@@ -1,4 +1,5 @@
 const combatClass = {
+  monster: "Monster",
   cleric: "Cleric",
   druid: "Druid",
   fighter: "Fighter",

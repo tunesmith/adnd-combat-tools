@@ -2,6 +2,7 @@ import { useState } from "react";
 import Select from "react-select";
 import armorOptions from "../tables/armorType";
 import combatClassOptions from "../tables/combatClass";
+import { getTableByCombatClass } from "../tables/combatLevel";
 
 const Calculator = () => {
   const [inputs, setInputs] = useState<{
@@ -19,6 +20,8 @@ const Calculator = () => {
     event.preventDefault();
     alert(inputs);
   };
+
+  const monsterOptions = getTableByCombatClass("monster");
 
   return (
     <form onSubmit={handleSubmit}>
@@ -40,6 +43,11 @@ const Calculator = () => {
       <label>
         Class of Attacker:
         <Select options={combatClassOptions} />
+      </label>
+      <br />
+      <label>
+        Attacker Level:
+        <Select options={monsterOptions} />
       </label>
     </form>
   );
