@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Select from "react-select";
+import armorOptions from "../tables/armorType";
 
 const Calculator = () => {
   const [inputs, setInputs] = useState<{
@@ -30,25 +32,7 @@ const Calculator = () => {
       </label>
       <label>
         Target Armor Type:
-        <select value={inputs?.targetArmorType} onChange={handleChange}>
-          <option value="10">10 - No Armor</option>
-          <option value="9">9 - Shield only</option>
-          <option value="8">8 - Leather or padded armor</option>
-          <option value="7">
-            7 - Leather or padded armor + shield / studded leather / ring mail
-          </option>
-          <option value="6">
-            6 - Studded leather or ring mail + shield / scale mail
-          </option>
-          <option value="5">5 - Scale mail + shield / chain mail</option>
-          <option value="4">
-            4 - Chain mail + shield / splint mail / banded mail
-          </option>
-          <option value="3">
-            3 - Splint or banded mail + shield / plate mail
-          </option>
-          <option value="2">2 - Plate mail + shield</option>
-        </select>
+        <Select options={armorOptions} />
       </label>
       <input type="submit" />
     </form>
