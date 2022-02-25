@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Select from "react-select";
 import armorOptions from "../tables/armorType";
+import combatClassOptions from "../tables/combatClass";
 
 const Calculator = () => {
   const [inputs, setInputs] = useState<{
@@ -30,11 +31,16 @@ const Calculator = () => {
           onChange={handleChange}
         />
       </label>
+      <br />
       <label>
         Target Armor Type:
         <Select options={armorOptions} />
       </label>
-      <input type="submit" />
+      <br />
+      <label>
+        Class of Attacker:
+        <Select options={combatClassOptions} />
+      </label>
     </form>
   );
 };
