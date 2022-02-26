@@ -12,6 +12,7 @@ import { getArmorOptions } from "../tables/armorType";
 const Calculator = () => {
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
   const [attackerClass, setAttackerClass] = useState<string>("monster");
+  const prevAttackerClass = useRef<string>("monster");
   const [attackerLevelOptions, setAttackerLevelOptions] = useState(
     getTableByCombatClass("monster")
   );
@@ -40,18 +41,22 @@ const Calculator = () => {
   };
 
   const handleAttackerClass = (event) => {
-    setAttackerClass(event.value);
-    const newAttackerLevelOptions = getTableByCombatClass(
-      event.value === "monster" ? "monster" : classMap[event.value]
-    );
-    setAttackerLevelOptions(newAttackerLevelOptions);
-    setAttackerLevel("1");
-    const newWeaponOptions = getWeaponOptions(event.value);
-    setWeaponOptions(newWeaponOptions);
-    setAttackerWeapon(newWeaponOptions[0].value);
-    const newArmorTypeOptions = getArmorOptions;
-    setArmorTypeOptions(newArmorTypeOptions);
-    setTargetArmorType(newArmorTypeOptions[0].value);
+    const newAttackerClass = event.value;
+    if (newAttackerClass !== prevAttackerClass.current) {
+      setAttackerClass(event.value);
+      const newAttackerLevelOptions = getTableByCombatClass(
+        event.value === "monster" ? "monster" : classMap[event.value]
+      );
+      setAttackerLevelOptions(newAttackerLevelOptions);
+      setAttackerLevel("1");
+      const newWeaponOptions = getWeaponOptions(event.value);
+      setWeaponOptions(newWeaponOptions);
+      setAttackerWeapon(newWeaponOptions[0].value);
+      const newArmorTypeOptions = getArmorOptions;
+      setArmorTypeOptions(newArmorTypeOptions);
+      setTargetArmorType(newArmorTypeOptions[0].value);
+      prevAttackerClass.current = newAttackerClass;
+    }
   };
 
   const handleArmorType = (event) => {
@@ -93,7 +98,6 @@ const Calculator = () => {
 
   /**
    * TODO:
-   *  - Start looking up thaco and doing calculations
    *  - Styling
    */
   return (
@@ -111,7 +115,7 @@ const Calculator = () => {
       </label>
       <br />
       <label>
-        Attacker Level:
+        Attacker {attackerClass === "monster" ? "Hit Dice" : "Level"}:
         <Select
           instanceId={"attackerLevel"}
           value={attackerLevelOptions.filter(
@@ -156,12 +160,6 @@ const Calculator = () => {
           options={armorClassOptions.current}
           onChange={handleArmorClass}
         />
-        {/*<input*/}
-        {/*  type="number"*/}
-        {/*  name="targetArmorClass"*/}
-        {/*  value={targetArmorClass}*/}
-        {/*  onChange={handleArmorClass}*/}
-        {/*/>*/}
       </label>
       <br />
       {toHit && <div>To Hit: {toHit}</div>}
