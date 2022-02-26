@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import Select from "react-select";
 import attackerClassOptions, { classMap } from "../tables/attackerClass";
-import { getTableByCombatClass } from "../tables/combatLevel";
-import { getWeaponOptions } from "../tables/weapon";
+import {
+  getTableByCombatClass,
+  getThac,
+  getThaco,
+} from "../tables/combatLevel";
+import { getWeaponAdjustment, getWeaponOptions } from "../tables/weapon";
 import { getArmorOptions } from "../tables/armorType";
 
 const Calculator = () => {
-  console.log("rendering...");
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
   const [attackerClass, setAttackerClass] = useState<string>("monster");
   const [attackerLevelOptions, setAttackerLevelOptions] = useState(
@@ -15,20 +18,25 @@ const Calculator = () => {
   const [weaponOptions, setWeaponOptions] = useState(
     getWeaponOptions("monster")
   );
-  const [armorTypeOptions, setArmorTypeOptions] = useState(
-    getArmorOptions("monster")
-  );
+  const [armorTypeOptions, setArmorTypeOptions] = useState(getArmorOptions);
   const [targetArmorType, setTargetArmorType] = useState<string>(
     armorTypeOptions[0].value
   );
 
+  const armorClassOptions = useRef(
+    [...Array(21)].map((v, i) => {
+      return { value: 10 - i, label: 10 - i };
+    })
+  );
   const [attackerLevel, setAttackerLevel] = useState<string>("1");
   const [attackerWeapon, setAttackerWeapon] = useState<string>(
     weaponOptions[0].value
   );
 
+  const [toHit, setToHit] = useState<number | undefined>(undefined);
+
   const handleArmorClass = (event) => {
-    setTargetArmorClass(event.target.value);
+    setTargetArmorClass(event.value);
   };
 
   const handleAttackerClass = (event) => {
@@ -41,7 +49,7 @@ const Calculator = () => {
     const newWeaponOptions = getWeaponOptions(event.value);
     setWeaponOptions(newWeaponOptions);
     setAttackerWeapon(newWeaponOptions[0].value);
-    const newArmorTypeOptions = getArmorOptions(event.value);
+    const newArmorTypeOptions = getArmorOptions;
     setArmorTypeOptions(newArmorTypeOptions);
     setTargetArmorType(newArmorTypeOptions[0].value);
   };
@@ -56,6 +64,28 @@ const Calculator = () => {
   const handleAttackerWeapon = (event) => {
     setAttackerWeapon(event.value);
   };
+
+  useEffect(() => {
+    console.log("=~=~=~ re-calculating ~=~=~=");
+    const thaco = getThaco(
+      attackerClass === "monster" ? "monster" : classMap[attackerClass],
+      attackerLevel
+    );
+    console.log(`thaco: ${thaco}`);
+    const thac = getThac(targetArmorClass, thaco);
+    console.log(`thac: ${thac}`);
+    const adjustment = targetArmorType.trim()
+      ? getWeaponAdjustment(attackerWeapon, targetArmorType)
+      : 0;
+    console.log(`adj: ${adjustment}`);
+    setToHit(thac - adjustment);
+  }, [
+    attackerClass,
+    attackerLevel,
+    attackerWeapon,
+    targetArmorType,
+    targetArmorClass,
+  ]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -118,13 +148,23 @@ const Calculator = () => {
       <br />
       <label>
         Target AC:
-        <input
-          type="number"
-          name="targetArmorClass"
-          value={targetArmorClass}
+        <Select
+          instanceId={"targetArmorClass"}
+          value={armorClassOptions.current.filter(
+            (option) => option.value === targetArmorClass
+          )}
+          options={armorClassOptions.current}
           onChange={handleArmorClass}
         />
+        {/*<input*/}
+        {/*  type="number"*/}
+        {/*  name="targetArmorClass"*/}
+        {/*  value={targetArmorClass}*/}
+        {/*  onChange={handleArmorClass}*/}
+        {/*/>*/}
       </label>
+      <br />
+      {toHit && <div>To Hit: {toHit}</div>}
     </form>
   );
 };

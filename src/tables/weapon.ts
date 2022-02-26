@@ -164,6 +164,11 @@ const weapons = new Map([
   ["Voulge", [-1, -1, 0, 1, 1, 1, 0, 0, 0]],
 ]);
 
+export const getWeaponAdjustment = (weapon, armorType) => {
+  console.log(weapons.get(weapon));
+  return weapons.get(weapon)[armorType - 2];
+};
+
 const filterWeaponClasses = (weapons, restrictions) =>
   Array.from(weapons).filter((option) => restrictions.includes(option[0]));
 

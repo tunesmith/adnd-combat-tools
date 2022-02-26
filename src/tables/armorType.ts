@@ -48,21 +48,23 @@ const filterArmorTypes = (armorTypes, restrictions) =>
   );
 
 const armorTypeClasses = {
-  monster: filterArmorTypes(armorTypes, monsterArmor),
-  cleric: Object.entries(armorTypes).slice(0, -1),
-  druid: filterArmorTypes(armorTypes, druidArmor),
-  fighter: Object.entries(armorTypes).slice(0, -1),
-  paladin: Object.entries(armorTypes).slice(0, -1),
-  ranger: Object.entries(armorTypes).slice(0, -1),
-  magicuser: filterArmorTypes(armorTypes, magicuserArmor),
-  illusionist: filterArmorTypes(armorTypes, magicuserArmor),
-  thief: filterArmorTypes(armorTypes, thiefArmor),
-  assassin: filterArmorTypes(armorTypes, assassinArmor),
-  monk: filterArmorTypes(armorTypes, magicuserArmor),
-  bard: filterArmorTypes(armorTypes, bardArmor),
+  monster: () => filterArmorTypes(armorTypes, monsterArmor),
+  cleric: () => Object.entries(armorTypes).slice(0, -1),
+  druid: () => filterArmorTypes(armorTypes, druidArmor),
+  fighter: () => Object.entries(armorTypes).slice(0, -1),
+  paladin: () => Object.entries(armorTypes).slice(0, -1),
+  ranger: () => Object.entries(armorTypes).slice(0, -1),
+  magicuser: () => filterArmorTypes(armorTypes, magicuserArmor),
+  illusionist: () => filterArmorTypes(armorTypes, magicuserArmor),
+  thief: () => filterArmorTypes(armorTypes, thiefArmor),
+  assassin: () => filterArmorTypes(armorTypes, assassinArmor),
+  monk: () => filterArmorTypes(armorTypes, magicuserArmor),
+  bard: () => filterArmorTypes(armorTypes, bardArmor),
 };
 
-export const getArmorOptions = (attackerClass) =>
-  armorTypeClasses[attackerClass]
+export const getArmorOptions =
+  // (attackerClass) =>
+  // armorTypeClasses[attackerClass]()
+  Object.entries(armorTypes)
     .reverse()
     .map(([value, label]) => ({ value, label }));

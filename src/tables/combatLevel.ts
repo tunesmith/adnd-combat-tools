@@ -57,6 +57,38 @@ export const magicUserLevels: LevelMap = {
 };
 
 /**
+ * Given level, look up thaco.
+ * @param levelMap
+ * @param targetLevel
+ */
+const getLevelThaco = (levelMap: LevelMap, targetLevel: number) =>
+  Object.entries(levelMap).reduce<number>(
+    (previous, [level, thaco]) =>
+      parseInt(level, 10) <= targetLevel ? thaco : previous,
+    30
+  );
+
+/**
+ * Given class and level, get thaco.
+ *
+ * @param attackerClass
+ * @param attackerLevel
+ */
+export const getThaco = (attackerClass, attackerLevel) => {
+  switch (attackerClass) {
+    case "monster":
+      return monsterLevels.get(attackerLevel);
+    case "fighter":
+      return getLevelThaco(fighterLevels, attackerLevel);
+    case "cleric":
+      return getLevelThaco(clericLevels, attackerLevel);
+    case "magicuser":
+      return getLevelThaco(magicUserLevels, attackerLevel);
+    case "thief":
+      return getLevelThaco(thiefLevels, attackerLevel);
+  }
+};
+/**
  * Every combat line adds up to thaco,
  * except that 20 hits for five additional ac levels
  * @param ac
