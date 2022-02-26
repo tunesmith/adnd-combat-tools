@@ -1,13 +1,13 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import Select from "react-select";
-import attackerClassOptions, { classMap } from "../tables/attackerClass";
+import attackerClassOptions, { classMap } from "../../tables/attackerClass";
 import {
   getTableByCombatClass,
   getThac,
   getThaco,
-} from "../tables/combatLevel";
-import { getWeaponAdjustment, getWeaponOptions } from "../tables/weapon";
-import { getArmorOptions } from "../tables/armorType";
+} from "../../tables/combatLevel";
+import { getWeaponAdjustment, getWeaponOptions } from "../../tables/weapon";
+import { getArmorOptions } from "../../tables/armorType";
 
 const Calculator = () => {
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
