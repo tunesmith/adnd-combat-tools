@@ -1,3 +1,106 @@
+const monsterWeapons = ["None (Monster)"];
+const clericWeapons = [
+  "Club (Held)",
+  "Club (Hurled)",
+  "Flail, Footman’s",
+  "Flail, Horseman’s",
+  "Hammer, Lucern",
+  "Hammer (Held)",
+  "Hammer (Hurled)",
+  "Mace, Footman’s",
+  "Mace, Horseman’s",
+  "Staff, quarter",
+];
+const druidWeapons = [
+  "Club (Held)",
+  "Club (Hurled)",
+  "Dagger (Held)",
+  "Dagger (Hurled)",
+  "Dart",
+  "Hammer, Lucern",
+  "Hammer (Held)",
+  "Hammer (Hurled)",
+  "Scimitar",
+  "Sling (bullet)",
+  "Sling (stone)",
+  "Spear (held)",
+  "Spear (hurled)",
+  "Staff, quarter",
+];
+const magicuserWeapons = [
+  "Dagger (Held)",
+  "Dagger (Hurled)",
+  "Dart",
+  "Staff, quarter",
+];
+const thiefWeapons = [
+  "Club (Held)",
+  "Club (Hurled)",
+  "Dagger (Held)",
+  "Dagger (Hurled)",
+  "Dart",
+  "Sling (bullet)",
+  "Sling (stone)",
+  "Sword, broad",
+  "Sword, long",
+  "Sword, short",
+];
+const monkWeapons = [
+  "Axe, Hand (Held)",
+  "Axe, Hand (Hurled)",
+  "Bardiche",
+  "Bec de Corbin",
+  "Bill-Guisarme",
+  "Bo Stick",
+  "Club (Held)",
+  "Club (Hurled)",
+  "Crossbow, heavy",
+  "Crossbow, light",
+  "Dagger (Held)",
+  "Dagger (Hurled)",
+  "Fauchard",
+  "Fauchard-Fork",
+  "Fork, Military",
+  "Glaive",
+  "Glaive-Guisarme",
+  "Guisarme",
+  "Guisarme-Voulge",
+  "Halberd",
+  "Hammer, Lucern",
+  "Javelin",
+  "Jo Stick",
+  "Lance (heavy horse)",
+  "Lance (light horse)",
+  "Lance (medium horse)",
+  "Partisan",
+  "Pike, awl",
+  "Ranseur",
+  "Spear (held)",
+  "Spear (hurled)",
+  "Spetum",
+  "Staff, quarter",
+  "Trident",
+  "Voulge",
+];
+const bardWeapons = [
+  "Club (Held)",
+  "Club (Hurled)",
+  "Dagger (Held)",
+  "Dagger (Hurled)",
+  "Dart",
+  "Javelin",
+  "Sling (bullet)",
+  "Sling (stone)",
+  "Scimitar",
+  "Spear (held)",
+  "Spear (hurled)",
+  "Staff, quarter",
+  "Sword, bastard",
+  "Sword, broad",
+  "Sword, long",
+  "Sword, short",
+];
+
 const weapons = new Map([
   ["None (Monster)", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
   ["Axe, Battle", [-3, -2, -1, -1, 0, 0, 1, 1, 2]],
@@ -61,7 +164,26 @@ const weapons = new Map([
   ["Voulge", [-1, -1, 0, 1, 1, 1, 0, 0, 0]],
 ]);
 
-export const weaponOptions = Array.from(weapons).map(([label, value]) => ({
-  value: label,
-  label,
-}));
+const filterWeaponClasses = (weapons, restrictions) =>
+  Array.from(weapons).filter((option) => restrictions.includes(option[0]));
+
+const weaponClasses = {
+  monster: filterWeaponClasses(weapons, monsterWeapons),
+  cleric: filterWeaponClasses(weapons, clericWeapons),
+  druid: filterWeaponClasses(weapons, druidWeapons),
+  fighter: Array.from(weapons).slice(1),
+  paladin: Array.from(weapons).slice(1),
+  ranger: Array.from(weapons).slice(1),
+  magicuser: filterWeaponClasses(weapons, magicuserWeapons),
+  illusionist: filterWeaponClasses(weapons, magicuserWeapons),
+  thief: filterWeaponClasses(weapons, thiefWeapons),
+  assassin: Array.from(weapons).slice(1),
+  monk: filterWeaponClasses(weapons, monkWeapons),
+  bard: filterWeaponClasses(weapons, bardWeapons),
+};
+
+export const getWeaponOptions = (attackerClass) =>
+  Array.from(weaponClasses[attackerClass]).map(([label, value]) => ({
+    value: label,
+    label,
+  }));

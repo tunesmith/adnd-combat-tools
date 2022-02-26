@@ -22,8 +22,15 @@ const tmpOptions = [
   { value: "2", label: "2 - Plate mail + shield" },
 ];
 
+const monsterArmor = [" "];
+const druidArmor = ["10", "9", "8", "7"];
+const magicuserArmor = ["10"];
+const thiefArmor = ["10", "8"];
+const assassinArmor = ["10", "9", "8", "7"];
+const bardArmor = ["10", "8", "5"];
+
 const armorTypes = {
-  "": "(None)",
+  " ": "(None)",
   10: "10 - No Armor",
   9: "9 - Shield only",
   8: "8 - Leather or padded armor",
@@ -35,8 +42,27 @@ const armorTypes = {
   2: "2 - Plate mail + shield",
 };
 
-const armorOptions = Object.entries(armorTypes)
-  .reverse()
-  .map(([value, label]) => ({ value, label }));
+const filterArmorTypes = (armorTypes, restrictions) =>
+  Object.entries(armorTypes).filter((option) =>
+    restrictions.includes(option[0])
+  );
 
-export default armorOptions;
+const armorTypeClasses = {
+  monster: filterArmorTypes(armorTypes, monsterArmor),
+  cleric: Object.entries(armorTypes).slice(0, -1),
+  druid: filterArmorTypes(armorTypes, druidArmor),
+  fighter: Object.entries(armorTypes).slice(0, -1),
+  paladin: Object.entries(armorTypes).slice(0, -1),
+  ranger: Object.entries(armorTypes).slice(0, -1),
+  magicuser: filterArmorTypes(armorTypes, magicuserArmor),
+  illusionist: filterArmorTypes(armorTypes, magicuserArmor),
+  thief: filterArmorTypes(armorTypes, thiefArmor),
+  assassin: filterArmorTypes(armorTypes, assassinArmor),
+  monk: filterArmorTypes(armorTypes, magicuserArmor),
+  bard: filterArmorTypes(armorTypes, bardArmor),
+};
+
+export const getArmorOptions = (attackerClass) =>
+  armorTypeClasses[attackerClass]
+    .reverse()
+    .map(([value, label]) => ({ value, label }));

@@ -1,28 +1,31 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Select from "react-select";
-import armorOptions from "../tables/armorType";
 import attackerClassOptions, { classMap } from "../tables/attackerClass";
 import { getTableByCombatClass } from "../tables/combatLevel";
-import { weaponOptions } from "../tables/weapon";
+import { getWeaponOptions } from "../tables/weapon";
+import { getArmorOptions } from "../tables/armorType";
 
 const Calculator = () => {
+  console.log("rendering...");
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
-  const [targetArmorType, setTargetArmorType] = useState<string>("");
   const [attackerClass, setAttackerClass] = useState<string>("monster");
   const [attackerLevelOptions, setAttackerLevelOptions] = useState(
     getTableByCombatClass("monster")
   );
+  const [weaponOptions, setWeaponOptions] = useState(
+    getWeaponOptions("monster")
+  );
+  const [armorTypeOptions, setArmorTypeOptions] = useState(
+    getArmorOptions("monster")
+  );
+  const [targetArmorType, setTargetArmorType] = useState<string>(
+    armorTypeOptions[0].value
+  );
+
   const [attackerLevel, setAttackerLevel] = useState<string>("1");
-  const [attackerWeapon, setAttackerWeapon] =
-    useState<string>("None (Monster)");
-
-  // console.log(attackerLevelOptions);
-
-  // const handleChange = (event) => {
-  //   const name = event.target.name;
-  //   const value = event.target.value;
-  //   setInputs((values) => ({ ...values, [name]: value }));
-  // };
+  const [attackerWeapon, setAttackerWeapon] = useState<string>(
+    weaponOptions[0].value
+  );
 
   const handleArmorClass = (event) => {
     setTargetArmorClass(event.target.value);
@@ -33,9 +36,14 @@ const Calculator = () => {
     const newAttackerLevelOptions = getTableByCombatClass(
       event.value === "monster" ? "monster" : classMap[event.value]
     );
-    console.log(newAttackerLevelOptions);
     setAttackerLevelOptions(newAttackerLevelOptions);
     setAttackerLevel("1");
+    const newWeaponOptions = getWeaponOptions(event.value);
+    setWeaponOptions(newWeaponOptions);
+    setAttackerWeapon(newWeaponOptions[0].value);
+    const newArmorTypeOptions = getArmorOptions(event.value);
+    setArmorTypeOptions(newArmorTypeOptions);
+    setTargetArmorType(newArmorTypeOptions[0].value);
   };
 
   const handleArmorType = (event) => {
@@ -53,14 +61,8 @@ const Calculator = () => {
     event.preventDefault();
   };
 
-  // useEffect(() => {
-  //   console.log(`gonna get class for new attacker class: ${attackerClass}`);
-  //   setAttackerLevelOptions(getTableByCombatClass(attackerClass));
-  // }, [attackerClass]);
-
   /**
    * TODO:
-   *  - Maybe even make weapon list dependent on attacker class
    *  - Start looking up thaco and doing calculations
    *  - Styling
    */
@@ -106,10 +108,10 @@ const Calculator = () => {
         Target Armor Type:
         <Select
           instanceId={"targetArmorType"}
-          value={armorOptions.filter(
+          value={armorTypeOptions.filter(
             (option) => option.value === targetArmorType
           )}
-          options={armorOptions}
+          options={armorTypeOptions}
           onChange={handleArmorType}
         />
       </label>
