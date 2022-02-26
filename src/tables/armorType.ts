@@ -23,6 +23,7 @@ const tmpOptions = [
 ];
 
 const armorTypes = {
+  "": "(None)",
   10: "10 - No Armor",
   9: "9 - Shield only",
   8: "8 - Leather or padded armor",

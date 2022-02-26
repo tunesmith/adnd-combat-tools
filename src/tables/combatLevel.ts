@@ -70,7 +70,16 @@ export const getThac = (ac, thaco) => {
   return simpleThac;
 };
 
-export const getInterpolatedOptions = (
+/**
+ * I kind of screwed this up.
+ * For monsters, I want to display the HD levels as is, which makes thaco a sane value
+ * For classes, I want to display individual levels, so levels should be the value
+ *
+ * So either way I should just have the label be the value, and then look up the thaco here.
+ *
+ * @param levels
+ */
+const getInterpolatedOptions = (
   levels: LevelMap
 ): { value: string; label: string }[] => {
   const entries: [string, number][] = Object.entries(levels);
@@ -99,22 +108,37 @@ export const getInterpolatedOptions = (
   }));
 };
 
+const getClassLevels = (
+  levels: LevelMap
+): { value: string; label: string }[] => {
+  // this is so dumb. There's not a better way?
+  const max = Math.max(
+    ...Object.entries(levels).map((val) => parseInt(val[0], 10))
+  );
+  return Array.from(Array(max).keys()).map((key) => {
+    return {
+      value: `${key + 1}`,
+      label: `${key + 1}${key + 1 === max ? "+" : ""}`,
+    };
+  });
+};
+
 export const getTableByCombatClass = (
   combatClass: string
 ): { value: string; label: string }[] => {
   switch (combatClass) {
     case "monster":
       return Array.from(monsterLevels).map(([label, value]) => ({
-        value,
+        value: label,
         label,
       }));
     case "fighter":
-      return getInterpolatedOptions(fighterLevels);
+      return getClassLevels(fighterLevels);
     case "cleric":
-      return getInterpolatedOptions(clericLevels);
+      return getClassLevels(clericLevels);
     case "magicuser":
-      return getInterpolatedOptions(magicUserLevels);
+      return getClassLevels(magicUserLevels);
     case "thief":
-      return getInterpolatedOptions(thiefLevels);
+      return getClassLevels(thiefLevels);
   }
 };

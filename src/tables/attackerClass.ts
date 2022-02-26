@@ -1,4 +1,4 @@
-const combatClass = {
+const attackerClass = {
   monster: "Monster",
   cleric: "Cleric",
   druid: "Druid",
@@ -27,8 +27,8 @@ export const classMap = {
   bard: "fighter",
 };
 
-const combatClassOptions = Object.entries(combatClass).map(
+const attackerClassOptions = Object.entries(attackerClass).map(
   ([value, label]) => ({ value, label })
 );
 
-export default combatClassOptions;
+export default attackerClassOptions;

@@ -1,6 +1,5 @@
-import { monsterLevels } from "./combatLevel";
-
 const weapons = new Map([
+  ["None (Monster)", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
   ["Axe, Battle", [-3, -2, -1, -1, 0, 0, 1, 1, 2]],
   ["Axe, Hand (Held)", [-3, -2, -2, -1, 0, 0, 1, 1, 1]],
   ["Axe, Hand (Hurled)", [-4, -3, -2, -1, -1, 0, 0, 0, 1]],
@@ -41,7 +40,6 @@ const weapons = new Map([
   ["Mace, Footman’s", [1, 1, 0, 0, 0, 0, 0, 1, -1]],
   ["Mace, Horseman’s", [1, 1, 0, 0, 0, 0, 0, 0, 0]],
   ["Morning Star", [0, 1, 1, 1, 1, 1, 1, 2, 2]],
-  ["None (Monster)", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
   ["Partisan", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
   ["Pick, Military, Footman’s", [2, 2, 1, 1, 0, -1, -1, -1, -2]],
   ["Pick, Military, Horseman’s", [1, 1, 1, 1, 0, 0, -1, -1, -1]],
