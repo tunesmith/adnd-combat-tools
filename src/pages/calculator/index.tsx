@@ -61,6 +61,9 @@ const Calculator = () => {
 
   const handleArmorType = (event) => {
     setTargetArmorType(event.value);
+    if (event.value.trim()) {
+      setTargetArmorClass(parseInt(event.value, 10));
+    }
   };
   const handleAttackerLevel = (event) => {
     setAttackerLevel(event.value);
