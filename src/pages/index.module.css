@@ -1,0 +1,9 @@
+
+.links {
+    padding: 5rem;
+}
+.links a {
+    font-family: 'Sura', serif;
+    font-size: 16px;
+    color: var(--eggshell);
+}
