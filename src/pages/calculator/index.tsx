@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import attackerClassOptions, { classMap } from "../../tables/attackerClass";
 import {
@@ -8,6 +8,7 @@ import {
 } from "../../tables/combatLevel";
 import { getWeaponAdjustment, getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptions } from "../../tables/armorType";
+import styles from "./calculator.module.css";
 
 const Calculator = () => {
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
@@ -99,74 +100,108 @@ const Calculator = () => {
     event.preventDefault();
   };
 
+  const customStyles = {
+    control: (provided, state) => ({
+      ...provided,
+      backgroundColor: "#F0EFDD",
+    }),
+
+    option: (provided, state) => {
+      // console.log(provided);
+      return {
+        ...provided,
+        backgroundColor: "#F0EFDD",
+        color: "black",
+      };
+    },
+  };
+
   /**
    * TODO:
    *  - Styling
    */
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Class of Attacker:
-        <Select
-          instanceId={"attackerClass"}
-          value={attackerClassOptions.filter(
-            (option) => option.value === attackerClass
+    <div className={styles.outerContainer}>
+      <div className={styles.title}>AD&D Combat Calculator</div>
+      <div className={styles.calcContainer}>
+        <div className={styles.formContainer}>
+          <form onSubmit={handleSubmit}>
+            <label>
+              Class of Attacker:
+              <Select
+                instanceId={"attackerClass"}
+                styles={customStyles}
+                value={attackerClassOptions.filter(
+                  (option) => option.value === attackerClass
+                )}
+                options={attackerClassOptions}
+                onChange={handleAttackerClass}
+              />
+            </label>
+            <br />
+            <label>
+              Attacker {attackerClass === "monster" ? "Hit Dice" : "Level"}:
+              <Select
+                instanceId={"attackerLevel"}
+                styles={customStyles}
+                value={attackerLevelOptions.filter(
+                  (option) => option.value === attackerLevel
+                )}
+                options={attackerLevelOptions}
+                onChange={handleAttackerLevel}
+              />
+            </label>
+            <br />
+            <label>
+              Attacker Weapon:
+              <Select
+                instanceId={"attackerWeapon"}
+                styles={customStyles}
+                value={weaponOptions.filter(
+                  (option) => option.value === attackerWeapon
+                )}
+                options={weaponOptions}
+                onChange={handleAttackerWeapon}
+              />
+            </label>
+            <br />
+            <label>
+              Target Armor Type:
+              <Select
+                instanceId={"targetArmorType"}
+                styles={customStyles}
+                value={armorTypeOptions.filter(
+                  (option) => option.value === targetArmorType
+                )}
+                options={armorTypeOptions}
+                onChange={handleArmorType}
+              />
+            </label>
+            <br />
+            <label>
+              Target AC:
+              <Select
+                instanceId={"targetArmorClass"}
+                styles={customStyles}
+                value={armorClassOptions.current.filter(
+                  (option) => option.value === targetArmorClass
+                )}
+                options={armorClassOptions.current}
+                onChange={handleArmorClass}
+              />
+            </label>
+          </form>
+        </div>
+        <div className={styles.toHitContainer}>
+          {toHit && (
+            <div className={styles.toHitBox}>
+              <div>To Hit:</div>
+              <div className={styles.toHit}>{toHit}</div>
+            </div>
           )}
-          options={attackerClassOptions}
-          onChange={handleAttackerClass}
-        />
-      </label>
-      <br />
-      <label>
-        Attacker {attackerClass === "monster" ? "Hit Dice" : "Level"}:
-        <Select
-          instanceId={"attackerLevel"}
-          value={attackerLevelOptions.filter(
-            (option) => option.value === attackerLevel
-          )}
-          options={attackerLevelOptions}
-          onChange={handleAttackerLevel}
-        />
-      </label>
-      <br />
-      <label>
-        Attacker Weapon:
-        <Select
-          instanceId={"attackerWeapon"}
-          value={weaponOptions.filter(
-            (option) => option.value === attackerWeapon
-          )}
-          options={weaponOptions}
-          onChange={handleAttackerWeapon}
-        />
-      </label>
-      <br />
-      <label>
-        Target Armor Type:
-        <Select
-          instanceId={"targetArmorType"}
-          value={armorTypeOptions.filter(
-            (option) => option.value === targetArmorType
-          )}
-          options={armorTypeOptions}
-          onChange={handleArmorType}
-        />
-      </label>
-      <br />
-      <label>
-        Target AC:
-        <Select
-          instanceId={"targetArmorClass"}
-          value={armorClassOptions.current.filter(
-            (option) => option.value === targetArmorClass
-          )}
-          options={armorClassOptions.current}
-          onChange={handleArmorClass}
-        />
-      </label>
-      <br />
-      {toHit && <div>To Hit: {toHit}</div>}
-    </form>
+        </div>
+      </div>
+    </div>
   );
 };
 

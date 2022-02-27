@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Sura:wght@700&display=swap');
+
+@value eggshell: #F0EFDD;
+
+.outerContainer {
+    font-family: 'Sura', serif;
+    font-size: 16px;
+    color: var(--eggshell);
+    padding: 5rem;
+    /*border-style: solid;*/
+}
+
+.calcContainer {
+    background-color: var(--dark-olive-green);
+    padding: 1rem;
+    display: flex;
+    flex-direction: row;
+    border-style: solid;
+    border-color: var(--copper);
+    border-width: thick;
+    /*height: 100%;*/
+}
+
+.formContainer {
+    /*width: 50%;*/
+    padding: 1rem;
+    flex: 1;
+    /*background-color: var(--dark-olive-green);*/
+    /*border-style: solid;*/
+}
+
+.toHitContainer {
+    /*width: 50%;*/
+    /*display: flex;*/
+    flex: 1;
+    /*flex-direction: row;*/
+    /*height: 110%;*/
+    padding: 1rem;
+    /*border-style: dashed;*/
+    /*justify-content: center;*/
+    /*align-items: stretch;*/
+    /*position: relative;*/
+    /*margin: 0;*/
+    /*padding: 0;*/
+    /*align-items: stretch;*/
+    /*position: center;*/
+}
+
+.toHitBox {
+    flex: auto;
+    /*border-style: solid;*/
+    flex-direction: row;
+    /*display: flex;*/
+    /*height: 100%;*/
+    align-items: stretch;
+    /*justify-content: stretch;*/
+}
+.toHit {
+    /*border-style: solid;*/
+    /*align-items: stretch;*/
+    /*height: 100%;*/
+    /*position: absolute;*/
+    /*width: 100%;*/
+    /*height: 100%;*/
+    display: flex;
+    flex: 1;
+    font-size: 20vw;
+    /*height: 100%;*/
+    /*height: auto;*/
+    align-self: stretch;
+    /*align-self: flex-start;*/
+    /*margin: 0;*/
+    /*padding: 0;*/
+    justify-content: center;
+}
+
+.title {
+    font-family: 'Sura', serif;
+    font-size: 32px;
+    text-align: center;
+    /*width: 80%;*/
+    display: table;
+    margin: 0 auto;
+    padding-bottom: 20px;
+}
