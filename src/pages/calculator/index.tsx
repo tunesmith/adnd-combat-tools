@@ -129,6 +129,7 @@ const Calculator = () => {
             <label>
               Class of Attacker:
               <Select
+                isSearchable={false}
                 instanceId={"attackerClass"}
                 styles={customStyles}
                 value={attackerClassOptions.filter(
@@ -142,6 +143,7 @@ const Calculator = () => {
             <label>
               Attacker {attackerClass === "monster" ? "Hit Dice" : "Level"}:
               <Select
+                isSearchable={false}
                 instanceId={"attackerLevel"}
                 styles={customStyles}
                 value={attackerLevelOptions.filter(
@@ -155,6 +157,7 @@ const Calculator = () => {
             <label>
               Attacker Weapon:
               <Select
+                isSearchable={false}
                 instanceId={"attackerWeapon"}
                 styles={customStyles}
                 value={weaponOptions.filter(
@@ -168,6 +171,7 @@ const Calculator = () => {
             <label>
               Target Armor Type:
               <Select
+                isSearchable={false}
                 instanceId={"targetArmorType"}
                 styles={customStyles}
                 value={armorTypeOptions.filter(
@@ -181,6 +185,7 @@ const Calculator = () => {
             <label>
               Target AC:
               <Select
+                isSearchable={false}
                 instanceId={"targetArmorClass"}
                 styles={customStyles}
                 value={armorClassOptions.current.filter(

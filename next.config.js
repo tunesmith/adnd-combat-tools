@@ -1,4 +1,6 @@
+const debug = process.env.NODE_ENV !== "production";
+
 module.exports = {
-  assetPrefix: "/adnd-combat-tools/",
-  basePath: "/adnd-combat-tools",
+  assetPrefix: !debug ? "/adnd-combat-tools/" : "",
+  basePath: !debug ? "/adnd-combat-tools" : "",
 };
