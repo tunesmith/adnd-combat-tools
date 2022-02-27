@@ -27,8 +27,6 @@ export const classMap = {
   bard: "fighter",
 };
 
-const attackerClassOptions = Object.entries(attackerClass).map(
+export const attackerClassOptions = Object.entries(attackerClass).map(
   ([value, label]) => ({ value, label })
 );
-
-export default attackerClassOptions;

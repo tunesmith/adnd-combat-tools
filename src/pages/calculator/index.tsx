@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Select from "react-select";
-import attackerClassOptions, { classMap } from "../../tables/attackerClass";
+import { attackerClassOptions, classMap } from "../../tables/attackerClass";
 import {
   getTableByCombatClass,
   getThac,
