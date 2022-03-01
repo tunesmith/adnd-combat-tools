@@ -1,3 +1,5 @@
+import { arrayOf } from "prop-types";
+
 export const monsterLevels = new Map([
   ["up to 1-1", "21"],
   ["1-1", "20"],
@@ -144,13 +146,13 @@ const getClassLevels = (
   levels: LevelMap
 ): { value: string; label: string }[] => {
   // this is so dumb. There's not a better way?
-  const max = Math.max(
-    ...Object.entries(levels).map((val) => parseInt(val[0], 10))
-  );
-  return Array.from(Array(max).keys()).map((key) => {
+  const arrayOfKeys = Object.entries(levels).map((val) => parseInt(val[0], 10));
+  const max = Math.max(...arrayOfKeys);
+  const min = Math.min(...arrayOfKeys);
+  return Array.from(Array(max - min + 1).keys()).map((key) => {
     return {
-      value: `${key + 1}`,
-      label: `${key + 1}${key + 1 === max ? "+" : ""}`,
+      value: `${key + min}`,
+      label: `${key + min}${key + min === max ? "+" : ""}`,
     };
   });
 };
