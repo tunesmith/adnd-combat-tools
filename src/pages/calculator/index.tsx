@@ -81,13 +81,19 @@ const Calculator = () => {
       attackerLevel
     );
     console.log(`thaco: ${thaco}`);
-    const thac = getThac(targetArmorClass, thaco);
-    console.log(`thac: ${thac}`);
     const adjustment = targetArmorType.trim()
       ? getWeaponAdjustment(attackerWeapon, targetArmorType)
       : 0;
     console.log(`adj: ${adjustment}`);
-    setToHit(thac - adjustment);
+    // Adjust AC
+    setToHit(getThac(targetArmorClass + adjustment, thaco));
+    /**
+     * Alternatively the below makes the adjustment to the die instead of the AC. This is how
+     * the combat calculator wheel works, but the wheel is wrong. Dragon #74 refers to applying
+     * the adjustment to the "to hit" die, but DMG p70 (Balto with the staff) makes clear the
+     * adjustment should be applied to the AC.
+     */
+    // setToHit(getThac(targetArmorClass, thaco) - adjustment);
   }, [
     attackerClass,
     attackerLevel,
