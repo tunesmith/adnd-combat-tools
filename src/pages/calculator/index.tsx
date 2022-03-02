@@ -204,7 +204,7 @@ const Calculator = () => {
           </form>
         </div>
         <div className={styles.toHitContainer}>
-          {toHit && (
+          {(toHit || toHit === 0) && (
             <div className={styles.toHitBox}>
               <div>To Hit:</div>
               <div className={styles.toHit}>{toHit}</div>
