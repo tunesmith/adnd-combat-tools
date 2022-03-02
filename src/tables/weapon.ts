@@ -2,6 +2,7 @@ const monsterWeapons = ["None (Monster)"];
 const clericWeapons = [
   "Club (Held)",
   "Club (Hurled)",
+  "Fist or Open Hand",
   "Flail, Footman’s",
   "Flail, Horseman’s",
   "Hammer, Lucern",
@@ -17,6 +18,7 @@ const druidWeapons = [
   "Dagger (Held)",
   "Dagger (Hurled)",
   "Dart",
+  "Fist or Open Hand",
   "Hammer, Lucern",
   "Hammer (Held)",
   "Hammer (Hurled)",
@@ -31,6 +33,7 @@ const magicuserWeapons = [
   "Dagger (Held)",
   "Dagger (Hurled)",
   "Dart",
+  "Fist or Open Hand",
   "Staff, quarter",
 ];
 const thiefWeapons = [
@@ -39,6 +42,7 @@ const thiefWeapons = [
   "Dagger (Held)",
   "Dagger (Hurled)",
   "Dart",
+  "Fist or Open Hand",
   "Sling (bullet)",
   "Sling (stone)",
   "Sword, broad",
@@ -60,6 +64,7 @@ const monkWeapons = [
   "Dagger (Hurled)",
   "Fauchard",
   "Fauchard-Fork",
+  "Fist or Open Hand",
   "Fork, Military",
   "Glaive",
   "Glaive-Guisarme",
@@ -88,6 +93,7 @@ const bardWeapons = [
   "Dagger (Held)",
   "Dagger (Hurled)",
   "Dart",
+  "Fist or Open Hand",
   "Javelin",
   "Sling (bullet)",
   "Sling (stone)",
