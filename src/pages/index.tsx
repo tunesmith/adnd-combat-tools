@@ -5,6 +5,8 @@ const Index = () => {
   return (
     <div className={styles.links}>
       <Link href={"/calculator"}>AD&D Combat Calculator</Link>
+      <br />
+      <Link href={"/battle"}>AD&D Battle Table</Link>
     </div>
   );
 };
