@@ -9,6 +9,7 @@ import {
 import { getWeaponAdjustment, getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptions } from "../../tables/armorType";
 import styles from "./calculator.module.css";
+import customStyles from "../../helpers/selectCustomStyles";
 
 const Calculator = () => {
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
@@ -104,22 +105,6 @@ const Calculator = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-  };
-
-  const customStyles = {
-    control: (provided, state) => ({
-      ...provided,
-      backgroundColor: "#F0EFDD",
-    }),
-
-    option: (provided, state) => {
-      // console.log(provided);
-      return {
-        ...provided,
-        backgroundColor: "#F0EFDD",
-        color: "black",
-      };
-    },
   };
 
   /**
