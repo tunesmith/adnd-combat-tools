@@ -150,7 +150,7 @@ const getClassLevels = (
   return Array.from(Array(max - min + 1).keys()).map((key) => {
     return {
       value: `${key + min}`,
-      label: `${key + min}${key + min === max ? "+" : ""}`,
+      label: `Level ${key + min}${key + min === max ? "+" : ""}`,
     };
   });
 };
@@ -162,7 +162,7 @@ export const getTableByCombatClass = (
     case "monster":
       return Array.from(monsterLevels).map(([label, value]) => ({
         value: label,
-        label,
+        label: `${label} HD`,
       }));
     case "fighter":
       return getClassLevels(fighterLevels);

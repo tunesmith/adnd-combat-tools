@@ -6,7 +6,7 @@ const assassinArmor = ["10", "9", "8", "7"];
 const bardArmor = ["10", "8", "5"];
 
 const armorTypes = {
-  " ": "(None)",
+  " ": "Natural Armor",
   10: "10 - No Armor",
   9: "9 - Shield only",
   8: "8 - Leather or padded armor",

@@ -1,4 +1,4 @@
-const monsterWeapons = ["None (Monster)"];
+const monsterWeapons = ["No Weapon (Monster)"];
 const clericWeapons = [
   "Club (Held)",
   "Club (Hurled)",
@@ -108,7 +108,7 @@ const bardWeapons = [
 ];
 
 const weapons = new Map([
-  ["None (Monster)", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
+  ["No Weapon (Monster)", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
   ["Axe, Battle", [-3, -2, -1, -1, 0, 0, 1, 1, 2]],
   ["Axe, Hand (Held)", [-3, -2, -2, -1, 0, 0, 1, 1, 1]],
   ["Axe, Hand (Hurled)", [-4, -3, -2, -1, -1, 0, 0, 0, 1]],
