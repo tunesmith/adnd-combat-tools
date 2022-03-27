@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Sura:wght@700&display=swap');
+
+@value eggshell: #F0EFDD;
+
+.myBorder {
+    border-spacing: 0;
+    border: 3px solid var(--copper);
+    font-family: 'Sura', serif;
+    font-size: 16px;
+    color: var(--eggshell);
+}
+
+.myBorder > tbody > tr:last-child > td {
+    border-bottom: 0;
+}
+
+.myBorder > thead > tr > th {
+    background-color: var(--dark-olive-green);
+}
+
+.myBorder > thead > tr > th:first-child {
+    background-color: var(--copper);
+    background-image: linear-gradient(to top right, var(--caput-martuum), var(--dark-olive-green));
+    /*border-right: 0;*/
+    /*border-bottom: 0;*/
+}
+
+.myBorder > thead > tr > th, .myBorder > tbody > tr > td {
+    margin: 0;
+    padding: 0.5rem;
+    border-bottom: 3px solid var(--copper);
+    border-right: 3px solid var(--copper);
+}
+
+.myBorder > thead > tr > th:last-child, .myBorder > tbody > tr > td:last-child {
+    border-right: 0;
+}
