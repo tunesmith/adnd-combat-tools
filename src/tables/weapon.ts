@@ -1,4 +1,3 @@
-const monsterWeapons = ["No Weapon (Monster)"];
 const clericWeapons = [
   "Club (Held)",
   "Club (Hurled)",
@@ -108,7 +107,7 @@ const bardWeapons = [
 ];
 
 const weapons = new Map([
-  ["No Weapon (Monster)", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
+  ["Natural Weapon (Monster)", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
   ["Axe, Battle", [-3, -2, -1, -1, 0, 0, 1, 1, 2]],
   ["Axe, Hand (Held)", [-3, -2, -2, -1, 0, 0, 1, 1, 1]],
   ["Axe, Hand (Hurled)", [-4, -3, -2, -1, -1, 0, 0, 0, 1]],
@@ -179,7 +178,7 @@ const filterWeaponClasses = (weapons, restrictions) =>
   Array.from(weapons).filter((option) => restrictions.includes(option[0]));
 
 const weaponClasses = {
-  monster: filterWeaponClasses(weapons, monsterWeapons),
+  monster: weapons,
   cleric: filterWeaponClasses(weapons, clericWeapons),
   druid: filterWeaponClasses(weapons, druidWeapons),
   fighter: Array.from(weapons).slice(1),
