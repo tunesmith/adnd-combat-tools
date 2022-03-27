@@ -1,5 +1,3 @@
-import { arrayOf } from "prop-types";
-
 export const monsterLevels = new Map([
   ["up to 1-1", "21"],
   ["1-1", "20"],
@@ -63,10 +61,10 @@ export const magicUserLevels: LevelMap = {
  * @param levelMap
  * @param targetLevel
  */
-const getLevelThaco = (levelMap: LevelMap, targetLevel: number) =>
+const getLevelThaco = (levelMap: LevelMap, targetLevel: string) =>
   Object.entries(levelMap).reduce<number>(
     (previous, [level, thaco]) =>
-      parseInt(level, 10) <= targetLevel ? thaco : previous,
+      parseInt(level, 10) <= parseInt(targetLevel, 10) ? thaco : previous,
     30
   );
 
@@ -76,7 +74,7 @@ const getLevelThaco = (levelMap: LevelMap, targetLevel: number) =>
  * @param attackerClass
  * @param attackerLevel
  */
-export const getThaco = (attackerClass, attackerLevel) => {
+export const getThaco = (attackerClass: string, attackerLevel: string) => {
   switch (attackerClass) {
     case "monster":
       return monsterLevels.get(attackerLevel);
