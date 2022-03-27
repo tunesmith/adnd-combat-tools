@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import { attackerClassOptions, classMap } from "../../tables/attackerClass";
-import {
-  getTableByCombatClass,
-  getThac,
-  getThaco,
-} from "../../tables/combatLevel";
-import { getWeaponAdjustment, getWeaponOptions } from "../../tables/weapon";
+import { getTableByCombatClass } from "../../tables/combatLevel";
+import { getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptions } from "../../tables/armorType";
 import styles from "./calculator.module.css";
 import customStyles from "../../helpers/selectCustomStyles";
+import getToHit from "../../helpers/getToHit";
 
 const Calculator = () => {
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
@@ -76,41 +73,27 @@ const Calculator = () => {
   };
 
   useEffect(() => {
-    console.log("=~=~=~ re-calculating ~=~=~=");
-    const thaco = getThaco(
-      attackerClass === "monster" ? "monster" : classMap[attackerClass],
-      attackerLevel
+    setToHit(
+      getToHit(
+        attackerClass,
+        attackerLevel,
+        targetArmorType,
+        targetArmorClass,
+        attackerWeapon
+      )
     );
-    console.log(`thaco: ${thaco}`);
-    const adjustment = targetArmorType.trim()
-      ? getWeaponAdjustment(attackerWeapon, targetArmorType)
-      : 0;
-    console.log(`adj: ${adjustment}`);
-    // Adjust AC
-    setToHit(getThac(targetArmorClass + adjustment, thaco));
-    /**
-     * Alternatively the below makes the adjustment to the die instead of the AC. This is how
-     * the combat calculator wheel works, but the wheel is wrong. Dragon #74 refers to applying
-     * the adjustment to the "to hit" die, but DMG p70 (Balto with the staff) makes clear the
-     * adjustment should be applied to the AC.
-     */
-    // setToHit(getThac(targetArmorClass, thaco) - adjustment);
   }, [
     attackerClass,
     attackerLevel,
-    attackerWeapon,
     targetArmorType,
     targetArmorClass,
+    attackerWeapon,
   ]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
   };
 
-  /**
-   * TODO:
-   *  - Styling
-   */
   return (
     <div className={styles.outerContainer}>
       <div className={styles.title}>AD&D Combat Calculator</div>
