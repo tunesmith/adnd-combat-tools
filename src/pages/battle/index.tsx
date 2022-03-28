@@ -90,7 +90,10 @@ const Battle = () => {
 
   const columns = useMemo<Column[]>(
     () => [
-      { Header: "", accessor: "col0" },
+      {
+        Header: <div className={styles.tableTitle}>Battle Grid</div>,
+        accessor: "col0",
+      },
       {
         Header: () => (
           <BattleInput

@@ -21,8 +21,6 @@
 .myBorder > thead > tr > th:first-child {
     background-color: var(--copper);
     background-image: linear-gradient(to top right, var(--caput-martuum), var(--dark-olive-green));
-    /*border-right: 0;*/
-    /*border-bottom: 0;*/
 }
 
 .myBorder > thead > tr > th, .myBorder > tbody > tr > td {
@@ -34,4 +32,14 @@
 
 .myBorder > thead > tr > th:last-child, .myBorder > tbody > tr > td:last-child {
     border-right: 0;
+}
+
+.tableTitle {
+    font-family: 'Sura', serif;
+    font-size: 48px;
+    text-align: center;
+    /*width: 80%;*/
+    display: table;
+    margin: 0 auto;
+    padding-bottom: 20px;
 }
