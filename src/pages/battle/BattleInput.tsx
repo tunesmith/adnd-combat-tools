@@ -164,66 +164,54 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   return (
     <>
-      <label>
-        <Select
-          isSearchable={false}
-          instanceId={"creatureClass"}
-          styles={customStyles}
-          value={attackerClassOptions.filter(
-            (option) => option.value === creatureClass
-          )}
-          options={attackerClassOptions}
-          onChange={handleCreatureClass}
-        />
-      </label>
+      <Select
+        isSearchable={false}
+        instanceId={"creatureClass"}
+        styles={customStyles}
+        value={attackerClassOptions.filter(
+          (option) => option.value === creatureClass
+        )}
+        options={attackerClassOptions}
+        onChange={handleCreatureClass}
+      />
       <br />
-      <label>
-        <Select
-          isSearchable={false}
-          instanceId={"level"}
-          styles={customStyles}
-          value={levelOptions.filter((option) => option.value === level)}
-          options={levelOptions}
-          onChange={handleLevel}
-        />
-      </label>
+      <Select
+        isSearchable={false}
+        instanceId={"level"}
+        styles={customStyles}
+        value={levelOptions.filter((option) => option.value === level)}
+        options={levelOptions}
+        onChange={handleLevel}
+      />
       <br />
-      <label>
-        <Select
-          isSearchable={false}
-          instanceId={"armorType"}
-          styles={customStyles}
-          value={armorTypeOptions.filter(
-            (option) => option.value === armorType
-          )}
-          options={armorTypeOptions}
-          onChange={handleArmorType}
-        />
-      </label>
+      <Select
+        isSearchable={false}
+        instanceId={"armorType"}
+        styles={customStyles}
+        value={armorTypeOptions.filter((option) => option.value === armorType)}
+        options={armorTypeOptions}
+        onChange={handleArmorType}
+      />
       <br />
-      <label>
-        <Select
-          isSearchable={false}
-          instanceId={"armorClass"}
-          styles={customStyles}
-          value={armorClassOptions.current.filter(
-            (option) => option.value === armorClass
-          )}
-          options={armorClassOptions.current}
-          onChange={handleArmorClass}
-        />
-      </label>
+      <Select
+        isSearchable={false}
+        instanceId={"armorClass"}
+        styles={customStyles}
+        value={armorClassOptions.current.filter(
+          (option) => option.value === armorClass
+        )}
+        options={armorClassOptions.current}
+        onChange={handleArmorClass}
+      />
       <br />
-      <label>
-        <Select
-          isSearchable={false}
-          instanceId={"weapon"}
-          styles={customStyles}
-          value={weaponOptions.filter((option) => option.value === weapon)}
-          options={weaponOptions}
-          onChange={handleWeapon}
-        />
-      </label>
+      <Select
+        isSearchable={false}
+        instanceId={"weapon"}
+        styles={customStyles}
+        value={weaponOptions.filter((option) => option.value === weapon)}
+        options={weaponOptions}
+        onChange={handleWeapon}
+      />
     </>
   );
 };
