@@ -1,0 +1,30 @@
+.outerCell {
+    height: 100%;
+    width: 100%;
+}
+.left{
+    height: 100%;
+    width: 50%;
+    font-size: 40px;
+    background-color: var(--caput-martuum);
+    display:flex;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+    float:left;
+    text-align: center;
+    padding: 5px;
+}
+.right{
+    height: 100%;
+    width: 50%;
+    font-size: 40px;
+    background-color: var(--dark-olive-green);
+    display:flex;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+    float: right;
+    text-align: center;
+    padding: 5px;
+}

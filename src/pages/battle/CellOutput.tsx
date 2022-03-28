@@ -1,11 +1,7 @@
 import getToHit from "../../helpers/getToHit";
+import styles from "./cellOutput.module.css";
 
 const CellOutput = ({ red, green }) => {
-  // console.log("rendering cell... ");
-  // console.log("cell red: ");
-  // console.log(red);
-  // console.log("cell green: ");
-  // console.log(green);
   const redToHit = getToHit(
     red.class,
     red.level,
@@ -23,8 +19,9 @@ const CellOutput = ({ red, green }) => {
   );
 
   return (
-    <div>
-      {redToHit}, {greenToHit}
+    <div className={styles.outerCell}>
+      <div className={styles.left}>{redToHit}</div>
+      <div className={styles.right}>{greenToHit}</div>
     </div>
   );
 };
