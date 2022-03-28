@@ -36,7 +36,9 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const prevCreatureClass = useRef<string>(creature.class);
   const [level, setLevel] = useState<string>(creature.level);
   const [levelOptions, setLevelOptions] = useState(
-    getTableByCombatClass(creature.class)
+    getTableByCombatClass(
+      creature.class === "monster" ? "monster" : classMap[creature.class]
+    )
   );
   const [weaponOptions, setWeaponOptions] = useState(
     getWeaponOptions(creature.class)
@@ -58,7 +60,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     if (newCreatureClass !== prevCreatureClass.current) {
       setCreatureClass(newCreatureClass);
       const newLevelOptions = getTableByCombatClass(
-        event.value === "monster" ? "monster" : classMap[event.value]
+        newCreatureClass === "monster" ? "monster" : classMap[newCreatureClass]
       );
       setLevelOptions(newLevelOptions);
 

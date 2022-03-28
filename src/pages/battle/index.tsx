@@ -47,44 +47,9 @@ const Battle = () => {
     });
     // console.log("newState: ", newState);
     return newState;
-    // const newState = [
-    //   ...thisState,
-    //   (thisState[action.row][action.col] = action.stats),
-    //   // thisState(([action.row] = [initialCreature, {}, {}])),
-    // ];
-    // console.log(newState);
-    // return newState;
-    // return (...thisState);
-    // console.log("thisState: ", thisState);
-    // console.log("oldState: ", previousState.current);
-    // // state[action.row][action.col] = action.stats;
-    //
-    // const newState = [
-    //   ...thisState,
-    //   (thisState[action.row] = [action.stats, {}, {}]),
-    //   // (state[action.row][action.col] = action.stats)
-    // ];
-    // console.log("newState: ", newState);
-    // previousState.current = newState;
-    // return newState;
-    // // state[action.row][action.col] = action.stats;
-    // // return state;
   };
 
   const [state, dispatch] = useReducer(reducer, initialState);
-  // useEffect(() => {
-  //   dispatch({
-  //     row: 0,
-  //     col: 2,
-  //     creature: {
-  //       class: "cleric",
-  //       level: "6",
-  //       weapon: "Hammer (hurled)",
-  //       armorClass: 5,
-  //       armorType: " ",
-  //     },
-  //   });
-  // }, []);
 
   const columns = useMemo<Column[]>(
     () => [
