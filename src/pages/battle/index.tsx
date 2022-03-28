@@ -11,7 +11,6 @@ import CellOutput from "./CellOutput";
  * @constructor
  */
 const Battle = () => {
-  // console.log("rendering Battle");
   const initialCreature = {
     class: "monster",
     level: "1",
@@ -25,31 +24,26 @@ const Battle = () => {
     [initialCreature, {}, {}],
     [initialCreature, {}, {}],
   ];
-  // console.log("initialState", initialState);
-  // const tempState = [...initialState];
-  const previousState = useRef(initialState);
   const reducer = (thisState, action) => {
-    // console.log(`row: ${action.row}; col: ${action.col}`);
-    // console.log("creature: ", action.creature);
-    const newState = thisState.map((outer, outerIndex) => {
-      // console.log(`outerIndex: ${outerIndex}`);
+    return thisState.map((outer, outerIndex) => {
       if (outerIndex === action.row) {
-        // console.log("found row match");
         return outer.map((inner, innerIndex) => {
-          // console.log(`innerIndex: ${innerIndex}`);
           if (innerIndex === action.col) {
-            // console.log("found col match, returning action.creature");
-            // console.log(action.creature);
             return action.creature;
           } else return inner;
         });
       } else return outer.slice();
     });
-    // console.log("newState: ", newState);
-    return newState;
   };
 
   const [state, dispatch] = useReducer(reducer, initialState);
+
+  const getCellOutput = (row, columnNumber) => (
+    <CellOutput
+      red={state[row.row.index + 1][0]}
+      green={state[0][columnNumber]}
+    />
+  );
 
   const columns = useMemo<Column[]>(
     () => [
@@ -73,11 +67,7 @@ const Battle = () => {
           />
         ),
         accessor: "col1",
-        Cell: (row) => {
-          return (
-            <CellOutput red={state[row.row.index + 1][0]} green={state[0][1]} />
-          );
-        },
+        Cell: (row) => getCellOutput(row, 1),
       },
       {
         Header: (
@@ -89,11 +79,7 @@ const Battle = () => {
           />
         ),
         accessor: "col2",
-        Cell: (row) => {
-          return (
-            <CellOutput red={state[row.row.index + 1][0]} green={state[0][2]} />
-          );
-        },
+        Cell: (row) => getCellOutput(row, 2),
       },
     ],
     [state]
