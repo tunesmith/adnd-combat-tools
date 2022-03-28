@@ -32,22 +32,23 @@ const Battle = () => {
   // const tempState = [...initialState];
   const previousState = useRef(initialState);
   const reducer = (thisState, action) => {
-    console.log(`row: ${action.row}; col: ${action.col}`);
-    console.log("creature: ", action.creature);
+    // console.log(`row: ${action.row}; col: ${action.col}`);
+    // console.log("creature: ", action.creature);
     const newState = thisState.map((outer, outerIndex) => {
-      console.log(`outerIndex: ${outerIndex}`);
+      // console.log(`outerIndex: ${outerIndex}`);
       if (outerIndex === action.row) {
-        console.log("found row match");
+        // console.log("found row match");
         return outer.map((inner, innerIndex) => {
-          console.log(`innerIndex: ${innerIndex}`);
+          // console.log(`innerIndex: ${innerIndex}`);
           if (innerIndex === action.col) {
-            console.log("found col match, returning action.creature");
+            // console.log("found col match, returning action.creature");
+            // console.log(action.creature);
             return action.creature;
           } else return inner;
         });
       } else return outer.slice();
     });
-    console.log("newState: ", newState);
+    // console.log("newState: ", newState);
     return newState;
     // const newState = [
     //   ...thisState,

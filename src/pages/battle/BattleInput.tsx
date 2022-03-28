@@ -31,7 +31,7 @@ interface BattleInputProps {
   dispatch: Dispatch<BattleInputStructure>;
 }
 const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
-  console.log(`row: ${row}, col: ${col}`);
+  // console.log(`row: ${row}, col: ${col}`);
   const [attackerClass, setAttackerClass] = useState<string>(creature.class);
   const prevAttackerClass = useRef<string>(creature.class);
   const [attackerLevel, setAttackerLevel] = useState<string>(creature.level);
