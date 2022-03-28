@@ -1,4 +1,3 @@
-const monsterArmor = [" "];
 const druidArmor = ["10", "9", "8", "7"];
 const magicuserArmor = ["10"];
 const thiefArmor = ["10", "8"];
@@ -24,7 +23,7 @@ const filterArmorTypes = (armorTypes, restrictions) =>
   );
 
 const armorTypeClasses = {
-  monster: () => filterArmorTypes(armorTypes, monsterArmor),
+  monster: () => Object.entries(armorTypes),
   cleric: () => Object.entries(armorTypes).slice(0, -1),
   druid: () => filterArmorTypes(armorTypes, druidArmor),
   fighter: () => Object.entries(armorTypes).slice(0, -1),
