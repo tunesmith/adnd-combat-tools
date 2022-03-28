@@ -6,15 +6,15 @@ const bardArmor = ["10", "8", "5"];
 
 const armorTypes = {
   " ": "Natural Armor (Monster)",
-  10: "10 - No Armor",
-  9: "9 - Shield only",
-  8: "8 - Leather or padded armor",
-  7: "7 - Leather or padded armor + shield / studded leather / ring mail",
-  6: "6 - Studded leather or ring mail + shield / scale mail",
-  5: "5 - Scale mail + shield / chain mail",
-  4: "4 - Chain mail + shield / splint mail / banded mail",
-  3: "3 - Splint or banded mail + shield / plate mail",
-  2: "2 - Plate mail + shield",
+  10: "AT 10 - No Armor",
+  9: "AT 9 - Shield only",
+  8: "AT 8 - Leather or padded armor",
+  7: "AT 7 - Leather or padded armor + shield / studded leather / ring mail",
+  6: "AT 6 - Studded leather or ring mail + shield / scale mail",
+  5: "AT 5 - Scale mail + shield / chain mail",
+  4: "AT 4 - Chain mail + shield / splint mail / banded mail",
+  3: "AT 3 - Splint or banded mail + shield / plate mail",
+  2: "AT 2 - Plate mail + shield",
 };
 
 const filterArmorTypes = (armorTypes, restrictions) =>

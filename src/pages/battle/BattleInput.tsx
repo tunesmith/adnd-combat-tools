@@ -195,12 +195,16 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
           : {creatureClass === "monster" ? <>HD </> : <>L</>}
           {level}
           <br />
-          AT{" "}
-          {
-            armorTypeOptions.filter((option) => option.value === armorType)[0]
-              .label
-          }
-          <br />
+          {armorType.trim() && (
+            <>
+              {
+                armorTypeOptions.filter(
+                  (option) => option.value === armorType
+                )[0].label
+              }
+              <br />
+            </>
+          )}
           AC {armorClass}
           <br />
           {weaponOptions.filter((option) => option.value === weapon)[0].label}
