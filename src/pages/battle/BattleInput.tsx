@@ -3,7 +3,7 @@ import { attackerClassOptions, classMap } from "../../tables/attackerClass";
 import { Dispatch, useEffect, useMemo, useRef, useState } from "react";
 import { getTableByCombatClass } from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
-import { getArmorOptions } from "../../tables/armorType";
+import { getArmorOptionsByClass } from "../../tables/armorType";
 import customStyles from "../../helpers/selectCustomStyles";
 
 interface BattleInputStructure {
@@ -41,12 +41,12 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const [weaponOptions, setWeaponOptions] = useState(
     getWeaponOptions(creature.class)
   );
-  const [attackerWeapon, setAttackerWeapon] = useState<string>(
-    weaponOptions[0].value
+  const [attackerWeapon, setAttackerWeapon] = useState<string>(creature.weapon);
+  const [armorTypeOptions, setArmorTypeOptions] = useState(
+    getArmorOptionsByClass(attackerClass)
   );
-  const [armorTypeOptions, setArmorTypeOptions] = useState(getArmorOptions);
   const [targetArmorType, setTargetArmorType] = useState<string>(
-    armorTypeOptions[0].value
+    creature.armorType
   );
   const armorClassOptions = useRef(
     [...Array(21)].map((v, i) => {
@@ -60,18 +60,29 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const handleAttackerClass = (event) => {
     const newAttackerClass = event.value;
     if (newAttackerClass !== prevAttackerClass.current) {
-      setAttackerClass(event.value);
+      setAttackerClass(newAttackerClass);
       const newAttackerLevelOptions = getTableByCombatClass(
         event.value === "monster" ? "monster" : classMap[event.value]
       );
       setAttackerLevelOptions(newAttackerLevelOptions);
+
       setAttackerLevel("1");
-      const newWeaponOptions = getWeaponOptions(event.value);
-      setWeaponOptions(newWeaponOptions);
-      setAttackerWeapon(newWeaponOptions[0].value);
-      const newArmorTypeOptions = getArmorOptions;
+
+      const newArmorTypeOptions = getArmorOptionsByClass(newAttackerClass);
       setArmorTypeOptions(newArmorTypeOptions);
-      setTargetArmorType(newArmorTypeOptions[0].value);
+      const newArmorType = newArmorTypeOptions[0].value;
+      setTargetArmorType(newArmorType);
+
+      const newTargetArmorClass = newArmorType.trim()
+        ? parseInt(newArmorType, 10)
+        : targetArmorClass;
+      setTargetArmorClass(newTargetArmorClass);
+
+      const newWeaponOptions = getWeaponOptions(newAttackerClass);
+      setWeaponOptions(newWeaponOptions);
+      const newAttackerWeapon = newWeaponOptions[0].value;
+      setAttackerWeapon(newAttackerWeapon);
+
       prevAttackerClass.current = newAttackerClass;
 
       dispatch({
@@ -81,8 +92,10 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
           class: newAttackerClass,
           level: "1",
           armorType: newArmorTypeOptions[0].value,
-          armorClass: targetArmorClass,
-          weapon: newWeaponOptions[0].value,
+          armorClass: newArmorTypeOptions[0].value.trim()
+            ? parseInt(newArmorTypeOptions[0].value, 10)
+            : targetArmorClass,
+          weapon: newAttackerWeapon,
         },
       });
     }

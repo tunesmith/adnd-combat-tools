@@ -6,9 +6,6 @@ import CellOutput from "./CellOutput";
 
 /**
  * TODO:
- *  - Monsters can wield weapons! Fix weapon options for monsters (both tools)
- *  - Why isn't armor/weapons being properly calculated for battle table?
- *  - Why can't I choose weapons for some rows/columns?
  *  - Look and feel
  *  - Add rows/columns
  * @constructor
@@ -20,7 +17,7 @@ const Battle = () => {
     level: "1",
     armorType: " ",
     armorClass: 5,
-    weapon: "No Weapon (Monster)",
+    weapon: "Natural Weapon (Monster)",
   };
   const initialState = [
     [{}, initialCreature, initialCreature],

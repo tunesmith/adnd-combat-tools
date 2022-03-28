@@ -38,9 +38,11 @@ const armorTypeClasses = {
   bard: () => filterArmorTypes(armorTypes, bardArmor),
 };
 
-export const getArmorOptions =
-  // (attackerClass) =>
-  // armorTypeClasses[attackerClass]()
-  Object.entries(armorTypes)
+export const getArmorOptionsByClass = (attackerClass) =>
+  armorTypeClasses[attackerClass]()
     .reverse()
     .map(([value, label]) => ({ value, label }));
+
+export const getArmorOptions = Object.entries(armorTypes)
+  .reverse()
+  .map(([value, label]) => ({ value, label }));
