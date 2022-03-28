@@ -8,6 +8,7 @@
     font-family: 'Sura', serif;
     font-size: 16px;
     color: var(--eggshell);
+    height: 1px;
 }
 
 .myBorder > tbody > tr:last-child > td {
@@ -24,8 +25,8 @@
 }
 
 .myBorder > thead > tr > th, .myBorder > tbody > tr > td {
+    height: 100%;
     margin: 0;
-    padding: 0.5rem;
     border-bottom: 4px solid var(--copper);
     border-right: 4px solid var(--copper);
 }
@@ -36,10 +37,9 @@
 
 .tableTitle {
     font-family: 'Sura', serif;
-    font-size: 48px;
+    font-size: 36px;
     text-align: center;
-    /*width: 80%;*/
     display: table;
     margin: 0 auto;
-    padding-bottom: 20px;
+    padding: 1rem;
 }

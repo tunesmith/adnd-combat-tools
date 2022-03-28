@@ -2,6 +2,8 @@
     max-width: 275px;
     text-align: center;
     font-size: 14px;
+    height: 100%;
+    padding: 0.5rem;
 }
 .battleInput:hover {
     text-decoration: underline;
