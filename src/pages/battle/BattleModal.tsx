@@ -6,6 +6,8 @@ import { attackerClassOptions } from "../../tables/attackerClass";
 
 const BattleModal = ({
   setOpen,
+  creatureName,
+  handleCreatureName,
   creatureClass,
   handleCreatureClass,
   levelOptions,
@@ -36,6 +38,14 @@ const BattleModal = ({
             : "var(--dark-olive-green)",
         }}
       >
+        <input
+          className={styles.nameInput}
+          type={"text"}
+          defaultValue={creatureName}
+          onBlur={handleCreatureName}
+          placeholder={"(Name or label)"}
+        />
+        <br />
         <Select
           isSearchable={false}
           instanceId={"creatureClass"}

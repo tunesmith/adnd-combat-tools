@@ -31,6 +31,7 @@ interface BattleInputProps {
   dispatch: Dispatch<BattleInputStructure>;
 }
 const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
+  const [creatureName, setCreatureName] = useState<string>("");
   // console.log(`row: ${row}, col: ${col}`);
   const [creatureClass, setCreatureClass] = useState<string>(creature.class);
   const prevCreatureClass = useRef<string>(creature.class);
@@ -59,6 +60,10 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
    * Modal logic
    */
   const [open, setOpen] = useState(false);
+
+  const handleCreatureName = (event) => {
+    setCreatureName(event.target.value);
+  };
 
   const handleCreatureClass = (event) => {
     const newCreatureClass = event.value;
@@ -176,6 +181,12 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         }}
       >
         <div>
+          {creatureName && (
+            <>
+              <span className={styles.creatureName}>{creatureName}</span>
+              <br />
+            </>
+          )}
           {
             attackerClassOptions.filter(
               (option) => option.value === creatureClass
@@ -198,6 +209,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       {open && (
         <BattleModal
           setOpen={setOpen}
+          creatureName={creatureName}
+          handleCreatureName={handleCreatureName}
           creatureClass={creatureClass}
           handleCreatureClass={handleCreatureClass}
           levelOptions={levelOptions}

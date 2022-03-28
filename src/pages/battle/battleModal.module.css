@@ -18,6 +18,9 @@
     left: calc(50% - 250px);
     display: flex;
     flex-direction: column;
+    border-style: solid;
+    border-width: 4px;
+    border-color: var(--goldenrod);
 }
 
 @media (max-width: 500px) {
@@ -25,4 +28,11 @@
         left: 0;
         margin: 0 10px;
     }
+}
+
+.nameInput {
+    font-family: 'Sura', serif;
+    font-size: 16px;
+    background-color: var(--eggshell);
+    padding: 1rem;
 }

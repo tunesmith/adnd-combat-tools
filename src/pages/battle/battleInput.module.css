@@ -6,3 +6,7 @@
 .battleInput:hover {
     text-decoration: underline;
 }
+
+.creatureName {
+    font-size: 18px;
+}
