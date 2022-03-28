@@ -1,10 +1,10 @@
-import Select from "react-select";
 import { attackerClassOptions, classMap } from "../../tables/attackerClass";
 import { Dispatch, useRef, useState } from "react";
 import { getTableByCombatClass } from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptionsByClass } from "../../tables/armorType";
-import customStyles from "../../helpers/selectCustomStyles";
+import styles from "./battleInput.module.css";
+import BattleModal from "./BattleModal";
 
 interface BattleInputStructure {
   row: number;
@@ -54,6 +54,11 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     })
   );
   const [armorClass, setArmorClass] = useState<number>(creature.armorClass);
+
+  /**
+   * Modal logic
+   */
+  const [open, setOpen] = useState(false);
 
   const handleCreatureClass = (event) => {
     const newCreatureClass = event.value;
@@ -164,54 +169,52 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   return (
     <>
-      <Select
-        isSearchable={false}
-        instanceId={"creatureClass"}
-        styles={customStyles}
-        value={attackerClassOptions.filter(
-          (option) => option.value === creatureClass
-        )}
-        options={attackerClassOptions}
-        onChange={handleCreatureClass}
-      />
-      <br />
-      <Select
-        isSearchable={false}
-        instanceId={"level"}
-        styles={customStyles}
-        value={levelOptions.filter((option) => option.value === level)}
-        options={levelOptions}
-        onChange={handleLevel}
-      />
-      <br />
-      <Select
-        isSearchable={false}
-        instanceId={"armorType"}
-        styles={customStyles}
-        value={armorTypeOptions.filter((option) => option.value === armorType)}
-        options={armorTypeOptions}
-        onChange={handleArmorType}
-      />
-      <br />
-      <Select
-        isSearchable={false}
-        instanceId={"armorClass"}
-        styles={customStyles}
-        value={armorClassOptions.current.filter(
-          (option) => option.value === armorClass
-        )}
-        options={armorClassOptions.current}
-        onChange={handleArmorClass}
-      />
-      <br />
-      <Select
-        isSearchable={false}
-        instanceId={"weapon"}
-        styles={customStyles}
-        value={weaponOptions.filter((option) => option.value === weapon)}
-        options={weaponOptions}
-        onChange={handleWeapon}
-      />
+      <div
+        className={styles.battleInput}
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
+        <div>
+          {
+            attackerClassOptions.filter(
+              (option) => option.value === creatureClass
+            )[0].label
+          }
+          : {creatureClass === "monster" ? <>HD </> : <>L</>}
+          {level}
+          <br />
+          AT{" "}
+          {
+            armorTypeOptions.filter((option) => option.value === armorType)[0]
+              .label
+          }
+          <br />
+          AC {armorClass}
+          <br />
+          {weaponOptions.filter((option) => option.value === weapon)[0].label}
+        </div>
+      </div>
+      {open && (
+        <BattleModal
+          setOpen={setOpen}
+          creatureClass={creatureClass}
+          handleCreatureClass={handleCreatureClass}
+          levelOptions={levelOptions}
+          level={level}
+          handleLevel={handleLevel}
+          armorTypeOptions={armorTypeOptions}
+          armorType={armorType}
+          handleArmorType={handleArmorType}
+          armorClassOptions={armorClassOptions}
+          armorClass={armorClass}
+          handleArmorClass={handleArmorClass}
+          weaponOptions={weaponOptions}
+          weapon={weapon}
+          handleWeapon={handleWeapon}
+          row={row}
+        />
+      )}
     </>
   );
 };

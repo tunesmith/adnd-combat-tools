@@ -58,8 +58,9 @@ const Battle = () => {
         accessor: "col0",
       },
       {
-        Header: () => (
+        Header: (
           <BattleInput
+            key={"0-1"}
             row={0}
             col={1}
             creature={state[0][1]}
@@ -72,6 +73,7 @@ const Battle = () => {
       {
         Header: (
           <BattleInput
+            key={"0-2"}
             row={0}
             col={2}
             creature={state[0][2]}
@@ -89,6 +91,7 @@ const Battle = () => {
       {
         col0: (
           <BattleInput
+            key={"1-0"}
             row={1}
             col={0}
             creature={state[1][0]}
@@ -99,6 +102,7 @@ const Battle = () => {
       {
         col0: (
           <BattleInput
+            key={"2-0"}
             row={2}
             col={0}
             creature={state[2][0]}
@@ -109,6 +113,7 @@ const Battle = () => {
       {
         col0: (
           <BattleInput
+            key={"3-0"}
             row={3}
             col={0}
             creature={state[3][0]}
@@ -129,59 +134,60 @@ const Battle = () => {
     tableInstance;
 
   return (
-    // apply the table props
-    <table className={styles.myBorder} {...getTableProps()}>
-      <thead>
-        {
-          // Loop over the header rows
-          headerGroups.map((headerGroup) => (
-            // Apply the header row props
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {
-                // Loop over the headers in each row
-                headerGroup.headers.map((column) => (
-                  // Apply the header cell props
-                  <th {...column.getHeaderProps()}>
-                    {
-                      // Render the header
-                      column.render("Header")
-                    }
-                  </th>
-                ))
-              }
-            </tr>
-          ))
-        }
-      </thead>
-      <tbody {...getTableBodyProps()}>
-        {
-          // Loop over the table rows
-          rows.map((row) => {
-            // Prepare the row for display
-            prepareRow(row);
-            return (
-              // Apply the row props
-              <tr {...row.getRowProps()}>
+    <div id={"app-modal"}>
+      <table className={styles.myBorder} {...getTableProps()}>
+        <thead>
+          {
+            // Loop over the header rows
+            headerGroups.map((headerGroup) => (
+              // Apply the header row props
+              <tr {...headerGroup.getHeaderGroupProps()}>
                 {
-                  // Loop over the rows cells
-                  row.cells.map((cell) => {
-                    // Apply the cell props
-                    return (
-                      <td {...cell.getCellProps()}>
-                        {
-                          // Render the cell contents
-                          cell.render("Cell")
-                        }
-                      </td>
-                    );
-                  })
+                  // Loop over the headers in each row
+                  headerGroup.headers.map((column) => (
+                    // Apply the header cell props
+                    <th {...column.getHeaderProps()}>
+                      {
+                        // Render the header
+                        column.render("Header")
+                      }
+                    </th>
+                  ))
                 }
               </tr>
-            );
-          })
-        }
-      </tbody>
-    </table>
+            ))
+          }
+        </thead>
+        <tbody {...getTableBodyProps()}>
+          {
+            // Loop over the table rows
+            rows.map((row) => {
+              // Prepare the row for display
+              prepareRow(row);
+              return (
+                // Apply the row props
+                <tr {...row.getRowProps()}>
+                  {
+                    // Loop over the rows cells
+                    row.cells.map((cell) => {
+                      // Apply the cell props
+                      return (
+                        <td {...cell.getCellProps()}>
+                          {
+                            // Render the cell contents
+                            cell.render("Cell")
+                          }
+                        </td>
+                      );
+                    })
+                  }
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    </div>
   );
 };
 
