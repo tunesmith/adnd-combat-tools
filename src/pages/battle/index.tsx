@@ -11,7 +11,7 @@ import CellOutput from "./CellOutput";
  * @constructor
  */
 const Battle = () => {
-  console.log("rendering Battle");
+  // console.log("rendering Battle");
   const initialCreature = {
     class: "monster",
     level: "1",
@@ -89,7 +89,13 @@ const Battle = () => {
   const columns = useMemo<Column[]>(
     () => [
       {
-        Header: <div className={styles.tableTitle}>Battle Grid</div>,
+        Header: (
+          <div className={styles.tableTitle}>
+            AD&D
+            <br />
+            Battle Grid
+          </div>
+        ),
         accessor: "col0",
       },
       {
