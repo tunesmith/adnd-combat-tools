@@ -2,6 +2,56 @@
 
 @value eggshell: #F0EFDD;
 
+.container {
+    display: inline-block;
+}
+
+.addColumn {
+    float: right;
+}
+
+.addRow {
+    float: left;
+}
+
+.buttonBase {
+    background-color: var(--eggshell);
+    border: var(--copper);
+    border-style: solid;
+    padding: 3px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 36px;
+    transition-duration: 0.2s;
+}
+
+.buttonAddRow {
+    composes: buttonBase;
+    color: var(--caput-martuum);
+    border-width: 0 3px 3px 3px;
+}
+
+.buttonAddRow:hover {
+    border: var(--goldenrod);
+    border-width: 0 3px 3px 3px;
+    border-style: solid;
+    background-color: white;
+}
+
+.buttonAddColumn {
+    composes: buttonBase;
+    color: var(--dark-olive-green);
+    border-width: 3px 3px 3px 0;
+}
+
+.buttonAddColumn:hover {
+    border: var(--goldenrod);
+    border-width: 3px 3px 3px 0;
+    border-style: solid;
+    background-color: white;
+}
+
 .myBorder {
     border-spacing: 0;
     border: 4px solid var(--copper);
