@@ -5,8 +5,10 @@ import { getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptionsByClass } from "../../tables/armorType";
 import styles from "./battleInput.module.css";
 import BattleModal from "./BattleModal";
+import { CHANGE_CREATURE } from "./BattleMessage";
 
 interface BattleInputStructure {
+  type: number;
   row: number;
   col: number;
   creature: {
@@ -94,6 +96,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       prevCreatureClass.current = newCreatureClass;
 
       dispatch({
+        type: CHANGE_CREATURE,
         row,
         col,
         creature: {
@@ -112,6 +115,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const handleLevel = (event) => {
     setLevel(event.value);
     dispatch({
+      type: CHANGE_CREATURE,
       row,
       col,
       creature: {
@@ -130,6 +134,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       setArmorClass(parseInt(event.value, 10));
     }
     dispatch({
+      type: CHANGE_CREATURE,
       row,
       col,
       creature: {
@@ -145,6 +150,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const handleArmorClass = (event) => {
     setArmorClass(event.value);
     dispatch({
+      type: CHANGE_CREATURE,
       row,
       col,
       creature: {
@@ -160,6 +166,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const handleWeapon = (event) => {
     setWeapon(event.value);
     dispatch({
+      type: CHANGE_CREATURE,
       row,
       col,
       creature: {

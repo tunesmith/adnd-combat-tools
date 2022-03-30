@@ -6,8 +6,9 @@ import CellOutput from "./CellOutput";
 
 /**
  * TODO:
- *  - Look and feel
  *  - Add rows/columns
+ *  - Expanded armor types for better display
+ *  - Minimum cell width to fit font?
  * @constructor
  */
 const Battle = () => {
@@ -25,15 +26,23 @@ const Battle = () => {
     [initialCreature, {}, {}],
   ];
   const reducer = (thisState, action) => {
-    return thisState.map((outer, outerIndex) => {
-      if (outerIndex === action.row) {
-        return outer.map((inner, innerIndex) => {
-          if (innerIndex === action.col) {
-            return action.creature;
-          } else return inner;
+    // TODO add a type for changing a cell, below.
+    // TODO then a type for adding a column, adding a row,
+    // TODO then a type for removing a column, removing a row
+    // Try transpose, remove row, transpose back? Faster than removing column?
+    //  https://stackoverflow.com/questions/17428587/transposing-a-2d-array-in-javascript
+    switch (action.type) {
+      default: // CHANGE_CREATURE
+        return thisState.map((outer, outerIndex) => {
+          if (outerIndex === action.row) {
+            return outer.map((inner, innerIndex) => {
+              if (innerIndex === action.col) {
+                return action.creature;
+              } else return inner;
+            });
+          } else return outer.slice();
         });
-      } else return outer.slice();
-    });
+    }
   };
 
   const [state, dispatch] = useReducer(reducer, initialState);
