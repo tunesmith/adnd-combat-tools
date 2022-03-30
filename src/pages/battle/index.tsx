@@ -3,7 +3,7 @@ import { useTable, Column } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
 import CellOutput from "./CellOutput";
-import { ADD_ROW } from "./BattleMessage";
+import { ADD_COLUMN, ADD_ROW } from "./BattleMessage";
 
 /**
  * TODO:
@@ -33,6 +33,11 @@ const Battle = () => {
     // Try transpose, remove row, transpose back? Faster than removing column?
     //  https://stackoverflow.com/questions/17428587/transposing-a-2d-array-in-javascript
     switch (action.type) {
+      case ADD_COLUMN: {
+        return thisState.map((row, index) =>
+          row.concat(index === 0 ? initialCreature : {})
+        );
+      }
       case ADD_ROW: {
         const innerLength = thisState[0].length;
         const freshRow = [initialCreature].concat(
@@ -75,6 +80,9 @@ const Battle = () => {
               <button onClick={() => dispatch({ type: ADD_ROW })}>
                 Add Row
               </button>
+              <button onClick={() => dispatch({ type: ADD_COLUMN })}>
+                Add Column
+              </button>
             </div>
           ),
           accessor: "col0",
@@ -83,9 +91,9 @@ const Battle = () => {
         state[0].slice(1).map((creature, index) => ({
           Header: (
             <BattleInput
-              key={`0-${index}`}
+              key={`0-${index + 1}`}
               row={0}
-              col={index}
+              col={index + 1}
               creature={creature}
               dispatch={dispatch}
             />
