@@ -3,7 +3,7 @@ import { useTable, Column } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
 import CellOutput from "./CellOutput";
-import { ADD_COLUMN, ADD_ROW } from "./BattleMessage";
+import { ADD_COLUMN, ADD_ROW, DELETE_ROW } from "./BattleMessage";
 
 /**
  * TODO:
@@ -27,12 +27,18 @@ const Battle = () => {
     [initialCreature, {}, {}],
   ];
   const reducer = (thisState, action) => {
-    // TODO add a type for changing a cell, below.
-    // TODO then a type for adding a column, adding a row,
     // TODO then a type for removing a column, removing a row
     // Try transpose, remove row, transpose back? Faster than removing column?
     //  https://stackoverflow.com/questions/17428587/transposing-a-2d-array-in-javascript
     switch (action.type) {
+      // This is a problem because of key. It's deleting the right row, but then the key gets
+      // renumbered below in 'data'. So the key will need to be retained, or the operation
+      // will need to be done on the data array. Same with column.
+      // Also, add a confirmation portal for deletion
+      // Finally, I think I really will want to share url.
+      case DELETE_ROW: {
+        return thisState.filter((row, index) => index !== action.row);
+      }
       case ADD_COLUMN: {
         return thisState.map((row, index) =>
           row.concat(index === 0 ? initialCreature : {})

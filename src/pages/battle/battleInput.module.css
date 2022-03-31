@@ -1,12 +1,76 @@
+.container {
+    height: 100%;
+}
+
+.container:hover .buttonRemoveColumn {
+    opacity: 100%;
+}
+
+.container:hover .buttonRemoveRow {
+    opacity: 100%;
+}
+
+.removeInput {
+    float: left;
+    position: absolute;
+}
+
+.buttonBase {
+    opacity: 0;
+    background-color: var(--eggshell);
+    border: var(--copper);
+    border-style: solid;
+    padding: 2px 5px;
+    /*text-align: center;*/
+    /*text-decoration: none;*/
+    /*display: inline-block;*/
+    font-size: 12px;
+    transition-duration: 0.2s;
+    vertical-align: top;
+}
+
+.buttonRemoveRow {
+    composes: buttonBase;
+    color: var(--caput-martuum);
+    border-width: 0 2px 2px 0;
+}
+
+.buttonRemoveRow:hover {
+    border: var(--goldenrod);
+    border-width: 0 2px 2px 0;
+    border-style: solid;
+    background-color: white;
+}
+
+.buttonRemoveColumn {
+    composes: buttonBase;
+    color: var(--caput-martuum);
+    border-width: 0 2px 2px 0;
+}
+
+.buttonRemoveColumn:hover {
+    border: var(--goldenrod);
+    border-width: 0 2px 2px 0;
+    border-style: solid;
+    background-color: white;
+}
+
 .battleInput {
     max-width: 275px;
     text-align: center;
     font-size: 14px;
     height: 100%;
-    padding: 0.5rem;
 }
 .battleInput:hover {
     text-decoration: underline;
+}
+.battleInputColumn {
+    composes: battleInput;
+    padding: 1.75rem 0.5rem 0.5rem;
+}
+.battleInputRow {
+    composes: battleInput;
+    padding: 0.5rem;
 }
 
 .creatureName {

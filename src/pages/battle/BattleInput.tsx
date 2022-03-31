@@ -5,13 +5,13 @@ import { getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptionsByClass } from "../../tables/armorType";
 import styles from "./battleInput.module.css";
 import BattleModal from "./BattleModal";
-import { CHANGE_CREATURE } from "./BattleMessage";
+import { CHANGE_CREATURE, DELETE_COLUMN, DELETE_ROW } from "./BattleMessage";
 
 interface BattleInputStructure {
   type: number;
   row: number;
   col: number;
-  creature: {
+  creature?: {
     class: string;
     level: string;
     armorType: string;
@@ -181,64 +181,83 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   return (
     <>
-      <div
-        className={styles.battleInput}
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        <div>
-          {creatureName && (
-            <>
-              <span className={styles.creatureName}>{creatureName}</span>
-              <br />
-            </>
-          )}
-          {
-            attackerClassOptions.filter(
-              (option) => option.value === creatureClass
-            )[0].label
-          }
-          : {creatureClass === "monster" ? <>HD </> : <>L</>}
-          {level}
-          <br />
-          {armorType.trim() && (
-            <>
-              {
-                armorTypeOptions.filter(
-                  (option) => option.value === armorType
-                )[0].label
-              }
-              <br />
-            </>
-          )}
-          AC {armorClass}
-          <br />
-          {weaponOptions.filter((option) => option.value === weapon)[0].label}
+      <div className={styles.container}>
+        <div className={styles.removeInput}>
+          <button
+            className={
+              row < 1 ? styles.buttonRemoveColumn : styles.buttonRemoveRow
+            }
+            onClick={() =>
+              dispatch(
+                row < 1
+                  ? { type: DELETE_COLUMN, row, col }
+                  : { type: DELETE_ROW, row, col }
+              )
+            }
+          >
+            x
+          </button>
         </div>
+        <div
+          // data-text={"click to edit"}
+          className={row < 1 ? styles.battleInputColumn : styles.battleInputRow}
+          onClick={() => {
+            setOpen(true);
+          }}
+        >
+          <div>
+            {creatureName && (
+              <>
+                <span className={styles.creatureName}>{creatureName}</span>
+                <br />
+              </>
+            )}
+            {
+              attackerClassOptions.filter(
+                (option) => option.value === creatureClass
+              )[0].label
+            }
+            : {creatureClass === "monster" ? <>HD </> : <>L</>}
+            {level}
+            <br />
+            {armorType.trim() && (
+              <>
+                {
+                  armorTypeOptions.filter(
+                    (option) => option.value === armorType
+                  )[0].label
+                }
+                <br />
+              </>
+            )}
+            AC {armorClass}
+            <br />
+            {weaponOptions.filter((option) => option.value === weapon)[0].label}
+          </div>
+        </div>
+        {open && (
+          <BattleModal
+            setOpen={setOpen}
+            creatureName={creatureName}
+            handleCreatureName={handleCreatureName}
+            creatureClass={creatureClass}
+            handleCreatureClass={handleCreatureClass}
+            levelOptions={levelOptions}
+            level={level}
+            handleLevel={handleLevel}
+            armorTypeOptions={armorTypeOptions}
+            armorType={armorType}
+            handleArmorType={handleArmorType}
+            armorClassOptions={armorClassOptions}
+            armorClass={armorClass}
+            handleArmorClass={handleArmorClass}
+            weaponOptions={weaponOptions}
+            weapon={weapon}
+            handleWeapon={handleWeapon}
+            row={row}
+          />
+        )}
       </div>
-      {open && (
-        <BattleModal
-          setOpen={setOpen}
-          creatureName={creatureName}
-          handleCreatureName={handleCreatureName}
-          creatureClass={creatureClass}
-          handleCreatureClass={handleCreatureClass}
-          levelOptions={levelOptions}
-          level={level}
-          handleLevel={handleLevel}
-          armorTypeOptions={armorTypeOptions}
-          armorType={armorType}
-          handleArmorType={handleArmorType}
-          armorClassOptions={armorClassOptions}
-          armorClass={armorClass}
-          handleArmorClass={handleArmorClass}
-          weaponOptions={weaponOptions}
-          weapon={weapon}
-          handleWeapon={handleWeapon}
-          row={row}
-        />
-      )}
     </>
   );
 };
