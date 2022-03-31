@@ -1,18 +1,25 @@
-import { useCallback, useMemo, useReducer } from "react";
+import { useCallback, useMemo, useReducer, useRef } from "react";
 import { useTable, Column } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
 import CellOutput from "./CellOutput";
-import { ADD_COLUMN, ADD_ROW, DELETE_ROW } from "./BattleMessage";
+import {
+  ADD_COLUMN,
+  ADD_ROW,
+  DELETE_COLUMN,
+  DELETE_ROW,
+} from "./BattleMessage";
 
 /**
  * TODO:
- *  - Add rows/columns
  *  - Expanded armor types for better display
  *  - Minimum cell width to fit font?
+ *  - Confirmation portal for deletion
+ *  - Shareable url - compress data representation
  * @constructor
  */
 const Battle = () => {
+  const idCounter = useRef<number>(0);
   const initialCreature = useMemo(
     () => ({
       class: "monster",
@@ -23,34 +30,28 @@ const Battle = () => {
     }),
     []
   );
+  const incCounter = () => {
+    idCounter.current++;
+    return idCounter.current;
   };
-  const initialState = [
-    [{}, initialCreature, initialCreature],
-    [initialCreature, {}, {}],
-    [initialCreature, {}, {}],
-    [initialCreature, {}, {}],
-  ];
+
   const reducer = (thisState, action) => {
-    // TODO then a type for removing a column, removing a row
-    // Try transpose, remove row, transpose back? Faster than removing column?
-    //  https://stackoverflow.com/questions/17428587/transposing-a-2d-array-in-javascript
     switch (action.type) {
-      // This is a problem because of key. It's deleting the right row, but then the key gets
-      // renumbered below in 'data'. So the key will need to be retained, or the operation
-      // will need to be done on the data array. Same with column.
-      // Also, add a confirmation portal for deletion
-      // Finally, I think I really will want to share url.
-      case DELETE_ROW: {
-        return thisState.filter((row, index) => index !== action.row);
-      }
-      case ADD_COLUMN: {
-        return thisState.map((row, index) =>
-          row.concat(index === 0 ? initialCreature : {})
+      case DELETE_COLUMN:
+        return thisState.map((row) =>
+          row.filter((col, index) => index !== action.col)
         );
-      }
+      case DELETE_ROW:
+        return thisState.filter((row, index) => index !== action.row);
+      case ADD_COLUMN:
+        return thisState.map((row, index) =>
+          row.concat(
+            index === 0 ? { key: incCounter(), ...initialCreature } : {}
+          )
+        );
       case ADD_ROW: {
         const innerLength = thisState[0].length;
-        const freshRow = [initialCreature].concat(
+        const freshRow = [{ key: incCounter(), ...initialCreature }].concat(
           innerLength > 1 ? Array(innerLength - 1).fill({}) : []
         );
         return thisState.concat([freshRow]);
@@ -67,6 +68,20 @@ const Battle = () => {
         });
     }
   };
+
+  const initialState = useMemo(
+    () => [
+      [
+        {},
+        { key: incCounter(), ...initialCreature },
+        { key: incCounter(), ...initialCreature },
+      ],
+      [{ key: incCounter(), ...initialCreature }, {}, {}],
+      [{ key: incCounter(), ...initialCreature }, {}, {}],
+      [{ key: incCounter(), ...initialCreature }, {}, {}],
+    ],
+    [initialCreature]
+  );
 
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -97,7 +112,7 @@ const Battle = () => {
         state[0].slice(1).map((creature, index) => ({
           Header: (
             <BattleInput
-              key={`0-${index + 1}`}
+              key={creature.key}
               row={0}
               col={index + 1}
               creature={creature}
@@ -117,7 +132,7 @@ const Battle = () => {
         return {
           col0: (
             <BattleInput
-              key={`${index + 1}-0`}
+              key={row[0].key}
               row={index + 1}
               col={0}
               creature={row[0]}

@@ -12,6 +12,8 @@ interface BattleInputStructure {
   row: number;
   col: number;
   creature?: {
+    key: number;
+    name: string;
     class: string;
     level: string;
     armorType: string;
@@ -24,6 +26,8 @@ interface BattleInputProps {
   row: number;
   col: number;
   creature: {
+    key: number;
+    name: string;
     class: string;
     level: string;
     armorType: string;
@@ -33,8 +37,8 @@ interface BattleInputProps {
   dispatch: Dispatch<BattleInputStructure>;
 }
 const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
-  const [creatureName, setCreatureName] = useState<string>("");
-  // console.log(`row: ${row}, col: ${col}`);
+  const [creatureName, setCreatureName] = useState<string>(creature.name);
+  // console.log(`rendering creature for row ${row}, col ${col}: `, creature);
   const [creatureClass, setCreatureClass] = useState<string>(creature.class);
   const prevCreatureClass = useRef<string>(creature.class);
   const [level, setLevel] = useState<string>(creature.level);
@@ -65,6 +69,20 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   const handleCreatureName = (event) => {
     setCreatureName(event.target.value);
+    dispatch({
+      type: CHANGE_CREATURE,
+      row,
+      col,
+      creature: {
+        key: creature.key,
+        name: event.target.value,
+        class: creatureClass,
+        level: level,
+        armorType: armorType,
+        armorClass: armorClass,
+        weapon: weapon,
+      },
+    });
   };
 
   const handleCreatureClass = (event) => {
@@ -100,6 +118,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         row,
         col,
         creature: {
+          key: creature.key,
+          name: creatureName,
           class: newCreatureClass,
           level: "1",
           armorType: newArmorTypeOptions[0].value,
@@ -119,6 +139,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       row,
       col,
       creature: {
+        key: creature.key,
+        name: creatureName,
         class: creatureClass,
         level: event.value,
         armorType: armorType,
@@ -138,6 +160,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       row,
       col,
       creature: {
+        key: creature.key,
+        name: creatureName,
         class: creatureClass,
         level: level,
         armorType: event.value,
@@ -154,6 +178,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       row,
       col,
       creature: {
+        key: creature.key,
+        name: creatureName,
         class: creatureClass,
         level: level,
         armorType: armorType,
@@ -170,6 +196,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       row,
       col,
       creature: {
+        key: creature.key,
+        name: creatureName,
         class: creatureClass,
         level: level,
         armorType: armorType,
