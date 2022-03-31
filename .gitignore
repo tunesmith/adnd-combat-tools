@@ -36,3 +36,6 @@ yarn-error.log*
 # intellij
 *.iml
 .idea
+
+# typescript
+tsconfig.tsbuildinfo

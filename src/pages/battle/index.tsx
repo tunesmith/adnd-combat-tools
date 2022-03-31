@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useReducer, useRef } from "react";
 import { useTable, Column } from "react-table";
 import styles from "./battle.module.css";
-import BattleInput from "./BattleInput";
-import CellOutput from "./CellOutput";
+import BattleInput from "../../components/battle/BattleInput";
+import CellOutput from "../../components/battle/CellOutput";
 import {
   ADD_COLUMN,
   ADD_ROW,
