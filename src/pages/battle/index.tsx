@@ -1,4 +1,4 @@
-import { useMemo, useReducer } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import { useTable, Column } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
@@ -13,12 +13,16 @@ import { ADD_COLUMN, ADD_ROW, DELETE_ROW } from "./BattleMessage";
  * @constructor
  */
 const Battle = () => {
-  const initialCreature = {
-    class: "monster",
-    level: "1",
-    armorType: " ",
-    armorClass: 5,
-    weapon: "Natural Weapon (Monster)",
+  const initialCreature = useMemo(
+    () => ({
+      class: "monster",
+      level: "1",
+      armorType: " ",
+      armorClass: 5,
+      weapon: "Natural Weapon (Monster)",
+    }),
+    []
+  );
   };
   const initialState = [
     [{}, initialCreature, initialCreature],
@@ -66,11 +70,14 @@ const Battle = () => {
 
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const getCellOutput = (row, columnNumber) => (
-    <CellOutput
-      red={state[row.row.index + 1][0]}
-      green={state[0][columnNumber]}
-    />
+  const getCellOutput = useCallback(
+    (row, columnNumber) => (
+      <CellOutput
+        red={state[row.row.index + 1][0]}
+        green={state[0][columnNumber]}
+      />
+    ),
+    [state]
   );
 
   const columns: Column[] = useMemo<Column[]>(
@@ -101,7 +108,7 @@ const Battle = () => {
           Cell: (row) => getCellOutput(row, index + 1),
         }))
       ),
-    [state]
+    [getCellOutput, state]
   );
 
   const data = useMemo(
@@ -145,23 +152,31 @@ const Battle = () => {
           <thead>
             {
               // Loop over the header rows
-              headerGroups.map((headerGroup) => (
-                // Apply the header row props
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {
-                    // Loop over the headers in each row
-                    headerGroup.headers.map((column) => (
-                      // Apply the header cell props
-                      <th {...column.getHeaderProps()}>
-                        {
-                          // Render the header
-                          column.render("Header")
-                        }
-                      </th>
-                    ))
-                  }
-                </tr>
-              ))
+              headerGroups.map((headerGroup) => {
+                const { key, ...restHeaderProps } =
+                  headerGroup.getHeaderGroupProps();
+                return (
+                  // Apply the header row props
+                  <tr key={key} {...restHeaderProps}>
+                    {
+                      // Loop over the headers in each row
+                      headerGroup.headers.map((column) => {
+                        const { key, ...restColumnHeaderProps } =
+                          column.getHeaderProps();
+                        return (
+                          // Apply the header cell props
+                          <th key={key} {...restColumnHeaderProps}>
+                            {
+                              // Render the header
+                              column.render("Header")
+                            }
+                          </th>
+                        );
+                      })
+                    }
+                  </tr>
+                );
+              })
             }
           </thead>
           <tbody {...getTableBodyProps()}>
@@ -172,12 +187,14 @@ const Battle = () => {
                 prepareRow(row);
                 return (
                   // Apply the row props
+                  // eslint-disable-next-line react/jsx-key
                   <tr {...row.getRowProps()}>
                     {
                       // Loop over the rows cells
                       row.cells.map((cell) => {
                         // Apply the cell props
                         return (
+                          // eslint-disable-next-line react/jsx-key
                           <td {...cell.getCellProps()}>
                             {
                               // Render the cell contents
