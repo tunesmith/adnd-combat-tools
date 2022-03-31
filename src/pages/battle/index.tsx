@@ -8,7 +8,7 @@ import {
   ADD_ROW,
   DELETE_COLUMN,
   DELETE_ROW,
-} from "./BattleMessage";
+} from "../../helpers/BattleMessage";
 
 /**
  * TODO:

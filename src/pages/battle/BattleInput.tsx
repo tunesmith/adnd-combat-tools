@@ -5,7 +5,11 @@ import { getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptionsByClass } from "../../tables/armorType";
 import styles from "./battleInput.module.css";
 import BattleModal from "./BattleModal";
-import { CHANGE_CREATURE, DELETE_COLUMN, DELETE_ROW } from "./BattleMessage";
+import {
+  CHANGE_CREATURE,
+  DELETE_COLUMN,
+  DELETE_ROW,
+} from "../../helpers/BattleMessage";
 
 interface BattleInputStructure {
   type: number;
