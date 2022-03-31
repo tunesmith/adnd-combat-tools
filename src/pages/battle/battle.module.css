@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Sura:wght@700&display=swap');
+
+@value eggshell: #F0EFDD;
+
+.container {
+    display: inline-block;
+}
+
+.addColumn {
+    float: right;
+}
+
+.addRow {
+    float: left;
+}
+
+.buttonBase {
+    background-color: var(--eggshell);
+    border: var(--copper);
+    border-style: solid;
+    padding: 3px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 36px;
+    transition-duration: 0.2s;
+}
+
+.buttonAddRow {
+    composes: buttonBase;
+    color: var(--caput-martuum);
+    border-width: 0 3px 3px 3px;
+}
+
+.buttonAddRow:hover {
+    border: var(--goldenrod);
+    border-width: 0 3px 3px 3px;
+    border-style: solid;
+    background-color: white;
+}
+
+.buttonAddColumn {
+    composes: buttonBase;
+    color: var(--dark-olive-green);
+    border-width: 3px 3px 3px 0;
+}
+
+.buttonAddColumn:hover {
+    border: var(--goldenrod);
+    border-width: 3px 3px 3px 0;
+    border-style: solid;
+    background-color: white;
+}
+
+.myBorder {
+    border-spacing: 0;
+    border: 4px solid var(--copper);
+    font-family: 'Sura', serif;
+    font-size: 16px;
+    color: var(--eggshell);
+    height: 1px;
+}
+
+.myBorder > tbody > tr:last-child > td {
+    border-bottom: 0;
+}
+
+.myBorder > thead > tr > th {
+    background-color: var(--dark-olive-green);
+}
+
+.myBorder > thead > tr > th:first-child {
+    background-color: var(--copper);
+    background-image: linear-gradient(to top right, var(--caput-martuum), var(--dark-olive-green));
+}
+
+.myBorder > thead > tr > th, .myBorder > tbody > tr > td {
+    height: 100%;
+    margin: 0;
+    border-bottom: 4px solid var(--copper);
+    border-right: 4px solid var(--copper);
+}
+
+.myBorder > thead > tr > th:last-child, .myBorder > tbody > tr > td:last-child {
+    border-right: 0;
+}
+
+.tableTitle {
+    font-family: 'Sura', serif;
+    font-size: 36px;
+    text-align: center;
+    display: table;
+    margin: 0 auto;
+    padding: 1rem;
+}

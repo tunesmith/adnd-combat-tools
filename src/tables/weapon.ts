@@ -170,7 +170,7 @@ const weapons = new Map([
 ]);
 
 export const getWeaponAdjustment = (weapon, armorType) => {
-  console.log(weapons.get(weapon));
+  // console.log(weapons.get(weapon));
   return weapons.get(weapon)[armorType - 2];
 };
 
