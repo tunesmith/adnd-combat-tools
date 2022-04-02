@@ -131,7 +131,11 @@ const Battle = ({ rememberedState }: BattleProps) => {
 
   useEffect(() => {
     if (encodedGridState) {
-      window.history.replaceState({}, "", `/battle/${encodedGridState}`);
+      window.history.replaceState(
+        {},
+        "",
+        `/adnd-combat-tools/battle/${encodedGridState}`
+      );
     }
   }, [encodedGridState]);
 
