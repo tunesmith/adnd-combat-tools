@@ -23,7 +23,7 @@ import BattleInput from "./BattleInput";
  *  - Expanded armor types for better display
  *  - Minimum cell width to fit font?
  *  - Confirmation portal for deletion
- *  - Shareable url - compress data representation
+ *  - Compress data representation for slightly shorter urls
  * @constructor
  */
 interface Creature {
