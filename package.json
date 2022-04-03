@@ -9,7 +9,8 @@
     "start": "next start",
     "predeploy": "npm run build",
     "deploy": "gh-pages --dotfiles -x -d out",
-    "lint": "next lint"
+    "lint": "next lint",
+    "dev:static": "NODE_ENV=development next build && next export && serve ./out"
   },
   "dependencies": {
     "next": "^12.1.1",
@@ -27,6 +28,7 @@
     "eslint-config-prettier": "^8.5.0",
     "gh-pages": "^3.2.3",
     "prettier": "^2.6.1",
+    "serve": "^13.0.2",
     "typescript": "^4.6.3"
   }
 }

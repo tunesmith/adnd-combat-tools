@@ -17,6 +17,7 @@ import CellOutput from "./CellOutput";
 import { Column, useTable } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
+import getConfig from "next/config";
 
 /**
  * TODO:
@@ -37,6 +38,8 @@ interface BattleProps {
   rememberedState?: (Creature | {})[][];
 }
 const Battle = ({ rememberedState }: BattleProps) => {
+  const { publicRuntimeConfig } = getConfig();
+  const { NODE_ENV } = publicRuntimeConfig;
   const [encodedGridState, setEncodedGridState] = useState<string | undefined>(
     undefined
   );
@@ -134,10 +137,12 @@ const Battle = ({ rememberedState }: BattleProps) => {
       window.history.replaceState(
         {},
         "",
-        `/adnd-combat-tools/battle/${encodedGridState}`
+        NODE_ENV !== "production"
+          ? `/battle?s=${encodedGridState}`
+          : `/adnd-combat-tools/battle?s=${encodedGridState}`
       );
     }
-  }, [encodedGridState]);
+  }, [NODE_ENV, encodedGridState]);
 
   const getCellOutput = useCallback(
     (row, columnNumber) => (
