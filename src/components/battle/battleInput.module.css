@@ -57,6 +57,7 @@
 
 .battleInput {
     max-width: 275px;
+    min-width: 125px;
     text-align: center;
     font-size: 14px;
     height: 100%;
