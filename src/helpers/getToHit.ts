@@ -14,7 +14,7 @@ const getToHit = (
     attackerLevel
   );
 
-  const adjustment = targetArmorType.trim()
+  const adjustment = targetArmorType
     ? getWeaponAdjustment(attackerWeapon, targetArmorType)
     : 0;
 

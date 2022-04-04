@@ -30,7 +30,7 @@ import getConfig from "next/config";
 interface Creature {
   class: string;
   level: string;
-  armorType: string;
+  armorType: number;
   armorClass: number;
   weapon: string;
 }
@@ -48,7 +48,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
     () => ({
       class: "monster",
       level: "1",
-      armorType: " ",
+      armorType: 1,
       armorClass: 5,
       weapon: "Natural Weapon (Monster)",
     }),
@@ -117,7 +117,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    deflate(JSON.stringify({ version: 1, state }), (err, buffer) => {
+    deflate(JSON.stringify({ version: 2, state }), (err, buffer) => {
       if (err) {
         console.error("An error occurred:", err);
         process.exitCode = 1;

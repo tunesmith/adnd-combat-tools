@@ -1,11 +1,13 @@
 import getToHit from "../../helpers/getToHit";
 import styles from "./cellOutput.module.css";
+import { expandedArmorTypes } from "../../tables/armorType";
 
 const CellOutput = ({ red, green }) => {
   const redToHit = getToHit(
     red.class,
     red.level,
-    green.armorType,
+    expandedArmorTypes.filter((prop) => prop.key === green.armorType)[0]
+      .armorType,
     green.armorClass,
     red.weapon
   );
@@ -13,7 +15,8 @@ const CellOutput = ({ red, green }) => {
   const greenToHit = getToHit(
     green.class,
     green.level,
-    red.armorType,
+    expandedArmorTypes.filter((prop) => prop.key === red.armorType)[0]
+      .armorType,
     red.armorClass,
     green.weapon
   );

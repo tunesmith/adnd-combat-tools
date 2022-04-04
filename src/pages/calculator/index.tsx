@@ -77,7 +77,7 @@ const Calculator = () => {
       getToHit(
         attackerClass,
         attackerLevel,
-        targetArmorType,
+        targetArmorType.trim(),
         targetArmorClass,
         attackerWeapon
       )

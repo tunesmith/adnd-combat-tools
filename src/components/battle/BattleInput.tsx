@@ -2,7 +2,10 @@ import { attackerClassOptions, classMap } from "../../tables/attackerClass";
 import { Dispatch, useRef, useState } from "react";
 import { getTableByCombatClass } from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
-import { getArmorOptionsByClass } from "../../tables/armorType";
+import {
+  expandedArmorTypes,
+  getExpandedArmorOptionsByClass,
+} from "../../tables/armorType";
 import styles from "./battleInput.module.css";
 import BattleModal from "./BattleModal";
 import {
@@ -20,7 +23,7 @@ interface BattleInputStructure {
     name: string;
     class: string;
     level: string;
-    armorType: string;
+    armorType: number;
     armorClass: number;
     weapon: string;
   };
@@ -34,7 +37,7 @@ interface BattleInputProps {
     name: string;
     class: string;
     level: string;
-    armorType: string;
+    armorType: number;
     armorClass: number;
     weapon: string;
   };
@@ -56,9 +59,9 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   );
   const [weapon, setWeapon] = useState<string>(creature.weapon);
   const [armorTypeOptions, setArmorTypeOptions] = useState(
-    getArmorOptionsByClass(creatureClass)
+    getExpandedArmorOptionsByClass(creatureClass)
   );
-  const [armorType, setArmorType] = useState<string>(creature.armorType);
+  const [armorType, setArmorType] = useState<number>(creature.armorType);
   const armorClassOptions = useRef(
     [...Array(21)].map((v, i) => {
       return { value: 10 - i, label: `AC ${10 - i}` };
@@ -100,7 +103,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
       setLevel("1");
 
-      const newArmorTypeOptions = getArmorOptionsByClass(newCreatureClass);
+      const newArmorTypeOptions =
+        getExpandedArmorOptionsByClass(newCreatureClass);
       setArmorTypeOptions(newArmorTypeOptions);
       const newArmorType = newArmorTypeOptions[0].value;
       setArmorType(newArmorType);
@@ -156,8 +160,11 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   const handleArmorType = (event) => {
     setArmorType(event.value);
-    if (event.value.trim()) {
-      setArmorClass(parseInt(event.value, 10));
+    const derivedArmorClass = expandedArmorTypes.filter(
+      (prop) => prop.key === event.value
+    )[0].armorType;
+    if (event.value) {
+      setArmorClass(derivedArmorClass);
     }
     dispatch({
       type: CHANGE_CREATURE,
@@ -169,7 +176,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         class: creatureClass,
         level: level,
         armorType: event.value,
-        armorClass: event.value.trim() ? parseInt(event.value, 10) : armorClass,
+        armorClass: event.value ? derivedArmorClass : armorClass,
         weapon: weapon,
       },
     });
@@ -252,7 +259,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             : {creatureClass === "monster" ? <>HD </> : <>L</>}
             {level}
             <br />
-            {armorType.trim() && (
+            {armorType > 1 && (
               <>
                 {
                   armorTypeOptions.filter(

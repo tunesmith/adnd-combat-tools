@@ -12,7 +12,7 @@ interface ExpandedArmorProps {
   armorType: number | null;
   armorDescription: string;
 }
-const expandedArmorTypes: ExpandedArmorProps[] = [
+export const expandedArmorTypes: ExpandedArmorProps[] = [
   {
     key: 1,
     armorType: null,
@@ -119,6 +119,36 @@ const expandedArmorTypes: ExpandedArmorProps[] = [
     armorDescription: "AT 2 - Plate mail + shield",
   },
 ];
+
+const filterExpandedArmorTypes = (expandedArmorTypes, restrictions) =>
+  expandedArmorTypes.filter(
+    (props) =>
+      props.armorType !== null &&
+      restrictions.includes(props.armorType.toString())
+  );
+
+const expandedArmorTypeClasses = {
+  monster: () => expandedArmorTypes,
+  cleric: () => expandedArmorTypes.slice(1),
+  druid: () => filterExpandedArmorTypes(expandedArmorTypes, druidArmor),
+  fighter: () => expandedArmorTypes.slice(1),
+  paladin: () => expandedArmorTypes.slice(1),
+  ranger: () => expandedArmorTypes.slice(1),
+  magicuser: () => filterExpandedArmorTypes(expandedArmorTypes, magicuserArmor),
+  illusionist: () =>
+    filterExpandedArmorTypes(expandedArmorTypes, magicuserArmor),
+  thief: () => filterExpandedArmorTypes(expandedArmorTypes, thiefArmor),
+  assassin: () => filterExpandedArmorTypes(expandedArmorTypes, assassinArmor),
+  monk: () => filterExpandedArmorTypes(expandedArmorTypes, magicuserArmor),
+  bard: () => filterExpandedArmorTypes(expandedArmorTypes, bardArmor),
+};
+
+export const getExpandedArmorOptionsByClass = (attackerClass) =>
+  expandedArmorTypeClasses[attackerClass]().map((prop: ExpandedArmorProps) => ({
+    value: prop.key,
+    label: prop.armorDescription,
+  }));
+
 const armorTypes = {
   " ": "Natural Armor (Monster)",
   10: "AT 10 - No Armor",
