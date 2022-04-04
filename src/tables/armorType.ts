@@ -1,8 +1,14 @@
 const druidArmor = ["10", "9", "8", "7"];
-const magicuserArmor = ["10"];
+const magicUserArmor = ["10"];
 const thiefArmor = ["10", "8"];
 const assassinArmor = ["10", "9", "8", "7"];
 const bardArmor = ["10", "8", "5"];
+
+const expandedDruidArmor = [2, 3, 4, 6];
+const expandedMagicUserArmor = [2];
+const expandedThiefArmor = [2, 4];
+const expandedAssassinArmor = [2, 3, 4, 6];
+const expandedBardArmor = [2, 4, 14];
 
 /**
  * Expanded armor props to shrink display of labels in battle grid
@@ -130,17 +136,20 @@ const filterExpandedArmorTypes = (expandedArmorTypes, restrictions) =>
 const expandedArmorTypeClasses = {
   monster: () => expandedArmorTypes,
   cleric: () => expandedArmorTypes.slice(1),
-  druid: () => filterExpandedArmorTypes(expandedArmorTypes, druidArmor),
+  druid: () => filterExpandedArmorTypes(expandedArmorTypes, expandedDruidArmor),
   fighter: () => expandedArmorTypes.slice(1),
   paladin: () => expandedArmorTypes.slice(1),
   ranger: () => expandedArmorTypes.slice(1),
-  magicuser: () => filterExpandedArmorTypes(expandedArmorTypes, magicuserArmor),
+  magicuser: () =>
+    filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
   illusionist: () =>
-    filterExpandedArmorTypes(expandedArmorTypes, magicuserArmor),
-  thief: () => filterExpandedArmorTypes(expandedArmorTypes, thiefArmor),
-  assassin: () => filterExpandedArmorTypes(expandedArmorTypes, assassinArmor),
-  monk: () => filterExpandedArmorTypes(expandedArmorTypes, magicuserArmor),
-  bard: () => filterExpandedArmorTypes(expandedArmorTypes, bardArmor),
+    filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
+  thief: () => filterExpandedArmorTypes(expandedArmorTypes, expandedThiefArmor),
+  assassin: () =>
+    filterExpandedArmorTypes(expandedArmorTypes, expandedAssassinArmor),
+  monk: () =>
+    filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
+  bard: () => filterExpandedArmorTypes(expandedArmorTypes, expandedBardArmor),
 };
 
 export const getExpandedArmorOptionsByClass = (attackerClass) =>
@@ -174,11 +183,11 @@ const armorTypeClasses = {
   fighter: () => Object.entries(armorTypes).slice(0, -1),
   paladin: () => Object.entries(armorTypes).slice(0, -1),
   ranger: () => Object.entries(armorTypes).slice(0, -1),
-  magicuser: () => filterArmorTypes(armorTypes, magicuserArmor),
-  illusionist: () => filterArmorTypes(armorTypes, magicuserArmor),
+  magicuser: () => filterArmorTypes(armorTypes, magicUserArmor),
+  illusionist: () => filterArmorTypes(armorTypes, magicUserArmor),
   thief: () => filterArmorTypes(armorTypes, thiefArmor),
   assassin: () => filterArmorTypes(armorTypes, assassinArmor),
-  monk: () => filterArmorTypes(armorTypes, magicuserArmor),
+  monk: () => filterArmorTypes(armorTypes, magicUserArmor),
   bard: () => filterArmorTypes(armorTypes, bardArmor),
 };
 
