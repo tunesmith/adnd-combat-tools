@@ -109,9 +109,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       const newArmorType = newArmorTypeOptions[0].value;
       setArmorType(newArmorType);
 
-      const newArmorClass = newArmorType.trim()
-        ? parseInt(newArmorType, 10)
-        : armorClass;
+      const newArmorClass = newArmorType ? newArmorType : armorClass;
       setArmorClass(newArmorClass);
 
       const newWeaponOptions = getWeaponOptions(newCreatureClass);
@@ -131,8 +129,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
           class: newCreatureClass,
           level: "1",
           armorType: newArmorTypeOptions[0].value,
-          armorClass: newArmorTypeOptions[0].value.trim()
-            ? parseInt(newArmorTypeOptions[0].value, 10)
+          armorClass: newArmorTypeOptions[0].value
+            ? newArmorTypeOptions[0].value
             : armorClass,
           weapon: newWeapon,
         },

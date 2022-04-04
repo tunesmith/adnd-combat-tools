@@ -127,11 +127,7 @@ export const expandedArmorTypes: ExpandedArmorProps[] = [
 ];
 
 const filterExpandedArmorTypes = (expandedArmorTypes, restrictions) =>
-  expandedArmorTypes.filter(
-    (props) =>
-      props.armorType !== null &&
-      restrictions.includes(props.armorType.toString())
-  );
+  expandedArmorTypes.filter((props) => restrictions.includes(props.key));
 
 const expandedArmorTypeClasses = {
   monster: () => expandedArmorTypes,
