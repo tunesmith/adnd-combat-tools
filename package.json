@@ -10,7 +10,9 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages --dotfiles -x -d out",
     "lint": "next lint",
-    "dev:static": "NODE_ENV=development next build && next export && serve ./out"
+    "dev:static": "NODE_ENV=development next build && next export && serve ./out",
+    "tsc": "tsc",
+    "tsc:watch": "tsc -w"
   },
   "dependencies": {
     "next": "^12.1.1",
