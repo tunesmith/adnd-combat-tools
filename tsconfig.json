@@ -20,7 +20,7 @@
     "alwaysStrict": false, // set to true if strict is true
     "strict": false,
     "strictBindCallApply": true,
-    "strictFunctionTypes": false,
+    "strictFunctionTypes": true,
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
     "noImplicitAny": false,

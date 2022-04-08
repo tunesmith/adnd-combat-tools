@@ -29,7 +29,7 @@ const Calculator = () => {
     })
   );
   const [attackerLevel, setAttackerLevel] = useState<string>("1");
-  const [attackerWeapon, setAttackerWeapon] = useState<string>(
+  const [attackerWeapon, setAttackerWeapon] = useState<number>(
     weaponOptions[0].value
   );
 

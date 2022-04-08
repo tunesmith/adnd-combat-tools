@@ -21,10 +21,8 @@ import getConfig from "next/config";
 
 /**
  * TODO:
- *  - Expanded armor types for better display
- *  - Minimum cell width to fit font?
- *  - Confirmation portal for deletion
  *  - Compress data representation for slightly shorter urls
+ *  - Allow classes to pick empty armor for if DM doesn't use weapon adjustments?
  * @constructor
  */
 interface Creature {
@@ -32,7 +30,7 @@ interface Creature {
   level: string;
   armorType: number;
   armorClass: number;
-  weapon: string;
+  weapon: number;
 }
 interface BattleProps {
   rememberedState?: (Creature | {})[][];
@@ -50,7 +48,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
       level: "1",
       armorType: 1,
       armorClass: 5,
-      weapon: "Natural Weapon (Monster)",
+      weapon: 1,
     }),
     []
   );
@@ -117,7 +115,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    deflate(JSON.stringify({ version: 2, state }), (err, buffer) => {
+    deflate(JSON.stringify({ version: 3, state }), (err, buffer) => {
       if (err) {
         console.error("An error occurred:", err);
         process.exitCode = 1;

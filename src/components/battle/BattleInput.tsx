@@ -25,7 +25,7 @@ interface BattleInputStructure {
     level: string;
     armorType: number;
     armorClass: number;
-    weapon: string;
+    weapon: number;
   };
 }
 
@@ -39,7 +39,7 @@ interface BattleInputProps {
     level: string;
     armorType: number;
     armorClass: number;
-    weapon: string;
+    weapon: number;
   };
   dispatch: Dispatch<BattleInputStructure>;
 }
@@ -57,7 +57,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const [weaponOptions, setWeaponOptions] = useState(
     getWeaponOptions(creature.class)
   );
-  const [weapon, setWeapon] = useState<string>(creature.weapon);
+  const [weapon, setWeapon] = useState<number>(creature.weapon);
   const [armorTypeOptions, setArmorTypeOptions] = useState(
     getExpandedArmorOptionsByClass(creatureClass)
   );
