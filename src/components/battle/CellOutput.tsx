@@ -22,9 +22,9 @@ const CellOutput = ({ red, green }) => {
   );
 
   return (
-    <div className={styles.outerCell}>
-      <div className={styles.left}>{redToHit}</div>
-      <div className={styles.right}>{greenToHit}</div>
+    <div className={styles["outerCell"]}>
+      <div className={styles["left"]}>{redToHit}</div>
+      <div className={styles["right"]}>{greenToHit}</div>
     </div>
   );
 };

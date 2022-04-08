@@ -95,10 +95,10 @@ const Calculator = () => {
   };
 
   return (
-    <div className={styles.outerContainer}>
-      <div className={styles.title}>AD&D Combat Calculator</div>
-      <div className={styles.calcContainer}>
-        <div className={styles.formContainer}>
+    <div className={styles["outerContainer"]}>
+      <div className={styles["title"]}>AD&D Combat Calculator</div>
+      <div className={styles["calcContainer"]}>
+        <div className={styles["formContainer"]}>
           <form onSubmit={handleSubmit}>
             <label>
               Class of Attacker:
@@ -171,11 +171,11 @@ const Calculator = () => {
             </label>
           </form>
         </div>
-        <div className={styles.toHitContainer}>
+        <div className={styles["toHitContainer"]}>
           {(toHit || toHit === 0) && (
-            <div className={styles.toHitBox}>
+            <div className={styles["toHitBox"]}>
               <div>To Hit:</div>
-              <div className={styles.toHit}>{toHit}</div>
+              <div className={styles["toHit"]}>{toHit}</div>
             </div>
           )}
         </div>

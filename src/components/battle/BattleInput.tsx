@@ -218,11 +218,11 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   return (
     <>
-      <div className={styles.container}>
-        <div className={styles.removeInput}>
+      <div className={styles["container"]}>
+        <div className={styles["removeInput"]}>
           <button
             className={
-              row < 1 ? styles.buttonRemoveColumn : styles.buttonRemoveRow
+              row < 1 ? styles["buttonRemoveColumn"] : styles["buttonRemoveRow"]
             }
             onClick={() =>
               dispatch(
@@ -237,7 +237,9 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         </div>
         <div
           // data-text={"click to edit"}
-          className={row < 1 ? styles.battleInputColumn : styles.battleInputRow}
+          className={
+            row < 1 ? styles["battleInputColumn"] : styles["battleInputRow"]
+          }
           onClick={() => {
             setOpen(true);
           }}
@@ -245,7 +247,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
           <div>
             {creatureName && (
               <>
-                <span className={styles.creatureName}>{creatureName}</span>
+                <span className={styles["creatureName"]}>{creatureName}</span>
                 <br />
               </>
             )}

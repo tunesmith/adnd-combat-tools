@@ -157,7 +157,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
       [
         {
           Header: (
-            <div className={styles.tableTitle}>
+            <div className={styles["tableTitle"]}>
               AD&D
               <br />
               Battle Grid
@@ -211,16 +211,16 @@ const Battle = ({ rememberedState }: BattleProps) => {
 
   return (
     <div id={"app-modal"}>
-      <div className={styles.container}>
-        <div className={styles.addColumn}>
+      <div className={styles["container"]}>
+        <div className={styles["addColumn"]}>
           <button
-            className={styles.buttonAddColumn}
+            className={styles["buttonAddColumn"]}
             onClick={() => dispatch({ type: ADD_COLUMN })}
           >
             +
           </button>
         </div>
-        <table className={styles.myBorder} {...getTableProps()}>
+        <table className={styles["myBorder"]} {...getTableProps()}>
           <thead>
             {
               // Loop over the header rows
@@ -282,9 +282,9 @@ const Battle = ({ rememberedState }: BattleProps) => {
             }
           </tbody>
         </table>
-        <div className={styles.addRow}>
+        <div className={styles["addRow"]}>
           <button
-            className={styles.buttonAddRow}
+            className={styles["buttonAddRow"]}
             onClick={() => dispatch({ type: ADD_ROW })}
           >
             +

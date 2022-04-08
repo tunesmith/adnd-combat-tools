@@ -29,9 +29,9 @@ const BattleModal = ({
   }
   return createPortal(
     <>
-      <div className={styles.modalShadow} onClick={close} />
+      <div className={styles["modalShadow"]} onClick={close} />
       <div
-        className={styles.modal}
+        className={styles["modal"]}
         style={{
           backgroundColor: row
             ? "var(--caput-martuum)"
@@ -39,7 +39,7 @@ const BattleModal = ({
         }}
       >
         <input
-          className={styles.nameInput}
+          className={styles["nameInput"]}
           type={"text"}
           defaultValue={creatureName}
           onBlur={handleCreatureName}
