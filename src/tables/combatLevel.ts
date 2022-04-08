@@ -130,7 +130,7 @@ export const getTableByCombatClass = (
     case "thief":
       return getClassLevels(thiefLevels);
     default: // case "monster"
-      return Array.from(monsterLevels).map(([label, value]) => ({
+      return Array.from(monsterLevels).map(([label]) => ({
         value: label,
         label: `${label} HD`,
       }));

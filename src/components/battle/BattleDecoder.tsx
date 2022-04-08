@@ -53,7 +53,7 @@ const transformState = (wrapper: StateWrapper): ({} | CreatureV3)[][] => {
                   transformArmorType((creature as CreatureV1).armorType)
               )[0].key,
               weapon: Array.from(weapons).filter(
-                ([weaponId, weaponInfo]) =>
+                ([_, weaponInfo]) =>
                   weaponInfo.name === (creature as CreatureV1).weapon
               )[0][0],
             };
@@ -67,7 +67,7 @@ const transformState = (wrapper: StateWrapper): ({} | CreatureV3)[][] => {
             return {
               ...creature,
               weapon: Array.from(weapons).filter(
-                ([weaponId, weaponInfo]) =>
+                ([_, weaponInfo]) =>
                   weaponInfo.name === (creature as CreatureV2).weapon
               )[0][0],
             };

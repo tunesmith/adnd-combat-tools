@@ -61,10 +61,10 @@ const Battle = ({ rememberedState }: BattleProps) => {
     switch (action.type) {
       case DELETE_COLUMN:
         return thisState.map((row) =>
-          row.filter((col, index) => index !== action.col)
+          row.filter((_, index) => index !== action.col)
         );
       case DELETE_ROW:
-        return thisState.filter((row, index) => index !== action.row);
+        return thisState.filter((_, index) => index !== action.row);
       case ADD_COLUMN:
         return thisState.map((row, index) =>
           row.concat(

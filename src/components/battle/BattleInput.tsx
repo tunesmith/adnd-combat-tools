@@ -63,7 +63,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   );
   const [armorType, setArmorType] = useState<number>(creature.armorType);
   const armorClassOptions = useRef(
-    [...Array(21)].map((v, i) => {
+    [...Array(21)].map((_, i) => {
       return { value: 10 - i, label: `AC ${10 - i}` };
     })
   );

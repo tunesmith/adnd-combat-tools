@@ -24,7 +24,7 @@ const Calculator = () => {
   );
 
   const armorClassOptions = useRef(
-    [...Array(21)].map((v, i) => {
+    [...Array(21)].map((_, i) => {
       return { value: 10 - i, label: 10 - i };
     })
   );

@@ -1,10 +1,10 @@
 const customStyles = {
-  control: (provided, state) => ({
+  control: (provided) => ({
     ...provided,
     backgroundColor: "#F0EFDD",
   }),
 
-  option: (provided, state) => {
+  option: (provided) => {
     // console.log(provided);
     return {
       ...provided,
