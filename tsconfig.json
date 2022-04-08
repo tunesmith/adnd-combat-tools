@@ -12,18 +12,21 @@
     "allowUnusedLabels": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-    "noImplicitReturns": false,
+    "noImplicitReturns": true,
+
     "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "alwaysStrict": false, // set to true if strict is true
+    
     "strict": false,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
     "noImplicitAny": false,
+
     "noImplicitThis": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,

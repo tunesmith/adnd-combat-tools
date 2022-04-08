@@ -76,8 +76,6 @@ const getLevelThaco = (levelMap: LevelMap, targetLevel: string) =>
  */
 export const getThaco = (attackerClass: string, attackerLevel: string) => {
   switch (attackerClass) {
-    case "monster":
-      return monsterLevels.get(attackerLevel);
     case "fighter":
       return getLevelThaco(fighterLevels, attackerLevel);
     case "cleric":
@@ -86,6 +84,8 @@ export const getThaco = (attackerClass: string, attackerLevel: string) => {
       return getLevelThaco(magicUserLevels, attackerLevel);
     case "thief":
       return getLevelThaco(thiefLevels, attackerLevel);
+    default: // case "monster"
+      return monsterLevels.get(attackerLevel);
   }
 };
 /**
@@ -159,11 +159,6 @@ export const getTableByCombatClass = (
   combatClass: string
 ): { value: string; label: string }[] => {
   switch (combatClass) {
-    case "monster":
-      return Array.from(monsterLevels).map(([label, value]) => ({
-        value: label,
-        label: `${label} HD`,
-      }));
     case "fighter":
       return getClassLevels(fighterLevels);
     case "cleric":
@@ -172,5 +167,10 @@ export const getTableByCombatClass = (
       return getClassLevels(magicUserLevels);
     case "thief":
       return getClassLevels(thiefLevels);
+    default: // case "monster"
+      return Array.from(monsterLevels).map(([label, value]) => ({
+        value: label,
+        label: `${label} HD`,
+      }));
   }
 };
