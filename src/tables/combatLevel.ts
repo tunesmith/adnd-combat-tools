@@ -102,44 +102,6 @@ export const getThac = (ac, thaco) => {
   return simpleThac;
 };
 
-/**
- * I kind of screwed this up.
- * For monsters, I want to display the HD levels as is, which makes thaco a sane value
- * For classes, I want to display individual levels, so levels should be the value
- *
- * So either way I should just have the label be the value, and then look up the thaco here.
- *
- * @param levels
- */
-const getInterpolatedOptions = (
-  levels: LevelMap
-): { value: string; label: string }[] => {
-  const entries: [string, number][] = Object.entries(levels);
-  let interpolatedLevels: [string, number][] = [];
-
-  // ugh... possible without mutation? is there a "flat reduce"?
-  for (let i = 0; i < entries.length; i++) {
-    if (entries[i + 1]) {
-      interpolatedLevels.push(entries[i]);
-
-      const [level, thaco] = entries[i];
-      const [nextLevel, _] = entries[i + 1];
-
-      for (let j = parseInt(level, 10); j + 1 < parseInt(nextLevel, 10); j++) {
-        interpolatedLevels.push([`${j + 1}`, thaco]);
-      }
-    } else {
-      // For the last line, for example, make '21' be '21+'
-      interpolatedLevels.push([`${entries[i][0]}+`, entries[i][1]]);
-    }
-  }
-
-  return interpolatedLevels.map(([label, value]) => ({
-    value: `${value}`,
-    label,
-  }));
-};
-
 const getClassLevels = (
   levels: LevelMap
 ): { value: string; label: string }[] => {
