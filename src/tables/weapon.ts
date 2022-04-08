@@ -791,12 +791,17 @@ export const weapons = new Map<number, WeaponInfo>([
 //   ["Voulge", [-1, -1, 0, 1, 1, 1, 0, 0, 0]],
 // ]);
 
-export const getWeaponAdjustment = (weapon, armorType): number => {
+export const getWeaponAdjustment = (
+  weapon: number,
+  armorType: number
+): number => {
   return weapons.get(weapon).acAdjustments[armorType - 2];
 };
 
-const filterWeaponClasses = (weapons, restrictions) =>
-  Array.from(weapons).filter((option) => restrictions.includes(option[0]));
+const filterWeaponClasses = (
+  weapons: Map<number, WeaponInfo>,
+  restrictions: number[]
+) => Array.from(weapons).filter((option) => restrictions.includes(option[0]));
 
 const weaponClasses = {
   monster: weapons,
@@ -814,7 +819,7 @@ const weaponClasses = {
 };
 
 export const getWeaponOptions = (
-  attackerClass
+  attackerClass: string
 ): { value: number; label: string }[] =>
   Array.from<[number, WeaponInfo]>(weaponClasses[attackerClass]).map<{
     value: number;

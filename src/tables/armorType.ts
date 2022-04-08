@@ -126,8 +126,10 @@ export const expandedArmorTypes: ExpandedArmorProps[] = [
   },
 ];
 
-const filterExpandedArmorTypes = (expandedArmorTypes, restrictions) =>
-  expandedArmorTypes.filter((props) => restrictions.includes(props.key));
+const filterExpandedArmorTypes = (
+  expandedArmorTypes: ExpandedArmorProps[],
+  restrictions: number[]
+) => expandedArmorTypes.filter((props) => restrictions.includes(props.key));
 
 const expandedArmorTypeClasses = {
   monster: () => expandedArmorTypes,
@@ -187,7 +189,7 @@ const armorTypeClasses = {
   bard: () => filterArmorTypes(armorTypes, bardArmor),
 };
 
-export const getArmorOptionsByClass = (attackerClass) =>
+export const getArmorOptionsByClass = (attackerClass: string) =>
   armorTypeClasses[attackerClass]()
     .reverse()
     .map(([value, label]) => ({ value, label }));
