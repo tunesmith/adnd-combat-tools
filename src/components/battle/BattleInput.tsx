@@ -159,7 +159,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const handleArmorType = (event) => {
     setArmorType(event.value);
     const derivedArmorClass = expandedArmorTypes.filter(
-      (prop) => prop.key === event.value
+      (armorProps) => armorProps.key === event.value
     )[0].armorType;
     if (event.value) {
       setArmorClass(derivedArmorClass);

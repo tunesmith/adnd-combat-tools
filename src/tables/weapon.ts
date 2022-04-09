@@ -795,7 +795,23 @@ export const getWeaponAdjustment = (
   weapon: number,
   armorType: number
 ): number => {
-  return weapons.get(weapon).acAdjustments[armorType - 2];
+  const weaponProps = weapons.get(weapon);
+  if (weaponProps) {
+    const weaponAdjustment = weaponProps.acAdjustments[armorType - 2];
+    if (weaponAdjustment) {
+      return weaponAdjustment;
+    } else {
+      console.error(
+        `Couldn't find weapon adjustment for weapon ${weapon} and armorType ${armorType}; returning 0`
+      );
+      return 0;
+    }
+  } else {
+    console.error(
+      `Couldn't find weapon ${weapon} for armorType ${armorType}; returning 0`
+    );
+    return 0;
+  }
 };
 
 const filterWeaponClasses = (

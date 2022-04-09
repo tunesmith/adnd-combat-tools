@@ -2,8 +2,22 @@ import { useEffect, useState } from "react";
 import { unzip } from "zlib";
 import Battle from "./Battle";
 import { expandedArmorTypes } from "../../tables/armorType";
-import { weapons } from "../../tables/weapon";
+import { WeaponInfo, weapons } from "../../tables/weapon";
 
+/**
+ * The creature data structure is a two-dimensional array.
+ * Rows and Columns, like a basic spreadsheet matrix.
+ * Each "Cell" can contain either a creature or an empty object.
+ * The empty object *has* to be empty, so we define it as such here.
+ */
+type EmptyObject = Record<any, never>;
+
+/**
+ * The initial version of the Creature was inefficient. We were
+ * storing the actual string version of the armor type number,
+ * which was unclear since AT 7 refers to four different types
+ * of armor.
+ */
 interface CreatureV1 {
   class: string;
   level: string;
@@ -11,6 +25,13 @@ interface CreatureV1 {
   armorClass: number;
   weapon: string;
 }
+type StateV1 = (EmptyObject | CreatureV1)[][];
+
+/**
+ * For version 2, we transitioned to armor types with actual
+ * numerical row ids, but it's still storing the actual string
+ * value of the weapon name.
+ */
 interface CreatureV2 {
   class: string;
   level: string;
@@ -18,6 +39,12 @@ interface CreatureV2 {
   armorClass: number;
   weapon: string;
 }
+type StateV2 = (EmptyObject | CreatureV2)[][];
+
+/**
+ * For version 3, we transitioned to a numerical row id for
+ * each weapon.
+ */
 interface CreatureV3 {
   class: string;
   level: string;
@@ -25,57 +52,74 @@ interface CreatureV3 {
   armorClass: number;
   weapon: number;
 }
+type StateV3 = (EmptyObject | CreatureV3)[][];
+
 interface BattleDecoderProps {
   encodedState: string;
 }
+
+/**
+ * When someone visits with a pre-existing state code, it could be
+ * for any of the previously existing Creature versions.
+ *
+ * Technically, a StateWrapper cannot contain a *mix* of creature
+ * versions...
+ */
 interface StateWrapper {
   version: number;
-  state: ({} | CreatureV1 | CreatureV2 | CreatureV3)[][];
+  state: StateV1 | StateV2 | StateV3;
 }
+
 const transformArmorType = (oldArmorType: string): number | null => {
   if (!oldArmorType.trim()) {
     return null;
   }
   return parseInt(oldArmorType, 10);
 };
-const transformState = (wrapper: StateWrapper): ({} | CreatureV3)[][] => {
-  console.log(`wrapper version: ${wrapper.version}`);
+
+const transformState = (wrapper: StateWrapper): StateV3 => {
   switch (wrapper.version) {
     case 1:
-      return wrapper.state.map((row) =>
+      return (wrapper.state as StateV1).map((row) =>
         row.map((creature) => {
           if (Object.keys(creature).length) {
+            const creatureV1 = creature as CreatureV1;
+            const filteredArmor = expandedArmorTypes.filter(
+              (armorProps) =>
+                armorProps.armorType ===
+                transformArmorType(creatureV1.armorType)
+            )[0];
+            const filteredWeapon = Array.from(weapons).filter(
+              ([_, weaponInfo]: [number, WeaponInfo]) =>
+                weaponInfo.name === creatureV1.weapon
+            )[0];
+
             return {
-              ...creature,
-              armorType: expandedArmorTypes.filter(
-                (prop) =>
-                  prop.armorType ===
-                  transformArmorType((creature as CreatureV1).armorType)
-              )[0].key,
-              weapon: Array.from(weapons).filter(
-                ([_, weaponInfo]) =>
-                  weaponInfo.name === (creature as CreatureV1).weapon
-              )[0][0],
+              ...creatureV1,
+              armorType: filteredArmor ? filteredArmor.key : 0,
+              weapon: filteredWeapon ? filteredWeapon[0] : 0,
             };
-          } else return creature;
+          } else return creature as EmptyObject;
         })
       );
     case 2:
-      return wrapper.state.map((row) =>
+      return (wrapper.state as StateV2).map((row) =>
         row.map((creature) => {
           if (Object.keys(creature).length) {
+            const creatureV2 = creature as CreatureV2;
+            const filteredWeapon = Array.from(weapons).filter(
+              ([_, weaponInfo]: [number, WeaponInfo]) =>
+                weaponInfo.name === creatureV2.weapon
+            )[0];
             return {
-              ...creature,
-              weapon: Array.from(weapons).filter(
-                ([_, weaponInfo]) =>
-                  weaponInfo.name === (creature as CreatureV2).weapon
-              )[0][0],
+              ...creatureV2,
+              weapon: filteredWeapon ? filteredWeapon[0] : 0,
             };
-          } else return creature;
+          } else return creature as EmptyObject;
         })
       );
-    default:
-      return wrapper.state;
+    default: // version = 3
+      return wrapper.state as StateV3;
   }
 };
 
