@@ -114,8 +114,14 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
       const newWeaponOptions = getWeaponOptions(newCreatureClass);
       setWeaponOptions(newWeaponOptions);
-      const newWeapon = newWeaponOptions[0].value;
-      setWeapon(newWeapon);
+      const newWeapon = newWeaponOptions[0]?.value;
+      if (newWeapon) {
+        setWeapon(newWeapon);
+      } else {
+        console.error(
+          `Unable to load new weapon, using previous weapon: ${weapon}`
+        );
+      }
 
       prevCreatureClass.current = newCreatureClass;
 
@@ -132,7 +138,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
           armorClass: newArmorTypeOptions[0].value
             ? newArmorTypeOptions[0].value
             : armorClass,
-          weapon: newWeapon,
+          weapon: newWeapon || weapon,
         },
       });
     }
@@ -158,9 +164,11 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   const handleArmorType = (event) => {
     setArmorType(event.value);
-    const derivedArmorClass = expandedArmorTypes.filter(
-      (armorProps) => armorProps.key === event.value
-    )[0].armorType;
+    // When picking a new armor type, set the armor class accordingly... this may prove bothersome though
+    const derivedArmorClass =
+      expandedArmorTypes.filter(
+        (armorProps) => armorProps.key === event.value
+      )[0]?.armorType || 10;
     if (event.value) {
       setArmorClass(derivedArmorClass);
     }
@@ -251,11 +259,9 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
                 <br />
               </>
             )}
-            {
-              attackerClassOptions.filter(
-                (option) => option.value === creatureClass
-              )[0].label
-            }
+            {attackerClassOptions.filter(
+              (option) => option.value === creatureClass
+            )[0]?.label || "(No class selected)"}
             : {creatureClass === "monster" ? <>HD </> : <>L</>}
             {level}
             <br />
@@ -271,7 +277,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             )}
             AC {armorClass}
             <br />
-            {weaponOptions.filter((option) => option.value === weapon)[0].label}
+            {weaponOptions.filter((option) => option.value === weapon)[0]
+              ?.label || "(No weapon selected"}
           </div>
         </div>
         {open && (

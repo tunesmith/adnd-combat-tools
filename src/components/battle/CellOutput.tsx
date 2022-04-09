@@ -3,11 +3,22 @@ import styles from "./cellOutput.module.css";
 import { expandedArmorTypes } from "../../tables/armorType";
 
 const CellOutput = ({ red, green }) => {
+  const greenArmor = expandedArmorTypes.filter(
+    (armorProps) => armorProps.key === green.armorType
+  )[0];
+  if (!greenArmor) {
+    console.error("Unable to find green armor type; using monster armor");
+  }
+  const redArmor = expandedArmorTypes.filter(
+    (armorProps) => armorProps.key === red.armorType
+  )[0];
+  if (!redArmor) {
+    console.error("Unable to find green armor type; using monster armor");
+  }
   const redToHit = getToHit(
     red.class,
     red.level,
-    expandedArmorTypes.filter((prop) => prop.key === green.armorType)[0]
-      .armorType,
+    greenArmor?.armorType || null,
     green.armorClass,
     red.weapon
   );
@@ -15,8 +26,7 @@ const CellOutput = ({ red, green }) => {
   const greenToHit = getToHit(
     green.class,
     green.level,
-    expandedArmorTypes.filter((prop) => prop.key === red.armorType)[0]
-      .armorType,
+    redArmor?.armorType || null,
     red.armorClass,
     green.weapon
   );

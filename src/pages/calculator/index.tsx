@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import Select from "react-select";
+import Select, { SingleValue } from "react-select";
 import { attackerClassOptions, classMap } from "../../tables/attackerClass";
 import { getTableByCombatClass } from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
@@ -20,7 +20,7 @@ const Calculator = () => {
   );
   const [armorTypeOptions, setArmorTypeOptions] = useState(getArmorOptions);
   const [targetArmorType, setTargetArmorType] = useState<string>(
-    armorTypeOptions[0].value
+    armorTypeOptions[0]!.value
   );
 
   const armorClassOptions = useRef(
@@ -30,7 +30,7 @@ const Calculator = () => {
   );
   const [attackerLevel, setAttackerLevel] = useState<string>("1");
   const [attackerWeapon, setAttackerWeapon] = useState<number>(
-    weaponOptions[0].value
+    weaponOptions[0]!.value
   );
 
   const [toHit, setToHit] = useState<number | undefined>(undefined);
@@ -39,21 +39,31 @@ const Calculator = () => {
     setTargetArmorClass(event.value);
   };
 
-  const handleAttackerClass = (event) => {
-    const newAttackerClass = event.value;
-    if (newAttackerClass !== prevAttackerClass.current) {
-      setAttackerClass(event.value);
+  const handleAttackerClass = (
+    option: SingleValue<{ label: string; value: string }>
+  ) => {
+    const newAttackerClass = option?.value;
+    if (newAttackerClass && newAttackerClass !== prevAttackerClass.current) {
+      setAttackerClass(newAttackerClass);
       const newAttackerLevelOptions = getTableByCombatClass(
-        event.value === "monster" ? "monster" : classMap[event.value]
+        newAttackerClass === "monster" ? "monster" : classMap[newAttackerClass]
       );
       setAttackerLevelOptions(newAttackerLevelOptions);
       setAttackerLevel("1");
-      const newWeaponOptions = getWeaponOptions(event.value);
+      const newWeaponOptions = getWeaponOptions(newAttackerClass);
       setWeaponOptions(newWeaponOptions);
-      setAttackerWeapon(newWeaponOptions[0].value);
+      if (newWeaponOptions[0]) {
+        setAttackerWeapon(newWeaponOptions[0]?.value);
+      } else {
+        console.error("Unable to set new weapon, retaining old weapon");
+      }
       const newArmorTypeOptions = getArmorOptions;
       setArmorTypeOptions(newArmorTypeOptions);
-      setTargetArmorType(newArmorTypeOptions[0].value);
+      if (newArmorTypeOptions[0]) {
+        setTargetArmorType(newArmorTypeOptions[0].value);
+      } else {
+        console.error("Unable to set new armor type, retaining old armor type");
+      }
       prevAttackerClass.current = newAttackerClass;
     }
   };
