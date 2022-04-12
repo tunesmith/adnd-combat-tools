@@ -38,8 +38,12 @@ const Calculator = () => {
 
   const [toHit, setToHit] = useState<number | undefined>(undefined);
 
-  const handleArmorClass = (event) => {
-    setTargetArmorClass(event.value);
+  const handleArmorClass = (
+    option: SingleValue<{ label: number; value: number }>
+  ) => {
+    if (option?.value) {
+      setTargetArmorClass(option.value);
+    }
   };
 
   const handleAttackerClass = (

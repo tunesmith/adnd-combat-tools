@@ -150,7 +150,7 @@ const expandedArmorTypeClasses = {
   bard: () => filterExpandedArmorTypes(expandedArmorTypes, expandedBardArmor),
 };
 
-export const getExpandedArmorOptionsByClass = (attackerClass) =>
+export const getExpandedArmorOptionsByClass = (attackerClass: string) =>
   expandedArmorTypeClasses[attackerClass]().map((prop: ExpandedArmorProps) => ({
     value: prop.key,
     label: prop.armorDescription,
@@ -169,7 +169,7 @@ const armorTypes = {
   2: "AT 2 - Plate mail + shield",
 };
 
-const filterArmorTypes = (armorTypes, restrictions) =>
+const filterArmorTypes = (armorTypes, restrictions: string[]) =>
   Object.entries(armorTypes).filter((option) =>
     restrictions.includes(option[0])
   );
@@ -192,7 +192,7 @@ const armorTypeClasses = {
 export const getArmorOptionsByClass = (attackerClass: string) =>
   armorTypeClasses[attackerClass]()
     .reverse()
-    .map(([value, label]) => ({ value, label }));
+    .map(([value, label]: [number | string, string]) => ({ value, label }));
 
 export const getArmorOptions = Object.entries(armorTypes)
   .reverse()
