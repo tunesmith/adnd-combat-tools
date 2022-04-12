@@ -158,3 +158,8 @@ advantageous combat level might be MU, while specialization...
 I'm starting to go the other way. Maybe I just ask for "melee attacks" 
 or "# of melee attack routines" and have that set per round. Then I also
 don't have to take level into account.
+
+Finally, I might consider a new "page" (state var) for each combat round 
+or segment. If I do that, then I think the only thing that might carry over
+is the casting time of a spell. This may need to be a separate category
+than "Casting time" since it is by definition from start of round.

@@ -817,30 +817,44 @@ export const getWeaponAdjustment = (
 const filterWeaponClasses = (
   weapons: Map<number, WeaponInfo>,
   restrictions: number[]
-) => Array.from(weapons).filter((option) => restrictions.includes(option[0]));
+): Map<number, WeaponInfo> =>
+  new Map(
+    Array.from(weapons).filter((option) => restrictions.includes(option[0]))
+  );
 
-const weaponClasses = {
-  monster: weapons,
-  cleric: filterWeaponClasses(weapons, clericWeapons),
-  druid: filterWeaponClasses(weapons, druidWeapons),
-  fighter: Array.from(weapons).slice(1),
-  paladin: Array.from(weapons).slice(1),
-  ranger: Array.from(weapons).slice(1),
-  magicuser: filterWeaponClasses(weapons, magicUserWeapons),
-  illusionist: filterWeaponClasses(weapons, magicUserWeapons),
-  thief: filterWeaponClasses(weapons, thiefWeapons),
-  assassin: Array.from(weapons).slice(1),
-  monk: filterWeaponClasses(weapons, monkWeapons),
-  bard: filterWeaponClasses(weapons, bardWeapons),
-};
+const weaponClasses = new Map<string, Map<number, WeaponInfo>>([
+  ["monster", weapons],
+  ["cleric", filterWeaponClasses(weapons, clericWeapons)],
+  ["druid", filterWeaponClasses(weapons, druidWeapons)],
+  ["fighter", new Map(Array.from(weapons).slice(1))],
+  ["paladin", new Map(Array.from(weapons).slice(1))],
+  ["ranger", new Map(Array.from(weapons).slice(1))],
+  ["magicuser", filterWeaponClasses(weapons, magicUserWeapons)],
+  ["illusionist", filterWeaponClasses(weapons, magicUserWeapons)],
+  ["thief", filterWeaponClasses(weapons, thiefWeapons)],
+  ["assassin", new Map(Array.from(weapons).slice(1))],
+  ["monk", filterWeaponClasses(weapons, monkWeapons)],
+  ["bard", filterWeaponClasses(weapons, bardWeapons)],
+]);
+
+const constructOptions = (
+  weaponOptions: Map<number, WeaponInfo>
+): { value: number; label: string }[] =>
+  Array.from(weaponOptions).map(
+    ([weaponId, weaponInfo]: [number, WeaponInfo]) => ({
+      value: weaponId,
+      label: weaponInfo.name,
+    })
+  );
 
 export const getWeaponOptions = (
   attackerClass: string
-): { value: number; label: string }[] =>
-  Array.from<[number, WeaponInfo]>(weaponClasses[attackerClass]).map<{
-    value: number;
-    label: string;
-  }>(([weaponId, weaponInfo]: [number, WeaponInfo]) => ({
-    value: weaponId,
-    label: weaponInfo.name,
-  }));
+): { value: number; label: string }[] => {
+  const classWeapons = weaponClasses.get(attackerClass);
+  if (classWeapons) {
+    return constructOptions(classWeapons);
+  } else {
+    console.error(`Unable to get weapons for class ${attackerClass}`);
+    return constructOptions(weapons);
+  }
+};
