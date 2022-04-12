@@ -798,7 +798,7 @@ export const getWeaponAdjustment = (
   const weaponProps = weapons.get(weapon);
   if (weaponProps) {
     const weaponAdjustment = weaponProps.acAdjustments[armorType - 2];
-    if (weaponAdjustment) {
+    if (weaponAdjustment || weaponAdjustment === 0) {
       return weaponAdjustment;
     } else {
       console.error(

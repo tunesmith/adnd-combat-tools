@@ -103,6 +103,10 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     });
   };
 
+  const getDerivedArmorClass = (armorTypeId: number): number =>
+    expandedArmorTypes.filter((armorProps) => armorProps.key === armorTypeId)[0]
+      ?.armorType || 10;
+
   const handleCreatureClass = (option: SingleValue<CreatureOption>) => {
     const newCreatureClass = option?.value;
     if (newCreatureClass) {
@@ -123,8 +127,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         const newArmorType = newArmorTypeOptions[0].value;
         setArmorType(newArmorType);
 
-        const newArmorClass = newArmorType ? newArmorType : armorClass;
-        setArmorClass(newArmorClass);
+        setArmorClass(getDerivedArmorClass(newArmorType));
 
         const newWeaponOptions = getWeaponOptions(newCreatureClass);
         setWeaponOptions(newWeaponOptions);
@@ -191,13 +194,8 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     if (newArmorType) {
       setArmorType(newArmorType);
       // When picking a new armor type, set the armor class accordingly... this may prove bothersome though
-      const derivedArmorClass =
-        expandedArmorTypes.filter(
-          (armorProps) => armorProps.key === newArmorType
-        )[0]?.armorType || 10;
-      if (newArmorType) {
-        setArmorClass(derivedArmorClass);
-      }
+      const derivedArmorClass = getDerivedArmorClass(newArmorType);
+      setArmorClass(derivedArmorClass);
       dispatch({
         type: CHANGE_CREATURE,
         row,
@@ -208,7 +206,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
           class: creatureClass,
           level: level,
           armorType: newArmorType,
-          armorClass: newArmorType ? derivedArmorClass : armorClass,
+          armorClass: derivedArmorClass,
           weapon: weapon,
         },
       });
