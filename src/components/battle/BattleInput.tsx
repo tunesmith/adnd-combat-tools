@@ -2,7 +2,7 @@ import {
   attackerClassOptions,
   getGeneralClass,
 } from "../../tables/attackerClass";
-import { Dispatch, useRef, useState } from "react";
+import React, { FocusEvent, Dispatch, useRef, useState } from "react";
 import { getTableByCombatClass } from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
 import {
@@ -16,6 +16,14 @@ import {
   DELETE_COLUMN,
   DELETE_ROW,
 } from "../../helpers/BattleMessage";
+import { SingleValue } from "react-select";
+import {
+  ArmorClassOption,
+  ArmorTypeOption,
+  CreatureOption,
+  LevelOption,
+  WeaponOption,
+} from "./types";
 
 interface BattleInputStructure {
   type: number;
@@ -52,7 +60,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const [creatureClass, setCreatureClass] = useState<string>(creature.class);
   const prevCreatureClass = useRef<string>(creature.class);
   const [level, setLevel] = useState<string>(creature.level);
-  const [levelOptions, setLevelOptions] = useState(
+  const [levelOptions, setLevelOptions] = useState<LevelOption[]>(
     getTableByCombatClass(
       creature.class === "monster" ? "monster" : getGeneralClass(creature.class)
     )
@@ -65,7 +73,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     getExpandedArmorOptionsByClass(creatureClass)
   );
   const [armorType, setArmorType] = useState<number>(creature.armorType);
-  const armorClassOptions = useRef(
+  const armorClassOptions = useRef<ArmorClassOption[]>(
     [...Array(21)].map((_, i) => {
       return { value: 10 - i, label: `AC ${10 - i}` };
     })
@@ -75,9 +83,9 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   /**
    * Modal logic
    */
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<boolean>(false);
 
-  const handleCreatureName = (event) => {
+  const handleCreatureName = (event: FocusEvent<HTMLInputElement>) => {
     setCreatureName(event.target.value);
     dispatch({
       type: CHANGE_CREATURE,
@@ -95,41 +103,70 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     });
   };
 
-  const handleCreatureClass = (event) => {
-    const newCreatureClass = event.value;
-    if (newCreatureClass !== prevCreatureClass.current) {
-      setCreatureClass(newCreatureClass);
-      const newLevelOptions = getTableByCombatClass(
-        newCreatureClass === "monster"
-          ? "monster"
-          : getGeneralClass(newCreatureClass)
-      );
-      setLevelOptions(newLevelOptions);
-
-      setLevel("1");
-
-      const newArmorTypeOptions =
-        getExpandedArmorOptionsByClass(newCreatureClass);
-      setArmorTypeOptions(newArmorTypeOptions);
-      const newArmorType = newArmorTypeOptions[0].value;
-      setArmorType(newArmorType);
-
-      const newArmorClass = newArmorType ? newArmorType : armorClass;
-      setArmorClass(newArmorClass);
-
-      const newWeaponOptions = getWeaponOptions(newCreatureClass);
-      setWeaponOptions(newWeaponOptions);
-      const newWeapon = newWeaponOptions[0]?.value;
-      if (newWeapon) {
-        setWeapon(newWeapon);
-      } else {
-        console.error(
-          `Unable to load new weapon, using previous weapon: ${weapon}`
+  const handleCreatureClass = (option: SingleValue<CreatureOption>) => {
+    const newCreatureClass = option?.value;
+    if (newCreatureClass) {
+      if (newCreatureClass !== prevCreatureClass.current) {
+        setCreatureClass(newCreatureClass);
+        const newLevelOptions = getTableByCombatClass(
+          newCreatureClass === "monster"
+            ? "monster"
+            : getGeneralClass(newCreatureClass)
         );
+        setLevelOptions(newLevelOptions);
+
+        setLevel("1");
+
+        const newArmorTypeOptions =
+          getExpandedArmorOptionsByClass(newCreatureClass);
+        setArmorTypeOptions(newArmorTypeOptions);
+        const newArmorType = newArmorTypeOptions[0].value;
+        setArmorType(newArmorType);
+
+        const newArmorClass = newArmorType ? newArmorType : armorClass;
+        setArmorClass(newArmorClass);
+
+        const newWeaponOptions = getWeaponOptions(newCreatureClass);
+        setWeaponOptions(newWeaponOptions);
+        const newWeapon = newWeaponOptions[0]?.value;
+        if (newWeapon) {
+          setWeapon(newWeapon);
+        } else {
+          console.error(
+            `Unable to load new weapon, using previous weapon: ${weapon}`
+          );
+        }
+
+        prevCreatureClass.current = newCreatureClass;
+
+        dispatch({
+          type: CHANGE_CREATURE,
+          row,
+          col,
+          creature: {
+            key: creature.key,
+            name: creatureName,
+            class: newCreatureClass,
+            level: "1",
+            armorType: newArmorTypeOptions[0].value,
+            armorClass: newArmorTypeOptions[0].value
+              ? newArmorTypeOptions[0].value
+              : armorClass,
+            weapon: newWeapon || weapon,
+          },
+        });
       }
+    } else {
+      console.error("Could not switch creature class");
+    }
+  };
 
-      prevCreatureClass.current = newCreatureClass;
-
+  const handleLevel = (
+    option: SingleValue<{ label: string; value: string }>
+  ) => {
+    const newLevel = option?.value;
+    if (newLevel) {
+      setLevel(newLevel);
       dispatch({
         type: CHANGE_CREATURE,
         row,
@@ -137,96 +174,93 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         creature: {
           key: creature.key,
           name: creatureName,
-          class: newCreatureClass,
-          level: "1",
-          armorType: newArmorTypeOptions[0].value,
-          armorClass: newArmorTypeOptions[0].value
-            ? newArmorTypeOptions[0].value
-            : armorClass,
-          weapon: newWeapon || weapon,
+          class: creatureClass,
+          level: newLevel,
+          armorType: armorType,
+          armorClass: armorClass,
+          weapon: weapon,
         },
       });
+    } else {
+      console.error("could not switch to new level");
     }
   };
 
-  const handleLevel = (event) => {
-    setLevel(event.value);
-    dispatch({
-      type: CHANGE_CREATURE,
-      row,
-      col,
-      creature: {
-        key: creature.key,
-        name: creatureName,
-        class: creatureClass,
-        level: event.value,
-        armorType: armorType,
-        armorClass: armorClass,
-        weapon: weapon,
-      },
-    });
-  };
-
-  const handleArmorType = (event) => {
-    setArmorType(event.value);
-    // When picking a new armor type, set the armor class accordingly... this may prove bothersome though
-    const derivedArmorClass =
-      expandedArmorTypes.filter(
-        (armorProps) => armorProps.key === event.value
-      )[0]?.armorType || 10;
-    if (event.value) {
-      setArmorClass(derivedArmorClass);
+  const handleArmorType = (option: SingleValue<ArmorTypeOption>) => {
+    const newArmorType = option?.value;
+    if (newArmorType) {
+      setArmorType(newArmorType);
+      // When picking a new armor type, set the armor class accordingly... this may prove bothersome though
+      const derivedArmorClass =
+        expandedArmorTypes.filter(
+          (armorProps) => armorProps.key === newArmorType
+        )[0]?.armorType || 10;
+      if (newArmorType) {
+        setArmorClass(derivedArmorClass);
+      }
+      dispatch({
+        type: CHANGE_CREATURE,
+        row,
+        col,
+        creature: {
+          key: creature.key,
+          name: creatureName,
+          class: creatureClass,
+          level: level,
+          armorType: newArmorType,
+          armorClass: newArmorType ? derivedArmorClass : armorClass,
+          weapon: weapon,
+        },
+      });
+    } else {
+      console.error("Could not switch to new armor type");
     }
-    dispatch({
-      type: CHANGE_CREATURE,
-      row,
-      col,
-      creature: {
-        key: creature.key,
-        name: creatureName,
-        class: creatureClass,
-        level: level,
-        armorType: event.value,
-        armorClass: event.value ? derivedArmorClass : armorClass,
-        weapon: weapon,
-      },
-    });
   };
 
-  const handleArmorClass = (event) => {
-    setArmorClass(event.value);
-    dispatch({
-      type: CHANGE_CREATURE,
-      row,
-      col,
-      creature: {
-        key: creature.key,
-        name: creatureName,
-        class: creatureClass,
-        level: level,
-        armorType: armorType,
-        armorClass: event.value,
-        weapon: weapon,
-      },
-    });
+  const handleArmorClass = (option: SingleValue<ArmorClassOption>) => {
+    const newArmorClass = option?.value;
+    if (newArmorClass) {
+      setArmorClass(newArmorClass);
+      dispatch({
+        type: CHANGE_CREATURE,
+        row,
+        col,
+        creature: {
+          key: creature.key,
+          name: creatureName,
+          class: creatureClass,
+          level: level,
+          armorType: armorType,
+          armorClass: newArmorClass,
+          weapon: weapon,
+        },
+      });
+    } else {
+      console.error("Could not switch to new armor class");
+    }
   };
 
-  const handleWeapon = (event) => {
-    setWeapon(event.value);
-    dispatch({
-      type: CHANGE_CREATURE,
-      row,
-      col,
-      creature: {
-        key: creature.key,
-        name: creatureName,
-        class: creatureClass,
-        level: level,
-        armorType: armorType,
-        armorClass: armorClass,
-        weapon: event.value,
-      },
-    });
+  const handleWeapon = (option: SingleValue<WeaponOption>) => {
+    const newWeapon = option?.value;
+    if (newWeapon) {
+      setWeapon(newWeapon);
+      dispatch({
+        type: CHANGE_CREATURE,
+        row,
+        col,
+        creature: {
+          key: creature.key,
+          name: creatureName,
+          class: creatureClass,
+          level: level,
+          armorType: armorType,
+          armorClass: armorClass,
+          weapon: newWeapon,
+        },
+      });
+    } else {
+      console.error(`Could not select new weapon`);
+    }
   };
 
   return (

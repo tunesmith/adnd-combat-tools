@@ -1,3 +1,5 @@
+import { LevelOption } from "../components/battle/types";
+
 export const monsterLevels = new Map([
   ["up to 1-1", 21],
   ["1-1", 20],
@@ -130,9 +132,7 @@ const getClassLevels = (
   });
 };
 
-export const getTableByCombatClass = (
-  combatClass: string
-): { value: string; label: string }[] => {
+export const getTableByCombatClass = (combatClass: string): LevelOption[] => {
   switch (combatClass) {
     case "fighter":
       return getClassLevels(fighterLevels);

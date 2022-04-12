@@ -1,8 +1,16 @@
 import { createPortal } from "react-dom";
 import styles from "./battleModal.module.css";
-import Select from "react-select";
+import Select, { SingleValue } from "react-select";
 import customStyles from "../../helpers/selectCustomStyles";
 import { attackerClassOptions } from "../../tables/attackerClass";
+import { Dispatch, FocusEvent, SetStateAction, MutableRefObject } from "react";
+import {
+  ArmorClassOption,
+  ArmorTypeOption,
+  CreatureOption,
+  LevelOption,
+  WeaponOption,
+} from "./types";
 
 const BattleModal = ({
   setOpen,
@@ -23,6 +31,25 @@ const BattleModal = ({
   weapon,
   handleWeapon,
   row,
+}: {
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  creatureName: string;
+  handleCreatureName: (e: FocusEvent<HTMLInputElement>) => void;
+  creatureClass: string;
+  handleCreatureClass: (option: SingleValue<CreatureOption>) => void;
+  levelOptions: LevelOption[];
+  level: string;
+  handleLevel: (option: SingleValue<LevelOption>) => void;
+  armorTypeOptions: ArmorTypeOption[];
+  armorType: number;
+  handleArmorType: (option: SingleValue<ArmorTypeOption>) => void;
+  armorClassOptions: MutableRefObject<ArmorClassOption[]>;
+  armorClass: number;
+  handleArmorClass: (option: SingleValue<ArmorClassOption>) => void;
+  weaponOptions: WeaponOption[];
+  weapon: number;
+  handleWeapon: (option: SingleValue<WeaponOption>) => void;
+  row: number;
 }) => {
   function close() {
     setOpen(false);
