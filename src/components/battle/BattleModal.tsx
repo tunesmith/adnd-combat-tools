@@ -6,7 +6,7 @@ import { attackerClassOptions } from "../../tables/attackerClass";
 import { Dispatch, FocusEvent, SetStateAction, MutableRefObject } from "react";
 import {
   ArmorClassOption,
-  ArmorTypeOption,
+  ExpandedArmorTypeOption,
   CreatureOption,
   LevelOption,
   WeaponOption,
@@ -40,9 +40,9 @@ const BattleModal = ({
   levelOptions: LevelOption[];
   level: string;
   handleLevel: (option: SingleValue<LevelOption>) => void;
-  armorTypeOptions: ArmorTypeOption[];
+  armorTypeOptions: ExpandedArmorTypeOption[];
   armorType: number;
-  handleArmorType: (option: SingleValue<ArmorTypeOption>) => void;
+  handleArmorType: (option: SingleValue<ExpandedArmorTypeOption>) => void;
   armorClassOptions: MutableRefObject<ArmorClassOption[]>;
   armorClass: number;
   handleArmorClass: (option: SingleValue<ArmorClassOption>) => void;

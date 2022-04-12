@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Select, { SingleValue } from "react-select";
 import {
   attackerClassOptions,
@@ -10,6 +10,11 @@ import { getArmorOptions } from "../../tables/armorType";
 import styles from "./calculator.module.css";
 import customStyles from "../../helpers/selectCustomStyles";
 import getToHit from "../../helpers/getToHit";
+import {
+  ArmorTypeOption,
+  LevelOption,
+  WeaponOption,
+} from "../../components/battle/types";
 
 const Calculator = () => {
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
@@ -77,18 +82,31 @@ const Calculator = () => {
     }
   };
 
-  const handleArmorType = (event) => {
-    setTargetArmorType(event.value);
-    if (event.value.trim()) {
-      setTargetArmorClass(parseInt(event.value, 10));
+  const handleArmorType = (option: SingleValue<ArmorTypeOption>) => {
+    const newArmorType = option?.value;
+    if (newArmorType) {
+      setTargetArmorType(newArmorType);
+      if (newArmorType.trim()) {
+        setTargetArmorClass(parseInt(newArmorType, 10));
+      }
     }
   };
-  const handleAttackerLevel = (event) => {
-    setAttackerLevel(event.value);
+  const handleAttackerLevel = (option: SingleValue<LevelOption>) => {
+    const newLevel = option?.value;
+    if (newLevel) {
+      setAttackerLevel(newLevel);
+    } else {
+      console.error("Could not set new level.");
+    }
   };
 
-  const handleAttackerWeapon = (event) => {
-    setAttackerWeapon(event.value);
+  const handleAttackerWeapon = (option: SingleValue<WeaponOption>) => {
+    const newWeapon = option?.value;
+    if (newWeapon) {
+      setAttackerWeapon(newWeapon);
+    } else {
+      console.error("Could not set new weapon.");
+    }
   };
 
   useEffect(() => {
@@ -109,7 +127,7 @@ const Calculator = () => {
     attackerWeapon,
   ]);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   };
 

@@ -4,6 +4,8 @@
 // const assassinArmor = ["10", "9", "8", "7"];
 // const bardArmor = ["10", "8", "5"];
 
+import { ExpandedArmorTypeOption } from "../components/battle/types";
+
 const expandedDruidArmor = [2, 3, 4, 6];
 const expandedMagicUserArmor = [2];
 const expandedThiefArmor = [2, 4];
@@ -131,30 +133,61 @@ const filterExpandedArmorTypes = (
   restrictions: number[]
 ) => expandedArmorTypes.filter((props) => restrictions.includes(props.key));
 
-const expandedArmorTypeClasses = {
-  monster: () => expandedArmorTypes,
-  cleric: () => expandedArmorTypes.slice(1),
-  druid: () => filterExpandedArmorTypes(expandedArmorTypes, expandedDruidArmor),
-  fighter: () => expandedArmorTypes.slice(1),
-  paladin: () => expandedArmorTypes.slice(1),
-  ranger: () => expandedArmorTypes.slice(1),
-  magicuser: () =>
-    filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
-  illusionist: () =>
-    filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
-  thief: () => filterExpandedArmorTypes(expandedArmorTypes, expandedThiefArmor),
-  assassin: () =>
-    filterExpandedArmorTypes(expandedArmorTypes, expandedAssassinArmor),
-  monk: () =>
-    filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
-  bard: () => filterExpandedArmorTypes(expandedArmorTypes, expandedBardArmor),
-};
+const expandedArmorTypeClasses = new Map<string, () => ExpandedArmorProps[]>([
+  ["monster", () => expandedArmorTypes],
+  ["cleric", () => expandedArmorTypes.slice(1)],
+  [
+    "druid",
+    () => filterExpandedArmorTypes(expandedArmorTypes, expandedDruidArmor),
+  ],
+  ["fighter", () => expandedArmorTypes.slice(1)],
+  ["paladin", () => expandedArmorTypes.slice(1)],
+  ["ranger", () => expandedArmorTypes.slice(1)],
+  [
+    "magicuser",
+    () => filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
+  ],
+  [
+    "illusionist",
+    () => filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
+  ],
+  [
+    "thief",
+    () => filterExpandedArmorTypes(expandedArmorTypes, expandedThiefArmor),
+  ],
+  [
+    "assassin",
+    () => filterExpandedArmorTypes(expandedArmorTypes, expandedAssassinArmor),
+  ],
+  [
+    "monk",
+    () => filterExpandedArmorTypes(expandedArmorTypes, expandedMagicUserArmor),
+  ],
+  [
+    "bard",
+    () => filterExpandedArmorTypes(expandedArmorTypes, expandedBardArmor),
+  ],
+]);
 
-export const getExpandedArmorOptionsByClass = (attackerClass: string) =>
-  expandedArmorTypeClasses[attackerClass]().map((prop: ExpandedArmorProps) => ({
-    value: prop.key,
-    label: prop.armorDescription,
-  }));
+export const getExpandedArmorOptionsByClass = (
+  attackerClass: string
+): ExpandedArmorTypeOption[] => {
+  const armorTypeProps = expandedArmorTypeClasses.get(attackerClass);
+  if (armorTypeProps) {
+    return armorTypeProps().map((prop: ExpandedArmorProps) => ({
+      value: prop.key,
+      label: prop.armorDescription,
+    }));
+  } else {
+    console.error(
+      `Couldn't return armor types for attacker class ${attackerClass}; returning all armor types`
+    );
+    return expandedArmorTypes.map((prop: ExpandedArmorProps) => ({
+      value: prop.key,
+      label: prop.armorDescription,
+    }));
+  }
+};
 
 const armorTypes = {
   " ": "Natural Armor (Monster)",

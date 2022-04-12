@@ -1,3 +1,5 @@
+import { WeaponOption } from "../components/battle/types";
+
 const clericWeapons = [13, 14, 22, 23, 24, 31, 32, 33, 39, 40, 53];
 // const clericWeapons = [
 //   "Club (Held)",
@@ -839,7 +841,7 @@ const weaponClasses = new Map<string, Map<number, WeaponInfo>>([
 
 const constructOptions = (
   weaponOptions: Map<number, WeaponInfo>
-): { value: number; label: string }[] =>
+): WeaponOption[] =>
   Array.from(weaponOptions).map(
     ([weaponId, weaponInfo]: [number, WeaponInfo]) => ({
       value: weaponId,
@@ -847,9 +849,7 @@ const constructOptions = (
     })
   );
 
-export const getWeaponOptions = (
-  attackerClass: string
-): { value: number; label: string }[] => {
+export const getWeaponOptions = (attackerClass: string): WeaponOption[] => {
   const classWeapons = weaponClasses.get(attackerClass);
   if (classWeapons) {
     return constructOptions(classWeapons);

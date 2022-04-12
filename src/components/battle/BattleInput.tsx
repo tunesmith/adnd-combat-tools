@@ -19,7 +19,7 @@ import {
 import { SingleValue } from "react-select";
 import {
   ArmorClassOption,
-  ArmorTypeOption,
+  ExpandedArmorTypeOption,
   CreatureOption,
   LevelOption,
   WeaponOption,
@@ -65,13 +65,13 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       creature.class === "monster" ? "monster" : getGeneralClass(creature.class)
     )
   );
-  const [weaponOptions, setWeaponOptions] = useState(
+  const [weaponOptions, setWeaponOptions] = useState<WeaponOption[]>(
     getWeaponOptions(creature.class)
   );
   const [weapon, setWeapon] = useState<number>(creature.weapon);
-  const [armorTypeOptions, setArmorTypeOptions] = useState(
-    getExpandedArmorOptionsByClass(creatureClass)
-  );
+  const [armorTypeOptions, setArmorTypeOptions] = useState<
+    ExpandedArmorTypeOption[]
+  >(getExpandedArmorOptionsByClass(creatureClass));
   const [armorType, setArmorType] = useState<number>(creature.armorType);
   const armorClassOptions = useRef<ArmorClassOption[]>(
     [...Array(21)].map((_, i) => {
@@ -124,10 +124,15 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         const newArmorTypeOptions =
           getExpandedArmorOptionsByClass(newCreatureClass);
         setArmorTypeOptions(newArmorTypeOptions);
-        const newArmorType = newArmorTypeOptions[0].value;
-        setArmorType(newArmorType);
-
-        setArmorClass(getDerivedArmorClass(newArmorType));
+        const newArmorType = newArmorTypeOptions[0]?.value;
+        if (newArmorType) {
+          setArmorType(newArmorType);
+          setArmorClass(getDerivedArmorClass(newArmorType));
+        } else {
+          console.error(
+            `Unable to set new armor type or armor class for new creature class: ${newCreatureClass}`
+          );
+        }
 
         const newWeaponOptions = getWeaponOptions(newCreatureClass);
         setWeaponOptions(newWeaponOptions);
@@ -151,9 +156,9 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             name: creatureName,
             class: newCreatureClass,
             level: "1",
-            armorType: newArmorTypeOptions[0].value,
-            armorClass: newArmorTypeOptions[0].value
-              ? newArmorTypeOptions[0].value
+            armorType: newArmorType || armorType,
+            armorClass: newArmorType
+              ? getDerivedArmorClass(newArmorType)
               : armorClass,
             weapon: newWeapon || weapon,
           },
@@ -189,7 +194,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     }
   };
 
-  const handleArmorType = (option: SingleValue<ArmorTypeOption>) => {
+  const handleArmorType = (option: SingleValue<ExpandedArmorTypeOption>) => {
     const newArmorType = option?.value;
     if (newArmorType) {
       setArmorType(newArmorType);
@@ -261,6 +266,14 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     }
   };
 
+  const armorLabel = armorTypeOptions.filter(
+    (option: ExpandedArmorTypeOption) => option.value === armorType
+  )[0]?.label;
+
+  if (!armorLabel) {
+    console.error(`Could not find armor label for armor type: ${armorType}`);
+  }
+
   return (
     <>
       <div className={styles["container"]}>
@@ -302,13 +315,9 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             : {creatureClass === "monster" ? <>HD </> : <>L</>}
             {level}
             <br />
-            {armorType > 1 && (
+            {armorType > 1 && armorLabel && (
               <>
-                {
-                  armorTypeOptions.filter(
-                    (option: ArmorTypeOption) => option.value === armorType
-                  )[0].label
-                }
+                {armorLabel}
                 <br />
               </>
             )}
