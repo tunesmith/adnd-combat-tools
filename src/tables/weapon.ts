@@ -1,4 +1,4 @@
-import { WeaponOption } from "../components/battle/types";
+import { WeaponOption } from "../types/option";
 
 const clericWeapons = [13, 14, 22, 23, 24, 31, 32, 33, 39, 40, 53];
 // const clericWeapons = [

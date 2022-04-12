@@ -1,4 +1,7 @@
-const customStyles = {
+const customStyles: {
+  control: (provided: any) => any;
+  option: (provided: any) => any;
+} = {
   control: (provided) => ({
     ...provided,
     backgroundColor: "#F0EFDD",

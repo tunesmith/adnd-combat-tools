@@ -10,7 +10,7 @@ import {
   CreatureOption,
   LevelOption,
   WeaponOption,
-} from "./types";
+} from "../../types/option";
 
 const BattleModal = ({
   setOpen,

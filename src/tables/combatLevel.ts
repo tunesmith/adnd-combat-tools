@@ -1,4 +1,4 @@
-import { LevelOption } from "../components/battle/types";
+import { LevelOption } from "../types/option";
 
 export const monsterLevels = new Map([
   ["up to 1-1", 21],

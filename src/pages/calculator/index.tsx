@@ -10,11 +10,7 @@ import { getArmorOptions } from "../../tables/armorType";
 import styles from "./calculator.module.css";
 import customStyles from "../../helpers/selectCustomStyles";
 import getToHit from "../../helpers/getToHit";
-import {
-  ArmorTypeOption,
-  LevelOption,
-  WeaponOption,
-} from "../../components/battle/types";
+import { ArmorTypeOption, LevelOption, WeaponOption } from "../../types/option";
 
 const Calculator = () => {
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);

@@ -23,7 +23,7 @@ import {
   CreatureOption,
   LevelOption,
   WeaponOption,
-} from "./types";
+} from "../../types/option";
 
 interface BattleInputStructure {
   type: number;
