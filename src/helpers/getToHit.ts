@@ -1,16 +1,16 @@
 import { getThac, getThaco } from "../tables/combatLevel";
-import { classMap } from "../tables/attackerClass";
+import { getGeneralClass } from "../tables/attackerClass";
 import { getWeaponAdjustment } from "../tables/weapon";
 
 const getToHit = (
-  attackerClass,
-  attackerLevel,
-  targetArmorType,
-  targetArmorClass,
-  attackerWeapon
+  attackerClass: string,
+  attackerLevel: string,
+  targetArmorType: number | null,
+  targetArmorClass: number,
+  attackerWeapon: number
 ): number => {
   const thaco = getThaco(
-    attackerClass === "monster" ? "monster" : classMap[attackerClass],
+    attackerClass === "monster" ? "monster" : getGeneralClass(attackerClass),
     attackerLevel
   );
 

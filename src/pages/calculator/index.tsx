@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import Select, { SingleValue } from "react-select";
-import { attackerClassOptions, classMap } from "../../tables/attackerClass";
+import {
+  attackerClassOptions,
+  getGeneralClass,
+} from "../../tables/attackerClass";
 import { getTableByCombatClass } from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptions } from "../../tables/armorType";
@@ -46,7 +49,9 @@ const Calculator = () => {
     if (newAttackerClass && newAttackerClass !== prevAttackerClass.current) {
       setAttackerClass(newAttackerClass);
       const newAttackerLevelOptions = getTableByCombatClass(
-        newAttackerClass === "monster" ? "monster" : classMap[newAttackerClass]
+        newAttackerClass === "monster"
+          ? "monster"
+          : getGeneralClass(newAttackerClass)
       );
       setAttackerLevelOptions(newAttackerLevelOptions);
       setAttackerLevel("1");
@@ -87,7 +92,7 @@ const Calculator = () => {
       getToHit(
         attackerClass,
         attackerLevel,
-        targetArmorType.trim(),
+        targetArmorType.trim() ? parseInt(targetArmorType, 10) : null,
         targetArmorClass,
         attackerWeapon
       )

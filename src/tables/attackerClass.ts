@@ -13,7 +13,7 @@ const attackerClass = {
   bard: "Bard",
 };
 
-export const classMap = {
+const classMap = {
   cleric: "cleric",
   druid: "cleric",
   fighter: "fighter",
@@ -25,6 +25,10 @@ export const classMap = {
   assassin: "thief",
   monk: "cleric",
   bard: "fighter",
+};
+
+export const getGeneralClass = (className: string): string => {
+  return classMap[className];
 };
 
 export const attackerClassOptions = Object.entries(attackerClass).map(

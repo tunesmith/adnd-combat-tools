@@ -1,16 +1,16 @@
 export const monsterLevels = new Map([
-  ["up to 1-1", "21"],
-  ["1-1", "20"],
-  ["1", "19"],
-  ["1+", "18"],
-  ["2-3+", "16"],
-  ["4-5+", "15"],
-  ["6-7+", "13"],
-  ["8-9+", "12"],
-  ["10-11+", "10"],
-  ["12-13+", "9"],
-  ["14-15+", "8"],
-  ["16+", "7"],
+  ["up to 1-1", 21],
+  ["1-1", 20],
+  ["1", 19],
+  ["1+", 18],
+  ["2-3+", 16],
+  ["4-5+", 15],
+  ["6-7+", 13],
+  ["8-9+", 12],
+  ["10-11+", 10],
+  ["12-13+", 9],
+  ["14-15+", 8],
+  ["16+", 7],
 ]);
 
 interface LevelMap {
@@ -61,7 +61,7 @@ export const magicUserLevels: LevelMap = {
  * @param levelMap
  * @param targetLevel
  */
-const getLevelThaco = (levelMap: LevelMap, targetLevel: string) =>
+const getLevelThaco = (levelMap: LevelMap, targetLevel: string): number =>
   Object.entries(levelMap).reduce<number>(
     (previous, [level, thaco]) =>
       parseInt(level, 10) <= parseInt(targetLevel, 10) ? thaco : previous,
@@ -74,7 +74,10 @@ const getLevelThaco = (levelMap: LevelMap, targetLevel: string) =>
  * @param attackerClass
  * @param attackerLevel
  */
-export const getThaco = (attackerClass: string, attackerLevel: string) => {
+export const getThaco = (
+  attackerClass: string,
+  attackerLevel: string
+): number => {
   switch (attackerClass) {
     case "fighter":
       return getLevelThaco(fighterLevels, attackerLevel);
@@ -84,8 +87,18 @@ export const getThaco = (attackerClass: string, attackerLevel: string) => {
       return getLevelThaco(magicUserLevels, attackerLevel);
     case "thief":
       return getLevelThaco(thiefLevels, attackerLevel);
-    default: // case "monster"
-      return monsterLevels.get(attackerLevel);
+    default: {
+      // case "monster"
+      const monsterThaco = monsterLevels.get(attackerLevel);
+      if (monsterThaco) {
+        return monsterThaco;
+      } else {
+        console.error(
+          `Unable to get monster thaco for level: ${attackerLevel}, returning thaco 19 for HD1`
+        );
+        return 19;
+      }
+    }
   }
 };
 /**
@@ -94,7 +107,7 @@ export const getThaco = (attackerClass: string, attackerLevel: string) => {
  * @param ac
  * @param thaco
  */
-export const getThac = (ac, thaco) => {
+export const getThac = (ac: number, thaco: number) => {
   const simpleThac = thaco - ac;
   if (simpleThac >= 20) {
     return Math.max(20, simpleThac - 5);

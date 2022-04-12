@@ -1,4 +1,7 @@
-import { attackerClassOptions, classMap } from "../../tables/attackerClass";
+import {
+  attackerClassOptions,
+  getGeneralClass,
+} from "../../tables/attackerClass";
 import { Dispatch, useRef, useState } from "react";
 import { getTableByCombatClass } from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
@@ -51,7 +54,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   const [level, setLevel] = useState<string>(creature.level);
   const [levelOptions, setLevelOptions] = useState(
     getTableByCombatClass(
-      creature.class === "monster" ? "monster" : classMap[creature.class]
+      creature.class === "monster" ? "monster" : getGeneralClass(creature.class)
     )
   );
   const [weaponOptions, setWeaponOptions] = useState(
@@ -97,7 +100,9 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     if (newCreatureClass !== prevCreatureClass.current) {
       setCreatureClass(newCreatureClass);
       const newLevelOptions = getTableByCombatClass(
-        newCreatureClass === "monster" ? "monster" : classMap[newCreatureClass]
+        newCreatureClass === "monster"
+          ? "monster"
+          : getGeneralClass(newCreatureClass)
       );
       setLevelOptions(newLevelOptions);
 
