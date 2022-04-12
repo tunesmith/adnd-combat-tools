@@ -306,7 +306,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
               <>
                 {
                   armorTypeOptions.filter(
-                    (option) => option.value === armorType
+                    (option: ArmorTypeOption) => option.value === armorType
                   )[0].label
                 }
                 <br />

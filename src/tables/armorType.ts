@@ -1,8 +1,8 @@
-const druidArmor = ["10", "9", "8", "7"];
-const magicUserArmor = ["10"];
-const thiefArmor = ["10", "8"];
-const assassinArmor = ["10", "9", "8", "7"];
-const bardArmor = ["10", "8", "5"];
+// const druidArmor = ["10", "9", "8", "7"];
+// const magicUserArmor = ["10"];
+// const thiefArmor = ["10", "8"];
+// const assassinArmor = ["10", "9", "8", "7"];
+// const bardArmor = ["10", "8", "5"];
 
 const expandedDruidArmor = [2, 3, 4, 6];
 const expandedMagicUserArmor = [2];
@@ -169,30 +169,30 @@ const armorTypes = {
   2: "AT 2 - Plate mail + shield",
 };
 
-const filterArmorTypes = (armorTypes, restrictions: string[]) =>
-  Object.entries(armorTypes).filter((option) =>
-    restrictions.includes(option[0])
-  );
+// const filterArmorTypes = (armorTypes, restrictions: string[]) =>
+//   Object.entries(armorTypes).filter((option) =>
+//     restrictions.includes(option[0])
+//   );
 
-const armorTypeClasses = {
-  monster: () => Object.entries(armorTypes),
-  cleric: () => Object.entries(armorTypes).slice(0, -1),
-  druid: () => filterArmorTypes(armorTypes, druidArmor),
-  fighter: () => Object.entries(armorTypes).slice(0, -1),
-  paladin: () => Object.entries(armorTypes).slice(0, -1),
-  ranger: () => Object.entries(armorTypes).slice(0, -1),
-  magicuser: () => filterArmorTypes(armorTypes, magicUserArmor),
-  illusionist: () => filterArmorTypes(armorTypes, magicUserArmor),
-  thief: () => filterArmorTypes(armorTypes, thiefArmor),
-  assassin: () => filterArmorTypes(armorTypes, assassinArmor),
-  monk: () => filterArmorTypes(armorTypes, magicUserArmor),
-  bard: () => filterArmorTypes(armorTypes, bardArmor),
-};
-
-export const getArmorOptionsByClass = (attackerClass: string) =>
-  armorTypeClasses[attackerClass]()
-    .reverse()
-    .map(([value, label]: [number | string, string]) => ({ value, label }));
+// const armorTypeClasses = {
+//   monster: () => Object.entries(armorTypes),
+//   cleric: () => Object.entries(armorTypes).slice(0, -1),
+//   druid: () => filterArmorTypes(armorTypes, druidArmor),
+//   fighter: () => Object.entries(armorTypes).slice(0, -1),
+//   paladin: () => Object.entries(armorTypes).slice(0, -1),
+//   ranger: () => Object.entries(armorTypes).slice(0, -1),
+//   magicuser: () => filterArmorTypes(armorTypes, magicUserArmor),
+//   illusionist: () => filterArmorTypes(armorTypes, magicUserArmor),
+//   thief: () => filterArmorTypes(armorTypes, thiefArmor),
+//   assassin: () => filterArmorTypes(armorTypes, assassinArmor),
+//   monk: () => filterArmorTypes(armorTypes, magicUserArmor),
+//   bard: () => filterArmorTypes(armorTypes, bardArmor),
+// };
+//
+// export const getArmorOptionsByClass = (attackerClass: string) =>
+//   armorTypeClasses[attackerClass]()
+//     .reverse()
+//     .map(([value, label]: [number | string, string]) => ({ value, label }));
 
 export const getArmorOptions = Object.entries(armorTypes)
   .reverse()
