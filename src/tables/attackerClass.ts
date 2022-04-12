@@ -13,22 +13,30 @@ const attackerClass = {
   bard: "Bard",
 };
 
-const classMap = {
-  cleric: "cleric",
-  druid: "cleric",
-  fighter: "fighter",
-  ranger: "fighter",
-  paladin: "fighter",
-  magicuser: "magicuser",
-  illusionist: "magicuser",
-  thief: "thief",
-  assassin: "thief",
-  monk: "cleric",
-  bard: "fighter",
-};
+const classMap = new Map<string, string>([
+  ["cleric", "cleric"],
+  ["druid", "cleric"],
+  ["fighter", "fighter"],
+  ["ranger", "fighter"],
+  ["paladin", "fighter"],
+  ["magicuser", "magicuser"],
+  ["illusionist", "magicuser"],
+  ["thief", "thief"],
+  ["assassin", "thief"],
+  ["monk", "cleric"],
+  ["bard", "fighter"],
+]);
 
 export const getGeneralClass = (className: string): string => {
-  return classMap[className];
+  const generalClass = classMap.get(className);
+  if (generalClass) {
+    return generalClass;
+  } else {
+    console.error(
+      `Could not get general class for ${className}, returning 'fighter'`
+    );
+    return "fighter";
+  }
 };
 
 export const attackerClassOptions = Object.entries(attackerClass).map(
