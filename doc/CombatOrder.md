@@ -15,6 +15,9 @@ should always be considered simultaneous. I believe they are ordered.
 We do not concern ourselves with *outcome* of events - just when they 
 activate.
 
+It would be fun to display these like the recipe system. Each checkbox
+list would display the actions that could be run in any order.
+
 ## Inputs
 
 Distance: This is relevant for charging and closing. At this point,
