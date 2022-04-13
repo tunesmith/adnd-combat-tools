@@ -55,4 +55,5 @@ export type CreatureV3 = {
 export type StateV3 = (EmptyObject | CreatureV3)[][];
 
 export type Creature = CreatureV3;
-export type State = StateV3;
+export type StateRow = (EmptyObject | Creature)[];
+export type State = StateRow[];

@@ -18,7 +18,7 @@ import { Column, useTable } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
 import getConfig from "next/config";
-import { Creature, State } from "../../types/creature";
+import { Creature, State, StateRow } from "../../types/creature";
 
 /**
  * TODO:
@@ -52,7 +52,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
     return idCounter.current;
   };
 
-  const reducer = (thisState, action) => {
+  const reducer = (thisState: State, action) => {
     switch (action.type) {
       case DELETE_COLUMN:
         return thisState.map((row) =>
@@ -67,7 +67,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
           )
         );
       case ADD_ROW: {
-        const innerLength = thisState[0].length;
+        const innerLength = thisState[0]?.length || 0;
         const freshRow = [{ ...initialCreature, key: incCounter() }].concat(
           innerLength > 1 ? Array(innerLength - 1).fill({}) : []
         );
@@ -138,12 +138,14 @@ const Battle = ({ rememberedState }: BattleProps) => {
   }, [NODE_ENV, encodedGridState]);
 
   const getCellOutput = useCallback(
-    (row, columnNumber) => (
-      <CellOutput
-        red={state[row.row.index + 1][0]}
-        green={state[0][columnNumber]}
-      />
-    ),
+    (row, columnNumber) => {
+      const stateRow = state[row.row.index + 1];
+      if (stateRow && state[0]) {
+        return <CellOutput red={stateRow[0]} green={state[0][columnNumber]} />;
+      } else {
+        return <></>;
+      }
+    },
     [state]
   );
 
@@ -161,19 +163,21 @@ const Battle = ({ rememberedState }: BattleProps) => {
           accessor: "col0",
         },
       ].concat(
-        state[0].slice(1).map((creature, index) => ({
-          Header: (
-            <BattleInput
-              key={creature.key}
-              row={0}
-              col={index + 1}
-              creature={creature}
-              dispatch={dispatch}
-            />
-          ),
-          accessor: `col${index + 1}`,
-          Cell: (row) => getCellOutput(row, index + 1),
-        }))
+        state[0]
+          ? state[0].slice(1).map((creature, index) => ({
+              Header: (
+                <BattleInput
+                  key={creature.key}
+                  row={0}
+                  col={index + 1}
+                  creature={creature}
+                  dispatch={dispatch}
+                />
+              ),
+              accessor: `col${index + 1}`,
+              Cell: (row: StateRow) => getCellOutput(row, index + 1),
+            }))
+          : []
       ),
     [getCellOutput, state]
   );
@@ -197,6 +201,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
   );
 
   const tableInstance = useTable({
+    // @ts-ignore because I don't know how to type dynamic columns and rows
     columns,
     data,
   });
