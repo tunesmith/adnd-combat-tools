@@ -1,8 +1,9 @@
 import getToHit from "../../helpers/getToHit";
 import styles from "./cellOutput.module.css";
 import { expandedArmorTypes } from "../../tables/armorType";
+import { Creature } from "../../types/creature";
 
-const CellOutput = ({ red, green }) => {
+const CellOutput = ({ red, green }: { red: Creature; green: Creature }) => {
   const greenArmor = expandedArmorTypes.filter(
     (armorProps) => armorProps.key === green.armorType
   )[0];

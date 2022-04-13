@@ -13,6 +13,7 @@ export type EmptyObject = Record<any, never>;
  * of armor.
  */
 export interface CreatureV1 {
+  key: number;
   name?: string;
   class: string;
   level: string;
@@ -28,6 +29,7 @@ export type StateV1 = (EmptyObject | CreatureV1)[][];
  * value of the weapon name.
  */
 export interface CreatureV2 {
+  key: number;
   name?: string;
   class: string;
   level: string;
@@ -42,6 +44,7 @@ export type StateV2 = (EmptyObject | CreatureV2)[][];
  * each weapon.
  */
 export type CreatureV3 = {
+  key: number;
   name?: string;
   class: string;
   level: string;
