@@ -33,7 +33,7 @@ const BattleModal = ({
   row,
 }: {
   setOpen: Dispatch<SetStateAction<boolean>>;
-  creatureName: string;
+  creatureName: string | undefined;
   handleCreatureName: (e: FocusEvent<HTMLInputElement>) => void;
   creatureClass: string;
   handleCreatureClass: (option: SingleValue<CreatureOption>) => void;

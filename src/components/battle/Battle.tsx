@@ -18,7 +18,7 @@ import { Column, useTable } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
 import getConfig from "next/config";
-import { Creature, State, StateRow } from "../../types/creature";
+import { Creature, EmptyObject, State, StateRow } from "../../types/creature";
 
 /**
  * TODO:
@@ -28,6 +28,12 @@ import { Creature, State, StateRow } from "../../types/creature";
  */
 interface BattleProps {
   rememberedState?: State;
+}
+export interface ReducerAction {
+  type: number;
+  col?: number;
+  row?: number;
+  creature?: Creature;
 }
 const Battle = ({ rememberedState }: BattleProps) => {
   const { publicRuntimeConfig } = getConfig();
@@ -52,7 +58,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
     return idCounter.current;
   };
 
-  const reducer = (thisState: State, action) => {
+  const reducer = (thisState: State, action: ReducerAction): State => {
     switch (action.type) {
       case DELETE_COLUMN:
         return thisState.map((row) =>
@@ -74,13 +80,22 @@ const Battle = ({ rememberedState }: BattleProps) => {
         return thisState.concat([freshRow]);
       }
       default: // CHANGE_CREATURE
-        return thisState.map((outer, outerIndex) => {
+        return thisState.map((outer: StateRow, outerIndex: number) => {
           if (outerIndex === action.row) {
-            return outer.map((inner, innerIndex) => {
-              if (innerIndex === action.col) {
-                return action.creature;
-              } else return inner;
-            });
+            return outer.map(
+              (inner: EmptyObject | Creature, innerIndex: number) => {
+                if (innerIndex === action.col) {
+                  if (action.creature) {
+                    return action.creature;
+                  } else {
+                    console.error(
+                      "Unable to change creature: returning unedited creature instead"
+                    );
+                    return inner;
+                  }
+                } else return inner;
+              }
+            );
           } else return outer.slice();
         });
     }
@@ -139,9 +154,22 @@ const Battle = ({ rememberedState }: BattleProps) => {
 
   const getCellOutput = useCallback(
     (row, columnNumber) => {
-      const stateRow = state[row.row.index + 1];
-      if (stateRow && state[0]) {
-        return <CellOutput red={stateRow[0]} green={state[0][columnNumber]} />;
+      // We want to pass in the info from the column/row headers to calculate the intersecting cell.
+      const stateRow: StateRow | undefined = state[row.row.index + 1];
+      if (stateRow && state[0] && stateRow[0] && state[0][columnNumber]) {
+        /**
+         * It would be better if I could define this in the type definition, but
+         * I'm not sure there's a way to say that for a row, the first element is
+         * always Creature, and the remaining elements are empty. This would probably
+         * require a new data structure in the future since the 2d grid is kind of
+         * wasteful anyway.
+         */
+        return (
+          <CellOutput
+            red={stateRow[0] as Creature}
+            green={state[0][columnNumber] as Creature}
+          />
+        );
       } else {
         return <></>;
       }
@@ -170,7 +198,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
                   key={creature.key}
                   row={0}
                   col={index + 1}
-                  creature={creature}
+                  creature={creature as Creature}
                   dispatch={dispatch}
                 />
               ),
@@ -185,17 +213,22 @@ const Battle = ({ rememberedState }: BattleProps) => {
   const data = useMemo(
     () =>
       state.slice(1).map((row, index) => {
-        return {
-          col0: (
-            <BattleInput
-              key={row[0].key}
-              row={index + 1}
-              col={0}
-              creature={row[0]}
-              dispatch={dispatch}
-            />
-          ),
-        };
+        if (row[0]) {
+          return {
+            col0: (
+              <BattleInput
+                key={row[0].key}
+                row={index + 1}
+                col={0}
+                creature={row[0] as Creature}
+                dispatch={dispatch}
+              />
+            ),
+          };
+        } else {
+          console.error(`Could note render BattleInput for row: ${index}`);
+          return <></>;
+        }
       }),
     [state]
   );

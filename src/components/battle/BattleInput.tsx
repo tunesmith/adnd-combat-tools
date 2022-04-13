@@ -24,38 +24,19 @@ import {
   LevelOption,
   WeaponOption,
 } from "../../types/option";
-
-interface BattleInputStructure {
-  type: number;
-  row: number;
-  col: number;
-  creature?: {
-    key: number;
-    name: string;
-    class: string;
-    level: string;
-    armorType: number;
-    armorClass: number;
-    weapon: number;
-  };
-}
+import { Creature } from "../../types/creature";
+import { ReducerAction } from "./Battle";
 
 interface BattleInputProps {
   row: number;
   col: number;
-  creature: {
-    key: number;
-    name: string;
-    class: string;
-    level: string;
-    armorType: number;
-    armorClass: number;
-    weapon: number;
-  };
-  dispatch: Dispatch<BattleInputStructure>;
+  creature: Creature;
+  dispatch: Dispatch<ReducerAction>;
 }
 const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
-  const [creatureName, setCreatureName] = useState<string>(creature.name);
+  const [creatureName, setCreatureName] = useState<string | undefined>(
+    creature.name
+  );
   // console.log(`rendering creature for row ${row}, col ${col}: `, creature);
   const [creatureClass, setCreatureClass] = useState<string>(creature.class);
   const prevCreatureClass = useRef<string>(creature.class);
