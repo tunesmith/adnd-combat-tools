@@ -18,6 +18,7 @@ import { Column, useTable } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
 import getConfig from "next/config";
+import { Creature, State } from "../../types/creature";
 
 /**
  * TODO:
@@ -25,15 +26,8 @@ import getConfig from "next/config";
  *  - Allow classes to pick empty armor for if DM doesn't use weapon adjustments?
  * @constructor
  */
-interface Creature {
-  class: string;
-  level: string;
-  armorType: number;
-  armorClass: number;
-  weapon: number;
-}
 interface BattleProps {
-  rememberedState?: (Creature | {})[][];
+  rememberedState?: State;
 }
 const Battle = ({ rememberedState }: BattleProps) => {
   const { publicRuntimeConfig } = getConfig();
@@ -44,6 +38,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
   const idCounter = useRef<number>(0);
   const initialCreature: Creature = useMemo(
     () => ({
+      key: 0,
       class: "monster",
       level: "1",
       armorType: 1,
@@ -68,12 +63,12 @@ const Battle = ({ rememberedState }: BattleProps) => {
       case ADD_COLUMN:
         return thisState.map((row, index) =>
           row.concat(
-            index === 0 ? { key: incCounter(), ...initialCreature } : {}
+            index === 0 ? { ...initialCreature, key: incCounter() } : {}
           )
         );
       case ADD_ROW: {
         const innerLength = thisState[0].length;
-        const freshRow = [{ key: incCounter(), ...initialCreature }].concat(
+        const freshRow = [{ ...initialCreature, key: incCounter() }].concat(
           innerLength > 1 ? Array(innerLength - 1).fill({}) : []
         );
         return thisState.concat([freshRow]);
@@ -95,17 +90,17 @@ const Battle = ({ rememberedState }: BattleProps) => {
     () => [
       [
         {},
-        { key: incCounter(), ...initialCreature },
-        { key: incCounter(), ...initialCreature },
+        { ...initialCreature, key: incCounter() },
+        { ...initialCreature, key: incCounter() },
       ],
-      [{ key: incCounter(), ...initialCreature }, {}, {}],
-      [{ key: incCounter(), ...initialCreature }, {}, {}],
-      [{ key: incCounter(), ...initialCreature }, {}, {}],
+      [{ ...initialCreature, key: incCounter() }, {}, {}],
+      [{ ...initialCreature, key: incCounter() }, {}, {}],
+      [{ ...initialCreature, key: incCounter() }, {}, {}],
     ],
     [initialCreature]
   );
 
-  const initialState: (Creature | {})[][] = useMemo(() => {
+  const initialState: State = useMemo(() => {
     if (rememberedState) {
       return rememberedState;
     }
