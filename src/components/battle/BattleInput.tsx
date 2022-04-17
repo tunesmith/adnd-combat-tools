@@ -1,5 +1,6 @@
 import {
   attackerClassOptions,
+  BARD,
   getGeneralClass,
   MONSTER,
 } from "../../tables/attackerClass";
@@ -304,7 +305,14 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             )[0]?.label || "(No class selected)"}
             {levelLabel && (
               <>
-                : {creatureClass === MONSTER ? <>HD </> : <>L</>}
+                :{" "}
+                {creatureClass === MONSTER ? (
+                  <>HD </>
+                ) : creatureClass === BARD ? (
+                  <>F</>
+                ) : (
+                  <>L</>
+                )}
                 {levelLabel}
               </>
             )}

@@ -37,7 +37,7 @@ const classMap = new Map<number, number>([
   [THIEF, THIEF],
   [ASSASSIN, THIEF],
   [MONK, CLERIC],
-  [BARD, FIGHTER], // TODO change to BARD
+  [BARD, BARD],
 ]);
 
 export const getGeneralClass = (className: number): number => {

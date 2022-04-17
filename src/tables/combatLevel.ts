@@ -1,5 +1,5 @@
 import { LevelOption } from "../types/option";
-import { CLERIC, FIGHTER, MAGIC_USER, THIEF } from "./attackerClass";
+import { BARD, CLERIC, FIGHTER, MAGIC_USER, THIEF } from "./attackerClass";
 
 interface MonsterLevelProps {
   label: string;
@@ -74,6 +74,13 @@ const magicUserLevels = new Map<number, ClassLevelProps>([
   [16, { level: 16, label: "16", thaco: 13 }],
   [21, { level: 21, label: "21+", thaco: 11 }],
 ]);
+const bardLevels = new Map<number, ClassLevelProps>([
+  [1, { level: 1, label: "1", thaco: 20 }],
+  [3, { level: 3, label: "3", thaco: 18 }],
+  [5, { level: 5, label: "5", thaco: 16 }],
+  [7, { level: 7, label: "7", thaco: 14 }],
+  [8, { level: 8, label: "8+", thaco: 14 }],
+]);
 
 /**
  * Given level, look up thaco.
@@ -91,16 +98,16 @@ const getLevelThaco = (
   );
 
 /**
- * Given class and level, get thaco.
+ * Given general combat class and level, get thaco.
  *
- * @param attackerClass
+ * @param combatClass
  * @param attackerLevel
  */
 export const getThaco = (
-  attackerClass: number,
+  combatClass: number,
   attackerLevel: number
 ): number => {
-  switch (attackerClass) {
+  switch (combatClass) {
     case FIGHTER:
       return getLevelThaco(fighterLevels, attackerLevel);
     case CLERIC:
@@ -109,6 +116,8 @@ export const getThaco = (
       return getLevelThaco(magicUserLevels, attackerLevel);
     case THIEF:
       return getLevelThaco(thiefLevels, attackerLevel);
+    case BARD:
+      return getLevelThaco(bardLevels, attackerLevel);
     default: {
       // case "monster"
       const monsterThaco = monsterLevels.get(attackerLevel);
@@ -138,7 +147,8 @@ export const getThac = (ac: number, thaco: number) => {
 };
 
 const getClassLevels = (
-  levels: Map<number, ClassLevelProps>
+  levels: Map<number, ClassLevelProps>,
+  bard: boolean = false
 ): LevelOption[] => {
   const keys: number[] = Array.from(levels.keys());
   const max = Math.max(...keys);
@@ -147,7 +157,9 @@ const getClassLevels = (
   return Array.from(Array(max - min + 1).keys()).map((key) => {
     return {
       value: key + min,
-      label: `Level ${key + min}${key + min === max ? "+" : ""}`,
+      label: bard
+        ? `Level F${key + min}`
+        : `Level ${key + min}${key + min === max ? "+" : ""}`,
     };
   });
 };
@@ -168,6 +180,8 @@ export const getLevelOptionsByCombatClass = (
       return getClassLevels(magicUserLevels);
     case THIEF:
       return getClassLevels(thiefLevels);
+    case BARD:
+      return getClassLevels(bardLevels, true);
     default: // case "monster"
       return Array.from(monsterLevels).map(([levelId, levelProps]) => ({
         value: levelId,
