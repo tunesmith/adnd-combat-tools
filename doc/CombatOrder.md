@@ -136,33 +136,36 @@ What's left:
 - Battle Grid
 - Preferences
 
-Next up: Player... secondary screen? Only on combat screen?
-  - Mvmt Rate
-  - Dexterity (For missile, initiative, reaction)
-  - Weapon proficiencies
-
 Launch combat screen from battle grid? When do I prompt for 
 extra player information? What does this do to battle grid state?
 All in one page? Shared state? Hmm...
 
-What's interesting though is that not all the properties from 
-the Battle Grid are relevant anymore.
-
-Name: still relevant
-Class: still relevant
-Level: still relevant - is this different, though? Currently, it's combat level.
-Weapon: still relevant
-Armor Type: not relevant
-Armor Class: not relevant
-
-Problem: Someone could be a 20th level MU and a 5th level Fighter. Most
-advantageous combat level might be MU, while specialization... 
-
-I'm starting to go the other way. Maybe I just ask for "melee attacks" 
-or "# of melee attack routines" and have that set per round. Then I also
-don't have to take level into account.
-
-Finally, I might consider a new "page" (state var) for each combat round 
+I might consider a new "page" (state var) for each combat round 
 or segment. If I do that, then I think the only thing that might carry over
 is the casting time of a spell. This may need to be a separate category
 than "Casting time" since it is by definition from start of round.
+
+## Next step:
+
+Define a player object with the following properties:
+
+- Name
+- Class (this is class of combat table... perhaps not relevant)
+- Weapon (for things like reach and speed factor)
+- Movement Rate (for things like charge and close)
+- Dexterity (for things like initiative and surprise reaction)
+- Attacks per round (for both melee and missile)
+
+## Simple next step:
+
+- Put ids in for "Class" and "Level": v4 of creature.
+
+## Next:
+
+Create "Player" or "Combatant", cloned from Creature:
+- name
+- classId
+- weaponId
+- movementRate (new)
+- dexterity (new)
+- attacks (new)

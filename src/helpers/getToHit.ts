@@ -1,5 +1,5 @@
 import { getThac, getThaco } from "../tables/combatLevel";
-import { getGeneralClass } from "../tables/attackerClass";
+import { getGeneralClass, MONSTER } from "../tables/attackerClass";
 import { getWeaponAdjustment } from "../tables/weapon";
 
 const getToHit = (
@@ -10,7 +10,7 @@ const getToHit = (
   attackerWeapon: number
 ): number => {
   const thaco = getThaco(
-    attackerClass === "monster" ? "monster" : getGeneralClass(attackerClass),
+    attackerClass === "monster" ? MONSTER : getGeneralClass(attackerClass),
     attackerLevel
   );
 

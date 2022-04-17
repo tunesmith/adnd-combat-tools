@@ -1,4 +1,5 @@
 import { LevelOption } from "../types/option";
+import { CLERIC, FIGHTER, MAGIC_USER, THIEF } from "./attackerClass";
 
 export const monsterLevels = new Map([
   ["up to 1-1", 21],
@@ -77,17 +78,17 @@ const getLevelThaco = (levelMap: LevelMap, targetLevel: string): number =>
  * @param attackerLevel
  */
 export const getThaco = (
-  attackerClass: string,
+  attackerClass: number,
   attackerLevel: string
 ): number => {
   switch (attackerClass) {
-    case "fighter":
+    case FIGHTER:
       return getLevelThaco(fighterLevels, attackerLevel);
-    case "cleric":
+    case CLERIC:
       return getLevelThaco(clericLevels, attackerLevel);
-    case "magicuser":
+    case MAGIC_USER:
       return getLevelThaco(magicUserLevels, attackerLevel);
-    case "thief":
+    case THIEF:
       return getLevelThaco(thiefLevels, attackerLevel);
     default: {
       // case "monster"
@@ -132,15 +133,21 @@ const getClassLevels = (
   });
 };
 
-export const getTableByCombatClass = (combatClass: string): LevelOption[] => {
+/**
+ * Given a general combat class, get the list of level options for a select dropdown
+ * @param combatClass
+ */
+export const getLevelOptionsByCombatClass = (
+  combatClass: number
+): LevelOption[] => {
   switch (combatClass) {
-    case "fighter":
+    case FIGHTER:
       return getClassLevels(fighterLevels);
-    case "cleric":
+    case CLERIC:
       return getClassLevels(clericLevels);
-    case "magicuser":
+    case MAGIC_USER:
       return getClassLevels(magicUserLevels);
-    case "thief":
+    case THIEF:
       return getClassLevels(thiefLevels);
     default: // case "monster"
       return Array.from(monsterLevels).map(([label]) => ({

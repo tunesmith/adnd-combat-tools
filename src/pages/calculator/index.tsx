@@ -3,8 +3,9 @@ import Select, { SingleValue } from "react-select";
 import {
   attackerClassOptions,
   getGeneralClass,
+  MONSTER,
 } from "../../tables/attackerClass";
-import { getTableByCombatClass } from "../../tables/combatLevel";
+import { getLevelOptionsByCombatClass } from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
 import { getArmorOptions } from "../../tables/armorType";
 import styles from "./calculator.module.css";
@@ -17,7 +18,7 @@ const Calculator = () => {
   const [attackerClass, setAttackerClass] = useState<string>("monster");
   const prevAttackerClass = useRef<string>("monster");
   const [attackerLevelOptions, setAttackerLevelOptions] = useState(
-    getTableByCombatClass("monster")
+    getLevelOptionsByCombatClass(MONSTER)
   );
   const [weaponOptions, setWeaponOptions] = useState(
     getWeaponOptions("monster")
@@ -53,9 +54,9 @@ const Calculator = () => {
     const newAttackerClass = option?.value;
     if (newAttackerClass && newAttackerClass !== prevAttackerClass.current) {
       setAttackerClass(newAttackerClass);
-      const newAttackerLevelOptions = getTableByCombatClass(
+      const newAttackerLevelOptions = getLevelOptionsByCombatClass(
         newAttackerClass === "monster"
-          ? "monster"
+          ? MONSTER
           : getGeneralClass(newAttackerClass)
       );
       setAttackerLevelOptions(newAttackerLevelOptions);
