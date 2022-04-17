@@ -205,7 +205,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   const handleArmorClass = (option: SingleValue<ArmorClassOption>) => {
     const newArmorClass = option?.value;
-    if (newArmorClass) {
+    if (newArmorClass || newArmorClass === 0) {
       setArmorClass(newArmorClass);
       dispatch({
         type: CHANGE_CREATURE,

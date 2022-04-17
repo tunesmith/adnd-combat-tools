@@ -46,7 +46,7 @@ const Calculator = () => {
   const handleArmorClass = (
     option: SingleValue<{ label: number; value: number }>
   ) => {
-    if (option?.value) {
+    if (option?.value || option?.value === 0) {
       setTargetArmorClass(option.value);
     }
   };
