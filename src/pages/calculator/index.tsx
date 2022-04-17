@@ -11,18 +11,21 @@ import { getArmorOptions } from "../../tables/armorType";
 import styles from "./calculator.module.css";
 import customStyles from "../../helpers/selectCustomStyles";
 import getToHit from "../../helpers/getToHit";
-import { ArmorTypeOption, LevelOption, WeaponOption } from "../../types/option";
+import {
+  ArmorTypeOption,
+  CreatureOption,
+  LevelOption,
+  WeaponOption,
+} from "../../types/option";
 
 const Calculator = () => {
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
-  const [attackerClass, setAttackerClass] = useState<string>("monster");
-  const prevAttackerClass = useRef<string>("monster");
+  const [attackerClass, setAttackerClass] = useState<number>(MONSTER);
+  const prevAttackerClass = useRef<number>(MONSTER);
   const [attackerLevelOptions, setAttackerLevelOptions] = useState(
     getLevelOptionsByCombatClass(MONSTER)
   );
-  const [weaponOptions, setWeaponOptions] = useState(
-    getWeaponOptions("monster")
-  );
+  const [weaponOptions, setWeaponOptions] = useState(getWeaponOptions(MONSTER));
   const [armorTypeOptions, setArmorTypeOptions] = useState(getArmorOptions);
   const [targetArmorType, setTargetArmorType] = useState<string>(
     armorTypeOptions[0]!.value
@@ -48,14 +51,12 @@ const Calculator = () => {
     }
   };
 
-  const handleAttackerClass = (
-    option: SingleValue<{ label: string; value: string }>
-  ) => {
+  const handleAttackerClass = (option: SingleValue<CreatureOption>) => {
     const newAttackerClass = option?.value;
     if (newAttackerClass && newAttackerClass !== prevAttackerClass.current) {
       setAttackerClass(newAttackerClass);
       const newAttackerLevelOptions = getLevelOptionsByCombatClass(
-        newAttackerClass === "monster"
+        newAttackerClass === MONSTER
           ? MONSTER
           : getGeneralClass(newAttackerClass)
       );
@@ -149,7 +150,7 @@ const Calculator = () => {
             </label>
             <br />
             <label>
-              Attacker {attackerClass === "monster" ? "Hit Dice" : "Level"}:
+              Attacker {attackerClass === MONSTER ? "Hit Dice" : "Level"}:
               <Select
                 isSearchable={false}
                 instanceId={"attackerLevel"}

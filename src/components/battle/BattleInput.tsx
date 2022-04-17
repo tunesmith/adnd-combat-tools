@@ -39,12 +39,12 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     creature.name
   );
   // console.log(`rendering creature for row ${row}, col ${col}: `, creature);
-  const [creatureClass, setCreatureClass] = useState<string>(creature.class);
-  const prevCreatureClass = useRef<string>(creature.class);
+  const [creatureClass, setCreatureClass] = useState<number>(creature.class);
+  const prevCreatureClass = useRef<number>(creature.class);
   const [level, setLevel] = useState<string>(creature.level);
   const [levelOptions, setLevelOptions] = useState<LevelOption[]>(
     getLevelOptionsByCombatClass(
-      creature.class === "monster" ? MONSTER : getGeneralClass(creature.class)
+      creature.class === MONSTER ? MONSTER : getGeneralClass(creature.class)
     )
   );
   const [weaponOptions, setWeaponOptions] = useState<WeaponOption[]>(
@@ -95,7 +95,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
       if (newCreatureClass !== prevCreatureClass.current) {
         setCreatureClass(newCreatureClass);
         const newLevelOptions = getLevelOptionsByCombatClass(
-          newCreatureClass === "monster"
+          newCreatureClass === MONSTER
             ? MONSTER
             : getGeneralClass(newCreatureClass)
         );
@@ -294,7 +294,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             {attackerClassOptions.filter(
               (option) => option.value === creatureClass
             )[0]?.label || "(No class selected)"}
-            : {creatureClass === "monster" ? <>HD </> : <>L</>}
+            : {creatureClass === MONSTER ? <>HD </> : <>L</>}
             {level}
             <br />
             {armorType > 1 && armorLabel && (

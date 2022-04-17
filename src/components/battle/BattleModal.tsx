@@ -35,7 +35,7 @@ const BattleModal = ({
   setOpen: Dispatch<SetStateAction<boolean>>;
   creatureName: string | undefined;
   handleCreatureName: (e: FocusEvent<HTMLInputElement>) => void;
-  creatureClass: string;
+  creatureClass: number;
   handleCreatureClass: (option: SingleValue<CreatureOption>) => void;
   levelOptions: LevelOption[];
   level: string;

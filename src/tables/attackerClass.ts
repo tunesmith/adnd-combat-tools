@@ -11,36 +11,36 @@ export const ASSASSIN = 10;
 export const MONK = 11;
 export const BARD = 12;
 
-const attackerClass = {
-  monster: "Monster",
-  cleric: "Cleric",
-  druid: "Druid",
-  fighter: "Fighter",
-  ranger: "Ranger",
-  paladin: "Paladin",
-  magicuser: "Magic-User",
-  illusionist: "Illusionist",
-  thief: "Thief",
-  assassin: "Assassin",
-  monk: "Monk",
-  bard: "Bard",
-};
-
-const classMap = new Map<string, number>([
-  ["cleric", CLERIC],
-  ["druid", CLERIC],
-  ["fighter", FIGHTER],
-  ["ranger", FIGHTER],
-  ["paladin", FIGHTER],
-  ["magicuser", MAGIC_USER],
-  ["illusionist", MAGIC_USER],
-  ["thief", THIEF],
-  ["assassin", THIEF],
-  ["monk", CLERIC],
-  ["bard", FIGHTER], // TODO change to BARD
+const attackerClass = new Map<number, string>([
+  [MONSTER, "Monster"],
+  [CLERIC, "Cleric"],
+  [DRUID, "Druid"],
+  [FIGHTER, "Fighter"],
+  [RANGER, "Ranger"],
+  [PALADIN, "Paladin"],
+  [MAGIC_USER, "Magic-User"],
+  [ILLUSIONIST, "Illusionist"],
+  [THIEF, "Thief"],
+  [ASSASSIN, "Assassin"],
+  [MONK, "Monk"],
+  [BARD, "Bard"],
 ]);
 
-export const getGeneralClass = (className: string): number => {
+const classMap = new Map<number, number>([
+  [CLERIC, CLERIC],
+  [DRUID, CLERIC],
+  [FIGHTER, FIGHTER],
+  [RANGER, FIGHTER],
+  [PALADIN, FIGHTER],
+  [MAGIC_USER, MAGIC_USER],
+  [ILLUSIONIST, MAGIC_USER],
+  [THIEF, THIEF],
+  [ASSASSIN, THIEF],
+  [MONK, CLERIC],
+  [BARD, FIGHTER], // TODO change to BARD
+]);
+
+export const getGeneralClass = (className: number): number => {
   const generalClass = classMap.get(className);
   if (generalClass) {
     return generalClass;
@@ -52,6 +52,6 @@ export const getGeneralClass = (className: string): number => {
   }
 };
 
-export const attackerClassOptions = Object.entries(attackerClass).map(
+export const attackerClassOptions = Array.from(attackerClass).map(
   ([value, label]) => ({ value, label })
 );

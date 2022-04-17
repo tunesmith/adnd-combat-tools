@@ -1,4 +1,18 @@
 import { WeaponOption } from "../types/option";
+import {
+  ASSASSIN,
+  BARD,
+  CLERIC,
+  DRUID,
+  FIGHTER,
+  ILLUSIONIST,
+  MAGIC_USER,
+  MONK,
+  MONSTER,
+  PALADIN,
+  RANGER,
+  THIEF,
+} from "./attackerClass";
 
 const clericWeapons = [13, 14, 22, 23, 24, 31, 32, 33, 39, 40, 53];
 // const clericWeapons = [
@@ -824,19 +838,19 @@ const filterWeaponClasses = (
     Array.from(weapons).filter((option) => restrictions.includes(option[0]))
   );
 
-const weaponClasses = new Map<string, Map<number, WeaponInfo>>([
-  ["monster", weapons],
-  ["cleric", filterWeaponClasses(weapons, clericWeapons)],
-  ["druid", filterWeaponClasses(weapons, druidWeapons)],
-  ["fighter", new Map(Array.from(weapons).slice(1))],
-  ["paladin", new Map(Array.from(weapons).slice(1))],
-  ["ranger", new Map(Array.from(weapons).slice(1))],
-  ["magicuser", filterWeaponClasses(weapons, magicUserWeapons)],
-  ["illusionist", filterWeaponClasses(weapons, magicUserWeapons)],
-  ["thief", filterWeaponClasses(weapons, thiefWeapons)],
-  ["assassin", new Map(Array.from(weapons).slice(1))],
-  ["monk", filterWeaponClasses(weapons, monkWeapons)],
-  ["bard", filterWeaponClasses(weapons, bardWeapons)],
+const weaponClasses = new Map<number, Map<number, WeaponInfo>>([
+  [MONSTER, weapons],
+  [CLERIC, filterWeaponClasses(weapons, clericWeapons)],
+  [DRUID, filterWeaponClasses(weapons, druidWeapons)],
+  [FIGHTER, new Map(Array.from(weapons).slice(1))],
+  [PALADIN, new Map(Array.from(weapons).slice(1))],
+  [RANGER, new Map(Array.from(weapons).slice(1))],
+  [MAGIC_USER, filterWeaponClasses(weapons, magicUserWeapons)],
+  [ILLUSIONIST, filterWeaponClasses(weapons, magicUserWeapons)],
+  [THIEF, filterWeaponClasses(weapons, thiefWeapons)],
+  [ASSASSIN, new Map(Array.from(weapons).slice(1))],
+  [MONK, filterWeaponClasses(weapons, monkWeapons)],
+  [BARD, filterWeaponClasses(weapons, bardWeapons)],
 ]);
 
 const constructOptions = (
@@ -849,7 +863,7 @@ const constructOptions = (
     })
   );
 
-export const getWeaponOptions = (attackerClass: string): WeaponOption[] => {
+export const getWeaponOptions = (attackerClass: number): WeaponOption[] => {
   const classWeapons = weaponClasses.get(attackerClass);
   if (classWeapons) {
     return constructOptions(classWeapons);

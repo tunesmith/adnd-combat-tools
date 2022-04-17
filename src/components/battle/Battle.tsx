@@ -19,6 +19,7 @@ import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
 import getConfig from "next/config";
 import { Creature, EmptyObject, State, StateRow } from "../../types/creature";
+import { MONSTER } from "../../tables/attackerClass";
 
 /**
  * TODO:
@@ -45,7 +46,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
   const initialCreature: Creature = useMemo(
     () => ({
       key: 0,
-      class: "monster",
+      class: MONSTER,
       level: "1",
       armorType: 1,
       armorClass: 5,
@@ -125,7 +126,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    deflate(JSON.stringify({ version: 3, state }), (err, buffer) => {
+    deflate(JSON.stringify({ version: 4, state }), (err, buffer) => {
       if (err) {
         console.error("An error occurred:", err);
         process.exitCode = 1;

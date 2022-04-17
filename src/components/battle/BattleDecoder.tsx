@@ -11,7 +11,22 @@ import {
   StateV1,
   StateV2,
   StateV3,
+  StateV4,
 } from "../../types/creature";
+import {
+  ASSASSIN,
+  BARD,
+  CLERIC,
+  DRUID,
+  FIGHTER,
+  ILLUSIONIST,
+  MAGIC_USER,
+  MONK,
+  MONSTER,
+  PALADIN,
+  RANGER,
+  THIEF,
+} from "../../tables/attackerClass";
 
 interface BattleDecoderProps {
   encodedState: string;
@@ -26,7 +41,7 @@ interface BattleDecoderProps {
  */
 interface StateWrapper {
   version: number;
-  state: StateV1 | StateV2 | StateV3;
+  state: StateV1 | StateV2 | StateV3 | StateV4;
 }
 
 const transformArmorType = (oldArmorType: string): number | null => {
@@ -36,7 +51,38 @@ const transformArmorType = (oldArmorType: string): number | null => {
   return parseInt(oldArmorType, 10);
 };
 
-const transformState = (wrapper: StateWrapper): StateV3 => {
+const transformClass = (creatureClass: string): number => {
+  switch (creatureClass) {
+    case "monster":
+      return MONSTER;
+    case "cleric":
+      return CLERIC;
+    case "druid":
+      return DRUID;
+    case "fighter":
+      return FIGHTER;
+    case "ranger":
+      return RANGER;
+    case "paladin":
+      return PALADIN;
+    case "magicuser":
+      return MAGIC_USER;
+    case "illusionist":
+      return ILLUSIONIST;
+    case "thief":
+      return THIEF;
+    case "assassin":
+      return ASSASSIN;
+    case "monk":
+      return MONK;
+    case "bard":
+      return BARD;
+    default:
+      console.error(`Unrecognized class ${creatureClass}, returning MONSTER`);
+      return MONSTER;
+  }
+};
+const transformState = (wrapper: StateWrapper): StateV4 => {
   switch (wrapper.version) {
     case 1:
       return (wrapper.state as StateV1).map((row) =>
@@ -57,6 +103,7 @@ const transformState = (wrapper: StateWrapper): StateV3 => {
               ...creatureV1,
               armorType: filteredArmor ? filteredArmor.key : 0,
               weapon: filteredWeapon ? filteredWeapon[0] : 0,
+              class: transformClass(creatureV1.class),
             };
           } else return creature as EmptyObject;
         })
@@ -73,19 +120,30 @@ const transformState = (wrapper: StateWrapper): StateV3 => {
             return {
               ...creatureV2,
               weapon: filteredWeapon ? filteredWeapon[0] : 0,
+              class: transformClass(creatureV2.class),
             };
           } else return creature as EmptyObject;
         })
       );
-    default: // version = 3
-      return wrapper.state as StateV3;
+    case 3:
+      return (wrapper.state as StateV3).map((row) =>
+        row.map((creature) => {
+          if (Object.keys(creature).length) {
+            const creatureV3 = creature as CreatureV3;
+            return {
+              ...creatureV3,
+              class: transformClass(creatureV3.class),
+            };
+          } else return creature as EmptyObject;
+        })
+      );
+    default: // version = 4
+      return wrapper.state as StateV4;
   }
 };
 
 const BattleDecoder = ({ encodedState }: BattleDecoderProps) => {
-  const [result, setResult] = useState<({} | CreatureV3)[][] | undefined>(
-    undefined
-  );
+  const [result, setResult] = useState<StateV4 | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
