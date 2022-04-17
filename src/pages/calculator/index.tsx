@@ -91,7 +91,7 @@ const Calculator = () => {
   };
   const handleAttackerLevel = (option: SingleValue<LevelOption>) => {
     const newLevel = option?.value;
-    if (newLevel) {
+    if (newLevel || newLevel === 0) {
       setAttackerLevel(newLevel);
     } else {
       console.error("Could not set new level.");

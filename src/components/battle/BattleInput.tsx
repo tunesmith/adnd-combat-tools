@@ -157,7 +157,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   const handleLevel = (option: SingleValue<LevelOption>) => {
     const newLevel = option?.value;
-    if (newLevel) {
+    if (newLevel || newLevel === 0) {
       setLevel(newLevel);
       dispatch({
         type: CHANGE_CREATURE,
