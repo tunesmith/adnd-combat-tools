@@ -1,5 +1,5 @@
 export type CreatureOption = { label: string; value: number };
-export type LevelOption = { label: string; value: string };
+export type LevelOption = { label: string; value: number };
 export type ExpandedArmorTypeOption = { label: string; value: number };
 export type ArmorClassOption = ExpandedArmorTypeOption;
 export type WeaponOption = ExpandedArmorTypeOption;

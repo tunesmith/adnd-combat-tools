@@ -4,7 +4,7 @@ import { getWeaponAdjustment } from "../tables/weapon";
 
 const getToHit = (
   attackerClass: number,
-  attackerLevel: string,
+  attackerLevel: number,
   targetArmorType: number | null,
   targetArmorClass: number,
   attackerWeapon: number

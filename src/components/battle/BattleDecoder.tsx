@@ -27,6 +27,7 @@ import {
   RANGER,
   THIEF,
 } from "../../tables/attackerClass";
+import { monsterLevels } from "../../tables/combatLevel";
 
 interface BattleDecoderProps {
   encodedState: string;
@@ -82,6 +83,29 @@ const transformClass = (creatureClass: string): number => {
       return MONSTER;
   }
 };
+const transformLevel = (level: string, creatureClass: number): number => {
+  if (creatureClass === MONSTER) {
+    const monsterLevel = Array.from(monsterLevels).filter(
+      ([_, props]) => props.label === level
+    )[0];
+    if (monsterLevel) {
+      return monsterLevel[0];
+    } else {
+      console.error(
+        `Could not get level for monster level ${level}, returning 3 (1HD)`
+      );
+      return 3;
+    }
+  } else {
+    const numberLevel = parseInt(level, 10);
+    if (isNaN(numberLevel)) {
+      console.error("Could not parse level for ${level}, returning 1");
+      return 1;
+    } else {
+      return numberLevel;
+    }
+  }
+};
 const transformState = (wrapper: StateWrapper): StateV4 => {
   switch (wrapper.version) {
     case 1:
@@ -98,12 +122,13 @@ const transformState = (wrapper: StateWrapper): StateV4 => {
               ([_, weaponInfo]: [number, WeaponInfo]) =>
                 weaponInfo.name === creatureV1.weapon
             )[0];
-
+            const creatureClass = transformClass(creatureV1.class);
             return {
               ...creatureV1,
               armorType: filteredArmor ? filteredArmor.key : 0,
               weapon: filteredWeapon ? filteredWeapon[0] : 0,
-              class: transformClass(creatureV1.class),
+              class: creatureClass,
+              level: transformLevel(creatureV1.level, creatureClass),
             };
           } else return creature as EmptyObject;
         })
@@ -117,10 +142,12 @@ const transformState = (wrapper: StateWrapper): StateV4 => {
               ([_, weaponInfo]: [number, WeaponInfo]) =>
                 weaponInfo.name === creatureV2.weapon
             )[0];
+            const creatureClass = transformClass(creatureV2.class);
             return {
               ...creatureV2,
               weapon: filteredWeapon ? filteredWeapon[0] : 0,
-              class: transformClass(creatureV2.class),
+              class: creatureClass,
+              level: transformLevel(creatureV2.level, creatureClass),
             };
           } else return creature as EmptyObject;
         })
@@ -130,9 +157,11 @@ const transformState = (wrapper: StateWrapper): StateV4 => {
         row.map((creature) => {
           if (Object.keys(creature).length) {
             const creatureV3 = creature as CreatureV3;
+            const creatureClass = transformClass(creatureV3.class);
             return {
               ...creatureV3,
-              class: transformClass(creatureV3.class),
+              class: creatureClass,
+              level: transformLevel(creatureV3.level, creatureClass),
             };
           } else return creature as EmptyObject;
         })

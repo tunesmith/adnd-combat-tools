@@ -4,7 +4,10 @@ import {
   MONSTER,
 } from "../../tables/attackerClass";
 import React, { FocusEvent, Dispatch, useRef, useState } from "react";
-import { getLevelOptionsByCombatClass } from "../../tables/combatLevel";
+import {
+  getLevelOptionsByCombatClass,
+  monsterLevels,
+} from "../../tables/combatLevel";
 import { getWeaponOptions } from "../../tables/weapon";
 import {
   expandedArmorTypes,
@@ -41,7 +44,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
   // console.log(`rendering creature for row ${row}, col ${col}: `, creature);
   const [creatureClass, setCreatureClass] = useState<number>(creature.class);
   const prevCreatureClass = useRef<number>(creature.class);
-  const [level, setLevel] = useState<string>(creature.level);
+  const [level, setLevel] = useState<number>(creature.level);
   const [levelOptions, setLevelOptions] = useState<LevelOption[]>(
     getLevelOptionsByCombatClass(
       creature.class === MONSTER ? MONSTER : getGeneralClass(creature.class)
@@ -101,7 +104,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         );
         setLevelOptions(newLevelOptions);
 
-        setLevel("1");
+        setLevel(newCreatureClass === MONSTER ? 3 : 1);
 
         const newArmorTypeOptions =
           getExpandedArmorOptionsByClass(newCreatureClass);
@@ -137,7 +140,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             key: creature.key,
             name: creatureName,
             class: newCreatureClass,
-            level: "1",
+            level: newCreatureClass === MONSTER ? 3 : 1,
             armorType: newArmorType || armorType,
             armorClass: newArmorType
               ? getDerivedArmorClass(newArmorType)
@@ -151,9 +154,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     }
   };
 
-  const handleLevel = (
-    option: SingleValue<{ label: string; value: string }>
-  ) => {
+  const handleLevel = (option: SingleValue<LevelOption>) => {
     const newLevel = option?.value;
     if (newLevel) {
       setLevel(newLevel);
@@ -256,6 +257,13 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
     console.error(`Could not find armor label for armor type: ${armorType}`);
   }
 
+  const levelLabel =
+    creatureClass === MONSTER ? monsterLevels.get(level)?.label : `${level}`;
+  if (!levelLabel) {
+    console.log(levelOptions);
+    console.error(`Could not find level label where value is: ${level}`);
+  }
+
   return (
     <>
       <div className={styles["container"]}>
@@ -294,8 +302,12 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             {attackerClassOptions.filter(
               (option) => option.value === creatureClass
             )[0]?.label || "(No class selected)"}
-            : {creatureClass === MONSTER ? <>HD </> : <>L</>}
-            {level}
+            {levelLabel && (
+              <>
+                : {creatureClass === MONSTER ? <>HD </> : <>L</>}
+                {levelLabel}
+              </>
+            )}
             <br />
             {armorType > 1 && armorLabel && (
               <>

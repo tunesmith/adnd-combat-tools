@@ -38,7 +38,7 @@ const BattleModal = ({
   creatureClass: number;
   handleCreatureClass: (option: SingleValue<CreatureOption>) => void;
   levelOptions: LevelOption[];
-  level: string;
+  level: number;
   handleLevel: (option: SingleValue<LevelOption>) => void;
   armorTypeOptions: ExpandedArmorTypeOption[];
   armorType: number;

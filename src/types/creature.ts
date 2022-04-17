@@ -62,7 +62,7 @@ export type CreatureV4 = {
   key: number;
   name?: string;
   class: number;
-  level: string;
+  level: number;
   armorType: number;
   armorClass: number;
   weapon: number;

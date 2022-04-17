@@ -36,7 +36,7 @@ const Calculator = () => {
       return { value: 10 - i, label: 10 - i };
     })
   );
-  const [attackerLevel, setAttackerLevel] = useState<string>("1");
+  const [attackerLevel, setAttackerLevel] = useState<number>(3);
   const [attackerWeapon, setAttackerWeapon] = useState<number>(
     weaponOptions[0]!.value
   );
@@ -61,7 +61,7 @@ const Calculator = () => {
           : getGeneralClass(newAttackerClass)
       );
       setAttackerLevelOptions(newAttackerLevelOptions);
-      setAttackerLevel("1");
+      setAttackerLevel(newAttackerClass === MONSTER ? 3 : 1);
       const newWeaponOptions = getWeaponOptions(newAttackerClass);
       setWeaponOptions(newWeaponOptions);
       if (newWeaponOptions[0]) {

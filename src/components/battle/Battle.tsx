@@ -47,7 +47,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
     () => ({
       key: 0,
       class: MONSTER,
-      level: "1",
+      level: 3,
       armorType: 1,
       armorClass: 5,
       weapon: 1,
