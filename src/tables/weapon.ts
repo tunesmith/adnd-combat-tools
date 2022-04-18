@@ -14,6 +14,26 @@ import {
   THIEF,
 } from "./attackerClass";
 
+/**
+ * Unearthed Arcana notes:
+ *
+ * Cavalier does not use pole arms, missile weapons, or other "low social class" arms,
+ * including the 2H Sword. This restriction also applies to paladins, which means the
+ * UA paladin conflicts with the PHB paladin. Actually, it appears that is only
+ * *discouraged*, and allowed without penalty. So for menu purposes, it is "any", the
+ * same as fighters.
+ *
+ * And luckily, all classes can use the same weapons as before. The only changes are new weapons:
+ *
+ * Cleric: lasso, sap, and staff-sling
+ * Druid: aklys, garrot, lasso, sap, staff sling, khopesh sword, whip
+ * Magic-User: caltrop, knife, sling
+ * Thief: short bow, caltrop, hand crossbow, garrot, knife, sap, falchion sword
+ * Acrobat: as thief, plus lasso and staff
+ * Monk: aklys, atlatl, caltrop, hand crossbow, garrot, knife, lasso, sap, falchion sword,
+ *      hook fauchard (pole arm), man catcher (pole arm)
+ * Bard: garrot, knife, lasso, sap, falchion sword
+ */
 const clericWeapons = [13, 14, 22, 23, 24, 31, 32, 33, 39, 40, 53];
 // const clericWeapons = [
 //   "Club (Held)",
@@ -165,7 +185,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "natural",
       name: "Natural Weapon (Monster)",
-      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     },
   ],
   [
@@ -173,7 +193,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Axe, Battle",
-      acAdjustments: [-3, -2, -1, -1, 0, 0, 1, 1, 2],
+      acAdjustments: [-5, -4, -3, -2, -1, -1, 0, 0, 1, 1, 2],
       length: 4,
       speedFactor: 7,
     },
@@ -183,7 +203,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Axe, Hand (Held)",
-      acAdjustments: [-3, -2, -2, -1, 0, 0, 1, 1, 1],
+      acAdjustments: [-5, -4, -3, -2, -2, -1, 0, 0, 1, 1, 1],
       length: 1.5,
       speedFactor: 4,
     },
@@ -193,7 +213,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Axe, Hand (Hurled)",
-      acAdjustments: [-4, -3, -2, -1, -1, 0, 0, 0, 1],
+      acAdjustments: [-6, -5, -4, -3, -2, -1, -1, 0, 0, 0, 1],
       fireRate: 1,
     },
   ],
@@ -202,7 +222,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Bardiche",
-      acAdjustments: [-2, -1, 0, 0, 1, 1, 2, 2, 3],
+      acAdjustments: [-3, -2, -2, -1, 0, 0, 1, 1, 2, 2, 3],
       length: 5,
       speedFactor: 9,
     },
@@ -212,7 +232,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Bec de Corbin",
-      acAdjustments: [2, 2, 2, 0, 0, 0, 0, 0, -1],
+      acAdjustments: [2, 2, 2, 2, 2, 0, 0, 0, 0, 0, -1],
       length: 6,
       speedFactor: 9,
     },
@@ -222,7 +242,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Bill-Guisarme",
-      acAdjustments: [0, 0, 0, 0, 0, 0, 1, 0, 0],
+      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
       length: 8,
       speedFactor: 10,
     },
@@ -232,7 +252,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Bo Stick",
-      acAdjustments: [-9, -7, -5, -3, -1, 0, 1, 0, 3],
+      acAdjustments: [-13, -11, -9, -7, -5, -3, -1, 0, 1, 0, 3],
       length: 5,
       speedFactor: 3,
     },
@@ -242,7 +262,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Bow, composite, long",
-      acAdjustments: [-3, -3, -1, 0, 1, 2, 2, 2, 3],
+      acAdjustments: [-4, -3, -2, -1, -0, 0, 1, 2, 2, 3, 3],
       fireRate: 2,
     },
   ],
@@ -251,7 +271,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Bow, composite, short",
-      acAdjustments: [-3, -3, -1, 0, 1, 2, 2, 2, 3],
+      acAdjustments: [-4, -4, -3, -3, -1, 0, 1, 2, 2, 2, 3],
       fireRate: 2,
     },
   ],
@@ -260,7 +280,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Bow, long",
-      acAdjustments: [-1, 0, 0, 1, 2, 3, 3, 3, 3],
+      acAdjustments: [-2, -1, -1, 0, 0, 1, 2, 3, 3, 3, 3],
       fireRate: 2,
     },
   ],
@@ -269,7 +289,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Bow, short",
-      acAdjustments: [-5, -4, -1, 0, 0, 1, 2, 2, 2],
+      acAdjustments: [-7, -6, -5, -4, -1, 0, 0, 1, 2, 2, 2],
       fireRate: 2,
     },
   ],
@@ -278,7 +298,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Club (Held)",
-      acAdjustments: [-5, -4, -3, -2, -1, -1, 0, 0, 1],
+      acAdjustments: [-7, -6, -5, -4, -3, -2, -1, -1, 0, 0, 1],
       length: 3,
       speedFactor: 4,
     },
@@ -288,7 +308,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Club (Hurled)",
-      acAdjustments: [-7, -5, -3, -2, -1, -1, -1, 0, 0],
+      acAdjustments: [-9, -8, -7, -5, -3, -2, -1, -1, -1, 0, 0],
       fireRate: 1,
     },
   ],
@@ -297,7 +317,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Crossbow, heavy",
-      acAdjustments: [-1, 0, 1, 2, 3, 3, 4, 4, 4],
+      acAdjustments: [-2, -1, -1, 0, 1, 2, 3, 3, 4, 4, 4],
       fireRate: 0.5,
     },
   ],
@@ -306,7 +326,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Crossbow, light",
-      acAdjustments: [-2, -1, 0, 0, 1, 2, 3, 3, 3],
+      acAdjustments: [-3, -2, -2, -1, 0, 0, 1, 2, 3, 3, 3],
       fireRate: 1,
     },
   ],
@@ -315,7 +335,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Dagger (Held)",
-      acAdjustments: [-3, -3, -2, -2, 0, 0, 1, 1, 3],
+      acAdjustments: [-4, -4, -3, -3, -2, -2, 0, 0, 1, 1, 3],
       length: 1.25,
       speedFactor: 2,
     },
@@ -325,7 +345,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Dagger (Hurled)",
-      acAdjustments: [-5, -4, -3, -2, -1, -1, 0, 0, 1],
+      acAdjustments: [-7, -6, -5, -4, -3, -2, -1, -1, 0, 0, 1],
       fireRate: 2,
     },
   ],
@@ -334,7 +354,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Dart",
-      acAdjustments: [-5, -4, -3, -2, -1, 0, 1, 0, 1],
+      acAdjustments: [-7, -6, -5, -4, -3, -2, -1, 0, 1, 0, 1],
       fireRate: 3,
     },
   ],
@@ -343,7 +363,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Fauchard",
-      acAdjustments: [-2, -2, -1, -1, 0, 0, 0, -1, -1],
+      acAdjustments: [-3, -3, -2, -2, -1, -1, 0, 0, 0, -1, -1],
       length: 8,
       speedFactor: 8,
     },
@@ -353,7 +373,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Fauchard-Fork",
-      acAdjustments: [-1, -1, -1, 0, 0, 0, 1, 0, 1],
+      acAdjustments: [-2, -2, -1, -1, -1, 0, 0, 0, 1, 0, 1],
       length: 8,
       speedFactor: 8,
     },
@@ -363,7 +383,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Fist or Open Hand",
-      acAdjustments: [-7, -5, -3, -1, 0, 0, 2, 0, 4],
+      acAdjustments: [-9, -8, -7, -5, -3, -1, 0, 0, 2, 0, 4],
       length: 2,
       speedFactor: 1,
     },
@@ -373,7 +393,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Flail, Footman’s",
-      acAdjustments: [2, 2, 1, 2, 1, 1, 1, 1, -1],
+      acAdjustments: [3, 3, 2, 2, 1, 2, 1, 1, 1, 1, -1],
       length: 4,
       speedFactor: 7,
     },
@@ -383,7 +403,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Flail, Horseman’s",
-      acAdjustments: [0, 0, 0, 0, 0, 1, 1, 1, 0],
+      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0],
       length: 2,
       speedFactor: 6,
     },
@@ -393,7 +413,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Fork, Military",
-      acAdjustments: [-2, -2, -1, 0, 0, 1, 1, 0, 1],
+      acAdjustments: [-3, -3, -2, -2, -1, 0, 0, 1, 1, 0, 1],
       length: 7,
       speedFactor: 7,
     },
@@ -403,7 +423,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Glaive",
-      acAdjustments: [-1, -1, 0, 0, 0, 0, 0, 0, 0],
+      acAdjustments: [-2, -2, -1, -1, 0, 0, 0, 0, 0, 0, 0],
       length: 8,
       speedFactor: 8,
     },
@@ -413,7 +433,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Glaive-Guisarme",
-      acAdjustments: [-1, -1, 0, 0, 0, 0, 0, 0, 0],
+      acAdjustments: [-2, -2, -1, -1, 0, 0, 0, 0, 0, 0, 0],
       length: 8,
       speedFactor: 9,
     },
@@ -423,7 +443,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Guisarme",
-      acAdjustments: [-2, -2, -1, -1, 0, 0, 0, -1, -1],
+      acAdjustments: [-3, -3, -2, -2, -1, -1, 0, 0, 0, -1, -1],
       length: 6,
       speedFactor: 8,
     },
@@ -433,7 +453,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Guisarme-Voulge",
-      acAdjustments: [-1, -1, 0, 1, 1, 1, 0, 0, 0],
+      acAdjustments: [-2, -2, -1, -1, 0, 1, 1, 1, 0, 0, 0],
       length: 7,
       speedFactor: 10,
     },
@@ -443,7 +463,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Halberd",
-      acAdjustments: [1, 1, 1, 2, 2, 2, 1, 1, 0],
+      acAdjustments: [0, 1, 1, 1, 1, 2, 2, 2, 1, 1, 0],
       length: 5,
       speedFactor: 9,
     },
@@ -453,7 +473,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Hammer, Lucern",
-      acAdjustments: [1, 1, 2, 2, 2, 1, 1, 0, 0],
+      acAdjustments: [0, 1, 1, 1, 2, 2, 2, 1, 1, 0, 0],
       length: 5,
       speedFactor: 9,
     },
@@ -463,7 +483,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Hammer (Held)",
-      acAdjustments: [0, 1, 0, 1, 0, 0, 0, 0, 0],
+      acAdjustments: [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
       length: 1.5,
       speedFactor: 4,
     },
@@ -473,7 +493,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Hammer (Hurled)",
-      acAdjustments: [-2, -1, 0, 0, 0, 0, 0, 0, 1],
+      acAdjustments: [-4, -3, -2, -1, 0, 0, 0, 0, 0, 0, 1],
       fireRate: 1,
     },
   ],
@@ -482,7 +502,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Javelin",
-      acAdjustments: [-5, -4, -3, -2, -1, 0, 1, 0, 1],
+      acAdjustments: [-7, -6, -5, -4, -3, -2, -1, 0, 1, 0, 1],
       fireRate: 1,
     },
   ],
@@ -491,7 +511,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Jo Stick",
-      acAdjustments: [-8, -6, -4, -2, -1, 0, 1, 0, 2],
+      acAdjustments: [-10, -9, -8, -6, -4, -2, -1, 0, 1, 0, 2],
       length: 3,
       speedFactor: 2,
     },
@@ -501,7 +521,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Lance (heavy horse)",
-      acAdjustments: [3, 3, 2, 2, 2, 1, 1, 0, 0],
+      acAdjustments: [4, 4, 3, 3, 2, 2, 2, 1, 1, 0, 0],
       length: 14,
       speedFactor: 8,
     },
@@ -511,7 +531,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Lance (light horse)",
-      acAdjustments: [-2, -2, -1, 0, 0, 0, 0, 0, 0],
+      acAdjustments: [-3, -3, -2, -2, -1, 0, 0, 0, 0, 0, 0],
       length: 10,
       speedFactor: 7,
     },
@@ -521,7 +541,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Lance (medium horse)",
-      acAdjustments: [0, 1, 1, 1, 1, 0, 0, 0, 0],
+      acAdjustments: [-1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
       length: 12,
       speedFactor: 6,
     },
@@ -531,7 +551,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Mace, Footman’s",
-      acAdjustments: [1, 1, 0, 0, 0, 0, 0, 1, -1],
+      acAdjustments: [2, 2, 1, 1, 0, 0, 0, 0, 0, 1, -1],
       length: 2.5,
       speedFactor: 7,
     },
@@ -541,7 +561,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Mace, Horseman’s",
-      acAdjustments: [1, 1, 0, 0, 0, 0, 0, 0, 0],
+      acAdjustments: [2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
       length: 1.5,
       speedFactor: 6,
     },
@@ -551,7 +571,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Morning Star",
-      acAdjustments: [0, 1, 1, 1, 1, 1, 1, 2, 2],
+      acAdjustments: [0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2],
       length: 4,
       speedFactor: 7,
     },
@@ -561,7 +581,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Partisan",
-      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       length: 7,
       speedFactor: 9,
     },
@@ -571,7 +591,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Pick, Military, Footman’s",
-      acAdjustments: [2, 2, 1, 1, 0, -1, -1, -1, -2],
+      acAdjustments: [3, 3, 2, 2, 1, 1, 0, -1, -1, -1, -2],
       length: 4,
       speedFactor: 7,
     },
@@ -581,7 +601,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Pick, Military, Horseman’s",
-      acAdjustments: [1, 1, 1, 1, 0, 0, -1, -1, -1],
+      acAdjustments: [2, 2, 1, 1, 1, 1, 0, 0, -1, -1, -1],
       length: 2,
       speedFactor: 5,
     },
@@ -591,7 +611,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Pike, awl",
-      acAdjustments: [-1, 0, 0, 0, 0, 0, 0, -1, -2],
+      acAdjustments: [-1, -1, -1, 0, 0, 0, 0, 0, 0, -1, -2],
       length: 18,
       speedFactor: 13,
     },
@@ -601,7 +621,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Ranseur",
-      acAdjustments: [-2, -1, -1, 0, 0, 0, 0, 0, 1],
+      acAdjustments: [-3, -3, -2, -1, -1, 0, 0, 0, 0, 0, 1],
       length: 8,
       speedFactor: 8,
     },
@@ -611,7 +631,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Scimitar",
-      acAdjustments: [-3, -2, -2, -1, 0, 0, 1, 1, 3],
+      acAdjustments: [-4, -3, -3, -2, -2, -1, 0, 0, 1, 1, 3],
       length: 3,
       speedFactor: 4,
     },
@@ -621,7 +641,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Sling (bullet)",
-      acAdjustments: [-2, -2, -1, 0, 0, 0, 2, 1, 3],
+      acAdjustments: [-3, -3, -2, -2, -1, 0, 0, 0, 2, 1, 3],
       fireRate: 1,
     },
   ],
@@ -630,7 +650,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Sling (stone)",
-      acAdjustments: [-5, -4, -2, -1, 0, 0, 2, 1, 3],
+      acAdjustments: [-7, -6, -5, -4, -2, -1, 0, 0, 2, 1, 3],
       fireRate: 1,
     },
   ],
@@ -639,7 +659,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Spear (held)",
-      acAdjustments: [-2, -1, -1, -1, 0, 0, 0, 0, 0],
+      acAdjustments: [-2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0],
       length: 9,
       speedFactor: 7,
     },
@@ -649,7 +669,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "missile",
       name: "Spear (hurled)",
-      acAdjustments: [-3, -3, -2, -2, -1, 0, 0, 0, 0],
+      acAdjustments: [-4, -4, -3, -3, -2, -2, -1, 0, 0, 0, 0],
       fireRate: 1,
     },
   ],
@@ -658,7 +678,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Spetum",
-      acAdjustments: [-2, -1, 0, 0, 0, 0, 0, 1, 2],
+      acAdjustments: [-2, -2, -2, -1, 0, 0, 0, 0, 0, 1, 2],
       length: 8,
       speedFactor: 8,
     },
@@ -668,7 +688,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Staff, quarter",
-      acAdjustments: [-7, -5, -3, -1, 0, 0, 1, 1, 1],
+      acAdjustments: [-9, -8, -7, -5, -3, -1, 0, 0, 1, 1, 1],
       length: 7,
       speedFactor: 4,
     },
@@ -678,7 +698,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Sword, bastard",
-      acAdjustments: [0, 0, 1, 1, 1, 1, 1, 1, 0],
+      acAdjustments: [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0],
       length: 4.5,
       speedFactor: 6,
     },
@@ -688,7 +708,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Sword, broad",
-      acAdjustments: [-3, -2, -1, 0, 0, 1, 1, 1, 2],
+      acAdjustments: [-5, -4, -3, -2, -1, 0, 0, 1, 1, 1, 2],
       length: 3.5,
       speedFactor: 5,
     },
@@ -698,7 +718,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Sword, long",
-      acAdjustments: [-2, -1, 0, 0, 0, 0, 0, 1, 2],
+      acAdjustments: [-4, -3, -2, -1, 0, 0, 0, 0, 0, 1, 2],
       length: 3.5,
       speedFactor: 5,
     },
@@ -708,7 +728,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Sword, short",
-      acAdjustments: [-3, -2, -1, 0, 0, 0, 1, 0, 2],
+      acAdjustments: [-5, -4, -3, -2, -1, 0, 0, 0, 1, 0, 2],
       length: 2,
       speedFactor: 3,
     },
@@ -718,7 +738,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Sword, two-handed",
-      acAdjustments: [2, 2, 2, 2, 3, 3, 3, 1, 0],
+      acAdjustments: [2, 2, 2, 2, 2, 2, 3, 3, 3, 1, 0],
       length: 6,
       speedFactor: 10,
     },
@@ -728,7 +748,7 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Trident",
-      acAdjustments: [-3, -2, -1, -1, 0, 0, 1, 0, 1],
+      acAdjustments: [-4, -3, -3, -2, -1, -1, 0, 0, 1, 0, 1],
       length: 6,
       speedFactor: 7,
     },
@@ -738,74 +758,224 @@ export const weapons = new Map<number, WeaponInfo>([
     {
       weaponType: "melee",
       name: "Voulge",
-      acAdjustments: [-1, -1, 0, 1, 1, 1, 0, 0, 0],
+      acAdjustments: [-2, -2, -1, -1, 0, 1, 1, 1, 0, 0, 0],
       length: 8,
       speedFactor: 10,
     },
   ],
 ]);
-// const weapons = new Map([
-//   ["Natural Weapon (Monster)", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
-//   ["Axe, Battle", [-3, -2, -1, -1, 0, 0, 1, 1, 2]],
-//   ["Axe, Hand (Held)", [-3, -2, -2, -1, 0, 0, 1, 1, 1]],
-//   ["Axe, Hand (Hurled)", [-4, -3, -2, -1, -1, 0, 0, 0, 1]],
-//   ["Bardiche", [-2, -1, 0, 0, 1, 1, 2, 2, 3]],
-//   ["Bec de Corbin", [2, 2, 2, 0, 0, 0, 0, 0, -1]],
-//   ["Bill-Guisarme", [0, 0, 0, 0, 0, 0, 1, 0, 0]],
-//   ["Bo Stick", [-9, -7, -5, -3, -1, 0, 1, 0, 3]],
-//   ["Bow, composite, long", [-3, -3, -1, 0, 1, 2, 2, 2, 3]],
-//   ["Bow, composite, short", [-3, -3, -1, 0, 1, 2, 2, 2, 3]],
-//   ["Bow, long", [-1, 0, 0, 1, 2, 3, 3, 3, 3]],
-//   ["Bow, short", [-5, -4, -1, 0, 0, 1, 2, 2, 2]],
-//   ["Club (Held)", [-5, -4, -3, -2, -1, -1, 0, 0, 1]],
-//   ["Club (Hurled)", [-7, -5, -3, -2, -1, -1, -1, 0, 0]],
-//   ["Crossbow, heavy", [-1, 0, 1, 2, 3, 3, 4, 4, 4]],
-//   ["Crossbow, light", [-2, -1, 0, 0, 1, 2, 3, 3, 3]],
-//   ["Dagger (Held)", [-3, -3, -2, -2, 0, 0, 1, 1, 3]],
-//   ["Dagger (Hurled)", [-5, -4, -3, -2, -1, -1, 0, 0, 1]],
-//   ["Dart", [-5, -4, -3, -2, -1, 0, 1, 0, 1]],
-//   ["Fauchard", [-2, -2, -1, -1, 0, 0, 0, -1, -1]],
-//   ["Fauchard-Fork", [-1, -1, -1, 0, 0, 0, 1, 0, 1]],
-//   ["Fist or Open Hand", [-7, -5, -3, -1, 0, 0, 2, 0, 4]],
-//   ["Flail, Footman’s", [2, 2, 1, 2, 1, 1, 1, 1, -1]],
-//   ["Flail, Horseman’s", [0, 0, 0, 0, 0, 1, 1, 1, 0]],
-//   ["Fork, Military", [-2, -2, -1, 0, 0, 1, 1, 0, 1]],
-//   ["Glaive", [-1, -1, 0, 0, 0, 0, 0, 0, 0]],
-//   ["Glaive-Guisarme", [-1, -1, 0, 0, 0, 0, 0, 0, 0]],
-//   ["Guisarme", [-2, -2, -1, -1, 0, 0, 0, -1, -1]],
-//   ["Guisarme-Voulge", [-1, -1, 0, 1, 1, 1, 0, 0, 0]],
-//   ["Halberd", [1, 1, 1, 2, 2, 2, 1, 1, 0]],
-//   ["Hammer, Lucern", [1, 1, 2, 2, 2, 1, 1, 0, 0]],
-//   ["Hammer (Held)", [0, 1, 0, 1, 0, 0, 0, 0, 0]],
-//   ["Hammer (Hurled)", [-2, -1, 0, 0, 0, 0, 0, 0, 1]],
-//   ["Javelin", [-5, -4, -3, -2, -1, 0, 1, 0, 1]],
-//   ["Jo Stick", [-8, -6, -4, -2, -1, 0, 1, 0, 2]],
-//   ["Lance (heavy horse)", [3, 3, 2, 2, 2, 1, 1, 0, 0]],
-//   ["Lance (light horse)", [-2, -2, -1, 0, 0, 0, 0, 0, 0]],
-//   ["Lance (medium horse)", [0, 1, 1, 1, 1, 0, 0, 0, 0]],
-//   ["Mace, Footman’s", [1, 1, 0, 0, 0, 0, 0, 1, -1]],
-//   ["Mace, Horseman’s", [1, 1, 0, 0, 0, 0, 0, 0, 0]],
-//   ["Morning Star", [0, 1, 1, 1, 1, 1, 1, 2, 2]],
-//   ["Partisan", [0, 0, 0, 0, 0, 0, 0, 0, 0]],
-//   ["Pick, Military, Footman’s", [2, 2, 1, 1, 0, -1, -1, -1, -2]],
-//   ["Pick, Military, Horseman’s", [1, 1, 1, 1, 0, 0, -1, -1, -1]],
-//   ["Pike, awl", [-1, 0, 0, 0, 0, 0, 0, -1, -2]],
-//   ["Ranseur", [-2, -1, -1, 0, 0, 0, 0, 0, 1]],
-//   ["Scimitar", [-3, -2, -2, -1, 0, 0, 1, 1, 3]],
-//   ["Sling (bullet)", [-2, -2, -1, 0, 0, 0, 2, 1, 3]],
-//   ["Sling (stone)", [-5, -4, -2, -1, 0, 0, 2, 1, 3]],
-//   ["Spear (held)", [-2, -1, -1, -1, 0, 0, 0, 0, 0]],
-//   ["Spear (hurled)", [-3, -3, -2, -2, -1, 0, 0, 0, 0]],
-//   ["Spetum", [-2, -1, 0, 0, 0, 0, 0, 1, 2]],
-//   ["Staff, quarter", [-7, -5, -3, -1, 0, 0, 1, 1, 1]],
-//   ["Sword, bastard", [0, 0, 1, 1, 1, 1, 1, 1, 0]],
-//   ["Sword, broad", [-3, -2, -1, 0, 0, 1, 1, 1, 2]],
-//   ["Sword, long", [-2, -1, 0, 0, 0, 0, 0, 1, 2]],
-//   ["Sword, short", [-3, -2, -1, 0, 0, 0, 1, 0, 2]],
-//   ["Sword, two-handed", [2, 2, 2, 2, 3, 3, 3, 1, 0]],
-//   ["Trident", [-3, -2, -1, -1, 0, 0, 1, 0, 1]],
-//   ["Voulge", [-1, -1, 0, 1, 1, 1, 0, 0, 0]],
-// ]);
+
+export const uaWeapons = new Map<number, WeaponInfo>([
+  [
+    61,
+    {
+      weaponType: "melee",
+      name: "Aklys (held)",
+      acAdjustments: [-7, -6, -5, -4, -3, -2, -1, -1, 0, 0, 1],
+      length: 2,
+      speedFactor: 4, // UA says 4 (+1) with no explanation. For melee it's just a club though, which is 4.
+    },
+  ],
+  [
+    62,
+    {
+      weaponType: "missile",
+      name: "Aklys (hurled)",
+      acAdjustments: [-8, -7, -6, -5, -4, -3, -2, -1, 0, 0, 0],
+      fireRate: 1,
+    },
+  ],
+  [
+    63,
+    {
+      weaponType: "missile",
+      name: "Atlatl (javelin)", // UA also has Atlatl in melee section with a 3' length, no SF
+      acAdjustments: [-6, -5, -4, -3, -2, -1, 0, 0, 1, 1, 2],
+      fireRate: 1,
+    },
+  ],
+  [
+    64,
+    {
+      weaponType: "missile",
+      name: "Blowgun Needle", // UA also has Blowgun in melee section with a 4'-7' length, no SF
+      acAdjustments: [-14, -12, -10, -8, -6, -4, -2, -1, -1, 1, 2],
+      fireRate: 2,
+    },
+  ],
+  [
+    65,
+    {
+      weaponType: "natural",
+      name: "Caltrop", // Caltrops are so weird. 1+1 HD monster attack, no proficiency
+      acAdjustments: [-8, -7 - 6, -5, -4, -3, -2, -1, 0, 1, 2],
+    },
+  ],
+  [
+    66,
+    {
+      weaponType: "missile",
+      name: "Crossbow, hand",
+      acAdjustments: [-6, -4, -2, -1, 0, 0, 0, 1, 2, 2, 3],
+      fireRate: 1,
+    },
+  ],
+  [
+    67,
+    {
+      weaponType: "melee",
+      name: "Garrot",
+      length: 3,
+      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      speedFactor: 2,
+    },
+  ],
+  [
+    68,
+    {
+      weaponType: "melee",
+      name: "Harpoon (Held)",
+      acAdjustments: [-3, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0],
+      length: 7,
+      speedFactor: 6,
+    },
+  ],
+  [
+    69,
+    {
+      weaponType: "missile",
+      name: "Harpoon (Hurled)",
+      acAdjustments: [-6, -5, -4, -3, -2, -1, 0, 0, 0, 0, 1],
+      fireRate: 1,
+    },
+  ],
+  [
+    70,
+    {
+      weaponType: "melee",
+      name: "Hook Fauchard",
+      acAdjustments: [-3, -3, -2, -2, -1, -1, 0, 0, 0, 0, -1],
+      length: 8,
+      speedFactor: 9,
+    },
+  ],
+  [
+    71,
+    {
+      weaponType: "melee",
+      name: "Knife (held)",
+      acAdjustments: [-6, -5, -5, -4, -3, -2, -1, 0, 1, 1, 3],
+      length: 1,
+      speedFactor: 2,
+    },
+  ],
+  [
+    72,
+    {
+      weaponType: "missile",
+      name: "Knife (hurled)",
+      acAdjustments: [-8, -7, -6, -5, -4, -3, -2, -1, 0, 0, 1],
+      fireRate: 2,
+    },
+  ],
+  [
+    73,
+    {
+      weaponType: "melee",
+      name: "Lasso (held)",
+      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      length: 15,
+      speedFactor: 10,
+    },
+  ],
+  [
+    74,
+    {
+      weaponType: "missile",
+      name: "Lasso (hurled)",
+      acAdjustments: [9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1],
+      fireRate: 0.5,
+    },
+  ],
+  [
+    75,
+    {
+      weaponType: "melee",
+      name: "Man Catcher",
+      acAdjustments: [0, 0, 0, 0, 0, 0, 0, 0, -1, -2, -3],
+      length: 8,
+      speedFactor: 7,
+    },
+  ],
+  [
+    76,
+    {
+      weaponType: "melee",
+      name: "Sap",
+      acAdjustments: [-14, -13, -12, -10, -8, -6, -5, -4, -3, -2, 0],
+      length: 0.5,
+      speedFactor: 2,
+    },
+  ],
+  [
+    77,
+    {
+      weaponType: "melee",
+      name: "Spiked Buckler",
+      acAdjustments: [-7, -6, -5, -4, -3, -2, -1, 0, 0, 0, 2],
+      length: 1,
+      speedFactor: 4,
+    },
+  ],
+  [
+    78,
+    {
+      weaponType: "missile",
+      name: "Staff Sling (bullet)", // Also listed as melee with length 5, SF 11, but it's missile-only
+      acAdjustments: [-5, -4, -3, -2, -1, 0, 0, 0, 0, 0, 0],
+      fireRate: 0.5,
+    },
+  ],
+  [
+    79,
+    {
+      weaponType: "missile",
+      name: "Staff Sling (stone)", // Also listed as melee with length 5, SF 11, but it's missile-only
+      acAdjustments: [-6, -5, -4, -3, -2, -1, 0, 0, 0, 0, 0],
+      fireRate: 0.5,
+    },
+  ],
+  [
+    80,
+    {
+      weaponType: "melee",
+      name: "Sword, falchion",
+      acAdjustments: [-3, -2, -2, -1, 0, 1, 1, 1, 1, 0, 0],
+      length: 3.5,
+      speedFactor: 5,
+    },
+  ],
+  [
+    81,
+    {
+      weaponType: "melee",
+      name: "Sword, khopesh",
+      acAdjustments: [-7, -6, -5, -4, -2, -1, 0, 0, 1, 1, 2],
+      length: 3.5,
+      speedFactor: 9,
+    },
+  ],
+  [
+    82,
+    {
+      weaponType: "melee",
+      name: "Whip",
+      acAdjustments: [-14, -12, -10, -8, -6, -4, -2, -1, 1, 0, 3],
+      length: 14, // 8-20
+      speedFactor: 6, // 5-8
+    },
+  ],
+]);
 
 export const getWeaponAdjustment = (
   weapon: number,
@@ -813,7 +983,7 @@ export const getWeaponAdjustment = (
 ): number => {
   const weaponProps = weapons.get(weapon);
   if (weaponProps) {
-    const weaponAdjustment = weaponProps.acAdjustments[armorType - 2];
+    const weaponAdjustment = weaponProps.acAdjustments[armorType];
     if (weaponAdjustment || weaponAdjustment === 0) {
       return weaponAdjustment;
     } else {

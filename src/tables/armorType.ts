@@ -20,6 +20,25 @@ import {
   THIEF,
 } from "./attackerClass";
 
+/**
+ * Unearthed Arcana notes:
+ *
+ * Cavalier does not wear leather, padded, or studded leather armor. This restriction
+ * also applies to paladin, so UA paladin conflicts with PHB paladin.
+ *
+ * UA Druid can also wear padded armor, unlike PHB Druid.
+ *
+ * UA Thief can also wear studded leather, padded, or elfin chain for combat purposes.
+ *
+ * UA Assassin can also wear studded leather, padded, or elfin chain.
+ *
+ * Unlike the PHB Assassin, they cannot carry a shield. Ah but wait! That's in the
+ * errata. UA Assassin *can* carry a shield, just not in a round when they are
+ * engaged in an assassination act.
+ *
+ * UA Bard can also wear studded leather, padded, ring mail, or elfin chain, as
+ * well as the PHB Bard's leather and magical chain.
+ */
 const expandedDruidArmor = [2, 3, 4, 6];
 const expandedMagicUserArmor = [2];
 const expandedThiefArmor = [2, 4];

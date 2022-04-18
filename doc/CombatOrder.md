@@ -169,3 +169,8 @@ Create "Player" or "Combatant", cloned from Creature:
 - movementRate (new)
 - dexterity (new)
 - attacks (new)
+
+## Issue:
+
+What about fighting with two weapons? Would the second weapon affect 
+the order somehow? Would it matter?
