@@ -120,12 +120,14 @@ Preferences should store:
   - Start of round
   - Segment of opponents initiative die
 
-## First step
+## Completed
 
-Weapons are done:
- - length/reach (for ranges, I picked the middle)
- - speed factor (for range, I picked the middle)
- - firing rate for missile
+- Weapons are done:
+  - length/reach (for ranges, I picked the middle)
+  - speed factor (for range, I picked the middle)
+  - firing rate for missile
+- Put ids in for "Class" and "Level": v4 of creature.
+- UA Weapon Info is added, including AC Adjustments for Type 0 and 1
 
 ## Status
 
@@ -156,10 +158,6 @@ Define a player object with the following properties:
 - Dexterity (for things like initiative and surprise reaction)
 - Attacks per round (for both melee and missile)
 
-## Simple next step:
-
-- Put ids in for "Class" and "Level": v4 of creature.
-
 ## Next:
 
 Create "Player" or "Combatant", cloned from Creature:
@@ -173,4 +171,5 @@ Create "Player" or "Combatant", cloned from Creature:
 ## Issue:
 
 What about fighting with two weapons? Would the second weapon affect 
-the order somehow? Would it matter?
+the order somehow? Would it matter? I think it wouldn't, since it is
+one attack routine.

@@ -6,7 +6,7 @@ const Index = () => {
     <div className={styles["links"]}>
       <Link href={"/calculator"}>AD&D Combat Calculator</Link>
       <br />
-      <Link href={"/battle"}>AD&D Battle Table</Link>
+      <Link href={"/battle"}>AD&D Battle Grid</Link>
     </div>
   );
 };
