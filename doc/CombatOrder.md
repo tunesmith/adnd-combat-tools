@@ -173,3 +173,6 @@ Create "Player" or "Combatant", cloned from Creature:
 What about fighting with two weapons? Would the second weapon affect 
 the order somehow? Would it matter? I think it wouldn't, since it is
 one attack routine.
+
+Hmm, I might need to record reach for monsters with natural attack...
+for when they charge or receive a charge.
