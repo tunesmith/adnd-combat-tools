@@ -1,12 +1,24 @@
 import { NoCommand } from "../../tables/dungeon/dungeonTypes";
 import { doorBeyondResult } from "../../dungeon/services/doorBeyondResult";
 import { passageResults } from "../../dungeon/services/passage";
+import { unusualSizeResult } from "../../dungeon/services/unusualSizeResult";
+import { chamberResult } from "../../dungeon/services/chamberResult";
 
 describe("passage results", () => {
   test("initial move", () => {
     const passageResult = passageResults();
     console.log(passageResult);
     expect(passageResult).not.toBe(NoCommand.NoCommand);
+  });
+  test("unusual size", () => {
+    const unusualSize = unusualSizeResult();
+    console.log(unusualSize);
+    expect(unusualSize).not.toBe(NoCommand.NoCommand);
+  });
+  test("chamber", () => {
+    const chamber = chamberResult();
+    console.log(chamber);
+    expect(chamber).not.toBe(NoCommand.NoCommand);
   });
 });
 

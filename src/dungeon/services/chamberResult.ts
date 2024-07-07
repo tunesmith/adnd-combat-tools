@@ -4,6 +4,7 @@ import {
   chamberDimensions,
 } from "../../tables/dungeon/chambersRooms";
 import { unusualShapeResult } from "./unusualShapeResult";
+import { unusualSizeResult } from "./unusualSizeResult";
 
 export const chamberResult = (): string => {
   const roll = rollDice(chamberDimensions.sides);
@@ -29,7 +30,8 @@ export const chamberResult = (): string => {
         return (
           "The chamber has an unusual shape and size. " +
           unusualShapeResult() +
-          "(TODO unusual size)"
+          unusualSizeResult() +
+          "(TODO exits, contents, treasure)"
         );
     }
   } else {
