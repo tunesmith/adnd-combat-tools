@@ -1,4 +1,4 @@
-import { getTableEntry, rollDice } from "./periodicCheck";
+import { getTableEntry, rollDice } from "./passage";
 import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
 import { passageWidthResults } from "./passageWidth";
 

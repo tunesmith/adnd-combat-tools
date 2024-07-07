@@ -1,5 +1,5 @@
 import { SidePassages, sidePassages } from "../../tables/dungeon/sidePassages";
-import { getTableEntry, rollDice } from "./periodicCheck";
+import { getTableEntry, rollDice } from "./passage";
 
 export const sidePassageResults = (): string => {
   const sidePassageRoll = rollDice(sidePassages.sides);

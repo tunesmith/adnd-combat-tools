@@ -1,10 +1,9 @@
-import { getTableEntry, rollDice } from "./periodicCheck";
+import { getTableEntry, rollDice } from "./passage";
 import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
 import {
   periodicCheck,
   PeriodicCheck,
 } from "../../tables/dungeon/periodicCheck";
-import { doorBeyondResult } from "./doorBeyondResult";
 
 /**
  * Check again immediately on TABLE I (periodicCheck) unless
@@ -20,10 +19,9 @@ export const doorResult = (existingDoors: DoorLocation[]): string => {
     );
     if (doorLocationCommand === DoorLocation.Ahead) {
       // console.log(`door ahead; call doorBeyond for Ahead`);
-      return (
-        `A door is ${DoorLocation[doorLocationCommand]}. ` +
-        doorBeyondResult(true)
-      );
+      return `A door is ${DoorLocation[doorLocationCommand]}. `;
+      // doorBeyondResult(true)
+      // doorBeyondResult()
     } else {
       if (existingDoors.includes(doorLocationCommand as DoorLocation)) {
         // console.log(`existingDoors: `, existingDoors);
@@ -48,13 +46,15 @@ export const doorResult = (existingDoors: DoorLocation[]): string => {
           ]);
           return (
             `A door is to the ${DoorLocation[doorLocationCommand]}. ` +
-            doorBeyondResult(false) +
+            // doorBeyondResult(false) +
+            // doorBeyondResult() +
             `${nextDoor}`
           );
         } else {
           return (
             `A door is to the ${DoorLocation[doorLocationCommand]}. ` +
-            doorBeyondResult(false) +
+            // doorBeyondResult(false) +
+            // doorBeyondResult() +
             `There are no other doors, so the main passage extends 30' ahead. `
           );
         }

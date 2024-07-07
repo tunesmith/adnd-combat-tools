@@ -38,7 +38,7 @@ export const getTableEntry = (roll: number, table: Table): Command => {
  * But for rooms, it means that we would need another
  * move type, one that checks beyond a door.
  */
-export const periodicCheckResults = (): string => {
+export const passageResults = (): string => {
   const roll = rollDice(periodicCheck.sides);
   // console.log(`periodicCheck: ${roll}`);
   const command = getTableEntry(roll, periodicCheck);
