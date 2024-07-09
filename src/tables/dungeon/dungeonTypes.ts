@@ -29,6 +29,11 @@ import {
   TransmuteType,
   TransporterLocation,
 } from "./magicPool";
+import {
+  MonsterDistributionLevel,
+  MonsterLevel,
+  MonsterOne,
+} from "./monsterLevel";
 
 export interface Table {
   sides: number;
@@ -75,4 +80,7 @@ export type Command =
   | TransmuteType
   | PoolAlignment
   | TransporterLocation
+  | MonsterDistributionLevel
+  | MonsterLevel
+  | MonsterOne
   | NoCommand;

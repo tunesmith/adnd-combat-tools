@@ -9,8 +9,12 @@ import { doorResult } from "./doorResult";
 import { chamberResult } from "./chamberResult";
 import { stairsResult } from "./stairsResult";
 
-export const rollDice = (sides: number): number => {
-  return Math.floor(Math.random() * sides) + 1;
+export const rollDice = (sides: number, rolls: number = 1): number => {
+  let total = 0;
+  for (let i = 0; i < rolls; i++) {
+    total += Math.floor(Math.random() * sides) + 1;
+  }
+  return total;
 };
 
 export const getTableEntry = (roll: number, table: Table): Command => {

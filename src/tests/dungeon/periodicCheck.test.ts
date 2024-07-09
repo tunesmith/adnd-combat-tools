@@ -3,6 +3,7 @@ import { doorBeyondResult } from "../../dungeon/services/doorBeyondResult";
 import { passageResults } from "../../dungeon/services/passage";
 import { unusualSizeResult } from "../../dungeon/services/unusualSizeResult";
 import { chamberResult } from "../../dungeon/services/chamberResult";
+import { monsterLevelOne } from "../../dungeon/services/wanderingMonsterResult";
 
 describe("passage results", () => {
   test("initial move", () => {
@@ -19,6 +20,11 @@ describe("passage results", () => {
     const chamber = chamberResult();
     console.log(chamber);
     expect(chamber).not.toBe(NoCommand.NoCommand);
+  });
+  test("monster level one", () => {
+    const monsters = monsterLevelOne(5);
+    console.log(monsters);
+    expect(monsters).not.toBe(NoCommand.NoCommand);
   });
 });
 
