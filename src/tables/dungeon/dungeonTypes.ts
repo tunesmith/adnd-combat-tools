@@ -33,6 +33,7 @@ import {
   MonsterDistributionLevel,
   MonsterLevel,
   MonsterOne,
+  MonsterTwo,
 } from "./monsterLevel";
 
 export interface Table {
@@ -83,4 +84,5 @@ export type Command =
   | MonsterDistributionLevel
   | MonsterLevel
   | MonsterOne
+  | MonsterTwo
   | NoCommand;
