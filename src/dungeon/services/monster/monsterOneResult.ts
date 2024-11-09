@@ -1,5 +1,10 @@
 import { getTableEntry, rollDice } from "../passage";
-import { MonsterOne, monsterOne } from "../../../tables/dungeon/monsterLevel";
+import {
+  Human,
+  human,
+  MonsterOne,
+  monsterOne,
+} from "../../../tables/dungeon/monsterLevel";
 import {
   formatMonsterCount,
   getNumberOfMonsters,
@@ -97,5 +102,44 @@ export const monsterOneResult = (dungeonLevel: number): string => {
       const zombies = getNumberOfMonsters(1, dungeonLevel, 1, 3);
       return formatMonsterCount(zombies, "zombie", "zombies");
     }
+  }
+};
+
+export const humanResult = (dungeonLevel: number): string => {
+  const roll = rollDice(human.sides);
+  const command = getTableEntry(roll, human) as Human;
+  switch (command) {
+    case Human.Bandit_5to15: {
+      const bandits = getNumberOfMonsters(1, dungeonLevel, 2, 6, 3);
+      return (
+        formatMonsterCount(bandits, "bandit", "bandits") +
+        `Upper level leaders and sub-leaders are not with groups numbering ` +
+        `under 30, and at only 50% of normal level (rounded up) for groups ` +
+        `under 60. You may wish to exclude this encounter on levels below ` +
+        `whatever point you find them to be unlikely.`
+      );
+    }
+    case Human.Berserker_3to9: {
+      const berserkers = getNumberOfMonsters(1, dungeonLevel, 2, 4, 1);
+      return (
+        formatMonsterCount(berserkers, "berserker", "berserkers") +
+        `Upper level leaders and sub-leaders are not with groups numbering ` +
+        `under 30, and at only 50% of normal level (rounded up) for groups ` +
+        `under 60. You may wish to exclude this encounter on levels below ` +
+        `whatever point you find them to be unlikely.`
+      );
+    }
+    case Human.Brigand_5to15: {
+      const brigands = getNumberOfMonsters(1, dungeonLevel, 2, 6, 3);
+      return (
+        formatMonsterCount(brigands, "brigand", "brigands") +
+        `Upper level leaders and sub-leaders are not with groups numbering ` +
+        `under 30, and at only 50% of normal level (rounded up) for groups ` +
+        `under 60. You may wish to exclude this encounter on levels below ` +
+        `whatever point you find them to be unlikely.`
+      );
+    }
+    case Human.Character:
+      return `(TODO: Roll Character Subtable for monsterLevel 1 and dungeonLevel ${dungeonLevel}.)`;
   }
 };

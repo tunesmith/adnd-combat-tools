@@ -72,7 +72,7 @@ export const passageResults = (): string => {
         return result;
       }
       case PeriodicCheck.TrickTrap: {
-        const result = "The passage ends in a trick or trap. (TODO)";
+        const result = "There is a trick or trap. (TODO) -- check again in 30'";
         return result;
       }
       case PeriodicCheck.WanderingMonster: {

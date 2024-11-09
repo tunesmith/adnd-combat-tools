@@ -87,8 +87,8 @@ export const formatMonsterCount = (
   plural: string
 ): string => {
   return count === 1
-    ? `There is ${count} ${singular} here.`
-    : `There are ${count} ${plural} here.`;
+    ? `There is ${count} ${singular} here. `
+    : `There are ${count} ${plural} here. `;
 };
 
 export const getNumberOfMonsters = (

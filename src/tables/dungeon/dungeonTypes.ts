@@ -30,6 +30,7 @@ import {
   TransporterLocation,
 } from "./magicPool";
 import {
+  Human,
   MonsterDistributionLevel,
   MonsterLevel,
   MonsterOne,
@@ -84,5 +85,6 @@ export type Command =
   | MonsterDistributionLevel
   | MonsterLevel
   | MonsterOne
+  | Human
   | MonsterTwo
   | NoCommand;
