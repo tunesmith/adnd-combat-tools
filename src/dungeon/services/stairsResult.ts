@@ -1,4 +1,3 @@
-import { getTableEntry, rollDice } from "./passage";
 import {
   Chute,
   chute,
@@ -11,6 +10,7 @@ import {
 } from "../../tables/dungeon/stairs";
 import { Table } from "../../tables/dungeon/dungeonTypes";
 import { chamberResult } from "./chamberResult";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 export const stairsResult = (): string => {
   const roll = rollDice(stairs.sides);

@@ -1,6 +1,7 @@
 import { DoorBeyond, doorBeyond } from "../../tables/dungeon/doorBeyond";
 import { passageWidthResults } from "./passageWidth";
-import { getTableEntry, rollDice } from "./passage";
+
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 export const doorBeyondResult = (): string => {
   const doorBeyondRoll = rollDice(doorBeyond.sides);

@@ -1,6 +1,6 @@
-import { getTableEntry, rollDice } from "./passage";
 import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
 import { passageWidthResults } from "./passageWidth";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 export const passageTurnResults = (): string => {
   const roll = rollDice(passageTurns.sides);

@@ -13,10 +13,10 @@ import {
   dungeonTwoThree,
   MonsterLevel,
 } from "../../tables/dungeon/monsterLevel";
-import { getTableEntry, rollDice } from "./passage";
 import { Table } from "../../tables/dungeon/dungeonTypes";
 import { monsterOneResult } from "./monster/monsterOneResult";
 import { monsterTwoResult } from "./monster/monsterTwoResult";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 export const wanderingMonsterResult = (level: number): string => {
   const table = getMonsterTable(level);

@@ -1,5 +1,6 @@
 import { SidePassages, sidePassages } from "../../tables/dungeon/sidePassages";
-import { getTableEntry, rollDice } from "./passage";
+
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 /**
  * We do *not* check passage width for side passages, as the "periodic check"

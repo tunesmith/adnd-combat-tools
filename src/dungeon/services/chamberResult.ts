@@ -1,10 +1,10 @@
-import { getTableEntry, rollDice } from "./passage";
 import {
   ChamberDimensions,
   chamberDimensions,
 } from "../../tables/dungeon/chambersRooms";
 import { unusualShapeResult } from "./unusualShapeResult";
 import { unusualSizeResult } from "./unusualSizeResult";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 export const chamberResult = (): string => {
   const roll = rollDice(chamberDimensions.sides);

@@ -1,5 +1,5 @@
-import { getTableEntry, rollDice } from "./passage";
 import { UnusualSize, unusualSize } from "../../tables/dungeon/unusualSize";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 export const unusualSizeResult = (): string => {
   return `It is about ${getSize()} sq. ft. `;

@@ -1,9 +1,9 @@
-import { getTableEntry, rollDice } from "./passage";
 import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
 import {
   periodicCheck,
   PeriodicCheck,
 } from "../../tables/dungeon/periodicCheck";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 /**
  * When doing passage checks, the rules subtly imply this looks for *closed*

@@ -1,4 +1,3 @@
-import { getTableEntry, rollDice } from "./passage";
 import {
   CircularContents,
   circularContents,
@@ -16,6 +15,7 @@ import {
   TransporterLocation,
   transporterLocation,
 } from "../../tables/dungeon/magicPool";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 export const unusualShapeResult = (): string => {
   const roll = rollDice(unusualShape.sides);

@@ -1,9 +1,9 @@
-import { getTableEntry, rollDice } from "../passage";
 import { MonsterTwo, monsterTwo } from "../../../tables/dungeon/monsterLevel";
 import {
   formatMonsterCount,
   getNumberOfMonsters,
 } from "../wanderingMonsterResult";
+import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
 
 export const monsterTwoResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterTwo.sides);

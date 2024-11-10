@@ -1,11 +1,12 @@
 import { doorBeyondResult } from "../../dungeon/services/doorBeyondResult";
-import { getTableEntry, passageResults } from "../../dungeon/services/passage";
+import { passageResults } from "../../dungeon/services/passage";
 import { unusualSizeResult } from "../../dungeon/services/unusualSizeResult";
 import { chamberResult } from "../../dungeon/services/chamberResult";
 import { monsterOneResult } from "../../dungeon/services/monster/monsterOneResult";
 import { monsterTwoResult } from "../../dungeon/services/monster/monsterTwoResult";
 import { sidePassages, SidePassages } from "../../tables/dungeon/sidePassages";
 import { Table } from "../../tables/dungeon/dungeonTypes";
+import { getTableEntry } from "../../dungeon/helpers/dungeonLookup";
 
 describe("passage results", () => {
   test("initial move", () => {

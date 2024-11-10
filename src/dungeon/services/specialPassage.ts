@@ -1,4 +1,3 @@
-import { getTableEntry, rollDice } from "./passage";
 import {
   ChasmConstruction,
   chasmConstruction,
@@ -19,6 +18,7 @@ import {
   StreamConstruction,
   streamConstruction,
 } from "../../tables/dungeon/specialPassage";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 export const specialPassageResult = (): string => {
   const specialPassageRoll = rollDice(specialPassage.sides);
