@@ -172,7 +172,7 @@ export const chasmConstructionResult = (): string => {
       return result + jumpingPlaceWidthResult();
     }
     case ChasmConstruction.Obstacle:
-      return "";
+      return "It has no bridge, and is too wide to jump across. ";
   }
 };
 
