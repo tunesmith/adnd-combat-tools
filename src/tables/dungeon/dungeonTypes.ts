@@ -37,17 +37,19 @@ import {
   MonsterTwo,
 } from "./monsterLevel";
 
-export interface Table {
+export type Table<T> = {
   sides: number;
-  entries: Entry[];
-}
-export interface Entry {
-  range: number[];
-  command: Command;
-}
-export enum NoCommand {
-  NoCommand,
-}
+  entries: [Entry<T>, ...Entry<T>[]];
+};
+
+// Define a non-empty range tuple
+export type Range = [number, ...number[]];
+
+export type Entry<T> = {
+  range: Range;
+  command: T;
+};
+
 export type Command =
   | PeriodicCheck
   | DoorLocation
@@ -86,5 +88,4 @@ export type Command =
   | MonsterLevel
   | MonsterOne
   | Human
-  | MonsterTwo
-  | NoCommand;
+  | MonsterTwo;

@@ -11,7 +11,7 @@ export enum SpecialPassage {
   SixtyFootRiver,
   TwentyFootChasm,
 }
-export const specialPassage: Table = {
+export const specialPassage: Table<SpecialPassage> = {
   sides: 20,
   entries: [
     { range: [1, 4], command: SpecialPassage.FortyFeetColumns },
@@ -31,7 +31,7 @@ export enum GalleryStairLocation {
   PassageBeginning,
 }
 
-export const galleryStairLocation: Table = {
+export const galleryStairLocation: Table<GalleryStairLocation> = {
   sides: 20,
   entries: [
     { range: [1, 15], command: GalleryStairLocation.PassageEnd },
@@ -44,7 +44,7 @@ export enum GalleryStairOccurrence {
   Supplement,
 }
 
-export const galleryStairOccurrence: Table = {
+export const galleryStairOccurrence: Table<GalleryStairOccurrence> = {
   sides: 20,
   entries: [
     { range: [1, 10], command: GalleryStairOccurrence.Replace },
@@ -57,7 +57,7 @@ export enum StreamConstruction {
   Obstacle,
 }
 
-export const streamConstruction: Table = {
+export const streamConstruction: Table<StreamConstruction> = {
   sides: 20,
   entries: [
     { range: [1, 15], command: StreamConstruction.Bridged },
@@ -71,7 +71,7 @@ export enum RiverConstruction {
   Obstacle,
 }
 
-export const riverConstruction: Table = {
+export const riverConstruction: Table<RiverConstruction> = {
   sides: 20,
   entries: [
     { range: [1, 10], command: RiverConstruction.Bridged },
@@ -85,7 +85,7 @@ export enum RiverBoatBank {
   OppositeSide,
 }
 
-export const riverBoatBank: Table = {
+export const riverBoatBank: Table<RiverBoatBank> = {
   sides: 20,
   entries: [
     { range: [1, 10], command: RiverBoatBank.ThisSide },
@@ -102,7 +102,7 @@ export enum ChasmDepth {
   Feet200,
 }
 
-export const chasmDepth: Table = {
+export const chasmDepth: Table<ChasmDepth> = {
   sides: 6,
   entries: [
     { range: [1], command: ChasmDepth.Feet150 },
@@ -120,7 +120,7 @@ export enum ChasmConstruction {
   Obstacle,
 }
 
-export const chasmConstruction: Table = {
+export const chasmConstruction: Table<ChasmConstruction> = {
   sides: 20,
   entries: [
     { range: [1, 10], command: ChasmConstruction.Bridged },
@@ -134,7 +134,7 @@ export enum JumpingPlaceWidth {
   TenFeet,
 }
 
-export const jumpingPlaceWidth: Table = {
+export const jumpingPlaceWidth: Table<JumpingPlaceWidth> = {
   sides: 20,
   entries: [
     { range: [1, 10], command: JumpingPlaceWidth.FiveFeet },

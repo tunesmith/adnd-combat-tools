@@ -8,7 +8,7 @@ export enum DoorBeyond {
   Room,
   Chamber,
 }
-export const doorBeyond: Table = {
+export const doorBeyond: Table<DoorBeyond> = {
   sides: 20,
   entries: [
     { range: [1, 4], command: DoorBeyond.ParallelPassageOrCloset },

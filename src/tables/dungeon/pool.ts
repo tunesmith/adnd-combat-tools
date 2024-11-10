@@ -8,7 +8,7 @@ export enum Pool {
   MagicPool,
 }
 
-export const pool: Table = {
+export const pool: Table<Pool> = {
   sides: 20,
   entries: [
     { range: [1, 8], command: Pool.NoPool },

@@ -9,7 +9,7 @@ export enum UnusualSize {
   SqFt3400,
   RollAgain,
 }
-export const unusualSize: Table = {
+export const unusualSize: Table<UnusualSize> = {
   sides: 20,
   entries: [
     { range: [1, 3], command: UnusualSize.SqFt500 },

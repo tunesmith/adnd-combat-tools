@@ -6,7 +6,7 @@ export enum ExitDirection {
   LeftRight45,
   RightLeft45,
 }
-export const exitDirection: Table = {
+export const exitDirection: Table<ExitDirection> = {
   sides: 20,
   entries: [
     { range: [1, 16], command: ExitDirection.StraightAhead },

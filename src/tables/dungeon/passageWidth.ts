@@ -7,7 +7,7 @@ export enum PassageWidth {
   FiveFeet,
   SpecialPassage,
 }
-export const passageWidth: Table = {
+export const passageWidth: Table<PassageWidth> = {
   sides: 20,
   entries: [
     { range: [1, 12], command: PassageWidth.TenFeet },

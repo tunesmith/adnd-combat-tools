@@ -11,7 +11,7 @@ export enum PeriodicCheck {
   TrickTrap,
   WanderingMonster,
 }
-export const periodicCheck: Table = {
+export const periodicCheck: Table<PeriodicCheck> = {
   sides: 20,
   entries: [
     { range: [1, 2], command: PeriodicCheck.ContinueStraight },

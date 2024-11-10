@@ -14,7 +14,7 @@ export enum Stairs {
   TrapDownDownTwo,
   UpOneDownTwo,
 }
-export const stairs: Table = {
+export const stairs: Table<Stairs> = {
   sides: 20,
   entries: [
     { range: [1, 5], command: Stairs.DownOne },
@@ -37,7 +37,7 @@ export enum Egress {
   Open,
 }
 
-export const egressOne: Table = {
+export const egressOne: Table<Egress> = {
   sides: 20,
   entries: [
     { range: [1], command: Egress.Closed },
@@ -45,7 +45,7 @@ export const egressOne: Table = {
   ],
 };
 
-export const egressTwo: Table = {
+export const egressTwo: Table<Egress> = {
   sides: 20,
   entries: [
     { range: [1, 2], command: Egress.Closed },
@@ -53,7 +53,7 @@ export const egressTwo: Table = {
   ],
 };
 
-export const egressThree: Table = {
+export const egressThree: Table<Egress> = {
   sides: 20,
   entries: [
     { range: [1, 3], command: Egress.Closed },
@@ -66,7 +66,7 @@ export enum Chute {
   DoesNotExist,
 }
 
-export const chute: Table = {
+export const chute: Table<Chute> = {
   sides: 6,
   entries: [
     { range: [1], command: Chute.Exists },

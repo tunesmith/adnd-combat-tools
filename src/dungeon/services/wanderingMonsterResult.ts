@@ -48,7 +48,7 @@ export const wanderingMonsterResult = (level: number): string => {
 
 // I could use MonsterDistribution instead of the case fall-through
 // gets complained about.
-export const getMonsterTable = (level: number): Table => {
+export const getMonsterTable = (level: number): Table<MonsterLevel> => {
   switch (level) {
     case 1:
       return dungeonOne;

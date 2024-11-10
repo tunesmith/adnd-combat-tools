@@ -9,7 +9,7 @@ export enum ChamberDimensions {
   Rectangular40x60,
   Unusual,
 }
-export const chamberDimensions: Table = {
+export const chamberDimensions: Table<ChamberDimensions> = {
   sides: 20,
   entries: [
     { range: [1, 4], command: ChamberDimensions.Square20x20 },
@@ -33,7 +33,7 @@ export enum RoomDimensions {
   Rectangular30x40,
   Unusual,
 }
-export const roomDimensions: Table = {
+export const roomDimensions: Table<RoomDimensions> = {
   sides: 20,
   entries: [
     { range: [1, 2], command: RoomDimensions.Square10x10 },

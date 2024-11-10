@@ -5,7 +5,7 @@ export enum DoorLocation {
   Right,
   Ahead,
 }
-export const doorLocation: Table = {
+export const doorLocation: Table<DoorLocation> = {
   sides: 20,
   entries: [
     { range: [1, 6], command: DoorLocation.Left },

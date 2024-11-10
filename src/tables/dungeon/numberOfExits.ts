@@ -9,7 +9,7 @@ export enum NumberOfExits {
   OneToFour,
   DoorChamberOrPassageRoom,
 }
-export const numberOfExits: Table = {
+export const numberOfExits: Table<NumberOfExits> = {
   sides: 20,
   entries: [
     { range: [1, 3], command: NumberOfExits.OneTwo600 },
@@ -28,7 +28,7 @@ export enum OneToFour {
   Three,
   Four,
 }
-export const oneToFour: Table = {
+export const oneToFour: Table<OneToFour> = {
   sides: 4,
   entries: [
     { range: [1], command: OneToFour.One },

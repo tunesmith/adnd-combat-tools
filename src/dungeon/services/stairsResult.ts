@@ -66,7 +66,7 @@ export const stairsResult = (): string => {
   }
 };
 
-export const egressResult = (egressTable: Table): string => {
+export const egressResult = (egressTable: Table<Egress>): string => {
   const roll = rollDice(egressTable.sides);
   const command = getTableEntry(roll, egressTable);
   if (command in Egress) {

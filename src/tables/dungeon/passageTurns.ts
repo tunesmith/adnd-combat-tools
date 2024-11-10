@@ -8,7 +8,7 @@ export enum PassageTurns {
   Right45,
   Right135,
 }
-export const passageTurns: Table = {
+export const passageTurns: Table<PassageTurns> = {
   sides: 20,
   entries: [
     { range: [1, 8], command: PassageTurns.Left90 },

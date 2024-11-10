@@ -7,7 +7,7 @@ export enum MagicPool {
   Transporter,
 }
 
-export const magicPool: Table = {
+export const magicPool: Table<MagicPool> = {
   sides: 20,
   entries: [
     { range: [1, 8], command: MagicPool.TransmuteGold },
@@ -22,7 +22,7 @@ export enum TransmuteType {
   GoldToLead,
 }
 
-export const transmuteType: Table = {
+export const transmuteType: Table<TransmuteType> = {
   sides: 20,
   entries: [
     { range: [1, 11], command: TransmuteType.GoldToPlatinum },
@@ -38,7 +38,7 @@ export enum PoolAlignment {
   Neutral,
 }
 
-export const poolAlignment: Table = {
+export const poolAlignment: Table<PoolAlignment> = {
   sides: 20,
   entries: [
     { range: [1, 6], command: PoolAlignment.LawfulGood },
@@ -56,7 +56,7 @@ export enum TransporterLocation {
   Away100Miles,
 }
 
-export const transporterLocation: Table = {
+export const transporterLocation: Table<TransporterLocation> = {
   sides: 20,
   entries: [
     { range: [1, 7], command: TransporterLocation.Surface },

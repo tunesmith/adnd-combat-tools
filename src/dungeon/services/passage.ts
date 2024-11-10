@@ -1,4 +1,4 @@
-import { Command, NoCommand, Table } from "../../tables/dungeon/dungeonTypes";
+import { Command, Table } from "../../tables/dungeon/dungeonTypes";
 import {
   PeriodicCheck,
   periodicCheck,
@@ -17,19 +17,45 @@ export const rollDice = (sides: number, rolls: number = 1): number => {
   return total;
 };
 
-export const getTableEntry = (roll: number, table: Table): Command => {
-  const entry = table.entries.find((entry) => {
-    const loRange = entry.range[0];
-    const hiRange = entry.range[entry.range.length - 1];
-    return loRange && hiRange && roll >= loRange && roll <= hiRange;
-  });
-  if (entry) {
-    return entry.command;
-  } else {
-    return NoCommand.NoCommand;
-  }
-};
+/**
+ * Helper function to get the last element of a non-empty array
+ *
+ * Note that the type assertion is okay here, because the parameter
+ * type of [T, ...T[]] logically means it can't be undefined. Typescript
+ * just isn't smart enough to realize this in the type inference,
+ * which is why we need the 'as T' type assertion
+ * @param arr
+ */
+function getLastElement<T>(arr: [T, ...T[]]): T {
+  return arr[arr.length - 1] as T;
+}
 
+export const getTableEntry = <T extends Command>(
+  roll: number,
+  table: Table<T>
+): T => {
+  // Access the last entry; entries are guaranteed to be non-empty
+  const lastEntry = getLastElement(table.entries);
+  const maxRoll = getLastElement(lastEntry.range); // Always a number
+
+  if (roll > maxRoll || roll < 1) {
+    throw new Error(
+      `Roll ${roll} is out of bounds for table with sides up to ${maxRoll}`
+    );
+  }
+
+  const entry = table.entries.find((entry) => {
+    const loRange = entry.range[0]; // Always defined
+    const hiRange = getLastElement(entry.range); // Always defined
+    return roll >= loRange && roll <= hiRange;
+  });
+
+  if (!entry) {
+    throw new Error(`No entry found for roll ${roll}`);
+  }
+
+  return entry.command;
+};
 /**
  * If we follow the Strategic Review mindset, then it means
  * we follow the rule that:

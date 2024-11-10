@@ -28,7 +28,7 @@ export enum MonsterLevel {
   Ten,
 }
 
-export const monsterDistribution: Table = {
+export const monsterDistribution: Table<MonsterDistributionLevel> = {
   sides: 16,
   entries: [
     { range: [1], command: MonsterDistributionLevel.One },
@@ -46,7 +46,7 @@ export const monsterDistribution: Table = {
   ],
 };
 
-export const dungeonOne: Table = {
+export const dungeonOne: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1, 16], command: MonsterLevel.One },
@@ -55,7 +55,7 @@ export const dungeonOne: Table = {
   ],
 };
 
-export const dungeonTwoThree: Table = {
+export const dungeonTwoThree: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1, 12], command: MonsterLevel.One },
@@ -66,7 +66,7 @@ export const dungeonTwoThree: Table = {
   ],
 };
 
-export const dungeonFour: Table = {
+export const dungeonFour: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1, 5], command: MonsterLevel.One },
@@ -78,7 +78,7 @@ export const dungeonFour: Table = {
   ],
 };
 
-export const dungeonFive: Table = {
+export const dungeonFive: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1, 3], command: MonsterLevel.One },
@@ -91,7 +91,7 @@ export const dungeonFive: Table = {
   ],
 };
 
-export const dungeonSix: Table = {
+export const dungeonSix: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1, 2], command: MonsterLevel.One },
@@ -105,7 +105,7 @@ export const dungeonSix: Table = {
   ],
 };
 
-export const dungeonSeven: Table = {
+export const dungeonSeven: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1], command: MonsterLevel.One },
@@ -120,7 +120,7 @@ export const dungeonSeven: Table = {
   ],
 };
 
-export const dungeonEight: Table = {
+export const dungeonEight: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1], command: MonsterLevel.One },
@@ -136,7 +136,7 @@ export const dungeonEight: Table = {
   ],
 };
 
-export const dungeonNine: Table = {
+export const dungeonNine: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1], command: MonsterLevel.One },
@@ -152,7 +152,7 @@ export const dungeonNine: Table = {
   ],
 };
 
-export const dungeonTenEleven: Table = {
+export const dungeonTenEleven: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1], command: MonsterLevel.One },
@@ -168,7 +168,7 @@ export const dungeonTenEleven: Table = {
   ],
 };
 
-export const dungeonTwelveThirteen: Table = {
+export const dungeonTwelveThirteen: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1], command: MonsterLevel.One },
@@ -184,7 +184,7 @@ export const dungeonTwelveThirteen: Table = {
   ],
 };
 
-export const dungeonFourteenFifteen: Table = {
+export const dungeonFourteenFifteen: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1], command: MonsterLevel.One },
@@ -200,7 +200,7 @@ export const dungeonFourteenFifteen: Table = {
   ],
 };
 
-export const dungeonSixteen: Table = {
+export const dungeonSixteen: Table<MonsterLevel> = {
   sides: 20,
   entries: [
     { range: [1], command: MonsterLevel.One },
@@ -238,7 +238,7 @@ export enum MonsterOne {
   Skeleton_1to4,
   Zombie_1to3,
 }
-export const monsterOne: Table = {
+export const monsterOne: Table<MonsterOne> = {
   sides: 100,
   entries: [
     { range: [1, 2], command: MonsterOne.AntGiant_1to4 },
@@ -271,7 +271,7 @@ export enum Human {
   Character,
 }
 
-export const human: Table = {
+export const human: Table<Human> = {
   sides: 100,
   entries: [
     { range: [1, 25], command: Human.Bandit_5to15 },
@@ -297,7 +297,7 @@ export enum MonsterTwo {
   Troglodyte_2to8,
 }
 
-export const monsterTwo: Table = {
+export const monsterTwo: Table<MonsterTwo> = {
   sides: 100,
   entries: [
     { range: [1], command: MonsterTwo.Badger_1to4_Gnoll_4to10 },

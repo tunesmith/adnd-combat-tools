@@ -6,7 +6,7 @@ export enum ExitLocation {
   RightWall,
   SameWall,
 }
-export const exitLocation: Table = {
+export const exitLocation: Table<ExitLocation> = {
   sides: 20,
   entries: [
     { range: [1, 3], command: ExitLocation.OppositeWall },
@@ -21,7 +21,7 @@ export enum StrangeDoor {
   OneWayDoor,
   OppositeDirection,
 }
-export const strangeDoor: Table = {
+export const strangeDoor: Table<StrangeDoor> = {
   sides: 20,
   entries: [
     { range: [1, 5], command: StrangeDoor.SecretDoor },

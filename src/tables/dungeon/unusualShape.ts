@@ -10,7 +10,7 @@ export enum UnusualShape {
   Octagonal,
   Cave,
 }
-export const unusualShape: Table = {
+export const unusualShape: Table<UnusualShape> = {
   sides: 20,
   entries: [
     { range: [1, 5], command: UnusualShape.Circular },
@@ -30,7 +30,7 @@ export enum CircularContents {
   Shaft,
   Normal,
 }
-export const circularContents: Table = {
+export const circularContents: Table<CircularContents> = {
   sides: 20,
   entries: [
     { range: [1, 5], command: CircularContents.Pool },

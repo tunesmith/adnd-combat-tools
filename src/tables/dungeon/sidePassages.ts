@@ -14,7 +14,7 @@ export enum SidePassages {
   FourWay,
   PassageX,
 }
-export const sidePassages: Table = {
+export const sidePassages: Table<SidePassages> = {
   sides: 20,
   entries: [
     { range: [1, 2], command: SidePassages.Left90 },
