@@ -12,7 +12,7 @@ import {
 
 export const monsterOneResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterOne.sides);
-  const command = getTableEntry(roll, monsterOne) as MonsterOne;
+  const command = getTableEntry(roll, monsterOne);
   switch (command) {
     case MonsterOne.AntGiant_1to4: {
       const ants = getNumberOfMonsters(1, dungeonLevel, 1, 4);
@@ -107,7 +107,7 @@ export const monsterOneResult = (dungeonLevel: number): string => {
 
 export const humanResult = (dungeonLevel: number): string => {
   const roll = rollDice(human.sides);
-  const command = getTableEntry(roll, human) as Human;
+  const command = getTableEntry(roll, human);
   switch (command) {
     case Human.Bandit_5to15: {
       const bandits = getNumberOfMonsters(1, dungeonLevel, 2, 6, 3);

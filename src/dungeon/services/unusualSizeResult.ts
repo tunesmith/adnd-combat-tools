@@ -7,7 +7,7 @@ export const unusualSizeResult = (): string => {
 
 export const getSize = (extraSquareFootage: number = 0): number => {
   const roll = rollDice(unusualSize.sides);
-  const command = getTableEntry(roll, unusualSize) as UnusualSize;
+  const command = getTableEntry(roll, unusualSize);
   console.log(`unusualSize roll: ${roll} is ${UnusualSize[command]}`);
   switch (command) {
     case UnusualSize.SqFt500:

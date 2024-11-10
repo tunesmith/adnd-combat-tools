@@ -21,7 +21,7 @@ import { monsterTwoResult } from "./monster/monsterTwoResult";
 export const wanderingMonsterResult = (level: number): string => {
   const table = getMonsterTable(level);
   const roll = rollDice(table.sides);
-  const command = getTableEntry(roll, table) as MonsterLevel;
+  const command = getTableEntry(roll, table);
   switch (command) {
     case MonsterLevel.One:
       return monsterOneResult(level);

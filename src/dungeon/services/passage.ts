@@ -73,40 +73,36 @@ export const passageResults = (): string => {
   // console.log(`periodicCheck: ${roll}`);
   const command = getTableEntry(roll, periodicCheck);
   // const command = PeriodicCheck.Stairs;
-  if (command in PeriodicCheck) {
-    console.log(`periodicCheck: ${roll} is ${PeriodicCheck[command]}`);
-    switch (command as PeriodicCheck) {
-      case PeriodicCheck.ContinueStraight:
-        return "Continue straight -- check again in 60'";
-      case PeriodicCheck.Door: {
-        return closedDoorResult([]);
-      }
-      case PeriodicCheck.SidePassage: {
-        return sidePassageResults();
-      }
-      case PeriodicCheck.PassageTurn: {
-        return passageTurnResults();
-      }
-      case PeriodicCheck.Chamber: {
-        return "The passage opens into a chamber. " + chamberResult();
-      }
-      case PeriodicCheck.Stairs: {
-        return stairsResult();
-      }
-      case PeriodicCheck.DeadEnd: {
-        const result = "The passage reaches a dead end. (TODO)";
-        return result;
-      }
-      case PeriodicCheck.TrickTrap: {
-        const result = "There is a trick or trap. (TODO) -- check again in 30'";
-        return result;
-      }
-      case PeriodicCheck.WanderingMonster: {
-        const result = "There is a wandering monster. (TODO)";
-        return result;
-      }
+  console.log(`periodicCheck: ${roll} is ${PeriodicCheck[command]}`);
+  switch (command) {
+    case PeriodicCheck.ContinueStraight:
+      return "Continue straight -- check again in 60'";
+    case PeriodicCheck.Door: {
+      return closedDoorResult([]);
     }
-  } else {
-    return "done";
+    case PeriodicCheck.SidePassage: {
+      return sidePassageResults();
+    }
+    case PeriodicCheck.PassageTurn: {
+      return passageTurnResults();
+    }
+    case PeriodicCheck.Chamber: {
+      return "The passage opens into a chamber. " + chamberResult();
+    }
+    case PeriodicCheck.Stairs: {
+      return stairsResult();
+    }
+    case PeriodicCheck.DeadEnd: {
+      const result = "The passage reaches a dead end. (TODO)";
+      return result;
+    }
+    case PeriodicCheck.TrickTrap: {
+      const result = "There is a trick or trap. (TODO) -- check again in 30'";
+      return result;
+    }
+    case PeriodicCheck.WanderingMonster: {
+      const result = "There is a wandering monster. (TODO)";
+      return result;
+    }
   }
 };

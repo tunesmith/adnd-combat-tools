@@ -7,7 +7,7 @@ import {
 
 export const monsterTwoResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterTwo.sides);
-  const command = getTableEntry(roll, monsterTwo) as MonsterTwo;
+  const command = getTableEntry(roll, monsterTwo);
   switch (command) {
     case MonsterTwo.Badger_1to4_Gnoll_4to10: {
       if (dungeonLevel <= 3) {
