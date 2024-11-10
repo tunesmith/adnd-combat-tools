@@ -6,11 +6,16 @@ import {
 } from "../../tables/dungeon/periodicCheck";
 
 /**
+ * When doing passage checks, the rules subtly imply this looks for *closed*
+ * doors. Opening a door is a fresh move. For closed doors, we don't need to
+ * roll what is behind the door. Roll for that when a decision is made to
+ * open a door (or when the situation calls for it, like listening at doors).
+ *
  * Check again immediately on TABLE I (periodicCheck) unless
  * door is straight ahead; if another door is not indicated,
  * then ignore the result and check again 30' past the door.
  */
-export const doorResult = (existingDoors: DoorLocation[]): string => {
+export const closedDoorResult = (existingDoors: DoorLocation[]): string => {
   const doorLocationRoll = rollDice(doorLocation.sides);
   const doorLocationCommand = getTableEntry(doorLocationRoll, doorLocation);
   if (doorLocationCommand in DoorLocation) {
@@ -18,17 +23,16 @@ export const doorResult = (existingDoors: DoorLocation[]): string => {
       `door roll: ${doorLocationRoll} is ${DoorLocation[doorLocationCommand]}`
     );
     if (doorLocationCommand === DoorLocation.Ahead) {
-      // console.log(`door ahead; call doorBeyond for Ahead`);
+      // DoorLocation.Ahead implies it is a dead end. Don't check for any more additional doors.
       return `A door is ${DoorLocation[doorLocationCommand]}. `;
-      // doorBeyondResult(true)
-      // doorBeyondResult()
     } else {
       if (existingDoors.includes(doorLocationCommand as DoorLocation)) {
+        // This branch implies we haven't rolled DoorLocation.Ahead
         // console.log(`existingDoors: `, existingDoors);
         // console.log(
         //   `ignore this extra ${DoorLocation[doorLocationCommand]} as we already rolled it`
         // );
-        return "There are no more doors, so the main passage extends 30' ahead. ";
+        return "There are no more doors. The main passage extends -- check again in 30'. ";
       } else {
         // console.log(
         //   `got ${DoorLocation[doorLocationCommand]}, checking for another door`
@@ -40,22 +44,18 @@ export const doorResult = (existingDoors: DoorLocation[]): string => {
         // );
 
         if (periodicCommand === PeriodicCheck.Door) {
-          const nextDoor = doorResult([
+          const nextDoor = closedDoorResult([
             ...existingDoors,
             doorLocationCommand as DoorLocation,
           ]);
           return (
             `A door is to the ${DoorLocation[doorLocationCommand]}. ` +
-            // doorBeyondResult(false) +
-            // doorBeyondResult() +
             `${nextDoor}`
           );
         } else {
           return (
             `A door is to the ${DoorLocation[doorLocationCommand]}. ` +
-            // doorBeyondResult(false) +
-            // doorBeyondResult() +
-            `There are no other doors, so the main passage extends 30' ahead. `
+            `There are no other doors. The main passage extends -- check again in 30'. `
           );
         }
       }

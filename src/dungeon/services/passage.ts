@@ -5,7 +5,7 @@ import {
 } from "../../tables/dungeon/periodicCheck";
 import { sidePassageResults } from "./sidePassage";
 import { passageTurnResults } from "./passageTurn";
-import { doorResult } from "./doorResult";
+import { closedDoorResult } from "./closedDoorResult";
 import { chamberResult } from "./chamberResult";
 import { stairsResult } from "./stairsResult";
 
@@ -53,7 +53,7 @@ export const passageResults = (): string => {
       case PeriodicCheck.ContinueStraight:
         return "Continue straight -- check again in 60'";
       case PeriodicCheck.Door: {
-        return doorResult([]);
+        return closedDoorResult([]);
       }
       case PeriodicCheck.SidePassage: {
         return sidePassageResults();
