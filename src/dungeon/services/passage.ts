@@ -8,6 +8,7 @@ import { closedDoorResult } from "./closedDoorResult";
 import { chamberResult } from "./chamberResult";
 import { stairsResult } from "./stairsResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { wanderingMonsterResult } from "./wanderingMonsterResult";
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -22,14 +23,25 @@ import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
  * move type, one that checks beyond a door.
  */
 export const passageResults = (): string => {
+  // TODO adjust level through UI
+  const level = 1;
   const roll = rollDice(periodicCheck.sides);
   // console.log(`periodicCheck: ${roll}`);
   const command = getTableEntry(roll, periodicCheck);
-  // const command = PeriodicCheck.Stairs;
+  // const command = PeriodicCheck.WanderingMonster;
   console.log(`periodicCheck: ${roll} is ${PeriodicCheck[command]}`);
+  return getPassageResult(level, command);
+};
+
+export const getPassageResult = (
+  level: number,
+  command: PeriodicCheck,
+  avoidMonster: boolean = false
+): string => {
+  console.log(`avoidMonster: ${avoidMonster}`);
   switch (command) {
     case PeriodicCheck.ContinueStraight:
-      return "Continue straight -- check again in 60'";
+      return "Continue straight -- check again in 60'. ";
     case PeriodicCheck.Door: {
       return closedDoorResult([]);
     }
@@ -46,16 +58,15 @@ export const passageResults = (): string => {
       return stairsResult();
     }
     case PeriodicCheck.DeadEnd: {
-      const result = "The passage reaches a dead end. (TODO)";
+      const result = "The passage reaches a dead end. (TODO) ";
       return result;
     }
     case PeriodicCheck.TrickTrap: {
-      const result = "There is a trick or trap. (TODO) -- check again in 30'";
+      const result = "There is a trick or trap. (TODO) -- check again in 30'. ";
       return result;
     }
     case PeriodicCheck.WanderingMonster: {
-      const result = "There is a wandering monster. (TODO)";
-      return result;
+      return wanderingMonsterResult(level);
     }
   }
 };

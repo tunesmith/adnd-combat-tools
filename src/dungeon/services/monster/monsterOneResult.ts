@@ -69,7 +69,7 @@ export const monsterOneResult = (dungeonLevel: number): string => {
       return formatMonsterCount(hobgoblins, "hobgoblin", "hobgoblins");
     }
     case MonsterOne.Human:
-      return `(TODO: Roll Human Subtable for monsterLevel 1 and dungeonLevel ${dungeonLevel}.)`;
+      return humanResult(dungeonLevel);
     case MonsterOne.Kobold_6to18: {
       const kobolds = getNumberOfMonsters(1, dungeonLevel, 3, 6);
       return formatMonsterCount(kobolds, "kobold", "kobolds");

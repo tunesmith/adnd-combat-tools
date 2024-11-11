@@ -17,16 +17,36 @@ import { Table } from "../../tables/dungeon/dungeonTypes";
 import { monsterOneResult } from "./monster/monsterOneResult";
 import { monsterTwoResult } from "./monster/monsterTwoResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import {
+  PeriodicCheck,
+  periodicCheck,
+} from "../../tables/dungeon/periodicCheck";
+import { getPassageResult } from "./passage";
 
+/**
+ * In addition to rolling the wandering monster, we also have
+ * to roll where it comes from.
+ *
+ *
+ * @param level
+ */
 export const wanderingMonsterResult = (level: number): string => {
+  let locationCommand: PeriodicCheck;
+  do {
+    const roll = rollDice(periodicCheck.sides);
+    locationCommand = getTableEntry(roll, periodicCheck);
+  } while (locationCommand === PeriodicCheck.WanderingMonster);
+  const passageResult =
+    getPassageResult(level, locationCommand, true) + "Wandering Monster: ";
+
   const table = getMonsterTable(level);
   const roll = rollDice(table.sides);
   const command = getTableEntry(roll, table);
   switch (command) {
     case MonsterLevel.One:
-      return monsterOneResult(level);
+      return passageResult + monsterOneResult(level);
     case MonsterLevel.Two:
-      return monsterTwoResult(level);
+      return passageResult + monsterTwoResult(level);
     case MonsterLevel.Three:
       return "(TODO: Roll Monster for Level Three)";
     case MonsterLevel.Four:
@@ -87,8 +107,8 @@ export const formatMonsterCount = (
   plural: string
 ): string => {
   return count === 1
-    ? `There is ${count} ${singular} here. `
-    : `There are ${count} ${plural} here. `;
+    ? `There is ${count} ${singular}. `
+    : `There are ${count} ${plural}. `;
 };
 
 export const getNumberOfMonsters = (
