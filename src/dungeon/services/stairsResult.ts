@@ -45,15 +45,15 @@ export const stairsResult = (): string => {
         chuteResult()
       );
     case Stairs.ChimneyUpOne:
-      return "There is a chimney that goes up one level. The current passage extends 30'. ";
+      return "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
     case Stairs.ChimneyUpTwo:
-      return "There is a chimney that goes up two levels. The current passage extends 30'. ";
+      return "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
     case Stairs.ChimneyDownTwo:
-      return "There is a chimney that goes down two levels. The current passage extends 30'. ";
+      return "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
     case Stairs.TrapDoorDownOne:
-      return "There is a trap door that goes down one level. The current passage extends 30'. ";
+      return "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
     case Stairs.TrapDownDownTwo:
-      return "There is a trap door that goes down two levels. The current passage extends 30'. ";
+      return "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
     case Stairs.UpOneDownTwo:
       return (
         "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. " +
