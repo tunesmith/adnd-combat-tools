@@ -5,6 +5,7 @@ import {
 import { unusualShapeResult } from "./unusualShapeResult";
 import { unusualSizeResult } from "./unusualSizeResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { exitResult } from "./exitResult";
 
 export const chamberResult = (): string => {
   const roll = rollDice(chamberDimensions.sides);
@@ -14,17 +15,41 @@ export const chamberResult = (): string => {
   );
   switch (command) {
     case ChamberDimensions.Square20x20:
-      return "The chamber is square and 20' x 20'. (TODO exits, contents, treasure) ";
+      return (
+        "The chamber is square and 20' x 20'. " +
+        exitResult(20, 20) +
+        "(TODO contents, treasure) "
+      );
     case ChamberDimensions.Square30x30:
-      return "The chamber is square and 30' x 30'. (TODO exits, contents, treasure) ";
+      return (
+        "The chamber is square and 30' x 30'. " +
+        exitResult(30, 30) +
+        "(TODO contents, treasure) "
+      );
     case ChamberDimensions.Square40x40:
-      return "The chamber is square and 40' x 40'. (TODO exits, contents, treasure) ";
+      return (
+        "The chamber is square and 40' x 40'. " +
+        exitResult(40, 40) +
+        "(TODO contents, treasure) "
+      );
     case ChamberDimensions.Rectangular20x30:
-      return "The chamber is rectangular and 20' x 30'. (TODO exits, contents, treasure) ";
+      return (
+        "The chamber is rectangular and 20' x 30'. " +
+        exitResult(20, 30) +
+        "(TODO contents, treasure) "
+      );
     case ChamberDimensions.Rectangular30x50:
-      return "The chamber is rectangular and 30' x 50'. (TODO exits, contents, treasure) ";
+      return (
+        "The chamber is rectangular and 30' x 50'. " +
+        exitResult(30, 50) +
+        "(TODO contents, treasure) "
+      );
     case ChamberDimensions.Rectangular40x60:
-      return "The chamber is rectangular and 40' x 60'. (TODO exits, contents, treasure) ";
+      return (
+        "The chamber is rectangular and 40' x 60'. " +
+        exitResult(40, 60) +
+        "(TODO contents, treasure) "
+      );
     case ChamberDimensions.Unusual:
       return (
         "The chamber has an unusual shape and size. " +

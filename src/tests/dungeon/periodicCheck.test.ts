@@ -38,15 +38,10 @@ describe("passage results", () => {
 
 describe("door results", () => {
   test("open door", () => {
-    const doorResult = doorBeyondResult();
+    const doorResult = doorBeyondResult(true);
     console.log(doorResult);
     expect(doorResult).not.toBe(null);
   });
-  // test("open door straight ahead", () => {
-  //   const doorResult = doorBeyondResult(true);
-  //   console.log(doorResult);
-  //   expect(doorResult).not.toBe(NoCommand.NoCommand);
-  // });
   // test("open door not straight ahead", () => {
   //   const doorResult = doorBeyondResult(false);
   //   console.log(doorResult);
