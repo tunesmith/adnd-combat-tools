@@ -32,6 +32,17 @@ import {
 import { MonsterDistributionLevel, MonsterLevel } from "./monster/monsterLevel";
 import { Human, MonsterOne } from "./monster/monsterOne";
 import { MonsterTwo } from "./monster/monsterTwo";
+import { DragonThree, MonsterThree } from "./monster/monsterThree";
+import {
+  DragonFourOlder,
+  DragonFourYounger,
+  MonsterFour,
+} from "./monster/monsterFour";
+import {
+  DragonFiveOlder,
+  DragonFiveYounger,
+  MonsterFive,
+} from "./monster/monsterFive";
 
 export type Table<T> = {
   sides: number;
@@ -84,4 +95,12 @@ export type Command =
   | MonsterLevel
   | MonsterOne
   | Human
-  | MonsterTwo;
+  | MonsterTwo
+  | MonsterThree
+  | MonsterFour
+  | MonsterFive
+  | DragonThree
+  | DragonFourYounger
+  | DragonFourOlder
+  | DragonFiveYounger
+  | DragonFiveOlder;

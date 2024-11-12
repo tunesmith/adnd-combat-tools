@@ -22,6 +22,7 @@ import {
   periodicCheck,
 } from "../../tables/dungeon/periodicCheck";
 import { getPassageResult } from "./passage";
+import { monsterThreeResult } from "./monster/monsterThreeResult";
 
 /**
  * In addition to rolling the wandering monster, we also have
@@ -48,7 +49,7 @@ export const wanderingMonsterResult = (level: number): string => {
     case MonsterLevel.Two:
       return passageResult + monsterTwoResult(level);
     case MonsterLevel.Three:
-      return "(TODO: Roll Monster for Level Three)";
+      return passageResult + monsterThreeResult(level);
     case MonsterLevel.Four:
       return "(TODO: Roll Monster for Level Four)";
     case MonsterLevel.Five:

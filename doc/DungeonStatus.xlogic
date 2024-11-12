@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<flyingLogic instance="23a54ab9-4915-4e79-9cac-07d885c35d6d" majorVersion="5" minorVersion="0" uuid="3edb118b-e729-48fb-bab4-d4f8be950033">
+<flyingLogic instance="abc3247a-a589-411e-b533-527e1d858ff9" majorVersion="5" minorVersion="0" uuid="3edb118b-e729-48fb-bab4-d4f8be950033">
     <domains>
         <domain>
             <attributes>
@@ -173,17 +173,17 @@
     <displaySettings addEntityAsSuccessor="true" annotationToBrowse="false" bias="Bias.end" compactness="1.0" confidenceVisible="false" edgeNotesVisible="false" edgeWeightsVisible="false"
         entityIdVisible="false" noteNumbersVisible="false" orientation="Orientation.leftToRight" projectManagementVisible="false"/>
     <documentInfo author="" comments="" keywords="" title=""/>
-    <canvasSettings canvasMode="graph" horizScroll="633.0" vertScroll="51.0" zoom="0.686"/>
+    <canvasSettings canvasMode="graph" horizScroll="653.0" vertScroll="498.0" zoom="0.689"/>
     <chartSettings classVisible="true" classWidth="90" completionVisible="true" effortVisible="true" finishDateVisible="true" resourceVisible="true" resourceWidth="60" startDateVisible="true" titleWidth="104"/>
     <inspectorSettings visibility="false" width="284">
-        <inspector title="navigation" visibility="minimized"/>
-        <inspector title="layout" visibility="open"/>
-        <inspector title="element" visibility="minimized"/>
-        <inspector title="document" visibility="minimized"/>
         <inspector height="150" title="domain" visibility="open"/>
-        <inspector height="220" title="text" visibility="open"/>
-        <inspector height="150" title="userattrs" visibility="minimized"/>
         <inspector title="operators" visibility="open"/>
+        <inspector height="220" title="text" visibility="open"/>
+        <inspector title="element" visibility="minimized"/>
+        <inspector title="layout" visibility="open"/>
+        <inspector title="navigation" visibility="minimized"/>
+        <inspector title="document" visibility="minimized"/>
+        <inspector height="150" title="userattrs" visibility="minimized"/>
     </inspectorSettings>
     <printSettings footerLeft="" footerMiddle="" footerRight="" headerLeft="" headerMiddle="" headerRight="" paperMargins="54.0 54.0 54.0 54.0" paperName="Letter" paperOrientation="portrait"
         paperSize="612.0 792.0 in" saveInk="false" showselhalo="true"/>
@@ -970,7 +970,7 @@
                             </attribute>
                         </attributes>
                     </vertex>
-                    <vertex eid="125" grouped="123 126 128 130 132 134 136 138 140 142 144 146">
+                    <vertex eid="125" grouped="123 126 128 130 132 134 136 138 140 142 144 146 185">
                         <attributes>
                             <attribute class="java.lang.String" key="title">Wandering Monster</attribute>
                         </attributes>
@@ -986,7 +986,7 @@
                                 <fuzzyOr/>
                             </attribute>
                             <attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass">
-                                <entityClass name="White" uuid="3935e3d4-ea6e-43ee-aadf-9e2941c334a3"/>
+                                <entityClass name="Done" uuid="d2be6e9f-543b-4433-a591-990f8d8ce316"/>
                             </attribute>
                         </attributes>
                     </vertex>
@@ -1001,7 +1001,7 @@
                                 <fuzzyOr/>
                             </attribute>
                             <attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass">
-                                <entityClass name="White" uuid="3935e3d4-ea6e-43ee-aadf-9e2941c334a3"/>
+                                <entityClass name="Done" uuid="d2be6e9f-543b-4433-a591-990f8d8ce316"/>
                             </attribute>
                         </attributes>
                     </vertex>
@@ -1016,11 +1016,11 @@
                                 <fuzzyOr/>
                             </attribute>
                             <attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass">
-                                <entityClass name="White" uuid="3935e3d4-ea6e-43ee-aadf-9e2941c334a3"/>
+                                <entityClass name="Done" uuid="d2be6e9f-543b-4433-a591-990f8d8ce316"/>
                             </attribute>
                         </attributes>
                     </vertex>
-                    <vertex eid="132">
+                    <vertex eid="132" outEdgeOrder="183 186">
                         <attributes>
                             <attribute class="java.lang.String" key="type">entity</attribute>
                             <attribute class="java.lang.String" key="title">monsterThreeResult</attribute>
@@ -1031,7 +1031,7 @@
                                 <fuzzyOr/>
                             </attribute>
                             <attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass">
-                                <entityClass name="White" uuid="3935e3d4-ea6e-43ee-aadf-9e2941c334a3"/>
+                                <entityClass name="Done" uuid="d2be6e9f-543b-4433-a591-990f8d8ce316"/>
                             </attribute>
                         </attributes>
                     </vertex>
@@ -1287,6 +1287,41 @@
                             </attribute>
                             <attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass">
                                 <entityClass name="White" uuid="3935e3d4-ea6e-43ee-aadf-9e2941c334a3"/>
+                            </attribute>
+                        </attributes>
+                    </vertex>
+                    <vertex eid="180" inEdgeOrder="181 182 183">
+                        <attributes>
+                            <attribute class="java.lang.String" key="type">entity</attribute>
+                            <attribute class="java.lang.String" key="title">characterResult</attribute>
+                            <attribute class="com.arciem.FuzzyBoolean" key="confidence">
+                                <fuzzyBoolean true="0.5"/>
+                            </attribute>
+                            <attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator">
+                                <fuzzyOr/>
+                            </attribute>
+                            <attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass">
+                                <entityClass name="White" uuid="3935e3d4-ea6e-43ee-aadf-9e2941c334a3"/>
+                            </attribute>
+                        </attributes>
+                    </vertex>
+                    <vertex eid="184" grouped="180">
+                        <attributes>
+                            <attribute class="java.lang.String" key="title">CharacterResult</attribute>
+                        </attributes>
+                    </vertex>
+                    <vertex eid="185">
+                        <attributes>
+                            <attribute class="java.lang.String" key="type">entity</attribute>
+                            <attribute class="java.lang.String" key="title">dragonThreeResult</attribute>
+                            <attribute class="com.arciem.FuzzyBoolean" key="confidence">
+                                <fuzzyBoolean true="0.5"/>
+                            </attribute>
+                            <attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator">
+                                <fuzzyOr/>
+                            </attribute>
+                            <attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass">
+                                <entityClass name="Done" uuid="d2be6e9f-543b-4433-a591-990f8d8ce316"/>
                             </attribute>
                         </attributes>
                     </vertex>
@@ -2189,6 +2224,50 @@
                         </attributes>
                     </edge>
                     <edge eid="179" source="109" target="178">
+                        <attributes>
+                            <attribute class="java.lang.Double" key="weight">1.0</attribute>
+                            <attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator">
+                                <multiply/>
+                            </attribute>
+                            <attribute class="com.arciem.FuzzyBoolean" key="confidence">
+                                <fuzzyBoolean true="0.5"/>
+                            </attribute>
+                        </attributes>
+                    </edge>
+                    <edge eid="181" source="128" target="180">
+                        <attributes>
+                            <attribute class="java.lang.Double" key="weight">1.0</attribute>
+                            <attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator">
+                                <multiply/>
+                            </attribute>
+                            <attribute class="com.arciem.FuzzyBoolean" key="confidence">
+                                <fuzzyBoolean true="0.5"/>
+                            </attribute>
+                        </attributes>
+                    </edge>
+                    <edge eid="182" source="130" target="180">
+                        <attributes>
+                            <attribute class="java.lang.Double" key="weight">1.0</attribute>
+                            <attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator">
+                                <multiply/>
+                            </attribute>
+                            <attribute class="com.arciem.FuzzyBoolean" key="confidence">
+                                <fuzzyBoolean true="0.5"/>
+                            </attribute>
+                        </attributes>
+                    </edge>
+                    <edge eid="183" source="132" target="180">
+                        <attributes>
+                            <attribute class="java.lang.Double" key="weight">1.0</attribute>
+                            <attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator">
+                                <multiply/>
+                            </attribute>
+                            <attribute class="com.arciem.FuzzyBoolean" key="confidence">
+                                <fuzzyBoolean true="0.5"/>
+                            </attribute>
+                        </attributes>
+                    </edge>
+                    <edge eid="186" source="132" target="185">
                         <attributes>
                             <attribute class="java.lang.Double" key="weight">1.0</attribute>
                             <attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator">

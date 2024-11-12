@@ -9,6 +9,7 @@ import {
   MonsterOne,
   monsterOne,
 } from "../../../tables/dungeon/monster/monsterOne";
+import { characterResult } from "./characterResult";
 
 export const monsterOneResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterOne.sides);
@@ -140,6 +141,6 @@ export const humanResult = (dungeonLevel: number): string => {
       );
     }
     case Human.Character:
-      return `(TODO: Roll Character Subtable for monsterLevel 1 and dungeonLevel ${dungeonLevel}.)`;
+      return characterResult(1, dungeonLevel);
   }
 };
