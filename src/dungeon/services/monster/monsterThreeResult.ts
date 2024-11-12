@@ -26,13 +26,15 @@ export const monsterThreeResult = (dungeonLevel: number): string => {
     case MonsterThree.Character:
       return characterResult(3, dungeonLevel);
     case MonsterThree.Dragon:
-      return dragonThreeResult();
+      return dragonThreeResult(dungeonLevel);
     case MonsterThree.FungiViolet_1to3: {
       const fungi = getNumberOfMonsters(3, dungeonLevel, 1, 3);
       return formatMonsterCount(fungi, "violet fungus", "violet fungi");
     }
-    case MonsterThree.GelatinousCube:
-      return "There is a gelatinous cube. ";
+    case MonsterThree.GelatinousCube: {
+      const cubes = getNumberOfMonsters(3, dungeonLevel, 1, 1);
+      return formatMonsterCount(cubes, "gelatinous cube", "gelatinous cubes");
+    }
     case MonsterThree.Ghoul_1to4: {
       const ghouls = getNumberOfMonsters(3, dungeonLevel, 1, 4);
       return formatMonsterCount(ghouls, "ghoul", "ghouls");
@@ -49,8 +51,10 @@ export const monsterThreeResult = (dungeonLevel: number): string => {
         "wererat lycanthropes"
       );
     }
-    case MonsterThree.OchreJelly:
-      return "There is an ochre jelly. ";
+    case MonsterThree.OchreJelly: {
+      const jelly = getNumberOfMonsters(3, dungeonLevel, 1, 1);
+      return formatMonsterCount(jelly, "jelly", "jelly");
+    }
     case MonsterThree.Ogre_1to3: {
       const ogres = getNumberOfMonsters(3, dungeonLevel, 1, 3);
       return formatMonsterCount(ogres, "ogre", "ogres");
@@ -86,24 +90,39 @@ export const monsterThreeResult = (dungeonLevel: number): string => {
   }
 };
 
-const dragonThreeResult = (): string => {
+const dragonThreeResult = (dungeonLevel: number): string => {
   const dragonRoll = rollDice(dragonThree.sides);
   const dragonCommand = getTableEntry(dragonRoll, dragonThree);
   switch (dragonCommand) {
-    case DragonThree.Black_VeryYoung_1:
+    case DragonThree.Black_VeryYoung_1: {
+      const dragons = getNumberOfMonsters(3, dungeonLevel, 1, 1);
       return (
-        "There is a very young black dragon with 1 hit point per die. " +
-        "(Determine the number of hit dice for a dragon as normal.) "
+        formatMonsterCount(
+          dragons,
+          "very young black dragon with 1 hit point per die",
+          "very young black dragons with 1 hit point per die"
+        ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
-    case DragonThree.Brass_VeryYoung_1:
+    }
+    case DragonThree.Brass_VeryYoung_1: {
+      const dragons = getNumberOfMonsters(3, dungeonLevel, 1, 1);
       return (
-        "There is a very young brass dragon with 1 hit point per die. " +
-        "(Determine the number of hit dice for a dragon as normal.) "
+        formatMonsterCount(
+          dragons,
+          "very young brass dragon with 1 hit point per die",
+          "very young brass dragons with 1 hit point per die"
+        ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
-    case DragonThree.White_VeryYoung_1:
+    }
+    case DragonThree.White_VeryYoung_1: {
+      const dragons = getNumberOfMonsters(3, dungeonLevel, 1, 1);
       return (
-        "There is a very young white dragon with 1 hit point per die. " +
-        "(Determine the number of hit dice for a dragon as normal.) "
+        formatMonsterCount(
+          dragons,
+          "very young white dragon with 1 hit point per die",
+          "very young white dragons with 1 hit point per die"
+        ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
+    }
   }
 };
