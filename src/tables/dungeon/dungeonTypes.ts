@@ -29,13 +29,9 @@ import {
   TransmuteType,
   TransporterLocation,
 } from "./magicPool";
-import {
-  Human,
-  MonsterDistributionLevel,
-  MonsterLevel,
-  MonsterOne,
-  MonsterTwo,
-} from "./monsterLevel";
+import { MonsterDistributionLevel, MonsterLevel } from "./monster/monsterLevel";
+import { Human, MonsterOne } from "./monster/monsterOne";
+import { MonsterTwo } from "./monster/monsterTwo";
 
 export type Table<T> = {
   sides: number;

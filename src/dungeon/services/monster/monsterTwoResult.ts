@@ -1,9 +1,12 @@
-import { MonsterTwo, monsterTwo } from "../../../tables/dungeon/monsterLevel";
 import {
   formatMonsterCount,
   getNumberOfMonsters,
 } from "../wanderingMonsterResult";
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
+import {
+  MonsterTwo,
+  monsterTwo,
+} from "../../../tables/dungeon/monster/monsterTwo";
 
 export const monsterTwoResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterTwo.sides);

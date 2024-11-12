@@ -12,7 +12,7 @@ import {
   dungeonTwelveThirteen,
   dungeonTwoThree,
   MonsterLevel,
-} from "../../tables/dungeon/monsterLevel";
+} from "../../tables/dungeon/monster/monsterLevel";
 import { Table } from "../../tables/dungeon/dungeonTypes";
 import { monsterOneResult } from "./monster/monsterOneResult";
 import { monsterTwoResult } from "./monster/monsterTwoResult";
