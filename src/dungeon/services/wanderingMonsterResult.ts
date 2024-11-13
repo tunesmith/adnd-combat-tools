@@ -23,6 +23,7 @@ import {
 } from "../../tables/dungeon/periodicCheck";
 import { getPassageResult } from "./passage";
 import { monsterThreeResult } from "./monster/monsterThreeResult";
+import { monsterFourResult } from "./monster/monsterFourResult";
 
 /**
  * In addition to rolling the wandering monster, we also have
@@ -43,6 +44,7 @@ export const wanderingMonsterResult = (level: number): string => {
   const table = getMonsterTable(level);
   const roll = rollDice(table.sides);
   const command = getTableEntry(roll, table);
+  console.log(`monsterLevel roll: ${roll} is ${MonsterLevel[command]}`);
   switch (command) {
     case MonsterLevel.One:
       return passageResult + monsterOneResult(level);
@@ -51,7 +53,7 @@ export const wanderingMonsterResult = (level: number): string => {
     case MonsterLevel.Three:
       return passageResult + monsterThreeResult(level);
     case MonsterLevel.Four:
-      return "(TODO: Roll Monster for Level Four)";
+      return passageResult + monsterFourResult(level);
     case MonsterLevel.Five:
       return "(TODO: Roll Monster for Level Five)";
     case MonsterLevel.Six:
