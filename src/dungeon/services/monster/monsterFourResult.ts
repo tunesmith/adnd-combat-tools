@@ -48,20 +48,19 @@ export const monsterFourResult = (dungeonLevel: number): string => {
       return formatMonsterCount(hounds, "hell hound", "hell hounds");
     }
     case MonsterFour.Hydra_5to6Heads: {
-      const hydrae = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      const heads = rollDice(2) + 4;
+      const heads = getNumberOfMonsters(4, dungeonLevel, 1, 2, 4);
       return formatMonsterCount(
-        hydrae,
+        heads,
         `${heads}-headed hydra`,
-        `${heads}-headed hydrae`
+        `${heads}-headed hydra`
       );
     }
     case MonsterFour.HydroPyro_5Heads: {
-      const hydrae = getNumberOfMonsters(4, dungeonLevel, 1, 1);
+      const heads = getNumberOfMonsters(4, dungeonLevel, 1, 1, 5);
       return formatMonsterCount(
-        hydrae,
-        `5-headed pyrohydra`,
-        `5-headed pyrohydrae`
+        heads,
+        `${heads}-headed pyrohydra`,
+        `${heads}-headed pyrohydra`
       );
     }
     case MonsterFour.LycanthropeWerewolf_1to2: {
