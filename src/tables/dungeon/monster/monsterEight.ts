@@ -74,7 +74,7 @@ export enum DragonEight {
   White_Ancient_8,
 }
 
-export const dragonSix: Table<DragonEight> = {
+export const dragonEight: Table<DragonEight> = {
   sides: 100,
   entries: [
     { range: [1, 13], command: DragonEight.Black_Ancient_8 },
