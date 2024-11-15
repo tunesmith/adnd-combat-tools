@@ -10,6 +10,7 @@ import { getTableEntry } from "../../dungeon/helpers/dungeonLookup";
 import { monsterThreeResult } from "../../dungeon/services/monster/monsterThreeResult";
 import { monsterFourResult } from "../../dungeon/services/monster/monsterFourResult";
 import { wanderingMonsterResult } from "../../dungeon/services/wanderingMonsterResult";
+import { monsterFiveResult } from "../../dungeon/services/monster/monsterFiveResult";
 
 describe("passage results", () => {
   test("initial move", () => {
@@ -49,6 +50,16 @@ describe("passage results", () => {
   });
   test("wandering monster level four", () => {
     const monsters = wanderingMonsterResult(4);
+    console.log(monsters);
+    expect(monsters).not.toBe(null);
+  });
+  test("monster level five", () => {
+    const monsters = monsterFiveResult(5);
+    console.log(monsters);
+    expect(monsters).not.toBe(null);
+  });
+  test("wandering monster level five", () => {
+    const monsters = wanderingMonsterResult(5);
     console.log(monsters);
     expect(monsters).not.toBe(null);
   });

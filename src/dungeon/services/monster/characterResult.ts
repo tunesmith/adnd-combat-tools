@@ -1,5 +1,13 @@
 import { rollDice } from "../../helpers/dungeonLookup";
 
+/**
+ * DMG p11: rolling methods for characters and henchmen
+ * DMG p100: stats adjustments and traits for NPCs
+ * DMG p176: character party instructions
+ *
+ * @param monsterLevel
+ * @param dungeonLevel
+ */
 export const characterResult = (
   monsterLevel: number,
   dungeonLevel: number
