@@ -3,7 +3,7 @@ import {
   getNumberOfMonsters,
 } from "../wanderingMonsterResult";
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
-import { characterResult } from "./characterResult";
+import { characterResult, formatPartyResult } from "./characterResult";
 import {
   DragonFiveOlder,
   dragonFiveOlder,
@@ -17,8 +17,10 @@ export const monsterFiveResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterFive.sides);
   const command = getTableEntry(roll, monsterFive);
   switch (command) {
-    case MonsterFive.Character:
-      return characterResult(5, dungeonLevel);
+    case MonsterFive.Character: {
+      const characters = characterResult(5, dungeonLevel);
+      return formatPartyResult(characters);
+    }
     case MonsterFive.Cockatrice_1to2: {
       const cockatrices = getNumberOfMonsters(5, dungeonLevel, 1, 2);
       return formatMonsterCount(cockatrices, "cockatrice", "cockatrices");

@@ -11,6 +11,10 @@ import { monsterThreeResult } from "../../dungeon/services/monster/monsterThreeR
 import { monsterFourResult } from "../../dungeon/services/monster/monsterFourResult";
 import { wanderingMonsterResult } from "../../dungeon/services/wanderingMonsterResult";
 import { monsterFiveResult } from "../../dungeon/services/monster/monsterFiveResult";
+import {
+  characterResult,
+  formatPartyResult,
+} from "../../dungeon/services/monster/characterResult";
 
 describe("passage results", () => {
   test("initial move", () => {
@@ -27,6 +31,11 @@ describe("passage results", () => {
     const chamber = chamberResult();
     console.log(chamber);
     expect(chamber).not.toBe(null);
+  });
+  test("character result", () => {
+    const character = characterResult(5, 5);
+    console.log(formatPartyResult(character));
+    expect(character).not.toBe(null);
   });
   test("monster level one", () => {
     const monsters = monsterOneResult(1);

@@ -9,7 +9,7 @@ import {
   MonsterOne,
   monsterOne,
 } from "../../../tables/dungeon/monster/monsterOne";
-import { characterResult } from "./characterResult";
+import { characterResult, formatPartyResult } from "./characterResult";
 
 export const monsterOneResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterOne.sides);
@@ -140,7 +140,9 @@ export const humanResult = (dungeonLevel: number): string => {
         `whatever point you find them to be unlikely.`
       );
     }
-    case Human.Character:
-      return characterResult(1, dungeonLevel);
+    case Human.Character: {
+      const characters = characterResult(1, dungeonLevel);
+      return formatPartyResult(characters);
+    }
   }
 };

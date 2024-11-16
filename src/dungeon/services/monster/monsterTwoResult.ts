@@ -7,7 +7,7 @@ import {
   MonsterTwo,
   monsterTwo,
 } from "../../../tables/dungeon/monster/monsterTwo";
-import { characterResult } from "./characterResult";
+import { characterResult, formatPartyResult } from "./characterResult";
 
 export const monsterTwoResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterTwo.sides);
@@ -30,8 +30,10 @@ export const monsterTwoResult = (dungeonLevel: number): string => {
         "giant centipedes"
       );
     }
-    case MonsterTwo.Character:
-      return characterResult(2, dungeonLevel);
+    case MonsterTwo.Character: {
+      const characters = characterResult(2, dungeonLevel);
+      return formatPartyResult(characters);
+    }
     case MonsterTwo.DevilLemure_2to5: {
       const devils = getNumberOfMonsters(2, dungeonLevel, 1, 4, 1);
       return formatMonsterCount(devils, "lemure devil", "lemure devils");

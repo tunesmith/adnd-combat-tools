@@ -1,4 +1,15 @@
-import { rollDice } from "../../helpers/dungeonLookup";
+import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
+import {
+  character,
+  Character,
+  characterMax,
+  incompatibleClasses,
+  multiClassCombinations,
+  multiClassLikelihood,
+  race,
+  Race,
+  raceToClasses,
+} from "../../../tables/dungeon/monster/character";
 
 /**
  * DMG p11: rolling methods for characters and henchmen
@@ -11,14 +22,80 @@ import { rollDice } from "../../helpers/dungeonLookup";
 export const characterResult = (
   monsterLevel: number,
   dungeonLevel: number
-): string => {
-  const characters = rollDice(4) + 1;
-  const others = 9 - characters;
+): PartyResult => {
+  const charactersCount = rollDice(4) + 1;
+  const othersCount = 9 - charactersCount;
   const henchmen = dungeonLevel > 3;
   const characterLevel = getCharacterLevel(monsterLevel, dungeonLevel);
-  return `There are ${characters} L${characterLevel} characters and ${others} ${
-    henchmen ? "henchmen" : "men-at-arms"
-  }. `;
+  const otherLevel = henchmen ? getHenchmanLevel(characterLevel) : 0;
+
+  const mainParty = createParty([], charactersCount).map(
+    (ch): PartyMember => ({
+      level: characterLevel,
+      characterClass: ch,
+      characterRole: CharacterRole.Main,
+    })
+  );
+
+  // Use the main party as the starting compatibility pool
+  const otherPartyMembers = createParty(
+    mainParty.map((member) => member.characterClass),
+    othersCount
+  ).map(
+    (ch): PartyMember => ({
+      level: otherLevel,
+      characterClass: ch,
+      characterRole: henchmen
+        ? CharacterRole.Henchman
+        : CharacterRole.ManAtArms,
+    })
+  );
+
+  return {
+    mainCharacters: mainParty,
+    otherCharacters: otherPartyMembers,
+    henchmen,
+  };
+};
+
+// Man-at-arms: 4-7 hit points each (DMG p30). I think this makes more sense
+// than 1-6 hit points. On the other hand DMB p100 says "minimum of 4 hit points",
+// and offers a constitution bonus. Hmm. I suppose that could lead to as many
+// as eight hit points if taken literally. What's the point of a hit point
+// bonus if 4-7 hp is prescribed? I think 4-7 hit points is for men-at-arms
+// a party may encounter in the wild, but a rolled man-at-arms should be
+// 1-6 with hit point bonuses applied (if any), minimum 4hp.
+
+// All men-at-arms are
+enum CharacterRole {
+  Main,
+  Henchman,
+  ManAtArms,
+}
+interface PartyMember {
+  level: number; // Character level (0 for men-at-arms)
+  characterClass: Character; // Enum for character class
+  characterRole: CharacterRole; // Role in the party
+}
+
+interface PartyResult {
+  mainCharacters: PartyMember[]; // The main party members
+  otherCharacters: PartyMember[]; // Includes henchmen or men-at-arms
+  henchmen: boolean; // Indicates if henchmen are present
+}
+export const formatPartyResult = (result: PartyResult): string => {
+  const charactersText = result.mainCharacters
+    .map((member) => `${Character[member.characterClass]} (L${member.level})`)
+    .join(", ");
+
+  const overallPartyText = result.otherCharacters
+    .map((member) => `${Character[member.characterClass]} (L${member.level})`)
+    .join(", ");
+
+  return `
+    Main Characters: ${charactersText}
+    Other ${result.henchmen ? "Henchmen" : "Men-At-Arms"}: ${overallPartyText}
+  `.trim();
 };
 
 /**
@@ -53,3 +130,135 @@ const getCharacterLevel = (
   }
   return roll;
 };
+
+/**
+ * Each henchman will have a level equal to one-third that of his or her master,
+ * rounded down in all cases where fractions are below one-half, and plus 1 level
+ * per 3 levels of the master's experience level where the character’s level is
+ * above 8th. For example, o 5th level magic-user would have a 2nd level henchman,
+ * as one-third of 5 is 1.7; at 9th level the character’s henchman would be 3 +3
+ * (one third of 9 plus 1 level for every 3 levels of experience of the master
+ * equals 3 + 3) or 6th level. Bonus for the level of the character master is only
+ * in whole numbers, all fractions being dropped, i.e. at 11th level there is still
+ * only a bonus of 3, but at 12th there is a bonus of 4.
+ *
+ * @param characterLevel
+ */
+const getHenchmanLevel = (characterLevel: number): number => {
+  const baseHenchmanLevel = Math.round(characterLevel / 3);
+  const henchmanLevelBonus =
+    characterLevel > 8 ? Math.floor(characterLevel / 3) : 0;
+  return baseHenchmanLevel + henchmanLevelBonus;
+};
+
+const getRace = (): Race => {
+  const raceRoll = rollDice(race.sides);
+  return getTableEntry(raceRoll, race);
+};
+
+const getNumberOfClasses = (
+  characterRace: Race,
+  multiClassProbability: number
+): number => {
+  if (multiClassProbability > multiClassLikelihood[characterRace]) {
+    return 1;
+  }
+  if (characterRace === Race.Elf || characterRace === Race.HalfElf) {
+    if (rollDice(100) <= 25) {
+      return 3;
+    }
+  }
+  return 2;
+};
+
+function getRandomClassForRace(race: Race): Character {
+  while (true) {
+    // Roll a random class based on the character table
+    const roll = rollDice(character.sides); // e.g., d100 for a 100-sided table
+    const candidateClass = getTableEntry(roll, character);
+
+    // Check if the class is valid for the race
+    if (raceToClasses[race]?.includes(candidateClass)) {
+      return candidateClass; // Valid result, return the class
+    }
+    // Otherwise, reroll
+  }
+}
+
+function getMultiClass(characterRace: Race, numClasses: number): Character[] {
+  const selectedClasses: Character[] = [];
+  while (selectedClasses.length < numClasses) {
+    const roll = rollDice(character.sides);
+    const candidate = getTableEntry(roll, character);
+
+    const validMultiClass = multiClassCombinations[characterRace]
+      ?.filter((combo) => combo.length === numClasses) // Only combos of the right size
+      .some((combo) => {
+        const includesCandidate = combo.includes(candidate);
+        const isNotDuplicate = !selectedClasses.includes(candidate);
+        const matchesSelected = selectedClasses.every((cls) =>
+          combo.includes(cls)
+        );
+        return includesCandidate && isNotDuplicate && matchesSelected;
+      });
+
+    if (validMultiClass) {
+      selectedClasses.push(candidate);
+    }
+  }
+  return selectedClasses;
+}
+
+function createParty(
+  initialParty: Character[] = [],
+  partySize: number = 9
+): Character[] {
+  const party: Character[] = [...initialParty];
+  const counts: Record<Character, number> = Object.fromEntries(
+    Object.values(Character).map((c) => [c, 0])
+  ) as Record<Character, number>;
+
+  // Initialize counts based on the initial party
+  for (const member of initialParty) {
+    counts[member]++;
+  }
+
+  while (party.length < partySize) {
+    const nonHumanRoll = rollDice(100);
+    const characterRace = nonHumanRoll <= 20 ? getRace() : Race.Human;
+    const multiClassProbability = rollDice(100);
+    const numClasses = getNumberOfClasses(characterRace, multiClassProbability);
+
+    const characterClasses =
+      numClasses === 1
+        ? [getRandomClassForRace(characterRace)] // Single-class
+        : getMultiClass(characterRace, numClasses); // Multi-class
+
+    characterClasses.forEach((candidate) => {
+      if (!isCompatible(candidate, party)) {
+        return; // Skip this combination if any part is incompatible
+      }
+      if (counts[candidate] >= characterMax[candidate]) {
+        return; // Skip if max limit for this class is reached
+      }
+      party.push(candidate);
+      counts[candidate]++;
+    });
+  }
+
+  return party;
+}
+
+function isCompatible(candidate: Character, party: Character[]): boolean {
+  // Check if candidate conflicts with any existing party members
+  for (const member of party) {
+    if (
+      incompatibleClasses[member]?.includes(candidate) ||
+      incompatibleClasses[candidate]?.includes(member)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}

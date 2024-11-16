@@ -3,7 +3,7 @@ import {
   getNumberOfMonsters,
 } from "../wanderingMonsterResult";
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
-import { characterResult } from "./characterResult";
+import { characterResult, formatPartyResult } from "./characterResult";
 import {
   DragonSix,
   dragonSix,
@@ -27,8 +27,10 @@ export const monsterSixResult = (dungeonLevel: number): string => {
         "carrion crawlers"
       );
     }
-    case MonsterSix.Character:
-      return characterResult(6, dungeonLevel);
+    case MonsterSix.Character: {
+      const characters = characterResult(6, dungeonLevel);
+      return formatPartyResult(characters);
+    }
     case MonsterSix.DevilErinyes_1to2: {
       const erinyes = getNumberOfMonsters(6, dungeonLevel, 1, 2);
       return formatMonsterCount(erinyes, "erinyes", "erinyes");

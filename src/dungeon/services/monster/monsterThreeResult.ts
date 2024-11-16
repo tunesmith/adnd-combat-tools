@@ -9,7 +9,7 @@ import {
   MonsterThree,
   monsterThree,
 } from "../../../tables/dungeon/monster/monsterThree";
-import { characterResult } from "./characterResult";
+import { characterResult, formatPartyResult } from "./characterResult";
 
 export const monsterThreeResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterThree.sides);
@@ -23,8 +23,10 @@ export const monsterThreeResult = (dungeonLevel: number): string => {
       const bugbears = getNumberOfMonsters(3, dungeonLevel, 1, 6, 1);
       return formatMonsterCount(bugbears, "bugbear", "bugbears");
     }
-    case MonsterThree.Character:
-      return characterResult(3, dungeonLevel);
+    case MonsterThree.Character: {
+      const characters = characterResult(2, dungeonLevel);
+      return formatPartyResult(characters);
+    }
     case MonsterThree.Dragon:
       return dragonThreeResult(dungeonLevel);
     case MonsterThree.FungiViolet_1to3: {

@@ -3,7 +3,7 @@ import {
   getNumberOfMonsters,
 } from "../wanderingMonsterResult";
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
-import { characterResult } from "./characterResult";
+import { characterResult, formatPartyResult } from "./characterResult";
 import {
   DragonFourOlder,
   dragonFourOlder,
@@ -25,8 +25,10 @@ export const monsterFourResult = (dungeonLevel: number): string => {
       const blinkDogs = getNumberOfMonsters(4, dungeonLevel, 1, 4, 1);
       return formatMonsterCount(blinkDogs, "blink dog", "blink dogs");
     }
-    case MonsterFour.Character:
-      return characterResult(4, dungeonLevel);
+    case MonsterFour.Character: {
+      const characters = characterResult(4, dungeonLevel);
+      return formatPartyResult(characters);
+    }
     case MonsterFour.DragonYounger:
       return dragonFourYoungerResult(dungeonLevel);
     case MonsterFour.DragonOlder:
