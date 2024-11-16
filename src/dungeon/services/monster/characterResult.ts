@@ -1,7 +1,7 @@
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
 import {
-  character,
-  Character,
+  characterClass,
+  CharacterClass,
   characterMax,
   incompatibleClasses,
   multiClassCombinations,
@@ -76,7 +76,7 @@ enum CharacterRole {
 }
 interface PartyMember {
   level: number; // Character level (0 for men-at-arms)
-  characterClass: Character; // Enum for character class
+  characterClass: CharacterClass; // Enum for character class
   characterRole: CharacterRole; // Role in the party
 }
 
@@ -87,11 +87,15 @@ interface PartyResult {
 }
 export const formatPartyResult = (result: PartyResult): string => {
   const charactersText = result.mainCharacters
-    .map((member) => `${Character[member.characterClass]} (L${member.level})`)
+    .map(
+      (member) => `${CharacterClass[member.characterClass]} (L${member.level})`
+    )
     .join(", ");
 
   const overallPartyText = result.otherCharacters
-    .map((member) => `${Character[member.characterClass]} (L${member.level})`)
+    .map(
+      (member) => `${CharacterClass[member.characterClass]} (L${member.level})`
+    )
     .join(", ");
 
   return `
@@ -176,11 +180,11 @@ const getNumberOfClasses = (
   return 2;
 };
 
-function getRandomClassForRace(race: CharacterRace): Character {
+function getRandomClassForRace(race: CharacterRace): CharacterClass {
   while (true) {
     // Roll a random class based on the character table
-    const roll = rollDice(character.sides); // e.g., d100 for a 100-sided table
-    const candidateClass = getTableEntry(roll, character);
+    const roll = rollDice(characterClass.sides); // e.g., d100 for a 100-sided table
+    const candidateClass = getTableEntry(roll, characterClass);
 
     // Check if the class is valid for the race
     if (raceToClasses[race]?.includes(candidateClass)) {
@@ -193,11 +197,11 @@ function getRandomClassForRace(race: CharacterRace): Character {
 function getMultiClass(
   characterRace: CharacterRace,
   numClasses: number
-): Character[] {
-  const selectedClasses: Character[] = [];
+): CharacterClass[] {
+  const selectedClasses: CharacterClass[] = [];
   while (selectedClasses.length < numClasses) {
-    const roll = rollDice(character.sides);
-    const candidate = getTableEntry(roll, character);
+    const roll = rollDice(characterClass.sides);
+    const candidate = getTableEntry(roll, characterClass);
 
     const validMultiClass = multiClassCombinations[characterRace]
       ?.filter((combo) => combo.length === numClasses) // Only combos of the right size
@@ -218,13 +222,13 @@ function getMultiClass(
 }
 
 function createParty(
-  initialParty: Character[] = [],
+  initialParty: CharacterClass[] = [],
   partySize: number = 9
-): Character[] {
-  const party: Character[] = [...initialParty];
-  const counts: Record<Character, number> = Object.fromEntries(
-    Object.values(Character).map((c) => [c, 0])
-  ) as Record<Character, number>;
+): CharacterClass[] {
+  const party: CharacterClass[] = [...initialParty];
+  const counts: Record<CharacterClass, number> = Object.fromEntries(
+    Object.values(CharacterClass).map((c) => [c, 0])
+  ) as Record<CharacterClass, number>;
 
   // Initialize counts based on the initial party
   for (const member of initialParty) {
@@ -257,7 +261,10 @@ function createParty(
   return party;
 }
 
-function isCompatible(candidate: Character, party: Character[]): boolean {
+function isCompatible(
+  candidate: CharacterClass,
+  party: CharacterClass[]
+): boolean {
   // Check if candidate conflicts with any existing party members
   for (const member of party) {
     if (

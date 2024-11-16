@@ -1,7 +1,7 @@
 import { Table } from "../dungeonTypes";
 import { CharacterRace } from "./character/characterRace";
 
-export enum Character {
+export enum CharacterClass {
   Cleric,
   Druid,
   Fighter,
@@ -15,48 +15,48 @@ export enum Character {
   ManAtArms,
 }
 
-export const characterMax: Record<Character, number> = {
-  [Character.Cleric]: 3,
-  [Character.Druid]: 2,
-  [Character.Fighter]: 5,
-  [Character.Paladin]: 2,
-  [Character.Ranger]: 2,
-  [Character.MagicUser]: 3,
-  [Character.Illusionist]: 4,
-  [Character.Thief]: 1,
-  [Character.Assassin]: 2,
-  [Character.MonkBard]: 1,
-  [Character.ManAtArms]: 7,
+export const characterMax: Record<CharacterClass, number> = {
+  [CharacterClass.Cleric]: 3,
+  [CharacterClass.Druid]: 2,
+  [CharacterClass.Fighter]: 5,
+  [CharacterClass.Paladin]: 2,
+  [CharacterClass.Ranger]: 2,
+  [CharacterClass.MagicUser]: 3,
+  [CharacterClass.Illusionist]: 4,
+  [CharacterClass.Thief]: 1,
+  [CharacterClass.Assassin]: 2,
+  [CharacterClass.MonkBard]: 1,
+  [CharacterClass.ManAtArms]: 7,
 };
 
-export const character: Table<Character> = {
+export const characterClass: Table<CharacterClass> = {
   sides: 100,
   entries: [
-    { range: [1, 17], command: Character.Cleric },
-    { range: [18, 20], command: Character.Druid },
-    { range: [21, 60], command: Character.Fighter },
-    { range: [61, 62], command: Character.Paladin },
-    { range: [63, 65], command: Character.Ranger },
-    { range: [66, 86], command: Character.MagicUser },
-    { range: [87, 88], command: Character.Illusionist },
-    { range: [89, 98], command: Character.Thief },
-    { range: [99], command: Character.Assassin },
-    { range: [100], command: Character.MonkBard },
+    { range: [1, 17], command: CharacterClass.Cleric },
+    { range: [18, 20], command: CharacterClass.Druid },
+    { range: [21, 60], command: CharacterClass.Fighter },
+    { range: [61, 62], command: CharacterClass.Paladin },
+    { range: [63, 65], command: CharacterClass.Ranger },
+    { range: [66, 86], command: CharacterClass.MagicUser },
+    { range: [87, 88], command: CharacterClass.Illusionist },
+    { range: [89, 98], command: CharacterClass.Thief },
+    { range: [99], command: CharacterClass.Assassin },
+    { range: [100], command: CharacterClass.MonkBard },
   ],
 };
 
-export const incompatibleClasses: Record<Character, Character[]> = {
-  [Character.Paladin]: [Character.Assassin, Character.Druid],
-  [Character.Assassin]: [Character.Paladin, Character.Ranger],
-  [Character.Ranger]: [Character.Assassin],
-  [Character.Cleric]: [],
-  [Character.Druid]: [],
-  [Character.Fighter]: [],
-  [Character.MagicUser]: [],
-  [Character.Illusionist]: [],
-  [Character.Thief]: [],
-  [Character.MonkBard]: [],
-  [Character.ManAtArms]: [],
+export const incompatibleClasses: Record<CharacterClass, CharacterClass[]> = {
+  [CharacterClass.Paladin]: [CharacterClass.Assassin, CharacterClass.Druid],
+  [CharacterClass.Assassin]: [CharacterClass.Paladin, CharacterClass.Ranger],
+  [CharacterClass.Ranger]: [CharacterClass.Assassin],
+  [CharacterClass.Cleric]: [],
+  [CharacterClass.Druid]: [],
+  [CharacterClass.Fighter]: [],
+  [CharacterClass.MagicUser]: [],
+  [CharacterClass.Illusionist]: [],
+  [CharacterClass.Thief]: [],
+  [CharacterClass.MonkBard]: [],
+  [CharacterClass.ManAtArms]: [],
 };
 
 /**
@@ -83,84 +83,85 @@ export const multiClassLikelihood: Record<CharacterRace, number> = {
   [CharacterRace.HalfOrc]: 20, // Example value
 };
 
-export const raceToClasses: Record<CharacterRace, Character[]> = {
+export const raceToClasses: Record<CharacterRace, CharacterClass[]> = {
   [CharacterRace.Human]: [
-    Character.Cleric,
-    Character.Druid,
-    Character.Fighter,
-    Character.Paladin,
-    Character.Ranger,
-    Character.MagicUser,
-    Character.Illusionist,
-    Character.Thief,
-    Character.Assassin,
-    Character.MonkBard,
+    CharacterClass.Cleric,
+    CharacterClass.Druid,
+    CharacterClass.Fighter,
+    CharacterClass.Paladin,
+    CharacterClass.Ranger,
+    CharacterClass.MagicUser,
+    CharacterClass.Illusionist,
+    CharacterClass.Thief,
+    CharacterClass.Assassin,
+    CharacterClass.MonkBard,
   ],
   [CharacterRace.Dwarf]: [
-    Character.Fighter,
-    Character.Thief,
-    Character.Assassin,
+    CharacterClass.Fighter,
+    CharacterClass.Thief,
+    CharacterClass.Assassin,
   ],
   [CharacterRace.Elf]: [
-    Character.Fighter,
-    Character.MagicUser,
-    Character.Thief,
-    Character.Assassin,
+    CharacterClass.Fighter,
+    CharacterClass.MagicUser,
+    CharacterClass.Thief,
+    CharacterClass.Assassin,
   ],
   [CharacterRace.Gnome]: [
-    Character.Fighter,
-    Character.Illusionist,
-    Character.Thief,
-    Character.Assassin,
+    CharacterClass.Fighter,
+    CharacterClass.Illusionist,
+    CharacterClass.Thief,
+    CharacterClass.Assassin,
   ],
   [CharacterRace.HalfElf]: [
-    Character.Cleric,
-    Character.Druid,
-    Character.Fighter,
-    Character.Ranger,
-    Character.MagicUser,
-    Character.Thief,
-    Character.Assassin,
+    CharacterClass.Cleric,
+    CharacterClass.Druid,
+    CharacterClass.Fighter,
+    CharacterClass.Ranger,
+    CharacterClass.MagicUser,
+    CharacterClass.Thief,
+    CharacterClass.Assassin,
   ],
-  [CharacterRace.Halfling]: [Character.Fighter, Character.Thief],
+  [CharacterRace.Halfling]: [CharacterClass.Fighter, CharacterClass.Thief],
   [CharacterRace.HalfOrc]: [
-    Character.Cleric,
-    Character.Fighter,
-    Character.Thief,
-    Character.Assassin,
+    CharacterClass.Cleric,
+    CharacterClass.Fighter,
+    CharacterClass.Thief,
+    CharacterClass.Assassin,
   ],
 };
 
-export const multiClassCombinations: Record<CharacterRace, Character[][]> = {
-  [CharacterRace.Human]: [], // Humans cannot multi-class
-  [CharacterRace.Dwarf]: [[Character.Fighter, Character.Thief]],
-  [CharacterRace.Elf]: [
-    [Character.Fighter, Character.Thief],
-    [Character.Fighter, Character.MagicUser],
-    [Character.MagicUser, Character.Thief],
-    [Character.Fighter, Character.MagicUser, Character.Thief],
-  ],
-  [CharacterRace.Gnome]: [
-    [Character.Fighter, Character.Illusionist],
-    [Character.Fighter, Character.Thief],
-    [Character.Illusionist, Character.Thief],
-  ],
-  [CharacterRace.HalfElf]: [
-    [Character.Cleric, Character.Ranger],
-    [Character.Cleric, Character.Fighter],
-    [Character.Cleric, Character.MagicUser],
-    [Character.Fighter, Character.MagicUser],
-    [Character.Fighter, Character.Thief],
-    [Character.MagicUser, Character.Thief],
-    [Character.Cleric, Character.Fighter, Character.MagicUser],
-    [Character.Fighter, Character.MagicUser, Character.Thief],
-  ],
-  [CharacterRace.Halfling]: [[Character.Fighter, Character.Thief]],
-  [CharacterRace.HalfOrc]: [
-    [Character.Cleric, Character.Fighter],
-    [Character.Cleric, Character.Thief],
-    [Character.Cleric, Character.Assassin],
-    [Character.Fighter, Character.Thief],
-    [Character.Fighter, Character.Assassin],
-  ],
-};
+export const multiClassCombinations: Record<CharacterRace, CharacterClass[][]> =
+  {
+    [CharacterRace.Human]: [], // Humans cannot multi-class
+    [CharacterRace.Dwarf]: [[CharacterClass.Fighter, CharacterClass.Thief]],
+    [CharacterRace.Elf]: [
+      [CharacterClass.Fighter, CharacterClass.Thief],
+      [CharacterClass.Fighter, CharacterClass.MagicUser],
+      [CharacterClass.MagicUser, CharacterClass.Thief],
+      [CharacterClass.Fighter, CharacterClass.MagicUser, CharacterClass.Thief],
+    ],
+    [CharacterRace.Gnome]: [
+      [CharacterClass.Fighter, CharacterClass.Illusionist],
+      [CharacterClass.Fighter, CharacterClass.Thief],
+      [CharacterClass.Illusionist, CharacterClass.Thief],
+    ],
+    [CharacterRace.HalfElf]: [
+      [CharacterClass.Cleric, CharacterClass.Ranger],
+      [CharacterClass.Cleric, CharacterClass.Fighter],
+      [CharacterClass.Cleric, CharacterClass.MagicUser],
+      [CharacterClass.Fighter, CharacterClass.MagicUser],
+      [CharacterClass.Fighter, CharacterClass.Thief],
+      [CharacterClass.MagicUser, CharacterClass.Thief],
+      [CharacterClass.Cleric, CharacterClass.Fighter, CharacterClass.MagicUser],
+      [CharacterClass.Fighter, CharacterClass.MagicUser, CharacterClass.Thief],
+    ],
+    [CharacterRace.Halfling]: [[CharacterClass.Fighter, CharacterClass.Thief]],
+    [CharacterRace.HalfOrc]: [
+      [CharacterClass.Cleric, CharacterClass.Fighter],
+      [CharacterClass.Cleric, CharacterClass.Thief],
+      [CharacterClass.Cleric, CharacterClass.Assassin],
+      [CharacterClass.Fighter, CharacterClass.Thief],
+      [CharacterClass.Fighter, CharacterClass.Assassin],
+    ],
+  };
