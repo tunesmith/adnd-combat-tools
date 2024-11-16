@@ -1,11 +1,5 @@
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
-import {
-  characterMax,
-  incompatibleClasses,
-  multiClassCombinations,
-  multiClassLikelihood,
-  raceToClasses,
-} from "../../../tables/dungeon/monster/character";
+import { allowedMultiClassCombinationsByRace } from "../../../tables/dungeon/monster/character";
 import {
   CharacterRace,
   characterRace,
@@ -14,6 +8,10 @@ import {
   CharacterClass,
   characterClass,
 } from "../../../tables/dungeon/monster/character/characterClass";
+import { characterMax } from "../../models/characterMax";
+import { incompatibleClasses } from "../../models/incompatibleClasses";
+import { multiClassLikelihood } from "../../models/multiClassLikelihood";
+import { allowedClassesByRace } from "../../models/allowedClassesByRace";
 
 /**
  * DMG p11: rolling methods for characters and henchmen
@@ -189,7 +187,7 @@ function getRandomClassForRace(race: CharacterRace): CharacterClass {
     const candidateClass = getTableEntry(roll, characterClass);
 
     // Check if the class is valid for the race
-    if (raceToClasses[race]?.includes(candidateClass)) {
+    if (allowedClassesByRace[race]?.includes(candidateClass)) {
       return candidateClass; // Valid result, return the class
     }
     // Otherwise, reroll
@@ -205,7 +203,7 @@ function getMultiClass(
     const roll = rollDice(characterClass.sides);
     const candidate = getTableEntry(roll, characterClass);
 
-    const validMultiClass = multiClassCombinations[characterRace]
+    const validMultiClass = allowedMultiClassCombinationsByRace[characterRace]
       ?.filter((combo) => combo.length === numClasses) // Only combos of the right size
       .some((combo) => {
         const includesCandidate = combo.includes(candidate);
