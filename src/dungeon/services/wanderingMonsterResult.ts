@@ -25,6 +25,7 @@ import { getPassageResult } from "./passage";
 import { monsterThreeResult } from "./monster/monsterThreeResult";
 import { monsterFourResult } from "./monster/monsterFourResult";
 import { monsterFiveResult } from "./monster/monsterFiveResult";
+import { monsterSixResult } from "./monster/monsterSixResult";
 
 /**
  * In addition to rolling the wandering monster, we also have
@@ -58,7 +59,7 @@ export const wanderingMonsterResult = (level: number): string => {
     case MonsterLevel.Five:
       return passageResult + monsterFiveResult(level);
     case MonsterLevel.Six:
-      return "(TODO: Roll Monster for Level Six)";
+      return passageResult + monsterSixResult(level);
     case MonsterLevel.Seven:
       return "(TODO: Roll Monster for Level Seven)";
     case MonsterLevel.Eight:

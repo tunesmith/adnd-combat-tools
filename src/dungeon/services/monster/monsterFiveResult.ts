@@ -157,8 +157,8 @@ const dragonFiveYoungerResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "sub-adult blue dragon with 3 hit point per die",
-          "sub-adult blue dragons with 3 hit point per die"
+          "sub-adult blue dragon with 3 hit points per die",
+          "sub-adult blue dragons with 3 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -177,8 +177,8 @@ const dragonFiveYoungerResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "sub-adult bronze dragon with 3 hit point per die",
-          "sub-adult bronze dragons with 3 hit point per die"
+          "sub-adult bronze dragon with 3 hit points per die",
+          "sub-adult bronze dragons with 3 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -187,8 +187,8 @@ const dragonFiveYoungerResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "sub-adult copper dragon with 3 hit point per die",
-          "sub-adult copper dragons with 3 hit point per die"
+          "sub-adult copper dragon with 3 hit points per die",
+          "sub-adult copper dragons with 3 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -197,8 +197,8 @@ const dragonFiveYoungerResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "sub-adult gold dragon with 3 hit point per die",
-          "sub-adult gold dragons with 3 hit point per die"
+          "sub-adult gold dragon with 3 hit points per die",
+          "sub-adult gold dragons with 3 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -207,8 +207,8 @@ const dragonFiveYoungerResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "sub-adult green dragon with 3 hit point per die",
-          "sub-adult green dragons with 3 hit point per die"
+          "sub-adult green dragon with 3 hit points per die",
+          "sub-adult green dragons with 3 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -217,8 +217,8 @@ const dragonFiveYoungerResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "sub-adult red dragon with 3 hit point per die",
-          "sub-adult red dragons with 3 hit point per die"
+          "sub-adult red dragon with 3 hit points per die",
+          "sub-adult red dragons with 3 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -227,8 +227,8 @@ const dragonFiveYoungerResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "sub-adult silver dragon with 3 hit point per die",
-          "sub-adult silver dragons with 3 hit point per die"
+          "sub-adult silver dragon with 3 hit points per die",
+          "sub-adult silver dragons with 3 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -264,8 +264,8 @@ const dragonFiveOlderResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "young adult blue dragon with 4 hit point per die",
-          "young adult blue dragons with 4 hit point per die"
+          "young adult blue dragon with 4 hit points per die",
+          "young adult blue dragons with 4 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -284,8 +284,8 @@ const dragonFiveOlderResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "young adult bronze dragon with 4 hit point per die",
-          "young adult bronze dragons with 4 hit point per die"
+          "young adult bronze dragon with 4 hit points per die",
+          "young adult bronze dragons with 4 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -294,8 +294,8 @@ const dragonFiveOlderResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "young adult copper dragon with 4 hit point per die",
-          "young adult copper dragons with 4 hit point per die"
+          "young adult copper dragon with 4 hit points per die",
+          "young adult copper dragons with 4 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -304,8 +304,8 @@ const dragonFiveOlderResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "young adult gold dragon with 4 hit point per die",
-          "young adult gold dragons with 4 hit point per die"
+          "young adult gold dragon with 4 hit points per die",
+          "young adult gold dragons with 4 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -314,8 +314,8 @@ const dragonFiveOlderResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "young adult green dragon with 4 hit point per die",
-          "young adult green dragons with 4 hit point per die"
+          "young adult green dragon with 4 hit points per die",
+          "young adult green dragons with 4 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -324,8 +324,8 @@ const dragonFiveOlderResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "young adult red dragon with 4 hit point per die",
-          "young adult red dragons with 4 hit point per die"
+          "young adult red dragon with 4 hit points per die",
+          "young adult red dragons with 4 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }
@@ -334,8 +334,8 @@ const dragonFiveOlderResult = (dungeonLevel: number): string => {
       return (
         formatMonsterCount(
           dragons,
-          "young adult silver dragon with 4 hit point per die",
-          "young adult silver dragons with 4 hit point per die"
+          "young adult silver dragon with 4 hit points per die",
+          "young adult silver dragons with 4 hit points per die"
         ) + "(Determine the number of hit dice for a dragon as normal.) "
       );
     }

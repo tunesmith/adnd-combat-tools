@@ -43,6 +43,11 @@ import {
   DragonFiveYounger,
   MonsterFive,
 } from "./monster/monsterFive";
+import { DragonSix, MonsterSix } from "./monster/monsterSix";
+import { DragonSeven, MonsterSeven } from "./monster/monsterSeven";
+import { DragonEight, MonsterEight } from "./monster/monsterEight";
+import { DragonNine, MonsterNine } from "./monster/monsterNine";
+import { DragonTen, MonsterTen } from "./monster/monsterTen";
 
 export type Table<T> = {
   sides: number;
@@ -99,8 +104,18 @@ export type Command =
   | MonsterThree
   | MonsterFour
   | MonsterFive
+  | MonsterSix
+  | MonsterSeven
+  | MonsterEight
+  | MonsterNine
+  | MonsterTen
   | DragonThree
   | DragonFourYounger
   | DragonFourOlder
   | DragonFiveYounger
-  | DragonFiveOlder;
+  | DragonFiveOlder
+  | DragonSix
+  | DragonSeven
+  | DragonEight
+  | DragonNine
+  | DragonTen;
