@@ -1,7 +1,5 @@
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
 import {
-  characterClass,
-  CharacterClass,
   characterMax,
   incompatibleClasses,
   multiClassCombinations,
@@ -12,6 +10,10 @@ import {
   CharacterRace,
   characterRace,
 } from "../../../tables/dungeon/monster/character/characterRace";
+import {
+  CharacterClass,
+  characterClass,
+} from "../../../tables/dungeon/monster/character/characterClass";
 
 /**
  * DMG p11: rolling methods for characters and henchmen

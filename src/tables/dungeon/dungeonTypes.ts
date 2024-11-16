@@ -48,8 +48,8 @@ import { DragonSeven, MonsterSeven } from "./monster/monsterSeven";
 import { DragonEight, MonsterEight } from "./monster/monsterEight";
 import { DragonNine, MonsterNine } from "./monster/monsterNine";
 import { DragonTen, MonsterTen } from "./monster/monsterTen";
-import { CharacterClass } from "./monster/character";
 import { CharacterRace } from "./monster/character/characterRace";
+import { CharacterClass } from "./monster/character/characterClass";
 
 export type Table<T> = {
   sides: number;
