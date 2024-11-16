@@ -1,5 +1,4 @@
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
-import { allowedMultiClassCombinationsByRace } from "../../../tables/dungeon/monster/character";
 import {
   CharacterRace,
   characterRace,
@@ -12,6 +11,7 @@ import { characterMax } from "../../models/characterMax";
 import { incompatibleClasses } from "../../models/incompatibleClasses";
 import { multiClassLikelihood } from "../../models/multiClassLikelihood";
 import { allowedClassesByRace } from "../../models/allowedClassesByRace";
+import { allowedMultiClassCombinationsByRace } from "../../models/allowedMultiClassCombinationsByRace";
 
 /**
  * DMG p11: rolling methods for characters and henchmen

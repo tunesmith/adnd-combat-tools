@@ -1,5 +1,5 @@
-import { CharacterRace } from "./character/characterRace";
-import { CharacterClass } from "./character/characterClass";
+import { CharacterRace } from "../../tables/dungeon/monster/character/characterRace";
+import { CharacterClass } from "../../tables/dungeon/monster/character/characterClass";
 
 export const allowedMultiClassCombinationsByRace: Record<
   CharacterRace,
