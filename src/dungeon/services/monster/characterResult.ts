@@ -9,8 +9,8 @@ import {
   raceToClasses,
 } from "../../../tables/dungeon/monster/character";
 import {
-  Race,
-  race,
+  CharacterRace,
+  characterRace,
 } from "../../../tables/dungeon/monster/character/characterRace";
 
 /**
@@ -153,19 +153,22 @@ const getHenchmanLevel = (characterLevel: number): number => {
   return baseHenchmanLevel + henchmanLevelBonus;
 };
 
-const getRace = (): Race => {
-  const raceRoll = rollDice(race.sides);
-  return getTableEntry(raceRoll, race);
+const getRace = (): CharacterRace => {
+  const raceRoll = rollDice(characterRace.sides);
+  return getTableEntry(raceRoll, characterRace);
 };
 
 const getNumberOfClasses = (
-  characterRace: Race,
+  characterRace: CharacterRace,
   multiClassProbability: number
 ): number => {
   if (multiClassProbability > multiClassLikelihood[characterRace]) {
     return 1;
   }
-  if (characterRace === Race.Elf || characterRace === Race.HalfElf) {
+  if (
+    characterRace === CharacterRace.Elf ||
+    characterRace === CharacterRace.HalfElf
+  ) {
     if (rollDice(100) <= 25) {
       return 3;
     }
@@ -173,7 +176,7 @@ const getNumberOfClasses = (
   return 2;
 };
 
-function getRandomClassForRace(race: Race): Character {
+function getRandomClassForRace(race: CharacterRace): Character {
   while (true) {
     // Roll a random class based on the character table
     const roll = rollDice(character.sides); // e.g., d100 for a 100-sided table
@@ -187,7 +190,10 @@ function getRandomClassForRace(race: Race): Character {
   }
 }
 
-function getMultiClass(characterRace: Race, numClasses: number): Character[] {
+function getMultiClass(
+  characterRace: CharacterRace,
+  numClasses: number
+): Character[] {
   const selectedClasses: Character[] = [];
   while (selectedClasses.length < numClasses) {
     const roll = rollDice(character.sides);
@@ -227,7 +233,7 @@ function createParty(
 
   while (party.length < partySize) {
     const nonHumanRoll = rollDice(100);
-    const characterRace = nonHumanRoll <= 20 ? getRace() : Race.Human;
+    const characterRace = nonHumanRoll <= 20 ? getRace() : CharacterRace.Human;
     const multiClassProbability = rollDice(100);
     const numClasses = getNumberOfClasses(characterRace, multiClassProbability);
 

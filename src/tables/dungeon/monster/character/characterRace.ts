@@ -1,6 +1,6 @@
 import { Table } from "../../dungeonTypes";
 
-export enum Race {
+export enum CharacterRace {
   Human,
   Dwarf,
   Elf,
@@ -10,14 +10,14 @@ export enum Race {
   HalfOrc,
 }
 
-export const race: Table<Race> = {
+export const characterRace: Table<CharacterRace> = {
   sides: 100,
   entries: [
-    { range: [1, 25], command: Race.Dwarf },
-    { range: [26, 50], command: Race.Elf },
-    { range: [51, 60], command: Race.Gnome },
-    { range: [61, 85], command: Race.HalfElf },
-    { range: [86, 95], command: Race.Halfling },
-    { range: [96, 100], command: Race.HalfOrc },
+    { range: [1, 25], command: CharacterRace.Dwarf },
+    { range: [26, 50], command: CharacterRace.Elf },
+    { range: [51, 60], command: CharacterRace.Gnome },
+    { range: [61, 85], command: CharacterRace.HalfElf },
+    { range: [86, 95], command: CharacterRace.Halfling },
+    { range: [96, 100], command: CharacterRace.HalfOrc },
   ],
 };

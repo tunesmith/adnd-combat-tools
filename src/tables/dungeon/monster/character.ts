@@ -1,5 +1,5 @@
 import { Table } from "../dungeonTypes";
-import { Race } from "./character/characterRace";
+import { CharacterRace } from "./character/characterRace";
 
 export enum Character {
   Cleric,
@@ -63,28 +63,28 @@ export const incompatibleClasses: Record<Character, Character[]> = {
  * PHB mentions racial tolerances. We'll rule out "Hate"
  * but not "Antipathy".
  */
-export const incompatibleRaces: Record<Race, Race[]> = {
-  [Race.Human]: [],
-  [Race.Dwarf]: [Race.HalfOrc],
-  [Race.Elf]: [],
-  [Race.Gnome]: [Race.HalfOrc],
-  [Race.HalfElf]: [],
-  [Race.Halfling]: [],
-  [Race.HalfOrc]: [Race.Dwarf, Race.Gnome],
+export const incompatibleRaces: Record<CharacterRace, CharacterRace[]> = {
+  [CharacterRace.Human]: [],
+  [CharacterRace.Dwarf]: [CharacterRace.HalfOrc],
+  [CharacterRace.Elf]: [],
+  [CharacterRace.Gnome]: [CharacterRace.HalfOrc],
+  [CharacterRace.HalfElf]: [],
+  [CharacterRace.Halfling]: [],
+  [CharacterRace.HalfOrc]: [CharacterRace.Dwarf, CharacterRace.Gnome],
 };
 
-export const multiClassLikelihood: Record<Race, number> = {
-  [Race.Human]: 0, // Humans cannot be multi-class in 1e
-  [Race.Dwarf]: 15, // 15% chance
-  [Race.Elf]: 85, // 85% chance
-  [Race.Gnome]: 50, // Example value
-  [Race.HalfElf]: 75, // 75% chance
-  [Race.Halfling]: 10, // Example value
-  [Race.HalfOrc]: 20, // Example value
+export const multiClassLikelihood: Record<CharacterRace, number> = {
+  [CharacterRace.Human]: 0, // Humans cannot be multi-class in 1e
+  [CharacterRace.Dwarf]: 15, // 15% chance
+  [CharacterRace.Elf]: 85, // 85% chance
+  [CharacterRace.Gnome]: 50, // Example value
+  [CharacterRace.HalfElf]: 75, // 75% chance
+  [CharacterRace.Halfling]: 10, // Example value
+  [CharacterRace.HalfOrc]: 20, // Example value
 };
 
-export const raceToClasses: Record<Race, Character[]> = {
-  [Race.Human]: [
+export const raceToClasses: Record<CharacterRace, Character[]> = {
+  [CharacterRace.Human]: [
     Character.Cleric,
     Character.Druid,
     Character.Fighter,
@@ -96,20 +96,24 @@ export const raceToClasses: Record<Race, Character[]> = {
     Character.Assassin,
     Character.MonkBard,
   ],
-  [Race.Dwarf]: [Character.Fighter, Character.Thief, Character.Assassin],
-  [Race.Elf]: [
+  [CharacterRace.Dwarf]: [
+    Character.Fighter,
+    Character.Thief,
+    Character.Assassin,
+  ],
+  [CharacterRace.Elf]: [
     Character.Fighter,
     Character.MagicUser,
     Character.Thief,
     Character.Assassin,
   ],
-  [Race.Gnome]: [
+  [CharacterRace.Gnome]: [
     Character.Fighter,
     Character.Illusionist,
     Character.Thief,
     Character.Assassin,
   ],
-  [Race.HalfElf]: [
+  [CharacterRace.HalfElf]: [
     Character.Cleric,
     Character.Druid,
     Character.Fighter,
@@ -118,8 +122,8 @@ export const raceToClasses: Record<Race, Character[]> = {
     Character.Thief,
     Character.Assassin,
   ],
-  [Race.Halfling]: [Character.Fighter, Character.Thief],
-  [Race.HalfOrc]: [
+  [CharacterRace.Halfling]: [Character.Fighter, Character.Thief],
+  [CharacterRace.HalfOrc]: [
     Character.Cleric,
     Character.Fighter,
     Character.Thief,
@@ -127,21 +131,21 @@ export const raceToClasses: Record<Race, Character[]> = {
   ],
 };
 
-export const multiClassCombinations: Record<Race, Character[][]> = {
-  [Race.Human]: [], // Humans cannot multi-class
-  [Race.Dwarf]: [[Character.Fighter, Character.Thief]],
-  [Race.Elf]: [
+export const multiClassCombinations: Record<CharacterRace, Character[][]> = {
+  [CharacterRace.Human]: [], // Humans cannot multi-class
+  [CharacterRace.Dwarf]: [[Character.Fighter, Character.Thief]],
+  [CharacterRace.Elf]: [
     [Character.Fighter, Character.Thief],
     [Character.Fighter, Character.MagicUser],
     [Character.MagicUser, Character.Thief],
     [Character.Fighter, Character.MagicUser, Character.Thief],
   ],
-  [Race.Gnome]: [
+  [CharacterRace.Gnome]: [
     [Character.Fighter, Character.Illusionist],
     [Character.Fighter, Character.Thief],
     [Character.Illusionist, Character.Thief],
   ],
-  [Race.HalfElf]: [
+  [CharacterRace.HalfElf]: [
     [Character.Cleric, Character.Ranger],
     [Character.Cleric, Character.Fighter],
     [Character.Cleric, Character.MagicUser],
@@ -151,8 +155,8 @@ export const multiClassCombinations: Record<Race, Character[][]> = {
     [Character.Cleric, Character.Fighter, Character.MagicUser],
     [Character.Fighter, Character.MagicUser, Character.Thief],
   ],
-  [Race.Halfling]: [[Character.Fighter, Character.Thief]],
-  [Race.HalfOrc]: [
+  [CharacterRace.Halfling]: [[Character.Fighter, Character.Thief]],
+  [CharacterRace.HalfOrc]: [
     [Character.Cleric, Character.Fighter],
     [Character.Cleric, Character.Thief],
     [Character.Cleric, Character.Assassin],
