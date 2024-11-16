@@ -1,4 +1,5 @@
 import { Table } from "../dungeonTypes";
+import { Race } from "./character/characterRace";
 
 export enum Character {
   Cleric,
@@ -58,16 +59,6 @@ export const incompatibleClasses: Record<Character, Character[]> = {
   [Character.ManAtArms]: [],
 };
 
-export enum Race {
-  Human,
-  Dwarf,
-  Elf,
-  Gnome,
-  HalfElf,
-  Halfling,
-  HalfOrc,
-}
-
 /**
  * PHB mentions racial tolerances. We'll rule out "Hate"
  * but not "Antipathy".
@@ -80,18 +71,6 @@ export const incompatibleRaces: Record<Race, Race[]> = {
   [Race.HalfElf]: [],
   [Race.Halfling]: [],
   [Race.HalfOrc]: [Race.Dwarf, Race.Gnome],
-};
-
-export const race: Table<Race> = {
-  sides: 100,
-  entries: [
-    { range: [1, 25], command: Race.Dwarf },
-    { range: [26, 50], command: Race.Elf },
-    { range: [51, 60], command: Race.Gnome },
-    { range: [61, 85], command: Race.HalfElf },
-    { range: [86, 95], command: Race.Halfling },
-    { range: [96, 100], command: Race.HalfOrc },
-  ],
 };
 
 export const multiClassLikelihood: Record<Race, number> = {

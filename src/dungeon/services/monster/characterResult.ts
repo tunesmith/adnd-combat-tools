@@ -6,10 +6,12 @@ import {
   incompatibleClasses,
   multiClassCombinations,
   multiClassLikelihood,
-  race,
-  Race,
   raceToClasses,
 } from "../../../tables/dungeon/monster/character";
+import {
+  Race,
+  race,
+} from "../../../tables/dungeon/monster/character/characterRace";
 
 /**
  * DMG p11: rolling methods for characters and henchmen
