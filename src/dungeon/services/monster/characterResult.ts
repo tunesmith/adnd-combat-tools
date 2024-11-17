@@ -112,6 +112,33 @@ const getRace = (): CharacterRace => {
   return getTableEntry(raceRoll, characterRace);
 };
 
+/**
+ * Note there is something crazy here. The DMG says:
+ *
+ * About 50% of non-humans will have two professions,
+ * about 25% of those will have three.
+ *
+ * First, we definitely interpret this to mean "25% of
+ * the 50%", rather than an additional 25%.
+ *
+ * But, note that only elves and half-elves can have three.
+ *
+ * Staring closely at the table, we see that we would
+ * overall expect 52.25% of non-humans to be multi-class,
+ * which is close enough to "about 50%".
+ *
+ * To have roughly 25% of those be three-class, just from
+ * elves and half-elves, that means that elves and half-elves
+ * would each need to have a 30.74% chance of being three-class,
+ * rather than a straight 25% chance.
+ *
+ * We'll just use 30%. That means we'd expect an overall
+ * percentage of the multi-class being three-class of being
+ * 24.4%, which is also close enough to "about 25%".
+ *
+ * @param characterRace
+ * @param multiClassProbability
+ */
 const getNumberOfClasses = (
   characterRace: CharacterRace,
   multiClassProbability: number
@@ -123,7 +150,7 @@ const getNumberOfClasses = (
     characterRace === CharacterRace.Elf ||
     characterRace === CharacterRace.HalfElf
   ) {
-    if (rollDice(100) <= 25) {
+    if (rollDice(100) <= 30) {
       return 3;
     }
   }
