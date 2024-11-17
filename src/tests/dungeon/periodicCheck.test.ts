@@ -33,9 +33,9 @@ describe("passage results", () => {
     expect(chamber).not.toBe(null);
   });
   test("character result", () => {
-    const character = characterResult(5, 5);
-    console.log(formatPartyResult(character));
-    expect(character).not.toBe(null);
+    const party = characterResult(5, 5);
+    console.log(formatPartyResult(party));
+    expect(party).not.toBe(null);
   });
   test("monster level one", () => {
     const monsters = monsterOneResult(1);

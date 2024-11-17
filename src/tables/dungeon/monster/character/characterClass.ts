@@ -11,6 +11,8 @@ export enum CharacterClass {
   Thief,
   Assassin,
   MonkBard,
+  Monk,
+  Bard,
   ManAtArms,
 }
 

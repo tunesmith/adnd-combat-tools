@@ -10,6 +10,8 @@ export const incompatibleClasses: Record<CharacterClass, CharacterClass[]> = {
   [CharacterClass.MagicUser]: [],
   [CharacterClass.Illusionist]: [],
   [CharacterClass.Thief]: [],
+  [CharacterClass.Monk]: [],
+  [CharacterClass.Bard]: [],
   [CharacterClass.MonkBard]: [],
   [CharacterClass.ManAtArms]: [],
 };

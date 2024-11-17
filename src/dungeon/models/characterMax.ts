@@ -11,5 +11,7 @@ export const characterMax: Record<CharacterClass, number> = {
   [CharacterClass.Thief]: 1,
   [CharacterClass.Assassin]: 2,
   [CharacterClass.MonkBard]: 1,
+  [CharacterClass.Monk]: 1,
+  [CharacterClass.Bard]: 1,
   [CharacterClass.ManAtArms]: 7,
 };
