@@ -1,5 +1,5 @@
 import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
-import { Attribute } from "../../services/monster/characterResult";
+import { Attribute } from "../../models/attributes";
 
 /**
  * This is an implementation of the advice from DMG p11 for

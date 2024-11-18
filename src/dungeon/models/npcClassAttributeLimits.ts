@@ -1,6 +1,6 @@
 import { AttributeRange } from "./raceAttributeLimits";
 import { CharacterClass } from "../../tables/dungeon/monster/character/characterClass";
-import { Attribute } from "../services/monster/characterResult";
+import { Attribute } from "./attributes";
 
 interface ClassAttributeTable {
   [CharacterClass.Cleric]: Record<Attribute, AttributeRange>;

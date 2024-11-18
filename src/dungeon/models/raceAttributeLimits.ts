@@ -1,5 +1,6 @@
-import { Attribute, Gender } from "../services/monster/characterResult";
 import { CharacterRace } from "../../tables/dungeon/monster/character/characterRace";
+import { Attribute } from "./attributes";
+import { Gender } from "./character/gender";
 
 export interface AttributeRange {
   min: number;

@@ -18,6 +18,8 @@ import raceAttributeLimits from "../../models/raceAttributeLimits";
 import { npcClassAttributeLimits } from "../../models/npcClassAttributeLimits";
 import { getMaxLevel } from "../../helpers/character/getMaxLevel";
 import { getAttributeDice } from "../../helpers/character/getAttributeDice";
+import { Attribute, Attributes } from "../../models/attributes";
+import { Gender } from "../../models/character/gender";
 
 export const createMainParty = (
   charactersCount: number,
@@ -139,22 +141,6 @@ interface PartyMember {
 interface CharacterProfession {
   level: number;
   characterClass: CharacterClass;
-}
-
-export enum Attribute {
-  Strength = "STR",
-  Intelligence = "INT",
-  Wisdom = "WIS",
-  Dexterity = "DEX",
-  Constitution = "CON",
-  Charisma = "CHA",
-}
-
-export interface Attributes extends Record<Attribute, number> {}
-
-export enum Gender {
-  Male = "M",
-  Female = "F",
 }
 
 interface CharacterSheet {
