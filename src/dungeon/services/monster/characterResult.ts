@@ -1,15 +1,9 @@
-import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
+import { rollDice } from "../../helpers/dungeonLookup";
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import {
-  CharacterClass,
-  characterClass,
-} from "../../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
 import { characterMax } from "../../models/characterMax";
-import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
-import { getMaxLevel } from "../../helpers/character/getMaxLevel";
-import { Gender } from "../../models/character/gender";
 import {
   CharacterSheet,
   PartyResult,
@@ -17,8 +11,8 @@ import {
 import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
-import { getAttributes } from "../../helpers/character/attributes/getAttributes";
 import { getCharacterRace } from "../../helpers/character/getCharacterRace";
+import { getRandomClassForRace } from "../../helpers/character/getRandomClassForRace";
 
 export const createMainParty = (
   charactersCount: number,
@@ -151,81 +145,6 @@ export const formatPartyResult = (result: PartyResult): string => {
     Other ${result.henchmen ? "Henchmen" : "Men-At-Arms"}: ${overallPartyText}
   `.trim();
 };
-
-/**
- * Level restrictions are tricky here because the DMG leaves this fairly
- * undefined. It just says:
- *
- * "If the profession of the character or henchman is very limited or
- * impossible for the race, use it, or its closest approximation, as
- * one of two or three classes of the individual."
- *
- * This is one of the rare 100% contradictory instructions in the DMG,
- * as it is immediately contradicted by describing a different method
- * for determining multi-class occurrence, one that isn't compatible
- * with simply *choosing* to make a single-class character a multi-class
- * character.
- *
- * But more relevantly, there is no indication of what "very limited"
- * means. It can only mean level limitations. But what is the cutoff
- * point?
- *
- * One clue I found in PHB is this statement:
- *
- * As halflings ore unable to work beyond 6th level as fighters, it is
- * most probable that the character will be a thief or a multi-classed
- * fighter/thief.
- *
- * This is weak evidence of 6th level being a cutoff, though, as there
- * isn't similar language for the half-elf or half-orc being limited
- * as cleric, at L5 and L4 respectively.
- *
- * We're left to try to intuit something that is as close to BtB intent
- * as possible, while also avoiding contradicting anything as much as
- * possible.
- *
- * For a single-class case like this, I think the most straightforward
- * interpretation would be to simply allow the class if the class's
- * maximum level *equals or exceeds* the characterLevel parameter.
- * Otherwise, we should re-roll.
- *
- * @param characterRace
- * @param characterLevel
- */
-function getRandomClassForRace(
-  characterRace: CharacterRace,
-  characterLevel: number
-): CharacterSheet {
-  while (true) {
-    // Roll a random class based on the character table
-    const roll = rollDice(characterClass.sides); // e.g., d100 for a 100-sided table
-    const candidateClass = getTableEntry(roll, characterClass);
-
-    // Check if the class is valid for the race
-    if (allowedNpcClassesByRace[characterRace]?.includes(candidateClass)) {
-      const genderRoll = rollDice(2);
-      const gender = genderRoll === 1 ? Gender.Male : Gender.Female;
-      const attributes = getAttributes(candidateClass, characterRace, gender);
-
-      if (
-        getMaxLevel(characterRace, candidateClass, attributes) >= characterLevel
-      ) {
-        return {
-          characterRace: characterRace,
-          gender: gender,
-          attributes: attributes,
-          professions: [
-            {
-              characterClass: candidateClass,
-              level: characterLevel,
-            },
-          ],
-        };
-      }
-    }
-    // Otherwise, re-roll
-  }
-}
 
 /**
  * Remember that WIS min 13 if a multi-classed half-elven cleric (!!)
