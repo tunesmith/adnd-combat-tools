@@ -27,6 +27,7 @@ import { assessRacialPenalty } from "../../helpers/character/assessRacialPenalty
 import { assessNpcBonus } from "../../helpers/character/assessNpcBonus";
 import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
+import { rollAttributeDice } from "../../helpers/character/rollAttributeDice";
 
 export const createMainParty = (
   charactersCount: number,
@@ -283,24 +284,6 @@ function getRandomClassForRace(
     // Otherwise, re-roll
   }
 }
-
-const rollAttributeDice = (dice: number): number => {
-  if (dice < 3) {
-    throw new Error("The number of dice must be at least 3");
-  }
-
-  // Roll the specified number of d6 dice
-  const rolls: number[] = Array.from(
-    { length: dice },
-    () => Math.floor(Math.random() * 6) + 1
-  );
-
-  // Sort the rolls in descending order
-  rolls.sort((a, b) => b - a);
-
-  // Take the three highest rolls and sum them
-  return rolls.slice(0, 3).reduce((sum, roll) => sum + roll, 0);
-};
 
 const rollAttribute = (
   attribute: Attribute,
