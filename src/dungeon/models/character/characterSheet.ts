@@ -1,0 +1,34 @@
+import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
+import { Attributes } from "../attributes";
+import { Gender } from "./gender";
+import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
+
+enum CharacterRole {
+  Main,
+  Henchman,
+  ManAtArms,
+}
+
+interface PartyMember {
+  level: number; // Character level (0 for men-at-arms)
+  characterClass: CharacterClass; // Enum for character class
+  characterRole: CharacterRole; // Role in the party
+}
+
+interface CharacterProfession {
+  level: number;
+  characterClass: CharacterClass;
+}
+
+export interface CharacterSheet {
+  professions: CharacterProfession[];
+  characterRace: CharacterRace;
+  attributes: Attributes;
+  gender: Gender;
+}
+
+export interface PartyResult {
+  mainCharacters: CharacterSheet[]; // The main party members
+  otherCharacters: PartyMember[]; // Includes henchmen or men-at-arms
+  henchmen: boolean; // Indicates if henchmen are present
+}

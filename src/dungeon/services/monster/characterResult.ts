@@ -20,6 +20,10 @@ import { getMaxLevel } from "../../helpers/character/getMaxLevel";
 import { getAttributeDice } from "../../helpers/character/getAttributeDice";
 import { Attribute, Attributes } from "../../models/attributes";
 import { Gender } from "../../models/character/gender";
+import {
+  CharacterSheet,
+  PartyResult,
+} from "../../models/character/characterSheet";
 
 export const createMainParty = (
   charactersCount: number,
@@ -126,35 +130,6 @@ export const characterResult = (
 // a party may encounter in the wild, but a rolled man-at-arms should be
 // 1-6 with hit point bonuses applied (if any), minimum 4hp.
 
-// All men-at-arms are
-enum CharacterRole {
-  Main,
-  Henchman,
-  ManAtArms,
-}
-interface PartyMember {
-  level: number; // Character level (0 for men-at-arms)
-  characterClass: CharacterClass; // Enum for character class
-  characterRole: CharacterRole; // Role in the party
-}
-
-interface CharacterProfession {
-  level: number;
-  characterClass: CharacterClass;
-}
-
-interface CharacterSheet {
-  professions: CharacterProfession[];
-  characterRace: CharacterRace;
-  attributes: Attributes;
-  gender: Gender;
-}
-
-interface PartyResult {
-  mainCharacters: CharacterSheet[]; // The main party members
-  otherCharacters: PartyMember[]; // Includes henchmen or men-at-arms
-  henchmen: boolean; // Indicates if henchmen are present
-}
 export const formatPartyResult = (result: PartyResult): string => {
   const charactersText = result.mainCharacters
     .map(
