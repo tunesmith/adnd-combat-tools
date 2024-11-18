@@ -11,24 +11,17 @@ import { characterMax } from "../../models/characterMax";
 import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
-import raceAttributeLimits from "../../models/raceAttributeLimits";
-import { npcClassAttributeLimits } from "../../models/npcClassAttributeLimits";
 import { getMaxLevel } from "../../helpers/character/getMaxLevel";
-import { getAttributeDice } from "../../helpers/character/attributes/getAttributeDice";
 import { Attribute, Attributes } from "../../models/attributes";
 import { Gender } from "../../models/character/gender";
 import {
   CharacterSheet,
   PartyResult,
 } from "../../models/character/characterSheet";
-import { assessRacialBonus } from "../../helpers/character/attributes/assessRacialBonus";
-import { assessRacialPenalty } from "../../helpers/character/attributes/assessRacialPenalty";
-import { assessNpcClassBonus } from "../../helpers/character/attributes/assessNpcClassBonus";
 import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
-import { rollAttributeDice } from "../../helpers/character/attributes/rollAttributeDice";
-import { getStrengthAdjustedScore } from "../../helpers/character/attributes/fighter/getStrengthAdjustedScore";
 import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
+import { rollAttribute } from "../../helpers/character/attributes/rollAttribute";
 
 export const createMainParty = (
   charactersCount: number,
@@ -243,65 +236,6 @@ function getRandomClassForRace(
     // Otherwise, re-roll
   }
 }
-
-const rollAttribute = (
-  attribute: Attribute,
-  candidateClass: CharacterClass,
-  candidateRace: CharacterRace,
-  gender: Gender
-): number => {
-  const dice = getAttributeDice(attribute, candidateClass);
-  const rawScore = rollAttributeDice(dice);
-  // Now for each raw score I need to adjust it in several ways.
-  // First, I'll adjust it downward by racial penalty. Since we adjust
-  // upward later, I don't want to risk adjusting it downward below a
-  // race/class minimum.
-  const racePenaltyAdjustedScore = assessRacialPenalty(
-    attribute,
-    rawScore,
-    candidateRace
-  );
-
-  // Next, I'll adjust it upward to race minimums.
-  const raceRange = raceAttributeLimits[candidateRace][gender][attribute];
-  const raceMinAdjustedScore = Math.max(
-    racePenaltyAdjustedScore,
-    raceRange.min
-  );
-
-  // Next, I'll adjust it upward to class minimums.
-  const classRange = npcClassAttributeLimits[candidateClass][attribute];
-  const classMinAdjustedScore = Math.max(raceMinAdjustedScore, classRange.min);
-
-  // Now we'll apply race bonuses
-  const raceBonusAdjustedScore = assessRacialBonus(
-    attribute,
-    classMinAdjustedScore,
-    candidateRace
-  );
-
-  // Then, there are the additional DMG class bonuses
-  const npcAdjustedScore = assessNpcClassBonus(
-    attribute,
-    raceBonusAdjustedScore,
-    candidateClass
-  );
-
-  // Now we are done with upward adjustments, need to adjust *downward*
-  // for race and class maximums
-  const raceMaxAdjustedScore = Math.min(npcAdjustedScore, raceRange.max);
-  const classMaxAdjustedScore = Math.min(raceMaxAdjustedScore, classRange.max);
-
-  // Finally, I need to do some special handling for fighter exceptional strength,
-  // Since there are race/gender limits for this score.
-  return getStrengthAdjustedScore(
-    attribute,
-    candidateClass,
-    candidateRace,
-    gender,
-    classMaxAdjustedScore
-  );
-};
 
 /**
  * For NPCs, we're following the rule of 3d6 for normal attributes,
