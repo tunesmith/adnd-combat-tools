@@ -14,20 +14,20 @@ import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
 import raceAttributeLimits from "../../models/raceAttributeLimits";
 import { npcClassAttributeLimits } from "../../models/npcClassAttributeLimits";
 import { getMaxLevel } from "../../helpers/character/getMaxLevel";
-import { getAttributeDice } from "../../helpers/character/getAttributeDice";
+import { getAttributeDice } from "../../helpers/character/attributes/getAttributeDice";
 import { Attribute, Attributes } from "../../models/attributes";
 import { Gender } from "../../models/character/gender";
 import {
   CharacterSheet,
   PartyResult,
 } from "../../models/character/characterSheet";
-import { assessRacialBonus } from "../../helpers/character/assessRacialBonus";
-import { assessRacialPenalty } from "../../helpers/character/assessRacialPenalty";
-import { assessNpcClassBonus } from "../../helpers/character/assessNpcClassBonus";
+import { assessRacialBonus } from "../../helpers/character/attributes/assessRacialBonus";
+import { assessRacialPenalty } from "../../helpers/character/attributes/assessRacialPenalty";
+import { assessNpcClassBonus } from "../../helpers/character/attributes/assessNpcClassBonus";
 import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
-import { rollAttributeDice } from "../../helpers/character/rollAttributeDice";
-import { getStrengthAdjustedScore } from "../../helpers/character/fighter/getStrengthAdjustedScore";
+import { rollAttributeDice } from "../../helpers/character/attributes/rollAttributeDice";
+import { getStrengthAdjustedScore } from "../../helpers/character/attributes/fighter/getStrengthAdjustedScore";
 import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
 
 export const createMainParty = (

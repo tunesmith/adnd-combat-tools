@@ -1,4 +1,4 @@
-import { rollAttributeDice } from "../../../../dungeon/helpers/character/rollAttributeDice";
+import { rollAttributeDice } from "../../../../../dungeon/helpers/character/attributes/rollAttributeDice";
 
 describe("rollAttributeDice", () => {
   it("throws an error if dice is less than 3", () => {

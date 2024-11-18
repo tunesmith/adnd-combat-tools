@@ -1,4 +1,4 @@
-import { rollDice } from "../../dungeonLookup";
+import { rollDice } from "../../../dungeonLookup";
 
 /**
  * Rather than roll d100 and cap it, I think it's better to
