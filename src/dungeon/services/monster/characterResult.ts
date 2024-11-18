@@ -8,7 +8,6 @@ import {
   characterClass,
 } from "../../../tables/dungeon/monster/character/characterClass";
 import { characterMax } from "../../models/characterMax";
-import { multiClassLikelihood } from "../../models/multiClassLikelihood";
 import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
@@ -29,6 +28,7 @@ import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { rollAttributeDice } from "../../helpers/character/rollAttributeDice";
 import { getStrengthAdjustedScore } from "../../helpers/character/fighter/getStrengthAdjustedScore";
+import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
 
 export const createMainParty = (
   charactersCount: number,
@@ -167,48 +167,6 @@ export const formatPartyResult = (result: PartyResult): string => {
 const getRace = (): CharacterRace => {
   const raceRoll = rollDice(characterRace.sides);
   return getTableEntry(raceRoll, characterRace);
-};
-
-/**
- * Note there is something crazy here. The DMG says:
- *
- * About 50% of non-humans will have two professions,
- * about 25% of those will have three.
- *
- * First, we definitely interpret this to mean "25% of
- * the 50%", rather than an additional 25%.
- *
- * But, note that only elves and half-elves can have three.
- *
- * Staring closely at the table, we see that we would
- * overall expect 52.25% of non-humans to be multi-class,
- * which is close enough to "about 50%".
- *
- * To have roughly 25% of those be three-class, just from
- * elves and half-elves, that means that elves and half-elves
- * would each need to have a 30.74% chance of being three-class,
- * rather than a straight 25% chance.
- *
- * We'll just use 30%. That means we'd expect an overall
- * percentage of the multi-class being three-class of being
- * 24.4%, which is also close enough to "about 25%".
- *
- * @param characterRace
- */
-const getNumberOfClasses = (characterRace: CharacterRace): number => {
-  const multiClassProbability = rollDice(100);
-  if (multiClassProbability > multiClassLikelihood[characterRace]) {
-    return 1;
-  }
-  if (
-    characterRace === CharacterRace.Elf ||
-    characterRace === CharacterRace.HalfElf
-  ) {
-    if (rollDice(100) <= 30) {
-      return 3;
-    }
-  }
-  return 2;
 };
 
 /**
