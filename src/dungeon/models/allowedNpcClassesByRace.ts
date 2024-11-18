@@ -21,7 +21,8 @@ export const allowedNpcClassesByRace: Record<CharacterRace, CharacterClass[]> =
       CharacterClass.Illusionist,
       CharacterClass.Thief,
       CharacterClass.Assassin,
-      CharacterClass.MonkBard,
+      CharacterClass.Monk,
+      CharacterClass.Bard,
     ],
     [CharacterRace.Dwarf]: [
       CharacterClass.Cleric, // 8, NPC only
@@ -51,6 +52,7 @@ export const allowedNpcClassesByRace: Record<CharacterRace, CharacterClass[]> =
       CharacterClass.MagicUser, // INT <17 6; INT 17 7; INT 18 8
       CharacterClass.Thief, // U
       CharacterClass.Assassin, // 11
+      CharacterClass.Bard, // 23
     ],
     [CharacterRace.Halfling]: [
       CharacterClass.Druid, // 6

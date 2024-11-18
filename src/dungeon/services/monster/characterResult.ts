@@ -34,10 +34,10 @@ export const createMainParty = (
     console.log(`numClasses: ${numClasses} (sticking to single-class for now`);
 
     const characterSheet = getRandomClassForRace(characterRace, characterLevel);
-    // const characterClasses =
+    // const characterSheet =
     //   numClasses === 1
-    //     ? [getRandomClassForRace(characterRace, characterLevel)] // Single-class
-    //     : getMultiClass(characterRace, numClasses); // Multi-class
+    //     ? getRandomClassForRace(characterRace, characterLevel) // Single-class
+    //     : getMultiClassForRace(characterRace, numClasses, characterLevel); // Multi-class
 
     characterSheet.professions.forEach((profession) => {
       if (!isCompatibleClass(profession.characterClass, party)) {
@@ -123,31 +123,49 @@ export const characterResult = (
  *
  * @param characterRace
  * @param numClasses
- */
-// function getMultiClass(
+ * @param characterLevel
+//  */
+// function getMultiClassForRace(
 //   characterRace: CharacterRace,
-//   numClasses: number
-// ): CharacterClass[] {
+//   numClasses: number,
+//   characterLevel: number
+// ): CharacterSheet {
 //   const selectedClasses: CharacterClass[] = [];
+//
+//   // Step 1: Pre-filter valid combinations by race and number of classes
+//   let validCombinations = allowedMultiClassCombinationsByRace[
+//     characterRace
+//   ]?.filter((combo) => combo.length === numClasses); // Only combos of the correct size
+//
+//   // If no valid combinations exist, throw an error
+//   if (!validCombinations || validCombinations.length === 0) {
+//     throw new Error(
+//       `No valid multi-class combinations exist for ${characterRace} with ${numClasses} classes.`
+//     );
+//   }
+//
+//   // Step 2: Generate classes until all are selected
 //   while (selectedClasses.length < numClasses) {
 //     const roll = rollDice(characterClass.sides);
 //     const candidate = getTableEntry(roll, characterClass);
 //
-//     const validMultiClass = allowedMultiClassCombinationsByRace[characterRace]
-//       ?.filter((combo) => combo.length === numClasses) // Only combos of the right size
-//       .some((combo) => {
-//         const includesCandidate = combo.includes(candidate);
-//         const isNotDuplicate = !selectedClasses.includes(candidate);
-//         const matchesSelected = selectedClasses.every((cls) =>
-//           combo.includes(cls)
-//         );
-//         return includesCandidate && isNotDuplicate && matchesSelected;
-//       });
+//     // Re-check validity for this candidate against remaining valid combinations
+//     const validMultiClass = validCombinations.some((combo) => {
+//       const includesCandidate = combo.includes(candidate);
+//       const isNotDuplicate = !selectedClasses.includes(candidate);
+//       return includesCandidate && isNotDuplicate;
+//     });
 //
 //     if (validMultiClass) {
 //       selectedClasses.push(candidate);
+//
+//       // Re-filter valid combinations after adding the new class
+//       validCombinations = validCombinations.filter((combo) =>
+//         combo.includes(candidate)
+//       );
 //     }
 //   }
+//
 //   return selectedClasses;
 // }
 

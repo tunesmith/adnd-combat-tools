@@ -32,7 +32,7 @@ export const formatPartyResult = (result: PartyResult): string => {
     .join(", ");
 
   return `
-    Main Characters: ${charactersText}
+    Main Characters:\n ${charactersText}
     Other ${result.henchmen ? "Henchmen" : "Men-At-Arms"}: ${overallPartyText}
   `.trim();
 };

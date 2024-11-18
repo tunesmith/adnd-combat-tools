@@ -1,7 +1,10 @@
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { CharacterSheet } from "../../models/character/characterSheet";
 import { getTableEntry, rollDice } from "../dungeonLookup";
-import { characterClass } from "../../../tables/dungeon/monster/character/characterClass";
+import {
+  CharacterClass,
+  characterClass,
+} from "../../../tables/dungeon/monster/character/characterClass";
 import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { Gender } from "../../models/character/gender";
 import { getAttributes } from "./attributes/getAttributes";
@@ -33,9 +36,9 @@ import { getMaxLevel } from "./getMaxLevel";
  *
  * One clue I found in PHB is this statement:
  *
- * As halflings ore unable to work beyond 6th level as fighters, it is
+ * "As halflings ore unable to work beyond 6th level as fighters, it is
  * most probable that the character will be a thief or a multi-classed
- * fighter/thief.
+ * fighter/thief."
  *
  * This is weak evidence of 6th level being a cutoff, though, as there
  * isn't similar language for the half-elf or half-orc being limited
@@ -53,6 +56,13 @@ import { getMaxLevel } from "./getMaxLevel";
  * Otherwise, we should re-roll. Reasoning: why would such a restricted
  * character be exploring such a deep level of the dungeon?
  *
+ * I was about to talk myself out of this given very deep dungeon levels,
+ * having to do with a case of 13th level characters and a half-orc
+ * assassin, but I think the implementation is still such that an
+ * infinite loops is impossible. If a half-orc is in the party, the
+ * race would just be re-rolled in the case of Dwarf or Gnome. You could
+ * end up with four thieves and a druid of compatible non-human races.
+ *
  * @param characterRace
  * @param characterLevel
  */
@@ -63,7 +73,13 @@ export function getRandomClassForRace(
   while (true) {
     // Roll a random class based on the character table
     const roll = rollDice(characterClass.sides); // e.g., d100 for a 100-sided table
-    const candidateClass = getTableEntry(roll, characterClass);
+    const prelimClass = getTableEntry(roll, characterClass);
+    const candidateClass =
+      prelimClass === CharacterClass.MonkBard
+        ? Math.random() < 0.5
+          ? CharacterClass.Monk
+          : CharacterClass.Bard
+        : prelimClass;
 
     // First if the class is even allowed for the race
     if (allowedNpcClassesByRace[characterRace]?.includes(candidateClass)) {

@@ -136,6 +136,8 @@ export const getMaxLevel = (
           return Infinity;
         case CharacterClass.Assassin:
           return 11;
+        case CharacterClass.Bard:
+          return 23;
         default:
           return 0;
       }
