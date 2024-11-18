@@ -12,7 +12,6 @@ import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
 import { getMaxLevel } from "../../helpers/character/getMaxLevel";
-import { Attribute, Attributes } from "../../models/attributes";
 import { Gender } from "../../models/character/gender";
 import {
   CharacterSheet,
@@ -21,7 +20,7 @@ import {
 import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
-import { rollAttribute } from "../../helpers/character/attributes/rollAttribute";
+import { getAttributes } from "../../helpers/character/attributes/getAttributes";
 
 export const createMainParty = (
   charactersCount: number,
@@ -236,57 +235,6 @@ function getRandomClassForRace(
     // Otherwise, re-roll
   }
 }
-
-/**
- * For NPCs, we're following the rule of 3d6 for normal attributes,
- * and 4d6 for "key" attributes for a class. On top of that, we then
- * adjust them by the values specified in the NPC generation sections
- * of the DMG, and the race adjustments (including min/max) of the PHB.
- * We do not allocate scores; we roll them in order.
- *
- * @param candidateClass
- * @param candidateRace
- * @param gender
- */
-const getAttributes = (
-  candidateClass: CharacterClass,
-  candidateRace: CharacterRace,
-  gender: Gender
-): Attributes => {
-  return {
-    STR: rollAttribute(
-      Attribute.Strength,
-      candidateClass,
-      candidateRace,
-      gender
-    ),
-    INT: rollAttribute(
-      Attribute.Intelligence,
-      candidateClass,
-      candidateRace,
-      gender
-    ),
-    WIS: rollAttribute(Attribute.Wisdom, candidateClass, candidateRace, gender),
-    DEX: rollAttribute(
-      Attribute.Dexterity,
-      candidateClass,
-      candidateRace,
-      gender
-    ),
-    CON: rollAttribute(
-      Attribute.Constitution,
-      candidateClass,
-      candidateRace,
-      gender
-    ),
-    CHA: rollAttribute(
-      Attribute.Charisma,
-      candidateClass,
-      candidateRace,
-      gender
-    ),
-  };
-};
 
 /**
  * Remember that WIS min 13 if a multi-classed half-elven cleric (!!)
