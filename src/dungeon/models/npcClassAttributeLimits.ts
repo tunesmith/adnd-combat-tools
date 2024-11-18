@@ -1,4 +1,4 @@
-import { AttributeRange } from "./raceAttributes";
+import { AttributeRange } from "./raceAttributeLimits";
 import { CharacterClass } from "../../tables/dungeon/monster/character/characterClass";
 import { Attribute } from "../services/monster/characterResult";
 
@@ -18,7 +18,7 @@ interface ClassAttributeTable {
   [CharacterClass.MonkBard]: Record<Attribute, AttributeRange>;
 }
 
-export const npcClassAttributes: ClassAttributeTable = {
+export const npcClassAttributeLimits: ClassAttributeTable = {
   [CharacterClass.Cleric]: {
     STR: { min: 6, max: 18 },
     INT: { min: 6, max: 18 },

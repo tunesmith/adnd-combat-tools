@@ -14,9 +14,10 @@ import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
 import { incompatibleRaces } from "../../models/incompatibleRaces";
-import raceAttributes from "../../models/raceAttributes";
-import { npcClassAttributes } from "../../models/npcClassAttributes";
+import raceAttributeLimits from "../../models/raceAttributeLimits";
+import { npcClassAttributeLimits } from "../../models/npcClassAttributeLimits";
 import { getMaxLevel } from "../../helpers/character/getMaxLevel";
+import { getAttributeDice } from "../../helpers/character/getAttributeDice";
 
 export const createMainParty = (
   charactersCount: number,
@@ -319,147 +320,6 @@ function getRandomClassForRace(
   }
 }
 
-const getAttributeDice = (
-  attribute: Attribute,
-  candidateClass: CharacterClass
-): number => {
-  switch (candidateClass) {
-    case CharacterClass.Cleric:
-      switch (attribute) {
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Druid:
-      switch (attribute) {
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Charisma:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Fighter:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Paladin:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        case Attribute.Charisma:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Ranger:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.MagicUser:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Illusionist:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Thief:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Assassin:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Monk:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Bard:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        case Attribute.Charisma:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.ManAtArms:
-      return 3;
-    default:
-      return 3;
-  }
-};
-
 const rollAttributeDice = (dice: number): number => {
   if (dice < 3) {
     throw new Error("The number of dice must be at least 3");
@@ -643,14 +503,14 @@ const rollAttribute = (
   );
 
   // Next, I'll adjust it upward to race minimums.
-  const raceRange = raceAttributes[candidateRace][gender][attribute];
+  const raceRange = raceAttributeLimits[candidateRace][gender][attribute];
   const raceMinAdjustedScore = Math.max(
     racePenaltyAdjustedScore,
     raceRange.min
   );
 
   // Next, I'll adjust it upward to class minimums.
-  const classRange = npcClassAttributes[candidateClass][attribute];
+  const classRange = npcClassAttributeLimits[candidateClass][attribute];
   const classMinAdjustedScore = Math.max(raceMinAdjustedScore, classRange.min);
 
   // Now we'll apply race bonuses

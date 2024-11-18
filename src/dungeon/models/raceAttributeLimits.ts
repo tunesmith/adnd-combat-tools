@@ -6,7 +6,7 @@ export interface AttributeRange {
   max: number;
 }
 
-export interface GenderAttributeRanges {
+interface GenderAttributeRanges {
   [Gender.Male]: Record<Attribute, AttributeRange>;
   [Gender.Female]: Record<Attribute, AttributeRange>;
 }
@@ -21,7 +21,7 @@ interface RaceAttributeTable {
   [CharacterRace.HalfOrc]: GenderAttributeRanges;
 }
 
-const raceAttributes: RaceAttributeTable = {
+const raceAttributeLimits: RaceAttributeTable = {
   [CharacterRace.Human]: {
     M: {
       STR: { min: 3, max: 18 }, // 18/100 for fighter
@@ -150,4 +150,4 @@ const raceAttributes: RaceAttributeTable = {
   },
 };
 
-export default raceAttributes;
+export default raceAttributeLimits;
