@@ -8,12 +8,10 @@ import {
   characterClass,
 } from "../../../tables/dungeon/monster/character/characterClass";
 import { characterMax } from "../../models/characterMax";
-import { incompatibleClasses } from "../../models/incompatibleClasses";
 import { multiClassLikelihood } from "../../models/multiClassLikelihood";
 import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
-import { incompatibleRaces } from "../../models/incompatibleRaces";
 import raceAttributeLimits from "../../models/raceAttributeLimits";
 import { npcClassAttributeLimits } from "../../models/npcClassAttributeLimits";
 import { getMaxLevel } from "../../helpers/character/getMaxLevel";
@@ -27,6 +25,8 @@ import {
 import { assessRacialBonus } from "../../helpers/character/assessRacialBonus";
 import { assessRacialPenalty } from "../../helpers/character/assessRacialPenalty";
 import { assessNpcBonus } from "../../helpers/character/assessNpcBonus";
+import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
+import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 
 export const createMainParty = (
   charactersCount: number,
@@ -556,38 +556,3 @@ const getAttributes = (
 //
 //   return party;
 // }
-
-function isCompatibleClass(
-  candidate: CharacterClass,
-  party: CharacterSheet[]
-): boolean {
-  // Check if candidate conflicts with any existing party members
-  for (const sheet of party) {
-    for (const profession of sheet.professions) {
-      if (
-        incompatibleClasses[profession.characterClass]?.includes(candidate) ||
-        incompatibleClasses[candidate]?.includes(profession.characterClass)
-      ) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-const isCompatibleRace = (
-  candidateRace: CharacterRace,
-  party: CharacterSheet[]
-): boolean => {
-  for (const member of party) {
-    if (
-      incompatibleRaces[member.characterRace].includes(candidateRace) ||
-      incompatibleRaces[candidateRace].includes(member.characterRace)
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-};
