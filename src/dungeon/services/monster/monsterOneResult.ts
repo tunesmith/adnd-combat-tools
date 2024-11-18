@@ -9,7 +9,8 @@ import {
   MonsterOne,
   monsterOne,
 } from "../../../tables/dungeon/monster/monsterOne";
-import { characterResult, formatPartyResult } from "./characterResult";
+import { characterResult } from "./characterResult";
+import { formatPartyResult } from "../../helpers/party/formatPartyResult";
 
 export const monsterOneResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterOne.sides);

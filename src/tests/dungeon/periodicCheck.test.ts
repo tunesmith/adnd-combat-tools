@@ -11,10 +11,8 @@ import { monsterThreeResult } from "../../dungeon/services/monster/monsterThreeR
 import { monsterFourResult } from "../../dungeon/services/monster/monsterFourResult";
 import { wanderingMonsterResult } from "../../dungeon/services/wanderingMonsterResult";
 import { monsterFiveResult } from "../../dungeon/services/monster/monsterFiveResult";
-import {
-  characterResult,
-  formatPartyResult,
-} from "../../dungeon/services/monster/characterResult";
+import { characterResult } from "../../dungeon/services/monster/characterResult";
+import { formatPartyResult } from "../../dungeon/helpers/party/formatPartyResult";
 
 describe("passage results", () => {
   test("initial move", () => {

@@ -3,7 +3,7 @@ import {
   getNumberOfMonsters,
 } from "../wanderingMonsterResult";
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
-import { characterResult, formatPartyResult } from "./characterResult";
+import { characterResult } from "./characterResult";
 import {
   DragonFourOlder,
   dragonFourOlder,
@@ -12,6 +12,7 @@ import {
   MonsterFour,
   monsterFour,
 } from "../../../tables/dungeon/monster/monsterFour";
+import { formatPartyResult } from "../../helpers/party/formatPartyResult";
 
 export const monsterFourResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterFour.sides);

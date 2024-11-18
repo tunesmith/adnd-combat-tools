@@ -1,5 +1,4 @@
 import { rollDice } from "../../helpers/dungeonLookup";
-import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
 import { characterMax } from "../../models/characterMax";
 import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
@@ -116,35 +115,6 @@ export const characterResult = (
 // bonus if 4-7 hp is prescribed? I think 4-7 hit points is for men-at-arms
 // a party may encounter in the wild, but a rolled man-at-arms should be
 // 1-6 with hit point bonuses applied (if any), minimum 4hp.
-
-export const formatPartyResult = (result: PartyResult): string => {
-  const charactersText = result.mainCharacters
-    .map(
-      (member) =>
-        `${member.gender} ` +
-        `${CharacterRace[member.characterRace]} ` +
-        member.professions.map(
-          (profession) =>
-            `${CharacterClass[profession.characterClass]} (L${
-              profession.level
-            }) `
-        ) +
-        `STR${member.attributes.STR} INT${member.attributes.INT} WIS${member.attributes.WIS} ` +
-        `DEX${member.attributes.DEX} CON${member.attributes.DEX} CHA${member.attributes.CHA}`
-    )
-    .join(",\n ");
-
-  const overallPartyText = result.otherCharacters
-    .map(
-      (member) => `${CharacterClass[member.characterClass]} (L${member.level})`
-    )
-    .join(", ");
-
-  return `
-    Main Characters: ${charactersText}
-    Other ${result.henchmen ? "Henchmen" : "Men-At-Arms"}: ${overallPartyText}
-  `.trim();
-};
 
 /**
  * Remember that WIS min 13 if a multi-classed half-elven cleric (!!)
