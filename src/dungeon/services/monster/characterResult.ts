@@ -1,8 +1,5 @@
 import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
-import {
-  CharacterRace,
-  characterRace,
-} from "../../../tables/dungeon/monster/character/characterRace";
+import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import {
   CharacterClass,
   characterClass,
@@ -21,6 +18,7 @@ import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
 import { getAttributes } from "../../helpers/character/attributes/getAttributes";
+import { getCharacterRace } from "../../helpers/character/getCharacterRace";
 
 export const createMainParty = (
   charactersCount: number,
@@ -152,15 +150,6 @@ export const formatPartyResult = (result: PartyResult): string => {
     Main Characters: ${charactersText}
     Other ${result.henchmen ? "Henchmen" : "Men-At-Arms"}: ${overallPartyText}
   `.trim();
-};
-
-const getCharacterRace = (): CharacterRace => {
-  const nonHumanRoll = rollDice(100);
-  if (nonHumanRoll > 20) {
-    return CharacterRace.Human;
-  }
-  const raceRoll = rollDice(characterRace.sides);
-  return getTableEntry(raceRoll, characterRace);
 };
 
 /**
