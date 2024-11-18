@@ -33,9 +33,7 @@ export const createMainParty = (
   const party: CharacterSheet[] = [];
 
   while (party.length < charactersCount) {
-    const nonHumanRoll = rollDice(100);
-    const characterRace = nonHumanRoll <= 20 ? getRace() : CharacterRace.Human;
-
+    const characterRace = getCharacterRace();
     if (!isCompatibleRace(characterRace, party)) {
       continue; // skip if race is incompatible with who is already in the party
     }
@@ -156,7 +154,11 @@ export const formatPartyResult = (result: PartyResult): string => {
   `.trim();
 };
 
-const getRace = (): CharacterRace => {
+const getCharacterRace = (): CharacterRace => {
+  const nonHumanRoll = rollDice(100);
+  if (nonHumanRoll > 20) {
+    return CharacterRace.Human;
+  }
   const raceRoll = rollDice(characterRace.sides);
   return getTableEntry(raceRoll, characterRace);
 };
