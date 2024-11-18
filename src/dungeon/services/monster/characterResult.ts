@@ -24,6 +24,9 @@ import {
   CharacterSheet,
   PartyResult,
 } from "../../models/character/characterSheet";
+import { assessRacialBonus } from "../../helpers/character/assessRacialBonus";
+import { assessRacialPenalty } from "../../helpers/character/assessRacialPenalty";
+import { assessNpcBonus } from "../../helpers/character/assessNpcBonus";
 
 export const createMainParty = (
   charactersCount: number,
@@ -297,152 +300,6 @@ const rollAttributeDice = (dice: number): number => {
 
   // Take the three highest rolls and sum them
   return rolls.slice(0, 3).reduce((sum, roll) => sum + roll, 0);
-};
-
-const assessRacialPenalty = (
-  attribute: Attribute,
-  score: number,
-  candidateRace: CharacterRace
-) => {
-  switch (candidateRace) {
-    case CharacterRace.Dwarf:
-      return attribute === Attribute.Charisma ? score - 2 : score;
-    case CharacterRace.Elf:
-      return attribute === Attribute.Constitution ? score - 1 : score;
-    case CharacterRace.Gnome:
-      return attribute === Attribute.Charisma ? score - 1 : score;
-    case CharacterRace.Halfling:
-      return attribute === Attribute.Strength ? score - 1 : score;
-    case CharacterRace.HalfOrc:
-      return attribute === Attribute.Charisma ? score - 2 : score;
-    default:
-      return score;
-  }
-};
-
-const assessRacialBonus = (
-  attribute: Attribute,
-  score: number,
-  candidateRace: CharacterRace
-) => {
-  switch (candidateRace) {
-    case CharacterRace.Dwarf:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 1;
-        case Attribute.Constitution:
-          return score + 2;
-        default:
-          return score;
-      }
-    case CharacterRace.Elf:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return score + 1;
-        case Attribute.Dexterity:
-          return score + 2;
-        default:
-          return score;
-      }
-    case CharacterRace.Gnome:
-      switch (attribute) {
-        case Attribute.Wisdom:
-          return score + 1;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterRace.Halfling:
-      switch (attribute) {
-        case Attribute.Dexterity:
-          return score + 2;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterRace.HalfOrc:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 1;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    default:
-      return score;
-  }
-};
-
-const assessNpcBonus = (
-  attribute: Attribute,
-  score: number,
-  candidateClass: CharacterClass
-) => {
-  switch (candidateClass) {
-    case CharacterClass.Cleric:
-      return attribute === Attribute.Wisdom ? score + 2 : score;
-    case CharacterClass.Fighter:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 2;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterClass.Ranger:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 2;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterClass.Paladin:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 2;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterClass.MagicUser:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return score + 2;
-        case Attribute.Dexterity:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterClass.Thief:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return score + 1;
-        case Attribute.Dexterity:
-          return score + 2;
-        default:
-          return score;
-      }
-    case CharacterClass.Assassin:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 1;
-        case Attribute.Intelligence:
-          return score + 1;
-        case Attribute.Dexterity:
-          return score + 2;
-        default:
-          return score;
-      }
-    default:
-      return score;
-  }
 };
 
 const rollAttribute = (
