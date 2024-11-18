@@ -124,24 +124,3 @@ export const npcClassAttributes: ClassAttributeTable = {
     CHA: { min: 3, max: 18 },
   },
 };
-
-export function getClassAttributeRange(
-  characterClass: CharacterClass,
-  attribute: Attribute
-): AttributeRange {
-  const classData = npcClassAttributes[characterClass];
-  if (!classData) {
-    throw new Error(
-      `Class ${characterClass} not found in class attribute table.`
-    );
-  }
-
-  const range = classData[attribute];
-  if (!range) {
-    throw new Error(
-      `Attribute ${attribute} not found for class ${characterClass}.`
-    );
-  }
-
-  return range;
-}

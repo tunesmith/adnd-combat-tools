@@ -10,12 +10,12 @@ import {
 import { characterMax } from "../../models/characterMax";
 import { incompatibleClasses } from "../../models/incompatibleClasses";
 import { multiClassLikelihood } from "../../models/multiClassLikelihood";
-import { allowedClassesByRace } from "../../models/allowedClassesByRace";
+import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
 import { incompatibleRaces } from "../../models/incompatibleRaces";
-import { getRaceAttributeRange } from "../../models/raceAttributes";
-import { getClassAttributeRange } from "../../models/npcClassAttributes";
+import raceAttributes from "../../models/raceAttributes";
+import { npcClassAttributes } from "../../models/npcClassAttributes";
 
 export const createMainParty = (
   charactersCount: number,
@@ -293,7 +293,7 @@ function getRandomClassForRace(
     const candidateClass = getTableEntry(roll, characterClass);
 
     // Check if the class is valid for the race
-    if (allowedClassesByRace[characterRace]?.includes(candidateClass)) {
+    if (allowedNpcClassesByRace[characterRace]?.includes(candidateClass)) {
       const genderRoll = rollDice(2);
       const gender = genderRoll === 1 ? Gender.Male : Gender.Female;
       const attributes = getAttributes(candidateClass, characterRace, gender);
@@ -800,14 +800,14 @@ const rollAttribute = (
   );
 
   // Next, I'll adjust it upward to race minimums.
-  const raceRange = getRaceAttributeRange(candidateRace, gender, attribute);
+  const raceRange = raceAttributes[candidateRace][gender][attribute];
   const raceMinAdjustedScore = Math.max(
     racePenaltyAdjustedScore,
     raceRange.min
   );
 
   // Next, I'll adjust it upward to class minimums.
-  const classRange = getClassAttributeRange(candidateClass, attribute);
+  const classRange = npcClassAttributes[candidateClass][attribute];
   const classMinAdjustedScore = Math.max(raceMinAdjustedScore, classRange.min);
 
   // Now we'll apply race bonuses

@@ -150,29 +150,4 @@ const raceAttributes: RaceAttributeTable = {
   },
 };
 
-export function getRaceAttributeRange(
-  race: CharacterRace,
-  gender: Gender,
-  attribute: Attribute
-): AttributeRange {
-  const raceData = raceAttributes[race];
-  if (!raceData) {
-    throw new Error(`Race ${race} not found in attribute table.`);
-  }
-
-  const genderData = raceData[gender];
-  if (!genderData) {
-    throw new Error(`Gender ${gender} not found for race ${race}.`);
-  }
-
-  const range = genderData[attribute];
-  if (!range) {
-    throw new Error(
-      `Attribute ${attribute} not found for race ${race} and gender ${gender}.`
-    );
-  }
-
-  return range;
-}
-
 export default raceAttributes;
