@@ -24,10 +24,11 @@ import {
 } from "../../models/character/characterSheet";
 import { assessRacialBonus } from "../../helpers/character/assessRacialBonus";
 import { assessRacialPenalty } from "../../helpers/character/assessRacialPenalty";
-import { assessNpcBonus } from "../../helpers/character/assessNpcBonus";
+import { assessNpcClassBonus } from "../../helpers/character/assessNpcClassBonus";
 import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { rollAttributeDice } from "../../helpers/character/rollAttributeDice";
+import { getStrengthAdjustedScore } from "../../helpers/character/fighter/getStrengthAdjustedScore";
 
 export const createMainParty = (
   charactersCount: number,
@@ -321,8 +322,8 @@ const rollAttribute = (
     candidateRace
   );
 
-  // Then, there are the additional DMG results
-  const npcAdjustedScore = assessNpcBonus(
+  // Then, there are the additional DMG class bonuses
+  const npcAdjustedScore = assessNpcClassBonus(
     attribute,
     raceBonusAdjustedScore,
     candidateClass
@@ -345,81 +346,11 @@ const rollAttribute = (
 };
 
 /**
- * I may regret this, but I think I can just store Strength as a
- * decimal, where 18.00 is interpreted as raw 18 for non-fighters,
- * and 18/100 for fighters.
- *
- * @param attribute
- * @param candidateClass
- * @param candidateRace
- * @param gender
- * @param score
- */
-const getStrengthAdjustedScore = (
-  attribute: Attribute,
-  candidateClass: CharacterClass,
-  candidateRace: CharacterRace,
-  gender: Gender,
-  score: number
-): number => {
-  if (
-    attribute === Attribute.Strength &&
-    (candidateClass === CharacterClass.Fighter ||
-      candidateClass === CharacterClass.Paladin ||
-      candidateClass === CharacterClass.Ranger) &&
-    score === 18
-  ) {
-    switch (candidateRace) {
-      case CharacterRace.Human:
-        return gender === Gender.Male
-          ? getExceptionalStrength(100)
-          : getExceptionalStrength(50);
-      case CharacterRace.Dwarf:
-        return gender === Gender.Male ? getExceptionalStrength(99) : score;
-      case CharacterRace.Elf:
-        return gender === Gender.Male ? getExceptionalStrength(75) : score;
-      case CharacterRace.Gnome:
-        return gender === Gender.Male ? getExceptionalStrength(50) : score;
-      case CharacterRace.HalfElf:
-        return gender === Gender.Male ? getExceptionalStrength(90) : score;
-      case CharacterRace.Halfling:
-        return score;
-      case CharacterRace.HalfOrc:
-        return gender === Gender.Male
-          ? getExceptionalStrength(99)
-          : getExceptionalStrength(75);
-      default:
-        return score;
-    }
-  }
-  return score;
-};
-
-/**
- * Rather than roll d100 and cap it, I think it's better to
- * scale, as otherwise female human fighters with 18 strength
- * would be 50% likely to be clustered at 18/50, which seems
- * silly.
- *
- * For human male fighters, we can consider a raw 18 as 18/00,
- * since a raw 18 is otherwise impossible for a fighter.
- *
- * @param max
- */
-const getExceptionalStrength = (max: number): number => {
-  const exceptionalStrength = rollDice(max) / 100;
-  return exceptionalStrength === 1 ? 18 : 18 + exceptionalStrength;
-};
-
-/**
  * For NPCs, we're following the rule of 3d6 for normal attributes,
  * and 4d6 for "key" attributes for a class. On top of that, we then
  * adjust them by the values specified in the NPC generation sections
  * of the DMG, and the race adjustments (including min/max) of the PHB.
  * We do not allocate scores; we roll them in order.
- *
- * TODO Exceptional Strength? I guess not yet, not until after it is
- *  clear they are a fighter
  *
  * @param candidateClass
  * @param candidateRace

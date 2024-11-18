@@ -9,7 +9,7 @@ import { CharacterClass } from "../../../tables/dungeon/monster/character/charac
  * @param score
  * @param candidateClass
  */
-export const assessNpcBonus = (
+export const assessNpcClassBonus = (
   attribute: Attribute,
   score: number,
   candidateClass: CharacterClass
