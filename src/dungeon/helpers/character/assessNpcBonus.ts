@@ -73,6 +73,15 @@ export const assessNpcBonus = (
         default:
           return score;
       }
+    case CharacterClass.ManAtArms:
+      switch (attribute) {
+        case Attribute.Strength:
+          return score + 1;
+        case Attribute.Constitution:
+          return score + 3;
+        default:
+          return score;
+      }
     default:
       return score;
   }
