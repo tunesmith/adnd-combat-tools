@@ -2,7 +2,9 @@ import { CharacterRace } from "../../tables/dungeon/monster/character/characterR
 
 /**
  * PHB mentions racial tolerances. We'll rule out "Hate"
- * but not "Antipathy".
+ * but not "Antipathy". This basically means that Dwarves
+ * and Gnomes cannot be in the same party as Half-Orcs, and
+ * vice versa.
  */
 export const incompatibleRaces: Record<CharacterRace, CharacterRace[]> = {
   [CharacterRace.Human]: [],

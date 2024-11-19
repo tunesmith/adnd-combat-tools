@@ -6,8 +6,9 @@ import { getTableEntry, rollDice } from "../dungeonLookup";
 
 /**
  * This implements the logic suggested on DMG p176, where
- * NPC parties be about 20% non-human, and broken down by
- * race according to the listed there.
+ * NPC parties are suggested to be about 20% non-human,
+ * broken down by race according to the percentages listed
+ * there.
  */
 export const getCharacterRace = (): CharacterRace => {
   const nonHumanRoll = rollDice(100);
