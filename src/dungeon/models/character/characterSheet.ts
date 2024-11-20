@@ -15,7 +15,7 @@ interface PartyMember {
   characterRole: CharacterRole; // Role in the party
 }
 
-interface CharacterProfession {
+export interface CharacterProfession {
   level: number;
   characterClass: CharacterClass;
 }

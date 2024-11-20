@@ -17,8 +17,7 @@ import { allowedMultiClassCombinationsByRace } from "../../models/allowedMultiCl
 import { getCharacterClass } from "../../helpers/character/getCharacterClass";
 import { Gender } from "../../models/character/gender";
 import { getAttributes } from "../../helpers/character/attributes/getAttributes";
-import { getMaxLevel } from "../../helpers/character/getMaxLevel";
-import { getLevelDistributor } from "../../helpers/character/getLevelDistributor";
+import { getProfessions } from "../../helpers/character/getProfessions";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -184,107 +183,18 @@ function getMultiClassForRace(
   const genderRoll = rollDice(2);
   const gender = genderRoll === 1 ? Gender.Male : Gender.Female;
   const attributes = getAttributes(selectedClasses, characterRace, gender);
-
-  const classMaxLevels = selectedClasses.map((characterClass) => {
-    return {
-      characterClass,
-      maxLevel: getMaxLevel(characterRace, characterClass, attributes),
-    };
-  });
-
-  // Level of Multi-Classed Individuals:
-  // Determine level for a single profession, add 2, and divide by 2, dropping fractions below one-half.
-  // For a triple class, add three, divide by three, and drop fractions below one-half.
-  const baseLevel = Math.floor(
-    (characterLevel + selectedClasses.length) / selectedClasses.length
+  const professions = getProfessions(
+    characterRace,
+    selectedClasses,
+    attributes,
+    characterLevel,
+    numClasses
   );
-
-  // Assign initial levels, capped at maxLevel
-  const levelDistributor = getLevelDistributor();
-
-  classMaxLevels.forEach(({ characterClass, maxLevel }) => {
-    levelDistributor[characterClass] = Math.min(baseLevel, maxLevel);
-  });
-
-  // Calculate remaining levels to distribute
-  let excessLevels =
-    baseLevel -
-    Object.values(levelDistributor).reduce((sum, level) => sum + level, 0);
-
-  // Distribute excess levels to classes under their maxLevel
-  while (excessLevels > 0) {
-    const eligibleClasses = classMaxLevels.filter(
-      ({ characterClass, maxLevel }) =>
-        levelDistributor[characterClass] < maxLevel
-    );
-
-    if (eligibleClasses.length === 0) break;
-
-    // If one class is thereby exceeded, take one-half the excess levels and assign them to the other.
-    // In a triple-classed individual, divide excess levels and assign to the two remaining classes.
-    const excessPerClass = Math.floor(
-      (numClasses === 1 ? Math.round(excessLevels / 2) : excessLevels) /
-        eligibleClasses.length
-    );
-    eligibleClasses.forEach(({ characterClass, maxLevel }) => {
-      const allocatable = Math.min(
-        excessPerClass,
-        maxLevel - levelDistributor[characterClass]
-      );
-      levelDistributor[characterClass] += allocatable;
-      excessLevels -= allocatable;
-    });
-  }
 
   return {
     gender: gender,
     attributes: attributes,
     characterRace: characterRace,
-    professions: selectedClasses.map((selectedClass) => {
-      return {
-        characterClass: selectedClass,
-        level: levelDistributor[selectedClass],
-      };
-    }),
+    professions: professions,
   };
 }
-
-// function createParty(
-//   initialParty: CharacterClass[] = [],
-//   partySize: number = 9
-// ): CharacterClass[] {
-//   const party: CharacterClass[] = [...initialParty];
-//   const counts: Record<CharacterClass, number> = Object.fromEntries(
-//     Object.values(CharacterClass).map((c) => [c, 0])
-//   ) as Record<CharacterClass, number>;
-//
-//   // Initialize counts based on the initial party
-//   for (const member of initialParty) {
-//     counts[member]++;
-//   }
-//
-//   while (party.length < partySize) {
-//     const nonHumanRoll = rollDice(100);
-//     const characterRace = nonHumanRoll <= 20 ? getRace() : CharacterRace.Human;
-//     const multiClassProbability = rollDice(100);
-//     const numClasses = getNumberOfClasses(characterRace, multiClassProbability);
-//
-//     const characterClasses =
-//       numClasses === 1
-//         ? [getRandomClassForRace(characterRace)] // Single-class
-//         : getMultiClass(characterRace, numClasses); // Multi-class
-//
-//     characterClasses.forEach((candidate) => {
-//       if (!isCompatibleClass(candidate, party)) {
-//         return; // Skip this combination if any part is incompatible
-//       }
-//       if (counts[candidate] >= characterMax[candidate]) {
-//         return; // Skip if max limit for this class is reached
-//       }
-//       party.push(candidate);
-//       counts[candidate]++;
-//     });
-//   }
-//
-//   return party;
-// }
