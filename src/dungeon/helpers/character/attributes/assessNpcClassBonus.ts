@@ -7,82 +7,72 @@ import { CharacterClass } from "../../../../tables/dungeon/monster/character/cha
  *
  * @param attribute
  * @param score
- * @param candidateClass
+ * @param candidateClasses
  */
 export const assessNpcClassBonus = (
   attribute: Attribute,
   score: number,
-  candidateClass: CharacterClass
+  candidateClasses: CharacterClass[]
 ) => {
-  switch (candidateClass) {
-    case CharacterClass.Cleric:
-      return attribute === Attribute.Wisdom ? score + 2 : score;
-    case CharacterClass.Fighter:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 2;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterClass.Ranger:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 2;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterClass.Paladin:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 2;
-        case Attribute.Constitution:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterClass.MagicUser:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return score + 2;
-        case Attribute.Dexterity:
-          return score + 1;
-        default:
-          return score;
-      }
-    case CharacterClass.Thief:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return score + 1;
-        case Attribute.Dexterity:
-          return score + 2;
-        default:
-          return score;
-      }
-    case CharacterClass.Assassin:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 1;
-        case Attribute.Intelligence:
-          return score + 1;
-        case Attribute.Dexterity:
-          return score + 2;
-        default:
-          return score;
-      }
-    case CharacterClass.ManAtArms:
-      switch (attribute) {
-        case Attribute.Strength:
-          return score + 1;
-        case Attribute.Constitution:
-          return score + 3;
-        default:
-          return score;
-      }
-    default:
-      return score;
-  }
+  const getClassBonus = (characterClass: CharacterClass): number => {
+    switch (characterClass) {
+      case CharacterClass.Cleric:
+        return attribute === Attribute.Wisdom ? 2 : 0;
+      case CharacterClass.Fighter:
+      case CharacterClass.Ranger:
+      case CharacterClass.Paladin:
+        switch (attribute) {
+          case Attribute.Strength:
+            return 2;
+          case Attribute.Constitution:
+            return 1;
+          default:
+            return 0;
+        }
+      case CharacterClass.MagicUser:
+        switch (attribute) {
+          case Attribute.Intelligence:
+            return 2;
+          case Attribute.Dexterity:
+            return 1;
+          default:
+            return 0;
+        }
+      case CharacterClass.Thief:
+        switch (attribute) {
+          case Attribute.Intelligence:
+            return 1;
+          case Attribute.Dexterity:
+            return 2;
+          default:
+            return 0;
+        }
+      case CharacterClass.Assassin:
+        switch (attribute) {
+          case Attribute.Strength:
+          case Attribute.Intelligence:
+            return 1;
+          case Attribute.Dexterity:
+            return 2;
+          default:
+            return 0;
+        }
+      case CharacterClass.ManAtArms:
+        switch (attribute) {
+          case Attribute.Strength:
+            return 1;
+          case Attribute.Constitution:
+            return 3;
+          default:
+            return 0;
+        }
+      default:
+        return 0;
+    }
+  };
+
+  const maxBonus = Math.max(
+    ...candidateClasses.map((candidateClass) => getClassBonus(candidateClass))
+  );
+  return score + maxBonus;
 };

@@ -15,145 +15,110 @@ import { Attribute } from "../../../models/attributes";
  * all attributes.
  *
  * @param attribute
- * @param candidateClass
+ * @param candidateClasses
  */
 export const getAttributeDice = (
   attribute: Attribute,
-  candidateClass: CharacterClass
+  candidateClasses: CharacterClass[]
 ): number => {
-  switch (candidateClass) {
-    case CharacterClass.Cleric:
-      switch (attribute) {
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Druid:
-      switch (attribute) {
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Charisma:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Fighter:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Paladin:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        case Attribute.Charisma:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Ranger:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.MagicUser:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Illusionist:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Thief:
-      switch (attribute) {
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Assassin:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Monk:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.Bard:
-      switch (attribute) {
-        case Attribute.Strength:
-          return 4;
-        case Attribute.Intelligence:
-          return 4;
-        case Attribute.Wisdom:
-          return 4;
-        case Attribute.Dexterity:
-          return 4;
-        case Attribute.Constitution:
-          return 4;
-        case Attribute.Charisma:
-          return 4;
-        default:
-          return 3;
-      }
-    case CharacterClass.ManAtArms:
-      return 3;
-    default:
-      return 3;
-  }
+  const getClassAttributeDice = (characterClass: CharacterClass): number => {
+    switch (characterClass) {
+      case CharacterClass.Cleric:
+        switch (attribute) {
+          case Attribute.Strength:
+          case Attribute.Wisdom:
+          case Attribute.Dexterity:
+          case Attribute.Constitution:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.Druid:
+        switch (attribute) {
+          case Attribute.Wisdom:
+          case Attribute.Charisma:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.Fighter:
+        switch (attribute) {
+          case Attribute.Strength:
+          case Attribute.Constitution:
+          case Attribute.Dexterity:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.Paladin:
+        switch (attribute) {
+          case Attribute.Strength:
+          case Attribute.Intelligence:
+          case Attribute.Wisdom:
+          case Attribute.Constitution:
+          case Attribute.Charisma:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.Ranger:
+        switch (attribute) {
+          case Attribute.Strength:
+          case Attribute.Intelligence:
+          case Attribute.Wisdom:
+          case Attribute.Constitution:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.MagicUser:
+      case CharacterClass.Illusionist:
+      case CharacterClass.Thief:
+        switch (attribute) {
+          case Attribute.Intelligence:
+          case Attribute.Dexterity:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.Assassin:
+        switch (attribute) {
+          case Attribute.Strength:
+          case Attribute.Intelligence:
+          case Attribute.Dexterity:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.Monk:
+        switch (attribute) {
+          case Attribute.Strength:
+          case Attribute.Wisdom:
+          case Attribute.Dexterity:
+          case Attribute.Constitution:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.Bard:
+        switch (attribute) {
+          case Attribute.Strength:
+          case Attribute.Intelligence:
+          case Attribute.Wisdom:
+          case Attribute.Dexterity:
+          case Attribute.Constitution:
+          case Attribute.Charisma:
+            return 4;
+          default:
+            return 3;
+        }
+      case CharacterClass.ManAtArms:
+        return 3;
+      default:
+        return 3;
+    }
+  };
+
+  // Iterate over all classes and find the maximum dice count
+  return Math.max(...candidateClasses.map(getClassAttributeDice));
 };

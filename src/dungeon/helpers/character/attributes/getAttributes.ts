@@ -13,44 +13,49 @@ import { rollAttribute } from "./rollAttribute";
  *
  * We do not allocate scores; we roll them in order.
  *
- * @param candidateClass
+ * @param candidateClasses
  * @param candidateRace
  * @param gender
  */
 export const getAttributes = (
-  candidateClass: CharacterClass,
+  candidateClasses: CharacterClass[],
   candidateRace: CharacterRace,
   gender: Gender
 ): Attributes => {
   return {
     STR: rollAttribute(
       Attribute.Strength,
-      candidateClass,
+      candidateClasses,
       candidateRace,
       gender
     ),
     INT: rollAttribute(
       Attribute.Intelligence,
-      candidateClass,
+      candidateClasses,
       candidateRace,
       gender
     ),
-    WIS: rollAttribute(Attribute.Wisdom, candidateClass, candidateRace, gender),
+    WIS: rollAttribute(
+      Attribute.Wisdom,
+      candidateClasses,
+      candidateRace,
+      gender
+    ),
     DEX: rollAttribute(
       Attribute.Dexterity,
-      candidateClass,
+      candidateClasses,
       candidateRace,
       gender
     ),
     CON: rollAttribute(
       Attribute.Constitution,
-      candidateClass,
+      candidateClasses,
       candidateRace,
       gender
     ),
     CHA: rollAttribute(
       Attribute.Charisma,
-      candidateClass,
+      candidateClasses,
       candidateRace,
       gender
     ),

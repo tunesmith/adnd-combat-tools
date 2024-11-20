@@ -21,17 +21,17 @@ import { getStrengthAdjustedScore } from "./fighter/getStrengthAdjustedScore";
  * And in the right order!
  *
  * @param attribute
- * @param candidateClass
+ * @param candidateClasses
  * @param candidateRace
  * @param gender
  */
 export const rollAttribute = (
   attribute: Attribute,
-  candidateClass: CharacterClass,
+  candidateClasses: CharacterClass[],
   candidateRace: CharacterRace,
   gender: Gender
 ): number => {
-  const dice = getAttributeDice(attribute, candidateClass);
+  const dice = getAttributeDice(attribute, candidateClasses);
   const rawScore = rollAttributeDice(dice);
   // Now for each raw score I need to adjust it in several ways.
   // First, I'll adjust it downward by racial penalty. Since we adjust
@@ -51,13 +51,34 @@ export const rollAttribute = (
   );
 
   // Next, I'll adjust it upward to class minimums.
-  const classRange = npcClassAttributeLimits[candidateClass][attribute];
-  const classMinAdjustedScore = Math.max(raceMinAdjustedScore, classRange.min);
+  // Calculate the maximum minimum score across all candidate classes
+  const maxClassMin = Math.max(
+    ...candidateClasses.map(
+      (candidateClass) => npcClassAttributeLimits[candidateClass][attribute].min
+    )
+  );
+  // Adjust the score upward to the maximum of the race minimum and class minimums
+  const classMinAdjustedScore = Math.max(raceMinAdjustedScore, maxClassMin);
+
+  // Remember that WIS min 13 if a multi-classed half-elven cleric. Weird asterisk rule from PHB
+  // that is mentioned both in cleric description and the wisdom table.
+  const adjustedWisdomMinimum =
+    attribute === Attribute.Wisdom &&
+    candidateRace === CharacterRace.HalfElf &&
+    candidateClasses.length > 1 &&
+    candidateClasses.includes(CharacterClass.Cleric)
+      ? 13
+      : 0;
+
+  const wisdomAdjustedScore = Math.max(
+    classMinAdjustedScore,
+    adjustedWisdomMinimum
+  );
 
   // Now we'll apply race bonuses
   const raceBonusAdjustedScore = assessRacialBonus(
     attribute,
-    classMinAdjustedScore,
+    wisdomAdjustedScore,
     candidateRace
   );
 
@@ -65,21 +86,26 @@ export const rollAttribute = (
   const npcAdjustedScore = assessNpcClassBonus(
     attribute,
     raceBonusAdjustedScore,
-    candidateClass
+    candidateClasses
   );
 
   // Now we are done with upward adjustments, need to adjust *downward*
   // for race and class maximums
   const raceMaxAdjustedScore = Math.min(npcAdjustedScore, raceRange.max);
-  const classMaxAdjustedScore = Math.min(raceMaxAdjustedScore, classRange.max);
+
+  // I used to also adjust downward by *class* maximum, but I realized I was just
+  // always inferring that to be 18... and races can explicitly hit 19 sometimes,
+  // and it's pretty clear that race should take precedence there. I couldn't think
+  // of a case where "class maximum" would ever hold precedence over race maximum,
+  // so I'm omitting that, and sticking with race maximum.
 
   // Finally, I need to do some special handling for fighter exceptional strength,
   // Since there are race/gender limits for this score.
   return getStrengthAdjustedScore(
     attribute,
-    candidateClass,
+    candidateClasses,
     candidateRace,
     gender,
-    classMaxAdjustedScore
+    raceMaxAdjustedScore
   );
 };

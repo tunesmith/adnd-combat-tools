@@ -12,7 +12,29 @@ import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
 import { getCharacterRace } from "../../helpers/character/getCharacterRace";
 import { getRandomClassForRace } from "../../helpers/character/getRandomClassForRace";
+import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
+import { allowedMultiClassCombinationsByRace } from "../../models/allowedMultiClassCombinationsByRace";
+import { getCharacterClass } from "../../helpers/character/getCharacterClass";
+import { Gender } from "../../models/character/gender";
+import { getAttributes } from "../../helpers/character/attributes/getAttributes";
+import { getMaxLevel } from "../../helpers/character/getMaxLevel";
+import { getLevelDistributor } from "../../helpers/character/getLevelDistributor";
 
+/**
+ * There are some tricky intricacies here having to do with whether a generated
+ * NPC can truly join the party in question.
+ *
+ * We solve this by moving in stages, from the most general to the most specific.
+ *
+ * What seems to make sense is to pick the race first, and then try again if we
+ * have generated an incompatible race.
+ *
+ * What's next is to generate how many classes that race has, knowing that elves
+ * and half-elves can sometimes have three classes.
+ *
+ * @param charactersCount
+ * @param characterLevel
+ */
 export const createMainParty = (
   charactersCount: number,
   characterLevel: number
@@ -31,24 +53,27 @@ export const createMainParty = (
 
     // humans are always 1 class, non-humans are sometimes 2 or even 3
     const numClasses = getNumberOfClasses(characterRace);
-    console.log(`numClasses: ${numClasses} (sticking to single-class for now`);
 
-    const characterSheet = getRandomClassForRace(characterRace, characterLevel);
-    // const characterSheet =
-    //   numClasses === 1
-    //     ? getRandomClassForRace(characterRace, characterLevel) // Single-class
-    //     : getMultiClassForRace(characterRace, numClasses, characterLevel); // Multi-class
+    // Generate the character sheet
+    const characterSheet =
+      numClasses === 1
+        ? getRandomClassForRace(characterRace, characterLevel) // Single-class
+        : getMultiClassForRace(characterRace, numClasses, characterLevel); // Multi-class
 
-    characterSheet.professions.forEach((profession) => {
-      if (!isCompatibleClass(profession.characterClass, party)) {
-        return; // Skip this combination if any part is incompatible
-      }
-      if (
+    // Check compatibility and limits
+    const exceedsLimits = characterSheet.professions.some(
+      (profession) =>
+        !isCompatibleClass(profession.characterClass, party) ||
         counts[profession.characterClass] >=
-        characterMax[profession.characterClass]
-      ) {
-        return; // Skip if max limit for this class is reached
-      }
+          characterMax[profession.characterClass]
+    );
+
+    if (exceedsLimits) {
+      continue; // Skip this character sheet entirely if any class is incompatible or exceeds the limit
+    }
+
+    // Update counts and add to the party
+    characterSheet.professions.forEach((profession) => {
       counts[profession.characterClass]++;
     });
 
@@ -57,6 +82,7 @@ export const createMainParty = (
 
   return party;
 };
+
 /**
  * DMG p11: rolling methods for characters and henchmen
  * DMG p100: stats adjustments and traits for NPCs
@@ -117,57 +143,111 @@ export const characterResult = (
 // 1-6 with hit point bonuses applied (if any), minimum 4hp.
 
 /**
- * Remember that WIS min 13 if a multi-classed half-elven cleric (!!)
- * It's the only special case that depends on both class and race,
- * and only for multi-classed. Weird.
- *
  * @param characterRace
  * @param numClasses
  * @param characterLevel
-//  */
-// function getMultiClassForRace(
-//   characterRace: CharacterRace,
-//   numClasses: number,
-//   characterLevel: number
-// ): CharacterSheet {
-//   const selectedClasses: CharacterClass[] = [];
-//
-//   // Step 1: Pre-filter valid combinations by race and number of classes
-//   let validCombinations = allowedMultiClassCombinationsByRace[
-//     characterRace
-//   ]?.filter((combo) => combo.length === numClasses); // Only combos of the correct size
-//
-//   // If no valid combinations exist, throw an error
-//   if (!validCombinations || validCombinations.length === 0) {
-//     throw new Error(
-//       `No valid multi-class combinations exist for ${characterRace} with ${numClasses} classes.`
-//     );
-//   }
-//
-//   // Step 2: Generate classes until all are selected
-//   while (selectedClasses.length < numClasses) {
-//     const roll = rollDice(characterClass.sides);
-//     const candidate = getTableEntry(roll, characterClass);
-//
-//     // Re-check validity for this candidate against remaining valid combinations
-//     const validMultiClass = validCombinations.some((combo) => {
-//       const includesCandidate = combo.includes(candidate);
-//       const isNotDuplicate = !selectedClasses.includes(candidate);
-//       return includesCandidate && isNotDuplicate;
-//     });
-//
-//     if (validMultiClass) {
-//       selectedClasses.push(candidate);
-//
-//       // Re-filter valid combinations after adding the new class
-//       validCombinations = validCombinations.filter((combo) =>
-//         combo.includes(candidate)
-//       );
-//     }
-//   }
-//
-//   return selectedClasses;
-// }
+ */
+function getMultiClassForRace(
+  characterRace: CharacterRace,
+  numClasses: number,
+  characterLevel: number
+): CharacterSheet {
+  const selectedClasses: CharacterClass[] = [];
+
+  // Step 1: Pre-filter valid combinations by race and number of classes
+  let validCombinations = allowedMultiClassCombinationsByRace[
+    characterRace
+  ]?.filter((combo) => combo.length === numClasses); // Only combos of the correct size
+
+  // Step 2: Generate classes until all are selected
+  while (selectedClasses.length < numClasses) {
+    const candidate = getCharacterClass();
+
+    // Re-check validity for this candidate against remaining valid combinations
+    const validMultiClass = validCombinations.some((combo) => {
+      const includesCandidate = combo.includes(candidate);
+      const isNotDuplicate = !selectedClasses.includes(candidate);
+      return includesCandidate && isNotDuplicate;
+    });
+
+    if (validMultiClass) {
+      selectedClasses.push(candidate);
+
+      // Re-filter valid combinations after adding the new class
+      validCombinations = validCombinations.filter((combo) =>
+        combo.includes(candidate)
+      );
+    }
+  }
+
+  // Step 3: Classes are selected. Now, fill out the character sheet
+  const genderRoll = rollDice(2);
+  const gender = genderRoll === 1 ? Gender.Male : Gender.Female;
+  const attributes = getAttributes(selectedClasses, characterRace, gender);
+
+  const classMaxLevels = selectedClasses.map((characterClass) => {
+    return {
+      characterClass,
+      maxLevel: getMaxLevel(characterRace, characterClass, attributes),
+    };
+  });
+
+  // Level of Multi-Classed Individuals:
+  // Determine level for a single profession, add 2, and divide by 2, dropping fractions below one-half.
+  // For a triple class, add three, divide by three, and drop fractions below one-half.
+  const baseLevel = Math.floor(
+    (characterLevel + selectedClasses.length) / selectedClasses.length
+  );
+
+  // Assign initial levels, capped at maxLevel
+  const levelDistributor = getLevelDistributor();
+
+  classMaxLevels.forEach(({ characterClass, maxLevel }) => {
+    levelDistributor[characterClass] = Math.min(baseLevel, maxLevel);
+  });
+
+  // Calculate remaining levels to distribute
+  let excessLevels =
+    baseLevel -
+    Object.values(levelDistributor).reduce((sum, level) => sum + level, 0);
+
+  // Distribute excess levels to classes under their maxLevel
+  while (excessLevels > 0) {
+    const eligibleClasses = classMaxLevels.filter(
+      ({ characterClass, maxLevel }) =>
+        levelDistributor[characterClass] < maxLevel
+    );
+
+    if (eligibleClasses.length === 0) break;
+
+    // If one class is thereby exceeded, take one-half the excess levels and assign them to the other.
+    // In a triple-classed individual, divide excess levels and assign to the two remaining classes.
+    const excessPerClass = Math.floor(
+      (numClasses === 1 ? Math.round(excessLevels / 2) : excessLevels) /
+        eligibleClasses.length
+    );
+    eligibleClasses.forEach(({ characterClass, maxLevel }) => {
+      const allocatable = Math.min(
+        excessPerClass,
+        maxLevel - levelDistributor[characterClass]
+      );
+      levelDistributor[characterClass] += allocatable;
+      excessLevels -= allocatable;
+    });
+  }
+
+  return {
+    gender: gender,
+    attributes: attributes,
+    characterRace: characterRace,
+    professions: selectedClasses.map((selectedClass) => {
+      return {
+        characterClass: selectedClass,
+        level: levelDistributor[selectedClass],
+      };
+    }),
+  };
+}
 
 // function createParty(
 //   initialParty: CharacterClass[] = [],

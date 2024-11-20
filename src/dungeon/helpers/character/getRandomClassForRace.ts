@@ -1,14 +1,11 @@
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { CharacterSheet } from "../../models/character/characterSheet";
-import { getTableEntry, rollDice } from "../dungeonLookup";
-import {
-  CharacterClass,
-  characterClass,
-} from "../../../tables/dungeon/monster/character/characterClass";
+import { rollDice } from "../dungeonLookup";
 import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { Gender } from "../../models/character/gender";
 import { getAttributes } from "./attributes/getAttributes";
 import { getMaxLevel } from "./getMaxLevel";
+import { getCharacterClass } from "./getCharacterClass";
 
 /**
  * Level restrictions are tricky here because the DMG leaves this fairly
@@ -71,22 +68,14 @@ export function getRandomClassForRace(
   characterLevel: number
 ): CharacterSheet {
   while (true) {
-    // Roll a random class based on the character table
-    const roll = rollDice(characterClass.sides); // e.g., d100 for a 100-sided table
-    const prelimClass = getTableEntry(roll, characterClass);
-    const candidateClass =
-      prelimClass === CharacterClass.MonkBard
-        ? Math.random() < 0.5
-          ? CharacterClass.Monk
-          : CharacterClass.Bard
-        : prelimClass;
+    const candidateClass = getCharacterClass();
 
     // First if the class is even allowed for the race
     if (allowedNpcClassesByRace[characterRace]?.includes(candidateClass)) {
       const genderRoll = rollDice(2);
       const gender = genderRoll === 1 ? Gender.Male : Gender.Female;
       // We need attributes as some max levels are dependent on attribute scores
-      const attributes = getAttributes(candidateClass, characterRace, gender);
+      const attributes = getAttributes([candidateClass], characterRace, gender);
 
       if (
         getMaxLevel(characterRace, candidateClass, attributes) >= characterLevel

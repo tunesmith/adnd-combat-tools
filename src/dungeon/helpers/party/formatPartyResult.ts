@@ -14,12 +14,15 @@ export const formatPartyResult = (result: PartyResult): string => {
       (member) =>
         `${member.gender} ` +
         `${CharacterRace[member.characterRace]} ` +
-        member.professions.map(
-          (profession) =>
-            `${CharacterClass[profession.characterClass]} (L${
-              profession.level
-            }) `
-        ) +
+        member.professions
+          .map(
+            (profession) =>
+              `${CharacterClass[profession.characterClass]} (L${
+                profession.level
+              })`
+          )
+          .join(", ") +
+        " " +
         `STR${member.attributes.STR} INT${member.attributes.INT} WIS${member.attributes.WIS} ` +
         `DEX${member.attributes.DEX} CON${member.attributes.DEX} CHA${member.attributes.CHA}`
     )

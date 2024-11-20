@@ -10,23 +10,26 @@ import { getExceptionalStrength } from "./getExceptionalStrength";
  * "STRENGTH TABLE I." on PHB p9.
  *
  * @param attribute
- * @param candidateClass
+ * @param candidateClasses
  * @param candidateRace
  * @param gender
  * @param score
  */
 export const getStrengthAdjustedScore = (
   attribute: Attribute,
-  candidateClass: CharacterClass,
+  candidateClasses: CharacterClass[],
   candidateRace: CharacterRace,
   gender: Gender,
   score: number
 ): number => {
   if (
     attribute === Attribute.Strength &&
-    (candidateClass === CharacterClass.Fighter ||
-      candidateClass === CharacterClass.Paladin ||
-      candidateClass === CharacterClass.Ranger) &&
+    candidateClasses.some(
+      (candidateClass) =>
+        candidateClass === CharacterClass.Fighter ||
+        candidateClass === CharacterClass.Paladin ||
+        candidateClass === CharacterClass.Ranger
+    ) &&
     score === 18
   ) {
     switch (candidateRace) {
