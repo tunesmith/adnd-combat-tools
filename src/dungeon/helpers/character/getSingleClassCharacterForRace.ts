@@ -1,11 +1,10 @@
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { CharacterSheet } from "../../models/character/characterSheet";
-import { rollDice } from "../dungeonLookup";
 import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
-import { Gender } from "../../models/character/gender";
 import { getAttributes } from "./attributes/getAttributes";
 import { getMaxLevel } from "./getMaxLevel";
 import { getCharacterClass } from "./getCharacterClass";
+import { getCharacterGender } from "./getCharacterGender";
 
 /**
  * Level restrictions are tricky here because the DMG leaves this fairly
@@ -72,8 +71,7 @@ export function getSingleClassCharacterForRace(
 
     // First if the class is even allowed for the race
     if (allowedNpcClassesByRace[characterRace]?.includes(candidateClass)) {
-      const genderRoll = rollDice(2);
-      const gender = genderRoll === 1 ? Gender.Male : Gender.Female;
+      const gender = getCharacterGender();
       // We need attributes as some max levels are dependent on attribute scores
       const attributes = getAttributes([candidateClass], characterRace, gender);
 

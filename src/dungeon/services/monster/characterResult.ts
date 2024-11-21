@@ -13,11 +13,10 @@ import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
 import { getCharacterRace } from "../../helpers/character/getCharacterRace";
 import { getSingleClassCharacterForRace } from "../../helpers/character/getSingleClassCharacterForRace";
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import { allowedMultiClassCombinationsByRace } from "../../models/allowedMultiClassCombinationsByRace";
-import { getCharacterClass } from "../../helpers/character/getCharacterClass";
-import { Gender } from "../../models/character/gender";
 import { getAttributes } from "../../helpers/character/attributes/getAttributes";
 import { getProfessions } from "../../helpers/character/getProfessions";
+import { getCharacterGender } from "../../helpers/character/getCharacterGender";
+import { getMultiClassForRace } from "../../helpers/character/getMultiClassForRace";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -145,40 +144,6 @@ export const characterResult = (
 // a party may encounter in the wild, but a rolled man-at-arms should be
 // 1-6 with hit point bonuses applied (if any), minimum 4hp.
 
-const getMultiClassForRace = (
-  characterRace: CharacterRace,
-  numClasses: number
-): CharacterClass[] => {
-  const selectedClasses: CharacterClass[] = [];
-
-  // Step 1: Pre-filter valid combinations by race and number of classes
-  let validCombinations = allowedMultiClassCombinationsByRace[
-    characterRace
-  ]?.filter((combo) => combo.length === numClasses); // Only combos of the correct size
-
-  // Step 2: Generate classes until all are selected
-  while (selectedClasses.length < numClasses) {
-    const candidate = getCharacterClass();
-
-    // Re-check validity for this candidate against remaining valid combinations
-    const validMultiClass = validCombinations.some((combo) => {
-      const includesCandidate = combo.includes(candidate);
-      const isNotDuplicate = !selectedClasses.includes(candidate);
-      return includesCandidate && isNotDuplicate;
-    });
-
-    if (validMultiClass) {
-      selectedClasses.push(candidate);
-
-      // Re-filter valid combinations after adding the new class
-      validCombinations = validCombinations.filter((combo) =>
-        combo.includes(candidate)
-      );
-    }
-  }
-  return selectedClasses;
-};
-
 /**
  * @param characterRace
  * @param numClasses
@@ -190,7 +155,7 @@ function getMultiClassCharacterForRace(
   characterLevel: number
 ): CharacterSheet {
   const selectedClasses = getMultiClassForRace(characterRace, numClasses);
-  const gender = rollDice(2) === 1 ? Gender.Male : Gender.Female;
+  const gender = getCharacterGender();
   const attributes = getAttributes(selectedClasses, characterRace, gender);
   const professions = getProfessions(
     characterRace,
