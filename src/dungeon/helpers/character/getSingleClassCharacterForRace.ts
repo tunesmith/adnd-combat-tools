@@ -63,7 +63,7 @@ import { getCharacterClass } from "./getCharacterClass";
  * @param characterRace
  * @param characterLevel
  */
-export function getRandomClassForRace(
+export function getSingleClassCharacterForRace(
   characterRace: CharacterRace,
   characterLevel: number
 ): CharacterSheet {

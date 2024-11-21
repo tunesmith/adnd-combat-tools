@@ -11,7 +11,7 @@ import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
 import { getCharacterRace } from "../../helpers/character/getCharacterRace";
-import { getRandomClassForRace } from "../../helpers/character/getRandomClassForRace";
+import { getSingleClassCharacterForRace } from "../../helpers/character/getSingleClassCharacterForRace";
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { allowedMultiClassCombinationsByRace } from "../../models/allowedMultiClassCombinationsByRace";
 import { getCharacterClass } from "../../helpers/character/getCharacterClass";
@@ -56,8 +56,12 @@ export const createMainParty = (
     // Generate the character sheet
     const characterSheet =
       numClasses === 1
-        ? getRandomClassForRace(characterRace, characterLevel) // Single-class
-        : getMultiClassForRace(characterRace, numClasses, characterLevel); // Multi-class
+        ? getSingleClassCharacterForRace(characterRace, characterLevel)
+        : getMultiClassCharacterForRace(
+            characterRace,
+            numClasses,
+            characterLevel
+          );
 
     // Check compatibility and limits
     const exceedsLimits = characterSheet.professions.some(
@@ -141,16 +145,10 @@ export const characterResult = (
 // a party may encounter in the wild, but a rolled man-at-arms should be
 // 1-6 with hit point bonuses applied (if any), minimum 4hp.
 
-/**
- * @param characterRace
- * @param numClasses
- * @param characterLevel
- */
-function getMultiClassForRace(
+const getMultiClassForRace = (
   characterRace: CharacterRace,
-  numClasses: number,
-  characterLevel: number
-): CharacterSheet {
+  numClasses: number
+): CharacterClass[] => {
   const selectedClasses: CharacterClass[] = [];
 
   // Step 1: Pre-filter valid combinations by race and number of classes
@@ -178,10 +176,21 @@ function getMultiClassForRace(
       );
     }
   }
+  return selectedClasses;
+};
 
-  // Step 3: Classes are selected. Now, fill out the character sheet
-  const genderRoll = rollDice(2);
-  const gender = genderRoll === 1 ? Gender.Male : Gender.Female;
+/**
+ * @param characterRace
+ * @param numClasses
+ * @param characterLevel
+ */
+function getMultiClassCharacterForRace(
+  characterRace: CharacterRace,
+  numClasses: number,
+  characterLevel: number
+): CharacterSheet {
+  const selectedClasses = getMultiClassForRace(characterRace, numClasses);
+  const gender = rollDice(2) === 1 ? Gender.Male : Gender.Female;
   const attributes = getAttributes(selectedClasses, characterRace, gender);
   const professions = getProfessions(
     characterRace,
