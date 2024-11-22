@@ -12,11 +12,7 @@ import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
 import { getCharacterRace } from "../../helpers/character/getCharacterRace";
 import { getSingleClassCharacterForRace } from "../../helpers/character/getSingleClassCharacterForRace";
-import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import { getAttributes } from "../../helpers/character/attributes/getAttributes";
-import { getProfessions } from "../../helpers/character/getProfessions";
-import { getCharacterGender } from "../../helpers/character/getCharacterGender";
-import { getMultiClassForRace } from "../../helpers/character/getMultiClassForRace";
+import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -143,32 +139,3 @@ export const characterResult = (
 // bonus if 4-7 hp is prescribed? I think 4-7 hit points is for men-at-arms
 // a party may encounter in the wild, but a rolled man-at-arms should be
 // 1-6 with hit point bonuses applied (if any), minimum 4hp.
-
-/**
- * @param characterRace
- * @param numClasses
- * @param characterLevel
- */
-function getMultiClassCharacterForRace(
-  characterRace: CharacterRace,
-  numClasses: number,
-  characterLevel: number
-): CharacterSheet {
-  const selectedClasses = getMultiClassForRace(characterRace, numClasses);
-  const gender = getCharacterGender();
-  const attributes = getAttributes(selectedClasses, characterRace, gender);
-  const professions = getProfessions(
-    characterRace,
-    selectedClasses,
-    attributes,
-    characterLevel,
-    numClasses
-  );
-
-  return {
-    gender: gender,
-    attributes: attributes,
-    characterRace: characterRace,
-    professions: professions,
-  };
-}
