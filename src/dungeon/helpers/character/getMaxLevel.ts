@@ -22,7 +22,16 @@ export const getMaxLevel = (
 ): number => {
   switch (candidateRace) {
     case CharacterRace.Human:
-      return Infinity;
+      switch (candidateClass) {
+        case CharacterClass.Druid:
+          return 14; // (The Great Druid)
+        case CharacterClass.Assassin:
+          return 14; // (Master of Assassins)
+        case CharacterClass.Monk:
+          return 17; // (Grand Master of Flowers)
+        default:
+          return Infinity;
+      }
     case CharacterRace.Dwarf:
       switch (candidateClass) {
         case CharacterClass.Cleric:
@@ -104,7 +113,7 @@ export const getMaxLevel = (
         case CharacterClass.Cleric:
           return 5;
         case CharacterClass.Druid:
-          return Infinity;
+          return 14; // 14 is max (The Great Druid)
         case CharacterClass.Fighter: {
           if (attributes.STR < 17) {
             return 6;
@@ -168,7 +177,7 @@ export const getMaxLevel = (
           }
         }
         case CharacterClass.Assassin:
-          return Infinity;
+          return 14; // 14 is Max (Master of Assassins)
         default:
           return 0;
       }
