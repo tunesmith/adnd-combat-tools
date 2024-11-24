@@ -5,7 +5,7 @@ import { getCharacterGender } from "./getCharacterGender";
 import { getAttributes } from "./attributes/getAttributes";
 import { getProfessions } from "./getProfessions";
 import { getHitPoints } from "./getHitPoints";
-import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "../../models/characterClass";
 
 /**
  * Similar to {@link getSingleClassCharacterForRace}, although simpler to meet

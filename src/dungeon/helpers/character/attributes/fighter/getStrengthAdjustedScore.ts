@@ -1,8 +1,8 @@
 import { Attribute } from "../../../../models/attributes";
-import { CharacterClass } from "../../../../../tables/dungeon/monster/character/characterClass";
 import { CharacterRace } from "../../../../../tables/dungeon/monster/character/characterRace";
 import { Gender } from "../../../../models/character/gender";
 import { getExceptionalStrength } from "./getExceptionalStrength";
+import { CharacterClass } from "../../../../models/characterClass";
 
 /**
  * This encodes the race-based and gender-based maximum

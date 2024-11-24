@@ -6,7 +6,7 @@ import { getMaxLevel } from "./level/getMaxLevel";
 import { getCharacterClass } from "./class/getCharacterClass";
 import { getCharacterGender } from "./getCharacterGender";
 import { getHitPoints } from "./getHitPoints";
-import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "../../models/characterClass";
 
 /**
  * Level restrictions are tricky here because the DMG leaves this fairly

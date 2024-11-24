@@ -1,4 +1,4 @@
-import { CharacterClass } from "../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "./characterClass";
 
 /**
  * Paladins clearly cannot be a member of a party with non-good characters,
@@ -23,6 +23,5 @@ export const incompatibleClasses: Record<CharacterClass, CharacterClass[]> = {
   [CharacterClass.Thief]: [],
   [CharacterClass.Monk]: [],
   [CharacterClass.Bard]: [],
-  [CharacterClass.MonkBard]: [],
   [CharacterClass.ManAtArms]: [],
 };

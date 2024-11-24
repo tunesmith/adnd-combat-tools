@@ -1,6 +1,6 @@
 import { AttributeRange } from "./raceAttributeLimits";
-import { CharacterClass } from "../../tables/dungeon/monster/character/characterClass";
 import { Attribute } from "./attributes";
+import { CharacterClass } from "./characterClass";
 
 interface ClassAttributeTable {
   [CharacterClass.Cleric]: Record<Attribute, AttributeRange>;
@@ -15,7 +15,6 @@ interface ClassAttributeTable {
   [CharacterClass.Monk]: Record<Attribute, AttributeRange>;
   [CharacterClass.Bard]: Record<Attribute, AttributeRange>;
   [CharacterClass.ManAtArms]: Record<Attribute, AttributeRange>;
-  [CharacterClass.MonkBard]: Record<Attribute, AttributeRange>;
 }
 
 export const npcClassAttributeLimits: ClassAttributeTable = {
@@ -108,14 +107,6 @@ export const npcClassAttributeLimits: ClassAttributeTable = {
     CHA: { min: 15, max: 18 },
   },
   [CharacterClass.ManAtArms]: {
-    STR: { min: 3, max: 18 },
-    INT: { min: 3, max: 18 },
-    WIS: { min: 3, max: 18 },
-    DEX: { min: 3, max: 18 },
-    CON: { min: 3, max: 18 },
-    CHA: { min: 3, max: 18 },
-  },
-  [CharacterClass.MonkBard]: {
     STR: { min: 3, max: 18 },
     INT: { min: 3, max: 18 },
     WIS: { min: 3, max: 18 },

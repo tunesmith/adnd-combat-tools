@@ -1,8 +1,8 @@
 import { getMaxLevel } from "./level/getMaxLevel";
-import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { Attributes } from "../../models/attributes";
 import { CharacterProfession } from "../../models/character/characterSheet";
+import { CharacterClass } from "../../models/characterClass";
 
 /**
  * getProfessions gets the character class / level combination for each class

@@ -1,9 +1,9 @@
 import { rollAttribute } from "../../../../../dungeon/helpers/character/attributes/rollAttribute";
 import { Attribute } from "../../../../../dungeon/models/attributes";
-import { CharacterClass } from "../../../../../tables/dungeon/monster/character/characterClass";
 import { CharacterRace } from "../../../../../tables/dungeon/monster/character/characterRace";
 import { Gender } from "../../../../../dungeon/models/character/gender";
 import * as DiceUtils from "../../../../../dungeon/helpers/character/attributes/rollAttributeDice";
+import { CharacterClass } from "../../../../../dungeon/models/characterClass";
 
 jest.mock(
   "../../../../../dungeon/helpers/character/attributes/rollAttributeDice",

@@ -1,6 +1,6 @@
 import { PartyResult } from "../../models/character/characterSheet";
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "../../models/characterClass";
 
 /**
  * This is probably temporary, just be able to output a string

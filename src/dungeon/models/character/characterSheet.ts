@@ -1,7 +1,7 @@
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { Attributes } from "../attributes";
 import { Gender } from "./gender";
-import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "../characterClass";
 
 enum CharacterRole {
   Main,

@@ -49,7 +49,7 @@ import { DragonEight, MonsterEight } from "./monster/monsterEight";
 import { DragonNine, MonsterNine } from "./monster/monsterNine";
 import { DragonTen, MonsterTen } from "./monster/monsterTen";
 import { CharacterRace } from "./monster/character/characterRace";
-import { CharacterClass } from "./monster/character/characterClass";
+import { CharacterClassTable } from "./monster/character/characterClass";
 
 export type Table<T> = {
   sides: number;
@@ -121,5 +121,5 @@ export type Command =
   | DragonEight
   | DragonNine
   | DragonTen
-  | CharacterClass
+  | CharacterClassTable
   | CharacterRace;

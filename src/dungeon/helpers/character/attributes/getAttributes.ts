@@ -1,8 +1,8 @@
-import { CharacterClass } from "../../../../tables/dungeon/monster/character/characterClass";
 import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
 import { Gender } from "../../../models/character/gender";
 import { Attribute, Attributes } from "../../../models/attributes";
 import { rollAttribute } from "./rollAttribute";
+import { CharacterClass } from "../../../models/characterClass";
 
 /**
  * For NPCs, we're following the rule of 3d6 for normal attributes,

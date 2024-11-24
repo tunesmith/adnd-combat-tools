@@ -1,5 +1,4 @@
 import { Attribute } from "../../../models/attributes";
-import { CharacterClass } from "../../../../tables/dungeon/monster/character/characterClass";
 import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
 import { Gender } from "../../../models/character/gender";
 import { getAttributeDice } from "./getAttributeDice";
@@ -10,6 +9,7 @@ import { npcClassAttributeLimits } from "../../../models/npcClassAttributeLimits
 import { assessRacialBonus } from "./assessRacialBonus";
 import { assessNpcClassBonus } from "./assessNpcClassBonus";
 import { getStrengthAdjustedScore } from "./fighter/getStrengthAdjustedScore";
+import { CharacterClass } from "../../../models/characterClass";
 
 /**
  * Rolling a single attribute for an NPC is actually rather complicated.

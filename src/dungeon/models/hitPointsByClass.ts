@@ -1,4 +1,4 @@
-import { CharacterClass } from "../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "./characterClass";
 
 export interface HitDiceDetails {
   hitDie: number;
@@ -73,12 +73,6 @@ export const hitPointsByClass: Record<CharacterClass, HitDiceDetails> = {
     firstLevelDice: 1,
     numberOfDice: 9,
     perLateLevel: 2,
-  },
-  [CharacterClass.MonkBard]: {
-    hitDie: 0,
-    firstLevelDice: 0,
-    numberOfDice: 0,
-    perLateLevel: 0,
   },
   [CharacterClass.ManAtArms]: {
     hitDie: 4,

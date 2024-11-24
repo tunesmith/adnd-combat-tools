@@ -1,5 +1,4 @@
 import { rollDice } from "../../helpers/dungeonLookup";
-import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
 import { characterMax } from "../../models/characterMax";
 import { getCharacterLevel } from "../../helpers/character/level/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/level/getHenchmanLevel";
@@ -13,6 +12,7 @@ import { getNumberOfClasses } from "../../helpers/character/class/getNumberOfCla
 import { getCharacterRace } from "../../helpers/character/getCharacterRace";
 import { getSingleClassCharacterForRace } from "../../helpers/character/getSingleClassCharacterForRace";
 import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";
+import { CharacterClass } from "../../models/characterClass";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated

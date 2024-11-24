@@ -1,4 +1,4 @@
-import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "../../models/characterClass";
 
 export interface HitPointBonus {
   bonus: number;

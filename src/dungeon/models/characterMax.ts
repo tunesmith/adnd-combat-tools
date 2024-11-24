@@ -1,4 +1,4 @@
-import { CharacterClass } from "../../tables/dungeon/monster/character/characterClass";
+import { CharacterClass } from "./characterClass";
 
 /**
  * These are the maximum numbers of character classes per generated
@@ -18,7 +18,6 @@ export const characterMax: Record<CharacterClass, number> = {
   [CharacterClass.Illusionist]: 1,
   [CharacterClass.Thief]: 4,
   [CharacterClass.Assassin]: 2,
-  [CharacterClass.MonkBard]: 1,
   [CharacterClass.Monk]: 1,
   [CharacterClass.Bard]: 1,
   [CharacterClass.ManAtArms]: 7,
