@@ -1,15 +1,15 @@
 import { rollDice } from "../../helpers/dungeonLookup";
 import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
 import { characterMax } from "../../models/characterMax";
-import { getCharacterLevel } from "../../helpers/character/getCharacterLevel";
-import { getHenchmanLevel } from "../../helpers/character/getHenchmanLevel";
+import { getCharacterLevel } from "../../helpers/character/level/getCharacterLevel";
+import { getHenchmanLevel } from "../../helpers/character/level/getHenchmanLevel";
 import {
   CharacterSheet,
   PartyResult,
 } from "../../models/character/characterSheet";
 import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
-import { getNumberOfClasses } from "../../helpers/character/getNumberOfClasses";
+import { getNumberOfClasses } from "../../helpers/character/class/getNumberOfClasses";
 import { getCharacterRace } from "../../helpers/character/getCharacterRace";
 import { getSingleClassCharacterForRace } from "../../helpers/character/getSingleClassCharacterForRace";
 import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";

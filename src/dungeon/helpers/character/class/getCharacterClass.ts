@@ -1,8 +1,8 @@
-import { getTableEntry, rollDice } from "../dungeonLookup";
+import { getTableEntry, rollDice } from "../../dungeonLookup";
 import {
   characterClass,
   CharacterClass,
-} from "../../../tables/dungeon/monster/character/characterClass";
+} from "../../../../tables/dungeon/monster/character/characterClass";
 
 /**
  * The regular NPC character table from the DMG has

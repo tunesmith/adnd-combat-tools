@@ -1,6 +1,6 @@
-import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
-import { allowedMultiClassCombinationsByRace } from "../../models/allowedMultiClassCombinationsByRace";
+import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
+import { CharacterClass } from "../../../../tables/dungeon/monster/character/characterClass";
+import { allowedMultiClassCombinationsByRace } from "../../../models/allowedMultiClassCombinationsByRace";
 import { getCharacterClass } from "./getCharacterClass";
 
 /**

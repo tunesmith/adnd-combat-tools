@@ -1,5 +1,5 @@
-import * as dungeonLookup from "../../../../dungeon/helpers/dungeonLookup";
-import { getCharacterLevel } from "../../../../dungeon/helpers/character/getCharacterLevel";
+import * as dungeonLookup from "../../../../../dungeon/helpers/dungeonLookup";
+import { getCharacterLevel } from "../../../../../dungeon/helpers/character/level/getCharacterLevel";
 
 describe("getCharacterLevel", () => {
   afterEach(() => {

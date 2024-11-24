@@ -2,8 +2,8 @@ import { CharacterRace } from "../../../tables/dungeon/monster/character/charact
 import { CharacterSheet } from "../../models/character/characterSheet";
 import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
 import { getAttributes } from "./attributes/getAttributes";
-import { getMaxLevel } from "./getMaxLevel";
-import { getCharacterClass } from "./getCharacterClass";
+import { getMaxLevel } from "./level/getMaxLevel";
+import { getCharacterClass } from "./class/getCharacterClass";
 import { getCharacterGender } from "./getCharacterGender";
 import { getHitPoints } from "./getHitPoints";
 

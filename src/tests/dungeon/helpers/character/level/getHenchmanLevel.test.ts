@@ -1,4 +1,4 @@
-import { getHenchmanLevel } from "../../../../dungeon/helpers/character/getHenchmanLevel";
+import { getHenchmanLevel } from "../../../../../dungeon/helpers/character/level/getHenchmanLevel";
 
 describe("getHenchmanLevel", () => {
   test("book example #1", () => {

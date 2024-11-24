@@ -1,4 +1,4 @@
-import { getMaxLevel } from "./getMaxLevel";
+import { getMaxLevel } from "./level/getMaxLevel";
 import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { Attributes } from "../../models/attributes";

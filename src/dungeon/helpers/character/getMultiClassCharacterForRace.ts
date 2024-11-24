@@ -1,6 +1,6 @@
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { CharacterSheet } from "../../models/character/characterSheet";
-import { getMultiClassForRace } from "./getMultiClassForRace";
+import { getMultiClassForRace } from "./class/getMultiClassForRace";
 import { getCharacterGender } from "./getCharacterGender";
 import { getAttributes } from "./attributes/getAttributes";
 import { getProfessions } from "./getProfessions";
