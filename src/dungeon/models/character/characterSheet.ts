@@ -26,6 +26,7 @@ export interface CharacterSheet {
   attributes: Attributes;
   gender: Gender;
   hitPoints: number;
+  isBard: boolean;
 }
 
 export interface PartyResult {

@@ -5,6 +5,7 @@ import { getCharacterGender } from "./getCharacterGender";
 import { getAttributes } from "./attributes/getAttributes";
 import { getProfessions } from "./getProfessions";
 import { getHitPoints } from "./getHitPoints";
+import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
 
 /**
  * Similar to {@link getSingleClassCharacterForRace}, although simpler to meet
@@ -36,5 +37,6 @@ export function getMultiClassCharacterForRace(
     characterRace: characterRace,
     hitPoints: getHitPoints(professions, attributes.CON),
     professions: professions,
+    isBard: selectedClasses.includes(CharacterClass.Bard),
   };
 }

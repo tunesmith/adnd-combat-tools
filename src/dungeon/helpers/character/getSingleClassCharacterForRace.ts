@@ -6,6 +6,7 @@ import { getMaxLevel } from "./level/getMaxLevel";
 import { getCharacterClass } from "./class/getCharacterClass";
 import { getCharacterGender } from "./getCharacterGender";
 import { getHitPoints } from "./getHitPoints";
+import { CharacterClass } from "../../../tables/dungeon/monster/character/characterClass";
 
 /**
  * Level restrictions are tricky here because the DMG leaves this fairly
@@ -89,6 +90,7 @@ export function getSingleClassCharacterForRace(
           attributes: attributes,
           hitPoints: getHitPoints([profession], attributes.CON),
           professions: [profession],
+          isBard: candidateClass === CharacterClass.Bard,
         };
       }
     }
