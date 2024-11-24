@@ -24,7 +24,8 @@ export const formatPartyResult = (result: PartyResult): string => {
           .join(", ") +
         " " +
         `STR${member.attributes.STR} INT${member.attributes.INT} WIS${member.attributes.WIS} ` +
-        `DEX${member.attributes.DEX} CON${member.attributes.CON} CHA${member.attributes.CHA}`
+        `DEX${member.attributes.DEX} CON${member.attributes.CON} CHA${member.attributes.CHA} ` +
+        `(hp: ${member.hitPoints})`
     )
     .join(",\n ");
 

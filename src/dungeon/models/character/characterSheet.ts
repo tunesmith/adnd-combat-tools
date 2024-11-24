@@ -25,6 +25,7 @@ export interface CharacterSheet {
   characterRace: CharacterRace;
   attributes: Attributes;
   gender: Gender;
+  hitPoints: number;
 }
 
 export interface PartyResult {

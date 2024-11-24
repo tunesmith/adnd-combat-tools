@@ -4,6 +4,7 @@ import { getMultiClassForRace } from "./getMultiClassForRace";
 import { getCharacterGender } from "./getCharacterGender";
 import { getAttributes } from "./attributes/getAttributes";
 import { getProfessions } from "./getProfessions";
+import { getHitPoints } from "./getHitPoints";
 
 /**
  * Similar to {@link getSingleClassCharacterForRace}, although simpler to meet
@@ -33,6 +34,7 @@ export function getMultiClassCharacterForRace(
     gender: gender,
     attributes: attributes,
     characterRace: characterRace,
+    hitPoints: getHitPoints(professions, attributes.CON),
     professions: professions,
   };
 }

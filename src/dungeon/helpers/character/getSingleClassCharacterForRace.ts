@@ -5,6 +5,7 @@ import { getAttributes } from "./attributes/getAttributes";
 import { getMaxLevel } from "./getMaxLevel";
 import { getCharacterClass } from "./getCharacterClass";
 import { getCharacterGender } from "./getCharacterGender";
+import { getHitPoints } from "./getHitPoints";
 
 /**
  * Level restrictions are tricky here because the DMG leaves this fairly
@@ -78,16 +79,16 @@ export function getSingleClassCharacterForRace(
       if (
         getMaxLevel(characterRace, candidateClass, attributes) >= characterLevel
       ) {
+        const profession = {
+          level: characterLevel,
+          characterClass: candidateClass,
+        };
         return {
           characterRace: characterRace,
           gender: gender,
           attributes: attributes,
-          professions: [
-            {
-              characterClass: candidateClass,
-              level: characterLevel,
-            },
-          ],
+          hitPoints: getHitPoints([profession], attributes.CON),
+          professions: [profession],
         };
       }
     }
