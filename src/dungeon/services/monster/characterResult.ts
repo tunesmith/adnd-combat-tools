@@ -14,6 +14,7 @@ import { getCharacterRace } from "../../helpers/character/getCharacterRace";
 import { getSingleClassCharacterForRace } from "../../helpers/character/getSingleClassCharacterForRace";
 import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";
 import { CharacterClass } from "../../models/characterClass";
+import { getMonkHenchmen } from "../../helpers/character/henchmen/getMonkHenchmen";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -83,21 +84,10 @@ export const createMainParty = (
 };
 
 /**
- * Monks can have fighters, thieves, or assassins as henchmen,
- * starting at Level 6.
- *
- * @param level
- */
-const getMonkHenchmen = (level: number): number => {
-  if (level < 6) return 0;
-  return level - 6 + 2;
-};
-
-/**
  * This is just a straight mapping of the maximum
  * henchmen per charisma level, from the PHB
  */
-const charismaTable: Record<number, number> = {
+const henchmenByCharisma: Record<number, number> = {
   3: 1,
   4: 1,
   5: 2,
@@ -120,7 +110,7 @@ const getMaxHenchmenByCharisma = (charisma: number): number => {
   if (charisma < 3 || charisma > 18) {
     throw new Error(`Charisma value ${charisma} is out of range (3–18).`);
   }
-  return charismaTable[charisma] as number;
+  return henchmenByCharisma[charisma] as number;
 };
 
 /**
