@@ -3,6 +3,7 @@ import { characterMax } from "../../models/characterMax";
 import { getCharacterLevel } from "../../helpers/character/level/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/level/getHenchmanLevel";
 import {
+  CharacterProfession,
   CharacterSheet,
   PartyResult,
 } from "../../models/character/characterSheet";
@@ -82,6 +83,188 @@ export const createMainParty = (
 };
 
 /**
+ * Monks can have fighters, thieves, or assassins as henchmen,
+ * starting at Level 6.
+ *
+ * @param level
+ */
+const getMonkHenchmen = (level: number): number => {
+  if (level < 6) return 0;
+  return level - 6 + 2;
+};
+
+/**
+ * This is just a straight mapping of the maximum
+ * henchmen per charisma level, from the PHB
+ */
+const charismaTable: Record<number, number> = {
+  3: 1,
+  4: 1,
+  5: 2,
+  6: 2,
+  7: 3,
+  8: 3,
+  9: 4,
+  10: 4,
+  11: 4,
+  12: 5,
+  13: 5,
+  14: 6,
+  15: 7,
+  16: 8,
+  17: 10,
+  18: 15,
+};
+
+const getMaxHenchmenByCharisma = (charisma: number): number => {
+  if (charisma < 3 || charisma > 18) {
+    throw new Error(`Charisma value ${charisma} is out of range (3–18).`);
+  }
+  return charismaTable[charisma] as number;
+};
+
+/**
+ * Assassins cannot have henchmen below Level 4.
+ * From 4th-7th level, they can only have assassin henchmen,
+ * which in turn is limited by the number of assassins already
+ * in the character party.
+ *
+ * From level 8th on, they can also have thieves, and from
+ * 12th on, they can have anyone. They are also limited by
+ * charisma max though.
+ *
+ * @param level
+ * @param maxHenchmenByCharisma
+ * @param party
+ */
+const getAssassinHenchmen = (
+  level: number,
+  maxHenchmenByCharisma: number,
+  party: CharacterSheet[]
+) => {
+  if (level < 4) return 0;
+  const numAssassins = getCountOfClassesInParty(party, [
+    CharacterClass.Assassin,
+  ]);
+  if (level < 8) {
+    const remainingAssassins =
+      characterMax[CharacterClass.Assassin] - numAssassins;
+    return Math.min(remainingAssassins, maxHenchmenByCharisma);
+  }
+  const numThieves = getCountOfClassesInParty(party, [CharacterClass.Thief]);
+  if (level < 12) {
+    const remainingAssassins =
+      characterMax[CharacterClass.Assassin] - numAssassins;
+    const remainingThieves = characterMax[CharacterClass.Thief] - numThieves;
+    return Math.min(
+      remainingAssassins + remainingThieves,
+      maxHenchmenByCharisma
+    );
+  }
+  return maxHenchmenByCharisma;
+};
+
+const getCountOfClassesInParty = (
+  party: CharacterSheet[],
+  classesToCount: CharacterClass[]
+): number => {
+  return party
+    .flatMap((character) => character.professions)
+    .filter((profession) => classesToCount.includes(profession.characterClass))
+    .length;
+};
+
+const getHenchmenForProfession = (
+  profession: CharacterProfession,
+  mainParty: CharacterSheet[],
+  maxHenchmenByCharisma: number
+): number => {
+  switch (profession.characterClass) {
+    case CharacterClass.Monk:
+      return getMonkHenchmen(profession.level);
+
+    case CharacterClass.Assassin:
+      return getAssassinHenchmen(
+        profession.level,
+        maxHenchmenByCharisma,
+        mainParty
+      );
+
+    case CharacterClass.Ranger:
+      return profession.level >= 8 ? maxHenchmenByCharisma : 0;
+
+    default:
+      return maxHenchmenByCharisma;
+  }
+};
+
+const getMaxHenchmenForMember = (
+  member: CharacterSheet,
+  mainParty: CharacterSheet[]
+): number => {
+  const maxHenchmenByCharisma = getMaxHenchmenByCharisma(member.attributes.CHA);
+
+  // Multi-class characters can always hire henchmen:
+  // A cleric/ranger or cleric/assassin can because clerics can
+  if (member.professions.length > 1) {
+    return maxHenchmenByCharisma;
+  }
+
+  // Single-class logic: Directly access the only profession
+  return getHenchmenForProfession(
+    member.professions[0]!,
+    mainParty,
+    maxHenchmenByCharisma
+  );
+};
+
+/**
+ * It's possible for a main party configuration to not be able to hire henchmen:
+ *
+ * Rangers: no henchmen until 8th level
+ * Assassins: Only assassins while main character assassin is from 4th-7th level; 8th-11th also thieves; 12th anyone
+ * Monks: no henchmen until 6th level. At 6th, 2 fighters, thieves, or assassins (not paladins/rangers). One additional per level.
+ *
+ * @param mainParty
+ * @param requiredHenchmen
+ */
+const canPartyHireHenchmen = (
+  mainParty: CharacterSheet[],
+  requiredHenchmen: number
+): boolean => {
+  const maxHenchmen = mainParty.reduce((total, member) => {
+    return total + getMaxHenchmenForMember(member, mainParty);
+  }, 0);
+
+  return maxHenchmen >= requiredHenchmen;
+};
+
+/**
+ * At this point, it is first necessary to check whether the main party is able to
+ * hire a sufficient level of henchmen. This is based off of the level of the members,
+ * their classes, and their charisma. If it is not viable, we will have to call
+ * createMainParty again.
+ *
+ * @param charactersCount
+ * @param characterLevel
+ * @param othersCount
+ * @param henchmenRequired
+ */
+export const createViableMainParty = (
+  charactersCount: number,
+  characterLevel: number,
+  othersCount: number,
+  henchmenRequired: boolean
+): CharacterSheet[] => {
+  let mainParty: CharacterSheet[];
+  do {
+    mainParty = createMainParty(charactersCount, characterLevel);
+  } while (!canPartyHireHenchmen(mainParty, othersCount) && henchmenRequired);
+
+  return mainParty;
+};
+
+/**
  * DMG p11: rolling methods for characters and henchmen
  * DMG p100: stats adjustments and traits for NPCs
  * DMG p176: character party instructions
@@ -95,12 +278,21 @@ export const characterResult = (
 ): PartyResult => {
   const charactersCount = rollDice(4) + 1;
   const othersCount = 9 - charactersCount;
-  const henchmen = dungeonLevel > 3;
+  const henchmenRequired = dungeonLevel > 3;
   // levels are "base levels", which might change due to multi-classing
   const characterLevel = getCharacterLevel(monsterLevel, dungeonLevel);
-  const otherLevel = henchmen ? getHenchmanLevel(characterLevel) : 0;
+  const otherLevel = henchmenRequired ? getHenchmanLevel(characterLevel) : 0;
 
-  const mainParty = createMainParty(charactersCount, characterLevel);
+  const mainParty = createViableMainParty(
+    charactersCount,
+    characterLevel,
+    othersCount,
+    henchmenRequired
+  );
+
+  // At this point, the main party is populated, and it's time to roll men-at-arms
+  // or henchmen.
+  //
   // const mainParty = createParty([], charactersCount).map(
   //   (ch): PartyMember => ({
   //     level: characterLevel,
@@ -128,7 +320,7 @@ export const characterResult = (
   return {
     mainCharacters: mainParty,
     otherCharacters: [],
-    henchmen,
+    henchmen: henchmenRequired,
   };
 };
 
