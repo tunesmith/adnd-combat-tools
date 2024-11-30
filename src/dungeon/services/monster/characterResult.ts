@@ -85,7 +85,7 @@ export const createMainParty = (
   return party;
 };
 
-const getHenchmenForProfession = (
+const getMaxHenchmenForProfession = (
   profession: CharacterProfession,
   mainParty: CharacterSheet[],
   maxHenchmenByCharisma: number
@@ -122,7 +122,7 @@ const getMaxHenchmenForMember = (
   }
 
   // Single-class logic: Directly access the only profession
-  return getHenchmenForProfession(
+  return getMaxHenchmenForProfession(
     member.professions[0]!,
     mainParty,
     maxHenchmenByCharisma
