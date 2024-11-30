@@ -15,6 +15,7 @@ import { getSingleClassCharacterForRace } from "../../helpers/character/getSingl
 import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";
 import { CharacterClass } from "../../models/characterClass";
 import { getMonkHenchmen } from "../../helpers/character/henchmen/getMonkHenchmen";
+import { henchmenByCharisma } from "../../models/henchmenByCharisma";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -81,29 +82,6 @@ export const createMainParty = (
   }
 
   return party;
-};
-
-/**
- * This is just a straight mapping of the maximum
- * henchmen per charisma level, from the PHB
- */
-const henchmenByCharisma: Record<number, number> = {
-  3: 1,
-  4: 1,
-  5: 2,
-  6: 2,
-  7: 3,
-  8: 3,
-  9: 4,
-  10: 4,
-  11: 4,
-  12: 5,
-  13: 5,
-  14: 6,
-  15: 7,
-  16: 8,
-  17: 10,
-  18: 15,
 };
 
 const getMaxHenchmenByCharisma = (charisma: number): number => {
