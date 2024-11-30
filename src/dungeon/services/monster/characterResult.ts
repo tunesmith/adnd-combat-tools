@@ -3,7 +3,6 @@ import { characterMax } from "../../models/characterMax";
 import { getCharacterLevel } from "../../helpers/character/level/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/level/getHenchmanLevel";
 import {
-  CharacterProfession,
   CharacterSheet,
   PartyResult,
 } from "../../models/character/characterSheet";
@@ -14,9 +13,7 @@ import { getCharacterRace } from "../../helpers/character/getCharacterRace";
 import { getSingleClassCharacterForRace } from "../../helpers/character/getSingleClassCharacterForRace";
 import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";
 import { CharacterClass } from "../../models/characterClass";
-import { getMonkHenchmen } from "../../helpers/character/henchmen/getMonkHenchmen";
-import { getMaxHenchmenByCharisma } from "../../helpers/character/henchmen/getMaxHenchmenByCharisma";
-import { getAssassinHenchmen } from "../../helpers/character/henchmen/getAssassinHenchmen";
+import { canPartyHireHenchmen } from "../../helpers/party/canPartyHireHenchmen";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -83,71 +80,6 @@ export const createMainParty = (
   }
 
   return party;
-};
-
-const getMaxHenchmenForProfession = (
-  profession: CharacterProfession,
-  mainParty: CharacterSheet[],
-  maxHenchmenByCharisma: number
-): number => {
-  switch (profession.characterClass) {
-    case CharacterClass.Monk:
-      return getMonkHenchmen(profession.level);
-
-    case CharacterClass.Assassin:
-      return getAssassinHenchmen(
-        profession.level,
-        maxHenchmenByCharisma,
-        mainParty
-      );
-
-    case CharacterClass.Ranger:
-      return profession.level >= 8 ? maxHenchmenByCharisma : 0;
-
-    default:
-      return maxHenchmenByCharisma;
-  }
-};
-
-const getMaxHenchmenForMember = (
-  member: CharacterSheet,
-  mainParty: CharacterSheet[]
-): number => {
-  const maxHenchmenByCharisma = getMaxHenchmenByCharisma(member.attributes.CHA);
-
-  // Multi-class characters can always hire henchmen:
-  // A cleric/ranger or cleric/assassin can because clerics can
-  if (member.professions.length > 1) {
-    return maxHenchmenByCharisma;
-  }
-
-  // Single-class logic: Directly access the only profession
-  return getMaxHenchmenForProfession(
-    member.professions[0]!,
-    mainParty,
-    maxHenchmenByCharisma
-  );
-};
-
-/**
- * It's possible for a main party configuration to not be able to hire henchmen:
- *
- * Rangers: no henchmen until 8th level
- * Assassins: Only assassins while main character assassin is from 4th-7th level; 8th-11th also thieves; 12th anyone
- * Monks: no henchmen until 6th level. At 6th, 2 fighters, thieves, or assassins (not paladins/rangers). One additional per level.
- *
- * @param mainParty
- * @param requiredHenchmen
- */
-const canPartyHireHenchmen = (
-  mainParty: CharacterSheet[],
-  requiredHenchmen: number
-): boolean => {
-  const maxHenchmen = mainParty.reduce((total, member) => {
-    return total + getMaxHenchmenForMember(member, mainParty);
-  }, 0);
-
-  return maxHenchmen >= requiredHenchmen;
 };
 
 /**
