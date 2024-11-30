@@ -15,7 +15,8 @@ import { getSingleClassCharacterForRace } from "../../helpers/character/getSingl
 import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";
 import { CharacterClass } from "../../models/characterClass";
 import { getMonkHenchmen } from "../../helpers/character/henchmen/getMonkHenchmen";
-import { henchmenByCharisma } from "../../models/henchmenByCharisma";
+import { getMaxHenchmenByCharisma } from "../../helpers/character/henchmen/getMaxHenchmenByCharisma";
+import { getAssassinHenchmen } from "../../helpers/character/henchmen/getAssassinHenchmen";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -82,64 +83,6 @@ export const createMainParty = (
   }
 
   return party;
-};
-
-const getMaxHenchmenByCharisma = (charisma: number): number => {
-  if (charisma < 3 || charisma > 18) {
-    throw new Error(`Charisma value ${charisma} is out of range (3–18).`);
-  }
-  return henchmenByCharisma[charisma] as number;
-};
-
-/**
- * Assassins cannot have henchmen below Level 4.
- * From 4th-7th level, they can only have assassin henchmen,
- * which in turn is limited by the number of assassins already
- * in the character party.
- *
- * From level 8th on, they can also have thieves, and from
- * 12th on, they can have anyone. They are also limited by
- * charisma max though.
- *
- * @param level
- * @param maxHenchmenByCharisma
- * @param party
- */
-const getAssassinHenchmen = (
-  level: number,
-  maxHenchmenByCharisma: number,
-  party: CharacterSheet[]
-) => {
-  if (level < 4) return 0;
-  const numAssassins = getCountOfClassesInParty(party, [
-    CharacterClass.Assassin,
-  ]);
-  if (level < 8) {
-    const remainingAssassins =
-      characterMax[CharacterClass.Assassin] - numAssassins;
-    return Math.min(remainingAssassins, maxHenchmenByCharisma);
-  }
-  const numThieves = getCountOfClassesInParty(party, [CharacterClass.Thief]);
-  if (level < 12) {
-    const remainingAssassins =
-      characterMax[CharacterClass.Assassin] - numAssassins;
-    const remainingThieves = characterMax[CharacterClass.Thief] - numThieves;
-    return Math.min(
-      remainingAssassins + remainingThieves,
-      maxHenchmenByCharisma
-    );
-  }
-  return maxHenchmenByCharisma;
-};
-
-const getCountOfClassesInParty = (
-  party: CharacterSheet[],
-  classesToCount: CharacterClass[]
-): number => {
-  return party
-    .flatMap((character) => character.professions)
-    .filter((profession) => classesToCount.includes(profession.characterClass))
-    .length;
 };
 
 const getHenchmenForProfession = (
