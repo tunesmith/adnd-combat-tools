@@ -12,7 +12,15 @@ export const getCountOfClassesInParty = (
   party: CharacterSheet[],
   classesToCount: CharacterClass[]
 ): number => {
-  return party
+  const flattenParty = (party: CharacterSheet[]): CharacterSheet[] => {
+    return party.flatMap((character) => [
+      character,
+      ...flattenParty(character.followers),
+    ]);
+  };
+
+  // Flatten the party and count classes
+  return flattenParty(party)
     .flatMap((character) => character.professions)
     .filter((profession) => classesToCount.includes(profession.characterClass))
     .length;

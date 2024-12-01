@@ -27,6 +27,7 @@ export interface CharacterSheet {
   gender: Gender;
   hitPoints: number;
   isBard: boolean;
+  followers: CharacterSheet[];
 }
 
 export interface PartyResult {

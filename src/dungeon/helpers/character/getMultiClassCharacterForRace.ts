@@ -38,5 +38,6 @@ export function getMultiClassCharacterForRace(
     hitPoints: getHitPoints(professions, attributes.CON),
     professions: professions,
     isBard: selectedClasses.includes(CharacterClass.Bard),
+    followers: [],
   };
 }

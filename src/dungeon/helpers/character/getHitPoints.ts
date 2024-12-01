@@ -37,7 +37,6 @@ export const getHitPoints = (
   professions: CharacterProfession[],
   constitution: Attributes["CON"]
 ): number => {
-  console.log("new character");
   // Use reduce to calculate total hit points
   return professions.reduce((total, profession) => {
     const { level, characterClass } = profession;

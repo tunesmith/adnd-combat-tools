@@ -14,6 +14,7 @@ import { getSingleClassCharacterForRace } from "../../helpers/character/getSingl
 import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";
 import { CharacterClass } from "../../models/characterClass";
 import { canPartyHireHenchmen } from "../../helpers/party/canPartyHireHenchmen";
+import { getMaxHenchmenForMember } from "../../helpers/character/henchmen/getMaxHenchmenForMember";
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -29,20 +30,35 @@ import { canPartyHireHenchmen } from "../../helpers/party/canPartyHireHenchmen";
  *
  * @param charactersCount
  * @param characterLevel
+ * @param existingParty
  */
 export const createMainParty = (
   charactersCount: number,
-  characterLevel: number
+  characterLevel: number,
+  existingParty: CharacterSheet[] = []
 ): CharacterSheet[] => {
   const counts: Record<CharacterClass, number> = Object.fromEntries(
     Object.values(CharacterClass).map((c) => [c, 0])
   ) as Record<CharacterClass, number>;
 
-  const party: CharacterSheet[] = [];
+  // Initialize counts with counts from existing party
+  existingParty.forEach((characterSheet) => {
+    characterSheet.professions.forEach((profession) => {
+      counts[profession.characterClass]++;
+    });
+    characterSheet.followers.forEach((follower) => {
+      follower.professions.forEach((profession) => {
+        counts[profession.characterClass]++;
+      });
+    });
+  });
 
-  while (party.length < charactersCount) {
+  // party is the number to generate in this invocation
+  const newMembers: CharacterSheet[] = [];
+
+  while (newMembers.length < charactersCount) {
     const characterRace = getCharacterRace();
-    if (!isCompatibleRace(characterRace, party)) {
+    if (!isCompatibleRace(characterRace, [...newMembers, ...existingParty])) {
       continue; // skip if race is incompatible with who is already in the party
     }
 
@@ -62,7 +78,10 @@ export const createMainParty = (
     // Check compatibility and limits
     const exceedsLimits = characterSheet.professions.some(
       (profession) =>
-        !isCompatibleClass(profession.characterClass, party) ||
+        !isCompatibleClass(profession.characterClass, [
+          ...newMembers,
+          ...existingParty,
+        ]) ||
         counts[profession.characterClass] >=
           characterMax[profession.characterClass]
     );
@@ -76,10 +95,10 @@ export const createMainParty = (
       counts[profession.characterClass]++;
     });
 
-    party.push(characterSheet);
+    newMembers.push(characterSheet);
   }
 
-  return party;
+  return newMembers;
 };
 
 /**
@@ -105,6 +124,33 @@ export const createViableMainParty = (
   } while (!canPartyHireHenchmen(mainParty, othersCount) && henchmenRequired);
 
   return mainParty;
+};
+
+export const generateFollowers = (
+  mainParty: CharacterSheet[],
+  numFollowers: number,
+  followerLevel: number
+): void => {
+  let remainingFollowers = numFollowers;
+  while (remainingFollowers > 0) {
+    let generatedFollowersThisPass = 0;
+    for (const member of mainParty) {
+      if (getMaxHenchmenForMember(member, mainParty) > 0) {
+        const henchmen = createMainParty(1, followerLevel, mainParty);
+        member.followers.push(...henchmen);
+        // get CharacterSheet of henchman
+        // add it to this member's followers[]
+        remainingFollowers--;
+        generatedFollowersThisPass++;
+        if (remainingFollowers <= 0) break;
+      }
+    }
+    // If no henchmen were generated in this pass, break to avoid infinite loop
+    if (generatedFollowersThisPass === 0) {
+      console.warn("No more eligible characters to generate henchmen.");
+      break;
+    }
+  }
 };
 
 /**
@@ -133,6 +179,7 @@ export const characterResult = (
     henchmenRequired
   );
 
+  generateFollowers(mainParty, othersCount, otherLevel);
   // At this point, the main party is populated, and it's time to roll men-at-arms
   // or henchmen.
   //

@@ -25,18 +25,28 @@ export const formatPartyResult = (result: PartyResult): string => {
         " " +
         `STR${member.attributes.STR} INT${member.attributes.INT} WIS${member.attributes.WIS} ` +
         `DEX${member.attributes.DEX} CON${member.attributes.CON} CHA${member.attributes.CHA} ` +
-        `(hp: ${member.hitPoints})`
+        `(hp: ${member.hitPoints})` +
+        member.followers.map(
+          (follower) =>
+            `\n    ${follower.gender} ` +
+            `${CharacterRace[follower.characterRace]} ` +
+            follower.professions
+              .map(
+                (profession) =>
+                  `${CharacterClass[profession.characterClass]} (L${
+                    profession.level
+                  })`
+              )
+              .join(", ") +
+            " " +
+            `STR${follower.attributes.STR} INT${follower.attributes.INT} WIS${follower.attributes.WIS} ` +
+            `DEX${follower.attributes.DEX} CON${follower.attributes.CON} CHA${follower.attributes.CHA} ` +
+            `(hp: ${follower.hitPoints})`
+        )
     )
     .join(",\n ");
 
-  const overallPartyText = result.otherCharacters
-    .map(
-      (member) => `${CharacterClass[member.characterClass]} (L${member.level})`
-    )
-    .join(", ");
-
   return `
     Main Characters:\n ${charactersText}
-    Other ${result.henchmen ? "Henchmen" : "Men-At-Arms"}: ${overallPartyText}
   `.trim();
 };

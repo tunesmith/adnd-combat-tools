@@ -3,7 +3,7 @@ import { getMaxHenchmenByCharisma } from "./getMaxHenchmenByCharisma";
 import { getMaxHenchmenForProfession } from "./getMaxHenchmenForProfession";
 
 /**
- * # of henchmen per character depend on a few different things,
+ * Number of henchmen per character depend on a few different things,
  * including charisma and character class. Multi-class characters
  * are unlimited though, other than by charisma.
  *

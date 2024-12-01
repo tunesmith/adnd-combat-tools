@@ -91,6 +91,7 @@ export function getSingleClassCharacterForRace(
           hitPoints: getHitPoints([profession], attributes.CON),
           professions: [profession],
           isBard: candidateClass === CharacterClass.Bard,
+          followers: [],
         };
       }
     }
