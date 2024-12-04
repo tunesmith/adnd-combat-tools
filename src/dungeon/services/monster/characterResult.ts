@@ -32,7 +32,7 @@ import { getMaxHenchmenForMember } from "../../helpers/character/henchmen/getMax
  * @param characterLevel
  * @param existingParty
  */
-export const createMainParty = (
+export const createCharacters = (
   charactersCount: number,
   characterLevel: number,
   existingParty: CharacterSheet[] = []
@@ -120,7 +120,7 @@ export const createViableMainParty = (
 ): CharacterSheet[] => {
   let mainParty: CharacterSheet[];
   do {
-    mainParty = createMainParty(charactersCount, characterLevel);
+    mainParty = createCharacters(charactersCount, characterLevel);
   } while (!canPartyHireHenchmen(mainParty, othersCount) && henchmenRequired);
 
   return mainParty;
@@ -136,7 +136,7 @@ export const generateFollowers = (
     let generatedFollowersThisPass = 0;
     for (const member of mainParty) {
       if (getMaxHenchmenForMember(member, mainParty) > 0) {
-        const henchmen = createMainParty(1, followerLevel, mainParty);
+        const henchmen = createCharacters(1, followerLevel, mainParty);
         member.followers.push(...henchmen);
         // get CharacterSheet of henchman
         // add it to this member's followers[]
