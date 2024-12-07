@@ -1,6 +1,6 @@
 {
   "name": "adnd-combat-tools",
-  "homepage": "http://tunesmith.github.io/adnd-combat-tools",
+  "homepage": "https://tunesmith.github.io/adnd-combat-tools",
   "version": "0.2.2",
   "private": true,
   "scripts": {
@@ -12,7 +12,10 @@
     "lint": "next lint",
     "dev:static": "NODE_ENV=development next build && next export && serve ./out",
     "tsc": "tsc",
-    "tsc:watch": "tsc -w"
+    "tsc:watch": "tsc -w",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "next": "^12.1.1",
