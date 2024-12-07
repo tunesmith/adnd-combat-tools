@@ -1,117 +1,116 @@
-import { AttributeRange } from "./raceAttributeLimits";
 import { Attribute } from "./attributes";
 import { CharacterClass } from "./characterClass";
 
 interface ClassAttributeTable {
-  [CharacterClass.Cleric]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Druid]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Fighter]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Paladin]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Ranger]: Record<Attribute, AttributeRange>;
-  [CharacterClass.MagicUser]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Illusionist]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Thief]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Assassin]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Monk]: Record<Attribute, AttributeRange>;
-  [CharacterClass.Bard]: Record<Attribute, AttributeRange>;
-  [CharacterClass.ManAtArms]: Record<Attribute, AttributeRange>;
+  [CharacterClass.Cleric]: Record<Attribute, number>;
+  [CharacterClass.Druid]: Record<Attribute, number>;
+  [CharacterClass.Fighter]: Record<Attribute, number>;
+  [CharacterClass.Paladin]: Record<Attribute, number>;
+  [CharacterClass.Ranger]: Record<Attribute, number>;
+  [CharacterClass.MagicUser]: Record<Attribute, number>;
+  [CharacterClass.Illusionist]: Record<Attribute, number>;
+  [CharacterClass.Thief]: Record<Attribute, number>;
+  [CharacterClass.Assassin]: Record<Attribute, number>;
+  [CharacterClass.Monk]: Record<Attribute, number>;
+  [CharacterClass.Bard]: Record<Attribute, number>;
+  [CharacterClass.ManAtArms]: Record<Attribute, number>;
 }
 
 export const npcClassAttributeLimits: ClassAttributeTable = {
   [CharacterClass.Cleric]: {
-    STR: { min: 6, max: 18 },
-    INT: { min: 6, max: 18 },
-    WIS: { min: 9, max: 18 }, // min 13 if a multi-classed half-elven cleric
-    DEX: { min: 3, max: 18 },
-    CON: { min: 6, max: 18 },
-    CHA: { min: 6, max: 18 },
+    STR: 6,
+    INT: 6,
+    WIS: 9, // min 13 if a multi-classed half-elven cleric
+    DEX: 3,
+    CON: 6,
+    CHA: 6,
   },
   [CharacterClass.Druid]: {
-    STR: { min: 6, max: 18 },
-    INT: { min: 6, max: 18 },
-    WIS: { min: 12, max: 18 },
-    DEX: { min: 6, max: 18 },
-    CON: { min: 6, max: 18 },
-    CHA: { min: 14, max: 18 }, // PHB says 15 minimum for pc
+    STR: 6,
+    INT: 6,
+    WIS: 12,
+    DEX: 6,
+    CON: 6,
+    CHA: 14, // PHB says 15 minimum for pc
   },
   [CharacterClass.Fighter]: {
-    STR: { min: 9, max: 18 },
-    INT: { min: 3, max: 18 },
-    WIS: { min: 6, max: 18 },
-    DEX: { min: 6, max: 18 },
-    CON: { min: 7, max: 18 },
-    CHA: { min: 6, max: 18 },
+    STR: 9,
+    INT: 3,
+    WIS: 6,
+    DEX: 6,
+    CON: 7,
+    CHA: 6,
   },
   [CharacterClass.Paladin]: {
-    STR: { min: 12, max: 18 },
-    INT: { min: 9, max: 18 },
-    WIS: { min: 13, max: 18 },
-    DEX: { min: 6, max: 18 },
-    CON: { min: 9, max: 18 },
-    CHA: { min: 17, max: 18 },
+    STR: 12,
+    INT: 9,
+    WIS: 13,
+    DEX: 6,
+    CON: 9,
+    CHA: 17,
   },
   [CharacterClass.Ranger]: {
-    STR: { min: 13, max: 18 },
-    INT: { min: 13, max: 18 },
-    WIS: { min: 12, max: 18 }, // PHB says 14 minimum for pc
-    DEX: { min: 6, max: 18 },
-    CON: { min: 14, max: 18 },
-    CHA: { min: 6, max: 18 },
+    STR: 13,
+    INT: 13,
+    WIS: 12, // PHB says 14 minimum for pc
+    DEX: 6,
+    CON: 14,
+    CHA: 6,
   },
   [CharacterClass.MagicUser]: {
-    STR: { min: 3, max: 18 },
-    INT: { min: 9, max: 18 },
-    WIS: { min: 6, max: 18 },
-    DEX: { min: 6, max: 18 },
-    CON: { min: 6, max: 18 },
-    CHA: { min: 6, max: 18 },
+    STR: 3,
+    INT: 9,
+    WIS: 6,
+    DEX: 6,
+    CON: 6,
+    CHA: 6,
   },
   [CharacterClass.Illusionist]: {
-    STR: { min: 6, max: 18 },
-    INT: { min: 15, max: 18 },
-    WIS: { min: 6, max: 18 },
-    DEX: { min: 15, max: 18 }, // PHB says 16 minimum for pc
-    CON: { min: 3, max: 18 },
-    CHA: { min: 6, max: 18 },
+    STR: 6,
+    INT: 15,
+    WIS: 6,
+    DEX: 15, // PHB says 16 minimum for pc
+    CON: 3,
+    CHA: 6,
   },
   [CharacterClass.Thief]: {
-    STR: { min: 6, max: 18 },
-    INT: { min: 6, max: 18 },
-    WIS: { min: 3, max: 18 },
-    DEX: { min: 9, max: 18 },
-    CON: { min: 6, max: 18 },
-    CHA: { min: 6, max: 18 },
+    STR: 6,
+    INT: 6,
+    WIS: 3,
+    DEX: 9,
+    CON: 6,
+    CHA: 6,
   },
   [CharacterClass.Assassin]: {
-    STR: { min: 12, max: 18 },
-    INT: { min: 11, max: 18 },
-    WIS: { min: 6, max: 18 },
-    DEX: { min: 12, max: 18 },
-    CON: { min: 6, max: 18 },
-    CHA: { min: 3, max: 18 },
+    STR: 12,
+    INT: 11,
+    WIS: 6,
+    DEX: 12,
+    CON: 6,
+    CHA: 3,
   },
   [CharacterClass.Monk]: {
-    STR: { min: 12, max: 18 }, // PHB says 15 minimum for pc
-    INT: { min: 6, max: 18 },
-    WIS: { min: 15, max: 18 },
-    DEX: { min: 15, max: 18 },
-    CON: { min: 11, max: 18 },
-    CHA: { min: 6, max: 18 },
+    STR: 12, // PHB says 15 minimum for pc
+    INT: 6,
+    WIS: 15,
+    DEX: 15,
+    CON: 11,
+    CHA: 6,
   },
   [CharacterClass.Bard]: {
-    STR: { min: 15, max: 18 },
-    INT: { min: 12, max: 18 },
-    WIS: { min: 15, max: 18 },
-    DEX: { min: 15, max: 18 },
-    CON: { min: 10, max: 18 },
-    CHA: { min: 15, max: 18 },
+    STR: 15,
+    INT: 12,
+    WIS: 15,
+    DEX: 15,
+    CON: 10,
+    CHA: 15,
   },
   [CharacterClass.ManAtArms]: {
-    STR: { min: 3, max: 18 },
-    INT: { min: 3, max: 18 },
-    WIS: { min: 3, max: 18 },
-    DEX: { min: 3, max: 18 },
-    CON: { min: 3, max: 18 },
-    CHA: { min: 3, max: 18 },
+    STR: 3,
+    INT: 3,
+    WIS: 3,
+    DEX: 3,
+    CON: 3,
+    CHA: 3,
   },
 };

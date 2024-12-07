@@ -54,7 +54,7 @@ export const rollAttribute = (
   // Calculate the maximum minimum score across all candidate classes
   const maxClassMin = Math.max(
     ...candidateClasses.map(
-      (candidateClass) => npcClassAttributeLimits[candidateClass][attribute].min
+      (candidateClass) => npcClassAttributeLimits[candidateClass][attribute]
     )
   );
   // Adjust the score upward to the maximum of the race minimum and class minimums
