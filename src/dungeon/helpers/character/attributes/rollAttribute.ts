@@ -5,7 +5,7 @@ import { getAttributeDice } from "./getAttributeDice";
 import { rollAttributeDice } from "./rollAttributeDice";
 import { assessRacialPenalty } from "./assessRacialPenalty";
 import raceAttributeLimits from "../../../models/raceAttributeLimits";
-import { npcClassAttributeLimits } from "../../../models/npcClassAttributeLimits";
+import { npcClassAttributeMinimums } from "../../../models/npcClassAttributeMinimums";
 import { assessRacialBonus } from "./assessRacialBonus";
 import { assessNpcClassBonus } from "./assessNpcClassBonus";
 import { getStrengthAdjustedScore } from "./fighter/getStrengthAdjustedScore";
@@ -54,7 +54,7 @@ export const rollAttribute = (
   // Calculate the maximum minimum score across all candidate classes
   const maxClassMin = Math.max(
     ...candidateClasses.map(
-      (candidateClass) => npcClassAttributeLimits[candidateClass][attribute]
+      (candidateClass) => npcClassAttributeMinimums[candidateClass][attribute]
     )
   );
   // Adjust the score upward to the maximum of the race minimum and class minimums

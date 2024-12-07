@@ -16,7 +16,7 @@ interface ClassAttributeTable {
   [CharacterClass.ManAtArms]: Record<Attribute, number>;
 }
 
-export const npcClassAttributeLimits: ClassAttributeTable = {
+export const npcClassAttributeMinimums: ClassAttributeTable = {
   [CharacterClass.Cleric]: {
     STR: 6,
     INT: 6,
