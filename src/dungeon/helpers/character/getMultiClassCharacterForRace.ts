@@ -5,6 +5,7 @@ import { getCharacterGender } from "./getCharacterGender";
 import { getAttributes } from "./attributes/getAttributes";
 import { getProfessions } from "./getProfessions";
 import { getHitPoints } from "./getHitPoints";
+import { CharacterClass } from "../../models/characterClass";
 
 /**
  * Similar to {@link getSingleClassCharacterForRace}, although simpler to meet
@@ -37,6 +38,11 @@ export function getMultiClassCharacterForRace(
     hitPoints: getHitPoints(professions, attributes.CON),
     professions: professions,
     isBard: false, // can't have a multi-class Bard
+    bardLevels: {
+      [CharacterClass.Fighter]: 0,
+      [CharacterClass.Thief]: 0,
+      [CharacterClass.Bard]: 0,
+    },
     followers: [],
   };
 }

@@ -20,6 +20,11 @@ export interface CharacterProfession {
   characterClass: CharacterClass;
 }
 
+export interface BardLevels {
+  [CharacterClass.Fighter]: number;
+  [CharacterClass.Thief]: number;
+  [CharacterClass.Bard]: number;
+}
 export interface CharacterSheet {
   professions: CharacterProfession[];
   characterRace: CharacterRace;
@@ -27,6 +32,7 @@ export interface CharacterSheet {
   gender: Gender;
   hitPoints: number;
   isBard: boolean;
+  bardLevels: BardLevels;
   followers: CharacterSheet[];
 }
 

@@ -69,10 +69,10 @@ export const hitPointsByClass: Record<CharacterClass, HitDiceDetails> = {
     perLateLevel: 0,
   },
   [CharacterClass.Bard]: {
-    hitDie: 8,
-    firstLevelDice: 1,
-    numberOfDice: 9,
-    perLateLevel: 2,
+    hitDie: 6,
+    firstLevelDice: 0,
+    numberOfDice: 10,
+    perLateLevel: 1,
   },
   [CharacterClass.ManAtArms]: {
     hitDie: 4,

@@ -29,6 +29,8 @@ export const getMaxLevel = (
           return 14; // (Master of Assassins)
         case CharacterClass.Monk:
           return 17; // (Grand Master of Flowers)
+        case CharacterClass.Bard:
+          return 23;
         default:
           return Infinity;
       }

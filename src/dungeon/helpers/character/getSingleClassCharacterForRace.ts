@@ -7,6 +7,8 @@ import { getCharacterClass } from "./class/getCharacterClass";
 import { getCharacterGender } from "./getCharacterGender";
 import { getHitPoints } from "./getHitPoints";
 import { CharacterClass } from "../../models/characterClass";
+import { getBardLevels } from "./level/getBardLevels";
+import { getBardHitPoints } from "./hitpoints/getBardHitPoints";
 
 /**
  * Level restrictions are tricky here because the DMG leaves this fairly
@@ -80,6 +82,14 @@ export function getSingleClassCharacterForRace(
       if (
         getMaxLevel(characterRace, candidateClass, attributes) >= characterLevel
       ) {
+        const bardLevels =
+          candidateClass === CharacterClass.Bard
+            ? getBardLevels(characterLevel)
+            : {
+                [CharacterClass.Fighter]: 0,
+                [CharacterClass.Thief]: 0,
+                [CharacterClass.Bard]: 0,
+              };
         const profession = {
           level: characterLevel,
           characterClass: candidateClass,
@@ -88,9 +98,13 @@ export function getSingleClassCharacterForRace(
           characterRace: characterRace,
           gender: gender,
           attributes: attributes,
-          hitPoints: getHitPoints([profession], attributes.CON),
+          hitPoints:
+            candidateClass === CharacterClass.Bard
+              ? getBardHitPoints(bardLevels, attributes.CON)
+              : getHitPoints([profession], attributes.CON),
           professions: [profession],
           isBard: candidateClass === CharacterClass.Bard,
+          bardLevels: bardLevels,
           followers: [],
         };
       }

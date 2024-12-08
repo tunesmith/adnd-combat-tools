@@ -32,10 +32,12 @@ import { rollDice } from "../dungeonLookup";
  *
  * @param professions
  * @param constitution
+ * @param levelsToIgnore
  */
 export const getHitPoints = (
   professions: CharacterProfession[],
-  constitution: Attributes["CON"]
+  constitution: Attributes["CON"],
+  levelsToIgnore: number = 0
 ): number => {
   // Use reduce to calculate total hit points
   return professions.reduce((total, profession) => {
@@ -47,23 +49,39 @@ export const getHitPoints = (
       constitution
     );
 
+    // No reason to calculate if we are ignoring all levels
+    if (level - levelsToIgnore <= 0) {
+      return total;
+    }
+
     let hitPoints = 0;
 
-    // Handle first level with extra dice
-    for (let i = 0; i < firstLevelDice; i++) {
-      hitPoints += rollDieWithReRoll(hitDie, reRoll) + bonus;
+    // Handle first level with extra dice, ignoring if necessary
+    if (levelsToIgnore === 0) {
+      for (let i = 0; i < firstLevelDice; i++) {
+        hitPoints += rollDieWithReRoll(hitDie, reRoll) + bonus;
+      }
     }
 
     const remainingDice = numberOfDice - firstLevelDice;
     const remainingLevelsToRoll = Math.min(level - 1, remainingDice);
-    for (let i = 1; i <= remainingLevelsToRoll; i++) {
-      hitPoints += rollDieWithReRoll(hitDie, reRoll) + bonus;
+
+    const remainingLevelsToIgnore = Math.max(levelsToIgnore - 1, 0);
+    const remainingLevelsToRollAfterIgnoringLevels =
+      remainingLevelsToRoll - remainingLevelsToIgnore;
+
+    if (remainingLevelsToRollAfterIgnoringLevels > 0) {
+      for (let i = 1; i <= remainingLevelsToRollAfterIgnoringLevels; i++) {
+        hitPoints += rollDieWithReRoll(hitDie, reRoll) + bonus;
+      }
     }
 
-    // add back in the first level
-    const totalLevelsRolled = remainingLevelsToRoll + 1;
+    const totalLevelsRolled = remainingLevelsToRoll + 1; // (to add back in first level)
+    // add late-level hp bonuses
     const lateLevels = Math.max(0, level - totalLevelsRolled);
-    hitPoints += lateLevels * perLateLevel;
+    const lateLevelsToIgnore = Math.max(0, levelsToIgnore - totalLevelsRolled);
+
+    hitPoints += (lateLevels - lateLevelsToIgnore) * perLateLevel;
 
     // Add the hit points for this profession to the total, divided by number of professions
     return total + Math.round(hitPoints / professions.length);
