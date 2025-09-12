@@ -6,7 +6,7 @@ describe("adapters", () => {
     expect(step.action).toBe("passage");
     expect(Array.isArray(step.messages)).toBe(true);
     expect(step.messages.length).toBeGreaterThan(0);
-    expect(typeof step.messages[0]?.text).toBe("string");
+    expect(step.messages[0]?.kind).toBe("paragraph");
   });
 
   it("returns a message for door", () => {
@@ -15,4 +15,3 @@ describe("adapters", () => {
     expect(step.messages.length).toBeGreaterThan(0);
   });
 });
-

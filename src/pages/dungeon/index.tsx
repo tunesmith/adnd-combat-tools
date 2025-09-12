@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useRef, useState } from "react";
 import styles from "./dungeon.module.css";
 import { rollDice } from "../../dungeon/helpers/dungeonLookup";
 import { runDungeonStep } from "../../dungeon/services/adapters";
+import { DungeonMessage } from "../../types/dungeon";
 
 type ActionKind = "passage" | "door";
 
@@ -9,7 +10,7 @@ type FeedItem = {
   id: string;
   action: ActionKind;
   roll: number;
-  messages: { kind: "paragraph"; text: string }[];
+  messages: DungeonMessage[];
 };
 
 const DungeonIndexPage = () => {
@@ -159,10 +160,25 @@ const DungeonIndexPage = () => {
                 </div>
                 <div className={styles["messages"]}>
                   {item.messages.map((m, i) => {
-                    const parts = m.text
-                      .split(/(?<=[.!?])\s+/)
-                      .filter(Boolean);
-                    return parts.map((p, j) => <p key={`${i}-${j}`}>{p}</p>);
+                    switch (m.kind) {
+                      case "heading":
+                        return (
+                          <p key={i} style={{ fontWeight: 700 }}>
+                            {m.text}
+                          </p>
+                        );
+                      case "bullet-list":
+                        return (
+                          <ul key={i} style={{ marginLeft: "1.25rem" }}>
+                            {m.items.map((it, idx) => (
+                              <li key={idx}>{it}</li>
+                            ))}
+                          </ul>
+                        );
+                      case "paragraph":
+                      default:
+                        return <p key={i}>{m.text}</p>;
+                    }
                   })}
                 </div>
               </div>

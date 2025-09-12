@@ -20,7 +20,7 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Map adapter output to formatted UI (split into readable sentences/paragraphs); present as styled cards with action chips and prominent roll; include Clear Feed; newest first.
 
 6) Types and return-shape convergence
-- After inspecting outputs, introduce minimal `DungeonStep`/`DungeonMessage` in `src/types/` that match reality; update adapters + page accordingly.
+- Introduce shared types in `src/types/dungeon.ts` (`DungeonMessage` union with paragraph/heading/bullet-list; `DungeonStep`). Update adapters and page to use these types and render nodes directly (no string parsing). This enables migrating services from string logs to typed results incrementally.
 
 7) Refactor services (non-breaking)
 - Update `passageResults`/`doorBeyondResults` (or wrappers) to return typed collections instead of console logging; keep logs via a thin wrapper to avoid breaking any existing usage; update tests.
@@ -52,4 +52,5 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Completed: Step 3 — Dice utilities review + tests
 - Completed: Step 4 — Service adapter layer (adapters created, wired into page, tests added)
 - Completed: Step 5 — Render results (formatting/polish)
-- Next: Step 6 — Types and return-shape convergence
+- Completed: Step 6 — Types and return-shape convergence (types added, adapters/page updated, tests adjusted)
+- Next: Step 7 — Refactor services to emit typed nodes

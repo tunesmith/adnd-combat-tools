@@ -40,7 +40,7 @@ export const monsterFive: Table<MonsterFive> = {
     { range: [29, 31], command: MonsterFive.Leucrotta_1to2 },
     { range: [32, 50], command: MonsterFive.LizardSubterranean_1to3 },
     { range: [51, 52], command: MonsterFive.LycanthropeWereboar_1to3 },
-    { range: [53, 50], command: MonsterFive.Minotaur_1to3 },
+    { range: [53, 60], command: MonsterFive.Minotaur_1to3 },
     { range: [61, 64], command: MonsterFive.MoldYellow },
     { range: [65], command: MonsterFive.Quasit },
     { range: [66, 67], command: MonsterFive.RustMonster },
