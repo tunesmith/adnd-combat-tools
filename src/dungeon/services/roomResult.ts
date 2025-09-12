@@ -6,6 +6,7 @@ import { unusualShapeResult } from "./unusualShapeResult";
 import { unusualSizeResult } from "./unusualSizeResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { exitResult } from "./exitResult";
+import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
 export const roomResult = (): string => {
   const roll = rollDice(roomDimensions.sides);
@@ -68,4 +69,70 @@ export const roomResult = (): string => {
         "(TODO exits, contents, treasure) "
       );
   }
+};
+
+/**
+ * Typed variant for room dimensions.
+ * - In detail mode with no roll, returns only a table preview node.
+ * - Otherwise returns a heading + bullet with roll/result and a paragraph description.
+ */
+export const roomMessages = (
+  options?: { roll?: number; detailMode?: boolean }
+): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+  if (options?.detailMode && options.roll === undefined) {
+    const preview: DungeonTablePreview = {
+      kind: "table-preview",
+      id: "roomDimensions",
+      title: "Room Dimensions",
+      sides: roomDimensions.sides,
+      entries: roomDimensions.entries.map((e) => ({
+        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        label: RoomDimensions[e.command] ?? String(e.command),
+      })),
+    };
+    return { usedRoll: undefined, messages: [preview] };
+  }
+
+  const usedRoll = options?.roll ?? rollDice(roomDimensions.sides);
+  const command = getTableEntry(usedRoll, roomDimensions);
+  let desc: string;
+  switch (command) {
+    case RoomDimensions.Square10x10:
+      desc = "The room is square and 10' x 10'. " + exitResult(10, 10, true) + "(TODO contents, treasure) ";
+      break;
+    case RoomDimensions.Square20x20:
+      desc = "The room is square and 20' x 20'. " + exitResult(20, 20, true) + "(TODO contents, treasure) ";
+      break;
+    case RoomDimensions.Square30x30:
+      desc = "The room is square and 30' x 30'. " + exitResult(30, 30, true) + "(TODO contents, treasure) ";
+      break;
+    case RoomDimensions.Square40x40:
+      desc = "The room is square and 40' x 40'. " + exitResult(40, 40, true) + "(TODO contents, treasure) ";
+      break;
+    case RoomDimensions.Rectangular10x20:
+      desc = "The room is rectangular and 10' x 20'. " + exitResult(10, 20, true) + "(TODO contents, treasure) ";
+      break;
+    case RoomDimensions.Rectangular20x30:
+      desc = "The room is rectangular and 20' x 30'. " + exitResult(20, 30, true) + "(TODO contents, treasure) ";
+      break;
+    case RoomDimensions.Rectangular20x40:
+      desc = "The room is rectangular and 20' x 40'. " + exitResult(20, 40, true) + "(TODO contents, treasure) ";
+      break;
+    case RoomDimensions.Rectangular30x40:
+      desc = "The room is rectangular and 30' x 40'. " + exitResult(30, 40, true) + "(TODO contents, treasure) ";
+      break;
+    case RoomDimensions.Unusual:
+      desc =
+        "The room has an unusual shape and size. " +
+        unusualShapeResult() +
+        unusualSizeResult() +
+        "(TODO exits, contents, treasure) ";
+      break;
+  }
+  const messages: DungeonMessage[] = [
+    { kind: "heading", level: 4, text: "Room Dimensions" },
+    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${RoomDimensions[command] ?? String(command)}`] },
+    { kind: "paragraph", text: desc },
+  ];
+  return { usedRoll, messages };
 };

@@ -2,8 +2,10 @@ import { DoorBeyond, doorBeyond } from "../../tables/dungeon/doorBeyond";
 import { passageWidthResults } from "./passageWidth";
 
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { chamberResult } from "./chamberResult";
-import { roomResult } from "./roomResult";
+import { chamberMessages, chamberResult } from "./chamberResult";
+import { chamberDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
+import { roomMessages, roomResult } from "./roomResult";
+import { roomDimensions, RoomDimensions } from "../../tables/dungeon/chambersRooms";
 import { DungeonMessage, DungeonRollTrace, DungeonTablePreview } from "../../types/dungeon";
 import { passageWidthMessages } from "./passageWidth";
 import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
@@ -200,10 +202,49 @@ export const doorBeyondMessages = (
       }
       break;
     case DoorBeyond.Room:
-      text = "Beyond the door is a room. " + roomResult();
+      if (options?.detailMode) {
+        text = "Beyond the door is a room. ";
+        const preview: DungeonTablePreview = {
+          kind: "table-preview",
+          id: "roomDimensions",
+          title: "Room Dimensions",
+          sides: roomDimensions.sides,
+          entries: roomDimensions.entries.map((e) => ({
+            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            label: RoomDimensions[e.command] ?? String(e.command),
+          })),
+        };
+        previews.push(preview);
+      } else {
+        const res = roomMessages({});
+        text = "Beyond the door is a room. ";
+        // Append room description paragraph(s)
+        for (const m of res.messages) {
+          if (m.kind === "paragraph") text += m.text;
+        }
+      }
       break;
     case DoorBeyond.Chamber:
-      text = "Beyond the door is a chamber. " + chamberResult();
+      if (options?.detailMode) {
+        text = "Beyond the door is a chamber. ";
+        const preview: DungeonTablePreview = {
+          kind: "table-preview",
+          id: "chamberDimensions",
+          title: "Chamber Dimensions",
+          sides: chamberDimensions.sides,
+          entries: chamberDimensions.entries.map((e) => ({
+            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            label: ChamberDimensions[e.command] ?? String(e.command),
+          })),
+        };
+        previews.push(preview);
+      } else {
+        const res = chamberMessages({});
+        text = "Beyond the door is a chamber. ";
+        for (const m of res.messages) {
+          if (m.kind === "paragraph") text += m.text;
+        }
+      }
       break;
   }
 

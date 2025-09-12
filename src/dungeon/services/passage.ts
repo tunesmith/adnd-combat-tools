@@ -10,6 +10,7 @@ import { stairsResult } from "./stairsResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { wanderingMonsterResult } from "./wanderingMonsterResult";
 import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import { chamberDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -99,9 +100,28 @@ export const passageMessages = (
   }
   const usedRoll = options?.roll ?? rollDice(periodicCheck.sides);
   const command = getTableEntry(usedRoll, periodicCheck);
-  const text = getPassageResult(level, command, options?.avoidMonster ?? false);
+  let text: string;
+  const heading: DungeonMessage = { kind: "heading", level: 3, text: "Passage" };
+  if (options?.detailMode && command === PeriodicCheck.Chamber) {
+    text = "The passage opens into a chamber. ";
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
+    const para: DungeonMessage = { kind: "paragraph", text };
+    // Prepend a friendly note for not-yet-typed previews if any in future
+    const preview: DungeonTablePreview = {
+      kind: "table-preview",
+      id: "chamberDimensions",
+      title: "Chamber Dimensions",
+      sides: chamberDimensions.sides,
+      entries: chamberDimensions.entries.map((e) => ({
+        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        label: ChamberDimensions[e.command] ?? String(e.command),
+      })),
+    };
+    return { usedRoll, messages: [heading, bullet, para, preview] };
+  }
+  text = getPassageResult(level, command, options?.avoidMonster ?? false);
   const messages: DungeonMessage[] = [
-    { kind: "heading", level: 3, text: "Passage" },
+    heading,
     { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] },
     { kind: "paragraph", text },
   ];

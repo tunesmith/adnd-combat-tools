@@ -5,6 +5,8 @@ import { runDungeonStep } from "../../dungeon/services/adapters";
 import { DungeonMessage, DungeonRenderNode, DungeonRollTrace, RollTraceItem, DungeonTablePreview } from "../../types/dungeon";
 import { passageWidthMessages } from "../../dungeon/services/passageWidth";
 import { doorBeyondMessages } from "../../dungeon/services/doorBeyondResult";
+import { roomMessages } from "../../dungeon/services/roomResult";
+import { chamberMessages } from "../../dungeon/services/chamberResult";
 import { passageMessages } from "../../dungeon/services/passage";
 
 type ActionKind = "passage" | "door";
@@ -188,9 +190,14 @@ const DungeonIndexPage = () => {
                   >
                     {item.action}
                   </span>
+                  {!detailMode && (
+                    <span className={styles["roll"]}>(roll: {item.roll})</span>
+                  )}
                 </div>
                 <div className={styles["messages"]}>
-                  {item.messages.map((m, i) => renderNode(m, i, item.id, overrides, setOverrides, setFeed))}
+                  {(detailMode ? filterForDetail(item.messages, item.action) : filterForCompact(item.messages, item.action)).map((m, i) =>
+                    renderNode(m, i, item.id, overrides, setOverrides, setFeed)
+                  )}
                 </div>
               </div>
             ))
@@ -404,6 +411,76 @@ function resolvePreview(
       })
     );
   }
+  if (tp.id === "roomDimensions") {
+    const resolved = roomMessages({ roll: usedRoll });
+    setFeed((prev) =>
+      prev.map((fi) => {
+        if (fi.id !== feedItemId) return fi;
+        const newMessages: DungeonRenderNode[] = [];
+        let skippingOld = false;
+        for (const node of fi.messages) {
+          if (node.kind === "table-preview" && node.id === tp.id) {
+            newMessages.push(node);
+            skippingOld = true; // replace prior resolved block
+            for (const m of resolved.messages) newMessages.push(m);
+          } else {
+            if (skippingOld) {
+              if (node.kind === "table-preview" && node.id !== tp.id) {
+                skippingOld = false;
+              } else if (node.kind === "heading" && node.text !== "Room Dimensions") {
+                skippingOld = false;
+              } else if (node.kind === "heading" && node.text === "Room Dimensions") {
+                // keep skipping prior resolved block nodes until next unrelated section
+              } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+                // skip
+              } else {
+                skippingOld = false;
+              }
+              if (!skippingOld) newMessages.push(node);
+            } else {
+              newMessages.push(node);
+            }
+          }
+        }
+        return { ...fi, messages: newMessages };
+      })
+    );
+  }
+  if (tp.id === "chamberDimensions") {
+    const resolved = chamberMessages({ roll: usedRoll });
+    setFeed((prev) =>
+      prev.map((fi) => {
+        if (fi.id !== feedItemId) return fi;
+        const newMessages: DungeonRenderNode[] = [];
+        let skippingOld = false;
+        for (const node of fi.messages) {
+          if (node.kind === "table-preview" && node.id === tp.id) {
+            newMessages.push(node);
+            skippingOld = true;
+            for (const m of resolved.messages) newMessages.push(m);
+          } else {
+            if (skippingOld) {
+              if (node.kind === "table-preview" && node.id !== tp.id) {
+                skippingOld = false;
+              } else if (node.kind === "heading" && node.text !== "Chamber Dimensions") {
+                skippingOld = false;
+              } else if (node.kind === "heading" && node.text === "Chamber Dimensions") {
+                // keep skipping
+              } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+                // skip
+              } else {
+                skippingOld = false;
+              }
+              if (!skippingOld) newMessages.push(node);
+            } else {
+              newMessages.push(node);
+            }
+          }
+        }
+        return { ...fi, messages: newMessages };
+      })
+    );
+  }
   if (tp.id === "periodicCheck") {
     const resolved = passageMessages({ roll: usedRoll, detailMode: true });
     setFeed((prev) =>
@@ -430,6 +507,46 @@ function resolvePreview(
       })
     );
   }
+}
+
+function filterForCompact(
+  nodes: DungeonRenderNode[],
+  action: ActionKind
+): DungeonRenderNode[] {
+  const rootHeading = action === "passage" ? "Passage" : "Door";
+  return nodes.filter((n) => {
+    if (n.kind === "heading") {
+      // Drop the redundant root heading; keep sub-headings
+      return n.text !== rootHeading;
+    }
+    if (n.kind === "bullet-list") {
+      // Drop pure roll bullets like "roll: 9 — Foo"
+      const allRoll = n.items.every((it) => it.trim().toLowerCase().startsWith("roll:"));
+      return !allRoll;
+    }
+    if (n.kind === "roll-trace") {
+      // Hide debug traces in compact view
+      return false;
+    }
+    return true;
+  });
+}
+
+function filterForDetail(
+  nodes: DungeonRenderNode[],
+  action: ActionKind
+): DungeonRenderNode[] {
+  const rootHeading = action === "passage" ? "Passage" : "Door";
+  let droppedRootHeading = false;
+  const result: DungeonRenderNode[] = [];
+  for (const n of nodes) {
+    if (!droppedRootHeading && n.kind === "heading" && n.text === rootHeading) {
+      droppedRootHeading = true;
+      continue;
+    }
+    result.push(n);
+  }
+  return result;
 }
 
 function getRootPreviewNodes(action: ActionKind): DungeonRenderNode[] {
