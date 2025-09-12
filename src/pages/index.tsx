@@ -7,6 +7,8 @@ const Index = () => {
       <Link href={"/calculator"}>AD&D Combat Calculator</Link>
       <br />
       <Link href={"/battle"}>AD&D Battle Grid</Link>
+      <br />
+      <Link href={"/dungeon"}>AD&D Random Dungeon Generator</Link>
     </div>
   );
 };

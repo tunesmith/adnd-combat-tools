@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<flyingLogic instance="abc3247a-a589-411e-b533-527e1d858ff9" majorVersion="5" minorVersion="0" uuid="3edb118b-e729-48fb-bab4-d4f8be950033">
+<flyingLogic instance="fbb6e613-482a-4b02-846f-6731eb7d46a7" majorVersion="5" minorVersion="0" uuid="3edb118b-e729-48fb-bab4-d4f8be950033">
     <domains>
         <domain>
             <attributes>
@@ -173,16 +173,16 @@
     <displaySettings addEntityAsSuccessor="true" annotationToBrowse="false" bias="Bias.end" compactness="1.0" confidenceVisible="false" edgeNotesVisible="false" edgeWeightsVisible="false"
         entityIdVisible="false" noteNumbersVisible="false" orientation="Orientation.leftToRight" projectManagementVisible="false"/>
     <documentInfo author="" comments="" keywords="" title=""/>
-    <canvasSettings canvasMode="graph" horizScroll="653.0" vertScroll="498.0" zoom="0.689"/>
+    <canvasSettings canvasMode="graph" horizScroll="555.0" vertScroll="60.0" zoom="0.6756"/>
     <chartSettings classVisible="true" classWidth="90" completionVisible="true" effortVisible="true" finishDateVisible="true" resourceVisible="true" resourceWidth="60" startDateVisible="true" titleWidth="104"/>
     <inspectorSettings visibility="false" width="284">
-        <inspector height="150" title="domain" visibility="open"/>
-        <inspector title="operators" visibility="open"/>
-        <inspector height="220" title="text" visibility="open"/>
-        <inspector title="element" visibility="minimized"/>
-        <inspector title="layout" visibility="open"/>
-        <inspector title="navigation" visibility="minimized"/>
         <inspector title="document" visibility="minimized"/>
+        <inspector title="element" visibility="minimized"/>
+        <inspector height="220" title="text" visibility="open"/>
+        <inspector title="operators" visibility="open"/>
+        <inspector height="150" title="domain" visibility="open"/>
+        <inspector title="navigation" visibility="minimized"/>
+        <inspector title="layout" visibility="open"/>
         <inspector height="150" title="userattrs" visibility="minimized"/>
     </inspectorSettings>
     <printSettings footerLeft="" footerMiddle="" footerRight="" headerLeft="" headerMiddle="" headerRight="" paperMargins="54.0 54.0 54.0 54.0" paperName="Letter" paperOrientation="portrait"
