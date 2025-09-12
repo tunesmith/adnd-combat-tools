@@ -79,5 +79,40 @@
 }
 
 .feedItem {
-    margin: 0.25rem 0;
+    margin: 0.75rem 0;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.15);
+    border-left: 6px solid var(--copper);
+}
+
+.itemHeader {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--eggshell);
+    color: var(--caput-martuum);
+    font-weight: 700;
+}
+
+.chipPassage { color: var(--dark-olive-green); }
+.chipDoor { color: var(--caput-martuum); }
+
+.roll {
+    font-weight: 700;
+}
+
+.messages p {
+    margin: 0.35rem 0;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: flex-end;
 }

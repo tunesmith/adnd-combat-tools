@@ -60,6 +60,15 @@ const DungeonIndexPage = () => {
     <div className={styles["outerContainer"]}>
       <div className={styles["title"]}>AD&D Random Dungeon Generator</div>
       <div className={styles["contentContainer"]}>
+        <div className={styles["toolbar"]}>
+          <button
+            type="button"
+            className={styles["button"]}
+            onClick={() => setFeed([])}
+          >
+            Clear Feed
+          </button>
+        </div>
         <form className={styles["formContainer"]} onSubmit={handleSubmit}>
           <div className={styles["controlsRow"]}>
             <div className={styles["actionSelector"]}>
@@ -138,12 +147,24 @@ const DungeonIndexPage = () => {
           ) : (
             feed.map((item) => (
               <div className={styles["feedItem"]} key={item.id}>
-                <div>
-                  <strong>{item.action}</strong> — d20: {item.roll}
+                <div className={styles["itemHeader"]}>
+                  <span
+                    className={`${styles["chip"]} ${
+                      item.action === "passage" ? styles["chipPassage"] : styles["chipDoor"]
+                    }`}
+                  >
+                    {item.action}
+                  </span>
+                  <span className={styles["roll"]}>d20: {item.roll}</span>
                 </div>
-                {item.messages.map((m, i) => (
-                  <div key={i}>{m.text}</div>
-                ))}
+                <div className={styles["messages"]}>
+                  {item.messages.map((m, i) => {
+                    const parts = m.text
+                      .split(/(?<=[.!?])\s+/)
+                      .filter(Boolean);
+                    return parts.map((p, j) => <p key={`${i}-${j}`}>{p}</p>);
+                  })}
+                </div>
               </div>
             ))
           )}

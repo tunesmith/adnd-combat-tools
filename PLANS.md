@@ -17,7 +17,7 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Create `src/dungeon/services/adapters.ts` to call `passageResults` and `doorBeyondResult`. Capture outputs into a minimal, typed structure (`DungeonStep` with `messages`) for rendering. Unit tests for adapters included.
 
 5) Render results
-- Map adapter output to formatted UI (paragraphs/bullets); preserve a session list of steps with newest first; clear button.
+- Map adapter output to formatted UI (split into readable sentences/paragraphs); present as styled cards with action chips and prominent roll; include Clear Feed; newest first.
 
 6) Types and return-shape convergence
 - After inspecting outputs, introduce minimal `DungeonStep`/`DungeonMessage` in `src/types/` that match reality; update adapters + page accordingly.
@@ -51,4 +51,5 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Completed: Step 2 — Basic UI shell (action selector, 1–20 input, Roll + Submit, validation, running feed)
 - Completed: Step 3 — Dice utilities review + tests
 - Completed: Step 4 — Service adapter layer (adapters created, wired into page, tests added)
-- Next: Step 5 — Render results (formatting/polish)
+- Completed: Step 5 — Render results (formatting/polish)
+- Next: Step 6 — Types and return-shape convergence
