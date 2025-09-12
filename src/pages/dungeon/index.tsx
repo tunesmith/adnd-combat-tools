@@ -24,6 +24,8 @@ const DungeonIndexPage = () => {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [detailMode, setDetailMode] = useState<boolean>(false);
   const [overrides, setOverrides] = useState<Record<string, number | undefined>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [resolved, setResolved] = useState<Record<string, boolean>>({});
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
   const parsedRoll = useMemo(() => {
@@ -196,7 +198,7 @@ const DungeonIndexPage = () => {
                 </div>
                 <div className={styles["messages"]}>
                   {(detailMode ? filterForDetail(item.messages, item.action) : filterForCompact(item.messages, item.action)).map((m, i) =>
-                    renderNode(m, i, item.id, overrides, setOverrides, setFeed)
+                    renderNode(m, i, item.id, overrides, setOverrides, setFeed, true, collapsed, setCollapsed, resolved, setResolved)
                   )}
                 </div>
               </div>
@@ -215,7 +217,11 @@ function renderNode(
   overrides: Record<string, number | undefined>,
   setOverrides: React.Dispatch<React.SetStateAction<Record<string, number | undefined>>>,
   setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
-  enablePreviewControls: boolean = true
+  enablePreviewControls: boolean = true,
+  collapsed?: Record<string, boolean>,
+  setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  resolved?: Record<string, boolean>,
+  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 ): JSX.Element {
   switch (m.kind) {
     case "heading":
@@ -234,17 +240,42 @@ function renderNode(
       );
     case "table-preview": {
       const tp = m as DungeonTablePreview;
+      const keyId = `${feedItemId}:${tp.id}`;
+      const isCollapsed = !!(collapsed && collapsed[keyId]);
+      const hasResolved = !!(resolved && resolved[keyId]);
       return (
         <div key={key} style={{ border: "1px dashed var(--copper)", padding: "0.5rem", margin: "0.5rem 0" }}>
-          <div style={{ fontWeight: 700 }}>{tp.title} (d{tp.sides})</div>
-          <div style={{ fontSize: "0.95em" }}>
-            {tp.entries.map((e, i) => (
-              <div key={i}>
-                <code style={{ opacity: 0.85 }}>{e.range}</code>: {e.label}
-              </div>
-            ))}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <div style={{ fontWeight: 700 }}>{tp.title} (d{tp.sides})</div>
+            {setCollapsed && hasResolved && (
+              <button
+                type="button"
+                onClick={() => setCollapsed((prev) => ({ ...prev, [keyId]: !isCollapsed }))}
+                title={isCollapsed ? "Expand table" : "Collapse table"}
+                aria-label={isCollapsed ? "Expand table" : "Collapse table"}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "var(--eggshell)",
+                  fontSize: "18px",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                }}
+              >
+                {isCollapsed ? "▸" : "▾"}
+              </button>
+            )}
           </div>
-          {enablePreviewControls && (
+          {!isCollapsed && (
+            <div style={{ fontSize: "0.95em" }}>
+              {tp.entries.map((e, i) => (
+                <div key={i}>
+                  <code style={{ opacity: 0.85 }}>{e.range}</code>: {e.label}
+                </div>
+              ))}
+            </div>
+          )}
+          {!isCollapsed && enablePreviewControls && (
             <div style={{ marginTop: "0.5rem", display: "flex", gap: 8, alignItems: "center" }}>
               <label>
                 Override next roll:
@@ -264,7 +295,7 @@ function renderNode(
               <button
                 type="button"
                 className={styles["button"]}
-                onClick={() => resolvePreview(tp, feedItemId, overrides, setOverrides, setFeed, false)}
+                onClick={() => resolvePreview(tp, feedItemId, overrides, setOverrides, setFeed, false, setCollapsed, setResolved)}
                 style={{ padding: "6px 12px" }}
               >
                 Submit
@@ -272,7 +303,7 @@ function renderNode(
               <button
                 type="button"
                 className={styles["button"]}
-                onClick={() => resolvePreview(tp, feedItemId, overrides, setOverrides, setFeed, true)}
+                onClick={() => resolvePreview(tp, feedItemId, overrides, setOverrides, setFeed, true, setCollapsed, setResolved)}
                 style={{ padding: "6px 12px" }}
               >
                 AutoRoll
@@ -324,7 +355,9 @@ function resolvePreview(
   overrides: Record<string, number | undefined>,
   setOverrides: React.Dispatch<React.SetStateAction<Record<string, number | undefined>>>,
   setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
-  shouldRoll: boolean
+  shouldRoll: boolean,
+  setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 ) {
   let usedRoll: number | undefined = overrides[tp.id];
   if (shouldRoll || usedRoll === undefined) {
@@ -339,6 +372,8 @@ function resolvePreview(
   if (overrides[tp.id] !== undefined) {
     setOverrides((prev) => ({ ...prev, [tp.id]: undefined }));
   }
+
+  const keyId = `${feedItemId}:${tp.id}`;
 
   if (tp.id === "passageWidth") {
     const width = passageWidthMessages({ roll: usedRoll });
@@ -384,6 +419,8 @@ function resolvePreview(
         return { ...fi, messages: newMessages };
       })
     );
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
   if (tp.id === "doorBeyond") {
     const resolved = doorBeyondMessages({ roll: usedRoll, detailMode: true });
@@ -410,6 +447,8 @@ function resolvePreview(
         return { ...fi, messages: newMessages };
       })
     );
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
   if (tp.id === "roomDimensions") {
     const resolved = roomMessages({ roll: usedRoll });
@@ -445,6 +484,8 @@ function resolvePreview(
         return { ...fi, messages: newMessages };
       })
     );
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
   if (tp.id === "chamberDimensions") {
     const resolved = chamberMessages({ roll: usedRoll });
@@ -480,6 +521,8 @@ function resolvePreview(
         return { ...fi, messages: newMessages };
       })
     );
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
   if (tp.id === "periodicCheck") {
     const resolved = passageMessages({ roll: usedRoll, detailMode: true });
@@ -506,6 +549,54 @@ function resolvePreview(
         return { ...fi, messages: newMessages };
       })
     );
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
+  }
+  if (tp.id === "numberOfExits") {
+    // Use context for dimensions if provided
+    const ctx = tp.context && tp.context.kind === 'exits' ? tp.context : undefined;
+    if (!ctx) return;
+    const { exitMessages } = require("../../dungeon/services/exitResult");
+    const resolved = exitMessages({
+      length: ctx.length,
+      width: ctx.width,
+      isRoom: ctx.isRoom,
+      roll: usedRoll,
+    });
+    setFeed((prev) =>
+      prev.map((fi) => {
+        if (fi.id !== feedItemId) return fi;
+        const newMessages: DungeonRenderNode[] = [];
+        let skippingOld = false;
+        for (const node of fi.messages) {
+          if (node.kind === "table-preview" && node.id === tp.id) {
+            newMessages.push(node);
+            skippingOld = true;
+            for (const m of resolved.messages) newMessages.push(m);
+          } else {
+            if (skippingOld) {
+              if (node.kind === "table-preview" && node.id !== tp.id) {
+                skippingOld = false;
+              } else if (node.kind === "heading" && node.text !== "Exits") {
+                skippingOld = false;
+              } else if (node.kind === "heading" && node.text === "Exits") {
+                // keep skipping
+              } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+                // skip
+              } else {
+                skippingOld = false;
+              }
+              if (!skippingOld) newMessages.push(node);
+            } else {
+              newMessages.push(node);
+            }
+          }
+        }
+        return { ...fi, messages: newMessages };
+      })
+    );
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
 }
 

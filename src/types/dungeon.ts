@@ -43,7 +43,11 @@ export type DungeonTablePreview = {
   title: string;
   sides: number;
   entries: TablePreviewEntry[];
+  context?: TableContext;
 };
+
+export type TableContext =
+  | { kind: "exits"; length: number; width: number; isRoom: boolean };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;
 

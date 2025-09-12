@@ -5,6 +5,7 @@ import {
 import { unusualShapeResult } from "./unusualShapeResult";
 import { unusualSizeResult } from "./unusualSizeResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { exitMessages } from "./exitResult";
 import { exitResult } from "./exitResult";
 import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
@@ -80,38 +81,55 @@ export const chamberMessages = (
 
   const usedRoll = options?.roll ?? rollDice(chamberDimensions.sides);
   const command = getTableEntry(usedRoll, chamberDimensions);
-  let desc: string;
+  let baseDesc: string;
+  let dims: { length: number; width: number } | undefined;
   switch (command) {
     case ChamberDimensions.Square20x20:
-      desc = "The chamber is square and 20' x 20'. " + exitResult(20, 20) + "(TODO contents, treasure) ";
+      baseDesc = "The chamber is square and 20' x 20'. ";
+      dims = { length: 20, width: 20 };
       break;
     case ChamberDimensions.Square30x30:
-      desc = "The chamber is square and 30' x 30'. " + exitResult(30, 30) + "(TODO contents, treasure) ";
+      baseDesc = "The chamber is square and 30' x 30'. ";
+      dims = { length: 30, width: 30 };
       break;
     case ChamberDimensions.Square40x40:
-      desc = "The chamber is square and 40' x 40'. " + exitResult(40, 40) + "(TODO contents, treasure) ";
+      baseDesc = "The chamber is square and 40' x 40'. ";
+      dims = { length: 40, width: 40 };
       break;
     case ChamberDimensions.Rectangular20x30:
-      desc = "The chamber is rectangular and 20' x 30'. " + exitResult(20, 30) + "(TODO contents, treasure) ";
+      baseDesc = "The chamber is rectangular and 20' x 30'. ";
+      dims = { length: 20, width: 30 };
       break;
     case ChamberDimensions.Rectangular30x50:
-      desc = "The chamber is rectangular and 30' x 50'. " + exitResult(30, 50) + "(TODO contents, treasure) ";
+      baseDesc = "The chamber is rectangular and 30' x 50'. ";
+      dims = { length: 30, width: 50 };
       break;
     case ChamberDimensions.Rectangular40x60:
-      desc = "The chamber is rectangular and 40' x 60'. " + exitResult(40, 60) + "(TODO contents, treasure) ";
+      baseDesc = "The chamber is rectangular and 40' x 60'. ";
+      dims = { length: 40, width: 60 };
       break;
     case ChamberDimensions.Unusual:
-      desc =
+      baseDesc =
         "The chamber has an unusual shape and size. " +
         unusualShapeResult() +
-        unusualSizeResult() +
-        "(TODO exits, contents, treasure) ";
+        unusualSizeResult();
       break;
   }
-  const messages: DungeonMessage[] = [
+  const messages: (DungeonMessage | DungeonTablePreview)[] = [
     { kind: "heading", level: 4, text: "Chamber Dimensions" },
     { kind: "bullet-list", items: [`roll: ${usedRoll} — ${ChamberDimensions[command] ?? String(command)}`] },
-    { kind: "paragraph", text: desc },
+    { kind: "paragraph", text: baseDesc },
   ];
+  if (dims) {
+    if (options?.detailMode) {
+      const preview = exitMessages({ length: dims.length, width: dims.width, isRoom: false, detailMode: true });
+      messages.push(...preview.messages);
+    } else {
+      const exits = exitMessages({ length: dims.length, width: dims.width, isRoom: false });
+      for (const m of exits.messages) if (m.kind === "paragraph") messages.push(m);
+    }
+  } else {
+    messages.push({ kind: "paragraph", text: "(TODO exits, contents, treasure) " });
+  }
   return { usedRoll, messages };
 };
