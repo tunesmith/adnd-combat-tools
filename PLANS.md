@@ -11,7 +11,7 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Action switcher ("passage" | "door"), number input (1–20), Roll button, Submit button; client-side validation; disabled-submit until valid. Output shows a running feed of steps (clear on refresh, no persistence). Note future option: allow manual rolls for recursive sub-steps.
 
 3) Dice utilities review + tests
-- Reuse existing `rollDice` in `src/dungeon/helpers/dungeonLookup.ts`. Add light wrappers/guards only if needed (e.g., clamp 1–20 for UI). Add/adjust unit tests under `src/tests/`.
+- Reuse existing `rollDice` in `src/dungeon/helpers/dungeonLookup.ts`. Add light wrappers/guards only if needed (e.g., clamp 1–20 for UI). Added unit tests under `src/tests/dungeon/helpers/dungeonLookup.test.ts` for single and multiple rolls.
 
 4) Service adapter layer
 - Create `src/dungeon/services/adapters.ts` to call `passageResults` and `doorBeyondResult`. Inspect each sub-service’s actual outputs and capture them into a minimal, typed structure for rendering. Do not guess shapes; reflect what the services currently emit and iterate.
@@ -49,4 +49,5 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 ## Status
 - Completed: Step 1 — Scaffold page and navigation
 - Completed: Step 2 — Basic UI shell (action selector, 1–20 input, Roll + Submit, validation, running feed)
-- Next: Step 3 — Dice utilities review + tests
+- Completed: Step 3 — Dice utilities review + tests
+- Next: Step 4 — Service adapter layer
