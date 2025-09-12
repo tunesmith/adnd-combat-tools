@@ -15,6 +15,8 @@ import { sidePassageMessages } from "./sidePassage";
 import { passageTurnMessages } from "./passageTurn";
 import { stairsMessages } from "./stairsResult";
 import { trickTrapMessages } from "./trickTrap";
+import { doorLocation } from "../../tables/dungeon/doorLocation";
+import { DoorLocation } from "../../tables/dungeon/doorLocation";
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -120,6 +122,22 @@ export const passageMessages = (
         range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: ChamberDimensions[e.command] ?? String(e.command),
       })),
+    };
+    return { usedRoll, messages: [heading, bullet, para, preview] };
+  }
+  if (options?.detailMode && command === PeriodicCheck.Door) {
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
+    const para: DungeonMessage = { kind: "paragraph", text: "A closed door is indicated." };
+    const preview: DungeonTablePreview = {
+      kind: "table-preview",
+      id: "doorLocation:0",
+      title: "Door Location",
+      sides: doorLocation.sides,
+      entries: doorLocation.entries.map((e) => ({
+        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        label: DoorLocation[e.command] ?? String(e.command),
+      })),
+      context: { kind: "doorChain", existing: [] },
     };
     return { usedRoll, messages: [heading, bullet, para, preview] };
   }

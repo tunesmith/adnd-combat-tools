@@ -47,7 +47,8 @@ export type DungeonTablePreview = {
 };
 
 export type TableContext =
-  | { kind: "exits"; length: number; width: number; isRoom: boolean };
+  | { kind: "exits"; length: number; width: number; isRoom: boolean }
+  | { kind: "doorChain"; existing: string[] };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;
 

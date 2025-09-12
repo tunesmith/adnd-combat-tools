@@ -1,4 +1,5 @@
 import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
+import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 import {
   periodicCheck,
   PeriodicCheck,
@@ -59,4 +60,34 @@ export const closedDoorResult = (existingDoors: DoorLocation[]): string => {
       }
     }
   }
+};
+
+export const doorLocationMessages = (
+  options?: { roll?: number; detailMode?: boolean }
+): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+  if (options?.detailMode && options.roll === undefined) {
+    const preview: DungeonTablePreview = {
+      kind: "table-preview",
+      id: "doorLocation",
+      title: "Door Location",
+      sides: doorLocation.sides,
+      entries: doorLocation.entries.map((e) => ({
+        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        label: DoorLocation[e.command] ?? String(e.command),
+      })),
+    };
+    return { usedRoll: undefined, messages: [preview] };
+  }
+  const usedRoll = options?.roll ?? rollDice(doorLocation.sides);
+  const command = getTableEntry(usedRoll, doorLocation);
+  const text =
+    command === DoorLocation.Ahead
+      ? "A door is Ahead. "
+      : `A door is to the ${DoorLocation[command]}. `;
+  const messages: DungeonMessage[] = [
+    { kind: "heading", level: 4, text: "Door Location" },
+    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${DoorLocation[command]}`] },
+    { kind: "paragraph", text },
+  ];
+  return { usedRoll, messages };
 };
