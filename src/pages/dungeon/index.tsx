@@ -8,6 +8,21 @@ import { doorBeyondMessages } from "../../dungeon/services/doorBeyondResult";
 import { roomMessages } from "../../dungeon/services/roomResult";
 import { chamberMessages } from "../../dungeon/services/chamberResult";
 import { passageMessages } from "../../dungeon/services/passage";
+import { sidePassageMessages } from "../../dungeon/services/sidePassage";
+import { passageTurnMessages } from "../../dungeon/services/passageTurn";
+import { stairsMessages } from "../../dungeon/services/stairsResult";
+import { specialPassageMessages } from "../../dungeon/services/specialPassage";
+import {
+  galleryStairLocationMessages,
+  galleryStairOccurrenceMessages,
+  streamConstructionMessages,
+  riverConstructionMessages,
+  riverBoatBankMessages,
+  chasmDepthMessages,
+  chasmConstructionMessages,
+  jumpingPlaceWidthMessages,
+} from "../../dungeon/services/specialPassage";
+import { trickTrapMessages } from "../../dungeon/services/trickTrap";
 
 type ActionKind = "passage" | "door";
 
@@ -376,7 +391,7 @@ function resolvePreview(
   const keyId = `${feedItemId}:${tp.id}`;
 
   if (tp.id === "passageWidth") {
-    const width = passageWidthMessages({ roll: usedRoll });
+    const width = passageWidthMessages({ roll: usedRoll, detailMode: true });
     setFeed((prev) =>
       prev.map((fi) => {
         if (fi.id !== feedItemId) return fi;
@@ -395,6 +410,11 @@ function resolvePreview(
               items: [`roll: ${width.usedRoll} — ${width.trace.result}`],
             });
             for (const m of width.messages) newMessages.push(m);
+            // If width indicates SpecialPassage, stage a Special Passage preview
+            if (width.trace.result === "SpecialPassage") {
+              const preview = specialPassageMessages({ detailMode: true });
+              for (const m of preview.messages) newMessages.push(m);
+            }
           } else {
             if (skippingOldResult) {
               // Skip previously appended result nodes until the next preview or heading that isn't ours
@@ -421,6 +441,60 @@ function resolvePreview(
     );
     if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
+  }
+  if (tp.id === "specialPassage") {
+    const resolved = specialPassageMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Special Passage")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "galleryStairLocation") {
+    const resolved = galleryStairLocationMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Gallery Stair Location")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "galleryStairOccurrence") {
+    const resolved = galleryStairOccurrenceMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Gallery Stair Occurrence")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "streamConstruction") {
+    const resolved = streamConstructionMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Stream Construction")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "riverConstruction") {
+    const resolved = riverConstructionMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "River Construction")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "riverBoatBank") {
+    const resolved = riverBoatBankMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Boat Bank")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "chasmDepth") {
+    const resolved = chasmDepthMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Chasm Depth")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "chasmConstruction") {
+    const resolved = chasmConstructionMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Chasm Construction")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "jumpingPlaceWidth") {
+    const resolved = jumpingPlaceWidthMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Jumping Place Width")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "doorBeyond") {
     const resolved = doorBeyondMessages({ roll: usedRoll, detailMode: true });
@@ -598,6 +672,67 @@ function resolvePreview(
     if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
+  if (tp.id === "sidePassages") {
+    const resolved = sidePassageMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Side Passages")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "passageTurns") {
+    const resolved = passageTurnMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Passage Turns")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "stairs") {
+    const resolved = stairsMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Stairs")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "trickTrap") {
+    const resolved = trickTrapMessages({ roll: usedRoll });
+    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Trick / Trap")));
+    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+}
+
+function updateResolvedBlock(
+  fi: FeedItem,
+  feedItemId: string,
+  tableId: string,
+  messages: DungeonRenderNode[],
+  headingText: string
+): FeedItem {
+  if (fi.id !== feedItemId) return fi;
+  const newMessages: DungeonRenderNode[] = [];
+  let skippingOld = false;
+  for (const node of fi.messages) {
+    if (node.kind === "table-preview" && node.id === tableId) {
+      newMessages.push(node);
+      skippingOld = true;
+      for (const m of messages) newMessages.push(m);
+    } else {
+      if (skippingOld) {
+        if (node.kind === "table-preview" && node.id !== tableId) {
+          skippingOld = false;
+        } else if (node.kind === "heading" && node.text !== headingText) {
+          skippingOld = false;
+        } else if (node.kind === "heading" && node.text === headingText) {
+          // keep skipping
+        } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+          // skip
+        } else {
+          skippingOld = false;
+        }
+        if (!skippingOld) newMessages.push(node);
+      } else {
+        newMessages.push(node);
+      }
+    }
+  }
+  return { ...fi, messages: newMessages };
 }
 
 function filterForCompact(

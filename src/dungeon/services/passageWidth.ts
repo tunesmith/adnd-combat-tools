@@ -21,7 +21,7 @@ export const passageWidthResults = (): string => {
 };
 
 export const passageWidthMessages = (
-  options?: { roll?: number }
+  options?: { roll?: number; detailMode?: boolean }
 ): { usedRoll: number; messages: DungeonMessage[]; trace: RollTraceItem } => {
   const usedRoll = options?.roll ?? rollDice(passageWidth.sides);
   const command = getTableEntry(usedRoll, passageWidth);
@@ -40,7 +40,7 @@ export const passageWidthMessages = (
       text = "The passage is 5' wide. ";
       break;
     case PassageWidth.SpecialPassage:
-      text = specialPassageResult();
+      text = options?.detailMode ? "" : specialPassageResult();
       break;
   }
   const messages: DungeonMessage[] = [{ kind: "paragraph", text }];

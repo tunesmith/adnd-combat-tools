@@ -11,6 +11,10 @@ import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { wanderingMonsterResult } from "./wanderingMonsterResult";
 import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 import { chamberDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
+import { sidePassageMessages } from "./sidePassage";
+import { passageTurnMessages } from "./passageTurn";
+import { stairsMessages } from "./stairsResult";
+import { trickTrapMessages } from "./trickTrap";
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -118,6 +122,30 @@ export const passageMessages = (
       })),
     };
     return { usedRoll, messages: [heading, bullet, para, preview] };
+  }
+  if (options?.detailMode && command === PeriodicCheck.SidePassage) {
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
+    const para: DungeonMessage = { kind: "paragraph", text: "A side passage occurs." };
+    const preview = sidePassageMessages({ detailMode: true });
+    return { usedRoll, messages: [heading, bullet, para, ...preview.messages] };
+  }
+  if (options?.detailMode && command === PeriodicCheck.PassageTurn) {
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
+    const para: DungeonMessage = { kind: "paragraph", text: "The passage turns." };
+    const preview = passageTurnMessages({ detailMode: true });
+    return { usedRoll, messages: [heading, bullet, para, ...preview.messages] };
+  }
+  if (options?.detailMode && command === PeriodicCheck.Stairs) {
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
+    const para: DungeonMessage = { kind: "paragraph", text: "Stairs are indicated here." };
+    const preview = stairsMessages({ detailMode: true });
+    return { usedRoll, messages: [heading, bullet, para, ...preview.messages] };
+  }
+  if (options?.detailMode && command === PeriodicCheck.TrickTrap) {
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
+    const para: DungeonMessage = { kind: "paragraph", text: "There is a trick or trap here." };
+    const preview = trickTrapMessages({ detailMode: true });
+    return { usedRoll, messages: [heading, bullet, para, ...preview.messages] };
   }
   text = getPassageResult(level, command, options?.avoidMonster ?? false);
   const messages: DungeonMessage[] = [
