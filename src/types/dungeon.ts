@@ -32,8 +32,23 @@ export type DungeonRollTrace = {
 
 export type DungeonRenderable = DungeonMessage | DungeonRollTrace;
 
+export type TablePreviewEntry = {
+  range: string;
+  label: string;
+};
+
+export type DungeonTablePreview = {
+  kind: "table-preview";
+  id: string; // stable identifier, e.g., table name
+  title: string;
+  sides: number;
+  entries: TablePreviewEntry[];
+};
+
+export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;
+
 export type DungeonStep = {
   action: DungeonAction;
   roll?: number;
-  messages: DungeonRenderable[];
+  messages: DungeonRenderNode[];
 };

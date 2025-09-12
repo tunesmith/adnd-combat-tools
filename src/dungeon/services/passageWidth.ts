@@ -44,10 +44,11 @@ export const passageWidthMessages = (
       break;
   }
   const messages: DungeonMessage[] = [{ kind: "paragraph", text }];
+  const resultLabel = PassageWidth[command] ?? String(command);
   const trace: RollTraceItem = {
     table: "passageWidth",
     roll: usedRoll,
-    result: PassageWidth[command],
+    result: resultLabel,
   };
   return { usedRoll, messages, trace };
 };

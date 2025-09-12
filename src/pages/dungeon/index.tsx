@@ -2,7 +2,7 @@ import { FormEvent, useMemo, useRef, useState } from "react";
 import styles from "./dungeon.module.css";
 import { rollDice } from "../../dungeon/helpers/dungeonLookup";
 import { runDungeonStep } from "../../dungeon/services/adapters";
-import { DungeonMessage, DungeonRenderable, DungeonRollTrace, RollTraceItem } from "../../types/dungeon";
+import { DungeonMessage, DungeonRenderNode, DungeonRollTrace, RollTraceItem, DungeonTablePreview } from "../../types/dungeon";
 
 type ActionKind = "passage" | "door";
 
@@ -17,6 +17,7 @@ const DungeonIndexPage = () => {
   const [action, setAction] = useState<ActionKind>("passage");
   const [rollInput, setRollInput] = useState<string>("");
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [detailMode, setDetailMode] = useState<boolean>(false);
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
   const parsedRoll = useMemo(() => {
@@ -30,7 +31,7 @@ const DungeonIndexPage = () => {
   }, [parsedRoll]);
 
   const addToFeed = (act: ActionKind, roll: number) => {
-    const step = runDungeonStep(act, { roll });
+    const step = runDungeonStep(act, { roll, detailMode });
     const item: FeedItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       action: act,
@@ -125,6 +126,15 @@ const DungeonIndexPage = () => {
             >
               Submit
             </button>
+
+            <label style={{ marginLeft: "auto" }}>
+              <input
+                type="checkbox"
+                checked={detailMode}
+                onChange={(e) => setDetailMode(e.target.checked)}
+              />
+              Detail mode
+            </label>
           </div>
 
           {rollInput.length > 0 && !isValid && (
@@ -170,7 +180,7 @@ const DungeonIndexPage = () => {
   );
 };
 
-function renderNode(m: DungeonRenderable, key: number): JSX.Element {
+function renderNode(m: DungeonRenderNode, key: number): JSX.Element {
   switch (m.kind) {
     case "heading":
       return (
@@ -186,6 +196,21 @@ function renderNode(m: DungeonRenderable, key: number): JSX.Element {
           ))}
         </ul>
       );
+    case "table-preview": {
+      const tp = m as DungeonTablePreview;
+      return (
+        <div key={key} style={{ border: "1px dashed var(--copper)", padding: "0.5rem", margin: "0.5rem 0" }}>
+          <div style={{ fontWeight: 700 }}>{tp.title} (d{tp.sides})</div>
+          <div style={{ fontSize: "0.95em" }}>
+            {tp.entries.map((e, i) => (
+              <div key={i}>
+                <code style={{ opacity: 0.85 }}>{e.range}</code>: {e.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
     case "roll-trace":
       return (
         <div key={key} style={{ opacity: 0.9 }}>

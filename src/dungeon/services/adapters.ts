@@ -4,7 +4,7 @@ import { DungeonAction, DungeonStep } from "../../types/dungeon";
 
 export function runDungeonStep(
   action: DungeonAction,
-  options?: { roll?: number; doorAhead?: boolean }
+  options?: { roll?: number; doorAhead?: boolean; detailMode?: boolean }
 ): DungeonStep {
   switch (action) {
     case "passage": {
@@ -17,6 +17,7 @@ export function runDungeonStep(
       const { messages } = doorBeyondMessages({
         roll: options?.roll,
         doorAhead: options?.doorAhead,
+        detailMode: options?.detailMode,
       });
       return { action, roll: options?.roll, messages };
     }
