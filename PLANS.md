@@ -14,7 +14,7 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Reuse existing `rollDice` in `src/dungeon/helpers/dungeonLookup.ts`. Add light wrappers/guards only if needed (e.g., clamp 1–20 for UI). Added unit tests under `src/tests/dungeon/helpers/dungeonLookup.test.ts` for single and multiple rolls.
 
 4) Service adapter layer
-- Create `src/dungeon/services/adapters.ts` to call `passageResults` and `doorBeyondResult`. Inspect each sub-service’s actual outputs and capture them into a minimal, typed structure for rendering. Do not guess shapes; reflect what the services currently emit and iterate.
+- Create `src/dungeon/services/adapters.ts` to call `passageResults` and `doorBeyondResult`. Capture outputs into a minimal, typed structure (`DungeonStep` with `messages`) for rendering. Unit tests for adapters included.
 
 5) Render results
 - Map adapter output to formatted UI (paragraphs/bullets); preserve a session list of steps with newest first; clear button.
@@ -50,4 +50,5 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Completed: Step 1 — Scaffold page and navigation
 - Completed: Step 2 — Basic UI shell (action selector, 1–20 input, Roll + Submit, validation, running feed)
 - Completed: Step 3 — Dice utilities review + tests
-- Next: Step 4 — Service adapter layer
+- Completed: Step 4 — Service adapter layer (adapters created, wired into page, tests added)
+- Next: Step 5 — Render results (formatting/polish)

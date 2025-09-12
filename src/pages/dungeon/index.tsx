@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useRef, useState } from "react";
 import styles from "./dungeon.module.css";
 import { rollDice } from "../../dungeon/helpers/dungeonLookup";
+import { runDungeonStep } from "../../dungeon/services/adapters";
 
 type ActionKind = "passage" | "door";
 
@@ -8,6 +9,7 @@ type FeedItem = {
   id: string;
   action: ActionKind;
   roll: number;
+  messages: { kind: "paragraph"; text: string }[];
 };
 
 const DungeonIndexPage = () => {
@@ -27,10 +29,12 @@ const DungeonIndexPage = () => {
   }, [parsedRoll]);
 
   const addToFeed = (act: ActionKind, roll: number) => {
+    const step = runDungeonStep(act, { roll });
     const item: FeedItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       action: act,
       roll,
+      messages: step.messages,
     };
     setFeed((prev) => [item, ...prev]);
     // announce briefly for a11y
@@ -134,7 +138,12 @@ const DungeonIndexPage = () => {
           ) : (
             feed.map((item) => (
               <div className={styles["feedItem"]} key={item.id}>
-                <strong>{item.action}</strong> — d20: {item.roll}
+                <div>
+                  <strong>{item.action}</strong> — d20: {item.roll}
+                </div>
+                {item.messages.map((m, i) => (
+                  <div key={i}>{m.text}</div>
+                ))}
               </div>
             ))
           )}
