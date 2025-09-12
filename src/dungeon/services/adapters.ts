@@ -1,5 +1,5 @@
 import { passageResults } from "./passage";
-import { doorBeyondResult } from "./doorBeyondResult";
+import { doorBeyondMessages } from "./doorBeyondResult";
 import {
   DungeonAction,
   DungeonMessage,
@@ -17,8 +17,10 @@ export function runDungeonStep(
       return { action, roll: options?.roll, messages };
     }
     case "door": {
-      const text = doorBeyondResult(options?.doorAhead ?? false);
-      const messages: DungeonMessage[] = [{ kind: "paragraph", text }];
+      const { messages } = doorBeyondMessages({
+        roll: options?.roll,
+        doorAhead: options?.doorAhead,
+      });
       return { action, roll: options?.roll, messages };
     }
   }

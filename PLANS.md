@@ -23,7 +23,8 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Introduce shared types in `src/types/dungeon.ts` (`DungeonMessage` union with paragraph/heading/bullet-list; `DungeonStep`). Update adapters and page to use these types and render nodes directly (no string parsing). This enables migrating services from string logs to typed results incrementally.
 
 7) Refactor services (non-breaking)
-- Update `passageResults`/`doorBeyondResults` (or wrappers) to return typed collections instead of console logging; keep logs via a thin wrapper to avoid breaking any existing usage; update tests.
+- 7a: Door path — add typed variant that accepts an optional roll override and returns `DungeonMessage[]`; adapter uses it; keep legacy string export.
+- 7b: Passage path — same approach for `passageResults`; then progressively type subtables.
 
 8) Polish, a11y, and docs
 - Keyboard navigation, aria-labels, focus management, empty states; README section + doc note; light CSS tune to match existing tools.
@@ -53,4 +54,8 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Completed: Step 4 — Service adapter layer (adapters created, wired into page, tests added)
 - Completed: Step 5 — Render results (formatting/polish)
 - Completed: Step 6 — Types and return-shape convergence (types added, adapters/page updated, tests adjusted)
-- Next: Step 7 — Refactor services to emit typed nodes
+- Completed: Step 7a — Door path typed wrapper; adapter uses typed messages
+- Next: Step 7b — Passage path typed wrapper and gradual subtable typing
+
+## Future Enhancement
+- Add a structured Roll Trace (per-step and nested sub-rolls) so each parent action displays its own roll and any recursive rolls from subtables. Represent as a dedicated node (e.g., `kind: 'roll-trace'`) and render as an expandable list.
