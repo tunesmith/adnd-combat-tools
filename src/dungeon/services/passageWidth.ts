@@ -1,6 +1,7 @@
 import { PassageWidth, passageWidth } from "../../tables/dungeon/passageWidth";
 import { specialPassageResult } from "./specialPassage";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { DungeonMessage, RollTraceItem } from "../../types/dungeon";
 
 export const passageWidthResults = (): string => {
   const roll = rollDice(passageWidth.sides);
@@ -17,4 +18,36 @@ export const passageWidthResults = (): string => {
     case PassageWidth.SpecialPassage:
       return specialPassageResult();
   }
+};
+
+export const passageWidthMessages = (
+  options?: { roll?: number }
+): { usedRoll: number; messages: DungeonMessage[]; trace: RollTraceItem } => {
+  const usedRoll = options?.roll ?? rollDice(passageWidth.sides);
+  const command = getTableEntry(usedRoll, passageWidth);
+  let text: string;
+  switch (command) {
+    case PassageWidth.TenFeet:
+      text = "The passage is 10' wide. ";
+      break;
+    case PassageWidth.TwentyFeet:
+      text = "The passage is 20' wide. ";
+      break;
+    case PassageWidth.ThirtyFeet:
+      text = "The passage is 30' wide. ";
+      break;
+    case PassageWidth.FiveFeet:
+      text = "The passage is 5' wide. ";
+      break;
+    case PassageWidth.SpecialPassage:
+      text = specialPassageResult();
+      break;
+  }
+  const messages: DungeonMessage[] = [{ kind: "paragraph", text }];
+  const trace: RollTraceItem = {
+    table: "passageWidth",
+    roll: usedRoll,
+    result: PassageWidth[command],
+  };
+  return { usedRoll, messages, trace };
 };

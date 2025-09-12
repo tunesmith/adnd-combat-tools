@@ -2,7 +2,7 @@ import { FormEvent, useMemo, useRef, useState } from "react";
 import styles from "./dungeon.module.css";
 import { rollDice } from "../../dungeon/helpers/dungeonLookup";
 import { runDungeonStep } from "../../dungeon/services/adapters";
-import { DungeonMessage } from "../../types/dungeon";
+import { DungeonMessage, DungeonRenderable, DungeonRollTrace, RollTraceItem } from "../../types/dungeon";
 
 type ActionKind = "passage" | "door";
 
@@ -10,7 +10,7 @@ type FeedItem = {
   id: string;
   action: ActionKind;
   roll: number;
-  messages: DungeonMessage[];
+  messages: DungeonRenderable[];
 };
 
 const DungeonIndexPage = () => {
@@ -159,27 +159,7 @@ const DungeonIndexPage = () => {
                   <span className={styles["roll"]}>d20: {item.roll}</span>
                 </div>
                 <div className={styles["messages"]}>
-                  {item.messages.map((m, i) => {
-                    switch (m.kind) {
-                      case "heading":
-                        return (
-                          <p key={i} style={{ fontWeight: 700 }}>
-                            {m.text}
-                          </p>
-                        );
-                      case "bullet-list":
-                        return (
-                          <ul key={i} style={{ marginLeft: "1.25rem" }}>
-                            {m.items.map((it, idx) => (
-                              <li key={idx}>{it}</li>
-                            ))}
-                          </ul>
-                        );
-                      case "paragraph":
-                      default:
-                        return <p key={i}>{m.text}</p>;
-                    }
-                  })}
+                  {item.messages.map((m, i) => renderNode(m, i))}
                 </div>
               </div>
             ))
@@ -189,5 +169,57 @@ const DungeonIndexPage = () => {
     </div>
   );
 };
+
+function renderNode(m: DungeonRenderable, key: number): JSX.Element {
+  switch (m.kind) {
+    case "heading":
+      return (
+        <p key={key} style={{ fontWeight: 700 }}>
+          {m.text}
+        </p>
+      );
+    case "bullet-list":
+      return (
+        <ul key={key} style={{ marginLeft: "1.25rem" }}>
+          {m.items.map((it, idx) => (
+            <li key={idx}>{it}</li>
+          ))}
+        </ul>
+      );
+    case "roll-trace":
+      return (
+        <div key={key} style={{ opacity: 0.9 }}>
+          {renderTraceList(m)}
+        </div>
+      );
+    case "paragraph":
+    default:
+      return (
+        // @ts-expect-error TS narrows default to DungeonMessage with text
+        <p key={key}>{m.text}</p>
+      );
+  }
+}
+
+function renderTraceList(trace: DungeonRollTrace) {
+  const renderItem = (it: RollTraceItem, idx: number): JSX.Element => (
+    <li key={idx}>
+      <code>{it.table}</code>: roll {it.roll} → {it.result}
+      {it.children && it.children.length > 0 && (
+        <ul style={{ marginLeft: "1rem" }}>
+          {it.children.map((c, i) => renderItem(c, i))}
+        </ul>
+      )}
+    </li>
+  );
+  return (
+    <div>
+      <div style={{ fontStyle: "italic", marginTop: "0.25rem" }}>Roll trace</div>
+      <ul style={{ marginLeft: "1.25rem" }}>
+        {trace.items.map((it, idx) => renderItem(it, idx))}
+      </ul>
+    </div>
+  );
+}
 
 export default DungeonIndexPage;

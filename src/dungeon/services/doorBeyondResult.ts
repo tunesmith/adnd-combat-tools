@@ -4,7 +4,8 @@ import { passageWidthResults } from "./passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { chamberResult } from "./chamberResult";
 import { roomResult } from "./roomResult";
-import { DungeonMessage } from "../../types/dungeon";
+import { DungeonMessage, DungeonRollTrace } from "../../types/dungeon";
+import { passageWidthMessages } from "./passageWidth";
 
 /**
  * TODO allow "doorAhead" boolean in UI
@@ -57,35 +58,54 @@ export const doorBeyondResult = (doorAhead: boolean = false): string => {
  */
 export const doorBeyondMessages = (
   options?: { roll?: number; doorAhead?: boolean }
-): { usedRoll: number; messages: DungeonMessage[] } => {
+): { usedRoll: number; messages: (DungeonMessage | DungeonRollTrace)[] } => {
   const doorAhead = options?.doorAhead ?? false;
   const usedRoll = options?.roll ?? rollDice(doorBeyond.sides);
   const command = getTableEntry(usedRoll, doorBeyond);
 
   let text: string;
+  const traceItems: DungeonRollTrace["items"] = [];
   switch (command) {
     case DoorBeyond.ParallelPassageOrCloset:
       if (doorAhead) {
         text =
           "Beyond the door is a 10' x 10' room (check contents, treasure). ";
       } else {
-        text =
-          "Beyond the door is a parallel passage, extending 30' in both directions. " +
-          passageWidthResults();
+        text = "Beyond the door is a parallel passage, extending 30' in both directions. ";
+        const width = passageWidthMessages();
+        text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
+        traceItems.push({
+          table: "passageWidth",
+          roll: width.usedRoll,
+          result: width.trace.result,
+        });
       }
       break;
     case DoorBeyond.PassageStraightAhead:
-      text = "Beyond the door is a passage straight ahead. " + passageWidthResults();
+      text = "Beyond the door is a passage straight ahead. ";
+      {
+        const width = passageWidthMessages();
+        text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
+        traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+      }
       break;
     case DoorBeyond.Passage45AheadBehind:
       text =
-        "Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). " +
-        passageWidthResults();
+        "Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ";
+      {
+        const width = passageWidthMessages();
+        text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
+        traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+      }
       break;
     case DoorBeyond.Passage45BehindAhead:
       text =
-        "Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). " +
-        passageWidthResults();
+        "Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ";
+      {
+        const width = passageWidthMessages();
+        text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
+        traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+      }
       break;
     case DoorBeyond.Room:
       text = "Beyond the door is a room. " + roomResult();
@@ -95,12 +115,13 @@ export const doorBeyondMessages = (
       break;
   }
 
-  const messages: DungeonMessage[] = [
+  const messages: (DungeonMessage | DungeonRollTrace)[] = [
     { kind: "heading", level: 3, text: "Door" },
-    { kind: "bullet-list", items: [
-      `roll: ${usedRoll} — ${DoorBeyond[command]}`,
-    ]},
+    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${DoorBeyond[command]}`] },
     { kind: "paragraph", text },
   ];
+  if (traceItems.length > 0) {
+    messages.push({ kind: "roll-trace", items: traceItems });
+  }
   return { usedRoll, messages };
 };

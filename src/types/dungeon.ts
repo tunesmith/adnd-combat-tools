@@ -18,9 +18,22 @@ export type DungeonBulletList = {
 
 export type DungeonMessage = DungeonParagraph | DungeonHeading | DungeonBulletList;
 
+export type RollTraceItem = {
+  table: string;
+  roll: number;
+  result: string;
+  children?: RollTraceItem[];
+};
+
+export type DungeonRollTrace = {
+  kind: "roll-trace";
+  items: RollTraceItem[];
+};
+
+export type DungeonRenderable = DungeonMessage | DungeonRollTrace;
+
 export type DungeonStep = {
   action: DungeonAction;
   roll?: number;
-  messages: DungeonMessage[];
+  messages: DungeonRenderable[];
 };
-

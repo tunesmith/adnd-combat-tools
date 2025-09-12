@@ -1,10 +1,6 @@
 import { passageMessages } from "./passage";
 import { doorBeyondMessages } from "./doorBeyondResult";
-import {
-  DungeonAction,
-  DungeonMessage,
-  DungeonStep,
-} from "../../types/dungeon";
+import { DungeonAction, DungeonStep } from "../../types/dungeon";
 
 export function runDungeonStep(
   action: DungeonAction,
