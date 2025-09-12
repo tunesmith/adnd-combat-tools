@@ -9,7 +9,7 @@ import { chamberResult } from "./chamberResult";
 import { stairsResult } from "./stairsResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { wanderingMonsterResult } from "./wanderingMonsterResult";
-import { DungeonMessage } from "../../types/dungeon";
+import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -77,9 +77,26 @@ export const getPassageResult = (
  * and structured messages for UI rendering.
  */
 export const passageMessages = (
-  options?: { roll?: number; level?: number; avoidMonster?: boolean }
-): { usedRoll: number; messages: DungeonMessage[] } => {
+  options?: { roll?: number; level?: number; avoidMonster?: boolean; detailMode?: boolean }
+): { usedRoll?: number; messages: DungeonMessage[] | (DungeonMessage | DungeonTablePreview)[] } => {
   const level = options?.level ?? 1;
+  if (options?.detailMode && options.roll === undefined) {
+    const preview: DungeonTablePreview = {
+      kind: "table-preview",
+      id: "periodicCheck",
+      title: "Periodic Check",
+      sides: periodicCheck.sides,
+      entries: periodicCheck.entries.map((e) => ({
+        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        label: PeriodicCheck[e.command] ?? String(e.command),
+      })),
+    };
+    const messages: (DungeonMessage | DungeonTablePreview)[] = [
+      { kind: "heading", level: 3, text: "Passage" },
+      preview,
+    ];
+    return { usedRoll: undefined, messages };
+  }
   const usedRoll = options?.roll ?? rollDice(periodicCheck.sides);
   const command = getTableEntry(usedRoll, periodicCheck);
   const text = getPassageResult(level, command, options?.avoidMonster ?? false);

@@ -3,6 +3,9 @@ import styles from "./dungeon.module.css";
 import { rollDice } from "../../dungeon/helpers/dungeonLookup";
 import { runDungeonStep } from "../../dungeon/services/adapters";
 import { DungeonMessage, DungeonRenderNode, DungeonRollTrace, RollTraceItem, DungeonTablePreview } from "../../types/dungeon";
+import { passageWidthMessages } from "../../dungeon/services/passageWidth";
+import { doorBeyondMessages } from "../../dungeon/services/doorBeyondResult";
+import { passageMessages } from "../../dungeon/services/passage";
 
 type ActionKind = "passage" | "door";
 
@@ -18,6 +21,7 @@ const DungeonIndexPage = () => {
   const [rollInput, setRollInput] = useState<string>("");
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [detailMode, setDetailMode] = useState<boolean>(false);
+  const [overrides, setOverrides] = useState<Record<string, number | undefined>>({});
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
   const parsedRoll = useMemo(() => {
@@ -31,7 +35,17 @@ const DungeonIndexPage = () => {
   }, [parsedRoll]);
 
   const addToFeed = (act: ActionKind, roll: number) => {
-    const step = runDungeonStep(act, { roll, detailMode });
+    const step = runDungeonStep(act, {
+      roll,
+      detailMode,
+      takeOverride: (tableId: string) => {
+        const v = overrides[tableId];
+        if (v === undefined) return undefined;
+        // consume one-time
+        setOverrides((prev) => ({ ...prev, [tableId]: undefined }));
+        return v;
+      },
+    });
     const item: FeedItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       action: act,
@@ -111,20 +125,20 @@ const DungeonIndexPage = () => {
             </label>
 
             <button
-              type="button"
-              className={styles["button"]}
-              onClick={handleRoll}
-              aria-label="Roll a d20 and submit"
-            >
-              Roll
-            </button>
-
-            <button
               type="submit"
               className={styles["button"]}
               disabled={!isValid}
             >
               Submit
+            </button>
+
+            <button
+              type="button"
+              className={styles["button"]}
+              onClick={handleRoll}
+              aria-label="Automatically roll a d20 and submit"
+            >
+              AutoRoll
             </button>
 
             <label style={{ marginLeft: "auto" }}>
@@ -141,6 +155,14 @@ const DungeonIndexPage = () => {
             <div className={styles["errorText"]}>Enter an integer 1–20.</div>
           )}
         </form>
+
+        {detailMode && (
+          <div style={{ marginTop: "0.5rem" }}>
+            {getRootPreviewNodes(action).map((n, i) =>
+              renderNode(n, i, "root", overrides, setOverrides, setFeed, false)
+            )}
+          </div>
+        )}
 
         <div
           role="status"
@@ -166,10 +188,9 @@ const DungeonIndexPage = () => {
                   >
                     {item.action}
                   </span>
-                  <span className={styles["roll"]}>d20: {item.roll}</span>
                 </div>
                 <div className={styles["messages"]}>
-                  {item.messages.map((m, i) => renderNode(m, i))}
+                  {item.messages.map((m, i) => renderNode(m, i, item.id, overrides, setOverrides, setFeed))}
                 </div>
               </div>
             ))
@@ -180,7 +201,15 @@ const DungeonIndexPage = () => {
   );
 };
 
-function renderNode(m: DungeonRenderNode, key: number): JSX.Element {
+function renderNode(
+  m: DungeonRenderNode,
+  key: number,
+  feedItemId: string,
+  overrides: Record<string, number | undefined>,
+  setOverrides: React.Dispatch<React.SetStateAction<Record<string, number | undefined>>>,
+  setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
+  enablePreviewControls: boolean = true
+): JSX.Element {
   switch (m.kind) {
     case "heading":
       return (
@@ -208,6 +237,41 @@ function renderNode(m: DungeonRenderNode, key: number): JSX.Element {
               </div>
             ))}
           </div>
+          {enablePreviewControls && (
+            <div style={{ marginTop: "0.5rem", display: "flex", gap: 8, alignItems: "center" }}>
+              <label>
+                Override next roll:
+                <input
+                  type="number"
+                  min={1}
+                  max={tp.sides}
+                  value={overrides[tp.id] ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value ? Number(e.target.value) : undefined;
+                    setOverrides((prev) => ({ ...prev, [tp.id]: value }));
+                  }}
+                  className={styles["numberInput"]}
+                  style={{ width: 80, marginLeft: 8 }}
+                />
+              </label>
+              <button
+                type="button"
+                className={styles["button"]}
+                onClick={() => resolvePreview(tp, feedItemId, overrides, setOverrides, setFeed, false)}
+                style={{ padding: "6px 12px" }}
+              >
+                Submit
+              </button>
+              <button
+                type="button"
+                className={styles["button"]}
+                onClick={() => resolvePreview(tp, feedItemId, overrides, setOverrides, setFeed, true)}
+                style={{ padding: "6px 12px" }}
+              >
+                AutoRoll
+              </button>
+            </div>
+          )}
         </div>
       );
     }
@@ -245,6 +309,137 @@ function renderTraceList(trace: DungeonRollTrace) {
       </ul>
     </div>
   );
+}
+
+function resolvePreview(
+  tp: DungeonTablePreview,
+  feedItemId: string,
+  overrides: Record<string, number | undefined>,
+  setOverrides: React.Dispatch<React.SetStateAction<Record<string, number | undefined>>>,
+  setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
+  shouldRoll: boolean
+) {
+  let usedRoll: number | undefined = overrides[tp.id];
+  if (shouldRoll || usedRoll === undefined) {
+    // Simple auto-roll using existing dice util via specific resolvers where possible
+    // For now, only passageWidth is supported here
+    if (tp.id === "passageWidth") {
+      usedRoll = undefined; // we will let passageWidthMessages roll if undefined
+    }
+  }
+
+  // Consume override if present
+  if (overrides[tp.id] !== undefined) {
+    setOverrides((prev) => ({ ...prev, [tp.id]: undefined }));
+  }
+
+  if (tp.id === "passageWidth") {
+    const width = passageWidthMessages({ roll: usedRoll });
+    setFeed((prev) =>
+      prev.map((fi) => {
+        if (fi.id !== feedItemId) return fi;
+        const newMessages: DungeonRenderNode[] = [];
+        let skippingOldResult = false;
+        for (const node of fi.messages) {
+          if (node.kind === "table-preview" && node.id === tp.id) {
+            // Keep the preview visible as a record, then append the result below it
+            newMessages.push(node);
+            // Remove any prior resolved block for this table by skipping
+            skippingOldResult = true;
+            // Append the fresh resolved block
+            newMessages.push({ kind: "heading", level: 4, text: "Passage Width" });
+            newMessages.push({
+              kind: "bullet-list",
+              items: [`roll: ${width.usedRoll} — ${width.trace.result}`],
+            });
+            for (const m of width.messages) newMessages.push(m);
+          } else {
+            if (skippingOldResult) {
+              // Skip previously appended result nodes until the next preview or heading that isn't ours
+              if (node.kind === "table-preview" && node.id !== tp.id) {
+                skippingOldResult = false;
+              } else if (node.kind === "heading" && node.text !== "Passage Width") {
+                skippingOldResult = false;
+              } else if (node.kind === "heading" && node.text === "Passage Width") {
+                // keep skipping
+              } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+                // skip
+              } else {
+                // any other node type
+                skippingOldResult = false;
+              }
+              if (!skippingOldResult) newMessages.push(node);
+            } else {
+              newMessages.push(node);
+            }
+          }
+        }
+        return { ...fi, messages: newMessages };
+      })
+    );
+  }
+  if (tp.id === "doorBeyond") {
+    const resolved = doorBeyondMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) =>
+      prev.map((fi) => {
+        if (fi.id !== feedItemId) return fi;
+        const newMessages: DungeonRenderNode[] = [];
+        let appended = false;
+        for (const node of fi.messages) {
+          newMessages.push(node);
+          if (!appended && node.kind === "table-preview" && node.id === tp.id) {
+            appended = true;
+            // Append the door results, skipping duplicate heading if present
+            let skipFirstHeading = true;
+            for (const m of resolved.messages) {
+              if (skipFirstHeading && m.kind === "heading") {
+                skipFirstHeading = false;
+                continue;
+              }
+              newMessages.push(m);
+            }
+          }
+        }
+        return { ...fi, messages: newMessages };
+      })
+    );
+  }
+  if (tp.id === "periodicCheck") {
+    const resolved = passageMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) =>
+      prev.map((fi) => {
+        if (fi.id !== feedItemId) return fi;
+        const newMessages: DungeonRenderNode[] = [];
+        let appended = false;
+        for (const node of fi.messages) {
+          newMessages.push(node);
+          if (!appended && node.kind === "table-preview" && node.id === tp.id) {
+            appended = true;
+            // Append the passage results, skipping duplicate heading if present
+            let skipFirstHeading = true;
+            for (const m of resolved.messages) {
+              if (skipFirstHeading && m.kind === "heading") {
+                skipFirstHeading = false;
+                continue;
+              }
+              newMessages.push(m);
+            }
+          }
+        }
+        return { ...fi, messages: newMessages };
+      })
+    );
+  }
+}
+
+function getRootPreviewNodes(action: ActionKind): DungeonRenderNode[] {
+  // Render only the table preview node(s) for the selected action
+  if (action === "door") {
+    const { messages } = doorBeyondMessages({ detailMode: true });
+    return messages.filter((m) => m.kind === "table-preview") as DungeonRenderNode[];
+  }
+  const { messages } = passageMessages({ detailMode: true });
+  return messages.filter((m) => m.kind === "table-preview") as DungeonRenderNode[];
 }
 
 export default DungeonIndexPage;

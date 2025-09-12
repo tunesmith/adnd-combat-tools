@@ -58,9 +58,35 @@ export const doorBeyondResult = (doorAhead: boolean = false): string => {
  * existing string output but captures the primary roll.
  */
 export const doorBeyondMessages = (
-  options?: { roll?: number; doorAhead?: boolean; detailMode?: boolean }
-): { usedRoll: number; messages: (DungeonMessage | DungeonRollTrace | DungeonTablePreview)[] } => {
+  options?: {
+    roll?: number;
+    doorAhead?: boolean;
+    detailMode?: boolean;
+    takeOverride?: (tableId: string) => number | undefined;
+  }
+): { usedRoll?: number; messages: (DungeonMessage | DungeonRollTrace | DungeonTablePreview)[] } => {
   const doorAhead = options?.doorAhead ?? false;
+  if (options?.detailMode && options.roll === undefined) {
+    const preview: DungeonTablePreview = {
+      kind: "table-preview",
+      id: "doorBeyond",
+      title: "Door Beyond",
+      sides: doorBeyond.sides,
+      entries: doorBeyond.entries.map((e) => ({
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        label: DoorBeyond[e.command] ?? String(e.command),
+      })),
+    };
+    const messages: (DungeonMessage | DungeonRollTrace | DungeonTablePreview)[] = [
+      { kind: "heading", level: 3, text: "Door" },
+      preview,
+    ];
+    return { usedRoll: undefined, messages };
+  }
+
   const usedRoll = options?.roll ?? rollDice(doorBeyond.sides);
   const command = getTableEntry(usedRoll, doorBeyond);
 
@@ -86,13 +112,16 @@ export const doorBeyondMessages = (
               })),
             }
           : undefined;
-        const width = passageWidthMessages();
-        text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
-        traceItems.push({
-          table: "passageWidth",
-          roll: width.usedRoll,
-          result: width.trace.result,
-        });
+        if (!options?.detailMode) {
+          const override = options?.takeOverride?.("passageWidth");
+          const width = passageWidthMessages({ roll: override });
+          text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
+          traceItems.push({
+            table: "passageWidth",
+            roll: width.usedRoll,
+            result: width.trace.result,
+          });
+        }
         if (widthPreview) previews.push(widthPreview);
       }
       break;
@@ -111,9 +140,12 @@ export const doorBeyondMessages = (
               })),
             }
           : undefined;
-        const width = passageWidthMessages();
-        text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
-        traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+        if (!options?.detailMode) {
+          const override = options?.takeOverride?.("passageWidth");
+          const width = passageWidthMessages({ roll: override });
+          text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
+          traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+        }
         if (widthPreview) previews.push(widthPreview);
       }
       break;
@@ -133,9 +165,12 @@ export const doorBeyondMessages = (
               })),
             }
           : undefined;
-        const width = passageWidthMessages();
-        text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
-        traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+        if (!options?.detailMode) {
+          const override = options?.takeOverride?.("passageWidth");
+          const width = passageWidthMessages({ roll: override });
+          text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
+          traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+        }
         if (widthPreview) previews.push(widthPreview);
       }
       break;
@@ -155,9 +190,12 @@ export const doorBeyondMessages = (
               })),
             }
           : undefined;
-        const width = passageWidthMessages();
-        text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
-        traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+        if (!options?.detailMode) {
+          const override = options?.takeOverride?.("passageWidth");
+          const width = passageWidthMessages({ roll: override });
+          text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
+          traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
+        }
         if (widthPreview) previews.push(widthPreview);
       }
       break;
