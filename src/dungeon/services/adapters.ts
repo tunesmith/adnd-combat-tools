@@ -1,4 +1,4 @@
-import { passageResults } from "./passage";
+import { passageMessages } from "./passage";
 import { doorBeyondMessages } from "./doorBeyondResult";
 import {
   DungeonAction,
@@ -12,8 +12,9 @@ export function runDungeonStep(
 ): DungeonStep {
   switch (action) {
     case "passage": {
-      const text = passageResults();
-      const messages: DungeonMessage[] = [{ kind: "paragraph", text }];
+      const { messages } = passageMessages({
+        roll: options?.roll,
+      });
       return { action, roll: options?.roll, messages };
     }
     case "door": {

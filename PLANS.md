@@ -55,7 +55,8 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Completed: Step 5 — Render results (formatting/polish)
 - Completed: Step 6 — Types and return-shape convergence (types added, adapters/page updated, tests adjusted)
 - Completed: Step 7a — Door path typed wrapper; adapter uses typed messages
-- Next: Step 7b — Passage path typed wrapper and gradual subtable typing
+- Completed: Step 7b — Passage path typed wrapper and adapter integration
+- Next: Step 8 — Begin migrating subtables to typed nodes and introduce optional roll trace/table preview design
 
 ## Future Enhancement
 - Add a structured Roll Trace (per-step and nested sub-rolls) so each parent action displays its own roll and any recursive rolls from subtables. Represent as a dedicated node (e.g., `kind: 'roll-trace'`) and render as an expandable list.

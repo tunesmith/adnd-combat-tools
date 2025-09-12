@@ -9,6 +9,7 @@ import { chamberResult } from "./chamberResult";
 import { stairsResult } from "./stairsResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { wanderingMonsterResult } from "./wanderingMonsterResult";
+import { DungeonMessage } from "../../types/dungeon";
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -69,4 +70,23 @@ export const getPassageResult = (
       return wanderingMonsterResult(level);
     }
   }
+};
+
+/**
+ * Typed variant mirroring `passageResults` but with optional roll override
+ * and structured messages for UI rendering.
+ */
+export const passageMessages = (
+  options?: { roll?: number; level?: number; avoidMonster?: boolean }
+): { usedRoll: number; messages: DungeonMessage[] } => {
+  const level = options?.level ?? 1;
+  const usedRoll = options?.roll ?? rollDice(periodicCheck.sides);
+  const command = getTableEntry(usedRoll, periodicCheck);
+  const text = getPassageResult(level, command, options?.avoidMonster ?? false);
+  const messages: DungeonMessage[] = [
+    { kind: "heading", level: 3, text: "Passage" },
+    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] },
+    { kind: "paragraph", text },
+  ];
+  return { usedRoll, messages };
 };
