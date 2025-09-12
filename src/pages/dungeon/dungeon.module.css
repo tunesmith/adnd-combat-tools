@@ -27,3 +27,57 @@
 .placeholder {
     color: var(--eggshell);
 }
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.controlsRow {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.actionSelector {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.numberInput {
+    width: 80px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--copper);
+}
+
+.errorText {
+    color: var(--goldenrod);
+}
+
+.button {
+    background-color: var(--eggshell);
+    color: var(--caput-martuum);
+    border: 2px solid var(--copper);
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.feed {
+    margin-top: 1rem;
+    background-color: rgba(0,0,0,0.1);
+    padding: 0.5rem;
+    min-height: 3rem;
+}
+
+.feedItem {
+    margin: 0.25rem 0;
+}

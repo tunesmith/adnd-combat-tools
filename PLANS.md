@@ -48,4 +48,5 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 
 ## Status
 - Completed: Step 1 — Scaffold page and navigation
-- Next: Step 2 — Basic UI shell
+- Completed: Step 2 — Basic UI shell (action selector, 1–20 input, Roll + Submit, validation, running feed)
+- Next: Step 3 — Dice utilities review + tests
