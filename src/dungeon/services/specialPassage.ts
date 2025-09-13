@@ -131,7 +131,7 @@ export const specialPassageMessages = (
       const preview = galleryStairLocationMessages({ detailMode: true });
       for (const m of preview.messages) messages.push(m);
     } else if (command === SpecialPassage.TenFootStream) {
-      const preview = streamConstructionMessages({ detailMode: true } as any);
+      const preview = streamConstructionMessages({ detailMode: true });
       for (const m of preview.messages) messages.push(m);
     } else if (
       command === SpecialPassage.TwentyFootRiver ||
@@ -141,7 +141,7 @@ export const specialPassageMessages = (
       const preview = riverConstructionMessages({ detailMode: true });
       for (const m of preview.messages) messages.push(m);
     } else if (command === SpecialPassage.TwentyFootChasm) {
-      const depthPrev = chasmDepthMessages({ detailMode: true } as any);
+      const depthPrev = chasmDepthMessages({ detailMode: true });
       for (const m of depthPrev.messages) messages.push(m);
       const constrPrev = chasmConstructionMessages({ detailMode: true });
       for (const m of constrPrev.messages) messages.push(m);

@@ -191,6 +191,89 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     }
     return nodes;
   }
+  if ((event as any).kind === "sidePassages") {
+    // Side Passages resolution
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Side Passages" };
+    const label = (SidePassages as any)[(event as any).result] ?? String((event as any).result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let text = "";
+    switch ((event as any).result) {
+      case SidePassages.Left90:
+        text = "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Right90:
+        text = "A side passage branches right 90 degrees. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Left45:
+        text = "A side passage branches left 45 degrees ahead. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Right45:
+        text = "A side passage branches right 45 degrees ahead. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Left135:
+        text = "A side passage branches left 45 degrees behind (left 135 degrees). Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Right135:
+        text = "A side passage branches right 45 degrees behind (right 135 degrees). Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.LeftCurve45:
+        text = "A side passage branches at a curve, 45 degrees left ahead. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.RightCurve45:
+        text = "A side passage branches at a curve, 45 degrees right ahead. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.PassageT:
+        text = "The passage reaches a 'T' intersection to either side. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.PassageY:
+        text = "The passage reaches a 'Y' intersection, ahead 45 degrees to the left and right. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.FourWay:
+        text = "The passage reaches a four-way intersection. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.PassageX:
+        text = "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text });
+    return nodes;
+  }
+  if ((event as any).kind === "passageTurns") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Passage Turns" };
+    const label = (PassageTurns as any)[(event as any).result] ?? String((event as any).result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let textPrefix = "";
+    switch ((event as any).result) {
+      case PassageTurns.Left90:
+        textPrefix = "The passage turns left 90 degrees - check again in 30'. ";
+        break;
+      case PassageTurns.Left45:
+        textPrefix = "The passage turns left 45 degrees ahead - check again in 30'. ";
+        break;
+      case PassageTurns.Left135:
+        textPrefix = "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
+        break;
+      case PassageTurns.Right90:
+        textPrefix = "The passage turns right 90 degrees - check again in 30'. ";
+        break;
+      case PassageTurns.Right45:
+        textPrefix = "The passage turns right 45 degrees ahead - check again in 30'. ";
+        break;
+      case PassageTurns.Right135:
+        textPrefix = "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text: textPrefix });
+    // In detail mode for passage turns, stage a Passage Width preview; for compact, auto append width text
+    nodes.push({
+      kind: "table-preview",
+      id: "passageWidth",
+      title: "Passage Width",
+      sides: passageWidth.sides,
+      entries: passageWidth.entries.map((e) => ({ range: rangeText(e.range), label: PassageWidth[e.command] ?? String(e.command) })),
+    });
+    return nodes;
+  }
   return nodes;
 }
 
@@ -251,6 +334,84 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
       for (const m of width.messages) if (m.kind === "paragraph") text += m.text;
     }
     nodes.push(heading, bullet, { kind: "paragraph", text });
+    return nodes;
+  }
+  if ((event as any).kind === "sidePassages") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Side Passages" };
+    const label = (SidePassages as any)[(event as any).result] ?? String((event as any).result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    // Text equals the detail path text
+    let text = "";
+    switch ((event as any).result) {
+      case SidePassages.Left90:
+        text = "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Right90:
+        text = "A side passage branches right 90 degrees. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Left45:
+        text = "A side passage branches left 45 degrees ahead. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Right45:
+        text = "A side passage branches right 45 degrees ahead. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Left135:
+        text = "A side passage branches left 45 degrees behind (left 135 degrees). Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.Right135:
+        text = "A side passage branches right 45 degrees behind (right 135 degrees). Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.LeftCurve45:
+        text = "A side passage branches at a curve, 45 degrees left ahead. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.RightCurve45:
+        text = "A side passage branches at a curve, 45 degrees right ahead. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.PassageT:
+        text = "The passage reaches a 'T' intersection to either side. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.PassageY:
+        text = "The passage reaches a 'Y' intersection, ahead 45 degrees to the left and right. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.FourWay:
+        text = "The passage reaches a four-way intersection. Passages extend -- check again in 30'. ";
+        break;
+      case SidePassages.PassageX:
+        text = "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text });
+    return nodes;
+  }
+  if ((event as any).kind === "passageTurns") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Passage Turns" };
+    const label = (PassageTurns as any)[(event as any).result] ?? String((event as any).result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let textPrefix = "";
+    switch ((event as any).result) {
+      case PassageTurns.Left90:
+        textPrefix = "The passage turns left 90 degrees - check again in 30'. ";
+        break;
+      case PassageTurns.Left45:
+        textPrefix = "The passage turns left 45 degrees ahead - check again in 30'. ";
+        break;
+      case PassageTurns.Left135:
+        textPrefix = "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
+        break;
+      case PassageTurns.Right90:
+        textPrefix = "The passage turns right 90 degrees - check again in 30'. ";
+        break;
+      case PassageTurns.Right45:
+        textPrefix = "The passage turns right 45 degrees ahead - check again in 30'. ";
+        break;
+      case PassageTurns.Right135:
+        textPrefix = "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text: textPrefix });
+    // Compact: append width paragraph
+    const width = passageWidthMessages({});
+    for (const m of width.messages) if (m.kind === "paragraph") nodes.push(m);
     return nodes;
   }
   return nodes;

@@ -374,7 +374,7 @@ export const circularShapeMagicPoolMessages = (options?: {
       text = "It transmutes gold. ";
       messages.push({ kind: "paragraph", text });
       if (options?.detailMode) {
-        const prev = transmuteTypeMessages({ detailMode: true } as any);
+        const prev = transmuteTypeMessages({ detailMode: true });
         for (const m of prev.messages) messages.push(m);
       } else {
         messages[messages.length - 1] = {
@@ -393,7 +393,7 @@ export const circularShapeMagicPoolMessages = (options?: {
         "It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1--20 points. Wish can be withheld for up to 1 day. ";
       messages.push({ kind: "paragraph", text });
       if (options?.detailMode) {
-        const prev = poolAlignmentMessages({ detailMode: true } as any);
+        const prev = poolAlignmentMessages({ detailMode: true });
         for (const m of prev.messages) messages.push(m);
       } else {
         messages[messages.length - 1] = {
@@ -406,7 +406,7 @@ export const circularShapeMagicPoolMessages = (options?: {
       text = "It is a transporter. ";
       messages.push({ kind: "paragraph", text });
       if (options?.detailMode) {
-        const prev = transporterLocationMessages({ detailMode: true } as any);
+        const prev = transporterLocationMessages({ detailMode: true });
         for (const m of prev.messages) messages.push(m);
       } else {
         messages[messages.length - 1] = {
