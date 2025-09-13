@@ -17,6 +17,14 @@ import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { periodicCheck } from "../../tables/dungeon/periodicCheck";
 import { getPassageResult } from "../services/passage";
+import { getMonsterTable } from "../services/wanderingMonsterResult";
+import { MonsterLevel } from "../../tables/dungeon/monster/monsterLevel";
+import { monsterOneResult } from "../services/monster/monsterOneResult";
+import { monsterTwoResult } from "../services/monster/monsterTwoResult";
+import { monsterThreeResult } from "../services/monster/monsterThreeResult";
+import { monsterFourResult } from "../services/monster/monsterFourResult";
+import { monsterFiveResult } from "../services/monster/monsterFiveResult";
+import { monsterSixResult } from "../services/monster/monsterSixResult";
 import { roomMessages } from "../services/roomResult";
 import { chamberMessages } from "../services/chamberResult";
 import { passageWidthMessages } from "../services/passageWidth";
@@ -129,8 +137,8 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
         break;
       }
       case PeriodicCheck.WanderingMonster:
-        // In detail mode we keep behavior consistent: delegate to legacy string path for now.
-        nodes.push({ kind: "paragraph", text: getPassageResult(event.level, PeriodicCheck.WanderingMonster, event.avoidMonster ?? false) });
+        // For now, render a composed paragraph; previews to follow.
+        nodes.push({ kind: "paragraph", text: compactWanderingMonsterText(event.level) });
         break;
     }
     return nodes;
@@ -478,6 +486,8 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
     const text =
       event.result === PeriodicCheck.Door
         ? compactDoorText()
+        : event.result === PeriodicCheck.WanderingMonster
+        ? compactWanderingMonsterText(event.level)
         : getPassageResult(event.level, event.result, event.avoidMonster ?? false);
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
@@ -715,4 +725,60 @@ function compactDoorText(existing: ("Left" | "Right")[] = []): string {
     return prefix + compactDoorText([...existing, loc]);
   }
   return prefix + "There are no other doors. The main passage extends -- check again in 30'. ";
+}
+
+// Compose compact text for Wandering Monster without legacy helpers.
+function compactWanderingMonsterText(level: number): string {
+  // Determine where the monster comes from (re-rolling 20s)
+  let location: PeriodicCheck;
+  do {
+    const r = rollDice(periodicCheck.sides);
+    location = getTableEntry(r, periodicCheck);
+  } while (location === PeriodicCheck.WanderingMonster);
+
+  let prefix = "";
+  if (location === PeriodicCheck.Door) {
+    prefix = compactDoorText();
+  } else {
+    // Reuse existing strings for other locations to preserve parity text
+    prefix = getPassageResult(level, location, true);
+  }
+  // Roll monster level table for the given dungeon level
+  const table = getMonsterTable(level);
+  const roll = rollDice(table.sides);
+  const ml = getTableEntry(roll, table);
+  let monsterText = "";
+  switch (ml) {
+    case MonsterLevel.One:
+      monsterText = monsterOneResult(level);
+      break;
+    case MonsterLevel.Two:
+      monsterText = monsterTwoResult(level);
+      break;
+    case MonsterLevel.Three:
+      monsterText = monsterThreeResult(level);
+      break;
+    case MonsterLevel.Four:
+      monsterText = monsterFourResult(level);
+      break;
+    case MonsterLevel.Five:
+      monsterText = monsterFiveResult(level);
+      break;
+    case MonsterLevel.Six:
+      monsterText = monsterSixResult(level);
+      break;
+    case MonsterLevel.Seven:
+      monsterText = "(TODO: Roll Monster for Level Seven)";
+      break;
+    case MonsterLevel.Eight:
+      monsterText = "(TODO: Roll Monster for Level Eight)";
+      break;
+    case MonsterLevel.Nine:
+      monsterText = "(TODO: Roll Monster for Level Nine)";
+      break;
+    case MonsterLevel.Ten:
+      monsterText = "(TODO: Roll Monster for Level Ten)";
+      break;
+  }
+  return `${prefix}Wandering Monster: ${monsterText}`;
 }
