@@ -96,36 +96,87 @@ export const specialPassageMessages = (
       break;
     case SpecialPassage.FiftyFeetGalleries: {
       text =
-        "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. " +
-        galleryStairLocationResult();
+        "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. ";
       break;
     }
     case SpecialPassage.TenFootStream: {
-      text = "A stream, 10' wide, bisects the passage. " + streamConstructionResult();
+      text = "A stream, 10' wide, bisects the passage. ";
       break;
     }
     case SpecialPassage.TwentyFootRiver: {
-      text = "A river, 20' wide, bisects the passage. " + riverConstructionResult();
+      text = "A river, 20' wide, bisects the passage. ";
       break;
     }
     case SpecialPassage.FortyFootRiver: {
-      text = "A river, 40' wide, bisects the passage. " + riverConstructionResult();
+      text = "A river, 40' wide, bisects the passage. ";
       break;
     }
     case SpecialPassage.SixtyFootRiver: {
-      text = "A river, 60' wide, bisects the passage. " + riverConstructionResult();
+      text = "A river, 60' wide, bisects the passage. ";
       break;
     }
     case SpecialPassage.TwentyFootChasm: {
-      text = "A chasm, 20' wide, bisects the passage. " + chasmDepthResult() + chasmConstructionResult();
+      text = "A chasm, 20' wide, bisects the passage. ";
       break;
     }
   }
-  const messages: DungeonMessage[] = [
+  const messages: (DungeonMessage | DungeonTablePreview)[] = [
     { kind: "heading", level: 4, text: "Special Passage" },
     { kind: "bullet-list", items: [`roll: ${usedRoll} — ${SpecialPassage[command] ?? String(command)}`] },
     { kind: "paragraph", text },
   ];
+  if (options?.detailMode) {
+    // In detail mode, stage previews for required subtables instead of auto-rolling
+    if (command === SpecialPassage.FiftyFeetGalleries) {
+      const preview = galleryStairLocationMessages({ detailMode: true });
+      for (const m of preview.messages) messages.push(m);
+    } else if (command === SpecialPassage.TenFootStream) {
+      const preview = streamConstructionMessages({ detailMode: true } as any);
+      for (const m of preview.messages) messages.push(m);
+    } else if (
+      command === SpecialPassage.TwentyFootRiver ||
+      command === SpecialPassage.FortyFootRiver ||
+      command === SpecialPassage.SixtyFootRiver
+    ) {
+      const preview = riverConstructionMessages({ detailMode: true });
+      for (const m of preview.messages) messages.push(m);
+    } else if (command === SpecialPassage.TwentyFootChasm) {
+      const depthPrev = chasmDepthMessages({ detailMode: true } as any);
+      for (const m of depthPrev.messages) messages.push(m);
+      const constrPrev = chasmConstructionMessages({ detailMode: true });
+      for (const m of constrPrev.messages) messages.push(m);
+    }
+  } else {
+    // Legacy auto-roll text for compact mode or when previews are not desired
+    switch (command) {
+      case SpecialPassage.FiftyFeetGalleries:
+        messages[messages.length - 1] = {
+          kind: "paragraph",
+          text: text + galleryStairLocationResult(),
+        } as DungeonMessage;
+        break;
+      case SpecialPassage.TenFootStream:
+        messages[messages.length - 1] = {
+          kind: "paragraph",
+          text: text + streamConstructionResult(),
+        } as DungeonMessage;
+        break;
+      case SpecialPassage.TwentyFootRiver:
+      case SpecialPassage.FortyFootRiver:
+      case SpecialPassage.SixtyFootRiver:
+        messages[messages.length - 1] = {
+          kind: "paragraph",
+          text: text + riverConstructionResult(),
+        } as DungeonMessage;
+        break;
+      case SpecialPassage.TwentyFootChasm:
+        messages[messages.length - 1] = {
+          kind: "paragraph",
+          text: text + chasmDepthResult() + chasmConstructionResult(),
+        } as DungeonMessage;
+        break;
+    }
+  }
   return { usedRoll, messages };
 };
 
@@ -322,8 +373,25 @@ export const galleryStairOccurrenceMessages = (
 };
 
 export const streamConstructionMessages = (
-  options?: { roll?: number }
-): { usedRoll: number; messages: DungeonMessage[] } => {
+  options?: { roll?: number; detailMode?: boolean }
+): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+  if (options?.detailMode && options.roll === undefined) {
+    return {
+      usedRoll: undefined,
+      messages: [
+        {
+          kind: "table-preview",
+          id: "streamConstruction",
+          title: "Stream Construction",
+          sides: streamConstruction.sides,
+          entries: streamConstruction.entries.map((e) => ({
+            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            label: StreamConstruction[e.command] ?? String(e.command),
+          })),
+        },
+      ],
+    };
+  }
   const usedRoll = options?.roll ?? rollDice(streamConstruction.sides);
   const command = getTableEntry(usedRoll, streamConstruction);
   const text = command === StreamConstruction.Bridged ? "A bridge crosses the stream. " : "";
@@ -339,7 +407,24 @@ export const streamConstructionMessages = (
 
 export const riverConstructionMessages = (
   options?: { roll?: number; detailMode?: boolean }
-): { usedRoll: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+  if (options?.detailMode && options.roll === undefined) {
+    return {
+      usedRoll: undefined,
+      messages: [
+        {
+          kind: "table-preview",
+          id: "riverConstruction",
+          title: "River Construction",
+          sides: riverConstruction.sides,
+          entries: riverConstruction.entries.map((e) => ({
+            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            label: RiverConstruction[e.command] ?? String(e.command),
+          })),
+        },
+      ],
+    };
+  }
   const usedRoll = options?.roll ?? rollDice(riverConstruction.sides);
   const command = getTableEntry(usedRoll, riverConstruction);
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
@@ -386,8 +471,25 @@ export const riverBoatBankMessages = (
 };
 
 export const chasmDepthMessages = (
-  options?: { roll?: number }
-): { usedRoll: number; messages: DungeonMessage[] } => {
+  options?: { roll?: number; detailMode?: boolean }
+): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+  if (options?.detailMode && options.roll === undefined) {
+    return {
+      usedRoll: undefined,
+      messages: [
+        {
+          kind: "table-preview",
+          id: "chasmDepth",
+          title: "Chasm Depth",
+          sides: chasmDepth.sides,
+          entries: chasmDepth.entries.map((e) => ({
+            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            label: ChasmDepth[e.command] ?? String(e.command),
+          })),
+        },
+      ],
+    };
+  }
   const usedRoll = options?.roll ?? rollDice(chasmDepth.sides);
   const command = getTableEntry(usedRoll, chasmDepth);
   const depthText =
@@ -415,7 +517,24 @@ export const chasmDepthMessages = (
 
 export const chasmConstructionMessages = (
   options?: { roll?: number; detailMode?: boolean }
-): { usedRoll: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+  if (options?.detailMode && options.roll === undefined) {
+    return {
+      usedRoll: undefined,
+      messages: [
+        {
+          kind: "table-preview",
+          id: "chasmConstruction",
+          title: "Chasm Construction",
+          sides: chasmConstruction.sides,
+          entries: chasmConstruction.entries.map((e) => ({
+            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            label: ChasmConstruction[e.command] ?? String(e.command),
+          })),
+        },
+      ],
+    };
+  }
   const usedRoll = options?.roll ?? rollDice(chasmConstruction.sides);
   const command = getTableEntry(usedRoll, chasmConstruction);
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
