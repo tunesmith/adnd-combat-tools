@@ -244,7 +244,7 @@ const DungeonIndexPage = () => {
         <div className={styles["feed"]}>
           {feed.length === 0 ? (
             <div className={styles["placeholder"]}>
-              Make a selection, enter 1–20 or click Roll.
+              Make a selection, enter 1–20 or click AutoRoll.
             </div>
           ) : (
             feed.map((item) => (
@@ -861,7 +861,9 @@ function resolvePreview(
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
   if (tp.id === "unusualShape") {
-    const { unusualShapeMessages } = require("../../dungeon/services/unusualShapeResult");
+    const {
+      unusualShapeMessages,
+    } = require("../../dungeon/services/unusualShapeResult");
     const resolved = unusualShapeMessages({ roll: usedRoll, detailMode: true });
     setFeed((prev) =>
       prev.map((fi) =>
@@ -880,7 +882,9 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "unusualSize" || tp.id.startsWith("unusualSize:")) {
-    const { unusualSizeMessages } = require("../../dungeon/services/unusualSizeResult");
+    const {
+      unusualSizeMessages,
+    } = require("../../dungeon/services/unusualSizeResult");
     let seq = 0;
     let extra = 0;
     if (tp.id.startsWith("unusualSize:")) {
@@ -888,7 +892,12 @@ function resolvePreview(
       seq = Number(parts[1]) || 0;
       if (parts.length > 2) extra = Number(parts[2]) || 0;
     }
-    const resolved = unusualSizeMessages({ roll: usedRoll, detailMode: true, seq, extra });
+    const resolved = unusualSizeMessages({
+      roll: usedRoll,
+      detailMode: true,
+      seq,
+      extra,
+    });
     setFeed((prev) =>
       prev.map((fi) =>
         updateResolvedBlock(
@@ -906,8 +915,13 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "circularContents") {
-    const { circularContentsMessages } = require("../../dungeon/services/unusualShapeResult");
-    const resolved = circularContentsMessages({ roll: usedRoll, detailMode: true });
+    const {
+      circularContentsMessages,
+    } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = circularContentsMessages({
+      roll: usedRoll,
+      detailMode: true,
+    });
     setFeed((prev) =>
       prev.map((fi) =>
         updateResolvedBlock(
@@ -925,17 +939,16 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "circularShapePool") {
-    const { circularShapePoolMessages } = require("../../dungeon/services/unusualShapeResult");
-    const resolved = circularShapePoolMessages({ roll: usedRoll, detailMode: true });
+    const {
+      circularShapePoolMessages,
+    } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = circularShapePoolMessages({
+      roll: usedRoll,
+      detailMode: true,
+    });
     setFeed((prev) =>
       prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Pool"
-        )
+        updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Pool")
       )
     );
     if (setCollapsed)
@@ -944,8 +957,13 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "circularShapeMagicPool") {
-    const { circularShapeMagicPoolMessages } = require("../../dungeon/services/unusualShapeResult");
-    const resolved = circularShapeMagicPoolMessages({ roll: usedRoll, detailMode: true });
+    const {
+      circularShapeMagicPoolMessages,
+    } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = circularShapeMagicPoolMessages({
+      roll: usedRoll,
+      detailMode: true,
+    });
     setFeed((prev) =>
       prev.map((fi) =>
         updateResolvedBlock(
@@ -963,7 +981,9 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "transmuteType") {
-    const { transmuteTypeMessages } = require("../../dungeon/services/unusualShapeResult");
+    const {
+      transmuteTypeMessages,
+    } = require("../../dungeon/services/unusualShapeResult");
     const resolved = transmuteTypeMessages({ roll: usedRoll });
     setFeed((prev) =>
       prev.map((fi) =>
@@ -982,7 +1002,9 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "poolAlignment") {
-    const { poolAlignmentMessages } = require("../../dungeon/services/unusualShapeResult");
+    const {
+      poolAlignmentMessages,
+    } = require("../../dungeon/services/unusualShapeResult");
     const resolved = poolAlignmentMessages({ roll: usedRoll });
     setFeed((prev) =>
       prev.map((fi) =>
@@ -1001,7 +1023,9 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "transporterLocation") {
-    const { transporterLocationMessages } = require("../../dungeon/services/unusualShapeResult");
+    const {
+      transporterLocationMessages,
+    } = require("../../dungeon/services/unusualShapeResult");
     const resolved = transporterLocationMessages({ roll: usedRoll });
     setFeed((prev) =>
       prev.map((fi) =>
@@ -1241,7 +1265,11 @@ function resolvePreview(
     if (setResolved)
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
-  if (tp.id === "egress:one" || tp.id === "egress:two" || tp.id === "egress:three") {
+  if (
+    tp.id === "egress:one" ||
+    tp.id === "egress:two" ||
+    tp.id === "egress:three"
+  ) {
     const { egressMessages } = require("../../dungeon/services/stairsResult");
     const tableKey = tp.id.split(":")[1] as "one" | "two" | "three";
     const resolved = egressMessages({ table: tableKey, roll: usedRoll });
@@ -1259,7 +1287,9 @@ function resolvePreview(
     const { chuteMessages } = require("../../dungeon/services/stairsResult");
     const resolved = chuteMessages({ roll: usedRoll });
     setFeed((prev) =>
-      prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Chute"))
+      prev.map((fi) =>
+        updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Chute")
+      )
     );
     if (setCollapsed)
       setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));

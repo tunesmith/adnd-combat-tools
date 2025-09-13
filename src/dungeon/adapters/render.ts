@@ -11,13 +11,33 @@ import { chamberDimensions, ChamberDimensions, roomDimensions, RoomDimensions } 
 import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
 import { sidePassages, SidePassages } from "../../tables/dungeon/sidePassages";
 import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
-import { stairs, Stairs } from "../../tables/dungeon/stairs";
+import { stairs, Stairs, egressOne, egressTwo, egressThree, Egress, chute, Chute } from "../../tables/dungeon/stairs";
 import { trickTrapMessages } from "../services/trickTrap";
 import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
 import { getPassageResult } from "../services/passage";
 import { roomMessages } from "../services/roomResult";
 import { chamberMessages } from "../services/chamberResult";
 import { passageWidthMessages } from "../services/passageWidth";
+import {
+  SpecialPassage,
+  galleryStairLocation,
+  GalleryStairLocation,
+  streamConstruction,
+  StreamConstruction,
+  riverConstruction,
+  RiverConstruction,
+  chasmDepth,
+  ChasmDepth,
+  chasmConstruction,
+  ChasmConstruction,
+} from "../../tables/dungeon/specialPassage";
+import {
+  galleryStairLocationResult,
+  streamConstructionResult,
+  riverConstructionResult,
+  chasmDepthResult,
+  chasmConstructionResult,
+} from "../services/specialPassage";
 
 function rangeText(range: number[]): string {
   return range.length === 1 ? `${range[0]}` : `${range[0]}–${range[range.length - 1]}`;
@@ -273,6 +293,175 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     });
     return nodes;
   }
+  if (event.kind === "stairs") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Stairs" };
+    const label = Stairs[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let text = "";
+    switch (event.result) {
+      case Stairs.DownOne:
+        text = "There are stairs here that descend one level. ";
+        break;
+      case Stairs.DownTwo:
+        text = "There are stairs here that descend two levels. ";
+        break;
+      case Stairs.DownThree:
+        text = "There are stairs here that descend three levels. ";
+        break;
+      case Stairs.UpOne:
+        text = "There are stairs here that ascend one level. ";
+        break;
+      case Stairs.UpDead:
+        text = "There are stairs here that ascend one level to a dead end. ";
+        break;
+      case Stairs.DownDead:
+        text = "There are stairs here that descend one level to a dead end. ";
+        break;
+      case Stairs.ChimneyUpOne:
+        text = "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.ChimneyUpTwo:
+        text = "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.ChimneyDownTwo:
+        text = "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.TrapDoorDownOne:
+        text = "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.TrapDownDownTwo:
+        text = "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.UpOneDownTwo:
+        text = "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text });
+    // Stage subtables as previews in detail mode
+    if (event.result === Stairs.DownOne) {
+      nodes.push({
+        kind: "table-preview",
+        id: "egress:one",
+        title: "Egress (1 level)",
+        sides: egressOne.sides,
+        entries: egressOne.entries.map((e) => ({ range: rangeText(e.range), label: Egress[e.command] ?? String(e.command) })),
+      });
+    } else if (event.result === Stairs.DownTwo) {
+      nodes.push({
+        kind: "table-preview",
+        id: "egress:two",
+        title: "Egress (2 levels)",
+        sides: egressTwo.sides,
+        entries: egressTwo.entries.map((e) => ({ range: rangeText(e.range), label: Egress[e.command] ?? String(e.command) })),
+      });
+    } else if (event.result === Stairs.DownThree) {
+      nodes.push({
+        kind: "table-preview",
+        id: "egress:three",
+        title: "Egress (3 levels)",
+        sides: egressThree.sides,
+        entries: egressThree.entries.map((e) => ({ range: rangeText(e.range), label: Egress[e.command] ?? String(e.command) })),
+      });
+    } else if (event.result === Stairs.UpDead || event.result === Stairs.DownDead) {
+      nodes.push({
+        kind: "table-preview",
+        id: "chute",
+        title: "Chute",
+        sides: chute.sides,
+        entries: chute.entries.map((e) => ({ range: rangeText(e.range), label: Chute[e.command] ?? String(e.command) })),
+      });
+    } else if (event.result === Stairs.UpOneDownTwo) {
+      nodes.push({
+        kind: "table-preview",
+        id: "chamberDimensions",
+        title: "Chamber Dimensions",
+        sides: chamberDimensions.sides,
+        entries: chamberDimensions.entries.map((e) => ({ range: rangeText(e.range), label: ChamberDimensions[e.command] ?? String(e.command) })),
+      });
+    }
+    return nodes;
+  }
+  if (event.kind === "specialPassage") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Special Passage" };
+    const label = SpecialPassage[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let text = "";
+    switch (event.result) {
+      case SpecialPassage.FortyFeetColumns:
+        text = "The passage is 40' wide, with columns down the center. ";
+        break;
+      case SpecialPassage.FortyFeetDoubleColumns:
+        text = "The passage is 40' wide, with a double row of columns. ";
+        break;
+      case SpecialPassage.FiftyFeetDoubleColumns:
+        text = "The passage is 50' wide, with a double row of columns. ";
+        break;
+      case SpecialPassage.FiftyFeetGalleries:
+        text = "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. ";
+        break;
+      case SpecialPassage.TenFootStream:
+        text = "A stream, 10' wide, bisects the passage. ";
+        break;
+      case SpecialPassage.TwentyFootRiver:
+        text = "A river, 20' wide, bisects the passage. ";
+        break;
+      case SpecialPassage.FortyFootRiver:
+        text = "A river, 40' wide, bisects the passage. ";
+        break;
+      case SpecialPassage.SixtyFootRiver:
+        text = "A river, 60' wide, bisects the passage. ";
+        break;
+      case SpecialPassage.TwentyFootChasm:
+        text = "A chasm, 20' wide, bisects the passage. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text });
+    if (event.result === SpecialPassage.FiftyFeetGalleries) {
+      nodes.push({
+        kind: "table-preview",
+        id: "galleryStairLocation",
+        title: "Gallery Stair Location",
+        sides: galleryStairLocation.sides,
+        entries: galleryStairLocation.entries.map((e) => ({ range: rangeText(e.range), label: GalleryStairLocation[e.command] ?? String(e.command) })),
+      });
+    } else if (event.result === SpecialPassage.TenFootStream) {
+      nodes.push({
+        kind: "table-preview",
+        id: "streamConstruction",
+        title: "Stream Construction",
+        sides: streamConstruction.sides,
+        entries: streamConstruction.entries.map((e) => ({ range: rangeText(e.range), label: StreamConstruction[e.command] ?? String(e.command) })),
+      });
+    } else if (
+      event.result === SpecialPassage.TwentyFootRiver ||
+      event.result === SpecialPassage.FortyFootRiver ||
+      event.result === SpecialPassage.SixtyFootRiver
+    ) {
+      nodes.push({
+        kind: "table-preview",
+        id: "riverConstruction",
+        title: "River Construction",
+        sides: riverConstruction.sides,
+        entries: riverConstruction.entries.map((e) => ({ range: rangeText(e.range), label: RiverConstruction[e.command] ?? String(e.command) })),
+      });
+    } else if (event.result === SpecialPassage.TwentyFootChasm) {
+      nodes.push({
+        kind: "table-preview",
+        id: "chasmDepth",
+        title: "Chasm Depth",
+        sides: chasmDepth.sides,
+        entries: chasmDepth.entries.map((e) => ({ range: rangeText(e.range), label: ChasmDepth[e.command] ?? String(e.command) })),
+      });
+      nodes.push({
+        kind: "table-preview",
+        id: "chasmConstruction",
+        title: "Chasm Construction",
+        sides: chasmConstruction.sides,
+        entries: chasmConstruction.entries.map((e) => ({ range: rangeText(e.range), label: ChasmConstruction[e.command] ?? String(e.command) })),
+      });
+    }
+    return nodes;
+  }
   return nodes;
 }
 
@@ -411,6 +600,90 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
     // Compact: append width paragraph
     const width = passageWidthMessages({});
     for (const m of width.messages) if (m.kind === "paragraph") nodes.push(m);
+    return nodes;
+  }
+  if (event.kind === "stairs") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Stairs" };
+    const label = Stairs[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let text = "";
+    switch (event.result) {
+      case Stairs.DownOne:
+        text = "There are stairs here that descend one level. ";
+        break;
+      case Stairs.DownTwo:
+        text = "There are stairs here that descend two levels. ";
+        break;
+      case Stairs.DownThree:
+        text = "There are stairs here that descend three levels. ";
+        break;
+      case Stairs.UpOne:
+        text = "There are stairs here that ascend one level. ";
+        break;
+      case Stairs.UpDead:
+        text = "There are stairs here that ascend one level to a dead end. ";
+        break;
+      case Stairs.DownDead:
+        text = "There are stairs here that descend one level to a dead end. ";
+        break;
+      case Stairs.ChimneyUpOne:
+        text = "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.ChimneyUpTwo:
+        text = "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.ChimneyDownTwo:
+        text = "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.TrapDoorDownOne:
+        text = "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.TrapDownDownTwo:
+        text = "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
+        break;
+      case Stairs.UpOneDownTwo:
+        text = "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text });
+    return nodes;
+  }
+  if (event.kind === "specialPassage") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Special Passage" };
+    const label = SpecialPassage[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let text = "";
+    switch (event.result) {
+      case SpecialPassage.FortyFeetColumns:
+        text = "The passage is 40' wide, with columns down the center. ";
+        break;
+      case SpecialPassage.FortyFeetDoubleColumns:
+        text = "The passage is 40' wide, with a double row of columns. ";
+        break;
+      case SpecialPassage.FiftyFeetDoubleColumns:
+        text = "The passage is 50' wide, with a double row of columns. ";
+        break;
+      case SpecialPassage.FiftyFeetGalleries:
+        text = "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. " + galleryStairLocationResult();
+        break;
+      case SpecialPassage.TenFootStream:
+        text = "A stream, 10' wide, bisects the passage. " + streamConstructionResult();
+        break;
+      case SpecialPassage.TwentyFootRiver:
+      case SpecialPassage.FortyFootRiver:
+      case SpecialPassage.SixtyFootRiver:
+        text =
+          (event.result === SpecialPassage.TwentyFootRiver
+            ? "A river, 20' wide, bisects the passage. "
+            : event.result === SpecialPassage.FortyFootRiver
+            ? "A river, 40' wide, bisects the passage. "
+            : "A river, 60' wide, bisects the passage. ") + riverConstructionResult();
+        break;
+      case SpecialPassage.TwentyFootChasm:
+        text = "A chasm, 20' wide, bisects the passage. " + chasmDepthResult() + chasmConstructionResult();
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
   }
   return nodes;

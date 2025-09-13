@@ -2,8 +2,9 @@ import { Chute, chute, Egress, egressOne, egressThree, egressTwo, Stairs, stairs
 import { Table } from "../../tables/dungeon/dungeonTypes";
 import { chamberResult } from "./chamberResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
-import { chamberMessages } from "./chamberResult";
+import { DungeonRenderNode, DungeonTablePreview, DungeonMessage } from "../../types/dungeon";
+import { resolveStairs } from "../domain/resolvers";
+import { toCompactRender, toDetailRender } from "../adapters/render";
 
 export const stairsResult = (): string => {
   const roll = rollDice(stairs.sides);
@@ -81,7 +82,7 @@ export const chuteResult = (): string => {
 
 export const stairsMessages = (
   options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -95,66 +96,9 @@ export const stairsMessages = (
     };
     return { usedRoll: undefined, messages: [preview] };
   }
-  const usedRoll = options?.roll ?? rollDice(stairs.sides);
-  const command = getTableEntry(usedRoll, stairs);
-  let text: string;
-  switch (command) {
-    case Stairs.DownOne:
-      text = "There are stairs here that descend one level. ";
-      break;
-    case Stairs.DownTwo:
-      text = "There are stairs here that descend two levels. ";
-      break;
-    case Stairs.DownThree:
-      text = "There are stairs here that descend three levels. ";
-      break;
-    case Stairs.UpOne:
-      text = "There are stairs here that ascend one level. ";
-      break;
-    case Stairs.UpDead:
-      text = "There are stairs here that ascend one level to a dead end. ";
-      break;
-    case Stairs.DownDead:
-      text = "There are stairs here that descend one level to a dead end. ";
-      break;
-    case Stairs.ChimneyUpOne:
-      text = "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.ChimneyUpTwo:
-      text = "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.ChimneyDownTwo:
-      text = "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.TrapDoorDownOne:
-      text = "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.TrapDownDownTwo:
-      text = "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.UpOneDownTwo:
-      text = "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ";
-      break;
-  }
-  const messages: (DungeonMessage | DungeonTablePreview)[] = [
-    { kind: "heading", level: 4, text: "Stairs" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${Stairs[command] ?? String(command)}`] },
-    { kind: "paragraph", text },
-  ];
-  if (options?.detailMode) {
-    if (command === Stairs.DownOne) {
-      messages.push(...egressMessages({ table: "one", detailMode: true }).messages);
-    } else if (command === Stairs.DownTwo) {
-      messages.push(...egressMessages({ table: "two", detailMode: true }).messages);
-    } else if (command === Stairs.DownThree) {
-      messages.push(...egressMessages({ table: "three", detailMode: true }).messages);
-    } else if (command === Stairs.UpDead || command === Stairs.DownDead) {
-      messages.push(...chuteMessages({ detailMode: true }).messages);
-    } else if (command === Stairs.UpOneDownTwo) {
-      // Stage a chamber preview so it can recurse further
-      messages.push(...chamberMessages({ detailMode: true }).messages);
-    }
-  }
+  const node = resolveStairs({ roll: options?.roll });
+  const usedRoll = node.type === "event" ? node.roll : undefined;
+  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
   return { usedRoll, messages };
 };
 

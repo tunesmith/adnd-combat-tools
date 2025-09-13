@@ -19,7 +19,9 @@ import {
   streamConstruction,
 } from "../../tables/dungeon/specialPassage";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import { DungeonRenderNode, DungeonTablePreview, DungeonMessage } from "../../types/dungeon";
+import { resolveSpecialPassage } from "../domain/resolvers";
+import { toCompactRender, toDetailRender } from "../adapters/render";
 
 export const specialPassageResult = (): string => {
   const specialPassageRoll = rollDice(specialPassage.sides);
@@ -67,7 +69,7 @@ export const specialPassageResult = (): string => {
 
 export const specialPassageMessages = (
   options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -81,102 +83,9 @@ export const specialPassageMessages = (
     };
     return { usedRoll: undefined, messages: [preview] };
   }
-  const usedRoll = options?.roll ?? rollDice(specialPassage.sides);
-  const command = getTableEntry(usedRoll, specialPassage);
-  let text: string = "";
-  switch (command) {
-    case SpecialPassage.FortyFeetColumns:
-      text = "The passage is 40' wide, with columns down the center. ";
-      break;
-    case SpecialPassage.FortyFeetDoubleColumns:
-      text = "The passage is 40' wide, with a double row of columns. ";
-      break;
-    case SpecialPassage.FiftyFeetDoubleColumns:
-      text = "The passage is 50' wide, with a double row of columns. ";
-      break;
-    case SpecialPassage.FiftyFeetGalleries: {
-      text =
-        "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. ";
-      break;
-    }
-    case SpecialPassage.TenFootStream: {
-      text = "A stream, 10' wide, bisects the passage. ";
-      break;
-    }
-    case SpecialPassage.TwentyFootRiver: {
-      text = "A river, 20' wide, bisects the passage. ";
-      break;
-    }
-    case SpecialPassage.FortyFootRiver: {
-      text = "A river, 40' wide, bisects the passage. ";
-      break;
-    }
-    case SpecialPassage.SixtyFootRiver: {
-      text = "A river, 60' wide, bisects the passage. ";
-      break;
-    }
-    case SpecialPassage.TwentyFootChasm: {
-      text = "A chasm, 20' wide, bisects the passage. ";
-      break;
-    }
-  }
-  const messages: (DungeonMessage | DungeonTablePreview)[] = [
-    { kind: "heading", level: 4, text: "Special Passage" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${SpecialPassage[command] ?? String(command)}`] },
-    { kind: "paragraph", text },
-  ];
-  if (options?.detailMode) {
-    // In detail mode, stage previews for required subtables instead of auto-rolling
-    if (command === SpecialPassage.FiftyFeetGalleries) {
-      const preview = galleryStairLocationMessages({ detailMode: true });
-      for (const m of preview.messages) messages.push(m);
-    } else if (command === SpecialPassage.TenFootStream) {
-      const preview = streamConstructionMessages({ detailMode: true });
-      for (const m of preview.messages) messages.push(m);
-    } else if (
-      command === SpecialPassage.TwentyFootRiver ||
-      command === SpecialPassage.FortyFootRiver ||
-      command === SpecialPassage.SixtyFootRiver
-    ) {
-      const preview = riverConstructionMessages({ detailMode: true });
-      for (const m of preview.messages) messages.push(m);
-    } else if (command === SpecialPassage.TwentyFootChasm) {
-      const depthPrev = chasmDepthMessages({ detailMode: true });
-      for (const m of depthPrev.messages) messages.push(m);
-      const constrPrev = chasmConstructionMessages({ detailMode: true });
-      for (const m of constrPrev.messages) messages.push(m);
-    }
-  } else {
-    // Legacy auto-roll text for compact mode or when previews are not desired
-    switch (command) {
-      case SpecialPassage.FiftyFeetGalleries:
-        messages[messages.length - 1] = {
-          kind: "paragraph",
-          text: text + galleryStairLocationResult(),
-        } as DungeonMessage;
-        break;
-      case SpecialPassage.TenFootStream:
-        messages[messages.length - 1] = {
-          kind: "paragraph",
-          text: text + streamConstructionResult(),
-        } as DungeonMessage;
-        break;
-      case SpecialPassage.TwentyFootRiver:
-      case SpecialPassage.FortyFootRiver:
-      case SpecialPassage.SixtyFootRiver:
-        messages[messages.length - 1] = {
-          kind: "paragraph",
-          text: text + riverConstructionResult(),
-        } as DungeonMessage;
-        break;
-      case SpecialPassage.TwentyFootChasm:
-        messages[messages.length - 1] = {
-          kind: "paragraph",
-          text: text + chasmDepthResult() + chasmConstructionResult(),
-        } as DungeonMessage;
-        break;
-    }
-  }
+  const node = resolveSpecialPassage({ roll: options?.roll });
+  const usedRoll = node.type === "event" ? node.roll : undefined;
+  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
   return { usedRoll, messages };
 };
 
