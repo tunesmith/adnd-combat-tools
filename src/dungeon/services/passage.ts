@@ -9,7 +9,7 @@ import { chamberResult } from "./chamberResult";
 import { stairsResult } from "./stairsResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { wanderingMonsterResult } from "./wanderingMonsterResult";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import { DungeonMessage, DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 // legacy imports above kept for string API; message-path refactored below via adapters
 import { resolvePeriodicCheck } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
@@ -81,7 +81,7 @@ export const getPassageResult = (
  */
 export const passageMessages = (
   options?: { roll?: number; level?: number; avoidMonster?: boolean; detailMode?: boolean }
-): { usedRoll?: number; messages: DungeonMessage[] | (DungeonMessage | DungeonTablePreview)[] } => {
+): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   const level = options?.level ?? 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
@@ -103,5 +103,5 @@ export const passageMessages = (
   const node = resolvePeriodicCheck({ roll: options?.roll, level, avoidMonster: options?.avoidMonster });
   const usedRoll = (node.type === "event" ? node.roll : undefined) as number | undefined;
   const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
-  return { usedRoll, messages: messages as any };
+  return { usedRoll, messages };
 };

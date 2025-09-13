@@ -46,6 +46,7 @@ import {
   PeriodicCheckDoorOnly,
 } from "../../tables/dungeon/periodicCheckDoorOnly";
 import { getTableEntry } from "../../dungeon/helpers/dungeonLookup";
+import type { TableContext } from "../../types/dungeon";
 
 type Lateral = "Left" | "Right";
 type DoorChainContext = { kind: "doorChain"; existing: Lateral[] };
@@ -509,6 +510,12 @@ function resolvePreview(
   }
 
   const keyId = `${feedItemId}:${tp.id}`;
+
+  // Try the generic registry first; if handled, stop here
+  if (
+    resolveViaRegistry(tp, feedItemId, usedRoll!, setFeed, setCollapsed, setResolved)
+  )
+    return;
 
   if (tp.id === "passageWidth") {
     const width = passageWidthMessages({ roll: usedRoll, detailMode: true });
@@ -1111,9 +1118,8 @@ function resolvePreview(
           if (node.kind === "table-preview" && node.id === tp.id) {
             newMessages.push(node);
             for (const m of resolved.messages) newMessages.push(m);
-            const bullet =
-              (resolved.messages.find((m) => m.kind === "bullet-list") as any)
-                ?.items?.[0] ?? "";
+            const bulletList = resolved.messages.find((m): m is Extract<DungeonRenderNode, { kind: "bullet-list" }> => m.kind === "bullet-list");
+            const bullet = bulletList ? bulletList.items[0] : "";
             const label = String(bullet);
             const existing: Lateral[] = isDoorChainContext(tp.context)
               ? tp.context.existing
@@ -1435,3 +1441,79 @@ function getRootPreviewNodes(action: ActionKind): DungeonRenderNode[] {
 }
 
 export default DungeonIndexPage;
+
+// ----- Registry dispatch helpers -----
+
+type RegistryResolver = (opts: {
+  roll: number;
+  id: string;
+  context?: TableContext;
+}) => DungeonRenderNode[];
+
+const TABLE_HEADINGS: Record<string, string> = {
+  sidePassages: "Side Passages",
+  passageTurns: "Passage Turns",
+  stairs: "Stairs",
+  galleryStairLocation: "Gallery Stair Location",
+  galleryStairOccurrence: "Gallery Stair Occurrence",
+  streamConstruction: "Stream Construction",
+  riverConstruction: "River Construction",
+  riverBoatBank: "Boat Bank",
+  chasmDepth: "Chasm Depth",
+  chasmConstruction: "Chasm Construction",
+  jumpingPlaceWidth: "Jumping Place Width",
+  circularContents: "Circular Contents",
+  circularShapePool: "Pool",
+  circularShapeMagicPool: "Magic Pool Effect",
+  transmuteType: "Transmutation Type",
+  poolAlignment: "Pool Alignment",
+  transporterLocation: "Transporter Location",
+  chute: "Chute",
+  egress: "Egress",
+};
+
+const TABLE_RESOLVERS: Record<string, RegistryResolver> = {
+  sidePassages: ({ roll }) => sidePassageMessages({ roll, detailMode: true }).messages,
+  passageTurns: ({ roll }) => passageTurnMessages({ roll, detailMode: true }).messages,
+  stairs: ({ roll }) => stairsMessages({ roll, detailMode: true }).messages,
+  galleryStairLocation: ({ roll }) => galleryStairLocationMessages({ roll, detailMode: true }).messages,
+  galleryStairOccurrence: ({ roll }) => galleryStairOccurrenceMessages({ roll }).messages,
+  streamConstruction: ({ roll }) => streamConstructionMessages({ roll, detailMode: true }).messages,
+  riverConstruction: ({ roll }) => riverConstructionMessages({ roll, detailMode: true }).messages,
+  riverBoatBank: ({ roll }) => riverBoatBankMessages({ roll }).messages,
+  chasmDepth: ({ roll }) => chasmDepthMessages({ roll, detailMode: true }).messages,
+  chasmConstruction: ({ roll }) => chasmConstructionMessages({ roll, detailMode: true }).messages,
+  jumpingPlaceWidth: ({ roll }) => jumpingPlaceWidthMessages({ roll }).messages,
+  circularContents: ({ roll }) => circularContentsMessages({ roll, detailMode: true }).messages,
+  circularShapePool: ({ roll }) => circularShapePoolMessages({ roll, detailMode: true }).messages,
+  circularShapeMagicPool: ({ roll }) => circularShapeMagicPoolMessages({ roll, detailMode: true }).messages,
+  transmuteType: ({ roll }) => transmuteTypeMessages({ roll }).messages,
+  poolAlignment: ({ roll }) => poolAlignmentMessages({ roll }).messages,
+  transporterLocation: ({ roll }) => transporterLocationMessages({ roll }).messages,
+  chute: ({ roll }) => chuteMessages({ roll }).messages,
+  egress: ({ roll, id }) => {
+    const key = (id.split(":")[1] as "one" | "two" | "three") || "one";
+    return egressMessages({ table: key, roll }).messages;
+  },
+};
+
+function resolveViaRegistry(
+  tp: DungeonTablePreview,
+  feedItemId: string,
+  usedRoll: number,
+  setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
+  setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+): boolean {
+  const base: string = String(tp.id.split(":")[0] ?? "");
+  const resolver = (TABLE_RESOLVERS as Record<string, RegistryResolver>)[base];
+  const heading = (TABLE_HEADINGS as Record<string, string>)[base];
+  if (!resolver || !heading) return false;
+  const resolvedMsgs = resolver({ roll: usedRoll, id: tp.id, context: tp.context });
+  setFeed((prev) =>
+    prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolvedMsgs, heading))
+  );
+  if (setCollapsed) setCollapsed!((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  if (setResolved) setResolved!((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  return true;
+}

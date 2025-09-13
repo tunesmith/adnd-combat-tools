@@ -3,7 +3,7 @@ import { passageWidthResults } from "./passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { chamberResult } from "./chamberResult";
 import { roomResult } from "./roomResult";
-import { DungeonMessage, DungeonRollTrace, DungeonTablePreview } from "../../types/dungeon";
+import { DungeonMessage, DungeonRollTrace, DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 import { resolveDoorBeyond } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 
@@ -57,7 +57,7 @@ export const doorBeyondMessages = (
     detailMode?: boolean;
     takeOverride?: (tableId: string) => number | undefined;
   }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonRollTrace | DungeonTablePreview)[] } => {
+): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   const doorAhead = options?.doorAhead ?? false;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
@@ -80,7 +80,7 @@ export const doorBeyondMessages = (
     return { usedRoll: undefined, messages };
   }
   const node = resolveDoorBeyond({ roll: options?.roll, doorAhead });
-  const usedRoll = (node.type === "event" ? node.roll : undefined) as number | undefined;
+  const usedRoll = node.type === "event" ? node.roll : undefined;
   const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
-  return { usedRoll, messages: messages as any };
+  return { usedRoll, messages };
 };

@@ -209,7 +209,7 @@ export const unusualShapeMessages = (options?: {
     { kind: "paragraph", text },
   ];
   if (options?.detailMode && command === UnusualShape.Circular) {
-    const preview = circularContentsMessages({ detailMode: true } as any);
+    const preview = circularContentsMessages({ detailMode: true });
     for (const m of preview.messages) messages.push(m);
   }
   return { usedRoll, messages };
@@ -265,7 +265,7 @@ export const circularContentsMessages = (options?: {
     { kind: "paragraph", text },
   ];
   if (options?.detailMode && command === CircularContents.Pool) {
-    const preview = circularShapePoolMessages({ detailMode: true } as any);
+    const preview = circularShapePoolMessages({ detailMode: true });
     for (const m of preview.messages) messages.push(m);
   }
   return { usedRoll, messages };
@@ -326,7 +326,7 @@ export const circularShapePoolMessages = (options?: {
     { kind: "paragraph", text },
   ];
   if (options?.detailMode && command === Pool.MagicPool) {
-    const preview = circularShapeMagicPoolMessages({ detailMode: true } as any);
+    const preview = circularShapeMagicPoolMessages({ detailMode: true });
     for (const m of preview.messages) messages.push(m);
   }
   return { usedRoll, messages };

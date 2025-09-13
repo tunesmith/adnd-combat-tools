@@ -1,7 +1,7 @@
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { periodicCheck } from "../../tables/dungeon/periodicCheck";
 import { doorBeyond } from "../../tables/dungeon/doorBeyond";
-import { DungeonOutcomeNode } from "./outcome";
+import { DungeonOutcomeNode, OutcomeEvent } from "./outcome";
 import { sidePassages } from "../../tables/dungeon/sidePassages";
 import { passageTurns } from "../../tables/dungeon/passageTurns";
 import { stairs } from "../../tables/dungeon/stairs";
@@ -38,23 +38,27 @@ export function resolveDoorBeyond(options?: {
 export function resolveSidePassages(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(sidePassages.sides);
   const command = getTableEntry(usedRoll, sidePassages);
-  return { type: "event", roll: usedRoll, event: { kind: "sidePassages", result: command } as any };
+  const event: OutcomeEvent = { kind: "sidePassages", result: command } as OutcomeEvent;
+  return { type: "event", roll: usedRoll, event };
 }
 
 export function resolvePassageTurns(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(passageTurns.sides);
   const command = getTableEntry(usedRoll, passageTurns);
-  return { type: "event", roll: usedRoll, event: { kind: "passageTurns", result: command } as any };
+  const event: OutcomeEvent = { kind: "passageTurns", result: command } as OutcomeEvent;
+  return { type: "event", roll: usedRoll, event };
 }
 
 export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(stairs.sides);
   const command = getTableEntry(usedRoll, stairs);
-  return { type: "event", roll: usedRoll, event: { kind: "stairs", result: command } as any };
+  const event: OutcomeEvent = { kind: "stairs", result: command } as OutcomeEvent;
+  return { type: "event", roll: usedRoll, event };
 }
 
 export function resolveSpecialPassage(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(specialPassage.sides);
   const command = getTableEntry(usedRoll, specialPassage);
-  return { type: "event", roll: usedRoll, event: { kind: "specialPassage", result: command } as any };
+  const event: OutcomeEvent = { kind: "specialPassage", result: command } as OutcomeEvent;
+  return { type: "event", roll: usedRoll, event };
 }
