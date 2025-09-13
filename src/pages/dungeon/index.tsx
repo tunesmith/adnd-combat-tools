@@ -44,15 +44,9 @@ import {
 } from "../../dungeon/services/specialPassage";
 import { trickTrapMessages } from "../../dungeon/services/trickTrap";
 import { doorLocationMessages } from "../../dungeon/services/closedDoorResult";
-import {
-  periodicCheckDoorOnly,
-  PeriodicCheckDoorOnly,
-} from "../../tables/dungeon/periodicCheckDoorOnly";
-import { getTableEntry } from "../../dungeon/helpers/dungeonLookup";
+import { periodicDoorOnlyMessages } from "../../dungeon/services/periodicDoorOnly";
 import type { TableContext } from "../../types/dungeon";
 
-type Lateral = "Left" | "Right";
-type DoorChainContext = { kind: "doorChain"; existing: Lateral[] };
 type ExitsContext = {
   kind: "exits";
   length: number;
@@ -60,24 +54,14 @@ type ExitsContext = {
   isRoom: boolean;
 };
 
-function isDoorChainContext(x: unknown): x is DoorChainContext {
-  return (
-    typeof x === "object" &&
-    x !== null &&
-    (x as any).kind === "doorChain" &&
-    Array.isArray((x as any).existing) &&
-    (x as any).existing.every((v: unknown) => v === "Left" || v === "Right")
-  );
-}
-
 function isExitsContext(x: unknown): x is ExitsContext {
+  if (!x || typeof x !== "object") return false;
+  const o = x as { kind?: unknown; length?: unknown; width?: unknown; isRoom?: unknown };
   return (
-    typeof x === "object" &&
-    x !== null &&
-    (x as any).kind === "exits" &&
-    typeof (x as any).length === "number" &&
-    typeof (x as any).width === "number" &&
-    typeof (x as any).isRoom === "boolean"
+    o.kind === "exits" &&
+    typeof o.length === "number" &&
+    typeof o.width === "number" &&
+    typeof o.isRoom === "boolean"
   );
 }
 
@@ -803,102 +787,6 @@ function resolvePreview(
               }
               newMessages.push(m);
             }
-            // Handle door-chain recursion: prefer the door-only periodic check preview
-            if (isDoorChainContext(tp.context)) {
-              newMessages.push(
-                createPeriodicDoorOnlyPreview({ context: tp.context })
-              );
-            }
-          }
-        }
-        return { ...fi, messages: newMessages };
-      })
-    );
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
-  }
-  if (tp.id.startsWith("periodicCheckDoorOnly")) {
-    const roll = usedRoll ?? 1;
-    const cmd = getTableEntry(roll, periodicCheckDoorOnly);
-    const isDoor = cmd === PeriodicCheckDoorOnly.Door;
-    const msgs: DungeonRenderNode[] = [
-      { kind: "heading", level: 4, text: "Periodic Check (doors only)" },
-      {
-        kind: "bullet-list",
-        items: [`roll: ${roll} — ${isDoor ? "Door" : "Ignore"}`],
-      },
-    ];
-    if (isDoor) {
-      msgs.push(
-        createDoorLocationPreview({
-          context: isDoorChainContext(tp.context) ? tp.context : undefined,
-        })
-      );
-    } else {
-      msgs.push({
-        kind: "paragraph",
-        text: "Ignored (not a door). Continue 30' past the door.",
-      });
-    }
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          msgs,
-          "Periodic Check (doors only)"
-        )
-      )
-    );
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
-  }
-  if (tp.id.startsWith("doorLocation")) {
-    const resolved = doorLocationMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) => {
-        if (fi.id !== feedItemId) return fi;
-        const newMessages: DungeonRenderNode[] = [];
-        for (const node of fi.messages) {
-          if (node.kind === "table-preview" && node.id === tp.id) {
-            newMessages.push(node);
-            for (const m of resolved.messages) newMessages.push(m);
-            const bulletList = resolved.messages.find(
-              (m): m is Extract<DungeonRenderNode, { kind: "bullet-list" }> =>
-                m.kind === "bullet-list"
-            );
-            const bullet = bulletList ? bulletList.items[0] : "";
-            const label = String(bullet);
-            const existing: Lateral[] = isDoorChainContext(tp.context)
-              ? tp.context.existing
-              : [];
-            if (label.includes("Ahead")) {
-              // Door ahead is a dead end — no further periodic recheck.
-            } else {
-              const loc: Lateral | "" = label.includes("Left")
-                ? "Left"
-                : label.includes("Right")
-                ? "Right"
-                : "";
-              if (loc && existing.includes(loc)) {
-                newMessages.push({
-                  kind: "paragraph",
-                  text: "There are no more doors. The main passage extends -- check again in 30'. ",
-                });
-              } else {
-                const nextExisting: Lateral[] = loc
-                  ? [...existing, loc]
-                  : existing;
-                newMessages.push(
-                  createPeriodicDoorOnlyPreview({
-                    context: { kind: "doorChain", existing: nextExisting },
-                  })
-                );
-              }
-            }
-          } else {
-            newMessages.push(node);
           }
         }
         return { ...fi, messages: newMessages };
@@ -1012,45 +900,6 @@ function updateResolvedBlock(
   return { ...fi, messages: newMessages };
 }
 
-function createPeriodicDoorOnlyPreview({
-  context,
-}: {
-  context?: DoorChainContext;
-}): DungeonTablePreview {
-  const seq = isDoorChainContext(context) ? context.existing.length : 0;
-  return {
-    kind: "table-preview",
-    id: `periodicCheckDoorOnly:${seq}`,
-    title: "Periodic Check (doors only)",
-    sides: 20,
-    entries: [
-      { range: "1–2", label: "Ignore" },
-      { range: "3–5", label: "Door" },
-      { range: "6–20", label: "Ignore" },
-    ],
-    context,
-  };
-}
-
-function createDoorLocationPreview({
-  context,
-}: {
-  context?: DoorChainContext;
-}): DungeonTablePreview {
-  const seq = isDoorChainContext(context) ? context.existing.length : 0;
-  return {
-    kind: "table-preview",
-    id: `doorLocation:${seq}`,
-    title: "Door Location",
-    sides: 20,
-    entries: [
-      { range: "1–6", label: "Left" },
-      { range: "7–12", label: "Right" },
-      { range: "13–20", label: "Ahead" },
-    ],
-    context,
-  };
-}
 
 function filterForCompact(
   nodes: DungeonRenderNode[],
@@ -1122,6 +971,8 @@ const TABLE_ID_LIST = [
   "sidePassages",
   "passageTurns",
   "stairs",
+  "doorLocation",
+  "periodicCheckDoorOnly",
   "galleryStairLocation",
   "galleryStairOccurrence",
   "streamConstruction",
@@ -1150,6 +1001,8 @@ const TABLE_HEADINGS: Record<TableId, string> = {
   sidePassages: "Side Passages",
   passageTurns: "Passage Turns",
   stairs: "Stairs",
+  doorLocation: "Door Location",
+  periodicCheckDoorOnly: "Periodic Check (doors only)",
   galleryStairLocation: "Gallery Stair Location",
   galleryStairOccurrence: "Gallery Stair Occurrence",
   streamConstruction: "Stream Construction",
@@ -1174,6 +1027,10 @@ const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   passageTurns: ({ roll }) =>
     passageTurnMessages({ roll, detailMode: true }).messages,
   stairs: ({ roll }) => stairsMessages({ roll, detailMode: true }).messages,
+  doorLocation: ({ roll, context }) =>
+    doorLocationMessages({ roll, detailMode: true, context }).messages,
+  periodicCheckDoorOnly: ({ roll, context }) =>
+    periodicDoorOnlyMessages({ roll, detailMode: true, context }).messages,
   galleryStairLocation: ({ roll }) =>
     galleryStairLocationMessages({ roll, detailMode: true }).messages,
   galleryStairOccurrence: ({ roll }) =>

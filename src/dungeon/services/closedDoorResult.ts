@@ -1,5 +1,6 @@
 import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import { DungeonTablePreview, DungeonRenderNode, TableContext } from "../../types/dungeon";
+import { periodicCheckDoorOnly, PeriodicCheckDoorOnly } from "../../tables/dungeon/periodicCheckDoorOnly";
 import {
   periodicCheck,
   PeriodicCheck,
@@ -63,18 +64,23 @@ export const closedDoorResult = (existingDoors: DoorLocation[]): string => {
 };
 
 export const doorLocationMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+  options?: { roll?: number; detailMode?: boolean; context?: TableContext }
+): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+  // Preview (detail) — include sequence + context when available
   if (options?.detailMode && options.roll === undefined) {
+    const seq = isDoorChainContext(options?.context)
+      ? options?.context?.existing?.length || 0
+      : 0;
     const preview: DungeonTablePreview = {
       kind: "table-preview",
-      id: "doorLocation",
+      id: `doorLocation:${seq}`,
       title: "Door Location",
       sides: doorLocation.sides,
       entries: doorLocation.entries.map((e) => ({
         range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: DoorLocation[e.command] ?? String(e.command),
       })),
+      context: options?.context,
     };
     return { usedRoll: undefined, messages: [preview] };
   }
@@ -84,10 +90,51 @@ export const doorLocationMessages = (
     command === DoorLocation.Ahead
       ? "A door is Ahead. "
       : `A door is to the ${DoorLocation[command]}. `;
-  const messages: DungeonMessage[] = [
+  const messages: DungeonRenderNode[] = [
     { kind: "heading", level: 4, text: "Door Location" },
     { kind: "bullet-list", items: [`roll: ${usedRoll} — ${DoorLocation[command]}`] },
     { kind: "paragraph", text },
   ];
+
+  // Chain continuation logic (detail mode): schedule the next door-only periodic roll
+  if (options?.detailMode) {
+    const existing: ("Left" | "Right")[] = isDoorChainContext(options?.context)
+      ? ((options?.context?.existing || []) as ("Left" | "Right")[])
+      : [];
+    if (command === DoorLocation.Ahead) {
+      // Dead end; chain stops here.
+      return { usedRoll, messages };
+    }
+    const loc: "Left" | "Right" | "" =
+      command === DoorLocation.Left ? "Left" : command === DoorLocation.Right ? "Right" : "";
+    if (loc === "") {
+      return { usedRoll, messages };
+    }
+    if (existing.includes(loc)) {
+      messages.push({
+        kind: "paragraph",
+        text: "There are no more doors. The main passage extends -- check again in 30'. ",
+      });
+      return { usedRoll, messages };
+    }
+    const nextExisting = [...existing, loc];
+    const nextSeq = existing.length; // aligns with historical id sequencing
+    const nextPreview: DungeonTablePreview = {
+      kind: "table-preview",
+      id: `periodicCheckDoorOnly:${nextSeq}`,
+      title: "Periodic Check (doors only)",
+      sides: periodicCheckDoorOnly.sides,
+      entries: periodicCheckDoorOnly.entries.map((e) => ({
+        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        label: PeriodicCheckDoorOnly[e.command] ?? String(e.command),
+      })),
+      context: { kind: "doorChain", existing: nextExisting },
+    };
+    messages.push(nextPreview);
+  }
   return { usedRoll, messages };
 };
+
+function isDoorChainContext(o: TableContext | undefined): o is Extract<TableContext, { kind: "doorChain" }> {
+  return !!o && (o as any).kind === "doorChain" && Array.isArray((o as any).existing);
+}

@@ -110,13 +110,13 @@ Phase 1 — Domain outcome and adapters (no UI change)
 - Introduce `DungeonOutcomeNode` (as above) and render adapters.
 - Implement a single POC resolver: Periodic Check → outcomes, and adapt `passageMessages()` to use it via adapter for both modes. Keep `getPassageResult()` temporarily for `wanderingMonsterResult`.
 
-Status: Pending. Prior experimental branch was rolled back; this phase will resume after Phase 0 parity tests are in place and green.
+Status: Completed. Implemented outcome + adapters for Passage (Periodic Check) and Door Beyond. Parity confirmed via tests.
 
 Phase 2 — Replace string services incrementally
 - Convert `sidePassage`, `passageTurn`, `stairs`, `specialPassage` chains to return outcomes. Wire their typed `...Messages()` through the adapters. Remove corresponding `...Result()` string functions after consumers migrate.
 - Update `wanderingMonsterResult` to compose outcomes (location + monster) instead of strings; then remove `getPassageResult`.
 
-Status: Pending. Will start with side passage and passage turns (lowest risk), then stairs and special passage chain.
+Status: Completed. Migrated Side Passages, Passage Turns, Stairs, and the Special Passage chain to the outcome model and routed their typed `...Messages()` through the render adapters. Legacy string functions retained only where still referenced (e.g., compact composition helpers for special passage) to preserve text parity.
 
 Phase 3 — Registry refactor for index.tsx
 - Add `TableIdBase`, `TABLE_RESOLVERS`, `TABLE_HEADINGS` and `resolveViaRegistry`.
@@ -124,20 +124,70 @@ Phase 3 — Registry refactor for index.tsx
 - Extract helpers: `parseTableId`, `markResolved`, and `makeTablePreview`.
 - Result: most of the long `if/else` chain disappears; index.tsx shrinks meaningfully.
 
-Status: Pending. To be introduced after Phase 2 migrations for the simpler tables.
+Status: Completed. Added a typed registry in `index.tsx` with:
+- `TableId` union derived from `TABLE_ID_LIST` and `isTableId` type guard
+- `TABLE_RESOLVERS` and `TABLE_HEADINGS` as `Record<TableId, ...>`
+- `resolveViaRegistry(...)` that safely narrows ids and rewrites the preview block via `updateResolvedBlock`
+
+Also removed now-unreachable branches from `resolvePreview` for ids handled by the registry and replaced dynamic `require(...)` calls with static imports.
 
 Phase 4 — Cleanup and parity checks
 - Remove legacy string paths and eliminate duplicated sentences living in services.
 - Ensure compact/detail adapters match previous output. Keep minor deltas documented if any are intended.
 
-Status: Pending. Legacy string functions (`getPassageResult`, `doorBeyondResult`, etc.) remain for now to minimize risk; will remove post‑parity tests.
+Status: In progress/partial. Most legacy string paths remain only as helpers for compact text composition or for external references (e.g., `getPassageResult` for compact parity). Removing them is optional and can be done table-by-table after adding coverage.
 
 ## Current Status Summary
 - Build: `tsc` passes.
-- Tests: 8/8 passing (existing suite). Parity tests to be added next.
-- Implemented outcomes: Periodic Check, Door Beyond.
-- Services migrated to adapters: `passageMessages`, `doorBeyondMessages`.
-- No behavior differences expected or observed.
+- Tests: 9/9 passing (including comprehensive parity tests).
+- Outcomes implemented: Periodic Check, Side Passages, Passage Turns, Stairs, Special Passage, Door Beyond.
+- Services migrated to adapters: `passageMessages`, `sidePassageMessages`, `passageTurnMessages`, `stairsMessages`, `specialPassageMessages`, `doorBeyondMessages`.
+- Registry in `index.tsx` routes common ids; dead branches removed; bespoke flows preserved.
+- App code free of `any` (tests contain minimal helper anys only).
+
+### Periodic Check Modernization Status
+
+Detail mode (adapters + previews)
+- ContinueStraight (1–2): Modernized. Paragraph only; no preview needed.
+- Door (3–5): Modernized. Paragraph + Door Location preview (with door-chain context).
+- SidePassage (6–10): Modernized. Paragraph + Side Passages preview.
+- PassageTurn (11–13): Modernized. Paragraph + Passage Width preview staged.
+- Chamber (14–16): Modernized. Paragraph + Chamber Dimensions preview.
+- Stairs (17): Modernized. Paragraph + staged subtables (Egress/Chute/Chamber) as previews.
+- DeadEnd (18): Modernized. Paragraph only; no preview needed.
+- TrickTrap (19): Partially modernized. Shows a Trick/Trap preview stub; underlying table not implemented yet.
+- WanderingMonster (20): Not modernized. Delegates to legacy string path; no previews yet for its chain.
+
+Compact mode (current behavior and dependency)
+- All Periodic Check outcomes currently route through the legacy `getPassageResult(...)` for exact text parity. This includes Door (which uses the legacy door-chain logic), Trick/Trap, and Wandering Monster.
+- Many cases are “ready to switch” to fully modern compact text (ContinueStraight, SidePassage, PassageTurn, Chamber, Stairs, DeadEnd) once we stop depending on `getPassageResult` globally. Door and Wandering Monster require outcome work to match legacy chains.
+
+What remains to remove legacy strings from Periodic Check
+- Door chain outcome: Model the closed-door chain as a structured outcome (first door location, possible repeats, recheck branch). Use compact adapter to compose the same single-paragraph text; keep detail adapter in preview mode (already done).
+- Wandering Monster outcome: Compose the “where-from” (Periodic Check sans WM), monster level/type, and counts as outcomes; detail adapter can stage previews, compact composes text. Replace `wanderingMonsterResult` usage.
+- Trick/Trap table: Replace the stub with a real table; both detail and compact then become purely adapter-driven.
+
+Test strategy for the switch
+- Keep existing parity tests; switch compact adapters to generate text directly (no calls to legacy). Tests continue to assert exact strings, so they guard against drift while enabling deletion of legacy helpers.
+- After Door chain + Wandering Monster outcomes land, delete `getPassageResult` and associated legacy result functions (or move to a `legacy/` module during a short transition).
+
+## What Could Still Be Done (Optional)
+- Door chain structure: Avoid parsing bullet text in `doorLocation:*` by carrying a structured outcome for door location results alongside messages. This would simplify the chain logic and remove incidental string parsing.
+- Extract registry to a module: Move `TableId`, `TABLE_RESOLVERS`, `TABLE_HEADINGS`, and `resolveViaRegistry` to a small helper file to further reduce `index.tsx` size.
+- Normalize return types: Ensure all `...Messages()` consistently return `DungeonRenderNode[]` (most already do) and eliminate legacy union return type hints.
+- Tighten test helpers: Remove the small `any` usage in parity test type guards by adding local predicates.
+- Consider outcome model for Exits: `numberOfExits` could become an outcome node using the current context (length/width/isRoom) to further unify flows; keep behavior identical.
+- (Longer term) Room/Chamber previews via registry: With careful handling of bespoke replacement rules, these could be partially routed through the registry for consistency.
+
+## Notes on Behavior Parity
+- Compact vs detail: Compact text remains exactly as before; detail mode stages previews and respects prior UI/UX.
+- Special Passage subtables: `detailMode: true` is used consistently; when a roll is supplied, output is the same, and when no roll is provided, the table renders as a preview.
+- Bespoke flows retained: Door chain (`doorLocation:*`, `periodicCheckDoorOnly:*`), `passageWidth` special handling, `numberOfExits` with dimension context, and the `periodicCheck` root remain explicitly handled.
+
+## Suggested Next Steps
+- If desired, remove remaining legacy string functions once their callers are fully outcome-based and parity-tested.
+- Add targeted parity tests around door chain structured handling if we move away from label parsing.
+- Begin new feature work on top of the now-simplified adapters/registry foundation.
 
 ## Notes on Behavior Parity
 - Compact mode keeps today’s sentences (no roll bullets or traces, no previews).
