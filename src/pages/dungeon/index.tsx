@@ -487,13 +487,10 @@ function resolvePreview(
   setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 ) {
   let usedRoll: number | undefined = overrides[tp.id];
-  if (shouldRoll || usedRoll === undefined) {
-    // Simple auto-roll using existing dice util via specific resolvers where possible
-    // For now, only passageWidth is supported here
-    if (tp.id === "passageWidth") {
-      usedRoll = undefined; // we will let passageWidthMessages roll if undefined
-    }
-  }
+  // If the user clicked Submit without an override, do nothing.
+  if (!shouldRoll && usedRoll === undefined) return;
+  // For AutoRoll, generate a roll if we don't already have one.
+  if (shouldRoll && usedRoll === undefined) usedRoll = rollDice(tp.sides);
 
   // Consume override if present
   if (overrides[tp.id] !== undefined) {
@@ -770,7 +767,8 @@ function resolvePreview(
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
   if (tp.id === "roomDimensions") {
-    const resolved = roomMessages({ roll: usedRoll });
+    // Keep detail-mode chain so Exits appears as a preview
+    const resolved = roomMessages({ roll: usedRoll, detailMode: true });
     setFeed((prev) =>
       prev.map((fi) => {
         if (fi.id !== feedItemId) return fi;
@@ -816,7 +814,8 @@ function resolvePreview(
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
   if (tp.id === "chamberDimensions") {
-    const resolved = chamberMessages({ roll: usedRoll });
+    // Keep detail-mode chain so Unusual subtables and Exits appear as previews
+    const resolved = chamberMessages({ roll: usedRoll, detailMode: true });
     setFeed((prev) =>
       prev.map((fi) => {
         if (fi.id !== feedItemId) return fi;
@@ -860,6 +859,165 @@ function resolvePreview(
     );
     if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
+  }
+  if (tp.id === "unusualShape") {
+    const { unusualShapeMessages } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = unusualShapeMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Unusual Shape"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "unusualSize" || tp.id.startsWith("unusualSize:")) {
+    const { unusualSizeMessages } = require("../../dungeon/services/unusualSizeResult");
+    let seq = 0;
+    let extra = 0;
+    if (tp.id.startsWith("unusualSize:")) {
+      const parts = tp.id.split(":");
+      seq = Number(parts[1]) || 0;
+      if (parts.length > 2) extra = Number(parts[2]) || 0;
+    }
+    const resolved = unusualSizeMessages({ roll: usedRoll, detailMode: true, seq, extra });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Unusual Size"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "circularContents") {
+    const { circularContentsMessages } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = circularContentsMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Circular Contents"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "circularShapePool") {
+    const { circularShapePoolMessages } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = circularShapePoolMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Pool"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "circularShapeMagicPool") {
+    const { circularShapeMagicPoolMessages } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = circularShapeMagicPoolMessages({ roll: usedRoll, detailMode: true });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Magic Pool Effect"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "transmuteType") {
+    const { transmuteTypeMessages } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = transmuteTypeMessages({ roll: usedRoll });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Transmutation Type"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "poolAlignment") {
+    const { poolAlignmentMessages } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = poolAlignmentMessages({ roll: usedRoll });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Pool Alignment"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "transporterLocation") {
+    const { transporterLocationMessages } = require("../../dungeon/services/unusualShapeResult");
+    const resolved = transporterLocationMessages({ roll: usedRoll });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Transporter Location"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "periodicCheck") {
     const resolved = passageMessages({ roll: usedRoll, detailMode: true });

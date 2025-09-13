@@ -2,8 +2,8 @@ import {
   ChamberDimensions,
   chamberDimensions,
 } from "../../tables/dungeon/chambersRooms";
-import { unusualShapeResult } from "./unusualShapeResult";
-import { unusualSizeResult } from "./unusualSizeResult";
+import { unusualShapeMessages, unusualShapeResult } from "./unusualShapeResult";
+import { unusualSizeMessages, unusualSizeResult } from "./unusualSizeResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { exitMessages } from "./exitResult";
 import { exitResult } from "./exitResult";
@@ -109,10 +109,7 @@ export const chamberMessages = (
       dims = { length: 40, width: 60 };
       break;
     case ChamberDimensions.Unusual:
-      baseDesc =
-        "The chamber has an unusual shape and size. " +
-        unusualShapeResult() +
-        unusualSizeResult();
+      baseDesc = "The chamber has an unusual shape and size. ";
       break;
   }
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
@@ -129,7 +126,20 @@ export const chamberMessages = (
       for (const m of exits.messages) if (m.kind === "paragraph") messages.push(m);
     }
   } else {
-    messages.push({ kind: "paragraph", text: "(TODO exits, contents, treasure) " });
+    // Unusual: preview shape and size subtables in detail mode; otherwise auto-roll legacy text
+    if (options?.detailMode) {
+      const shapePrev = unusualShapeMessages({ detailMode: true });
+      messages.push(...shapePrev.messages);
+      const sizePrev = unusualSizeMessages({ detailMode: true });
+      messages.push(...sizePrev.messages);
+      // Exits TBD based on derived dimensions; keep contents/treasure TODO
+      messages.push({ kind: "paragraph", text: "(TODO contents, treasure) " });
+    } else {
+      messages[messages.length - 1] = {
+        kind: "paragraph",
+        text: baseDesc + unusualShapeResult() + unusualSizeResult() + "(TODO exits, contents, treasure) ",
+      };
+    }
   }
   return { usedRoll, messages };
 };
