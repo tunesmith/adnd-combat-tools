@@ -1050,7 +1050,10 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "passageTurns") {
-    const resolved = passageTurnMessages({ roll: usedRoll });
+    // In detail mode, resolving Passage Turns should not auto-roll
+    // Passage Width. Pass detailMode: true so the width appears as
+    // a preview (and any further subtables remain staged).
+    const resolved = passageTurnMessages({ roll: usedRoll, detailMode: true });
     setFeed((prev) =>
       prev.map((fi) =>
         updateResolvedBlock(
