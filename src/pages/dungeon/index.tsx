@@ -44,6 +44,8 @@ import {
 } from "../../dungeon/services/specialPassage";
 import { trickTrapMessages } from "../../dungeon/services/trickTrap";
 import { doorLocationMessages } from "../../dungeon/services/closedDoorResult";
+import { wanderingWhereFromMessages } from "../../dungeon/services/wanderingWhereFrom";
+import { monsterLevelMessages, monsterOneMessages, humanMessages } from "../../dungeon/services/monsterLevelMessages";
 import { periodicDoorOnlyMessages } from "../../dungeon/services/periodicDoorOnly";
 import type { TableContext } from "../../types/dungeon";
 
@@ -82,6 +84,7 @@ const DungeonIndexPage = () => {
   const [overrides, setOverrides] = useState<
     Record<string, number | undefined>
   >({});
+  const [dungeonLevel, setDungeonLevel] = useState<number>(1);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [resolved, setResolved] = useState<Record<string, boolean>>({});
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
@@ -100,6 +103,7 @@ const DungeonIndexPage = () => {
     const step = runDungeonStep(act, {
       roll,
       detailMode,
+      level: dungeonLevel,
       takeOverride: (tableId: string) => {
         const v = overrides[tableId];
         if (v === undefined) return undefined;
@@ -211,6 +215,20 @@ const DungeonIndexPage = () => {
               />
               Detail mode
             </label>
+            <label style={{ marginLeft: "1rem" }}>
+              Dungeon level:
+              <select
+                className={styles["numberInput"]}
+                value={dungeonLevel}
+                onChange={(e) => setDungeonLevel(Number(e.target.value) || 1)}
+              >
+                {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           {rollInput.length > 0 && !isValid && (
@@ -220,7 +238,7 @@ const DungeonIndexPage = () => {
 
         {detailMode && (
           <div style={{ marginTop: "0.5rem" }}>
-            {getRootPreviewNodes(action).map((n, i) =>
+            {getRootPreviewNodes(action, dungeonLevel).map((n, i) =>
               renderNode(n, i, "root", overrides, setOverrides, setFeed, false)
             )}
           </div>
@@ -768,7 +786,7 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "periodicCheck") {
-    const resolved = passageMessages({ roll: usedRoll, detailMode: true });
+    const resolved = passageMessages({ roll: usedRoll, detailMode: true, level: dungeonLevel });
     setFeed((prev) =>
       prev.map((fi) => {
         if (fi.id !== feedItemId) return fi;
@@ -943,7 +961,7 @@ function filterForDetail(
   return result;
 }
 
-function getRootPreviewNodes(action: ActionKind): DungeonRenderNode[] {
+function getRootPreviewNodes(action: ActionKind, dungeonLevel: number): DungeonRenderNode[] {
   // Render only the table preview node(s) for the selected action
   if (action === "door") {
     const { messages } = doorBeyondMessages({ detailMode: true });
@@ -951,7 +969,7 @@ function getRootPreviewNodes(action: ActionKind): DungeonRenderNode[] {
       (m) => m.kind === "table-preview"
     ) as DungeonRenderNode[];
   }
-  const { messages } = passageMessages({ detailMode: true });
+  const { messages } = passageMessages({ detailMode: true, level: dungeonLevel });
   return messages.filter(
     (m) => m.kind === "table-preview"
   ) as DungeonRenderNode[];
@@ -973,6 +991,10 @@ const TABLE_ID_LIST = [
   "stairs",
   "doorLocation",
   "periodicCheckDoorOnly",
+  "wanderingWhereFrom",
+  "monsterLevel",
+  "monsterOne",
+  "human",
   "galleryStairLocation",
   "galleryStairOccurrence",
   "streamConstruction",
@@ -1003,6 +1025,10 @@ const TABLE_HEADINGS: Record<TableId, string> = {
   stairs: "Stairs",
   doorLocation: "Door Location",
   periodicCheckDoorOnly: "Periodic Check (doors only)",
+  wanderingWhereFrom: "Where From",
+  monsterLevel: "Monster Level",
+  monsterOne: "Monster (Level 1)",
+  human: "Human Subtable",
   galleryStairLocation: "Gallery Stair Location",
   galleryStairOccurrence: "Gallery Stair Occurrence",
   streamConstruction: "Stream Construction",
@@ -1031,6 +1057,13 @@ const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     doorLocationMessages({ roll, detailMode: true, context }).messages,
   periodicCheckDoorOnly: ({ roll, context }) =>
     periodicDoorOnlyMessages({ roll, detailMode: true, context }).messages,
+  wanderingWhereFrom: ({ roll, context }) =>
+    wanderingWhereFromMessages({ roll, detailMode: true, context }).messages,
+  monsterLevel: ({ roll, id, context }) =>
+    monsterLevelMessages({ id, roll, detailMode: true, context }).messages,
+  monsterOne: ({ roll, context }) =>
+    monsterOneMessages({ roll, detailMode: true, context }).messages,
+  human: ({ roll, context }) => humanMessages({ roll, detailMode: true, context }).messages,
   galleryStairLocation: ({ roll }) =>
     galleryStairLocationMessages({ roll, detailMode: true }).messages,
   galleryStairOccurrence: ({ roll }) =>

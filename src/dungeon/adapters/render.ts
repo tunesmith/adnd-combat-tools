@@ -137,8 +137,26 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
         break;
       }
       case PeriodicCheck.WanderingMonster:
-        // For now, render a composed paragraph; previews to follow.
-        nodes.push({ kind: "paragraph", text: compactWanderingMonsterText(event.level) });
+        // Detail: Stage Where-From and a Monster Level preview derived from the selected dungeon level
+        nodes.push({ kind: "paragraph", text: "A wandering monster is indicated." });
+        nodes.push({
+          kind: "table-preview",
+          id: "wanderingWhereFrom",
+          title: "Where From",
+          sides: periodicCheck.sides,
+          entries: periodicCheck.entries
+            .filter((e) => e.command !== PeriodicCheck.WanderingMonster)
+            .map((e) => ({ range: rangeText(e.range), label: PeriodicCheck[e.command] ?? String(e.command) })),
+        });
+        const lvlTable = getMonsterTable(event.level);
+        nodes.push({
+          kind: "table-preview",
+          id: `monsterLevel:${event.level}`,
+          title: "Monster Level",
+          sides: lvlTable.sides,
+          entries: lvlTable.entries.map((e) => ({ range: rangeText(e.range), label: MonsterLevel[e.command] ?? String(e.command) })),
+          context: { kind: "wandering", level: event.level } as TableContext,
+        });
         break;
     }
     return nodes;

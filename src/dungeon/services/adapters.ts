@@ -8,14 +8,16 @@ export function runDungeonStep(
     roll?: number;
     doorAhead?: boolean;
     detailMode?: boolean;
+    level?: number;
     takeOverride?: (tableId: string) => number | undefined;
   }
 ): DungeonStep {
   switch (action) {
     case "passage": {
       const { messages } = passageMessages({
-        roll: options?.detailMode ? options?.roll : options?.roll,
+        roll: options?.roll,
         detailMode: options?.detailMode,
+        level: options?.level,
       });
       return { action, roll: options?.roll, messages };
     }
