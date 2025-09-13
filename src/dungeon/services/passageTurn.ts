@@ -1,7 +1,7 @@
 import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
 import { passageWidthResults } from "./passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import { DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 import { resolvePassageTurns } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 
@@ -45,7 +45,7 @@ export const passageTurnResults = (): string => {
 
 export const passageTurnMessages = (
   options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -60,7 +60,7 @@ export const passageTurnMessages = (
     return { usedRoll: undefined, messages: [preview] };
   }
   const node = resolvePassageTurns({ roll: options?.roll });
-  const usedRoll = (node.type === "event" ? node.roll : undefined) as number | undefined;
+  const usedRoll = node.type === "event" ? node.roll : undefined;
   const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
-  return { usedRoll, messages: messages as any };
+  return { usedRoll, messages };
 };

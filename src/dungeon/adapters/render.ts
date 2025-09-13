@@ -191,13 +191,12 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     }
     return nodes;
   }
-  if ((event as any).kind === "sidePassages") {
-    // Side Passages resolution
+  if (event.kind === "sidePassages") {
     const heading: DungeonMessage = { kind: "heading", level: 4, text: "Side Passages" };
-    const label = (SidePassages as any)[(event as any).result] ?? String((event as any).result);
+    const label = SidePassages[event.result] ?? String(event.result);
     const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
     let text = "";
-    switch ((event as any).result) {
+    switch (event.result) {
       case SidePassages.Left90:
         text = "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";
         break;
@@ -238,12 +237,12 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
   }
-  if ((event as any).kind === "passageTurns") {
+  if (event.kind === "passageTurns") {
     const heading: DungeonMessage = { kind: "heading", level: 4, text: "Passage Turns" };
-    const label = (PassageTurns as any)[(event as any).result] ?? String((event as any).result);
+    const label = PassageTurns[event.result] ?? String(event.result);
     const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
     let textPrefix = "";
-    switch ((event as any).result) {
+    switch (event.result) {
       case PassageTurns.Left90:
         textPrefix = "The passage turns left 90 degrees - check again in 30'. ";
         break;
@@ -336,7 +335,7 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
   }
-  if ((event as any).kind === "sidePassages") {
+  if (event.kind === "sidePassages") {
     const heading: DungeonMessage = { kind: "heading", level: 4, text: "Side Passages" };
     const label = (SidePassages as any)[(event as any).result] ?? String((event as any).result);
     const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
@@ -383,12 +382,12 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
   }
-  if ((event as any).kind === "passageTurns") {
+  if (event.kind === "passageTurns") {
     const heading: DungeonMessage = { kind: "heading", level: 4, text: "Passage Turns" };
-    const label = (PassageTurns as any)[(event as any).result] ?? String((event as any).result);
+    const label = PassageTurns[event.result] ?? String(event.result);
     const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
     let textPrefix = "";
-    switch ((event as any).result) {
+    switch (event.result) {
       case PassageTurns.Left90:
         textPrefix = "The passage turns left 90 degrees - check again in 30'. ";
         break;

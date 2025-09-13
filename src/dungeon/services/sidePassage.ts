@@ -1,7 +1,7 @@
 import { SidePassages, sidePassages } from "../../tables/dungeon/sidePassages";
 
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import { DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 import { resolveSidePassages } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 
@@ -46,7 +46,7 @@ export const sidePassageResults = (): string => {
 
 export const sidePassageMessages = (
   options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -61,7 +61,7 @@ export const sidePassageMessages = (
     return { usedRoll: undefined, messages: [preview] };
   }
   const node = resolveSidePassages({ roll: options?.roll });
-  const usedRoll = (node.type === "event" ? node.roll : undefined) as number | undefined;
+  const usedRoll = node.type === "event" ? node.roll : undefined;
   const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
-  return { usedRoll, messages: messages as any };
+  return { usedRoll, messages };
 };
