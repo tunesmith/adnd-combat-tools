@@ -28,7 +28,10 @@ import {
   transporterLocationMessages,
 } from "../../dungeon/services/unusualShapeResult";
 import { unusualSizeMessages } from "../../dungeon/services/unusualSizeResult";
-import { egressMessages, chuteMessages } from "../../dungeon/services/stairsResult";
+import {
+  egressMessages,
+  chuteMessages,
+} from "../../dungeon/services/stairsResult";
 import {
   galleryStairLocationMessages,
   galleryStairOccurrenceMessages,
@@ -513,7 +516,14 @@ function resolvePreview(
 
   // Try the generic registry first; if handled, stop here
   if (
-    resolveViaRegistry(tp, feedItemId, usedRoll!, setFeed, setCollapsed, setResolved)
+    resolveViaRegistry(
+      tp,
+      feedItemId,
+      usedRoll,
+      setFeed,
+      setCollapsed,
+      setResolved
+    )
   )
     return;
 
@@ -595,159 +605,6 @@ function resolvePreview(
           tp.id,
           resolved.messages,
           "Special Passage"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "galleryStairLocation") {
-    const resolved = galleryStairLocationMessages({
-      roll: usedRoll,
-      detailMode: true,
-    });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Gallery Stair Location"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "galleryStairOccurrence") {
-    const resolved = galleryStairOccurrenceMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Gallery Stair Occurrence"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "streamConstruction") {
-    const resolved = streamConstructionMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Stream Construction"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "riverConstruction") {
-    const resolved = riverConstructionMessages({
-      roll: usedRoll,
-      detailMode: true,
-    });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "River Construction"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "riverBoatBank") {
-    const resolved = riverBoatBankMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Boat Bank"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "chasmDepth") {
-    const resolved = chasmDepthMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Chasm Depth"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "chasmConstruction") {
-    const resolved = chasmConstructionMessages({
-      roll: usedRoll,
-      detailMode: true,
-    });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Chasm Construction"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "jumpingPlaceWidth") {
-    const resolved = jumpingPlaceWidthMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Jumping Place Width"
         )
       )
     );
@@ -926,117 +783,6 @@ function resolvePreview(
     if (setResolved)
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
-  if (tp.id === "circularContents") {
-    const resolved = circularContentsMessages({
-      roll: usedRoll,
-      detailMode: true,
-    });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Circular Contents"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "circularShapePool") {
-    const resolved = circularShapePoolMessages({
-      roll: usedRoll,
-      detailMode: true,
-    });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Pool")
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "circularShapeMagicPool") {
-    const resolved = circularShapeMagicPoolMessages({
-      roll: usedRoll,
-      detailMode: true,
-    });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Magic Pool Effect"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "transmuteType") {
-    const resolved = transmuteTypeMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Transmutation Type"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "poolAlignment") {
-    const resolved = poolAlignmentMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Pool Alignment"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "transporterLocation") {
-    const resolved = transporterLocationMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Transporter Location"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
   if (tp.id === "periodicCheck") {
     const resolved = passageMessages({ roll: usedRoll, detailMode: true });
     setFeed((prev) =>
@@ -1118,7 +864,10 @@ function resolvePreview(
           if (node.kind === "table-preview" && node.id === tp.id) {
             newMessages.push(node);
             for (const m of resolved.messages) newMessages.push(m);
-            const bulletList = resolved.messages.find((m): m is Extract<DungeonRenderNode, { kind: "bullet-list" }> => m.kind === "bullet-list");
+            const bulletList = resolved.messages.find(
+              (m): m is Extract<DungeonRenderNode, { kind: "bullet-list" }> =>
+                m.kind === "bullet-list"
+            );
             const bullet = bulletList ? bulletList.items[0] : "";
             const label = String(bullet);
             const existing: Lateral[] = isDoorChainContext(tp.context)
@@ -1205,87 +954,6 @@ function resolvePreview(
     );
     if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
-  }
-  if (tp.id === "sidePassages") {
-    const resolved = sidePassageMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Side Passages"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "passageTurns") {
-    // In detail mode, resolving Passage Turns should not auto-roll
-    // Passage Width. Pass detailMode: true so the width appears as
-    // a preview (and any further subtables remain staged).
-    const resolved = passageTurnMessages({ roll: usedRoll, detailMode: true });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          "Passage Turns"
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "stairs") {
-    // Resolve in detail mode so subtable previews (egress, chute, chamber) are inserted
-    const resolved = stairsMessages({ roll: usedRoll, detailMode: true });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Stairs")
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (
-    tp.id === "egress:one" ||
-    tp.id === "egress:two" ||
-    tp.id === "egress:three"
-  ) {
-    const tableKey = tp.id.split(":")[1] as "one" | "two" | "three";
-    const resolved = egressMessages({ table: tableKey, roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Egress")
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === "chute") {
-    const resolved = chuteMessages({ roll: usedRoll });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Chute")
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "trickTrap") {
     const resolved = trickTrapMessages({ roll: usedRoll });
@@ -1445,12 +1113,40 @@ export default DungeonIndexPage;
 // ----- Registry dispatch helpers -----
 
 type RegistryResolver = (opts: {
-  roll: number;
+  roll?: number;
   id: string;
   context?: TableContext;
 }) => DungeonRenderNode[];
 
-const TABLE_HEADINGS: Record<string, string> = {
+const TABLE_ID_LIST = [
+  "sidePassages",
+  "passageTurns",
+  "stairs",
+  "galleryStairLocation",
+  "galleryStairOccurrence",
+  "streamConstruction",
+  "riverConstruction",
+  "riverBoatBank",
+  "chasmDepth",
+  "chasmConstruction",
+  "jumpingPlaceWidth",
+  "circularContents",
+  "circularShapePool",
+  "circularShapeMagicPool",
+  "transmuteType",
+  "poolAlignment",
+  "transporterLocation",
+  "chute",
+  "egress",
+] as const;
+
+function isTableId(x: string): x is TableId {
+  return (TABLE_ID_LIST as readonly string[]).includes(x);
+}
+
+type TableId = typeof TABLE_ID_LIST[number];
+
+const TABLE_HEADINGS: Record<TableId, string> = {
   sidePassages: "Side Passages",
   passageTurns: "Passage Turns",
   stairs: "Stairs",
@@ -1472,24 +1168,36 @@ const TABLE_HEADINGS: Record<string, string> = {
   egress: "Egress",
 };
 
-const TABLE_RESOLVERS: Record<string, RegistryResolver> = {
-  sidePassages: ({ roll }) => sidePassageMessages({ roll, detailMode: true }).messages,
-  passageTurns: ({ roll }) => passageTurnMessages({ roll, detailMode: true }).messages,
+const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
+  sidePassages: ({ roll }) =>
+    sidePassageMessages({ roll, detailMode: true }).messages,
+  passageTurns: ({ roll }) =>
+    passageTurnMessages({ roll, detailMode: true }).messages,
   stairs: ({ roll }) => stairsMessages({ roll, detailMode: true }).messages,
-  galleryStairLocation: ({ roll }) => galleryStairLocationMessages({ roll, detailMode: true }).messages,
-  galleryStairOccurrence: ({ roll }) => galleryStairOccurrenceMessages({ roll }).messages,
-  streamConstruction: ({ roll }) => streamConstructionMessages({ roll, detailMode: true }).messages,
-  riverConstruction: ({ roll }) => riverConstructionMessages({ roll, detailMode: true }).messages,
+  galleryStairLocation: ({ roll }) =>
+    galleryStairLocationMessages({ roll, detailMode: true }).messages,
+  galleryStairOccurrence: ({ roll }) =>
+    galleryStairOccurrenceMessages({ roll }).messages,
+  streamConstruction: ({ roll }) =>
+    streamConstructionMessages({ roll, detailMode: true }).messages,
+  riverConstruction: ({ roll }) =>
+    riverConstructionMessages({ roll, detailMode: true }).messages,
   riverBoatBank: ({ roll }) => riverBoatBankMessages({ roll }).messages,
-  chasmDepth: ({ roll }) => chasmDepthMessages({ roll, detailMode: true }).messages,
-  chasmConstruction: ({ roll }) => chasmConstructionMessages({ roll, detailMode: true }).messages,
+  chasmDepth: ({ roll }) =>
+    chasmDepthMessages({ roll, detailMode: true }).messages,
+  chasmConstruction: ({ roll }) =>
+    chasmConstructionMessages({ roll, detailMode: true }).messages,
   jumpingPlaceWidth: ({ roll }) => jumpingPlaceWidthMessages({ roll }).messages,
-  circularContents: ({ roll }) => circularContentsMessages({ roll, detailMode: true }).messages,
-  circularShapePool: ({ roll }) => circularShapePoolMessages({ roll, detailMode: true }).messages,
-  circularShapeMagicPool: ({ roll }) => circularShapeMagicPoolMessages({ roll, detailMode: true }).messages,
+  circularContents: ({ roll }) =>
+    circularContentsMessages({ roll, detailMode: true }).messages,
+  circularShapePool: ({ roll }) =>
+    circularShapePoolMessages({ roll, detailMode: true }).messages,
+  circularShapeMagicPool: ({ roll }) =>
+    circularShapeMagicPoolMessages({ roll, detailMode: true }).messages,
   transmuteType: ({ roll }) => transmuteTypeMessages({ roll }).messages,
   poolAlignment: ({ roll }) => poolAlignmentMessages({ roll }).messages,
-  transporterLocation: ({ roll }) => transporterLocationMessages({ roll }).messages,
+  transporterLocation: ({ roll }) =>
+    transporterLocationMessages({ roll }).messages,
   chute: ({ roll }) => chuteMessages({ roll }).messages,
   egress: ({ roll, id }) => {
     const key = (id.split(":")[1] as "one" | "two" | "three") || "one";
@@ -1500,20 +1208,35 @@ const TABLE_RESOLVERS: Record<string, RegistryResolver> = {
 function resolveViaRegistry(
   tp: DungeonTablePreview,
   feedItemId: string,
-  usedRoll: number,
-  setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
+  usedRoll?: number,
+  setFeed?: React.Dispatch<React.SetStateAction<FeedItem[]>>,
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 ): boolean {
-  const base: string = String(tp.id.split(":")[0] ?? "");
-  const resolver = (TABLE_RESOLVERS as Record<string, RegistryResolver>)[base];
-  const heading = (TABLE_HEADINGS as Record<string, string>)[base];
-  if (!resolver || !heading) return false;
-  const resolvedMsgs = resolver({ roll: usedRoll, id: tp.id, context: tp.context });
-  setFeed((prev) =>
-    prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolvedMsgs, heading))
-  );
-  if (setCollapsed) setCollapsed!((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  if (setResolved) setResolved!((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  const base = String(tp.id.split(":")[0] ?? "");
+  if (!isTableId(base)) return false;
+
+  const resolver = TABLE_RESOLVERS[base];
+  const heading = TABLE_HEADINGS[base];
+
+  const resolvedMsgs = resolver({
+    roll: usedRoll,
+    id: tp.id,
+    context: tp.context,
+  });
+
+  if (setFeed) {
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(fi, feedItemId, tp.id, resolvedMsgs, heading)
+      )
+    );
+  }
+  if (setCollapsed) {
+    setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (setResolved) {
+    setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
   return true;
 }
