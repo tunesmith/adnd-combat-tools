@@ -2,7 +2,13 @@ import { FormEvent, useMemo, useRef, useState } from "react";
 import styles from "./dungeon.module.css";
 import { rollDice } from "../../dungeon/helpers/dungeonLookup";
 import { runDungeonStep } from "../../dungeon/services/adapters";
-import { DungeonMessage, DungeonRenderNode, DungeonRollTrace, RollTraceItem, DungeonTablePreview } from "../../types/dungeon";
+import {
+  DungeonRenderNode,
+  DungeonRollTrace,
+  RollTraceItem,
+  DungeonTablePreview,
+} from "../../types/dungeon";
+import { exitMessages } from "../../dungeon/services/exitResult";
 import { passageWidthMessages } from "../../dungeon/services/passageWidth";
 import { doorBeyondMessages } from "../../dungeon/services/doorBeyondResult";
 import { roomMessages } from "../../dungeon/services/roomResult";
@@ -24,8 +30,41 @@ import {
 } from "../../dungeon/services/specialPassage";
 import { trickTrapMessages } from "../../dungeon/services/trickTrap";
 import { doorLocationMessages } from "../../dungeon/services/closedDoorResult";
-import { periodicCheckDoorOnly, PeriodicCheckDoorOnly } from "../../tables/dungeon/periodicCheckDoorOnly";
+import {
+  periodicCheckDoorOnly,
+  PeriodicCheckDoorOnly,
+} from "../../tables/dungeon/periodicCheckDoorOnly";
 import { getTableEntry } from "../../dungeon/helpers/dungeonLookup";
+
+type Lateral = "Left" | "Right";
+type DoorChainContext = { kind: "doorChain"; existing: Lateral[] };
+type ExitsContext = {
+  kind: "exits";
+  length: number;
+  width: number;
+  isRoom: boolean;
+};
+
+function isDoorChainContext(x: unknown): x is DoorChainContext {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    (x as any).kind === "doorChain" &&
+    Array.isArray((x as any).existing) &&
+    (x as any).existing.every((v: unknown) => v === "Left" || v === "Right")
+  );
+}
+
+function isExitsContext(x: unknown): x is ExitsContext {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    (x as any).kind === "exits" &&
+    typeof (x as any).length === "number" &&
+    typeof (x as any).width === "number" &&
+    typeof (x as any).isRoom === "boolean"
+  );
+}
 
 type ActionKind = "passage" | "door";
 
@@ -33,7 +72,7 @@ type FeedItem = {
   id: string;
   action: ActionKind;
   roll: number;
-  messages: DungeonRenderable[];
+  messages: DungeonRenderNode[];
 };
 
 const DungeonIndexPage = () => {
@@ -41,7 +80,9 @@ const DungeonIndexPage = () => {
   const [rollInput, setRollInput] = useState<string>("");
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [detailMode, setDetailMode] = useState<boolean>(false);
-  const [overrides, setOverrides] = useState<Record<string, number | undefined>>({});
+  const [overrides, setOverrides] = useState<
+    Record<string, number | undefined>
+  >({});
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [resolved, setResolved] = useState<Record<string, boolean>>({});
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
@@ -190,7 +231,13 @@ const DungeonIndexPage = () => {
           role="status"
           aria-live="polite"
           aria-atomic="true"
-          style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(1px, 1px, 1px, 1px)" }}
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(1px, 1px, 1px, 1px)",
+          }}
           ref={liveRegionRef}
         />
 
@@ -205,7 +252,9 @@ const DungeonIndexPage = () => {
                 <div className={styles["itemHeader"]}>
                   <span
                     className={`${styles["chip"]} ${
-                      item.action === "passage" ? styles["chipPassage"] : styles["chipDoor"]
+                      item.action === "passage"
+                        ? styles["chipPassage"]
+                        : styles["chipDoor"]
                     }`}
                   >
                     {item.action}
@@ -215,8 +264,23 @@ const DungeonIndexPage = () => {
                   )}
                 </div>
                 <div className={styles["messages"]}>
-                  {(detailMode ? filterForDetail(item.messages, item.action) : filterForCompact(item.messages, item.action)).map((m, i) =>
-                    renderNode(m, i, item.id, overrides, setOverrides, setFeed, true, collapsed, setCollapsed, resolved, setResolved)
+                  {(detailMode
+                    ? filterForDetail(item.messages, item.action)
+                    : filterForCompact(item.messages, item.action)
+                  ).map((m, i) =>
+                    renderNode(
+                      m,
+                      i,
+                      item.id,
+                      overrides,
+                      setOverrides,
+                      setFeed,
+                      true,
+                      collapsed,
+                      setCollapsed,
+                      resolved,
+                      setResolved
+                    )
                   )}
                 </div>
               </div>
@@ -233,7 +297,9 @@ function renderNode(
   key: number,
   feedItemId: string,
   overrides: Record<string, number | undefined>,
-  setOverrides: React.Dispatch<React.SetStateAction<Record<string, number | undefined>>>,
+  setOverrides: React.Dispatch<
+    React.SetStateAction<Record<string, number | undefined>>
+  >,
   setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
   enablePreviewControls: boolean = true,
   collapsed?: Record<string, boolean>,
@@ -262,13 +328,24 @@ function renderNode(
       const isCollapsed = !!(collapsed && collapsed[keyId]);
       const hasResolved = !!(resolved && resolved[keyId]);
       return (
-        <div key={key} style={{ border: "1px dashed var(--copper)", padding: "0.5rem", margin: "0.5rem 0" }}>
+        <div
+          key={key}
+          style={{
+            border: "1px dashed var(--copper)",
+            padding: "0.5rem",
+            margin: "0.5rem 0",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-            <div style={{ fontWeight: 700 }}>{tp.title} (d{tp.sides})</div>
+            <div style={{ fontWeight: 700 }}>
+              {tp.title} (d{tp.sides})
+            </div>
             {setCollapsed && hasResolved && (
               <button
                 type="button"
-                onClick={() => setCollapsed((prev) => ({ ...prev, [keyId]: !isCollapsed }))}
+                onClick={() =>
+                  setCollapsed((prev) => ({ ...prev, [keyId]: !isCollapsed }))
+                }
                 title={isCollapsed ? "Expand table" : "Collapse table"}
                 aria-label={isCollapsed ? "Expand table" : "Collapse table"}
                 style={{
@@ -294,7 +371,14 @@ function renderNode(
             </div>
           )}
           {!isCollapsed && enablePreviewControls && (
-            <div style={{ marginTop: "0.5rem", display: "flex", gap: 8, alignItems: "center" }}>
+            <div
+              style={{
+                marginTop: "0.5rem",
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
               <label>
                 Override next roll:
                 <input
@@ -303,7 +387,9 @@ function renderNode(
                   max={tp.sides}
                   value={overrides[tp.id] ?? ""}
                   onChange={(e) => {
-                    const value = e.target.value ? Number(e.target.value) : undefined;
+                    const value = e.target.value
+                      ? Number(e.target.value)
+                      : undefined;
                     setOverrides((prev) => ({ ...prev, [tp.id]: value }));
                   }}
                   className={styles["numberInput"]}
@@ -313,7 +399,18 @@ function renderNode(
               <button
                 type="button"
                 className={styles["button"]}
-                onClick={() => resolvePreview(tp, feedItemId, overrides, setOverrides, setFeed, false, setCollapsed, setResolved)}
+                onClick={() =>
+                  resolvePreview(
+                    tp,
+                    feedItemId,
+                    overrides,
+                    setOverrides,
+                    setFeed,
+                    false,
+                    setCollapsed,
+                    setResolved
+                  )
+                }
                 style={{ padding: "6px 12px" }}
               >
                 Submit
@@ -321,7 +418,18 @@ function renderNode(
               <button
                 type="button"
                 className={styles["button"]}
-                onClick={() => resolvePreview(tp, feedItemId, overrides, setOverrides, setFeed, true, setCollapsed, setResolved)}
+                onClick={() =>
+                  resolvePreview(
+                    tp,
+                    feedItemId,
+                    overrides,
+                    setOverrides,
+                    setFeed,
+                    true,
+                    setCollapsed,
+                    setResolved
+                  )
+                }
                 style={{ padding: "6px 12px" }}
               >
                 AutoRoll
@@ -339,10 +447,7 @@ function renderNode(
       );
     case "paragraph":
     default:
-      return (
-        // @ts-expect-error TS narrows default to DungeonMessage with text
-        <p key={key}>{m.text}</p>
-      );
+      return <p key={key}>{m.text}</p>;
   }
 }
 
@@ -359,7 +464,9 @@ function renderTraceList(trace: DungeonRollTrace) {
   );
   return (
     <div>
-      <div style={{ fontStyle: "italic", marginTop: "0.25rem" }}>Roll trace</div>
+      <div style={{ fontStyle: "italic", marginTop: "0.25rem" }}>
+        Roll trace
+      </div>
       <ul style={{ marginLeft: "1.25rem" }}>
         {trace.items.map((it, idx) => renderItem(it, idx))}
       </ul>
@@ -371,7 +478,9 @@ function resolvePreview(
   tp: DungeonTablePreview,
   feedItemId: string,
   overrides: Record<string, number | undefined>,
-  setOverrides: React.Dispatch<React.SetStateAction<Record<string, number | undefined>>>,
+  setOverrides: React.Dispatch<
+    React.SetStateAction<Record<string, number | undefined>>
+  >,
   setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
   shouldRoll: boolean,
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
@@ -407,7 +516,11 @@ function resolvePreview(
             // Remove any prior resolved block for this table by skipping
             skippingOldResult = true;
             // Append the fresh resolved block
-            newMessages.push({ kind: "heading", level: 4, text: "Passage Width" });
+            newMessages.push({
+              kind: "heading",
+              level: 4,
+              text: "Passage Width",
+            });
             newMessages.push({
               kind: "bullet-list",
               items: [`roll: ${width.usedRoll} — ${width.trace.result}`],
@@ -423,11 +536,20 @@ function resolvePreview(
               // Skip previously appended result nodes until the next preview or heading that isn't ours
               if (node.kind === "table-preview" && node.id !== tp.id) {
                 skippingOldResult = false;
-              } else if (node.kind === "heading" && node.text !== "Passage Width") {
+              } else if (
+                node.kind === "heading" &&
+                node.text !== "Passage Width"
+              ) {
                 skippingOldResult = false;
-              } else if (node.kind === "heading" && node.text === "Passage Width") {
+              } else if (
+                node.kind === "heading" &&
+                node.text === "Passage Width"
+              ) {
                 // keep skipping
-              } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+              } else if (
+                node.kind === "bullet-list" ||
+                node.kind === "paragraph"
+              ) {
                 // skip
               } else {
                 // any other node type
@@ -446,58 +568,178 @@ function resolvePreview(
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
   if (tp.id === "specialPassage") {
-    const resolved = specialPassageMessages({ roll: usedRoll, detailMode: true });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Special Passage")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    const resolved = specialPassageMessages({
+      roll: usedRoll,
+      detailMode: true,
+    });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Special Passage"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "galleryStairLocation") {
-    const resolved = galleryStairLocationMessages({ roll: usedRoll, detailMode: true });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Gallery Stair Location")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    const resolved = galleryStairLocationMessages({
+      roll: usedRoll,
+      detailMode: true,
+    });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Gallery Stair Location"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "galleryStairOccurrence") {
     const resolved = galleryStairOccurrenceMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Gallery Stair Occurrence")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Gallery Stair Occurrence"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "streamConstruction") {
     const resolved = streamConstructionMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Stream Construction")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Stream Construction"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "riverConstruction") {
-    const resolved = riverConstructionMessages({ roll: usedRoll, detailMode: true });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "River Construction")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    const resolved = riverConstructionMessages({
+      roll: usedRoll,
+      detailMode: true,
+    });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "River Construction"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "riverBoatBank") {
     const resolved = riverBoatBankMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Boat Bank")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Boat Bank"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "chasmDepth") {
     const resolved = chasmDepthMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Chasm Depth")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Chasm Depth"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "chasmConstruction") {
-    const resolved = chasmConstructionMessages({ roll: usedRoll, detailMode: true });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Chasm Construction")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    const resolved = chasmConstructionMessages({
+      roll: usedRoll,
+      detailMode: true,
+    });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Chasm Construction"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "jumpingPlaceWidth") {
     const resolved = jumpingPlaceWidthMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Jumping Place Width")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Jumping Place Width"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "doorBeyond") {
     const resolved = doorBeyondMessages({ roll: usedRoll, detailMode: true });
@@ -543,11 +785,20 @@ function resolvePreview(
             if (skippingOld) {
               if (node.kind === "table-preview" && node.id !== tp.id) {
                 skippingOld = false;
-              } else if (node.kind === "heading" && node.text !== "Room Dimensions") {
+              } else if (
+                node.kind === "heading" &&
+                node.text !== "Room Dimensions"
+              ) {
                 skippingOld = false;
-              } else if (node.kind === "heading" && node.text === "Room Dimensions") {
+              } else if (
+                node.kind === "heading" &&
+                node.text === "Room Dimensions"
+              ) {
                 // keep skipping prior resolved block nodes until next unrelated section
-              } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+              } else if (
+                node.kind === "bullet-list" ||
+                node.kind === "paragraph"
+              ) {
                 // skip
               } else {
                 skippingOld = false;
@@ -580,11 +831,20 @@ function resolvePreview(
             if (skippingOld) {
               if (node.kind === "table-preview" && node.id !== tp.id) {
                 skippingOld = false;
-              } else if (node.kind === "heading" && node.text !== "Chamber Dimensions") {
+              } else if (
+                node.kind === "heading" &&
+                node.text !== "Chamber Dimensions"
+              ) {
                 skippingOld = false;
-              } else if (node.kind === "heading" && node.text === "Chamber Dimensions") {
+              } else if (
+                node.kind === "heading" &&
+                node.text === "Chamber Dimensions"
+              ) {
                 // keep skipping
-              } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+              } else if (
+                node.kind === "bullet-list" ||
+                node.kind === "paragraph"
+              ) {
                 // skip
               } else {
                 skippingOld = false;
@@ -622,8 +882,10 @@ function resolvePreview(
               newMessages.push(m);
             }
             // Handle door-chain recursion: prefer the door-only periodic check preview
-            if (tp.context && (tp.context as any).kind === "doorChain") {
-              newMessages.push(createPeriodicDoorOnlyPreview({ context: tp.context }));
+            if (isDoorChainContext(tp.context)) {
+              newMessages.push(
+                createPeriodicDoorOnlyPreview({ context: tp.context })
+              );
             }
           }
         }
@@ -639,14 +901,34 @@ function resolvePreview(
     const isDoor = cmd === PeriodicCheckDoorOnly.Door;
     const msgs: DungeonRenderNode[] = [
       { kind: "heading", level: 4, text: "Periodic Check (doors only)" },
-      { kind: "bullet-list", items: [`roll: ${roll} — ${isDoor ? "Door" : "Ignore"}`] },
+      {
+        kind: "bullet-list",
+        items: [`roll: ${roll} — ${isDoor ? "Door" : "Ignore"}`],
+      },
     ];
     if (isDoor) {
-      msgs.push(createDoorLocationPreview({ context: tp.context }));
+      msgs.push(
+        createDoorLocationPreview({
+          context: isDoorChainContext(tp.context) ? tp.context : undefined,
+        })
+      );
     } else {
-      msgs.push({ kind: "paragraph", text: "Ignored (not a door). Continue 30' past the door." });
+      msgs.push({
+        kind: "paragraph",
+        text: "Ignored (not a door). Continue 30' past the door.",
+      });
     }
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, msgs, "Periodic Check (doors only)")));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          msgs,
+          "Periodic Check (doors only)"
+        )
+      )
+    );
     if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
   }
@@ -660,19 +942,34 @@ function resolvePreview(
           if (node.kind === "table-preview" && node.id === tp.id) {
             newMessages.push(node);
             for (const m of resolved.messages) newMessages.push(m);
-            const bullet = (resolved.messages.find((m) => m.kind === "bullet-list") as any)?.items?.[0] ?? "";
+            const bullet =
+              (resolved.messages.find((m) => m.kind === "bullet-list") as any)
+                ?.items?.[0] ?? "";
             const label = String(bullet);
-            const existing: string[] = tp.context && (tp.context as any).kind === 'doorChain' ? (tp.context as any).existing ?? [] : [];
+            const existing: Lateral[] = isDoorChainContext(tp.context)
+              ? tp.context.existing
+              : [];
             if (label.includes("Ahead")) {
               // Door ahead is a dead end — no further periodic recheck.
             } else {
-              const loc = label.includes("Left") ? "Left" : label.includes("Right") ? "Right" : "";
+              const loc: Lateral | "" = label.includes("Left")
+                ? "Left"
+                : label.includes("Right")
+                ? "Right"
+                : "";
               if (loc && existing.includes(loc)) {
-                newMessages.push({ kind: "paragraph", text: "There are no more doors. The main passage extends -- check again in 30'. " });
+                newMessages.push({
+                  kind: "paragraph",
+                  text: "There are no more doors. The main passage extends -- check again in 30'. ",
+                });
               } else {
-                const nextExisting = loc ? [...existing, loc] : existing;
+                const nextExisting: Lateral[] = loc
+                  ? [...existing, loc]
+                  : existing;
                 newMessages.push(
-                  createPeriodicDoorOnlyPreview({ context: { kind: 'doorChain', existing: nextExisting } })
+                  createPeriodicDoorOnlyPreview({
+                    context: { kind: "doorChain", existing: nextExisting },
+                  })
                 );
               }
             }
@@ -688,9 +985,8 @@ function resolvePreview(
   }
   if (tp.id === "numberOfExits") {
     // Use context for dimensions if provided
-    const ctx = tp.context && tp.context.kind === 'exits' ? tp.context : undefined;
+    const ctx = isExitsContext(tp.context) ? tp.context : undefined;
     if (!ctx) return;
-    const { exitMessages } = require("../../dungeon/services/exitResult");
     const resolved = exitMessages({
       length: ctx.length,
       width: ctx.width,
@@ -715,7 +1011,10 @@ function resolvePreview(
                 skippingOld = false;
               } else if (node.kind === "heading" && node.text === "Exits") {
                 // keep skipping
-              } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+              } else if (
+                node.kind === "bullet-list" ||
+                node.kind === "paragraph"
+              ) {
                 // skip
               } else {
                 skippingOld = false;
@@ -734,27 +1033,69 @@ function resolvePreview(
   }
   if (tp.id === "sidePassages") {
     const resolved = sidePassageMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Side Passages")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Side Passages"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "passageTurns") {
     const resolved = passageTurnMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Passage Turns")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Passage Turns"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "stairs") {
     const resolved = stairsMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Stairs")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Stairs")
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "trickTrap") {
     const resolved = trickTrapMessages({ roll: usedRoll });
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Trick / Trap")));
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(
+          fi,
+          feedItemId,
+          tp.id,
+          resolved.messages,
+          "Trick / Trap"
+        )
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
 }
 
@@ -795,8 +1136,12 @@ function updateResolvedBlock(
   return { ...fi, messages: newMessages };
 }
 
-function createPeriodicDoorOnlyPreview({ context }: { context?: any }): DungeonTablePreview {
-  const seq = context && context.kind === 'doorChain' ? (context.existing?.length ?? 0) : 0;
+function createPeriodicDoorOnlyPreview({
+  context,
+}: {
+  context?: DoorChainContext;
+}): DungeonTablePreview {
+  const seq = isDoorChainContext(context) ? context.existing.length : 0;
   return {
     kind: "table-preview",
     id: `periodicCheckDoorOnly:${seq}`,
@@ -811,8 +1156,12 @@ function createPeriodicDoorOnlyPreview({ context }: { context?: any }): DungeonT
   };
 }
 
-function createDoorLocationPreview({ context }: { context?: any }): DungeonTablePreview {
-  const seq = context && context.kind === 'doorChain' ? (context.existing?.length ?? 0) : 0;
+function createDoorLocationPreview({
+  context,
+}: {
+  context?: DoorChainContext;
+}): DungeonTablePreview {
+  const seq = isDoorChainContext(context) ? context.existing.length : 0;
   return {
     kind: "table-preview",
     id: `doorLocation:${seq}`,
@@ -824,7 +1173,7 @@ function createDoorLocationPreview({ context }: { context?: any }): DungeonTable
       { range: "13–20", label: "Ahead" },
     ],
     context,
-  } as any;
+  };
 }
 
 function filterForCompact(
@@ -839,7 +1188,9 @@ function filterForCompact(
     }
     if (n.kind === "bullet-list") {
       // Drop pure roll bullets like "roll: 9 — Foo"
-      const allRoll = n.items.every((it) => it.trim().toLowerCase().startsWith("roll:"));
+      const allRoll = n.items.every((it) =>
+        it.trim().toLowerCase().startsWith("roll:")
+      );
       return !allRoll;
     }
     if (n.kind === "roll-trace") {
@@ -871,10 +1222,14 @@ function getRootPreviewNodes(action: ActionKind): DungeonRenderNode[] {
   // Render only the table preview node(s) for the selected action
   if (action === "door") {
     const { messages } = doorBeyondMessages({ detailMode: true });
-    return messages.filter((m) => m.kind === "table-preview") as DungeonRenderNode[];
+    return messages.filter(
+      (m) => m.kind === "table-preview"
+    ) as DungeonRenderNode[];
   }
   const { messages } = passageMessages({ detailMode: true });
-  return messages.filter((m) => m.kind === "table-preview") as DungeonRenderNode[];
+  return messages.filter(
+    (m) => m.kind === "table-preview"
+  ) as DungeonRenderNode[];
 }
 
 export default DungeonIndexPage;

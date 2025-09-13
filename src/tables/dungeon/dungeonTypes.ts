@@ -50,6 +50,7 @@ import { DragonNine, MonsterNine } from "./monster/monsterNine";
 import { DragonTen, MonsterTen } from "./monster/monsterTen";
 import { CharacterRace } from "./monster/character/characterRace";
 import { CharacterClassTable } from "./monster/character/characterClass";
+import { PeriodicCheckDoorOnly } from "./periodicCheckDoorOnly";
 
 export type Table<T> = {
   sides: number;
@@ -122,4 +123,5 @@ export type Command =
   | DragonNine
   | DragonTen
   | CharacterClassTable
-  | CharacterRace;
+  | CharacterRace
+  | PeriodicCheckDoorOnly;
