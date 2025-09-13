@@ -3,6 +3,7 @@ import {
   DungeonMessage,
   DungeonRenderNode,
   DungeonTablePreview,
+  TableContext,
 } from "../../types/dungeon";
 import { PeriodicCheck } from "../../tables/dungeon/periodicCheck";
 import { DoorBeyond } from "../../tables/dungeon/doorBeyond";
@@ -43,7 +44,7 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
           title: "Door Location",
           sides: doorLocation.sides,
           entries: doorLocation.entries.map((e) => ({ range: rangeText(e.range), label: DoorLocation[e.command] ?? String(e.command) })),
-          context: { kind: "doorChain", existing: [] } as any,
+          context: { kind: "doorChain", existing: [] } as TableContext,
         };
         nodes.push(preview);
         break;
