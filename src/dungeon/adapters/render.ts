@@ -14,6 +14,8 @@ import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
 import { stairs, Stairs, egressOne, egressTwo, egressThree, Egress, chute, Chute } from "../../tables/dungeon/stairs";
 import { trickTrapMessages } from "../services/trickTrap";
 import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
+import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { periodicCheck } from "../../tables/dungeon/periodicCheck";
 import { getPassageResult } from "../services/passage";
 import { roomMessages } from "../services/roomResult";
 import { chamberMessages } from "../services/chamberResult";
@@ -473,7 +475,10 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
   if (event.kind === "periodicCheck") {
     const heading: DungeonMessage = { kind: "heading", level: 3, text: "Passage" };
     const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${PeriodicCheck[event.result]}`] };
-    const text = getPassageResult(event.level, event.result, event.avoidMonster ?? false);
+    const text =
+      event.result === PeriodicCheck.Door
+        ? compactDoorText()
+        : getPassageResult(event.level, event.result, event.avoidMonster ?? false);
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
   }
@@ -687,4 +692,27 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
     return nodes;
   }
   return nodes;
+}
+
+// Compose compact text for the closed-door chain without legacy helpers.
+function compactDoorText(existing: ("Left" | "Right")[] = []): string {
+  const doorRoll = rollDice(doorLocation.sides);
+  const doorCmd = getTableEntry(doorRoll, doorLocation);
+  const prefix =
+    doorCmd === DoorLocation.Ahead
+      ? "A door is Ahead. "
+      : `A door is to the ${DoorLocation[doorCmd]}. `;
+  if (doorCmd === DoorLocation.Ahead) return prefix;
+  const loc: "Left" | "Right" | "" =
+    doorCmd === DoorLocation.Left ? "Left" : doorCmd === DoorLocation.Right ? "Right" : "";
+  if (loc === "") return prefix;
+  if (existing.includes(loc)) {
+    return prefix + "There are no more doors. The main passage extends -- check again in 30'. ";
+  }
+  const reRoll = rollDice(periodicCheck.sides);
+  const reCmd = getTableEntry(reRoll, periodicCheck);
+  if (reCmd === PeriodicCheck.Door) {
+    return prefix + compactDoorText([...existing, loc]);
+  }
+  return prefix + "There are no other doors. The main passage extends -- check again in 30'. ";
 }
