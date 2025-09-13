@@ -1229,11 +1229,37 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "stairs") {
-    const resolved = stairsMessages({ roll: usedRoll });
+    // Resolve in detail mode so subtable previews (egress, chute, chamber) are inserted
+    const resolved = stairsMessages({ roll: usedRoll, detailMode: true });
     setFeed((prev) =>
       prev.map((fi) =>
         updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Stairs")
       )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "egress:one" || tp.id === "egress:two" || tp.id === "egress:three") {
+    const { egressMessages } = require("../../dungeon/services/stairsResult");
+    const tableKey = tp.id.split(":")[1] as "one" | "two" | "three";
+    const resolved = egressMessages({ table: tableKey, roll: usedRoll });
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Egress")
+      )
+    );
+    if (setCollapsed)
+      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    if (setResolved)
+      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+  }
+  if (tp.id === "chute") {
+    const { chuteMessages } = require("../../dungeon/services/stairsResult");
+    const resolved = chuteMessages({ roll: usedRoll });
+    setFeed((prev) =>
+      prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolved.messages, "Chute"))
     );
     if (setCollapsed)
       setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
