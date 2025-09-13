@@ -1,21 +1,14 @@
 import { DoorBeyond, doorBeyond } from "../../tables/dungeon/doorBeyond";
 import { passageWidthResults } from "./passageWidth";
-
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { chamberMessages, chamberResult } from "./chamberResult";
-import { chamberDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
-import { roomMessages, roomResult } from "./roomResult";
-import { roomDimensions, RoomDimensions } from "../../tables/dungeon/chambersRooms";
+import { chamberResult } from "./chamberResult";
+import { roomResult } from "./roomResult";
 import { DungeonMessage, DungeonRollTrace, DungeonTablePreview } from "../../types/dungeon";
-import { passageWidthMessages } from "./passageWidth";
-import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
+import { resolveDoorBeyond } from "../domain/resolvers";
+import { toCompactRender, toDetailRender } from "../adapters/render";
 
 /**
- * TODO allow "doorAhead" boolean in UI
- *
- * Note: This table says to always check the width of the passage.
- *
- * @param doorAhead
+ * Legacy string result (kept for compact mode parity and tests)
  */
 export const doorBeyondResult = (doorAhead: boolean = false): string => {
   const doorBeyondRoll = rollDice(doorBeyond.sides);
@@ -55,9 +48,7 @@ export const doorBeyondResult = (doorAhead: boolean = false): string => {
 };
 
 /**
- * Typed variant that supports an optional roll override and returns
- * structured messages for UI rendering. For now it mirrors the
- * existing string output but captures the primary roll.
+ * Typed variant using domain outcome + adapters.
  */
 export const doorBeyondMessages = (
   options?: {
@@ -88,176 +79,8 @@ export const doorBeyondMessages = (
     ];
     return { usedRoll: undefined, messages };
   }
-
-  const usedRoll = options?.roll ?? rollDice(doorBeyond.sides);
-  const command = getTableEntry(usedRoll, doorBeyond);
-
-  let text: string;
-  const traceItems: DungeonRollTrace["items"] = [];
-  const previews: DungeonTablePreview[] = [];
-  switch (command) {
-    case DoorBeyond.ParallelPassageOrCloset:
-      if (doorAhead) {
-        text =
-          "Beyond the door is a 10' x 10' room (check contents, treasure). ";
-      } else {
-        text = "Beyond the door is a parallel passage, extending 30' in both directions. ";
-        const widthPreview: DungeonTablePreview | undefined = options?.detailMode
-          ? {
-              kind: "table-preview",
-              id: "passageWidth",
-              title: "Passage Width",
-              sides: passageWidth.sides,
-              entries: passageWidth.entries.map((e) => ({
-                range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-                label: PassageWidth[e.command] ?? String(e.command),
-              })),
-            }
-          : undefined;
-        if (!options?.detailMode) {
-          const override = options?.takeOverride?.("passageWidth");
-          const width = passageWidthMessages({ roll: override });
-          text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
-          traceItems.push({
-            table: "passageWidth",
-            roll: width.usedRoll,
-            result: width.trace.result,
-          });
-        }
-        if (widthPreview) previews.push(widthPreview);
-      }
-      break;
-    case DoorBeyond.PassageStraightAhead:
-      text = "Beyond the door is a passage straight ahead. ";
-      {
-        const widthPreview: DungeonTablePreview | undefined = options?.detailMode
-          ? {
-              kind: "table-preview",
-              id: "passageWidth",
-              title: "Passage Width",
-              sides: passageWidth.sides,
-              entries: passageWidth.entries.map((e) => ({
-                range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-                label: PassageWidth[e.command] ?? String(e.command),
-              })),
-            }
-          : undefined;
-        if (!options?.detailMode) {
-          const override = options?.takeOverride?.("passageWidth");
-          const width = passageWidthMessages({ roll: override });
-          text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
-          traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
-        }
-        if (widthPreview) previews.push(widthPreview);
-      }
-      break;
-    case DoorBeyond.Passage45AheadBehind:
-      text =
-        "Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ";
-      {
-        const widthPreview: DungeonTablePreview | undefined = options?.detailMode
-          ? {
-              kind: "table-preview",
-              id: "passageWidth",
-              title: "Passage Width",
-              sides: passageWidth.sides,
-              entries: passageWidth.entries.map((e) => ({
-                range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-                label: PassageWidth[e.command] ?? String(e.command),
-              })),
-            }
-          : undefined;
-        if (!options?.detailMode) {
-          const override = options?.takeOverride?.("passageWidth");
-          const width = passageWidthMessages({ roll: override });
-          text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
-          traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
-        }
-        if (widthPreview) previews.push(widthPreview);
-      }
-      break;
-    case DoorBeyond.Passage45BehindAhead:
-      text =
-        "Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ";
-      {
-        const widthPreview: DungeonTablePreview | undefined = options?.detailMode
-          ? {
-              kind: "table-preview",
-              id: "passageWidth",
-              title: "Passage Width",
-              sides: passageWidth.sides,
-              entries: passageWidth.entries.map((e) => ({
-                range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-                label: PassageWidth[e.command] ?? String(e.command),
-              })),
-            }
-          : undefined;
-        if (!options?.detailMode) {
-          const override = options?.takeOverride?.("passageWidth");
-          const width = passageWidthMessages({ roll: override });
-          text += width.messages.map((m) => (m.kind === "paragraph" ? m.text : "")).join("");
-          traceItems.push({ table: "passageWidth", roll: width.usedRoll, result: width.trace.result });
-        }
-        if (widthPreview) previews.push(widthPreview);
-      }
-      break;
-    case DoorBeyond.Room:
-      if (options?.detailMode) {
-        text = "Beyond the door is a room. ";
-        const preview: DungeonTablePreview = {
-          kind: "table-preview",
-          id: "roomDimensions",
-          title: "Room Dimensions",
-          sides: roomDimensions.sides,
-          entries: roomDimensions.entries.map((e) => ({
-            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-            label: RoomDimensions[e.command] ?? String(e.command),
-          })),
-        };
-        previews.push(preview);
-      } else {
-        const res = roomMessages({});
-        text = "Beyond the door is a room. ";
-        // Append room description paragraph(s)
-        for (const m of res.messages) {
-          if (m.kind === "paragraph") text += m.text;
-        }
-      }
-      break;
-    case DoorBeyond.Chamber:
-      if (options?.detailMode) {
-        text = "Beyond the door is a chamber. ";
-        const preview: DungeonTablePreview = {
-          kind: "table-preview",
-          id: "chamberDimensions",
-          title: "Chamber Dimensions",
-          sides: chamberDimensions.sides,
-          entries: chamberDimensions.entries.map((e) => ({
-            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-            label: ChamberDimensions[e.command] ?? String(e.command),
-          })),
-        };
-        previews.push(preview);
-      } else {
-        const res = chamberMessages({});
-        text = "Beyond the door is a chamber. ";
-        for (const m of res.messages) {
-          if (m.kind === "paragraph") text += m.text;
-        }
-      }
-      break;
-  }
-
-  const messages: (DungeonMessage | DungeonRollTrace | DungeonTablePreview)[] = [
-    { kind: "heading", level: 3, text: "Door" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${DoorBeyond[command]}`] },
-    { kind: "paragraph", text },
-  ];
-  if (previews.length > 0) {
-    messages.push(...previews);
-  }
-  if (traceItems.length > 0) {
-    messages.push({ kind: "roll-trace", items: traceItems });
-  }
-  return { usedRoll, messages };
+  const node = resolveDoorBeyond({ roll: options?.roll, doorAhead });
+  const usedRoll = (node.type === "event" ? node.roll : undefined) as number | undefined;
+  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
+  return { usedRoll, messages: messages as any };
 };

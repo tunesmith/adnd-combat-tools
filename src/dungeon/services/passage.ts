@@ -10,13 +10,9 @@ import { stairsResult } from "./stairsResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { wanderingMonsterResult } from "./wanderingMonsterResult";
 import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
-import { chamberDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
-import { sidePassageMessages } from "./sidePassage";
-import { passageTurnMessages } from "./passageTurn";
-import { stairsMessages } from "./stairsResult";
-import { trickTrapMessages } from "./trickTrap";
-import { doorLocation } from "../../tables/dungeon/doorLocation";
-import { DoorLocation } from "../../tables/dungeon/doorLocation";
+// legacy imports above kept for string API; message-path refactored below via adapters
+import { resolvePeriodicCheck } from "../domain/resolvers";
+import { toCompactRender, toDetailRender } from "../adapters/render";
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -104,72 +100,8 @@ export const passageMessages = (
     ];
     return { usedRoll: undefined, messages };
   }
-  const usedRoll = options?.roll ?? rollDice(periodicCheck.sides);
-  const command = getTableEntry(usedRoll, periodicCheck);
-  let text: string;
-  const heading: DungeonMessage = { kind: "heading", level: 3, text: "Passage" };
-  if (options?.detailMode && command === PeriodicCheck.Chamber) {
-    text = "The passage opens into a chamber. ";
-    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
-    const para: DungeonMessage = { kind: "paragraph", text };
-    // Prepend a friendly note for not-yet-typed previews if any in future
-    const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "chamberDimensions",
-      title: "Chamber Dimensions",
-      sides: chamberDimensions.sides,
-      entries: chamberDimensions.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-        label: ChamberDimensions[e.command] ?? String(e.command),
-      })),
-    };
-    return { usedRoll, messages: [heading, bullet, para, preview] };
-  }
-  if (options?.detailMode && command === PeriodicCheck.Door) {
-    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
-    const para: DungeonMessage = { kind: "paragraph", text: "A closed door is indicated." };
-    const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "doorLocation:0",
-      title: "Door Location",
-      sides: doorLocation.sides,
-      entries: doorLocation.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-        label: DoorLocation[e.command] ?? String(e.command),
-      })),
-      context: { kind: "doorChain", existing: [] },
-    };
-    return { usedRoll, messages: [heading, bullet, para, preview] };
-  }
-  if (options?.detailMode && command === PeriodicCheck.SidePassage) {
-    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
-    const para: DungeonMessage = { kind: "paragraph", text: "A side passage occurs." };
-    const preview = sidePassageMessages({ detailMode: true });
-    return { usedRoll, messages: [heading, bullet, para, ...preview.messages] };
-  }
-  if (options?.detailMode && command === PeriodicCheck.PassageTurn) {
-    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
-    const para: DungeonMessage = { kind: "paragraph", text: "The passage turns." };
-    const preview = passageTurnMessages({ detailMode: true });
-    return { usedRoll, messages: [heading, bullet, para, ...preview.messages] };
-  }
-  if (options?.detailMode && command === PeriodicCheck.Stairs) {
-    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
-    const para: DungeonMessage = { kind: "paragraph", text: "Stairs are indicated here." };
-    const preview = stairsMessages({ detailMode: true });
-    return { usedRoll, messages: [heading, bullet, para, ...preview.messages] };
-  }
-  if (options?.detailMode && command === PeriodicCheck.TrickTrap) {
-    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] };
-    const para: DungeonMessage = { kind: "paragraph", text: "There is a trick or trap here." };
-    const preview = trickTrapMessages({ detailMode: true });
-    return { usedRoll, messages: [heading, bullet, para, ...preview.messages] };
-  }
-  text = getPassageResult(level, command, options?.avoidMonster ?? false);
-  const messages: DungeonMessage[] = [
-    heading,
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${PeriodicCheck[command]}`] },
-    { kind: "paragraph", text },
-  ];
-  return { usedRoll, messages };
+  const node = resolvePeriodicCheck({ roll: options?.roll, level, avoidMonster: options?.avoidMonster });
+  const usedRoll = (node.type === "event" ? node.roll : undefined) as number | undefined;
+  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
+  return { usedRoll, messages: messages as any };
 };
