@@ -209,7 +209,7 @@ Test strategy for the switch
     - Special Passage → galleries/stream/river/chasm subtables.
   - Adapters (detail) render children via a single preview mapper for passage turns; compact remains adapter-only strings.
   - Removed `services/compactWhereFrom` to avoid duplication; adapters own compact composition. `wanderingMonsterResult` is deprecated and unused by UI.
-- Next: add children for rooms/chambers → exits + unusual shape/size (with context).
+- Rooms/Chambers now attach children: standard shapes → `numberOfExits` with `{ length, width, isRoom }` context; unusual → `unusualShape` and `unusualSize`. Detail adapter renders child previews via the mapper. Compact adapters reuse current strings for parity.
 - Trick/Trap: Replace stub with a real table and messages, derive preview rows, and add any required subtables.
 - Door chain outcome (optional): Model door chain as a structured outcome (doorLocation sequence + rechecks) to avoid string-based label parsing in UI.
 - Registry extraction (optional): Move TABLE_ID_LIST/HEADINGS/RESOLVERS + `resolveViaRegistry` to a helper module.

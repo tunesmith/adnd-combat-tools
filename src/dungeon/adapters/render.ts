@@ -30,6 +30,12 @@ import { passageWidthMessages } from "../services/passageWidth";
 import { SpecialPassage, galleryStairLocation, GalleryStairLocation, streamConstruction, StreamConstruction, riverConstruction, RiverConstruction, chasmDepth, ChasmDepth, chasmConstruction, ChasmConstruction } from "../../tables/dungeon/specialPassage";
 import { galleryStairLocationResult, streamConstructionResult, riverConstructionResult, chasmDepthResult, chasmConstructionResult, specialPassageResult } from "../services/specialPassage";
 import { chamberResult } from "../services/chamberResult";
+import { numberOfExits, NumberOfExits } from "../../tables/dungeon/numberOfExits";
+import { unusualShape, UnusualShape } from "../../tables/dungeon/unusualShape";
+import { unusualSize, UnusualSize } from "../../tables/dungeon/unusualSize";
+import { exitMessages } from "../services/exitResult";
+import { unusualShapeResult } from "../services/unusualShapeResult";
+import { unusualSizeResult } from "../services/unusualSizeResult";
 
 function rangeText(range: number[]): string {
   return range.length === 1 ? `${range[0]}` : `${range[0]}–${range[range.length - 1]}`;
@@ -211,6 +217,88 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
         break;
     }
     nodes.push(heading, bullet, { kind: "paragraph", text });
+    return nodes;
+  }
+  if (event.kind === "roomDimensions") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Room Dimensions" };
+    const label = RoomDimensions[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let baseDesc = "";
+    switch (event.result) {
+      case RoomDimensions.Square10x10:
+        baseDesc = "The room is square and 10' x 10'. ";
+        break;
+      case RoomDimensions.Square20x20:
+        baseDesc = "The room is square and 20' x 20'. ";
+        break;
+      case RoomDimensions.Square30x30:
+        baseDesc = "The room is square and 30' x 30'. ";
+        break;
+      case RoomDimensions.Square40x40:
+        baseDesc = "The room is square and 40' x 40'. ";
+        break;
+      case RoomDimensions.Rectangular10x20:
+        baseDesc = "The room is rectangular and 10' x 20'. ";
+        break;
+      case RoomDimensions.Rectangular20x30:
+        baseDesc = "The room is rectangular and 20' x 30'. ";
+        break;
+      case RoomDimensions.Rectangular20x40:
+        baseDesc = "The room is rectangular and 20' x 40'. ";
+        break;
+      case RoomDimensions.Rectangular30x40:
+        baseDesc = "The room is rectangular and 30' x 40'. ";
+        break;
+      case RoomDimensions.Unusual:
+        baseDesc = "The room has an unusual shape and size. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text: baseDesc });
+    if (outcome.children && Array.isArray(outcome.children)) {
+      for (const child of outcome.children) {
+        if (child.type !== "pending-roll") continue;
+        const preview = previewForPending(child);
+        if (preview) nodes.push(preview);
+      }
+    }
+    return nodes;
+  }
+  if (event.kind === "chamberDimensions") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Chamber Dimensions" };
+    const label = ChamberDimensions[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let baseDesc = "";
+    switch (event.result) {
+      case ChamberDimensions.Square20x20:
+        baseDesc = "The chamber is square and 20' x 20'. ";
+        break;
+      case ChamberDimensions.Square30x30:
+        baseDesc = "The chamber is square and 30' x 30'. ";
+        break;
+      case ChamberDimensions.Square40x40:
+        baseDesc = "The chamber is square and 40' x 40'. ";
+        break;
+      case ChamberDimensions.Rectangular20x30:
+        baseDesc = "The chamber is rectangular and 20' x 30'. ";
+        break;
+      case ChamberDimensions.Rectangular30x50:
+        baseDesc = "The chamber is rectangular and 30' x 50'. ";
+        break;
+      case ChamberDimensions.Rectangular40x60:
+        baseDesc = "The chamber is rectangular and 40' x 60'. ";
+        break;
+      case ChamberDimensions.Unusual:
+        baseDesc = "The chamber has an unusual shape and size. ";
+        break;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text: baseDesc });
+    if (outcome.children && Array.isArray(outcome.children)) {
+      for (const child of outcome.children) {
+        if (child.type !== "pending-roll") continue;
+        const preview = previewForPending(child);
+        if (preview) nodes.push(preview);
+      }
+    }
     return nodes;
   }
   if (event.kind === "passageTurns") {
@@ -443,6 +531,31 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         sides: chamberDimensions.sides,
         entries: chamberDimensions.entries.map((e) => ({ range: rangeText(e.range), label: ChamberDimensions[e.command] ?? String(e.command) })),
       };
+    case "numberOfExits":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Exits",
+        sides: numberOfExits.sides,
+        entries: numberOfExits.entries.map((e) => ({ range: rangeText(e.range), label: NumberOfExits[e.command] ?? String(e.command) })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case "unusualShape":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Unusual Shape",
+        sides: unusualShape.sides,
+        entries: unusualShape.entries.map((e) => ({ range: rangeText(e.range), label: UnusualShape[e.command] ?? String(e.command) })),
+      };
+    case "unusualSize":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Unusual Size",
+        sides: unusualSize.sides,
+        entries: unusualSize.entries.map((e) => ({ range: rangeText(e.range), label: UnusualSize[e.command] ?? String(e.command) })),
+      };
     case "stairs":
       return {
         kind: "table-preview",
@@ -604,6 +717,102 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
     ) {
       const width = passageWidthMessages({});
       for (const m of width.messages) if (m.kind === "paragraph") text += m.text;
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text });
+    return nodes;
+  }
+  if (event.kind === "roomDimensions") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Room Dimensions" };
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${RoomDimensions[event.result]}`] };
+    let baseDesc = "";
+    let dims: { length: number; width: number } | undefined;
+    switch (event.result) {
+      case RoomDimensions.Square10x10:
+        baseDesc = "The room is square and 10' x 10'. ";
+        dims = { length: 10, width: 10 };
+        break;
+      case RoomDimensions.Square20x20:
+        baseDesc = "The room is square and 20' x 20'. ";
+        dims = { length: 20, width: 20 };
+        break;
+      case RoomDimensions.Square30x30:
+        baseDesc = "The room is square and 30' x 30'. ";
+        dims = { length: 30, width: 30 };
+        break;
+      case RoomDimensions.Square40x40:
+        baseDesc = "The room is square and 40' x 40'. ";
+        dims = { length: 40, width: 40 };
+        break;
+      case RoomDimensions.Rectangular10x20:
+        baseDesc = "The room is rectangular and 10' x 20'. ";
+        dims = { length: 10, width: 20 };
+        break;
+      case RoomDimensions.Rectangular20x30:
+        baseDesc = "The room is rectangular and 20' x 30'. ";
+        dims = { length: 20, width: 30 };
+        break;
+      case RoomDimensions.Rectangular20x40:
+        baseDesc = "The room is rectangular and 20' x 40'. ";
+        dims = { length: 20, width: 40 };
+        break;
+      case RoomDimensions.Rectangular30x40:
+        baseDesc = "The room is rectangular and 30' x 40'. ";
+        dims = { length: 30, width: 40 };
+        break;
+      case RoomDimensions.Unusual:
+        baseDesc = "The room has an unusual shape and size. ";
+        break;
+    }
+    let text = baseDesc;
+    if (dims) {
+      const exits = exitMessages({ length: dims.length, width: dims.width, isRoom: true });
+      for (const m of exits.messages) if (m.kind === "paragraph") text += m.text;
+    } else {
+      text += unusualShapeResult() + unusualSizeResult() + "(TODO exits, contents, treasure) ";
+    }
+    nodes.push(heading, bullet, { kind: "paragraph", text });
+    return nodes;
+  }
+  if (event.kind === "chamberDimensions") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Chamber Dimensions" };
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${ChamberDimensions[event.result]}`] };
+    let baseDesc = "";
+    let dims: { length: number; width: number } | undefined;
+    switch (event.result) {
+      case ChamberDimensions.Square20x20:
+        baseDesc = "The chamber is square and 20' x 20'. ";
+        dims = { length: 20, width: 20 };
+        break;
+      case ChamberDimensions.Square30x30:
+        baseDesc = "The chamber is square and 30' x 30'. ";
+        dims = { length: 30, width: 30 };
+        break;
+      case ChamberDimensions.Square40x40:
+        baseDesc = "The chamber is square and 40' x 40'. ";
+        dims = { length: 40, width: 40 };
+        break;
+      case ChamberDimensions.Rectangular20x30:
+        baseDesc = "The chamber is rectangular and 20' x 30'. ";
+        dims = { length: 20, width: 30 };
+        break;
+      case ChamberDimensions.Rectangular30x50:
+        baseDesc = "The chamber is rectangular and 30' x 50'. ";
+        dims = { length: 30, width: 50 };
+        break;
+      case ChamberDimensions.Rectangular40x60:
+        baseDesc = "The chamber is rectangular and 40' x 60'. ";
+        dims = { length: 40, width: 60 };
+        break;
+      case ChamberDimensions.Unusual:
+        baseDesc = "The chamber has an unusual shape and size. ";
+        break;
+    }
+    let text = baseDesc;
+    if (dims) {
+      const exits = exitMessages({ length: dims.length, width: dims.width, isRoom: false });
+      for (const m of exits.messages) if (m.kind === "paragraph") text += m.text;
+    } else {
+      text += unusualShapeResult() + unusualSizeResult() + "(TODO exits, contents, treasure) ";
     }
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;

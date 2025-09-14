@@ -4,6 +4,7 @@ import type { SidePassages } from "../../tables/dungeon/sidePassages";
 import type { PassageTurns } from "../../tables/dungeon/passageTurns";
 import type { Stairs } from "../../tables/dungeon/stairs";
 import type { SpecialPassage } from "../../tables/dungeon/specialPassage";
+import type { RoomDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
 
 // Domain outcome event kinds cover high-level tables we resolve.
 export type OutcomeEvent =
@@ -12,7 +13,9 @@ export type OutcomeEvent =
   | { kind: "sidePassages"; result: SidePassages }
   | { kind: "passageTurns"; result: PassageTurns }
   | { kind: "stairs"; result: Stairs }
-  | { kind: "specialPassage"; result: SpecialPassage };
+  | { kind: "specialPassage"; result: SpecialPassage }
+  | { kind: "roomDimensions"; result: RoomDimensions }
+  | { kind: "chamberDimensions"; result: ChamberDimensions };
 
 export type PendingRoll = {
   type: "pending-roll";
