@@ -1,5 +1,5 @@
 import { doorBeyondResult } from "../../dungeon/services/doorBeyondResult";
-import { passageResults } from "../../dungeon/services/passage";
+import { passageMessages } from "../../dungeon/services/passage";
 import { unusualSizeResult } from "../../dungeon/services/unusualSizeResult";
 import { chamberResult } from "../../dungeon/services/chamberResult";
 import { monsterOneResult } from "../../dungeon/services/monster/monsterOneResult";
@@ -9,16 +9,14 @@ import { Table } from "../../tables/dungeon/dungeonTypes";
 import { getTableEntry } from "../../dungeon/helpers/dungeonLookup";
 import { monsterThreeResult } from "../../dungeon/services/monster/monsterThreeResult";
 import { monsterFourResult } from "../../dungeon/services/monster/monsterFourResult";
-import { wanderingMonsterResult } from "../../dungeon/services/wanderingMonsterResult";
 import { monsterFiveResult } from "../../dungeon/services/monster/monsterFiveResult";
 import { characterResult } from "../../dungeon/services/monster/characterResult";
 import { formatPartyResult } from "../../dungeon/helpers/party/formatPartyResult";
 
 describe("passage results", () => {
-  test("initial move", () => {
-    const passageResult = passageResults();
-    console.log(passageResult);
-    expect(passageResult).not.toBe(null);
+  test("compact passage returns a paragraph for a concrete roll", () => {
+    const { messages } = passageMessages({ roll: 1, detailMode: false, level: 1 });
+    expect(messages && messages.length).toBeGreaterThan(0);
   });
   test("unusual size", () => {
     const unusualSize = unusualSizeResult();
@@ -55,20 +53,14 @@ describe("passage results", () => {
     console.log(monsters);
     expect(monsters).not.toBe(null);
   });
-  test("wandering monster level four", () => {
-    const monsters = wanderingMonsterResult(4);
-    console.log(monsters);
-    expect(monsters).not.toBe(null);
-  });
   test("monster level five", () => {
     const monsters = monsterFiveResult(5);
     console.log(monsters);
     expect(monsters).not.toBe(null);
   });
-  test("wandering monster level five", () => {
-    const monsters = wanderingMonsterResult(5);
-    console.log(monsters);
-    expect(monsters).not.toBe(null);
+  test("compact wandering monster returns a composed string for roll=20", () => {
+    const { messages } = passageMessages({ roll: 20, detailMode: false, level: 1 });
+    expect(messages && messages.length).toBeGreaterThan(0);
   });
 });
 

@@ -17,11 +17,7 @@ import { Table } from "../../tables/dungeon/dungeonTypes";
 import { monsterOneResult } from "./monster/monsterOneResult";
 import { monsterTwoResult } from "./monster/monsterTwoResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import {
-  PeriodicCheck,
-  periodicCheck,
-} from "../../tables/dungeon/periodicCheck";
-import { getPassageResult } from "./passage";
+import { PeriodicCheck, periodicCheck } from "../../tables/dungeon/periodicCheck";
 import { monsterThreeResult } from "./monster/monsterThreeResult";
 import { monsterFourResult } from "./monster/monsterFourResult";
 import { monsterFiveResult } from "./monster/monsterFiveResult";
@@ -40,8 +36,12 @@ export const wanderingMonsterResult = (level: number): string => {
     const roll = rollDice(periodicCheck.sides);
     locationCommand = getTableEntry(roll, periodicCheck);
   } while (locationCommand === PeriodicCheck.WanderingMonster);
+  // Compose where-from text inline to avoid legacy getPassageResult
+  const { compactDoorText, compactPeriodicText } = require("./compactWhereFrom");
   const passageResult =
-    getPassageResult(level, locationCommand, true) + "Wandering Monster: ";
+    (locationCommand === PeriodicCheck.Door
+      ? compactDoorText()
+      : compactPeriodicText(level, locationCommand, true)) + "Wandering Monster: ";
 
   const table = getMonsterTable(level);
   const roll = rollDice(table.sides);

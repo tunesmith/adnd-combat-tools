@@ -16,7 +16,6 @@ import { trickTrapMessages } from "../services/trickTrap";
 import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { periodicCheck } from "../../tables/dungeon/periodicCheck";
-import { getPassageResult } from "../services/passage";
 import { getMonsterTable } from "../services/wanderingMonsterResult";
 import { MonsterLevel } from "../../tables/dungeon/monster/monsterLevel";
 import { monsterOneResult } from "../services/monster/monsterOneResult";
@@ -506,7 +505,7 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
         ? compactDoorText()
         : event.result === PeriodicCheck.WanderingMonster
         ? compactWanderingMonsterText(event.level)
-        : getPassageResult(event.level, event.result, event.avoidMonster ?? false);
+        : compactPeriodicText(event.level, event.result, event.avoidMonster ?? false);
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
   }
@@ -722,28 +721,7 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
   return nodes;
 }
 
-// Compose compact text for the closed-door chain without legacy helpers.
-function compactDoorText(existing: ("Left" | "Right")[] = []): string {
-  const doorRoll = rollDice(doorLocation.sides);
-  const doorCmd = getTableEntry(doorRoll, doorLocation);
-  const prefix =
-    doorCmd === DoorLocation.Ahead
-      ? "A door is Ahead. "
-      : `A door is to the ${DoorLocation[doorCmd]}. `;
-  if (doorCmd === DoorLocation.Ahead) return prefix;
-  const loc: "Left" | "Right" | "" =
-    doorCmd === DoorLocation.Left ? "Left" : doorCmd === DoorLocation.Right ? "Right" : "";
-  if (loc === "") return prefix;
-  if (existing.includes(loc)) {
-    return prefix + "There are no more doors. The main passage extends -- check again in 30'. ";
-  }
-  const reRoll = rollDice(periodicCheck.sides);
-  const reCmd = getTableEntry(reRoll, periodicCheck);
-  if (reCmd === PeriodicCheck.Door) {
-    return prefix + compactDoorText([...existing, loc]);
-  }
-  return prefix + "There are no other doors. The main passage extends -- check again in 30'. ";
-}
+import { compactDoorText, compactPeriodicText } from "../services/compactWhereFrom";
 
 // Compose compact text for Wandering Monster without legacy helpers.
 function compactWanderingMonsterText(level: number): string {
@@ -758,8 +736,8 @@ function compactWanderingMonsterText(level: number): string {
   if (location === PeriodicCheck.Door) {
     prefix = compactDoorText();
   } else {
-    // Reuse existing strings for other locations to preserve parity text
-    prefix = getPassageResult(level, location, true);
+    // Compose compact periodic text for where-from (non-door)
+    prefix = compactPeriodicText(level, location, true);
   }
   // Roll monster level table for the given dungeon level
   const table = getMonsterTable(level);

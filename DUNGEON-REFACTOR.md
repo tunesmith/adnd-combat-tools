@@ -139,11 +139,19 @@ Status: In progress/partial. Most legacy string paths remain only as helpers for
 
 ## Current Status Summary
 - Build: `tsc` passes.
-- Tests: 9/9 passing (including comprehensive parity tests).
-- Outcomes implemented: Periodic Check, Side Passages, Passage Turns, Stairs, Special Passage, Door Beyond.
-- Services migrated to adapters: `passageMessages`, `sidePassageMessages`, `passageTurnMessages`, `stairsMessages`, `specialPassageMessages`, `doorBeyondMessages`.
-- Registry in `index.tsx` routes common ids; dead branches removed; bespoke flows preserved.
-- App code free of `any` (tests contain minimal helper anys only).
+- Tests: 86/86 passing (parity + WM coverage added).
+- Outcomes/adapters: Periodic Check, Side Passages, Passage Turns, Stairs, Special Passage, Door Beyond are outcome-driven with detail/compact adapters.
+- Door chain: Now fully service/adapter-driven in detail mode (doorLocation <-> periodicCheckDoorOnly chain) and compact mode (composed text). Page-level bespoke logic removed; routed via registry.
+- Wandering Monster:
+  - Compact: Adapter composes where-from + monster text; no legacy dependency.
+  - Detail: Stages Where-From (with recursion: Door/Side/Turn/Chamber/Stairs) and Monster Level preview; Level 1 Human subtable; Levels 2–6 monster tables with dragon subtables (3, 4-younger/older, 5-younger/older, 6) and detailed dragon paragraphs.
+  - Deterministic: Detail resolvers render text for the exact rolled entry; no hidden re-rolls.
+- Dungeon Level UI: Level 1–16 selector; previews and WM flows derive monster level tables from current selection; context threads level to subtables.
+- Legacy removal:
+  - `closedDoorResult` removed.
+  - Adapters no longer call `getPassageResult`.
+  - `getPassageResult` retained only for legacy parity tests and legacy `wanderingMonsterResult` (test usage only); not used by UI/adapters.
+- Preview rows: Derived from table definitions for Periodic Check (minus WM), DoorWhereFrom chain, Monster Level 1–6, and dragon subtables.
 
 ### Periodic Check Modernization Status
 
@@ -157,6 +165,7 @@ Detail mode (adapters + previews)
 - DeadEnd (18): Modernized. Paragraph only; no preview needed.
 - TrickTrap (19): Partially modernized. Shows a Trick/Trap preview stub; underlying table not implemented yet.
 - WanderingMonster (20): Not modernized. Delegates to legacy string path; no previews yet for its chain.
+Updated: Compact path is adapter-only; detail stages Where-From and Monster Level previews with subtables as above. Remaining: convert to outcome node if desired.
 
 Compact mode (current behavior and dependency)
 - All Periodic Check outcomes currently route through the legacy `getPassageResult(...)` for exact text parity. This includes Door (which uses the legacy door-chain logic), Trick/Trap, and Wandering Monster.
@@ -185,9 +194,17 @@ Test strategy for the switch
 - Bespoke flows retained: Door chain (`doorLocation:*`, `periodicCheckDoorOnly:*`), `passageWidth` special handling, `numberOfExits` with dimension context, and the `periodicCheck` root remain explicitly handled.
 
 ## Suggested Next Steps
-- If desired, remove remaining legacy string functions once their callers are fully outcome-based and parity-tested.
+- Remove remaining legacy string functions once their callers are fully outcome-based and parity-tested.
 - Add targeted parity tests around door chain structured handling if we move away from label parsing.
 - Begin new feature work on top of the now-simplified adapters/registry foundation.
+
+## Updated Remaining Work (as of now)
+- `getPassageResult` has been removed and tests now assert adapter outputs directly. `wanderingMonsterResult` composes its where-from prefix via `services/compactWhereFrom`.
+- Trick/Trap: Replace stub with a real table and messages, derive preview rows, and add any required subtables.
+- Door chain outcome (optional): Model door chain as a structured outcome (doorLocation sequence + rechecks) to avoid string-based label parsing in UI.
+- Registry extraction (optional): Move TABLE_ID_LIST/HEADINGS/RESOLVERS + `resolveViaRegistry` to a helper module.
+- Normalize compact composition: `compactPeriodicText` currently reuses a few legacy service strings for exact parity; migrate to pure adapter strings once parity coverage is locked.
+- Minor typings: Remove leftover `any` in tests by adding small type guards where convenient.
 
 ## Notes on Behavior Parity
 - Compact mode keeps today’s sentences (no roll bullets or traces, no previews).

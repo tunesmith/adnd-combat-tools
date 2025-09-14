@@ -1,5 +1,4 @@
 import { passageMessages } from "../../dungeon/services/passage";
-import { getPassageResult } from "../../dungeon/services/passage";
 import { periodicCheck, PeriodicCheck } from "../../tables/dungeon/periodicCheck";
 import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 import { doorBeyondMessages } from "../../dungeon/services/doorBeyondResult";
@@ -52,29 +51,26 @@ function pickRollForSpecialPassage(cmd: SpecialPassage): number {
   return entry.range[0];
 }
 
-describe("Phase 0 parity: Passage compact vs legacy", () => {
-  test("ContinueStraight matches legacy text", () => {
+describe("Passage compact text (adapter)", () => {
+  test("ContinueStraight exact text", () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.ContinueStraight);
-    const legacy = getPassageResult(1, PeriodicCheck.ContinueStraight);
     const { messages } = passageMessages({ roll, detailMode: false, level: 1 });
     const para = (messages as DungeonMessage[]).find(isParagraph);
-    expect(para && para.text).toBe(legacy);
+    expect(para && para.text).toBe("Continue straight -- check again in 60'. ");
   });
 
-  test("DeadEnd matches legacy text", () => {
+  test("DeadEnd exact text", () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.DeadEnd);
-    const legacy = getPassageResult(1, PeriodicCheck.DeadEnd);
     const { messages } = passageMessages({ roll, detailMode: false, level: 1 });
     const para = (messages as DungeonMessage[]).find(isParagraph);
-    expect(para && para.text).toBe(legacy);
+    expect(para && para.text).toBe("The passage reaches a dead end. (TODO) ");
   });
 
-  test("TrickTrap matches legacy text", () => {
+  test("TrickTrap exact text", () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.TrickTrap);
-    const legacy = getPassageResult(1, PeriodicCheck.TrickTrap);
     const { messages } = passageMessages({ roll, detailMode: false, level: 1 });
     const para = (messages as DungeonMessage[]).find(isParagraph);
-    expect(para && para.text).toBe(legacy);
+    expect(para && para.text).toBe("There is a trick or trap. (TODO) -- check again in 30'. ");
   });
 });
 
