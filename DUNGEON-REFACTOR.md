@@ -182,7 +182,7 @@ Test strategy for the switch
 
 ## What Could Still Be Done (Optional)
 - Door chain structure: Avoid parsing bullet text in `doorLocation:*` by carrying a structured outcome for door location results alongside messages. This would simplify the chain logic and remove incidental string parsing.
-- Extract registry to a module: Move `TableId`, `TABLE_RESOLVERS`, `TABLE_HEADINGS`, and `resolveViaRegistry` to a small helper file to further reduce `index.tsx` size.
+- (Done) Extract registry to a module: `src/dungeon/helpers/registry.ts` contains `TableId`, `TABLE_RESOLVERS`, `TABLE_HEADINGS`, `resolveViaRegistry`, and `updateResolvedBlock`.
 - Normalize return types: Ensure all `...Messages()` consistently return `DungeonRenderNode[]` (most already do) and eliminate legacy union return type hints.
 - Tighten test helpers: Remove the small `any` usage in parity test type guards by adding local predicates.
 - Consider outcome model for Exits: `numberOfExits` could become an outcome node using the current context (length/width/isRoom) to further unify flows; keep behavior identical.
@@ -197,6 +197,11 @@ Test strategy for the switch
 - Remove remaining legacy string functions once their callers are fully outcome-based and parity-tested.
 - Add targeted parity tests around door chain structured handling if we move away from label parsing.
 - Begin new feature work on top of the now-simplified adapters/registry foundation.
+
+### Immediate Next Steps (actionable)
+1) Remove `passageWidthResults()` by ensuring all callers use `passageWidthMessages` or inline compact logic (adapter). Then delete function.
+2) Remove remaining `...Result()` producers in unusual shape/size by relying on `...Messages` for detail and compact text in adapters.
+3) Add outcome resolvers for exits/egress/chute if desired, and route all calls through outcomes to keep services pure.
 
 ## Updated Remaining Work (as of now)
 - `getPassageResult` has been removed and tests now assert adapter outputs directly.

@@ -27,8 +27,7 @@ import { monsterSixResult } from "../services/monster/monsterSixResult";
 import { roomMessages } from "../services/roomResult";
 import { chamberMessages } from "../services/chamberResult";
 import { passageWidthMessages } from "../services/passageWidth";
-import { SpecialPassage, galleryStairLocation, GalleryStairLocation, streamConstruction, StreamConstruction, riverConstruction, RiverConstruction, chasmDepth, ChasmDepth, chasmConstruction, ChasmConstruction } from "../../tables/dungeon/specialPassage";
-import { galleryStairLocationResult, streamConstructionResult, riverConstructionResult, chasmDepthResult, chasmConstructionResult, specialPassageResult } from "../services/specialPassage";
+import { SpecialPassage, specialPassage, galleryStairLocation, GalleryStairLocation, streamConstruction, StreamConstruction, riverConstruction, RiverConstruction, chasmDepth, ChasmDepth, chasmConstruction, ChasmConstruction, riverBoatBank, RiverBoatBank, galleryStairOccurrence, GalleryStairOccurrence, jumpingPlaceWidth, JumpingPlaceWidth } from "../../tables/dungeon/specialPassage";
 import { chamberResult } from "../services/chamberResult";
 import { numberOfExits, NumberOfExits } from "../../tables/dungeon/numberOfExits";
 import { unusualShape, UnusualShape } from "../../tables/dungeon/unusualShape";
@@ -957,10 +956,10 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
         text = "The passage is 50' wide, with a double row of columns. ";
         break;
       case SpecialPassage.FiftyFeetGalleries:
-        text = "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. " + galleryStairLocationResult();
+        text = "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. " + compactSpecialPassageSuffix(SpecialPassage.FiftyFeetGalleries);
         break;
       case SpecialPassage.TenFootStream:
-        text = "A stream, 10' wide, bisects the passage. " + streamConstructionResult();
+        text = "A stream, 10' wide, bisects the passage. " + compactSpecialPassageSuffix(SpecialPassage.TenFootStream);
         break;
       case SpecialPassage.TwentyFootRiver:
       case SpecialPassage.FortyFootRiver:
@@ -970,10 +969,10 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
             ? "A river, 20' wide, bisects the passage. "
             : event.result === SpecialPassage.FortyFootRiver
             ? "A river, 40' wide, bisects the passage. "
-            : "A river, 60' wide, bisects the passage. ") + riverConstructionResult();
+            : "A river, 60' wide, bisects the passage. ") + compactSpecialPassageSuffix(event.result);
         break;
       case SpecialPassage.TwentyFootChasm:
-        text = "A chasm, 20' wide, bisects the passage. " + chasmDepthResult() + chasmConstructionResult();
+        text = "A chasm, 20' wide, bisects the passage. " + compactSpecialPassageSuffix(SpecialPassage.TwentyFootChasm);
         break;
     }
     nodes.push(heading, bullet, { kind: "paragraph", text });
@@ -1004,6 +1003,93 @@ function compactDoorText(existing: ("Left" | "Right")[] = []): string {
     return prefix + compactDoorText([...existing, loc]);
   }
   return prefix + "There are no other doors. The main passage extends -- check again in 30'. ";
+}
+
+function compactSpecialPassageSuffix(kind: SpecialPassage): string {
+  switch (kind) {
+    case SpecialPassage.FiftyFeetGalleries: {
+      const r = rollDice(galleryStairLocation.sides);
+      const c = getTableEntry(r, galleryStairLocation);
+      if (c === GalleryStairLocation.PassageEnd) {
+        const r2 = rollDice(galleryStairOccurrence.sides);
+        const c2 = getTableEntry(r2, galleryStairOccurrence);
+        const tail =
+          c2 === GalleryStairOccurrence.Replace
+            ? "If a stairway is otherwise indicated in or adjacent to the passage, it will replace the end stairs. "
+            : "If a stairway is otherwise indicated in or adjacent to the passage, it will supplement the end stairs. ";
+        return "Stairs up to the gallery will be at the end of the passage. " + tail;
+      }
+      return "Stairs up to the gallery are at the beginning of the passage. ";
+    }
+    case SpecialPassage.TenFootStream: {
+      const r = rollDice(streamConstruction.sides);
+      const c = getTableEntry(r, streamConstruction);
+      return c === StreamConstruction.Bridged ? "A bridge crosses the stream. " : "";
+    }
+    case SpecialPassage.TwentyFootRiver:
+    case SpecialPassage.FortyFootRiver:
+    case SpecialPassage.SixtyFootRiver: {
+      const r = rollDice(riverConstruction.sides);
+      const c = getTableEntry(r, riverConstruction);
+      if (c === RiverConstruction.Bridged) return "A bridge crosses the river. ";
+      if (c === RiverConstruction.Obstacle) return "";
+      const r2 = rollDice(riverBoatBank.sides);
+      const c2 = getTableEntry(r2, riverBoatBank);
+      const tail = c2 === RiverBoatBank.ThisSide ? "The boat is on this bank of the river. " : "The boat is on the opposite bank of the river. ";
+      return "There is a boat. " + tail;
+    }
+    case SpecialPassage.TwentyFootChasm: {
+      const r = rollDice(chasmDepth.sides);
+      const c = getTableEntry(r, chasmDepth);
+      const depth =
+        c === ChasmDepth.Feet150
+          ? "The chasm is 150' deep. "
+          : c === ChasmDepth.Feet160
+          ? "The chasm is 160' deep. "
+          : c === ChasmDepth.Feet170
+          ? "The chasm is 170' deep. "
+          : c === ChasmDepth.Feet180
+          ? "The chasm is 180' deep. "
+          : c === ChasmDepth.Feet190
+          ? "The chasm is 190' deep. "
+          : "The chasm is 200' deep. ";
+      const r2 = rollDice(chasmConstruction.sides);
+      const c2 = getTableEntry(r2, chasmConstruction);
+      if (c2 === ChasmConstruction.Bridged) return depth + "A bridge crosses the chasm. ";
+      if (c2 === ChasmConstruction.Obstacle) return depth + "It has no bridge, and is too wide to jump across. ";
+      const r3 = rollDice(jumpingPlaceWidth.sides);
+      const c3 = getTableEntry(r3, jumpingPlaceWidth);
+      const width = c3 === JumpingPlaceWidth.FiveFeet ? "It is 5' wide. " : "It is 10' wide. ";
+      return depth + "There is a jumping place. " + width;
+    }
+    default:
+      return "";
+  }
+}
+
+function compactRandomSpecialPassage(): string {
+  const r = rollDice(specialPassage.sides);
+  const cmd = getTableEntry(r, specialPassage);
+  switch (cmd) {
+    case SpecialPassage.FortyFeetColumns:
+      return "The passage is 40' wide, with columns down the center. ";
+    case SpecialPassage.FortyFeetDoubleColumns:
+      return "The passage is 40' wide, with a double row of columns. ";
+    case SpecialPassage.FiftyFeetDoubleColumns:
+      return "The passage is 50' wide, with a double row of columns. ";
+    case SpecialPassage.FiftyFeetGalleries:
+      return "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. " + compactSpecialPassageSuffix(SpecialPassage.FiftyFeetGalleries);
+    case SpecialPassage.TenFootStream:
+      return "A stream, 10' wide, bisects the passage. " + compactSpecialPassageSuffix(SpecialPassage.TenFootStream);
+    case SpecialPassage.TwentyFootRiver:
+      return "A river, 20' wide, bisects the passage. " + compactSpecialPassageSuffix(SpecialPassage.TwentyFootRiver);
+    case SpecialPassage.FortyFootRiver:
+      return "A river, 40' wide, bisects the passage. " + compactSpecialPassageSuffix(SpecialPassage.FortyFootRiver);
+    case SpecialPassage.SixtyFootRiver:
+      return "A river, 60' wide, bisects the passage. " + compactSpecialPassageSuffix(SpecialPassage.SixtyFootRiver);
+    case SpecialPassage.TwentyFootChasm:
+      return "A chasm, 20' wide, bisects the passage. " + compactSpecialPassageSuffix(SpecialPassage.TwentyFootChasm);
+  }
 }
 
 function compactPeriodicText(_level: number, result: PeriodicCheck, _avoidMonster: boolean): string {
@@ -1083,7 +1169,7 @@ function compactPeriodicText(_level: number, result: PeriodicCheck, _avoidMonste
           widthText = "The passage is 5' wide. ";
           break;
         case PassageWidth.SpecialPassage:
-          widthText = specialPassageResult();
+          widthText = compactRandomSpecialPassage();
           break;
       }
       return prefix + widthText;
