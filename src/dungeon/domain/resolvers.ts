@@ -4,7 +4,8 @@ import { doorBeyond } from "../../tables/dungeon/doorBeyond";
 import type { DungeonOutcomeNode, OutcomeEvent } from "./outcome";
 import { sidePassages } from "../../tables/dungeon/sidePassages";
 import { passageTurns } from "../../tables/dungeon/passageTurns";
-import { stairs, Stairs } from "../../tables/dungeon/stairs";
+import { stairs, Stairs, egressOne, egressTwo, egressThree, chute } from "../../tables/dungeon/stairs";
+import { numberOfExits } from "../../tables/dungeon/numberOfExits";
 import { specialPassage, SpecialPassage } from "../../tables/dungeon/specialPassage";
 import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
 import { roomDimensions, RoomDimensions, chamberDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
@@ -129,6 +130,34 @@ export function resolvePassageWidth(options?: { roll?: number }): DungeonOutcome
     children.push({ type: "pending-roll", table: "specialPassage" });
   }
   return { type: "event", roll: usedRoll, event, children: children.length ? children : undefined };
+}
+
+export function resolveEgress(options: { roll?: number; which: "one" | "two" | "three" }): DungeonOutcomeNode {
+  const table = options.which === "one" ? egressOne : options.which === "two" ? egressTwo : egressThree;
+  const usedRoll = options.roll ?? rollDice(table.sides);
+  const command = getTableEntry(usedRoll, table);
+  return { type: "event", roll: usedRoll, event: { kind: "egress", result: command, which: options.which } as OutcomeEvent };
+}
+
+export function resolveChute(options?: { roll?: number }): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(chute.sides);
+  const command = getTableEntry(usedRoll, chute);
+  return { type: "event", roll: usedRoll, event: { kind: "chute", result: command } as OutcomeEvent };
+}
+
+export function resolveNumberOfExits(options: {
+  roll?: number;
+  length: number;
+  width: number;
+  isRoom: boolean;
+}): DungeonOutcomeNode {
+  const usedRoll = options.roll ?? rollDice(numberOfExits.sides);
+  const command = getTableEntry(usedRoll, numberOfExits);
+  return {
+    type: "event",
+    roll: usedRoll,
+    event: { kind: "numberOfExits", result: command, context: { length: options.length, width: options.width, isRoom: options.isRoom } } as OutcomeEvent,
+  };
 }
 
 export function resolveRoomDimensions(options?: { roll?: number }): DungeonOutcomeNode {

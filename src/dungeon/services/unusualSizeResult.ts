@@ -2,9 +2,7 @@ import { UnusualSize, unusualSize } from "../../tables/dungeon/unusualSize";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
-export const unusualSizeResult = (): string => {
-  return `It is about ${getSize()} sq. ft. `;
-};
+// Legacy string unusualSizeResult removed; use unusualSizeMessages in adapters.
 
 export const getSize = (extraSquareFootage: number = 0): number => {
   const roll = rollDice(unusualSize.sides);

@@ -1,6 +1,6 @@
 import { doorBeyondResult } from "../../dungeon/services/doorBeyondResult";
 import { passageMessages } from "../../dungeon/services/passage";
-import { unusualSizeResult } from "../../dungeon/services/unusualSizeResult";
+import { unusualSizeMessages } from "../../dungeon/services/unusualSizeResult";
 import { chamberResult } from "../../dungeon/services/chamberResult";
 import { monsterOneResult } from "../../dungeon/services/monster/monsterOneResult";
 import { monsterTwoResult } from "../../dungeon/services/monster/monsterTwoResult";
@@ -19,9 +19,8 @@ describe("passage results", () => {
     expect(messages && messages.length).toBeGreaterThan(0);
   });
   test("unusual size", () => {
-    const unusualSize = unusualSizeResult();
-    console.log(unusualSize);
-    expect(unusualSize).not.toBe(null);
+    const res = unusualSizeMessages({});
+    expect(res.messages.length).toBeGreaterThan(0);
   });
   test("chamber", () => {
     const chamber = chamberResult();
