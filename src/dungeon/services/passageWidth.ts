@@ -3,22 +3,6 @@ import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { SpecialPassage, specialPassage, galleryStairLocation, GalleryStairLocation, galleryStairOccurrence, GalleryStairOccurrence, streamConstruction, StreamConstruction, riverConstruction, RiverConstruction, riverBoatBank, RiverBoatBank, chasmDepth, ChasmDepth, chasmConstruction, ChasmConstruction, jumpingPlaceWidth, JumpingPlaceWidth } from "../../tables/dungeon/specialPassage";
 import type { DungeonMessage, RollTraceItem } from "../../types/dungeon";
 
-export const passageWidthResults = (): string => {
-  const roll = rollDice(passageWidth.sides);
-  const command = getTableEntry(roll, passageWidth);
-  switch (command) {
-    case PassageWidth.TenFeet:
-      return "The passage is 10' wide. ";
-    case PassageWidth.TwentyFeet:
-      return "The passage is 20' wide. ";
-    case PassageWidth.ThirtyFeet:
-      return "The passage is 30' wide. ";
-    case PassageWidth.FiveFeet:
-      return "The passage is 5' wide. ";
-    case PassageWidth.SpecialPassage:
-      return compactRandomSpecialPassage();
-  }
-};
 
 export const passageWidthMessages = (
   options?: { roll?: number; detailMode?: boolean }

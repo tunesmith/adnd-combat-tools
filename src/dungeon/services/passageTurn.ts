@@ -1,5 +1,5 @@
 import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
-import { passageWidthResults } from "./passageWidth";
+import { passageWidthMessages } from "./passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import type { DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 import { resolvePassageTurns } from "../domain/resolvers";
@@ -11,36 +11,18 @@ export const passageTurnResults = (): string => {
   console.log(`passageTurn roll: ${roll} is ${PassageTurns[command]}`);
   switch (command) {
     case PassageTurns.Left90:
-      return (
-        "The passage turns left 90 degrees - check again in 30'. " +
-        passageWidthResults()
-      );
+      return ("The passage turns left 90 degrees - check again in 30'. " + textWidth());
     case PassageTurns.Left45:
-      return (
-        "The passage turns left 45 degrees ahead - check again in 30'. " +
-        passageWidthResults()
-      );
+      return ("The passage turns left 45 degrees ahead - check again in 30'. " + textWidth());
     case PassageTurns.Left135:
-      return (
-        "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. " +
-        passageWidthResults()
-      );
+      return ("The passage turns left 45 degrees behind (135 degrees) - check again in 30'. " + textWidth());
     case PassageTurns.Right90:
-      return (
-        "The passage turns right 90 degrees - check again in 30'. " +
-        passageWidthResults()
-      );
+      return ("The passage turns right 90 degrees - check again in 30'. " + textWidth());
     case PassageTurns.Right45:
-      return (
-        "The passage turns right 45 degrees ahead - check again in 30'. " +
-        passageWidthResults()
-      );
+      return ("The passage turns right 45 degrees ahead - check again in 30'. " + textWidth());
     case PassageTurns.Right135:
-      return (
-        "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. " +
-        passageWidthResults()
-      );
-  }
+      return ("The passage turns right 45 degrees behind (135 degrees) - check again in 30'. " + textWidth());
+}
 };
 
 export const passageTurnMessages = (
@@ -64,3 +46,10 @@ export const passageTurnMessages = (
   const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
   return { usedRoll, messages };
 };
+
+function textWidth(): string {
+  const width = passageWidthMessages({});
+  let text = "";
+  for (const m of width.messages) if (m.kind === "paragraph") text += m.text;
+  return text;
+}

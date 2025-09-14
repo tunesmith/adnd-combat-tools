@@ -1,5 +1,5 @@
 import { DoorBeyond, doorBeyond } from "../../tables/dungeon/doorBeyond";
-import { passageWidthResults } from "./passageWidth";
+import { passageWidthMessages } from "./passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { chamberResult } from "./chamberResult";
 import { roomResult } from "./roomResult";
@@ -21,25 +21,38 @@ export const doorBeyondResult = (doorAhead: boolean = false): string => {
       if (doorAhead) {
         return "Beyond the door is a 10' x 10' room (check contents, treasure, TODO). ";
       } else {
+        const width = passageWidthMessages({});
+        let wtext = "";
+        for (const m of width.messages) if (m.kind === "paragraph") wtext += m.text;
         return (
           "Beyond the door is a parallel passage, extending 30' in both directions. " +
-          passageWidthResults()
+          wtext
         );
       }
-    case DoorBeyond.PassageStraightAhead:
-      return (
-        "Beyond the door is a passage straight ahead. " + passageWidthResults()
-      );
-    case DoorBeyond.Passage45AheadBehind:
+    case DoorBeyond.PassageStraightAhead: {
+      const width = passageWidthMessages({});
+      let wtext = "";
+      for (const m of width.messages) if (m.kind === "paragraph") wtext += m.text;
+      return "Beyond the door is a passage straight ahead. " + wtext;
+    }
+    case DoorBeyond.Passage45AheadBehind: {
+      const width = passageWidthMessages({});
+      let wtext = "";
+      for (const m of width.messages) if (m.kind === "paragraph") wtext += m.text;
       return (
         "Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). " +
-        passageWidthResults()
+        wtext
       );
-    case DoorBeyond.Passage45BehindAhead:
+    }
+    case DoorBeyond.Passage45BehindAhead: {
+      const width = passageWidthMessages({});
+      let wtext = "";
+      for (const m of width.messages) if (m.kind === "paragraph") wtext += m.text;
       return (
         "Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). " +
-        passageWidthResults()
+        wtext
       );
+    }
     case DoorBeyond.Room:
       return "Beyond the door is a room. " + roomResult();
     case DoorBeyond.Chamber:

@@ -233,13 +233,13 @@ These services still return legacy strings or mix composition logic and must be 
 - `src/dungeon/services/passageTurn.ts`
   - `passageTurnResults()`
 - `src/dungeon/services/passageWidth.ts`
-  - `passageWidthResults()`
+  - `passageWidthResults()` — removed; callers now use messages/inline compact logic.
 - `src/dungeon/services/roomResult.ts`
   - `roomResult()`
 - `src/dungeon/services/sidePassage.ts`
   - `sidePassageResults()`
 - `src/dungeon/services/specialPassage.ts`
-  - `specialPassageResult()`
+  - `specialPassageResult()` — removed from service; compact logic in adapter.
 - `src/dungeon/services/stairsResult.ts`
   - `stairsResult()`
   - `egressResult()` (indirect via `egressMessages` exists; add resolver version)
