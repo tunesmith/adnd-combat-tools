@@ -206,6 +206,46 @@ Test strategy for the switch
 - Normalize compact composition: `compactPeriodicText` currently reuses a few legacy service strings for exact parity; migrate to pure adapter strings once parity coverage is locked.
 - Minor typings: Remove leftover `any` in tests by adding small type guards where convenient.
 
+### Remaining Legacy String Producers To Migrate
+These services still return legacy strings or mix composition logic and must be migrated to outcome resolvers + adapters (then removed):
+
+- `src/dungeon/services/chamberResult.ts`
+  - `chamberResult()`
+- `src/dungeon/services/doorBeyondResult.ts`
+  - `doorBeyondResult()`
+- `src/dungeon/services/exitResult.ts`
+  - `exitResult()`
+- `src/dungeon/services/passageTurn.ts`
+  - `passageTurnResults()`
+- `src/dungeon/services/passageWidth.ts`
+  - `passageWidthResults()`
+- `src/dungeon/services/roomResult.ts`
+  - `roomResult()`
+- `src/dungeon/services/sidePassage.ts`
+  - `sidePassageResults()`
+- `src/dungeon/services/specialPassage.ts`
+  - `specialPassageResult()`
+- `src/dungeon/services/stairsResult.ts`
+  - `stairsResult()`
+  - `egressResult()` (indirect via `egressMessages` exists; add resolver version)
+  - `chuteResult()` (indirect via `chuteMessages` exists; add resolver version)
+- `src/dungeon/services/unusualShapeResult.ts`
+  - all `...Result()` methods (e.g., `unusualShapeResult()`, circular/hex/etc. buckets)
+- `src/dungeon/services/unusualSizeResult.ts`
+  - `unusualSizeResult()`
+- `src/dungeon/services/wanderingMonsterResult.ts`
+  - `wanderingMonsterResult()` (aggregator; UI no longer calls it — replace fully with outcome/adapters or remove)
+
+Notes:
+- Some message-oriented helpers (e.g., `...Messages`) already exist and route through adapters; the goal is to have matching `resolve...()` outcome functions and eliminate `...Result()` string functions entirely.
+- We introduced `services/compactWhereFrom.ts` to consolidate compact-mode composition for “where-from” and door-chain text; this should be subsumed by outcome traversal once compact adapters stop reusing legacy service strings.
+
+### Migration Outline (per service)
+- Create `resolveXxx(...) => DungeonOutcomeNode` that encodes the event and any child pending rolls.
+- Update `toDetailRender` and `toCompactRender` to map the new outcome (drop any special-casing and legacy string calls).
+- Switch `...Messages` to resolve -> adapt and remove `...Result()`.
+- Add/adjust tests to assert adapter text and preview staging; then delete the legacy function.
+
 ## Notes on Behavior Parity
 - Compact mode keeps today’s sentences (no roll bullets or traces, no previews).
 - Detail mode keeps staged previews, bullet list of rolls, auto‑collapse after resolve, and caret behavior.
@@ -232,3 +272,57 @@ Test strategy for the switch
 
 ## Longer‑Term (optional)
 - Compose a richer Outcome graph to encode distances, lengths, and numeric data rather than embedding text in adapters, enabling alternate renderers (e.g., dramatic narration via LLM, export to VTT, or stateful map generation).
+
+## Phased Migration Plan
+
+We will track progress and keep this guide updated as code lands. When a phase completes or scope changes, update this section accordingly.
+
+- Phase 0 — Lint & Type Checks
+  - Goal: tighten quality gates to catch issues early.
+  - Actions: run `next lint` and TypeScript checks regularly; add CI steps. Prefer adding ESLint plugins for TypeScript rules (see notes below) and a `lint:all` script that runs both ESLint and `tsc`.
+
+### Linting Improvements (Phase 0 details)
+- Scripts added:
+  - `npm run lint:types` → `tsc -p tsconfig.json` to enforce TS rules in tests/build (ts-jest transpiles without type checking).
+  - `npm run lint:all` → runs ESLint + TypeScript checks.
+- Recommended ESLint setup for stronger TypeScript linting (requires network to install devDeps):
+  - Install dev dependencies:
+    - `@typescript-eslint/eslint-plugin`
+    - `@typescript-eslint/parser`
+    - `eslint-plugin-import`
+    - `eslint-plugin-unused-imports`
+  - Example `.eslintrc.json`:
+    {
+      "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended", "prettier"],
+      "parser": "@typescript-eslint/parser",
+      "plugins": ["@typescript-eslint", "import", "unused-imports"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+        "@typescript-eslint/consistent-type-imports": ["warn", { "fixStyle": "separate-type-imports" }],
+        "unused-imports/no-unused-imports": "warn",
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": ["**/src/tests/**"] }]
+      }
+    }
+  - For type-aware rules (e.g., no-unnecessary-type-assertion), add:
+    - `parserOptions.project: ["./tsconfig.json"]`
+  - Run `npm run lint:all` locally and in CI.
+
+- Phase 1 — Replace easy compact strings in adapters
+  - Goal: stop reusing legacy string functions for simple flows (side passages, turns, stairs) in compact mode.
+  - Actions: compose compact text directly in adapters for these cases; keep behavior identical with tests.
+
+- Phase 2 — Encode staging as outcome children
+  - Goal: move preview staging logic from adapters into resolvers by adding `children` pending-roll nodes.
+  - Actions: enrich resolvers (periodic check, stairs, special passage, rooms/chambers) to return `DungeonOutcomeNode` with `children` for subtables.
+
+- Phase 3 — Model exits and unusual tables as outcomes
+  - Goal: migrate `exitResult`, `unusualShapeResult`, and `unusualSizeResult` to resolvers; adapters map outcomes to render nodes.
+  - Actions: add `resolveNumberOfExits`, `resolveUnusualShape`, and `resolveUnusualSize`, thread required context through outcomes.
+
+- Phase 4 — Remove remaining legacy string functions
+  - Goal: delete all `...Result()` functions once callers are on outcome/adapters and tests cover parity.
+  - Actions: remove string helpers, update refs, and keep this guide synchronized with the actual code state.
+
+Notes on keeping this guide current
+- As part of each PR that changes refactor scope or completes a migration step, update this document (sections: Remaining Legacy String Producers, Updated Remaining Work, and Phased Migration Plan) so it remains the source of truth.

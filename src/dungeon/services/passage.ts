@@ -1,5 +1,12 @@
-import { PeriodicCheck, periodicCheck } from "../../tables/dungeon/periodicCheck";
-import { DungeonMessage, DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
+import {
+  PeriodicCheck,
+  periodicCheck,
+} from "../../tables/dungeon/periodicCheck";
+import {
+  DungeonMessage,
+  DungeonTablePreview,
+  DungeonRenderNode,
+} from "../../types/dungeon";
 // legacy imports above kept for string API; message-path refactored below via adapters
 import { resolvePeriodicCheck } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
@@ -16,13 +23,12 @@ import { toCompactRender, toDetailRender } from "../adapters/render";
  * But for rooms, it means that we would need another
  * move type, one that checks beyond a door.
  */
-/**
- * Typed variant mirroring `passageResults` but with optional roll override
- * and structured messages for UI rendering.
- */
-export const passageMessages = (
-  options?: { roll?: number; level?: number; avoidMonster?: boolean; detailMode?: boolean }
-): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+export const passageMessages = (options?: {
+  roll?: number;
+  level?: number;
+  avoidMonster?: boolean;
+  detailMode?: boolean;
+}): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   const level = options?.level ?? 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
@@ -31,10 +37,15 @@ export const passageMessages = (
       title: "Periodic Check",
       sides: periodicCheck.sides,
       entries: periodicCheck.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: PeriodicCheck[e.command] ?? String(e.command),
       })),
-      context: options?.level ? ({ kind: "wandering", level: options.level } as any) : undefined,
+      context: options?.level
+        ? ({ kind: "wandering", level: options.level } as any)
+        : undefined,
     };
     const messages: (DungeonMessage | DungeonTablePreview)[] = [
       { kind: "heading", level: 3, text: "Passage" },
@@ -42,8 +53,16 @@ export const passageMessages = (
     ];
     return { usedRoll: undefined, messages };
   }
-  const node = resolvePeriodicCheck({ roll: options?.roll, level, avoidMonster: options?.avoidMonster });
-  const usedRoll = (node.type === "event" ? node.roll : undefined) as number | undefined;
-  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
+  const node = resolvePeriodicCheck({
+    roll: options?.roll,
+    level,
+    avoidMonster: options?.avoidMonster,
+  });
+  const usedRoll = (node.type === "event" ? node.roll : undefined) as
+    | number
+    | undefined;
+  const messages = options?.detailMode
+    ? toDetailRender(node)
+    : toCompactRender(node);
   return { usedRoll, messages };
 };

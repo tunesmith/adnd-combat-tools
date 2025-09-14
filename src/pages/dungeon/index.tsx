@@ -1,8 +1,9 @@
-import { FormEvent, useMemo, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import { useMemo, useRef, useState } from "react";
 import styles from "./dungeon.module.css";
 import { rollDice } from "../../dungeon/helpers/dungeonLookup";
 import { runDungeonStep } from "../../dungeon/services/adapters";
-import {
+import type {
   DungeonRenderNode,
   DungeonRollTrace,
   RollTraceItem,
@@ -80,6 +81,13 @@ function isExitsContext(x: unknown): x is ExitsContext {
     typeof o.width === "number" &&
     typeof o.isRoom === "boolean"
   );
+}
+
+type WanderingContext = { kind: "wandering"; level: number };
+function isWanderingContext(x: unknown): x is WanderingContext {
+  if (!x || typeof x !== "object") return false;
+  const o = x as { kind?: unknown; level?: unknown };
+  return o.kind === "wandering" && typeof o.level === "number";
 }
 
 type ActionKind = "passage" | "door";
@@ -333,7 +341,7 @@ function renderNode(
     React.SetStateAction<Record<string, number | undefined>>
   >,
   setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
-  enablePreviewControls: boolean = true,
+  enablePreviewControls = true,
   collapsed?: Record<string, boolean>,
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   resolved?: Record<string, boolean>,
@@ -801,10 +809,9 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "periodicCheck") {
-    const levelFromCtx =
-      tp.context && (tp.context as any).kind === "wandering" && typeof (tp.context as any).level === "number"
-        ? (tp.context as any).level
-        : undefined;
+    const levelFromCtx = isWanderingContext(tp.context)
+      ? tp.context.level
+      : undefined;
     const resolved = passageMessages({ roll: usedRoll, detailMode: true, level: levelFromCtx });
     setFeed((prev) =>
       prev.map((fi) => {
