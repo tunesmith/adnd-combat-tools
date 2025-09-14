@@ -172,6 +172,30 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     }
     return nodes;
   }
+  if ((event as any).kind === "passageWidth") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Passage Width" };
+    const pw = event as unknown as { result: PassageWidth };
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${PassageWidth[pw.result]}`] };
+    let text = "";
+    switch (pw.result) {
+      case PassageWidth.FiveFeet:
+        text = "The passage is 5' wide. ";
+        break;
+      case PassageWidth.TenFeet:
+        text = "The passage is 10' wide. ";
+        break;
+      case PassageWidth.TwentyFeet:
+        text = "The passage is 20' wide. ";
+        break;
+      case PassageWidth.ThirtyFeet:
+        text = "The passage is 30' wide. ";
+        break;
+      case PassageWidth.SpecialPassage:
+        text = compactRandomSpecialPassage();
+        break;
+    }
+    return [heading, bullet, { kind: "paragraph", text }];
+  }
   if (event.kind === "sidePassages") {
     const heading: DungeonMessage = { kind: "heading", level: 4, text: "Side Passages" };
     const label = SidePassages[event.result] ?? String(event.result);
@@ -470,6 +494,37 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
       });
     }
     return nodes;
+  }
+  if ((event as any).kind === "passageWidth") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Passage Width" };
+    const pw = event as unknown as { result: PassageWidth };
+    const label = PassageWidth[pw.result] ?? String(pw.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    let text = "";
+    switch (pw.result) {
+      case PassageWidth.FiveFeet:
+        text = "The passage is 5' wide. ";
+        break;
+      case PassageWidth.TenFeet:
+        text = "The passage is 10' wide. ";
+        break;
+      case PassageWidth.TwentyFeet:
+        text = "The passage is 20' wide. ";
+        break;
+      case PassageWidth.ThirtyFeet:
+        text = "The passage is 30' wide. ";
+        break;
+      case PassageWidth.SpecialPassage:
+        text = ""; // defer to special passage preview below
+        break;
+    }
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (text) nodes2.push({ kind: "paragraph", text });
+    if (pw.result === PassageWidth.SpecialPassage) {
+      const prev = previewForPending({ type: "pending-roll", table: "specialPassage" });
+      if (prev) nodes2.push(prev);
+    }
+    return nodes2;
   }
   return nodes;
 }

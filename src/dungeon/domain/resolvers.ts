@@ -6,6 +6,7 @@ import { sidePassages } from "../../tables/dungeon/sidePassages";
 import { passageTurns } from "../../tables/dungeon/passageTurns";
 import { stairs, Stairs } from "../../tables/dungeon/stairs";
 import { specialPassage, SpecialPassage } from "../../tables/dungeon/specialPassage";
+import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
 import { roomDimensions, RoomDimensions, chamberDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
 
 export function resolvePeriodicCheck(options?: {
@@ -115,6 +116,17 @@ export function resolveSpecialPassage(options?: { roll?: number }): DungeonOutco
   } else if (command === SpecialPassage.TwentyFootChasm) {
     children.push({ type: "pending-roll", table: "chasmDepth" });
     children.push({ type: "pending-roll", table: "chasmConstruction" });
+  }
+  return { type: "event", roll: usedRoll, event, children: children.length ? children : undefined };
+}
+
+export function resolvePassageWidth(options?: { roll?: number }): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(passageWidth.sides);
+  const command = getTableEntry(usedRoll, passageWidth);
+  const event: OutcomeEvent = { kind: "passageWidth", result: command } as OutcomeEvent;
+  const children: DungeonOutcomeNode[] = [];
+  if (command === PassageWidth.SpecialPassage) {
+    children.push({ type: "pending-roll", table: "specialPassage" });
   }
   return { type: "event", roll: usedRoll, event, children: children.length ? children : undefined };
 }
