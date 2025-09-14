@@ -72,7 +72,9 @@ export function resolvePassageTurns(options?: { roll?: number }): DungeonOutcome
   const usedRoll = options?.roll ?? rollDice(passageTurns.sides);
   const command = getTableEntry(usedRoll, passageTurns);
   const event: OutcomeEvent = { kind: "passageTurns", result: command } as OutcomeEvent;
-  return { type: "event", roll: usedRoll, event };
+  // After a turn, determine passage width as a staged child in detail mode
+  const children: DungeonOutcomeNode[] = [{ type: "pending-roll", table: "passageWidth" }];
+  return { type: "event", roll: usedRoll, event, children };
 }
 
 export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {

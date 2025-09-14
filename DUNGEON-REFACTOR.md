@@ -199,8 +199,17 @@ Test strategy for the switch
 - Begin new feature work on top of the now-simplified adapters/registry foundation.
 
 ## Updated Remaining Work (as of now)
-- `getPassageResult` has been removed and tests now assert adapter outputs directly. `wanderingMonsterResult` composes its where-from prefix via `services/compactWhereFrom`.
-- Phase 1 progress: `compactPeriodicText` no longer calls `sidePassageResults`, `passageTurnResults`, or `stairsResult`; compact strings for these are composed directly. Width special-cases still rely on `specialPassageResult`, and `UpOneDownTwo` still appends `chamberResult` (to be migrated in later phases).
+- `getPassageResult` has been removed and tests now assert adapter outputs directly.
+- Phase 1 complete: compact-mode composition for side passages, turns, and stairs is done in the adapter (no legacy calls). Width special-cases still rely on `specialPassageResult`, and `UpOneDownTwo` appends `chamberResult` (to be migrated later).
+- Phase 2 in progress:
+  - Resolvers now attach pending children for nested flows:
+    - Periodic Check → doorLocation, sidePassages, passageTurns, chamberDimensions, stairs, trickTrap; Wandering → where-from + monster level.
+    - Passage Turns → passageWidth (added).
+    - Stairs → egress/chute/chamber.
+    - Special Passage → galleries/stream/river/chasm subtables.
+  - Adapters (detail) render children via a single preview mapper for passage turns; compact remains adapter-only strings.
+  - Removed `services/compactWhereFrom` to avoid duplication; adapters own compact composition. `wanderingMonsterResult` is deprecated and unused by UI.
+- Next: add children for rooms/chambers → exits + unusual shape/size (with context).
 - Trick/Trap: Replace stub with a real table and messages, derive preview rows, and add any required subtables.
 - Door chain outcome (optional): Model door chain as a structured outcome (doorLocation sequence + rechecks) to avoid string-based label parsing in UI.
 - Registry extraction (optional): Move TABLE_ID_LIST/HEADINGS/RESOLVERS + `resolveViaRegistry` to a helper module.
@@ -239,7 +248,13 @@ These services still return legacy strings or mix composition logic and must be 
 
 Notes:
 - Some message-oriented helpers (e.g., `...Messages`) already exist and route through adapters; the goal is to have matching `resolve...()` outcome functions and eliminate `...Result()` string functions entirely.
-- We introduced `services/compactWhereFrom.ts` to consolidate compact-mode composition for “where-from” and door-chain text; this should be subsumed by outcome traversal once compact adapters stop reusing legacy service strings.
+- The temporary `services/compactWhereFrom.ts` has been removed; adapters are the only source of compact strings for these flows.
+
+## Current Snapshot (for session restarts)
+- Resolvers: periodicCheck, stairs, and specialPassage return outcomes with children; pending: passageTurns → passageWidth; rooms/chambers → exits + unusuals.
+- Adapters: render pending children in detail via `previewForPending`; compact composition is centralized and no longer relies on service helpers.
+- Legacy: `getPassageResult` removed; `wanderingMonsterResult` kept only for helper exports (deprecated by UI); compactWhereFrom deleted.
+- Tests: assert adapter outputs and preview staging; added compact door-chain test to ensure repeated side does not duplicate the prefix.
 
 ### Migration Outline (per service)
 - Create `resolveXxx(...) => DungeonOutcomeNode` that encodes the event and any child pending rolls.

@@ -80,7 +80,7 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
         break;
     }
     // Render any pending child previews supplied by the resolver
-    if (outcome.type === "event" && outcome.children && Array.isArray(outcome.children)) {
+    if (outcome.children && Array.isArray(outcome.children)) {
       for (const child of outcome.children) {
         if (child.type !== "pending-roll") continue;
         const preview = previewForPending(child);
@@ -239,14 +239,14 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
         break;
     }
     nodes.push(heading, bullet, { kind: "paragraph", text: textPrefix });
-    // In detail mode for passage turns, stage a Passage Width preview; for compact, auto append width text
-    nodes.push({
-      kind: "table-preview",
-      id: "passageWidth",
-      title: "Passage Width",
-      sides: passageWidth.sides,
-      entries: passageWidth.entries.map((e) => ({ range: rangeText(e.range), label: PassageWidth[e.command] ?? String(e.command) })),
-    });
+    // Render any pending child previews supplied by the resolver
+    if (outcome.children && Array.isArray(outcome.children)) {
+      for (const child of outcome.children) {
+        if (child.type !== "pending-roll") continue;
+        const preview = previewForPending(child);
+        if (preview) nodes.push(preview);
+      }
+    }
     return nodes;
   }
   if (event.kind === "stairs") {
@@ -426,6 +426,14 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         title: "Passage Turns",
         sides: passageTurns.sides,
         entries: passageTurns.entries.map((e) => ({ range: rangeText(e.range), label: PassageTurns[e.command] ?? String(e.command) })),
+      };
+    case "passageWidth":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Passage Width",
+        sides: passageWidth.sides,
+        entries: passageWidth.entries.map((e) => ({ range: rangeText(e.range), label: PassageWidth[e.command] ?? String(e.command) })),
       };
     case "chamberDimensions":
       return {
