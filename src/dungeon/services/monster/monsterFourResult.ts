@@ -14,9 +14,10 @@ import {
 } from "../../../tables/dungeon/monster/monsterFour";
 import { formatPartyResult } from "../../helpers/party/formatPartyResult";
 
-export const monsterFourResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterFour.sides);
-  const command = getTableEntry(roll, monsterFour);
+export const monsterFourTextForCommand = (
+  dungeonLevel: number,
+  command: MonsterFour
+): string => {
   switch (command) {
     case MonsterFour.ApeCarnivorous_1to3: {
       const apes = getNumberOfMonsters(4, dungeonLevel, 1, 3);
@@ -115,6 +116,12 @@ export const monsterFourResult = (dungeonLevel: number): string => {
       return formatMonsterCount(toads, "poisonous toad", "poisonous toads");
     }
   }
+};
+
+export const monsterFourResult = (dungeonLevel: number): string => {
+  const roll = rollDice(monsterFour.sides);
+  const command = getTableEntry(roll, monsterFour);
+  return monsterFourTextForCommand(dungeonLevel, command);
 };
 
 const dragonFourYoungerResult = (dungeonLevel: number): string => {

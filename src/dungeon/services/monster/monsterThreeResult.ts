@@ -12,9 +12,10 @@ import {
 import { characterResult } from "./characterResult";
 import { formatPartyResult } from "../../helpers/party/formatPartyResult";
 
-export const monsterThreeResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterThree.sides);
-  const command = getTableEntry(roll, monsterThree);
+export const monsterThreeTextForCommand = (
+  dungeonLevel: number,
+  command: MonsterThree
+): string => {
   switch (command) {
     case MonsterThree.BeetleBoring_1to3: {
       const beetles = getNumberOfMonsters(3, dungeonLevel, 1, 3);
@@ -91,6 +92,12 @@ export const monsterThreeResult = (dungeonLevel: number): string => {
       return formatMonsterCount(weasels, "giant weasel", "giant weasels");
     }
   }
+};
+
+export const monsterThreeResult = (dungeonLevel: number): string => {
+  const roll = rollDice(monsterThree.sides);
+  const command = getTableEntry(roll, monsterThree);
+  return monsterThreeTextForCommand(dungeonLevel, command);
 };
 
 const dragonThreeResult = (dungeonLevel: number): string => {

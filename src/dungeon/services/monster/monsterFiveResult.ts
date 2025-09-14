@@ -14,9 +14,10 @@ import {
 } from "../../../tables/dungeon/monster/monsterFive";
 import { formatPartyResult } from "../../helpers/party/formatPartyResult";
 
-export const monsterFiveResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterFive.sides);
-  const command = getTableEntry(roll, monsterFive);
+export const monsterFiveTextForCommand = (
+  dungeonLevel: number,
+  command: MonsterFive
+): string => {
   switch (command) {
     case MonsterFive.Character: {
       const characters = characterResult(5, dungeonLevel);
@@ -139,6 +140,12 @@ export const monsterFiveResult = (dungeonLevel: number): string => {
       return formatMonsterCount(spiders, "giant spider", "giant spiders");
     }
   }
+};
+
+export const monsterFiveResult = (dungeonLevel: number): string => {
+  const roll = rollDice(monsterFive.sides);
+  const command = getTableEntry(roll, monsterFive);
+  return monsterFiveTextForCommand(dungeonLevel, command);
 };
 
 const dragonFiveYoungerResult = (dungeonLevel: number): string => {

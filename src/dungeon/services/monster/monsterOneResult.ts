@@ -12,9 +12,10 @@ import {
 import { characterResult } from "./characterResult";
 import { formatPartyResult } from "../../helpers/party/formatPartyResult";
 
-export const monsterOneResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterOne.sides);
-  const command = getTableEntry(roll, monsterOne);
+export const monsterOneTextForCommand = (
+  dungeonLevel: number,
+  command: MonsterOne
+): string => {
   switch (command) {
     case MonsterOne.AntGiant_1to4: {
       const ants = getNumberOfMonsters(1, dungeonLevel, 1, 4);
@@ -105,6 +106,12 @@ export const monsterOneResult = (dungeonLevel: number): string => {
       return formatMonsterCount(zombies, "zombie", "zombies");
     }
   }
+};
+
+export const monsterOneResult = (dungeonLevel: number): string => {
+  const roll = rollDice(monsterOne.sides);
+  const command = getTableEntry(roll, monsterOne);
+  return monsterOneTextForCommand(dungeonLevel, command);
 };
 
 export const humanResult = (dungeonLevel: number): string => {

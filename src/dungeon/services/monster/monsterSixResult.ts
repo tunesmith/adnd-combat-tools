@@ -12,9 +12,10 @@ import {
 } from "../../../tables/dungeon/monster/monsterSix";
 import { formatPartyResult } from "../../helpers/party/formatPartyResult";
 
-export const monsterSixResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterSix.sides);
-  const command = getTableEntry(roll, monsterSix);
+export const monsterSixTextForCommand = (
+  dungeonLevel: number,
+  command: MonsterSix
+): string => {
   switch (command) {
     case MonsterSix.Basilisk: {
       const basilisks = getNumberOfMonsters(6, dungeonLevel, 1, 1);
@@ -147,6 +148,12 @@ export const monsterSixResult = (dungeonLevel: number): string => {
       return formatMonsterCount(wyverns, "wyvern", "wyverns");
     }
   }
+};
+
+export const monsterSixResult = (dungeonLevel: number): string => {
+  const roll = rollDice(monsterSix.sides);
+  const command = getTableEntry(roll, monsterSix);
+  return monsterSixTextForCommand(dungeonLevel, command);
 };
 
 const dragonSixResult = (dungeonLevel: number): string => {

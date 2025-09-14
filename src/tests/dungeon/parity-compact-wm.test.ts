@@ -1,4 +1,6 @@
 import { passageMessages } from "../../dungeon/services/passage";
+import { wanderingWhereFromMessages } from "../../dungeon/services/wanderingWhereFrom";
+import { monsterThreeMessages } from "../../dungeon/services/monsterLevelMessages";
 import { DungeonMessage } from "../../types/dungeon";
 import * as dungeonLookup from "../../dungeon/helpers/dungeonLookup";
 import { wanderingMonsterResult } from "../../dungeon/services/wanderingMonsterResult";
@@ -56,6 +58,46 @@ describe("Compact parity: Wandering Monster", () => {
       .mockImplementationOnce(() => 2);
     const legacy = wanderingMonsterResult(1);
     expect(para.text.trim()).toBe(legacy.trim());
+    spy.mockRestore();
+  });
+
+  test("Where-from Passage Turn stages Passage Turns preview (detail)", () => {
+    // Roll 11 -> PassageTurn on periodicCheck
+    const { messages } = wanderingWhereFromMessages({ roll: 11, detailMode: true });
+    const hasPassageTurns = messages.some(
+      (m: any) => m.kind === "table-preview" && m.id === "passageTurns"
+    );
+    expect(hasPassageTurns).toBe(true);
+  });
+  
+  test("Monster Level 3: roll 11 (Bugbear) yields bugbears, not ogres", () => {
+    // Ensure resolving monsterThree with a specific roll produces matching text
+    const spy = jest.spyOn(require("../../dungeon/helpers/dungeonLookup"), "rollDice");
+    // Force an unrelated ogre roll inside legacy function to expose the bug
+    spy.mockImplementation(() => 61); // Ogre range on monsterThree
+    const { messages } = monsterThreeMessages({ roll: 11, detailMode: true, context: { kind: "wandering", level: 3 } });
+    const para = (messages as any[]).find((m) => m.kind === "paragraph");
+    expect(para && typeof para.text === "string" && para.text.toLowerCase().includes("bugbear")).toBe(true);
+    spy.mockRestore();
+  });
+
+  test("Monster Level 3: Wererat 2–5 rolls plural count", () => {
+    // Roll 51 => LycanthropeWererat_2to5; force inner count roll to 1 so total = 2
+    const spy = jest.spyOn(require("../../dungeon/helpers/dungeonLookup"), "rollDice");
+    spy.mockImplementation(() => 1);
+    const { messages } = monsterThreeMessages({ roll: 51, detailMode: true, context: { kind: "wandering", level: 3 } });
+    const para = (messages as any[]).find((m) => m.kind === "paragraph");
+    expect(para && typeof para.text === "string" && para.text.includes("There are 2 wererat lycanthropes")).toBe(true);
+    spy.mockRestore();
+  });
+
+  test("Monster Level 1: roll 27 at level 1 yields 9–16 halflings (deterministic 9)", () => {
+    const spy = jest.spyOn(require("../../dungeon/helpers/dungeonLookup"), "rollDice");
+    spy.mockImplementation(() => 1); // force 1d8 => 1; 1 + 8 = 9
+    const { monsterOneMessages } = require("../../dungeon/services/monsterLevelMessages");
+    const { messages } = monsterOneMessages({ roll: 27, detailMode: true, context: { kind: "wandering", level: 1 } });
+    const para = (messages as any[]).find((m) => m.kind === "paragraph");
+    expect(para && typeof para.text === "string" && para.text.includes("There are 9 halflings")).toBe(true);
     spy.mockRestore();
   });
 });

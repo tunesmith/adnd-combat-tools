@@ -45,7 +45,22 @@ import {
 import { trickTrapMessages } from "../../dungeon/services/trickTrap";
 import { doorLocationMessages } from "../../dungeon/services/closedDoorResult";
 import { wanderingWhereFromMessages } from "../../dungeon/services/wanderingWhereFrom";
-import { monsterLevelMessages, monsterOneMessages, humanMessages } from "../../dungeon/services/monsterLevelMessages";
+import {
+  monsterLevelMessages,
+  monsterOneMessages,
+  humanMessages,
+  monsterTwoMessages,
+  monsterThreeMessages,
+  monsterFourMessages,
+  monsterFiveMessages,
+  monsterSixMessages,
+  dragonThreeMessages,
+  dragonFourYoungerMessages,
+  dragonFourOlderMessages,
+  dragonFiveYoungerMessages,
+  dragonFiveOlderMessages,
+  dragonSixMessages,
+} from "../../dungeon/services/monsterLevelMessages";
 import { periodicDoorOnlyMessages } from "../../dungeon/services/periodicDoorOnly";
 import type { TableContext } from "../../types/dungeon";
 
@@ -994,6 +1009,17 @@ const TABLE_ID_LIST = [
   "wanderingWhereFrom",
   "monsterLevel",
   "monsterOne",
+  "monsterTwo",
+  "monsterThree",
+  "monsterFour",
+  "monsterFive",
+  "monsterSix",
+  "dragonThree",
+  "dragonFourYounger",
+  "dragonFourOlder",
+  "dragonFiveYounger",
+  "dragonFiveOlder",
+  "dragonSix",
   "human",
   "galleryStairLocation",
   "galleryStairOccurrence",
@@ -1028,6 +1054,17 @@ const TABLE_HEADINGS: Record<TableId, string> = {
   wanderingWhereFrom: "Where From",
   monsterLevel: "Monster Level",
   monsterOne: "Monster (Level 1)",
+  monsterTwo: "Monster (Level 2)",
+  monsterThree: "Monster (Level 3)",
+  monsterFour: "Monster (Level 4)",
+  monsterFive: "Monster (Level 5)",
+  monsterSix: "Monster (Level 6)",
+  dragonThree: "Dragon (Level 3)",
+  dragonFourYounger: "Dragon (Younger)",
+  dragonFourOlder: "Dragon (Older)",
+  dragonFiveYounger: "Dragon (Younger)",
+  dragonFiveOlder: "Dragon (Older)",
+  dragonSix: "Dragon",
   human: "Human Subtable",
   galleryStairLocation: "Gallery Stair Location",
   galleryStairOccurrence: "Gallery Stair Occurrence",
@@ -1063,6 +1100,28 @@ const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     monsterLevelMessages({ id, roll, detailMode: true, context }).messages,
   monsterOne: ({ roll, context }) =>
     monsterOneMessages({ roll, detailMode: true, context }).messages,
+  monsterTwo: ({ roll, context }) =>
+    monsterTwoMessages({ roll, detailMode: true, context }).messages,
+  monsterThree: ({ roll, context }) =>
+    monsterThreeMessages({ roll, detailMode: true, context }).messages,
+  monsterFour: ({ roll, context }) =>
+    monsterFourMessages({ roll, detailMode: true, context }).messages,
+  monsterFive: ({ roll, context }) =>
+    monsterFiveMessages({ roll, detailMode: true, context }).messages,
+  monsterSix: ({ roll, context }) =>
+    monsterSixMessages({ roll, detailMode: true, context }).messages,
+  dragonThree: ({ roll, context }) =>
+    dragonThreeMessages({ roll, detailMode: true, context }).messages,
+  dragonFourYounger: ({ roll, context }) =>
+    dragonFourYoungerMessages({ roll, detailMode: true, context }).messages,
+  dragonFourOlder: ({ roll, context }) =>
+    dragonFourOlderMessages({ roll, detailMode: true, context }).messages,
+  dragonFiveYounger: ({ roll, context }) =>
+    dragonFiveYoungerMessages({ roll, detailMode: true, context }).messages,
+  dragonFiveOlder: ({ roll, context }) =>
+    dragonFiveOlderMessages({ roll, detailMode: true, context }).messages,
+  dragonSix: ({ roll, context }) =>
+    dragonSixMessages({ roll, detailMode: true, context }).messages,
   human: ({ roll, context }) => humanMessages({ roll, detailMode: true, context }).messages,
   galleryStairLocation: ({ roll }) =>
     galleryStairLocationMessages({ roll, detailMode: true }).messages,

@@ -10,9 +10,10 @@ import {
 import { characterResult } from "./characterResult";
 import { formatPartyResult } from "../../helpers/party/formatPartyResult";
 
-export const monsterTwoResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterTwo.sides);
-  const command = getTableEntry(roll, monsterTwo);
+export const monsterTwoTextForCommand = (
+  dungeonLevel: number,
+  command: MonsterTwo
+): string => {
   switch (command) {
     case MonsterTwo.Badger_1to4_Gnoll_4to10: {
       if (dungeonLevel <= 3) {
@@ -76,4 +77,10 @@ export const monsterTwoResult = (dungeonLevel: number): string => {
       return formatMonsterCount(troglodytes, "troglodyte", "troglodytes");
     }
   }
+};
+
+export const monsterTwoResult = (dungeonLevel: number): string => {
+  const roll = rollDice(monsterTwo.sides);
+  const command = getTableEntry(roll, monsterTwo);
+  return monsterTwoTextForCommand(dungeonLevel, command);
 };
