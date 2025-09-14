@@ -14,11 +14,17 @@ import {
 } from "../../helpers/BattleMessage";
 import { deflate } from "zlib";
 import CellOutput from "./CellOutput";
-import { Column, useTable } from "react-table";
+import type { Column } from "react-table";
+import { useTable } from "react-table";
 import styles from "./battle.module.css";
 import BattleInput from "./BattleInput";
 import getConfig from "next/config";
-import { Creature, EmptyObject, State, StateRow } from "../../types/creature";
+import type {
+  Creature,
+  EmptyObject,
+  State,
+  StateRow,
+} from "../../types/creature";
 import { MONSTER } from "../../tables/attackerClass";
 
 /**
@@ -178,7 +184,9 @@ const Battle = ({ rememberedState }: BattleProps) => {
     [state]
   );
 
-  const columns: Column[] = useMemo<Column[]>(
+  const columns: Column<Record<string, unknown>>[] = useMemo<
+    Column<Record<string, unknown>>[]
+  >(
     () =>
       [
         {
@@ -211,7 +219,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
     [getCellOutput, state]
   );
 
-  const data = useMemo(
+  const data = useMemo<Record<string, unknown>[]>(
     () =>
       state.slice(1).map((row, index) => {
         if (row[0]) {
@@ -227,18 +235,14 @@ const Battle = ({ rememberedState }: BattleProps) => {
             ),
           };
         } else {
-          console.error(`Could note render BattleInput for row: ${index}`);
-          return <></>;
+          console.error(`Could not render BattleInput for row: ${index}`);
+          return { col0: null };
         }
       }),
     [state]
   );
 
-  const tableInstance = useTable({
-    // @ts-ignore because I don't know how to type dynamic columns and rows
-    columns,
-    data,
-  });
+  const tableInstance = useTable<Record<string, unknown>>({ columns, data });
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
     tableInstance;
