@@ -1,9 +1,9 @@
-import { PeriodicCheck } from "../../tables/dungeon/periodicCheck";
-import { DoorBeyond } from "../../tables/dungeon/doorBeyond";
-import { SidePassages } from "../../tables/dungeon/sidePassages";
-import { PassageTurns } from "../../tables/dungeon/passageTurns";
-import { Stairs } from "../../tables/dungeon/stairs";
-import { SpecialPassage } from "../../tables/dungeon/specialPassage";
+import type { PeriodicCheck } from "../../tables/dungeon/periodicCheck";
+import type { DoorBeyond } from "../../tables/dungeon/doorBeyond";
+import type { SidePassages } from "../../tables/dungeon/sidePassages";
+import type { PassageTurns } from "../../tables/dungeon/passageTurns";
+import type { Stairs } from "../../tables/dungeon/stairs";
+import type { SpecialPassage } from "../../tables/dungeon/specialPassage";
 
 // Domain outcome event kinds cover high-level tables we resolve.
 export type OutcomeEvent =

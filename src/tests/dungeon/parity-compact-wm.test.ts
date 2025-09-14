@@ -1,7 +1,7 @@
 import { passageMessages } from "../../dungeon/services/passage";
 import { wanderingWhereFromMessages } from "../../dungeon/services/wanderingWhereFrom";
 import { monsterThreeMessages } from "../../dungeon/services/monsterLevelMessages";
-import { DungeonMessage } from "../../types/dungeon";
+import type { DungeonMessage } from "../../types/dungeon";
 import * as dungeonLookup from "../../dungeon/helpers/dungeonLookup";
 
 function isParagraph(m: DungeonMessage): m is Extract<DungeonMessage, { kind: "paragraph"; text: string }> {

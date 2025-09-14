@@ -1,4 +1,4 @@
-import { LevelOption } from "../types/option";
+import type { LevelOption } from "../types/option";
 import { BARD, CLERIC, FIGHTER, MAGIC_USER, THIEF } from "./attackerClass";
 
 interface LevelProps {

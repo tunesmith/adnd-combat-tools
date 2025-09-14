@@ -7,7 +7,7 @@ import { unusualSizeMessages, unusualSizeResult } from "./unusualSizeResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { exitMessages } from "./exitResult";
 import { exitResult } from "./exitResult";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
 export const chamberResult = (): string => {
   const roll = rollDice(chamberDimensions.sides);

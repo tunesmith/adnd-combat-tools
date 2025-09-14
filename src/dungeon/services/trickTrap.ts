@@ -1,4 +1,4 @@
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
 // Stub typed wrapper for Trick/Trap until a full table is added
 export const trickTrapMessages = (

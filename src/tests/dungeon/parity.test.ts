@@ -1,6 +1,6 @@
 import { passageMessages } from "../../dungeon/services/passage";
 import { periodicCheck, PeriodicCheck } from "../../tables/dungeon/periodicCheck";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 import { doorBeyondMessages } from "../../dungeon/services/doorBeyondResult";
 import { doorBeyond, DoorBeyond } from "../../tables/dungeon/doorBeyond";
 import { stairsMessages } from "../../dungeon/services/stairsResult";

@@ -1,5 +1,5 @@
-import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import { CharacterSheet } from "../../models/character/characterSheet";
+import type { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
+import type { CharacterSheet } from "../../models/character/characterSheet";
 import { incompatibleRaces } from "../../models/incompatibleRaces";
 
 /**

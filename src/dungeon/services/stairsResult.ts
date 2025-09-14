@@ -2,7 +2,11 @@ import { Chute, chute, Egress, egressOne, egressThree, egressTwo, Stairs, stairs
 import { Table } from "../../tables/dungeon/dungeonTypes";
 import { chamberResult } from "./chamberResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonRenderNode, DungeonTablePreview, DungeonMessage } from "../../types/dungeon";
+import type {
+  DungeonRenderNode,
+  DungeonTablePreview,
+  DungeonMessage,
+} from "../../types/dungeon";
 import { resolveStairs } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 

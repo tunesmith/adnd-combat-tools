@@ -1,4 +1,4 @@
-import { PartyResult } from "../../models/character/characterSheet";
+import type { PartyResult } from "../../models/character/characterSheet";
 import { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
 import { CharacterClass } from "../../models/characterClass";
 

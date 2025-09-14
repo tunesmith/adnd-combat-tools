@@ -1,7 +1,7 @@
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { periodicCheck, PeriodicCheck } from "../../tables/dungeon/periodicCheck";
 import { doorBeyond } from "../../tables/dungeon/doorBeyond";
-import { DungeonOutcomeNode, OutcomeEvent } from "./outcome";
+import type { DungeonOutcomeNode, OutcomeEvent } from "./outcome";
 import { sidePassages } from "../../tables/dungeon/sidePassages";
 import { passageTurns } from "../../tables/dungeon/passageTurns";
 import { stairs, Stairs } from "../../tables/dungeon/stairs";

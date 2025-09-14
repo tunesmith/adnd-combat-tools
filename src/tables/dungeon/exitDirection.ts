@@ -1,4 +1,4 @@
-import { Table } from "./dungeonTypes";
+import type { Table } from "./dungeonTypes";
 
 // (Don't use for Doors)
 export enum ExitDirection {

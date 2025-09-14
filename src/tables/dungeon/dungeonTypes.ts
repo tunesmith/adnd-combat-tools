@@ -1,4 +1,4 @@
-import {
+import type {
   ChasmConstruction,
   ChasmDepth,
   GalleryStairLocation,
@@ -9,48 +9,48 @@ import {
   SpecialPassage,
   StreamConstruction,
 } from "./specialPassage";
-import { PassageWidth } from "./passageWidth";
-import { SidePassages } from "./sidePassages";
-import { DoorBeyond } from "./doorBeyond";
-import { DoorLocation } from "./doorLocation";
-import { PeriodicCheck } from "./periodicCheck";
-import { PassageTurns } from "./passageTurns";
-import { ChamberDimensions, RoomDimensions } from "./chambersRooms";
-import { CircularContents, UnusualShape } from "./unusualShape";
-import { UnusualSize } from "./unusualSize";
-import { NumberOfExits, OneToFour } from "./numberOfExits";
-import { ExitLocation, StrangeDoor } from "./exitLocation";
-import { ExitDirection } from "./exitDirection";
-import { Chute, Egress, Stairs } from "./stairs";
-import { Pool } from "./pool";
-import {
+import type { PassageWidth } from "./passageWidth";
+import type { SidePassages } from "./sidePassages";
+import type { DoorBeyond } from "./doorBeyond";
+import type { DoorLocation } from "./doorLocation";
+import type { PeriodicCheck } from "./periodicCheck";
+import type { PassageTurns } from "./passageTurns";
+import type { ChamberDimensions, RoomDimensions } from "./chambersRooms";
+import type { CircularContents, UnusualShape } from "./unusualShape";
+import type { UnusualSize } from "./unusualSize";
+import type { NumberOfExits, OneToFour } from "./numberOfExits";
+import type { ExitLocation, StrangeDoor } from "./exitLocation";
+import type { ExitDirection } from "./exitDirection";
+import type { Chute, Egress, Stairs } from "./stairs";
+import type { Pool } from "./pool";
+import type {
   MagicPool,
   PoolAlignment,
   TransmuteType,
   TransporterLocation,
 } from "./magicPool";
-import { MonsterDistributionLevel, MonsterLevel } from "./monster/monsterLevel";
-import { Human, MonsterOne } from "./monster/monsterOne";
-import { MonsterTwo } from "./monster/monsterTwo";
-import { DragonThree, MonsterThree } from "./monster/monsterThree";
-import {
+import type { MonsterDistributionLevel, MonsterLevel } from "./monster/monsterLevel";
+import type { Human, MonsterOne } from "./monster/monsterOne";
+import type { MonsterTwo } from "./monster/monsterTwo";
+import type { DragonThree, MonsterThree } from "./monster/monsterThree";
+import type {
   DragonFourOlder,
   DragonFourYounger,
   MonsterFour,
 } from "./monster/monsterFour";
-import {
+import type {
   DragonFiveOlder,
   DragonFiveYounger,
   MonsterFive,
 } from "./monster/monsterFive";
-import { DragonSix, MonsterSix } from "./monster/monsterSix";
-import { DragonSeven, MonsterSeven } from "./monster/monsterSeven";
-import { DragonEight, MonsterEight } from "./monster/monsterEight";
-import { DragonNine, MonsterNine } from "./monster/monsterNine";
-import { DragonTen, MonsterTen } from "./monster/monsterTen";
-import { CharacterRace } from "./monster/character/characterRace";
-import { CharacterClassTable } from "./monster/character/characterClass";
-import { PeriodicCheckDoorOnly } from "./periodicCheckDoorOnly";
+import type { DragonSix, MonsterSix } from "./monster/monsterSix";
+import type { DragonSeven, MonsterSeven } from "./monster/monsterSeven";
+import type { DragonEight, MonsterEight } from "./monster/monsterEight";
+import type { DragonNine, MonsterNine } from "./monster/monsterNine";
+import type { DragonTen, MonsterTen } from "./monster/monsterTen";
+import type { CharacterRace } from "./monster/character/characterRace";
+import type { CharacterClassTable } from "./monster/character/characterClass";
+import type { PeriodicCheckDoorOnly } from "./periodicCheckDoorOnly";
 
 export type Table<T> = {
   sides: number;

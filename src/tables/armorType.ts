@@ -4,7 +4,7 @@
 // const assassinArmor = ["10", "9", "8", "7"];
 // const bardArmor = ["10", "8", "5"];
 
-import { ExpandedArmorTypeOption } from "../types/option";
+import type { ExpandedArmorTypeOption } from "../types/option";
 import {
   ASSASSIN,
   BARD,

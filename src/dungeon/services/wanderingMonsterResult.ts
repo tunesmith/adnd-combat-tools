@@ -13,7 +13,7 @@ import {
   dungeonTwoThree,
   MonsterLevel,
 } from "../../tables/dungeon/monster/monsterLevel";
-import { Table } from "../../tables/dungeon/dungeonTypes";
+import type { Table } from "../../tables/dungeon/dungeonTypes";
 import { monsterOneResult } from "./monster/monsterOneResult";
 import { monsterTwoResult } from "./monster/monsterTwoResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";

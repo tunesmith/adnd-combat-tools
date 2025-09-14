@@ -1,4 +1,4 @@
-import { WeaponOption } from "../types/option";
+import type { WeaponOption } from "../types/option";
 import {
   ASSASSIN,
   BARD,

@@ -1,6 +1,6 @@
 import { Attribute } from "../../../models/attributes";
 import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
-import { Gender } from "../../../models/character/gender";
+import type { Gender } from "../../../models/character/gender";
 import { getAttributeDice } from "./getAttributeDice";
 import { rollAttributeDice } from "./rollAttributeDice";
 import { assessRacialPenalty } from "./assessRacialPenalty";

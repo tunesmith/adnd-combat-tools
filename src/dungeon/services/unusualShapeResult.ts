@@ -16,7 +16,7 @@ import {
   transporterLocation,
 } from "../../tables/dungeon/magicPool";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
 export const unusualShapeResult = (): string => {
   const roll = rollDice(unusualShape.sides);

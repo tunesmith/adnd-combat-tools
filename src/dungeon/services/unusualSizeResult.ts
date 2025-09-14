@@ -1,6 +1,6 @@
 import { UnusualSize, unusualSize } from "../../tables/dungeon/unusualSize";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
 export const unusualSizeResult = (): string => {
   return `It is about ${getSize()} sq. ft. `;

@@ -1,8 +1,9 @@
-import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
-import { Gender } from "../../../models/character/gender";
-import { Attribute, Attributes } from "../../../models/attributes";
+import type { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
+import type { Gender } from "../../../models/character/gender";
+import { Attribute } from "../../../models/attributes";
+import type { Attributes } from "../../../models/attributes";
 import { rollAttribute } from "./rollAttribute";
-import { CharacterClass } from "../../../models/characterClass";
+import type { CharacterClass } from "../../../models/characterClass";
 
 /**
  * For NPCs, we're following the rule of 3d6 for normal attributes,

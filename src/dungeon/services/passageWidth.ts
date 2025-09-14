@@ -1,7 +1,7 @@
 import { PassageWidth, passageWidth } from "../../tables/dungeon/passageWidth";
 import { specialPassageResult } from "./specialPassage";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonMessage, RollTraceItem } from "../../types/dungeon";
+import type { DungeonMessage, RollTraceItem } from "../../types/dungeon";
 
 export const passageWidthResults = (): string => {
   const roll = rollDice(passageWidth.sides);

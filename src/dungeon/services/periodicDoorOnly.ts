@@ -1,4 +1,4 @@
-import { DungeonMessage, DungeonRenderNode, DungeonTablePreview, TableContext } from "../../types/dungeon";
+import type { DungeonMessage, DungeonRenderNode, DungeonTablePreview, TableContext } from "../../types/dungeon";
 import { periodicCheckDoorOnly, PeriodicCheckDoorOnly } from "../../tables/dungeon/periodicCheckDoorOnly";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 

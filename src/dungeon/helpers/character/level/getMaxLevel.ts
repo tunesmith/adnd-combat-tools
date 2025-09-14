@@ -1,5 +1,5 @@
 import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
-import { Attributes } from "../../../models/attributes";
+import type { Attributes } from "../../../models/attributes";
 import { CharacterClass } from "../../../models/characterClass";
 
 /**

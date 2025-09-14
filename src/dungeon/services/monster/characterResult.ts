@@ -2,10 +2,7 @@ import { rollDice } from "../../helpers/dungeonLookup";
 import { characterMax } from "../../models/characterMax";
 import { getCharacterLevel } from "../../helpers/character/level/getCharacterLevel";
 import { getHenchmanLevel } from "../../helpers/character/level/getHenchmanLevel";
-import {
-  CharacterSheet,
-  PartyResult,
-} from "../../models/character/characterSheet";
+import type { CharacterSheet, PartyResult } from "../../models/character/characterSheet";
 import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
 import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
 import { getNumberOfClasses } from "../../helpers/character/class/getNumberOfClasses";

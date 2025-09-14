@@ -1,5 +1,5 @@
 import type { DungeonOutcomeNode, PendingRoll } from "../domain/outcome";
-import {
+import type {
   DungeonMessage,
   DungeonRenderNode,
   DungeonTablePreview,

@@ -1,4 +1,4 @@
-import { DungeonRenderNode, DungeonTablePreview } from "../../types/dungeon";
+import type { DungeonRenderNode, DungeonTablePreview } from "../../types/dungeon";
 import { doorLocationMessages } from "../../dungeon/services/closedDoorResult";
 import { periodicDoorOnlyMessages } from "../../dungeon/services/periodicDoorOnly";
 

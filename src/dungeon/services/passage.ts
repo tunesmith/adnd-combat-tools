@@ -2,7 +2,7 @@ import {
   PeriodicCheck,
   periodicCheck,
 } from "../../tables/dungeon/periodicCheck";
-import {
+import type {
   DungeonMessage,
   DungeonTablePreview,
   DungeonRenderNode,

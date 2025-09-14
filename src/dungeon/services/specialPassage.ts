@@ -19,7 +19,11 @@ import {
   streamConstruction,
 } from "../../tables/dungeon/specialPassage";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonRenderNode, DungeonTablePreview, DungeonMessage } from "../../types/dungeon";
+import type {
+  DungeonRenderNode,
+  DungeonTablePreview,
+  DungeonMessage,
+} from "../../types/dungeon";
 import { resolveSpecialPassage } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 

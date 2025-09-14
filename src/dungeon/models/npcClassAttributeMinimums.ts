@@ -1,4 +1,4 @@
-import { Attribute } from "./attributes";
+import type { Attribute } from "./attributes";
 import { CharacterClass } from "./characterClass";
 
 interface ClassAttributeTable {

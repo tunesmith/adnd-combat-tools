@@ -1,5 +1,5 @@
-import { BardLevels } from "../../../models/character/characterSheet";
-import { Attributes } from "../../../models/attributes";
+import type { BardLevels } from "../../../models/character/characterSheet";
+import type { Attributes } from "../../../models/attributes";
 import { getHitPoints } from "../getHitPoints";
 import { CharacterClass } from "../../../models/characterClass";
 

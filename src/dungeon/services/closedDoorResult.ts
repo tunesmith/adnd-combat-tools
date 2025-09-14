@@ -1,5 +1,5 @@
 import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
-import { DungeonTablePreview, DungeonRenderNode, TableContext } from "../../types/dungeon";
+import type { DungeonTablePreview, DungeonRenderNode, TableContext } from "../../types/dungeon";
 import { periodicCheckDoorOnly, PeriodicCheckDoorOnly } from "../../tables/dungeon/periodicCheckDoorOnly";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 

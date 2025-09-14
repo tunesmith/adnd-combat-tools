@@ -1,4 +1,4 @@
-import { BardLevels } from "../../../models/character/characterSheet";
+import type { BardLevels } from "../../../models/character/characterSheet";
 import { rollDice } from "../../dungeonLookup";
 import { CharacterClass } from "../../../models/characterClass";
 

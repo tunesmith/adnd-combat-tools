@@ -5,7 +5,7 @@ import { chamberResult } from "../../dungeon/services/chamberResult";
 import { monsterOneResult } from "../../dungeon/services/monster/monsterOneResult";
 import { monsterTwoResult } from "../../dungeon/services/monster/monsterTwoResult";
 import { sidePassages, SidePassages } from "../../tables/dungeon/sidePassages";
-import { Table } from "../../tables/dungeon/dungeonTypes";
+import type { Table } from "../../tables/dungeon/dungeonTypes";
 import { getTableEntry } from "../../dungeon/helpers/dungeonLookup";
 import { monsterThreeResult } from "../../dungeon/services/monster/monsterThreeResult";
 import { monsterFourResult } from "../../dungeon/services/monster/monsterFourResult";

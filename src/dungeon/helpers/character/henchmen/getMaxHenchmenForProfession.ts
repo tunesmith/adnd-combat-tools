@@ -1,7 +1,4 @@
-import {
-  CharacterProfession,
-  CharacterSheet,
-} from "../../../models/character/characterSheet";
+import type { CharacterProfession, CharacterSheet } from "../../../models/character/characterSheet";
 import { CharacterClass } from "../../../models/characterClass";
 import { getMonkHenchmen } from "./getMonkHenchmen";
 import { getAssassinHenchmen } from "./getAssassinHenchmen";

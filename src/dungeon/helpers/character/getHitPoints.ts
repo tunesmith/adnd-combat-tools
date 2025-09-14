@@ -1,5 +1,5 @@
-import { CharacterProfession } from "../../models/character/characterSheet";
-import { Attributes } from "../../models/attributes";
+import type { CharacterProfession } from "../../models/character/characterSheet";
+import type { Attributes } from "../../models/attributes";
 import { hitPointsByClass } from "../../models/hitPointsByClass";
 import { getHitPointBonus } from "./getHitPointBonus";
 import { rollDice } from "../dungeonLookup";

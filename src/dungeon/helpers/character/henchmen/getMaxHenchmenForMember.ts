@@ -1,4 +1,4 @@
-import { CharacterSheet } from "../../../models/character/characterSheet";
+import type { CharacterSheet } from "../../../models/character/characterSheet";
 import { getMaxHenchmenByCharisma } from "./getMaxHenchmenByCharisma";
 import { getMaxHenchmenForProfession } from "./getMaxHenchmenForProfession";
 

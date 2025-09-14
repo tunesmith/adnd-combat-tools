@@ -3,7 +3,7 @@ import { passageWidthResults } from "./passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { chamberResult } from "./chamberResult";
 import { roomResult } from "./roomResult";
-import { DungeonMessage, DungeonRollTrace, DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
+import type { DungeonMessage, DungeonRollTrace, DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 import { resolveDoorBeyond } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 

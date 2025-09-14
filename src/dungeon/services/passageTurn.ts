@@ -1,7 +1,7 @@
 import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
 import { passageWidthResults } from "./passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
+import type { DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 import { resolvePassageTurns } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 

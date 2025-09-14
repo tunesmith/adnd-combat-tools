@@ -1,4 +1,4 @@
-import { CharacterSheet } from "../../../models/character/characterSheet";
+import type { CharacterSheet } from "../../../models/character/characterSheet";
 import { getCountOfClassesInParty } from "../../party/getCountOfClassesInParty";
 import { CharacterClass } from "../../../models/characterClass";
 import { characterMax } from "../../../models/characterMax";

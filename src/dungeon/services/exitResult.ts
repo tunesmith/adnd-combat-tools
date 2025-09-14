@@ -1,6 +1,6 @@
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { NumberOfExits, numberOfExits } from "../../tables/dungeon/numberOfExits";
-import { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
 
 export const exitResult = (
   length: number,

@@ -1,4 +1,9 @@
-import { DungeonMessage, DungeonRenderNode, DungeonTablePreview, TableContext } from "../../types/dungeon";
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+  DungeonTablePreview,
+  TableContext,
+} from "../../types/dungeon";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import { getMonsterTable } from "./wanderingMonsterResult";
 import { MonsterLevel } from "../../tables/dungeon/monster/monsterLevel";
