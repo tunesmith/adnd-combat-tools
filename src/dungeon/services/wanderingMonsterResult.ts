@@ -22,6 +22,7 @@ import { monsterThreeResult } from "./monster/monsterThreeResult";
 import { monsterFourResult } from "./monster/monsterFourResult";
 import { monsterFiveResult } from "./monster/monsterFiveResult";
 import { monsterSixResult } from "./monster/monsterSixResult";
+import { compactDoorText, compactPeriodicText } from "./compactWhereFrom";
 
 /**
  * In addition to rolling the wandering monster, we also have
@@ -36,8 +37,6 @@ export const wanderingMonsterResult = (level: number): string => {
     const roll = rollDice(periodicCheck.sides);
     locationCommand = getTableEntry(roll, periodicCheck);
   } while (locationCommand === PeriodicCheck.WanderingMonster);
-  // Compose where-from text inline to avoid legacy getPassageResult
-  const { compactDoorText, compactPeriodicText } = require("./compactWhereFrom");
   const passageResult =
     (locationCommand === PeriodicCheck.Door
       ? compactDoorText()

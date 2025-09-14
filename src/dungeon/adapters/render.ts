@@ -27,26 +27,9 @@ import { monsterSixResult } from "../services/monster/monsterSixResult";
 import { roomMessages } from "../services/roomResult";
 import { chamberMessages } from "../services/chamberResult";
 import { passageWidthMessages } from "../services/passageWidth";
-import {
-  SpecialPassage,
-  galleryStairLocation,
-  GalleryStairLocation,
-  streamConstruction,
-  StreamConstruction,
-  riverConstruction,
-  RiverConstruction,
-  chasmDepth,
-  ChasmDepth,
-  chasmConstruction,
-  ChasmConstruction,
-} from "../../tables/dungeon/specialPassage";
-import {
-  galleryStairLocationResult,
-  streamConstructionResult,
-  riverConstructionResult,
-  chasmDepthResult,
-  chasmConstructionResult,
-} from "../services/specialPassage";
+import { SpecialPassage, galleryStairLocation, GalleryStairLocation, streamConstruction, StreamConstruction, riverConstruction, RiverConstruction, chasmDepth, ChasmDepth, chasmConstruction, ChasmConstruction } from "../../tables/dungeon/specialPassage";
+import { galleryStairLocationResult, streamConstructionResult, riverConstructionResult, chasmDepthResult, chasmConstructionResult, specialPassageResult } from "../services/specialPassage";
+import { chamberResult } from "../services/chamberResult";
 
 function rangeText(range: number[]): string {
   return range.length === 1 ? `${range[0]}` : `${range[0]}–${range[range.length - 1]}`;
@@ -821,13 +804,13 @@ function compactPeriodicText(_level: number, result: PeriodicCheck, _avoidMonste
           widthText = "The passage is 5' wide. ";
           break;
         case PassageWidth.SpecialPassage:
-          widthText = require("../services/specialPassage").specialPassageResult();
+          widthText = specialPassageResult();
           break;
       }
       return prefix + widthText;
     }
     case PeriodicCheck.Chamber:
-      return "The passage opens into a chamber. " + require("../services/chamberResult").chamberResult();
+      return "The passage opens into a chamber. " + chamberResult();
     case PeriodicCheck.Stairs: {
       const sRoll = rollDice(stairs.sides);
       const sCmd = getTableEntry(sRoll, stairs);
@@ -877,7 +860,7 @@ function compactPeriodicText(_level: number, result: PeriodicCheck, _avoidMonste
         case Stairs.UpOneDownTwo:
           return (
             "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. " +
-            require("../services/chamberResult").chamberResult()
+            chamberResult()
           );
       }
     }

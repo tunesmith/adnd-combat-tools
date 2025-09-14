@@ -119,7 +119,7 @@ export function compactPeriodicText(_level: number, result: PeriodicCheck, _avoi
         return prefix + widthText;
       }
     case PeriodicCheck.Chamber:
-      return "The passage opens into a chamber. " + require("../services/chamberResult").chamberResult();
+      return "The passage opens into a chamber. " + chamberResult();
     case PeriodicCheck.Stairs:
       {
         const sRoll = rollDice(stairs.sides);

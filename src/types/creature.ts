@@ -4,7 +4,7 @@
  * Each "Cell" can contain either a creature or an empty object.
  * The empty object *has* to be empty, so we define it as such here.
  */
-export type EmptyObject = Record<any, never>;
+export type EmptyObject = Record<string, never>;
 
 /**
  * The initial version of the Creature was inefficient. We were
