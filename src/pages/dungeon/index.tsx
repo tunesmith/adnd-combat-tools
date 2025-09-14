@@ -801,7 +801,11 @@ function resolvePreview(
       setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === "periodicCheck") {
-    const resolved = passageMessages({ roll: usedRoll, detailMode: true, level: dungeonLevel });
+    const levelFromCtx =
+      tp.context && (tp.context as any).kind === "wandering" && typeof (tp.context as any).level === "number"
+        ? (tp.context as any).level
+        : undefined;
+    const resolved = passageMessages({ roll: usedRoll, detailMode: true, level: levelFromCtx });
     setFeed((prev) =>
       prev.map((fi) => {
         if (fi.id !== feedItemId) return fi;

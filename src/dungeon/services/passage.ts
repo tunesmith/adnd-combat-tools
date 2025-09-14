@@ -4,7 +4,6 @@ import {
 } from "../../tables/dungeon/periodicCheck";
 import { sidePassageResults } from "./sidePassage";
 import { passageTurnResults } from "./passageTurn";
-import { closedDoorResult } from "./closedDoorResult";
 import { chamberResult } from "./chamberResult";
 import { stairsResult } from "./stairsResult";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
@@ -13,6 +12,7 @@ import { DungeonMessage, DungeonTablePreview, DungeonRenderNode } from "../../ty
 // legacy imports above kept for string API; message-path refactored below via adapters
 import { resolvePeriodicCheck } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
+import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -47,7 +47,7 @@ export const getPassageResult = (
     case PeriodicCheck.ContinueStraight:
       return "Continue straight -- check again in 60'. ";
     case PeriodicCheck.Door: {
-      return closedDoorResult([]);
+      return compactDoorText();
     }
     case PeriodicCheck.SidePassage: {
       return sidePassageResults();
@@ -75,6 +75,28 @@ export const getPassageResult = (
   }
 };
 
+function compactDoorText(existing: ("Left" | "Right")[] = []): string {
+  const doorRoll = rollDice(doorLocation.sides);
+  const cmd = getTableEntry(doorRoll, doorLocation);
+  const prefix =
+    cmd === DoorLocation.Ahead
+      ? "A door is Ahead. "
+      : `A door is to the ${DoorLocation[cmd]}. `;
+  if (cmd === DoorLocation.Ahead) return prefix;
+  const loc: "Left" | "Right" | "" =
+    cmd === DoorLocation.Left ? "Left" : cmd === DoorLocation.Right ? "Right" : "";
+  if (loc === "") return prefix;
+  if (existing.includes(loc)) {
+    return prefix + "There are no more doors. The main passage extends -- check again in 30'. ";
+  }
+  const reRoll = rollDice(periodicCheck.sides);
+  const reCmd = getTableEntry(reRoll, periodicCheck);
+  if (reCmd === PeriodicCheck.Door) {
+    return prefix + compactDoorText([...existing, loc]);
+  }
+  return prefix + "There are no other doors. The main passage extends -- check again in 30'. ";
+}
+
 /**
  * Typed variant mirroring `passageResults` but with optional roll override
  * and structured messages for UI rendering.
@@ -93,6 +115,7 @@ export const passageMessages = (
         range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: PeriodicCheck[e.command] ?? String(e.command),
       })),
+      context: options?.level ? ({ kind: "wandering", level: options.level } as any) : undefined,
     };
     const messages: (DungeonMessage | DungeonTablePreview)[] = [
       { kind: "heading", level: 3, text: "Passage" },
