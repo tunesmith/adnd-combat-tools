@@ -22,7 +22,7 @@ import { monsterThreeResult } from "./monster/monsterThreeResult";
 import { monsterFourResult } from "./monster/monsterFourResult";
 import { monsterFiveResult } from "./monster/monsterFiveResult";
 import { monsterSixResult } from "./monster/monsterSixResult";
-import { compactDoorText, compactPeriodicText } from "./compactWhereFrom";
+// Legacy aggregator retained for helpers; app no longer uses this string path.
 
 /**
  * In addition to rolling the wandering monster, we also have
@@ -37,10 +37,7 @@ export const wanderingMonsterResult = (level: number): string => {
     const roll = rollDice(periodicCheck.sides);
     locationCommand = getTableEntry(roll, periodicCheck);
   } while (locationCommand === PeriodicCheck.WanderingMonster);
-  const passageResult =
-    (locationCommand === PeriodicCheck.Door
-      ? compactDoorText()
-      : compactPeriodicText(level, locationCommand, true)) + "Wandering Monster: ";
+  const passageResult = "Wandering Monster: ";
 
   const table = getMonsterTable(level);
   const roll = rollDice(table.sides);

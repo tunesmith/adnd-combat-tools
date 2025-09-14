@@ -87,5 +87,5 @@ export const doorLocationMessages = (
 };
 
 function isDoorChainContext(o: TableContext | undefined): o is Extract<TableContext, { kind: "doorChain" }> {
-  return !!o && (o as any).kind === "doorChain" && Array.isArray((o as any).existing);
+  return !!o && o.kind === "doorChain";
 }

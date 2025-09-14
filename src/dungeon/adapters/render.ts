@@ -1,4 +1,4 @@
-import { DungeonOutcomeNode } from "../domain/outcome";
+import type { DungeonOutcomeNode, PendingRoll } from "../domain/outcome";
 import {
   DungeonMessage,
   DungeonRenderNode,
@@ -50,63 +50,22 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
         break;
       case PeriodicCheck.Door: {
         nodes.push({ kind: "paragraph", text: "A closed door is indicated." });
-        const preview: DungeonTablePreview = {
-          kind: "table-preview",
-          id: "doorLocation:0",
-          title: "Door Location",
-          sides: doorLocation.sides,
-          entries: doorLocation.entries.map((e) => ({ range: rangeText(e.range), label: DoorLocation[e.command] ?? String(e.command) })),
-          context: { kind: "doorChain", existing: [] } as TableContext,
-        };
-        nodes.push(preview);
         break;
       }
       case PeriodicCheck.SidePassage: {
         nodes.push({ kind: "paragraph", text: "A side passage occurs." });
-        const preview: DungeonRenderNode = {
-          kind: "table-preview",
-          id: "sidePassages",
-          title: "Side Passages",
-          sides: sidePassages.sides,
-          entries: sidePassages.entries.map((e) => ({ range: rangeText(e.range), label: SidePassages[e.command] ?? String(e.command) })),
-        };
-        nodes.push(preview);
         break;
       }
       case PeriodicCheck.PassageTurn: {
         nodes.push({ kind: "paragraph", text: "The passage turns." });
-        const preview: DungeonRenderNode = {
-          kind: "table-preview",
-          id: "passageTurns",
-          title: "Passage Turns",
-          sides: passageTurns.sides,
-          entries: passageTurns.entries.map((e) => ({ range: rangeText(e.range), label: PassageTurns[e.command] ?? String(e.command) })),
-        };
-        nodes.push(preview);
         break;
       }
       case PeriodicCheck.Chamber: {
         nodes.push({ kind: "paragraph", text: "The passage opens into a chamber. " });
-        const preview: DungeonRenderNode = {
-          kind: "table-preview",
-          id: "chamberDimensions",
-          title: "Chamber Dimensions",
-          sides: chamberDimensions.sides,
-          entries: chamberDimensions.entries.map((e) => ({ range: rangeText(e.range), label: ChamberDimensions[e.command] ?? String(e.command) })),
-        };
-        nodes.push(preview);
         break;
       }
       case PeriodicCheck.Stairs: {
         nodes.push({ kind: "paragraph", text: "Stairs are indicated here." });
-        const preview: DungeonRenderNode = {
-          kind: "table-preview",
-          id: "stairs",
-          title: "Stairs",
-          sides: stairs.sides,
-          entries: stairs.entries.map((e) => ({ range: rangeText(e.range), label: Stairs[e.command] ?? String(e.command) })),
-        };
-        nodes.push(preview);
         break;
       }
       case PeriodicCheck.DeadEnd:
@@ -114,32 +73,19 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
         break;
       case PeriodicCheck.TrickTrap: {
         nodes.push({ kind: "paragraph", text: "There is a trick or trap here." });
-        const preview = trickTrapMessages({ detailMode: true });
-        for (const m of preview.messages) nodes.push(m);
         break;
       }
       case PeriodicCheck.WanderingMonster:
-        // Detail: Stage Where-From and a Monster Level preview derived from the selected dungeon level
         nodes.push({ kind: "paragraph", text: "A wandering monster is indicated." });
-        nodes.push({
-          kind: "table-preview",
-          id: "wanderingWhereFrom",
-          title: "Where From",
-          sides: periodicCheck.sides,
-          entries: periodicCheck.entries
-            .filter((e) => e.command !== PeriodicCheck.WanderingMonster)
-            .map((e) => ({ range: rangeText(e.range), label: PeriodicCheck[e.command] ?? String(e.command) })),
-        });
-        const lvlTable = getMonsterTable(event.level);
-        nodes.push({
-          kind: "table-preview",
-          id: `monsterLevel:${event.level}`,
-          title: "Monster Level",
-          sides: lvlTable.sides,
-          entries: lvlTable.entries.map((e) => ({ range: rangeText(e.range), label: MonsterLevel[e.command] ?? String(e.command) })),
-          context: { kind: "wandering", level: event.level } as TableContext,
-        });
         break;
+    }
+    // Render any pending child previews supplied by the resolver
+    if (outcome.type === "event" && outcome.children && Array.isArray(outcome.children)) {
+      for (const child of outcome.children) {
+        if (child.type !== "pending-roll") continue;
+        const preview = previewForPending(child);
+        if (preview) nodes.push(preview);
+      }
     }
     return nodes;
   }
@@ -347,47 +293,13 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
         break;
     }
     nodes.push(heading, bullet, { kind: "paragraph", text });
-    // Stage subtables as previews in detail mode
-    if (event.result === Stairs.DownOne) {
-      nodes.push({
-        kind: "table-preview",
-        id: "egress:one",
-        title: "Egress (1 level)",
-        sides: egressOne.sides,
-        entries: egressOne.entries.map((e) => ({ range: rangeText(e.range), label: Egress[e.command] ?? String(e.command) })),
-      });
-    } else if (event.result === Stairs.DownTwo) {
-      nodes.push({
-        kind: "table-preview",
-        id: "egress:two",
-        title: "Egress (2 levels)",
-        sides: egressTwo.sides,
-        entries: egressTwo.entries.map((e) => ({ range: rangeText(e.range), label: Egress[e.command] ?? String(e.command) })),
-      });
-    } else if (event.result === Stairs.DownThree) {
-      nodes.push({
-        kind: "table-preview",
-        id: "egress:three",
-        title: "Egress (3 levels)",
-        sides: egressThree.sides,
-        entries: egressThree.entries.map((e) => ({ range: rangeText(e.range), label: Egress[e.command] ?? String(e.command) })),
-      });
-    } else if (event.result === Stairs.UpDead || event.result === Stairs.DownDead) {
-      nodes.push({
-        kind: "table-preview",
-        id: "chute",
-        title: "Chute",
-        sides: chute.sides,
-        entries: chute.entries.map((e) => ({ range: rangeText(e.range), label: Chute[e.command] ?? String(e.command) })),
-      });
-    } else if (event.result === Stairs.UpOneDownTwo) {
-      nodes.push({
-        kind: "table-preview",
-        id: "chamberDimensions",
-        title: "Chamber Dimensions",
-        sides: chamberDimensions.sides,
-        entries: chamberDimensions.entries.map((e) => ({ range: rangeText(e.range), label: ChamberDimensions[e.command] ?? String(e.command) })),
-      });
+    // Render pending child previews from resolver
+    if (outcome.type === "event" && outcome.children && Array.isArray(outcome.children)) {
+      for (const child of outcome.children) {
+        if (child.type !== "pending-roll") continue;
+        const preview = previewForPending(child);
+        if (preview) nodes.push(preview);
+      }
     }
     return nodes;
   }
@@ -473,6 +385,155 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     return nodes;
   }
   return nodes;
+}
+
+function isTableContext(x: unknown): x is TableContext {
+  if (!x || typeof x !== "object") return false;
+  const k = (x as { kind?: unknown }).kind;
+  if (k === "doorChain") return Array.isArray((x as { existing?: unknown }).existing);
+  if (k === "wandering") return typeof (x as { level?: unknown }).level === "number";
+  if (k === "exits") {
+    const o = x as { length?: unknown; width?: unknown; isRoom?: unknown };
+    return typeof o.length === "number" && typeof o.width === "number" && typeof o.isRoom === "boolean";
+  }
+  return false;
+}
+
+function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
+  const base = String(p.table.split(":")[0]);
+  switch (base) {
+    case "doorLocation":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Door Location",
+        sides: doorLocation.sides,
+        entries: doorLocation.entries.map((e) => ({ range: rangeText(e.range), label: DoorLocation[e.command] ?? String(e.command) })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case "sidePassages":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Side Passages",
+        sides: sidePassages.sides,
+        entries: sidePassages.entries.map((e) => ({ range: rangeText(e.range), label: SidePassages[e.command] ?? String(e.command) })),
+      };
+    case "passageTurns":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Passage Turns",
+        sides: passageTurns.sides,
+        entries: passageTurns.entries.map((e) => ({ range: rangeText(e.range), label: PassageTurns[e.command] ?? String(e.command) })),
+      };
+    case "chamberDimensions":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Chamber Dimensions",
+        sides: chamberDimensions.sides,
+        entries: chamberDimensions.entries.map((e) => ({ range: rangeText(e.range), label: ChamberDimensions[e.command] ?? String(e.command) })),
+      };
+    case "stairs":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Stairs",
+        sides: stairs.sides,
+        entries: stairs.entries.map((e) => ({ range: rangeText(e.range), label: Stairs[e.command] ?? String(e.command) })),
+      };
+    case "egress": {
+      const which = p.table.split(":")[1] as "one" | "two" | "three" | undefined;
+      const table = which === "one" ? egressOne : which === "two" ? egressTwo : egressThree;
+      const title = which === "one" ? "Egress (1 level)" : which === "two" ? "Egress (2 levels)" : "Egress (3 levels)";
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title,
+        sides: table.sides,
+        entries: table.entries.map((e) => ({ range: rangeText(e.range), label: Egress[e.command] ?? String(e.command) })),
+      };
+    }
+    case "chute":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Chute",
+        sides: chute.sides,
+        entries: chute.entries.map((e) => ({ range: rangeText(e.range), label: Chute[e.command] ?? String(e.command) })),
+      };
+    case "wanderingWhereFrom":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Where From",
+        sides: periodicCheck.sides,
+        entries: periodicCheck.entries
+          .filter((e) => e.command !== PeriodicCheck.WanderingMonster)
+          .map((e) => ({ range: rangeText(e.range), label: PeriodicCheck[e.command] ?? String(e.command) })),
+      };
+    case "monsterLevel": {
+      const parts = p.table.split(":");
+      const lvl = Number(parts[1] ?? 1) || 1;
+      const table = getMonsterTable(lvl);
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Monster Level",
+        sides: table.sides,
+        entries: table.entries.map((e) => ({ range: rangeText(e.range), label: MonsterLevel[e.command] ?? String(e.command) })),
+        context: { kind: "wandering", level: lvl } as TableContext,
+      };
+    }
+    case "galleryStairLocation":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Gallery Stair Location",
+        sides: galleryStairLocation.sides,
+        entries: galleryStairLocation.entries.map((e) => ({ range: rangeText(e.range), label: GalleryStairLocation[e.command] ?? String(e.command) })),
+      };
+    case "streamConstruction":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Stream Construction",
+        sides: streamConstruction.sides,
+        entries: streamConstruction.entries.map((e) => ({ range: rangeText(e.range), label: StreamConstruction[e.command] ?? String(e.command) })),
+      };
+    case "riverConstruction":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "River Construction",
+        sides: riverConstruction.sides,
+        entries: riverConstruction.entries.map((e) => ({ range: rangeText(e.range), label: RiverConstruction[e.command] ?? String(e.command) })),
+      };
+    case "chasmDepth":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Chasm Depth",
+        sides: chasmDepth.sides,
+        entries: chasmDepth.entries.map((e) => ({ range: rangeText(e.range), label: ChasmDepth[e.command] ?? String(e.command) })),
+      };
+    case "chasmConstruction":
+      return {
+        kind: "table-preview",
+        id: p.table,
+        title: "Chasm Construction",
+        sides: chasmConstruction.sides,
+        entries: chasmConstruction.entries.map((e) => ({ range: rangeText(e.range), label: ChasmConstruction[e.command] ?? String(e.command) })),
+      };
+    case "trickTrap": {
+      // Use existing trick/trap messages to build preview
+      const preview = trickTrapMessages({ detailMode: true });
+      const tp = preview.messages.find((m) => m.kind === "table-preview") as DungeonTablePreview | undefined;
+      return tp;
+    }
+  }
+  return undefined;
 }
 
 // COMPACT MODE: outcome -> render nodes with auto-resolved text (no previews)
@@ -717,7 +778,8 @@ function compactDoorText(existing: ("Left" | "Right")[] = []): string {
     doorCmd === DoorLocation.Left ? "Left" : doorCmd === DoorLocation.Right ? "Right" : "";
   if (loc === "") return prefix;
   if (existing.includes(loc)) {
-    return prefix + "There are no more doors. The main passage extends -- check again in 30'. ";
+    // On repeating the same left/right location, do not duplicate the location prefix.
+    return "There are no more doors. The main passage extends -- check again in 30'. ";
   }
   const reRoll = rollDice(periodicCheck.sides);
   const reCmd = getTableEntry(reRoll, periodicCheck);

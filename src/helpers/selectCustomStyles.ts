@@ -1,6 +1,7 @@
+type StyleObj = Record<string, unknown>;
 const customStyles: {
-  control: (provided: any) => any;
-  option: (provided: any) => any;
+  control: (provided: StyleObj) => StyleObj;
+  option: (provided: StyleObj) => StyleObj;
 } = {
   control: (provided) => ({
     ...provided,

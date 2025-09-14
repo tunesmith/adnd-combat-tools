@@ -34,4 +34,20 @@ describe("Compact: PeriodicCheck Door (adapter)", () => {
     );
     spy.mockRestore();
   });
+
+  test("Right then repeat Right yields single 'Right' prefix", () => {
+    const spy = jest.spyOn(dungeonLookup, "rollDice");
+    // Sequence: doorLocation Right (7), periodic recheck Door (3), doorLocation Right again (7)
+    spy
+      .mockImplementationOnce(() => 7) // doorLocation Right
+      .mockImplementationOnce(() => 3) // periodicCheck Door (continue chain)
+      .mockImplementationOnce(() => 7); // doorLocation Right again (repeat)
+    const { messages } = passageMessages({ roll: pickRollFor(PeriodicCheck.Door), detailMode: false, level: 1 });
+    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const text = para.text.trim();
+    const occurrences = (text.match(/A door is to the Right\./g) || []).length;
+    expect(occurrences).toBe(1);
+    expect(text.includes("There are no more doors. The main passage extends -- check again in 30'.")).toBe(true);
+    spy.mockRestore();
+  });
 });

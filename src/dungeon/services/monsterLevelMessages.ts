@@ -27,7 +27,7 @@ function parseLevelFromId(id: string): number {
 }
 
 function isWandering(ctx?: TableContext): ctx is Extract<TableContext, { kind: "wandering" }> {
-  return !!ctx && (ctx as any).kind === "wandering" && typeof (ctx as any).level === "number";
+  return !!ctx && ctx.kind === "wandering";
 }
 
 export const monsterLevelMessages = (

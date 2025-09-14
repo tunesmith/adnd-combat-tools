@@ -17,6 +17,7 @@
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript with strict settings (see `tsconfig.json`). Avoid `any`; add explicit types.
+- Project policy: Do not introduce `any` in source code. Prefer precise types or small type guards over `any` and avoid unnecessary type assertions.
 - Formatting: Prettier. Lint rules: `next/core-web-vitals` + Prettier. Run `npm run lint` before PRs.
 - Files: React components `PascalCase.tsx`; helpers/data `camelCase.ts`; CSS Modules `*.module.css`.
 - Keep functions pure in `helpers/` and `dungeon/helpers/` where possible; colocate domain data in `tables/`.
