@@ -200,6 +200,7 @@ Test strategy for the switch
 
 ## Updated Remaining Work (as of now)
 - `getPassageResult` has been removed and tests now assert adapter outputs directly. `wanderingMonsterResult` composes its where-from prefix via `services/compactWhereFrom`.
+- Phase 1 progress: `compactPeriodicText` no longer calls `sidePassageResults`, `passageTurnResults`, or `stairsResult`; compact strings for these are composed directly. Width special-cases still rely on `specialPassageResult`, and `UpOneDownTwo` still appends `chamberResult` (to be migrated in later phases).
 - Trick/Trap: Replace stub with a real table and messages, derive preview rows, and add any required subtables.
 - Door chain outcome (optional): Model door chain as a structured outcome (doorLocation sequence + rechecks) to avoid string-based label parsing in UI.
 - Registry extraction (optional): Move TABLE_ID_LIST/HEADINGS/RESOLVERS + `resolveViaRegistry` to a helper module.
