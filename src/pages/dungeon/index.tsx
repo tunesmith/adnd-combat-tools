@@ -74,7 +74,12 @@ type ExitsContext = {
 
 function isExitsContext(x: unknown): x is ExitsContext {
   if (!x || typeof x !== "object") return false;
-  const o = x as { kind?: unknown; length?: unknown; width?: unknown; isRoom?: unknown };
+  const o = x as {
+    kind?: unknown;
+    length?: unknown;
+    width?: unknown;
+    isRoom?: unknown;
+  };
   return (
     o.kind === "exits" &&
     typeof o.length === "number" &&
@@ -363,7 +368,7 @@ function renderNode(
         </ul>
       );
     case "table-preview": {
-      const tp = m as DungeonTablePreview;
+      const tp = m;
       const keyId = `${feedItemId}:${tp.id}`;
       const isCollapsed = !!(collapsed && collapsed[keyId]);
       const hasResolved = !!(resolved && resolved[keyId]);
@@ -812,7 +817,11 @@ function resolvePreview(
     const levelFromCtx = isWanderingContext(tp.context)
       ? tp.context.level
       : undefined;
-    const resolved = passageMessages({ roll: usedRoll, detailMode: true, level: levelFromCtx });
+    const resolved = passageMessages({
+      roll: usedRoll,
+      detailMode: true,
+      level: levelFromCtx,
+    });
     setFeed((prev) =>
       prev.map((fi) => {
         if (fi.id !== feedItemId) return fi;
@@ -944,7 +953,6 @@ function updateResolvedBlock(
   return { ...fi, messages: newMessages };
 }
 
-
 function filterForCompact(
   nodes: DungeonRenderNode[],
   action: ActionKind
@@ -987,18 +995,20 @@ function filterForDetail(
   return result;
 }
 
-function getRootPreviewNodes(action: ActionKind, dungeonLevel: number): DungeonRenderNode[] {
+function getRootPreviewNodes(
+  action: ActionKind,
+  dungeonLevel: number
+): DungeonRenderNode[] {
   // Render only the table preview node(s) for the selected action
   if (action === "door") {
     const { messages } = doorBeyondMessages({ detailMode: true });
-    return messages.filter(
-      (m) => m.kind === "table-preview"
-    ) as DungeonRenderNode[];
+    return messages.filter((m) => m.kind === "table-preview");
   }
-  const { messages } = passageMessages({ detailMode: true, level: dungeonLevel });
-  return messages.filter(
-    (m) => m.kind === "table-preview"
-  ) as DungeonRenderNode[];
+  const { messages } = passageMessages({
+    detailMode: true,
+    level: dungeonLevel,
+  });
+  return messages.filter((m) => m.kind === "table-preview");
 }
 
 export default DungeonIndexPage;
@@ -1133,7 +1143,8 @@ const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     dragonFiveOlderMessages({ roll, detailMode: true, context }).messages,
   dragonSix: ({ roll, context }) =>
     dragonSixMessages({ roll, detailMode: true, context }).messages,
-  human: ({ roll, context }) => humanMessages({ roll, detailMode: true, context }).messages,
+  human: ({ roll, context }) =>
+    humanMessages({ roll, detailMode: true, context }).messages,
   galleryStairLocation: ({ roll }) =>
     galleryStairLocationMessages({ roll, detailMode: true }).messages,
   galleryStairOccurrence: ({ roll }) =>
