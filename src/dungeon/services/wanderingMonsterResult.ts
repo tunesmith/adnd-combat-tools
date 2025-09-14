@@ -14,14 +14,7 @@ import {
   MonsterLevel,
 } from "../../tables/dungeon/monster/monsterLevel";
 import type { Table } from "../../tables/dungeon/dungeonTypes";
-import { monsterOneResult } from "./monster/monsterOneResult";
-import { monsterTwoResult } from "./monster/monsterTwoResult";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { PeriodicCheck, periodicCheck } from "../../tables/dungeon/periodicCheck";
-import { monsterThreeResult } from "./monster/monsterThreeResult";
-import { monsterFourResult } from "./monster/monsterFourResult";
-import { monsterFiveResult } from "./monster/monsterFiveResult";
-import { monsterSixResult } from "./monster/monsterSixResult";
+import { rollDice } from "../helpers/dungeonLookup";
 // Legacy aggregator retained for helpers; app no longer uses this string path.
 
 /**
@@ -31,41 +24,6 @@ import { monsterSixResult } from "./monster/monsterSixResult";
  *
  * @param level
  */
-export const wanderingMonsterResult = (level: number): string => {
-  let locationCommand: PeriodicCheck;
-  do {
-    const roll = rollDice(periodicCheck.sides);
-    locationCommand = getTableEntry(roll, periodicCheck);
-  } while (locationCommand === PeriodicCheck.WanderingMonster);
-  const passageResult = "Wandering Monster: ";
-
-  const table = getMonsterTable(level);
-  const roll = rollDice(table.sides);
-  const command = getTableEntry(roll, table);
-  console.log(`monsterLevel roll: ${roll} is ${MonsterLevel[command]}`);
-  switch (command) {
-    case MonsterLevel.One:
-      return passageResult + monsterOneResult(level);
-    case MonsterLevel.Two:
-      return passageResult + monsterTwoResult(level);
-    case MonsterLevel.Three:
-      return passageResult + monsterThreeResult(level);
-    case MonsterLevel.Four:
-      return passageResult + monsterFourResult(level);
-    case MonsterLevel.Five:
-      return passageResult + monsterFiveResult(level);
-    case MonsterLevel.Six:
-      return passageResult + monsterSixResult(level);
-    case MonsterLevel.Seven:
-      return "(TODO: Roll Monster for Level Seven)";
-    case MonsterLevel.Eight:
-      return "(TODO: Roll Monster for Level Eight)";
-    case MonsterLevel.Nine:
-      return "(TODO: Roll Monster for Level Nine)";
-    case MonsterLevel.Ten:
-      return "(TODO: Roll Monster for Level Ten)";
-  }
-};
 
 // I could use MonsterDistribution instead of the case fall-through
 // gets complained about.

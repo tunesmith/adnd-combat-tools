@@ -243,17 +243,16 @@ These services still return legacy strings or mix composition logic and must be 
   - all `...Result()` methods (e.g., `unusualShapeResult()`, circular/hex/etc. buckets)
 - `src/dungeon/services/unusualSizeResult.ts`
   - `unusualSizeResult()`
-- `src/dungeon/services/wanderingMonsterResult.ts`
-  - `wanderingMonsterResult()` (aggregator; UI no longer calls it — replace fully with outcome/adapters or remove)
+// Removed: `src/dungeon/services/wanderingMonsterResult.ts` legacy aggregator function
 
 Notes:
 - Some message-oriented helpers (e.g., `...Messages`) already exist and route through adapters; the goal is to have matching `resolve...()` outcome functions and eliminate `...Result()` string functions entirely.
 - The temporary `services/compactWhereFrom.ts` has been removed; adapters are the only source of compact strings for these flows.
 
 ## Current Snapshot (for session restarts)
-- Resolvers: periodicCheck, stairs, and specialPassage return outcomes with children; pending: passageTurns → passageWidth; rooms/chambers → exits + unusuals.
+- Resolvers: periodicCheck, stairs, and specialPassage return outcomes with children; passageTurns → passageWidth added; rooms/chambers → exits + unusuals pending.
 - Adapters: render pending children in detail via `previewForPending`; compact composition is centralized and no longer relies on service helpers.
-- Legacy: `getPassageResult` removed; `wanderingMonsterResult` kept only for helper exports (deprecated by UI); compactWhereFrom deleted.
+- Legacy: `getPassageResult` removed; legacy `wanderingMonsterResult` removed (helpers retained in the same module); `compactWhereFrom` deleted.
 - Tests: assert adapter outputs and preview staging; added compact door-chain test to ensure repeated side does not duplicate the prefix.
 
 ### Migration Outline (per service)
