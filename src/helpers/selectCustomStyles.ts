@@ -1,21 +1,16 @@
-type StyleObj = Record<string, unknown>;
-const customStyles: {
-  control: (provided: StyleObj) => StyleObj;
-  option: (provided: StyleObj) => StyleObj;
-} = {
-  control: (provided) => ({
+import type { CSSObjectWithLabel } from "react-select";
+
+const customStyles = {
+  control: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
     ...provided,
     backgroundColor: "#F0EFDD",
   }),
 
-  option: (provided) => {
-    // console.log(provided);
-    return {
-      ...provided,
-      backgroundColor: "#F0EFDD",
-      color: "black",
-    };
-  },
+  option: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    backgroundColor: "#F0EFDD",
+    color: "black",
+  }),
 };
 
 export default customStyles;
