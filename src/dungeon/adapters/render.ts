@@ -33,8 +33,8 @@ import { numberOfExits, NumberOfExits } from "../../tables/dungeon/numberOfExits
 import { unusualShape, UnusualShape } from "../../tables/dungeon/unusualShape";
 import { unusualSize, UnusualSize } from "../../tables/dungeon/unusualSize";
 import { exitMessages } from "../services/exitResult";
-import { unusualShapeResult } from "../services/unusualShapeResult";
-import { unusualSizeResult } from "../services/unusualSizeResult";
+import { unusualShapeMessages } from "../services/unusualShapeResult";
+import { unusualSizeMessages } from "../services/unusualSizeResult";
 
 function rangeText(range: number[]): string {
   return range.length === 1 ? `${range[0]}` : `${range[0]}–${range[range.length - 1]}`;
@@ -172,12 +172,12 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     }
     return nodes;
   }
-  if ((event as any).kind === "passageWidth") {
+  if (isPassageWidthEvent(event)) {
     const heading: DungeonMessage = { kind: "heading", level: 4, text: "Passage Width" };
-    const pw = event as unknown as { result: PassageWidth };
-    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${PassageWidth[pw.result]}`] };
+    const r = (event as { result: number }).result;
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${PassageWidth[r as PassageWidth]}`] };
     let text = "";
-    switch (pw.result) {
+    switch (r as PassageWidth) {
       case PassageWidth.FiveFeet:
         text = "The passage is 5' wide. ";
         break;
@@ -495,13 +495,13 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     }
     return nodes;
   }
-  if ((event as any).kind === "passageWidth") {
+  if (isPassageWidthEvent(event)) {
     const heading: DungeonMessage = { kind: "heading", level: 4, text: "Passage Width" };
-    const pw = event as unknown as { result: PassageWidth };
-    const label = PassageWidth[pw.result] ?? String(pw.result);
+    const r = (event as { result: number }).result;
+    const label = PassageWidth[r as PassageWidth] ?? String(r);
     const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
     let text = "";
-    switch (pw.result) {
+    switch (r as PassageWidth) {
       case PassageWidth.FiveFeet:
         text = "The passage is 5' wide. ";
         break;
@@ -520,7 +520,7 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
     }
     const nodes2: DungeonRenderNode[] = [heading, bullet];
     if (text) nodes2.push({ kind: "paragraph", text });
-    if (pw.result === PassageWidth.SpecialPassage) {
+    if ((r as PassageWidth) === PassageWidth.SpecialPassage) {
       const prev = previewForPending({ type: "pending-roll", table: "specialPassage" });
       if (prev) nodes2.push(prev);
     }
@@ -711,6 +711,12 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   return undefined;
 }
 
+function isPassageWidthEvent(ev: unknown): ev is { kind: "passageWidth"; result: PassageWidth } {
+  if (!ev || typeof ev !== "object") return false;
+  const o = ev as { kind?: unknown; result?: unknown };
+  return o.kind === "passageWidth" && typeof o.result === "number";
+}
+
 // COMPACT MODE: outcome -> render nodes with auto-resolved text (no previews)
 export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[] {
   if (outcome.type !== "event") return [];
@@ -822,7 +828,11 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
       const exits = exitMessages({ length: dims.length, width: dims.width, isRoom: true });
       for (const m of exits.messages) if (m.kind === "paragraph") text += m.text;
     } else {
-      text += unusualShapeResult() + unusualSizeResult() + "(TODO exits, contents, treasure) ";
+      const shape = unusualShapeMessages({});
+      for (const m of shape.messages) if (m.kind === "paragraph") text += m.text;
+      const size = unusualSizeMessages({});
+      for (const m of size.messages) if (m.kind === "paragraph") text += m.text;
+      text += "(TODO exits, contents, treasure) ";
     }
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
@@ -866,7 +876,11 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
       const exits = exitMessages({ length: dims.length, width: dims.width, isRoom: false });
       for (const m of exits.messages) if (m.kind === "paragraph") text += m.text;
     } else {
-      text += unusualShapeResult() + unusualSizeResult() + "(TODO exits, contents, treasure) ";
+      const shape = unusualShapeMessages({});
+      for (const m of shape.messages) if (m.kind === "paragraph") text += m.text;
+      const size = unusualSizeMessages({});
+      for (const m of size.messages) if (m.kind === "paragraph") text += m.text;
+      text += "(TODO exits, contents, treasure) ";
     }
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
