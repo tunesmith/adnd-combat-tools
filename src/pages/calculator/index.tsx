@@ -1,5 +1,7 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
-import Select, { SingleValue } from "react-select";
+import type { FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { SingleValue } from "react-select";
+import Select from "react-select";
 import {
   attackerClassOptions,
   getGeneralClass,
@@ -11,7 +13,7 @@ import { getArmorOptions } from "../../tables/armorType";
 import styles from "./calculator.module.css";
 import customStyles from "../../helpers/selectCustomStyles";
 import getToHit from "../../helpers/getToHit";
-import {
+import type {
   ArmorTypeOption,
   CreatureOption,
   LevelOption,

@@ -1,10 +1,16 @@
 import { createPortal } from "react-dom";
 import styles from "./battleModal.module.css";
-import Select, { SingleValue } from "react-select";
+import type { SingleValue } from "react-select";
+import Select from "react-select";
 import customStyles from "../../helpers/selectCustomStyles";
 import { attackerClassOptions } from "../../tables/attackerClass";
-import { Dispatch, FocusEvent, SetStateAction, MutableRefObject } from "react";
-import {
+import type {
+  Dispatch,
+  FocusEvent,
+  SetStateAction,
+  MutableRefObject,
+} from "react";
+import type {
   ArmorClassOption,
   ExpandedArmorTypeOption,
   CreatureOption,

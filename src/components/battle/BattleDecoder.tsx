@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { unzip } from "zlib";
 import Battle from "./Battle";
 import { expandedArmorTypes } from "../../tables/armorType";
-import { WeaponInfo, weapons } from "../../tables/weapon";
-import {
+import type { WeaponInfo } from "../../tables/weapon";
+import { weapons } from "../../tables/weapon";
+import type {
   CreatureV1,
   CreatureV2,
   CreatureV3,

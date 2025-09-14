@@ -2,6 +2,21 @@ import { getThac, getThaco } from "../tables/combatLevel";
 import { getGeneralClass, MONSTER } from "../tables/attackerClass";
 import { getWeaponAdjustment } from "../tables/weapon";
 
+/**
+ * h = (targetArmorClass + lookup(weapon, targetArmorType)), lookup(generalClass, level)
+ *
+ * So it's really
+ *
+ * h = (c - (a + b))
+ *
+ * where c and b are lookups
+ *
+ * @param attackerClass
+ * @param attackerLevel
+ * @param targetArmorType
+ * @param targetArmorClass
+ * @param attackerWeapon
+ */
 const getToHit = (
   attackerClass: number,
   attackerLevel: number,

@@ -4,7 +4,8 @@ import {
   getGeneralClass,
   MONSTER,
 } from "../../tables/attackerClass";
-import React, { FocusEvent, Dispatch, useRef, useState } from "react";
+import type { FocusEvent, Dispatch } from "react";
+import React, { useRef, useState } from "react";
 import {
   getLevelOptionsByCombatClass,
   monsterLevels,
@@ -21,16 +22,16 @@ import {
   DELETE_COLUMN,
   DELETE_ROW,
 } from "../../helpers/BattleMessage";
-import { SingleValue } from "react-select";
-import {
+import type { SingleValue } from "react-select";
+import type {
   ArmorClassOption,
   ExpandedArmorTypeOption,
   CreatureOption,
   LevelOption,
   WeaponOption,
 } from "../../types/option";
-import { Creature } from "../../types/creature";
-import { ReducerAction } from "./Battle";
+import type { Creature } from "../../types/creature";
+import type { ReducerAction } from "./Battle";
 
 interface BattleInputProps {
   row: number;
