@@ -1,4 +1,10 @@
-import type { DungeonOutcomeNode, PendingRoll } from '../domain/outcome';
+import type {
+  DoorChainLaterality,
+  DungeonOutcomeNode,
+  OutcomeEvent,
+  OutcomeEventNode,
+  PendingRoll,
+} from '../domain/outcome';
 import type {
   DungeonMessage,
   DungeonRenderNode,
@@ -67,7 +73,12 @@ import {
 } from '../../tables/dungeon/numberOfExits';
 import { unusualShape, UnusualShape } from '../../tables/dungeon/unusualShape';
 import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
+import { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnly';
 // detail-mode preview helpers remain for other flows; compact composition is local
+import {
+  resolveDoorLocation,
+  resolvePeriodicDoorOnly,
+} from '../domain/resolvers';
 
 function rangeText(range: number[]): string {
   return range.length === 1
@@ -1183,7 +1194,7 @@ export function toCompactRender(
     };
     const text =
       event.result === PeriodicCheck.Door
-        ? compactDoorText()
+        ? renderCompactDoorChain()
         : event.result === PeriodicCheck.WanderingMonster
         ? compactWanderingMonsterText(event.level)
         : compactPeriodicText(
@@ -1302,10 +1313,18 @@ export function toCompactRender(
     if (dims) {
       const area = dims.length * dims.width;
       // Mirror exits compact composition inline
-      if (area <= 600) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
-      else if (area <= 1200) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
-      else if (area <= 1600) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
-      else text += 'There is one additional exit. (TODO location, direction/width if passage) ';
+      if (area <= 600)
+        text +=
+          'There is one additional exit. (TODO location, direction/width if passage) ';
+      else if (area <= 1200)
+        text +=
+          'There is one additional exit. (TODO location, direction/width if passage) ';
+      else if (area <= 1600)
+        text +=
+          'There is one additional exit. (TODO location, direction/width if passage) ';
+      else
+        text +=
+          'There is one additional exit. (TODO location, direction/width if passage) ';
     } else {
       // Unusual shape/size compact composition inline
       // Shape
@@ -1394,10 +1413,18 @@ export function toCompactRender(
     if (dims) {
       const area = dims.length * dims.width;
       // Inline exits compact composition (chamber context behaves like passage)
-      if (area <= 600) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
-      else if (area <= 1200) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
-      else if (area <= 1600) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
-      else text += 'There is one additional exit. (TODO location, direction/width if passage) ';
+      if (area <= 600)
+        text +=
+          'There is one additional exit. (TODO location, direction/width if passage) ';
+      else if (area <= 1200)
+        text +=
+          'There is one additional exit. (TODO location, direction/width if passage) ';
+      else if (area <= 1600)
+        text +=
+          'There is one additional exit. (TODO location, direction/width if passage) ';
+      else
+        text +=
+          'There is one additional exit. (TODO location, direction/width if passage) ';
     } else {
       const rShape = rollDice(unusualShape.sides);
       const cShape = getTableEntry(rShape, unusualShape);
@@ -1829,34 +1856,115 @@ export function toCompactRender(
 }
 
 // Compact helpers live locally in the adapter to avoid service-level string APIs.
-function compactDoorText(existing: ('Left' | 'Right')[] = []): string {
-  const doorRoll = rollDice(doorLocation.sides);
-  const doorCmd = getTableEntry(doorRoll, doorLocation);
-  const prefix =
-    doorCmd === DoorLocation.Ahead
-      ? 'A door is Ahead. '
-      : `A door is to the ${DoorLocation[doorCmd]}. `;
-  if (doorCmd === DoorLocation.Ahead) return prefix;
-  const loc: 'Left' | 'Right' | '' =
-    doorCmd === DoorLocation.Left
+function renderCompactDoorChain(existing: DoorChainLaterality[] = []): string {
+  const events = rollDoorChain(existing);
+  if (!events.length) return 'A door is indicated. ';
+  return formatDoorChain(events);
+}
+
+function rollDoorChain(existing: DoorChainLaterality[]): OutcomeEventNode[] {
+  const resolved: OutcomeEventNode[] = [];
+  const queue: PendingRoll[] = [
+    {
+      type: 'pending-roll',
+      table: `doorLocation:${existing.length}`,
+      context: { kind: 'doorChain', existing: [...existing] },
+    },
+  ];
+  while (queue.length) {
+    const pending = queue.shift();
+    if (!pending) break;
+    const node = resolveDoorPending(pending);
+    if (!node || node.type !== 'event') continue;
+    resolved.push(node);
+    if (node.children) {
+      for (const child of node.children) {
+        if (child.type !== 'pending-roll') continue;
+        if (!isDoorChainTable(child.table)) continue;
+        queue.push(child);
+      }
+    }
+  }
+  return resolved;
+}
+
+function resolveDoorPending(
+  pending: PendingRoll
+): OutcomeEventNode | undefined {
+  const base = pending.table.split(':')[0] ?? '';
+  const existing = readDoorChainExisting(pending.context);
+  const sequence = parseDoorChainSequence(pending.table, existing.length);
+  if (base === 'doorLocation') {
+    const node = resolveDoorLocation({ existing, sequence });
+    return node.type === 'event' ? node : undefined;
+  }
+  if (base === 'periodicCheckDoorOnly') {
+    const node = resolvePeriodicDoorOnly({ existing, sequence });
+    return node.type === 'event' ? node : undefined;
+  }
+  return undefined;
+}
+
+function parseDoorChainSequence(table: string, fallback: number): number {
+  const parts = table.split(':');
+  if (parts.length >= 2) {
+    const seq = Number(parts[1]);
+    if (Number.isInteger(seq)) return seq;
+  }
+  return fallback;
+}
+
+function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
+  if (!isTableContext(context)) return [];
+  if (context.kind !== 'doorChain') return [];
+  const arr = Array.isArray(context.existing) ? context.existing : [];
+  return arr.filter(
+    (v): v is DoorChainLaterality => v === 'Left' || v === 'Right'
+  );
+}
+
+function isDoorChainTable(id: string): boolean {
+  const base = id.split(':')[0] ?? '';
+  return base === 'doorLocation' || base === 'periodicCheckDoorOnly';
+}
+
+function formatDoorChain(events: OutcomeEventNode[]): string {
+  let text = '';
+  for (const ev of events) {
+    if (ev.event.kind === 'doorLocation') {
+      text += formatDoorLocationEvent(ev.event);
+    } else if (ev.event.kind === 'periodicDoorOnly') {
+      text += formatPeriodicDoorOnlyEvent(ev.event);
+    }
+  }
+  return text;
+}
+
+function formatDoorLocationEvent(
+  event: Extract<OutcomeEvent, { kind: 'doorLocation' }>
+): string {
+  if (event.result === DoorLocation.Ahead) return 'A door is Ahead. ';
+  const lateral =
+    event.result === DoorLocation.Left
       ? 'Left'
-      : doorCmd === DoorLocation.Right
+      : event.result === DoorLocation.Right
       ? 'Right'
-      : '';
-  if (loc === '') return prefix;
-  if (existing.includes(loc)) {
-    // On repeating the same left/right location, do not duplicate the location prefix.
+      : undefined;
+  if (!lateral) return '';
+  const repeated = event.existingAfter.length === event.existingBefore.length;
+  if (repeated) {
     return "There are no more doors. The main passage extends -- check again in 30'. ";
   }
-  const reRoll = rollDice(periodicCheck.sides);
-  const reCmd = getTableEntry(reRoll, periodicCheck);
-  if (reCmd === PeriodicCheck.Door) {
-    return prefix + compactDoorText([...existing, loc]);
+  return `A door is to the ${lateral}. `;
+}
+
+function formatPeriodicDoorOnlyEvent(
+  event: Extract<OutcomeEvent, { kind: 'periodicDoorOnly' }>
+): string {
+  if (event.result === PeriodicCheckDoorOnly.Ignore) {
+    return "There are no other doors. The main passage extends -- check again in 30'. ";
   }
-  return (
-    prefix +
-    "There are no other doors. The main passage extends -- check again in 30'. "
-  );
+  return '';
 }
 
 function compactSpecialPassageSuffix(kind: SpecialPassage): string {
@@ -1986,7 +2094,7 @@ function compactPeriodicText(
     case PeriodicCheck.ContinueStraight:
       return "Continue straight -- check again in 60'. ";
     case PeriodicCheck.Door:
-      return compactDoorText();
+      return renderCompactDoorChain();
     case PeriodicCheck.SidePassage: {
       const roll = rollDice(sidePassages.sides);
       const cmd = getTableEntry(roll, sidePassages);
@@ -2170,7 +2278,7 @@ function compactWanderingMonsterText(level: number): string {
 
   let prefix = '';
   if (location === PeriodicCheck.Door) {
-    prefix = compactDoorText();
+    prefix = renderCompactDoorChain();
   } else {
     // Compose compact periodic text for where-from (non-door)
     prefix = compactPeriodicText(level, location, true);

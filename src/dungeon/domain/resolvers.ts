@@ -4,6 +4,7 @@ import {
   PeriodicCheck,
 } from '../../tables/dungeon/periodicCheck';
 import { doorBeyond } from '../../tables/dungeon/doorBeyond';
+import { doorLocation, DoorLocation } from '../../tables/dungeon/doorLocation';
 import type { DungeonOutcomeNode, OutcomeEvent } from './outcome';
 import { sidePassages } from '../../tables/dungeon/sidePassages';
 import { passageTurns } from '../../tables/dungeon/passageTurns';
@@ -29,6 +30,17 @@ import {
 } from '../../tables/dungeon/chambersRooms';
 import { unusualShape } from '../../tables/dungeon/unusualShape';
 import { unusualSize } from '../../tables/dungeon/unusualSize';
+import {
+  periodicCheckDoorOnly,
+  PeriodicCheckDoorOnly,
+} from '../../tables/dungeon/periodicCheckDoorOnly';
+import type { DoorChainLaterality } from './outcome';
+
+function toLaterality(loc: DoorLocation): DoorChainLaterality | undefined {
+  if (loc === DoorLocation.Left) return 'Left';
+  if (loc === DoorLocation.Right) return 'Right';
+  return undefined;
+}
 
 export function resolvePeriodicCheck(options?: {
   roll?: number;
@@ -98,6 +110,75 @@ export function resolveDoorBeyond(options?: {
       result: command,
       doorAhead: options?.doorAhead,
     },
+  };
+}
+
+export function resolveDoorLocation(options?: {
+  roll?: number;
+  existing?: DoorChainLaterality[];
+  sequence?: number;
+}): DungeonOutcomeNode {
+  const existingBefore = options?.existing ? [...options.existing] : [];
+  const usedRoll = options?.roll ?? rollDice(doorLocation.sides);
+  const command = getTableEntry(usedRoll, doorLocation);
+  const lateral = toLaterality(command);
+  const existingAfter = lateral
+    ? existingBefore.includes(lateral)
+      ? existingBefore
+      : [...existingBefore, lateral]
+    : existingBefore;
+  const sequence =
+    options?.sequence !== undefined ? options.sequence : existingBefore.length;
+  const children: DungeonOutcomeNode[] = [];
+  if (lateral && existingAfter.length > existingBefore.length) {
+    children.push({
+      type: 'pending-roll',
+      table: `periodicCheckDoorOnly:${sequence}`,
+      context: { kind: 'doorChain', existing: existingAfter },
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'doorLocation',
+      result: command,
+      existingBefore,
+      existingAfter,
+      sequence,
+    },
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolvePeriodicDoorOnly(options?: {
+  roll?: number;
+  existing?: DoorChainLaterality[];
+  sequence?: number;
+}): DungeonOutcomeNode {
+  const existing = options?.existing ? [...options.existing] : [];
+  const usedRoll = options?.roll ?? rollDice(periodicCheckDoorOnly.sides);
+  const command = getTableEntry(usedRoll, periodicCheckDoorOnly);
+  const sequence =
+    options?.sequence !== undefined ? options.sequence : existing.length;
+  const children: DungeonOutcomeNode[] = [];
+  if (command === PeriodicCheckDoorOnly.Door) {
+    children.push({
+      type: 'pending-roll',
+      table: `doorLocation:${sequence}`,
+      context: { kind: 'doorChain', existing },
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'periodicDoorOnly',
+      result: command,
+      existing,
+      sequence,
+    },
+    children: children.length ? children : undefined,
   };
 }
 
@@ -411,7 +492,9 @@ export function resolveChamberDimensions(options?: {
   };
 }
 
-export function resolveUnusualShape(options?: { roll?: number }): DungeonOutcomeNode {
+export function resolveUnusualShape(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(unusualShape.sides);
   const command = getTableEntry(usedRoll, unusualShape);
   return {
@@ -421,7 +504,9 @@ export function resolveUnusualShape(options?: { roll?: number }): DungeonOutcome
   };
 }
 
-export function resolveUnusualSize(options?: { roll?: number }): DungeonOutcomeNode {
+export function resolveUnusualSize(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(unusualSize.sides);
   const command = getTableEntry(usedRoll, unusualSize);
   return {

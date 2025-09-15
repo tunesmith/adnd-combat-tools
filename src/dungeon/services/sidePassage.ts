@@ -1,5 +1,8 @@
 import { SidePassages, sidePassages } from '../../tables/dungeon/sidePassages';
-import type { DungeonTablePreview, DungeonRenderNode } from '../../types/dungeon';
+import type {
+  DungeonTablePreview,
+  DungeonRenderNode,
+} from '../../types/dungeon';
 import { resolveSidePassages } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
 

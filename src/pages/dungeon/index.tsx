@@ -13,7 +13,6 @@ import { doorBeyondMessages } from '../../dungeon/services/doorBeyondResult';
 import { passageMessages } from '../../dungeon/services/passage';
 import { resolveViaRegistry } from '../../dungeon/helpers/registry';
 
-
 type ActionKind = 'passage' | 'door';
 
 type FeedItem = {
@@ -461,7 +460,6 @@ function resolvePreview(
     setOverrides((prev) => ({ ...prev, [tp.id]: undefined }));
   }
 
-
   // Try the generic registry first; if handled, stop here
   if (
     resolveViaRegistry(
@@ -474,7 +472,6 @@ function resolvePreview(
     )
   )
     return;
-
 }
 
 function filterForCompact(

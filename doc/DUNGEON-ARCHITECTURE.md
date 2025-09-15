@@ -99,29 +99,35 @@ This guide explains how the Dungeon feature is structured: what goes where, how 
   - Auto-collapses the preview and marks it as resolved.
 
 Think of the registry as a small “view controller” for preview resolution in detail mode. It does not compute rules; it only:
+
 - Parses preview ids and optional params.
 - Calls the appropriate resolver/renderer.
 - Patches the rendered feed and toggles UI state.
 
 ## Adding or Modifying a Table
 
-1) Add the table
+1. Add the table
+
 - Create `src/tables/dungeon/<table>.ts` with enum and `Table<T>`.
 
-2) Add a resolver (domain)
+2. Add a resolver (domain)
+
 - Implement `resolveXxx({ roll? }) => DungeonOutcomeNode`.
 - If the table implies subtables, push `children` with `pending-roll` nodes and/or carry `context`.
 
-3) Map to render (adapters)
+3. Map to render (adapters)
+
 - toDetailRender: add a branch for the event to create heading + bullet + preview mapping.
 - toCompactRender: compose final text for compact mode (no references to services).
 
-4) Register for detail-mode previews
+4. Register for detail-mode previews
+
 - Add to `TABLE_ID_LIST` and `TABLE_HEADINGS`.
 - Add a resolver entry to `TABLE_RESOLVERS` that returns messages via `toDetailRender(resolveXxx({ roll }))`.
 - For parameterized preview ids (e.g., `unusualSize:seq:extra`), parse params inside the registry entry.
 
-5) Tests
+5. Tests
+
 - Add focused tests under `src/tests/dungeon/**`:
   - Deterministic `rollDice` via `jest.spyOn(dungeonLookup, 'rollDice')`.
   - Assert exact compact strings for adapter outputs.
@@ -151,6 +157,7 @@ Think of the registry as a small “view controller” for preview resolution in
 ## FAQ / Subtleties
 
 - What exactly is a “message service” and who should call it?
+
   - A message service is a small function in `src/dungeon/services/**` that returns `DungeonRenderNode[]`. In detail mode and when no `roll` is provided, it emits a `table-preview`. Some services also help stage nested previews (e.g., unusual size roll‑again sequencing). They exist to keep preview assembly concise. Adapters may call them in detail mode only. Compact paths should not call them.
 
 - Why are some detail flows still using services?
@@ -163,14 +170,17 @@ Think of the registry as a small “view controller” for preview resolution in
 ## Alternative: Per-Outcome Renderers
 
 We currently centralize rendering in a single adapter file for both modes. An alternative is one renderer module per outcome (e.g., `render/periodicCheck.ts`, `render/doorBeyond.ts`) that exports two pure functions:
+
 - `renderDetail(event, roll, children) => DungeonRenderNode[]`
 - `renderCompact(event, roll) => DungeonRenderNode[]`
 
 Pros:
+
 - Higher cohesion; each outcome’s view logic is colocated and easier to navigate.
 - Simpler unit tests per outcome.
 
 Cons:
+
 - Shared preview-insertion utilities must be reused to avoid duplication.
 - Detail rendering sometimes depends on child previews; careful to accept `children` and reuse the shared preview mapper (`previewForPending`).
 

@@ -184,7 +184,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   doorBeyond: ({ roll }) => toDetailRender(resolveDoorBeyond({ roll })),
   periodicCheck: ({ roll, context }) => {
     const c = (context || {}) as { kind?: string; level?: number };
-    const level = c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
+    const level =
+      c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
     return toDetailRender(resolvePeriodicCheck({ roll, level }));
   },
   periodicCheckDoorOnly: ({ roll, context }) =>

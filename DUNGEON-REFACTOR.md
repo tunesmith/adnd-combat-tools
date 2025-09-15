@@ -43,9 +43,9 @@ Refactor is effectively complete. Optional next: normalize compact composition f
 
 ## Shortlist After That (optional, in order)
 
-1) Normalize compact adapters away from service helpers
-- For `egress/chute` and `exits`, either keep current message helpers (acceptable) or move compact composition fully into adapters for consistency. If we choose the latter, add small adapter helpers and then remove the string‑composition paths from those services.
+1. Normalize compact adapters away from service helpers
 
+- For `egress/chute` and `exits`, either keep current message helpers (acceptable) or move compact composition fully into adapters for consistency. If we choose the latter, add small adapter helpers and then remove the string‑composition paths from those services.
 
 ## Notes on Behavior Parity
 

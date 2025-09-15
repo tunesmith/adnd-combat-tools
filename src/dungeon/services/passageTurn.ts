@@ -6,7 +6,6 @@ import type {
 import { resolvePassageTurns } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
 
-
 export const passageTurnMessages = (options?: {
   roll?: number;
   detailMode?: boolean;

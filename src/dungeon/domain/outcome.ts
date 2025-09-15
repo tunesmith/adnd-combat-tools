@@ -12,6 +12,10 @@ import type {
 import type { NumberOfExits } from '../../tables/dungeon/numberOfExits';
 import type { UnusualShape } from '../../tables/dungeon/unusualShape';
 import type { UnusualSize } from '../../tables/dungeon/unusualSize';
+import type { DoorLocation } from '../../tables/dungeon/doorLocation';
+import type { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnly';
+
+export type DoorChainLaterality = 'Left' | 'Right';
 
 // Domain outcome event kinds cover high-level tables we resolve.
 export type OutcomeEvent =
@@ -22,6 +26,19 @@ export type OutcomeEvent =
       avoidMonster?: boolean;
     }
   | { kind: 'doorBeyond'; result: DoorBeyond; doorAhead?: boolean }
+  | {
+      kind: 'doorLocation';
+      result: DoorLocation;
+      existingBefore: DoorChainLaterality[];
+      existingAfter: DoorChainLaterality[];
+      sequence: number;
+    }
+  | {
+      kind: 'periodicDoorOnly';
+      result: PeriodicCheckDoorOnly;
+      existing: DoorChainLaterality[];
+      sequence: number;
+    }
   | { kind: 'sidePassages'; result: SidePassages }
   | { kind: 'passageTurns'; result: PassageTurns }
   | { kind: 'stairs'; result: Stairs }
