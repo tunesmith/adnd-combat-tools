@@ -78,6 +78,9 @@ import { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnl
 import {
   resolveDoorLocation,
   resolvePeriodicDoorOnly,
+  resolvePassageTurns,
+  resolvePassageWidth,
+  resolveSidePassages,
 } from '../domain/resolvers';
 
 function rangeText(range: number[]): string {
@@ -1193,15 +1196,9 @@ export function toCompactRender(
       items: [`roll: ${roll} — ${PeriodicCheck[event.result]}`],
     };
     const text =
-      event.result === PeriodicCheck.Door
-        ? renderCompactDoorChain()
-        : event.result === PeriodicCheck.WanderingMonster
+      event.result === PeriodicCheck.WanderingMonster
         ? compactWanderingMonsterText(event.level)
-        : compactPeriodicText(
-            event.level,
-            event.result,
-            event.avoidMonster ?? false
-          );
+        : renderCompactPeriodicOutcome(outcome);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1857,52 +1854,97 @@ export function toCompactRender(
 
 // Compact helpers live locally in the adapter to avoid service-level string APIs.
 function renderCompactDoorChain(existing: DoorChainLaterality[] = []): string {
-  const events = rollDoorChain(existing);
-  if (!events.length) return 'A door is indicated. ';
+  const root = resolveNodeForCompact({
+    type: 'pending-roll',
+    table: `doorLocation:${existing.length}`,
+    context: { kind: 'doorChain', existing: [...existing] },
+  });
+  if (!root) return 'A door is indicated. ';
+  const events = flattenOutcomeTree(root);
   return formatDoorChain(events);
 }
 
-function rollDoorChain(existing: DoorChainLaterality[]): OutcomeEventNode[] {
-  const resolved: OutcomeEventNode[] = [];
-  const queue: PendingRoll[] = [
-    {
-      type: 'pending-roll',
-      table: `doorLocation:${existing.length}`,
-      context: { kind: 'doorChain', existing: [...existing] },
-    },
-  ];
-  while (queue.length) {
-    const pending = queue.shift();
-    if (!pending) break;
-    const node = resolveDoorPending(pending);
-    if (!node || node.type !== 'event') continue;
-    resolved.push(node);
-    if (node.children) {
-      for (const child of node.children) {
-        if (child.type !== 'pending-roll') continue;
-        if (!isDoorChainTable(child.table)) continue;
-        queue.push(child);
-      }
-    }
+function flattenOutcomeTree(node: OutcomeEventNode): OutcomeEventNode[] {
+  const items: OutcomeEventNode[] = [node];
+  const childEvents = (node.children || []).filter(
+    (child): child is OutcomeEventNode => child.type === 'event'
+  );
+  for (const child of childEvents) {
+    items.push(...flattenOutcomeTree(child));
   }
-  return resolved;
+  return items;
 }
 
-function resolveDoorPending(
-  pending: PendingRoll
+function formatDoorChain(events: OutcomeEventNode[]): string {
+  let text = '';
+  for (const ev of events) {
+    if (ev.event.kind === 'doorLocation') {
+      text += formatDoorLocationEvent(ev.event);
+    } else if (ev.event.kind === 'periodicDoorOnly') {
+      text += formatPeriodicDoorOnlyEvent(ev.event);
+    }
+  }
+  return text;
+}
+
+function resolveNodeForCompact(
+  node: DungeonOutcomeNode,
+  depth = 0
 ): OutcomeEventNode | undefined {
+  if (depth > 16) return undefined;
+  if (node.type === 'event') {
+    const childEvents = resolveChildrenForCompact(node.children, depth + 1);
+    return {
+      type: 'event',
+      event: node.event,
+      roll: node.roll,
+      children: childEvents.length
+        ? (childEvents as unknown as DungeonOutcomeNode[])
+        : undefined,
+    };
+  }
+  const resolved = resolvePendingForCompact(node);
+  if (!resolved) return undefined;
+  return resolveNodeForCompact(resolved, depth + 1);
+}
+
+function resolveChildrenForCompact(
+  children: DungeonOutcomeNode[] | undefined,
+  depth = 0
+): OutcomeEventNode[] {
+  if (!children) return [];
+  const result: OutcomeEventNode[] = [];
+  for (const child of children) {
+    const resolved = resolveNodeForCompact(child, depth + 1);
+    if (resolved) result.push(resolved);
+  }
+  return result;
+}
+
+function resolvePendingForCompact(
+  pending: PendingRoll
+): DungeonOutcomeNode | undefined {
   const base = pending.table.split(':')[0] ?? '';
-  const existing = readDoorChainExisting(pending.context);
-  const sequence = parseDoorChainSequence(pending.table, existing.length);
-  if (base === 'doorLocation') {
-    const node = resolveDoorLocation({ existing, sequence });
-    return node.type === 'event' ? node : undefined;
+  switch (base) {
+    case 'doorLocation': {
+      const existing = readDoorChainExisting(pending.context);
+      const sequence = parseDoorChainSequence(pending.table, existing.length);
+      return resolveDoorLocation({ existing, sequence });
+    }
+    case 'periodicCheckDoorOnly': {
+      const existing = readDoorChainExisting(pending.context);
+      const sequence = parseDoorChainSequence(pending.table, existing.length);
+      return resolvePeriodicDoorOnly({ existing, sequence });
+    }
+    case 'sidePassages':
+      return resolveSidePassages({});
+    case 'passageTurns':
+      return resolvePassageTurns({});
+    case 'passageWidth':
+      return resolvePassageWidth({});
+    default:
+      return undefined;
   }
-  if (base === 'periodicCheckDoorOnly') {
-    const node = resolvePeriodicDoorOnly({ existing, sequence });
-    return node.type === 'event' ? node : undefined;
-  }
-  return undefined;
 }
 
 function parseDoorChainSequence(table: string, fallback: number): number {
@@ -1921,23 +1963,6 @@ function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
   return arr.filter(
     (v): v is DoorChainLaterality => v === 'Left' || v === 'Right'
   );
-}
-
-function isDoorChainTable(id: string): boolean {
-  const base = id.split(':')[0] ?? '';
-  return base === 'doorLocation' || base === 'periodicCheckDoorOnly';
-}
-
-function formatDoorChain(events: OutcomeEventNode[]): string {
-  let text = '';
-  for (const ev of events) {
-    if (ev.event.kind === 'doorLocation') {
-      text += formatDoorLocationEvent(ev.event);
-    } else if (ev.event.kind === 'periodicDoorOnly') {
-      text += formatPeriodicDoorOnlyEvent(ev.event);
-    }
-  }
-  return text;
 }
 
 function formatDoorLocationEvent(
@@ -1965,6 +1990,66 @@ function formatPeriodicDoorOnlyEvent(
     return "There are no other doors. The main passage extends -- check again in 30'. ";
   }
   return '';
+}
+
+function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'periodicCheck') return '';
+  const event = node.event;
+  switch (event.result) {
+    case PeriodicCheck.Door:
+      return renderCompactDoorChain();
+    case PeriodicCheck.SidePassage: {
+      const children = resolveChildrenForCompact(node.children);
+      const side = children.find(
+        (child) => child.event.kind === 'sidePassages'
+      );
+      if (!side) {
+        return compactPeriodicText(
+          event.level,
+          event.result,
+          event.avoidMonster ?? false
+        );
+      }
+      return formatSidePassageResult(side.event.result);
+    }
+    default:
+      return compactPeriodicText(
+        event.level,
+        event.result,
+        event.avoidMonster ?? false
+      );
+  }
+}
+
+function formatSidePassageResult(result: SidePassages): string {
+  switch (result) {
+    case SidePassages.Left90:
+      return "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";
+    case SidePassages.Right90:
+      return "A side passage branches right 90 degrees. Passages extend -- check again in 30'. ";
+    case SidePassages.Left45:
+      return "A side passage branches left 45 degrees ahead. Passages extend -- check again in 30'. ";
+    case SidePassages.Right45:
+      return "A side passage branches right 45 degrees ahead. Passages extend -- check again in 30'. ";
+    case SidePassages.Left135:
+      return "A side passage branches left 45 degrees behind (left 135 degrees). Passages extend -- check again in 30'. ";
+    case SidePassages.Right135:
+      return "A side passage branches right 45 degrees behind (right 135 degrees). Passages extend -- check again in 30'. ";
+    case SidePassages.LeftCurve45:
+      return "A side passage branches at a curve, 45 degrees left ahead. Passages extend -- check again in 30'. ";
+    case SidePassages.RightCurve45:
+      return "A side passage branches at a curve, 45 degrees right ahead. Passages extend -- check again in 30'. ";
+    case SidePassages.PassageT:
+      return "The passage reaches a 'T' intersection to either side. Passages extend -- check again in 30'. ";
+    case SidePassages.PassageY:
+      return "The passage reaches a 'Y' intersection, ahead 45 degrees to the left and right. Passages extend -- check again in 30'. ";
+    case SidePassages.FourWay:
+      return "The passage reaches a four-way intersection. Passages extend -- check again in 30'. ";
+    case SidePassages.PassageX:
+      return "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
+    default:
+      return "A side passage branches. Passages extend -- check again in 30'. ";
+  }
 }
 
 function compactSpecialPassageSuffix(kind: SpecialPassage): string {
