@@ -10,6 +10,8 @@ import type {
   ChamberDimensions,
 } from '../../tables/dungeon/chambersRooms';
 import type { NumberOfExits } from '../../tables/dungeon/numberOfExits';
+import type { UnusualShape } from '../../tables/dungeon/unusualShape';
+import type { UnusualSize } from '../../tables/dungeon/unusualSize';
 
 // Domain outcome event kinds cover high-level tables we resolve.
 export type OutcomeEvent =
@@ -33,7 +35,9 @@ export type OutcomeEvent =
       kind: 'numberOfExits';
       result: NumberOfExits;
       context: { length: number; width: number; isRoom: boolean };
-    };
+    }
+  | { kind: 'unusualShape'; result: UnusualShape }
+  | { kind: 'unusualSize'; result: UnusualSize };
 
 export type PendingRoll = {
   type: 'pending-roll';

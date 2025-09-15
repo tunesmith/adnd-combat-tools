@@ -787,6 +787,38 @@ export function toDetailRender(
     for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
     return nodes2;
   }
+  if (event.kind === 'unusualShape') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Unusual Shape',
+    };
+    const label = UnusualShape[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const res = unusualShapeMessages({ roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
+    return nodes2;
+  }
+  if (event.kind === 'unusualSize') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Unusual Size',
+    };
+    const label = UnusualSize[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const res = unusualSizeMessages({ roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
+    return nodes2;
+  }
   return nodes;
 }
 
@@ -1538,6 +1570,36 @@ export function toCompactRender(
       isRoom: ev.context.isRoom,
       roll,
     });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
+    return nodes2;
+  }
+  if (event.kind === 'unusualShape') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Unusual Shape',
+    };
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${UnusualShape[event.result]}`],
+    };
+    const res = unusualShapeMessages({ roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
+    return nodes2;
+  }
+  if (event.kind === 'unusualSize') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Unusual Size',
+    };
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${UnusualSize[event.result]}`],
+    };
+    const res = unusualSizeMessages({ roll });
     const nodes2: DungeonRenderNode[] = [heading, bullet];
     for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
     return nodes2;

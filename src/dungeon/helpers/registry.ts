@@ -42,6 +42,8 @@ import {
   resolveEgress,
   resolveChute,
   resolveNumberOfExits,
+  resolveUnusualShape,
+  resolveUnusualSize,
 } from '../domain/resolvers';
 import { toDetailRender } from '../adapters/render';
 import {
@@ -89,6 +91,8 @@ const TABLE_ID_LIST = [
   'chasmDepth',
   'chasmConstruction',
   'jumpingPlaceWidth',
+  'unusualShape',
+  'unusualSize',
   'circularContents',
   'circularShapePool',
   'circularShapeMagicPool',
@@ -135,6 +139,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   chasmDepth: 'Chasm Depth',
   chasmConstruction: 'Chasm Construction',
   jumpingPlaceWidth: 'Jumping Place Width',
+  unusualShape: 'Unusual Shape',
+  unusualSize: 'Unusual Size',
   circularContents: 'Circular Contents',
   circularShapePool: 'Pool',
   circularShapeMagicPool: 'Magic Pool Effect',
@@ -200,6 +206,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   chasmConstruction: ({ roll }) =>
     chasmConstructionMessages({ roll, detailMode: true }).messages,
   jumpingPlaceWidth: ({ roll }) => jumpingPlaceWidthMessages({ roll }).messages,
+  unusualShape: ({ roll }) => toDetailRender(resolveUnusualShape({ roll })),
+  unusualSize: ({ roll }) => toDetailRender(resolveUnusualSize({ roll })),
   circularContents: ({ roll }) =>
     circularContentsMessages({ roll, detailMode: true }).messages,
   circularShapePool: ({ roll }) =>

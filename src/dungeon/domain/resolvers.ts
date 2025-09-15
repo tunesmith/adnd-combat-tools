@@ -27,6 +27,8 @@ import {
   chamberDimensions,
   ChamberDimensions,
 } from '../../tables/dungeon/chambersRooms';
+import { unusualShape } from '../../tables/dungeon/unusualShape';
+import { unusualSize } from '../../tables/dungeon/unusualSize';
 
 export function resolvePeriodicCheck(options?: {
   roll?: number;
@@ -406,5 +408,25 @@ export function resolveChamberDimensions(options?: {
     roll: usedRoll,
     event,
     children: children.length ? children : undefined,
+  };
+}
+
+export function resolveUnusualShape(options?: { roll?: number }): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(unusualShape.sides);
+  const command = getTableEntry(usedRoll, unusualShape);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'unusualShape', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveUnusualSize(options?: { roll?: number }): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(unusualSize.sides);
+  const command = getTableEntry(usedRoll, unusualSize);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'unusualSize', result: command } as OutcomeEvent,
   };
 }
