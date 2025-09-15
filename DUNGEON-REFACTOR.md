@@ -27,20 +27,19 @@ This guide tracks the dungeon refactor. It focuses on why we’re doing it (obje
   - Side Passages, Passage Turns, Stairs compact strings are composed in the adapter (no legacy string helpers).
 - Phase 2 — Encode staging as outcome children: Complete.
   - Resolvers return child `pending-roll` nodes for width, special passage, egress/chute, room/chamber exits, unusual subtables, etc.
-- Phase 3 — Model exits and unusual tables as outcomes: Partially complete.
+- Phase 3 — Model exits and unusual tables as outcomes: Complete.
   - Exits (`numberOfExits`) are outcome‑based and adapted in detail/compact.
-  - Unusual Shape/Size are still message‑based helpers staged as previews; not yet modeled as outcome events.
+  - Unusual Shape/Size are outcome events; adapters map them; `unusualSize` preview chaining semantics preserved.
 - Phase 4 — Remove remaining legacy string functions: Largely complete for flows the UI uses.
   - Legacy string aggregators like `getPassageResult` and `wanderingMonsterResult` are no longer used by the UI.
   - Message helpers (door location, periodic door‑only, unusual tables, exits, egress/chute, room/chamber) remain by design and are used in detail adapters/registry; compact composition has been moved into the adapter.
 
 ## What’s Next (single, actionable step)
 
-Model Unusual Shape/Size as outcome events and map them in adapters.
+Refactor is effectively complete. Optional next: normalize compact composition for a few message-backed flows.
 
-- Add outcome kinds for `unusualShape` and `unusualSize` and resolvers that return those outcomes.
-- Update adapters to render these outcomes in detail (with roll bullets + preview consistency) and compact.
-- Route `unusualShape` and `unusualSize` through the registry so the page resolves them generically.
+- Option A: Move compact composition for `egress/chute/exits/unusual` fully into adapters to remove message-service dependencies in compact mode.
+- Option B: Keep as-is (acceptable), since current approach is consistent and well‑typed.
 
 ## Shortlist After That (optional, in order)
 

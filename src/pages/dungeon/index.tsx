@@ -13,12 +13,6 @@ import { doorBeyondMessages } from '../../dungeon/services/doorBeyondResult';
 import { passageMessages } from '../../dungeon/services/passage';
 import { resolveViaRegistry } from '../../dungeon/helpers/registry';
 
-type WanderingContext = { kind: 'wandering'; level: number };
-function isWanderingContext(x: unknown): x is WanderingContext {
-  if (!x || typeof x !== 'object') return false;
-  const o = x as { kind?: unknown; level?: unknown };
-  return o.kind === 'wandering' && typeof o.level === 'number';
-}
 
 type ActionKind = 'passage' | 'door';
 
@@ -467,7 +461,6 @@ function resolvePreview(
     setOverrides((prev) => ({ ...prev, [tp.id]: undefined }));
   }
 
-  const keyId = `${feedItemId}:${tp.id}`;
 
   // Try the generic registry first; if handled, stop here
   if (
