@@ -207,7 +207,18 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     chasmConstructionMessages({ roll, detailMode: true }).messages,
   jumpingPlaceWidth: ({ roll }) => jumpingPlaceWidthMessages({ roll }).messages,
   unusualShape: ({ roll }) => toDetailRender(resolveUnusualShape({ roll })),
-  unusualSize: ({ roll }) => toDetailRender(resolveUnusualSize({ roll })),
+  unusualSize: ({ roll, id }) => {
+    // Parse seq/extra from id if present: unusualSize:seq:extra
+    let seq = 0;
+    let extra = 0;
+    const parts = id.split(':');
+    if (parts.length >= 2) seq = Number(parts[1]) || 0;
+    if (parts.length >= 3) extra = Number(parts[2]) || 0;
+    // Use message helper to keep preview-chaining semantics (RollAgain) intact
+    // and preserve final size calculation with carried extra.
+    const { unusualSizeMessages } = require('../services/unusualSizeResult');
+    return unusualSizeMessages({ roll, detailMode: true, seq, extra }).messages;
+  },
   circularContents: ({ roll }) =>
     circularContentsMessages({ roll, detailMode: true }).messages,
   circularShapePool: ({ roll }) =>

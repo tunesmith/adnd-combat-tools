@@ -15,8 +15,6 @@ import { roomMessages } from '../../dungeon/services/roomResult';
 import { chamberMessages } from '../../dungeon/services/chamberResult';
 import { passageMessages } from '../../dungeon/services/passage';
 import { specialPassageMessages } from '../../dungeon/services/specialPassage';
-import { unusualShapeMessages } from '../../dungeon/services/unusualShapeResult';
-import { unusualSizeMessages } from '../../dungeon/services/unusualSizeResult';
 import { trickTrapMessages } from '../../dungeon/services/trickTrap';
 import {
   resolveViaRegistry,
@@ -699,54 +697,6 @@ function resolvePreview(
     );
     if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
     if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
-  }
-  if (tp.id === 'unusualShape') {
-    const resolved = unusualShapeMessages({ roll: usedRoll, detailMode: true });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          'Unusual Shape'
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-  }
-  if (tp.id === 'unusualSize' || tp.id.startsWith('unusualSize:')) {
-    let seq = 0;
-    let extra = 0;
-    if (tp.id.startsWith('unusualSize:')) {
-      const parts = tp.id.split(':');
-      seq = Number(parts[1]) || 0;
-      if (parts.length > 2) extra = Number(parts[2]) || 0;
-    }
-    const resolved = unusualSizeMessages({
-      roll: usedRoll,
-      detailMode: true,
-      seq,
-      extra,
-    });
-    setFeed((prev) =>
-      prev.map((fi) =>
-        updateResolvedBlock(
-          fi,
-          feedItemId,
-          tp.id,
-          resolved.messages,
-          'Unusual Size'
-        )
-      )
-    );
-    if (setCollapsed)
-      setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
-    if (setResolved)
-      setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
   }
   if (tp.id === 'periodicCheck') {
     const levelFromCtx = isWanderingContext(tp.context)
