@@ -1,6 +1,6 @@
-import { getThac, getThaco } from "../tables/combatLevel";
-import { getGeneralClass, MONSTER } from "../tables/attackerClass";
-import { getWeaponAdjustment } from "../tables/weapon";
+import { getThac, getThaco } from '../tables/combatLevel';
+import { getGeneralClass, MONSTER } from '../tables/attackerClass';
+import { getWeaponAdjustment } from '../tables/weapon';
 
 /**
  * h = (targetArmorClass + lookup(weapon, targetArmorType)), lookup(generalClass, level)

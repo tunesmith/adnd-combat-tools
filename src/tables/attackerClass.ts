@@ -12,18 +12,18 @@ export const MONK = 11;
 export const BARD = 12;
 
 const attackerClass = new Map<number, string>([
-  [MONSTER, "Monster"],
-  [CLERIC, "Cleric"],
-  [DRUID, "Druid"],
-  [FIGHTER, "Fighter"],
-  [RANGER, "Ranger"],
-  [PALADIN, "Paladin"],
-  [MAGIC_USER, "Magic-User"],
-  [ILLUSIONIST, "Illusionist"],
-  [THIEF, "Thief"],
-  [ASSASSIN, "Assassin"],
-  [MONK, "Monk"],
-  [BARD, "Bard"],
+  [MONSTER, 'Monster'],
+  [CLERIC, 'Cleric'],
+  [DRUID, 'Druid'],
+  [FIGHTER, 'Fighter'],
+  [RANGER, 'Ranger'],
+  [PALADIN, 'Paladin'],
+  [MAGIC_USER, 'Magic-User'],
+  [ILLUSIONIST, 'Illusionist'],
+  [THIEF, 'Thief'],
+  [ASSASSIN, 'Assassin'],
+  [MONK, 'Monk'],
+  [BARD, 'Bard'],
 ]);
 
 const classMap = new Map<number, number>([
