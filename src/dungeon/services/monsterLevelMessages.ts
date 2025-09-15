@@ -81,8 +81,9 @@ export const monsterLevelMessages = (options: {
   detailMode?: boolean;
   context?: TableContext;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
-  const dungeonLevel = isWandering(options.context)
-    ? options.context.level
+  const ctx = options.context;
+  const dungeonLevel = isWandering(ctx)
+    ? ctx.level
     : parseLevelFromId(options.id);
   const table = getMonsterTable(dungeonLevel);
   if (options.detailMode && options.roll === undefined) {
@@ -100,7 +101,7 @@ export const monsterLevelMessages = (options: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options.roll ?? rollDice(table.sides);
-  const lvl = getTableEntry(usedRoll, table) as MonsterLevel;
+  const lvl = getTableEntry(usedRoll, table);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -201,9 +202,8 @@ export const monsterOneMessages = (options?: {
   detailMode?: boolean;
   context?: TableContext;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
-  const dungeonLevel = isWandering(options?.context)
-    ? options!.context.level
-    : 1;
+  const ctx = options?.context;
+  const dungeonLevel = isWandering(ctx) ? ctx.level : 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',
@@ -219,7 +219,7 @@ export const monsterOneMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? rollDice(monsterOne.sides);
-  const cmd = getTableEntry(usedRoll, monsterOne) as MonsterOne;
+  const cmd = getTableEntry(usedRoll, monsterOne);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -259,9 +259,8 @@ export const monsterTwoMessages = (options?: {
   detailMode?: boolean;
   context?: TableContext;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
-  const dungeonLevel = isWandering(options?.context)
-    ? options!.context.level
-    : 1;
+  const ctx = options?.context;
+  const dungeonLevel = isWandering(ctx) ? ctx.level : 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',
@@ -277,7 +276,7 @@ export const monsterTwoMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? rollDice(monsterTwo.sides);
-  const cmd = getTableEntry(usedRoll, monsterTwo) as MonsterTwo;
+  const cmd = getTableEntry(usedRoll, monsterTwo);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -300,9 +299,8 @@ export const monsterThreeMessages = (options?: {
   detailMode?: boolean;
   context?: TableContext;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
-  const dungeonLevel = isWandering(options?.context)
-    ? options!.context.level
-    : 1;
+  const ctx = options?.context;
+  const dungeonLevel = isWandering(ctx) ? ctx.level : 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',
@@ -318,7 +316,7 @@ export const monsterThreeMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? rollDice(monsterThree.sides);
-  const cmd = getTableEntry(usedRoll, monsterThree) as MonsterThree;
+  const cmd = getTableEntry(usedRoll, monsterThree);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -355,9 +353,8 @@ export const monsterFourMessages = (options?: {
   detailMode?: boolean;
   context?: TableContext;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
-  const dungeonLevel = isWandering(options?.context)
-    ? options!.context.level
-    : 1;
+  const ctx = options?.context;
+  const dungeonLevel = isWandering(ctx) ? ctx.level : 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',
@@ -373,7 +370,7 @@ export const monsterFourMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? rollDice(monsterFour.sides);
-  const cmd = getTableEntry(usedRoll, monsterFour) as MonsterFour;
+  const cmd = getTableEntry(usedRoll, monsterFour);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -422,9 +419,8 @@ export const monsterFiveMessages = (options?: {
   detailMode?: boolean;
   context?: TableContext;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
-  const dungeonLevel = isWandering(options?.context)
-    ? options!.context.level
-    : 1;
+  const ctx = options?.context;
+  const dungeonLevel = isWandering(ctx) ? ctx.level : 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',
@@ -440,7 +436,7 @@ export const monsterFiveMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? rollDice(monsterFive.sides);
-  const cmd = getTableEntry(usedRoll, monsterFive) as MonsterFive;
+  const cmd = getTableEntry(usedRoll, monsterFive);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -489,9 +485,8 @@ export const monsterSixMessages = (options?: {
   detailMode?: boolean;
   context?: TableContext;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
-  const dungeonLevel = isWandering(options?.context)
-    ? options!.context.level
-    : 1;
+  const ctx = options?.context;
+  const dungeonLevel = isWandering(ctx) ? ctx.level : 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',
@@ -507,7 +502,7 @@ export const monsterSixMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? rollDice(monsterSix.sides);
-  const cmd = getTableEntry(usedRoll, monsterSix) as MonsterSix;
+  const cmd = getTableEntry(usedRoll, monsterSix);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -560,8 +555,9 @@ export const dragonThreeMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? 1;
-  const cmd = getTableEntry(usedRoll, dragonThree) as DragonThree;
-  const level = isWandering(options?.context) ? options!.context.level : 3;
+  const cmd = getTableEntry(usedRoll, dragonThree);
+  const ctx = options?.context;
+  const level = isWandering(ctx) ? ctx.level : 3;
   let text = '';
   const n = getNumberOfMonsters(3, level, 1, 1);
   switch (cmd) {
@@ -623,8 +619,9 @@ export const dragonFourYoungerMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? 1;
-  const cmd = getTableEntry(usedRoll, dragonFourYounger) as DragonFourYounger;
-  const level = isWandering(options?.context) ? options!.context.level : 4;
+  const cmd = getTableEntry(usedRoll, dragonFourYounger);
+  const ctx = options?.context;
+  const level = isWandering(ctx) ? ctx.level : 4;
   const n = getNumberOfMonsters(4, level, 1, 1);
   const make = (color: string, age: string, hp: number) =>
     formatMonsterCount(
@@ -698,8 +695,9 @@ export const dragonFourOlderMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? 1;
-  const cmd = getTableEntry(usedRoll, dragonFourOlder) as DragonFourOlder;
-  const level = isWandering(options?.context) ? options!.context.level : 4;
+  const cmd = getTableEntry(usedRoll, dragonFourOlder);
+  const ctx = options?.context;
+  const level = isWandering(ctx) ? ctx.level : 4;
   const n = getNumberOfMonsters(4, level, 1, 1);
   const make = (color: string, age: string, hp: number) =>
     formatMonsterCount(
@@ -773,8 +771,9 @@ export const dragonFiveYoungerMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? 1;
-  const cmd = getTableEntry(usedRoll, dragonFiveYounger) as DragonFiveYounger;
-  const level = isWandering(options?.context) ? options!.context.level : 5;
+  const cmd = getTableEntry(usedRoll, dragonFiveYounger);
+  const ctx = options?.context;
+  const level = isWandering(ctx) ? ctx.level : 5;
   const n = getNumberOfMonsters(5, level, 1, 1);
   const make = (color: string, age: string, hp: number) =>
     formatMonsterCount(
@@ -848,8 +847,9 @@ export const dragonFiveOlderMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? 1;
-  const cmd = getTableEntry(usedRoll, dragonFiveOlder) as DragonFiveOlder;
-  const level = isWandering(options?.context) ? options!.context.level : 5;
+  const cmd = getTableEntry(usedRoll, dragonFiveOlder);
+  const ctx = options?.context;
+  const level = isWandering(ctx) ? ctx.level : 5;
   const n = getNumberOfMonsters(5, level, 1, 1);
   const make = (color: string, age: string, hp: number) =>
     formatMonsterCount(
@@ -923,8 +923,9 @@ export const dragonSixMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const usedRoll = options?.roll ?? 1;
-  const cmd = getTableEntry(usedRoll, dragonSix) as DragonSix;
-  const level = isWandering(options?.context) ? options!.context.level : 6;
+  const cmd = getTableEntry(usedRoll, dragonSix);
+  const ctx = options?.context;
+  const level = isWandering(ctx) ? ctx.level : 6;
   const n = getNumberOfMonsters(6, level, 1, 1);
   const make = (color: string, age: string, hp: number) =>
     formatMonsterCount(
@@ -980,9 +981,8 @@ export const humanMessages = (options?: {
   detailMode?: boolean;
   context?: TableContext;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
-  const dungeonLevel = isWandering(options?.context)
-    ? options!.context.level
-    : 1;
+  const ctx = options?.context;
+  const dungeonLevel = isWandering(ctx) ? ctx.level : 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',

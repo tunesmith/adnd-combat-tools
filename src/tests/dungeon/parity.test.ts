@@ -42,22 +42,26 @@ function pickRollForDoorBeyond(cmd: DoorBeyond): number {
 }
 
 function pickRollForStairs(cmd: Stairs): number {
-  const entry = stairs.entries.find((e) => e.command === cmd)!;
+  const entry = stairs.entries.find((e) => e.command === cmd);
+  if (!entry) throw new Error('No entry for command');
   return entry.range[0];
 }
 
 function pickRollForRoom(cmd: RoomDimensions): number {
-  const entry = roomDimensions.entries.find((e) => e.command === cmd)!;
+  const entry = roomDimensions.entries.find((e) => e.command === cmd);
+  if (!entry) throw new Error('No entry for command');
   return entry.range[0];
 }
 
 function pickRollForChamber(cmd: ChamberDimensions): number {
-  const entry = chamberDimensions.entries.find((e) => e.command === cmd)!;
+  const entry = chamberDimensions.entries.find((e) => e.command === cmd);
+  if (!entry) throw new Error('No entry for command');
   return entry.range[0];
 }
 
 function pickRollForSpecialPassage(cmd: SpecialPassage): number {
-  const entry = specialPassage.entries.find((e) => e.command === cmd)!;
+  const entry = specialPassage.entries.find((e) => e.command === cmd);
+  if (!entry) throw new Error('No entry for command');
   return entry.range[0];
 }
 
@@ -93,7 +97,8 @@ describe('Phase 0 parity: Passage detail previews', () => {
       (m) => m.kind === 'table-preview'
     ) as DungeonTablePreview[];
     expect(previews.length).toBeGreaterThanOrEqual(1);
-    const first = previews[0]!;
+    const first = previews[0];
+    if (!first) throw new Error('Expected a preview');
     expect(first.id).toBe('periodicCheck');
   });
 
@@ -165,7 +170,8 @@ describe('Phase 0 parity: Door detail previews', () => {
       (m) => m.kind === 'table-preview'
     ) as DungeonTablePreview[];
     expect(previews.length).toBeGreaterThanOrEqual(1);
-    const first = previews[0]!;
+    const first = previews[0];
+    if (!first) throw new Error('Expected a preview');
     expect(first.id).toBe('doorBeyond');
   });
 
@@ -188,7 +194,9 @@ describe('Phase 0 parity: Door compact prefixes', () => {
       detailMode: false,
       doorAhead: false,
     });
-    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const para = (messages as DungeonMessage[]).find(isParagraph);
+    expect(para).toBeTruthy();
+    if (!para) throw new Error('Expected paragraph');
     expect(para.text.startsWith('Beyond the door is a parallel passage')).toBe(
       true
     );
@@ -201,7 +209,9 @@ describe('Phase 0 parity: Door compact prefixes', () => {
       detailMode: false,
       doorAhead: true,
     });
-    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const para = (messages as DungeonMessage[]).find(isParagraph);
+    expect(para).toBeTruthy();
+    if (!para) throw new Error('Expected paragraph');
     expect(para.text.startsWith("Beyond the door is a 10' x 10' room")).toBe(
       true
     );
@@ -210,7 +220,9 @@ describe('Phase 0 parity: Door compact prefixes', () => {
   test('Straight Ahead starts with expected text', () => {
     const roll = pickRollForDoorBeyond(DoorBeyond.PassageStraightAhead);
     const { messages } = doorBeyondMessages({ roll, detailMode: false });
-    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const para = (messages as DungeonMessage[]).find(isParagraph);
+    expect(para).toBeTruthy();
+    if (!para) throw new Error('Expected paragraph');
     expect(
       para.text.startsWith('Beyond the door is a passage straight ahead.')
     ).toBe(true);
@@ -343,6 +355,8 @@ describe('Phase 0 parity: Passage Width behavior', () => {
       (m) => (m as any).kind === 'paragraph'
     ) as Extract<DungeonMessage, { kind: 'paragraph' }>[];
     expect(paras.length).toBe(1);
-    expect(typeof paras[0]!.text).toBe('string');
+    const first = paras[0];
+    if (!first) throw new Error('Expected one paragraph');
+    expect(typeof first.text).toBe('string');
   });
 });

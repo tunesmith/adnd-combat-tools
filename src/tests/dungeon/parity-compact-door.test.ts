@@ -13,7 +13,8 @@ function isParagraph(
 }
 
 function pickRollFor(cmd: PeriodicCheck): number {
-  const entry = periodicCheck.entries.find((e) => e.command === cmd)!;
+  const entry = periodicCheck.entries.find((e) => e.command === cmd);
+  if (!entry) throw new Error('No entry for command');
   return entry.range[0];
 }
 
@@ -27,7 +28,9 @@ describe('Compact: PeriodicCheck Door (adapter)', () => {
       detailMode: false,
       level: 1,
     });
-    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const para = (messages as DungeonMessage[]).find(isParagraph);
+    expect(para).toBeTruthy();
+    if (!para) throw new Error('Expected paragraph');
     expect(para.text).toBe('A door is Ahead. ');
     spy.mockRestore();
   });
@@ -41,7 +44,9 @@ describe('Compact: PeriodicCheck Door (adapter)', () => {
       detailMode: false,
       level: 1,
     });
-    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const para = (messages as DungeonMessage[]).find(isParagraph);
+    expect(para).toBeTruthy();
+    if (!para) throw new Error('Expected paragraph');
     expect(para.text).toBe(
       "A door is to the Left. There are no other doors. The main passage extends -- check again in 30'. "
     );
@@ -60,7 +65,9 @@ describe('Compact: PeriodicCheck Door (adapter)', () => {
       detailMode: false,
       level: 1,
     });
-    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const para = (messages as DungeonMessage[]).find(isParagraph);
+    expect(para).toBeTruthy();
+    if (!para) throw new Error('Expected paragraph');
     const text = para.text.trim();
     const occurrences = (text.match(/A door is to the Right\./g) || []).length;
     expect(occurrences).toBe(1);

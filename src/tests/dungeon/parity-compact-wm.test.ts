@@ -26,7 +26,9 @@ describe('Compact: Wandering Monster (adapter)', () => {
       detailMode: false,
       level: 1,
     });
-    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const para = (messages as DungeonMessage[]).find(isParagraph);
+    expect(para).toBeTruthy();
+    if (!para) throw new Error('Expected paragraph');
     expect(para.text.trim()).toBe(
       'A door is Ahead. Wandering Monster: There are 3 skeletons.'
     );
@@ -49,7 +51,9 @@ describe('Compact: Wandering Monster (adapter)', () => {
       detailMode: false,
       level: 1,
     });
-    const para = (messages as DungeonMessage[]).find(isParagraph)!;
+    const para = (messages as DungeonMessage[]).find(isParagraph);
+    expect(para).toBeTruthy();
+    if (!para) throw new Error('Expected paragraph');
     expect(para.text.trim()).toBe(
       "A door is to the Left. There are no other doors. The main passage extends -- check again in 30'. Wandering Monster: There are 2 fire beetles."
     );

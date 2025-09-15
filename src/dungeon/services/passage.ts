@@ -58,9 +58,7 @@ export const passageMessages = (options?: {
     level,
     avoidMonster: options?.avoidMonster,
   });
-  const usedRoll = (node.type === 'event' ? node.roll : undefined) as
-    | number
-    | undefined;
+  const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);

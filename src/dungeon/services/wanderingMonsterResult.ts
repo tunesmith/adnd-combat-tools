@@ -11,8 +11,8 @@ import {
   dungeonTenEleven,
   dungeonTwelveThirteen,
   dungeonTwoThree,
-  MonsterLevel,
 } from '../../tables/dungeon/monster/monsterLevel';
+import type { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
 import type { Table } from '../../tables/dungeon/dungeonTypes';
 import { rollDice } from '../helpers/dungeonLookup';
 // Legacy aggregator retained for helpers; app no longer uses this string path.

@@ -12,8 +12,9 @@ function isPreview(n: DungeonRenderNode): n is DungeonTablePreview {
 describe('Door chain detail flow', () => {
   test('doorLocation preview uses sequence 0 when no context', () => {
     const { messages } = doorLocationMessages({ detailMode: true });
-    const p = messages.find(isPreview)!;
+    const p = messages.find(isPreview);
     expect(p).toBeTruthy();
+    if (!p) throw new Error('Expected preview');
     expect(p.id).toBe('doorLocation:0');
   });
 
@@ -25,8 +26,9 @@ describe('Door chain detail flow', () => {
     });
     const preview = messages.find(isPreview);
     expect(preview).toBeTruthy();
-    expect(preview!.id).toBe('periodicCheckDoorOnly:0');
-    expect(preview!.context && (preview!.context as any).existing).toEqual([
+    if (!preview) throw new Error('Expected preview');
+    expect(preview.id).toBe('periodicCheckDoorOnly:0');
+    expect(preview.context && (preview.context as any).existing).toEqual([
       'Left',
     ]);
   });
@@ -65,8 +67,9 @@ describe('Door chain detail flow', () => {
       detailMode: true,
       context: { kind: 'doorChain', existing: ['Left'] },
     });
-    const p = messages.find(isPreview)!;
+    const p = messages.find(isPreview);
     expect(p).toBeTruthy();
+    if (!p) throw new Error('Expected preview');
     expect(p.id).toBe('periodicCheckDoorOnly:1');
   });
 
@@ -76,8 +79,9 @@ describe('Door chain detail flow', () => {
       detailMode: true,
       context: { kind: 'doorChain', existing: ['Left', 'Right'] },
     });
-    const p = messages.find(isPreview)!;
+    const p = messages.find(isPreview);
     expect(p).toBeTruthy();
+    if (!p) throw new Error('Expected preview');
     expect(p.id).toBe('doorLocation:2');
     expect(p.context && (p.context as any).existing).toEqual(['Left', 'Right']);
   });

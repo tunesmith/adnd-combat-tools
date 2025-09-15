@@ -7,4 +7,4 @@ export enum Attribute {
   Charisma = 'CHA',
 }
 
-export interface Attributes extends Record<Attribute, number> {}
+export type Attributes = Record<Attribute, number>;

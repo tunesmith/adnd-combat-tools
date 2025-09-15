@@ -23,8 +23,13 @@ export const getMaxHenchmenForMember = (
   }
 
   // Single-class logic: Directly access the only profession
+  const [onlyProfession] = member.professions;
+  if (!onlyProfession) {
+    // Fallback: if no profession is present, defer to CHA-based limit
+    return maxHenchmenByCharisma;
+  }
   return getMaxHenchmenForProfession(
-    member.professions[0]!,
+    onlyProfession,
     mainParty,
     maxHenchmenByCharisma
   );
