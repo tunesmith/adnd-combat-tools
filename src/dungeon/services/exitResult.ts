@@ -1,9 +1,9 @@
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import {
   NumberOfExits,
   numberOfExits,
-} from "../../tables/dungeon/numberOfExits";
-import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+} from '../../tables/dungeon/numberOfExits';
+import type { DungeonMessage, DungeonTablePreview } from '../../types/dungeon';
 
 export const exitResult = (
   length: number,
@@ -16,41 +16,41 @@ export const exitResult = (
   switch (command) {
     case NumberOfExits.OneTwo600:
       if (length * width <= 600) {
-        return "There is one additional exit. (TODO location, direction/width if passage) ";
+        return 'There is one additional exit. (TODO location, direction/width if passage) ';
       } else {
-        return "There are two additional exits. (TODO location, direction/width if passage) ";
+        return 'There are two additional exits. (TODO location, direction/width if passage) ';
       }
     case NumberOfExits.TwoThree600:
       if (length * width <= 600) {
-        return "There are two additional exits. (TODO location, direction/width if passage) ";
+        return 'There are two additional exits. (TODO location, direction/width if passage) ';
       } else {
-        return "There are three additional exits. (TODO location, direction/width if passage) ";
+        return 'There are three additional exits. (TODO location, direction/width if passage) ';
       }
     case NumberOfExits.ThreeFour600:
       if (length * width <= 600) {
-        return "There are three additional exits. (TODO location, direction/width if passage) ";
+        return 'There are three additional exits. (TODO location, direction/width if passage) ';
       } else {
-        return "There are four additional exits. (TODO location, direction/width if passage) ";
+        return 'There are four additional exits. (TODO location, direction/width if passage) ';
       }
     case NumberOfExits.ZeroOne1200:
       if (length * width <= 1200) {
-        return "There are no exits here, other than the entrance. (TODO secret doors) ";
+        return 'There are no exits here, other than the entrance. (TODO secret doors) ';
       } else {
-        return "There is one additional exit. (TODO location, direction/width if passage) ";
+        return 'There is one additional exit. (TODO location, direction/width if passage) ';
       }
     case NumberOfExits.ZeroOne1600:
       if (length * width <= 1600) {
-        return "There are no exits here, other than the entrance. (TODO secret doors) ";
+        return 'There are no exits here, other than the entrance. (TODO secret doors) ';
       } else {
-        return "There is one additional exit. (TODO location, direction/width if passage) ";
+        return 'There is one additional exit. (TODO location, direction/width if passage) ';
       }
     case NumberOfExits.OneToFour:
-      return "There are 1d4 exits here, other than the entrance. (TODO d4, location, direction/width if passage) ";
+      return 'There are 1d4 exits here, other than the entrance. (TODO d4, location, direction/width if passage) ';
     case NumberOfExits.DoorChamberOrPassageRoom:
       if (isRoom) {
-        return "There is a passage exiting from the room. (TODO location/direction/width) ";
+        return 'There is a passage exiting from the room. (TODO location/direction/width) ';
       } else {
-        return "There is a door. (TODO location) ";
+        return 'There is a door. (TODO location) ';
       }
   }
 };
@@ -68,9 +68,9 @@ export const exitMessages = (options: {
   const isRoom = options.isRoom ?? false;
   if (options.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "numberOfExits",
-      title: "Exits",
+      kind: 'table-preview',
+      id: 'numberOfExits',
+      title: 'Exits',
       sides: numberOfExits.sides,
       entries: numberOfExits.entries.map((e) => ({
         range:
@@ -80,7 +80,7 @@ export const exitMessages = (options: {
         label: NumberOfExits[e.command] ?? String(e.command),
       })),
       context: {
-        kind: "exits",
+        kind: 'exits',
         length: options.length,
         width: options.width,
         isRoom,
@@ -95,52 +95,52 @@ export const exitMessages = (options: {
     case NumberOfExits.OneTwo600:
       text =
         options.length * options.width <= 600
-          ? "There is one additional exit. (TODO location, direction/width if passage) "
-          : "There are two additional exits. (TODO location, direction/width if passage) ";
+          ? 'There is one additional exit. (TODO location, direction/width if passage) '
+          : 'There are two additional exits. (TODO location, direction/width if passage) ';
       break;
     case NumberOfExits.TwoThree600:
       text =
         options.length * options.width <= 600
-          ? "There are two additional exits. (TODO location, direction/width if passage) "
-          : "There are three additional exits. (TODO location, direction/width if passage) ";
+          ? 'There are two additional exits. (TODO location, direction/width if passage) '
+          : 'There are three additional exits. (TODO location, direction/width if passage) ';
       break;
     case NumberOfExits.ThreeFour600:
       text =
         options.length * options.width <= 600
-          ? "There are three additional exits. (TODO location, direction/width if passage) "
-          : "There are four additional exits. (TODO location, direction/width if passage) ";
+          ? 'There are three additional exits. (TODO location, direction/width if passage) '
+          : 'There are four additional exits. (TODO location, direction/width if passage) ';
       break;
     case NumberOfExits.ZeroOne1200:
       text =
         options.length * options.width <= 1200
-          ? "There are no exits here, other than the entrance. (TODO secret doors) "
-          : "There is one additional exit. (TODO location, direction/width if passage) ";
+          ? 'There are no exits here, other than the entrance. (TODO secret doors) '
+          : 'There is one additional exit. (TODO location, direction/width if passage) ';
       break;
     case NumberOfExits.ZeroOne1600:
       text =
         options.length * options.width <= 1600
-          ? "There are no exits here, other than the entrance. (TODO secret doors) "
-          : "There is one additional exit. (TODO location, direction/width if passage) ";
+          ? 'There are no exits here, other than the entrance. (TODO secret doors) '
+          : 'There is one additional exit. (TODO location, direction/width if passage) ';
       break;
     case NumberOfExits.OneToFour:
       text =
-        "There are 1d4 exits here, other than the entrance. (TODO d4, location, direction/width if passage) ";
+        'There are 1d4 exits here, other than the entrance. (TODO d4, location, direction/width if passage) ';
       break;
     case NumberOfExits.DoorChamberOrPassageRoom:
       text = isRoom
-        ? "There is a passage exiting from the room. (TODO location/direction/width) "
-        : "There is a door. (TODO location) ";
+        ? 'There is a passage exiting from the room. (TODO location/direction/width) '
+        : 'There is a door. (TODO location) ';
       break;
   }
   const messages: DungeonMessage[] = [
-    { kind: "heading", level: 4, text: "Exits" },
+    { kind: 'heading', level: 4, text: 'Exits' },
     {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [
         `roll: ${usedRoll} — ${NumberOfExits[command] ?? String(command)}`,
       ],
     },
-    { kind: "paragraph", text },
+    { kind: 'paragraph', text },
   ];
   return { usedRoll, messages };
 };

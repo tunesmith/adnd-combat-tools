@@ -17,15 +17,15 @@ import {
   specialPassage,
   StreamConstruction,
   streamConstruction,
-} from "../../tables/dungeon/specialPassage";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+} from '../../tables/dungeon/specialPassage';
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import type {
   DungeonRenderNode,
   DungeonTablePreview,
   DungeonMessage,
-} from "../../types/dungeon";
-import { resolveSpecialPassage } from "../domain/resolvers";
-import { toCompactRender, toDetailRender } from "../adapters/render";
+} from '../../types/dungeon';
+import { resolveSpecialPassage } from '../domain/resolvers';
+import { toCompactRender, toDetailRender } from '../adapters/render';
 
 export const specialPassageMessages = (options?: {
   roll?: number;
@@ -33,9 +33,9 @@ export const specialPassageMessages = (options?: {
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "specialPassage",
-      title: "Special Passage",
+      kind: 'table-preview',
+      id: 'specialPassage',
+      title: 'Special Passage',
       sides: specialPassage.sides,
       entries: specialPassage.entries.map((e) => ({
         range:
@@ -48,7 +48,7 @@ export const specialPassageMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const node = resolveSpecialPassage({ roll: options?.roll });
-  const usedRoll = node.type === "event" ? node.roll : undefined;
+  const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);
@@ -68,9 +68,9 @@ export const galleryStairLocationMessages = (options?: {
       usedRoll: undefined,
       messages: [
         {
-          kind: "table-preview",
-          id: "galleryStairLocation",
-          title: "Gallery Stair Location",
+          kind: 'table-preview',
+          id: 'galleryStairLocation',
+          title: 'Gallery Stair Location',
           sides: galleryStairLocation.sides,
           entries: galleryStairLocation.entries.map((e) => ({
             range:
@@ -87,21 +87,21 @@ export const galleryStairLocationMessages = (options?: {
   const command = getTableEntry(usedRoll, galleryStairLocation);
   const text =
     command === GalleryStairLocation.PassageEnd
-      ? "Stairs up to the gallery will be at the end of the passage. "
-      : "Stairs up to the gallery are at the beginning of the passage. ";
+      ? 'Stairs up to the gallery will be at the end of the passage. '
+      : 'Stairs up to the gallery are at the beginning of the passage. ';
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
-    { kind: "heading", level: 4, text: "Gallery Stair Location" },
+    { kind: 'heading', level: 4, text: 'Gallery Stair Location' },
     {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${usedRoll} — ${GalleryStairLocation[command]}`],
     },
-    { kind: "paragraph", text },
+    { kind: 'paragraph', text },
   ];
   if (options?.detailMode && command === GalleryStairLocation.PassageEnd) {
     messages.push({
-      kind: "table-preview",
-      id: "galleryStairOccurrence",
-      title: "Gallery Stair Occurrence",
+      kind: 'table-preview',
+      id: 'galleryStairOccurrence',
+      title: 'Gallery Stair Occurrence',
       sides: galleryStairOccurrence.sides,
       entries: galleryStairOccurrence.entries.map((e) => ({
         range:
@@ -122,17 +122,17 @@ export const galleryStairOccurrenceMessages = (options?: {
   const command = getTableEntry(usedRoll, galleryStairOccurrence);
   const text =
     command === GalleryStairOccurrence.Replace
-      ? "If a stairway is otherwise indicated in or adjacent to the passage, it will replace the end stairs. "
-      : "If a stairway is otherwise indicated in or adjacent to the passage, it will supplement the end stairs. ";
+      ? 'If a stairway is otherwise indicated in or adjacent to the passage, it will replace the end stairs. '
+      : 'If a stairway is otherwise indicated in or adjacent to the passage, it will supplement the end stairs. ';
   return {
     usedRoll,
     messages: [
-      { kind: "heading", level: 4, text: "Gallery Stair Occurrence" },
+      { kind: 'heading', level: 4, text: 'Gallery Stair Occurrence' },
       {
-        kind: "bullet-list",
+        kind: 'bullet-list',
         items: [`roll: ${usedRoll} — ${GalleryStairOccurrence[command]}`],
       },
-      { kind: "paragraph", text },
+      { kind: 'paragraph', text },
     ],
   };
 };
@@ -149,9 +149,9 @@ export const streamConstructionMessages = (options?: {
       usedRoll: undefined,
       messages: [
         {
-          kind: "table-preview",
-          id: "streamConstruction",
-          title: "Stream Construction",
+          kind: 'table-preview',
+          id: 'streamConstruction',
+          title: 'Stream Construction',
           sides: streamConstruction.sides,
           entries: streamConstruction.entries.map((e) => ({
             range:
@@ -168,17 +168,17 @@ export const streamConstructionMessages = (options?: {
   const command = getTableEntry(usedRoll, streamConstruction);
   const text =
     command === StreamConstruction.Bridged
-      ? "A bridge crosses the stream. "
-      : "";
+      ? 'A bridge crosses the stream. '
+      : '';
   return {
     usedRoll,
     messages: [
-      { kind: "heading", level: 4, text: "Stream Construction" },
+      { kind: 'heading', level: 4, text: 'Stream Construction' },
       {
-        kind: "bullet-list",
+        kind: 'bullet-list',
         items: [`roll: ${usedRoll} — ${StreamConstruction[command]}`],
       },
-      { kind: "paragraph", text },
+      { kind: 'paragraph', text },
     ],
   };
 };
@@ -195,9 +195,9 @@ export const riverConstructionMessages = (options?: {
       usedRoll: undefined,
       messages: [
         {
-          kind: "table-preview",
-          id: "riverConstruction",
-          title: "River Construction",
+          kind: 'table-preview',
+          id: 'riverConstruction',
+          title: 'River Construction',
           sides: riverConstruction.sides,
           entries: riverConstruction.entries.map((e) => ({
             range:
@@ -213,21 +213,21 @@ export const riverConstructionMessages = (options?: {
   const usedRoll = options?.roll ?? rollDice(riverConstruction.sides);
   const command = getTableEntry(usedRoll, riverConstruction);
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
-    { kind: "heading", level: 4, text: "River Construction" },
+    { kind: 'heading', level: 4, text: 'River Construction' },
     {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${usedRoll} — ${RiverConstruction[command]}`],
     },
   ];
   if (command === RiverConstruction.Bridged) {
-    messages.push({ kind: "paragraph", text: "A bridge crosses the river. " });
+    messages.push({ kind: 'paragraph', text: 'A bridge crosses the river. ' });
   } else if (command === RiverConstruction.Boat) {
-    messages.push({ kind: "paragraph", text: "There is a boat. " });
+    messages.push({ kind: 'paragraph', text: 'There is a boat. ' });
     if (options?.detailMode) {
       messages.push({
-        kind: "table-preview",
-        id: "riverBoatBank",
-        title: "Boat Bank",
+        kind: 'table-preview',
+        id: 'riverBoatBank',
+        title: 'Boat Bank',
         sides: riverBoatBank.sides,
         entries: riverBoatBank.entries.map((e) => ({
           range:
@@ -249,17 +249,17 @@ export const riverBoatBankMessages = (options?: {
   const command = getTableEntry(usedRoll, riverBoatBank);
   const text =
     command === RiverBoatBank.ThisSide
-      ? "The boat is on this bank of the river. "
-      : "The boat is on the opposite bank of the river. ";
+      ? 'The boat is on this bank of the river. '
+      : 'The boat is on the opposite bank of the river. ';
   return {
     usedRoll,
     messages: [
-      { kind: "heading", level: 4, text: "Boat Bank" },
+      { kind: 'heading', level: 4, text: 'Boat Bank' },
       {
-        kind: "bullet-list",
+        kind: 'bullet-list',
         items: [`roll: ${usedRoll} — ${RiverBoatBank[command]}`],
       },
-      { kind: "paragraph", text },
+      { kind: 'paragraph', text },
     ],
   };
 };
@@ -276,9 +276,9 @@ export const chasmDepthMessages = (options?: {
       usedRoll: undefined,
       messages: [
         {
-          kind: "table-preview",
-          id: "chasmDepth",
-          title: "Chasm Depth",
+          kind: 'table-preview',
+          id: 'chasmDepth',
+          title: 'Chasm Depth',
           sides: chasmDepth.sides,
           entries: chasmDepth.entries.map((e) => ({
             range:
@@ -309,12 +309,12 @@ export const chasmDepthMessages = (options?: {
   return {
     usedRoll,
     messages: [
-      { kind: "heading", level: 4, text: "Chasm Depth" },
+      { kind: 'heading', level: 4, text: 'Chasm Depth' },
       {
-        kind: "bullet-list",
+        kind: 'bullet-list',
         items: [`roll: ${usedRoll} — ${ChasmDepth[command]}`],
       },
-      { kind: "paragraph", text },
+      { kind: 'paragraph', text },
     ],
   };
 };
@@ -331,9 +331,9 @@ export const chasmConstructionMessages = (options?: {
       usedRoll: undefined,
       messages: [
         {
-          kind: "table-preview",
-          id: "chasmConstruction",
-          title: "Chasm Construction",
+          kind: 'table-preview',
+          id: 'chasmConstruction',
+          title: 'Chasm Construction',
           sides: chasmConstruction.sides,
           entries: chasmConstruction.entries.map((e) => ({
             range:
@@ -349,21 +349,21 @@ export const chasmConstructionMessages = (options?: {
   const usedRoll = options?.roll ?? rollDice(chasmConstruction.sides);
   const command = getTableEntry(usedRoll, chasmConstruction);
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
-    { kind: "heading", level: 4, text: "Chasm Construction" },
+    { kind: 'heading', level: 4, text: 'Chasm Construction' },
     {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${usedRoll} — ${ChasmConstruction[command]}`],
     },
   ];
   if (command === ChasmConstruction.Bridged) {
-    messages.push({ kind: "paragraph", text: "A bridge crosses the chasm. " });
+    messages.push({ kind: 'paragraph', text: 'A bridge crosses the chasm. ' });
   } else if (command === ChasmConstruction.JumpingPlace) {
-    messages.push({ kind: "paragraph", text: "There is a jumping place. " });
+    messages.push({ kind: 'paragraph', text: 'There is a jumping place. ' });
     if (options?.detailMode) {
       messages.push({
-        kind: "table-preview",
-        id: "jumpingPlaceWidth",
-        title: "Jumping Place Width",
+        kind: 'table-preview',
+        id: 'jumpingPlaceWidth',
+        title: 'Jumping Place Width',
         sides: jumpingPlaceWidth.sides,
         entries: jumpingPlaceWidth.entries.map((e) => ({
           range:
@@ -376,8 +376,8 @@ export const chasmConstructionMessages = (options?: {
     }
   } else {
     messages.push({
-      kind: "paragraph",
-      text: "It has no bridge, and is too wide to jump across. ",
+      kind: 'paragraph',
+      text: 'It has no bridge, and is too wide to jump across. ',
     });
   }
   return { usedRoll, messages };
@@ -393,12 +393,12 @@ export const jumpingPlaceWidthMessages = (options?: {
   return {
     usedRoll,
     messages: [
-      { kind: "heading", level: 4, text: "Jumping Place Width" },
+      { kind: 'heading', level: 4, text: 'Jumping Place Width' },
       {
-        kind: "bullet-list",
+        kind: 'bullet-list',
         items: [`roll: ${usedRoll} — ${JumpingPlaceWidth[command]}`],
       },
-      { kind: "paragraph", text },
+      { kind: 'paragraph', text },
     ],
   };
 };

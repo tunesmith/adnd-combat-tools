@@ -1,5 +1,5 @@
-import { Attribute } from "../../../models/attributes";
-import { CharacterClass } from "../../../models/characterClass";
+import { Attribute } from '../../../models/attributes';
+import { CharacterClass } from '../../../models/characterClass';
 
 /**
  * These are the character class based adjustments to attribute

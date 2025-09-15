@@ -1,4 +1,4 @@
-import type { Command, Table } from "../../tables/dungeon/dungeonTypes";
+import type { Command, Table } from '../../tables/dungeon/dungeonTypes';
 
 export const rollDice = (sides: number, rolls: number = 1): number => {
   let total = 0;

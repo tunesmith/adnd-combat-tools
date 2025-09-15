@@ -1,18 +1,18 @@
-export type DungeonAction = "passage" | "door";
+export type DungeonAction = 'passage' | 'door';
 
 export type DungeonParagraph = {
-  kind: "paragraph";
+  kind: 'paragraph';
   text: string;
 };
 
 export type DungeonHeading = {
-  kind: "heading";
+  kind: 'heading';
   level?: 2 | 3 | 4;
   text: string;
 };
 
 export type DungeonBulletList = {
-  kind: "bullet-list";
+  kind: 'bullet-list';
   items: string[];
 };
 
@@ -29,7 +29,7 @@ export type RollTraceItem = {
 };
 
 export type DungeonRollTrace = {
-  kind: "roll-trace";
+  kind: 'roll-trace';
   items: RollTraceItem[];
 };
 
@@ -41,7 +41,7 @@ export type TablePreviewEntry = {
 };
 
 export type DungeonTablePreview = {
-  kind: "table-preview";
+  kind: 'table-preview';
   id: string; // stable identifier, e.g., table name
   title: string;
   sides: number;
@@ -50,9 +50,9 @@ export type DungeonTablePreview = {
 };
 
 export type TableContext =
-  | { kind: "exits"; length: number; width: number; isRoom: boolean }
-  | { kind: "doorChain"; existing: string[] }
-  | { kind: "wandering"; level: number };
+  | { kind: 'exits'; length: number; width: number; isRoom: boolean }
+  | { kind: 'doorChain'; existing: string[] }
+  | { kind: 'wandering'; level: number };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;
 

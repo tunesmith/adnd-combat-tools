@@ -1,12 +1,12 @@
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import {
   periodicCheck,
   PeriodicCheck,
-} from "../../tables/dungeon/periodicCheck";
-import { doorBeyond } from "../../tables/dungeon/doorBeyond";
-import type { DungeonOutcomeNode, OutcomeEvent } from "./outcome";
-import { sidePassages } from "../../tables/dungeon/sidePassages";
-import { passageTurns } from "../../tables/dungeon/passageTurns";
+} from '../../tables/dungeon/periodicCheck';
+import { doorBeyond } from '../../tables/dungeon/doorBeyond';
+import type { DungeonOutcomeNode, OutcomeEvent } from './outcome';
+import { sidePassages } from '../../tables/dungeon/sidePassages';
+import { passageTurns } from '../../tables/dungeon/passageTurns';
 import {
   stairs,
   Stairs,
@@ -14,19 +14,19 @@ import {
   egressTwo,
   egressThree,
   chute,
-} from "../../tables/dungeon/stairs";
-import { numberOfExits } from "../../tables/dungeon/numberOfExits";
+} from '../../tables/dungeon/stairs';
+import { numberOfExits } from '../../tables/dungeon/numberOfExits';
 import {
   specialPassage,
   SpecialPassage,
-} from "../../tables/dungeon/specialPassage";
-import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
+} from '../../tables/dungeon/specialPassage';
+import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import {
   roomDimensions,
   RoomDimensions,
   chamberDimensions,
   ChamberDimensions,
-} from "../../tables/dungeon/chambersRooms";
+} from '../../tables/dungeon/chambersRooms';
 
 export function resolvePeriodicCheck(options?: {
   roll?: number;
@@ -40,40 +40,40 @@ export function resolvePeriodicCheck(options?: {
   switch (command) {
     case PeriodicCheck.Door:
       children.push({
-        type: "pending-roll",
-        table: "doorLocation:0",
-        context: { kind: "doorChain", existing: [] },
+        type: 'pending-roll',
+        table: 'doorLocation:0',
+        context: { kind: 'doorChain', existing: [] },
       });
       break;
     case PeriodicCheck.SidePassage:
-      children.push({ type: "pending-roll", table: "sidePassages" });
+      children.push({ type: 'pending-roll', table: 'sidePassages' });
       break;
     case PeriodicCheck.PassageTurn:
-      children.push({ type: "pending-roll", table: "passageTurns" });
+      children.push({ type: 'pending-roll', table: 'passageTurns' });
       break;
     case PeriodicCheck.Chamber:
-      children.push({ type: "pending-roll", table: "chamberDimensions" });
+      children.push({ type: 'pending-roll', table: 'chamberDimensions' });
       break;
     case PeriodicCheck.Stairs:
-      children.push({ type: "pending-roll", table: "stairs" });
+      children.push({ type: 'pending-roll', table: 'stairs' });
       break;
     case PeriodicCheck.TrickTrap:
-      children.push({ type: "pending-roll", table: "trickTrap" });
+      children.push({ type: 'pending-roll', table: 'trickTrap' });
       break;
     case PeriodicCheck.WanderingMonster:
-      children.push({ type: "pending-roll", table: "wanderingWhereFrom" });
+      children.push({ type: 'pending-roll', table: 'wanderingWhereFrom' });
       children.push({
-        type: "pending-roll",
+        type: 'pending-roll',
         table: `monsterLevel:${level}`,
-        context: { kind: "wandering", level },
+        context: { kind: 'wandering', level },
       });
       break;
   }
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event: {
-      kind: "periodicCheck",
+      kind: 'periodicCheck',
       result: command,
       level,
       avoidMonster: options?.avoidMonster,
@@ -89,10 +89,10 @@ export function resolveDoorBeyond(options?: {
   const usedRoll = options?.roll ?? rollDice(doorBeyond.sides);
   const command = getTableEntry(usedRoll, doorBeyond);
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event: {
-      kind: "doorBeyond",
+      kind: 'doorBeyond',
       result: command,
       doorAhead: options?.doorAhead,
     },
@@ -105,10 +105,10 @@ export function resolveSidePassages(options?: {
   const usedRoll = options?.roll ?? rollDice(sidePassages.sides);
   const command = getTableEntry(usedRoll, sidePassages);
   const event: OutcomeEvent = {
-    kind: "sidePassages",
+    kind: 'sidePassages',
     result: command,
   } as OutcomeEvent;
-  return { type: "event", roll: usedRoll, event };
+  return { type: 'event', roll: usedRoll, event };
 }
 
 export function resolvePassageTurns(options?: {
@@ -117,37 +117,37 @@ export function resolvePassageTurns(options?: {
   const usedRoll = options?.roll ?? rollDice(passageTurns.sides);
   const command = getTableEntry(usedRoll, passageTurns);
   const event: OutcomeEvent = {
-    kind: "passageTurns",
+    kind: 'passageTurns',
     result: command,
   } as OutcomeEvent;
   // After a turn, determine passage width as a staged child in detail mode
   const children: DungeonOutcomeNode[] = [
-    { type: "pending-roll", table: "passageWidth" },
+    { type: 'pending-roll', table: 'passageWidth' },
   ];
-  return { type: "event", roll: usedRoll, event, children };
+  return { type: 'event', roll: usedRoll, event, children };
 }
 
 export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(stairs.sides);
   const command = getTableEntry(usedRoll, stairs);
   const event: OutcomeEvent = {
-    kind: "stairs",
+    kind: 'stairs',
     result: command,
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
   if (command === Stairs.DownOne) {
-    children.push({ type: "pending-roll", table: "egress:one" });
+    children.push({ type: 'pending-roll', table: 'egress:one' });
   } else if (command === Stairs.DownTwo) {
-    children.push({ type: "pending-roll", table: "egress:two" });
+    children.push({ type: 'pending-roll', table: 'egress:two' });
   } else if (command === Stairs.DownThree) {
-    children.push({ type: "pending-roll", table: "egress:three" });
+    children.push({ type: 'pending-roll', table: 'egress:three' });
   } else if (command === Stairs.UpDead || command === Stairs.DownDead) {
-    children.push({ type: "pending-roll", table: "chute" });
+    children.push({ type: 'pending-roll', table: 'chute' });
   } else if (command === Stairs.UpOneDownTwo) {
-    children.push({ type: "pending-roll", table: "chamberDimensions" });
+    children.push({ type: 'pending-roll', table: 'chamberDimensions' });
   }
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event,
     children: children.length ? children : undefined,
@@ -160,26 +160,26 @@ export function resolveSpecialPassage(options?: {
   const usedRoll = options?.roll ?? rollDice(specialPassage.sides);
   const command = getTableEntry(usedRoll, specialPassage);
   const event: OutcomeEvent = {
-    kind: "specialPassage",
+    kind: 'specialPassage',
     result: command,
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
   if (command === SpecialPassage.FiftyFeetGalleries) {
-    children.push({ type: "pending-roll", table: "galleryStairLocation" });
+    children.push({ type: 'pending-roll', table: 'galleryStairLocation' });
   } else if (command === SpecialPassage.TenFootStream) {
-    children.push({ type: "pending-roll", table: "streamConstruction" });
+    children.push({ type: 'pending-roll', table: 'streamConstruction' });
   } else if (
     command === SpecialPassage.TwentyFootRiver ||
     command === SpecialPassage.FortyFootRiver ||
     command === SpecialPassage.SixtyFootRiver
   ) {
-    children.push({ type: "pending-roll", table: "riverConstruction" });
+    children.push({ type: 'pending-roll', table: 'riverConstruction' });
   } else if (command === SpecialPassage.TwentyFootChasm) {
-    children.push({ type: "pending-roll", table: "chasmDepth" });
-    children.push({ type: "pending-roll", table: "chasmConstruction" });
+    children.push({ type: 'pending-roll', table: 'chasmDepth' });
+    children.push({ type: 'pending-roll', table: 'chasmConstruction' });
   }
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event,
     children: children.length ? children : undefined,
@@ -192,15 +192,15 @@ export function resolvePassageWidth(options?: {
   const usedRoll = options?.roll ?? rollDice(passageWidth.sides);
   const command = getTableEntry(usedRoll, passageWidth);
   const event: OutcomeEvent = {
-    kind: "passageWidth",
+    kind: 'passageWidth',
     result: command,
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
   if (command === PassageWidth.SpecialPassage) {
-    children.push({ type: "pending-roll", table: "specialPassage" });
+    children.push({ type: 'pending-roll', table: 'specialPassage' });
   }
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event,
     children: children.length ? children : undefined,
@@ -209,21 +209,21 @@ export function resolvePassageWidth(options?: {
 
 export function resolveEgress(options: {
   roll?: number;
-  which: "one" | "two" | "three";
+  which: 'one' | 'two' | 'three';
 }): DungeonOutcomeNode {
   const table =
-    options.which === "one"
+    options.which === 'one'
       ? egressOne
-      : options.which === "two"
+      : options.which === 'two'
       ? egressTwo
       : egressThree;
   const usedRoll = options.roll ?? rollDice(table.sides);
   const command = getTableEntry(usedRoll, table);
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event: {
-      kind: "egress",
+      kind: 'egress',
       result: command,
       which: options.which,
     } as OutcomeEvent,
@@ -234,9 +234,9 @@ export function resolveChute(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(chute.sides);
   const command = getTableEntry(usedRoll, chute);
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
-    event: { kind: "chute", result: command } as OutcomeEvent,
+    event: { kind: 'chute', result: command } as OutcomeEvent,
   };
 }
 
@@ -249,10 +249,10 @@ export function resolveNumberOfExits(options: {
   const usedRoll = options.roll ?? rollDice(numberOfExits.sides);
   const command = getTableEntry(usedRoll, numberOfExits);
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event: {
-      kind: "numberOfExits",
+      kind: 'numberOfExits',
       result: command,
       context: {
         length: options.length,
@@ -269,74 +269,74 @@ export function resolveRoomDimensions(options?: {
   const usedRoll = options?.roll ?? rollDice(roomDimensions.sides);
   const command = getTableEntry(usedRoll, roomDimensions);
   const event: OutcomeEvent = {
-    kind: "roomDimensions",
+    kind: 'roomDimensions',
     result: command,
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
   switch (command) {
     case RoomDimensions.Square10x10:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 10, width: 10, isRoom: true },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 10, width: 10, isRoom: true },
       });
       break;
     case RoomDimensions.Square20x20:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 20, width: 20, isRoom: true },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 20, width: 20, isRoom: true },
       });
       break;
     case RoomDimensions.Square30x30:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 30, width: 30, isRoom: true },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 30, width: 30, isRoom: true },
       });
       break;
     case RoomDimensions.Square40x40:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 40, width: 40, isRoom: true },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 40, width: 40, isRoom: true },
       });
       break;
     case RoomDimensions.Rectangular10x20:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 10, width: 20, isRoom: true },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 10, width: 20, isRoom: true },
       });
       break;
     case RoomDimensions.Rectangular20x30:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 20, width: 30, isRoom: true },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 20, width: 30, isRoom: true },
       });
       break;
     case RoomDimensions.Rectangular20x40:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 20, width: 40, isRoom: true },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 20, width: 40, isRoom: true },
       });
       break;
     case RoomDimensions.Rectangular30x40:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 30, width: 40, isRoom: true },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 30, width: 40, isRoom: true },
       });
       break;
     case RoomDimensions.Unusual:
-      children.push({ type: "pending-roll", table: "unusualShape" });
-      children.push({ type: "pending-roll", table: "unusualSize" });
+      children.push({ type: 'pending-roll', table: 'unusualShape' });
+      children.push({ type: 'pending-roll', table: 'unusualSize' });
       break;
   }
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event,
     children: children.length ? children : undefined,
@@ -349,60 +349,60 @@ export function resolveChamberDimensions(options?: {
   const usedRoll = options?.roll ?? rollDice(chamberDimensions.sides);
   const command = getTableEntry(usedRoll, chamberDimensions);
   const event: OutcomeEvent = {
-    kind: "chamberDimensions",
+    kind: 'chamberDimensions',
     result: command,
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
   switch (command) {
     case ChamberDimensions.Square20x20:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 20, width: 20, isRoom: false },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 20, width: 20, isRoom: false },
       });
       break;
     case ChamberDimensions.Square30x30:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 30, width: 30, isRoom: false },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 30, width: 30, isRoom: false },
       });
       break;
     case ChamberDimensions.Square40x40:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 40, width: 40, isRoom: false },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 40, width: 40, isRoom: false },
       });
       break;
     case ChamberDimensions.Rectangular20x30:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 20, width: 30, isRoom: false },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 20, width: 30, isRoom: false },
       });
       break;
     case ChamberDimensions.Rectangular30x50:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 30, width: 50, isRoom: false },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 30, width: 50, isRoom: false },
       });
       break;
     case ChamberDimensions.Rectangular40x60:
       children.push({
-        type: "pending-roll",
-        table: "numberOfExits",
-        context: { kind: "exits", length: 40, width: 60, isRoom: false },
+        type: 'pending-roll',
+        table: 'numberOfExits',
+        context: { kind: 'exits', length: 40, width: 60, isRoom: false },
       });
       break;
     case ChamberDimensions.Unusual:
-      children.push({ type: "pending-roll", table: "unusualShape" });
-      children.push({ type: "pending-roll", table: "unusualSize" });
+      children.push({ type: 'pending-roll', table: 'unusualShape' });
+      children.push({ type: 'pending-roll', table: 'unusualSize' });
       break;
   }
   return {
-    type: "event",
+    type: 'event',
     roll: usedRoll,
     event,
     children: children.length ? children : undefined,

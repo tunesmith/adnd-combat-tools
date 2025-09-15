@@ -1,5 +1,5 @@
-import type { CharacterSheet } from "../../models/character/characterSheet";
-import type { CharacterClass } from "../../models/characterClass";
+import type { CharacterSheet } from '../../models/character/characterSheet';
+import type { CharacterClass } from '../../models/characterClass';
 
 /**
  * Utility function to count the number of a list of classes within a party.

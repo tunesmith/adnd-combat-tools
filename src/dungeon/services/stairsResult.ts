@@ -7,15 +7,15 @@ import {
   egressTwo,
   Stairs,
   stairs,
-} from "../../tables/dungeon/stairs";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+} from '../../tables/dungeon/stairs';
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import type {
   DungeonRenderNode,
   DungeonTablePreview,
   DungeonMessage,
-} from "../../types/dungeon";
-import { resolveStairs } from "../domain/resolvers";
-import { toCompactRender, toDetailRender } from "../adapters/render";
+} from '../../types/dungeon';
+import { resolveStairs } from '../domain/resolvers';
+import { toCompactRender, toDetailRender } from '../adapters/render';
 
 export const stairsMessages = (options?: {
   roll?: number;
@@ -23,9 +23,9 @@ export const stairsMessages = (options?: {
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "stairs",
-      title: "Stairs",
+      kind: 'table-preview',
+      id: 'stairs',
+      title: 'Stairs',
       sides: stairs.sides,
       entries: stairs.entries.map((e) => ({
         range:
@@ -38,7 +38,7 @@ export const stairsMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const node = resolveStairs({ roll: options?.roll });
-  const usedRoll = node.type === "event" ? node.roll : undefined;
+  const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);
@@ -46,7 +46,7 @@ export const stairsMessages = (options?: {
 };
 
 export const egressMessages = (options: {
-  table: "one" | "two" | "three";
+  table: 'one' | 'two' | 'three';
   roll?: number;
   detailMode?: boolean;
 }): {
@@ -54,20 +54,20 @@ export const egressMessages = (options: {
   messages: (DungeonMessage | DungeonTablePreview)[];
 } => {
   const table =
-    options.table === "one"
+    options.table === 'one'
       ? egressOne
-      : options.table === "two"
+      : options.table === 'two'
       ? egressTwo
       : egressThree;
   const titleSuffix =
-    options.table === "one"
-      ? "(1 level)"
-      : options.table === "two"
-      ? "(2 levels)"
-      : "(3 levels)";
+    options.table === 'one'
+      ? '(1 level)'
+      : options.table === 'two'
+      ? '(2 levels)'
+      : '(3 levels)';
   if (options.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
+      kind: 'table-preview',
       id: `egress:${options.table}`,
       title: `Egress ${titleSuffix}`,
       sides: table.sides,
@@ -85,12 +85,12 @@ export const egressMessages = (options: {
   const command = getTableEntry(usedRoll, table);
   const text =
     command === Egress.Closed
-      ? "After descending, an unnoticed door will close egress for the day. "
-      : "";
+      ? 'After descending, an unnoticed door will close egress for the day. '
+      : '';
   const messages: DungeonMessage[] = [
-    { kind: "heading", level: 4, text: "Egress" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${Egress[command]}`] },
-    { kind: "paragraph", text },
+    { kind: 'heading', level: 4, text: 'Egress' },
+    { kind: 'bullet-list', items: [`roll: ${usedRoll} — ${Egress[command]}`] },
+    { kind: 'paragraph', text },
   ];
   return { usedRoll, messages };
 };
@@ -104,9 +104,9 @@ export const chuteMessages = (options?: {
 } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "chute",
-      title: "Chute",
+      kind: 'table-preview',
+      id: 'chute',
+      title: 'Chute',
       sides: chute.sides,
       entries: chute.entries.map((e) => ({
         range:
@@ -122,12 +122,12 @@ export const chuteMessages = (options?: {
   const command = getTableEntry(usedRoll, chute);
   const text =
     command === Chute.Exists
-      ? "The stairs will turn into a chute, descending two levels from the top. "
-      : "";
+      ? 'The stairs will turn into a chute, descending two levels from the top. '
+      : '';
   const messages: DungeonMessage[] = [
-    { kind: "heading", level: 4, text: "Chute" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${Chute[command]}`] },
-    { kind: "paragraph", text },
+    { kind: 'heading', level: 4, text: 'Chute' },
+    { kind: 'bullet-list', items: [`roll: ${usedRoll} — ${Chute[command]}`] },
+    { kind: 'paragraph', text },
   ];
   return { usedRoll, messages };
 };

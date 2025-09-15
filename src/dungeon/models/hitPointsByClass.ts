@@ -1,4 +1,4 @@
-import { CharacterClass } from "./characterClass";
+import { CharacterClass } from './characterClass';
 
 export interface HitDiceDetails {
   hitDie: number;

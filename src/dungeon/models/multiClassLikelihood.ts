@@ -1,4 +1,4 @@
-import { CharacterRace } from "../../tables/dungeon/monster/character/characterRace";
+import { CharacterRace } from '../../tables/dungeon/monster/character/characterRace';
 
 export const multiClassLikelihood: Record<CharacterRace, number> = {
   [CharacterRace.Human]: 0, // Humans cannot multi-class

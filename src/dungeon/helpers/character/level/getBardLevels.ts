@@ -1,6 +1,6 @@
-import type { BardLevels } from "../../../models/character/characterSheet";
-import { rollDice } from "../../dungeonLookup";
-import { CharacterClass } from "../../../models/characterClass";
+import type { BardLevels } from '../../../models/character/characterSheet';
+import { rollDice } from '../../dungeonLookup';
+import { CharacterClass } from '../../../models/characterClass';
 
 /**
  * Bards begin play as fighters, and they must remain exclusively fighters until they have achieved

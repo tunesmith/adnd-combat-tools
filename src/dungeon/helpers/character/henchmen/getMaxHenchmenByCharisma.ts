@@ -1,4 +1,4 @@
-import { henchmenByCharisma } from "../../../models/henchmenByCharisma";
+import { henchmenByCharisma } from '../../../models/henchmenByCharisma';
 
 /**
  * There's probably a better way to do the typescript that doesn't

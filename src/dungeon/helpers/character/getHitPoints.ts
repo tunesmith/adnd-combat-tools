@@ -1,8 +1,8 @@
-import type { CharacterProfession } from "../../models/character/characterSheet";
-import type { Attributes } from "../../models/attributes";
-import { hitPointsByClass } from "../../models/hitPointsByClass";
-import { getHitPointBonus } from "./getHitPointBonus";
-import { rollDice } from "../dungeonLookup";
+import type { CharacterProfession } from '../../models/character/characterSheet';
+import type { Attributes } from '../../models/attributes';
+import { hitPointsByClass } from '../../models/hitPointsByClass';
+import { getHitPointBonus } from './getHitPointBonus';
+import { rollDice } from '../dungeonLookup';
 
 /**
  * Sums up the hit points for the character in question.
@@ -36,7 +36,7 @@ import { rollDice } from "../dungeonLookup";
  */
 export const getHitPoints = (
   professions: CharacterProfession[],
-  constitution: Attributes["CON"],
+  constitution: Attributes['CON'],
   levelsToIgnore: number = 0
 ): number => {
   // Use reduce to calculate total hit points

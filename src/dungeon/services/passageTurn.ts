@@ -1,12 +1,12 @@
-import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
-import { passageWidthMessages } from "./passageWidth";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { passageTurns, PassageTurns } from '../../tables/dungeon/passageTurns';
+import { passageWidthMessages } from './passageWidth';
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import type {
   DungeonTablePreview,
   DungeonRenderNode,
-} from "../../types/dungeon";
-import { resolvePassageTurns } from "../domain/resolvers";
-import { toCompactRender, toDetailRender } from "../adapters/render";
+} from '../../types/dungeon';
+import { resolvePassageTurns } from '../domain/resolvers';
+import { toCompactRender, toDetailRender } from '../adapters/render';
 
 export const passageTurnResults = (): string => {
   const roll = rollDice(passageTurns.sides);
@@ -51,9 +51,9 @@ export const passageTurnMessages = (options?: {
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "passageTurns",
-      title: "Passage Turns",
+      kind: 'table-preview',
+      id: 'passageTurns',
+      title: 'Passage Turns',
       sides: passageTurns.sides,
       entries: passageTurns.entries.map((e) => ({
         range:
@@ -66,7 +66,7 @@ export const passageTurnMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const node = resolvePassageTurns({ roll: options?.roll });
-  const usedRoll = node.type === "event" ? node.roll : undefined;
+  const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);
@@ -75,7 +75,7 @@ export const passageTurnMessages = (options?: {
 
 function textWidth(): string {
   const width = passageWidthMessages({});
-  let text = "";
-  for (const m of width.messages) if (m.kind === "paragraph") text += m.text;
+  let text = '';
+  for (const m of width.messages) if (m.kind === 'paragraph') text += m.text;
   return text;
 }

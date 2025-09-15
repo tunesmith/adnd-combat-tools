@@ -1,6 +1,6 @@
-import type { CharacterSheet } from "../../models/character/characterSheet";
-import { incompatibleClasses } from "../../models/incompatibleClasses";
-import type { CharacterClass } from "../../models/characterClass";
+import type { CharacterSheet } from '../../models/character/characterSheet';
+import { incompatibleClasses } from '../../models/incompatibleClasses';
+import type { CharacterClass } from '../../models/characterClass';
 
 /**
  * Checks a party to see if a prospective candidate's class is

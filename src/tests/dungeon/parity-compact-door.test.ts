@@ -1,15 +1,15 @@
-import { passageMessages } from "../../dungeon/services/passage";
+import { passageMessages } from '../../dungeon/services/passage';
 import {
   periodicCheck,
   PeriodicCheck,
-} from "../../tables/dungeon/periodicCheck";
-import type { DungeonMessage } from "../../types/dungeon";
-import * as dungeonLookup from "../../dungeon/helpers/dungeonLookup";
+} from '../../tables/dungeon/periodicCheck';
+import type { DungeonMessage } from '../../types/dungeon';
+import * as dungeonLookup from '../../dungeon/helpers/dungeonLookup';
 
 function isParagraph(
   m: DungeonMessage
-): m is Extract<DungeonMessage, { kind: "paragraph"; text: string }> {
-  return (m as any).kind === "paragraph" && typeof (m as any).text === "string";
+): m is Extract<DungeonMessage, { kind: 'paragraph'; text: string }> {
+  return (m as any).kind === 'paragraph' && typeof (m as any).text === 'string';
 }
 
 function pickRollFor(cmd: PeriodicCheck): number {
@@ -17,9 +17,9 @@ function pickRollFor(cmd: PeriodicCheck): number {
   return entry.range[0];
 }
 
-describe("Compact: PeriodicCheck Door (adapter)", () => {
-  test("Ahead (dead end) exact text under controlled RNG", () => {
-    const spy = jest.spyOn(dungeonLookup, "rollDice");
+describe('Compact: PeriodicCheck Door (adapter)', () => {
+  test('Ahead (dead end) exact text under controlled RNG', () => {
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
     // Adapter compact path doorLocation: Ahead
     spy.mockImplementationOnce(() => 20);
     const { messages } = passageMessages({
@@ -28,12 +28,12 @@ describe("Compact: PeriodicCheck Door (adapter)", () => {
       level: 1,
     });
     const para = (messages as DungeonMessage[]).find(isParagraph)!;
-    expect(para.text).toBe("A door is Ahead. ");
+    expect(para.text).toBe('A door is Ahead. ');
     spy.mockRestore();
   });
 
-  test("Left then Ignore (no further door) exact text under controlled RNG", () => {
-    const spy = jest.spyOn(dungeonLookup, "rollDice");
+  test('Left then Ignore (no further door) exact text under controlled RNG', () => {
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
     // Adapter compact path: doorLocation Left (1), periodic recheck Ignore (1)
     spy.mockImplementationOnce(() => 1).mockImplementationOnce(() => 1);
     const { messages } = passageMessages({
@@ -49,7 +49,7 @@ describe("Compact: PeriodicCheck Door (adapter)", () => {
   });
 
   test("Right then repeat Right yields single 'Right' prefix", () => {
-    const spy = jest.spyOn(dungeonLookup, "rollDice");
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
     // Sequence: doorLocation Right (7), periodic recheck Door (3), doorLocation Right again (7)
     spy
       .mockImplementationOnce(() => 7) // doorLocation Right

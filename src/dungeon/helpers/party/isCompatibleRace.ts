@@ -1,6 +1,6 @@
-import type { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import type { CharacterSheet } from "../../models/character/characterSheet";
-import { incompatibleRaces } from "../../models/incompatibleRaces";
+import type { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
+import type { CharacterSheet } from '../../models/character/characterSheet';
+import { incompatibleRaces } from '../../models/incompatibleRaces';
 
 /**
  * Checks a party to see if a prospective candidate's race is

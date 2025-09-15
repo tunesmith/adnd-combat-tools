@@ -1,25 +1,25 @@
-import { rollAttribute } from "../../../../../dungeon/helpers/character/attributes/rollAttribute";
-import { Attribute } from "../../../../../dungeon/models/attributes";
-import { CharacterRace } from "../../../../../tables/dungeon/monster/character/characterRace";
-import { Gender } from "../../../../../dungeon/models/character/gender";
-import * as DiceUtils from "../../../../../dungeon/helpers/character/attributes/rollAttributeDice";
-import { CharacterClass } from "../../../../../dungeon/models/characterClass";
+import { rollAttribute } from '../../../../../dungeon/helpers/character/attributes/rollAttribute';
+import { Attribute } from '../../../../../dungeon/models/attributes';
+import { CharacterRace } from '../../../../../tables/dungeon/monster/character/characterRace';
+import { Gender } from '../../../../../dungeon/models/character/gender';
+import * as DiceUtils from '../../../../../dungeon/helpers/character/attributes/rollAttributeDice';
+import { CharacterClass } from '../../../../../dungeon/models/characterClass';
 
 jest.mock(
-  "../../../../../dungeon/helpers/character/attributes/rollAttributeDice",
+  '../../../../../dungeon/helpers/character/attributes/rollAttributeDice',
   () => ({
     rollAttributeDice: jest.fn(),
   })
 );
 
-describe("rollAttribute", () => {
+describe('rollAttribute', () => {
   const mockRollAttributeDice = DiceUtils.rollAttributeDice as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("should return a valid attribute score for a single-class human fighter", () => {
+  it('should return a valid attribute score for a single-class human fighter', () => {
     // Mock the dice roll to guarantee the same raw score
     mockRollAttributeDice.mockReturnValue(15);
 
@@ -35,7 +35,7 @@ describe("rollAttribute", () => {
     expect(result).toBe(17);
   });
 
-  it("should handle multi-class half-elf clerics with wisdom adjustment rule", () => {
+  it('should handle multi-class half-elf clerics with wisdom adjustment rule', () => {
     mockRollAttributeDice.mockReturnValue(10);
 
     const result = rollAttribute(
@@ -49,7 +49,7 @@ describe("rollAttribute", () => {
     expect(result).toBe(15);
   });
 
-  it("should apply racial bonuses and penalties correctly", () => {
+  it('should apply racial bonuses and penalties correctly', () => {
     mockRollAttributeDice.mockReturnValue(14);
 
     const result = rollAttribute(
@@ -63,7 +63,7 @@ describe("rollAttribute", () => {
     expect(result).toBe(16);
   });
 
-  it("should cap scores at racial maximums", () => {
+  it('should cap scores at racial maximums', () => {
     mockRollAttributeDice.mockReturnValue(20); // Simulate a raw roll above the max
 
     const result = rollAttribute(
@@ -77,7 +77,7 @@ describe("rollAttribute", () => {
     expect(result).toBe(12); // Half-Orcs have a charisma racial maximum of 12
   });
 
-  it("should handle fighter exceptional strength correctly", () => {
+  it('should handle fighter exceptional strength correctly', () => {
     mockRollAttributeDice.mockReturnValue(18);
 
     const result = rollAttribute(
@@ -92,7 +92,7 @@ describe("rollAttribute", () => {
     // Exceptional strength logic should apply (mock or test the exceptional strength function separately)
   });
 
-  it("should cap constitution for a F Elf F/MU", () => {
+  it('should cap constitution for a F Elf F/MU', () => {
     mockRollAttributeDice.mockReturnValue(23);
     const result = rollAttribute(
       Attribute.Constitution,

@@ -1,4 +1,4 @@
-import { CharacterClass } from "./characterClass";
+import { CharacterClass } from './characterClass';
 
 /**
  * These are the maximum numbers of character classes per generated

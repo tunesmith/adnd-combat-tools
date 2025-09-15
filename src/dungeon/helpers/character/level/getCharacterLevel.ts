@@ -1,4 +1,4 @@
-import { rollDice } from "../../dungeonLookup";
+import { rollDice } from '../../dungeonLookup';
 
 /**
  * The level of each character will be equal to that of the level of the

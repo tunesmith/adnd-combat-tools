@@ -3,20 +3,20 @@ import {
   DungeonRenderNode,
   DungeonTablePreview,
   TableContext,
-} from "../../types/dungeon";
+} from '../../types/dungeon';
 import {
   periodicCheck,
   PeriodicCheck,
-} from "../../tables/dungeon/periodicCheck";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
-import { sidePassages, SidePassages } from "../../tables/dungeon/sidePassages";
-import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
+} from '../../tables/dungeon/periodicCheck';
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
+import { doorLocation, DoorLocation } from '../../tables/dungeon/doorLocation';
+import { sidePassages, SidePassages } from '../../tables/dungeon/sidePassages';
+import { passageTurns, PassageTurns } from '../../tables/dungeon/passageTurns';
 import {
   chamberDimensions,
   ChamberDimensions,
-} from "../../tables/dungeon/chambersRooms";
-import { stairs, Stairs } from "../../tables/dungeon/stairs";
+} from '../../tables/dungeon/chambersRooms';
+import { stairs, Stairs } from '../../tables/dungeon/stairs';
 
 function rangeText(range: number[]): string {
   return range.length === 1
@@ -31,9 +31,9 @@ export const wanderingWhereFromMessages = (options?: {
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "wanderingWhereFrom",
-      title: "Where From",
+      kind: 'table-preview',
+      id: 'wanderingWhereFrom',
+      title: 'Where From',
       sides: periodicCheck.sides,
       entries: periodicCheck.entries
         .filter((e) => e.command !== PeriodicCheck.WanderingMonster)
@@ -53,34 +53,34 @@ export const wanderingWhereFromMessages = (options?: {
     cmd = PeriodicCheck.ContinueStraight;
   }
   const heading: DungeonMessage = {
-    kind: "heading",
+    kind: 'heading',
     level: 4,
-    text: "Where From",
+    text: 'Where From',
   };
   const bullet: DungeonMessage = {
-    kind: "bullet-list",
+    kind: 'bullet-list',
     items: [`roll: ${usedRoll} — ${PeriodicCheck[cmd]}`],
   };
   const messages: DungeonRenderNode[] = [heading, bullet];
   if (cmd === PeriodicCheck.Door) {
-    messages.push({ kind: "paragraph", text: "A closed door is indicated." });
+    messages.push({ kind: 'paragraph', text: 'A closed door is indicated.' });
     messages.push({
-      kind: "table-preview",
-      id: "doorLocation:0",
-      title: "Door Location",
+      kind: 'table-preview',
+      id: 'doorLocation:0',
+      title: 'Door Location',
       sides: doorLocation.sides,
       entries: doorLocation.entries.map((e) => ({
         range: rangeText(e.range),
         label: DoorLocation[e.command] ?? String(e.command),
       })),
-      context: { kind: "doorChain", existing: [] } as TableContext,
+      context: { kind: 'doorChain', existing: [] } as TableContext,
     });
   } else if (cmd === PeriodicCheck.SidePassage) {
-    messages.push({ kind: "paragraph", text: "A side passage occurs." });
+    messages.push({ kind: 'paragraph', text: 'A side passage occurs.' });
     messages.push({
-      kind: "table-preview",
-      id: "sidePassages",
-      title: "Side Passages",
+      kind: 'table-preview',
+      id: 'sidePassages',
+      title: 'Side Passages',
       sides: sidePassages.sides,
       entries: sidePassages.entries.map((e) => ({
         range: rangeText(e.range),
@@ -88,11 +88,11 @@ export const wanderingWhereFromMessages = (options?: {
       })),
     });
   } else if (cmd === PeriodicCheck.PassageTurn) {
-    messages.push({ kind: "paragraph", text: "The passage turns." });
+    messages.push({ kind: 'paragraph', text: 'The passage turns.' });
     messages.push({
-      kind: "table-preview",
-      id: "passageTurns",
-      title: "Passage Turns",
+      kind: 'table-preview',
+      id: 'passageTurns',
+      title: 'Passage Turns',
       sides: passageTurns.sides,
       entries: passageTurns.entries.map((e) => ({
         range: rangeText(e.range),
@@ -101,13 +101,13 @@ export const wanderingWhereFromMessages = (options?: {
     });
   } else if (cmd === PeriodicCheck.Chamber) {
     messages.push({
-      kind: "paragraph",
-      text: "The passage opens into a chamber. ",
+      kind: 'paragraph',
+      text: 'The passage opens into a chamber. ',
     });
     messages.push({
-      kind: "table-preview",
-      id: "chamberDimensions",
-      title: "Chamber Dimensions",
+      kind: 'table-preview',
+      id: 'chamberDimensions',
+      title: 'Chamber Dimensions',
       sides: chamberDimensions.sides,
       entries: chamberDimensions.entries.map((e) => ({
         range: rangeText(e.range),
@@ -115,11 +115,11 @@ export const wanderingWhereFromMessages = (options?: {
       })),
     });
   } else if (cmd === PeriodicCheck.Stairs) {
-    messages.push({ kind: "paragraph", text: "Stairs are indicated here." });
+    messages.push({ kind: 'paragraph', text: 'Stairs are indicated here.' });
     messages.push({
-      kind: "table-preview",
-      id: "stairs",
-      title: "Stairs",
+      kind: 'table-preview',
+      id: 'stairs',
+      title: 'Stairs',
       sides: stairs.sides,
       entries: stairs.entries.map((e) => ({
         range: rangeText(e.range),
@@ -129,7 +129,7 @@ export const wanderingWhereFromMessages = (options?: {
   } else {
     // ContinueStraight / DeadEnd / TrickTrap
     messages.push({
-      kind: "paragraph",
+      kind: 'paragraph',
       text: `Appears from: ${PeriodicCheck[cmd]}. `,
     });
   }

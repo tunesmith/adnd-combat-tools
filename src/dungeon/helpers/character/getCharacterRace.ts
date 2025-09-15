@@ -1,8 +1,8 @@
 import {
   characterRace,
   CharacterRace,
-} from "../../../tables/dungeon/monster/character/characterRace";
-import { getTableEntry, rollDice } from "../dungeonLookup";
+} from '../../../tables/dungeon/monster/character/characterRace';
+import { getTableEntry, rollDice } from '../dungeonLookup';
 
 /**
  * This implements the logic suggested on DMG p176, where

@@ -1,11 +1,11 @@
-import type { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import type { CharacterSheet } from "../../models/character/characterSheet";
-import { getMultiClassForRace } from "./class/getMultiClassForRace";
-import { getCharacterGender } from "./getCharacterGender";
-import { getAttributes } from "./attributes/getAttributes";
-import { getProfessions } from "./getProfessions";
-import { getHitPoints } from "./getHitPoints";
-import { CharacterClass } from "../../models/characterClass";
+import type { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
+import type { CharacterSheet } from '../../models/character/characterSheet';
+import { getMultiClassForRace } from './class/getMultiClassForRace';
+import { getCharacterGender } from './getCharacterGender';
+import { getAttributes } from './attributes/getAttributes';
+import { getProfessions } from './getProfessions';
+import { getHitPoints } from './getHitPoints';
+import { CharacterClass } from '../../models/characterClass';
 
 /**
  * Similar to {@link getSingleClassCharacterForRace}, although simpler to meet

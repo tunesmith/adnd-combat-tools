@@ -1,4 +1,4 @@
-import { CharacterRace } from "../../tables/dungeon/monster/character/characterRace";
+import { CharacterRace } from '../../tables/dungeon/monster/character/characterRace';
 
 /**
  * PHB mentions racial tolerances. We'll rule out "Hate"

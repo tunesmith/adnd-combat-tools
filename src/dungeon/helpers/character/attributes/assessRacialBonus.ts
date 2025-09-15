@@ -1,5 +1,5 @@
-import { Attribute } from "../../../models/attributes";
-import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
+import { Attribute } from '../../../models/attributes';
+import { CharacterRace } from '../../../../tables/dungeon/monster/character/characterRace';
 
 /**
  * For this, we are summing the racial bonuses listed in

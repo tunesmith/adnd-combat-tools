@@ -1,6 +1,6 @@
-import { passageMessages } from "./passage";
-import { doorBeyondMessages } from "./doorBeyondResult";
-import type { DungeonAction, DungeonStep } from "../../types/dungeon";
+import { passageMessages } from './passage';
+import { doorBeyondMessages } from './doorBeyondResult';
+import type { DungeonAction, DungeonStep } from '../../types/dungeon';
 
 export function runDungeonStep(
   action: DungeonAction,
@@ -13,7 +13,7 @@ export function runDungeonStep(
   }
 ): DungeonStep {
   switch (action) {
-    case "passage": {
+    case 'passage': {
       const { messages } = passageMessages({
         roll: options?.roll,
         detailMode: options?.detailMode,
@@ -21,7 +21,7 @@ export function runDungeonStep(
       });
       return { action, roll: options?.roll, messages };
     }
-    case "door": {
+    case 'door': {
       const { messages } = doorBeyondMessages({
         roll: options?.detailMode ? options?.roll : options?.roll,
         doorAhead: options?.doorAhead,

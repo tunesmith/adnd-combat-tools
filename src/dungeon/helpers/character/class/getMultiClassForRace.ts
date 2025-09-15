@@ -1,7 +1,7 @@
-import type { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
-import { allowedMultiClassCombinationsByRace } from "../../../models/allowedMultiClassCombinationsByRace";
-import { getCharacterClass } from "./getCharacterClass";
-import type { CharacterClass } from "../../../models/characterClass";
+import type { CharacterRace } from '../../../../tables/dungeon/monster/character/characterRace';
+import { allowedMultiClassCombinationsByRace } from '../../../models/allowedMultiClassCombinationsByRace';
+import { getCharacterClass } from './getCharacterClass';
+import type { CharacterClass } from '../../../models/characterClass';
 
 /**
  * This selects a valid multi-class combination for a particular race.

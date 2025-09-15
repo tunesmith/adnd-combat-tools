@@ -1,20 +1,20 @@
-import { rollDice } from "../../helpers/dungeonLookup";
-import { characterMax } from "../../models/characterMax";
-import { getCharacterLevel } from "../../helpers/character/level/getCharacterLevel";
-import { getHenchmanLevel } from "../../helpers/character/level/getHenchmanLevel";
+import { rollDice } from '../../helpers/dungeonLookup';
+import { characterMax } from '../../models/characterMax';
+import { getCharacterLevel } from '../../helpers/character/level/getCharacterLevel';
+import { getHenchmanLevel } from '../../helpers/character/level/getHenchmanLevel';
 import type {
   CharacterSheet,
   PartyResult,
-} from "../../models/character/characterSheet";
-import { isCompatibleRace } from "../../helpers/party/isCompatibleRace";
-import { isCompatibleClass } from "../../helpers/party/isCompatibleClass";
-import { getNumberOfClasses } from "../../helpers/character/class/getNumberOfClasses";
-import { getCharacterRace } from "../../helpers/character/getCharacterRace";
-import { getSingleClassCharacterForRace } from "../../helpers/character/getSingleClassCharacterForRace";
-import { getMultiClassCharacterForRace } from "../../helpers/character/getMultiClassCharacterForRace";
-import { CharacterClass } from "../../models/characterClass";
-import { canPartyHireHenchmen } from "../../helpers/party/canPartyHireHenchmen";
-import { getMaxHenchmenForMember } from "../../helpers/character/henchmen/getMaxHenchmenForMember";
+} from '../../models/character/characterSheet';
+import { isCompatibleRace } from '../../helpers/party/isCompatibleRace';
+import { isCompatibleClass } from '../../helpers/party/isCompatibleClass';
+import { getNumberOfClasses } from '../../helpers/character/class/getNumberOfClasses';
+import { getCharacterRace } from '../../helpers/character/getCharacterRace';
+import { getSingleClassCharacterForRace } from '../../helpers/character/getSingleClassCharacterForRace';
+import { getMultiClassCharacterForRace } from '../../helpers/character/getMultiClassCharacterForRace';
+import { CharacterClass } from '../../models/characterClass';
+import { canPartyHireHenchmen } from '../../helpers/party/canPartyHireHenchmen';
+import { getMaxHenchmenForMember } from '../../helpers/character/henchmen/getMaxHenchmenForMember';
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -135,6 +135,7 @@ export const generateFollowers = (
   while (remainingFollowers > 0) {
     let generatedFollowersThisPass = 0;
     for (const member of mainParty) {
+      // TODO I forgot to check compatible followers for monks/assassins
       if (getMaxHenchmenForMember(member, mainParty) > 0) {
         const henchmen = createCharacters(1, followerLevel, mainParty);
         member.followers.push(...henchmen);
@@ -147,7 +148,7 @@ export const generateFollowers = (
     }
     // If no henchmen were generated in this pass, break to avoid infinite loop
     if (generatedFollowersThisPass === 0) {
-      console.warn("No more eligible characters to generate henchmen.");
+      console.warn('No more eligible characters to generate henchmen.');
       break;
     }
   }

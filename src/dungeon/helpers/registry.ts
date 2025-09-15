@@ -1,17 +1,17 @@
-import type React from "react";
+import type React from 'react';
 import type {
   DungeonRenderNode,
   DungeonTablePreview,
   TableContext,
-} from "../../types/dungeon";
+} from '../../types/dungeon';
 
 // Message services used by the registry
-import { sidePassageMessages } from "../services/sidePassage";
-import { passageTurnMessages } from "../services/passageTurn";
-import { stairsMessages } from "../services/stairsResult";
-import { doorLocationMessages } from "../services/closedDoorResult";
-import { periodicDoorOnlyMessages } from "../services/periodicDoorOnly";
-import { wanderingWhereFromMessages } from "../services/wanderingWhereFrom";
+import { sidePassageMessages } from '../services/sidePassage';
+import { passageTurnMessages } from '../services/passageTurn';
+import { stairsMessages } from '../services/stairsResult';
+import { doorLocationMessages } from '../services/closedDoorResult';
+import { periodicDoorOnlyMessages } from '../services/periodicDoorOnly';
+import { wanderingWhereFromMessages } from '../services/wanderingWhereFrom';
 import {
   monsterLevelMessages,
   monsterOneMessages,
@@ -27,7 +27,7 @@ import {
   dragonFiveOlderMessages,
   dragonSixMessages,
   humanMessages,
-} from "../services/monsterLevelMessages";
+} from '../services/monsterLevelMessages';
 import {
   galleryStairLocationMessages,
   galleryStairOccurrenceMessages,
@@ -37,13 +37,13 @@ import {
   chasmDepthMessages,
   chasmConstructionMessages,
   jumpingPlaceWidthMessages,
-} from "../services/specialPassage";
+} from '../services/specialPassage';
 import {
   resolveEgress,
   resolveChute,
   resolveNumberOfExits,
-} from "../domain/resolvers";
-import { toDetailRender } from "../adapters/render";
+} from '../domain/resolvers';
+import { toDetailRender } from '../adapters/render';
 import {
   circularContentsMessages,
   circularShapePoolMessages,
@@ -51,7 +51,7 @@ import {
   transmuteTypeMessages,
   poolAlignmentMessages,
   transporterLocationMessages,
-} from "../services/unusualShapeResult";
+} from '../services/unusualShapeResult';
 
 // Registry resolver type
 export type RegistryResolver = (opts: {
@@ -61,43 +61,43 @@ export type RegistryResolver = (opts: {
 }) => DungeonRenderNode[];
 
 const TABLE_ID_LIST = [
-  "sidePassages",
-  "passageTurns",
-  "stairs",
-  "doorLocation",
-  "periodicCheckDoorOnly",
-  "wanderingWhereFrom",
-  "monsterLevel",
-  "monsterOne",
-  "monsterTwo",
-  "monsterThree",
-  "monsterFour",
-  "monsterFive",
-  "monsterSix",
-  "dragonThree",
-  "dragonFourYounger",
-  "dragonFourOlder",
-  "dragonFiveYounger",
-  "dragonFiveOlder",
-  "dragonSix",
-  "human",
-  "galleryStairLocation",
-  "galleryStairOccurrence",
-  "streamConstruction",
-  "riverConstruction",
-  "riverBoatBank",
-  "chasmDepth",
-  "chasmConstruction",
-  "jumpingPlaceWidth",
-  "circularContents",
-  "circularShapePool",
-  "circularShapeMagicPool",
-  "transmuteType",
-  "poolAlignment",
-  "transporterLocation",
-  "chute",
-  "egress",
-  "numberOfExits",
+  'sidePassages',
+  'passageTurns',
+  'stairs',
+  'doorLocation',
+  'periodicCheckDoorOnly',
+  'wanderingWhereFrom',
+  'monsterLevel',
+  'monsterOne',
+  'monsterTwo',
+  'monsterThree',
+  'monsterFour',
+  'monsterFive',
+  'monsterSix',
+  'dragonThree',
+  'dragonFourYounger',
+  'dragonFourOlder',
+  'dragonFiveYounger',
+  'dragonFiveOlder',
+  'dragonSix',
+  'human',
+  'galleryStairLocation',
+  'galleryStairOccurrence',
+  'streamConstruction',
+  'riverConstruction',
+  'riverBoatBank',
+  'chasmDepth',
+  'chasmConstruction',
+  'jumpingPlaceWidth',
+  'circularContents',
+  'circularShapePool',
+  'circularShapeMagicPool',
+  'transmuteType',
+  'poolAlignment',
+  'transporterLocation',
+  'chute',
+  'egress',
+  'numberOfExits',
 ] as const;
 
 function isTableId(x: string): x is TableId {
@@ -107,43 +107,43 @@ function isTableId(x: string): x is TableId {
 export type TableId = typeof TABLE_ID_LIST[number];
 
 export const TABLE_HEADINGS: Record<TableId, string> = {
-  sidePassages: "Side Passages",
-  passageTurns: "Passage Turns",
-  stairs: "Stairs",
-  doorLocation: "Door Location",
-  periodicCheckDoorOnly: "Periodic Check (doors only)",
-  wanderingWhereFrom: "Where From",
-  monsterLevel: "Monster Level",
-  monsterOne: "Monster (Level 1)",
-  monsterTwo: "Monster (Level 2)",
-  monsterThree: "Monster (Level 3)",
-  monsterFour: "Monster (Level 4)",
-  monsterFive: "Monster (Level 5)",
-  monsterSix: "Monster (Level 6)",
-  dragonThree: "Dragon (Level 3)",
-  dragonFourYounger: "Dragon (Younger)",
-  dragonFourOlder: "Dragon (Older)",
-  dragonFiveYounger: "Dragon (Younger)",
-  dragonFiveOlder: "Dragon (Older)",
-  dragonSix: "Dragon",
-  human: "Human Subtable",
-  galleryStairLocation: "Gallery Stair Location",
-  galleryStairOccurrence: "Gallery Stair Occurrence",
-  streamConstruction: "Stream Construction",
-  riverConstruction: "River Construction",
-  riverBoatBank: "Boat Bank",
-  chasmDepth: "Chasm Depth",
-  chasmConstruction: "Chasm Construction",
-  jumpingPlaceWidth: "Jumping Place Width",
-  circularContents: "Circular Contents",
-  circularShapePool: "Pool",
-  circularShapeMagicPool: "Magic Pool Effect",
-  transmuteType: "Transmutation Type",
-  poolAlignment: "Pool Alignment",
-  transporterLocation: "Transporter Location",
-  chute: "Chute",
-  egress: "Egress",
-  numberOfExits: "Exits",
+  sidePassages: 'Side Passages',
+  passageTurns: 'Passage Turns',
+  stairs: 'Stairs',
+  doorLocation: 'Door Location',
+  periodicCheckDoorOnly: 'Periodic Check (doors only)',
+  wanderingWhereFrom: 'Where From',
+  monsterLevel: 'Monster Level',
+  monsterOne: 'Monster (Level 1)',
+  monsterTwo: 'Monster (Level 2)',
+  monsterThree: 'Monster (Level 3)',
+  monsterFour: 'Monster (Level 4)',
+  monsterFive: 'Monster (Level 5)',
+  monsterSix: 'Monster (Level 6)',
+  dragonThree: 'Dragon (Level 3)',
+  dragonFourYounger: 'Dragon (Younger)',
+  dragonFourOlder: 'Dragon (Older)',
+  dragonFiveYounger: 'Dragon (Younger)',
+  dragonFiveOlder: 'Dragon (Older)',
+  dragonSix: 'Dragon',
+  human: 'Human Subtable',
+  galleryStairLocation: 'Gallery Stair Location',
+  galleryStairOccurrence: 'Gallery Stair Occurrence',
+  streamConstruction: 'Stream Construction',
+  riverConstruction: 'River Construction',
+  riverBoatBank: 'Boat Bank',
+  chasmDepth: 'Chasm Depth',
+  chasmConstruction: 'Chasm Construction',
+  jumpingPlaceWidth: 'Jumping Place Width',
+  circularContents: 'Circular Contents',
+  circularShapePool: 'Pool',
+  circularShapeMagicPool: 'Magic Pool Effect',
+  transmuteType: 'Transmutation Type',
+  poolAlignment: 'Pool Alignment',
+  transporterLocation: 'Transporter Location',
+  chute: 'Chute',
+  egress: 'Egress',
+  numberOfExits: 'Exits',
 };
 
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
@@ -212,7 +212,7 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     transporterLocationMessages({ roll }).messages,
   chute: ({ roll }) => toDetailRender(resolveChute({ roll })),
   egress: ({ roll, id }) => {
-    const key = (id.split(":")[1] as "one" | "two" | "three") || "one";
+    const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';
     return toDetailRender(resolveEgress({ which: key, roll }));
   },
   numberOfExits: ({ roll, context }) => {
@@ -223,9 +223,9 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
         width?: number;
         isRoom?: boolean;
       }) || {};
-    const length = typeof c.length === "number" ? c.length : 10;
-    const width = typeof c.width === "number" ? c.width : 10;
-    const isRoom = typeof c.isRoom === "boolean" ? c.isRoom : false;
+    const length = typeof c.length === 'number' ? c.length : 10;
+    const width = typeof c.width === 'number' ? c.width : 10;
+    const isRoom = typeof c.isRoom === 'boolean' ? c.isRoom : false;
     return toDetailRender(
       resolveNumberOfExits({ roll, length, width, isRoom })
     );
@@ -245,19 +245,19 @@ export function updateResolvedBlock<T extends FeedLike>(
   const newMessages: DungeonRenderNode[] = [];
   let skippingOld = false;
   for (const node of fi.messages) {
-    if (node.kind === "table-preview" && node.id === tableId) {
+    if (node.kind === 'table-preview' && node.id === tableId) {
       newMessages.push(node);
       skippingOld = true;
       for (const m of messages) newMessages.push(m);
     } else {
       if (skippingOld) {
-        if (node.kind === "table-preview" && node.id !== tableId) {
+        if (node.kind === 'table-preview' && node.id !== tableId) {
           skippingOld = false;
-        } else if (node.kind === "heading" && node.text !== headingText) {
+        } else if (node.kind === 'heading' && node.text !== headingText) {
           skippingOld = false;
-        } else if (node.kind === "heading" && node.text === headingText) {
+        } else if (node.kind === 'heading' && node.text === headingText) {
           // keep skipping
-        } else if (node.kind === "bullet-list" || node.kind === "paragraph") {
+        } else if (node.kind === 'bullet-list' || node.kind === 'paragraph') {
           // skip
         } else {
           skippingOld = false;
@@ -279,7 +279,7 @@ export function resolveViaRegistry<T extends FeedLike>(
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 ): boolean {
-  const base = String(tp.id.split(":")[0] ?? "");
+  const base = String(tp.id.split(':')[0] ?? '');
   if (!isTableId(base)) return false;
 
   const resolver = TABLE_RESOLVERS[base];

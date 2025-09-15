@@ -1,4 +1,4 @@
-import { CharacterClass } from "./characterClass";
+import { CharacterClass } from './characterClass';
 
 /**
  * Paladins clearly cannot be a member of a party with non-good characters,

@@ -1,15 +1,15 @@
-import { Attribute } from "../../../models/attributes";
-import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
-import type { Gender } from "../../../models/character/gender";
-import { getAttributeDice } from "./getAttributeDice";
-import { rollAttributeDice } from "./rollAttributeDice";
-import { assessRacialPenalty } from "./assessRacialPenalty";
-import raceAttributeLimits from "../../../models/raceAttributeLimits";
-import { npcClassAttributeMinimums } from "../../../models/npcClassAttributeMinimums";
-import { assessRacialBonus } from "./assessRacialBonus";
-import { assessNpcClassBonus } from "./assessNpcClassBonus";
-import { getStrengthAdjustedScore } from "./fighter/getStrengthAdjustedScore";
-import { CharacterClass } from "../../../models/characterClass";
+import { Attribute } from '../../../models/attributes';
+import { CharacterRace } from '../../../../tables/dungeon/monster/character/characterRace';
+import type { Gender } from '../../../models/character/gender';
+import { getAttributeDice } from './getAttributeDice';
+import { rollAttributeDice } from './rollAttributeDice';
+import { assessRacialPenalty } from './assessRacialPenalty';
+import raceAttributeLimits from '../../../models/raceAttributeLimits';
+import { npcClassAttributeMinimums } from '../../../models/npcClassAttributeMinimums';
+import { assessRacialBonus } from './assessRacialBonus';
+import { assessNpcClassBonus } from './assessNpcClassBonus';
+import { getStrengthAdjustedScore } from './fighter/getStrengthAdjustedScore';
+import { CharacterClass } from '../../../models/characterClass';
 
 /**
  * Rolling a single attribute for an NPC is actually rather complicated.

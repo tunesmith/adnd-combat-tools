@@ -1,7 +1,7 @@
-import type { CharacterSheet } from "../../../models/character/characterSheet";
-import { getCountOfClassesInParty } from "../../party/getCountOfClassesInParty";
-import { CharacterClass } from "../../../models/characterClass";
-import { characterMax } from "../../../models/characterMax";
+import type { CharacterSheet } from '../../../models/character/characterSheet';
+import { getCountOfClassesInParty } from '../../party/getCountOfClassesInParty';
+import { CharacterClass } from '../../../models/characterClass';
+import { characterMax } from '../../../models/characterMax';
 
 /**
  * Assassins cannot have henchmen below Level 4.

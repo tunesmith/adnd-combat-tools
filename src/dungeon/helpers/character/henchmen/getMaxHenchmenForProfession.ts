@@ -1,10 +1,10 @@
 import type {
   CharacterProfession,
   CharacterSheet,
-} from "../../../models/character/characterSheet";
-import { CharacterClass } from "../../../models/characterClass";
-import { getMonkHenchmen } from "./getMonkHenchmen";
-import { getAssassinHenchmen } from "./getAssassinHenchmen";
+} from '../../../models/character/characterSheet';
+import { CharacterClass } from '../../../models/characterClass';
+import { getMonkHenchmen } from './getMonkHenchmen';
+import { getAssassinHenchmen } from './getAssassinHenchmen';
 
 /**
  * Normally, the henchman limit for a character is controlled

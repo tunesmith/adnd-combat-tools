@@ -3,12 +3,12 @@ import type {
   DungeonRenderNode,
   DungeonTablePreview,
   TableContext,
-} from "../../types/dungeon";
+} from '../../types/dungeon';
 import {
   periodicCheckDoorOnly,
   PeriodicCheckDoorOnly,
-} from "../../tables/dungeon/periodicCheckDoorOnly";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+} from '../../tables/dungeon/periodicCheckDoorOnly';
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 
 export const periodicDoorOnlyMessages = (options?: {
   roll?: number;
@@ -21,9 +21,9 @@ export const periodicDoorOnlyMessages = (options?: {
       ? options?.context?.existing?.length || 0
       : 0;
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
+      kind: 'table-preview',
       id: `periodicCheckDoorOnly:${seq}`,
-      title: "Periodic Check (doors only)",
+      title: 'Periodic Check (doors only)',
       sides: periodicCheckDoorOnly.sides,
       entries: periodicCheckDoorOnly.entries.map((e) => ({
         range:
@@ -41,13 +41,13 @@ export const periodicDoorOnlyMessages = (options?: {
   const cmd = getTableEntry(usedRoll, periodicCheckDoorOnly);
   const isDoor = cmd === PeriodicCheckDoorOnly.Door;
   const heading: DungeonMessage = {
-    kind: "heading",
+    kind: 'heading',
     level: 4,
-    text: "Periodic Check (doors only)",
+    text: 'Periodic Check (doors only)',
   };
   const bullet: DungeonMessage = {
-    kind: "bullet-list",
-    items: [`roll: ${usedRoll} — ${isDoor ? "Door" : "Ignore"}`],
+    kind: 'bullet-list',
+    items: [`roll: ${usedRoll} — ${isDoor ? 'Door' : 'Ignore'}`],
   };
   const messages: DungeonRenderNode[] = [heading, bullet];
 
@@ -57,21 +57,21 @@ export const periodicDoorOnlyMessages = (options?: {
       ? options?.context?.existing?.length || 0
       : 0;
     const next: DungeonTablePreview = {
-      kind: "table-preview",
+      kind: 'table-preview',
       id: `doorLocation:${seq}`,
-      title: "Door Location",
+      title: 'Door Location',
       sides: 20,
       entries: [
-        { range: "1–6", label: "Left" },
-        { range: "7–12", label: "Right" },
-        { range: "13–20", label: "Ahead" },
+        { range: '1–6', label: 'Left' },
+        { range: '7–12', label: 'Right' },
+        { range: '13–20', label: 'Ahead' },
       ],
       context: options?.context,
     };
     messages.push(next);
   } else {
     messages.push({
-      kind: "paragraph",
+      kind: 'paragraph',
       text: "Ignored (not a door). Continue 30' past the door.",
     });
   }
@@ -81,6 +81,6 @@ export const periodicDoorOnlyMessages = (options?: {
 
 function isDoorChainContext(
   o: TableContext | undefined
-): o is Extract<TableContext, { kind: "doorChain" }> {
-  return !!o && o.kind === "doorChain";
+): o is Extract<TableContext, { kind: 'doorChain' }> {
+  return !!o && o.kind === 'doorChain';
 }

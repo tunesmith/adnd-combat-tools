@@ -1,6 +1,6 @@
-import { UnusualSize, unusualSize } from "../../tables/dungeon/unusualSize";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import type { DungeonMessage, DungeonTablePreview } from "../../types/dungeon";
+import { UnusualSize, unusualSize } from '../../tables/dungeon/unusualSize';
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
+import type { DungeonMessage, DungeonTablePreview } from '../../types/dungeon';
 
 // Legacy string unusualSizeResult removed; use unusualSizeMessages in adapters.
 
@@ -37,9 +37,9 @@ export const unusualSizeMessages = (options?: {
 } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
+      kind: 'table-preview',
       id: `unusualSize:${options.seq ?? 0}:${options?.extra ?? 0}`,
-      title: "Unusual Size (sq. ft.)",
+      title: 'Unusual Size (sq. ft.)',
       sides: unusualSize.sides,
       entries: unusualSize.entries.map((e) => ({
         range:
@@ -54,24 +54,24 @@ export const unusualSizeMessages = (options?: {
   const usedRoll = options?.roll ?? rollDice(unusualSize.sides);
   const command = getTableEntry(usedRoll, unusualSize);
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
-    { kind: "heading", level: 4, text: "Unusual Size" },
+    { kind: 'heading', level: 4, text: 'Unusual Size' },
     {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${usedRoll} — ${UnusualSize[command]}`],
     },
   ];
   if (command === UnusualSize.RollAgain && options?.detailMode) {
     // Stage another preview; defer size until resolved
     messages.push({
-      kind: "paragraph",
-      text: "Roll again for unusual size.",
+      kind: 'paragraph',
+      text: 'Roll again for unusual size.',
     });
     const nextSeq = (options?.seq ?? 0) + 1;
     const nextExtra = options?.extra ? options.extra * 2 : 2000;
     messages.push({
-      kind: "table-preview",
+      kind: 'table-preview',
       id: `unusualSize:${nextSeq}:${nextExtra}`,
-      title: "Unusual Size (sq. ft.)",
+      title: 'Unusual Size (sq. ft.)',
       sides: unusualSize.sides,
       entries: unusualSize.entries.map((e) => ({
         range:
@@ -98,7 +98,7 @@ export const unusualSizeMessages = (options?: {
       : 3400;
   const extra = options?.extra ?? 0;
   messages.push({
-    kind: "paragraph",
+    kind: 'paragraph',
     text: `It is about ${size + extra} sq. ft. `,
   });
   return { usedRoll, messages };

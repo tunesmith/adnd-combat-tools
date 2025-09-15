@@ -1,6 +1,6 @@
-import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
-import type { Attributes } from "../../../models/attributes";
-import { CharacterClass } from "../../../models/characterClass";
+import { CharacterRace } from '../../../../tables/dungeon/monster/character/characterRace';
+import type { Attributes } from '../../../models/attributes';
+import { CharacterClass } from '../../../models/characterClass';
 
 /**
  * This is a literal implementation of

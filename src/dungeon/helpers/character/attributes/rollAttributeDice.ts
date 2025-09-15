@@ -3,7 +3,7 @@ export const rollAttributeDice = (
   randomGenerator: () => number = () => Math.floor(Math.random() * 6) + 1
 ): number => {
   if (dice < 3) {
-    throw new Error("The number of dice must be at least 3");
+    throw new Error('The number of dice must be at least 3');
   }
 
   // Roll the specified number of d6 dice

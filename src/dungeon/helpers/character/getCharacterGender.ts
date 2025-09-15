@@ -1,5 +1,5 @@
-import { Gender } from "../../models/character/gender";
-import { rollDice } from "../dungeonLookup";
+import { Gender } from '../../models/character/gender';
+import { rollDice } from '../dungeonLookup';
 
 /**
  * I really just externalized this to mock it in unit tests.

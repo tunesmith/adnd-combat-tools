@@ -1,6 +1,6 @@
-import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
-import { rollDice } from "../../dungeonLookup";
-import { multiClassLikelihood } from "../../../models/multiClassLikelihood";
+import { CharacterRace } from '../../../../tables/dungeon/monster/character/characterRace';
+import { rollDice } from '../../dungeonLookup';
+import { multiClassLikelihood } from '../../../models/multiClassLikelihood';
 
 /**
  * Note there is something crazy here. The DMG says:

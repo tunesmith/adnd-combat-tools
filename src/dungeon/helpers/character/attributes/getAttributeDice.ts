@@ -1,5 +1,5 @@
-import { Attribute } from "../../../models/attributes";
-import { CharacterClass } from "../../../models/characterClass";
+import { Attribute } from '../../../models/attributes';
+import { CharacterClass } from '../../../models/characterClass';
 
 /**
  * This is an implementation of the advice from DMG p11 for

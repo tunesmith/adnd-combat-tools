@@ -1,14 +1,14 @@
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from "../wanderingMonsterResult";
-import { getTableEntry, rollDice } from "../../helpers/dungeonLookup";
+} from '../wanderingMonsterResult';
+import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
 import {
   MonsterTwo,
   monsterTwo,
-} from "../../../tables/dungeon/monster/monsterTwo";
-import { characterResult } from "./characterResult";
-import { formatPartyResult } from "../../helpers/party/formatPartyResult";
+} from '../../../tables/dungeon/monster/monsterTwo';
+import { characterResult } from './characterResult';
+import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 
 export const monsterTwoTextForCommand = (
   dungeonLevel: number,
@@ -18,18 +18,18 @@ export const monsterTwoTextForCommand = (
     case MonsterTwo.Badger_1to4_Gnoll_4to10: {
       if (dungeonLevel <= 3) {
         const badgers = getNumberOfMonsters(2, dungeonLevel, 1, 4);
-        return formatMonsterCount(badgers, "badger", "badgers");
+        return formatMonsterCount(badgers, 'badger', 'badgers');
       } else {
         const gnolls = getNumberOfMonsters(2, dungeonLevel, 2, 4, 2);
-        return formatMonsterCount(gnolls, "gnoll", "gnolls");
+        return formatMonsterCount(gnolls, 'gnoll', 'gnolls');
       }
     }
     case MonsterTwo.CentipedeGiant_3to13: {
       const centipedes = getNumberOfMonsters(2, dungeonLevel, 2, 6, 1);
       return formatMonsterCount(
         centipedes,
-        "giant centipede",
-        "giant centipedes"
+        'giant centipede',
+        'giant centipedes'
       );
     }
     case MonsterTwo.Character: {
@@ -38,43 +38,43 @@ export const monsterTwoTextForCommand = (
     }
     case MonsterTwo.DevilLemure_2to5: {
       const devils = getNumberOfMonsters(2, dungeonLevel, 1, 4, 1);
-      return formatMonsterCount(devils, "lemure devil", "lemure devils");
+      return formatMonsterCount(devils, 'lemure devil', 'lemure devils');
     }
     case MonsterTwo.GasSpore_1to2: {
       const gasSpores = getNumberOfMonsters(2, dungeonLevel, 1, 2);
-      return formatMonsterCount(gasSpores, "gas spore", "gas spores");
+      return formatMonsterCount(gasSpores, 'gas spore', 'gas spores');
     }
     case MonsterTwo.Gnoll_4to10: {
       const gnolls = getNumberOfMonsters(2, dungeonLevel, 2, 4, 2);
-      return formatMonsterCount(gnolls, "gnoll", "gnolls");
+      return formatMonsterCount(gnolls, 'gnoll', 'gnolls');
     }
     case MonsterTwo.Piercer_1to4: {
       const piercers = getNumberOfMonsters(2, dungeonLevel, 1, 4);
-      return formatMonsterCount(piercers, "piercer", "piercers");
+      return formatMonsterCount(piercers, 'piercer', 'piercers');
     }
     case MonsterTwo.RatGiant_6to24: {
       const giantRats = getNumberOfMonsters(2, dungeonLevel, 6, 4);
-      return formatMonsterCount(giantRats, "giant rat", "giant rats");
+      return formatMonsterCount(giantRats, 'giant rat', 'giant rats');
     }
     case MonsterTwo.RotGrub_1to4: {
       const rotGrubs = getNumberOfMonsters(2, dungeonLevel, 1, 4);
-      return formatMonsterCount(rotGrubs, "rot grubs", "rot grubs");
+      return formatMonsterCount(rotGrubs, 'rot grubs', 'rot grubs');
     }
     case MonsterTwo.Shrieker_1to3: {
       const shriekers = getNumberOfMonsters(2, dungeonLevel, 1, 3);
-      return formatMonsterCount(shriekers, "shrieker", "shriekers");
+      return formatMonsterCount(shriekers, 'shrieker', 'shriekers');
     }
     case MonsterTwo.Stirge_5to15: {
       const stirges = getNumberOfMonsters(2, dungeonLevel, 2, 6, 3);
-      return formatMonsterCount(stirges, "stirge", "stirges");
+      return formatMonsterCount(stirges, 'stirge', 'stirges');
     }
     case MonsterTwo.ToadGiant_1to4: {
       const toads = getNumberOfMonsters(2, dungeonLevel, 1, 4);
-      return formatMonsterCount(toads, "giant toad", "giant toads");
+      return formatMonsterCount(toads, 'giant toad', 'giant toads');
     }
     case MonsterTwo.Troglodyte_2to8: {
       const troglodytes = getNumberOfMonsters(2, dungeonLevel, 2, 4);
-      return formatMonsterCount(troglodytes, "troglodyte", "troglodytes");
+      return formatMonsterCount(troglodytes, 'troglodyte', 'troglodytes');
     }
   }
 };

@@ -1,12 +1,12 @@
-import { SidePassages, sidePassages } from "../../tables/dungeon/sidePassages";
+import { SidePassages, sidePassages } from '../../tables/dungeon/sidePassages';
 
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import type {
   DungeonTablePreview,
   DungeonRenderNode,
-} from "../../types/dungeon";
-import { resolveSidePassages } from "../domain/resolvers";
-import { toCompactRender, toDetailRender } from "../adapters/render";
+} from '../../types/dungeon';
+import { resolveSidePassages } from '../domain/resolvers';
+import { toCompactRender, toDetailRender } from '../adapters/render';
 
 /**
  * We do *not* check passage width for side passages, as the "periodic check"
@@ -53,9 +53,9 @@ export const sidePassageMessages = (options?: {
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "sidePassages",
-      title: "Side Passages",
+      kind: 'table-preview',
+      id: 'sidePassages',
+      title: 'Side Passages',
       sides: sidePassages.sides,
       entries: sidePassages.entries.map((e) => ({
         range:
@@ -68,7 +68,7 @@ export const sidePassageMessages = (options?: {
     return { usedRoll: undefined, messages: [preview] };
   }
   const node = resolveSidePassages({ roll: options?.roll });
-  const usedRoll = node.type === "event" ? node.roll : undefined;
+  const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);

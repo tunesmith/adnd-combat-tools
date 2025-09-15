@@ -1,17 +1,17 @@
-import { runDungeonStep } from "../../dungeon/services/adapters";
+import { runDungeonStep } from '../../dungeon/services/adapters';
 
-describe("adapters", () => {
-  it("returns a message for passage", () => {
-    const step = runDungeonStep("passage", { roll: 10 });
-    expect(step.action).toBe("passage");
+describe('adapters', () => {
+  it('returns a message for passage', () => {
+    const step = runDungeonStep('passage', { roll: 10 });
+    expect(step.action).toBe('passage');
     expect(Array.isArray(step.messages)).toBe(true);
     expect(step.messages.length).toBeGreaterThan(0);
-    expect(step.messages.some((m: any) => m.kind === "paragraph")).toBe(true);
+    expect(step.messages.some((m: any) => m.kind === 'paragraph')).toBe(true);
   });
 
-  it("returns a message for door", () => {
-    const step = runDungeonStep("door", { roll: 12, doorAhead: true });
-    expect(step.action).toBe("door");
+  it('returns a message for door', () => {
+    const step = runDungeonStep('door', { roll: 12, doorAhead: true });
+    expect(step.action).toBe('door');
     expect(step.messages.length).toBeGreaterThan(0);
   });
 });

@@ -1,5 +1,5 @@
-import type { CharacterSheet } from "../../models/character/characterSheet";
-import { getMaxHenchmenForMember } from "../character/henchmen/getMaxHenchmenForMember";
+import type { CharacterSheet } from '../../models/character/characterSheet';
+import { getMaxHenchmenForMember } from '../character/henchmen/getMaxHenchmenForMember';
 
 /**
  * It's possible for a main party configuration to not be able to hire henchmen,

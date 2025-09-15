@@ -1,5 +1,5 @@
-import { Attribute } from "../../../models/attributes";
-import { CharacterRace } from "../../../../tables/dungeon/monster/character/characterRace";
+import { Attribute } from '../../../models/attributes';
+import { CharacterRace } from '../../../../tables/dungeon/monster/character/characterRace';
 
 /**
  * See the docs for {@link assessRacialBonus} for the thinking behind this.

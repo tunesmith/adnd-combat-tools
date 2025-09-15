@@ -1,6 +1,6 @@
-import type { CharacterSheet } from "../../../models/character/characterSheet";
-import { getMaxHenchmenByCharisma } from "./getMaxHenchmenByCharisma";
-import { getMaxHenchmenForProfession } from "./getMaxHenchmenForProfession";
+import type { CharacterSheet } from '../../../models/character/characterSheet';
+import { getMaxHenchmenByCharisma } from './getMaxHenchmenByCharisma';
+import { getMaxHenchmenForProfession } from './getMaxHenchmenForProfession';
 
 /**
  * Number of henchmen per character depend on a few different things,

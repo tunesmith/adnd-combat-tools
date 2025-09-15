@@ -1,21 +1,21 @@
-import type { DungeonOutcomeNode, PendingRoll } from "../domain/outcome";
+import type { DungeonOutcomeNode, PendingRoll } from '../domain/outcome';
 import type {
   DungeonMessage,
   DungeonRenderNode,
   DungeonTablePreview,
   TableContext,
-} from "../../types/dungeon";
-import { PeriodicCheck } from "../../tables/dungeon/periodicCheck";
-import { DoorBeyond } from "../../tables/dungeon/doorBeyond";
+} from '../../types/dungeon';
+import { PeriodicCheck } from '../../tables/dungeon/periodicCheck';
+import { DoorBeyond } from '../../tables/dungeon/doorBeyond';
 import {
   chamberDimensions,
   ChamberDimensions,
   roomDimensions,
   RoomDimensions,
-} from "../../tables/dungeon/chambersRooms";
-import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
-import { sidePassages, SidePassages } from "../../tables/dungeon/sidePassages";
-import { passageTurns, PassageTurns } from "../../tables/dungeon/passageTurns";
+} from '../../tables/dungeon/chambersRooms';
+import { doorLocation, DoorLocation } from '../../tables/dungeon/doorLocation';
+import { sidePassages, SidePassages } from '../../tables/dungeon/sidePassages';
+import { passageTurns, PassageTurns } from '../../tables/dungeon/passageTurns';
 import {
   stairs,
   Stairs,
@@ -25,22 +25,22 @@ import {
   Egress,
   chute,
   Chute,
-} from "../../tables/dungeon/stairs";
-import { trickTrapMessages } from "../services/trickTrap";
-import { passageWidth, PassageWidth } from "../../tables/dungeon/passageWidth";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { periodicCheck } from "../../tables/dungeon/periodicCheck";
-import { getMonsterTable } from "../services/wanderingMonsterResult";
-import { MonsterLevel } from "../../tables/dungeon/monster/monsterLevel";
-import { monsterOneResult } from "../services/monster/monsterOneResult";
-import { monsterTwoResult } from "../services/monster/monsterTwoResult";
-import { monsterThreeResult } from "../services/monster/monsterThreeResult";
-import { monsterFourResult } from "../services/monster/monsterFourResult";
-import { monsterFiveResult } from "../services/monster/monsterFiveResult";
-import { monsterSixResult } from "../services/monster/monsterSixResult";
-import { roomMessages } from "../services/roomResult";
-import { chamberMessages } from "../services/chamberResult";
-import { passageWidthMessages } from "../services/passageWidth";
+} from '../../tables/dungeon/stairs';
+import { trickTrapMessages } from '../services/trickTrap';
+import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
+import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
+import { periodicCheck } from '../../tables/dungeon/periodicCheck';
+import { getMonsterTable } from '../services/wanderingMonsterResult';
+import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
+import { monsterOneResult } from '../services/monster/monsterOneResult';
+import { monsterTwoResult } from '../services/monster/monsterTwoResult';
+import { monsterThreeResult } from '../services/monster/monsterThreeResult';
+import { monsterFourResult } from '../services/monster/monsterFourResult';
+import { monsterFiveResult } from '../services/monster/monsterFiveResult';
+import { monsterSixResult } from '../services/monster/monsterSixResult';
+import { roomMessages } from '../services/roomResult';
+import { chamberMessages } from '../services/chamberResult';
+import { passageWidthMessages } from '../services/passageWidth';
 import {
   SpecialPassage,
   specialPassage,
@@ -60,17 +60,17 @@ import {
   GalleryStairOccurrence,
   jumpingPlaceWidth,
   JumpingPlaceWidth,
-} from "../../tables/dungeon/specialPassage";
+} from '../../tables/dungeon/specialPassage';
 import {
   numberOfExits,
   NumberOfExits,
-} from "../../tables/dungeon/numberOfExits";
-import { unusualShape, UnusualShape } from "../../tables/dungeon/unusualShape";
-import { unusualSize, UnusualSize } from "../../tables/dungeon/unusualSize";
-import { exitMessages } from "../services/exitResult";
-import { egressMessages, chuteMessages } from "../services/stairsResult";
-import { unusualShapeMessages } from "../services/unusualShapeResult";
-import { unusualSizeMessages } from "../services/unusualSizeResult";
+} from '../../tables/dungeon/numberOfExits';
+import { unusualShape, UnusualShape } from '../../tables/dungeon/unusualShape';
+import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
+import { exitMessages } from '../services/exitResult';
+import { egressMessages, chuteMessages } from '../services/stairsResult';
+import { unusualShapeMessages } from '../services/unusualShapeResult';
+import { unusualSizeMessages } from '../services/unusualSizeResult';
 
 function rangeText(range: number[]): string {
   return range.length === 1
@@ -82,84 +82,84 @@ function rangeText(range: number[]): string {
 export function toDetailRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
-  if (outcome.type !== "event") return [];
+  if (outcome.type !== 'event') return [];
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = outcome;
-  if (event.kind === "periodicCheck") {
+  if (event.kind === 'periodicCheck') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 3,
-      text: "Passage",
+      text: 'Passage',
     };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${PeriodicCheck[event.result]}`],
     };
     nodes.push(heading, bullet);
     switch (event.result) {
       case PeriodicCheck.ContinueStraight:
         nodes.push({
-          kind: "paragraph",
+          kind: 'paragraph',
           text: "Continue straight -- check again in 60'. ",
         });
         break;
       case PeriodicCheck.Door: {
-        nodes.push({ kind: "paragraph", text: "A closed door is indicated." });
+        nodes.push({ kind: 'paragraph', text: 'A closed door is indicated.' });
         break;
       }
       case PeriodicCheck.SidePassage: {
-        nodes.push({ kind: "paragraph", text: "A side passage occurs." });
+        nodes.push({ kind: 'paragraph', text: 'A side passage occurs.' });
         break;
       }
       case PeriodicCheck.PassageTurn: {
-        nodes.push({ kind: "paragraph", text: "The passage turns." });
+        nodes.push({ kind: 'paragraph', text: 'The passage turns.' });
         break;
       }
       case PeriodicCheck.Chamber: {
         nodes.push({
-          kind: "paragraph",
-          text: "The passage opens into a chamber. ",
+          kind: 'paragraph',
+          text: 'The passage opens into a chamber. ',
         });
         break;
       }
       case PeriodicCheck.Stairs: {
-        nodes.push({ kind: "paragraph", text: "Stairs are indicated here." });
+        nodes.push({ kind: 'paragraph', text: 'Stairs are indicated here.' });
         break;
       }
       case PeriodicCheck.DeadEnd:
         nodes.push({
-          kind: "paragraph",
-          text: "The passage reaches a dead end. (TODO) ",
+          kind: 'paragraph',
+          text: 'The passage reaches a dead end. (TODO) ',
         });
         break;
       case PeriodicCheck.TrickTrap: {
         nodes.push({
-          kind: "paragraph",
-          text: "There is a trick or trap here.",
+          kind: 'paragraph',
+          text: 'There is a trick or trap here.',
         });
         break;
       }
       case PeriodicCheck.WanderingMonster:
         nodes.push({
-          kind: "paragraph",
-          text: "A wandering monster is indicated.",
+          kind: 'paragraph',
+          text: 'A wandering monster is indicated.',
         });
         break;
     }
     // Render any pending child previews supplied by the resolver
     if (outcome.children && Array.isArray(outcome.children)) {
       for (const child of outcome.children) {
-        if (child.type !== "pending-roll") continue;
+        if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
         if (preview) nodes.push(preview);
       }
     }
     return nodes;
   }
-  if (event.kind === "doorBeyond") {
-    const heading: DungeonMessage = { kind: "heading", level: 3, text: "Door" };
+  if (event.kind === 'doorBeyond') {
+    const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${DoorBeyond[event.result]}`],
     };
     nodes.push(heading, bullet);
@@ -167,18 +167,18 @@ export function toDetailRender(
       case DoorBeyond.ParallelPassageOrCloset: {
         if (event.doorAhead) {
           nodes.push({
-            kind: "paragraph",
+            kind: 'paragraph',
             text: "Beyond the door is a 10' x 10' room (check contents, treasure). ",
           });
         } else {
           nodes.push({
-            kind: "paragraph",
+            kind: 'paragraph',
             text: "Beyond the door is a parallel passage, extending 30' in both directions. ",
           });
           nodes.push({
-            kind: "table-preview",
-            id: "passageWidth",
-            title: "Passage Width",
+            kind: 'table-preview',
+            id: 'passageWidth',
+            title: 'Passage Width',
             sides: passageWidth.sides,
             entries: passageWidth.entries.map((e) => ({
               range: rangeText(e.range),
@@ -190,13 +190,13 @@ export function toDetailRender(
       }
       case DoorBeyond.PassageStraightAhead: {
         nodes.push({
-          kind: "paragraph",
-          text: "Beyond the door is a passage straight ahead. ",
+          kind: 'paragraph',
+          text: 'Beyond the door is a passage straight ahead. ',
         });
         nodes.push({
-          kind: "table-preview",
-          id: "passageWidth",
-          title: "Passage Width",
+          kind: 'table-preview',
+          id: 'passageWidth',
+          title: 'Passage Width',
           sides: passageWidth.sides,
           entries: passageWidth.entries.map((e) => ({
             range: rangeText(e.range),
@@ -207,13 +207,13 @@ export function toDetailRender(
       }
       case DoorBeyond.Passage45AheadBehind: {
         nodes.push({
-          kind: "paragraph",
-          text: "Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ",
+          kind: 'paragraph',
+          text: 'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ',
         });
         nodes.push({
-          kind: "table-preview",
-          id: "passageWidth",
-          title: "Passage Width",
+          kind: 'table-preview',
+          id: 'passageWidth',
+          title: 'Passage Width',
           sides: passageWidth.sides,
           entries: passageWidth.entries.map((e) => ({
             range: rangeText(e.range),
@@ -224,13 +224,13 @@ export function toDetailRender(
       }
       case DoorBeyond.Passage45BehindAhead: {
         nodes.push({
-          kind: "paragraph",
-          text: "Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ",
+          kind: 'paragraph',
+          text: 'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ',
         });
         nodes.push({
-          kind: "table-preview",
-          id: "passageWidth",
-          title: "Passage Width",
+          kind: 'table-preview',
+          id: 'passageWidth',
+          title: 'Passage Width',
           sides: passageWidth.sides,
           entries: passageWidth.entries.map((e) => ({
             range: rangeText(e.range),
@@ -240,11 +240,11 @@ export function toDetailRender(
         break;
       }
       case DoorBeyond.Room: {
-        nodes.push({ kind: "paragraph", text: "Beyond the door is a room. " });
+        nodes.push({ kind: 'paragraph', text: 'Beyond the door is a room. ' });
         nodes.push({
-          kind: "table-preview",
-          id: "roomDimensions",
-          title: "Room Dimensions",
+          kind: 'table-preview',
+          id: 'roomDimensions',
+          title: 'Room Dimensions',
           sides: roomDimensions.sides,
           entries: roomDimensions.entries.map((e) => ({
             range: rangeText(e.range),
@@ -255,13 +255,13 @@ export function toDetailRender(
       }
       case DoorBeyond.Chamber: {
         nodes.push({
-          kind: "paragraph",
-          text: "Beyond the door is a chamber. ",
+          kind: 'paragraph',
+          text: 'Beyond the door is a chamber. ',
         });
         nodes.push({
-          kind: "table-preview",
-          id: "chamberDimensions",
-          title: "Chamber Dimensions",
+          kind: 'table-preview',
+          id: 'chamberDimensions',
+          title: 'Chamber Dimensions',
           sides: chamberDimensions.sides,
           entries: chamberDimensions.entries.map((e) => ({
             range: rangeText(e.range),
@@ -275,16 +275,16 @@ export function toDetailRender(
   }
   if (isPassageWidthEvent(event)) {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Passage Width",
+      text: 'Passage Width',
     };
     const r = (event as { result: number }).result;
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${PassageWidth[r as PassageWidth]}`],
     };
-    let text = "";
+    let text = '';
     switch (r as PassageWidth) {
       case PassageWidth.FiveFeet:
         text = "The passage is 5' wide. ";
@@ -302,20 +302,20 @@ export function toDetailRender(
         text = compactRandomSpecialPassage();
         break;
     }
-    return [heading, bullet, { kind: "paragraph", text }];
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
-  if (event.kind === "sidePassages") {
+  if (event.kind === 'sidePassages') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Side Passages",
+      text: 'Side Passages',
     };
     const label = SidePassages[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = "";
+    let text = '';
     switch (event.result) {
       case SidePassages.Left90:
         text =
@@ -366,21 +366,21 @@ export function toDetailRender(
           "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
-  if (event.kind === "roomDimensions") {
+  if (event.kind === 'roomDimensions') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Room Dimensions",
+      text: 'Room Dimensions',
     };
     const label = RoomDimensions[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let baseDesc = "";
+    let baseDesc = '';
     switch (event.result) {
       case RoomDimensions.Square10x10:
         baseDesc = "The room is square and 10' x 10'. ";
@@ -407,31 +407,31 @@ export function toDetailRender(
         baseDesc = "The room is rectangular and 30' x 40'. ";
         break;
       case RoomDimensions.Unusual:
-        baseDesc = "The room has an unusual shape and size. ";
+        baseDesc = 'The room has an unusual shape and size. ';
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text: baseDesc });
+    nodes.push(heading, bullet, { kind: 'paragraph', text: baseDesc });
     if (outcome.children && Array.isArray(outcome.children)) {
       for (const child of outcome.children) {
-        if (child.type !== "pending-roll") continue;
+        if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
         if (preview) nodes.push(preview);
       }
     }
     return nodes;
   }
-  if (event.kind === "chamberDimensions") {
+  if (event.kind === 'chamberDimensions') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Chamber Dimensions",
+      text: 'Chamber Dimensions',
     };
     const label = ChamberDimensions[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let baseDesc = "";
+    let baseDesc = '';
     switch (event.result) {
       case ChamberDimensions.Square20x20:
         baseDesc = "The chamber is square and 20' x 20'. ";
@@ -452,31 +452,31 @@ export function toDetailRender(
         baseDesc = "The chamber is rectangular and 40' x 60'. ";
         break;
       case ChamberDimensions.Unusual:
-        baseDesc = "The chamber has an unusual shape and size. ";
+        baseDesc = 'The chamber has an unusual shape and size. ';
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text: baseDesc });
+    nodes.push(heading, bullet, { kind: 'paragraph', text: baseDesc });
     if (outcome.children && Array.isArray(outcome.children)) {
       for (const child of outcome.children) {
-        if (child.type !== "pending-roll") continue;
+        if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
         if (preview) nodes.push(preview);
       }
     }
     return nodes;
   }
-  if (event.kind === "passageTurns") {
+  if (event.kind === 'passageTurns') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Passage Turns",
+      text: 'Passage Turns',
     };
     const label = PassageTurns[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let textPrefix = "";
+    let textPrefix = '';
     switch (event.result) {
       case PassageTurns.Left90:
         textPrefix = "The passage turns left 90 degrees - check again in 30'. ";
@@ -502,47 +502,47 @@ export function toDetailRender(
           "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text: textPrefix });
+    nodes.push(heading, bullet, { kind: 'paragraph', text: textPrefix });
     // Render any pending child previews supplied by the resolver
     if (outcome.children && Array.isArray(outcome.children)) {
       for (const child of outcome.children) {
-        if (child.type !== "pending-roll") continue;
+        if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
         if (preview) nodes.push(preview);
       }
     }
     return nodes;
   }
-  if (event.kind === "stairs") {
+  if (event.kind === 'stairs') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Stairs",
+      text: 'Stairs',
     };
     const label = Stairs[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = "";
+    let text = '';
     switch (event.result) {
       case Stairs.DownOne:
-        text = "There are stairs here that descend one level. ";
+        text = 'There are stairs here that descend one level. ';
         break;
       case Stairs.DownTwo:
-        text = "There are stairs here that descend two levels. ";
+        text = 'There are stairs here that descend two levels. ';
         break;
       case Stairs.DownThree:
-        text = "There are stairs here that descend three levels. ";
+        text = 'There are stairs here that descend three levels. ';
         break;
       case Stairs.UpOne:
-        text = "There are stairs here that ascend one level. ";
+        text = 'There are stairs here that ascend one level. ';
         break;
       case Stairs.UpDead:
-        text = "There are stairs here that ascend one level to a dead end. ";
+        text = 'There are stairs here that ascend one level to a dead end. ';
         break;
       case Stairs.DownDead:
-        text = "There are stairs here that descend one level to a dead end. ";
+        text = 'There are stairs here that descend one level to a dead end. ';
         break;
       case Stairs.ChimneyUpOne:
         text =
@@ -566,36 +566,36 @@ export function toDetailRender(
         break;
       case Stairs.UpOneDownTwo:
         text =
-          "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ";
+          'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ';
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     // Render pending child previews from resolver
     if (
-      outcome.type === "event" &&
+      outcome.type === 'event' &&
       outcome.children &&
       Array.isArray(outcome.children)
     ) {
       for (const child of outcome.children) {
-        if (child.type !== "pending-roll") continue;
+        if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
         if (preview) nodes.push(preview);
       }
     }
     return nodes;
   }
-  if (event.kind === "specialPassage") {
+  if (event.kind === 'specialPassage') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Special Passage",
+      text: 'Special Passage',
     };
     const label = SpecialPassage[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = "";
+    let text = '';
     switch (event.result) {
       case SpecialPassage.FortyFeetColumns:
         text = "The passage is 40' wide, with columns down the center. ";
@@ -626,12 +626,12 @@ export function toDetailRender(
         text = "A chasm, 20' wide, bisects the passage. ";
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     if (event.result === SpecialPassage.FiftyFeetGalleries) {
       nodes.push({
-        kind: "table-preview",
-        id: "galleryStairLocation",
-        title: "Gallery Stair Location",
+        kind: 'table-preview',
+        id: 'galleryStairLocation',
+        title: 'Gallery Stair Location',
         sides: galleryStairLocation.sides,
         entries: galleryStairLocation.entries.map((e) => ({
           range: rangeText(e.range),
@@ -640,9 +640,9 @@ export function toDetailRender(
       });
     } else if (event.result === SpecialPassage.TenFootStream) {
       nodes.push({
-        kind: "table-preview",
-        id: "streamConstruction",
-        title: "Stream Construction",
+        kind: 'table-preview',
+        id: 'streamConstruction',
+        title: 'Stream Construction',
         sides: streamConstruction.sides,
         entries: streamConstruction.entries.map((e) => ({
           range: rangeText(e.range),
@@ -655,9 +655,9 @@ export function toDetailRender(
       event.result === SpecialPassage.SixtyFootRiver
     ) {
       nodes.push({
-        kind: "table-preview",
-        id: "riverConstruction",
-        title: "River Construction",
+        kind: 'table-preview',
+        id: 'riverConstruction',
+        title: 'River Construction',
         sides: riverConstruction.sides,
         entries: riverConstruction.entries.map((e) => ({
           range: rangeText(e.range),
@@ -666,9 +666,9 @@ export function toDetailRender(
       });
     } else if (event.result === SpecialPassage.TwentyFootChasm) {
       nodes.push({
-        kind: "table-preview",
-        id: "chasmDepth",
-        title: "Chasm Depth",
+        kind: 'table-preview',
+        id: 'chasmDepth',
+        title: 'Chasm Depth',
         sides: chasmDepth.sides,
         entries: chasmDepth.entries.map((e) => ({
           range: rangeText(e.range),
@@ -676,9 +676,9 @@ export function toDetailRender(
         })),
       });
       nodes.push({
-        kind: "table-preview",
-        id: "chasmConstruction",
-        title: "Chasm Construction",
+        kind: 'table-preview',
+        id: 'chasmConstruction',
+        title: 'Chasm Construction',
         sides: chasmConstruction.sides,
         entries: chasmConstruction.entries.map((e) => ({
           range: rangeText(e.range),
@@ -690,17 +690,17 @@ export function toDetailRender(
   }
   if (isPassageWidthEvent(event)) {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Passage Width",
+      text: 'Passage Width',
     };
     const r = (event as { result: number }).result;
     const label = PassageWidth[r as PassageWidth] ?? String(r);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = "";
+    let text = '';
     switch (r as PassageWidth) {
       case PassageWidth.FiveFeet:
         text = "The passage is 5' wide. ";
@@ -715,66 +715,66 @@ export function toDetailRender(
         text = "The passage is 30' wide. ";
         break;
       case PassageWidth.SpecialPassage:
-        text = ""; // defer to special passage preview below
+        text = ''; // defer to special passage preview below
         break;
     }
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (text) nodes2.push({ kind: "paragraph", text });
+    if (text) nodes2.push({ kind: 'paragraph', text });
     if ((r as PassageWidth) === PassageWidth.SpecialPassage) {
       const prev = previewForPending({
-        type: "pending-roll",
-        table: "specialPassage",
+        type: 'pending-roll',
+        table: 'specialPassage',
       });
       if (prev) nodes2.push(prev);
     }
     return nodes2;
   }
-  if (event.kind === "egress") {
+  if (event.kind === 'egress') {
     const which = event.which;
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Egress",
+      text: 'Egress',
     };
     const label = Egress[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
     const res = egressMessages({ table: which, roll });
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
     return nodes2;
   }
-  if (event.kind === "chute") {
+  if (event.kind === 'chute') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Chute",
+      text: 'Chute',
     };
     const label = Chute[event.result as 0 | 1] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
     const res = chuteMessages({ roll });
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
     return nodes2;
   }
-  if ((event as { kind?: unknown }).kind === "numberOfExits") {
+  if ((event as { kind?: unknown }).kind === 'numberOfExits') {
     const ev = event as unknown as {
       result: NumberOfExits;
       context: { length: number; width: number; isRoom: boolean };
     };
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Exits",
+      text: 'Exits',
     };
     const label = NumberOfExits[ev.result] ?? String(ev.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
     const res = exitMessages({
@@ -784,38 +784,38 @@ export function toDetailRender(
       roll,
     });
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
     return nodes2;
   }
   return nodes;
 }
 
 function isTableContext(x: unknown): x is TableContext {
-  if (!x || typeof x !== "object") return false;
+  if (!x || typeof x !== 'object') return false;
   const k = (x as { kind?: unknown }).kind;
-  if (k === "doorChain")
+  if (k === 'doorChain')
     return Array.isArray((x as { existing?: unknown }).existing);
-  if (k === "wandering")
-    return typeof (x as { level?: unknown }).level === "number";
-  if (k === "exits") {
+  if (k === 'wandering')
+    return typeof (x as { level?: unknown }).level === 'number';
+  if (k === 'exits') {
     const o = x as { length?: unknown; width?: unknown; isRoom?: unknown };
     return (
-      typeof o.length === "number" &&
-      typeof o.width === "number" &&
-      typeof o.isRoom === "boolean"
+      typeof o.length === 'number' &&
+      typeof o.width === 'number' &&
+      typeof o.isRoom === 'boolean'
     );
   }
   return false;
 }
 
 function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
-  const base = String(p.table.split(":")[0]);
+  const base = String(p.table.split(':')[0]);
   switch (base) {
-    case "doorLocation":
+    case 'doorLocation':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Door Location",
+        title: 'Door Location',
         sides: doorLocation.sides,
         entries: doorLocation.entries.map((e) => ({
           range: rangeText(e.range),
@@ -823,55 +823,55 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         })),
         context: isTableContext(p.context) ? p.context : undefined,
       };
-    case "sidePassages":
+    case 'sidePassages':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Side Passages",
+        title: 'Side Passages',
         sides: sidePassages.sides,
         entries: sidePassages.entries.map((e) => ({
           range: rangeText(e.range),
           label: SidePassages[e.command] ?? String(e.command),
         })),
       };
-    case "passageTurns":
+    case 'passageTurns':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Passage Turns",
+        title: 'Passage Turns',
         sides: passageTurns.sides,
         entries: passageTurns.entries.map((e) => ({
           range: rangeText(e.range),
           label: PassageTurns[e.command] ?? String(e.command),
         })),
       };
-    case "passageWidth":
+    case 'passageWidth':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Passage Width",
+        title: 'Passage Width',
         sides: passageWidth.sides,
         entries: passageWidth.entries.map((e) => ({
           range: rangeText(e.range),
           label: PassageWidth[e.command] ?? String(e.command),
         })),
       };
-    case "chamberDimensions":
+    case 'chamberDimensions':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Chamber Dimensions",
+        title: 'Chamber Dimensions',
         sides: chamberDimensions.sides,
         entries: chamberDimensions.entries.map((e) => ({
           range: rangeText(e.range),
           label: ChamberDimensions[e.command] ?? String(e.command),
         })),
       };
-    case "numberOfExits":
+    case 'numberOfExits':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Exits",
+        title: 'Exits',
         sides: numberOfExits.sides,
         entries: numberOfExits.entries.map((e) => ({
           range: rangeText(e.range),
@@ -879,55 +879,55 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         })),
         context: isTableContext(p.context) ? p.context : undefined,
       };
-    case "unusualShape":
+    case 'unusualShape':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Unusual Shape",
+        title: 'Unusual Shape',
         sides: unusualShape.sides,
         entries: unusualShape.entries.map((e) => ({
           range: rangeText(e.range),
           label: UnusualShape[e.command] ?? String(e.command),
         })),
       };
-    case "unusualSize":
+    case 'unusualSize':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Unusual Size",
+        title: 'Unusual Size',
         sides: unusualSize.sides,
         entries: unusualSize.entries.map((e) => ({
           range: rangeText(e.range),
           label: UnusualSize[e.command] ?? String(e.command),
         })),
       };
-    case "stairs":
+    case 'stairs':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Stairs",
+        title: 'Stairs',
         sides: stairs.sides,
         entries: stairs.entries.map((e) => ({
           range: rangeText(e.range),
           label: Stairs[e.command] ?? String(e.command),
         })),
       };
-    case "egress": {
-      const which = p.table.split(":")[1] as
-        | "one"
-        | "two"
-        | "three"
+    case 'egress': {
+      const which = p.table.split(':')[1] as
+        | 'one'
+        | 'two'
+        | 'three'
         | undefined;
       const table =
-        which === "one" ? egressOne : which === "two" ? egressTwo : egressThree;
+        which === 'one' ? egressOne : which === 'two' ? egressTwo : egressThree;
       const title =
-        which === "one"
-          ? "Egress (1 level)"
-          : which === "two"
-          ? "Egress (2 levels)"
-          : "Egress (3 levels)";
+        which === 'one'
+          ? 'Egress (1 level)'
+          : which === 'two'
+          ? 'Egress (2 levels)'
+          : 'Egress (3 levels)';
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
         title,
         sides: table.sides,
@@ -937,22 +937,22 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         })),
       };
     }
-    case "chute":
+    case 'chute':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Chute",
+        title: 'Chute',
         sides: chute.sides,
         entries: chute.entries.map((e) => ({
           range: rangeText(e.range),
           label: Chute[e.command] ?? String(e.command),
         })),
       };
-    case "wanderingWhereFrom":
+    case 'wanderingWhereFrom':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Where From",
+        title: 'Where From',
         sides: periodicCheck.sides,
         entries: periodicCheck.entries
           .filter((e) => e.command !== PeriodicCheck.WanderingMonster)
@@ -961,81 +961,81 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
             label: PeriodicCheck[e.command] ?? String(e.command),
           })),
       };
-    case "monsterLevel": {
-      const parts = p.table.split(":");
+    case 'monsterLevel': {
+      const parts = p.table.split(':');
       const lvl = Number(parts[1] ?? 1) || 1;
       const table = getMonsterTable(lvl);
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Monster Level",
+        title: 'Monster Level',
         sides: table.sides,
         entries: table.entries.map((e) => ({
           range: rangeText(e.range),
           label: MonsterLevel[e.command] ?? String(e.command),
         })),
-        context: { kind: "wandering", level: lvl } as TableContext,
+        context: { kind: 'wandering', level: lvl } as TableContext,
       };
     }
-    case "galleryStairLocation":
+    case 'galleryStairLocation':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Gallery Stair Location",
+        title: 'Gallery Stair Location',
         sides: galleryStairLocation.sides,
         entries: galleryStairLocation.entries.map((e) => ({
           range: rangeText(e.range),
           label: GalleryStairLocation[e.command] ?? String(e.command),
         })),
       };
-    case "streamConstruction":
+    case 'streamConstruction':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Stream Construction",
+        title: 'Stream Construction',
         sides: streamConstruction.sides,
         entries: streamConstruction.entries.map((e) => ({
           range: rangeText(e.range),
           label: StreamConstruction[e.command] ?? String(e.command),
         })),
       };
-    case "riverConstruction":
+    case 'riverConstruction':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "River Construction",
+        title: 'River Construction',
         sides: riverConstruction.sides,
         entries: riverConstruction.entries.map((e) => ({
           range: rangeText(e.range),
           label: RiverConstruction[e.command] ?? String(e.command),
         })),
       };
-    case "chasmDepth":
+    case 'chasmDepth':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Chasm Depth",
+        title: 'Chasm Depth',
         sides: chasmDepth.sides,
         entries: chasmDepth.entries.map((e) => ({
           range: rangeText(e.range),
           label: ChasmDepth[e.command] ?? String(e.command),
         })),
       };
-    case "chasmConstruction":
+    case 'chasmConstruction':
       return {
-        kind: "table-preview",
+        kind: 'table-preview',
         id: p.table,
-        title: "Chasm Construction",
+        title: 'Chasm Construction',
         sides: chasmConstruction.sides,
         entries: chasmConstruction.entries.map((e) => ({
           range: rangeText(e.range),
           label: ChasmConstruction[e.command] ?? String(e.command),
         })),
       };
-    case "trickTrap": {
+    case 'trickTrap': {
       // Use existing trick/trap messages to build preview
       const preview = trickTrapMessages({ detailMode: true });
-      const tp = preview.messages.find((m) => m.kind === "table-preview") as
+      const tp = preview.messages.find((m) => m.kind === 'table-preview') as
         | DungeonTablePreview
         | undefined;
       return tp;
@@ -1046,27 +1046,27 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
 
 function isPassageWidthEvent(
   ev: unknown
-): ev is { kind: "passageWidth"; result: PassageWidth } {
-  if (!ev || typeof ev !== "object") return false;
+): ev is { kind: 'passageWidth'; result: PassageWidth } {
+  if (!ev || typeof ev !== 'object') return false;
   const o = ev as { kind?: unknown; result?: unknown };
-  return o.kind === "passageWidth" && typeof o.result === "number";
+  return o.kind === 'passageWidth' && typeof o.result === 'number';
 }
 
 // COMPACT MODE: outcome -> render nodes with auto-resolved text (no previews)
 export function toCompactRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
-  if (outcome.type !== "event") return [];
+  if (outcome.type !== 'event') return [];
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = outcome;
-  if (event.kind === "periodicCheck") {
+  if (event.kind === 'periodicCheck') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 3,
-      text: "Passage",
+      text: 'Passage',
     };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${PeriodicCheck[event.result]}`],
     };
     const text =
@@ -1079,18 +1079,18 @@ export function toCompactRender(
             event.result,
             event.avoidMonster ?? false
           );
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
-  if (event.kind === "doorBeyond") {
-    const heading: DungeonMessage = { kind: "heading", level: 3, text: "Door" };
+  if (event.kind === 'doorBeyond') {
+    const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${DoorBeyond[event.result]}`],
     };
     // Mirror doorBeyondMessages compact text behavior by reusing existing services.
     // We reuse doorBeyondMessages logic indirectly by recreating the same strings.
-    let text = "";
+    let text = '';
     switch (event.result) {
       case DoorBeyond.ParallelPassageOrCloset:
         text = event.doorAhead
@@ -1098,28 +1098,28 @@ export function toCompactRender(
           : "Beyond the door is a parallel passage, extending 30' in both directions. ";
         break;
       case DoorBeyond.PassageStraightAhead:
-        text = "Beyond the door is a passage straight ahead. ";
+        text = 'Beyond the door is a passage straight ahead. ';
         break;
       case DoorBeyond.Passage45AheadBehind:
         text =
-          "Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ";
+          'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ';
         break;
       case DoorBeyond.Passage45BehindAhead:
         text =
-          "Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ";
+          'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ';
         break;
       case DoorBeyond.Room: {
         const res = roomMessages({});
-        text = "Beyond the door is a room. ";
+        text = 'Beyond the door is a room. ';
         for (const m of res.messages)
-          if (m.kind === "paragraph") text += m.text;
+          if (m.kind === 'paragraph') text += m.text;
         break;
       }
       case DoorBeyond.Chamber: {
         const res = chamberMessages({});
-        text = "Beyond the door is a chamber. ";
+        text = 'Beyond the door is a chamber. ';
         for (const m of res.messages)
-          if (m.kind === "paragraph") text += m.text;
+          if (m.kind === 'paragraph') text += m.text;
         break;
       }
     }
@@ -1132,22 +1132,22 @@ export function toCompactRender(
     ) {
       const width = passageWidthMessages({});
       for (const m of width.messages)
-        if (m.kind === "paragraph") text += m.text;
+        if (m.kind === 'paragraph') text += m.text;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
-  if (event.kind === "roomDimensions") {
+  if (event.kind === 'roomDimensions') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Room Dimensions",
+      text: 'Room Dimensions',
     };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${RoomDimensions[event.result]}`],
     };
-    let baseDesc = "";
+    let baseDesc = '';
     let dims: { length: number; width: number } | undefined;
     switch (event.result) {
       case RoomDimensions.Square10x10:
@@ -1183,7 +1183,7 @@ export function toCompactRender(
         dims = { length: 30, width: 40 };
         break;
       case RoomDimensions.Unusual:
-        baseDesc = "The room has an unusual shape and size. ";
+        baseDesc = 'The room has an unusual shape and size. ';
         break;
     }
     let text = baseDesc;
@@ -1194,29 +1194,29 @@ export function toCompactRender(
         isRoom: true,
       });
       for (const m of exits.messages)
-        if (m.kind === "paragraph") text += m.text;
+        if (m.kind === 'paragraph') text += m.text;
     } else {
       const shape = unusualShapeMessages({});
       for (const m of shape.messages)
-        if (m.kind === "paragraph") text += m.text;
+        if (m.kind === 'paragraph') text += m.text;
       const size = unusualSizeMessages({});
-      for (const m of size.messages) if (m.kind === "paragraph") text += m.text;
-      text += "(TODO exits, contents, treasure) ";
+      for (const m of size.messages) if (m.kind === 'paragraph') text += m.text;
+      text += '(TODO exits, contents, treasure) ';
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
-  if (event.kind === "chamberDimensions") {
+  if (event.kind === 'chamberDimensions') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Chamber Dimensions",
+      text: 'Chamber Dimensions',
     };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${ChamberDimensions[event.result]}`],
     };
-    let baseDesc = "";
+    let baseDesc = '';
     let dims: { length: number; width: number } | undefined;
     switch (event.result) {
       case ChamberDimensions.Square20x20:
@@ -1244,7 +1244,7 @@ export function toCompactRender(
         dims = { length: 40, width: 60 };
         break;
       case ChamberDimensions.Unusual:
-        baseDesc = "The chamber has an unusual shape and size. ";
+        baseDesc = 'The chamber has an unusual shape and size. ';
         break;
     }
     let text = baseDesc;
@@ -1255,31 +1255,31 @@ export function toCompactRender(
         isRoom: false,
       });
       for (const m of exits.messages)
-        if (m.kind === "paragraph") text += m.text;
+        if (m.kind === 'paragraph') text += m.text;
     } else {
       const shape = unusualShapeMessages({});
       for (const m of shape.messages)
-        if (m.kind === "paragraph") text += m.text;
+        if (m.kind === 'paragraph') text += m.text;
       const size = unusualSizeMessages({});
-      for (const m of size.messages) if (m.kind === "paragraph") text += m.text;
-      text += "(TODO exits, contents, treasure) ";
+      for (const m of size.messages) if (m.kind === 'paragraph') text += m.text;
+      text += '(TODO exits, contents, treasure) ';
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
-  if (event.kind === "sidePassages") {
+  if (event.kind === 'sidePassages') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Side Passages",
+      text: 'Side Passages',
     };
     const label = SidePassages[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
     // Text equals the detail path text
-    let text = "";
+    let text = '';
     switch (event.result) {
       case SidePassages.Left90:
         text =
@@ -1330,21 +1330,21 @@ export function toCompactRender(
           "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
-  if (event.kind === "passageTurns") {
+  if (event.kind === 'passageTurns') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Passage Turns",
+      text: 'Passage Turns',
     };
     const label = PassageTurns[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let textPrefix = "";
+    let textPrefix = '';
     switch (event.result) {
       case PassageTurns.Left90:
         textPrefix = "The passage turns left 90 degrees - check again in 30'. ";
@@ -1370,42 +1370,42 @@ export function toCompactRender(
           "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text: textPrefix });
+    nodes.push(heading, bullet, { kind: 'paragraph', text: textPrefix });
     // Compact: append width paragraph
     const width = passageWidthMessages({});
-    for (const m of width.messages) if (m.kind === "paragraph") nodes.push(m);
+    for (const m of width.messages) if (m.kind === 'paragraph') nodes.push(m);
     return nodes;
   }
-  if (event.kind === "stairs") {
+  if (event.kind === 'stairs') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Stairs",
+      text: 'Stairs',
     };
     const label = Stairs[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = "";
+    let text = '';
     switch (event.result) {
       case Stairs.DownOne:
-        text = "There are stairs here that descend one level. ";
+        text = 'There are stairs here that descend one level. ';
         break;
       case Stairs.DownTwo:
-        text = "There are stairs here that descend two levels. ";
+        text = 'There are stairs here that descend two levels. ';
         break;
       case Stairs.DownThree:
-        text = "There are stairs here that descend three levels. ";
+        text = 'There are stairs here that descend three levels. ';
         break;
       case Stairs.UpOne:
-        text = "There are stairs here that ascend one level. ";
+        text = 'There are stairs here that ascend one level. ';
         break;
       case Stairs.UpDead:
-        text = "There are stairs here that ascend one level to a dead end. ";
+        text = 'There are stairs here that ascend one level to a dead end. ';
         break;
       case Stairs.DownDead:
-        text = "There are stairs here that descend one level to a dead end. ";
+        text = 'There are stairs here that descend one level to a dead end. ';
         break;
       case Stairs.ChimneyUpOne:
         text =
@@ -1429,24 +1429,24 @@ export function toCompactRender(
         break;
       case Stairs.UpOneDownTwo:
         text =
-          "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ";
+          'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ';
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
-  if (event.kind === "specialPassage") {
+  if (event.kind === 'specialPassage') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Special Passage",
+      text: 'Special Passage',
     };
     const label = SpecialPassage[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = "";
+    let text = '';
     switch (event.result) {
       case SpecialPassage.FortyFeetColumns:
         text = "The passage is 40' wide, with columns down the center. ";
@@ -1484,52 +1484,52 @@ export function toCompactRender(
           compactSpecialPassageSuffix(SpecialPassage.TwentyFootChasm);
         break;
     }
-    nodes.push(heading, bullet, { kind: "paragraph", text });
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
-  if (event.kind === "egress") {
+  if (event.kind === 'egress') {
     const which = event.which;
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Egress",
+      text: 'Egress',
     };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${Egress[event.result]}`],
     };
     const res = egressMessages({ table: which, roll });
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
     return nodes2;
   }
-  if (event.kind === "chute") {
+  if (event.kind === 'chute') {
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Chute",
+      text: 'Chute',
     };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${Chute[event.result as 0 | 1]}`],
     };
     const res = chuteMessages({ roll });
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
     return nodes2;
   }
-  if ((event as { kind?: unknown }).kind === "numberOfExits") {
+  if ((event as { kind?: unknown }).kind === 'numberOfExits') {
     const ev = event as unknown as {
       result: NumberOfExits;
       context: { length: number; width: number; isRoom: boolean };
     };
     const heading: DungeonMessage = {
-      kind: "heading",
+      kind: 'heading',
       level: 4,
-      text: "Exits",
+      text: 'Exits',
     };
     const bullet: DungeonMessage = {
-      kind: "bullet-list",
+      kind: 'bullet-list',
       items: [`roll: ${roll} — ${NumberOfExits[ev.result]}`],
     };
     const res = exitMessages({
@@ -1539,28 +1539,28 @@ export function toCompactRender(
       roll,
     });
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
     return nodes2;
   }
   return nodes;
 }
 
 // Compact helpers live locally in the adapter to avoid service-level string APIs.
-function compactDoorText(existing: ("Left" | "Right")[] = []): string {
+function compactDoorText(existing: ('Left' | 'Right')[] = []): string {
   const doorRoll = rollDice(doorLocation.sides);
   const doorCmd = getTableEntry(doorRoll, doorLocation);
   const prefix =
     doorCmd === DoorLocation.Ahead
-      ? "A door is Ahead. "
+      ? 'A door is Ahead. '
       : `A door is to the ${DoorLocation[doorCmd]}. `;
   if (doorCmd === DoorLocation.Ahead) return prefix;
-  const loc: "Left" | "Right" | "" =
+  const loc: 'Left' | 'Right' | '' =
     doorCmd === DoorLocation.Left
-      ? "Left"
+      ? 'Left'
       : doorCmd === DoorLocation.Right
-      ? "Right"
-      : "";
-  if (loc === "") return prefix;
+      ? 'Right'
+      : '';
+  if (loc === '') return prefix;
   if (existing.includes(loc)) {
     // On repeating the same left/right location, do not duplicate the location prefix.
     return "There are no more doors. The main passage extends -- check again in 30'. ";
@@ -1586,20 +1586,20 @@ function compactSpecialPassageSuffix(kind: SpecialPassage): string {
         const c2 = getTableEntry(r2, galleryStairOccurrence);
         const tail =
           c2 === GalleryStairOccurrence.Replace
-            ? "If a stairway is otherwise indicated in or adjacent to the passage, it will replace the end stairs. "
-            : "If a stairway is otherwise indicated in or adjacent to the passage, it will supplement the end stairs. ";
+            ? 'If a stairway is otherwise indicated in or adjacent to the passage, it will replace the end stairs. '
+            : 'If a stairway is otherwise indicated in or adjacent to the passage, it will supplement the end stairs. ';
         return (
-          "Stairs up to the gallery will be at the end of the passage. " + tail
+          'Stairs up to the gallery will be at the end of the passage. ' + tail
         );
       }
-      return "Stairs up to the gallery are at the beginning of the passage. ";
+      return 'Stairs up to the gallery are at the beginning of the passage. ';
     }
     case SpecialPassage.TenFootStream: {
       const r = rollDice(streamConstruction.sides);
       const c = getTableEntry(r, streamConstruction);
       return c === StreamConstruction.Bridged
-        ? "A bridge crosses the stream. "
-        : "";
+        ? 'A bridge crosses the stream. '
+        : '';
     }
     case SpecialPassage.TwentyFootRiver:
     case SpecialPassage.FortyFootRiver:
@@ -1607,15 +1607,15 @@ function compactSpecialPassageSuffix(kind: SpecialPassage): string {
       const r = rollDice(riverConstruction.sides);
       const c = getTableEntry(r, riverConstruction);
       if (c === RiverConstruction.Bridged)
-        return "A bridge crosses the river. ";
-      if (c === RiverConstruction.Obstacle) return "";
+        return 'A bridge crosses the river. ';
+      if (c === RiverConstruction.Obstacle) return '';
       const r2 = rollDice(riverBoatBank.sides);
       const c2 = getTableEntry(r2, riverBoatBank);
       const tail =
         c2 === RiverBoatBank.ThisSide
-          ? "The boat is on this bank of the river. "
-          : "The boat is on the opposite bank of the river. ";
-      return "There is a boat. " + tail;
+          ? 'The boat is on this bank of the river. '
+          : 'The boat is on the opposite bank of the river. ';
+      return 'There is a boat. ' + tail;
     }
     case SpecialPassage.TwentyFootChasm: {
       const r = rollDice(chasmDepth.sides);
@@ -1635,19 +1635,19 @@ function compactSpecialPassageSuffix(kind: SpecialPassage): string {
       const r2 = rollDice(chasmConstruction.sides);
       const c2 = getTableEntry(r2, chasmConstruction);
       if (c2 === ChasmConstruction.Bridged)
-        return depth + "A bridge crosses the chasm. ";
+        return depth + 'A bridge crosses the chasm. ';
       if (c2 === ChasmConstruction.Obstacle)
-        return depth + "It has no bridge, and is too wide to jump across. ";
+        return depth + 'It has no bridge, and is too wide to jump across. ';
       const r3 = rollDice(jumpingPlaceWidth.sides);
       const c3 = getTableEntry(r3, jumpingPlaceWidth);
       const width =
         c3 === JumpingPlaceWidth.FiveFeet
           ? "It is 5' wide. "
           : "It is 10' wide. ";
-      return depth + "There is a jumping place. " + width;
+      return depth + 'There is a jumping place. ' + width;
     }
     default:
-      return "";
+      return '';
   }
 }
 
@@ -1737,7 +1737,7 @@ function compactPeriodicText(
     case PeriodicCheck.PassageTurn: {
       const roll = rollDice(passageTurns.sides);
       const cmd = getTableEntry(roll, passageTurns);
-      let prefix = "";
+      let prefix = '';
       switch (cmd) {
         case PassageTurns.Left90:
           prefix = "The passage turns left 90 degrees - check again in 30'. ";
@@ -1764,7 +1764,7 @@ function compactPeriodicText(
       }
       const wRoll = rollDice(passageWidth.sides);
       const wCmd = getTableEntry(wRoll, passageWidth);
-      let widthText = "";
+      let widthText = '';
       switch (wCmd) {
         case PassageWidth.TenFeet:
           widthText = "The passage is 10' wide. ";
@@ -1786,8 +1786,8 @@ function compactPeriodicText(
     }
     case PeriodicCheck.Chamber: {
       const res = chamberMessages({});
-      let text = "The passage opens into a chamber. ";
-      for (const m of res.messages) if (m.kind === "paragraph") text += m.text;
+      let text = 'The passage opens into a chamber. ';
+      for (const m of res.messages) if (m.kind === 'paragraph') text += m.text;
       return text;
     }
     case PeriodicCheck.Stairs: {
@@ -1799,39 +1799,39 @@ function compactPeriodicText(
           const c = getTableEntry(r, egressOne);
           const suffix =
             c === Egress.Closed
-              ? "After descending, an unnoticed door will close egress for the day. "
-              : "";
-          return "There are stairs here that descend one level. " + suffix;
+              ? 'After descending, an unnoticed door will close egress for the day. '
+              : '';
+          return 'There are stairs here that descend one level. ' + suffix;
         }
         case Stairs.DownTwo: {
           const r = rollDice(egressTwo.sides);
           const c = getTableEntry(r, egressTwo);
           const suffix =
             c === Egress.Closed
-              ? "After descending, an unnoticed door will close egress for the day. "
-              : "";
-          return "There are stairs here that descend two levels. " + suffix;
+              ? 'After descending, an unnoticed door will close egress for the day. '
+              : '';
+          return 'There are stairs here that descend two levels. ' + suffix;
         }
         case Stairs.DownThree: {
           const r = rollDice(egressThree.sides);
           const c = getTableEntry(r, egressThree);
           const suffix =
             c === Egress.Closed
-              ? "After descending, an unnoticed door will close egress for the day. "
-              : "";
-          return "There are stairs here that descend three levels. " + suffix;
+              ? 'After descending, an unnoticed door will close egress for the day. '
+              : '';
+          return 'There are stairs here that descend three levels. ' + suffix;
         }
         case Stairs.UpOne:
-          return "There are stairs here that ascend one level. ";
+          return 'There are stairs here that ascend one level. ';
         case Stairs.UpDead: {
           const r = rollDice(chute.sides);
           const c = getTableEntry(r, chute);
           const suffix =
             c === Chute.Exists
-              ? "The stairs will turn into a chute, descending two levels from the top. "
-              : "";
+              ? 'The stairs will turn into a chute, descending two levels from the top. '
+              : '';
           return (
-            "There are stairs here that ascend one level to a dead end. " +
+            'There are stairs here that ascend one level to a dead end. ' +
             suffix
           );
         }
@@ -1840,10 +1840,10 @@ function compactPeriodicText(
           const c = getTableEntry(r, chute);
           const suffix =
             c === Chute.Exists
-              ? "The stairs will turn into a chute, descending two levels from the top. "
-              : "";
+              ? 'The stairs will turn into a chute, descending two levels from the top. '
+              : '';
           return (
-            "There are stairs here that descend one level to a dead end. " +
+            'There are stairs here that descend one level to a dead end. ' +
             suffix
           );
         }
@@ -1860,19 +1860,19 @@ function compactPeriodicText(
         case Stairs.UpOneDownTwo: {
           const res = chamberMessages({});
           let text =
-            "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ";
+            'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ';
           for (const m of res.messages)
-            if (m.kind === "paragraph") text += m.text;
+            if (m.kind === 'paragraph') text += m.text;
           return text;
         }
       }
     }
     case PeriodicCheck.DeadEnd:
-      return "The passage reaches a dead end. (TODO) ";
+      return 'The passage reaches a dead end. (TODO) ';
     case PeriodicCheck.TrickTrap:
       return "There is a trick or trap. (TODO) -- check again in 30'. ";
     case PeriodicCheck.WanderingMonster:
-      return "";
+      return '';
   }
 }
 
@@ -1885,7 +1885,7 @@ function compactWanderingMonsterText(level: number): string {
     location = getTableEntry(r, periodicCheck);
   } while (location === PeriodicCheck.WanderingMonster);
 
-  let prefix = "";
+  let prefix = '';
   if (location === PeriodicCheck.Door) {
     prefix = compactDoorText();
   } else {
@@ -1896,7 +1896,7 @@ function compactWanderingMonsterText(level: number): string {
   const table = getMonsterTable(level);
   const roll = rollDice(table.sides);
   const ml = getTableEntry(roll, table);
-  let monsterText = "";
+  let monsterText = '';
   switch (ml) {
     case MonsterLevel.One:
       monsterText = monsterOneResult(level);
@@ -1917,16 +1917,16 @@ function compactWanderingMonsterText(level: number): string {
       monsterText = monsterSixResult(level);
       break;
     case MonsterLevel.Seven:
-      monsterText = "(TODO: Roll Monster for Level Seven)";
+      monsterText = '(TODO: Roll Monster for Level Seven)';
       break;
     case MonsterLevel.Eight:
-      monsterText = "(TODO: Roll Monster for Level Eight)";
+      monsterText = '(TODO: Roll Monster for Level Eight)';
       break;
     case MonsterLevel.Nine:
-      monsterText = "(TODO: Roll Monster for Level Nine)";
+      monsterText = '(TODO: Roll Monster for Level Nine)';
       break;
     case MonsterLevel.Ten:
-      monsterText = "(TODO: Roll Monster for Level Ten)";
+      monsterText = '(TODO: Roll Monster for Level Ten)';
       break;
   }
   return `${prefix}Wandering Monster: ${monsterText}`;

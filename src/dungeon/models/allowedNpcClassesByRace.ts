@@ -1,5 +1,5 @@
-import { CharacterRace } from "../../tables/dungeon/monster/character/characterRace";
-import { CharacterClass } from "./characterClass";
+import { CharacterRace } from '../../tables/dungeon/monster/character/characterRace';
+import { CharacterClass } from './characterClass';
 
 /**
  * This is specifically for npc classes, so it's slightly more permissive

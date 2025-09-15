@@ -1,7 +1,7 @@
-import type { BardLevels } from "../../../models/character/characterSheet";
-import type { Attributes } from "../../../models/attributes";
-import { getHitPoints } from "../getHitPoints";
-import { CharacterClass } from "../../../models/characterClass";
+import type { BardLevels } from '../../../models/character/characterSheet';
+import type { Attributes } from '../../../models/attributes';
+import { getHitPoints } from '../getHitPoints';
+import { CharacterClass } from '../../../models/characterClass';
 
 /**
  * The hit point calculation is affected by the following phrase in PHB 118:
@@ -20,7 +20,7 @@ import { CharacterClass } from "../../../models/characterClass";
  */
 export const getBardHitPoints = (
   bardLevels: BardLevels,
-  constitution: Attributes["CON"]
+  constitution: Attributes['CON']
 ): number => {
   const fighterHitPoints = getHitPoints(
     [

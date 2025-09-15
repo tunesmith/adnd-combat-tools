@@ -1,12 +1,12 @@
-import { DoorBeyond, doorBeyond } from "../../tables/dungeon/doorBeyond";
+import { DoorBeyond, doorBeyond } from '../../tables/dungeon/doorBeyond';
 import type {
   DungeonMessage,
   DungeonRollTrace,
   DungeonTablePreview,
   DungeonRenderNode,
-} from "../../types/dungeon";
-import { resolveDoorBeyond } from "../domain/resolvers";
-import { toCompactRender, toDetailRender } from "../adapters/render";
+} from '../../types/dungeon';
+import { resolveDoorBeyond } from '../domain/resolvers';
+import { toCompactRender, toDetailRender } from '../adapters/render';
 
 /**
  * Legacy string result (kept for compact mode parity and tests)
@@ -24,9 +24,9 @@ export const doorBeyondMessages = (options?: {
   const doorAhead = options?.doorAhead ?? false;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "doorBeyond",
-      title: "Door Beyond",
+      kind: 'table-preview',
+      id: 'doorBeyond',
+      title: 'Door Beyond',
       sides: doorBeyond.sides,
       entries: doorBeyond.entries.map((e) => ({
         range:
@@ -40,11 +40,11 @@ export const doorBeyondMessages = (options?: {
       | DungeonMessage
       | DungeonRollTrace
       | DungeonTablePreview
-    )[] = [{ kind: "heading", level: 3, text: "Door" }, preview];
+    )[] = [{ kind: 'heading', level: 3, text: 'Door' }, preview];
     return { usedRoll: undefined, messages };
   }
   const node = resolveDoorBeyond({ roll: options?.roll, doorAhead });
-  const usedRoll = node.type === "event" ? node.roll : undefined;
+  const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);

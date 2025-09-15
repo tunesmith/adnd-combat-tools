@@ -1,15 +1,15 @@
 import {
   PeriodicCheck,
   periodicCheck,
-} from "../../tables/dungeon/periodicCheck";
+} from '../../tables/dungeon/periodicCheck';
 import type {
   DungeonMessage,
   DungeonTablePreview,
   DungeonRenderNode,
-} from "../../types/dungeon";
+} from '../../types/dungeon';
 // legacy imports above kept for string API; message-path refactored below via adapters
-import { resolvePeriodicCheck } from "../domain/resolvers";
-import { toCompactRender, toDetailRender } from "../adapters/render";
+import { resolvePeriodicCheck } from '../domain/resolvers';
+import { toCompactRender, toDetailRender } from '../adapters/render';
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -32,9 +32,9 @@ export const passageMessages = (options?: {
   const level = options?.level ?? 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
-      kind: "table-preview",
-      id: "periodicCheck",
-      title: "Periodic Check",
+      kind: 'table-preview',
+      id: 'periodicCheck',
+      title: 'Periodic Check',
       sides: periodicCheck.sides,
       entries: periodicCheck.entries.map((e) => ({
         range:
@@ -44,11 +44,11 @@ export const passageMessages = (options?: {
         label: PeriodicCheck[e.command] ?? String(e.command),
       })),
       context: options?.level
-        ? { kind: "wandering", level: options.level }
+        ? { kind: 'wandering', level: options.level }
         : undefined,
     };
     const messages: (DungeonMessage | DungeonTablePreview)[] = [
-      { kind: "heading", level: 3, text: "Passage" },
+      { kind: 'heading', level: 3, text: 'Passage' },
       preview,
     ];
     return { usedRoll: undefined, messages };
@@ -58,7 +58,7 @@ export const passageMessages = (options?: {
     level,
     avoidMonster: options?.avoidMonster,
   });
-  const usedRoll = (node.type === "event" ? node.roll : undefined) as
+  const usedRoll = (node.type === 'event' ? node.roll : undefined) as
     | number
     | undefined;
   const messages = options?.detailMode

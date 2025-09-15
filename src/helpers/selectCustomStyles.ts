@@ -1,4 +1,4 @@
-import type { CSSObjectWithLabel } from "react-select";
+import type { CSSObjectWithLabel } from 'react-select';
 
 const customStyles = {
   control: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({

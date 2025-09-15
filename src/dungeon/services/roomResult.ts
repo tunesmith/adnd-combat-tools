@@ -1,6 +1,6 @@
-import type { DungeonRenderNode } from "../../types/dungeon";
-import { resolveRoomDimensions } from "../domain/resolvers";
-import { toCompactRender, toDetailRender } from "../adapters/render";
+import type { DungeonRenderNode } from '../../types/dungeon';
+import { resolveRoomDimensions } from '../domain/resolvers';
+import { toCompactRender, toDetailRender } from '../adapters/render';
 
 /**
  * Typed variant for room dimensions.
@@ -15,6 +15,6 @@ export const roomMessages = (options?: {
   const rendered = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);
-  const usedRoll = (node.type === "event" && node.roll) || options?.roll;
+  const usedRoll = (node.type === 'event' && node.roll) || options?.roll;
   return { usedRoll, messages: rendered };
 };

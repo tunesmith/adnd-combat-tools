@@ -1,14 +1,14 @@
-import type { CharacterRace } from "../../../tables/dungeon/monster/character/characterRace";
-import type { CharacterSheet } from "../../models/character/characterSheet";
-import { allowedNpcClassesByRace } from "../../models/allowedNpcClassesByRace";
-import { getAttributes } from "./attributes/getAttributes";
-import { getMaxLevel } from "./level/getMaxLevel";
-import { getCharacterClass } from "./class/getCharacterClass";
-import { getCharacterGender } from "./getCharacterGender";
-import { getHitPoints } from "./getHitPoints";
-import { CharacterClass } from "../../models/characterClass";
-import { getBardLevels } from "./level/getBardLevels";
-import { getBardHitPoints } from "./hitpoints/getBardHitPoints";
+import type { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
+import type { CharacterSheet } from '../../models/character/characterSheet';
+import { allowedNpcClassesByRace } from '../../models/allowedNpcClassesByRace';
+import { getAttributes } from './attributes/getAttributes';
+import { getMaxLevel } from './level/getMaxLevel';
+import { getCharacterClass } from './class/getCharacterClass';
+import { getCharacterGender } from './getCharacterGender';
+import { getHitPoints } from './getHitPoints';
+import { CharacterClass } from '../../models/characterClass';
+import { getBardLevels } from './level/getBardLevels';
+import { getBardHitPoints } from './hitpoints/getBardHitPoints';
 
 /**
  * Level restrictions are tricky here because the DMG leaves this fairly
