@@ -155,7 +155,8 @@ export const circularContentsMessages = (options?: {
     for (const m of preview.messages) messages.push(m);
   } else if (!options?.detailMode && command === CircularContents.Pool) {
     const poolRes = circularShapePoolMessages({});
-    for (const m of poolRes.messages) if (m.kind === "paragraph") messages[messages.length - 1] = m;
+    for (const m of poolRes.messages)
+      if (m.kind === "paragraph") messages[messages.length - 1] = m;
   }
   return { usedRoll, messages };
 };
@@ -219,7 +220,8 @@ export const circularShapePoolMessages = (options?: {
     for (const m of preview.messages) messages.push(m);
   } else if (!options?.detailMode && command === Pool.MagicPool) {
     const magic = circularShapeMagicPoolMessages({});
-    for (const m of magic.messages) if (m.kind === "paragraph") messages[messages.length - 1] = m;
+    for (const m of magic.messages)
+      if (m.kind === "paragraph") messages[messages.length - 1] = m;
   }
   return { usedRoll, messages };
 };
@@ -270,7 +272,12 @@ export const circularShapeMagicPoolMessages = (options?: {
         for (const m of prev.messages) messages.push(m);
       } else {
         const tt = transmuteTypeMessages({});
-        for (const m of tt.messages) if (m.kind === "paragraph") messages[messages.length - 1] = { kind: "paragraph", text: text + m.text } as DungeonMessage;
+        for (const m of tt.messages)
+          if (m.kind === "paragraph")
+            messages[messages.length - 1] = {
+              kind: "paragraph",
+              text: text + m.text,
+            } as DungeonMessage;
       }
       break;
     case MagicPool.AlterCharacteristic:
@@ -287,7 +294,12 @@ export const circularShapeMagicPoolMessages = (options?: {
         for (const m of prev.messages) messages.push(m);
       } else {
         const align = poolAlignmentMessages({});
-        for (const m of align.messages) if (m.kind === "paragraph") messages[messages.length - 1] = { kind: "paragraph", text: text + m.text } as DungeonMessage;
+        for (const m of align.messages)
+          if (m.kind === "paragraph")
+            messages[messages.length - 1] = {
+              kind: "paragraph",
+              text: text + m.text,
+            } as DungeonMessage;
       }
       break;
     case MagicPool.Transporter:
@@ -298,7 +310,12 @@ export const circularShapeMagicPoolMessages = (options?: {
         for (const m of prev.messages) messages.push(m);
       } else {
         const trans = transporterLocationMessages({});
-        for (const m of trans.messages) if (m.kind === "paragraph") messages[messages.length - 1] = { kind: "paragraph", text: text + m.text } as DungeonMessage;
+        for (const m of trans.messages)
+          if (m.kind === "paragraph")
+            messages[messages.length - 1] = {
+              kind: "paragraph",
+              text: text + m.text,
+            } as DungeonMessage;
       }
       break;
   }

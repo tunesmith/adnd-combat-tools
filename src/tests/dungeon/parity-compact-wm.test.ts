@@ -4,7 +4,9 @@ import { monsterThreeMessages } from "../../dungeon/services/monsterLevelMessage
 import type { DungeonMessage } from "../../types/dungeon";
 import * as dungeonLookup from "../../dungeon/helpers/dungeonLookup";
 
-function isParagraph(m: DungeonMessage): m is Extract<DungeonMessage, { kind: "paragraph"; text: string }> {
+function isParagraph(
+  m: DungeonMessage
+): m is Extract<DungeonMessage, { kind: "paragraph"; text: string }> {
   return (m as any).kind === "paragraph" && typeof (m as any).text === "string";
 }
 
@@ -19,9 +21,15 @@ describe("Compact: Wandering Monster (adapter)", () => {
       .mockImplementationOnce(() => 1) // monster level table -> Level One
       .mockImplementationOnce(() => 97) // monsterOne -> Skeletons
       .mockImplementationOnce(() => 3); // d4 -> 3
-    const { messages } = passageMessages({ roll: 20, detailMode: false, level: 1 });
+    const { messages } = passageMessages({
+      roll: 20,
+      detailMode: false,
+      level: 1,
+    });
     const para = (messages as DungeonMessage[]).find(isParagraph)!;
-    expect(para.text.trim()).toBe("A door is Ahead. Wandering Monster: There are 3 skeletons.");
+    expect(para.text.trim()).toBe(
+      "A door is Ahead. Wandering Monster: There are 3 skeletons."
+    );
     spy.mockRestore();
   });
 
@@ -36,7 +44,11 @@ describe("Compact: Wandering Monster (adapter)", () => {
       .mockImplementationOnce(() => 1) // level one
       .mockImplementationOnce(() => 10) // fire beetle bucket
       .mockImplementationOnce(() => 2); // d4 -> 2
-    const { messages } = passageMessages({ roll: 20, detailMode: false, level: 1 });
+    const { messages } = passageMessages({
+      roll: 20,
+      detailMode: false,
+      level: 1,
+    });
     const para = (messages as DungeonMessage[]).find(isParagraph)!;
     expect(para.text.trim()).toBe(
       "A door is to the Left. There are no other doors. The main passage extends -- check again in 30'. Wandering Monster: There are 2 fire beetles."
@@ -46,41 +58,79 @@ describe("Compact: Wandering Monster (adapter)", () => {
 
   test("Where-from Passage Turn stages Passage Turns preview (detail)", () => {
     // Roll 11 -> PassageTurn on periodicCheck
-    const { messages } = wanderingWhereFromMessages({ roll: 11, detailMode: true });
+    const { messages } = wanderingWhereFromMessages({
+      roll: 11,
+      detailMode: true,
+    });
     const hasPassageTurns = messages.some(
       (m: any) => m.kind === "table-preview" && m.id === "passageTurns"
     );
     expect(hasPassageTurns).toBe(true);
   });
-  
+
   test("Monster Level 3: roll 11 (Bugbear) yields bugbears, not ogres", () => {
     // Ensure resolving monsterThree with a specific roll produces matching text
-    const spy = jest.spyOn(require("../../dungeon/helpers/dungeonLookup"), "rollDice");
+    const spy = jest.spyOn(
+      require("../../dungeon/helpers/dungeonLookup"),
+      "rollDice"
+    );
     // Force an unrelated ogre roll inside legacy function to expose the bug
     spy.mockImplementation(() => 61); // Ogre range on monsterThree
-    const { messages } = monsterThreeMessages({ roll: 11, detailMode: true, context: { kind: "wandering", level: 3 } });
+    const { messages } = monsterThreeMessages({
+      roll: 11,
+      detailMode: true,
+      context: { kind: "wandering", level: 3 },
+    });
     const para = (messages as any[]).find((m) => m.kind === "paragraph");
-    expect(para && typeof para.text === "string" && para.text.toLowerCase().includes("bugbear")).toBe(true);
+    expect(
+      para &&
+        typeof para.text === "string" &&
+        para.text.toLowerCase().includes("bugbear")
+    ).toBe(true);
     spy.mockRestore();
   });
 
   test("Monster Level 3: Wererat 2–5 rolls plural count", () => {
     // Roll 51 => LycanthropeWererat_2to5; force inner count roll to 1 so total = 2
-    const spy = jest.spyOn(require("../../dungeon/helpers/dungeonLookup"), "rollDice");
+    const spy = jest.spyOn(
+      require("../../dungeon/helpers/dungeonLookup"),
+      "rollDice"
+    );
     spy.mockImplementation(() => 1);
-    const { messages } = monsterThreeMessages({ roll: 51, detailMode: true, context: { kind: "wandering", level: 3 } });
+    const { messages } = monsterThreeMessages({
+      roll: 51,
+      detailMode: true,
+      context: { kind: "wandering", level: 3 },
+    });
     const para = (messages as any[]).find((m) => m.kind === "paragraph");
-    expect(para && typeof para.text === "string" && para.text.includes("There are 2 wererat lycanthropes")).toBe(true);
+    expect(
+      para &&
+        typeof para.text === "string" &&
+        para.text.includes("There are 2 wererat lycanthropes")
+    ).toBe(true);
     spy.mockRestore();
   });
 
   test("Monster Level 1: roll 27 at level 1 yields 9–16 halflings (deterministic 9)", () => {
-    const spy = jest.spyOn(require("../../dungeon/helpers/dungeonLookup"), "rollDice");
+    const spy = jest.spyOn(
+      require("../../dungeon/helpers/dungeonLookup"),
+      "rollDice"
+    );
     spy.mockImplementation(() => 1); // force 1d8 => 1; 1 + 8 = 9
-    const { monsterOneMessages } = require("../../dungeon/services/monsterLevelMessages");
-    const { messages } = monsterOneMessages({ roll: 27, detailMode: true, context: { kind: "wandering", level: 1 } });
+    const {
+      monsterOneMessages,
+    } = require("../../dungeon/services/monsterLevelMessages");
+    const { messages } = monsterOneMessages({
+      roll: 27,
+      detailMode: true,
+      context: { kind: "wandering", level: 1 },
+    });
     const para = (messages as any[]).find((m) => m.kind === "paragraph");
-    expect(para && typeof para.text === "string" && para.text.includes("There are 9 halflings")).toBe(true);
+    expect(
+      para &&
+        typeof para.text === "string" &&
+        para.text.includes("There are 9 halflings")
+    ).toBe(true);
     spy.mockRestore();
   });
 });

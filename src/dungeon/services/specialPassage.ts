@@ -27,10 +27,10 @@ import type {
 import { resolveSpecialPassage } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 
-
-export const specialPassageMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+export const specialPassageMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+}): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -38,7 +38,10 @@ export const specialPassageMessages = (
       title: "Special Passage",
       sides: specialPassage.sides,
       entries: specialPassage.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: SpecialPassage[e.command] ?? String(e.command),
       })),
     };
@@ -46,22 +49,20 @@ export const specialPassageMessages = (
   }
   const node = resolveSpecialPassage({ roll: options?.roll });
   const usedRoll = node.type === "event" ? node.roll : undefined;
-  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
+  const messages = options?.detailMode
+    ? toDetailRender(node)
+    : toCompactRender(node);
   return { usedRoll, messages };
 };
 
-
-
-
-
-
-
-
-
 // Typed wrappers for sub-tables
-export const galleryStairLocationMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+export const galleryStairLocationMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+}): {
+  usedRoll?: number;
+  messages: (DungeonMessage | DungeonTablePreview)[];
+} => {
   if (options?.detailMode && options.roll === undefined) {
     return {
       usedRoll: undefined,
@@ -72,7 +73,10 @@ export const galleryStairLocationMessages = (
           title: "Gallery Stair Location",
           sides: galleryStairLocation.sides,
           entries: galleryStairLocation.entries.map((e) => ({
-            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            range:
+              e.range.length === 1
+                ? `${e.range[0]}`
+                : `${e.range[0]}–${e.range[e.range.length - 1]}`,
             label: GalleryStairLocation[e.command] ?? String(e.command),
           })),
         },
@@ -87,7 +91,10 @@ export const galleryStairLocationMessages = (
       : "Stairs up to the gallery are at the beginning of the passage. ";
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
     { kind: "heading", level: 4, text: "Gallery Stair Location" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${GalleryStairLocation[command]}`] },
+    {
+      kind: "bullet-list",
+      items: [`roll: ${usedRoll} — ${GalleryStairLocation[command]}`],
+    },
     { kind: "paragraph", text },
   ];
   if (options?.detailMode && command === GalleryStairLocation.PassageEnd) {
@@ -97,7 +104,10 @@ export const galleryStairLocationMessages = (
       title: "Gallery Stair Occurrence",
       sides: galleryStairOccurrence.sides,
       entries: galleryStairOccurrence.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: GalleryStairOccurrence[e.command] ?? String(e.command),
       })),
     });
@@ -105,9 +115,9 @@ export const galleryStairLocationMessages = (
   return { usedRoll, messages };
 };
 
-export const galleryStairOccurrenceMessages = (
-  options?: { roll?: number }
-): { usedRoll: number; messages: DungeonMessage[] } => {
+export const galleryStairOccurrenceMessages = (options?: {
+  roll?: number;
+}): { usedRoll: number; messages: DungeonMessage[] } => {
   const usedRoll = options?.roll ?? rollDice(galleryStairOccurrence.sides);
   const command = getTableEntry(usedRoll, galleryStairOccurrence);
   const text =
@@ -118,15 +128,22 @@ export const galleryStairOccurrenceMessages = (
     usedRoll,
     messages: [
       { kind: "heading", level: 4, text: "Gallery Stair Occurrence" },
-      { kind: "bullet-list", items: [`roll: ${usedRoll} — ${GalleryStairOccurrence[command]}`] },
+      {
+        kind: "bullet-list",
+        items: [`roll: ${usedRoll} — ${GalleryStairOccurrence[command]}`],
+      },
       { kind: "paragraph", text },
     ],
   };
 };
 
-export const streamConstructionMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+export const streamConstructionMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+}): {
+  usedRoll?: number;
+  messages: (DungeonMessage | DungeonTablePreview)[];
+} => {
   if (options?.detailMode && options.roll === undefined) {
     return {
       usedRoll: undefined,
@@ -137,7 +154,10 @@ export const streamConstructionMessages = (
           title: "Stream Construction",
           sides: streamConstruction.sides,
           entries: streamConstruction.entries.map((e) => ({
-            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            range:
+              e.range.length === 1
+                ? `${e.range[0]}`
+                : `${e.range[0]}–${e.range[e.range.length - 1]}`,
             label: StreamConstruction[e.command] ?? String(e.command),
           })),
         },
@@ -146,20 +166,30 @@ export const streamConstructionMessages = (
   }
   const usedRoll = options?.roll ?? rollDice(streamConstruction.sides);
   const command = getTableEntry(usedRoll, streamConstruction);
-  const text = command === StreamConstruction.Bridged ? "A bridge crosses the stream. " : "";
+  const text =
+    command === StreamConstruction.Bridged
+      ? "A bridge crosses the stream. "
+      : "";
   return {
     usedRoll,
     messages: [
       { kind: "heading", level: 4, text: "Stream Construction" },
-      { kind: "bullet-list", items: [`roll: ${usedRoll} — ${StreamConstruction[command]}`] },
+      {
+        kind: "bullet-list",
+        items: [`roll: ${usedRoll} — ${StreamConstruction[command]}`],
+      },
       { kind: "paragraph", text },
     ],
   };
 };
 
-export const riverConstructionMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+export const riverConstructionMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+}): {
+  usedRoll?: number;
+  messages: (DungeonMessage | DungeonTablePreview)[];
+} => {
   if (options?.detailMode && options.roll === undefined) {
     return {
       usedRoll: undefined,
@@ -170,7 +200,10 @@ export const riverConstructionMessages = (
           title: "River Construction",
           sides: riverConstruction.sides,
           entries: riverConstruction.entries.map((e) => ({
-            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            range:
+              e.range.length === 1
+                ? `${e.range[0]}`
+                : `${e.range[0]}–${e.range[e.range.length - 1]}`,
             label: RiverConstruction[e.command] ?? String(e.command),
           })),
         },
@@ -181,7 +214,10 @@ export const riverConstructionMessages = (
   const command = getTableEntry(usedRoll, riverConstruction);
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
     { kind: "heading", level: 4, text: "River Construction" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${RiverConstruction[command]}`] },
+    {
+      kind: "bullet-list",
+      items: [`roll: ${usedRoll} — ${RiverConstruction[command]}`],
+    },
   ];
   if (command === RiverConstruction.Bridged) {
     messages.push({ kind: "paragraph", text: "A bridge crosses the river. " });
@@ -194,7 +230,10 @@ export const riverConstructionMessages = (
         title: "Boat Bank",
         sides: riverBoatBank.sides,
         entries: riverBoatBank.entries.map((e) => ({
-          range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+          range:
+            e.range.length === 1
+              ? `${e.range[0]}`
+              : `${e.range[0]}–${e.range[e.range.length - 1]}`,
           label: RiverBoatBank[e.command] ?? String(e.command),
         })),
       });
@@ -203,9 +242,9 @@ export const riverConstructionMessages = (
   return { usedRoll, messages };
 };
 
-export const riverBoatBankMessages = (
-  options?: { roll?: number }
-): { usedRoll: number; messages: DungeonMessage[] } => {
+export const riverBoatBankMessages = (options?: {
+  roll?: number;
+}): { usedRoll: number; messages: DungeonMessage[] } => {
   const usedRoll = options?.roll ?? rollDice(riverBoatBank.sides);
   const command = getTableEntry(usedRoll, riverBoatBank);
   const text =
@@ -216,15 +255,22 @@ export const riverBoatBankMessages = (
     usedRoll,
     messages: [
       { kind: "heading", level: 4, text: "Boat Bank" },
-      { kind: "bullet-list", items: [`roll: ${usedRoll} — ${RiverBoatBank[command]}`] },
+      {
+        kind: "bullet-list",
+        items: [`roll: ${usedRoll} — ${RiverBoatBank[command]}`],
+      },
       { kind: "paragraph", text },
     ],
   };
 };
 
-export const chasmDepthMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+export const chasmDepthMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+}): {
+  usedRoll?: number;
+  messages: (DungeonMessage | DungeonTablePreview)[];
+} => {
   if (options?.detailMode && options.roll === undefined) {
     return {
       usedRoll: undefined,
@@ -235,7 +281,10 @@ export const chasmDepthMessages = (
           title: "Chasm Depth",
           sides: chasmDepth.sides,
           entries: chasmDepth.entries.map((e) => ({
-            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            range:
+              e.range.length === 1
+                ? `${e.range[0]}`
+                : `${e.range[0]}–${e.range[e.range.length - 1]}`,
             label: ChasmDepth[e.command] ?? String(e.command),
           })),
         },
@@ -261,15 +310,22 @@ export const chasmDepthMessages = (
     usedRoll,
     messages: [
       { kind: "heading", level: 4, text: "Chasm Depth" },
-      { kind: "bullet-list", items: [`roll: ${usedRoll} — ${ChasmDepth[command]}`] },
+      {
+        kind: "bullet-list",
+        items: [`roll: ${usedRoll} — ${ChasmDepth[command]}`],
+      },
       { kind: "paragraph", text },
     ],
   };
 };
 
-export const chasmConstructionMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+export const chasmConstructionMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+}): {
+  usedRoll?: number;
+  messages: (DungeonMessage | DungeonTablePreview)[];
+} => {
   if (options?.detailMode && options.roll === undefined) {
     return {
       usedRoll: undefined,
@@ -280,7 +336,10 @@ export const chasmConstructionMessages = (
           title: "Chasm Construction",
           sides: chasmConstruction.sides,
           entries: chasmConstruction.entries.map((e) => ({
-            range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+            range:
+              e.range.length === 1
+                ? `${e.range[0]}`
+                : `${e.range[0]}–${e.range[e.range.length - 1]}`,
             label: ChasmConstruction[e.command] ?? String(e.command),
           })),
         },
@@ -291,7 +350,10 @@ export const chasmConstructionMessages = (
   const command = getTableEntry(usedRoll, chasmConstruction);
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
     { kind: "heading", level: 4, text: "Chasm Construction" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${ChasmConstruction[command]}`] },
+    {
+      kind: "bullet-list",
+      items: [`roll: ${usedRoll} — ${ChasmConstruction[command]}`],
+    },
   ];
   if (command === ChasmConstruction.Bridged) {
     messages.push({ kind: "paragraph", text: "A bridge crosses the chasm. " });
@@ -304,20 +366,26 @@ export const chasmConstructionMessages = (
         title: "Jumping Place Width",
         sides: jumpingPlaceWidth.sides,
         entries: jumpingPlaceWidth.entries.map((e) => ({
-          range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+          range:
+            e.range.length === 1
+              ? `${e.range[0]}`
+              : `${e.range[0]}–${e.range[e.range.length - 1]}`,
           label: JumpingPlaceWidth[e.command] ?? String(e.command),
         })),
       });
     }
   } else {
-    messages.push({ kind: "paragraph", text: "It has no bridge, and is too wide to jump across. " });
+    messages.push({
+      kind: "paragraph",
+      text: "It has no bridge, and is too wide to jump across. ",
+    });
   }
   return { usedRoll, messages };
 };
 
-export const jumpingPlaceWidthMessages = (
-  options?: { roll?: number }
-): { usedRoll: number; messages: DungeonMessage[] } => {
+export const jumpingPlaceWidthMessages = (options?: {
+  roll?: number;
+}): { usedRoll: number; messages: DungeonMessage[] } => {
   const usedRoll = options?.roll ?? rollDice(jumpingPlaceWidth.sides);
   const command = getTableEntry(usedRoll, jumpingPlaceWidth);
   const widthText = command === JumpingPlaceWidth.FiveFeet ? "5'" : "10'";
@@ -326,7 +394,10 @@ export const jumpingPlaceWidthMessages = (
     usedRoll,
     messages: [
       { kind: "heading", level: 4, text: "Jumping Place Width" },
-      { kind: "bullet-list", items: [`roll: ${usedRoll} — ${JumpingPlaceWidth[command]}`] },
+      {
+        kind: "bullet-list",
+        items: [`roll: ${usedRoll} — ${JumpingPlaceWidth[command]}`],
+      },
       { kind: "paragraph", text },
     ],
   };

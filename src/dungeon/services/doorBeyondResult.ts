@@ -1,5 +1,10 @@
 import { DoorBeyond, doorBeyond } from "../../tables/dungeon/doorBeyond";
-import type { DungeonMessage, DungeonRollTrace, DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
+import type {
+  DungeonMessage,
+  DungeonRollTrace,
+  DungeonTablePreview,
+  DungeonRenderNode,
+} from "../../types/dungeon";
 import { resolveDoorBeyond } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 
@@ -10,14 +15,12 @@ import { toCompactRender, toDetailRender } from "../adapters/render";
 /**
  * Typed variant using domain outcome + adapters.
  */
-export const doorBeyondMessages = (
-  options?: {
-    roll?: number;
-    doorAhead?: boolean;
-    detailMode?: boolean;
-    takeOverride?: (tableId: string) => number | undefined;
-  }
-): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+export const doorBeyondMessages = (options?: {
+  roll?: number;
+  doorAhead?: boolean;
+  detailMode?: boolean;
+  takeOverride?: (tableId: string) => number | undefined;
+}): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   const doorAhead = options?.doorAhead ?? false;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
@@ -33,14 +36,17 @@ export const doorBeyondMessages = (
         label: DoorBeyond[e.command] ?? String(e.command),
       })),
     };
-    const messages: (DungeonMessage | DungeonRollTrace | DungeonTablePreview)[] = [
-      { kind: "heading", level: 3, text: "Door" },
-      preview,
-    ];
+    const messages: (
+      | DungeonMessage
+      | DungeonRollTrace
+      | DungeonTablePreview
+    )[] = [{ kind: "heading", level: 3, text: "Door" }, preview];
     return { usedRoll: undefined, messages };
   }
   const node = resolveDoorBeyond({ roll: options?.roll, doorAhead });
   const usedRoll = node.type === "event" ? node.roll : undefined;
-  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
+  const messages = options?.detailMode
+    ? toDetailRender(node)
+    : toCompactRender(node);
   return { usedRoll, messages };
 };

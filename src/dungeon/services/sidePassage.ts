@@ -47,9 +47,10 @@ export const sidePassageResults = (): string => {
   }
 };
 
-export const sidePassageMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+export const sidePassageMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+}): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -57,7 +58,10 @@ export const sidePassageMessages = (
       title: "Side Passages",
       sides: sidePassages.sides,
       entries: sidePassages.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: SidePassages[e.command] ?? String(e.command),
       })),
     };
@@ -65,6 +69,8 @@ export const sidePassageMessages = (
   }
   const node = resolveSidePassages({ roll: options?.roll });
   const usedRoll = node.type === "event" ? node.roll : undefined;
-  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
+  const messages = options?.detailMode
+    ? toDetailRender(node)
+    : toCompactRender(node);
   return { usedRoll, messages };
 };

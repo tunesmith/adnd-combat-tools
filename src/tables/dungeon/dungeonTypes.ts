@@ -29,7 +29,10 @@ import type {
   TransmuteType,
   TransporterLocation,
 } from "./magicPool";
-import type { MonsterDistributionLevel, MonsterLevel } from "./monster/monsterLevel";
+import type {
+  MonsterDistributionLevel,
+  MonsterLevel,
+} from "./monster/monsterLevel";
 import type { Human, MonsterOne } from "./monster/monsterOne";
 import type { MonsterTwo } from "./monster/monsterTwo";
 import type { DragonThree, MonsterThree } from "./monster/monsterThree";

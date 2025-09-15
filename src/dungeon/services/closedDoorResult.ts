@@ -1,6 +1,13 @@
 import { doorLocation, DoorLocation } from "../../tables/dungeon/doorLocation";
-import type { DungeonTablePreview, DungeonRenderNode, TableContext } from "../../types/dungeon";
-import { periodicCheckDoorOnly, PeriodicCheckDoorOnly } from "../../tables/dungeon/periodicCheckDoorOnly";
+import type {
+  DungeonTablePreview,
+  DungeonRenderNode,
+  TableContext,
+} from "../../types/dungeon";
+import {
+  periodicCheckDoorOnly,
+  PeriodicCheckDoorOnly,
+} from "../../tables/dungeon/periodicCheckDoorOnly";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 
 /**
@@ -14,9 +21,11 @@ import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
  * then ignore the result and check again 30' past the door.
  */
 
-export const doorLocationMessages = (
-  options?: { roll?: number; detailMode?: boolean; context?: TableContext }
-): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+export const doorLocationMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+  context?: TableContext;
+}): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   // Preview (detail) — include sequence + context when available
   if (options?.detailMode && options.roll === undefined) {
     const seq = isDoorChainContext(options?.context)
@@ -28,7 +37,10 @@ export const doorLocationMessages = (
       title: "Door Location",
       sides: doorLocation.sides,
       entries: doorLocation.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: DoorLocation[e.command] ?? String(e.command),
       })),
       context: options?.context,
@@ -43,7 +55,10 @@ export const doorLocationMessages = (
       : `A door is to the ${DoorLocation[command]}. `;
   const messages: DungeonRenderNode[] = [
     { kind: "heading", level: 4, text: "Door Location" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${DoorLocation[command]}`] },
+    {
+      kind: "bullet-list",
+      items: [`roll: ${usedRoll} — ${DoorLocation[command]}`],
+    },
     { kind: "paragraph", text },
   ];
 
@@ -57,7 +72,11 @@ export const doorLocationMessages = (
       return { usedRoll, messages };
     }
     const loc: "Left" | "Right" | "" =
-      command === DoorLocation.Left ? "Left" : command === DoorLocation.Right ? "Right" : "";
+      command === DoorLocation.Left
+        ? "Left"
+        : command === DoorLocation.Right
+        ? "Right"
+        : "";
     if (loc === "") {
       return { usedRoll, messages };
     }
@@ -76,7 +95,10 @@ export const doorLocationMessages = (
       title: "Periodic Check (doors only)",
       sides: periodicCheckDoorOnly.sides,
       entries: periodicCheckDoorOnly.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: PeriodicCheckDoorOnly[e.command] ?? String(e.command),
       })),
       context: { kind: "doorChain", existing: nextExisting },
@@ -86,6 +108,8 @@ export const doorLocationMessages = (
   return { usedRoll, messages };
 };
 
-function isDoorChainContext(o: TableContext | undefined): o is Extract<TableContext, { kind: "doorChain" }> {
+function isDoorChainContext(
+  o: TableContext | undefined
+): o is Extract<TableContext, { kind: "doorChain" }> {
   return !!o && o.kind === "doorChain";
 }

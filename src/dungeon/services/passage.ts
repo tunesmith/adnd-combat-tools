@@ -43,7 +43,9 @@ export const passageMessages = (options?: {
             : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: PeriodicCheck[e.command] ?? String(e.command),
       })),
-      context: options?.level ? { kind: "wandering", level: options.level } : undefined,
+      context: options?.level
+        ? { kind: "wandering", level: options.level }
+        : undefined,
     };
     const messages: (DungeonMessage | DungeonTablePreview)[] = [
       { kind: "heading", level: 3, text: "Passage" },

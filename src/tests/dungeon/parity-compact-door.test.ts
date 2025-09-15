@@ -1,9 +1,14 @@
 import { passageMessages } from "../../dungeon/services/passage";
-import { periodicCheck, PeriodicCheck } from "../../tables/dungeon/periodicCheck";
+import {
+  periodicCheck,
+  PeriodicCheck,
+} from "../../tables/dungeon/periodicCheck";
 import type { DungeonMessage } from "../../types/dungeon";
 import * as dungeonLookup from "../../dungeon/helpers/dungeonLookup";
 
-function isParagraph(m: DungeonMessage): m is Extract<DungeonMessage, { kind: "paragraph"; text: string }> {
+function isParagraph(
+  m: DungeonMessage
+): m is Extract<DungeonMessage, { kind: "paragraph"; text: string }> {
   return (m as any).kind === "paragraph" && typeof (m as any).text === "string";
 }
 
@@ -17,7 +22,11 @@ describe("Compact: PeriodicCheck Door (adapter)", () => {
     const spy = jest.spyOn(dungeonLookup, "rollDice");
     // Adapter compact path doorLocation: Ahead
     spy.mockImplementationOnce(() => 20);
-    const { messages } = passageMessages({ roll: pickRollFor(PeriodicCheck.Door), detailMode: false, level: 1 });
+    const { messages } = passageMessages({
+      roll: pickRollFor(PeriodicCheck.Door),
+      detailMode: false,
+      level: 1,
+    });
     const para = (messages as DungeonMessage[]).find(isParagraph)!;
     expect(para.text).toBe("A door is Ahead. ");
     spy.mockRestore();
@@ -27,7 +36,11 @@ describe("Compact: PeriodicCheck Door (adapter)", () => {
     const spy = jest.spyOn(dungeonLookup, "rollDice");
     // Adapter compact path: doorLocation Left (1), periodic recheck Ignore (1)
     spy.mockImplementationOnce(() => 1).mockImplementationOnce(() => 1);
-    const { messages } = passageMessages({ roll: pickRollFor(PeriodicCheck.Door), detailMode: false, level: 1 });
+    const { messages } = passageMessages({
+      roll: pickRollFor(PeriodicCheck.Door),
+      detailMode: false,
+      level: 1,
+    });
     const para = (messages as DungeonMessage[]).find(isParagraph)!;
     expect(para.text).toBe(
       "A door is to the Left. There are no other doors. The main passage extends -- check again in 30'. "
@@ -42,12 +55,20 @@ describe("Compact: PeriodicCheck Door (adapter)", () => {
       .mockImplementationOnce(() => 7) // doorLocation Right
       .mockImplementationOnce(() => 3) // periodicCheck Door (continue chain)
       .mockImplementationOnce(() => 7); // doorLocation Right again (repeat)
-    const { messages } = passageMessages({ roll: pickRollFor(PeriodicCheck.Door), detailMode: false, level: 1 });
+    const { messages } = passageMessages({
+      roll: pickRollFor(PeriodicCheck.Door),
+      detailMode: false,
+      level: 1,
+    });
     const para = (messages as DungeonMessage[]).find(isParagraph)!;
     const text = para.text.trim();
     const occurrences = (text.match(/A door is to the Right\./g) || []).length;
     expect(occurrences).toBe(1);
-    expect(text.includes("There are no more doors. The main passage extends -- check again in 30'.")).toBe(true);
+    expect(
+      text.includes(
+        "There are no more doors. The main passage extends -- check again in 30'."
+      )
+    ).toBe(true);
     spy.mockRestore();
   });
 });

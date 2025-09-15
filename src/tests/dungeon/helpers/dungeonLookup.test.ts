@@ -24,4 +24,3 @@ describe("rollDice", () => {
     expect(rollDice(6, 3)).toBe(11);
   });
 });
-

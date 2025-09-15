@@ -13,4 +13,3 @@ export const periodicCheckDoorOnly: Table<PeriodicCheckDoorOnly> = {
     { range: [6, 20], command: PeriodicCheckDoorOnly.Ignore },
   ],
 };
-

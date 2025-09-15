@@ -5,12 +5,20 @@ import type { PassageTurns } from "../../tables/dungeon/passageTurns";
 import type { Stairs, Egress } from "../../tables/dungeon/stairs";
 import type { SpecialPassage } from "../../tables/dungeon/specialPassage";
 import type { PassageWidth } from "../../tables/dungeon/passageWidth";
-import type { RoomDimensions, ChamberDimensions } from "../../tables/dungeon/chambersRooms";
+import type {
+  RoomDimensions,
+  ChamberDimensions,
+} from "../../tables/dungeon/chambersRooms";
 import type { NumberOfExits } from "../../tables/dungeon/numberOfExits";
 
 // Domain outcome event kinds cover high-level tables we resolve.
 export type OutcomeEvent =
-  | { kind: "periodicCheck"; result: PeriodicCheck; level: number; avoidMonster?: boolean }
+  | {
+      kind: "periodicCheck";
+      result: PeriodicCheck;
+      level: number;
+      avoidMonster?: boolean;
+    }
   | { kind: "doorBeyond"; result: DoorBeyond; doorAhead?: boolean }
   | { kind: "sidePassages"; result: SidePassages }
   | { kind: "passageTurns"; result: PassageTurns }
@@ -21,7 +29,11 @@ export type OutcomeEvent =
   | { kind: "chamberDimensions"; result: ChamberDimensions }
   | { kind: "egress"; result: Egress; which: "one" | "two" | "three" }
   | { kind: "chute"; result: number }
-  | { kind: "numberOfExits"; result: NumberOfExits; context: { length: number; width: number; isRoom: boolean } };
+  | {
+      kind: "numberOfExits";
+      result: NumberOfExits;
+      context: { length: number; width: number; isRoom: boolean };
+    };
 
 export type PendingRoll = {
   type: "pending-roll";

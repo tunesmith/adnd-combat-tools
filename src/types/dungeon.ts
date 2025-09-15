@@ -16,7 +16,10 @@ export type DungeonBulletList = {
   items: string[];
 };
 
-export type DungeonMessage = DungeonParagraph | DungeonHeading | DungeonBulletList;
+export type DungeonMessage =
+  | DungeonParagraph
+  | DungeonHeading
+  | DungeonBulletList;
 
 export type RollTraceItem = {
   table: string;

@@ -26,9 +26,15 @@ export const getSize = (extraSquareFootage: number = 0): number => {
   }
 };
 
-export const unusualSizeMessages = (
-  options?: { roll?: number; detailMode?: boolean; seq?: number; extra?: number }
-): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+export const unusualSizeMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+  seq?: number;
+  extra?: number;
+}): {
+  usedRoll?: number;
+  messages: (DungeonMessage | DungeonTablePreview)[];
+} => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -36,7 +42,10 @@ export const unusualSizeMessages = (
       title: "Unusual Size (sq. ft.)",
       sides: unusualSize.sides,
       entries: unusualSize.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: UnusualSize[e.command] ?? String(e.command),
       })),
     };
@@ -46,7 +55,10 @@ export const unusualSizeMessages = (
   const command = getTableEntry(usedRoll, unusualSize);
   const messages: (DungeonMessage | DungeonTablePreview)[] = [
     { kind: "heading", level: 4, text: "Unusual Size" },
-    { kind: "bullet-list", items: [`roll: ${usedRoll} — ${UnusualSize[command]}`] },
+    {
+      kind: "bullet-list",
+      items: [`roll: ${usedRoll} — ${UnusualSize[command]}`],
+    },
   ];
   if (command === UnusualSize.RollAgain && options?.detailMode) {
     // Stage another preview; defer size until resolved
@@ -62,7 +74,10 @@ export const unusualSizeMessages = (
       title: "Unusual Size (sq. ft.)",
       sides: unusualSize.sides,
       entries: unusualSize.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: UnusualSize[e.command] ?? String(e.command),
       })),
     });
@@ -82,6 +97,9 @@ export const unusualSizeMessages = (
       ? 2700
       : 3400;
   const extra = options?.extra ?? 0;
-  messages.push({ kind: "paragraph", text: `It is about ${size + extra} sq. ft. ` });
+  messages.push({
+    kind: "paragraph",
+    text: `It is about ${size + extra} sq. ft. `,
+  });
   return { usedRoll, messages };
 };

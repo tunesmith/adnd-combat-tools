@@ -1,5 +1,9 @@
 import type React from "react";
-import type { DungeonRenderNode, DungeonTablePreview, TableContext } from "../../types/dungeon";
+import type {
+  DungeonRenderNode,
+  DungeonTablePreview,
+  TableContext,
+} from "../../types/dungeon";
 
 // Message services used by the registry
 import { sidePassageMessages } from "../services/sidePassage";
@@ -34,7 +38,11 @@ import {
   chasmConstructionMessages,
   jumpingPlaceWidthMessages,
 } from "../services/specialPassage";
-import { resolveEgress, resolveChute, resolveNumberOfExits } from "../domain/resolvers";
+import {
+  resolveEgress,
+  resolveChute,
+  resolveNumberOfExits,
+} from "../domain/resolvers";
 import { toDetailRender } from "../adapters/render";
 import {
   circularContentsMessages,
@@ -96,7 +104,7 @@ function isTableId(x: string): x is TableId {
   return (TABLE_ID_LIST as readonly string[]).includes(x);
 }
 
-export type TableId = (typeof TABLE_ID_LIST)[number];
+export type TableId = typeof TABLE_ID_LIST[number];
 
 export const TABLE_HEADINGS: Record<TableId, string> = {
   sidePassages: "Side Passages",
@@ -208,11 +216,19 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     return toDetailRender(resolveEgress({ which: key, roll }));
   },
   numberOfExits: ({ roll, context }) => {
-    const c = (context as { kind?: string; length?: number; width?: number; isRoom?: boolean }) || {};
+    const c =
+      (context as {
+        kind?: string;
+        length?: number;
+        width?: number;
+        isRoom?: boolean;
+      }) || {};
     const length = typeof c.length === "number" ? c.length : 10;
     const width = typeof c.width === "number" ? c.width : 10;
     const isRoom = typeof c.isRoom === "boolean" ? c.isRoom : false;
-    return toDetailRender(resolveNumberOfExits({ roll, length, width, isRoom }));
+    return toDetailRender(
+      resolveNumberOfExits({ roll, length, width, isRoom })
+    );
   },
 };
 
@@ -276,7 +292,11 @@ export function resolveViaRegistry<T extends FeedLike>(
   });
 
   if (setFeed) {
-    setFeed((prev) => prev.map((fi) => updateResolvedBlock(fi, feedItemId, tp.id, resolvedMsgs, heading)));
+    setFeed((prev) =>
+      prev.map((fi) =>
+        updateResolvedBlock(fi, feedItemId, tp.id, resolvedMsgs, heading)
+      )
+    );
   }
   if (setCollapsed) {
     setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));

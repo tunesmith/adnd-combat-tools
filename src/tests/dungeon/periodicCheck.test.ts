@@ -15,7 +15,11 @@ import { formatPartyResult } from "../../dungeon/helpers/party/formatPartyResult
 
 describe("passage results", () => {
   test("compact passage returns a paragraph for a concrete roll", () => {
-    const { messages } = passageMessages({ roll: 1, detailMode: false, level: 1 });
+    const { messages } = passageMessages({
+      roll: 1,
+      detailMode: false,
+      level: 1,
+    });
     expect(messages && messages.length).toBeGreaterThan(0);
   });
   test("unusual size", () => {
@@ -24,7 +28,10 @@ describe("passage results", () => {
   });
   test("chamber", () => {
     const res = chamberMessages({});
-    const text = res.messages.filter((m) => m.kind === "paragraph").map((m) => (m as any).text).join("");
+    const text = res.messages
+      .filter((m) => m.kind === "paragraph")
+      .map((m) => (m as any).text)
+      .join("");
     console.log(text);
     expect(text).not.toBe(null);
   });
@@ -59,7 +66,11 @@ describe("passage results", () => {
     expect(monsters).not.toBe(null);
   });
   test("compact wandering monster returns a composed string for roll=20", () => {
-    const { messages } = passageMessages({ roll: 20, detailMode: false, level: 1 });
+    const { messages } = passageMessages({
+      roll: 20,
+      detailMode: false,
+      level: 1,
+    });
     expect(messages && messages.length).toBeGreaterThan(0);
   });
 });
@@ -67,7 +78,10 @@ describe("passage results", () => {
 describe("door results", () => {
   test("open door", () => {
     const res = doorBeyondMessages({ doorAhead: true, detailMode: false });
-    const text = res.messages.filter((m) => m.kind === "paragraph").map((m) => (m as any).text).join("");
+    const text = res.messages
+      .filter((m) => m.kind === "paragraph")
+      .map((m) => (m as any).text)
+      .join("");
     console.log(text);
     expect(text).not.toBe(null);
   });
