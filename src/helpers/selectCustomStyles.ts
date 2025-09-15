@@ -4,15 +4,15 @@ const customStyles: {
 } = {
   control: (provided) => ({
     ...provided,
-    backgroundColor: "#F0EFDD",
+    backgroundColor: '#F0EFDD',
   }),
 
   option: (provided) => {
     // console.log(provided);
     return {
       ...provided,
-      backgroundColor: "#F0EFDD",
-      color: "black",
+      backgroundColor: '#F0EFDD',
+      color: 'black',
     };
   },
 };

@@ -1,5 +1,5 @@
-import { LevelOption } from "../types/option";
-import { BARD, CLERIC, FIGHTER, MAGIC_USER, THIEF } from "./attackerClass";
+import { LevelOption } from '../types/option';
+import { BARD, CLERIC, FIGHTER, MAGIC_USER, THIEF } from './attackerClass';
 
 interface LevelProps {
   label?: string;
@@ -14,18 +14,18 @@ interface LevelProps {
  * A bard always engages in combat at the level he or she attained as a fighter.
  */
 export const monsterLevels = new Map<number, LevelProps>([
-  [1, { label: "up to 1-1", thaco: 21 }],
-  [2, { label: "1-1", thaco: 20 }],
-  [3, { label: "1", thaco: 19 }],
-  [4, { label: "1+", thaco: 18 }],
-  [5, { label: "2-3+", thaco: 16 }],
-  [6, { label: "4-5+", thaco: 15 }],
-  [7, { label: "6-7+", thaco: 13 }],
-  [8, { label: "8-9+", thaco: 12 }],
-  [9, { label: "10-11+", thaco: 10 }],
-  [10, { label: "12-13+", thaco: 9 }],
-  [11, { label: "14-15+", thaco: 8 }],
-  [12, { label: "16+", thaco: 7 }],
+  [1, { label: 'up to 1-1', thaco: 21 }],
+  [2, { label: '1-1', thaco: 20 }],
+  [3, { label: '1', thaco: 19 }],
+  [4, { label: '1+', thaco: 18 }],
+  [5, { label: '2-3+', thaco: 16 }],
+  [6, { label: '4-5+', thaco: 15 }],
+  [7, { label: '6-7+', thaco: 13 }],
+  [8, { label: '8-9+', thaco: 12 }],
+  [9, { label: '10-11+', thaco: 10 }],
+  [10, { label: '12-13+', thaco: 9 }],
+  [11, { label: '14-15+', thaco: 8 }],
+  [12, { label: '16+', thaco: 7 }],
 ]);
 const fighterLevels = new Map<number, LevelProps>([
   [0, { thaco: 21 }],
@@ -148,7 +148,7 @@ const getClassLevels = (
       value: key + min,
       label: bard
         ? `Level F${key + min}`
-        : `Level ${key + min}${key + min === max ? "+" : ""}`,
+        : `Level ${key + min}${key + min === max ? '+' : ''}`,
     };
   });
 };

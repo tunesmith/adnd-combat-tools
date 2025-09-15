@@ -4,7 +4,7 @@
 // const assassinArmor = ["10", "9", "8", "7"];
 // const bardArmor = ["10", "8", "5"];
 
-import { ExpandedArmorTypeOption } from "../types/option";
+import { ExpandedArmorTypeOption } from '../types/option';
 import {
   ASSASSIN,
   BARD,
@@ -18,7 +18,7 @@ import {
   PALADIN,
   RANGER,
   THIEF,
-} from "./attackerClass";
+} from './attackerClass';
 
 /**
  * Unearthed Arcana notes:
@@ -57,107 +57,107 @@ export const expandedArmorTypes: ExpandedArmorProps[] = [
   {
     key: 1,
     armorType: null,
-    armorDescription: "Natural armor (Monster)",
+    armorDescription: 'Natural armor (Monster)',
   },
   {
     key: 2,
     armorType: 10,
-    armorDescription: "AT 10 - No Armor",
+    armorDescription: 'AT 10 - No Armor',
   },
   {
     key: 3,
     armorType: 9,
-    armorDescription: "AT 9 - Shield only",
+    armorDescription: 'AT 9 - Shield only',
   },
   {
     key: 4,
     armorType: 8,
-    armorDescription: "AT 8 - Leather armor",
+    armorDescription: 'AT 8 - Leather armor',
   },
   {
     key: 5,
     armorType: 8,
-    armorDescription: "AT 8 - Padded armor",
+    armorDescription: 'AT 8 - Padded armor',
   },
   {
     key: 6,
     armorType: 7,
-    armorDescription: "AT 7 - Leather armor + shield",
+    armorDescription: 'AT 7 - Leather armor + shield',
   },
   {
     key: 7,
     armorType: 7,
-    armorDescription: "AT 7 - Padded armor + shield",
+    armorDescription: 'AT 7 - Padded armor + shield',
   },
   {
     key: 8,
     armorType: 7,
-    armorDescription: "AT 7 - Studded leather",
+    armorDescription: 'AT 7 - Studded leather',
   },
   {
     key: 9,
     armorType: 7,
-    armorDescription: "AT 7 - Ring mail",
+    armorDescription: 'AT 7 - Ring mail',
   },
   {
     key: 10,
     armorType: 6,
-    armorDescription: "AT 6 - Studded leather + shield",
+    armorDescription: 'AT 6 - Studded leather + shield',
   },
   {
     key: 11,
     armorType: 6,
-    armorDescription: "AT 6 - Ring mail + shield",
+    armorDescription: 'AT 6 - Ring mail + shield',
   },
   {
     key: 12,
     armorType: 6,
-    armorDescription: "AT 6 - Scale mail",
+    armorDescription: 'AT 6 - Scale mail',
   },
   {
     key: 13,
     armorType: 5,
-    armorDescription: "AT 5 - Scale mail + shield",
+    armorDescription: 'AT 5 - Scale mail + shield',
   },
   {
     key: 14,
     armorType: 5,
-    armorDescription: "AT 5 - Chain mail",
+    armorDescription: 'AT 5 - Chain mail',
   },
   {
     key: 15,
     armorType: 4,
-    armorDescription: "AT 4 - Chain mail + shield",
+    armorDescription: 'AT 4 - Chain mail + shield',
   },
   {
     key: 16,
     armorType: 4,
-    armorDescription: "AT 4 - Splint mail",
+    armorDescription: 'AT 4 - Splint mail',
   },
   {
     key: 17,
     armorType: 4,
-    armorDescription: "AT 4 - Banded mail",
+    armorDescription: 'AT 4 - Banded mail',
   },
   {
     key: 18,
     armorType: 3,
-    armorDescription: "AT 3 - Splint mail + shield",
+    armorDescription: 'AT 3 - Splint mail + shield',
   },
   {
     key: 19,
     armorType: 3,
-    armorDescription: "AT 3 - Banded mail + shield",
+    armorDescription: 'AT 3 - Banded mail + shield',
   },
   {
     key: 20,
     armorType: 3,
-    armorDescription: "AT 3 - Plate mail",
+    armorDescription: 'AT 3 - Plate mail',
   },
   {
     key: 21,
     armorType: 2,
-    armorDescription: "AT 2 - Plate mail + shield",
+    armorDescription: 'AT 2 - Plate mail + shield',
   },
 ];
 
@@ -220,16 +220,16 @@ export const getExpandedArmorOptionsByClass = (
 };
 
 const armorTypes = {
-  " ": "Natural Armor (Monster)",
-  10: "AT 10 - No Armor",
-  9: "AT 9 - Shield only",
-  8: "AT 8 - Leather or padded armor",
-  7: "AT 7 - Leather or padded armor + shield / studded leather / ring mail",
-  6: "AT 6 - Studded leather or ring mail + shield / scale mail",
-  5: "AT 5 - Scale mail + shield / chain mail",
-  4: "AT 4 - Chain mail + shield / splint mail / banded mail",
-  3: "AT 3 - Splint or banded mail + shield / plate mail",
-  2: "AT 2 - Plate mail + shield",
+  ' ': 'Natural Armor (Monster)',
+  10: 'AT 10 - No Armor',
+  9: 'AT 9 - Shield only',
+  8: 'AT 8 - Leather or padded armor',
+  7: 'AT 7 - Leather or padded armor + shield / studded leather / ring mail',
+  6: 'AT 6 - Studded leather or ring mail + shield / scale mail',
+  5: 'AT 5 - Scale mail + shield / chain mail',
+  4: 'AT 4 - Chain mail + shield / splint mail / banded mail',
+  3: 'AT 3 - Splint or banded mail + shield / plate mail',
+  2: 'AT 2 - Plate mail + shield',
 };
 
 // const filterArmorTypes = (armorTypes, restrictions: string[]) =>
