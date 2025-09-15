@@ -67,10 +67,7 @@ import {
 } from '../../tables/dungeon/numberOfExits';
 import { unusualShape, UnusualShape } from '../../tables/dungeon/unusualShape';
 import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
-import { exitMessages } from '../services/exitResult';
-import { egressMessages, chuteMessages } from '../services/stairsResult';
-import { unusualShapeMessages } from '../services/unusualShapeResult';
-import { unusualSizeMessages } from '../services/unusualSizeResult';
+// detail-mode preview helpers remain for other flows; compact composition is local
 
 function rangeText(range: number[]): string {
   return range.length === 1
@@ -730,7 +727,6 @@ export function toDetailRender(
     return nodes2;
   }
   if (event.kind === 'egress') {
-    const which = event.which;
     const heading: DungeonMessage = {
       kind: 'heading',
       level: 4,
@@ -741,10 +737,11 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const res = egressMessages({ table: which, roll });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    const suffix =
+      event.result === Egress.Closed
+        ? 'After descending, an unnoticed door will close egress for the day. '
+        : '';
+    return [heading, bullet, { kind: 'paragraph', text: suffix }];
   }
   if (event.kind === 'chute') {
     const heading: DungeonMessage = {
@@ -757,10 +754,11 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const res = chuteMessages({ roll });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    const text =
+      (event.result as number) === Chute.Exists
+        ? 'The stairs will turn into a chute, descending two levels from the top. '
+        : '';
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   if ((event as { kind?: unknown }).kind === 'numberOfExits') {
     const ev = event as unknown as {
@@ -777,15 +775,50 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const res = exitMessages({
-      length: ev.context.length,
-      width: ev.context.width,
-      isRoom: ev.context.isRoom,
-      roll,
-    });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    const area = ev.context.length * ev.context.width;
+    let text = '';
+    switch (ev.result) {
+      case NumberOfExits.OneTwo600:
+        text =
+          area <= 600
+            ? 'There is one additional exit. (TODO location, direction/width if passage) '
+            : 'There are two additional exits. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.TwoThree600:
+        text =
+          area <= 600
+            ? 'There are two additional exits. (TODO location, direction/width if passage) '
+            : 'There are three additional exits. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.ThreeFour600:
+        text =
+          area <= 600
+            ? 'There are three additional exits. (TODO location, direction/width if passage) '
+            : 'There are four additional exits. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.ZeroOne1200:
+        text =
+          area <= 1200
+            ? 'There are no exits here, other than the entrance. (TODO secret doors) '
+            : 'There is one additional exit. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.ZeroOne1600:
+        text =
+          area <= 1600
+            ? 'There are no exits here, other than the entrance. (TODO secret doors) '
+            : 'There is one additional exit. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.OneToFour:
+        text =
+          'There are 1d4 exits here, other than the entrance. (TODO d4, location, direction/width if passage) ';
+        break;
+      case NumberOfExits.DoorChamberOrPassageRoom:
+        text = ev.context.isRoom
+          ? 'There is a passage exiting from the room. (TODO location/direction/width) '
+          : 'There is a door. (TODO location) ';
+        break;
+    }
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   if (event.kind === 'unusualShape') {
     const heading: DungeonMessage = {
@@ -798,10 +831,35 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const res = unusualShapeMessages({ roll });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    let text = '';
+    switch (event.result) {
+      case UnusualShape.Circular:
+        text = 'It is circular. ';
+        break;
+      case UnusualShape.Triangular:
+        text = 'It is triangular. ';
+        break;
+      case UnusualShape.Trapezoidal:
+        text = 'It is trapezoidal. ';
+        break;
+      case UnusualShape.OddShaped:
+        text =
+          'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) ';
+        break;
+      case UnusualShape.Oval:
+        text = 'It is oval-shaped. ';
+        break;
+      case UnusualShape.Hexagonal:
+        text = 'It is hexagonal. ';
+        break;
+      case UnusualShape.Octagonal:
+        text = 'It is octagonal. ';
+        break;
+      case UnusualShape.Cave:
+        text = 'It is actually a cave. ';
+        break;
+    }
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   if (event.kind === 'unusualSize') {
     const heading: DungeonMessage = {
@@ -814,10 +872,32 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const res = unusualSizeMessages({ roll });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    let size = 3400; // default fallback
+    switch (event.result) {
+      case UnusualSize.SqFt500:
+        size = 500;
+        break;
+      case UnusualSize.SqFt900:
+        size = 900;
+        break;
+      case UnusualSize.SqFt1300:
+        size = 1300;
+        break;
+      case UnusualSize.SqFt2000:
+        size = 2000;
+        break;
+      case UnusualSize.SqFt2700:
+        size = 2700;
+        break;
+      case UnusualSize.SqFt3400:
+        size = 3400;
+        break;
+      case UnusualSize.RollAgain:
+        size = 3400;
+        break;
+    }
+    const text = `It is about ${size} sq. ft. `;
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   return nodes;
 }
@@ -1220,19 +1300,50 @@ export function toCompactRender(
     }
     let text = baseDesc;
     if (dims) {
-      const exits = exitMessages({
-        length: dims.length,
-        width: dims.width,
-        isRoom: true,
-      });
-      for (const m of exits.messages)
-        if (m.kind === 'paragraph') text += m.text;
+      const area = dims.length * dims.width;
+      // Mirror exits compact composition inline
+      if (area <= 600) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
+      else if (area <= 1200) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
+      else if (area <= 1600) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
+      else text += 'There is one additional exit. (TODO location, direction/width if passage) ';
     } else {
-      const shape = unusualShapeMessages({});
-      for (const m of shape.messages)
-        if (m.kind === 'paragraph') text += m.text;
-      const size = unusualSizeMessages({});
-      for (const m of size.messages) if (m.kind === 'paragraph') text += m.text;
+      // Unusual shape/size compact composition inline
+      // Shape
+      // Roll and map to text
+      const rShape = rollDice(unusualShape.sides);
+      const cShape = getTableEntry(rShape, unusualShape);
+      text +=
+        cShape === UnusualShape.Circular
+          ? 'It is circular. '
+          : cShape === UnusualShape.Triangular
+          ? 'It is triangular. '
+          : cShape === UnusualShape.Trapezoidal
+          ? 'It is trapezoidal. '
+          : cShape === UnusualShape.OddShaped
+          ? 'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) '
+          : cShape === UnusualShape.Oval
+          ? 'It is oval-shaped. '
+          : cShape === UnusualShape.Hexagonal
+          ? 'It is hexagonal. '
+          : cShape === UnusualShape.Octagonal
+          ? 'It is octagonal. '
+          : 'It is actually a cave. ';
+      // Size
+      const rSize = rollDice(unusualSize.sides);
+      const cSize = getTableEntry(rSize, unusualSize);
+      const sizeVal =
+        cSize === UnusualSize.SqFt500
+          ? 500
+          : cSize === UnusualSize.SqFt900
+          ? 900
+          : cSize === UnusualSize.SqFt1300
+          ? 1300
+          : cSize === UnusualSize.SqFt2000
+          ? 2000
+          : cSize === UnusualSize.SqFt2700
+          ? 2700
+          : 3400;
+      text += `It is about ${sizeVal} sq. ft. `;
       text += '(TODO exits, contents, treasure) ';
     }
     nodes.push(heading, bullet, { kind: 'paragraph', text });
@@ -1281,19 +1392,46 @@ export function toCompactRender(
     }
     let text = baseDesc;
     if (dims) {
-      const exits = exitMessages({
-        length: dims.length,
-        width: dims.width,
-        isRoom: false,
-      });
-      for (const m of exits.messages)
-        if (m.kind === 'paragraph') text += m.text;
+      const area = dims.length * dims.width;
+      // Inline exits compact composition (chamber context behaves like passage)
+      if (area <= 600) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
+      else if (area <= 1200) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
+      else if (area <= 1600) text += 'There is one additional exit. (TODO location, direction/width if passage) ';
+      else text += 'There is one additional exit. (TODO location, direction/width if passage) ';
     } else {
-      const shape = unusualShapeMessages({});
-      for (const m of shape.messages)
-        if (m.kind === 'paragraph') text += m.text;
-      const size = unusualSizeMessages({});
-      for (const m of size.messages) if (m.kind === 'paragraph') text += m.text;
+      const rShape = rollDice(unusualShape.sides);
+      const cShape = getTableEntry(rShape, unusualShape);
+      text +=
+        cShape === UnusualShape.Circular
+          ? 'It is circular. '
+          : cShape === UnusualShape.Triangular
+          ? 'It is triangular. '
+          : cShape === UnusualShape.Trapezoidal
+          ? 'It is trapezoidal. '
+          : cShape === UnusualShape.OddShaped
+          ? 'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) '
+          : cShape === UnusualShape.Oval
+          ? 'It is oval-shaped. '
+          : cShape === UnusualShape.Hexagonal
+          ? 'It is hexagonal. '
+          : cShape === UnusualShape.Octagonal
+          ? 'It is octagonal. '
+          : 'It is actually a cave. ';
+      const rSize = rollDice(unusualSize.sides);
+      const cSize = getTableEntry(rSize, unusualSize);
+      const sizeVal =
+        cSize === UnusualSize.SqFt500
+          ? 500
+          : cSize === UnusualSize.SqFt900
+          ? 900
+          : cSize === UnusualSize.SqFt1300
+          ? 1300
+          : cSize === UnusualSize.SqFt2000
+          ? 2000
+          : cSize === UnusualSize.SqFt2700
+          ? 2700
+          : 3400;
+      text += `It is about ${sizeVal} sq. ft. `;
       text += '(TODO exits, contents, treasure) ';
     }
     nodes.push(heading, bullet, { kind: 'paragraph', text });
@@ -1520,7 +1658,6 @@ export function toCompactRender(
     return nodes;
   }
   if (event.kind === 'egress') {
-    const which = event.which;
     const heading: DungeonMessage = {
       kind: 'heading',
       level: 4,
@@ -1530,10 +1667,11 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${Egress[event.result]}`],
     };
-    const res = egressMessages({ table: which, roll });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    const suffix =
+      event.result === Egress.Closed
+        ? 'After descending, an unnoticed door will close egress for the day. '
+        : '';
+    return [heading, bullet, { kind: 'paragraph', text: suffix }];
   }
   if (event.kind === 'chute') {
     const heading: DungeonMessage = {
@@ -1545,10 +1683,11 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${Chute[event.result as 0 | 1]}`],
     };
-    const res = chuteMessages({ roll });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    const text =
+      (event.result as number) === Chute.Exists
+        ? 'The stairs will turn into a chute, descending two levels from the top. '
+        : '';
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   if ((event as { kind?: unknown }).kind === 'numberOfExits') {
     const ev = event as unknown as {
@@ -1564,15 +1703,50 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${NumberOfExits[ev.result]}`],
     };
-    const res = exitMessages({
-      length: ev.context.length,
-      width: ev.context.width,
-      isRoom: ev.context.isRoom,
-      roll,
-    });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    const area = ev.context.length * ev.context.width;
+    let text = '';
+    switch (ev.result) {
+      case NumberOfExits.OneTwo600:
+        text =
+          area <= 600
+            ? 'There is one additional exit. (TODO location, direction/width if passage) '
+            : 'There are two additional exits. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.TwoThree600:
+        text =
+          area <= 600
+            ? 'There are two additional exits. (TODO location, direction/width if passage) '
+            : 'There are three additional exits. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.ThreeFour600:
+        text =
+          area <= 600
+            ? 'There are three additional exits. (TODO location, direction/width if passage) '
+            : 'There are four additional exits. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.ZeroOne1200:
+        text =
+          area <= 1200
+            ? 'There are no exits here, other than the entrance. (TODO secret doors) '
+            : 'There is one additional exit. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.ZeroOne1600:
+        text =
+          area <= 1600
+            ? 'There are no exits here, other than the entrance. (TODO secret doors) '
+            : 'There is one additional exit. (TODO location, direction/width if passage) ';
+        break;
+      case NumberOfExits.OneToFour:
+        text =
+          'There are 1d4 exits here, other than the entrance. (TODO d4, location, direction/width if passage) ';
+        break;
+      case NumberOfExits.DoorChamberOrPassageRoom:
+        text = ev.context.isRoom
+          ? 'There is a passage exiting from the room. (TODO location/direction/width) '
+          : 'There is a door. (TODO location) ';
+        break;
+    }
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   if (event.kind === 'unusualShape') {
     const heading: DungeonMessage = {
@@ -1584,10 +1758,35 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${UnusualShape[event.result]}`],
     };
-    const res = unusualShapeMessages({ roll });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    let text = '';
+    switch (event.result) {
+      case UnusualShape.Circular:
+        text = 'It is circular. ';
+        break;
+      case UnusualShape.Triangular:
+        text = 'It is triangular. ';
+        break;
+      case UnusualShape.Trapezoidal:
+        text = 'It is trapezoidal. ';
+        break;
+      case UnusualShape.OddShaped:
+        text =
+          'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) ';
+        break;
+      case UnusualShape.Oval:
+        text = 'It is oval-shaped. ';
+        break;
+      case UnusualShape.Hexagonal:
+        text = 'It is hexagonal. ';
+        break;
+      case UnusualShape.Octagonal:
+        text = 'It is octagonal. ';
+        break;
+      case UnusualShape.Cave:
+        text = 'It is actually a cave. ';
+        break;
+    }
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   if (event.kind === 'unusualSize') {
     const heading: DungeonMessage = {
@@ -1599,10 +1798,32 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${UnusualSize[event.result]}`],
     };
-    const res = unusualSizeMessages({ roll });
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    for (const m of res.messages) if (m.kind === 'paragraph') nodes2.push(m);
-    return nodes2;
+    let size = 3400;
+    switch (event.result) {
+      case UnusualSize.SqFt500:
+        size = 500;
+        break;
+      case UnusualSize.SqFt900:
+        size = 900;
+        break;
+      case UnusualSize.SqFt1300:
+        size = 1300;
+        break;
+      case UnusualSize.SqFt2000:
+        size = 2000;
+        break;
+      case UnusualSize.SqFt2700:
+        size = 2700;
+        break;
+      case UnusualSize.SqFt3400:
+        size = 3400;
+        break;
+      case UnusualSize.RollAgain:
+        size = 3400; // match compact fallback
+        break;
+    }
+    const text = `It is about ${size} sq. ft. `;
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   return nodes;
 }

@@ -15,7 +15,6 @@ import {
 import type { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
 import type { Table } from '../../tables/dungeon/dungeonTypes';
 import { rollDice } from '../helpers/dungeonLookup';
-// Legacy aggregator retained for helpers; app no longer uses this string path.
 
 /**
  * In addition to rolling the wandering monster, we also have

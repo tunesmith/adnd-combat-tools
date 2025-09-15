@@ -18,20 +18,6 @@ import {
 import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import type { DungeonMessage, DungeonTablePreview } from '../../types/dungeon';
 
-// Legacy string unusualShapeResult removed; use unusualShapeMessages.
-
-// Legacy string functions removed; compact composition handled in messages/adapters.
-
-// Legacy string functions removed.
-
-// Legacy string functions removed.
-
-// Legacy string functions removed.
-
-// Legacy string functions removed.
-
-// Legacy string functions removed.
-
 // Typed wrappers (detail-mode previews) for Unusual Shape and immediate subtables
 export const unusualShapeMessages = (options?: {
   roll?: number;

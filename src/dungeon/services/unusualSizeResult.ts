@@ -2,8 +2,6 @@ import { UnusualSize, unusualSize } from '../../tables/dungeon/unusualSize';
 import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import type { DungeonMessage, DungeonTablePreview } from '../../types/dungeon';
 
-// Legacy string unusualSizeResult removed; use unusualSizeMessages in adapters.
-
 export const getSize = (extraSquareFootage: number = 0): number => {
   const roll = rollDice(unusualSize.sides);
   const command = getTableEntry(roll, unusualSize);

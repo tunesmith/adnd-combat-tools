@@ -7,7 +7,6 @@ import type {
   DungeonTablePreview,
   DungeonRenderNode,
 } from '../../types/dungeon';
-// legacy imports above kept for string API; message-path refactored below via adapters
 import { resolvePeriodicCheck } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
 
