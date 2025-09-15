@@ -1,8 +1,8 @@
 import { DoorBeyond, doorBeyond } from "../../tables/dungeon/doorBeyond";
 import { passageWidthMessages } from "./passageWidth";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { chamberResult } from "./chamberResult";
-import { roomResult } from "./roomResult";
+import { chamberMessages } from "./chamberResult";
+import { roomMessages } from "./roomResult";
 import type { DungeonMessage, DungeonRollTrace, DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 import { resolveDoorBeyond } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
@@ -53,10 +53,18 @@ export const doorBeyondResult = (doorAhead: boolean = false): string => {
         wtext
       );
     }
-    case DoorBeyond.Room:
-      return "Beyond the door is a room. " + roomResult();
-    case DoorBeyond.Chamber:
-      return "Beyond the door is a chamber. " + chamberResult();
+    case DoorBeyond.Room: {
+      const res = roomMessages({});
+      let text = "Beyond the door is a room. ";
+      for (const m of res.messages) if (m.kind === "paragraph") text += m.text;
+      return text;
+    }
+    case DoorBeyond.Chamber: {
+      const res = chamberMessages({});
+      let text = "Beyond the door is a chamber. ";
+      for (const m of res.messages) if (m.kind === "paragraph") text += m.text;
+      return text;
+    }
   }
 };
 

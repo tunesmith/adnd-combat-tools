@@ -28,7 +28,6 @@ import { roomMessages } from "../services/roomResult";
 import { chamberMessages } from "../services/chamberResult";
 import { passageWidthMessages } from "../services/passageWidth";
 import { SpecialPassage, specialPassage, galleryStairLocation, GalleryStairLocation, streamConstruction, StreamConstruction, riverConstruction, RiverConstruction, chasmDepth, ChasmDepth, chasmConstruction, ChasmConstruction, riverBoatBank, RiverBoatBank, galleryStairOccurrence, GalleryStairOccurrence, jumpingPlaceWidth, JumpingPlaceWidth } from "../../tables/dungeon/specialPassage";
-import { chamberResult } from "../services/chamberResult";
 import { numberOfExits, NumberOfExits } from "../../tables/dungeon/numberOfExits";
 import { unusualShape, UnusualShape } from "../../tables/dungeon/unusualShape";
 import { unusualSize, UnusualSize } from "../../tables/dungeon/unusualSize";
@@ -1299,8 +1298,12 @@ function compactPeriodicText(_level: number, result: PeriodicCheck, _avoidMonste
       }
       return prefix + widthText;
     }
-    case PeriodicCheck.Chamber:
-      return "The passage opens into a chamber. " + chamberResult();
+    case PeriodicCheck.Chamber: {
+      const res = chamberMessages({});
+      let text = "The passage opens into a chamber. ";
+      for (const m of res.messages) if (m.kind === "paragraph") text += m.text;
+      return text;
+    }
     case PeriodicCheck.Stairs: {
       const sRoll = rollDice(stairs.sides);
       const sCmd = getTableEntry(sRoll, stairs);
@@ -1347,11 +1350,12 @@ function compactPeriodicText(_level: number, result: PeriodicCheck, _avoidMonste
           return "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
         case Stairs.TrapDownDownTwo:
           return "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
-        case Stairs.UpOneDownTwo:
-          return (
-            "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. " +
-            chamberResult()
-          );
+        case Stairs.UpOneDownTwo: {
+          const res = chamberMessages({});
+          let text = "There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ";
+          for (const m of res.messages) if (m.kind === "paragraph") text += m.text;
+          return text;
+        }
       }
     }
     case PeriodicCheck.DeadEnd:
