@@ -4,7 +4,7 @@ import type { DungeonRenderNode, DungeonTablePreview, TableContext } from "../..
 // Message services used by the registry
 import { sidePassageMessages } from "../services/sidePassage";
 import { passageTurnMessages } from "../services/passageTurn";
-import { stairsMessages, egressMessages, chuteMessages } from "../services/stairsResult";
+import { stairsMessages } from "../services/stairsResult";
 import { doorLocationMessages } from "../services/closedDoorResult";
 import { periodicDoorOnlyMessages } from "../services/periodicDoorOnly";
 import { wanderingWhereFromMessages } from "../services/wanderingWhereFrom";
@@ -34,6 +34,8 @@ import {
   chasmConstructionMessages,
   jumpingPlaceWidthMessages,
 } from "../services/specialPassage";
+import { resolveEgress, resolveChute, resolveNumberOfExits } from "../domain/resolvers";
+import { toDetailRender } from "../adapters/render";
 import {
   circularContentsMessages,
   circularShapePoolMessages,
@@ -87,6 +89,7 @@ const TABLE_ID_LIST = [
   "transporterLocation",
   "chute",
   "egress",
+  "numberOfExits",
 ] as const;
 
 function isTableId(x: string): x is TableId {
@@ -132,6 +135,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   transporterLocation: "Transporter Location",
   chute: "Chute",
   egress: "Egress",
+  numberOfExits: "Exits",
 };
 
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
@@ -198,10 +202,17 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   poolAlignment: ({ roll }) => poolAlignmentMessages({ roll }).messages,
   transporterLocation: ({ roll }) =>
     transporterLocationMessages({ roll }).messages,
-  chute: ({ roll }) => chuteMessages({ roll }).messages,
+  chute: ({ roll }) => toDetailRender(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(":")[1] as "one" | "two" | "three") || "one";
-    return egressMessages({ table: key, roll }).messages;
+    return toDetailRender(resolveEgress({ which: key, roll }));
+  },
+  numberOfExits: ({ roll, context }) => {
+    const c = (context as { kind?: string; length?: number; width?: number; isRoom?: boolean }) || {};
+    const length = typeof c.length === "number" ? c.length : 10;
+    const width = typeof c.width === "number" ? c.width : 10;
+    const isRoom = typeof c.isRoom === "boolean" ? c.isRoom : false;
+    return toDetailRender(resolveNumberOfExits({ roll, length, width, isRoom }));
   },
 };
 
@@ -275,4 +286,3 @@ export function resolveViaRegistry<T extends FeedLike>(
   }
   return true;
 }
-

@@ -9,7 +9,6 @@ import type {
   RollTraceItem,
   DungeonTablePreview,
 } from "../../types/dungeon";
-import { exitMessages } from "../../dungeon/services/exitResult";
 import { passageWidthMessages } from "../../dungeon/services/passageWidth";
 import { doorBeyondMessages } from "../../dungeon/services/doorBeyondResult";
 import { roomMessages } from "../../dungeon/services/roomResult";
@@ -21,28 +20,7 @@ import { unusualSizeMessages } from "../../dungeon/services/unusualSizeResult";
 import { trickTrapMessages } from "../../dungeon/services/trickTrap";
 import { resolveViaRegistry, updateResolvedBlock } from "../../dungeon/helpers/registry";
 
-type ExitsContext = {
-  kind: "exits";
-  length: number;
-  width: number;
-  isRoom: boolean;
-};
 
-function isExitsContext(x: unknown): x is ExitsContext {
-  if (!x || typeof x !== "object") return false;
-  const o = x as {
-    kind?: unknown;
-    length?: unknown;
-    width?: unknown;
-    isRoom?: unknown;
-  };
-  return (
-    o.kind === "exits" &&
-    typeof o.length === "number" &&
-    typeof o.width === "number" &&
-    typeof o.isRoom === "boolean"
-  );
-}
 
 type WanderingContext = { kind: "wandering"; level: number };
 function isWanderingContext(x: unknown): x is WanderingContext {
@@ -795,54 +773,6 @@ function resolvePreview(
                 continue;
               }
               newMessages.push(m);
-            }
-          }
-        }
-        return { ...fi, messages: newMessages };
-      })
-    );
-    if (setCollapsed) setCollapsed((prev) => ({ ...prev, [keyId]: true }));
-    if (setResolved) setResolved((prev) => ({ ...prev, [keyId]: true }));
-  }
-  if (tp.id === "numberOfExits") {
-    // Use context for dimensions if provided
-    const ctx = isExitsContext(tp.context) ? tp.context : undefined;
-    if (!ctx) return;
-    const resolved = exitMessages({
-      length: ctx.length,
-      width: ctx.width,
-      isRoom: ctx.isRoom,
-      roll: usedRoll,
-    });
-    setFeed((prev) =>
-      prev.map((fi) => {
-        if (fi.id !== feedItemId) return fi;
-        const newMessages: DungeonRenderNode[] = [];
-        let skippingOld = false;
-        for (const node of fi.messages) {
-          if (node.kind === "table-preview" && node.id === tp.id) {
-            newMessages.push(node);
-            skippingOld = true;
-            for (const m of resolved.messages) newMessages.push(m);
-          } else {
-            if (skippingOld) {
-              if (node.kind === "table-preview" && node.id !== tp.id) {
-                skippingOld = false;
-              } else if (node.kind === "heading" && node.text !== "Exits") {
-                skippingOld = false;
-              } else if (node.kind === "heading" && node.text === "Exits") {
-                // keep skipping
-              } else if (
-                node.kind === "bullet-list" ||
-                node.kind === "paragraph"
-              ) {
-                // skip
-              } else {
-                skippingOld = false;
-              }
-              if (!skippingOld) newMessages.push(node);
-            } else {
-              newMessages.push(node);
             }
           }
         }

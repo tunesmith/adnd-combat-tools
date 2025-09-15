@@ -33,6 +33,7 @@ import { numberOfExits, NumberOfExits } from "../../tables/dungeon/numberOfExits
 import { unusualShape, UnusualShape } from "../../tables/dungeon/unusualShape";
 import { unusualSize, UnusualSize } from "../../tables/dungeon/unusualSize";
 import { exitMessages } from "../services/exitResult";
+import { egressMessages, chuteMessages } from "../services/stairsResult";
 import { unusualShapeMessages } from "../services/unusualShapeResult";
 import { unusualSizeMessages } from "../services/unusualSizeResult";
 
@@ -524,6 +525,35 @@ export function toDetailRender(outcome: DungeonOutcomeNode): DungeonRenderNode[]
       const prev = previewForPending({ type: "pending-roll", table: "specialPassage" });
       if (prev) nodes2.push(prev);
     }
+    return nodes2;
+  }
+  if (event.kind === "egress") {
+    const which = event.which;
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Egress" };
+    const label = Egress[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    const res = egressMessages({ table: which, roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    return nodes2;
+  }
+  if (event.kind === "chute") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Chute" };
+    const label = Chute[event.result as 0 | 1] ?? String(event.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    const res = chuteMessages({ roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    return nodes2;
+  }
+  if ((event as { kind?: unknown }).kind === "numberOfExits") {
+    const ev = event as unknown as { result: NumberOfExits; context: { length: number; width: number; isRoom: boolean } };
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Exits" };
+    const label = NumberOfExits[ev.result] ?? String(ev.result);
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${label}`] };
+    const res = exitMessages({ length: ev.context.length, width: ev.context.width, isRoom: ev.context.isRoom, roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
     return nodes2;
   }
   return nodes;
@@ -1046,6 +1076,32 @@ export function toCompactRender(outcome: DungeonOutcomeNode): DungeonRenderNode[
     }
     nodes.push(heading, bullet, { kind: "paragraph", text });
     return nodes;
+  }
+  if (event.kind === "egress") {
+    const which = event.which;
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Egress" };
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${Egress[event.result]}`] };
+    const res = egressMessages({ table: which, roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    return nodes2;
+  }
+  if (event.kind === "chute") {
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Chute" };
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${Chute[event.result as 0 | 1]}`] };
+    const res = chuteMessages({ roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    return nodes2;
+  }
+  if ((event as { kind?: unknown }).kind === "numberOfExits") {
+    const ev = event as unknown as { result: NumberOfExits; context: { length: number; width: number; isRoom: boolean } };
+    const heading: DungeonMessage = { kind: "heading", level: 4, text: "Exits" };
+    const bullet: DungeonMessage = { kind: "bullet-list", items: [`roll: ${roll} — ${NumberOfExits[ev.result]}`] };
+    const res = exitMessages({ length: ev.context.length, width: ev.context.width, isRoom: ev.context.isRoom, roll });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    for (const m of res.messages) if (m.kind === "paragraph") nodes2.push(m);
+    return nodes2;
   }
   return nodes;
 }
