@@ -5,27 +5,27 @@ import {
   useReducer,
   useRef,
   useState,
-} from "react";
+} from 'react';
 import {
   ADD_COLUMN,
   ADD_ROW,
   DELETE_COLUMN,
   DELETE_ROW,
-} from "../../helpers/BattleMessage";
-import { deflate } from "zlib";
-import CellOutput from "./CellOutput";
-import type { Column } from "react-table";
-import { useTable } from "react-table";
-import styles from "./battle.module.css";
-import BattleInput from "./BattleInput";
-import getConfig from "next/config";
+} from '../../helpers/BattleMessage';
+import { deflate } from 'zlib';
+import CellOutput from './CellOutput';
+import type { Column } from 'react-table';
+import { useTable } from 'react-table';
+import styles from './battle.module.css';
+import BattleInput from './BattleInput';
+import getConfig from 'next/config';
 import type {
   Creature,
   EmptyObject,
   State,
   StateRow,
-} from "../../types/creature";
-import { MONSTER } from "../../tables/attackerClass";
+} from '../../types/creature';
+import { MONSTER } from '../../tables/attackerClass';
 
 /**
  * TODO:
@@ -96,7 +96,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
                     return action.creature;
                   } else {
                     console.error(
-                      "Unable to change creature: returning unedited creature instead"
+                      'Unable to change creature: returning unedited creature instead'
                     );
                     return inner;
                   }
@@ -134,16 +134,16 @@ const Battle = ({ rememberedState }: BattleProps) => {
   useEffect(() => {
     deflate(JSON.stringify({ version: 4, state }), (err, buffer) => {
       if (err) {
-        console.error("An error occurred:", err);
+        console.error('An error occurred:', err);
         process.exitCode = 1;
       }
-      setEncodedGridState(encodeURIComponent(buffer.toString("base64")));
+      setEncodedGridState(encodeURIComponent(buffer.toString('base64')));
     });
   }, [state]);
 
   useEffect(() => {
     return () => {
-      console.log("unmounting Battle");
+      console.log('unmounting Battle');
     };
   }, []);
 
@@ -151,8 +151,8 @@ const Battle = ({ rememberedState }: BattleProps) => {
     if (encodedGridState) {
       window.history.replaceState(
         {},
-        "",
-        NODE_ENV !== "production"
+        '',
+        NODE_ENV !== 'production'
           ? `/battle?s=${encodedGridState}`
           : `/adnd-combat-tools/battle?s=${encodedGridState}`
       );
@@ -191,13 +191,13 @@ const Battle = ({ rememberedState }: BattleProps) => {
       [
         {
           Header: (
-            <div className={styles["tableTitle"]}>
+            <div className={styles['tableTitle']}>
               AD&D
               <br />
               Battle Grid
             </div>
           ),
-          accessor: "col0",
+          accessor: 'col0',
         },
       ].concat(
         state[0]
@@ -248,17 +248,17 @@ const Battle = ({ rememberedState }: BattleProps) => {
     tableInstance;
 
   return (
-    <div id={"app-modal"}>
-      <div className={styles["container"]}>
-        <div className={styles["addColumn"]}>
+    <div id={'app-modal'}>
+      <div className={styles['container']}>
+        <div className={styles['addColumn']}>
           <button
-            className={styles["buttonAddColumn"]}
+            className={styles['buttonAddColumn']}
             onClick={() => dispatch({ type: ADD_COLUMN })}
           >
             +
           </button>
         </div>
-        <table className={styles["myBorder"]} {...getTableProps()}>
+        <table className={styles['myBorder']} {...getTableProps()}>
           <thead>
             {
               // Loop over the header rows
@@ -278,7 +278,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
                           <th key={key} {...restColumnHeaderProps}>
                             {
                               // Render the header
-                              column.render("Header")
+                              column.render('Header')
                             }
                           </th>
                         );
@@ -308,7 +308,7 @@ const Battle = ({ rememberedState }: BattleProps) => {
                           <td {...cell.getCellProps()}>
                             {
                               // Render the cell contents
-                              cell.render("Cell")
+                              cell.render('Cell')
                             }
                           </td>
                         );
@@ -320,9 +320,9 @@ const Battle = ({ rememberedState }: BattleProps) => {
             }
           </tbody>
         </table>
-        <div className={styles["addRow"]}>
+        <div className={styles['addRow']}>
           <button
-            className={styles["buttonAddRow"]}
+            className={styles['buttonAddRow']}
             onClick={() => dispatch({ type: ADD_ROW })}
           >
             +

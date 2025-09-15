@@ -10,12 +10,12 @@
   --shadow-color: #ddd;
   font-family: 'Poppins', sans-serif;
   font-size: 12px;
-  --caput-martuum: #5A2829;
+  --caput-martuum: #5a2829;
   --royal-green: #136207;
-  --goldenrod: #D7A52D;
-  --eggshell: #F0EFDD;
-  --copper: #AC7223;
-  --dark-olive-green: #546F3A;
+  --goldenrod: #d7a52d;
+  --eggshell: #f0efdd;
+  --copper: #ac7223;
+  --dark-olive-green: #546f3a;
 }
 
 * {

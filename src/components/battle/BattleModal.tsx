@@ -1,22 +1,22 @@
-import { createPortal } from "react-dom";
-import styles from "./battleModal.module.css";
-import type { SingleValue } from "react-select";
-import Select from "react-select";
-import customStyles from "../../helpers/selectCustomStyles";
-import { attackerClassOptions } from "../../tables/attackerClass";
+import { createPortal } from 'react-dom';
+import styles from './battleModal.module.css';
+import type { SingleValue } from 'react-select';
+import Select from 'react-select';
+import customStyles from '../../helpers/selectCustomStyles';
+import { attackerClassOptions } from '../../tables/attackerClass';
 import type {
   Dispatch,
   FocusEvent,
   SetStateAction,
   MutableRefObject,
-} from "react";
+} from 'react';
 import type {
   ArmorClassOption,
   ExpandedArmorTypeOption,
   CreatureOption,
   LevelOption,
   WeaponOption,
-} from "../../types/option";
+} from '../../types/option';
 
 const BattleModal = ({
   setOpen,
@@ -60,30 +60,30 @@ const BattleModal = ({
   function close() {
     setOpen(false);
   }
-  const modal = document.getElementById("app-modal");
+  const modal = document.getElementById('app-modal');
   return modal ? (
     createPortal(
       <>
-        <div className={styles["modalShadow"]} onClick={close} />
+        <div className={styles['modalShadow']} onClick={close} />
         <div
-          className={styles["modal"]}
+          className={styles['modal']}
           style={{
             backgroundColor: row
-              ? "var(--caput-martuum)"
-              : "var(--dark-olive-green)",
+              ? 'var(--caput-martuum)'
+              : 'var(--dark-olive-green)',
           }}
         >
           <input
-            className={styles["nameInput"]}
-            type={"text"}
+            className={styles['nameInput']}
+            type={'text'}
             defaultValue={creatureName}
             onBlur={handleCreatureName}
-            placeholder={"(Name or label)"}
+            placeholder={'(Name or label)'}
           />
           <br />
           <Select
             isSearchable={false}
-            instanceId={"creatureClass"}
+            instanceId={'creatureClass'}
             styles={customStyles}
             value={attackerClassOptions.filter(
               (option) => option.value === creatureClass
@@ -94,7 +94,7 @@ const BattleModal = ({
           <br />
           <Select
             isSearchable={false}
-            instanceId={"level"}
+            instanceId={'level'}
             styles={customStyles}
             value={levelOptions.filter((option) => option.value === level)}
             options={levelOptions}
@@ -103,7 +103,7 @@ const BattleModal = ({
           <br />
           <Select
             isSearchable={false}
-            instanceId={"armorType"}
+            instanceId={'armorType'}
             styles={customStyles}
             value={armorTypeOptions.filter(
               (option) => option.value === armorType
@@ -114,7 +114,7 @@ const BattleModal = ({
           <br />
           <Select
             isSearchable={false}
-            instanceId={"armorClass"}
+            instanceId={'armorClass'}
             styles={customStyles}
             value={armorClassOptions.current.filter(
               (option) => option.value === armorClass
@@ -125,7 +125,7 @@ const BattleModal = ({
           <br />
           <Select
             isSearchable={false}
-            instanceId={"weapon"}
+            instanceId={'weapon'}
             styles={customStyles}
             value={weaponOptions.filter((option) => option.value === weapon)}
             options={weaponOptions}

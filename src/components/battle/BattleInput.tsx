@@ -3,35 +3,35 @@ import {
   BARD,
   getGeneralClass,
   MONSTER,
-} from "../../tables/attackerClass";
-import type { FocusEvent, Dispatch } from "react";
-import React, { useRef, useState } from "react";
+} from '../../tables/attackerClass';
+import type { FocusEvent, Dispatch } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   getLevelOptionsByCombatClass,
   monsterLevels,
-} from "../../tables/combatLevel";
-import { getWeaponOptions } from "../../tables/weapon";
+} from '../../tables/combatLevel';
+import { getWeaponOptions } from '../../tables/weapon';
 import {
   expandedArmorTypes,
   getExpandedArmorOptionsByClass,
-} from "../../tables/armorType";
-import styles from "./battleInput.module.css";
-import BattleModal from "./BattleModal";
+} from '../../tables/armorType';
+import styles from './battleInput.module.css';
+import BattleModal from './BattleModal';
 import {
   CHANGE_CREATURE,
   DELETE_COLUMN,
   DELETE_ROW,
-} from "../../helpers/BattleMessage";
-import type { SingleValue } from "react-select";
+} from '../../helpers/BattleMessage';
+import type { SingleValue } from 'react-select';
 import type {
   ArmorClassOption,
   ExpandedArmorTypeOption,
   CreatureOption,
   LevelOption,
   WeaponOption,
-} from "../../types/option";
-import type { Creature } from "../../types/creature";
-import type { ReducerAction } from "./Battle";
+} from '../../types/option';
+import type { Creature } from '../../types/creature';
+import type { ReducerAction } from './Battle';
 
 interface BattleInputProps {
   row: number;
@@ -152,7 +152,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         });
       }
     } else {
-      console.error("Could not switch creature class");
+      console.error('Could not switch creature class');
     }
   };
 
@@ -175,7 +175,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         },
       });
     } else {
-      console.error("could not switch to new level");
+      console.error('could not switch to new level');
     }
   };
 
@@ -201,7 +201,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         },
       });
     } else {
-      console.error("Could not switch to new armor type");
+      console.error('Could not switch to new armor type');
     }
   };
 
@@ -224,7 +224,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         },
       });
     } else {
-      console.error("Could not switch to new armor class");
+      console.error('Could not switch to new armor class');
     }
   };
 
@@ -268,11 +268,11 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
 
   return (
     <>
-      <div className={styles["container"]}>
-        <div className={styles["removeInput"]}>
+      <div className={styles['container']}>
+        <div className={styles['removeInput']}>
           <button
             className={
-              row < 1 ? styles["buttonRemoveColumn"] : styles["buttonRemoveRow"]
+              row < 1 ? styles['buttonRemoveColumn'] : styles['buttonRemoveRow']
             }
             onClick={() =>
               dispatch(
@@ -288,7 +288,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
         <div
           // data-text={"click to edit"}
           className={
-            row < 1 ? styles["battleInputColumn"] : styles["battleInputRow"]
+            row < 1 ? styles['battleInputColumn'] : styles['battleInputRow']
           }
           onClick={() => {
             setOpen(true);
@@ -297,16 +297,16 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
           <div>
             {creatureName && (
               <>
-                <span className={styles["creatureName"]}>{creatureName}</span>
+                <span className={styles['creatureName']}>{creatureName}</span>
                 <br />
               </>
             )}
             {attackerClassOptions.filter(
               (option) => option.value === creatureClass
-            )[0]?.label || "(No class selected)"}
+            )[0]?.label || '(No class selected)'}
             {levelLabel && (
               <>
-                :{" "}
+                :{' '}
                 {creatureClass === MONSTER ? (
                   <>HD </>
                 ) : creatureClass === BARD ? (
@@ -327,7 +327,7 @@ const BattleInput = ({ row, col, creature, dispatch }: BattleInputProps) => {
             AC {armorClass}
             <br />
             {weaponOptions.filter((option) => option.value === weapon)[0]
-              ?.label || "(No weapon selected"}
+              ?.label || '(No weapon selected'}
           </div>
         </div>
         {open && (
