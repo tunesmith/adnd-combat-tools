@@ -38,12 +38,19 @@ import {
   chasmConstructionMessages,
   jumpingPlaceWidthMessages,
 } from '../services/specialPassage';
+import { unusualSizeMessages } from '../services/unusualSizeResult';
+import { trickTrapMessages } from '../services/trickTrap';
 import {
   resolveEgress,
   resolveChute,
   resolveNumberOfExits,
   resolveUnusualShape,
-  resolveUnusualSize,
+  resolvePassageWidth,
+  resolveSpecialPassage,
+  resolveDoorBeyond,
+  resolvePeriodicCheck,
+  resolveRoomDimensions,
+  resolveChamberDimensions,
 } from '../domain/resolvers';
 import { toDetailRender } from '../adapters/render';
 import {
@@ -67,6 +74,8 @@ const TABLE_ID_LIST = [
   'passageTurns',
   'stairs',
   'doorLocation',
+  'doorBeyond',
+  'periodicCheck',
   'periodicCheckDoorOnly',
   'wanderingWhereFrom',
   'monsterLevel',
@@ -85,6 +94,10 @@ const TABLE_ID_LIST = [
   'human',
   'galleryStairLocation',
   'galleryStairOccurrence',
+  'passageWidth',
+  'specialPassage',
+  'roomDimensions',
+  'chamberDimensions',
   'streamConstruction',
   'riverConstruction',
   'riverBoatBank',
@@ -93,6 +106,7 @@ const TABLE_ID_LIST = [
   'jumpingPlaceWidth',
   'unusualShape',
   'unusualSize',
+  'trickTrap',
   'circularContents',
   'circularShapePool',
   'circularShapeMagicPool',
@@ -115,6 +129,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   passageTurns: 'Passage Turns',
   stairs: 'Stairs',
   doorLocation: 'Door Location',
+  doorBeyond: 'Door',
+  periodicCheck: 'Passage',
   periodicCheckDoorOnly: 'Periodic Check (doors only)',
   wanderingWhereFrom: 'Where From',
   monsterLevel: 'Monster Level',
@@ -133,6 +149,10 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   human: 'Human Subtable',
   galleryStairLocation: 'Gallery Stair Location',
   galleryStairOccurrence: 'Gallery Stair Occurrence',
+  passageWidth: 'Passage Width',
+  specialPassage: 'Special Passage',
+  roomDimensions: 'Room Dimensions',
+  chamberDimensions: 'Chamber Dimensions',
   streamConstruction: 'Stream Construction',
   riverConstruction: 'River Construction',
   riverBoatBank: 'Boat Bank',
@@ -141,6 +161,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   jumpingPlaceWidth: 'Jumping Place Width',
   unusualShape: 'Unusual Shape',
   unusualSize: 'Unusual Size',
+  trickTrap: 'Trick / Trap',
   circularContents: 'Circular Contents',
   circularShapePool: 'Pool',
   circularShapeMagicPool: 'Magic Pool Effect',
@@ -160,6 +181,12 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   stairs: ({ roll }) => stairsMessages({ roll, detailMode: true }).messages,
   doorLocation: ({ roll, context }) =>
     doorLocationMessages({ roll, detailMode: true, context }).messages,
+  doorBeyond: ({ roll }) => toDetailRender(resolveDoorBeyond({ roll })),
+  periodicCheck: ({ roll, context }) => {
+    const c = (context || {}) as { kind?: string; level?: number };
+    const level = c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
+    return toDetailRender(resolvePeriodicCheck({ roll, level }));
+  },
   periodicCheckDoorOnly: ({ roll, context }) =>
     periodicDoorOnlyMessages({ roll, detailMode: true, context }).messages,
   wanderingWhereFrom: ({ roll, context }) =>
@@ -196,6 +223,11 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     galleryStairLocationMessages({ roll, detailMode: true }).messages,
   galleryStairOccurrence: ({ roll }) =>
     galleryStairOccurrenceMessages({ roll }).messages,
+  passageWidth: ({ roll }) => toDetailRender(resolvePassageWidth({ roll })),
+  specialPassage: ({ roll }) => toDetailRender(resolveSpecialPassage({ roll })),
+  roomDimensions: ({ roll }) => toDetailRender(resolveRoomDimensions({ roll })),
+  chamberDimensions: ({ roll }) =>
+    toDetailRender(resolveChamberDimensions({ roll })),
   streamConstruction: ({ roll }) =>
     streamConstructionMessages({ roll, detailMode: true }).messages,
   riverConstruction: ({ roll }) =>
@@ -214,9 +246,6 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     const parts = id.split(':');
     if (parts.length >= 2) seq = Number(parts[1]) || 0;
     if (parts.length >= 3) extra = Number(parts[2]) || 0;
-    // Use message helper to keep preview-chaining semantics (RollAgain) intact
-    // and preserve final size calculation with carried extra.
-    const { unusualSizeMessages } = require('../services/unusualSizeResult');
     return unusualSizeMessages({ roll, detailMode: true, seq, extra }).messages;
   },
   circularContents: ({ roll }) =>
@@ -229,6 +258,7 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   poolAlignment: ({ roll }) => poolAlignmentMessages({ roll }).messages,
   transporterLocation: ({ roll }) =>
     transporterLocationMessages({ roll }).messages,
+  trickTrap: ({ roll }) => trickTrapMessages({ roll }).messages,
   chute: ({ roll }) => toDetailRender(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';
