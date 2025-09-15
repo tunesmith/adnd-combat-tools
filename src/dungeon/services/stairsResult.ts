@@ -1,6 +1,13 @@
-import { Chute, chute, Egress, egressOne, egressThree, egressTwo, Stairs, stairs } from "../../tables/dungeon/stairs";
-import { Table } from "../../tables/dungeon/dungeonTypes";
-//
+import {
+  Chute,
+  chute,
+  Egress,
+  egressOne,
+  egressThree,
+  egressTwo,
+  Stairs,
+  stairs,
+} from "../../tables/dungeon/stairs";
 import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
 import type {
   DungeonRenderNode,
@@ -10,29 +17,10 @@ import type {
 import { resolveStairs } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
 
-export const stairsResult = (): string => {
-  const { messages } = stairsMessages({});
-  let text = "";
-  for (const m of messages) if (m.kind === "paragraph") text += m.text;
-  return text;
-};
-
-export const egressResult = (egressTable: Table<Egress>): string => {
-  const which = egressTable === egressOne ? "one" : egressTable === egressTwo ? "two" : "three";
-  const { messages } = egressMessages({ table: which });
-  for (const m of messages) if (m.kind === "paragraph") return m.text;
-  return "";
-};
-
-export const chuteResult = (): string => {
-  const { messages } = chuteMessages({});
-  for (const m of messages) if (m.kind === "paragraph") return m.text;
-  return "";
-};
-
-export const stairsMessages = (
-  options?: { roll?: number; detailMode?: boolean }
-): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+export const stairsMessages = (options?: {
+  roll?: number;
+  detailMode?: boolean;
+}): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -40,7 +28,10 @@ export const stairsMessages = (
       title: "Stairs",
       sides: stairs.sides,
       entries: stairs.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: Stairs[e.command] ?? String(e.command),
       })),
     };
@@ -48,7 +39,9 @@ export const stairsMessages = (
   }
   const node = resolveStairs({ roll: options?.roll });
   const usedRoll = node.type === "event" ? node.roll : undefined;
-  const messages = options?.detailMode ? toDetailRender(node) : toCompactRender(node);
+  const messages = options?.detailMode
+    ? toDetailRender(node)
+    : toCompactRender(node);
   return { usedRoll, messages };
 };
 
@@ -56,9 +49,22 @@ export const egressMessages = (options: {
   table: "one" | "two" | "three";
   roll?: number;
   detailMode?: boolean;
-}): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
-  const table = options.table === "one" ? egressOne : options.table === "two" ? egressTwo : egressThree;
-  const titleSuffix = options.table === "one" ? "(1 level)" : options.table === "two" ? "(2 levels)" : "(3 levels)";
+}): {
+  usedRoll?: number;
+  messages: (DungeonMessage | DungeonTablePreview)[];
+} => {
+  const table =
+    options.table === "one"
+      ? egressOne
+      : options.table === "two"
+      ? egressTwo
+      : egressThree;
+  const titleSuffix =
+    options.table === "one"
+      ? "(1 level)"
+      : options.table === "two"
+      ? "(2 levels)"
+      : "(3 levels)";
   if (options.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -66,7 +72,10 @@ export const egressMessages = (options: {
       title: `Egress ${titleSuffix}`,
       sides: table.sides,
       entries: table.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: Egress[e.command] ?? String(e.command),
       })),
     };
@@ -74,7 +83,10 @@ export const egressMessages = (options: {
   }
   const usedRoll = options.roll ?? rollDice(table.sides);
   const command = getTableEntry(usedRoll, table);
-  const text = command === Egress.Closed ? "After descending, an unnoticed door will close egress for the day. " : "";
+  const text =
+    command === Egress.Closed
+      ? "After descending, an unnoticed door will close egress for the day. "
+      : "";
   const messages: DungeonMessage[] = [
     { kind: "heading", level: 4, text: "Egress" },
     { kind: "bullet-list", items: [`roll: ${usedRoll} — ${Egress[command]}`] },
@@ -86,7 +98,10 @@ export const egressMessages = (options: {
 export const chuteMessages = (options?: {
   roll?: number;
   detailMode?: boolean;
-}): { usedRoll?: number; messages: (DungeonMessage | DungeonTablePreview)[] } => {
+}): {
+  usedRoll?: number;
+  messages: (DungeonMessage | DungeonTablePreview)[];
+} => {
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: "table-preview",
@@ -94,7 +109,10 @@ export const chuteMessages = (options?: {
       title: "Chute",
       sides: chute.sides,
       entries: chute.entries.map((e) => ({
-        range: e.range.length === 1 ? `${e.range[0]}` : `${e.range[0]}–${e.range[e.range.length - 1]}`,
+        range:
+          e.range.length === 1
+            ? `${e.range[0]}`
+            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
         label: Chute[e.command] ?? String(e.command),
       })),
     };
@@ -102,7 +120,10 @@ export const chuteMessages = (options?: {
   }
   const usedRoll = options?.roll ?? rollDice(chute.sides);
   const command = getTableEntry(usedRoll, chute);
-  const text = command === Chute.Exists ? "The stairs will turn into a chute, descending two levels from the top. " : "";
+  const text =
+    command === Chute.Exists
+      ? "The stairs will turn into a chute, descending two levels from the top. "
+      : "";
   const messages: DungeonMessage[] = [
     { kind: "heading", level: 4, text: "Chute" },
     { kind: "bullet-list", items: [`roll: ${usedRoll} — ${Chute[command]}`] },

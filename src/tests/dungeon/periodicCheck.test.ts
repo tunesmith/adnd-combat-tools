@@ -1,7 +1,7 @@
-import { doorBeyondResult } from "../../dungeon/services/doorBeyondResult";
+import { doorBeyondMessages } from "../../dungeon/services/doorBeyondResult";
 import { passageMessages } from "../../dungeon/services/passage";
 import { unusualSizeMessages } from "../../dungeon/services/unusualSizeResult";
-import { chamberResult } from "../../dungeon/services/chamberResult";
+import { chamberMessages } from "../../dungeon/services/chamberResult";
 import { monsterOneResult } from "../../dungeon/services/monster/monsterOneResult";
 import { monsterTwoResult } from "../../dungeon/services/monster/monsterTwoResult";
 import { sidePassages, SidePassages } from "../../tables/dungeon/sidePassages";
@@ -23,9 +23,10 @@ describe("passage results", () => {
     expect(res.messages.length).toBeGreaterThan(0);
   });
   test("chamber", () => {
-    const chamber = chamberResult();
-    console.log(chamber);
-    expect(chamber).not.toBe(null);
+    const res = chamberMessages({});
+    const text = res.messages.filter((m) => m.kind === "paragraph").map((m) => (m as any).text).join("");
+    console.log(text);
+    expect(text).not.toBe(null);
   });
   test("character result", () => {
     const party = characterResult(5, 5);
@@ -65,9 +66,10 @@ describe("passage results", () => {
 
 describe("door results", () => {
   test("open door", () => {
-    const doorResult = doorBeyondResult(true);
-    console.log(doorResult);
-    expect(doorResult).not.toBe(null);
+    const res = doorBeyondMessages({ doorAhead: true, detailMode: false });
+    const text = res.messages.filter((m) => m.kind === "paragraph").map((m) => (m as any).text).join("");
+    console.log(text);
+    expect(text).not.toBe(null);
   });
   // test("open door not straight ahead", () => {
   //   const doorResult = doorBeyondResult(false);

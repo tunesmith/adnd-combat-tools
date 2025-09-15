@@ -199,65 +199,35 @@ Test strategy for the switch
 - Begin new feature work on top of the now-simplified adapters/registry foundation.
 
 ### Immediate Next Steps (actionable)
-1) Remove `passageWidthResults()` by ensuring all callers use `passageWidthMessages` or inline compact logic (adapter). Then delete function.
-2) Remove remaining `...Result()` producers in unusual shape/size by relying on `...Messages` for detail and compact text in adapters.
-3) Add outcome resolvers for exits/egress/chute if desired, and route all calls through outcomes to keep services pure.
+1) Remove `passageWidthResults()` by ensuring all callers use `passageWidthMessages` or inline compact logic (adapter). Then delete function. (Done)
+2) Remove remaining `...Result()` producers in unusual shape/size by relying on `...Messages` for detail and compact text in adapters. (Done)
+3) Add outcome resolvers for exits/egress/chute, and route all calls through outcomes to keep services pure. (Done)
 
 ## Updated Remaining Work (as of now)
-- `getPassageResult` has been removed and tests now assert adapter outputs directly.
-- Phase 1 complete: compact-mode composition for side passages, turns, and stairs is done in the adapter (no legacy calls). Width special-cases still rely on `specialPassageResult`, and `UpOneDownTwo` appends `chamberResult` (to be migrated later).
-- Phase 2 in progress:
-  - Resolvers now attach pending children for nested flows:
-    - Periodic Check → doorLocation, sidePassages, passageTurns, chamberDimensions, stairs, trickTrap; Wandering → where-from + monster level.
-    - Passage Turns → passageWidth (added).
-    - Stairs → egress/chute/chamber.
-    - Special Passage → galleries/stream/river/chasm subtables.
-  - Adapters (detail) render children via a single preview mapper for passage turns; compact remains adapter-only strings.
-  - Removed `services/compactWhereFrom` to avoid duplication; adapters own compact composition. `wanderingMonsterResult` is deprecated and unused by UI.
-- Rooms/Chambers now attach children: standard shapes → `numberOfExits` with `{ length, width, isRoom }` context; unusual → `unusualShape` and `unusualSize`. Detail adapter renders child previews via the mapper. Compact adapters reuse current strings for parity.
-- Trick/Trap: Replace stub with a real table and messages, derive preview rows, and add any required subtables.
-- Door chain outcome (optional): Model door chain as a structured outcome (doorLocation sequence + rechecks) to avoid string-based label parsing in UI.
-- Registry extraction (optional): Move TABLE_ID_LIST/HEADINGS/RESOLVERS + `resolveViaRegistry` to a helper module.
-- Normalize compact composition: `compactPeriodicText` currently reuses a few legacy service strings for exact parity; migrate to pure adapter strings once parity coverage is locked.
-- Minor typings: Remove leftover `any` in tests by adding small type guards where convenient.
+- Most string-producing services removed or converted to resolvers/messages; UI behavior preserved.
+- Registry extracted and now handles many subtables (including egress/chute/numberOfExits).
+- Detail adapters render child previews via a single preview mapper; compact adapters compose exact text.
+- Rooms/Chambers: outcomes include exits/unusuals; detail stages previews, compact composes text.
+- Trick/Trap: remains a stub table; replace with real table/messages when prioritized.
+- Optional: Door chain structured outcome to remove any string label parsing from chain logic.
+- Adapters have some duplication between detail/compact; DRYing is optional and deferred.
 
-### Remaining Legacy String Producers To Migrate
-These services still return legacy strings or mix composition logic and must be migrated to outcome resolvers + adapters (then removed):
-
-- `src/dungeon/services/chamberResult.ts`
-  - `chamberResult()`
-- `src/dungeon/services/doorBeyondResult.ts`
-  - `doorBeyondResult()`
-- `src/dungeon/services/exitResult.ts`
-  - `exitResult()`
-- `src/dungeon/services/passageTurn.ts`
-  - `passageTurnResults()`
-- `src/dungeon/services/passageWidth.ts`
-  - `passageWidthResults()` — removed; callers now use messages/inline compact logic.
-- `src/dungeon/services/roomResult.ts`
-  - `roomResult()`
-- `src/dungeon/services/sidePassage.ts`
-  - `sidePassageResults()`
-- `src/dungeon/services/specialPassage.ts`
-  - `specialPassageResult()` — removed from service; compact logic in adapter.
-- `src/dungeon/services/stairsResult.ts`
-  - `stairsResult()`
-  - `egressResult()` (indirect via `egressMessages` exists; add resolver version)
-  - `chuteResult()` (indirect via `chuteMessages` exists; add resolver version)
-- `src/dungeon/services/unusualShapeResult.ts`
-  - all `...Result()` methods (e.g., `unusualShapeResult()`, circular/hex/etc. buckets)
-- `src/dungeon/services/unusualSizeResult.ts`
-  - `unusualSizeResult()`
-// Removed: `src/dungeon/services/wanderingMonsterResult.ts` legacy aggregator function
+### Remaining Work To Complete Refactor
+- Delete any now-unused legacy string functions (if still present). Current state:
+  - Door/Room/Chamber/Stairs legacy string functions have been removed or commented and replaced by messages/outcomes.
+  - ExitResult remains message-based by design; outcome-based numberOfExits resolver is wired in the registry.
+- Optional parity hardening: add targeted snapshots for compact texts most prone to drift.
+- Optional: Normalize compact composition for remaining domains (e.g., monsters) to adapter-only strings if we want to remove string helpers in monster services.
+- Optional: DRY shared logic between toDetailRender and toCompactRender using small renderer helpers.
 
 Notes:
 - Some message-oriented helpers (e.g., `...Messages`) already exist and route through adapters; the goal is to have matching `resolve...()` outcome functions and eliminate `...Result()` string functions entirely.
 - The temporary `services/compactWhereFrom.ts` has been removed; adapters are the only source of compact strings for these flows.
 
-## Current Snapshot (for session restarts)
-- Resolvers: periodicCheck, stairs, and specialPassage return outcomes with children; passageTurns → passageWidth added; rooms/chambers → exits + unusuals pending.
-- Adapters: render pending children in detail via `previewForPending`; compact composition is centralized and no longer relies on service helpers.
-- Legacy: `getPassageResult` removed; legacy `wanderingMonsterResult` removed (helpers retained in the same module); `compactWhereFrom` deleted.
+- Resolvers: periodicCheck, stairs, specialPassage, passageWidth, egress, chute, numberOfExits, rooms/chambers with exits + unusuals.
+- Adapters: preview mapping (detail) and compact composition (no special-passage/unusual string helpers). Door chain handled explicitly; page uses registry for most tables.
+- Legacy: special-passage/unusual/passWidth string helpers removed; door/stairs/room/chamber string APIs removed; WM aggregator removed.
+- Legacy: `getPassageResult` removed; WM aggregator removed; special-passage/unusual string helpers removed; passageWidthResults removed; door/stairs/room/chamber string functions are now delegate-only shims.
 - Tests: assert adapter outputs and preview staging; added compact door-chain test to ensure repeated side does not duplicate the prefix.
 
 ### Migration Outline (per service)

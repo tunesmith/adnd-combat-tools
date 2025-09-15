@@ -1,8 +1,4 @@
 import { DoorBeyond, doorBeyond } from "../../tables/dungeon/doorBeyond";
-import { passageWidthMessages } from "./passageWidth";
-import { getTableEntry, rollDice } from "../helpers/dungeonLookup";
-import { chamberMessages } from "./chamberResult";
-import { roomMessages } from "./roomResult";
 import type { DungeonMessage, DungeonRollTrace, DungeonTablePreview, DungeonRenderNode } from "../../types/dungeon";
 import { resolveDoorBeyond } from "../domain/resolvers";
 import { toCompactRender, toDetailRender } from "../adapters/render";
@@ -10,63 +6,6 @@ import { toCompactRender, toDetailRender } from "../adapters/render";
 /**
  * Legacy string result (kept for compact mode parity and tests)
  */
-export const doorBeyondResult = (doorAhead: boolean = false): string => {
-  const doorBeyondRoll = rollDice(doorBeyond.sides);
-  const doorBeyondCommand = getTableEntry(doorBeyondRoll, doorBeyond);
-  console.log(
-    `doorBeyond roll: ${doorBeyondRoll} is ${DoorBeyond[doorBeyondCommand]}`
-  );
-  switch (doorBeyondCommand) {
-    case DoorBeyond.ParallelPassageOrCloset:
-      if (doorAhead) {
-        return "Beyond the door is a 10' x 10' room (check contents, treasure, TODO). ";
-      } else {
-        const width = passageWidthMessages({});
-        let wtext = "";
-        for (const m of width.messages) if (m.kind === "paragraph") wtext += m.text;
-        return (
-          "Beyond the door is a parallel passage, extending 30' in both directions. " +
-          wtext
-        );
-      }
-    case DoorBeyond.PassageStraightAhead: {
-      const width = passageWidthMessages({});
-      let wtext = "";
-      for (const m of width.messages) if (m.kind === "paragraph") wtext += m.text;
-      return "Beyond the door is a passage straight ahead. " + wtext;
-    }
-    case DoorBeyond.Passage45AheadBehind: {
-      const width = passageWidthMessages({});
-      let wtext = "";
-      for (const m of width.messages) if (m.kind === "paragraph") wtext += m.text;
-      return (
-        "Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). " +
-        wtext
-      );
-    }
-    case DoorBeyond.Passage45BehindAhead: {
-      const width = passageWidthMessages({});
-      let wtext = "";
-      for (const m of width.messages) if (m.kind === "paragraph") wtext += m.text;
-      return (
-        "Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). " +
-        wtext
-      );
-    }
-    case DoorBeyond.Room: {
-      const res = roomMessages({});
-      let text = "Beyond the door is a room. ";
-      for (const m of res.messages) if (m.kind === "paragraph") text += m.text;
-      return text;
-    }
-    case DoorBeyond.Chamber: {
-      const res = chamberMessages({});
-      let text = "Beyond the door is a chamber. ";
-      for (const m of res.messages) if (m.kind === "paragraph") text += m.text;
-      return text;
-    }
-  }
-};
 
 /**
  * Typed variant using domain outcome + adapters.
