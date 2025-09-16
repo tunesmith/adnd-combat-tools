@@ -14,21 +14,21 @@ export function runDungeonStep(
 ): DungeonStep {
   switch (action) {
     case 'passage': {
-      const { messages } = passageMessages({
+      const { messages, outcome } = passageMessages({
         roll: options?.roll,
         detailMode: options?.detailMode,
         level: options?.level,
       });
-      return { action, roll: options?.roll, messages };
+      return { action, roll: options?.roll, outcome, messages };
     }
     case 'door': {
-      const { messages } = doorBeyondMessages({
-        roll: options?.detailMode ? options?.roll : options?.roll,
+      const { messages, outcome } = doorBeyondMessages({
+        roll: options?.roll,
         doorAhead: options?.doorAhead,
         detailMode: options?.detailMode,
         takeOverride: options?.takeOverride,
       });
-      return { action, roll: options?.roll, messages };
+      return { action, roll: options?.roll, outcome, messages };
     }
   }
 }

@@ -5,6 +5,7 @@ import type {
   DungeonTablePreview,
   DungeonRenderNode,
 } from '../../types/dungeon';
+import type { DungeonOutcomeNode } from '../domain/outcome';
 import { resolveDoorBeyond } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
 
@@ -20,7 +21,11 @@ export const doorBeyondMessages = (options?: {
   doorAhead?: boolean;
   detailMode?: boolean;
   takeOverride?: (tableId: string) => number | undefined;
-}): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+}): {
+  usedRoll?: number;
+  messages: DungeonRenderNode[];
+  outcome?: DungeonOutcomeNode;
+} => {
   const doorAhead = options?.doorAhead ?? false;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
@@ -41,12 +46,12 @@ export const doorBeyondMessages = (options?: {
       | DungeonRollTrace
       | DungeonTablePreview
     )[] = [{ kind: 'heading', level: 3, text: 'Door' }, preview];
-    return { usedRoll: undefined, messages };
+    return { usedRoll: undefined, messages, outcome: undefined };
   }
   const node = resolveDoorBeyond({ roll: options?.roll, doorAhead });
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);
-  return { usedRoll, messages };
+  return { usedRoll, messages, outcome: node };
 };

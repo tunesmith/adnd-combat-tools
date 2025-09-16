@@ -1,3 +1,5 @@
+import type { DungeonOutcomeNode } from '../dungeon/domain/outcome';
+
 export type DungeonAction = 'passage' | 'door';
 
 export type DungeonParagraph = {
@@ -59,5 +61,6 @@ export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;
 export type DungeonStep = {
   action: DungeonAction;
   roll?: number;
+  outcome?: DungeonOutcomeNode;
   messages: DungeonRenderNode[];
 };

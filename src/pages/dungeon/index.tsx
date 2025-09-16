@@ -9,16 +9,24 @@ import type {
   RollTraceItem,
   DungeonTablePreview,
 } from '../../types/dungeon';
+import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import { doorBeyondMessages } from '../../dungeon/services/doorBeyondResult';
 import { passageMessages } from '../../dungeon/services/passage';
 import { resolveViaRegistry } from '../../dungeon/helpers/registry';
 
 type ActionKind = 'passage' | 'door';
 
+type RenderCache = {
+  detail?: DungeonRenderNode[];
+  compact?: DungeonRenderNode[];
+};
+
 type FeedItem = {
   id: string;
   action: ActionKind;
   roll: number;
+  outcome?: DungeonOutcomeNode;
+  renderCache: RenderCache;
   messages: DungeonRenderNode[];
 };
 
@@ -58,10 +66,15 @@ const DungeonIndexPage = () => {
         return v;
       },
     });
+    const renderCache: RenderCache = detailMode
+      ? { detail: step.messages }
+      : { compact: step.messages };
     const item: FeedItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       action: act,
       roll,
+      outcome: step.outcome,
+      renderCache,
       messages: step.messages,
     };
     setFeed((prev) => [item, ...prev]);

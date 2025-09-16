@@ -7,6 +7,7 @@ import type {
   DungeonTablePreview,
   DungeonRenderNode,
 } from '../../types/dungeon';
+import type { DungeonOutcomeNode } from '../domain/outcome';
 import { resolvePeriodicCheck } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
 
@@ -27,7 +28,11 @@ export const passageMessages = (options?: {
   level?: number;
   avoidMonster?: boolean;
   detailMode?: boolean;
-}): { usedRoll?: number; messages: DungeonRenderNode[] } => {
+}): {
+  usedRoll?: number;
+  messages: DungeonRenderNode[];
+  outcome?: DungeonOutcomeNode;
+} => {
   const level = options?.level ?? 1;
   if (options?.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
@@ -50,7 +55,7 @@ export const passageMessages = (options?: {
       { kind: 'heading', level: 3, text: 'Passage' },
       preview,
     ];
-    return { usedRoll: undefined, messages };
+    return { usedRoll: undefined, messages, outcome: undefined };
   }
   const node = resolvePeriodicCheck({
     roll: options?.roll,
@@ -61,5 +66,5 @@ export const passageMessages = (options?: {
   const messages = options?.detailMode
     ? toDetailRender(node)
     : toCompactRender(node);
-  return { usedRoll, messages };
+  return { usedRoll, messages, outcome: node };
 };
