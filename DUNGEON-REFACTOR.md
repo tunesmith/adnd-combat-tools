@@ -13,10 +13,11 @@ This guide tracks the dungeon refactor. It focuses on why we’re doing it (obje
 
 - Outcome model in place: domain resolvers under `src/dungeon/domain/resolvers.ts` return `DungeonOutcomeNode` with staged child previews.
 - Adapters in place: `toDetailRender` and `toCompactRender` map outcomes to `DungeonRenderNode[]`; compact text is composed locally (no global legacy string path).
-- Registry extracted: `src/dungeon/helpers/registry.ts` resolves most previews (door chain, where‑from, monster tables, egress/chute, exits) and updates blocks generically.
+- Registry extracted: `src/dungeon/helpers/registry.ts` resolves most previews (door chain, where-from, monster tables, egress/chute, exits) and updates blocks generically.
 - Page simplified: `src/pages/dungeon/index.tsx` routes most tables through the registry; it keeps explicit branches only where flow truly differs (passage width, special passage, periodicCheck root, trick/trap, unusual shape/size, door beyond).
 - Door chain: Detail flow is preview‑driven (`doorLocation:*` <-> `periodicCheckDoorOnly:*`) with correct stop conditions; compact door text composes in the adapter (no legacy dependency).
-- Wandering Monster: Detail stages both where‑from and monster level; compact text composes in the adapter using the monster tables and per‑level result helpers.
+- Wandering Monster: Detail stages both where-from and monster level; compact text composes in the adapter using the monster tables and per-level result helpers.
+- Exits / egress / chute: Compact composition now lives entirely in the adapter and reuses the resolved outcome tree (including the stored exit counts).
 - Tests/typing: Jest passes locally; `tsc` passes; ESLint + Prettier configured.
 
 ## Phase Status
@@ -31,21 +32,16 @@ This guide tracks the dungeon refactor. It focuses on why we’re doing it (obje
   - Exits (`numberOfExits`) are outcome‑based and adapted in detail/compact.
   - Unusual Shape/Size are outcome events; adapters map them; `unusualSize` preview chaining semantics preserved.
 - Phase 4 — Remove remaining legacy string functions: Largely complete for flows the UI uses.
-  - Legacy string aggregators like `getPassageResult` and `wanderingMonsterResult` are no longer used by the UI.
-  - Message helpers (door location, periodic door‑only, unusual tables, exits, egress/chute, room/chamber) remain by design and are used in detail adapters/registry; compact composition has been moved into the adapter.
+- Legacy string aggregators like `getPassageResult` and `wanderingMonsterResult` are no longer used by the UI.
+- Message helpers remain for detail-mode preview staging where helpful (door location, periodic door-only, unusual tables, etc.); compact text for every flow is now generated in the adapter.
 
 ## What’s Next (single, actionable step)
 
-Refactor is effectively complete. Optional next: normalize compact composition for a few message-backed flows.
-
-- Option A: Move compact composition for `egress/chute/exits/unusual` fully into adapters to remove message-service dependencies in compact mode.
-- Option B: Keep as-is (acceptable), since current approach is consistent and well‑typed.
+Refactor is complete.
 
 ## Shortlist After That (optional, in order)
 
-1. Normalize compact adapters away from service helpers
-
-- For `egress/chute` and `exits`, either keep current message helpers (acceptable) or move compact composition fully into adapters for consistency. If we choose the latter, add small adapter helpers and then remove the string‑composition paths from those services.
+(none)
 
 ## Notes on Behavior Parity
 

@@ -1,195 +1,123 @@
-# Dungeon Architecture Guide
+# Dungeon Architecture
 
-This guide explains how the Dungeon feature is structured: what goes where, how data flows from random tables to UI, and how to add or change behavior safely. It assumes familiarity with AD&D Random Dungeon Generation but not with this codebase.
+This document explains how the dungeon generator is wired, what lives in each layer, and how information flows from a dice roll to what a player sees. Read it when you need to change behaviour or to add a new table.
 
-## Goals and Design Principles
+## High-Level Flow
 
-- Single source of truth for rules: resolve domain outcomes once, render anywhere.
-- Separation of concerns: domain resolution vs. presentation.
-- Predictable preview flows: detail mode stages tables as previews; compact mode produces final prose.
-- Typed-first: strict TypeScript, discriminated unions, no `any`, small type guards for dynamic contexts.
-- Pure functions by default: no side effects in domain resolvers or adapters; randomness is explicit via `rollDice`.
+```
+Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ Render Adapters ──▶ Page UI
+                               │                          │
+                               │                          └──▶ Registry (detail-mode preview resolution)
+                               └──▶ Message Services (detail-mode helpers only)
+```
 
-## Key Directories and Modules
+1. **Tables** describe the raw AD&D data: every `entries: [{ range, command }]` pair lives under `src/tables/dungeon/**`.
+2. **Domain resolvers** (`src/dungeon/domain/resolvers.ts`) consult those tables, roll as needed, and return a tree of `DungeonOutcomeNode`s.
+3. The **outcome tree** is a lightweight AST that records each roll and any follow-up tables that still need to be resolved.
+4. **Adapters** (`src/dungeon/adapters/render.ts`) translate outcome nodes into concrete UI messages for both detail and compact modes.
+5. The **registry** ties detail-mode previews back to the resolvers so the page can resolve staged tables without bespoke wiring.
+6. The **page UI** (`src/pages/dungeon/index.tsx`) is a thin orchestrator that renders previews, manages the feed, and delegates all logic to the layers above.
 
-- Tables (data): `src/tables/dungeon/**`
-  - Typed enums and table definitions (`sides`, `entries`, `range`, `command`).
-- Types (render + plumbing): `src/types/dungeon.ts`
-  - `DungeonRenderNode` (heading, bullet-list, paragraph, table-preview, roll-trace), `DungeonMessage` aliases, `TableContext` for threading state (door chains, exits, wandering level).
-- Domain (logic): `src/dungeon/domain/**`
-  - `outcome.ts`: `OutcomeEvent` + `DungeonOutcomeNode` model.
-  - `resolvers.ts`: `resolveXxx` functions (roll table → outcome event) with optional `children` for staged subflows.
-- Adapters (view mapping): `src/dungeon/adapters/render.ts`
-  - `toDetailRender(outcome)`: outcome → render nodes; adds headings/bullets and previews for `pending-roll` children.
-  - `toCompactRender(outcome)`: outcome → final compact text (no previews); composes directly in code (no service calls).
-- Registry (preview resolution): `src/dungeon/helpers/registry.ts`
-  - `TABLE_ID_LIST`, `TABLE_HEADINGS`, `TABLE_RESOLVERS` for preview ids.
-  - `resolveViaRegistry(tp, feedItemId, usedRoll, setFeed, setCollapsed, setResolved)` updates the feed and toggles UI state.
-- Services (message helpers): `src/dungeon/services/**`
-  - Small typed wrappers that return `DungeonRenderNode[]`. In detail mode they emit previews; compact mode usage is being phased out in favor of adapters.
-- Page (UI): `src/pages/dungeon/index.tsx`
-  - Renders root previews for Passage/Door and delegates preview resolution to the registry. Manages feed, overrides, collapse/resolved flags.
+## Files and Their Responsibilities
 
-## Core Data Model
+### Tables (`src/tables/dungeon/**`)
 
-- `DungeonOutcomeNode` (domain AST)
-  - `{ type: 'event', event: OutcomeEvent, roll: number, children?: DungeonOutcomeNode[] }`
-  - `{ type: 'pending-roll', table: string, context?: unknown }`
-- `OutcomeEvent` kinds (not exhaustive):
-  - `periodicCheck`, `doorBeyond`, `sidePassages`, `passageTurns`, `stairs`, `passageWidth`, `specialPassage`, `roomDimensions`, `chamberDimensions`, `egress`, `chute`, `numberOfExits`, `unusualShape`, `unusualSize`.
-- `TableContext` threads state for chains:
-  - `{ kind: 'doorChain', existing: ('Left'|'Right')[] }`
-  - `{ kind: 'wandering', level: number }`
-  - `{ kind: 'exits', length: number, width: number, isRoom: boolean }`
+- Enumerations for each table (e.g., `PeriodicCheck`, `Stairs`, `MonsterOne`).
+- `Table<T>` definitions with `sides` and `entries` arrays.
+- No logic lives here—only data.
 
-## Modes: Detail vs. Compact
+### Domain (`src/dungeon/domain`)
 
-- Detail mode
-  - Show headings + “roll: n — Label” bullets + paragraphs.
-  - Stage child tables as previews (`pending-roll`) without auto-rolling; user submits or auto-rolls.
-  - Registry resolves previews and updates collapse/resolved flags.
-- Compact mode
-  - No previews or roll traces; root headings hidden.
-  - One or more paragraphs mirror the historical prose exactly.
-  - All composition lives in `toCompactRender()` for consistency (no service calls). This is the “compact normalization” we adopted.
+- `outcome.ts` defines the types that flow through the system:
+  - `DungeonOutcomeNode` is either an `event` (resolved roll) or a `pending-roll` (preview still awaiting a roll).
+  - `OutcomeEvent` is a discriminated union capturing every table the generator understands. Events can carry extra structured data (e.g., exit count, wandering level).
+- `resolvers.ts` is the only place randomness happens. A resolver:
+  1. Chooses or accepts a roll.
+  2. Looks up the command in the relevant table.
+  3. Emits a `DungeonOutcomeNode` with optional `children` for additional rolls.
+  4. Threads typed context when follow-up tables depend on prior results (door chains, exits, wandering monster level).
+- Resolvers must stay pure: no DOM access, no logging, no global mutation.
 
-### Why Compact Normalization?
+### Adapters (`src/dungeon/adapters/render.ts`)
 
-- Single responsibility: Domain resolvers produce values; compact text is a pure view concern — keep it in one place.
-- Remove duplication: Avoid parallel compact strings in services and adapters drifting out of sync.
-- Testability: Unit tests target one function for compact text; easier to assert exact prose.
-- Decoupling: Services remain focused on detail-mode preview staging where they add value; compact mode stays service‑free.
+- `toDetailRender(outcome)` renders headings, “roll: n — label” bullets, and any explanatory paragraphs.
+- `toCompactRender(outcome)` produces the final compact prose that historically appeared in the tool.
+- Both helpers recursively walk `pending-roll` children to insert `table-preview` nodes so detail mode knows what to show.
+- Compact mode **never** calls services; every sentence is composed in code here so there is a single source of truth for the prose.
+- Shared helpers live alongside the render functions (e.g., door-chain formatting, exit text, wandering monster composition).
 
-## How Flows Are Structured
+### Registry (`src/dungeon/helpers/registry.ts`)
 
-- Periodic Check (`resolvePeriodicCheck`)
-  - Event includes `level` and optional `avoidMonster`.
-  - Children: side passages, passage turns, chamber/room, stairs, trick/trap (stub), or wandering monster previews.
-  - Compact: composes final sentence or delegates to compact helpers (e.g., door chain).
-- Door Chain (Closed doors while checking passage)
-  - Preview id sequence: `doorLocation:0` → `periodicCheckDoorOnly:0` → `doorLocation:1` …
-  - Context: `{ kind: 'doorChain', existing: ('Left'|'Right')[] }` to avoid repeating the same lateral.
-  - Compact: `compactDoorText()` implements chain recursion and termination rules.
-- Door Beyond (`resolveDoorBeyond`)
-  - Compact: composes final text, appends passage width when needed; rooms/chambers embed their own descriptions.
-- Stairs/Egress/Chute
-  - `resolveStairs()` sets `pending-roll` children for egress/chute.
-  - Compact: egress/chute suffix sentences are built directly in adapters.
-- Passage Width / Special Passage
-  - `resolvePassageWidth()` adds `specialPassage` pending preview when indicated.
-  - Special passage may add further previews (galleries, streams/rivers/chasm); compact strings composed in adapters.
-- Rooms/Chambers
-  - `resolveRoomDimensions` / `resolveChamberDimensions` add `pending-roll` for `numberOfExits` or for `unusualShape`/`unusualSize`.
-  - Compact: base description + exits (or unusual shape/size summary). Contents/treasure are placeholders.
-- Unusual Shape/Size
-  - Modeled as outcome events; compact strings composed in adapters. Detail preview for `unusualSize` may chain `RollAgain` using the preview id parameters.
-  - `unusualSize` preview id carries parameters (`unusualSize:seq:extra`) to support roll-again chaining in detail mode.
-- Exits (`numberOfExits`)
-  - Outcome includes contextual dimensions; compact text uses area thresholds and room/chamber differences.
-- Wandering Monster
-  - Detail: where-from (periodic check sans WM) + monster level + monster specifics + dragons/humans subtables staged via previews.
-  - Compact: adapter composes: where-from compact text + “Wandering Monster: …” + monster description from level-specific helpers.
+- Maps preview ids (e.g., `monsterLevel`, `doorLocation:0`) to resolver functions.
+- Supplies human-readable headings for each table.
+- `resolveViaRegistry` updates the React feed, manages collapsed/resolved state, and triggers the corresponding resolver when the user resolves a preview.
+- Detail mode uses the registry; compact mode skips it entirely.
 
-## The Registry: Table Resolution in Detail Mode
+### Services (`src/dungeon/services/**`)
 
-- Preview ids take the form `base[:param[:param...]]`, e.g., `doorLocation:1`, `unusualSize:2:2000`.
-- `TABLE_RESOLVERS[base]` returns `DungeonRenderNode[]` for the resolved result (usually via outcomes + `toDetailRender`).
-- After resolution, the registry:
-  - Replaces the preview with the resolved block in the feed.
-  - Auto-collapses the preview and marks it as resolved.
+- Small, typed wrappers that keep older call sites convenient.
+- In detail mode and when no roll is provided, they emit a single `table-preview` node to the UI.
+- Internally they just call the appropriate resolver and pass the result to `toDetailRender`/`toCompactRender`.
+- They still exist because the page code paths were historically service-based; today they are thin veneers and safe to bypass when writing new code.
 
-Think of the registry as a small “view controller” for preview resolution in detail mode. It does not compute rules; it only:
+### Page (`src/pages/dungeon/index.tsx`)
 
-- Parses preview ids and optional params.
-- Calls the appropriate resolver/renderer.
-- Patches the rendered feed and toggles UI state.
+- Houses the React state and layout (feed, controls, accessibility live region).
+- Chooses the root action (Passage or Door), collects overrides, and hands them to `runDungeonStep` (which delegates directly to the services/adapters).
+- Delegates preview resolution to the registry; when you add a new table you rarely need to touch the page.
 
-## Adding or Modifying a Table
+### Types (`src/types/dungeon.ts`)
 
-1. Add the table
+- Shared view types such as `DungeonRenderNode`, `DungeonMessage`, and `DungeonTablePreview`.
+- `TableContext` union for stateful preview chains (`doorChain`, `wandering`, `exits`).
 
-- Create `src/tables/dungeon/<table>.ts` with enum and `Table<T>`.
+### Tests (`src/tests/dungeon/**`)
 
-2. Add a resolver (domain)
+- Focused Jest tests pin key behaviours: compact text, preview staging, helper utilities.
+- Use `jest.spyOn(dungeonLookup, 'rollDice')` to make random output deterministic.
 
-- Implement `resolveXxx({ roll? }) => DungeonOutcomeNode`.
-- If the table implies subtables, push `children` with `pending-roll` nodes and/or carry `context`.
+## Detail vs. Compact Mode
 
-3. Map to render (adapters)
+| Concern            | Detail Mode                                            | Compact Mode                                    |
+| ------------------ | ------------------------------------------------------ | ----------------------------------------------- |
+| Audience           | Ref + manual flow control (DM stepping through tables) | Quick prose output akin to the original booklet |
+| Output             | Headings, bullet lists, paragraphs, table previews     | Paragraphs only                                 |
+| Interaction        | User triggers each `pending-roll` via the registry     | Everything auto-resolves in one go              |
+| Data source        | Outcome tree + registry + services for previews        | Outcome tree only                               |
+| Where to change it | `toDetailRender` + registry                            | `toCompactRender` helpers                       |
 
-- toDetailRender: add a branch for the event to create heading + bullet + preview mapping.
-- toCompactRender: compose final text for compact mode (no references to services).
+## How to Add a New Table
 
-4. Register for detail-mode previews
+1. **Model the table data**: create `src/tables/dungeon/yourTable.ts` with the enum and `Table` definition.
+2. **Add a resolver**: in `resolvers.ts`, implement `resolveYourThing(opts)` that returns a `DungeonOutcomeNode` and stages child previews when necessary.
+3. **Extend the outcome union**: update `OutcomeEvent` to include the new `kind` if needed.
+4. **Render it**:
+   - Update `toDetailRender` and `toCompactRender` to handle `event.kind === 'yourThing'`.
+   - Write any helper functions required to compose the final sentences.
+5. **Wire previews (detail mode)**: add an entry to `TABLE_ID_LIST`, `TABLE_HEADINGS`, and `TABLE_RESOLVERS` in `registry.ts`.
+6. **Expose via service (optional)**: if existing code expects a service wrapper, create one that simply calls the resolver and adapters.
+7. **Test**: add Jest tests to lock compact text and detail preview behaviour.
 
-- Add to `TABLE_ID_LIST` and `TABLE_HEADINGS`.
-- Add a resolver entry to `TABLE_RESOLVERS` that returns messages via `toDetailRender(resolveXxx({ roll }))`.
-- For parameterized preview ids (e.g., `unusualSize:seq:extra`), parse params inside the registry entry.
+## Pattern Notes
 
-5. Tests
+- **Door Chains**: The door chain flow keeps track of previously-seen lateral directions via `TableContext`. Resolvers use this to terminate properly; adapters read the same context for compact prose.
+- **Exit Counts**: `resolveNumberOfExits` now records the resolved count (including the 1d4 roll). Compact/detail renderers reuse the stored value so we do not re-roll.
+- **Wandering Monsters**: The wandering monster flow stages both the “where from” check and the monster level table. Compact mode reads the resolved outcome tree, so it never re-rolls level or monster subtables.
+- **Unusual Rooms/Chambers**: When `unusualShape`/`unusualSize` resolve, the adapters append explanatory text and remind the DM to determine exits/contents/treasure.
 
-- Add focused tests under `src/tests/dungeon/**`:
-  - Deterministic `rollDice` via `jest.spyOn(dungeonLookup, 'rollDice')`.
-  - Assert exact compact strings for adapter outputs.
-  - Assert that detail mode inserts expected previews and roll bullets.
+## Conventions and Guardrails
 
-## Conventions and Dos/Don’ts
+- Keep resolvers free of presentation logic. They should produce structured data that can be rendered in multiple formats.
+- Compact mode must not pull in `services/**`. If you find yourself reaching for one, add a helper in the adapter instead.
+- When adding `pending-roll` children, include just enough context for the next resolver to do its job.
+- Prefer discriminated unions to `any`. If you need to inspect `context`, add a small type guard rather than casting blindly.
+- Avoid console logging inside core code; use tests to assert behaviour.
 
-- Do: Keep domain resolvers pure and table-driven; they return outcomes only.
-- Do: Use adapters for composing text; compact mode must not call message services.
-- Do: Use `TableContext` for chains (door, exits, wandering level); provide minimal, typed context only.
-- Do: Give previews stable, descriptive ids; use `base[:param...]`.
-- Don’t: Mix UI concerns into domain or services.
-- Don’t: Introduce `any`; prefer discriminated unions and small guards.
-- Don’t: Duplicate logic across resolvers and messages; prefer one authoritative path.
+## Debugging the Flow
 
-## Service vs. View Responsibilities
+1. Run the app in detail mode. Each staged preview corresponds to a `pending-roll` node.
+2. Inspect the feed item in React dev tools to see the generated `DungeonRenderNode[]`.
+3. If the wrong preview appears, check the resolver’s children first, then the registry wiring.
+4. If compact text looks off, set a deterministic sequence in a Jest test and debug the helper in `render.ts`.
 
-- Services (`src/dungeon/services/**`)
-  - Provide typed message wrappers for preview flows (detail mode) and some specialized chains.
-  - Accept `detailMode?: true` to return table previews when `roll` is undefined.
-  - May compose paragraphs for detail mode where that simplifies staging. They should not be used by compact mode.
-- Adapters (`src/dungeon/adapters/render.ts`)
-  - Own all compact text composition and detail-mode rendering of outcomes.
-  - Insert previews from `pending-roll` children uniformly.
-  - Treat services as detail-only helpers; never call them in compact paths.
-
-## FAQ / Subtleties
-
-- What exactly is a “message service” and who should call it?
-
-  - A message service is a small function in `src/dungeon/services/**` that returns `DungeonRenderNode[]`. In detail mode and when no `roll` is provided, it emits a `table-preview`. Some services also help stage nested previews (e.g., unusual size roll‑again sequencing). They exist to keep preview assembly concise. Adapters may call them in detail mode only. Compact paths should not call them.
-
-- Why are some detail flows still using services?
-  - Detail mode benefits from helpers that stage nested previews and domain-specific sequences (e.g., unusual size roll‑again chaining). Adapters render the results; compact mode stays service‑free.
-- Why context on previews?
-  - Some chains depend on prior results (door chain left/right repeats, exits need dimensions). `TableContext` keeps this minimal and typed.
-- Can outcomes carry richer structured data?
-  - Yes; currently outcomes carry enum results and context. We can extend events with structured payloads over time to support alternate renderers (narration, VTT, mapping).
-
-## Alternative: Per-Outcome Renderers
-
-We currently centralize rendering in a single adapter file for both modes. An alternative is one renderer module per outcome (e.g., `render/periodicCheck.ts`, `render/doorBeyond.ts`) that exports two pure functions:
-
-- `renderDetail(event, roll, children) => DungeonRenderNode[]`
-- `renderCompact(event, roll) => DungeonRenderNode[]`
-
-Pros:
-
-- Higher cohesion; each outcome’s view logic is colocated and easier to navigate.
-- Simpler unit tests per outcome.
-
-Cons:
-
-- Shared preview-insertion utilities must be reused to avoid duplication.
-- Detail rendering sometimes depends on child previews; careful to accept `children` and reuse the shared preview mapper (`previewForPending`).
-
-If we choose this path later, the main adapter becomes a thin delegator switching on `event.kind` and calling the appropriate outcome renderer, and the registry remains the detail-mode view controller.
-
-## Quick Checklist (PRs touching dungeon)
-
-- Resolvers pure; no UI state.
-- Adapters compose compact strings; detail renders bullets + previews; no service calls in compact.
-- Registry handles preview resolution for new tables with proper id/heading.
-- Tests assert compact text and detail preview staging.
-- Types strict; no `any`; follow folder/file naming conventions.
+With these abstractions you can change one layer without surprising the others: tables stay pure data, resolvers stay pure functions, adapters own presentation, and the UI keeps its job of showing and resolving previews. Follow that layering and the dungeon generator remains easy to extend.
