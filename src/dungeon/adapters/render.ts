@@ -865,10 +865,7 @@ export function toDetailRender(
     return [heading, bullet, { kind: 'paragraph', text }];
   }
   if ((event as { kind?: unknown }).kind === 'numberOfExits') {
-    const ev = event as unknown as {
-      result: NumberOfExits;
-      context: { length: number; width: number; isRoom: boolean };
-    };
+    const ev = event as Extract<OutcomeEvent, { kind: 'numberOfExits' }>;
     const heading: DungeonMessage = {
       kind: 'heading',
       level: 4,
@@ -879,49 +876,7 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const area = ev.context.length * ev.context.width;
-    let text = '';
-    switch (ev.result) {
-      case NumberOfExits.OneTwo600:
-        text =
-          area <= 600
-            ? 'There is one additional exit. (TODO location, direction/width if passage) '
-            : 'There are two additional exits. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.TwoThree600:
-        text =
-          area <= 600
-            ? 'There are two additional exits. (TODO location, direction/width if passage) '
-            : 'There are three additional exits. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.ThreeFour600:
-        text =
-          area <= 600
-            ? 'There are three additional exits. (TODO location, direction/width if passage) '
-            : 'There are four additional exits. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.ZeroOne1200:
-        text =
-          area <= 1200
-            ? 'There are no exits here, other than the entrance. (TODO secret doors) '
-            : 'There is one additional exit. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.ZeroOne1600:
-        text =
-          area <= 1600
-            ? 'There are no exits here, other than the entrance. (TODO secret doors) '
-            : 'There is one additional exit. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.OneToFour:
-        text =
-          'There are 1d4 exits here, other than the entrance. (TODO d4, location, direction/width if passage) ';
-        break;
-      case NumberOfExits.DoorChamberOrPassageRoom:
-        text = ev.context.isRoom
-          ? 'There is a passage exiting from the room. (TODO location/direction/width) '
-          : 'There is a door. (TODO location) ';
-        break;
-    }
+    const text = formatNumberOfExitsEvent(ev);
     return [heading, bullet, { kind: 'paragraph', text }];
   }
   if (event.kind === 'unusualShape') {
@@ -2273,6 +2228,30 @@ function formatPeriodicDoorOnlyEvent(
   return '';
 }
 
+function formatNumberOfExitsEvent(
+  event: Extract<OutcomeEvent, { kind: 'numberOfExits' }>
+): string {
+  if (event.result === NumberOfExits.DoorChamberOrPassageRoom) {
+    return event.context.isRoom
+      ? 'There is a passage leaving this room. Determine its location and direction using the exit tables.'
+      : 'There is a door exiting this chamber. Determine its placement using the exit tables.';
+  }
+
+  const nounBase = event.context.isRoom ? 'door' : 'passage';
+  if (event.count <= 0) {
+    const plural = `${nounBase}s`;
+    return `There are no other ${plural}.`;
+  }
+  const plural = event.count === 1 ? nounBase : `${nounBase}s`;
+  const verb = event.count === 1 ? 'is' : 'are';
+  const rollInfo =
+    event.result === NumberOfExits.OneToFour
+      ? ` (1d4 result: ${event.count})`
+      : '';
+  const pronoun = event.count === 1 ? 'its' : 'their';
+  return `There ${verb} ${event.count} additional ${plural}${rollInfo}. Determine ${pronoun} location and direction using the exit tables.`;
+}
+
 function renderWanderingWhereFrom(node: OutcomeEventNode): string {
   if (node.event.kind !== 'wanderingWhereFrom') return '';
   switch (node.event.result) {
@@ -2657,49 +2636,42 @@ function renderCompactStairs(node: OutcomeEventNode): string {
 function renderCompactRoomDimensions(node: OutcomeEventNode): string {
   if (node.event.kind !== 'roomDimensions') return '';
   let text = '';
-  let dims: { length: number; width: number } | undefined;
   switch (node.event.result) {
     case RoomDimensions.Square10x10:
       text = "The room is square and 10' x 10'. ";
-      dims = { length: 10, width: 10 };
       break;
     case RoomDimensions.Square20x20:
       text = "The room is square and 20' x 20'. ";
-      dims = { length: 20, width: 20 };
       break;
     case RoomDimensions.Square30x30:
       text = "The room is square and 30' x 30'. ";
-      dims = { length: 30, width: 30 };
       break;
     case RoomDimensions.Square40x40:
       text = "The room is square and 40' x 40'. ";
-      dims = { length: 40, width: 40 };
       break;
     case RoomDimensions.Rectangular10x20:
       text = "The room is rectangular and 10' x 20'. ";
-      dims = { length: 10, width: 20 };
       break;
     case RoomDimensions.Rectangular20x30:
       text = "The room is rectangular and 20' x 30'. ";
-      dims = { length: 20, width: 30 };
       break;
     case RoomDimensions.Rectangular20x40:
       text = "The room is rectangular and 20' x 40'. ";
-      dims = { length: 20, width: 40 };
       break;
     case RoomDimensions.Rectangular30x40:
       text = "The room is rectangular and 30' x 40'. ";
-      dims = { length: 30, width: 40 };
       break;
     case RoomDimensions.Unusual:
       text = 'The room has an unusual shape and size. ';
       break;
   }
-  if (dims) {
-    text +=
-      'There is one additional exit. (TODO location, direction/width if passage) ';
-  } else {
+  if (node.event.result === RoomDimensions.Unusual) {
     text += renderCompactUnusualDetails(node);
+  }
+  const exits = findChildEvent(node, 'numberOfExits');
+  if (exits && exits.event.kind === 'numberOfExits') {
+    if (!text.endsWith(' ')) text += ' ';
+    text += `${formatNumberOfExitsEvent(exits.event)} `;
   }
   return text;
 }
@@ -2707,41 +2679,36 @@ function renderCompactRoomDimensions(node: OutcomeEventNode): string {
 function renderCompactChamberDimensions(node: OutcomeEventNode): string {
   if (node.event.kind !== 'chamberDimensions') return '';
   let text = '';
-  let dims: { length: number; width: number } | undefined;
   switch (node.event.result) {
     case ChamberDimensions.Square20x20:
       text = "The chamber is square and 20' x 20'. ";
-      dims = { length: 20, width: 20 };
       break;
     case ChamberDimensions.Square30x30:
       text = "The chamber is square and 30' x 30'. ";
-      dims = { length: 30, width: 30 };
       break;
     case ChamberDimensions.Square40x40:
       text = "The chamber is square and 40' x 40'. ";
-      dims = { length: 40, width: 40 };
       break;
     case ChamberDimensions.Rectangular20x30:
       text = "The chamber is rectangular and 20' x 30'. ";
-      dims = { length: 20, width: 30 };
       break;
     case ChamberDimensions.Rectangular30x50:
       text = "The chamber is rectangular and 30' x 50'. ";
-      dims = { length: 30, width: 50 };
       break;
     case ChamberDimensions.Rectangular40x60:
       text = "The chamber is rectangular and 40' x 60'. ";
-      dims = { length: 40, width: 60 };
       break;
     case ChamberDimensions.Unusual:
       text = 'The chamber has an unusual shape and size. ';
       break;
   }
-  if (dims) {
-    text +=
-      'There is one additional exit. (TODO location, direction/width if passage) ';
-  } else {
+  if (node.event.result === ChamberDimensions.Unusual) {
     text += renderCompactUnusualDetails(node);
+  }
+  const exits = findChildEvent(node, 'numberOfExits');
+  if (exits && exits.event.kind === 'numberOfExits') {
+    if (!text.endsWith(' ')) text += ' ';
+    text += `${formatNumberOfExitsEvent(exits.event)} `;
   }
   return text;
 }
@@ -2757,7 +2724,7 @@ function renderCompactUnusualDetails(node: OutcomeEventNode): string {
     text += formatUnusualSize(size.event.result);
   }
   if (shape || size) {
-    text += '(TODO exits, contents, treasure) ';
+    text += 'Determine exits, contents, and treasure separately. ';
   }
   return text;
 }

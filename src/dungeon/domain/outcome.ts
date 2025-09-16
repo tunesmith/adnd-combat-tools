@@ -86,6 +86,7 @@ export type OutcomeEvent =
       kind: 'numberOfExits';
       result: NumberOfExits;
       context: { length: number; width: number; isRoom: boolean };
+      count: number;
     }
   | { kind: 'unusualShape'; result: UnusualShape }
   | { kind: 'unusualSize'; result: UnusualSize }

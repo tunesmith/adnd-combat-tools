@@ -16,7 +16,10 @@ import {
   egressThree,
   chute,
 } from '../../tables/dungeon/stairs';
-import { numberOfExits } from '../../tables/dungeon/numberOfExits';
+import {
+  numberOfExits,
+  NumberOfExits,
+} from '../../tables/dungeon/numberOfExits';
 import {
   specialPassage,
   SpecialPassage,
@@ -95,6 +98,7 @@ import {
   dragonSixTextForCommand,
 } from '../services/monster/monsterSixResult';
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
+import { oneToFour, OneToFour } from '../../tables/dungeon/numberOfExits';
 import type { DoorChainLaterality } from './outcome';
 
 function toLaterality(loc: DoorLocation): DoorChainLaterality | undefined {
@@ -450,6 +454,41 @@ export function resolveNumberOfExits(options: {
 }): DungeonOutcomeNode {
   const usedRoll = options.roll ?? rollDice(numberOfExits.sides);
   const command = getTableEntry(usedRoll, numberOfExits);
+  const area = options.length * options.width;
+  let count = 0;
+  switch (command) {
+    case NumberOfExits.OneTwo600:
+      count = area <= 600 ? 1 : 2;
+      break;
+    case NumberOfExits.TwoThree600:
+      count = area <= 600 ? 2 : 3;
+      break;
+    case NumberOfExits.ThreeFour600:
+      count = area <= 600 ? 3 : 4;
+      break;
+    case NumberOfExits.ZeroOne1200:
+      count = area <= 1200 ? 0 : 1;
+      break;
+    case NumberOfExits.ZeroOne1600:
+      count = area <= 1600 ? 0 : 1;
+      break;
+    case NumberOfExits.OneToFour: {
+      const countRoll = rollDice(oneToFour.sides);
+      const bucket = getTableEntry(countRoll, oneToFour);
+      count =
+        bucket === OneToFour.One
+          ? 1
+          : bucket === OneToFour.Two
+          ? 2
+          : bucket === OneToFour.Three
+          ? 3
+          : 4;
+      break;
+    }
+    case NumberOfExits.DoorChamberOrPassageRoom:
+      count = 1;
+      break;
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -461,6 +500,7 @@ export function resolveNumberOfExits(options: {
         width: options.width,
         isRoom: options.isRoom,
       },
+      count,
     } as OutcomeEvent,
   };
 }
