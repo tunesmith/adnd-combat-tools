@@ -14,6 +14,16 @@ import type { UnusualShape } from '../../tables/dungeon/unusualShape';
 import type { UnusualSize } from '../../tables/dungeon/unusualSize';
 import type { DoorLocation } from '../../tables/dungeon/doorLocation';
 import type { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnly';
+import type {
+  GalleryStairLocation,
+  GalleryStairOccurrence,
+  StreamConstruction,
+  RiverConstruction,
+  RiverBoatBank,
+  ChasmDepth,
+  ChasmConstruction,
+  JumpingPlaceWidth,
+} from '../../tables/dungeon/specialPassage';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
@@ -54,7 +64,15 @@ export type OutcomeEvent =
       context: { length: number; width: number; isRoom: boolean };
     }
   | { kind: 'unusualShape'; result: UnusualShape }
-  | { kind: 'unusualSize'; result: UnusualSize };
+  | { kind: 'unusualSize'; result: UnusualSize }
+  | { kind: 'galleryStairLocation'; result: GalleryStairLocation }
+  | { kind: 'galleryStairOccurrence'; result: GalleryStairOccurrence }
+  | { kind: 'streamConstruction'; result: StreamConstruction }
+  | { kind: 'riverConstruction'; result: RiverConstruction }
+  | { kind: 'riverBoatBank'; result: RiverBoatBank }
+  | { kind: 'chasmDepth'; result: ChasmDepth }
+  | { kind: 'chasmConstruction'; result: ChasmConstruction }
+  | { kind: 'jumpingPlaceWidth'; result: JumpingPlaceWidth };
 
 export type PendingRoll = {
   type: 'pending-roll';

@@ -20,6 +20,14 @@ import { numberOfExits } from '../../tables/dungeon/numberOfExits';
 import {
   specialPassage,
   SpecialPassage,
+  galleryStairLocation,
+  galleryStairOccurrence,
+  streamConstruction,
+  riverConstruction,
+  riverBoatBank,
+  chasmDepth,
+  chasmConstruction,
+  jumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import {
@@ -513,5 +521,101 @@ export function resolveUnusualSize(options?: {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'unusualSize', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveGalleryStairLocation(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(galleryStairLocation.sides);
+  const command = getTableEntry(usedRoll, galleryStairLocation);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'galleryStairLocation', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveGalleryStairOccurrence(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(galleryStairOccurrence.sides);
+  const command = getTableEntry(usedRoll, galleryStairOccurrence);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'galleryStairOccurrence', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveStreamConstruction(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(streamConstruction.sides);
+  const command = getTableEntry(usedRoll, streamConstruction);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'streamConstruction', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveRiverConstruction(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(riverConstruction.sides);
+  const command = getTableEntry(usedRoll, riverConstruction);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'riverConstruction', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveRiverBoatBank(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(riverBoatBank.sides);
+  const command = getTableEntry(usedRoll, riverBoatBank);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'riverBoatBank', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveChasmDepth(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(chasmDepth.sides);
+  const command = getTableEntry(usedRoll, chasmDepth);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'chasmDepth', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveChasmConstruction(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(chasmConstruction.sides);
+  const command = getTableEntry(usedRoll, chasmConstruction);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'chasmConstruction', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveJumpingPlaceWidth(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(jumpingPlaceWidth.sides);
+  const command = getTableEntry(usedRoll, jumpingPlaceWidth);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'jumpingPlaceWidth', result: command } as OutcomeEvent,
   };
 }

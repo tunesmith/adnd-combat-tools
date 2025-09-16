@@ -76,11 +76,28 @@ import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
 import { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnly';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import {
+  resolveChamberDimensions,
+  resolveChute,
   resolveDoorLocation,
-  resolvePeriodicDoorOnly,
+  resolveEgress,
+  resolveGalleryStairLocation,
+  resolveGalleryStairOccurrence,
+  resolveNumberOfExits,
   resolvePassageTurns,
   resolvePassageWidth,
+  resolvePeriodicDoorOnly,
+  resolveRoomDimensions,
   resolveSidePassages,
+  resolveStreamConstruction,
+  resolveRiverConstruction,
+  resolveRiverBoatBank,
+  resolveChasmDepth,
+  resolveChasmConstruction,
+  resolveJumpingPlaceWidth,
+  resolveSpecialPassage,
+  resolveStairs,
+  resolveUnusualShape,
+  resolveUnusualSize,
 } from '../domain/resolvers';
 
 function rangeText(range: number[]): string {
@@ -1183,8 +1200,10 @@ export function toCompactRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
+  const resolved = resolveNodeForCompact(outcome);
+  const node = resolved ?? (outcome as OutcomeEventNode);
   const nodes: DungeonRenderNode[] = [];
-  const { event, roll } = outcome;
+  const { event, roll } = node;
   if (event.kind === 'periodicCheck') {
     const heading: DungeonMessage = {
       kind: 'heading',
@@ -1198,7 +1217,7 @@ export function toCompactRender(
     const text =
       event.result === PeriodicCheck.WanderingMonster
         ? compactWanderingMonsterText(event.level)
-        : renderCompactPeriodicOutcome(outcome);
+        : renderCompactPeriodicOutcome(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1267,101 +1286,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${RoomDimensions[event.result]}`],
     };
-    let baseDesc = '';
-    let dims: { length: number; width: number } | undefined;
-    switch (event.result) {
-      case RoomDimensions.Square10x10:
-        baseDesc = "The room is square and 10' x 10'. ";
-        dims = { length: 10, width: 10 };
-        break;
-      case RoomDimensions.Square20x20:
-        baseDesc = "The room is square and 20' x 20'. ";
-        dims = { length: 20, width: 20 };
-        break;
-      case RoomDimensions.Square30x30:
-        baseDesc = "The room is square and 30' x 30'. ";
-        dims = { length: 30, width: 30 };
-        break;
-      case RoomDimensions.Square40x40:
-        baseDesc = "The room is square and 40' x 40'. ";
-        dims = { length: 40, width: 40 };
-        break;
-      case RoomDimensions.Rectangular10x20:
-        baseDesc = "The room is rectangular and 10' x 20'. ";
-        dims = { length: 10, width: 20 };
-        break;
-      case RoomDimensions.Rectangular20x30:
-        baseDesc = "The room is rectangular and 20' x 30'. ";
-        dims = { length: 20, width: 30 };
-        break;
-      case RoomDimensions.Rectangular20x40:
-        baseDesc = "The room is rectangular and 20' x 40'. ";
-        dims = { length: 20, width: 40 };
-        break;
-      case RoomDimensions.Rectangular30x40:
-        baseDesc = "The room is rectangular and 30' x 40'. ";
-        dims = { length: 30, width: 40 };
-        break;
-      case RoomDimensions.Unusual:
-        baseDesc = 'The room has an unusual shape and size. ';
-        break;
-    }
-    let text = baseDesc;
-    if (dims) {
-      const area = dims.length * dims.width;
-      // Mirror exits compact composition inline
-      if (area <= 600)
-        text +=
-          'There is one additional exit. (TODO location, direction/width if passage) ';
-      else if (area <= 1200)
-        text +=
-          'There is one additional exit. (TODO location, direction/width if passage) ';
-      else if (area <= 1600)
-        text +=
-          'There is one additional exit. (TODO location, direction/width if passage) ';
-      else
-        text +=
-          'There is one additional exit. (TODO location, direction/width if passage) ';
-    } else {
-      // Unusual shape/size compact composition inline
-      // Shape
-      // Roll and map to text
-      const rShape = rollDice(unusualShape.sides);
-      const cShape = getTableEntry(rShape, unusualShape);
-      text +=
-        cShape === UnusualShape.Circular
-          ? 'It is circular. '
-          : cShape === UnusualShape.Triangular
-          ? 'It is triangular. '
-          : cShape === UnusualShape.Trapezoidal
-          ? 'It is trapezoidal. '
-          : cShape === UnusualShape.OddShaped
-          ? 'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) '
-          : cShape === UnusualShape.Oval
-          ? 'It is oval-shaped. '
-          : cShape === UnusualShape.Hexagonal
-          ? 'It is hexagonal. '
-          : cShape === UnusualShape.Octagonal
-          ? 'It is octagonal. '
-          : 'It is actually a cave. ';
-      // Size
-      const rSize = rollDice(unusualSize.sides);
-      const cSize = getTableEntry(rSize, unusualSize);
-      const sizeVal =
-        cSize === UnusualSize.SqFt500
-          ? 500
-          : cSize === UnusualSize.SqFt900
-          ? 900
-          : cSize === UnusualSize.SqFt1300
-          ? 1300
-          : cSize === UnusualSize.SqFt2000
-          ? 2000
-          : cSize === UnusualSize.SqFt2700
-          ? 2700
-          : 3400;
-      text += `It is about ${sizeVal} sq. ft. `;
-      text += '(TODO exits, contents, treasure) ';
-    }
+    const text = renderCompactRoomDimensions(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1375,89 +1300,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${ChamberDimensions[event.result]}`],
     };
-    let baseDesc = '';
-    let dims: { length: number; width: number } | undefined;
-    switch (event.result) {
-      case ChamberDimensions.Square20x20:
-        baseDesc = "The chamber is square and 20' x 20'. ";
-        dims = { length: 20, width: 20 };
-        break;
-      case ChamberDimensions.Square30x30:
-        baseDesc = "The chamber is square and 30' x 30'. ";
-        dims = { length: 30, width: 30 };
-        break;
-      case ChamberDimensions.Square40x40:
-        baseDesc = "The chamber is square and 40' x 40'. ";
-        dims = { length: 40, width: 40 };
-        break;
-      case ChamberDimensions.Rectangular20x30:
-        baseDesc = "The chamber is rectangular and 20' x 30'. ";
-        dims = { length: 20, width: 30 };
-        break;
-      case ChamberDimensions.Rectangular30x50:
-        baseDesc = "The chamber is rectangular and 30' x 50'. ";
-        dims = { length: 30, width: 50 };
-        break;
-      case ChamberDimensions.Rectangular40x60:
-        baseDesc = "The chamber is rectangular and 40' x 60'. ";
-        dims = { length: 40, width: 60 };
-        break;
-      case ChamberDimensions.Unusual:
-        baseDesc = 'The chamber has an unusual shape and size. ';
-        break;
-    }
-    let text = baseDesc;
-    if (dims) {
-      const area = dims.length * dims.width;
-      // Inline exits compact composition (chamber context behaves like passage)
-      if (area <= 600)
-        text +=
-          'There is one additional exit. (TODO location, direction/width if passage) ';
-      else if (area <= 1200)
-        text +=
-          'There is one additional exit. (TODO location, direction/width if passage) ';
-      else if (area <= 1600)
-        text +=
-          'There is one additional exit. (TODO location, direction/width if passage) ';
-      else
-        text +=
-          'There is one additional exit. (TODO location, direction/width if passage) ';
-    } else {
-      const rShape = rollDice(unusualShape.sides);
-      const cShape = getTableEntry(rShape, unusualShape);
-      text +=
-        cShape === UnusualShape.Circular
-          ? 'It is circular. '
-          : cShape === UnusualShape.Triangular
-          ? 'It is triangular. '
-          : cShape === UnusualShape.Trapezoidal
-          ? 'It is trapezoidal. '
-          : cShape === UnusualShape.OddShaped
-          ? 'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) '
-          : cShape === UnusualShape.Oval
-          ? 'It is oval-shaped. '
-          : cShape === UnusualShape.Hexagonal
-          ? 'It is hexagonal. '
-          : cShape === UnusualShape.Octagonal
-          ? 'It is octagonal. '
-          : 'It is actually a cave. ';
-      const rSize = rollDice(unusualSize.sides);
-      const cSize = getTableEntry(rSize, unusualSize);
-      const sizeVal =
-        cSize === UnusualSize.SqFt500
-          ? 500
-          : cSize === UnusualSize.SqFt900
-          ? 900
-          : cSize === UnusualSize.SqFt1300
-          ? 1300
-          : cSize === UnusualSize.SqFt2000
-          ? 2000
-          : cSize === UnusualSize.SqFt2700
-          ? 2700
-          : 3400;
-      text += `It is about ${sizeVal} sq. ft. `;
-      text += '(TODO exits, contents, treasure) ';
-    }
+    const text = renderCompactChamberDimensions(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1533,41 +1376,12 @@ export function toCompactRender(
       level: 4,
       text: 'Passage Turns',
     };
-    const label = PassageTurns[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
       kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
+      items: [`roll: ${roll} — ${PassageTurns[event.result] ?? event.result}`],
     };
-    let textPrefix = '';
-    switch (event.result) {
-      case PassageTurns.Left90:
-        textPrefix = "The passage turns left 90 degrees - check again in 30'. ";
-        break;
-      case PassageTurns.Left45:
-        textPrefix =
-          "The passage turns left 45 degrees ahead - check again in 30'. ";
-        break;
-      case PassageTurns.Left135:
-        textPrefix =
-          "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
-        break;
-      case PassageTurns.Right90:
-        textPrefix =
-          "The passage turns right 90 degrees - check again in 30'. ";
-        break;
-      case PassageTurns.Right45:
-        textPrefix =
-          "The passage turns right 45 degrees ahead - check again in 30'. ";
-        break;
-      case PassageTurns.Right135:
-        textPrefix =
-          "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
-        break;
-    }
-    nodes.push(heading, bullet, { kind: 'paragraph', text: textPrefix });
-    // Compact: append width paragraph
-    const width = passageWidthMessages({});
-    for (const m of width.messages) if (m.kind === 'paragraph') nodes.push(m);
+    const text = renderCompactPassageTurn(node);
+    nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
   if (event.kind === 'stairs') {
@@ -1576,56 +1390,11 @@ export function toCompactRender(
       level: 4,
       text: 'Stairs',
     };
-    const label = Stairs[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
       kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
+      items: [`roll: ${roll} — ${Stairs[event.result] ?? event.result}`],
     };
-    let text = '';
-    switch (event.result) {
-      case Stairs.DownOne:
-        text = 'There are stairs here that descend one level. ';
-        break;
-      case Stairs.DownTwo:
-        text = 'There are stairs here that descend two levels. ';
-        break;
-      case Stairs.DownThree:
-        text = 'There are stairs here that descend three levels. ';
-        break;
-      case Stairs.UpOne:
-        text = 'There are stairs here that ascend one level. ';
-        break;
-      case Stairs.UpDead:
-        text = 'There are stairs here that ascend one level to a dead end. ';
-        break;
-      case Stairs.DownDead:
-        text = 'There are stairs here that descend one level to a dead end. ';
-        break;
-      case Stairs.ChimneyUpOne:
-        text =
-          "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.ChimneyUpTwo:
-        text =
-          "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.ChimneyDownTwo:
-        text =
-          "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.TrapDoorDownOne:
-        text =
-          "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.TrapDownDownTwo:
-        text =
-          "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.UpOneDownTwo:
-        text =
-          'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ';
-        break;
-    }
+    const text = renderCompactStairs(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1635,49 +1404,13 @@ export function toCompactRender(
       level: 4,
       text: 'Special Passage',
     };
-    const label = SpecialPassage[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
       kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
+      items: [
+        `roll: ${roll} — ${SpecialPassage[event.result] ?? event.result}`,
+      ],
     };
-    let text = '';
-    switch (event.result) {
-      case SpecialPassage.FortyFeetColumns:
-        text = "The passage is 40' wide, with columns down the center. ";
-        break;
-      case SpecialPassage.FortyFeetDoubleColumns:
-        text = "The passage is 40' wide, with a double row of columns. ";
-        break;
-      case SpecialPassage.FiftyFeetDoubleColumns:
-        text = "The passage is 50' wide, with a double row of columns. ";
-        break;
-      case SpecialPassage.FiftyFeetGalleries:
-        text =
-          "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. " +
-          compactSpecialPassageSuffix(SpecialPassage.FiftyFeetGalleries);
-        break;
-      case SpecialPassage.TenFootStream:
-        text =
-          "A stream, 10' wide, bisects the passage. " +
-          compactSpecialPassageSuffix(SpecialPassage.TenFootStream);
-        break;
-      case SpecialPassage.TwentyFootRiver:
-      case SpecialPassage.FortyFootRiver:
-      case SpecialPassage.SixtyFootRiver:
-        text =
-          (event.result === SpecialPassage.TwentyFootRiver
-            ? "A river, 20' wide, bisects the passage. "
-            : event.result === SpecialPassage.FortyFootRiver
-            ? "A river, 40' wide, bisects the passage. "
-            : "A river, 60' wide, bisects the passage. ") +
-          compactSpecialPassageSuffix(event.result);
-        break;
-      case SpecialPassage.TwentyFootChasm:
-        text =
-          "A chasm, 20' wide, bisects the passage. " +
-          compactSpecialPassageSuffix(SpecialPassage.TwentyFootChasm);
-        break;
-    }
+    const text = renderCompactSpecialPassage(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1942,6 +1675,49 @@ function resolvePendingForCompact(
       return resolvePassageTurns({});
     case 'passageWidth':
       return resolvePassageWidth({});
+    case 'stairs':
+      return resolveStairs({});
+    case 'egress': {
+      const which = parseEgressWhich(pending.table);
+      return resolveEgress({ which, roll: undefined });
+    }
+    case 'chute':
+      return resolveChute({});
+    case 'specialPassage':
+      return resolveSpecialPassage({});
+    case 'roomDimensions':
+      return resolveRoomDimensions({});
+    case 'chamberDimensions':
+      return resolveChamberDimensions({});
+    case 'unusualShape':
+      return resolveUnusualShape({});
+    case 'unusualSize':
+      return resolveUnusualSize({});
+    case 'galleryStairLocation':
+      return resolveGalleryStairLocation({});
+    case 'galleryStairOccurrence':
+      return resolveGalleryStairOccurrence({});
+    case 'streamConstruction':
+      return resolveStreamConstruction({});
+    case 'riverConstruction':
+      return resolveRiverConstruction({});
+    case 'riverBoatBank':
+      return resolveRiverBoatBank({});
+    case 'chasmDepth':
+      return resolveChasmDepth({});
+    case 'chasmConstruction':
+      return resolveChasmConstruction({});
+    case 'jumpingPlaceWidth':
+      return resolveJumpingPlaceWidth({});
+    case 'numberOfExits': {
+      const ctx = readExitsContext(pending.context);
+      if (!ctx) return undefined;
+      return resolveNumberOfExits({
+        length: ctx.length,
+        width: ctx.width,
+        isRoom: ctx.isRoom,
+      });
+    }
     default:
       return undefined;
   }
@@ -1956,6 +1732,15 @@ function parseDoorChainSequence(table: string, fallback: number): number {
   return fallback;
 }
 
+function parseEgressWhich(table: string): 'one' | 'two' | 'three' {
+  const parts = table.split(':');
+  if (parts.length >= 2) {
+    const key = parts[1] as 'one' | 'two' | 'three';
+    if (key === 'one' || key === 'two' || key === 'three') return key;
+  }
+  return 'one';
+}
+
 function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
   if (!isTableContext(context)) return [];
   if (context.kind !== 'doorChain') return [];
@@ -1963,6 +1748,21 @@ function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
   return arr.filter(
     (v): v is DoorChainLaterality => v === 'Left' || v === 'Right'
   );
+}
+
+function readExitsContext(
+  context: unknown
+): { length: number; width: number; isRoom: boolean } | undefined {
+  if (!isTableContext(context)) return undefined;
+  if (context.kind !== 'exits') return undefined;
+  const length =
+    typeof context.length === 'number' ? context.length : undefined;
+  const width = typeof context.width === 'number' ? context.width : undefined;
+  const isRoom =
+    typeof context.isRoom === 'boolean' ? context.isRoom : undefined;
+  if (length === undefined || width === undefined || isRoom === undefined)
+    return undefined;
+  return { length, width, isRoom };
 }
 
 function formatDoorLocationEvent(
@@ -1992,6 +1792,453 @@ function formatPeriodicDoorOnlyEvent(
   return '';
 }
 
+function getChildEvents(node: OutcomeEventNode): OutcomeEventNode[] {
+  const children = (node.children || []) as DungeonOutcomeNode[];
+  return children.filter((c): c is OutcomeEventNode => c.type === 'event');
+}
+
+function findChildEvent<K extends OutcomeEvent['kind']>(
+  node: OutcomeEventNode,
+  kind: K
+): OutcomeEventNode | undefined {
+  return getChildEvents(node).find((child) => child.event.kind === kind);
+}
+
+function renderCompactPassageTurn(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'passageTurns') return '';
+  let prefix = '';
+  switch (node.event.result) {
+    case PassageTurns.Left90:
+      prefix = "The passage turns left 90 degrees - check again in 30'. ";
+      break;
+    case PassageTurns.Left45:
+      prefix = "The passage turns left 45 degrees ahead - check again in 30'. ";
+      break;
+    case PassageTurns.Left135:
+      prefix =
+        "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
+      break;
+    case PassageTurns.Right90:
+      prefix = "The passage turns right 90 degrees - check again in 30'. ";
+      break;
+    case PassageTurns.Right45:
+      prefix =
+        "The passage turns right 45 degrees ahead - check again in 30'. ";
+      break;
+    case PassageTurns.Right135:
+      prefix =
+        "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
+      break;
+  }
+  const widthNode = findChildEvent(node, 'passageWidth');
+  const widthText = widthNode ? renderCompactPassageWidth(widthNode) : '';
+  return prefix + widthText;
+}
+
+function renderCompactPassageWidth(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'passageWidth') return '';
+  switch (node.event.result) {
+    case PassageWidth.FiveFeet:
+      return "The passage is 5' wide. ";
+    case PassageWidth.TenFeet:
+      return "The passage is 10' wide. ";
+    case PassageWidth.TwentyFeet:
+      return "The passage is 20' wide. ";
+    case PassageWidth.ThirtyFeet:
+      return "The passage is 30' wide. ";
+    case PassageWidth.SpecialPassage: {
+      const special = findChildEvent(node, 'specialPassage');
+      return special
+        ? renderCompactSpecialPassage(special)
+        : 'A special passage occurs. ';
+    }
+    default:
+      return '';
+  }
+}
+
+function renderCompactSpecialPassage(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'specialPassage') return '';
+  let text = '';
+  switch (node.event.result) {
+    case SpecialPassage.FortyFeetColumns:
+      text = "The passage is 40' wide, with columns down the center. ";
+      break;
+    case SpecialPassage.FortyFeetDoubleColumns:
+      text = "The passage is 40' wide, with a double row of columns. ";
+      break;
+    case SpecialPassage.FiftyFeetDoubleColumns:
+      text = "The passage is 50' wide, with a double row of columns. ";
+      break;
+    case SpecialPassage.FiftyFeetGalleries: {
+      text =
+        "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. ";
+      const loc = findChildEvent(node, 'galleryStairLocation');
+      if (loc) {
+        text += formatGalleryStairLocation(
+          loc.event.result as GalleryStairLocation
+        );
+        const occurrence = findChildEvent(node, 'galleryStairOccurrence');
+        if (occurrence) {
+          text += formatGalleryStairOccurrence(
+            occurrence.event.result as GalleryStairOccurrence
+          );
+        }
+      }
+      break;
+    }
+    case SpecialPassage.TenFootStream: {
+      text = "A stream, 10' wide, bisects the passage. ";
+      const construction = findChildEvent(node, 'streamConstruction');
+      if (construction) {
+        text += formatStreamConstruction(
+          construction.event.result as StreamConstruction
+        );
+      }
+      break;
+    }
+    case SpecialPassage.TwentyFootRiver:
+    case SpecialPassage.FortyFootRiver:
+    case SpecialPassage.SixtyFootRiver: {
+      text =
+        node.event.result === SpecialPassage.TwentyFootRiver
+          ? "A river, 20' wide, bisects the passage. "
+          : node.event.result === SpecialPassage.FortyFootRiver
+          ? "A river, 40' wide, bisects the passage. "
+          : "A river, 60' wide, bisects the passage. ";
+      const construction = findChildEvent(node, 'riverConstruction');
+      if (construction) {
+        text += formatRiverConstruction(
+          construction.event.result as RiverConstruction,
+          node
+        );
+      }
+      break;
+    }
+    case SpecialPassage.TwentyFootChasm: {
+      text = "A chasm, 20' wide, bisects the passage. ";
+      const depth = findChildEvent(node, 'chasmDepth');
+      if (depth) text += formatChasmDepth(depth.event.result as ChasmDepth);
+      const construction = findChildEvent(node, 'chasmConstruction');
+      if (construction) {
+        text += formatChasmConstruction(
+          construction.event.result as ChasmConstruction,
+          node
+        );
+      }
+      break;
+    }
+    default:
+      break;
+  }
+  return text;
+}
+
+function formatGalleryStairLocation(result: GalleryStairLocation): string {
+  switch (result) {
+    case GalleryStairLocation.PassageBeginning:
+      return 'Stairs up to the gallery are at the beginning of the passage. ';
+    case GalleryStairLocation.PassageEnd:
+      return 'Stairs up to the gallery will be at the end of the passage. ';
+    default:
+      return '';
+  }
+}
+
+function formatGalleryStairOccurrence(result: GalleryStairOccurrence): string {
+  switch (result) {
+    case GalleryStairOccurrence.Replace:
+      return 'If a stairway is otherwise indicated in or adjacent to the passage, it will replace the end stairs. ';
+    case GalleryStairOccurrence.Supplement:
+      return 'If a stairway is otherwise indicated in or adjacent to the passage, it will supplement the end stairs. ';
+    default:
+      return '';
+  }
+}
+
+function formatStreamConstruction(result: StreamConstruction): string {
+  return result === StreamConstruction.Bridged
+    ? 'A bridge crosses the stream. '
+    : '';
+}
+
+function formatRiverConstruction(
+  result: RiverConstruction,
+  node: OutcomeEventNode
+): string {
+  if (result === RiverConstruction.Bridged)
+    return 'A bridge crosses the river. ';
+  if (result === RiverConstruction.Obstacle) return '';
+  const boat = findChildEvent(node, 'riverBoatBank');
+  if (boat) {
+    return (
+      'There is a boat. ' +
+      (boat.event.result === RiverBoatBank.ThisSide
+        ? 'The boat is on this bank of the river. '
+        : 'The boat is on the opposite bank of the river. ')
+    );
+  }
+  return '';
+}
+
+function formatChasmDepth(result: ChasmDepth): string {
+  switch (result) {
+    case ChasmDepth.Feet150:
+      return "The chasm is 150' deep. ";
+    case ChasmDepth.Feet160:
+      return "The chasm is 160' deep. ";
+    case ChasmDepth.Feet170:
+      return "The chasm is 170' deep. ";
+    case ChasmDepth.Feet180:
+      return "The chasm is 180' deep. ";
+    case ChasmDepth.Feet190:
+      return "The chasm is 190' deep. ";
+    case ChasmDepth.Feet200:
+      return "The chasm is 200' deep. ";
+    default:
+      return '';
+  }
+}
+
+function formatChasmConstruction(
+  result: ChasmConstruction,
+  node: OutcomeEventNode
+): string {
+  if (result === ChasmConstruction.Bridged)
+    return 'A bridge crosses the chasm. ';
+  if (result === ChasmConstruction.Obstacle)
+    return 'It has no bridge, and is too wide to jump across. ';
+  const jump = findChildEvent(node, 'jumpingPlaceWidth');
+  if (jump) {
+    return (
+      'There is a jumping place. ' +
+      (jump.event.result === JumpingPlaceWidth.FiveFeet
+        ? "It is 5' wide. "
+        : "It is 10' wide. ")
+    );
+  }
+  return '';
+}
+
+function renderCompactStairs(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'stairs') return '';
+  let text = '';
+  switch (node.event.result) {
+    case Stairs.DownOne:
+      text = 'There are stairs here that descend one level. ';
+      break;
+    case Stairs.DownTwo:
+      text = 'There are stairs here that descend two levels. ';
+      break;
+    case Stairs.DownThree:
+      text = 'There are stairs here that descend three levels. ';
+      break;
+    case Stairs.UpOne:
+      text = 'There are stairs here that ascend one level. ';
+      break;
+    case Stairs.UpDead:
+      text = 'There are stairs here that ascend one level to a dead end. ';
+      break;
+    case Stairs.DownDead:
+      text = 'There are stairs here that descend one level to a dead end. ';
+      break;
+    case Stairs.ChimneyUpOne:
+      text =
+        "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
+      break;
+    case Stairs.ChimneyUpTwo:
+      text =
+        "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
+      break;
+    case Stairs.ChimneyDownTwo:
+      text =
+        "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
+      break;
+    case Stairs.TrapDoorDownOne:
+      text =
+        "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
+      break;
+    case Stairs.TrapDownDownTwo:
+      text =
+        "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
+      break;
+    case Stairs.UpOneDownTwo:
+      text =
+        'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ';
+      break;
+  }
+  const egress = findChildEvent(node, 'egress');
+  if (egress && egress.event.kind === 'egress') {
+    if (egress.event.result === Egress.Closed) {
+      text +=
+        'After descending, an unnoticed door will close egress for the day. ';
+    }
+  }
+  const chuteEvent = findChildEvent(node, 'chute');
+  if (chuteEvent && chuteEvent.event.kind === 'chute') {
+    if (chuteEvent.event.result === Chute.Exists) {
+      text +=
+        'The stairs will turn into a chute, descending two levels from the top. ';
+    }
+  }
+  if (node.event.result === Stairs.UpOneDownTwo) {
+    const chamber = findChildEvent(node, 'chamberDimensions');
+    if (chamber) text += renderCompactChamberDimensions(chamber);
+  }
+  return text;
+}
+
+function renderCompactRoomDimensions(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'roomDimensions') return '';
+  let text = '';
+  let dims: { length: number; width: number } | undefined;
+  switch (node.event.result) {
+    case RoomDimensions.Square10x10:
+      text = "The room is square and 10' x 10'. ";
+      dims = { length: 10, width: 10 };
+      break;
+    case RoomDimensions.Square20x20:
+      text = "The room is square and 20' x 20'. ";
+      dims = { length: 20, width: 20 };
+      break;
+    case RoomDimensions.Square30x30:
+      text = "The room is square and 30' x 30'. ";
+      dims = { length: 30, width: 30 };
+      break;
+    case RoomDimensions.Square40x40:
+      text = "The room is square and 40' x 40'. ";
+      dims = { length: 40, width: 40 };
+      break;
+    case RoomDimensions.Rectangular10x20:
+      text = "The room is rectangular and 10' x 20'. ";
+      dims = { length: 10, width: 20 };
+      break;
+    case RoomDimensions.Rectangular20x30:
+      text = "The room is rectangular and 20' x 30'. ";
+      dims = { length: 20, width: 30 };
+      break;
+    case RoomDimensions.Rectangular20x40:
+      text = "The room is rectangular and 20' x 40'. ";
+      dims = { length: 20, width: 40 };
+      break;
+    case RoomDimensions.Rectangular30x40:
+      text = "The room is rectangular and 30' x 40'. ";
+      dims = { length: 30, width: 40 };
+      break;
+    case RoomDimensions.Unusual:
+      text = 'The room has an unusual shape and size. ';
+      break;
+  }
+  if (dims) {
+    text +=
+      'There is one additional exit. (TODO location, direction/width if passage) ';
+  } else {
+    text += renderCompactUnusualDetails(node);
+  }
+  return text;
+}
+
+function renderCompactChamberDimensions(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'chamberDimensions') return '';
+  let text = '';
+  let dims: { length: number; width: number } | undefined;
+  switch (node.event.result) {
+    case ChamberDimensions.Square20x20:
+      text = "The chamber is square and 20' x 20'. ";
+      dims = { length: 20, width: 20 };
+      break;
+    case ChamberDimensions.Square30x30:
+      text = "The chamber is square and 30' x 30'. ";
+      dims = { length: 30, width: 30 };
+      break;
+    case ChamberDimensions.Square40x40:
+      text = "The chamber is square and 40' x 40'. ";
+      dims = { length: 40, width: 40 };
+      break;
+    case ChamberDimensions.Rectangular20x30:
+      text = "The chamber is rectangular and 20' x 30'. ";
+      dims = { length: 20, width: 30 };
+      break;
+    case ChamberDimensions.Rectangular30x50:
+      text = "The chamber is rectangular and 30' x 50'. ";
+      dims = { length: 30, width: 50 };
+      break;
+    case ChamberDimensions.Rectangular40x60:
+      text = "The chamber is rectangular and 40' x 60'. ";
+      dims = { length: 40, width: 60 };
+      break;
+    case ChamberDimensions.Unusual:
+      text = 'The chamber has an unusual shape and size. ';
+      break;
+  }
+  if (dims) {
+    text +=
+      'There is one additional exit. (TODO location, direction/width if passage) ';
+  } else {
+    text += renderCompactUnusualDetails(node);
+  }
+  return text;
+}
+
+function renderCompactUnusualDetails(node: OutcomeEventNode): string {
+  let text = '';
+  const shape = findChildEvent(node, 'unusualShape');
+  if (shape && shape.event.kind === 'unusualShape') {
+    text += formatUnusualShape(shape.event.result);
+  }
+  const size = findChildEvent(node, 'unusualSize');
+  if (size && size.event.kind === 'unusualSize') {
+    text += formatUnusualSize(size.event.result);
+  }
+  if (shape || size) {
+    text += '(TODO exits, contents, treasure) ';
+  }
+  return text;
+}
+
+function formatUnusualShape(result: UnusualShape): string {
+  switch (result) {
+    case UnusualShape.Circular:
+      return 'It is circular. ';
+    case UnusualShape.Triangular:
+      return 'It is triangular. ';
+    case UnusualShape.Trapezoidal:
+      return 'It is trapezoidal. ';
+    case UnusualShape.OddShaped:
+      return 'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) ';
+    case UnusualShape.Oval:
+      return 'It is oval-shaped. ';
+    case UnusualShape.Hexagonal:
+      return 'It is hexagonal. ';
+    case UnusualShape.Octagonal:
+      return 'It is octagonal. ';
+    case UnusualShape.Cave:
+      return 'It is actually a cave. ';
+    default:
+      return '';
+  }
+}
+
+function formatUnusualSize(result: UnusualSize): string {
+  switch (result) {
+    case UnusualSize.SqFt500:
+      return 'It is about 500 sq. ft. ';
+    case UnusualSize.SqFt900:
+      return 'It is about 900 sq. ft. ';
+    case UnusualSize.SqFt1300:
+      return 'It is about 1300 sq. ft. ';
+    case UnusualSize.SqFt2000:
+      return 'It is about 2000 sq. ft. ';
+    case UnusualSize.SqFt2700:
+      return 'It is about 2700 sq. ft. ';
+    case UnusualSize.SqFt3400:
+    case UnusualSize.RollAgain:
+      return 'It is about 3400 sq. ft. ';
+    default:
+      return '';
+  }
+}
+
 function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
   if (node.event.kind !== 'periodicCheck') return '';
   const event = node.event;
@@ -1999,18 +2246,35 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     case PeriodicCheck.Door:
       return renderCompactDoorChain();
     case PeriodicCheck.SidePassage: {
-      const children = resolveChildrenForCompact(node.children);
-      const side = children.find(
-        (child) => child.event.kind === 'sidePassages'
-      );
-      if (!side) {
-        return compactPeriodicText(
-          event.level,
-          event.result,
-          event.avoidMonster ?? false
-        );
-      }
-      return formatSidePassageResult(side.event.result);
+      const side = findChildEvent(node, 'sidePassages');
+      return side && side.event.kind === 'sidePassages'
+        ? formatSidePassageResult(side.event.result)
+        : compactPeriodicText(
+            event.level,
+            event.result,
+            event.avoidMonster ?? false
+          );
+    }
+    case PeriodicCheck.PassageTurn: {
+      const turn = findChildEvent(node, 'passageTurns');
+      return turn
+        ? renderCompactPassageTurn(turn)
+        : compactPeriodicText(
+            event.level,
+            event.result,
+            event.avoidMonster ?? false
+          );
+    }
+    case PeriodicCheck.Chamber: {
+      const chamber = findChildEvent(node, 'chamberDimensions');
+      const detail = chamber ? renderCompactChamberDimensions(chamber) : '';
+      return 'The passage opens into a chamber. ' + detail;
+    }
+    case PeriodicCheck.Stairs: {
+      const stairs = findChildEvent(node, 'stairs');
+      return stairs
+        ? renderCompactStairs(stairs)
+        : 'Stairs are indicated here. ';
     }
     default:
       return compactPeriodicText(

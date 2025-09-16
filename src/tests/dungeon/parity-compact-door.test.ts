@@ -18,11 +18,21 @@ function pickRollFor(cmd: PeriodicCheck): number {
   return entry.range[0];
 }
 
+function mockRollSequence(values: number[]): jest.SpyInstance {
+  const copy = [...values];
+  const fallback = values.length ? values[values.length - 1]! : 1;
+  const spy = jest.spyOn(dungeonLookup, 'rollDice');
+  spy.mockImplementation((): number => {
+    if (copy.length === 0) return fallback;
+    const next = copy.shift();
+    return next === undefined ? fallback : next;
+  });
+  return spy;
+}
+
 describe('Compact: PeriodicCheck Door (adapter)', () => {
   test('Ahead (dead end) exact text under controlled RNG', () => {
-    const spy = jest.spyOn(dungeonLookup, 'rollDice');
-    // Adapter compact path doorLocation: Ahead
-    spy.mockImplementationOnce(() => 20);
+    const spy = mockRollSequence([20]);
     const { messages } = passageMessages({
       roll: pickRollFor(PeriodicCheck.Door),
       detailMode: false,
@@ -36,9 +46,7 @@ describe('Compact: PeriodicCheck Door (adapter)', () => {
   });
 
   test('Left then Ignore (no further door) exact text under controlled RNG', () => {
-    const spy = jest.spyOn(dungeonLookup, 'rollDice');
-    // Adapter compact path: doorLocation Left (1), periodic recheck Ignore (1)
-    spy.mockImplementationOnce(() => 1).mockImplementationOnce(() => 1);
+    const spy = mockRollSequence([1, 1]);
     const { messages } = passageMessages({
       roll: pickRollFor(PeriodicCheck.Door),
       detailMode: false,
@@ -54,12 +62,7 @@ describe('Compact: PeriodicCheck Door (adapter)', () => {
   });
 
   test("Right then repeat Right yields single 'Right' prefix", () => {
-    const spy = jest.spyOn(dungeonLookup, 'rollDice');
-    // Sequence: doorLocation Right (7), periodic recheck Door (3), doorLocation Right again (7)
-    spy
-      .mockImplementationOnce(() => 7) // doorLocation Right
-      .mockImplementationOnce(() => 3) // periodicCheck Door (continue chain)
-      .mockImplementationOnce(() => 7); // doorLocation Right again (repeat)
+    const spy = mockRollSequence([7, 3, 7]);
     const { messages } = passageMessages({
       roll: pickRollFor(PeriodicCheck.Door),
       detailMode: false,
@@ -73,7 +76,7 @@ describe('Compact: PeriodicCheck Door (adapter)', () => {
     expect(occurrences).toBe(1);
     expect(
       text.includes(
-        "There are no more doors. The main passage extends -- check again in 30'."
+        "There are no other doors. The main passage extends -- check again in 30'."
       )
     ).toBe(true);
     spy.mockRestore();
