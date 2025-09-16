@@ -65,6 +65,7 @@ export type OutcomeEvent =
     }
   | { kind: 'unusualShape'; result: UnusualShape }
   | { kind: 'unusualSize'; result: UnusualSize }
+  | { kind: 'wanderingWhereFrom'; result: PeriodicCheck }
   | { kind: 'galleryStairLocation'; result: GalleryStairLocation }
   | { kind: 'galleryStairOccurrence'; result: GalleryStairOccurrence }
   | { kind: 'streamConstruction'; result: StreamConstruction }

@@ -95,6 +95,7 @@ import {
   resolveStairs,
   resolveUnusualShape,
   resolveUnusualSize,
+  resolveWanderingWhereFrom,
 } from '../domain/resolvers';
 
 function rangeText(range: number[]): string {
@@ -1211,10 +1212,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${PeriodicCheck[event.result]}`],
     };
-    const text =
-      event.result === PeriodicCheck.WanderingMonster
-        ? compactWanderingMonsterText(event.level)
-        : renderCompactPeriodicOutcome(node);
+    const text = renderCompactPeriodicOutcome(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1538,12 +1536,17 @@ export function toCompactRender(
 }
 
 // Compact helpers live locally in the adapter to avoid service-level string APIs.
-function renderCompactDoorChain(existing: DoorChainLaterality[] = []): string {
-  const root = resolveNodeForCompact({
-    type: 'pending-roll',
-    table: `doorLocation:${existing.length}`,
-    context: { kind: 'doorChain', existing: [...existing] },
-  });
+function renderCompactDoorChain(
+  existing: DoorChainLaterality[] = [],
+  resolvedNode?: OutcomeEventNode
+): string {
+  const root =
+    resolvedNode ??
+    resolveNodeForCompact({
+      type: 'pending-roll',
+      table: `doorLocation:${existing.length}`,
+      context: { kind: 'doorChain', existing: [...existing] },
+    });
   if (!root) return 'A door is indicated. ';
   const events = flattenOutcomeTree(root);
   return formatDoorChain(events);
@@ -1645,6 +1648,8 @@ function resolvePendingForCompact(
       return resolveUnusualShape({});
     case 'unusualSize':
       return resolveUnusualSize({});
+    case 'wanderingWhereFrom':
+      return resolveWanderingWhereFrom({});
     case 'galleryStairLocation':
       return resolveGalleryStairLocation({});
     case 'galleryStairOccurrence':
@@ -1742,6 +1747,45 @@ function formatPeriodicDoorOnlyEvent(
     return "There are no other doors. The main passage extends -- check again in 30'. ";
   }
   return '';
+}
+
+function renderWanderingWhereFrom(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'wanderingWhereFrom') return '';
+  switch (node.event.result) {
+    case PeriodicCheck.Door: {
+      const door = findChildEvent(node, 'doorLocation');
+      return renderCompactDoorChain([], door);
+    }
+    case PeriodicCheck.SidePassage: {
+      const side = findChildEvent(node, 'sidePassages');
+      return side && side.event.kind === 'sidePassages'
+        ? formatSidePassageResult(side.event.result)
+        : 'A side passage occurs. ';
+    }
+    case PeriodicCheck.PassageTurn: {
+      const turn = findChildEvent(node, 'passageTurns');
+      return turn ? renderCompactPassageTurn(turn) : 'The passage turns. ';
+    }
+    case PeriodicCheck.Chamber: {
+      const chamber = findChildEvent(node, 'chamberDimensions');
+      const detail = chamber ? renderCompactChamberDimensions(chamber) : '';
+      return 'The passage opens into a chamber. ' + detail;
+    }
+    case PeriodicCheck.Stairs: {
+      const stairs = findChildEvent(node, 'stairs');
+      return stairs
+        ? renderCompactStairs(stairs)
+        : 'Stairs are indicated here. ';
+    }
+    case PeriodicCheck.ContinueStraight:
+      return "Continue straight -- check again in 60'. ";
+    case PeriodicCheck.DeadEnd:
+      return 'The passage reaches a dead end. (TODO) ';
+    case PeriodicCheck.TrickTrap:
+      return "There is a trick or trap. (TODO) -- check again in 30'. ";
+    default:
+      return `Appears from: ${PeriodicCheck[node.event.result]}. `;
+  }
 }
 
 function renderCompactDoorBeyond(node: OutcomeEventNode): string {
@@ -2274,6 +2318,15 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
         ? renderCompactStairs(stairs)
         : 'Stairs are indicated here. ';
     }
+    case PeriodicCheck.WanderingMonster: {
+      const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
+      return compactWanderingMonsterText(
+        event.level,
+        whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
+          ? whereFrom
+          : undefined
+      );
+    }
     default:
       return compactPeriodicText(
         event.level,
@@ -2478,20 +2531,27 @@ function compactPeriodicText(
 }
 
 // Compose compact text for Wandering Monster without legacy helpers.
-function compactWanderingMonsterText(level: number): string {
-  // Determine where the monster comes from (re-rolling 20s)
-  let location: PeriodicCheck;
-  do {
-    const r = rollDice(periodicCheck.sides);
-    location = getTableEntry(r, periodicCheck);
-  } while (location === PeriodicCheck.WanderingMonster);
-
+function compactWanderingMonsterText(
+  level: number,
+  whereNode?: OutcomeEventNode
+): string {
   let prefix = '';
-  if (location === PeriodicCheck.Door) {
-    prefix = renderCompactDoorChain();
+  if (whereNode && whereNode.event.kind === 'wanderingWhereFrom') {
+    prefix = renderWanderingWhereFrom(whereNode);
   } else {
-    // Compose compact periodic text for where-from (non-door)
-    prefix = compactPeriodicText(level, location, true);
+    // Determine where the monster comes from (re-rolling 20s)
+    let location: PeriodicCheck;
+    do {
+      const r = rollDice(periodicCheck.sides);
+      location = getTableEntry(r, periodicCheck);
+    } while (location === PeriodicCheck.WanderingMonster);
+
+    if (location === PeriodicCheck.Door) {
+      prefix = renderCompactDoorChain();
+    } else {
+      // Compose compact periodic text for where-from (non-door)
+      prefix = compactPeriodicText(level, location, true);
+    }
   }
   // Roll monster level table for the given dungeon level
   const table = getMonsterTable(level);

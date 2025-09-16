@@ -135,6 +135,50 @@ export function resolveDoorBeyond(options?: {
   };
 }
 
+export function resolveWanderingWhereFrom(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  let usedRoll = options?.roll ?? rollDice(periodicCheck.sides);
+  let command = getTableEntry(usedRoll, periodicCheck);
+  while (command === PeriodicCheck.WanderingMonster) {
+    usedRoll = rollDice(periodicCheck.sides);
+    command = getTableEntry(usedRoll, periodicCheck);
+  }
+  const children: DungeonOutcomeNode[] = [];
+  switch (command) {
+    case PeriodicCheck.Door:
+      children.push({
+        type: 'pending-roll',
+        table: 'doorLocation:0',
+        context: { kind: 'doorChain', existing: [] },
+      });
+      break;
+    case PeriodicCheck.SidePassage:
+      children.push({ type: 'pending-roll', table: 'sidePassages' });
+      break;
+    case PeriodicCheck.PassageTurn:
+      children.push({ type: 'pending-roll', table: 'passageTurns' });
+      break;
+    case PeriodicCheck.Chamber:
+      children.push({ type: 'pending-roll', table: 'chamberDimensions' });
+      break;
+    case PeriodicCheck.Stairs:
+      children.push({ type: 'pending-roll', table: 'stairs' });
+      break;
+    default:
+      break;
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'wanderingWhereFrom',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
 export function resolveDoorLocation(options?: {
   roll?: number;
   existing?: DoorChainLaterality[];
