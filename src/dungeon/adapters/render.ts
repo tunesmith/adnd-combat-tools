@@ -1142,6 +1142,19 @@ export function toDetailRender(
   return nodes;
 }
 
+export function renderDetailTree(
+  outcome: DungeonOutcomeNode
+): DungeonRenderNode[] {
+  if (outcome.type !== 'event') return [];
+  const nodes = [...toDetailRender(outcome)];
+  if (!outcome.children) return nodes;
+  for (const child of outcome.children) {
+    if (child.type !== 'event') continue;
+    nodes.push(...renderDetailTree(child));
+  }
+  return nodes;
+}
+
 function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   const base = String(p.table.split(':')[0]);
   switch (base) {

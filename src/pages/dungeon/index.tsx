@@ -13,7 +13,10 @@ import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import { doorBeyondMessages } from '../../dungeon/services/doorBeyondResult';
 import { passageMessages } from '../../dungeon/services/passage';
 import { resolveViaRegistry } from '../../dungeon/helpers/registry';
-import { toCompactRender, toDetailRender } from '../../dungeon/adapters/render';
+import {
+  renderDetailTree,
+  toCompactRender,
+} from '../../dungeon/adapters/render';
 
 type ActionKind = 'passage' | 'door';
 
@@ -497,7 +500,7 @@ function resolvePreview(
 function buildRenderCache(outcome?: DungeonOutcomeNode): RenderCache {
   if (!outcome || outcome.type !== 'event') return {};
   return {
-    detail: toDetailRender(outcome),
+    detail: renderDetailTree(outcome),
     compact: toCompactRender(outcome),
   };
 }

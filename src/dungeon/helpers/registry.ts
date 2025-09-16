@@ -49,7 +49,7 @@ import {
   resolveUnusualSize,
   resolveWanderingWhereFrom,
 } from '../domain/resolvers';
-import { toCompactRender, toDetailRender } from '../adapters/render';
+import { renderDetailTree, toCompactRender } from '../adapters/render';
 import {
   applyResolvedOutcome,
   parseDoorChainSequence,
@@ -182,7 +182,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
 };
 
 function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
-  return { outcome, messages: toDetailRender(outcome) };
+  return { outcome, messages: renderDetailTree(outcome) };
 }
 
 function withoutOutcome(messages: DungeonRenderNode[]): RegistryResolution {
@@ -429,7 +429,7 @@ export function resolveViaRegistry<T extends FeedLike>(
                   tp.id,
                   result.outcome
                 );
-                const detailRender = toDetailRender(updatedOutcome);
+                const detailRender = renderDetailTree(updatedOutcome);
                 const compactRender = toCompactRender(updatedOutcome);
                 return {
                   ...fi,
