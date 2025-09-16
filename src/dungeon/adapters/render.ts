@@ -120,6 +120,164 @@ function appendPendingPreviews(
   }
 }
 
+function previewForEventNode(
+  node: OutcomeEventNode
+): DungeonTablePreview | undefined {
+  const event = node.event;
+  let tableId: string | undefined;
+  let context: TableContext | undefined;
+  switch (event.kind) {
+    case 'periodicCheck':
+      tableId = 'periodicCheck';
+      break;
+    case 'doorBeyond':
+      tableId = 'doorBeyond';
+      break;
+    case 'doorLocation':
+      tableId = `doorLocation:${event.sequence}`;
+      context = { kind: 'doorChain', existing: event.existingAfter };
+      break;
+    case 'periodicDoorOnly':
+      tableId = `periodicCheckDoorOnly:${event.sequence}`;
+      context = { kind: 'doorChain', existing: event.existing };
+      break;
+    case 'sidePassages':
+      tableId = 'sidePassages';
+      break;
+    case 'passageTurns':
+      tableId = 'passageTurns';
+      break;
+    case 'passageWidth':
+      tableId = 'passageWidth';
+      break;
+    case 'roomDimensions':
+      tableId = 'roomDimensions';
+      break;
+    case 'chamberDimensions':
+      tableId = 'chamberDimensions';
+      break;
+    case 'specialPassage':
+      tableId = 'specialPassage';
+      break;
+    case 'stairs':
+      tableId = 'stairs';
+      break;
+    case 'egress':
+      tableId = `egress:${event.which}`;
+      break;
+    case 'chute':
+      tableId = 'chute';
+      break;
+    case 'numberOfExits':
+      tableId = 'numberOfExits';
+      context = {
+        kind: 'exits',
+        length: event.context.length,
+        width: event.context.width,
+        isRoom: event.context.isRoom,
+      };
+      break;
+    case 'unusualShape':
+      tableId = 'unusualShape';
+      break;
+    case 'unusualSize':
+      tableId = 'unusualSize';
+      break;
+    case 'wanderingWhereFrom':
+      tableId = 'wanderingWhereFrom';
+      break;
+    case 'galleryStairLocation':
+      tableId = 'galleryStairLocation';
+      break;
+    case 'galleryStairOccurrence':
+      tableId = 'galleryStairOccurrence';
+      break;
+    case 'streamConstruction':
+      tableId = 'streamConstruction';
+      break;
+    case 'riverConstruction':
+      tableId = 'riverConstruction';
+      break;
+    case 'riverBoatBank':
+      tableId = 'riverBoatBank';
+      break;
+    case 'chasmDepth':
+      tableId = 'chasmDepth';
+      break;
+    case 'chasmConstruction':
+      tableId = 'chasmConstruction';
+      break;
+    case 'jumpingPlaceWidth':
+      tableId = 'jumpingPlaceWidth';
+      break;
+    case 'monsterLevel':
+      tableId = `monsterLevel:${event.dungeonLevel}`;
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'monsterOne':
+      tableId = 'monsterOne';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'monsterTwo':
+      tableId = 'monsterTwo';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'monsterThree':
+      tableId = 'monsterThree';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'monsterFour':
+      tableId = 'monsterFour';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'monsterFive':
+      tableId = 'monsterFive';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'monsterSix':
+      tableId = 'monsterSix';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'dragonThree':
+      tableId = 'dragonThree';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'dragonFourYounger':
+      tableId = 'dragonFourYounger';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'dragonFourOlder':
+      tableId = 'dragonFourOlder';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'dragonFiveYounger':
+      tableId = 'dragonFiveYounger';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'dragonFiveOlder':
+      tableId = 'dragonFiveOlder';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'dragonSix':
+      tableId = 'dragonSix';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'human':
+      tableId = 'human';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    default:
+      tableId = undefined;
+  }
+  if (!tableId) return undefined;
+  const preview = previewForPending({
+    type: 'pending-roll',
+    table: tableId,
+    context,
+  });
+  return preview || undefined;
+}
+
 function humanLabel(command: Human): string {
   switch (command) {
     case Human.Bandit_5to15:
@@ -1147,6 +1305,8 @@ export function renderDetailTree(
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
   const nodes = [...toDetailRender(outcome)];
+  const preview = previewForEventNode(outcome);
+  if (preview) nodes.push(preview);
   if (!outcome.children) return nodes;
   for (const child of outcome.children) {
     if (child.type !== 'event') continue;
