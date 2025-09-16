@@ -16,6 +16,7 @@ import type {
 } from '../../types/dungeon';
 import { resolveStairs } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
+import { resolveOutcomeNode } from '../helpers/outcomeTree';
 
 export const stairsMessages = (options?: {
   roll?: number;
@@ -41,7 +42,7 @@ export const stairsMessages = (options?: {
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
-    : toCompactRender(node);
+    : toCompactRender(resolveOutcomeNode(node) ?? node);
   return { usedRoll, messages };
 };
 

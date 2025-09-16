@@ -3,6 +3,7 @@ import type { DungeonMessage, DungeonTablePreview } from '../../types/dungeon';
 import { PassageWidth, passageWidth } from '../../tables/dungeon/passageWidth';
 import { resolvePassageWidth } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
+import { resolveOutcomeNode } from '../helpers/outcomeTree';
 import type { RollTraceItem } from '../../types/dungeon';
 
 export const passageWidthMessages = (options?: {
@@ -20,7 +21,7 @@ export const passageWidthMessages = (options?: {
       : options?.roll || rollDice(passageWidth.sides);
   const render = options?.detailMode
     ? toDetailRender(node)
-    : toCompactRender(node);
+    : toCompactRender(resolveOutcomeNode(node) ?? node);
   // Keep only paragraphs and previews to match existing usage
   const messages = render.filter(
     (n) => n.kind === 'paragraph' || n.kind === 'table-preview'

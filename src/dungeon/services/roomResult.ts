@@ -1,6 +1,7 @@
 import type { DungeonRenderNode } from '../../types/dungeon';
 import { resolveRoomDimensions } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
+import { resolveOutcomeNode } from '../helpers/outcomeTree';
 
 /**
  * Typed variant for room dimensions.
@@ -12,9 +13,13 @@ export const roomMessages = (options?: {
   detailMode?: boolean;
 }): { usedRoll?: number; messages: DungeonRenderNode[] } => {
   const node = resolveRoomDimensions({ roll: options?.roll });
-  const rendered = options?.detailMode
-    ? toDetailRender(node)
-    : toCompactRender(node);
+  if (options?.detailMode) {
+    const rendered = toDetailRender(node);
+    const usedRoll = (node.type === 'event' && node.roll) || options?.roll;
+    return { usedRoll, messages: rendered };
+  }
+  const resolvedNode = resolveOutcomeNode(node) ?? node;
+  const rendered = toCompactRender(resolvedNode);
   const usedRoll = (node.type === 'event' && node.roll) || options?.roll;
   return { usedRoll, messages: rendered };
 };

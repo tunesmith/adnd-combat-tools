@@ -26,6 +26,7 @@ import type {
 } from '../../types/dungeon';
 import { resolveSpecialPassage } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
+import { resolveOutcomeNode } from '../helpers/outcomeTree';
 
 export const specialPassageMessages = (options?: {
   roll?: number;
@@ -51,7 +52,7 @@ export const specialPassageMessages = (options?: {
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
-    : toCompactRender(node);
+    : toCompactRender(resolveOutcomeNode(node) ?? node);
   return { usedRoll, messages };
 };
 

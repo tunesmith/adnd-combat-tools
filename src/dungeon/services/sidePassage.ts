@@ -5,6 +5,7 @@ import type {
 } from '../../types/dungeon';
 import { resolveSidePassages } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
+import { resolveOutcomeNode } from '../helpers/outcomeTree';
 
 /**
  * We do *not* check passage width for side passages, as the "periodic check"
@@ -36,6 +37,6 @@ export const sidePassageMessages = (options?: {
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   const messages = options?.detailMode
     ? toDetailRender(node)
-    : toCompactRender(node);
+    : toCompactRender(resolveOutcomeNode(node) ?? node);
   return { usedRoll, messages };
 };

@@ -1,5 +1,4 @@
 import type {
-  DoorChainLaterality,
   DungeonOutcomeNode,
   OutcomeEvent,
   OutcomeEventNode,
@@ -34,7 +33,6 @@ import {
 } from '../../tables/dungeon/stairs';
 import { trickTrapMessages } from '../services/trickTrap';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
-import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import { periodicCheck } from '../../tables/dungeon/periodicCheck';
 import { getMonsterTable } from '../services/wanderingMonsterResult';
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
@@ -78,7 +76,6 @@ import {
 } from '../../tables/dungeon/monster/monsterSix';
 import {
   SpecialPassage,
-  specialPassage,
   galleryStairLocation,
   GalleryStairLocation,
   streamConstruction,
@@ -89,11 +86,8 @@ import {
   ChasmDepth,
   chasmConstruction,
   ChasmConstruction,
-  riverBoatBank,
   RiverBoatBank,
-  galleryStairOccurrence,
   GalleryStairOccurrence,
-  jumpingPlaceWidth,
   JumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
 import {
@@ -104,45 +98,7 @@ import { unusualShape, UnusualShape } from '../../tables/dungeon/unusualShape';
 import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
 import { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnly';
 // detail-mode preview helpers remain for other flows; compact composition is local
-import {
-  resolveChamberDimensions,
-  resolveChute,
-  resolveDoorLocation,
-  resolveEgress,
-  resolveGalleryStairLocation,
-  resolveGalleryStairOccurrence,
-  resolveNumberOfExits,
-  resolvePassageTurns,
-  resolvePassageWidth,
-  resolvePeriodicDoorOnly,
-  resolveRoomDimensions,
-  resolveSidePassages,
-  resolveStreamConstruction,
-  resolveRiverConstruction,
-  resolveRiverBoatBank,
-  resolveChasmDepth,
-  resolveChasmConstruction,
-  resolveJumpingPlaceWidth,
-  resolveSpecialPassage,
-  resolveStairs,
-  resolveUnusualShape,
-  resolveUnusualSize,
-  resolveWanderingWhereFrom,
-  resolveMonsterLevel,
-  resolveMonsterOne,
-  resolveMonsterTwo,
-  resolveMonsterThree,
-  resolveMonsterFour,
-  resolveMonsterFive,
-  resolveMonsterSix,
-  resolveDragonThree,
-  resolveDragonFourYounger,
-  resolveDragonFourOlder,
-  resolveDragonFiveYounger,
-  resolveDragonFiveOlder,
-  resolveDragonSix,
-  resolveHuman,
-} from '../domain/resolvers';
+import { isTableContext } from '../helpers/outcomeTree';
 
 function rangeText(range: number[]): string {
   return range.length === 1
@@ -400,7 +356,7 @@ export function toDetailRender(
         text = "The passage is 30' wide. ";
         break;
       case PassageWidth.SpecialPassage:
-        text = compactRandomSpecialPassage();
+        text = 'A special passage occurs. ';
         break;
     }
     return [heading, bullet, { kind: 'paragraph', text }];
@@ -1186,36 +1142,6 @@ export function toDetailRender(
   return nodes;
 }
 
-function isTableContext(x: unknown): x is TableContext {
-  if (!x || typeof x !== 'object') return false;
-  const k = (x as { kind?: unknown }).kind;
-  if (k === 'doorChain')
-    return Array.isArray((x as { existing?: unknown }).existing);
-  if (k === 'wandering')
-    return typeof (x as { level?: unknown }).level === 'number';
-  if (k === 'exits') {
-    const o = x as { length?: unknown; width?: unknown; isRoom?: unknown };
-    return (
-      typeof o.length === 'number' &&
-      typeof o.width === 'number' &&
-      typeof o.isRoom === 'boolean'
-    );
-  }
-  return false;
-}
-
-function readDungeonLevelFromPending(p: PendingRoll, fallback: number): number {
-  const parts = p.table.split(':');
-  if (parts.length >= 2) {
-    const parsed = Number(parts[1]);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  }
-  if (isTableContext(p.context) && p.context.kind === 'wandering') {
-    return p.context.level;
-  }
-  return fallback;
-}
-
 function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   const base = String(p.table.split(':')[0]);
   switch (base) {
@@ -1621,8 +1547,7 @@ export function toCompactRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
-  const resolved = resolveNodeForCompact(outcome);
-  const node = resolved ?? outcome;
+  const node = outcome;
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = node;
   if (event.kind === 'periodicCheck') {
@@ -1959,19 +1884,9 @@ export function toCompactRender(
 }
 
 // Compact helpers live locally in the adapter to avoid service-level string APIs.
-function renderCompactDoorChain(
-  existing: DoorChainLaterality[] = [],
-  resolvedNode?: OutcomeEventNode
-): string {
-  const root =
-    resolvedNode ??
-    resolveNodeForCompact({
-      type: 'pending-roll',
-      table: `doorLocation:${existing.length}`,
-      context: { kind: 'doorChain', existing: [...existing] },
-    });
-  if (!root) return 'A door is indicated. ';
-  const events = flattenOutcomeTree(root);
+function renderCompactDoorChain(resolvedNode?: OutcomeEventNode): string {
+  if (!resolvedNode) return 'A door is indicated. ';
+  const events = flattenOutcomeTree(resolvedNode);
   return formatDoorChain(events);
 }
 
@@ -1998,209 +1913,6 @@ function formatDoorChain(events: OutcomeEventNode[]): string {
   return text;
 }
 
-function resolveNodeForCompact(
-  node: DungeonOutcomeNode,
-  depth = 0
-): OutcomeEventNode | undefined {
-  if (depth > 16) return undefined;
-  if (node.type === 'event') {
-    const childEvents = resolveChildrenForCompact(node.children, depth + 1);
-    return {
-      type: 'event',
-      event: node.event,
-      roll: node.roll,
-      children: childEvents.length
-        ? (childEvents as unknown as DungeonOutcomeNode[])
-        : undefined,
-    };
-  }
-  const resolved = resolvePendingForCompact(node);
-  if (!resolved) return undefined;
-  return resolveNodeForCompact(resolved, depth + 1);
-}
-
-function resolveChildrenForCompact(
-  children: DungeonOutcomeNode[] | undefined,
-  depth = 0
-): OutcomeEventNode[] {
-  if (!children) return [];
-  const result: OutcomeEventNode[] = [];
-  for (const child of children) {
-    const resolved = resolveNodeForCompact(child, depth + 1);
-    if (resolved) result.push(resolved);
-  }
-  return result;
-}
-
-function resolvePendingForCompact(
-  pending: PendingRoll
-): DungeonOutcomeNode | undefined {
-  const base = pending.table.split(':')[0] ?? '';
-  switch (base) {
-    case 'doorLocation': {
-      const existing = readDoorChainExisting(pending.context);
-      const sequence = parseDoorChainSequence(pending.table, existing.length);
-      return resolveDoorLocation({ existing, sequence });
-    }
-    case 'periodicCheckDoorOnly': {
-      const existing = readDoorChainExisting(pending.context);
-      const sequence = parseDoorChainSequence(pending.table, existing.length);
-      return resolvePeriodicDoorOnly({ existing, sequence });
-    }
-    case 'sidePassages':
-      return resolveSidePassages({});
-    case 'passageTurns':
-      return resolvePassageTurns({});
-    case 'passageWidth':
-      return resolvePassageWidth({});
-    case 'stairs':
-      return resolveStairs({});
-    case 'egress': {
-      const which = parseEgressWhich(pending.table);
-      return resolveEgress({ which, roll: undefined });
-    }
-    case 'chute':
-      return resolveChute({});
-    case 'specialPassage':
-      return resolveSpecialPassage({});
-    case 'roomDimensions':
-      return resolveRoomDimensions({});
-    case 'chamberDimensions':
-      return resolveChamberDimensions({});
-    case 'unusualShape':
-      return resolveUnusualShape({});
-    case 'unusualSize':
-      return resolveUnusualSize({});
-    case 'wanderingWhereFrom':
-      return resolveWanderingWhereFrom({});
-    case 'galleryStairLocation':
-      return resolveGalleryStairLocation({});
-    case 'galleryStairOccurrence':
-      return resolveGalleryStairOccurrence({});
-    case 'streamConstruction':
-      return resolveStreamConstruction({});
-    case 'riverConstruction':
-      return resolveRiverConstruction({});
-    case 'riverBoatBank':
-      return resolveRiverBoatBank({});
-    case 'chasmDepth':
-      return resolveChasmDepth({});
-    case 'chasmConstruction':
-      return resolveChasmConstruction({});
-    case 'jumpingPlaceWidth':
-      return resolveJumpingPlaceWidth({});
-    case 'numberOfExits': {
-      const ctx = readExitsContext(pending.context);
-      if (!ctx) return undefined;
-      return resolveNumberOfExits({
-        length: ctx.length,
-        width: ctx.width,
-        isRoom: ctx.isRoom,
-      });
-    }
-    case 'monsterLevel': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterLevel({ dungeonLevel });
-    }
-    case 'monsterOne': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterOne({ dungeonLevel });
-    }
-    case 'monsterTwo': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterTwo({ dungeonLevel });
-    }
-    case 'monsterThree': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterThree({ dungeonLevel });
-    }
-    case 'monsterFour': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterFour({ dungeonLevel });
-    }
-    case 'monsterFive': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterFive({ dungeonLevel });
-    }
-    case 'monsterSix': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterSix({ dungeonLevel });
-    }
-    case 'dragonThree': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 3);
-      return resolveDragonThree({ dungeonLevel });
-    }
-    case 'dragonFourYounger': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 4);
-      return resolveDragonFourYounger({ dungeonLevel });
-    }
-    case 'dragonFourOlder': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 4);
-      return resolveDragonFourOlder({ dungeonLevel });
-    }
-    case 'dragonFiveYounger': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 5);
-      return resolveDragonFiveYounger({ dungeonLevel });
-    }
-    case 'dragonFiveOlder': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 5);
-      return resolveDragonFiveOlder({ dungeonLevel });
-    }
-    case 'dragonSix': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 6);
-      return resolveDragonSix({ dungeonLevel });
-    }
-    case 'human': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveHuman({ dungeonLevel });
-    }
-    default:
-      return undefined;
-  }
-}
-
-function parseDoorChainSequence(table: string, fallback: number): number {
-  const parts = table.split(':');
-  if (parts.length >= 2) {
-    const seq = Number(parts[1]);
-    if (Number.isInteger(seq)) return seq;
-  }
-  return fallback;
-}
-
-function parseEgressWhich(table: string): 'one' | 'two' | 'three' {
-  const parts = table.split(':');
-  if (parts.length >= 2) {
-    const key = parts[1] as 'one' | 'two' | 'three';
-    if (key === 'one' || key === 'two' || key === 'three') return key;
-  }
-  return 'one';
-}
-
-function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
-  if (!isTableContext(context)) return [];
-  if (context.kind !== 'doorChain') return [];
-  const arr = Array.isArray(context.existing) ? context.existing : [];
-  return arr.filter(
-    (v): v is DoorChainLaterality => v === 'Left' || v === 'Right'
-  );
-}
-
-function readExitsContext(
-  context: unknown
-): { length: number; width: number; isRoom: boolean } | undefined {
-  if (!isTableContext(context)) return undefined;
-  if (context.kind !== 'exits') return undefined;
-  const length =
-    typeof context.length === 'number' ? context.length : undefined;
-  const width = typeof context.width === 'number' ? context.width : undefined;
-  const isRoom =
-    typeof context.isRoom === 'boolean' ? context.isRoom : undefined;
-  if (length === undefined || width === undefined || isRoom === undefined)
-    return undefined;
-  return { length, width, isRoom };
-}
-
 function formatDoorLocationEvent(
   event: Extract<OutcomeEvent, { kind: 'doorLocation' }>
 ): string {
@@ -2214,7 +1926,7 @@ function formatDoorLocationEvent(
   if (!lateral) return '';
   const repeated = event.existingAfter.length === event.existingBefore.length;
   if (repeated) {
-    return "There are no more doors. The main passage extends -- check again in 30'. ";
+    return "There are no other doors. The main passage extends -- check again in 30'. ";
   }
   return `A door is to the ${lateral}. `;
 }
@@ -2257,7 +1969,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
   switch (node.event.result) {
     case PeriodicCheck.Door: {
       const door = findChildEvent(node, 'doorLocation');
-      return renderCompactDoorChain([], door);
+      return renderCompactDoorChain(door);
     }
     case PeriodicCheck.SidePassage: {
       const side = findChildEvent(node, 'sidePassages');
@@ -2777,7 +2489,7 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
   const event = node.event;
   switch (event.result) {
     case PeriodicCheck.Door:
-      return renderCompactDoorChain();
+      return renderCompactDoorChain(findChildEvent(node, 'doorLocation'));
     case PeriodicCheck.SidePassage: {
       const side = findChildEvent(node, 'sidePassages');
       return side && side.event.kind === 'sidePassages'
@@ -2862,165 +2574,33 @@ function formatSidePassageResult(result: SidePassages): string {
   }
 }
 
-function compactSpecialPassageSuffix(kind: SpecialPassage): string {
-  switch (kind) {
-    case SpecialPassage.FiftyFeetGalleries: {
-      const r = rollDice(galleryStairLocation.sides);
-      const c = getTableEntry(r, galleryStairLocation);
-      if (c === GalleryStairLocation.PassageEnd) {
-        const r2 = rollDice(galleryStairOccurrence.sides);
-        const c2 = getTableEntry(r2, galleryStairOccurrence);
-        const tail =
-          c2 === GalleryStairOccurrence.Replace
-            ? 'If a stairway is otherwise indicated in or adjacent to the passage, it will replace the end stairs. '
-            : 'If a stairway is otherwise indicated in or adjacent to the passage, it will supplement the end stairs. ';
-        return (
-          'Stairs up to the gallery will be at the end of the passage. ' + tail
-        );
-      }
-      return 'Stairs up to the gallery are at the beginning of the passage. ';
-    }
-    case SpecialPassage.TenFootStream: {
-      const r = rollDice(streamConstruction.sides);
-      const c = getTableEntry(r, streamConstruction);
-      return c === StreamConstruction.Bridged
-        ? 'A bridge crosses the stream. '
-        : '';
-    }
-    case SpecialPassage.TwentyFootRiver:
-    case SpecialPassage.FortyFootRiver:
-    case SpecialPassage.SixtyFootRiver: {
-      const r = rollDice(riverConstruction.sides);
-      const c = getTableEntry(r, riverConstruction);
-      if (c === RiverConstruction.Bridged)
-        return 'A bridge crosses the river. ';
-      if (c === RiverConstruction.Obstacle) return '';
-      const r2 = rollDice(riverBoatBank.sides);
-      const c2 = getTableEntry(r2, riverBoatBank);
-      const tail =
-        c2 === RiverBoatBank.ThisSide
-          ? 'The boat is on this bank of the river. '
-          : 'The boat is on the opposite bank of the river. ';
-      return 'There is a boat. ' + tail;
-    }
-    case SpecialPassage.TwentyFootChasm: {
-      const r = rollDice(chasmDepth.sides);
-      const c = getTableEntry(r, chasmDepth);
-      const depth =
-        c === ChasmDepth.Feet150
-          ? "The chasm is 150' deep. "
-          : c === ChasmDepth.Feet160
-          ? "The chasm is 160' deep. "
-          : c === ChasmDepth.Feet170
-          ? "The chasm is 170' deep. "
-          : c === ChasmDepth.Feet180
-          ? "The chasm is 180' deep. "
-          : c === ChasmDepth.Feet190
-          ? "The chasm is 190' deep. "
-          : "The chasm is 200' deep. ";
-      const r2 = rollDice(chasmConstruction.sides);
-      const c2 = getTableEntry(r2, chasmConstruction);
-      if (c2 === ChasmConstruction.Bridged)
-        return depth + 'A bridge crosses the chasm. ';
-      if (c2 === ChasmConstruction.Obstacle)
-        return depth + 'It has no bridge, and is too wide to jump across. ';
-      const r3 = rollDice(jumpingPlaceWidth.sides);
-      const c3 = getTableEntry(r3, jumpingPlaceWidth);
-      const width =
-        c3 === JumpingPlaceWidth.FiveFeet
-          ? "It is 5' wide. "
-          : "It is 10' wide. ";
-      return depth + 'There is a jumping place. ' + width;
-    }
-    default:
-      return '';
-  }
-}
-
-function compactRandomSpecialPassage(): string {
-  const r = rollDice(specialPassage.sides);
-  const cmd = getTableEntry(r, specialPassage);
-  switch (cmd) {
-    case SpecialPassage.FortyFeetColumns:
-      return "The passage is 40' wide, with columns down the center. ";
-    case SpecialPassage.FortyFeetDoubleColumns:
-      return "The passage is 40' wide, with a double row of columns. ";
-    case SpecialPassage.FiftyFeetDoubleColumns:
-      return "The passage is 50' wide, with a double row of columns. ";
-    case SpecialPassage.FiftyFeetGalleries:
-      return (
-        "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. " +
-        compactSpecialPassageSuffix(SpecialPassage.FiftyFeetGalleries)
-      );
-    case SpecialPassage.TenFootStream:
-      return (
-        "A stream, 10' wide, bisects the passage. " +
-        compactSpecialPassageSuffix(SpecialPassage.TenFootStream)
-      );
-    case SpecialPassage.TwentyFootRiver:
-      return (
-        "A river, 20' wide, bisects the passage. " +
-        compactSpecialPassageSuffix(SpecialPassage.TwentyFootRiver)
-      );
-    case SpecialPassage.FortyFootRiver:
-      return (
-        "A river, 40' wide, bisects the passage. " +
-        compactSpecialPassageSuffix(SpecialPassage.FortyFootRiver)
-      );
-    case SpecialPassage.SixtyFootRiver:
-      return (
-        "A river, 60' wide, bisects the passage. " +
-        compactSpecialPassageSuffix(SpecialPassage.SixtyFootRiver)
-      );
-    case SpecialPassage.TwentyFootChasm:
-      return (
-        "A chasm, 20' wide, bisects the passage. " +
-        compactSpecialPassageSuffix(SpecialPassage.TwentyFootChasm)
-      );
-  }
-}
-
 function compactPeriodicText(
   _level: number,
   result: PeriodicCheck,
-  _avoidMonster: boolean
+  avoidMonster: boolean
 ): string {
   switch (result) {
     case PeriodicCheck.ContinueStraight:
       return "Continue straight -- check again in 60'. ";
     case PeriodicCheck.Door:
-      return renderCompactDoorChain();
-    case PeriodicCheck.SidePassage: {
-      const sideNode = resolveSidePassages({});
-      if (sideNode.type === 'event' && sideNode.event.kind === 'sidePassages') {
-        return formatSidePassageResult(sideNode.event.result);
-      }
+      return 'A door is indicated. ';
+    case PeriodicCheck.SidePassage:
       return "A side passage branches. Passages extend -- check again in 30'. ";
-    }
-    case PeriodicCheck.PassageTurn: {
-      const turnNode = resolveNodeForCompact(resolvePassageTurns({}));
-      return turnNode
-        ? renderCompactPassageTurn(turnNode)
-        : 'The passage turns. ';
-    }
-    case PeriodicCheck.Chamber: {
-      const chamberNode = resolveNodeForCompact(resolveChamberDimensions({}));
-      const detail = chamberNode
-        ? renderCompactChamberDimensions(chamberNode)
-        : '';
-      return 'The passage opens into a chamber. ' + detail;
-    }
-    case PeriodicCheck.Stairs: {
-      const stairsNode = resolveNodeForCompact(resolveStairs({}));
-      return stairsNode
-        ? renderCompactStairs(stairsNode)
-        : 'Stairs are indicated here. ';
-    }
+    case PeriodicCheck.PassageTurn:
+      return 'The passage turns. ';
+    case PeriodicCheck.Chamber:
+      return 'The passage opens into a chamber. ';
+    case PeriodicCheck.Stairs:
+      return 'Stairs are indicated here. ';
+    case PeriodicCheck.WanderingMonster:
+      return avoidMonster
+        ? 'Wandering Monster (ignored this turn). '
+        : 'Wandering Monster: unknown result. ';
     case PeriodicCheck.DeadEnd:
       return 'The passage reaches a dead end. (TODO) ';
     case PeriodicCheck.TrickTrap:
       return "There is a trick or trap. (TODO) -- check again in 30'. ";
-    case PeriodicCheck.WanderingMonster:
+    default:
       return '';
   }
 }
@@ -3031,16 +2611,10 @@ function compactWanderingMonsterText(
   whereNode?: OutcomeEventNode,
   levelNode?: OutcomeEventNode
 ): string {
-  let prefix = '';
-  if (whereNode && whereNode.event.kind === 'wanderingWhereFrom') {
-    prefix = renderWanderingWhereFrom(whereNode);
-  } else {
-    const resolvedWhere = resolveNodeForCompact(resolveWanderingWhereFrom({}));
-    if (resolvedWhere && resolvedWhere.event.kind === 'wanderingWhereFrom') {
-      prefix = renderWanderingWhereFrom(resolvedWhere);
-    }
-  }
-
+  const prefix =
+    whereNode && whereNode.event.kind === 'wanderingWhereFrom'
+      ? renderWanderingWhereFrom(whereNode)
+      : '';
   const monsterText = readMonsterEncounter(level, levelNode);
   return `${prefix}Wandering Monster: ${monsterText}`;
 }
@@ -3056,17 +2630,13 @@ const MONSTER_LEVEL_KIND: Partial<Record<MonsterLevel, OutcomeEvent['kind']>> =
   };
 
 function readMonsterEncounter(
-  dungeonLevel: number,
+  _dungeonLevel: number,
   levelNode?: OutcomeEventNode
 ): string {
-  const resolvedLevelNode =
-    levelNode?.event.kind === 'monsterLevel'
-      ? levelNode
-      : resolveNodeForCompact(resolveMonsterLevel({ dungeonLevel }));
-  if (!resolvedLevelNode || resolvedLevelNode.event.kind !== 'monsterLevel') {
+  if (!levelNode || levelNode.event.kind !== 'monsterLevel') {
     return fallbackMonsterLevelText(MonsterLevel.One);
   }
-  return readMonsterEncounterFromLevelNode(resolvedLevelNode);
+  return readMonsterEncounterFromLevelNode(levelNode);
 }
 
 function readMonsterEncounterFromLevelNode(node: OutcomeEventNode): string {

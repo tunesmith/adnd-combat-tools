@@ -8,6 +8,7 @@ import type {
   DungeonRenderNode,
 } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
+import { resolveOutcomeNode } from '../helpers/outcomeTree';
 import { resolvePeriodicCheck } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
 
@@ -63,8 +64,11 @@ export const passageMessages = (options?: {
     avoidMonster: options?.avoidMonster,
   });
   const usedRoll = node.type === 'event' ? node.roll : undefined;
-  const messages = options?.detailMode
-    ? toDetailRender(node)
-    : toCompactRender(node);
-  return { usedRoll, messages, outcome: node };
+  if (options?.detailMode) {
+    const messages = toDetailRender(node);
+    return { usedRoll, messages, outcome: node };
+  }
+  const resolvedNode = resolveOutcomeNode(node) ?? node;
+  const messages = toCompactRender(resolvedNode);
+  return { usedRoll, messages, outcome: resolvedNode };
 };
