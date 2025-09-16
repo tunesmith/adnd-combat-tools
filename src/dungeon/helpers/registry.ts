@@ -4,53 +4,58 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
+import type { DungeonOutcomeNode } from '../domain/outcome';
 
 // Message services used by the registry
-import { sidePassageMessages } from '../services/sidePassage';
-import { passageTurnMessages } from '../services/passageTurn';
-import { stairsMessages } from '../services/stairsResult';
-import { doorLocationMessages } from '../services/closedDoorResult';
-import { periodicDoorOnlyMessages } from '../services/periodicDoorOnly';
-import { wanderingWhereFromMessages } from '../services/wanderingWhereFrom';
-import {
-  galleryStairLocationMessages,
-  galleryStairOccurrenceMessages,
-  streamConstructionMessages,
-  riverConstructionMessages,
-  riverBoatBankMessages,
-  chasmDepthMessages,
-  chasmConstructionMessages,
-  jumpingPlaceWidthMessages,
-} from '../services/specialPassage';
-import { unusualSizeMessages } from '../services/unusualSizeResult';
 import { trickTrapMessages } from '../services/trickTrap';
 import {
-  resolveEgress,
-  resolveChute,
-  resolveNumberOfExits,
-  resolveUnusualShape,
-  resolvePassageWidth,
-  resolveSpecialPassage,
-  resolveDoorBeyond,
-  resolvePeriodicCheck,
-  resolveRoomDimensions,
   resolveChamberDimensions,
+  resolveChasmConstruction,
+  resolveChasmDepth,
+  resolveChute,
+  resolveDoorBeyond,
+  resolveDoorLocation,
+  resolveDragonFiveOlder,
+  resolveDragonFiveYounger,
+  resolveDragonFourOlder,
+  resolveDragonFourYounger,
+  resolveDragonSix,
+  resolveDragonThree,
+  resolveEgress,
+  resolveGalleryStairLocation,
+  resolveGalleryStairOccurrence,
+  resolveHuman,
+  resolveJumpingPlaceWidth,
+  resolveMonsterFive,
+  resolveMonsterFour,
   resolveMonsterLevel,
   resolveMonsterOne,
-  resolveMonsterTwo,
-  resolveMonsterThree,
-  resolveMonsterFour,
-  resolveMonsterFive,
   resolveMonsterSix,
-  resolveDragonThree,
-  resolveDragonFourYounger,
-  resolveDragonFourOlder,
-  resolveDragonFiveYounger,
-  resolveDragonFiveOlder,
-  resolveDragonSix,
-  resolveHuman,
+  resolveMonsterThree,
+  resolveMonsterTwo,
+  resolveNumberOfExits,
+  resolvePassageTurns,
+  resolvePassageWidth,
+  resolvePeriodicCheck,
+  resolvePeriodicDoorOnly,
+  resolveRiverBoatBank,
+  resolveRiverConstruction,
+  resolveRoomDimensions,
+  resolveSidePassages,
+  resolveSpecialPassage,
+  resolveStairs,
+  resolveStreamConstruction,
+  resolveUnusualShape,
+  resolveUnusualSize,
+  resolveWanderingWhereFrom,
 } from '../domain/resolvers';
-import { toDetailRender } from '../adapters/render';
+import { toCompactRender, toDetailRender } from '../adapters/render';
+import {
+  applyResolvedOutcome,
+  parseDoorChainSequence,
+  readDoorChainExisting,
+  readExitsContext,
+} from '../helpers/outcomeTree';
 import {
   circularContentsMessages,
   circularShapePoolMessages,
@@ -61,11 +66,16 @@ import {
 } from '../services/unusualShapeResult';
 
 // Registry resolver type
+type RegistryResolution = {
+  messages: DungeonRenderNode[];
+  outcome?: DungeonOutcomeNode;
+};
+
 export type RegistryResolver = (opts: {
   roll?: number;
   id: string;
   context?: TableContext;
-}) => DungeonRenderNode[];
+}) => RegistryResolution;
 
 const TABLE_ID_LIST = [
   'sidePassages',
@@ -171,139 +181,152 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   numberOfExits: 'Exits',
 };
 
+function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
+  return { outcome, messages: toDetailRender(outcome) };
+}
+
+function withoutOutcome(messages: DungeonRenderNode[]): RegistryResolution {
+  return { messages };
+}
+
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
-  sidePassages: ({ roll }) =>
-    sidePassageMessages({ roll, detailMode: true }).messages,
-  passageTurns: ({ roll }) =>
-    passageTurnMessages({ roll, detailMode: true }).messages,
-  stairs: ({ roll }) => stairsMessages({ roll, detailMode: true }).messages,
-  doorLocation: ({ roll, context }) =>
-    doorLocationMessages({ roll, detailMode: true, context }).messages,
-  doorBeyond: ({ roll }) => toDetailRender(resolveDoorBeyond({ roll })),
+  sidePassages: ({ roll }) => fromOutcome(resolveSidePassages({ roll })),
+  passageTurns: ({ roll }) => fromOutcome(resolvePassageTurns({ roll })),
+  stairs: ({ roll }) => fromOutcome(resolveStairs({ roll })),
+  doorLocation: ({ roll, context, id }) => {
+    const existing = readDoorChainExisting(context);
+    const sequence = parseDoorChainSequence(id, existing.length);
+    return fromOutcome(resolveDoorLocation({ roll, existing, sequence }));
+  },
+  doorBeyond: ({ roll }) => fromOutcome(resolveDoorBeyond({ roll })),
   periodicCheck: ({ roll, context }) => {
     const c = (context || {}) as { kind?: string; level?: number };
     const level =
       c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
-    return toDetailRender(resolvePeriodicCheck({ roll, level }));
+    return fromOutcome(resolvePeriodicCheck({ roll, level }));
   },
-  periodicCheckDoorOnly: ({ roll, context }) =>
-    periodicDoorOnlyMessages({ roll, detailMode: true, context }).messages,
-  wanderingWhereFrom: ({ roll, context }) =>
-    wanderingWhereFromMessages({ roll, detailMode: true, context }).messages,
+  periodicCheckDoorOnly: ({ roll, context, id }) => {
+    const existing = readDoorChainExisting(context);
+    const sequence = parseDoorChainSequence(id, existing.length);
+    return fromOutcome(resolvePeriodicDoorOnly({ roll, existing, sequence }));
+  },
+  wanderingWhereFrom: ({ roll }) =>
+    fromOutcome(resolveWanderingWhereFrom({ roll })),
   monsterLevel: ({ roll, id, context }) => {
     const dungeonLevel = readDungeonLevel(context, id, 1);
-    return toDetailRender(resolveMonsterLevel({ roll, dungeonLevel }));
+    return fromOutcome(resolveMonsterLevel({ roll, dungeonLevel }));
   },
   monsterOne: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterOne', 1);
-    return toDetailRender(resolveMonsterOne({ roll, dungeonLevel }));
+    return fromOutcome(resolveMonsterOne({ roll, dungeonLevel }));
   },
   monsterTwo: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterTwo', 1);
-    return toDetailRender(resolveMonsterTwo({ roll, dungeonLevel }));
+    return fromOutcome(resolveMonsterTwo({ roll, dungeonLevel }));
   },
   monsterThree: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterThree', 1);
-    return toDetailRender(resolveMonsterThree({ roll, dungeonLevel }));
+    return fromOutcome(resolveMonsterThree({ roll, dungeonLevel }));
   },
   monsterFour: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterFour', 1);
-    return toDetailRender(resolveMonsterFour({ roll, dungeonLevel }));
+    return fromOutcome(resolveMonsterFour({ roll, dungeonLevel }));
   },
   monsterFive: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterFive', 1);
-    return toDetailRender(resolveMonsterFive({ roll, dungeonLevel }));
+    return fromOutcome(resolveMonsterFive({ roll, dungeonLevel }));
   },
   monsterSix: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterSix', 1);
-    return toDetailRender(resolveMonsterSix({ roll, dungeonLevel }));
+    return fromOutcome(resolveMonsterSix({ roll, dungeonLevel }));
   },
   dragonThree: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonThree', 3);
-    return toDetailRender(resolveDragonThree({ roll, dungeonLevel }));
+    return fromOutcome(resolveDragonThree({ roll, dungeonLevel }));
   },
   dragonFourYounger: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonFourYounger', 4);
-    return toDetailRender(resolveDragonFourYounger({ roll, dungeonLevel }));
+    return fromOutcome(resolveDragonFourYounger({ roll, dungeonLevel }));
   },
   dragonFourOlder: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonFourOlder', 4);
-    return toDetailRender(resolveDragonFourOlder({ roll, dungeonLevel }));
+    return fromOutcome(resolveDragonFourOlder({ roll, dungeonLevel }));
   },
   dragonFiveYounger: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonFiveYounger', 5);
-    return toDetailRender(resolveDragonFiveYounger({ roll, dungeonLevel }));
+    return fromOutcome(resolveDragonFiveYounger({ roll, dungeonLevel }));
   },
   dragonFiveOlder: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonFiveOlder', 5);
-    return toDetailRender(resolveDragonFiveOlder({ roll, dungeonLevel }));
+    return fromOutcome(resolveDragonFiveOlder({ roll, dungeonLevel }));
   },
   dragonSix: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonSix', 6);
-    return toDetailRender(resolveDragonSix({ roll, dungeonLevel }));
+    return fromOutcome(resolveDragonSix({ roll, dungeonLevel }));
   },
   human: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'human', 1);
-    return toDetailRender(resolveHuman({ roll, dungeonLevel }));
+    return fromOutcome(resolveHuman({ roll, dungeonLevel }));
   },
   galleryStairLocation: ({ roll }) =>
-    galleryStairLocationMessages({ roll, detailMode: true }).messages,
+    fromOutcome(resolveGalleryStairLocation({ roll })),
   galleryStairOccurrence: ({ roll }) =>
-    galleryStairOccurrenceMessages({ roll }).messages,
-  passageWidth: ({ roll }) => toDetailRender(resolvePassageWidth({ roll })),
-  specialPassage: ({ roll }) => toDetailRender(resolveSpecialPassage({ roll })),
-  roomDimensions: ({ roll }) => toDetailRender(resolveRoomDimensions({ roll })),
+    fromOutcome(resolveGalleryStairOccurrence({ roll })),
+  passageWidth: ({ roll }) => fromOutcome(resolvePassageWidth({ roll })),
+  specialPassage: ({ roll }) => fromOutcome(resolveSpecialPassage({ roll })),
+  roomDimensions: ({ roll }) => fromOutcome(resolveRoomDimensions({ roll })),
   chamberDimensions: ({ roll }) =>
-    toDetailRender(resolveChamberDimensions({ roll })),
+    fromOutcome(resolveChamberDimensions({ roll })),
   streamConstruction: ({ roll }) =>
-    streamConstructionMessages({ roll, detailMode: true }).messages,
+    fromOutcome(resolveStreamConstruction({ roll })),
   riverConstruction: ({ roll }) =>
-    riverConstructionMessages({ roll, detailMode: true }).messages,
-  riverBoatBank: ({ roll }) => riverBoatBankMessages({ roll }).messages,
-  chasmDepth: ({ roll }) =>
-    chasmDepthMessages({ roll, detailMode: true }).messages,
+    fromOutcome(resolveRiverConstruction({ roll })),
+  riverBoatBank: ({ roll }) => fromOutcome(resolveRiverBoatBank({ roll })),
+  chasmDepth: ({ roll }) => fromOutcome(resolveChasmDepth({ roll })),
   chasmConstruction: ({ roll }) =>
-    chasmConstructionMessages({ roll, detailMode: true }).messages,
-  jumpingPlaceWidth: ({ roll }) => jumpingPlaceWidthMessages({ roll }).messages,
-  unusualShape: ({ roll }) => toDetailRender(resolveUnusualShape({ roll })),
-  unusualSize: ({ roll, id }) => {
-    // Parse seq/extra from id if present: unusualSize:seq:extra
-    let seq = 0;
-    let extra = 0;
-    const parts = id.split(':');
-    if (parts.length >= 2) seq = Number(parts[1]) || 0;
-    if (parts.length >= 3) extra = Number(parts[2]) || 0;
-    return unusualSizeMessages({ roll, detailMode: true, seq, extra }).messages;
-  },
+    fromOutcome(resolveChasmConstruction({ roll })),
+  jumpingPlaceWidth: ({ roll }) =>
+    fromOutcome(resolveJumpingPlaceWidth({ roll })),
+  unusualShape: ({ roll }) => fromOutcome(resolveUnusualShape({ roll })),
+  unusualSize: ({ roll }) => fromOutcome(resolveUnusualSize({ roll })),
   circularContents: ({ roll }) =>
-    circularContentsMessages({ roll, detailMode: true }).messages,
+    withoutOutcome(
+      circularContentsMessages({ roll, detailMode: true }).messages
+    ),
   circularShapePool: ({ roll }) =>
-    circularShapePoolMessages({ roll, detailMode: true }).messages,
+    withoutOutcome(
+      circularShapePoolMessages({ roll, detailMode: true }).messages
+    ),
   circularShapeMagicPool: ({ roll }) =>
-    circularShapeMagicPoolMessages({ roll, detailMode: true }).messages,
-  transmuteType: ({ roll }) => transmuteTypeMessages({ roll }).messages,
-  poolAlignment: ({ roll }) => poolAlignmentMessages({ roll }).messages,
+    withoutOutcome(
+      circularShapeMagicPoolMessages({ roll, detailMode: true }).messages
+    ),
+  transmuteType: ({ roll }) =>
+    withoutOutcome(transmuteTypeMessages({ roll }).messages),
+  poolAlignment: ({ roll }) =>
+    withoutOutcome(poolAlignmentMessages({ roll }).messages),
   transporterLocation: ({ roll }) =>
-    transporterLocationMessages({ roll }).messages,
-  trickTrap: ({ roll }) => trickTrapMessages({ roll }).messages,
-  chute: ({ roll }) => toDetailRender(resolveChute({ roll })),
+    withoutOutcome(transporterLocationMessages({ roll }).messages),
+  trickTrap: ({ roll }) => withoutOutcome(trickTrapMessages({ roll }).messages),
+  chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';
-    return toDetailRender(resolveEgress({ which: key, roll }));
+    return fromOutcome(resolveEgress({ which: key, roll }));
   },
   numberOfExits: ({ roll, context }) => {
-    const c =
-      (context as {
-        kind?: string;
-        length?: number;
-        width?: number;
-        isRoom?: boolean;
-      }) || {};
-    const length = typeof c.length === 'number' ? c.length : 10;
-    const width = typeof c.width === 'number' ? c.width : 10;
-    const isRoom = typeof c.isRoom === 'boolean' ? c.isRoom : false;
-    return toDetailRender(
-      resolveNumberOfExits({ roll, length, width, isRoom })
+    const ctx = readExitsContext(context);
+    if (!ctx) {
+      return fromOutcome(
+        resolveNumberOfExits({ roll, length: 10, width: 10, isRoom: false })
+      );
+    }
+    return fromOutcome(
+      resolveNumberOfExits({
+        roll,
+        length: ctx.length,
+        width: ctx.width,
+        isRoom: ctx.isRoom,
+      })
     );
   },
 };
@@ -326,7 +349,15 @@ function readDungeonLevel(
   return fallback;
 }
 
-export type FeedLike = { id: string; messages: DungeonRenderNode[] };
+export type FeedLike = {
+  id: string;
+  messages: DungeonRenderNode[];
+  outcome?: DungeonOutcomeNode;
+  renderCache?: {
+    detail?: DungeonRenderNode[];
+    compact?: DungeonRenderNode[];
+  };
+};
 
 export function updateResolvedBlock<T extends FeedLike>(
   fi: T,
@@ -379,7 +410,7 @@ export function resolveViaRegistry<T extends FeedLike>(
   const resolver = TABLE_RESOLVERS[base];
   const heading = TABLE_HEADINGS[base];
 
-  const resolvedMsgs = resolver({
+  const result = resolver({
     roll: usedRoll,
     id: tp.id,
     context: tp.context,
@@ -388,7 +419,37 @@ export function resolveViaRegistry<T extends FeedLike>(
   if (setFeed) {
     setFeed((prev) =>
       prev.map((fi) =>
-        updateResolvedBlock(fi, feedItemId, tp.id, resolvedMsgs, heading)
+        fi.id !== feedItemId
+          ? fi
+          : (() => {
+              const existingOutcome = fi.outcome;
+              if (existingOutcome && result.outcome) {
+                const updatedOutcome = applyResolvedOutcome(
+                  existingOutcome,
+                  tp.id,
+                  result.outcome
+                );
+                const detailRender = toDetailRender(updatedOutcome);
+                const compactRender = toCompactRender(updatedOutcome);
+                return {
+                  ...fi,
+                  outcome: updatedOutcome,
+                  messages: detailRender,
+                  renderCache: {
+                    ...fi.renderCache,
+                    detail: detailRender,
+                    compact: compactRender,
+                  },
+                } as T;
+              }
+              return updateResolvedBlock(
+                fi,
+                feedItemId,
+                tp.id,
+                result.messages,
+                heading
+              );
+            })()
       )
     );
   }

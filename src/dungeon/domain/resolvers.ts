@@ -24,12 +24,15 @@ import {
   specialPassage,
   SpecialPassage,
   galleryStairLocation,
+  GalleryStairLocation,
   galleryStairOccurrence,
   streamConstruction,
   riverConstruction,
+  RiverConstruction,
   riverBoatBank,
   chasmDepth,
   chasmConstruction,
+  ChasmConstruction,
   jumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
@@ -680,10 +683,15 @@ export function resolveGalleryStairLocation(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(galleryStairLocation.sides);
   const command = getTableEntry(usedRoll, galleryStairLocation);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === GalleryStairLocation.PassageEnd) {
+    children.push({ type: 'pending-roll', table: 'galleryStairOccurrence' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'galleryStairLocation', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
   };
 }
 
@@ -716,10 +724,15 @@ export function resolveRiverConstruction(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(riverConstruction.sides);
   const command = getTableEntry(usedRoll, riverConstruction);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === RiverConstruction.Boat) {
+    children.push({ type: 'pending-roll', table: 'riverBoatBank' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'riverConstruction', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
   };
 }
 
@@ -752,10 +765,15 @@ export function resolveChasmConstruction(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(chasmConstruction.sides);
   const command = getTableEntry(usedRoll, chasmConstruction);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === ChasmConstruction.JumpingPlace) {
+    children.push({ type: 'pending-roll', table: 'jumpingPlaceWidth' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'chasmConstruction', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
   };
 }
 

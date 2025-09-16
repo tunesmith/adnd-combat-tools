@@ -107,6 +107,30 @@ export function resolveOutcomeNode(
   return resolveOutcomeNode(resolved, depth + 1);
 }
 
+export function applyResolvedOutcome(
+  node: DungeonOutcomeNode,
+  tableId: string,
+  resolved: DungeonOutcomeNode
+): DungeonOutcomeNode {
+  if (node.type === 'pending-roll') {
+    return node.table === tableId ? resolved : node;
+  }
+  if (!node.children) return node;
+  let changed = false;
+  const nextChildren = node.children.map((child) => {
+    const updated = applyResolvedOutcome(child, tableId, resolved);
+    if (updated !== child) changed = true;
+    return updated;
+  });
+  if (!changed) return node;
+  return {
+    type: 'event',
+    event: node.event,
+    roll: node.roll,
+    children: nextChildren as unknown as DungeonOutcomeNode[],
+  };
+}
+
 function resolveChildren(
   children: DungeonOutcomeNode[] | undefined,
   depth: number
@@ -303,7 +327,10 @@ function resolvePendingNode(
   }
 }
 
-function parseDoorChainSequence(table: string, fallback: number): number {
+export function parseDoorChainSequence(
+  table: string,
+  fallback: number
+): number {
   const parts = table.split(':');
   if (parts.length >= 2) {
     const seq = Number(parts[1]);
@@ -321,7 +348,7 @@ function parseEgressWhich(table: string): 'one' | 'two' | 'three' {
   return 'one';
 }
 
-function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
+export function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
   if (!isTableContext(context)) return [];
   if (context.kind !== 'doorChain') return [];
   const arr = Array.isArray(context.existing) ? context.existing : [];
@@ -330,7 +357,7 @@ function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
   );
 }
 
-function readExitsContext(
+export function readExitsContext(
   context: unknown
 ): { length: number; width: number; isRoom: boolean } | undefined {
   if (!isTableContext(context)) return undefined;
