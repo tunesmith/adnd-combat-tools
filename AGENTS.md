@@ -38,6 +38,10 @@
 - PRs should include: clear summary, linked issues (e.g., `Closes #123`), screenshots/GIFs for UI, test plan (commands + expected results), and a note on docs if applicable.
 - Before opening a PR: run `npm run lint` and `npm test` (or `test:coverage`).
 
+## Agent Workflow
+
+- Run `npm run tsc`, `npm test`, `npm run format`, and `npm run lint` before finishing each commit.
+
 ## Deployment & Configuration Tips
 
 - GitHub Pages uses static export under `/adnd-combat-tools` (`basePath`/`assetPrefix` set in `next.config.js` for production).
