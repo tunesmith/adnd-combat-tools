@@ -20,12 +20,12 @@ function pickRollFor(cmd: PeriodicCheck): number {
 
 function mockRollSequence(values: number[]): jest.SpyInstance {
   const copy = [...values];
-  const fallback = values.length ? values[values.length - 1]! : 1;
+  const fallback = values.length > 0 ? values[values.length - 1] ?? 1 : 1;
   const spy = jest.spyOn(dungeonLookup, 'rollDice');
   spy.mockImplementation((): number => {
     if (copy.length === 0) return fallback;
     const next = copy.shift();
-    return next === undefined ? fallback : next;
+    return next ?? fallback;
   });
   return spy;
 }

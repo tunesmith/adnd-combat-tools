@@ -44,9 +44,6 @@ import { monsterThreeResult } from '../services/monster/monsterThreeResult';
 import { monsterFourResult } from '../services/monster/monsterFourResult';
 import { monsterFiveResult } from '../services/monster/monsterFiveResult';
 import { monsterSixResult } from '../services/monster/monsterSixResult';
-import { roomMessages } from '../services/roomResult';
-import { chamberMessages } from '../services/chamberResult';
-import { passageWidthMessages } from '../services/passageWidth';
 import {
   SpecialPassage,
   specialPassage,
@@ -1227,52 +1224,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${DoorBeyond[event.result]}`],
     };
-    // Mirror doorBeyondMessages compact text behavior by reusing existing services.
-    // We reuse doorBeyondMessages logic indirectly by recreating the same strings.
-    let text = '';
-    switch (event.result) {
-      case DoorBeyond.ParallelPassageOrCloset:
-        text = event.doorAhead
-          ? "Beyond the door is a 10' x 10' room (check contents, treasure). "
-          : "Beyond the door is a parallel passage, extending 30' in both directions. ";
-        break;
-      case DoorBeyond.PassageStraightAhead:
-        text = 'Beyond the door is a passage straight ahead. ';
-        break;
-      case DoorBeyond.Passage45AheadBehind:
-        text =
-          'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ';
-        break;
-      case DoorBeyond.Passage45BehindAhead:
-        text =
-          'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ';
-        break;
-      case DoorBeyond.Room: {
-        const res = roomMessages({});
-        text = 'Beyond the door is a room. ';
-        for (const m of res.messages)
-          if (m.kind === 'paragraph') text += m.text;
-        break;
-      }
-      case DoorBeyond.Chamber: {
-        const res = chamberMessages({});
-        text = 'Beyond the door is a chamber. ';
-        for (const m of res.messages)
-          if (m.kind === 'paragraph') text += m.text;
-        break;
-      }
-    }
-    // For cases that require Passage Width in compact mode, append it now.
-    if (
-      event.result === DoorBeyond.PassageStraightAhead ||
-      event.result === DoorBeyond.Passage45AheadBehind ||
-      event.result === DoorBeyond.Passage45BehindAhead ||
-      (event.result === DoorBeyond.ParallelPassageOrCloset && !event.doorAhead)
-    ) {
-      const width = passageWidthMessages({});
-      for (const m of width.messages)
-        if (m.kind === 'paragraph') text += m.text;
-    }
+    const text = renderCompactDoorBeyond(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1790,6 +1742,52 @@ function formatPeriodicDoorOnlyEvent(
     return "There are no other doors. The main passage extends -- check again in 30'. ";
   }
   return '';
+}
+
+function renderCompactDoorBeyond(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'doorBeyond') return '';
+  switch (node.event.result) {
+    case DoorBeyond.ParallelPassageOrCloset:
+      if (node.event.doorAhead) {
+        return "Beyond the door is a 10' x 10' room (check contents, treasure). ";
+      }
+      return (
+        "Beyond the door is a parallel passage, extending 30' in both directions. " +
+        renderChildPassageWidth(node)
+      );
+    case DoorBeyond.PassageStraightAhead:
+      return (
+        'Beyond the door is a passage straight ahead. ' +
+        renderChildPassageWidth(node)
+      );
+    case DoorBeyond.Passage45AheadBehind:
+      return (
+        'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ' +
+        renderChildPassageWidth(node)
+      );
+    case DoorBeyond.Passage45BehindAhead:
+      return (
+        'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ' +
+        renderChildPassageWidth(node)
+      );
+    case DoorBeyond.Room: {
+      const room = findChildEvent(node, 'roomDimensions');
+      const detail = room ? renderCompactRoomDimensions(room) : '';
+      return 'Beyond the door is a room. ' + detail;
+    }
+    case DoorBeyond.Chamber: {
+      const chamber = findChildEvent(node, 'chamberDimensions');
+      const detail = chamber ? renderCompactChamberDimensions(chamber) : '';
+      return 'Beyond the door is a chamber. ' + detail;
+    }
+    default:
+      return '';
+  }
+}
+
+function renderChildPassageWidth(node: OutcomeEventNode): string {
+  const width = findChildEvent(node, 'passageWidth');
+  return width ? renderCompactPassageWidth(width) : '';
 }
 
 function getChildEvents(node: OutcomeEventNode): OutcomeEventNode[] {
@@ -2445,167 +2443,30 @@ function compactPeriodicText(
     case PeriodicCheck.Door:
       return renderCompactDoorChain();
     case PeriodicCheck.SidePassage: {
-      const roll = rollDice(sidePassages.sides);
-      const cmd = getTableEntry(roll, sidePassages);
-      switch (cmd) {
-        case SidePassages.Left90:
-          return "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";
-        case SidePassages.Right90:
-          return "A side passage branches right 90 degrees. Passages extend -- check again in 30'. ";
-        case SidePassages.Left45:
-          return "A side passage branches left 45 degrees ahead. Passages extend -- check again in 30'. ";
-        case SidePassages.Right45:
-          return "A side passage branches right 45 degrees ahead. Passages extend -- check again in 30'. ";
-        case SidePassages.Left135:
-          return "A side passage branches left 45 degrees behind (left 135 degrees). Passages extend -- check again in 30'. ";
-        case SidePassages.Right135:
-          return "A side passage branches right 45 degrees behind (right 135 degrees). Passages extend -- check again in 30'. ";
-        case SidePassages.LeftCurve45:
-          return "A side passage branches at a curve, 45 degrees left ahead. Passages extend -- check again in 30'. ";
-        case SidePassages.RightCurve45:
-          return "A side passage branches at a curve, 45 degrees right ahead. Passages extend -- check again in 30'. ";
-        case SidePassages.PassageT:
-          return "The passage reaches a 'T' intersection to either side. Passages extend -- check again in 30'. ";
-        case SidePassages.PassageY:
-          return "The passage reaches a 'Y' intersection, ahead 45 degrees to the left and right. Passages extend -- check again in 30'. ";
-        case SidePassages.FourWay:
-          return "The passage reaches a four-way intersection. Passages extend -- check again in 30'. ";
-        case SidePassages.PassageX:
-          return "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
+      const sideNode = resolveSidePassages({});
+      if (sideNode.type === 'event' && sideNode.event.kind === 'sidePassages') {
+        return formatSidePassageResult(sideNode.event.result);
       }
+      return "A side passage branches. Passages extend -- check again in 30'. ";
     }
     case PeriodicCheck.PassageTurn: {
-      const roll = rollDice(passageTurns.sides);
-      const cmd = getTableEntry(roll, passageTurns);
-      let prefix = '';
-      switch (cmd) {
-        case PassageTurns.Left90:
-          prefix = "The passage turns left 90 degrees - check again in 30'. ";
-          break;
-        case PassageTurns.Left45:
-          prefix =
-            "The passage turns left 45 degrees ahead - check again in 30'. ";
-          break;
-        case PassageTurns.Left135:
-          prefix =
-            "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
-          break;
-        case PassageTurns.Right90:
-          prefix = "The passage turns right 90 degrees - check again in 30'. ";
-          break;
-        case PassageTurns.Right45:
-          prefix =
-            "The passage turns right 45 degrees ahead - check again in 30'. ";
-          break;
-        case PassageTurns.Right135:
-          prefix =
-            "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
-          break;
-      }
-      const wRoll = rollDice(passageWidth.sides);
-      const wCmd = getTableEntry(wRoll, passageWidth);
-      let widthText = '';
-      switch (wCmd) {
-        case PassageWidth.TenFeet:
-          widthText = "The passage is 10' wide. ";
-          break;
-        case PassageWidth.TwentyFeet:
-          widthText = "The passage is 20' wide. ";
-          break;
-        case PassageWidth.ThirtyFeet:
-          widthText = "The passage is 30' wide. ";
-          break;
-        case PassageWidth.FiveFeet:
-          widthText = "The passage is 5' wide. ";
-          break;
-        case PassageWidth.SpecialPassage:
-          widthText = compactRandomSpecialPassage();
-          break;
-      }
-      return prefix + widthText;
+      const turnNode = resolveNodeForCompact(resolvePassageTurns({}));
+      return turnNode
+        ? renderCompactPassageTurn(turnNode)
+        : 'The passage turns. ';
     }
     case PeriodicCheck.Chamber: {
-      const res = chamberMessages({});
-      let text = 'The passage opens into a chamber. ';
-      for (const m of res.messages) if (m.kind === 'paragraph') text += m.text;
-      return text;
+      const chamberNode = resolveNodeForCompact(resolveChamberDimensions({}));
+      const detail = chamberNode
+        ? renderCompactChamberDimensions(chamberNode)
+        : '';
+      return 'The passage opens into a chamber. ' + detail;
     }
     case PeriodicCheck.Stairs: {
-      const sRoll = rollDice(stairs.sides);
-      const sCmd = getTableEntry(sRoll, stairs);
-      switch (sCmd) {
-        case Stairs.DownOne: {
-          const r = rollDice(egressOne.sides);
-          const c = getTableEntry(r, egressOne);
-          const suffix =
-            c === Egress.Closed
-              ? 'After descending, an unnoticed door will close egress for the day. '
-              : '';
-          return 'There are stairs here that descend one level. ' + suffix;
-        }
-        case Stairs.DownTwo: {
-          const r = rollDice(egressTwo.sides);
-          const c = getTableEntry(r, egressTwo);
-          const suffix =
-            c === Egress.Closed
-              ? 'After descending, an unnoticed door will close egress for the day. '
-              : '';
-          return 'There are stairs here that descend two levels. ' + suffix;
-        }
-        case Stairs.DownThree: {
-          const r = rollDice(egressThree.sides);
-          const c = getTableEntry(r, egressThree);
-          const suffix =
-            c === Egress.Closed
-              ? 'After descending, an unnoticed door will close egress for the day. '
-              : '';
-          return 'There are stairs here that descend three levels. ' + suffix;
-        }
-        case Stairs.UpOne:
-          return 'There are stairs here that ascend one level. ';
-        case Stairs.UpDead: {
-          const r = rollDice(chute.sides);
-          const c = getTableEntry(r, chute);
-          const suffix =
-            c === Chute.Exists
-              ? 'The stairs will turn into a chute, descending two levels from the top. '
-              : '';
-          return (
-            'There are stairs here that ascend one level to a dead end. ' +
-            suffix
-          );
-        }
-        case Stairs.DownDead: {
-          const r = rollDice(chute.sides);
-          const c = getTableEntry(r, chute);
-          const suffix =
-            c === Chute.Exists
-              ? 'The stairs will turn into a chute, descending two levels from the top. '
-              : '';
-          return (
-            'There are stairs here that descend one level to a dead end. ' +
-            suffix
-          );
-        }
-        case Stairs.ChimneyUpOne:
-          return "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
-        case Stairs.ChimneyUpTwo:
-          return "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
-        case Stairs.ChimneyDownTwo:
-          return "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
-        case Stairs.TrapDoorDownOne:
-          return "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
-        case Stairs.TrapDownDownTwo:
-          return "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
-        case Stairs.UpOneDownTwo: {
-          const res = chamberMessages({});
-          let text =
-            'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ';
-          for (const m of res.messages)
-            if (m.kind === 'paragraph') text += m.text;
-          return text;
-        }
-      }
+      const stairsNode = resolveNodeForCompact(resolveStairs({}));
+      return stairsNode
+        ? renderCompactStairs(stairsNode)
+        : 'Stairs are indicated here. ';
     }
     case PeriodicCheck.DeadEnd:
       return 'The passage reaches a dead end. (TODO) ';

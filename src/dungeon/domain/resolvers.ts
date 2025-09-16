@@ -3,7 +3,7 @@ import {
   periodicCheck,
   PeriodicCheck,
 } from '../../tables/dungeon/periodicCheck';
-import { doorBeyond } from '../../tables/dungeon/doorBeyond';
+import { doorBeyond, DoorBeyond } from '../../tables/dungeon/doorBeyond';
 import { doorLocation, DoorLocation } from '../../tables/dungeon/doorLocation';
 import type { DungeonOutcomeNode, OutcomeEvent } from './outcome';
 import { sidePassages } from '../../tables/dungeon/sidePassages';
@@ -110,6 +110,19 @@ export function resolveDoorBeyond(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(doorBeyond.sides);
   const command = getTableEntry(usedRoll, doorBeyond);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === DoorBeyond.Room) {
+    children.push({ type: 'pending-roll', table: 'roomDimensions' });
+  } else if (command === DoorBeyond.Chamber) {
+    children.push({ type: 'pending-roll', table: 'chamberDimensions' });
+  } else if (
+    command === DoorBeyond.PassageStraightAhead ||
+    command === DoorBeyond.Passage45AheadBehind ||
+    command === DoorBeyond.Passage45BehindAhead ||
+    (command === DoorBeyond.ParallelPassageOrCloset && !options?.doorAhead)
+  ) {
+    children.push({ type: 'pending-roll', table: 'passageWidth' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -118,6 +131,7 @@ export function resolveDoorBeyond(options?: {
       result: command,
       doorAhead: options?.doorAhead,
     },
+    children: children.length ? children : undefined,
   };
 }
 
