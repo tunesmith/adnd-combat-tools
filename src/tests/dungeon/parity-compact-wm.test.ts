@@ -1,6 +1,10 @@
 import { passageMessages } from '../../dungeon/services/passage';
 import { wanderingWhereFromMessages } from '../../dungeon/services/wanderingWhereFrom';
-import { monsterThreeMessages } from '../../dungeon/services/monsterLevelMessages';
+import { toDetailRender } from '../../dungeon/adapters/render';
+import {
+  resolveMonsterOne,
+  resolveMonsterThree,
+} from '../../dungeon/domain/resolvers';
 import type { DungeonMessage } from '../../types/dungeon';
 import * as dungeonLookup from '../../dungeon/helpers/dungeonLookup';
 
@@ -74,17 +78,11 @@ describe('Compact: Wandering Monster (adapter)', () => {
 
   test('Monster Level 3: roll 11 (Bugbear) yields bugbears, not ogres', () => {
     // Ensure resolving monsterThree with a specific roll produces matching text
-    const spy = jest.spyOn(
-      require('../../dungeon/helpers/dungeonLookup'),
-      'rollDice'
-    );
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
     // Force an unrelated ogre roll inside legacy function to expose the bug
     spy.mockImplementation(() => 61); // Ogre range on monsterThree
-    const { messages } = monsterThreeMessages({
-      roll: 11,
-      detailMode: true,
-      context: { kind: 'wandering', level: 3 },
-    });
+    const node = resolveMonsterThree({ roll: 11, dungeonLevel: 3 });
+    const messages = toDetailRender(node);
     const para = (messages as any[]).find((m) => m.kind === 'paragraph');
     expect(
       para &&
@@ -96,16 +94,10 @@ describe('Compact: Wandering Monster (adapter)', () => {
 
   test('Monster Level 3: Wererat 2–5 rolls plural count', () => {
     // Roll 51 => LycanthropeWererat_2to5; force inner count roll to 1 so total = 2
-    const spy = jest.spyOn(
-      require('../../dungeon/helpers/dungeonLookup'),
-      'rollDice'
-    );
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
     spy.mockImplementation(() => 1);
-    const { messages } = monsterThreeMessages({
-      roll: 51,
-      detailMode: true,
-      context: { kind: 'wandering', level: 3 },
-    });
+    const node = resolveMonsterThree({ roll: 51, dungeonLevel: 3 });
+    const messages = toDetailRender(node);
     const para = (messages as any[]).find((m) => m.kind === 'paragraph');
     expect(
       para &&
@@ -116,19 +108,10 @@ describe('Compact: Wandering Monster (adapter)', () => {
   });
 
   test('Monster Level 1: roll 27 at level 1 yields 9–16 halflings (deterministic 9)', () => {
-    const spy = jest.spyOn(
-      require('../../dungeon/helpers/dungeonLookup'),
-      'rollDice'
-    );
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
     spy.mockImplementation(() => 1); // force 1d8 => 1; 1 + 8 = 9
-    const {
-      monsterOneMessages,
-    } = require('../../dungeon/services/monsterLevelMessages');
-    const { messages } = monsterOneMessages({
-      roll: 27,
-      detailMode: true,
-      context: { kind: 'wandering', level: 1 },
-    });
+    const node = resolveMonsterOne({ roll: 27, dungeonLevel: 1 });
+    const messages = toDetailRender(node);
     const para = (messages as any[]).find((m) => m.kind === 'paragraph');
     expect(
       para &&

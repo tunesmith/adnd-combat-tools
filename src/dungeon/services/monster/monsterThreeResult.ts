@@ -100,39 +100,45 @@ export const monsterThreeResult = (dungeonLevel: number): string => {
   return monsterThreeTextForCommand(dungeonLevel, command);
 };
 
-const dragonThreeResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonThree.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonThree);
-  switch (dragonCommand) {
-    case DragonThree.Black_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(3, dungeonLevel, 1, 1);
-      return (
+export const dragonThreeTextForCommand = (
+  dungeonLevel: number,
+  command: DragonThree
+): string => {
+  const dragons = getNumberOfMonsters(3, dungeonLevel, 1, 1);
+  const sharedSuffix =
+    '(Determine the number of hit dice for a dragon as normal.) ';
+  let text = '';
+  switch (command) {
+    case DragonThree.Black_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young black dragon with 1 hit point per die',
           'very young black dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonThree.Brass_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(3, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonThree.Brass_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young brass dragon with 1 hit point per die',
           'very young brass dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonThree.White_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(3, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonThree.White_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young white dragon with 1 hit point per die',
           'very young white dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
+        ) + sharedSuffix;
+      break;
   }
+  return text;
+};
+
+const dragonThreeResult = (dungeonLevel: number): string => {
+  const dragonRoll = rollDice(dragonThree.sides);
+  const dragonCommand = getTableEntry(dragonRoll, dragonThree);
+  return dragonThreeTextForCommand(dungeonLevel, dragonCommand);
 };

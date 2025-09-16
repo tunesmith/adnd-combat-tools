@@ -156,109 +156,55 @@ export const monsterSixResult = (dungeonLevel: number): string => {
   return monsterSixTextForCommand(dungeonLevel, command);
 };
 
+export const dragonSixTextForCommand = (
+  dungeonLevel: number,
+  command: DragonSix
+): string => {
+  const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
+  const make = (age: string, color: string, hp: number) =>
+    formatMonsterCount(
+      dragons,
+      `${age} ${color} dragon with ${hp} hit points per die`,
+      `${age} ${color} dragons with ${hp} hit points per die`
+    ) + '(Determine the number of hit dice for a dragon as normal.) ';
+  let text = '';
+  switch (command) {
+    case DragonSix.Black_Old_6:
+      text = make('old', 'black', 6);
+      break;
+    case DragonSix.Blue_Adult_5:
+      text = make('adult', 'blue', 5);
+      break;
+    case DragonSix.Brass_Old_6:
+      text = make('old', 'brass', 6);
+      break;
+    case DragonSix.Bronze_Adult_5:
+      text = make('adult', 'bronze', 5);
+      break;
+    case DragonSix.Copper_Adult_5:
+      text = make('adult', 'copper', 5);
+      break;
+    case DragonSix.Gold_Adult_5:
+      text = make('adult', 'gold', 5);
+      break;
+    case DragonSix.Green_Adult_5:
+      text = make('adult', 'green', 5);
+      break;
+    case DragonSix.Red_Adult_5:
+      text = make('adult', 'red', 5);
+      break;
+    case DragonSix.Silver_Adult_5:
+      text = make('adult', 'silver', 5);
+      break;
+    case DragonSix.White_Old_6:
+      text = make('old', 'white', 6);
+      break;
+  }
+  return text;
+};
+
 const dragonSixResult = (dungeonLevel: number): string => {
   const dragonRoll = rollDice(dragonSix.sides);
   const dragonCommand = getTableEntry(dragonRoll, dragonSix);
-  switch (dragonCommand) {
-    case DragonSix.Black_Old_6: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'old black dragon with 6 hit points per die',
-          'old black dragons with 6 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.Blue_Adult_5: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'adult blue dragon with 5 hit points per die',
-          'adult blue dragons with 5 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.Brass_Old_6: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'old brass dragon with 6 hit points per die',
-          'old brass dragons with 6 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.Bronze_Adult_5: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'adult bronze dragon with 5 hit points per die',
-          'adult bronze dragons with 5 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.Copper_Adult_5: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'adult copper dragon with 5 hit points per die',
-          'adult copper dragons with 5 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.Gold_Adult_5: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'adult gold dragon with 5 hit points per die',
-          'adult gold dragons with 5 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.Green_Adult_5: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'adult green dragon with 5 hit points per die',
-          'adult green dragons with 5 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.Red_Adult_5: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'adult red dragon with 5 hit points per die',
-          'adult red dragons with 5 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.Silver_Adult_5: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'adult silver dragon with 5 hit points per die',
-          'adult silver dragons with 5 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonSix.White_Old_6: {
-      const dragons = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'old white dragon with 6 hit points per die',
-          'old white dragons with 6 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-  }
+  return dragonSixTextForCommand(dungeonLevel, dragonCommand);
 };

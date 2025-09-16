@@ -24,6 +24,30 @@ import type {
   ChasmConstruction,
   JumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
+import type { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
+import type {
+  MonsterOne,
+  Human,
+} from '../../tables/dungeon/monster/monsterOne';
+import type { MonsterTwo } from '../../tables/dungeon/monster/monsterTwo';
+import type {
+  MonsterThree,
+  DragonThree,
+} from '../../tables/dungeon/monster/monsterThree';
+import type {
+  MonsterFour,
+  DragonFourYounger,
+  DragonFourOlder,
+} from '../../tables/dungeon/monster/monsterFour';
+import type {
+  MonsterFive,
+  DragonFiveYounger,
+  DragonFiveOlder,
+} from '../../tables/dungeon/monster/monsterFive';
+import type {
+  MonsterSix,
+  DragonSix,
+} from '../../tables/dungeon/monster/monsterSix';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
@@ -73,7 +97,90 @@ export type OutcomeEvent =
   | { kind: 'riverBoatBank'; result: RiverBoatBank }
   | { kind: 'chasmDepth'; result: ChasmDepth }
   | { kind: 'chasmConstruction'; result: ChasmConstruction }
-  | { kind: 'jumpingPlaceWidth'; result: JumpingPlaceWidth };
+  | { kind: 'jumpingPlaceWidth'; result: JumpingPlaceWidth }
+  | {
+      kind: 'monsterLevel';
+      result: MonsterLevel;
+      dungeonLevel: number;
+    }
+  | {
+      kind: 'monsterOne';
+      result: MonsterOne;
+      dungeonLevel: number;
+      text?: string;
+    }
+  | {
+      kind: 'monsterTwo';
+      result: MonsterTwo;
+      dungeonLevel: number;
+      text: string;
+    }
+  | {
+      kind: 'monsterThree';
+      result: MonsterThree;
+      dungeonLevel: number;
+      text?: string;
+    }
+  | {
+      kind: 'monsterFour';
+      result: MonsterFour;
+      dungeonLevel: number;
+      text?: string;
+    }
+  | {
+      kind: 'monsterFive';
+      result: MonsterFive;
+      dungeonLevel: number;
+      text?: string;
+    }
+  | {
+      kind: 'monsterSix';
+      result: MonsterSix;
+      dungeonLevel: number;
+      text?: string;
+    }
+  | {
+      kind: 'dragonThree';
+      result: DragonThree;
+      dungeonLevel: number;
+      text: string;
+    }
+  | {
+      kind: 'dragonFourYounger';
+      result: DragonFourYounger;
+      dungeonLevel: number;
+      text: string;
+    }
+  | {
+      kind: 'dragonFourOlder';
+      result: DragonFourOlder;
+      dungeonLevel: number;
+      text: string;
+    }
+  | {
+      kind: 'dragonFiveYounger';
+      result: DragonFiveYounger;
+      dungeonLevel: number;
+      text: string;
+    }
+  | {
+      kind: 'dragonFiveOlder';
+      result: DragonFiveOlder;
+      dungeonLevel: number;
+      text: string;
+    }
+  | {
+      kind: 'dragonSix';
+      result: DragonSix;
+      dungeonLevel: number;
+      text: string;
+    }
+  | {
+      kind: 'human';
+      result: Human;
+      dungeonLevel: number;
+      text: string;
+    };
 
 export type PendingRoll = {
   type: 'pending-roll';

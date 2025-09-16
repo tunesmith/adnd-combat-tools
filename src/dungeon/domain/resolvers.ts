@@ -42,6 +42,59 @@ import {
   periodicCheckDoorOnly,
   PeriodicCheckDoorOnly,
 } from '../../tables/dungeon/periodicCheckDoorOnly';
+import { getMonsterTable } from '../services/wanderingMonsterResult';
+import {
+  monsterOne,
+  MonsterOne,
+  human,
+} from '../../tables/dungeon/monster/monsterOne';
+import { monsterTwo } from '../../tables/dungeon/monster/monsterTwo';
+import {
+  monsterThree,
+  MonsterThree,
+  dragonThree,
+} from '../../tables/dungeon/monster/monsterThree';
+import {
+  monsterFour,
+  MonsterFour,
+  dragonFourYounger,
+  dragonFourOlder,
+} from '../../tables/dungeon/monster/monsterFour';
+import {
+  monsterFive,
+  MonsterFive,
+  dragonFiveYounger,
+  dragonFiveOlder,
+} from '../../tables/dungeon/monster/monsterFive';
+import {
+  monsterSix,
+  MonsterSix,
+  dragonSix,
+} from '../../tables/dungeon/monster/monsterSix';
+import {
+  monsterOneTextForCommand,
+  humanTextForCommand,
+} from '../services/monster/monsterOneResult';
+import { monsterTwoTextForCommand } from '../services/monster/monsterTwoResult';
+import {
+  monsterThreeTextForCommand,
+  dragonThreeTextForCommand,
+} from '../services/monster/monsterThreeResult';
+import {
+  monsterFourTextForCommand,
+  dragonFourYoungerTextForCommand,
+  dragonFourOlderTextForCommand,
+} from '../services/monster/monsterFourResult';
+import {
+  monsterFiveTextForCommand,
+  dragonFiveYoungerTextForCommand,
+  dragonFiveOlderTextForCommand,
+} from '../services/monster/monsterFiveResult';
+import {
+  monsterSixTextForCommand,
+  dragonSixTextForCommand,
+} from '../services/monster/monsterSixResult';
+import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
 import type { DoorChainLaterality } from './outcome';
 
 function toLaterality(loc: DoorLocation): DoorChainLaterality | undefined {
@@ -675,5 +728,376 @@ export function resolveJumpingPlaceWidth(options?: {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'jumpingPlaceWidth', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveMonsterLevel(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const table = getMonsterTable(dungeonLevel);
+  const usedRoll = options?.roll ?? rollDice(table.sides);
+  const result = getTableEntry(usedRoll, table);
+  const children: DungeonOutcomeNode[] = [];
+  const context = { kind: 'wandering', level: dungeonLevel } as const;
+  switch (result) {
+    case MonsterLevel.One:
+      children.push({ type: 'pending-roll', table: 'monsterOne', context });
+      break;
+    case MonsterLevel.Two:
+      children.push({ type: 'pending-roll', table: 'monsterTwo', context });
+      break;
+    case MonsterLevel.Three:
+      children.push({ type: 'pending-roll', table: 'monsterThree', context });
+      break;
+    case MonsterLevel.Four:
+      children.push({ type: 'pending-roll', table: 'monsterFour', context });
+      break;
+    case MonsterLevel.Five:
+      children.push({ type: 'pending-roll', table: 'monsterFive', context });
+      break;
+    case MonsterLevel.Six:
+      children.push({ type: 'pending-roll', table: 'monsterSix', context });
+      break;
+    default:
+      break;
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'monsterLevel',
+      result,
+      dungeonLevel,
+    },
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveMonsterOne(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const usedRoll = options?.roll ?? rollDice(monsterOne.sides);
+  const result = getTableEntry(usedRoll, monsterOne);
+  const children: DungeonOutcomeNode[] = [];
+  let text: string | undefined;
+  if (result === MonsterOne.Human) {
+    children.push({
+      type: 'pending-roll',
+      table: 'human',
+      context: { kind: 'wandering', level: dungeonLevel },
+    });
+  } else {
+    text = monsterOneTextForCommand(dungeonLevel, result);
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'monsterOne',
+      result,
+      dungeonLevel,
+      text,
+    },
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveMonsterTwo(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const usedRoll = options?.roll ?? rollDice(monsterTwo.sides);
+  const result = getTableEntry(usedRoll, monsterTwo);
+  const text = monsterTwoTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'monsterTwo',
+      result,
+      dungeonLevel,
+      text,
+    },
+  };
+}
+
+export function resolveMonsterThree(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const usedRoll = options?.roll ?? rollDice(monsterThree.sides);
+  const result = getTableEntry(usedRoll, monsterThree);
+  const children: DungeonOutcomeNode[] = [];
+  let text: string | undefined;
+  if (result === MonsterThree.Dragon) {
+    children.push({
+      type: 'pending-roll',
+      table: 'dragonThree',
+      context: { kind: 'wandering', level: dungeonLevel },
+    });
+  } else {
+    text = monsterThreeTextForCommand(dungeonLevel, result);
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'monsterThree',
+      result,
+      dungeonLevel,
+      text,
+    },
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveDragonThree(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 3;
+  const usedRoll = options?.roll ?? rollDice(dragonThree.sides);
+  const result = getTableEntry(usedRoll, dragonThree);
+  const text = dragonThreeTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'dragonThree',
+      result,
+      dungeonLevel,
+      text,
+    },
+  };
+}
+
+export function resolveMonsterFour(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const usedRoll = options?.roll ?? rollDice(monsterFour.sides);
+  const result = getTableEntry(usedRoll, monsterFour);
+  const children: DungeonOutcomeNode[] = [];
+  let text: string | undefined;
+  if (result === MonsterFour.DragonYounger) {
+    children.push({
+      type: 'pending-roll',
+      table: 'dragonFourYounger',
+      context: { kind: 'wandering', level: dungeonLevel },
+    });
+  } else if (result === MonsterFour.DragonOlder) {
+    children.push({
+      type: 'pending-roll',
+      table: 'dragonFourOlder',
+      context: { kind: 'wandering', level: dungeonLevel },
+    });
+  } else {
+    text = monsterFourTextForCommand(dungeonLevel, result);
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'monsterFour',
+      result,
+      dungeonLevel,
+      text,
+    },
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveDragonFourYounger(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 4;
+  const usedRoll = options?.roll ?? rollDice(dragonFourYounger.sides);
+  const result = getTableEntry(usedRoll, dragonFourYounger);
+  const text = dragonFourYoungerTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'dragonFourYounger',
+      result,
+      dungeonLevel,
+      text,
+    },
+  };
+}
+
+export function resolveDragonFourOlder(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 4;
+  const usedRoll = options?.roll ?? rollDice(dragonFourOlder.sides);
+  const result = getTableEntry(usedRoll, dragonFourOlder);
+  const text = dragonFourOlderTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'dragonFourOlder',
+      result,
+      dungeonLevel,
+      text,
+    },
+  };
+}
+
+export function resolveMonsterFive(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const usedRoll = options?.roll ?? rollDice(monsterFive.sides);
+  const result = getTableEntry(usedRoll, monsterFive);
+  const children: DungeonOutcomeNode[] = [];
+  let text: string | undefined;
+  if (result === MonsterFive.DragonYounger) {
+    children.push({
+      type: 'pending-roll',
+      table: 'dragonFiveYounger',
+      context: { kind: 'wandering', level: dungeonLevel },
+    });
+  } else if (result === MonsterFive.DragonOlder) {
+    children.push({
+      type: 'pending-roll',
+      table: 'dragonFiveOlder',
+      context: { kind: 'wandering', level: dungeonLevel },
+    });
+  } else {
+    text = monsterFiveTextForCommand(dungeonLevel, result);
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'monsterFive',
+      result,
+      dungeonLevel,
+      text,
+    },
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveDragonFiveYounger(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 5;
+  const usedRoll = options?.roll ?? rollDice(dragonFiveYounger.sides);
+  const result = getTableEntry(usedRoll, dragonFiveYounger);
+  const text = dragonFiveYoungerTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'dragonFiveYounger',
+      result,
+      dungeonLevel,
+      text,
+    },
+  };
+}
+
+export function resolveDragonFiveOlder(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 5;
+  const usedRoll = options?.roll ?? rollDice(dragonFiveOlder.sides);
+  const result = getTableEntry(usedRoll, dragonFiveOlder);
+  const text = dragonFiveOlderTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'dragonFiveOlder',
+      result,
+      dungeonLevel,
+      text,
+    },
+  };
+}
+
+export function resolveMonsterSix(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const usedRoll = options?.roll ?? rollDice(monsterSix.sides);
+  const result = getTableEntry(usedRoll, monsterSix);
+  const children: DungeonOutcomeNode[] = [];
+  let text: string | undefined;
+  if (result === MonsterSix.Dragon) {
+    children.push({
+      type: 'pending-roll',
+      table: 'dragonSix',
+      context: { kind: 'wandering', level: dungeonLevel },
+    });
+  } else {
+    text = monsterSixTextForCommand(dungeonLevel, result);
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'monsterSix',
+      result,
+      dungeonLevel,
+      text,
+    },
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveDragonSix(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 6;
+  const usedRoll = options?.roll ?? rollDice(dragonSix.sides);
+  const result = getTableEntry(usedRoll, dragonSix);
+  const text = dragonSixTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'dragonSix',
+      result,
+      dungeonLevel,
+      text,
+    },
+  };
+}
+
+export function resolveHuman(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const usedRoll = options?.roll ?? rollDice(human.sides);
+  const result = getTableEntry(usedRoll, human);
+  const text = humanTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'human',
+      result,
+      dungeonLevel,
+      text,
+    },
   };
 }

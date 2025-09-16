@@ -38,12 +38,44 @@ import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import { periodicCheck } from '../../tables/dungeon/periodicCheck';
 import { getMonsterTable } from '../services/wanderingMonsterResult';
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
-import { monsterOneResult } from '../services/monster/monsterOneResult';
-import { monsterTwoResult } from '../services/monster/monsterTwoResult';
-import { monsterThreeResult } from '../services/monster/monsterThreeResult';
-import { monsterFourResult } from '../services/monster/monsterFourResult';
-import { monsterFiveResult } from '../services/monster/monsterFiveResult';
-import { monsterSixResult } from '../services/monster/monsterSixResult';
+import {
+  monsterOne,
+  MonsterOne,
+  human,
+  Human,
+} from '../../tables/dungeon/monster/monsterOne';
+import {
+  monsterTwo,
+  MonsterTwo,
+} from '../../tables/dungeon/monster/monsterTwo';
+import {
+  monsterThree,
+  MonsterThree,
+  dragonThree,
+  DragonThree,
+} from '../../tables/dungeon/monster/monsterThree';
+import {
+  monsterFour,
+  MonsterFour,
+  dragonFourYounger,
+  DragonFourYounger,
+  dragonFourOlder,
+  DragonFourOlder,
+} from '../../tables/dungeon/monster/monsterFour';
+import {
+  monsterFive,
+  MonsterFive,
+  dragonFiveYounger,
+  DragonFiveYounger,
+  dragonFiveOlder,
+  DragonFiveOlder,
+} from '../../tables/dungeon/monster/monsterFive';
+import {
+  monsterSix,
+  MonsterSix,
+  dragonSix,
+  DragonSix,
+} from '../../tables/dungeon/monster/monsterSix';
 import {
   SpecialPassage,
   specialPassage,
@@ -96,12 +128,55 @@ import {
   resolveUnusualShape,
   resolveUnusualSize,
   resolveWanderingWhereFrom,
+  resolveMonsterLevel,
+  resolveMonsterOne,
+  resolveMonsterTwo,
+  resolveMonsterThree,
+  resolveMonsterFour,
+  resolveMonsterFive,
+  resolveMonsterSix,
+  resolveDragonThree,
+  resolveDragonFourYounger,
+  resolveDragonFourOlder,
+  resolveDragonFiveYounger,
+  resolveDragonFiveOlder,
+  resolveDragonSix,
+  resolveHuman,
 } from '../domain/resolvers';
 
 function rangeText(range: number[]): string {
   return range.length === 1
     ? `${range[0]}`
     : `${range[0]}–${range[range.length - 1]}`;
+}
+
+function appendPendingPreviews(
+  outcome: DungeonOutcomeNode,
+  collector: DungeonRenderNode[]
+): void {
+  if (outcome.type !== 'event') return;
+  const children = outcome.children;
+  if (!children || !Array.isArray(children)) return;
+  for (const child of children) {
+    if (child.type !== 'pending-roll') continue;
+    const preview = previewForPending(child);
+    if (preview) collector.push(preview);
+  }
+}
+
+function humanLabel(command: Human): string {
+  switch (command) {
+    case Human.Bandit_5to15:
+      return 'Bandit';
+    case Human.Berserker_3to9:
+      return 'Berserker';
+    case Human.Brigand_5to15:
+      return 'Brigand';
+    case Human.Character:
+      return 'Character';
+    default:
+      return Human[command] ?? 'Human';
+  }
 }
 
 // DETAIL MODE: outcome -> render nodes with previews for staged tables
@@ -784,7 +859,7 @@ export function toDetailRender(
       items: [`roll: ${roll} — ${label}`],
     };
     const text =
-      (event.result as number) === Chute.Exists
+      event.result === Chute.Exists
         ? 'The stairs will turn into a chute, descending two levels from the top. '
         : '';
     return [heading, bullet, { kind: 'paragraph', text }];
@@ -928,6 +1003,231 @@ export function toDetailRender(
     const text = `It is about ${size} sq. ft. `;
     return [heading, bullet, { kind: 'paragraph', text }];
   }
+  if (event.kind === 'monsterLevel') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Monster Level',
+    };
+    const label = MonsterLevel[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet);
+    if (event.result > MonsterLevel.Six) {
+      nodes.push({
+        kind: 'paragraph',
+        text: `(TODO: Monster Level ${MonsterLevel[event.result]} preview)`,
+      });
+    }
+    appendPendingPreviews(outcome, nodes);
+    return nodes;
+  }
+  if (event.kind === 'monsterOne') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Monster (Level 1)',
+    };
+    const label = MonsterOne[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet);
+    if (event.text) {
+      nodes.push({ kind: 'paragraph', text: event.text });
+    }
+    appendPendingPreviews(outcome, nodes);
+    return nodes;
+  }
+  if (event.kind === 'monsterTwo') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Monster (Level 2)',
+    };
+    const label = MonsterTwo[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet, {
+      kind: 'paragraph',
+      text: event.text,
+    });
+    return nodes;
+  }
+  if (event.kind === 'monsterThree') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Monster (Level 3)',
+    };
+    const label = MonsterThree[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet);
+    if (event.text) {
+      nodes.push({ kind: 'paragraph', text: event.text });
+    }
+    appendPendingPreviews(outcome, nodes);
+    return nodes;
+  }
+  if (event.kind === 'monsterFour') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Monster (Level 4)',
+    };
+    const label = MonsterFour[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet);
+    if (event.text) {
+      nodes.push({ kind: 'paragraph', text: event.text });
+    }
+    appendPendingPreviews(outcome, nodes);
+    return nodes;
+  }
+  if (event.kind === 'monsterFive') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Monster (Level 5)',
+    };
+    const label = MonsterFive[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet);
+    if (event.text) {
+      nodes.push({ kind: 'paragraph', text: event.text });
+    }
+    appendPendingPreviews(outcome, nodes);
+    return nodes;
+  }
+  if (event.kind === 'monsterSix') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Monster (Level 6)',
+    };
+    const label = MonsterSix[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet);
+    if (event.text) {
+      nodes.push({ kind: 'paragraph', text: event.text });
+    }
+    appendPendingPreviews(outcome, nodes);
+    return nodes;
+  }
+  if (event.kind === 'dragonThree') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Dragon (Level 3)',
+    };
+    const label = DragonThree[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
+    return nodes;
+  }
+  if (event.kind === 'dragonFourYounger') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Dragon (Younger)',
+    };
+    const label = DragonFourYounger[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
+    return nodes;
+  }
+  if (event.kind === 'dragonFourOlder') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Dragon (Older)',
+    };
+    const label = DragonFourOlder[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
+    return nodes;
+  }
+  if (event.kind === 'dragonFiveYounger') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Dragon (Younger)',
+    };
+    const label = DragonFiveYounger[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
+    return nodes;
+  }
+  if (event.kind === 'dragonFiveOlder') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Dragon (Older)',
+    };
+    const label = DragonFiveOlder[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
+    return nodes;
+  }
+  if (event.kind === 'dragonSix') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Dragon',
+    };
+    const label = DragonSix[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
+    return nodes;
+  }
+  if (event.kind === 'human') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Human Subtable',
+    };
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${humanLabel(event.result)}`],
+    };
+    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
+    return nodes;
+  }
   return nodes;
 }
 
@@ -947,6 +1247,18 @@ function isTableContext(x: unknown): x is TableContext {
     );
   }
   return false;
+}
+
+function readDungeonLevelFromPending(p: PendingRoll, fallback: number): number {
+  const parts = p.table.split(':');
+  if (parts.length >= 2) {
+    const parsed = Number(parts[1]);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  if (isTableContext(p.context) && p.context.kind === 'wandering') {
+    return p.context.level;
+  }
+  return fallback;
 }
 
 function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
@@ -1118,6 +1430,162 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         context: { kind: 'wandering', level: lvl } as TableContext,
       };
     }
+    case 'monsterOne':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Monster (Level 1)',
+        sides: monsterOne.sides,
+        entries: monsterOne.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: MonsterOne[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'monsterTwo':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Monster (Level 2)',
+        sides: monsterTwo.sides,
+        entries: monsterTwo.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: MonsterTwo[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'monsterThree':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Monster (Level 3)',
+        sides: monsterThree.sides,
+        entries: monsterThree.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: MonsterThree[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'monsterFour':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Monster (Level 4)',
+        sides: monsterFour.sides,
+        entries: monsterFour.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: MonsterFour[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'monsterFive':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Monster (Level 5)',
+        sides: monsterFive.sides,
+        entries: monsterFive.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: MonsterFive[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'monsterSix':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Monster (Level 6)',
+        sides: monsterSix.sides,
+        entries: monsterSix.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: MonsterSix[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'dragonThree':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Dragon (Level 3)',
+        sides: dragonThree.sides,
+        entries: dragonThree.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: DragonThree[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'dragonFourYounger':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Dragon (Younger)',
+        sides: dragonFourYounger.sides,
+        entries: dragonFourYounger.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: DragonFourYounger[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'dragonFourOlder':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Dragon (Older)',
+        sides: dragonFourOlder.sides,
+        entries: dragonFourOlder.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: DragonFourOlder[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'dragonFiveYounger':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Dragon (Younger)',
+        sides: dragonFiveYounger.sides,
+        entries: dragonFiveYounger.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: DragonFiveYounger[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'dragonFiveOlder':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Dragon (Older)',
+        sides: dragonFiveOlder.sides,
+        entries: dragonFiveOlder.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: DragonFiveOlder[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'dragonSix':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Dragon',
+        sides: dragonSix.sides,
+        entries: dragonSix.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: DragonSix[e.command] ?? String(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'human':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Human Subtable',
+        sides: human.sides,
+        entries: human.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: humanLabel(e.command),
+        })),
+        context: isTableContext(p.context) ? p.context : undefined,
+      };
     case 'galleryStairLocation':
       return {
         kind: 'table-preview',
@@ -1199,7 +1667,7 @@ export function toCompactRender(
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
   const resolved = resolveNodeForCompact(outcome);
-  const node = resolved ?? (outcome as OutcomeEventNode);
+  const node = resolved ?? outcome;
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = node;
   if (event.kind === 'periodicCheck') {
@@ -1391,7 +1859,7 @@ export function toCompactRender(
       items: [`roll: ${roll} — ${Chute[event.result as 0 | 1]}`],
     };
     const text =
-      (event.result as number) === Chute.Exists
+      event.result === Chute.Exists
         ? 'The stairs will turn into a chute, descending two levels from the top. '
         : '';
     return [heading, bullet, { kind: 'paragraph', text }];
@@ -1675,6 +2143,62 @@ function resolvePendingForCompact(
         isRoom: ctx.isRoom,
       });
     }
+    case 'monsterLevel': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterLevel({ dungeonLevel });
+    }
+    case 'monsterOne': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterOne({ dungeonLevel });
+    }
+    case 'monsterTwo': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterTwo({ dungeonLevel });
+    }
+    case 'monsterThree': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterThree({ dungeonLevel });
+    }
+    case 'monsterFour': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterFour({ dungeonLevel });
+    }
+    case 'monsterFive': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterFive({ dungeonLevel });
+    }
+    case 'monsterSix': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterSix({ dungeonLevel });
+    }
+    case 'dragonThree': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 3);
+      return resolveDragonThree({ dungeonLevel });
+    }
+    case 'dragonFourYounger': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 4);
+      return resolveDragonFourYounger({ dungeonLevel });
+    }
+    case 'dragonFourOlder': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 4);
+      return resolveDragonFourOlder({ dungeonLevel });
+    }
+    case 'dragonFiveYounger': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 5);
+      return resolveDragonFiveYounger({ dungeonLevel });
+    }
+    case 'dragonFiveOlder': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 5);
+      return resolveDragonFiveOlder({ dungeonLevel });
+    }
+    case 'dragonSix': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 6);
+      return resolveDragonSix({ dungeonLevel });
+    }
+    case 'human': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveHuman({ dungeonLevel });
+    }
     default:
       return undefined;
   }
@@ -1835,7 +2359,7 @@ function renderChildPassageWidth(node: OutcomeEventNode): string {
 }
 
 function getChildEvents(node: OutcomeEventNode): OutcomeEventNode[] {
-  const children = (node.children || []) as DungeonOutcomeNode[];
+  const children = node.children || [];
   return children.filter((c): c is OutcomeEventNode => c.type === 'event');
 }
 
@@ -2320,10 +2844,14 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     }
     case PeriodicCheck.WanderingMonster: {
       const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
+      const monsterLevelNode = findChildEvent(node, 'monsterLevel');
       return compactWanderingMonsterText(
         event.level,
         whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
           ? whereFrom
+          : undefined,
+        monsterLevelNode && monsterLevelNode.event.kind === 'monsterLevel'
+          ? monsterLevelNode
           : undefined
       );
     }
@@ -2533,62 +3061,122 @@ function compactPeriodicText(
 // Compose compact text for Wandering Monster without legacy helpers.
 function compactWanderingMonsterText(
   level: number,
-  whereNode?: OutcomeEventNode
+  whereNode?: OutcomeEventNode,
+  levelNode?: OutcomeEventNode
 ): string {
   let prefix = '';
   if (whereNode && whereNode.event.kind === 'wanderingWhereFrom') {
     prefix = renderWanderingWhereFrom(whereNode);
   } else {
-    // Determine where the monster comes from (re-rolling 20s)
-    let location: PeriodicCheck;
-    do {
-      const r = rollDice(periodicCheck.sides);
-      location = getTableEntry(r, periodicCheck);
-    } while (location === PeriodicCheck.WanderingMonster);
-
-    if (location === PeriodicCheck.Door) {
-      prefix = renderCompactDoorChain();
-    } else {
-      // Compose compact periodic text for where-from (non-door)
-      prefix = compactPeriodicText(level, location, true);
+    const resolvedWhere = resolveNodeForCompact(resolveWanderingWhereFrom({}));
+    if (resolvedWhere && resolvedWhere.event.kind === 'wanderingWhereFrom') {
+      prefix = renderWanderingWhereFrom(resolvedWhere);
     }
   }
-  // Roll monster level table for the given dungeon level
-  const table = getMonsterTable(level);
-  const roll = rollDice(table.sides);
-  const ml = getTableEntry(roll, table);
-  let monsterText = '';
-  switch (ml) {
-    case MonsterLevel.One:
-      monsterText = monsterOneResult(level);
-      break;
-    case MonsterLevel.Two:
-      monsterText = monsterTwoResult(level);
-      break;
-    case MonsterLevel.Three:
-      monsterText = monsterThreeResult(level);
-      break;
-    case MonsterLevel.Four:
-      monsterText = monsterFourResult(level);
-      break;
-    case MonsterLevel.Five:
-      monsterText = monsterFiveResult(level);
-      break;
-    case MonsterLevel.Six:
-      monsterText = monsterSixResult(level);
-      break;
-    case MonsterLevel.Seven:
-      monsterText = '(TODO: Roll Monster for Level Seven)';
-      break;
-    case MonsterLevel.Eight:
-      monsterText = '(TODO: Roll Monster for Level Eight)';
-      break;
-    case MonsterLevel.Nine:
-      monsterText = '(TODO: Roll Monster for Level Nine)';
-      break;
-    case MonsterLevel.Ten:
-      monsterText = '(TODO: Roll Monster for Level Ten)';
-      break;
-  }
+
+  const monsterText = readMonsterEncounter(level, levelNode);
   return `${prefix}Wandering Monster: ${monsterText}`;
+}
+
+const MONSTER_LEVEL_KIND: Partial<Record<MonsterLevel, OutcomeEvent['kind']>> =
+  {
+    [MonsterLevel.One]: 'monsterOne',
+    [MonsterLevel.Two]: 'monsterTwo',
+    [MonsterLevel.Three]: 'monsterThree',
+    [MonsterLevel.Four]: 'monsterFour',
+    [MonsterLevel.Five]: 'monsterFive',
+    [MonsterLevel.Six]: 'monsterSix',
+  };
+
+function readMonsterEncounter(
+  dungeonLevel: number,
+  levelNode?: OutcomeEventNode
+): string {
+  const resolvedLevelNode =
+    levelNode?.event.kind === 'monsterLevel'
+      ? levelNode
+      : resolveNodeForCompact(resolveMonsterLevel({ dungeonLevel }));
+  if (!resolvedLevelNode || resolvedLevelNode.event.kind !== 'monsterLevel') {
+    return fallbackMonsterLevelText(MonsterLevel.One);
+  }
+  return readMonsterEncounterFromLevelNode(resolvedLevelNode);
+}
+
+function readMonsterEncounterFromLevelNode(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'monsterLevel') {
+    return fallbackMonsterLevelText(MonsterLevel.One);
+  }
+  const mapping = MONSTER_LEVEL_KIND[node.event.result];
+  if (!mapping) {
+    return fallbackMonsterLevelText(node.event.result);
+  }
+  const monsterNode = findChildEvent(node, mapping);
+  if (!monsterNode) {
+    return fallbackMonsterLevelText(node.event.result);
+  }
+  const text = readMonsterEventText(monsterNode);
+  return text ?? fallbackMonsterLevelText(node.event.result);
+}
+
+function readMonsterEventText(node: OutcomeEventNode): string | undefined {
+  switch (node.event.kind) {
+    case 'monsterOne': {
+      if (node.event.text) return node.event.text;
+      const humanNode = findChildEvent(node, 'human');
+      return humanNode ? readMonsterEventText(humanNode) : undefined;
+    }
+    case 'monsterTwo':
+    case 'monsterThree':
+    case 'monsterFour':
+    case 'monsterFive':
+    case 'monsterSix': {
+      if (node.event.text) return node.event.text;
+      if (node.event.kind === 'monsterThree') {
+        const dragon = findChildEvent(node, 'dragonThree');
+        return dragon ? readMonsterEventText(dragon) : undefined;
+      }
+      if (node.event.kind === 'monsterFour') {
+        const younger = findChildEvent(node, 'dragonFourYounger');
+        if (younger) return readMonsterEventText(younger);
+        const older = findChildEvent(node, 'dragonFourOlder');
+        return older ? readMonsterEventText(older) : undefined;
+      }
+      if (node.event.kind === 'monsterFive') {
+        const younger = findChildEvent(node, 'dragonFiveYounger');
+        if (younger) return readMonsterEventText(younger);
+        const older = findChildEvent(node, 'dragonFiveOlder');
+        return older ? readMonsterEventText(older) : undefined;
+      }
+      if (node.event.kind === 'monsterSix') {
+        const dragon = findChildEvent(node, 'dragonSix');
+        return dragon ? readMonsterEventText(dragon) : undefined;
+      }
+      return undefined;
+    }
+    case 'dragonThree':
+    case 'dragonFourYounger':
+    case 'dragonFourOlder':
+    case 'dragonFiveYounger':
+    case 'dragonFiveOlder':
+    case 'dragonSix':
+    case 'human':
+      return node.event.text;
+    default:
+      return undefined;
+  }
+}
+
+function fallbackMonsterLevelText(level: MonsterLevel): string {
+  switch (level) {
+    case MonsterLevel.Seven:
+      return '(TODO: Roll Monster for Level Seven)';
+    case MonsterLevel.Eight:
+      return '(TODO: Roll Monster for Level Eight)';
+    case MonsterLevel.Nine:
+      return '(TODO: Roll Monster for Level Nine)';
+    case MonsterLevel.Ten:
+      return '(TODO: Roll Monster for Level Ten)';
+    default:
+      return '(Unknown Monster Result)';
+  }
 }

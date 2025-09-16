@@ -124,216 +124,154 @@ export const monsterFourResult = (dungeonLevel: number): string => {
   return monsterFourTextForCommand(dungeonLevel, command);
 };
 
-const dragonFourYoungerResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonFourYounger.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonFourYounger);
-  switch (dragonCommand) {
-    case DragonFourYounger.Black_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+export const dragonFourYoungerTextForCommand = (
+  dungeonLevel: number,
+  command: DragonFourYounger
+): string => {
+  const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
+  const sharedSuffix =
+    '(Determine the number of hit dice for a dragon as normal.) ';
+  let text = '';
+  switch (command) {
+    case DragonFourYounger.Black_Young_2:
+      text =
         formatMonsterCount(
           dragons,
           'young black dragon with 2 hit points per die',
           'young black dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.Blue_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.Blue_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young blue dragon with 1 hit point per die',
           'very young blue dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.Brass_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.Brass_Young_2:
+      text =
         formatMonsterCount(
           dragons,
           'young brass dragon with 2 hit points per die',
           'young brass dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.Bronze_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.Bronze_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young bronze dragon with 1 hit point per die',
           'very young bronze dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.Copper_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.Copper_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young copper dragon with 1 hit point per die',
           'very young copper dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.Gold_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.Gold_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young gold dragon with 1 hit point per die',
           'very young gold dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.Green_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.Green_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young green dragon with 1 hit point per die',
           'very young green dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.Red_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.Red_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young red dragon with 1 hit point per die',
           'very young red dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.Silver_VeryYoung_1: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.Silver_VeryYoung_1:
+      text =
         formatMonsterCount(
           dragons,
           'very young silver dragon with 1 hit point per die',
           'very young silver dragons with 1 hit point per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourYounger.White_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
+        ) + sharedSuffix;
+      break;
+    case DragonFourYounger.White_Young_2:
+      text =
         formatMonsterCount(
           dragons,
           'young white dragon with 2 hit points per die',
           'young white dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
+        ) + sharedSuffix;
+      break;
   }
+  return text;
+};
+
+export const dragonFourOlderTextForCommand = (
+  dungeonLevel: number,
+  command: DragonFourOlder
+): string => {
+  const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
+  const make = (color: string, age: string, hp: number) =>
+    formatMonsterCount(
+      dragons,
+      `${age} ${color} dragon with ${hp} hit point per die`,
+      `${age} ${color} dragons with ${hp} hit points per die`
+    ) + '(Determine the number of hit dice for a dragon as normal.) ';
+  let text = '';
+  switch (command) {
+    case DragonFourOlder.Black_SubAdult_3:
+      text = make('black', 'sub-adult', 3);
+      break;
+    case DragonFourOlder.Blue_Young_2:
+      text = make('blue', 'young', 2);
+      break;
+    case DragonFourOlder.Brass_SubAdult_3:
+      text = make('brass', 'sub-adult', 3);
+      break;
+    case DragonFourOlder.Bronze_Young_2:
+      text = make('bronze', 'young', 2);
+      break;
+    case DragonFourOlder.Copper_Young_2:
+      text = make('copper', 'young', 2);
+      break;
+    case DragonFourOlder.Gold_Young_2:
+      text = make('gold', 'young', 2);
+      break;
+    case DragonFourOlder.Green_Young_2:
+      text = make('green', 'young', 2);
+      break;
+    case DragonFourOlder.Red_Young_2:
+      text = make('red', 'young', 2);
+      break;
+    case DragonFourOlder.Silver_Young_2:
+      text = make('silver', 'young', 2);
+      break;
+    case DragonFourOlder.White_SubAdult_3:
+      text = make('white', 'sub-adult', 3);
+      break;
+  }
+  return text;
+};
+
+const dragonFourYoungerResult = (dungeonLevel: number): string => {
+  const dragonRoll = rollDice(dragonFourYounger.sides);
+  const dragonCommand = getTableEntry(dragonRoll, dragonFourYounger);
+  return dragonFourYoungerTextForCommand(dungeonLevel, dragonCommand);
 };
 
 const dragonFourOlderResult = (dungeonLevel: number): string => {
   const dragonRoll = rollDice(dragonFourOlder.sides);
   const dragonCommand = getTableEntry(dragonRoll, dragonFourOlder);
-  switch (dragonCommand) {
-    case DragonFourOlder.Black_SubAdult_3: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'sub-adult black dragon with 3 hit points per die',
-          'sub-adult black dragons with 3 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.Blue_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'young blue dragon with 2 hit points per die',
-          'young blue dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.Brass_SubAdult_3: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'sub-adult brass dragon with 3 hit points per die',
-          'sub-adult brass dragons with 3 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.Bronze_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'young bronze dragon with 2 hit points per die',
-          'young bronze dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.Copper_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'young copper dragon with 2 hit points per die',
-          'young copper dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.Gold_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'young gold dragon with 2 hit points per die',
-          'young gold dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.Green_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'young green dragon with 2 hit points per die',
-          'young green dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.Red_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'young red dragon with 2 hit points per die',
-          'young red dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.Silver_Young_2: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'young silver dragon with 2 hit points per die',
-          'young silver dragons with 2 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-    case DragonFourOlder.White_SubAdult_3: {
-      const dragons = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return (
-        formatMonsterCount(
-          dragons,
-          'sub-adult white dragon with 3 hit points per die',
-          'sub-adult white dragons with 3 hit points per die'
-        ) + '(Determine the number of hit dice for a dragon as normal.) '
-      );
-    }
-  }
+  return dragonFourOlderTextForCommand(dungeonLevel, dragonCommand);
 };

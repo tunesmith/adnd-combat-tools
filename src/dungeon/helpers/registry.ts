@@ -13,22 +13,6 @@ import { doorLocationMessages } from '../services/closedDoorResult';
 import { periodicDoorOnlyMessages } from '../services/periodicDoorOnly';
 import { wanderingWhereFromMessages } from '../services/wanderingWhereFrom';
 import {
-  monsterLevelMessages,
-  monsterOneMessages,
-  monsterTwoMessages,
-  monsterThreeMessages,
-  monsterFourMessages,
-  monsterFiveMessages,
-  monsterSixMessages,
-  dragonThreeMessages,
-  dragonFourYoungerMessages,
-  dragonFourOlderMessages,
-  dragonFiveYoungerMessages,
-  dragonFiveOlderMessages,
-  dragonSixMessages,
-  humanMessages,
-} from '../services/monsterLevelMessages';
-import {
   galleryStairLocationMessages,
   galleryStairOccurrenceMessages,
   streamConstructionMessages,
@@ -51,6 +35,20 @@ import {
   resolvePeriodicCheck,
   resolveRoomDimensions,
   resolveChamberDimensions,
+  resolveMonsterLevel,
+  resolveMonsterOne,
+  resolveMonsterTwo,
+  resolveMonsterThree,
+  resolveMonsterFour,
+  resolveMonsterFive,
+  resolveMonsterSix,
+  resolveDragonThree,
+  resolveDragonFourYounger,
+  resolveDragonFourOlder,
+  resolveDragonFiveYounger,
+  resolveDragonFiveOlder,
+  resolveDragonSix,
+  resolveHuman,
 } from '../domain/resolvers';
 import { toDetailRender } from '../adapters/render';
 import {
@@ -192,34 +190,62 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     periodicDoorOnlyMessages({ roll, detailMode: true, context }).messages,
   wanderingWhereFrom: ({ roll, context }) =>
     wanderingWhereFromMessages({ roll, detailMode: true, context }).messages,
-  monsterLevel: ({ roll, id, context }) =>
-    monsterLevelMessages({ id, roll, detailMode: true, context }).messages,
-  monsterOne: ({ roll, context }) =>
-    monsterOneMessages({ roll, detailMode: true, context }).messages,
-  monsterTwo: ({ roll, context }) =>
-    monsterTwoMessages({ roll, detailMode: true, context }).messages,
-  monsterThree: ({ roll, context }) =>
-    monsterThreeMessages({ roll, detailMode: true, context }).messages,
-  monsterFour: ({ roll, context }) =>
-    monsterFourMessages({ roll, detailMode: true, context }).messages,
-  monsterFive: ({ roll, context }) =>
-    monsterFiveMessages({ roll, detailMode: true, context }).messages,
-  monsterSix: ({ roll, context }) =>
-    monsterSixMessages({ roll, detailMode: true, context }).messages,
-  dragonThree: ({ roll, context }) =>
-    dragonThreeMessages({ roll, detailMode: true, context }).messages,
-  dragonFourYounger: ({ roll, context }) =>
-    dragonFourYoungerMessages({ roll, detailMode: true, context }).messages,
-  dragonFourOlder: ({ roll, context }) =>
-    dragonFourOlderMessages({ roll, detailMode: true, context }).messages,
-  dragonFiveYounger: ({ roll, context }) =>
-    dragonFiveYoungerMessages({ roll, detailMode: true, context }).messages,
-  dragonFiveOlder: ({ roll, context }) =>
-    dragonFiveOlderMessages({ roll, detailMode: true, context }).messages,
-  dragonSix: ({ roll, context }) =>
-    dragonSixMessages({ roll, detailMode: true, context }).messages,
-  human: ({ roll, context }) =>
-    humanMessages({ roll, detailMode: true, context }).messages,
+  monsterLevel: ({ roll, id, context }) => {
+    const dungeonLevel = readDungeonLevel(context, id, 1);
+    return toDetailRender(resolveMonsterLevel({ roll, dungeonLevel }));
+  },
+  monsterOne: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'monsterOne', 1);
+    return toDetailRender(resolveMonsterOne({ roll, dungeonLevel }));
+  },
+  monsterTwo: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'monsterTwo', 1);
+    return toDetailRender(resolveMonsterTwo({ roll, dungeonLevel }));
+  },
+  monsterThree: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'monsterThree', 1);
+    return toDetailRender(resolveMonsterThree({ roll, dungeonLevel }));
+  },
+  monsterFour: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'monsterFour', 1);
+    return toDetailRender(resolveMonsterFour({ roll, dungeonLevel }));
+  },
+  monsterFive: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'monsterFive', 1);
+    return toDetailRender(resolveMonsterFive({ roll, dungeonLevel }));
+  },
+  monsterSix: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'monsterSix', 1);
+    return toDetailRender(resolveMonsterSix({ roll, dungeonLevel }));
+  },
+  dragonThree: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'dragonThree', 3);
+    return toDetailRender(resolveDragonThree({ roll, dungeonLevel }));
+  },
+  dragonFourYounger: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'dragonFourYounger', 4);
+    return toDetailRender(resolveDragonFourYounger({ roll, dungeonLevel }));
+  },
+  dragonFourOlder: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'dragonFourOlder', 4);
+    return toDetailRender(resolveDragonFourOlder({ roll, dungeonLevel }));
+  },
+  dragonFiveYounger: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'dragonFiveYounger', 5);
+    return toDetailRender(resolveDragonFiveYounger({ roll, dungeonLevel }));
+  },
+  dragonFiveOlder: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'dragonFiveOlder', 5);
+    return toDetailRender(resolveDragonFiveOlder({ roll, dungeonLevel }));
+  },
+  dragonSix: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'dragonSix', 6);
+    return toDetailRender(resolveDragonSix({ roll, dungeonLevel }));
+  },
+  human: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'human', 1);
+    return toDetailRender(resolveHuman({ roll, dungeonLevel }));
+  },
   galleryStairLocation: ({ roll }) =>
     galleryStairLocationMessages({ roll, detailMode: true }).messages,
   galleryStairOccurrence: ({ roll }) =>
@@ -281,6 +307,24 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     );
   },
 };
+
+function readDungeonLevel(
+  context: TableContext | undefined,
+  id: string,
+  fallback: number
+): number {
+  if (context && context.kind === 'wandering') {
+    return context.level;
+  }
+  const parts = id.split(':');
+  if (parts.length >= 2) {
+    const parsed = Number(parts[1]);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return fallback;
+}
 
 export type FeedLike = { id: string; messages: DungeonRenderNode[] };
 
