@@ -13,6 +13,7 @@ import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import { doorBeyondMessages } from '../../dungeon/services/doorBeyondResult';
 import { passageMessages } from '../../dungeon/services/passage';
 import { resolveViaRegistry } from '../../dungeon/helpers/registry';
+import { toCompactRender, toDetailRender } from '../../dungeon/adapters/render';
 
 type ActionKind = 'passage' | 'door';
 
@@ -66,16 +67,20 @@ const DungeonIndexPage = () => {
         return v;
       },
     });
-    const renderCache: RenderCache = detailMode
-      ? { detail: step.messages }
-      : { compact: step.messages };
+    const renderCache = buildRenderCache(step.outcome);
+    const messages = selectMessagesForMode(
+      act,
+      detailMode,
+      renderCache,
+      step.messages
+    );
     const item: FeedItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       action: act,
       roll,
       outcome: step.outcome,
       renderCache,
-      messages: step.messages,
+      messages,
     };
     setFeed((prev) => [item, ...prev]);
     // announce briefly for a11y
@@ -240,9 +245,11 @@ const DungeonIndexPage = () => {
                   )}
                 </div>
                 <div className={styles['messages']}>
-                  {(detailMode
-                    ? filterForDetail(item.messages, item.action)
-                    : filterForCompact(item.messages, item.action)
+                  {selectMessagesForMode(
+                    item.action,
+                    detailMode,
+                    item.renderCache,
+                    item.messages
                   ).map((m, i) =>
                     renderNode(
                       m,
@@ -487,6 +494,14 @@ function resolvePreview(
     return;
 }
 
+function buildRenderCache(outcome?: DungeonOutcomeNode): RenderCache {
+  if (!outcome || outcome.type !== 'event') return {};
+  return {
+    detail: toDetailRender(outcome),
+    compact: toCompactRender(outcome),
+  };
+}
+
 function filterForCompact(
   nodes: DungeonRenderNode[],
   action: ActionKind
@@ -527,6 +542,20 @@ function filterForDetail(
     result.push(n);
   }
   return result;
+}
+
+function selectMessagesForMode(
+  action: ActionKind,
+  isDetail: boolean,
+  cache: RenderCache,
+  fallback: DungeonRenderNode[]
+): DungeonRenderNode[] {
+  const baseNodes = isDetail
+    ? cache.detail ?? fallback
+    : cache.compact ?? fallback;
+  return isDetail
+    ? filterForDetail(baseNodes, action)
+    : filterForCompact(baseNodes, action);
 }
 
 function getRootPreviewNodes(
