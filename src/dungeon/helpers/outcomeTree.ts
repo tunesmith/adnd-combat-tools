@@ -18,6 +18,7 @@ import {
   resolveChamberDimensions,
   resolveUnusualShape,
   resolveUnusualSize,
+  resolveCircularContents,
   resolveWanderingWhereFrom,
   resolveGalleryStairLocation,
   resolveGalleryStairOccurrence,
@@ -73,6 +74,9 @@ export function isTableContext(x: unknown): x is TableContext {
       typeof obj.isRoom === 'boolean'
     );
   }
+  if (kind === 'unusualSize') {
+    return typeof (x as { extra?: unknown }).extra === 'number';
+  }
   return false;
 }
 
@@ -112,6 +116,10 @@ export function applyResolvedOutcome(
   tableId: string,
   resolved: DungeonOutcomeNode
 ): DungeonOutcomeNode {
+  const baseId = String(tableId.split(':')[0] ?? tableId);
+  if (node.type === 'event' && node.event.kind === baseId) {
+    return resolved;
+  }
   if (node.type === 'pending-roll') {
     return node.table === tableId ? resolved : node;
   }
@@ -237,8 +245,16 @@ function resolvePendingNode(
       return resolveChamberDimensions({});
     case 'unusualShape':
       return resolveUnusualShape({});
-    case 'unusualSize':
-      return resolveUnusualSize({});
+    case 'unusualSize': {
+      const extra =
+        isTableContext(pending.context) &&
+        pending.context.kind === 'unusualSize'
+          ? pending.context.extra
+          : 0;
+      return resolveUnusualSize({ extra });
+    }
+    case 'circularContents':
+      return resolveCircularContents({});
     case 'wanderingWhereFrom':
       return resolveWanderingWhereFrom({});
     case 'galleryStairLocation':

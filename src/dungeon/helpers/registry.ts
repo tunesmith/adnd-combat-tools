@@ -45,6 +45,7 @@ import {
   resolveSpecialPassage,
   resolveStairs,
   resolveStreamConstruction,
+  resolveCircularContents,
   resolveUnusualShape,
   resolveUnusualSize,
   resolveWanderingWhereFrom,
@@ -57,7 +58,6 @@ import {
   readExitsContext,
 } from '../helpers/outcomeTree';
 import {
-  circularContentsMessages,
   circularShapePoolMessages,
   circularShapeMagicPoolMessages,
   transmuteTypeMessages,
@@ -288,11 +288,12 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   jumpingPlaceWidth: ({ roll }) =>
     fromOutcome(resolveJumpingPlaceWidth({ roll })),
   unusualShape: ({ roll }) => fromOutcome(resolveUnusualShape({ roll })),
-  unusualSize: ({ roll }) => fromOutcome(resolveUnusualSize({ roll })),
+  unusualSize: ({ roll, context }) => {
+    const extra = context && context.kind === 'unusualSize' ? context.extra : 0;
+    return fromOutcome(resolveUnusualSize({ roll, extra }));
+  },
   circularContents: ({ roll }) =>
-    withoutOutcome(
-      circularContentsMessages({ roll, detailMode: true }).messages
-    ),
+    fromOutcome(resolveCircularContents({ roll })),
   circularShapePool: ({ roll }) =>
     withoutOutcome(
       circularShapePoolMessages({ roll, detailMode: true }).messages

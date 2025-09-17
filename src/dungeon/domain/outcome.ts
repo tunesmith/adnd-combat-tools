@@ -10,7 +10,10 @@ import type {
   ChamberDimensions,
 } from '../../tables/dungeon/chambersRooms';
 import type { NumberOfExits } from '../../tables/dungeon/numberOfExits';
-import type { UnusualShape } from '../../tables/dungeon/unusualShape';
+import type {
+  UnusualShape,
+  CircularContents,
+} from '../../tables/dungeon/unusualShape';
 import type { UnusualSize } from '../../tables/dungeon/unusualSize';
 import type { DoorLocation } from '../../tables/dungeon/doorLocation';
 import type { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnly';
@@ -89,7 +92,8 @@ export type OutcomeEvent =
       count: number;
     }
   | { kind: 'unusualShape'; result: UnusualShape }
-  | { kind: 'unusualSize'; result: UnusualSize }
+  | { kind: 'circularContents'; result: CircularContents }
+  | { kind: 'unusualSize'; result: UnusualSize; extra: number }
   | { kind: 'wanderingWhereFrom'; result: PeriodicCheck }
   | { kind: 'galleryStairLocation'; result: GalleryStairLocation }
   | { kind: 'galleryStairOccurrence'; result: GalleryStairOccurrence }

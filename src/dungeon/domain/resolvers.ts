@@ -42,8 +42,12 @@ import {
   chamberDimensions,
   ChamberDimensions,
 } from '../../tables/dungeon/chambersRooms';
-import { unusualShape } from '../../tables/dungeon/unusualShape';
-import { unusualSize } from '../../tables/dungeon/unusualSize';
+import {
+  unusualShape,
+  UnusualShape,
+  circularContents,
+} from '../../tables/dungeon/unusualShape';
+import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
 import {
   periodicCheckDoorOnly,
   PeriodicCheckDoorOnly,
@@ -659,22 +663,50 @@ export function resolveUnusualShape(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(unusualShape.sides);
   const command = getTableEntry(usedRoll, unusualShape);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === UnusualShape.Circular) {
+    children.push({ type: 'pending-roll', table: 'circularContents' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'unusualShape', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
   };
 }
 
 export function resolveUnusualSize(options?: {
   roll?: number;
+  extra?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(unusualSize.sides);
   const command = getTableEntry(usedRoll, unusualSize);
+  const extra = options?.extra ?? 0;
+  const children: DungeonOutcomeNode[] = [];
+  if (command === UnusualSize.RollAgain) {
+    children.push({
+      type: 'pending-roll',
+      table: 'unusualSize',
+      context: { kind: 'unusualSize', extra: extra + 2000 },
+    });
+  }
   return {
     type: 'event',
     roll: usedRoll,
-    event: { kind: 'unusualSize', result: command } as OutcomeEvent,
+    event: { kind: 'unusualSize', result: command, extra } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveCircularContents(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(circularContents.sides);
+  const command = getTableEntry(usedRoll, circularContents);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'circularContents', result: command } as OutcomeEvent,
   };
 }
 

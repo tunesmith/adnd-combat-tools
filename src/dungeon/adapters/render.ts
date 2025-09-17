@@ -95,9 +95,17 @@ import {
   numberOfExits,
   NumberOfExits,
 } from '../../tables/dungeon/numberOfExits';
-import { unusualShape, UnusualShape } from '../../tables/dungeon/unusualShape';
+import {
+  unusualShape,
+  UnusualShape,
+  circularContents,
+  CircularContents,
+} from '../../tables/dungeon/unusualShape';
 import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
-import { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnly';
+import {
+  periodicCheckDoorOnly,
+  PeriodicCheckDoorOnly,
+} from '../../tables/dungeon/periodicCheckDoorOnly';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
 
@@ -117,7 +125,11 @@ function appendPendingPreviews(
   for (const child of children) {
     if (child.type !== 'pending-roll') continue;
     const preview = previewForPending(child);
-    if (preview) collector.push(preview);
+    if (!preview) continue;
+    const alreadyPresent = collector.some(
+      (node) => node.kind === 'table-preview' && node.id === preview.id
+    );
+    if (!alreadyPresent) collector.push(preview);
   }
 }
 
@@ -429,6 +441,44 @@ export function toDetailRender(
     }
     appendPendingPreviews(outcome, nodes);
     return nodes;
+  }
+  if (event.kind === 'doorLocation') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Door Location',
+    };
+    const label = DoorLocation[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const description = formatDoorLocationEvent(event).trim();
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (description) {
+      nodes2.push({ kind: 'paragraph', text: description });
+    }
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
+  }
+  if (event.kind === 'periodicDoorOnly') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Door Continuation',
+    };
+    const label = PeriodicCheckDoorOnly[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const description = formatPeriodicDoorOnlyEvent(event).trim();
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (description) {
+      nodes2.push({ kind: 'paragraph', text: description });
+    }
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
   }
   if (isPassageWidthEvent(event)) {
     const heading: DungeonMessage = {
@@ -979,7 +1029,47 @@ export function toDetailRender(
         text = 'It is actually a cave. ';
         break;
     }
-    return [heading, bullet, { kind: 'paragraph', text }];
+    const nodes2: DungeonRenderNode[] = [
+      heading,
+      bullet,
+      {
+        kind: 'paragraph',
+        text,
+      },
+    ];
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
+  }
+  if (event.kind === 'circularContents') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Circular Contents',
+    };
+    const label = CircularContents[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    let text = '';
+    switch (event.result) {
+      case CircularContents.Pool:
+        text = 'There is a pool. ';
+        break;
+      case CircularContents.Well:
+        text = 'There is a well. ';
+        break;
+      case CircularContents.Shaft:
+        text = 'There is a shaft. ';
+        break;
+      case CircularContents.Normal:
+        text = '';
+        break;
+    }
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (text) nodes2.push({ kind: 'paragraph', text });
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
   }
   if (event.kind === 'unusualSize') {
     const heading: DungeonMessage = {
@@ -992,32 +1082,39 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let size = 3400; // default fallback
+    const extra = (event as { extra?: number }).extra ?? 0;
+    let paragraphText = '';
     switch (event.result) {
       case UnusualSize.SqFt500:
-        size = 500;
+        paragraphText = `It is about ${500 + extra} sq. ft. `;
         break;
       case UnusualSize.SqFt900:
-        size = 900;
+        paragraphText = `It is about ${900 + extra} sq. ft. `;
         break;
       case UnusualSize.SqFt1300:
-        size = 1300;
+        paragraphText = `It is about ${1300 + extra} sq. ft. `;
         break;
       case UnusualSize.SqFt2000:
-        size = 2000;
+        paragraphText = `It is about ${2000 + extra} sq. ft. `;
         break;
       case UnusualSize.SqFt2700:
-        size = 2700;
+        paragraphText = `It is about ${2700 + extra} sq. ft. `;
         break;
       case UnusualSize.SqFt3400:
-        size = 3400;
+        paragraphText = `It is about ${3400 + extra} sq. ft. `;
         break;
       case UnusualSize.RollAgain:
-        size = 3400;
+        paragraphText = `Roll again for unusual size (add 2000 sq. ft.; current total ${(
+          extra + 2000
+        ).toLocaleString()} sq. ft.).`;
         break;
     }
-    const text = `It is about ${size} sq. ft. `;
-    return [heading, bullet, { kind: 'paragraph', text }];
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (paragraphText) {
+      nodes2.push({ kind: 'paragraph', text: paragraphText });
+    }
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
   }
   if (event.kind === 'monsterLevel') {
     const heading: DungeonMessage = {
@@ -1254,7 +1351,15 @@ export function renderDetailTree(
   if (outcome.type !== 'event') return [];
   const preview = previewForEventNode(outcome);
   const nodes: DungeonRenderNode[] = [];
-  if (preview) nodes.push(preview);
+  const pendingPreviewIds = new Set<string>();
+  if (Array.isArray(outcome.children)) {
+    for (const child of outcome.children) {
+      if (child.type !== 'pending-roll') continue;
+      const pendingPreview = previewForPending(child);
+      if (pendingPreview) pendingPreviewIds.add(pendingPreview.id);
+    }
+  }
+  if (preview && !pendingPreviewIds.has(preview.id)) nodes.push(preview);
   const detailNodes = includeHeading
     ? toDetailRender(outcome)
     : toDetailRender(outcome).filter((n) => n.kind !== 'heading');
@@ -1281,6 +1386,17 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
           label: DoorLocation[e.command] ?? String(e.command),
         })),
         context: isTableContext(p.context) ? p.context : undefined,
+      };
+    case 'periodicCheckDoorOnly':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Door Continuation',
+        sides: periodicCheckDoorOnly.sides,
+        entries: periodicCheckDoorOnly.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: PeriodicCheckDoorOnly[e.command] ?? String(e.command),
+        })),
       };
     case 'sidePassages':
       return {
@@ -1370,6 +1486,7 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
           range: rangeText(e.range),
           label: UnusualSize[e.command] ?? String(e.command),
         })),
+        context: isTableContext(p.context) ? p.context : undefined,
       };
     case 'stairs':
       return {
@@ -1626,6 +1743,19 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
           range: rangeText(e.range),
           label: GalleryStairLocation[e.command] ?? String(e.command),
         })),
+      };
+    case 'circularContents':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Circular Contents',
+        sides: circularContents.sides,
+        entries: circularContents.entries.map(
+          (e: typeof circularContents.entries[number]) => ({
+            range: rangeText(e.range),
+            label: CircularContents[e.command] ?? String(e.command),
+          })
+        ),
       };
     case 'streamConstruction':
       return {
@@ -2582,7 +2712,7 @@ function renderCompactUnusualDetails(node: OutcomeEventNode): string {
   }
   const size = findChildEvent(node, 'unusualSize');
   if (size && size.event.kind === 'unusualSize') {
-    text += formatUnusualSize(size.event.result);
+    text += formatUnusualSize(size.event.result, size.event.extra);
   }
   if (shape || size) {
     text += 'Determine exits, contents, and treasure separately. ';
@@ -2613,21 +2743,24 @@ function formatUnusualShape(result: UnusualShape): string {
   }
 }
 
-function formatUnusualSize(result: UnusualSize): string {
+function formatUnusualSize(result: UnusualSize, extra = 0): string {
   switch (result) {
     case UnusualSize.SqFt500:
-      return 'It is about 500 sq. ft. ';
+      return `It is about ${500 + extra} sq. ft. `;
     case UnusualSize.SqFt900:
-      return 'It is about 900 sq. ft. ';
+      return `It is about ${900 + extra} sq. ft. `;
     case UnusualSize.SqFt1300:
-      return 'It is about 1300 sq. ft. ';
+      return `It is about ${1300 + extra} sq. ft. `;
     case UnusualSize.SqFt2000:
-      return 'It is about 2000 sq. ft. ';
+      return `It is about ${2000 + extra} sq. ft. `;
     case UnusualSize.SqFt2700:
-      return 'It is about 2700 sq. ft. ';
+      return `It is about ${2700 + extra} sq. ft. `;
     case UnusualSize.SqFt3400:
-    case UnusualSize.RollAgain:
-      return 'It is about 3400 sq. ft. ';
+      return `It is about ${3400 + extra} sq. ft. `;
+    case UnusualSize.RollAgain: {
+      const total = extra + 2000;
+      return `Add 2000 sq. ft. (current total ${total.toLocaleString()} sq. ft.) and roll again. `;
+    }
     default:
       return '';
   }
