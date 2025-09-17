@@ -7,7 +7,6 @@ import type {
 import type { DungeonOutcomeNode } from '../domain/outcome';
 
 // Message services used by the registry
-import { trickTrapMessages } from '../services/trickTrap';
 import {
   resolveChamberDimensions,
   resolveChasmConstruction,
@@ -46,6 +45,12 @@ import {
   resolveStairs,
   resolveStreamConstruction,
   resolveCircularContents,
+  resolveCircularPool,
+  resolveCircularMagicPool,
+  resolveTransmuteType,
+  resolvePoolAlignment,
+  resolveTransporterLocation,
+  resolveTrickTrap,
   resolveUnusualShape,
   resolveUnusualSize,
   resolveWanderingWhereFrom,
@@ -57,13 +62,6 @@ import {
   readDoorChainExisting,
   readExitsContext,
 } from '../helpers/outcomeTree';
-import {
-  circularShapePoolMessages,
-  circularShapeMagicPoolMessages,
-  transmuteTypeMessages,
-  poolAlignmentMessages,
-  transporterLocationMessages,
-} from '../services/unusualShapeResult';
 
 // Registry resolver type
 type RegistryResolution = {
@@ -185,10 +183,6 @@ function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
   return { outcome, messages: renderDetailTree(outcome) };
 }
 
-function withoutOutcome(messages: DungeonRenderNode[]): RegistryResolution {
-  return { messages };
-}
-
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   sidePassages: ({ roll }) => fromOutcome(resolveSidePassages({ roll })),
   passageTurns: ({ roll }) => fromOutcome(resolvePassageTurns({ roll })),
@@ -294,21 +288,14 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   },
   circularContents: ({ roll }) =>
     fromOutcome(resolveCircularContents({ roll })),
-  circularShapePool: ({ roll }) =>
-    withoutOutcome(
-      circularShapePoolMessages({ roll, detailMode: true }).messages
-    ),
+  circularShapePool: ({ roll }) => fromOutcome(resolveCircularPool({ roll })),
   circularShapeMagicPool: ({ roll }) =>
-    withoutOutcome(
-      circularShapeMagicPoolMessages({ roll, detailMode: true }).messages
-    ),
-  transmuteType: ({ roll }) =>
-    withoutOutcome(transmuteTypeMessages({ roll }).messages),
-  poolAlignment: ({ roll }) =>
-    withoutOutcome(poolAlignmentMessages({ roll }).messages),
+    fromOutcome(resolveCircularMagicPool({ roll })),
+  transmuteType: ({ roll }) => fromOutcome(resolveTransmuteType({ roll })),
+  poolAlignment: ({ roll }) => fromOutcome(resolvePoolAlignment({ roll })),
   transporterLocation: ({ roll }) =>
-    withoutOutcome(transporterLocationMessages({ roll }).messages),
-  trickTrap: ({ roll }) => withoutOutcome(trickTrapMessages({ roll }).messages),
+    fromOutcome(resolveTransporterLocation({ roll })),
+  trickTrap: ({ roll }) => fromOutcome(resolveTrickTrap({ roll })),
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';

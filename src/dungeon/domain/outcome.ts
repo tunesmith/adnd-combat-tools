@@ -27,6 +27,13 @@ import type {
   ChasmConstruction,
   JumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
+import type { Pool } from '../../tables/dungeon/pool';
+import type {
+  MagicPool,
+  TransmuteType,
+  PoolAlignment,
+  TransporterLocation,
+} from '../../tables/dungeon/magicPool';
 import type { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
 import type {
   MonsterOne,
@@ -93,7 +100,13 @@ export type OutcomeEvent =
     }
   | { kind: 'unusualShape'; result: UnusualShape }
   | { kind: 'circularContents'; result: CircularContents }
+  | { kind: 'circularPool'; result: Pool }
+  | { kind: 'circularMagicPool'; result: MagicPool }
+  | { kind: 'transmuteType'; result: TransmuteType }
+  | { kind: 'poolAlignment'; result: PoolAlignment }
+  | { kind: 'transporterLocation'; result: TransporterLocation }
   | { kind: 'unusualSize'; result: UnusualSize; extra: number }
+  | { kind: 'trickTrap'; result: number }
   | { kind: 'wanderingWhereFrom'; result: PeriodicCheck }
   | { kind: 'galleryStairLocation'; result: GalleryStairLocation }
   | { kind: 'galleryStairOccurrence'; result: GalleryStairOccurrence }

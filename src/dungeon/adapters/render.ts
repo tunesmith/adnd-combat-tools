@@ -31,7 +31,6 @@ import {
   chute,
   Chute,
 } from '../../tables/dungeon/stairs';
-import { trickTrapMessages } from '../services/trickTrap';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import { periodicCheck } from '../../tables/dungeon/periodicCheck';
 import { getMonsterTable } from '../services/wanderingMonsterResult';
@@ -91,6 +90,17 @@ import {
   GalleryStairOccurrence,
   JumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
+import { pool, Pool } from '../../tables/dungeon/pool';
+import {
+  magicPool,
+  MagicPool,
+  transmuteType,
+  TransmuteType,
+  poolAlignment,
+  PoolAlignment,
+  transporterLocation,
+  TransporterLocation,
+} from '../../tables/dungeon/magicPool';
 import {
   numberOfExits,
   NumberOfExits,
@@ -169,11 +179,32 @@ function previewForEventNode(
     case 'chamberDimensions':
       tableId = 'chamberDimensions';
       break;
+    case 'circularContents':
+      tableId = 'circularContents';
+      break;
+    case 'circularPool':
+      tableId = 'circularShapePool';
+      break;
+    case 'circularMagicPool':
+      tableId = 'circularShapeMagicPool';
+      break;
+    case 'transmuteType':
+      tableId = 'transmuteType';
+      break;
+    case 'poolAlignment':
+      tableId = 'poolAlignment';
+      break;
+    case 'transporterLocation':
+      tableId = 'transporterLocation';
+      break;
     case 'specialPassage':
       tableId = undefined; // handled directly in detail render
       break;
     case 'stairs':
       tableId = 'stairs';
+      break;
+    case 'trickTrap':
+      tableId = 'trickTrap';
       break;
     case 'egress':
       tableId = `egress:${event.which}`;
@@ -1071,6 +1102,145 @@ export function toDetailRender(
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
+  if (event.kind === 'circularPool') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Pool',
+    };
+    const label = Pool[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    let text = '';
+    switch (event.result) {
+      case Pool.PoolNoMonster:
+        text = 'There is a pool. ';
+        break;
+      case Pool.PoolMonster:
+        text =
+          'There is a pool. There is a monster in the pool. (TODO Monster) ';
+        break;
+      case Pool.PoolMonsterTreasure:
+        text =
+          'There is a pool. There is a monster and treasure in the pool. (TODO Monster Treasure) ';
+        break;
+      case Pool.MagicPool:
+        text =
+          'There is a pool. It is a magical pool. (In order to find out what it is, characters must enter the magic pool.) ';
+        break;
+      default:
+        text = '';
+        break;
+    }
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (text) nodes2.push({ kind: 'paragraph', text });
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
+  }
+  if (event.kind === 'circularMagicPool') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Magic Pool Effect',
+    };
+    const label = MagicPool[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    let text = '';
+    switch (event.result) {
+      case MagicPool.TransmuteGold:
+        text = 'It transmutes gold. ';
+        break;
+      case MagicPool.AlterCharacteristic:
+        text =
+          'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
+        break;
+      case MagicPool.WishOrDamage:
+        text =
+          'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
+        break;
+      case MagicPool.Transporter:
+        text = 'It is a transporter. ';
+        break;
+    }
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (text) nodes2.push({ kind: 'paragraph', text });
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
+  }
+  if (event.kind === 'transmuteType') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Transmutation Type',
+    };
+    const label = TransmuteType[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const text =
+      event.result === TransmuteType.GoldToPlatinum
+        ? 'It will turn gold to platinum, one time only. '
+        : 'It will turn gold to lead, one time only. ';
+    return [heading, bullet, { kind: 'paragraph', text }];
+  }
+  if (event.kind === 'poolAlignment') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Pool Alignment',
+    };
+    const label = PoolAlignment[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const text =
+      event.result === PoolAlignment.LawfulGood
+        ? 'It is Lawful Good. '
+        : event.result === PoolAlignment.LawfulEvil
+        ? 'It is Lawful Evil. '
+        : event.result === PoolAlignment.ChaoticGood
+        ? 'It is Chaotic Good. '
+        : event.result === PoolAlignment.ChaoticEvil
+        ? 'It is Chaotic Evil. '
+        : 'It is Neutral. ';
+    return [heading, bullet, { kind: 'paragraph', text }];
+  }
+  if (event.kind === 'transporterLocation') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Transporter Location',
+    };
+    const label = TransporterLocation[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    let text = '';
+    switch (event.result) {
+      case TransporterLocation.Surface:
+        text = 'It transports characters back to the surface. ';
+        break;
+      case TransporterLocation.SameLevelElsewhere:
+        text = 'It transports characters elsewhere on the same level. ';
+        break;
+      case TransporterLocation.OneLevelDown:
+        text = 'It transports characters one level down. ';
+        break;
+      case TransporterLocation.Away100Miles:
+        text =
+          'It transports characters 100 miles away for outdoor adventure. ';
+        break;
+    }
+    return [heading, bullet, { kind: 'paragraph', text }];
+  }
   if (event.kind === 'unusualSize') {
     const heading: DungeonMessage = {
       kind: 'heading',
@@ -1115,6 +1285,19 @@ export function toDetailRender(
     }
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
+  }
+  if (event.kind === 'trickTrap') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Trick / Trap',
+    };
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — TBD`],
+    };
+    const text = "There is a trick or trap. (TODO) -- check again in 30'. ";
+    return [heading, bullet, { kind: 'paragraph', text }];
   }
   if (event.kind === 'monsterLevel') {
     const heading: DungeonMessage = {
@@ -1757,6 +1940,61 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
           })
         ),
       };
+    case 'circularShapePool':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Pool',
+        sides: pool.sides,
+        entries: pool.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: Pool[e.command] ?? String(e.command),
+        })),
+      };
+    case 'circularShapeMagicPool':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Magic Pool Effect',
+        sides: magicPool.sides,
+        entries: magicPool.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: MagicPool[e.command] ?? String(e.command),
+        })),
+      };
+    case 'transmuteType':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Transmutation Type',
+        sides: transmuteType.sides,
+        entries: transmuteType.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: TransmuteType[e.command] ?? String(e.command),
+        })),
+      };
+    case 'poolAlignment':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Pool Alignment',
+        sides: poolAlignment.sides,
+        entries: poolAlignment.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: PoolAlignment[e.command] ?? String(e.command),
+        })),
+      };
+    case 'transporterLocation':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Transporter Location',
+        sides: transporterLocation.sides,
+        entries: transporterLocation.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: TransporterLocation[e.command] ?? String(e.command),
+        })),
+      };
     case 'streamConstruction':
       return {
         kind: 'table-preview',
@@ -1801,14 +2039,16 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
           label: ChasmConstruction[e.command] ?? String(e.command),
         })),
       };
-    case 'trickTrap': {
-      // Use existing trick/trap messages to build preview
-      const preview = trickTrapMessages({ detailMode: true });
-      const tp = preview.messages.find((m) => m.kind === 'table-preview') as
-        | DungeonTablePreview
-        | undefined;
-      return tp;
-    }
+    case 'trickTrap':
+      return {
+        kind: 'table-preview',
+        id: p.table,
+        title: 'Trick / Trap',
+        sides: 20,
+        entries: [
+          { range: '1–20', label: 'Not yet implemented — use GM judgment' },
+        ],
+      };
   }
   return undefined;
 }
@@ -2276,7 +2516,10 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     case PeriodicCheck.DeadEnd:
       return 'The passage reaches a dead end. (TODO) ';
     case PeriodicCheck.TrickTrap:
-      return "There is a trick or trap. (TODO) -- check again in 30'. ";
+      const trap = findChildEvent(node, 'trickTrap');
+      return trap && trap.event.kind === 'trickTrap'
+        ? formatTrickTrap(trap.event.result)
+        : "There is a trick or trap. (TODO) -- check again in 30'. ";
     default:
       return `Appears from: ${PeriodicCheck[node.event.result]}. `;
   }
@@ -2709,10 +2952,22 @@ function renderCompactUnusualDetails(node: OutcomeEventNode): string {
   const shape = findChildEvent(node, 'unusualShape');
   if (shape && shape.event.kind === 'unusualShape') {
     text += formatUnusualShape(shape.event.result);
+    const contents = findChildEvent(shape, 'circularContents');
+    if (contents && contents.event.kind === 'circularContents') {
+      text += formatCircularContents(contents.event.result);
+    }
+    const poolNode = findChildEvent(shape, 'circularPool');
+    if (poolNode && poolNode.event.kind === 'circularPool') {
+      text += formatCircularPool(poolNode.event.result);
+      const magicNode = findChildEvent(poolNode, 'circularMagicPool');
+      if (magicNode && magicNode.event.kind === 'circularMagicPool') {
+        text += formatCircularMagicPool(magicNode);
+      }
+    }
   }
   const size = findChildEvent(node, 'unusualSize');
   if (size && size.event.kind === 'unusualSize') {
-    text += formatUnusualSize(size.event.result, size.event.extra);
+    text += formatUnusualSize(size.event.result, size.event.extra ?? 0);
   }
   if (shape || size) {
     text += 'Determine exits, contents, and treasure separately. ';
@@ -2764,6 +3019,108 @@ function formatUnusualSize(result: UnusualSize, extra = 0): string {
     default:
       return '';
   }
+}
+
+function formatCircularContents(result: CircularContents): string {
+  switch (result) {
+    case CircularContents.Well:
+      return 'There is a well. ';
+    case CircularContents.Shaft:
+      return 'There is a shaft. ';
+    default:
+      return '';
+  }
+}
+
+function formatCircularPool(result: Pool): string {
+  switch (result) {
+    case Pool.PoolNoMonster:
+      return 'There is a pool. ';
+    case Pool.PoolMonster:
+      return 'There is a pool. There is a monster in the pool. (TODO Monster) ';
+    case Pool.PoolMonsterTreasure:
+      return 'There is a pool. There is a monster and treasure in the pool. (TODO Monster Treasure) ';
+    case Pool.MagicPool:
+      return 'There is a pool. It is a magical pool. (In order to find out what it is, characters must enter the magic pool.) ';
+    default:
+      return '';
+  }
+}
+
+function formatCircularMagicPool(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'circularMagicPool') return '';
+  let text = '';
+  switch (node.event.result) {
+    case MagicPool.TransmuteGold:
+      text = 'It transmutes gold. ';
+      break;
+    case MagicPool.AlterCharacteristic:
+      text =
+        'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
+      break;
+    case MagicPool.WishOrDamage:
+      text =
+        'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
+      break;
+    case MagicPool.Transporter:
+      text = 'It is a transporter. ';
+      break;
+  }
+  const alignment = findChildEvent(node, 'poolAlignment');
+  if (alignment && alignment.event.kind === 'poolAlignment') {
+    text += formatPoolAlignment(alignment.event.result);
+  }
+  const transmute = findChildEvent(node, 'transmuteType');
+  if (transmute && transmute.event.kind === 'transmuteType') {
+    text += formatTransmuteType(transmute.event.result);
+  }
+  const transporter = findChildEvent(node, 'transporterLocation');
+  if (transporter && transporter.event.kind === 'transporterLocation') {
+    text += formatTransporterLocation(transporter.event.result);
+  }
+  return text;
+}
+
+function formatTransmuteType(result: TransmuteType): string {
+  return result === TransmuteType.GoldToPlatinum
+    ? 'It will turn gold to platinum, one time only. '
+    : 'It will turn gold to lead, one time only. ';
+}
+
+function formatPoolAlignment(result: PoolAlignment): string {
+  switch (result) {
+    case PoolAlignment.LawfulGood:
+      return 'It is Lawful Good. ';
+    case PoolAlignment.LawfulEvil:
+      return 'It is Lawful Evil. ';
+    case PoolAlignment.ChaoticGood:
+      return 'It is Chaotic Good. ';
+    case PoolAlignment.ChaoticEvil:
+      return 'It is Chaotic Evil. ';
+    case PoolAlignment.Neutral:
+      return 'It is Neutral. ';
+    default:
+      return '';
+  }
+}
+
+function formatTransporterLocation(result: TransporterLocation): string {
+  switch (result) {
+    case TransporterLocation.Surface:
+      return 'It transports characters back to the surface. ';
+    case TransporterLocation.SameLevelElsewhere:
+      return 'It transports characters elsewhere on the same level. ';
+    case TransporterLocation.OneLevelDown:
+      return 'It transports characters one level down. ';
+    case TransporterLocation.Away100Miles:
+      return 'It transports characters 100 miles away for outdoor adventure. ';
+    default:
+      return '';
+  }
+}
+
+function formatTrickTrap(result: number): string {
+  return `There is a trick or trap. (roll ${result}) -- check again in 30'. `;
 }
 
 function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {

@@ -35,6 +35,14 @@ import {
   ChasmConstruction,
   jumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
+import { pool, Pool } from '../../tables/dungeon/pool';
+import {
+  magicPool,
+  MagicPool,
+  transmuteType,
+  poolAlignment,
+  transporterLocation,
+} from '../../tables/dungeon/magicPool';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import {
   roomDimensions,
@@ -46,6 +54,7 @@ import {
   unusualShape,
   UnusualShape,
   circularContents,
+  CircularContents,
 } from '../../tables/dungeon/unusualShape';
 import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
 import {
@@ -703,10 +712,100 @@ export function resolveCircularContents(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(circularContents.sides);
   const command = getTableEntry(usedRoll, circularContents);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === CircularContents.Pool) {
+    children.push({ type: 'pending-roll', table: 'circularShapePool' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'circularContents', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveCircularPool(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(pool.sides);
+  const command = getTableEntry(usedRoll, pool);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === Pool.MagicPool) {
+    children.push({ type: 'pending-roll', table: 'circularShapeMagicPool' });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'circularPool', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveCircularMagicPool(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(magicPool.sides);
+  const command = getTableEntry(usedRoll, magicPool);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === MagicPool.TransmuteGold) {
+    children.push({ type: 'pending-roll', table: 'transmuteType' });
+  } else if (command === MagicPool.WishOrDamage) {
+    children.push({ type: 'pending-roll', table: 'poolAlignment' });
+  } else if (command === MagicPool.Transporter) {
+    children.push({ type: 'pending-roll', table: 'transporterLocation' });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'circularMagicPool', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTransmuteType(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(transmuteType.sides);
+  const command = getTableEntry(usedRoll, transmuteType);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'transmuteType', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolvePoolAlignment(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(poolAlignment.sides);
+  const command = getTableEntry(usedRoll, poolAlignment);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'poolAlignment', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveTransporterLocation(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(transporterLocation.sides);
+  const command = getTableEntry(usedRoll, transporterLocation);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'transporterLocation', result: command } as OutcomeEvent,
+  };
+}
+
+export function resolveTrickTrap(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(20);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'trickTrap', result: usedRoll } as OutcomeEvent,
   };
 }
 

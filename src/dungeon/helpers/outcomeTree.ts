@@ -19,6 +19,12 @@ import {
   resolveUnusualShape,
   resolveUnusualSize,
   resolveCircularContents,
+  resolveCircularPool,
+  resolveCircularMagicPool,
+  resolveTransmuteType,
+  resolvePoolAlignment,
+  resolveTransporterLocation,
+  resolveTrickTrap,
   resolveWanderingWhereFrom,
   resolveGalleryStairLocation,
   resolveGalleryStairOccurrence,
@@ -255,6 +261,16 @@ function resolvePendingNode(
     }
     case 'circularContents':
       return resolveCircularContents({});
+    case 'circularShapePool':
+      return resolveCircularPool({});
+    case 'circularShapeMagicPool':
+      return resolveCircularMagicPool({});
+    case 'transmuteType':
+      return resolveTransmuteType({});
+    case 'poolAlignment':
+      return resolvePoolAlignment({});
+    case 'transporterLocation':
+      return resolveTransporterLocation({});
     case 'wanderingWhereFrom':
       return resolveWanderingWhereFrom({});
     case 'galleryStairLocation':
@@ -273,6 +289,8 @@ function resolvePendingNode(
       return resolveChasmConstruction({});
     case 'jumpingPlaceWidth':
       return resolveJumpingPlaceWidth({});
+    case 'trickTrap':
+      return resolveTrickTrap({});
     case 'numberOfExits': {
       const context = readExitsContext(pending.context);
       if (!context) return undefined;

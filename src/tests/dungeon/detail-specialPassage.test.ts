@@ -158,6 +158,28 @@ describe('detail rendering for chamber unusual size rerolls', () => {
       )
     ).toBe(true);
   });
+
+  it('resolves circular pool chains including transporter details', () => {
+    const resolvedTree = resolveSequenceWithRolls(
+      [14, 18, 1, 1, 19, 20, 1, 6],
+      1
+    );
+    const detailNodes = renderDetailTree(resolvedTree);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.trim().startsWith('It is a transporter.')
+      )
+    ).toBe(true);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.trim() === 'It transports characters back to the surface.'
+      )
+    ).toBe(true);
+  });
 });
 
 function resolveSequenceWithRolls(

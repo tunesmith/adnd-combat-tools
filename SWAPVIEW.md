@@ -54,7 +54,21 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Keep roll traces and preview controls functional in detail mode.
 - Suggested commit: `dungeon: recompute dungeon feed renders on mode switch`.
 
-### 5. Verification & Polish
+### 5. Outcome-First Table Flows
+
+- Eliminate preview-only services by ensuring every dungeon table produces a `DungeonOutcomeNode` via a resolver.
+- Register the new resolvers in `TABLE_RESOLVERS` so detail/compact renders always pull from the authoritative tree.
+- Update renderers to handle any newly surfaced event kinds (e.g., pool, magic pool, transporter).
+- Suggested commit: `dungeon: convert legacy preview tables to outcome-driven resolvers`.
+
+### 6. Outcome Update Mechanics
+
+- Refine `applyResolvedOutcome` (and related helpers) to splice results into the exact pending node using stable identifiers.
+- Encode sequence information in pending IDs where necessary so repeated tables do not collide.
+- Backfill tests that cover reroll/override flows for multi-step tables to confirm updates replace, rather than append, results.
+- Suggested commit: `dungeon: target pending nodes when applying resolved outcomes`.
+
+### 7. Verification & Polish
 
 - Expand Jest coverage to cover cross-mode toggling and partial resolution states.
 - Manually smoke test both modes for passages and doors, including registry overrides.
