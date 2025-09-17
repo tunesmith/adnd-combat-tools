@@ -125,9 +125,18 @@ function rangeText(range: number[]): string {
     : `${range[0]}–${range[range.length - 1]}`;
 }
 
+function withTargetId(
+  preview: DungeonTablePreview,
+  fallback: string
+): DungeonTablePreview {
+  if (preview.targetId && preview.targetId.length > 0) return preview;
+  return { ...preview, targetId: fallback };
+}
+
 function appendPendingPreviews(
   outcome: DungeonOutcomeNode,
-  collector: DungeonRenderNode[]
+  collector: DungeonRenderNode[],
+  seenPreviews?: Set<string>
 ): void {
   if (outcome.type !== 'event') return;
   const children = outcome.children;
@@ -136,10 +145,15 @@ function appendPendingPreviews(
     if (child.type !== 'pending-roll') continue;
     const preview = previewForPending(child);
     if (!preview) continue;
+    const normalized = withTargetId(preview, child.id ?? child.table);
+    if (seenPreviews && seenPreviews.has(normalized.id)) continue;
     const alreadyPresent = collector.some(
-      (node) => node.kind === 'table-preview' && node.id === preview.id
+      (node) => node.kind === 'table-preview' && node.id === normalized.id
     );
-    if (!alreadyPresent) collector.push(preview);
+    if (!alreadyPresent) {
+      collector.push(normalized);
+      if (seenPreviews) seenPreviews.add(normalized.id);
+    }
   }
 }
 
@@ -317,9 +331,11 @@ function previewForEventNode(
   const preview = previewForPending({
     type: 'pending-roll',
     table: tableId,
+    id: node.id,
     context,
   });
-  return preview || undefined;
+  if (!preview) return undefined;
+  return withTargetId(preview, node.id ?? tableId);
 }
 
 function humanLabel(command: Human): string {
@@ -410,7 +426,7 @@ export function toDetailRender(
       for (const child of outcome.children) {
         if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
-        if (preview) nodes.push(preview);
+        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
       }
     }
     return nodes;
@@ -656,7 +672,7 @@ export function toDetailRender(
       for (const child of outcome.children) {
         if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
-        if (preview) nodes.push(preview);
+        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
       }
     }
     return nodes;
@@ -701,7 +717,7 @@ export function toDetailRender(
       for (const child of outcome.children) {
         if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
-        if (preview) nodes.push(preview);
+        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
       }
     }
     return nodes;
@@ -749,7 +765,7 @@ export function toDetailRender(
       for (const child of outcome.children) {
         if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
-        if (preview) nodes.push(preview);
+        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
       }
     }
     return nodes;
@@ -820,7 +836,7 @@ export function toDetailRender(
       for (const child of outcome.children) {
         if (child.type !== 'pending-roll') continue;
         const preview = previewForPending(child);
-        if (preview) nodes.push(preview);
+        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
       }
     }
     return nodes;
@@ -829,6 +845,7 @@ export function toDetailRender(
     const preview = previewForPending({
       type: 'pending-roll',
       table: 'specialPassage',
+      id: outcome.id,
     });
     const heading: DungeonMessage = {
       kind: 'heading',
@@ -871,7 +888,8 @@ export function toDetailRender(
         text = "A chasm, 20' wide, bisects the passage. ";
         break;
     }
-    if (preview) nodes.push(preview);
+    if (preview)
+      nodes.push(withTargetId(preview, outcome.id ?? 'specialPassage'));
     nodes.push(heading, bullet);
     if (text) nodes.push({ kind: 'paragraph', text });
     appendPendingPreviews(outcome, nodes);
@@ -1529,7 +1547,8 @@ export function toDetailRender(
 
 export function renderDetailTree(
   outcome: DungeonOutcomeNode,
-  includeHeading = true
+  includeHeading = true,
+  seenPreviews: Set<string> = new Set()
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
   const preview = previewForEventNode(outcome);
@@ -1542,15 +1561,31 @@ export function renderDetailTree(
       if (pendingPreview) pendingPreviewIds.add(pendingPreview.id);
     }
   }
-  if (preview && !pendingPreviewIds.has(preview.id)) nodes.push(preview);
+  if (
+    preview &&
+    !pendingPreviewIds.has(preview.id) &&
+    !seenPreviews.has(preview.id)
+  ) {
+    nodes.push(withTargetId(preview, outcome.id ?? preview.id));
+    seenPreviews.add(preview.id);
+  }
   const detailNodes = includeHeading
     ? toDetailRender(outcome)
     : toDetailRender(outcome).filter((n) => n.kind !== 'heading');
-  nodes.push(...detailNodes);
+  for (const detailNode of detailNodes) {
+    if (detailNode.kind === 'table-preview') {
+      const normalized = withTargetId(detailNode, outcome.id ?? detailNode.id);
+      if (seenPreviews.has(normalized.id)) continue;
+      nodes.push(normalized);
+      seenPreviews.add(normalized.id);
+    } else {
+      nodes.push(detailNode);
+    }
+  }
   if (!outcome.children) return nodes;
   for (const child of outcome.children) {
     if (child.type !== 'event') continue;
-    nodes.push(...renderDetailTree(child, false));
+    nodes.push(...renderDetailTree(child, false, seenPreviews));
   }
   return nodes;
 }

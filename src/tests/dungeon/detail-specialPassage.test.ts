@@ -9,11 +9,13 @@ import {
 } from '../../dungeon/domain/resolvers';
 import type {
   DungeonOutcomeNode,
+  OutcomeEventNode,
   PendingRoll,
 } from '../../dungeon/domain/outcome';
 import {
   applyResolvedOutcome,
   isTableContext,
+  normalizeOutcomeTree,
 } from '../../dungeon/helpers/outcomeTree';
 import { TABLE_RESOLVERS } from '../../dungeon/helpers/registry';
 import type { TableContext } from '../../types/dungeon';
@@ -21,12 +23,13 @@ import type { TableContext } from '../../types/dungeon';
 describe('detail rendering with special passage', () => {
   it('allows inspecting the detail nodes for a special passage sequence', () => {
     const periodic = resolvePeriodicCheck({ roll: 12, level: 1 });
-    const withTurns = applyResolvedOutcome(
-      periodic,
+    const normalized = normalizeOutcomeTree(periodic);
+    const withTurns = applyToPending(
+      normalized,
       'passageTurns',
       resolvePassageTurns({ roll: 1 })
     );
-    const withWidth = applyResolvedOutcome(
+    const withWidth = applyToPending(
       withTurns,
       'passageWidth',
       resolvePassageWidth({ roll: 19 })
@@ -182,6 +185,40 @@ describe('detail rendering for chamber unusual size rerolls', () => {
   });
 });
 
+describe('reroll updates', () => {
+  it('replaces passage width text when rerolled', () => {
+    const initialTree = resolveSequenceWithRolls([12, 1, 5], 1);
+    const widthEvent = findEventByKind(initialTree, 'passageWidth');
+    expect(widthEvent?.id).toBeDefined();
+    const normalizedResolution = normalizeOutcomeTree(
+      resolvePassageWidth({ roll: 17 }),
+      widthEvent?.id ?? 'passageWidth'
+    );
+    const rerolledTree = normalizeOutcomeTree(
+      applyResolvedOutcome(
+        initialTree,
+        widthEvent?.id ?? 'passageWidth',
+        normalizedResolution
+      )
+    );
+    const detailNodes = renderDetailTree(rerolledTree);
+    expect(
+      detailNodes.filter(
+        (node) => node.kind === 'paragraph' && node.text.includes("10' wide")
+      )
+    ).toHaveLength(0);
+    expect(
+      detailNodes.filter(
+        (node) => node.kind === 'paragraph' && node.text.includes("30' wide")
+      )
+    ).toHaveLength(1);
+    const widthPreviews = detailNodes.filter(
+      (node) => node.kind === 'table-preview' && node.id === 'passageWidth'
+    );
+    expect(widthPreviews).toHaveLength(1);
+  });
+});
+
 function resolveSequenceWithRolls(
   rolls: number[],
   level: number
@@ -189,10 +226,12 @@ function resolveSequenceWithRolls(
   if (rolls.length === 0) {
     throw new Error('must provide at least one roll');
   }
-  let root: DungeonOutcomeNode = resolvePeriodicCheck({
-    roll: rolls[0],
-    level,
-  });
+  let root: DungeonOutcomeNode = normalizeOutcomeTree(
+    resolvePeriodicCheck({
+      roll: rolls[0],
+      level,
+    })
+  );
   for (const roll of rolls.slice(1)) {
     const pending = findNextPending(root);
     if (!pending) break;
@@ -216,9 +255,38 @@ function resolveSequenceWithRolls(
     if (!resolution.outcome) {
       throw new Error(`Resolver for ${base} did not return an outcome`);
     }
-    root = applyResolvedOutcome(root, pending.table, resolution.outcome);
+    const normalizedOutcome = normalizeOutcomeTree(
+      resolution.outcome,
+      pending.id ?? pending.table
+    );
+    root = normalizeOutcomeTree(
+      applyResolvedOutcome(root, pending.id ?? pending.table, normalizedOutcome)
+    );
   }
   return root;
+}
+
+function applyToPending(
+  root: DungeonOutcomeNode,
+  tableId: string,
+  resolution: DungeonOutcomeNode
+): DungeonOutcomeNode {
+  const normalizedRoot = normalizeOutcomeTree(root);
+  const pending = findPendingByTable(normalizedRoot, tableId);
+  if (!pending) {
+    throw new Error(`No pending node found for table ${tableId}`);
+  }
+  const normalizedResolution = normalizeOutcomeTree(
+    resolution,
+    pending.id ?? pending.table
+  );
+  return normalizeOutcomeTree(
+    applyResolvedOutcome(
+      normalizedRoot,
+      pending.id ?? pending.table,
+      normalizedResolution
+    )
+  );
 }
 
 function findNextPending(node: DungeonOutcomeNode): PendingRoll | undefined {
@@ -227,6 +295,34 @@ function findNextPending(node: DungeonOutcomeNode): PendingRoll | undefined {
   for (const child of node.children) {
     const found = findNextPending(child);
     if (found) return found;
+  }
+  return undefined;
+}
+
+function findEventByKind(
+  node: DungeonOutcomeNode,
+  kind: OutcomeEventNode['event']['kind']
+): OutcomeEventNode | undefined {
+  if (node.type === 'event') {
+    if (node.event.kind === kind) return node;
+    if (!node.children) return undefined;
+    for (const child of node.children) {
+      const match = findEventByKind(child, kind);
+      if (match) return match;
+    }
+  }
+  return undefined;
+}
+
+function findPendingByTable(
+  node: DungeonOutcomeNode,
+  tableId: string
+): PendingRoll | undefined {
+  if (node.type === 'pending-roll' && node.table === tableId) return node;
+  if (node.type !== 'event' || !node.children) return undefined;
+  for (const child of node.children) {
+    const match = findPendingByTable(child, tableId);
+    if (match) return match;
   }
   return undefined;
 }

@@ -203,12 +203,14 @@ export type OutcomeEvent =
 export type PendingRoll = {
   type: 'pending-roll';
   table: string;
+  id?: string;
   // optional context used by the UI to thread chains like door locations
   context?: unknown;
 };
 
 export type OutcomeEventNode = {
   type: 'event';
+  id?: string;
   event: OutcomeEvent;
   roll: number;
   children?: DungeonOutcomeNode[];

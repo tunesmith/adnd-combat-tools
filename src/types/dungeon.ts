@@ -45,6 +45,7 @@ export type TablePreviewEntry = {
 export type DungeonTablePreview = {
   kind: 'table-preview';
   id: string; // stable identifier, e.g., table name
+  targetId?: string; // unique path for this occurrence in the outcome tree
   title: string;
   sides: number;
   entries: TablePreviewEntry[];

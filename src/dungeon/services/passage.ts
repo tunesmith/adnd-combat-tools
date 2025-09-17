@@ -8,7 +8,10 @@ import type {
   DungeonRenderNode,
 } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
-import { resolveOutcomeNode } from '../helpers/outcomeTree';
+import {
+  normalizeOutcomeTree,
+  resolveOutcomeNode,
+} from '../helpers/outcomeTree';
 import { resolvePeriodicCheck } from '../domain/resolvers';
 import { toCompactRender, toDetailRender } from '../adapters/render';
 
@@ -39,6 +42,7 @@ export const passageMessages = (options?: {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',
       id: 'periodicCheck',
+      targetId: 'periodicCheck',
       title: 'Periodic Check',
       sides: periodicCheck.sides,
       entries: periodicCheck.entries.map((e) => ({
@@ -63,12 +67,14 @@ export const passageMessages = (options?: {
     level,
     avoidMonster: options?.avoidMonster,
   });
+  const normalized = node.type === 'event' ? normalizeOutcomeTree(node) : node;
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   if (options?.detailMode) {
-    const messages = toDetailRender(node);
-    return { usedRoll, messages, outcome: node };
+    const messages = toDetailRender(normalized);
+    return { usedRoll, messages, outcome: normalized };
   }
-  const resolvedNode = resolveOutcomeNode(node) ?? node;
-  const messages = toCompactRender(resolvedNode);
-  return { usedRoll, messages, outcome: resolvedNode };
+  const resolvedNode = resolveOutcomeNode(normalized) ?? normalized;
+  const finalOutcome = normalizeOutcomeTree(resolvedNode);
+  const messages = toCompactRender(finalOutcome);
+  return { usedRoll, messages, outcome: finalOutcome };
 };

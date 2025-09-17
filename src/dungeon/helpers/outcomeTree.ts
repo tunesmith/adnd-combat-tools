@@ -59,6 +59,38 @@ import {
 
 const MAX_DEPTH = 32;
 
+export function normalizeOutcomeTree(
+  node: DungeonOutcomeNode,
+  rootId?: string
+): DungeonOutcomeNode {
+  if (node.type === 'pending-roll') {
+    const pendingId =
+      rootId ?? node.id ?? `root.pending.${sanitizeId(node.table)}`;
+    if (node.id === pendingId) return node;
+    return { ...node, id: pendingId };
+  }
+  const assignedId = rootId ?? node.id ?? `root.${sanitizeId(node.event.kind)}`;
+  const changed = node.id !== assignedId;
+  const baseChildren = node.children;
+  if (!baseChildren || baseChildren.length === 0) {
+    if (!changed) return node;
+    return { ...node, id: assignedId };
+  }
+  let childChanged = false;
+  const nextChildren = baseChildren.map((child, index) => {
+    const childId = buildChildId(assignedId, child, index);
+    const normalized = normalizeOutcomeTree(child, childId);
+    if (normalized !== child) childChanged = true;
+    return normalized;
+  });
+  if (!changed && !childChanged) return node;
+  return {
+    ...node,
+    id: assignedId,
+    children: childChanged ? nextChildren : baseChildren,
+  };
+}
+
 export function isTableContext(x: unknown): x is TableContext {
   if (!x || typeof x !== 'object') return false;
   const kind = (x as { kind?: unknown }).kind;
@@ -119,29 +151,37 @@ export function resolveOutcomeNode(
 
 export function applyResolvedOutcome(
   node: DungeonOutcomeNode,
-  tableId: string,
+  targetId: string,
   resolved: DungeonOutcomeNode
 ): DungeonOutcomeNode {
-  const baseId = String(tableId.split(':')[0] ?? tableId);
-  if (node.type === 'event' && node.event.kind === baseId) {
+  if (node.type === 'pending-roll') {
+    if (
+      matchesTarget(node.id, targetId) ||
+      (!node.id && node.table === targetId)
+    ) {
+      return resolved;
+    }
+    return node;
+  }
+  if (node.type !== 'event') return node;
+  if (
+    matchesTarget(node.id, targetId) ||
+    (!node.id && node.event.kind === targetId)
+  ) {
     return resolved;
   }
-  if (node.type === 'pending-roll') {
-    return node.table === tableId ? resolved : node;
-  }
-  if (!node.children) return node;
+  const children = node.children;
+  if (!children || children.length === 0) return node;
   let changed = false;
-  const nextChildren = node.children.map((child) => {
-    const updated = applyResolvedOutcome(child, tableId, resolved);
+  const nextChildren = children.map((child) => {
+    const updated = applyResolvedOutcome(child, targetId, resolved);
     if (updated !== child) changed = true;
     return updated;
   });
   if (!changed) return node;
   return {
-    type: 'event',
-    event: node.event,
-    roll: node.roll,
-    children: nextChildren as unknown as DungeonOutcomeNode[],
+    ...node,
+    children: nextChildren,
   };
 }
 
@@ -359,6 +399,26 @@ function resolvePendingNode(
     default:
       return undefined;
   }
+}
+
+function buildChildId(
+  parentId: string,
+  child: DungeonOutcomeNode,
+  index: number
+): string {
+  const suffix =
+    child.type === 'event'
+      ? sanitizeId(child.event.kind)
+      : sanitizeId(child.table);
+  return `${parentId}.${index}.${suffix}`;
+}
+
+function sanitizeId(value: string): string {
+  return value.replace(/\s+/g, '-');
+}
+
+function matchesTarget(nodeId: string | undefined, targetId: string): boolean {
+  return !!nodeId && nodeId === targetId;
 }
 
 export function parseDoorChainSequence(

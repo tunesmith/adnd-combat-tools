@@ -58,6 +58,7 @@ import {
 import { renderDetailTree, toCompactRender } from '../adapters/render';
 import {
   applyResolvedOutcome,
+  normalizeOutcomeTree,
   parseDoorChainSequence,
   readDoorChainExisting,
   readExitsContext,
@@ -180,7 +181,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
 };
 
 function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
-  return { outcome, messages: renderDetailTree(outcome) };
+  const normalized = normalizeOutcomeTree(outcome);
+  return { outcome: normalized, messages: renderDetailTree(normalized) };
 }
 
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
@@ -350,7 +352,7 @@ export type FeedLike = {
 export function updateResolvedBlock<T extends FeedLike>(
   fi: T,
   feedItemId: string,
-  tableId: string,
+  targetId: string,
   messages: DungeonRenderNode[],
   headingText: string
 ): T {
@@ -358,14 +360,19 @@ export function updateResolvedBlock<T extends FeedLike>(
   const newMessages: DungeonRenderNode[] = [];
   let skippingOld = false;
   for (const node of fi.messages) {
-    if (node.kind === 'table-preview' && node.id === tableId) {
+    const nodeTargetId =
+      node.kind === 'table-preview' ? node.targetId ?? node.id : undefined;
+    if (node.kind === 'table-preview' && nodeTargetId === targetId) {
       newMessages.push(node);
       skippingOld = true;
       for (const m of messages) newMessages.push(m);
     } else {
       if (skippingOld) {
-        if (node.kind === 'table-preview' && node.id !== tableId) {
-          skippingOld = false;
+        if (node.kind === 'table-preview') {
+          const compareId = node.targetId ?? node.id;
+          if (compareId !== targetId) {
+            skippingOld = false;
+          }
         } else if (node.kind === 'heading' && node.text !== headingText) {
           skippingOld = false;
         } else if (node.kind === 'heading' && node.text === headingText) {
@@ -412,11 +419,19 @@ export function resolveViaRegistry<T extends FeedLike>(
           : (() => {
               const existingOutcome = fi.outcome;
               if (existingOutcome && result.outcome) {
-                const updatedOutcome = applyResolvedOutcome(
-                  existingOutcome,
-                  tp.id,
-                  result.outcome
+                const targetKey = tp.targetId ?? tp.id;
+                const normalizedExisting =
+                  normalizeOutcomeTree(existingOutcome);
+                const normalizedResolution = normalizeOutcomeTree(
+                  result.outcome,
+                  targetKey
                 );
+                const applied = applyResolvedOutcome(
+                  normalizedExisting,
+                  targetKey,
+                  normalizedResolution
+                );
+                const updatedOutcome = normalizeOutcomeTree(applied);
                 const detailRender = renderDetailTree(updatedOutcome);
                 const compactRender = toCompactRender(updatedOutcome);
                 return {
@@ -433,7 +448,7 @@ export function resolveViaRegistry<T extends FeedLike>(
               return updateResolvedBlock(
                 fi,
                 feedItemId,
-                tp.id,
+                tp.targetId ?? tp.id,
                 result.messages,
                 heading
               );
@@ -441,11 +456,12 @@ export function resolveViaRegistry<T extends FeedLike>(
       )
     );
   }
+  const targetKey = tp.targetId ?? tp.id;
   if (setCollapsed) {
-    setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${targetKey}`]: true }));
   }
   if (setResolved) {
-    setResolved((prev) => ({ ...prev, [`${feedItemId}:${tp.id}`]: true }));
+    setResolved((prev) => ({ ...prev, [`${feedItemId}:${targetKey}`]: true }));
   }
   return true;
 }

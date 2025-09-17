@@ -310,7 +310,8 @@ function renderNode(
       );
     case 'table-preview': {
       const tp = m;
-      const keyId = `${feedItemId}:${tp.id}`;
+      const targetKey = tp.targetId ?? tp.id;
+      const keyId = `${feedItemId}:${targetKey}`;
       const isCollapsed = !!(collapsed && collapsed[keyId]);
       const hasResolved = !!(resolved && resolved[keyId]);
       return (
@@ -371,12 +372,12 @@ function renderNode(
                   type="number"
                   min={1}
                   max={tp.sides}
-                  value={overrides[tp.id] ?? ''}
+                  value={overrides[targetKey] ?? ''}
                   onChange={(e) => {
                     const value = e.target.value
                       ? Number(e.target.value)
                       : undefined;
-                    setOverrides((prev) => ({ ...prev, [tp.id]: value }));
+                    setOverrides((prev) => ({ ...prev, [targetKey]: value }));
                   }}
                   className={styles['numberInput']}
                   style={{ width: 80, marginLeft: 8 }}
@@ -472,15 +473,16 @@ function resolvePreview(
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 ) {
-  let usedRoll: number | undefined = overrides[tp.id];
+  const targetKey = tp.targetId ?? tp.id;
+  let usedRoll: number | undefined = overrides[targetKey];
   // If the user clicked Submit without an override, do nothing.
   if (!shouldRoll && usedRoll === undefined) return;
   // For AutoRoll, generate a roll if we don't already have one.
   if (shouldRoll && usedRoll === undefined) usedRoll = rollDice(tp.sides);
 
   // Consume override if present
-  if (overrides[tp.id] !== undefined) {
-    setOverrides((prev) => ({ ...prev, [tp.id]: undefined }));
+  if (overrides[targetKey] !== undefined) {
+    setOverrides((prev) => ({ ...prev, [targetKey]: undefined }));
   }
 
   // Try the generic registry first; if handled, stop here
