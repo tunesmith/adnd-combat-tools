@@ -9,10 +9,7 @@ import {
   countPendingNodes,
   normalizeOutcomeTree,
 } from '../../dungeon/helpers/outcomeTree';
-import {
-  findEventByKind,
-  resolveSequenceWithRolls,
-} from './detail-utils';
+import { findEventByKind, resolveSequenceWithRolls } from './detail-utils';
 
 describe('reroll updates', () => {
   it('replaces passage width text when rerolled', () => {

@@ -27,13 +27,11 @@ export function resolveSequenceWithRolls(
     const pending = findNextPending(root);
     if (!pending) break;
     const base = pending.table.split(':')[0] ?? '';
-    const resolver = TABLE_RESOLVERS[
-      base as keyof typeof TABLE_RESOLVERS
-    ] as ((opts: {
-      roll?: number;
-      id: string;
-      context?: TableContext;
-    }) => { outcome?: DungeonOutcomeNode }) | undefined;
+    const resolver = TABLE_RESOLVERS[base as keyof typeof TABLE_RESOLVERS] as
+      | ((opts: { roll?: number; id: string; context?: TableContext }) => {
+          outcome?: DungeonOutcomeNode;
+        })
+      | undefined;
     if (!resolver) {
       throw new Error(`No resolver for table ${base}`);
     }
@@ -84,7 +82,9 @@ export function applyToPending(
 export function findEventByKind<K extends OutcomeEvent['kind']>(
   node: DungeonOutcomeNode,
   kind: K
-): (OutcomeEventNode & { event: Extract<OutcomeEvent, { kind: K }> }) | undefined {
+):
+  | (OutcomeEventNode & { event: Extract<OutcomeEvent, { kind: K }> })
+  | undefined {
   if (node.type === 'event') {
     if (node.event.kind === kind) {
       return node as OutcomeEventNode & {

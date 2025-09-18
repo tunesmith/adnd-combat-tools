@@ -1,7 +1,5 @@
 import { renderDetailTree } from '../../dungeon/adapters/render';
-import {
-  resolveSequenceWithRolls,
-} from './detail-utils';
+import { resolveSequenceWithRolls } from './detail-utils';
 
 describe('detail rendering for chamber unusual size rerolls', () => {
   it('keeps unusual size pending when a reroll is indicated', () => {
