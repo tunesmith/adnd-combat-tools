@@ -88,6 +88,10 @@ export function renderCompact(feed: FeedSnapshot): DungeonRenderNode[] {
   return selectMessagesForMode(feed.action, false, feed.renderCache, feed.messages);
 }
 
+export function renderDetail(feed: FeedSnapshot): DungeonRenderNode[] {
+  return selectMessagesForMode(feed.action, true, feed.renderCache, feed.messages);
+}
+
 function findPreview(
   nodes: DungeonRenderNode[],
   id: string

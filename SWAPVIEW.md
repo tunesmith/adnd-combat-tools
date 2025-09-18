@@ -70,27 +70,40 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 
 ### 7. Verification & Polish _(in progress)_
 
-- Expand Jest coverage to cover cross-mode toggling and partial resolution states, including a pending-indicator experience once compact mode marks unresolved children.
-- Add a regression test that exercises registry-driven updates so feed pending counts shrink to zero once a resolution chain completes.
+- Expand coverage to span cross-mode toggling and partial resolution states, including a pending-indicator experience once compact mode marks unresolved children.
+- Add regression tests that exercise both the domain-only harness and the UI-level preview driver so feed pending counts shrink to zero once a resolution chain completes.
 - Manually smoke test both modes for passages and doors, including registry overrides and reroll/override replacements.
 - Update documentation or comments if behaviour differs from expectations.
 - Suggested commit: `dungeon: cover swapview flow and update docs`.
 
-### 8. Outcome Pipeline Unification *(queued)
+### 8. Render Override Harness *(queued — high priority)_
 
-- Unify the roll-resolution pipeline so detail overrides, compact renders, and automated tests all drive the same `resolveViaRegistry` flow; expose a shared helper (`applyOutcomeRoll`) that the UI and tests can call instead of bypassing registry logic.
+- Extract a reusable helper that drives the same `render → preview → resolveViaRegistry` loop the UI uses, rebuilding feed items from the shared outcome tree each time.
+- Document how to compose tests that start with `simulateDetailRun`, then advance previews through the new helper to mimic UI override flows.
+- Convert existing dungeon UI tests to use the higher-level helper so render-layer regressions (e.g., missing context on previews) surface automatically.
+- Suggested commit: `dungeon: add ui-level preview harness`.
+
+### 9. Render Layer Purification *(queued)_
+
+- Ensure every preview emitted by `previewForPending` and related helpers carries the same context/target identifiers the domain nodes hold; audits should cover all table families, not just doors.
+- Move any remaining stateful logic out of render adapters, making them pure transforms of outcome trees so the UI harness and domain harness share identical data.
+- Add sanity checks (type-level or runtime assertions) that fail if required preview context is missing.
+- Suggested commit: `dungeon: purify preview adapters`.
+
+### 10. Outcome Pipeline Unification *(queued)_
+
+- Unify the roll-resolution pipeline so detail overrides, compact renders, and automated tests all drive the same helper (e.g., `applyOutcomeRoll`) in both UI and harness contexts.
 - Simplify door-chain state management to avoid duplicating `existingBefore`/`existingAfter` bookkeeping and ensure repeated laterals terminate the chain consistently.
-- Rework regression tests to use the shared pipeline helper, eliminating bespoke tree-walking utilities that drift from production behaviour.
-- Audit unused outcome helpers and delete functions exercised only by legacy tests; highlight any behaviour the UI no longer exposes before removal.
+- Audit the registry for table-specific quirks once everything flows through the shared helper.
 - Suggested commit: `dungeon: unify detail/compact outcome updates`.
 
-### 9. Retire Legacy Preview Services *(queued)
+### 11. Retire Legacy Preview Services *(queued)_
 
 - Delete or rewrite the old `doorLocationMessages`, `periodicDoorOnlyMessages`, `trickTrapMessages`, etc., that are exercised only by legacy tests; replace their coverage with pipeline-driven tests where needed.
 - Remove tests (`detail-doorChain`, etc.) that validate behaviour the UI no longer uses, or adapt them to the unified outcome pipeline so they reflect actual behaviour.
 - Suggested commit: `dungeon: remove unused preview services`.
 
-### 10. Adapter Modularisation *(queued)
+### 12. Adapter Modularisation *(queued)_
 
 - Factor the monolithic render adapter into smaller event-family modules (e.g., passage, chamber, monsters) to improve maintainability and make patterns for new tables obvious.
 - Create shared helpers for recurring render shapes (heading + bullet + paragraph) to shrink boilerplate.
