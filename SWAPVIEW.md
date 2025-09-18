@@ -71,6 +71,7 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 ### 7. Verification & Polish _(in progress)_
 
 - Expand Jest coverage to cover cross-mode toggling and partial resolution states, including a pending-indicator experience once compact mode marks unresolved children.
+- Add a regression test that exercises registry-driven updates so feed pending counts shrink to zero once a resolution chain completes.
 - Manually smoke test both modes for passages and doors, including registry overrides and reroll/override replacements.
 - Update documentation or comments if behaviour differs from expectations.
 - Suggested commit: `dungeon: cover swapview flow and update docs`.
