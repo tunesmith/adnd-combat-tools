@@ -322,6 +322,17 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   },
 };
 
+export function resolveRegistryTable(opts: {
+  tableId: string;
+  roll?: number;
+  context?: TableContext;
+}): RegistryResolution | undefined {
+  const base = String(opts.tableId.split(':')[0] ?? '');
+  if (!isTableId(base)) return undefined;
+  const resolver = TABLE_RESOLVERS[base];
+  return resolver({ roll: opts.roll, id: opts.tableId, context: opts.context });
+}
+
 function readDungeonLevel(
   context: TableContext | undefined,
   id: string,
@@ -404,14 +415,13 @@ export function resolveViaRegistry<T extends FeedLike>(
   const base = String(tp.id.split(':')[0] ?? '');
   if (!isTableId(base)) return false;
 
-  const resolver = TABLE_RESOLVERS[base];
   const heading = TABLE_HEADINGS[base];
-
-  const result = resolver({
+  const result = resolveRegistryTable({
+    tableId: tp.id,
     roll: usedRoll,
-    id: tp.id,
     context: tp.context,
   });
+  if (!result) return false;
 
   if (setFeed) {
     setFeed((prev) =>

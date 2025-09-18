@@ -304,7 +304,7 @@ export function resolvePeriodicDoorOnly(options?: {
   if (command === PeriodicCheckDoorOnly.Door) {
     children.push({
       type: 'pending-roll',
-      table: `doorLocation:${sequence}`,
+      table: `doorLocation:${sequence + 1}`,
       context: { kind: 'doorChain', existing },
     });
   }

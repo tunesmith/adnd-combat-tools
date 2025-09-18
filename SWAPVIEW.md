@@ -76,7 +76,21 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Update documentation or comments if behaviour differs from expectations.
 - Suggested commit: `dungeon: cover swapview flow and update docs`.
 
-### 8. Adapter Modularisation \*(queued)
+### 8. Outcome Pipeline Unification *(queued)
+
+- Unify the roll-resolution pipeline so detail overrides, compact renders, and automated tests all drive the same `resolveViaRegistry` flow; expose a shared helper (`applyOutcomeRoll`) that the UI and tests can call instead of bypassing registry logic.
+- Simplify door-chain state management to avoid duplicating `existingBefore`/`existingAfter` bookkeeping and ensure repeated laterals terminate the chain consistently.
+- Rework regression tests to use the shared pipeline helper, eliminating bespoke tree-walking utilities that drift from production behaviour.
+- Audit unused outcome helpers and delete functions exercised only by legacy tests; highlight any behaviour the UI no longer exposes before removal.
+- Suggested commit: `dungeon: unify detail/compact outcome updates`.
+
+### 9. Retire Legacy Preview Services *(queued)
+
+- Delete or rewrite the old `doorLocationMessages`, `periodicDoorOnlyMessages`, `trickTrapMessages`, etc., that are exercised only by legacy tests; replace their coverage with pipeline-driven tests where needed.
+- Remove tests (`detail-doorChain`, etc.) that validate behaviour the UI no longer uses, or adapt them to the unified outcome pipeline so they reflect actual behaviour.
+- Suggested commit: `dungeon: remove unused preview services`.
+
+### 10. Adapter Modularisation *(queued)
 
 - Factor the monolithic render adapter into smaller event-family modules (e.g., passage, chamber, monsters) to improve maintainability and make patterns for new tables obvious.
 - Create shared helpers for recurring render shapes (heading + bullet + paragraph) to shrink boilerplate.

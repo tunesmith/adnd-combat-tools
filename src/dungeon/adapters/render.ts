@@ -1615,6 +1615,7 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
           range: rangeText(e.range),
           label: PeriodicCheckDoorOnly[e.command] ?? String(e.command),
         })),
+        context: isTableContext(p.context) ? p.context : undefined,
       };
     case 'sidePassages':
       return {

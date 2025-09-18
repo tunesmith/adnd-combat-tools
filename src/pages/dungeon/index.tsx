@@ -13,18 +13,11 @@ import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import { doorBeyondMessages } from '../../dungeon/services/doorBeyondResult';
 import { passageMessages } from '../../dungeon/services/passage';
 import { resolveViaRegistry } from '../../dungeon/helpers/registry';
-import {
-  renderDetailTree,
-  toCompactRender,
-} from '../../dungeon/adapters/render';
+import { buildRenderCache, selectMessagesForMode } from '../../dungeon/helpers/renderCache';
+import type { RenderCache } from '../../dungeon/helpers/renderCache';
 import { countPendingNodes } from '../../dungeon/helpers/outcomeTree';
 
 type ActionKind = 'passage' | 'door';
-
-type RenderCache = {
-  detail?: DungeonRenderNode[];
-  compact?: DungeonRenderNode[];
-};
 
 type FeedItem = {
   id: string;
@@ -506,70 +499,6 @@ function resolvePreview(
     )
   )
     return;
-}
-
-function buildRenderCache(outcome?: DungeonOutcomeNode): RenderCache {
-  if (!outcome || outcome.type !== 'event') return {};
-  return {
-    detail: renderDetailTree(outcome),
-    compact: toCompactRender(outcome),
-  };
-}
-
-function filterForCompact(
-  nodes: DungeonRenderNode[],
-  action: ActionKind
-): DungeonRenderNode[] {
-  const rootHeading = action === 'passage' ? 'Passage' : 'Door';
-  return nodes.filter((n) => {
-    if (n.kind === 'heading') {
-      // Drop the redundant root heading; keep sub-headings
-      return n.text !== rootHeading;
-    }
-    if (n.kind === 'bullet-list') {
-      // Drop pure roll bullets like "roll: 9 — Foo"
-      const allRoll = n.items.every((it) =>
-        it.trim().toLowerCase().startsWith('roll:')
-      );
-      return !allRoll;
-    }
-    if (n.kind === 'roll-trace') {
-      // Hide debug traces in compact view
-      return false;
-    }
-    return true;
-  });
-}
-
-function filterForDetail(
-  nodes: DungeonRenderNode[],
-  action: ActionKind
-): DungeonRenderNode[] {
-  const rootHeading = action === 'passage' ? 'Passage' : 'Door';
-  let droppedRootHeading = false;
-  const result: DungeonRenderNode[] = [];
-  for (const n of nodes) {
-    if (!droppedRootHeading && n.kind === 'heading' && n.text === rootHeading) {
-      droppedRootHeading = true;
-      continue;
-    }
-    result.push(n);
-  }
-  return result;
-}
-
-function selectMessagesForMode(
-  action: ActionKind,
-  isDetail: boolean,
-  cache: RenderCache,
-  fallback: DungeonRenderNode[]
-): DungeonRenderNode[] {
-  const baseNodes = isDetail
-    ? cache.detail ?? fallback
-    : cache.compact ?? fallback;
-  return isDetail
-    ? filterForDetail(baseNodes, action)
-    : filterForCompact(baseNodes, action);
 }
 
 function getRootPreviewNodes(
