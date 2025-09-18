@@ -17,6 +17,7 @@ import {
   renderDetailTree,
   toCompactRender,
 } from '../../dungeon/adapters/render';
+import { countPendingNodes } from '../../dungeon/helpers/outcomeTree';
 
 type ActionKind = 'passage' | 'door';
 
@@ -32,6 +33,7 @@ type FeedItem = {
   outcome?: DungeonOutcomeNode;
   renderCache: RenderCache;
   messages: DungeonRenderNode[];
+  pendingCount: number;
 };
 
 const DungeonIndexPage = () => {
@@ -71,6 +73,7 @@ const DungeonIndexPage = () => {
       },
     });
     const renderCache = buildRenderCache(step.outcome);
+    const pendingCount = countPendingNodes(step.outcome);
     const messages = selectMessagesForMode(
       act,
       detailMode,
@@ -84,6 +87,7 @@ const DungeonIndexPage = () => {
       outcome: step.outcome,
       renderCache,
       messages,
+      pendingCount,
     };
     setFeed((prev) => [item, ...prev]);
     // announce briefly for a11y
@@ -243,6 +247,11 @@ const DungeonIndexPage = () => {
                   >
                     {item.action}
                   </span>
+                  {item.pendingCount > 0 && (
+                    <span className={styles['pendingBadge']}>
+                      {item.pendingCount} pending
+                    </span>
+                  )}
                   {!detailMode && (
                     <span className={styles['roll']}>(roll: {item.roll})</span>
                   )}

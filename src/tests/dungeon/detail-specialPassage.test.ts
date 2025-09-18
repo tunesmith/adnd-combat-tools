@@ -17,6 +17,7 @@ import type {
 } from '../../dungeon/domain/outcome';
 import {
   applyResolvedOutcome,
+  countPendingNodes,
   isTableContext,
   normalizeOutcomeTree,
 } from '../../dungeon/helpers/outcomeTree';
@@ -219,6 +220,7 @@ describe('reroll updates', () => {
       (node) => node.kind === 'table-preview' && node.id === 'passageWidth'
     );
     expect(widthPreviews).toHaveLength(1);
+    expect(countPendingNodes(rerolledTree)).toBe(0);
   });
 
   it('replaces door location narrative on reroll', () => {
@@ -296,6 +298,7 @@ describe('reroll updates', () => {
       (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
     );
     expect(previews).toHaveLength(1);
+    expect(countPendingNodes(rerolledTree)).toBeGreaterThan(0);
   });
 });
 

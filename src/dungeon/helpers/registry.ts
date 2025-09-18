@@ -58,6 +58,7 @@ import {
 import { renderDetailTree, toCompactRender } from '../adapters/render';
 import {
   applyResolvedOutcome,
+  countPendingNodes,
   normalizeOutcomeTree,
   parseDoorChainSequence,
   readDoorChainExisting,
@@ -347,6 +348,7 @@ export type FeedLike = {
     detail?: DungeonRenderNode[];
     compact?: DungeonRenderNode[];
   };
+  pendingCount?: number;
 };
 
 export function updateResolvedBlock<T extends FeedLike>(
@@ -437,6 +439,7 @@ export function resolveViaRegistry<T extends FeedLike>(
                 return {
                   ...fi,
                   outcome: updatedOutcome,
+                  pendingCount: countPendingNodes(updatedOutcome),
                   messages: detailRender,
                   renderCache: {
                     ...fi.renderCache,

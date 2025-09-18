@@ -61,14 +61,14 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Update renderers to handle any newly surfaced event kinds (e.g., pool, magic pool, transporter).
 - Suggested commit: `dungeon: convert legacy preview tables to outcome-driven resolvers`.
 
-### 6. Outcome Update Mechanics _(in progress)_
+### 6. Outcome Update Mechanics _(status: complete)_
 
 - Introduce stable pending identifiers (e.g., hierarchical keys or indices) so each unresolved node can be uniquely addressed.
 - Refine `applyResolvedOutcome` (and related helpers) to splice results into the exact pending node using those identifiers and target paths.
 - Backfill tests that cover reroll/override flows for multi-step tables to confirm updates replace, rather than append, results.
 - Suggested commit: `dungeon: target pending nodes when applying resolved outcomes`.
 
-### 7. Verification & Polish _(upcoming)_
+### 7. Verification & Polish _(in progress)_
 
 - Expand Jest coverage to cover cross-mode toggling and partial resolution states, including a pending-indicator experience once compact mode marks unresolved children.
 - Manually smoke test both modes for passages and doors, including registry overrides and reroll/override replacements.

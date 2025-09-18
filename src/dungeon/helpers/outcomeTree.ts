@@ -465,3 +465,15 @@ export function readExitsContext(
     return undefined;
   return { length, width, isRoom };
 }
+
+export function countPendingNodes(
+  node: DungeonOutcomeNode | undefined
+): number {
+  if (!node) return 0;
+  if (node.type === 'pending-roll') return 1;
+  if (!node.children) return 0;
+  return node.children.reduce(
+    (total, child) => total + countPendingNodes(child),
+    0
+  );
+}
