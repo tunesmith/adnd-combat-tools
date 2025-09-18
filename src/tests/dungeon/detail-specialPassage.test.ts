@@ -3,12 +3,15 @@ import {
   toCompactRender,
 } from '../../dungeon/adapters/render';
 import {
+  resolveDoorLocation,
   resolvePeriodicCheck,
   resolvePassageTurns,
   resolvePassageWidth,
+  resolveSpecialPassage,
 } from '../../dungeon/domain/resolvers';
 import type {
   DungeonOutcomeNode,
+  OutcomeEvent,
   OutcomeEventNode,
   PendingRoll,
 } from '../../dungeon/domain/outcome';
@@ -217,6 +220,83 @@ describe('reroll updates', () => {
     );
     expect(widthPreviews).toHaveLength(1);
   });
+
+  it('replaces door location narrative on reroll', () => {
+    const initialTree = resolveSequenceWithRolls([3, 13], 1);
+    const doorEvent = findEventByKind(initialTree, 'doorLocation');
+    expect(doorEvent?.id).toBeDefined();
+
+    const rerollOutcome = normalizeOutcomeTree(
+      resolveDoorLocation({
+        roll: 2,
+        existing: doorEvent?.event.existingBefore ?? [],
+        sequence: doorEvent?.event.sequence ?? 0,
+      }),
+      doorEvent?.id
+    );
+
+    const rerolledTree = normalizeOutcomeTree(
+      applyResolvedOutcome(
+        initialTree,
+        doorEvent?.id ?? 'doorLocation',
+        rerollOutcome
+      )
+    );
+
+    const detailNodes = renderDetailTree(rerolledTree);
+    expect(
+      detailNodes.filter(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.includes('A door is to the Left')
+      )
+    ).toHaveLength(1);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' && node.text.includes('A door is Ahead')
+      )
+    ).toBe(false);
+  });
+
+  it('updates special passage outcome without duplicating previews', () => {
+    const initialTree = resolveSequenceWithRolls([12, 1, 19, 4], 1);
+    const specialPassageEvent = findEventByKind(initialTree, 'specialPassage');
+    expect(specialPassageEvent?.id).toBeDefined();
+
+    const rerollOutcome = normalizeOutcomeTree(
+      resolveSpecialPassage({ roll: 13 }),
+      specialPassageEvent?.id
+    );
+
+    const rerolledTree = normalizeOutcomeTree(
+      applyResolvedOutcome(
+        initialTree,
+        specialPassageEvent?.id ?? 'specialPassage',
+        rerollOutcome
+      )
+    );
+
+    const detailNodes = renderDetailTree(rerolledTree);
+    expect(
+      detailNodes.filter(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.includes("A stream, 10' wide, bisects the passage.")
+      )
+    ).toHaveLength(1);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.includes('columns down the center')
+      )
+    ).toBe(false);
+    const previews = detailNodes.filter(
+      (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
+    );
+    expect(previews).toHaveLength(1);
+  });
 });
 
 function resolveSequenceWithRolls(
@@ -299,12 +379,18 @@ function findNextPending(node: DungeonOutcomeNode): PendingRoll | undefined {
   return undefined;
 }
 
-function findEventByKind(
+function findEventByKind<K extends OutcomeEvent['kind']>(
   node: DungeonOutcomeNode,
-  kind: OutcomeEventNode['event']['kind']
-): OutcomeEventNode | undefined {
+  kind: K
+):
+  | (OutcomeEventNode & { event: Extract<OutcomeEvent, { kind: K }> })
+  | undefined {
   if (node.type === 'event') {
-    if (node.event.kind === kind) return node;
+    if (node.event.kind === kind) {
+      return node as OutcomeEventNode & {
+        event: Extract<OutcomeEvent, { kind: K }>;
+      };
+    }
     if (!node.children) return undefined;
     for (const child of node.children) {
       const match = findEventByKind(child, kind);
