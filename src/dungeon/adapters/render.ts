@@ -790,52 +790,11 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = '';
-    switch (event.result) {
-      case Stairs.DownOne:
-        text = 'There are stairs here that descend one level. ';
-        break;
-      case Stairs.DownTwo:
-        text = 'There are stairs here that descend two levels. ';
-        break;
-      case Stairs.DownThree:
-        text = 'There are stairs here that descend three levels. ';
-        break;
-      case Stairs.UpOne:
-        text = 'There are stairs here that ascend one level. ';
-        break;
-      case Stairs.UpDead:
-        text = 'There are stairs here that ascend one level to a dead end. ';
-        break;
-      case Stairs.DownDead:
-        text = 'There are stairs here that descend one level to a dead end. ';
-        break;
-      case Stairs.ChimneyUpOne:
-        text =
-          "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.ChimneyUpTwo:
-        text =
-          "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.ChimneyDownTwo:
-        text =
-          "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.TrapDoorDownOne:
-        text =
-          "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.TrapDownDownTwo:
-        text =
-          "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
-        break;
-      case Stairs.UpOneDownTwo:
-        text =
-          'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ';
-        break;
+    const summary = describeStairs(outcome);
+    nodes.push(heading, bullet);
+    if (summary.detailParagraphs.length > 0) {
+      nodes.push(...summary.detailParagraphs);
     }
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
     // Render pending child previews from resolver
     if (
       outcome.type === 'event' &&
@@ -2498,6 +2457,118 @@ function describeNumberOfExits(node: OutcomeEventNode): {
   };
 }
 
+function describeStairs(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'stairs') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const detailParagraphs: DungeonMessage[] = [];
+  const compactSegments: string[] = [];
+  const append = (
+    raw: string,
+    options?: { detail?: boolean; compact?: boolean }
+  ) => {
+    const includeDetail = options?.detail !== false;
+    const includeCompact = options?.compact !== false;
+    const trimmed = raw.trim();
+    if (trimmed.length === 0) return;
+    const endsWithPunctuation = /[.!?]$/.test(trimmed);
+    if (includeDetail) {
+      const detailText = endsWithPunctuation ? `${trimmed} ` : `${trimmed}. `;
+      detailParagraphs.push({ kind: 'paragraph', text: detailText });
+    }
+    if (includeCompact) {
+      compactSegments.push(endsWithPunctuation ? trimmed : `${trimmed}.`);
+    }
+  };
+
+  switch (node.event.result) {
+    case Stairs.DownOne:
+      append('There are stairs here that descend one level.');
+      break;
+    case Stairs.DownTwo:
+      append('There are stairs here that descend two levels.');
+      break;
+    case Stairs.DownThree:
+      append('There are stairs here that descend three levels.');
+      break;
+    case Stairs.UpOne:
+      append('There are stairs here that ascend one level.');
+      break;
+    case Stairs.UpDead:
+      append('There are stairs here that ascend one level to a dead end.');
+      break;
+    case Stairs.DownDead:
+      append('There are stairs here that descend one level to a dead end.');
+      break;
+    case Stairs.ChimneyUpOne:
+      append(
+        "There is a chimney that goes up one level. The current passage continues, check again in 30'."
+      );
+      break;
+    case Stairs.ChimneyUpTwo:
+      append(
+        "There is a chimney that goes up two levels. The current passage continues, check again in 30'."
+      );
+      break;
+    case Stairs.ChimneyDownTwo:
+      append(
+        "There is a chimney that goes down two levels. The current passage continues, check again in 30'."
+      );
+      break;
+    case Stairs.TrapDoorDownOne:
+      append(
+        "There is a trap door that goes down one level. The current passage continues, check again in 30'."
+      );
+      break;
+    case Stairs.TrapDownDownTwo:
+      append(
+        "There is a trap door that goes down two levels. The current passage continues, check again in 30'."
+      );
+      break;
+    case Stairs.UpOneDownTwo:
+      append(
+        'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber.'
+      );
+      break;
+  }
+
+  const egress = findChildEvent(node, 'egress');
+  if (egress && egress.event.kind === 'egress') {
+    if (egress.event.result === Egress.Closed) {
+      append(
+        'After descending, an unnoticed door will close egress for the day.'
+      );
+    }
+  }
+
+  const chuteEvent = findChildEvent(node, 'chute');
+  if (chuteEvent && chuteEvent.event.kind === 'chute') {
+    if (chuteEvent.event.result === Chute.Exists) {
+      append(
+        'The stairs will turn into a chute, descending two levels from the top.'
+      );
+    }
+  }
+
+  if (node.event.result === Stairs.UpOneDownTwo) {
+    const chamber = findChildEvent(node, 'chamberDimensions');
+    if (chamber) {
+      const chamberSummary = renderCompactChamberDimensions(chamber).trim();
+      if (chamberSummary.length > 0) {
+        append(chamberSummary, { detail: false });
+      }
+    }
+  }
+
+  return {
+    detailParagraphs,
+    compactText: joinCompactSegments(compactSegments),
+  };
+}
+
 function renderWanderingWhereFrom(node: OutcomeEventNode): string {
   if (node.event.kind !== 'wanderingWhereFrom') return '';
   switch (node.event.result) {
@@ -2745,70 +2816,8 @@ function formatChasmConstruction(
 
 function renderCompactStairs(node: OutcomeEventNode): string {
   if (node.event.kind !== 'stairs') return '';
-  let text = '';
-  switch (node.event.result) {
-    case Stairs.DownOne:
-      text = 'There are stairs here that descend one level. ';
-      break;
-    case Stairs.DownTwo:
-      text = 'There are stairs here that descend two levels. ';
-      break;
-    case Stairs.DownThree:
-      text = 'There are stairs here that descend three levels. ';
-      break;
-    case Stairs.UpOne:
-      text = 'There are stairs here that ascend one level. ';
-      break;
-    case Stairs.UpDead:
-      text = 'There are stairs here that ascend one level to a dead end. ';
-      break;
-    case Stairs.DownDead:
-      text = 'There are stairs here that descend one level to a dead end. ';
-      break;
-    case Stairs.ChimneyUpOne:
-      text =
-        "There is a chimney that goes up one level. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.ChimneyUpTwo:
-      text =
-        "There is a chimney that goes up two levels. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.ChimneyDownTwo:
-      text =
-        "There is a chimney that goes down two levels. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.TrapDoorDownOne:
-      text =
-        "There is a trap door that goes down one level. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.TrapDownDownTwo:
-      text =
-        "There is a trap door that goes down two levels. The current passage continues, check again in 30'. ";
-      break;
-    case Stairs.UpOneDownTwo:
-      text =
-        'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber. ';
-      break;
-  }
-  const egress = findChildEvent(node, 'egress');
-  if (egress && egress.event.kind === 'egress') {
-    if (egress.event.result === Egress.Closed) {
-      text +=
-        'After descending, an unnoticed door will close egress for the day. ';
-    }
-  }
-  const chuteEvent = findChildEvent(node, 'chute');
-  if (chuteEvent && chuteEvent.event.kind === 'chute') {
-    if (chuteEvent.event.result === Chute.Exists) {
-      text +=
-        'The stairs will turn into a chute, descending two levels from the top. ';
-    }
-  }
-  if (node.event.result === Stairs.UpOneDownTwo) {
-    const chamber = findChildEvent(node, 'chamberDimensions');
-    if (chamber) text += renderCompactChamberDimensions(chamber);
-  }
-  return text;
+  const summary = describeStairs(node);
+  return summary.compactText;
 }
 
 function joinCompactSegments(segments: string[]): string {
