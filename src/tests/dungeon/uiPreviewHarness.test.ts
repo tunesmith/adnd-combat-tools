@@ -5,7 +5,10 @@ import {
   renderDetail,
 } from './uiPreviewHarness';
 import type { DungeonTablePreview } from '../../types/dungeon';
-import type { OutcomeEventNode, PendingRoll } from '../../dungeon/domain/outcome';
+import type {
+  OutcomeEventNode,
+  PendingRoll,
+} from '../../dungeon/domain/outcome';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -74,13 +77,16 @@ describe('uiPreviewHarness', () => {
     const detailView = renderDetail(feed);
     void detailView;
 
-    const compactText = renderCompact(feed)
+    const compactView = renderCompact(feed);
+    const compactText = compactView
       .filter(
         (n): n is { kind: 'paragraph'; text: string } => n.kind === 'paragraph'
       )
       .map((n) => n.text.trim())
       .join(' ');
-    void compactText; // TODO: assert compact summary when render is corrected
+    expect(compactText).toBe(
+      'The passage opens into a chamber. The chamber has an unusual shape and size. It is triangular. It is about 4,500 sq. ft. Determine exits, contents, and treasure separately.'
+    );
   });
 });
 

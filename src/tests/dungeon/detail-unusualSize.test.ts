@@ -37,7 +37,7 @@ describe('detail rendering for chamber unusual size rerolls', () => {
       detailNodes.some(
         (node) =>
           node.kind === 'paragraph' &&
-          node.text.trim() === 'It is about 4500 sq. ft.'
+          node.text.trim() === 'It is about 4,500 sq. ft.'
       )
     ).toBe(true);
   });

@@ -1279,37 +1279,9 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const extra = (event as { extra?: number }).extra ?? 0;
-    let paragraphText = '';
-    switch (event.result) {
-      case UnusualSize.SqFt500:
-        paragraphText = `It is about ${500 + extra} sq. ft. `;
-        break;
-      case UnusualSize.SqFt900:
-        paragraphText = `It is about ${900 + extra} sq. ft. `;
-        break;
-      case UnusualSize.SqFt1300:
-        paragraphText = `It is about ${1300 + extra} sq. ft. `;
-        break;
-      case UnusualSize.SqFt2000:
-        paragraphText = `It is about ${2000 + extra} sq. ft. `;
-        break;
-      case UnusualSize.SqFt2700:
-        paragraphText = `It is about ${2700 + extra} sq. ft. `;
-        break;
-      case UnusualSize.SqFt3400:
-        paragraphText = `It is about ${3400 + extra} sq. ft. `;
-        break;
-      case UnusualSize.RollAgain:
-        paragraphText = `Roll again for unusual size (add 2000 sq. ft.; current total ${(
-          extra + 2000
-        ).toLocaleString()} sq. ft.).`;
-        break;
-    }
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (paragraphText) {
-      nodes2.push({ kind: 'paragraph', text: paragraphText });
-    }
+    const summary = describeUnusualSizeChain(outcome);
+    nodes2.push(...summary.detailParagraphs);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
@@ -3025,7 +2997,10 @@ function renderCompactUnusualDetails(node: OutcomeEventNode): string {
   }
   const size = findChildEvent(node, 'unusualSize');
   if (size && size.event.kind === 'unusualSize') {
-    text += formatUnusualSize(size.event.result, size.event.extra ?? 0);
+    const summary = describeUnusualSizeChain(size);
+    if (summary.compactText.length > 0) {
+      text += summary.compactText + ' ';
+    }
   }
   if (shape || size) {
     text += 'Determine exits, contents, and treasure separately. ';
@@ -3056,26 +3031,76 @@ function formatUnusualShape(result: UnusualShape): string {
   }
 }
 
-function formatUnusualSize(result: UnusualSize, extra = 0): string {
+function describeUnusualSizeChain(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'unusualSize') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const chain = gatherUnusualSizeChain(node);
+  const detailParagraphs: DungeonMessage[] = [];
+  const compactSegments: string[] = [];
+  let accumulatedExtra = (node.event as { extra?: number }).extra ?? 0;
+  for (const entry of chain) {
+    if (entry.event.kind !== 'unusualSize') continue;
+    const eventExtra = (entry.event as { extra?: number }).extra ?? accumulatedExtra;
+    accumulatedExtra = Math.max(accumulatedExtra, eventExtra);
+    if (entry.event.result === UnusualSize.RollAgain) {
+      accumulatedExtra += 2000;
+      const sentence = `Add 2000 sq. ft. (current total ${accumulatedExtra.toLocaleString()} sq. ft.) and roll again.`;
+      detailParagraphs.push({ kind: 'paragraph', text: sentence });
+      compactSegments.push(sentence);
+      continue;
+    }
+    const baseArea = unusualSizeBase(entry.event.result);
+    if (baseArea !== undefined) {
+      const total = baseArea + accumulatedExtra;
+      const sentence = `It is about ${total.toLocaleString()} sq. ft.`;
+      detailParagraphs.push({ kind: 'paragraph', text: sentence });
+      compactSegments.push(sentence);
+    }
+  }
+  return {
+    detailParagraphs,
+    compactText: compactSegments.join(' '),
+  };
+}
+
+function gatherUnusualSizeChain(node: OutcomeEventNode): OutcomeEventNode[] {
+  const result: OutcomeEventNode[] = [node];
+  let current: OutcomeEventNode | undefined = node;
+  const visited = new Set<string>();
+  while (current) {
+    const next: OutcomeEventNode | undefined = getChildEvents(current).find(
+      (child): child is OutcomeEventNode => child.event.kind === 'unusualSize'
+    );
+    if (!next) break;
+    const key = next.id ?? `${current.id}.unusualSize`;
+    if (visited.has(key)) break;
+    visited.add(key);
+    result.push(next);
+    current = next;
+  }
+  return result;
+}
+
+function unusualSizeBase(result: UnusualSize): number | undefined {
   switch (result) {
     case UnusualSize.SqFt500:
-      return `It is about ${500 + extra} sq. ft. `;
+      return 500;
     case UnusualSize.SqFt900:
-      return `It is about ${900 + extra} sq. ft. `;
+      return 900;
     case UnusualSize.SqFt1300:
-      return `It is about ${1300 + extra} sq. ft. `;
+      return 1300;
     case UnusualSize.SqFt2000:
-      return `It is about ${2000 + extra} sq. ft. `;
+      return 2000;
     case UnusualSize.SqFt2700:
-      return `It is about ${2700 + extra} sq. ft. `;
+      return 2700;
     case UnusualSize.SqFt3400:
-      return `It is about ${3400 + extra} sq. ft. `;
-    case UnusualSize.RollAgain: {
-      const total = extra + 2000;
-      return `Add 2000 sq. ft. (current total ${total.toLocaleString()} sq. ft.) and roll again. `;
-    }
+      return 3400;
     default:
-      return '';
+      return undefined;
   }
 }
 
