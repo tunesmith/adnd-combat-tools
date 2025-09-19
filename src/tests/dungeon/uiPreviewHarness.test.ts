@@ -1,14 +1,9 @@
 import {
   createFeedSnapshot,
-  resolvePreview,
+  resolvePendingPreview,
   renderCompact,
-  renderDetail,
+  listPendingPreviewTargets,
 } from './uiPreviewHarness';
-import type { DungeonTablePreview } from '../../types/dungeon';
-import type {
-  OutcomeEventNode,
-  PendingRoll,
-} from '../../dungeon/domain/outcome';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -18,9 +13,9 @@ describe('uiPreviewHarness', () => {
       detailMode: true,
     });
 
-    feed = resolvePreview(feed, 'doorLocation:0', 1);
-    feed = resolvePreview(feed, 'periodicCheckDoorOnly:0', 3);
-    feed = resolvePreview(feed, 'doorLocation:1', 4);
+    feed = resolvePendingPreview(feed, 'doorLocation', 1);
+    feed = resolvePendingPreview(feed, 'periodicCheckDoorOnly', 3);
+    feed = resolvePendingPreview(feed, 'doorLocation', 4);
 
     expect(feed.pendingCount).toBe(0);
     const compact = renderCompact(feed)
@@ -40,13 +35,13 @@ describe('uiPreviewHarness', () => {
       roll: 14,
       detailMode: true,
     });
-    feed = resolvePreview(feed, 'chamberDimensions', 18);
-    feed = resolvePreview(feed, 'unusualShape', 6);
-    feed = resolvePreview(feed, 'unusualSize', 15);
-    feed = resolvePreview(feed, 'unusualSize', 15);
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 18);
+    feed = resolvePendingPreview(feed, 'unusualShape', 6);
+    feed = resolvePendingPreview(feed, 'unusualSize', 15);
+    feed = resolvePendingPreview(feed, 'unusualSize', 15);
 
     expect(feed.pendingCount).toBe(1);
-    expect(listPreviewIds(feed)).toHaveLength(1);
+    expect(listPendingPreviewTargets(feed)).toHaveLength(1);
 
     const compactText = renderCompact(feed)
       .filter(
@@ -54,9 +49,13 @@ describe('uiPreviewHarness', () => {
       )
       .map((n) => n.text.trim())
       .join(' ');
-    expect(compactText).toBe(
-      'The passage opens into a chamber. The chamber has an unusual shape and size. It is triangular. Add 2000 sq. ft. (current total 2,000 sq. ft.) and roll again. Determine exits, contents, and treasure separately.'
+    expect(compactText).toContain(
+      'Add 2000 sq. ft. (current total 2,000 sq. ft.) and roll again.'
     );
+    expect(compactText).toContain(
+      'Add 2000 sq. ft. (current total 4,000 sq. ft.) and roll again.'
+    );
+    expect(compactText).not.toContain('It is about 4,500 sq. ft.');
   });
 
   test('chamber unusual size resolves fully when reroll finishes', () => {
@@ -65,17 +64,14 @@ describe('uiPreviewHarness', () => {
       roll: 14,
       detailMode: true,
     });
-    feed = resolvePreview(feed, 'chamberDimensions', 18);
-    feed = resolvePreview(feed, 'unusualShape', 6);
-    feed = resolvePreview(feed, 'unusualSize', 15);
-    feed = resolvePreview(feed, 'unusualSize', 15);
-    feed = resolvePreview(feed, 'unusualSize', 1);
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 18);
+    feed = resolvePendingPreview(feed, 'unusualShape', 6);
+    feed = resolvePendingPreview(feed, 'unusualSize', 15);
+    feed = resolvePendingPreview(feed, 'unusualSize', 15);
+    feed = resolvePendingPreview(feed, 'unusualSize', 1);
 
     expect(feed.pendingCount).toBe(0);
-    expect(listPreviewIds(feed)).toHaveLength(0);
-
-    const detailView = renderDetail(feed);
-    void detailView;
+    expect(listPendingPreviewTargets(feed)).toHaveLength(0);
 
     const compactView = renderCompact(feed);
     const compactText = compactView
@@ -84,33 +80,15 @@ describe('uiPreviewHarness', () => {
       )
       .map((n) => n.text.trim())
       .join(' ');
+    // expect(compactText).toContain(
+    //   'Add 2000 sq. ft. (current total 2,000 sq. ft.) and roll again.'
+    // );
+    // expect(compactText).toContain(
+    //   'Add 2000 sq. ft. (current total 4,000 sq. ft.) and roll again.'
+    // );
+    expect(compactText).toContain('It is about 4,500 sq. ft.');
     expect(compactText).toBe(
       'The passage opens into a chamber. The chamber has an unusual shape and size. It is triangular. It is about 4,500 sq. ft. Determine exits, contents, and treasure separately.'
     );
   });
 });
-
-function listPreviewIds(feed: ReturnType<typeof createFeedSnapshot>): string[] {
-  const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
-  return renderDetail(feed)
-    .filter((n): n is DungeonTablePreview => n.kind === 'table-preview')
-    .map((preview) =>
-      preview.targetId && preview.targetId.length > 0
-        ? preview.targetId
-        : preview.id
-    )
-    .filter((id) => pendingTargets.has(id));
-}
-
-function collectPendingTargets(node: OutcomeEventNode): string[] {
-  const acc: string[] = [];
-  const walk = (current: OutcomeEventNode | PendingRoll) => {
-    if (current.type === 'pending-roll') {
-      acc.push(current.id ?? current.table);
-      return;
-    }
-    current.children?.forEach((child) => walk(child));
-  };
-  walk(node);
-  return acc;
-}

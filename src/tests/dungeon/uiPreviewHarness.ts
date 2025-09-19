@@ -7,7 +7,7 @@ import type {
   DungeonRenderNode,
   DungeonTablePreview,
 } from '../../types/dungeon';
-import type { OutcomeEventNode } from '../../dungeon/domain/outcome';
+import type { OutcomeEventNode, PendingRoll } from '../../dungeon/domain/outcome';
 
 export type FeedSnapshot = {
   id: string;
@@ -92,12 +92,69 @@ export function renderDetail(feed: FeedSnapshot): DungeonRenderNode[] {
   return selectMessagesForMode(feed.action, true, feed.renderCache, feed.messages);
 }
 
+export function listPendingPreviewTargets(feed: FeedSnapshot): string[] {
+  const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
+  return renderDetail(feed)
+    .filter((n): n is DungeonTablePreview => n.kind === 'table-preview')
+    .map((preview) =>
+      preview.targetId && preview.targetId.length > 0
+        ? preview.targetId
+        : preview.id
+    )
+    .filter((id) => pendingTargets.has(id));
+}
+
+export function resolvePendingPreview(
+  feed: FeedSnapshot,
+  tableBase: string,
+  roll: number
+): FeedSnapshot {
+  const pendingPreview = getPendingPreviews(feed).find((preview) => {
+    const base = preview.id.split(':')[0];
+    return base === tableBase;
+  });
+  if (!pendingPreview) {
+    throw new Error(`No pending preview found for table ${tableBase}.`);
+  }
+  const key = pendingPreview.targetId && pendingPreview.targetId.length > 0
+    ? pendingPreview.targetId
+    : pendingPreview.id;
+  return resolvePreview(feed, key, roll);
+}
+
 function findPreview(
   nodes: DungeonRenderNode[],
   id: string
 ): DungeonTablePreview | undefined {
   for (const node of nodes) {
-    if (node.kind === 'table-preview' && node.id === id) return node;
+    if (node.kind !== 'table-preview') continue;
+    if (node.id === id) return node;
+    if (node.targetId && node.targetId === id) return node;
   }
   return undefined;
+}
+
+function getPendingPreviews(feed: FeedSnapshot): DungeonTablePreview[] {
+  const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
+  return renderDetail(feed)
+    .filter((n): n is DungeonTablePreview => n.kind === 'table-preview')
+    .filter((preview) => {
+      const key = preview.targetId && preview.targetId.length > 0
+        ? preview.targetId
+        : preview.id;
+      return pendingTargets.has(key);
+    });
+}
+
+function collectPendingTargets(node: OutcomeEventNode): string[] {
+  const acc: string[] = [];
+  const walk = (current: OutcomeEventNode | PendingRoll) => {
+    if (current.type === 'pending-roll') {
+      acc.push(current.id ?? current.table);
+      return;
+    }
+    current.children?.forEach((child) => walk(child));
+  };
+  walk(node);
+  return acc;
 }
