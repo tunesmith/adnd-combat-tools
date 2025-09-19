@@ -1,15 +1,24 @@
+import { toDetailRender } from '../../dungeon/adapters/render';
+import { resolveSidePassages } from '../../dungeon/domain/resolvers';
+import type { OutcomeEventNode } from '../../dungeon/domain/outcome';
 import { passageMessages } from '../../dungeon/services/passage';
 import {
   periodicCheck,
   PeriodicCheck,
 } from '../../tables/dungeon/periodicCheck';
-import type { DungeonMessage } from '../../types/dungeon';
+import type { DungeonMessage, DungeonRenderNode } from '../../types/dungeon';
 import * as dungeonLookup from '../../dungeon/helpers/dungeonLookup';
 
 function isParagraph(
   m: DungeonMessage
 ): m is Extract<DungeonMessage, { kind: 'paragraph'; text: string }> {
   return (m as any).kind === 'paragraph' && typeof (m as any).text === 'string';
+}
+
+function isRenderParagraph(
+  node: DungeonRenderNode
+): node is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> {
+  return node.kind === 'paragraph';
 }
 
 function pickRollFor(cmd: PeriodicCheck): number {
@@ -33,5 +42,16 @@ describe('Compact: PeriodicCheck Side Passage (adapter)', () => {
     );
     expect(spy).toHaveBeenCalledTimes(1);
     spy.mockRestore();
+  });
+});
+
+describe('Detail: Side passage rendering', () => {
+  test('detail render mirrors side passage helper output', () => {
+    const outcome = resolveSidePassages({ roll: 1 }) as OutcomeEventNode;
+    const rendered = toDetailRender(outcome);
+    const paragraphs = rendered.filter(isRenderParagraph);
+    expect(paragraphs.map((p) => p.text)).toEqual([
+      "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ",
+    ]);
   });
 });

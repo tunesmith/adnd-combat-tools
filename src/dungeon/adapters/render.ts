@@ -581,59 +581,10 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = '';
-    switch (event.result) {
-      case SidePassages.Left90:
-        text =
-          "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Right90:
-        text =
-          "A side passage branches right 90 degrees. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Left45:
-        text =
-          "A side passage branches left 45 degrees ahead. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Right45:
-        text =
-          "A side passage branches right 45 degrees ahead. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Left135:
-        text =
-          "A side passage branches left 45 degrees behind (left 135 degrees). Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Right135:
-        text =
-          "A side passage branches right 45 degrees behind (right 135 degrees). Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.LeftCurve45:
-        text =
-          "A side passage branches at a curve, 45 degrees left ahead. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.RightCurve45:
-        text =
-          "A side passage branches at a curve, 45 degrees right ahead. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.PassageT:
-        text =
-          "The passage reaches a 'T' intersection to either side. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.PassageY:
-        text =
-          "The passage reaches a 'Y' intersection, ahead 45 degrees to the left and right. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.FourWay:
-        text =
-          "The passage reaches a four-way intersection. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.PassageX:
-        text =
-          "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
-        break;
-    }
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
-    return nodes;
+    const summary = describeSidePassage(outcome);
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    nodes2.push(...summary.detailParagraphs);
+    return nodes2;
   }
   if (event.kind === 'roomDimensions') {
     const heading: DungeonMessage = {
@@ -2064,59 +2015,9 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    // Text equals the detail path text
-    let text = '';
-    switch (event.result) {
-      case SidePassages.Left90:
-        text =
-          "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Right90:
-        text =
-          "A side passage branches right 90 degrees. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Left45:
-        text =
-          "A side passage branches left 45 degrees ahead. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Right45:
-        text =
-          "A side passage branches right 45 degrees ahead. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Left135:
-        text =
-          "A side passage branches left 45 degrees behind (left 135 degrees). Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.Right135:
-        text =
-          "A side passage branches right 45 degrees behind (right 135 degrees). Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.LeftCurve45:
-        text =
-          "A side passage branches at a curve, 45 degrees left ahead. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.RightCurve45:
-        text =
-          "A side passage branches at a curve, 45 degrees right ahead. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.PassageT:
-        text =
-          "The passage reaches a 'T' intersection to either side. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.PassageY:
-        text =
-          "The passage reaches a 'Y' intersection, ahead 45 degrees to the left and right. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.FourWay:
-        text =
-          "The passage reaches a four-way intersection. Passages extend -- check again in 30'. ";
-        break;
-      case SidePassages.PassageX:
-        text =
-          "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
-        break;
-    }
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
+    const summary = describeSidePassage(node);
+    nodes.push(heading, bullet);
+    nodes.push(...summary.detailParagraphs);
     return nodes;
   }
   if (event.kind === 'passageTurns') {
@@ -2477,6 +2378,20 @@ function describePassageTurn(node: OutcomeEventNode): {
     detailParagraphs.push({ kind: 'paragraph', text: detailText });
   }
   return { detailParagraphs, compactText };
+}
+
+function describeSidePassage(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'sidePassages') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const text = formatSidePassageResult(node.event.result);
+  const detailParagraphs: DungeonMessage[] = text.length
+    ? [{ kind: 'paragraph', text }]
+    : [];
+  return { detailParagraphs, compactText: text };
 }
 
 function describeStairs(node: OutcomeEventNode): {
@@ -3339,13 +3254,17 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
       return renderCompactDoorChain(findChildEvent(node, 'doorLocation'));
     case PeriodicCheck.SidePassage: {
       const side = findChildEvent(node, 'sidePassages');
-      return side && side.event.kind === 'sidePassages'
-        ? formatSidePassageResult(side.event.result)
-        : compactPeriodicText(
-            event.level,
-            event.result,
-            event.avoidMonster ?? false
-          );
+      if (side && side.event.kind === 'sidePassages') {
+        const summary = describeSidePassage(side);
+        if (summary.compactText.length > 0) {
+          return summary.compactText;
+        }
+      }
+      return compactPeriodicText(
+        event.level,
+        event.result,
+        event.avoidMonster ?? false
+      );
     }
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
