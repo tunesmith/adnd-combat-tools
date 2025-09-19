@@ -133,6 +133,12 @@ function withTargetId(
   return { ...preview, targetId: fallback };
 }
 
+function previewKey(preview: DungeonTablePreview): string {
+  return preview.targetId && preview.targetId.length > 0
+    ? preview.targetId
+    : preview.id;
+}
+
 function appendPendingPreviews(
   outcome: DungeonOutcomeNode,
   collector: DungeonRenderNode[],
@@ -146,13 +152,16 @@ function appendPendingPreviews(
     const preview = previewForPending(child);
     if (!preview) continue;
     const normalized = withTargetId(preview, child.id ?? child.table);
-    if (seenPreviews && seenPreviews.has(normalized.id)) continue;
-    const alreadyPresent = collector.some(
-      (node) => node.kind === 'table-preview' && node.id === normalized.id
-    );
+    const key = previewKey(normalized);
+    if (seenPreviews && seenPreviews.has(key)) continue;
+    const alreadyPresent = collector.some((node) => {
+      if (node.kind !== 'table-preview') return false;
+      const existingKey = previewKey(node);
+      return existingKey === key;
+    });
     if (!alreadyPresent) {
       collector.push(normalized);
-      if (seenPreviews) seenPreviews.add(normalized.id);
+      if (seenPreviews) seenPreviews.add(key);
     }
   }
 }
@@ -1558,16 +1567,28 @@ export function renderDetailTree(
     for (const child of outcome.children) {
       if (child.type !== 'pending-roll') continue;
       const pendingPreview = previewForPending(child);
-      if (pendingPreview) pendingPreviewIds.add(pendingPreview.id);
+      if (pendingPreview) {
+        const normalizedPending = withTargetId(pendingPreview, child.id ?? child.table);
+        pendingPreviewIds.add(previewKey(normalizedPending));
+      }
     }
   }
+  const hasChildEventSameKind = Array.isArray(outcome.children)
+    ? outcome.children.some(
+        (child): child is OutcomeEventNode =>
+          child.type === 'event' && child.event.kind === outcome.event.kind
+      )
+    : false;
   if (
     preview &&
-    !pendingPreviewIds.has(preview.id) &&
-    !seenPreviews.has(preview.id)
+    !hasChildEventSameKind
   ) {
-    nodes.push(withTargetId(preview, outcome.id ?? preview.id));
-    seenPreviews.add(preview.id);
+    const normalizedPreview = withTargetId(preview, outcome.id ?? preview.id);
+    const key = previewKey(normalizedPreview);
+    if (!pendingPreviewIds.has(key) && !seenPreviews.has(key)) {
+      nodes.push(normalizedPreview);
+      seenPreviews.add(key);
+    }
   }
   const detailNodes = includeHeading
     ? toDetailRender(outcome)
@@ -1575,9 +1596,10 @@ export function renderDetailTree(
   for (const detailNode of detailNodes) {
     if (detailNode.kind === 'table-preview') {
       const normalized = withTargetId(detailNode, outcome.id ?? detailNode.id);
-      if (seenPreviews.has(normalized.id)) continue;
+      const key = previewKey(normalized);
+      if (seenPreviews.has(key)) continue;
       nodes.push(normalized);
-      seenPreviews.add(normalized.id);
+      seenPreviews.add(key);
     } else {
       nodes.push(detailNode);
     }
