@@ -2,12 +2,12 @@ import {
   simulateCompactRunWithSequence,
   simulateDetailRun,
 } from './dungeonRollHarness';
-import { runDungeonStep } from '../../dungeon/services/adapters';
-import { normalizeOutcomeTree, countPendingNodes } from '../../dungeon/helpers/outcomeTree';
-import { buildRenderCache, selectMessagesForMode } from '../../dungeon/helpers/renderCache';
-import { resolveViaRegistry } from '../../dungeon/helpers/registry';
-import type { DungeonRenderNode, DungeonTablePreview } from '../../types/dungeon';
-import type { OutcomeEventNode } from '../../dungeon/domain/outcome';
+import {
+  createFeedSnapshot,
+  resolvePendingPreview,
+  renderCompact,
+  listPendingPreviewTargets,
+} from './uiPreviewHarness';
 
 describe('dungeon roll harness', () => {
   test('tries out 3,1,3', () => {
@@ -66,60 +66,19 @@ describe('dungeon roll harness', () => {
   });
 
   test('ui resolver clears follow-up door continuation', () => {
-    const step = runDungeonStep('passage', { roll: 3, detailMode: true });
-    if (!step.outcome || step.outcome.type !== 'event') {
-      throw new Error('expected event outcome');
-    }
-    type FeedEntry = {
-      id: string;
-      action: 'passage';
-      roll: number;
-      outcome: OutcomeEventNode;
-      renderCache: ReturnType<typeof buildRenderCache>;
-      messages: DungeonRenderNode[];
-      pendingCount: number;
-    };
-    const feedItem: FeedEntry = {
-      id: 'feed',
-      action: 'passage' as const,
-      roll: 3,
-      outcome: normalizeOutcomeTree(step.outcome) as OutcomeEventNode,
-      renderCache: buildRenderCache(step.outcome),
-      messages: step.messages,
-      pendingCount: countPendingNodes(step.outcome),
-    };
-    let feed: FeedEntry[] = [feedItem];
-    const setFeed = (
-      value: ((prev: FeedEntry[]) => FeedEntry[]) | FeedEntry[]
-    ) => {
-      feed = typeof value === 'function' ? value(feed) : value;
-    };
+    let feed = createFeedSnapshot({ action: 'passage', roll: 3, detailMode: true });
 
-    const resolvePreviewById = (id: string, roll: number) => {
-      const current = feed[0];
-      if (!current) throw new Error('missing feed item');
-      const preview = findPreview(current.messages, id);
-      if (!preview) throw new Error(`preview ${id} not found`);
-      resolveViaRegistry(preview, current.id, roll, setFeed as any);
-    };
+    feed = resolvePendingPreview(feed, 'doorLocation', 1);
+    feed = resolvePendingPreview(feed, 'periodicCheckDoorOnly', 3);
+    feed = resolvePendingPreview(feed, 'doorLocation', 4);
 
-    resolvePreviewById('doorLocation:0', 1);
-    resolvePreviewById('periodicCheckDoorOnly:0', 3);
-    resolvePreviewById('doorLocation:1', 4);
+    expect(feed.pendingCount).toBe(0);
+    expect(listPendingPreviewTargets(feed)).toHaveLength(0);
 
-    const finalItem = feed[0];
-    if (!finalItem) throw new Error('missing final feed item');
-    expect(finalItem.pendingCount).toBe(0);
-    const compactNodes = selectMessagesForMode(
-      finalItem.action,
-      false,
-      finalItem.renderCache,
-      finalItem.messages
-    );
-    const compactText = compactNodes
-      .filter((n): n is Extract<DungeonRenderNode, { kind: 'paragraph' }> => n.kind === 'paragraph')
+    const compactNodes = renderCompact(feed)
+      .filter((n): n is { kind: 'paragraph'; text: string } => n.kind === 'paragraph')
       .map((n) => n.text);
-    expect(compactText).toEqual([
+    expect(compactNodes).toEqual([
       "A door is to the Left. There are no other doors. The main passage extends -- check again in 30'. ",
     ]);
   });
@@ -144,10 +103,3 @@ describe('dungeon roll harness', () => {
     ]);
   });
 });
-
-function findPreview(nodes: DungeonRenderNode[], id: string): DungeonTablePreview | undefined {
-  for (const node of nodes) {
-    if (node.kind === 'table-preview' && node.id === id) return node;
-  }
-  return undefined;
-}
