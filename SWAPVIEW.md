@@ -71,23 +71,24 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 ### 7. Verification & Polish _(in progress)_
 
 - Expand coverage to span cross-mode toggling and partial resolution states, including a pending-indicator experience once compact mode marks unresolved children.
-- Add regression tests that exercise both the domain-only harness and the UI-level preview driver so feed pending counts shrink to zero once a resolution chain completes.
+- The UI-level preview harness now drives the same `render → preview → resolveViaRegistry` loop as the page, and the dungeon roll/feed tests have been migrated to use it.
+- Add any remaining regressions that touch future flows (e.g., pools, exits) once their render helpers are purified.
 - Manually smoke test both modes for passages and doors, including registry overrides and reroll/override replacements.
 - Update documentation or comments if behaviour differs from expectations.
 - Suggested commit: `dungeon: cover swapview flow and update docs`.
 
-### 8. Render Override Harness *(queued — high priority)_
+### 8. Render Override Harness _(status: complete)_
 
-- Extract a reusable helper that drives the same `render → preview → resolveViaRegistry` loop the UI uses, rebuilding feed items from the shared outcome tree each time.
-- Document how to compose tests that start with `simulateDetailRun`, then advance previews through the new helper to mimic UI override flows.
-- Convert existing dungeon UI tests to use the higher-level helper so render-layer regressions (e.g., missing context on previews) surface automatically.
+- Extracted a reusable helper that drives the same `render → preview → resolveViaRegistry` loop the UI uses, rebuilding feed items from the shared outcome tree each time.
+- Documented usage inside the UI harness and migrated dungeon roll/feed tests to call the helper directly.
+- Render-layer regressions (missing context/target ids) now surface immediately in UI-level specs.
 - Suggested commit: `dungeon: add ui-level preview harness`.
 
-### 9. Render Layer Purification *(queued)_
+### 9. Render Layer Purification _(in progress)_
 
-- Ensure every preview emitted by `previewForPending` and related helpers carries the same context/target identifiers the domain nodes hold; audits should cover all table families, not just doors.
-- Move any remaining stateful logic out of render adapters, making them pure transforms of outcome trees so the UI harness and domain harness share identical data.
-- Add sanity checks (type-level or runtime assertions) that fail if required preview context is missing.
+- Special-passage, unusual-size, and circular pool/magic pool chains now use pure "describe" helpers that aggregate child outcomes for both detail and compact renderers.
+- Previews are keyed by `targetId`, and the UI harness verifies the same output the browser shows.
+- Remaining work: apply the same treatment to the remaining table families (e.g., number-of-exits, transporter chains in non-chamber contexts, any lingering ad-hoc string builders) and continue replacing inline concatenation with helpers.
 - Suggested commit: `dungeon: purify preview adapters`.
 
 ### 10. Outcome Pipeline Unification *(queued)_
