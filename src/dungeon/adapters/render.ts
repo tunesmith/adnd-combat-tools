@@ -851,11 +851,6 @@ export function toDetailRender(
     return nodes;
   }
   if (event.kind === 'specialPassage') {
-    const preview = previewForPending({
-      type: 'pending-roll',
-      table: 'specialPassage',
-      id: outcome.id,
-    });
     const heading: DungeonMessage = {
       kind: 'heading',
       level: 4,
@@ -866,43 +861,10 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = '';
-    switch (event.result) {
-      case SpecialPassage.FortyFeetColumns:
-        text = "The passage is 40' wide, with columns down the center. ";
-        break;
-      case SpecialPassage.FortyFeetDoubleColumns:
-        text = "The passage is 40' wide, with a double row of columns. ";
-        break;
-      case SpecialPassage.FiftyFeetDoubleColumns:
-        text = "The passage is 50' wide, with a double row of columns. ";
-        break;
-      case SpecialPassage.FiftyFeetGalleries:
-        text =
-          "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. ";
-        break;
-      case SpecialPassage.TenFootStream:
-        text = "A stream, 10' wide, bisects the passage. ";
-        break;
-      case SpecialPassage.TwentyFootRiver:
-        text = "A river, 20' wide, bisects the passage. ";
-        break;
-      case SpecialPassage.FortyFootRiver:
-        text = "A river, 40' wide, bisects the passage. ";
-        break;
-      case SpecialPassage.SixtyFootRiver:
-        text = "A river, 60' wide, bisects the passage. ";
-        break;
-      case SpecialPassage.TwentyFootChasm:
-        text = "A chasm, 20' wide, bisects the passage. ";
-        break;
-    }
-    if (preview)
-      nodes.push(withTargetId(preview, outcome.id ?? 'specialPassage'));
-    nodes.push(heading, bullet);
-    if (text) nodes.push({ kind: 'paragraph', text });
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
+    const summary = describeSpecialPassage(outcome);
+    const nodes2: DungeonRenderNode[] = [heading, bullet, ...summary.detailParagraphs];
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
   }
   if (event.kind === 'chasmDepth') {
     const heading: DungeonMessage = {
@@ -2668,79 +2630,8 @@ function renderCompactPassageWidth(node: OutcomeEventNode): string {
 
 function renderCompactSpecialPassage(node: OutcomeEventNode): string {
   if (node.event.kind !== 'specialPassage') return '';
-  let text = '';
-  switch (node.event.result) {
-    case SpecialPassage.FortyFeetColumns:
-      text = "The passage is 40' wide, with columns down the center. ";
-      break;
-    case SpecialPassage.FortyFeetDoubleColumns:
-      text = "The passage is 40' wide, with a double row of columns. ";
-      break;
-    case SpecialPassage.FiftyFeetDoubleColumns:
-      text = "The passage is 50' wide, with a double row of columns. ";
-      break;
-    case SpecialPassage.FiftyFeetGalleries: {
-      text =
-        "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. ";
-      const loc = findChildEvent(node, 'galleryStairLocation');
-      if (loc) {
-        text += formatGalleryStairLocation(
-          loc.event.result as GalleryStairLocation
-        );
-        const occurrence = findChildEvent(node, 'galleryStairOccurrence');
-        if (occurrence) {
-          text += formatGalleryStairOccurrence(
-            occurrence.event.result as GalleryStairOccurrence
-          );
-        }
-      }
-      break;
-    }
-    case SpecialPassage.TenFootStream: {
-      text = "A stream, 10' wide, bisects the passage. ";
-      const construction = findChildEvent(node, 'streamConstruction');
-      if (construction) {
-        text += formatStreamConstruction(
-          construction.event.result as StreamConstruction
-        );
-      }
-      break;
-    }
-    case SpecialPassage.TwentyFootRiver:
-    case SpecialPassage.FortyFootRiver:
-    case SpecialPassage.SixtyFootRiver: {
-      text =
-        node.event.result === SpecialPassage.TwentyFootRiver
-          ? "A river, 20' wide, bisects the passage. "
-          : node.event.result === SpecialPassage.FortyFootRiver
-          ? "A river, 40' wide, bisects the passage. "
-          : "A river, 60' wide, bisects the passage. ";
-      const construction = findChildEvent(node, 'riverConstruction');
-      if (construction) {
-        text += formatRiverConstruction(
-          construction.event.result as RiverConstruction,
-          node
-        );
-      }
-      break;
-    }
-    case SpecialPassage.TwentyFootChasm: {
-      text = "A chasm, 20' wide, bisects the passage. ";
-      const depth = findChildEvent(node, 'chasmDepth');
-      if (depth) text += formatChasmDepth(depth.event.result as ChasmDepth);
-      const construction = findChildEvent(node, 'chasmConstruction');
-      if (construction) {
-        text += formatChasmConstruction(
-          construction.event.result as ChasmConstruction,
-          node
-        );
-      }
-      break;
-    }
-    default:
-      break;
-  }
-  return text;
+  const summary = describeSpecialPassage(node);
+  return summary.compactText;
 }
 
 function formatGalleryStairLocation(result: GalleryStairLocation): string {
@@ -3061,6 +2952,109 @@ function describeUnusualSizeChain(node: OutcomeEventNode): {
       compactSegments.push(sentence);
     }
   }
+  return {
+    detailParagraphs,
+    compactText: compactSegments.join(' '),
+  };
+}
+
+function describeSpecialPassage(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'specialPassage') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const detailParagraphs: DungeonMessage[] = [];
+  const compactSegments: string[] = [];
+  const append = (raw: string | undefined) => {
+    if (!raw) return;
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+    const text = raw.endsWith(' ') ? raw : `${trimmed} `;
+    detailParagraphs.push({ kind: 'paragraph', text });
+    compactSegments.push(trimmed.endsWith('.') ? trimmed : `${trimmed}.`);
+  };
+
+  switch (node.event.result) {
+    case SpecialPassage.FortyFeetColumns:
+      append("The passage is 40' wide, with columns down the center. ");
+      break;
+    case SpecialPassage.FortyFeetDoubleColumns:
+      append("The passage is 40' wide, with a double row of columns. ");
+      break;
+    case SpecialPassage.FiftyFeetDoubleColumns:
+      append("The passage is 50' wide, with a double row of columns. ");
+      break;
+    case SpecialPassage.FiftyFeetGalleries: {
+      append(
+        "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. "
+      );
+      const loc = findChildEvent(node, 'galleryStairLocation');
+      if (loc)
+        append(
+          formatGalleryStairLocation(
+            loc.event.result as GalleryStairLocation
+          )
+        );
+      const occurrence = findChildEvent(node, 'galleryStairOccurrence');
+      if (occurrence)
+        append(
+          formatGalleryStairOccurrence(
+            occurrence.event.result as GalleryStairOccurrence
+          )
+        );
+      break;
+    }
+    case SpecialPassage.TenFootStream: {
+      append("A stream, 10' wide, bisects the passage. ");
+      const construction = findChildEvent(node, 'streamConstruction');
+      if (construction)
+        append(
+          formatStreamConstruction(
+            construction.event.result as StreamConstruction
+          )
+        );
+      break;
+    }
+    case SpecialPassage.TwentyFootRiver:
+    case SpecialPassage.FortyFootRiver:
+    case SpecialPassage.SixtyFootRiver: {
+      const base =
+        node.event.result === SpecialPassage.TwentyFootRiver
+          ? "A river, 20' wide, bisects the passage. "
+          : node.event.result === SpecialPassage.FortyFootRiver
+          ? "A river, 40' wide, bisects the passage. "
+          : "A river, 60' wide, bisects the passage. ";
+      append(base);
+      const construction = findChildEvent(node, 'riverConstruction');
+      if (construction)
+        append(
+          formatRiverConstruction(
+            construction.event.result as RiverConstruction,
+            node
+          )
+        );
+      break;
+    }
+    case SpecialPassage.TwentyFootChasm: {
+      append("A chasm, 20' wide, bisects the passage. ");
+      const depth = findChildEvent(node, 'chasmDepth');
+      if (depth) append(formatChasmDepth(depth.event.result as ChasmDepth));
+      const construction = findChildEvent(node, 'chasmConstruction');
+      if (construction)
+        append(
+          formatChasmConstruction(
+            construction.event.result as ChasmConstruction,
+            node
+          )
+        );
+      break;
+    }
+    default:
+      break;
+  }
+
   return {
     detailParagraphs,
     compactText: compactSegments.join(' '),

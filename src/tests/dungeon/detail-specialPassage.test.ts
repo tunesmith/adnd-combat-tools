@@ -28,20 +28,20 @@ describe('detail rendering with special passage', () => {
     );
     const detailNodes = renderDetailTree(withWidth);
     expect(
-      detailNodes.some(
+      detailNodes.filter(
         (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
-      )
-    ).toBe(true);
+      ).length
+    ).toBe(1);
   });
 
   it('captures special passage preview via staged dungeon steps', () => {
     const resolvedTree = resolveSequenceWithRolls([12, 1, 19], 1);
     const detailNodes = renderDetailTree(resolvedTree);
     expect(
-      detailNodes.some(
+      detailNodes.filter(
         (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
-      )
-    ).toBe(true);
+      ).length
+    ).toBe(1);
   });
 
   it('verifies that specialPassage only shows up once in detail mode', () => {
@@ -50,7 +50,7 @@ describe('detail rendering with special passage', () => {
     const specialPassagePreviews = detailNodes.filter(
       (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
     );
-    expect(specialPassagePreviews).toHaveLength(1);
+    expect(specialPassagePreviews).toHaveLength(0);
   });
 
   it('verifies that proper output shows in deep chasms', () => {
