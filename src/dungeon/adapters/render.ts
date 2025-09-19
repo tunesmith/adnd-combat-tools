@@ -862,7 +862,11 @@ export function toDetailRender(
       items: [`roll: ${roll} — ${label}`],
     };
     const summary = describeSpecialPassage(outcome);
-    const nodes2: DungeonRenderNode[] = [heading, bullet, ...summary.detailParagraphs];
+    const nodes2: DungeonRenderNode[] = [
+      heading,
+      bullet,
+      ...summary.detailParagraphs,
+    ];
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
@@ -1502,7 +1506,10 @@ export function renderDetailTree(
       if (child.type !== 'pending-roll') continue;
       const pendingPreview = previewForPending(child);
       if (pendingPreview) {
-        const normalizedPending = withTargetId(pendingPreview, child.id ?? child.table);
+        const normalizedPending = withTargetId(
+          pendingPreview,
+          child.id ?? child.table
+        );
         pendingPreviewIds.add(previewKey(normalizedPending));
       }
     }
@@ -1513,10 +1520,7 @@ export function renderDetailTree(
           child.type === 'event' && child.event.kind === outcome.event.kind
       )
     : false;
-  if (
-    preview &&
-    !hasChildEventSameKind
-  ) {
+  if (preview && !hasChildEventSameKind) {
     const normalizedPreview = withTargetId(preview, outcome.id ?? preview.id);
     const key = previewKey(normalizedPreview);
     if (!pendingPreviewIds.has(key) && !seenPreviews.has(key)) {
@@ -2873,17 +2877,17 @@ function renderCompactUnusualDetails(node: OutcomeEventNode): string {
   const shape = findChildEvent(node, 'unusualShape');
   if (shape && shape.event.kind === 'unusualShape') {
     text += formatUnusualShape(shape.event.result);
-    const contents = findChildEvent(shape, 'circularContents');
-    if (contents && contents.event.kind === 'circularContents') {
-      text += formatCircularContents(contents.event.result);
-    }
-    const poolNode = findChildEvent(shape, 'circularPool');
-    if (poolNode && poolNode.event.kind === 'circularPool') {
-      text += formatCircularPool(poolNode.event.result);
-      const magicNode = findChildEvent(poolNode, 'circularMagicPool');
-      if (magicNode && magicNode.event.kind === 'circularMagicPool') {
-        text += formatCircularMagicPool(magicNode);
-      }
+    const circularSentences = collectCircularChainSentences(shape);
+    if (circularSentences.length > 0) {
+      text += circularSentences
+        .map((sentence) =>
+          sentence.endsWith('.') ||
+          sentence.endsWith('!') ||
+          sentence.endsWith('?')
+            ? `${sentence} `
+            : `${sentence}. `
+        )
+        .join('');
     }
   }
   const size = findChildEvent(node, 'unusualSize');
@@ -2935,7 +2939,8 @@ function describeUnusualSizeChain(node: OutcomeEventNode): {
   let accumulatedExtra = (node.event as { extra?: number }).extra ?? 0;
   for (const entry of chain) {
     if (entry.event.kind !== 'unusualSize') continue;
-    const eventExtra = (entry.event as { extra?: number }).extra ?? accumulatedExtra;
+    const eventExtra =
+      (entry.event as { extra?: number }).extra ?? accumulatedExtra;
     accumulatedExtra = Math.max(accumulatedExtra, eventExtra);
     if (entry.event.result === UnusualSize.RollAgain) {
       accumulatedExtra += 2000;
@@ -2993,9 +2998,7 @@ function describeSpecialPassage(node: OutcomeEventNode): {
       const loc = findChildEvent(node, 'galleryStairLocation');
       if (loc)
         append(
-          formatGalleryStairLocation(
-            loc.event.result as GalleryStairLocation
-          )
+          formatGalleryStairLocation(loc.event.result as GalleryStairLocation)
         );
       const occurrence = findChildEvent(node, 'galleryStairOccurrence');
       if (occurrence)
@@ -3112,7 +3115,7 @@ function formatCircularContents(result: CircularContents): string {
 function formatCircularPool(result: Pool): string {
   switch (result) {
     case Pool.PoolNoMonster:
-      return 'There is a pool. ';
+      return 'There is a pool.';
     case Pool.PoolMonster:
       return 'There is a pool. There is a monster in the pool. (TODO Monster) ';
     case Pool.PoolMonsterTreasure:
@@ -3124,38 +3127,19 @@ function formatCircularPool(result: Pool): string {
   }
 }
 
-function formatCircularMagicPool(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'circularMagicPool') return '';
-  let text = '';
-  switch (node.event.result) {
+function formatCircularMagicPoolResult(result: MagicPool): string {
+  switch (result) {
     case MagicPool.TransmuteGold:
-      text = 'It transmutes gold. ';
-      break;
+      return 'It transmutes gold.';
     case MagicPool.AlterCharacteristic:
-      text =
-        'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
-      break;
+      return 'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
     case MagicPool.WishOrDamage:
-      text =
-        'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
-      break;
+      return 'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
     case MagicPool.Transporter:
-      text = 'It is a transporter. ';
-      break;
+      return 'It is a transporter.';
+    default:
+      return '';
   }
-  const alignment = findChildEvent(node, 'poolAlignment');
-  if (alignment && alignment.event.kind === 'poolAlignment') {
-    text += formatPoolAlignment(alignment.event.result);
-  }
-  const transmute = findChildEvent(node, 'transmuteType');
-  if (transmute && transmute.event.kind === 'transmuteType') {
-    text += formatTransmuteType(transmute.event.result);
-  }
-  const transporter = findChildEvent(node, 'transporterLocation');
-  if (transporter && transporter.event.kind === 'transporterLocation') {
-    text += formatTransporterLocation(transporter.event.result);
-  }
-  return text;
 }
 
 function formatTransmuteType(result: TransmuteType): string {
@@ -3194,6 +3178,61 @@ function formatTransporterLocation(result: TransporterLocation): string {
     default:
       return '';
   }
+}
+
+const CIRCULAR_CHAIN_KINDS = new Set<OutcomeEvent['kind']>([
+  'circularContents',
+  'circularPool',
+  'circularMagicPool',
+  'transmuteType',
+  'poolAlignment',
+  'transporterLocation',
+]);
+
+function circularSentenceForEvent(
+  eventNode: OutcomeEventNode
+): string | undefined {
+  switch (eventNode.event.kind) {
+    case 'circularContents':
+      return formatCircularContents(eventNode.event.result).trim();
+    case 'circularPool':
+      return formatCircularPool(eventNode.event.result).trim();
+    case 'circularMagicPool':
+      return formatCircularMagicPoolResult(eventNode.event.result).trim();
+    case 'transmuteType':
+      return formatTransmuteType(eventNode.event.result).trim();
+    case 'poolAlignment':
+      return formatPoolAlignment(eventNode.event.result).trim();
+    case 'transporterLocation':
+      return formatTransporterLocation(eventNode.event.result).trim();
+    default:
+      return undefined;
+  }
+}
+
+function collectCircularChainSentences(node: OutcomeEventNode): string[] {
+  const sentences: string[] = [];
+  const visited = new Set<string>();
+  const queue: OutcomeEventNode[] = getChildEvents(node).filter((child) =>
+    CIRCULAR_CHAIN_KINDS.has(child.event.kind)
+  );
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+    const key = current.id ?? `${current.event.kind}-${sentences.length}`;
+    if (visited.has(key)) continue;
+    visited.add(key);
+    const sentence = circularSentenceForEvent(current);
+    if (sentence && sentence.length > 0) {
+      sentences.push(sentence);
+    }
+    for (const child of getChildEvents(current)) {
+      if (CIRCULAR_CHAIN_KINDS.has(child.event.kind)) {
+        queue.push(child);
+      }
+    }
+  }
+  return sentences;
 }
 
 function formatTrickTrap(result: number): string {
