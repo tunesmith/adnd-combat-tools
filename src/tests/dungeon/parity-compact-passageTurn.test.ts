@@ -1,15 +1,27 @@
+import { toDetailRender } from '../../dungeon/adapters/render';
+import {
+  resolvePassageTurns,
+  resolvePassageWidth,
+} from '../../dungeon/domain/resolvers';
+import type { OutcomeEventNode } from '../../dungeon/domain/outcome';
 import { passageMessages } from '../../dungeon/services/passage';
 import {
   periodicCheck,
   PeriodicCheck,
 } from '../../tables/dungeon/periodicCheck';
-import type { DungeonMessage } from '../../types/dungeon';
+import type { DungeonMessage, DungeonRenderNode } from '../../types/dungeon';
 import * as dungeonLookup from '../../dungeon/helpers/dungeonLookup';
 
 function isParagraph(
   m: DungeonMessage
 ): m is Extract<DungeonMessage, { kind: 'paragraph'; text: string }> {
   return (m as any).kind === 'paragraph' && typeof (m as any).text === 'string';
+}
+
+function isRenderParagraph(
+  node: DungeonRenderNode
+): node is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> {
+  return node.kind === 'paragraph';
 }
 
 function pickRollFor(cmd: PeriodicCheck): number {
@@ -34,5 +46,21 @@ describe('Compact: PeriodicCheck Passage Turn (adapter)', () => {
     );
     expect(spy).toHaveBeenCalledTimes(2);
     spy.mockRestore();
+  });
+});
+
+describe('Detail: Passage turn rendering', () => {
+  test('detail render mirrors passage turn helper output', () => {
+    const turn = resolvePassageTurns({ roll: 1 }) as OutcomeEventNode;
+    const width = resolvePassageWidth({ roll: 2 }) as OutcomeEventNode;
+    const resolved: OutcomeEventNode = {
+      ...turn,
+      children: [width],
+    };
+    const rendered = toDetailRender(resolved);
+    const paragraphs = rendered.filter(isRenderParagraph);
+    expect(paragraphs.map((p) => p.text)).toEqual([
+      "The passage turns left 90 degrees - check again in 30'. ",
+    ]);
   });
 });

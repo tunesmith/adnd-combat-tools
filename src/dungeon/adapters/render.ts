@@ -742,33 +742,11 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let textPrefix = '';
-    switch (event.result) {
-      case PassageTurns.Left90:
-        textPrefix = "The passage turns left 90 degrees - check again in 30'. ";
-        break;
-      case PassageTurns.Left45:
-        textPrefix =
-          "The passage turns left 45 degrees ahead - check again in 30'. ";
-        break;
-      case PassageTurns.Left135:
-        textPrefix =
-          "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
-        break;
-      case PassageTurns.Right90:
-        textPrefix =
-          "The passage turns right 90 degrees - check again in 30'. ";
-        break;
-      case PassageTurns.Right45:
-        textPrefix =
-          "The passage turns right 45 degrees ahead - check again in 30'. ";
-        break;
-      case PassageTurns.Right135:
-        textPrefix =
-          "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
-        break;
+    const summary = describePassageTurn(outcome);
+    nodes.push(heading, bullet);
+    if (summary.detailParagraphs.length > 0) {
+      nodes.push(...summary.detailParagraphs);
     }
-    nodes.push(heading, bullet, { kind: 'paragraph', text: textPrefix });
     // Render any pending child previews supplied by the resolver
     if (outcome.children && Array.isArray(outcome.children)) {
       for (const child of outcome.children) {
@@ -2457,6 +2435,50 @@ function describeNumberOfExits(node: OutcomeEventNode): {
   };
 }
 
+function describePassageTurn(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'passageTurns') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  let detailText = '';
+  switch (node.event.result) {
+    case PassageTurns.Left90:
+      detailText = "The passage turns left 90 degrees - check again in 30'. ";
+      break;
+    case PassageTurns.Left45:
+      detailText =
+        "The passage turns left 45 degrees ahead - check again in 30'. ";
+      break;
+    case PassageTurns.Left135:
+      detailText =
+        "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
+      break;
+    case PassageTurns.Right90:
+      detailText = "The passage turns right 90 degrees - check again in 30'. ";
+      break;
+    case PassageTurns.Right45:
+      detailText =
+        "The passage turns right 45 degrees ahead - check again in 30'. ";
+      break;
+    case PassageTurns.Right135:
+      detailText =
+        "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
+      break;
+  }
+  let compactText = detailText;
+  const widthNode = findChildEvent(node, 'passageWidth');
+  if (widthNode && widthNode.event.kind === 'passageWidth') {
+    compactText += renderCompactPassageWidth(widthNode);
+  }
+  const detailParagraphs: DungeonMessage[] = [];
+  if (detailText.length > 0) {
+    detailParagraphs.push({ kind: 'paragraph', text: detailText });
+  }
+  return { detailParagraphs, compactText };
+}
+
 function describeStairs(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
@@ -2671,33 +2693,8 @@ function findChildEvent<K extends OutcomeEvent['kind']>(
 
 function renderCompactPassageTurn(node: OutcomeEventNode): string {
   if (node.event.kind !== 'passageTurns') return '';
-  let prefix = '';
-  switch (node.event.result) {
-    case PassageTurns.Left90:
-      prefix = "The passage turns left 90 degrees - check again in 30'. ";
-      break;
-    case PassageTurns.Left45:
-      prefix = "The passage turns left 45 degrees ahead - check again in 30'. ";
-      break;
-    case PassageTurns.Left135:
-      prefix =
-        "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
-      break;
-    case PassageTurns.Right90:
-      prefix = "The passage turns right 90 degrees - check again in 30'. ";
-      break;
-    case PassageTurns.Right45:
-      prefix =
-        "The passage turns right 45 degrees ahead - check again in 30'. ";
-      break;
-    case PassageTurns.Right135:
-      prefix =
-        "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
-      break;
-  }
-  const widthNode = findChildEvent(node, 'passageWidth');
-  const widthText = widthNode ? renderCompactPassageWidth(widthNode) : '';
-  return prefix + widthText;
+  const summary = describePassageTurn(node);
+  return summary.compactText;
 }
 
 function renderCompactPassageWidth(node: OutcomeEventNode): string {
