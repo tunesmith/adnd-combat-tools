@@ -13,7 +13,10 @@ import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import { doorBeyondMessages } from '../../dungeon/services/doorBeyondResult';
 import { passageMessages } from '../../dungeon/services/passage';
 import { resolveViaRegistry } from '../../dungeon/helpers/registry';
-import { buildRenderCache, selectMessagesForMode } from '../../dungeon/helpers/renderCache';
+import {
+  buildRenderCache,
+  selectMessagesForMode,
+} from '../../dungeon/helpers/renderCache';
 import type { RenderCache } from '../../dungeon/helpers/renderCache';
 import { countPendingNodes } from '../../dungeon/helpers/outcomeTree';
 

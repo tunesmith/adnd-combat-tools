@@ -38,6 +38,8 @@ describe('dungeon feed toggling confidence', () => {
       detailMode: true,
       dungeonLevel: 1,
     });
-    expect(listPendingPreviewTargets(snapshot)).toHaveLength(snapshot.pendingCount);
+    expect(listPendingPreviewTargets(snapshot)).toHaveLength(
+      snapshot.pendingCount
+    );
   });
 });

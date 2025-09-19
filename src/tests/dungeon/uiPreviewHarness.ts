@@ -1,13 +1,25 @@
 import { runDungeonStep } from '../../dungeon/services/adapters';
-import { normalizeOutcomeTree, countPendingNodes } from '../../dungeon/helpers/outcomeTree';
-import { buildRenderCache, selectMessagesForMode } from '../../dungeon/helpers/renderCache';
-import { resolveViaRegistry, type FeedLike } from '../../dungeon/helpers/registry';
+import {
+  normalizeOutcomeTree,
+  countPendingNodes,
+} from '../../dungeon/helpers/outcomeTree';
+import {
+  buildRenderCache,
+  selectMessagesForMode,
+} from '../../dungeon/helpers/renderCache';
+import {
+  resolveViaRegistry,
+  type FeedLike,
+} from '../../dungeon/helpers/registry';
 import type {
   DungeonAction,
   DungeonRenderNode,
   DungeonTablePreview,
 } from '../../types/dungeon';
-import type { OutcomeEventNode, PendingRoll } from '../../dungeon/domain/outcome';
+import type {
+  OutcomeEventNode,
+  PendingRoll,
+} from '../../dungeon/domain/outcome';
 
 export type FeedSnapshot = {
   id: string;
@@ -85,11 +97,21 @@ export function resolvePreview(
 }
 
 export function renderCompact(feed: FeedSnapshot): DungeonRenderNode[] {
-  return selectMessagesForMode(feed.action, false, feed.renderCache, feed.messages);
+  return selectMessagesForMode(
+    feed.action,
+    false,
+    feed.renderCache,
+    feed.messages
+  );
 }
 
 export function renderDetail(feed: FeedSnapshot): DungeonRenderNode[] {
-  return selectMessagesForMode(feed.action, true, feed.renderCache, feed.messages);
+  return selectMessagesForMode(
+    feed.action,
+    true,
+    feed.renderCache,
+    feed.messages
+  );
 }
 
 export function listPendingPreviewTargets(feed: FeedSnapshot): string[] {
@@ -116,9 +138,10 @@ export function resolvePendingPreview(
   if (!pendingPreview) {
     throw new Error(`No pending preview found for table ${tableBase}.`);
   }
-  const key = pendingPreview.targetId && pendingPreview.targetId.length > 0
-    ? pendingPreview.targetId
-    : pendingPreview.id;
+  const key =
+    pendingPreview.targetId && pendingPreview.targetId.length > 0
+      ? pendingPreview.targetId
+      : pendingPreview.id;
   return resolvePreview(feed, key, roll);
 }
 
@@ -139,9 +162,10 @@ function getPendingPreviews(feed: FeedSnapshot): DungeonTablePreview[] {
   return renderDetail(feed)
     .filter((n): n is DungeonTablePreview => n.kind === 'table-preview')
     .filter((preview) => {
-      const key = preview.targetId && preview.targetId.length > 0
-        ? preview.targetId
-        : preview.id;
+      const key =
+        preview.targetId && preview.targetId.length > 0
+          ? preview.targetId
+          : preview.id;
       return pendingTargets.has(key);
     });
 }

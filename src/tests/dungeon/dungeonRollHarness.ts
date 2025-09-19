@@ -130,7 +130,10 @@ export function simulateDetailRun(options: {
     }
     const targetId = pending.id ?? pending.table;
     const normalizedExisting = normalizeOutcomeTree(workingOutcome);
-    const normalizedResolution = normalizeOutcomeTree(resolution.outcome, targetId);
+    const normalizedResolution = normalizeOutcomeTree(
+      resolution.outcome,
+      targetId
+    );
     const applied = applyResolvedOutcome(
       normalizedExisting,
       targetId,
@@ -202,9 +205,7 @@ export function simulateCompactRun(options: {
     detailMode: false,
     level: options.dungeonLevel,
   });
-  const outcome = step.outcome
-    ? normalizeOutcomeTree(step.outcome)
-    : undefined;
+  const outcome = step.outcome ? normalizeOutcomeTree(step.outcome) : undefined;
   const cache = buildRenderCache(outcome);
   const compactNodes = selectMessagesForMode(
     options.action,
@@ -251,7 +252,9 @@ export function simulateCompactRunWithSequence(options: {
   const rolls = parseRollSequence(options.rolls);
   const initialRoll = rolls[0];
   if (initialRoll === undefined) {
-    throw new Error('simulateCompactRunWithSequence requires at least one roll.');
+    throw new Error(
+      'simulateCompactRunWithSequence requires at least one roll.'
+    );
   }
   const queued = rolls.slice(1);
   const { result, unused } = executeWithMockedDice(queued, () =>
@@ -294,7 +297,9 @@ function executeWithMockedDice<T>(
           throw new Error('Ran out of predetermined rolls for rollDice.');
         }
         if (value < 1 || value > sides) {
-          throw new Error(`Predetermined roll ${value} is invalid for d${sides}.`);
+          throw new Error(
+            `Predetermined roll ${value} is invalid for d${sides}.`
+          );
         }
         total += value;
       }
@@ -466,7 +471,6 @@ function cloneRollTrace(trace: DungeonRollTrace): DungeonRollTrace {
     items: trace.items.map(cloneItem),
   };
 }
-
 
 function freezeContext(context: TableContext): void {
   switch (context.kind) {

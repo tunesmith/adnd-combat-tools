@@ -91,20 +91,20 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Remaining work: apply the same treatment to the remaining table families (e.g., number-of-exits, transporter chains in non-chamber contexts, any lingering ad-hoc string builders) and continue replacing inline concatenation with helpers.
 - Suggested commit: `dungeon: purify preview adapters`.
 
-### 10. Outcome Pipeline Unification *(queued)_
+### 10. Outcome Pipeline Unification \*(queued)\_
 
 - Unify the roll-resolution pipeline so detail overrides, compact renders, and automated tests all drive the same helper (e.g., `applyOutcomeRoll`) in both UI and harness contexts.
 - Simplify door-chain state management to avoid duplicating `existingBefore`/`existingAfter` bookkeeping and ensure repeated laterals terminate the chain consistently.
 - Audit the registry for table-specific quirks once everything flows through the shared helper.
 - Suggested commit: `dungeon: unify detail/compact outcome updates`.
 
-### 11. Retire Legacy Preview Services *(queued)_
+### 11. Retire Legacy Preview Services \*(queued)\_
 
 - Delete or rewrite the old `doorLocationMessages`, `periodicDoorOnlyMessages`, `trickTrapMessages`, etc., that are exercised only by legacy tests; replace their coverage with pipeline-driven tests where needed.
 - Remove tests (`detail-doorChain`, etc.) that validate behaviour the UI no longer uses, or adapt them to the unified outcome pipeline so they reflect actual behaviour.
 - Suggested commit: `dungeon: remove unused preview services`.
 
-### 12. Adapter Modularisation *(queued)_
+### 12. Adapter Modularisation \*(queued)\_
 
 - Factor the monolithic render adapter into smaller event-family modules (e.g., passage, chamber, monsters) to improve maintainability and make patterns for new tables obvious.
 - Create shared helpers for recurring render shapes (heading + bullet + paragraph) to shrink boilerplate.

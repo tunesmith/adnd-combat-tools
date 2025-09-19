@@ -58,7 +58,9 @@ describe('dungeon roll harness', () => {
       "A door is to the Left. There are no other doors. The main passage extends -- check again in 30'.",
     ]);
     const compactText = compact.compact.paragraphs().join(' ');
-    expect((compactText.match(/A door is to the Left\./g) || []).length).toBe(1);
+    expect((compactText.match(/A door is to the Left\./g) || []).length).toBe(
+      1
+    );
 
     expect(compact.compact.paragraphs().map((p) => p.trim())).toEqual(
       detail.final.compact.paragraphs().map((p) => p.trim())
@@ -66,7 +68,11 @@ describe('dungeon roll harness', () => {
   });
 
   test('ui resolver clears follow-up door continuation', () => {
-    let feed = createFeedSnapshot({ action: 'passage', roll: 3, detailMode: true });
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 3,
+      detailMode: true,
+    });
 
     feed = resolvePendingPreview(feed, 'doorLocation', 1);
     feed = resolvePendingPreview(feed, 'periodicCheckDoorOnly', 3);
@@ -76,7 +82,9 @@ describe('dungeon roll harness', () => {
     expect(listPendingPreviewTargets(feed)).toHaveLength(0);
 
     const compactNodes = renderCompact(feed)
-      .filter((n): n is { kind: 'paragraph'; text: string } => n.kind === 'paragraph')
+      .filter(
+        (n): n is { kind: 'paragraph'; text: string } => n.kind === 'paragraph'
+      )
       .map((n) => n.text);
     expect(compactNodes).toEqual([
       "A door is to the Left. There are no other doors. The main passage extends -- check again in 30'. ",

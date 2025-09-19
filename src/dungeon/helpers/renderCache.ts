@@ -1,7 +1,4 @@
-import type {
-  DungeonAction,
-  DungeonRenderNode,
-} from '../../types/dungeon';
+import type { DungeonAction, DungeonRenderNode } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
 import { renderDetailTree, toCompactRender } from '../adapters/render';
 
