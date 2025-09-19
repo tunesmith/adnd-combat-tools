@@ -446,55 +446,9 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${DoorBeyond[event.result]}`],
     };
+    const summary = describeDoorBeyond(outcome);
     nodes.push(heading, bullet);
-    switch (event.result) {
-      case DoorBeyond.ParallelPassageOrCloset: {
-        if (event.doorAhead) {
-          nodes.push({
-            kind: 'paragraph',
-            text: "Beyond the door is a 10' x 10' room (check contents, treasure). ",
-          });
-        } else {
-          nodes.push({
-            kind: 'paragraph',
-            text: "Beyond the door is a parallel passage, extending 30' in both directions. ",
-          });
-        }
-        break;
-      }
-      case DoorBeyond.PassageStraightAhead: {
-        nodes.push({
-          kind: 'paragraph',
-          text: 'Beyond the door is a passage straight ahead. ',
-        });
-        break;
-      }
-      case DoorBeyond.Passage45AheadBehind: {
-        nodes.push({
-          kind: 'paragraph',
-          text: 'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ',
-        });
-        break;
-      }
-      case DoorBeyond.Passage45BehindAhead: {
-        nodes.push({
-          kind: 'paragraph',
-          text: 'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ',
-        });
-        break;
-      }
-      case DoorBeyond.Room: {
-        nodes.push({ kind: 'paragraph', text: 'Beyond the door is a room. ' });
-        break;
-      }
-      case DoorBeyond.Chamber: {
-        nodes.push({
-          kind: 'paragraph',
-          text: 'Beyond the door is a chamber. ',
-        });
-        break;
-      }
-    }
+    nodes.push(...summary.detailParagraphs);
     appendPendingPreviews(outcome, nodes);
     return nodes;
   }
@@ -2380,6 +2334,64 @@ function describePassageTurn(node: OutcomeEventNode): {
   return { detailParagraphs, compactText };
 }
 
+function describeDoorBeyond(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'doorBeyond') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const detailParagraphs: DungeonMessage[] = [];
+  const segments: string[] = [];
+  const appendParagraph = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const normalized = trimmed.endsWith(' ')
+      ? trimmed
+      : trimmed.endsWith('.')
+      ? `${trimmed} `
+      : `${trimmed}. `;
+    detailParagraphs.push({ kind: 'paragraph', text: normalized });
+    segments.push(normalized.trim());
+  };
+
+  switch (node.event.result) {
+    case DoorBeyond.ParallelPassageOrCloset:
+      if (node.event.doorAhead) {
+        appendParagraph(
+          "Beyond the door is a 10' x 10' room (check contents, treasure). "
+        );
+      } else {
+        appendParagraph(
+          "Beyond the door is a parallel passage, extending 30' in both directions. "
+        );
+      }
+      break;
+    case DoorBeyond.PassageStraightAhead:
+      appendParagraph('Beyond the door is a passage straight ahead. ');
+      break;
+    case DoorBeyond.Passage45AheadBehind:
+      appendParagraph(
+        'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). '
+      );
+      break;
+    case DoorBeyond.Passage45BehindAhead:
+      appendParagraph(
+        'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). '
+      );
+      break;
+    case DoorBeyond.Room:
+      appendParagraph('Beyond the door is a room. ');
+      break;
+    case DoorBeyond.Chamber:
+      appendParagraph('Beyond the door is a chamber. ');
+      break;
+  }
+
+  const compactText = segments.join(' ');
+  return { detailParagraphs, compactText };
+}
+
 function describePeriodicDoorOnly(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
@@ -2562,11 +2574,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
         ? renderCompactStairs(stairs)
         : 'Stairs are indicated here. ';
     }
-    case PeriodicCheck.ContinueStraight:
-      return "Continue straight -- check again in 60'. ";
-    case PeriodicCheck.DeadEnd:
-      return 'The passage reaches a dead end. (TODO) ';
-    case PeriodicCheck.TrickTrap:
+    case PeriodicCheck.TrickTrap: {
       const trap = findChildEvent(node, 'trickTrap');
       if (trap && trap.event.kind === 'trickTrap') {
         const summary = describeTrickTrap(trap);
@@ -2575,6 +2583,11 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
         }
       }
       return "There is a trick or trap. (TODO) -- check again in 30'. ";
+    }
+    case PeriodicCheck.ContinueStraight:
+      return "Continue straight -- check again in 60'. ";
+    case PeriodicCheck.DeadEnd:
+      return 'The passage reaches a dead end. (TODO) ';
     default:
       return `Appears from: ${PeriodicCheck[node.event.result]}. `;
   }
@@ -2582,43 +2595,32 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
 
 function renderCompactDoorBeyond(node: OutcomeEventNode): string {
   if (node.event.kind !== 'doorBeyond') return '';
-  switch (node.event.result) {
-    case DoorBeyond.ParallelPassageOrCloset:
-      if (node.event.doorAhead) {
-        return "Beyond the door is a 10' x 10' room (check contents, treasure). ";
-      }
-      return (
-        "Beyond the door is a parallel passage, extending 30' in both directions. " +
-        renderChildPassageWidth(node)
-      );
-    case DoorBeyond.PassageStraightAhead:
-      return (
-        'Beyond the door is a passage straight ahead. ' +
-        renderChildPassageWidth(node)
-      );
-    case DoorBeyond.Passage45AheadBehind:
-      return (
-        'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ' +
-        renderChildPassageWidth(node)
-      );
-    case DoorBeyond.Passage45BehindAhead:
-      return (
-        'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ' +
-        renderChildPassageWidth(node)
-      );
-    case DoorBeyond.Room: {
-      const room = findChildEvent(node, 'roomDimensions');
-      const detail = room ? renderCompactRoomDimensions(room) : '';
-      return 'Beyond the door is a room. ' + detail;
-    }
-    case DoorBeyond.Chamber: {
-      const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? renderCompactChamberDimensions(chamber) : '';
-      return 'Beyond the door is a chamber. ' + detail;
-    }
-    default:
-      return '';
+  const summary = describeDoorBeyond(node);
+  let text = summary.compactText;
+  if (
+    node.event.result === DoorBeyond.ParallelPassageOrCloset &&
+    !node.event.doorAhead
+  ) {
+    text += renderChildPassageWidth(node);
   }
+  if (
+    node.event.result === DoorBeyond.PassageStraightAhead ||
+    node.event.result === DoorBeyond.Passage45AheadBehind ||
+    node.event.result === DoorBeyond.Passage45BehindAhead
+  ) {
+    text += renderChildPassageWidth(node);
+  }
+  if (node.event.result === DoorBeyond.Room) {
+    const room = findChildEvent(node, 'roomDimensions');
+    const detail = room ? renderCompactRoomDimensions(room) : '';
+    text += detail;
+  }
+  if (node.event.result === DoorBeyond.Chamber) {
+    const chamber = findChildEvent(node, 'chamberDimensions');
+    const detail = chamber ? renderCompactChamberDimensions(chamber) : '';
+    text += detail;
+  }
+  return text;
 }
 
 function renderChildPassageWidth(node: OutcomeEventNode): string {
