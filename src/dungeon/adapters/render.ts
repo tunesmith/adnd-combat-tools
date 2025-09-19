@@ -999,20 +999,23 @@ export function toDetailRender(
         : '';
     return [heading, bullet, { kind: 'paragraph', text }];
   }
-  if ((event as { kind?: unknown }).kind === 'numberOfExits') {
-    const ev = event as Extract<OutcomeEvent, { kind: 'numberOfExits' }>;
+  if (event.kind === 'numberOfExits') {
     const heading: DungeonMessage = {
       kind: 'heading',
       level: 4,
       text: 'Exits',
     };
-    const label = NumberOfExits[ev.result] ?? String(ev.result);
+    const label = NumberOfExits[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const text = formatNumberOfExitsEvent(ev);
-    return [heading, bullet, { kind: 'paragraph', text }];
+    const summary = describeNumberOfExits(outcome);
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (summary.detailParagraphs.length > 0) {
+      nodes2.push(...summary.detailParagraphs);
+    }
+    return nodes2;
   }
   if (event.kind === 'unusualShape') {
     const heading: DungeonMessage = {
@@ -1143,25 +1146,32 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = '';
-    switch (event.result) {
-      case MagicPool.TransmuteGold:
-        text = 'It transmutes gold. ';
-        break;
-      case MagicPool.AlterCharacteristic:
-        text =
-          'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
-        break;
-      case MagicPool.WishOrDamage:
-        text =
-          'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
-        break;
-      case MagicPool.Transporter:
-        text = 'It is a transporter. ';
-        break;
-    }
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (text) nodes2.push({ kind: 'paragraph', text });
+    if (event.result === MagicPool.Transporter) {
+      const summary = describeMagicPoolTransporter(outcome);
+      if (summary.detailParagraphs.length > 0) {
+        nodes2.push(...summary.detailParagraphs);
+      }
+    } else {
+      let text = '';
+      switch (event.result) {
+        case MagicPool.TransmuteGold:
+          text = 'It transmutes gold. ';
+          break;
+        case MagicPool.AlterCharacteristic:
+          text =
+            'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
+          break;
+        case MagicPool.WishOrDamage:
+          text =
+            'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
+          break;
+        default:
+          text = '';
+          break;
+      }
+      if (text) nodes2.push({ kind: 'paragraph', text });
+    }
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
@@ -1216,23 +1226,12 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    let text = '';
-    switch (event.result) {
-      case TransporterLocation.Surface:
-        text = 'It transports characters back to the surface. ';
-        break;
-      case TransporterLocation.SameLevelElsewhere:
-        text = 'It transports characters elsewhere on the same level. ';
-        break;
-      case TransporterLocation.OneLevelDown:
-        text = 'It transports characters one level down. ';
-        break;
-      case TransporterLocation.Away100Miles:
-        text =
-          'It transports characters 100 miles away for outdoor adventure. ';
-        break;
+    const summary = describeTransporterLocation(outcome);
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (summary.detailParagraphs.length > 0) {
+      nodes2.push(...summary.detailParagraphs);
     }
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return nodes2;
   }
   if (event.kind === 'unusualSize') {
     const heading: DungeonMessage = {
@@ -2259,11 +2258,7 @@ export function toCompactRender(
         : '';
     return [heading, bullet, { kind: 'paragraph', text }];
   }
-  if ((event as { kind?: unknown }).kind === 'numberOfExits') {
-    const ev = event as unknown as {
-      result: NumberOfExits;
-      context: { length: number; width: number; isRoom: boolean };
-    };
+  if (event.kind === 'numberOfExits') {
     const heading: DungeonMessage = {
       kind: 'heading',
       level: 4,
@@ -2271,52 +2266,59 @@ export function toCompactRender(
     };
     const bullet: DungeonMessage = {
       kind: 'bullet-list',
-      items: [`roll: ${roll} — ${NumberOfExits[ev.result]}`],
+      items: [`roll: ${roll} — ${NumberOfExits[event.result]}`],
     };
-    const area = ev.context.length * ev.context.width;
-    let text = '';
-    switch (ev.result) {
-      case NumberOfExits.OneTwo600:
-        text =
-          area <= 600
-            ? 'There is one additional exit. (TODO location, direction/width if passage) '
-            : 'There are two additional exits. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.TwoThree600:
-        text =
-          area <= 600
-            ? 'There are two additional exits. (TODO location, direction/width if passage) '
-            : 'There are three additional exits. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.ThreeFour600:
-        text =
-          area <= 600
-            ? 'There are three additional exits. (TODO location, direction/width if passage) '
-            : 'There are four additional exits. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.ZeroOne1200:
-        text =
-          area <= 1200
-            ? 'There are no exits here, other than the entrance. (TODO secret doors) '
-            : 'There is one additional exit. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.ZeroOne1600:
-        text =
-          area <= 1600
-            ? 'There are no exits here, other than the entrance. (TODO secret doors) '
-            : 'There is one additional exit. (TODO location, direction/width if passage) ';
-        break;
-      case NumberOfExits.OneToFour:
-        text =
-          'There are 1d4 exits here, other than the entrance. (TODO d4, location, direction/width if passage) ';
-        break;
-      case NumberOfExits.DoorChamberOrPassageRoom:
-        text = ev.context.isRoom
-          ? 'There is a passage exiting from the room. (TODO location/direction/width) '
-          : 'There is a door. (TODO location) ';
-        break;
+    const summary = describeNumberOfExits(outcome);
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (summary.detailParagraphs.length > 0) {
+      nodes2.push(...summary.detailParagraphs);
     }
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return nodes2;
+  }
+  if (event.kind === 'circularMagicPool') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Magic Pool Effect',
+    };
+    const label = MagicPool[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (event.result === MagicPool.Transporter) {
+      const summary = describeMagicPoolTransporter(outcome);
+      if (summary.detailParagraphs.length > 0) {
+        nodes2.push(...summary.detailParagraphs);
+      }
+    } else {
+      const text = formatCircularMagicPoolResult(event.result);
+      if (text.length > 0) {
+        const paragraph = text.endsWith(' ') ? text : `${text.trim()} `;
+        nodes2.push({ kind: 'paragraph', text: paragraph });
+      }
+    }
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
+  }
+  if (event.kind === 'transporterLocation') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Transporter Location',
+    };
+    const label = TransporterLocation[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const summary = describeTransporterLocation(outcome);
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (summary.detailParagraphs.length > 0) {
+      nodes2.push(...summary.detailParagraphs);
+    }
+    return nodes2;
   }
   if (event.kind === 'unusualShape') {
     const heading: DungeonMessage = {
@@ -2477,6 +2479,23 @@ function formatNumberOfExitsEvent(
       : '';
   const pronoun = event.count === 1 ? 'its' : 'their';
   return `There ${verb} ${event.count} additional ${plural}${rollInfo}. Determine ${pronoun} location and direction using the exit tables.`;
+}
+
+function describeNumberOfExits(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'numberOfExits') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const text = formatNumberOfExitsEvent(node.event).trim();
+  if (text.length === 0) {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  return {
+    detailParagraphs: [{ kind: 'paragraph', text: `${text} ` }],
+    compactText: text,
+  };
 }
 
 function renderWanderingWhereFrom(node: OutcomeEventNode): string {
@@ -2792,84 +2811,103 @@ function renderCompactStairs(node: OutcomeEventNode): string {
   return text;
 }
 
+function joinCompactSegments(segments: string[]): string {
+  const normalized = segments
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0)
+    .map((segment) => (/[.!?]$/.test(segment) ? segment : `${segment}.`));
+  if (normalized.length === 0) return '';
+  return `${normalized.join(' ')} `;
+}
+
 function renderCompactRoomDimensions(node: OutcomeEventNode): string {
   if (node.event.kind !== 'roomDimensions') return '';
-  let text = '';
+  const segments: string[] = [];
   switch (node.event.result) {
     case RoomDimensions.Square10x10:
-      text = "The room is square and 10' x 10'. ";
+      segments.push("The room is square and 10' x 10'.");
       break;
     case RoomDimensions.Square20x20:
-      text = "The room is square and 20' x 20'. ";
+      segments.push("The room is square and 20' x 20'.");
       break;
     case RoomDimensions.Square30x30:
-      text = "The room is square and 30' x 30'. ";
+      segments.push("The room is square and 30' x 30'.");
       break;
     case RoomDimensions.Square40x40:
-      text = "The room is square and 40' x 40'. ";
+      segments.push("The room is square and 40' x 40'.");
       break;
     case RoomDimensions.Rectangular10x20:
-      text = "The room is rectangular and 10' x 20'. ";
+      segments.push("The room is rectangular and 10' x 20'.");
       break;
     case RoomDimensions.Rectangular20x30:
-      text = "The room is rectangular and 20' x 30'. ";
+      segments.push("The room is rectangular and 20' x 30'.");
       break;
     case RoomDimensions.Rectangular20x40:
-      text = "The room is rectangular and 20' x 40'. ";
+      segments.push("The room is rectangular and 20' x 40'.");
       break;
     case RoomDimensions.Rectangular30x40:
-      text = "The room is rectangular and 30' x 40'. ";
+      segments.push("The room is rectangular and 30' x 40'.");
       break;
     case RoomDimensions.Unusual:
-      text = 'The room has an unusual shape and size. ';
+      segments.push('The room has an unusual shape and size.');
       break;
   }
   if (node.event.result === RoomDimensions.Unusual) {
-    text += renderCompactUnusualDetails(node);
+    const unusual = renderCompactUnusualDetails(node).trim();
+    if (unusual.length > 0) {
+      segments.push(unusual);
+    }
   }
   const exits = findChildEvent(node, 'numberOfExits');
   if (exits && exits.event.kind === 'numberOfExits') {
-    if (!text.endsWith(' ')) text += ' ';
-    text += `${formatNumberOfExitsEvent(exits.event)} `;
+    const summary = describeNumberOfExits(exits);
+    if (summary.compactText.length > 0) {
+      segments.push(summary.compactText);
+    }
   }
-  return text;
+  return joinCompactSegments(segments);
 }
 
 function renderCompactChamberDimensions(node: OutcomeEventNode): string {
   if (node.event.kind !== 'chamberDimensions') return '';
-  let text = '';
+  const segments: string[] = [];
   switch (node.event.result) {
     case ChamberDimensions.Square20x20:
-      text = "The chamber is square and 20' x 20'. ";
+      segments.push("The chamber is square and 20' x 20'.");
       break;
     case ChamberDimensions.Square30x30:
-      text = "The chamber is square and 30' x 30'. ";
+      segments.push("The chamber is square and 30' x 30'.");
       break;
     case ChamberDimensions.Square40x40:
-      text = "The chamber is square and 40' x 40'. ";
+      segments.push("The chamber is square and 40' x 40'.");
       break;
     case ChamberDimensions.Rectangular20x30:
-      text = "The chamber is rectangular and 20' x 30'. ";
+      segments.push("The chamber is rectangular and 20' x 30'.");
       break;
     case ChamberDimensions.Rectangular30x50:
-      text = "The chamber is rectangular and 30' x 50'. ";
+      segments.push("The chamber is rectangular and 30' x 50'.");
       break;
     case ChamberDimensions.Rectangular40x60:
-      text = "The chamber is rectangular and 40' x 60'. ";
+      segments.push("The chamber is rectangular and 40' x 60'.");
       break;
     case ChamberDimensions.Unusual:
-      text = 'The chamber has an unusual shape and size. ';
+      segments.push('The chamber has an unusual shape and size.');
       break;
   }
   if (node.event.result === ChamberDimensions.Unusual) {
-    text += renderCompactUnusualDetails(node);
+    const unusual = renderCompactUnusualDetails(node).trim();
+    if (unusual.length > 0) {
+      segments.push(unusual);
+    }
   }
   const exits = findChildEvent(node, 'numberOfExits');
   if (exits && exits.event.kind === 'numberOfExits') {
-    if (!text.endsWith(' ')) text += ' ';
-    text += `${formatNumberOfExitsEvent(exits.event)} `;
+    const summary = describeNumberOfExits(exits);
+    if (summary.compactText.length > 0) {
+      segments.push(summary.compactText);
+    }
   }
-  return text;
+  return joinCompactSegments(segments);
 }
 
 function renderCompactUnusualDetails(node: OutcomeEventNode): string {
@@ -3136,7 +3174,7 @@ function formatCircularMagicPoolResult(result: MagicPool): string {
     case MagicPool.WishOrDamage:
       return 'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
     case MagicPool.Transporter:
-      return 'It is a transporter.';
+      return TRANSPORTER_BASE_SENTENCE;
     default:
       return '';
   }
@@ -3168,16 +3206,62 @@ function formatPoolAlignment(result: PoolAlignment): string {
 function formatTransporterLocation(result: TransporterLocation): string {
   switch (result) {
     case TransporterLocation.Surface:
-      return 'It transports characters back to the surface. ';
+      return 'It transports characters back to the surface.';
     case TransporterLocation.SameLevelElsewhere:
-      return 'It transports characters elsewhere on the same level. ';
+      return 'It transports characters elsewhere on the same level.';
     case TransporterLocation.OneLevelDown:
-      return 'It transports characters one level down. ';
+      return 'It transports characters one level down.';
     case TransporterLocation.Away100Miles:
-      return 'It transports characters 100 miles away for outdoor adventure. ';
+      return 'It transports characters 100 miles away for outdoor adventure.';
     default:
       return '';
   }
+}
+
+const TRANSPORTER_BASE_SENTENCE = 'It is a transporter.';
+
+function describeTransporterLocation(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'transporterLocation') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const sentence = formatTransporterLocation(node.event.result).trim();
+  if (!sentence) {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  return {
+    detailParagraphs: [{ kind: 'paragraph', text: `${sentence} ` }],
+    compactText: sentence,
+  };
+}
+
+function describeMagicPoolTransporter(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'circularMagicPool') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  if (node.event.result !== MagicPool.Transporter) {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const detailParagraphs: DungeonMessage[] = [
+    { kind: 'paragraph', text: `${TRANSPORTER_BASE_SENTENCE} ` },
+  ];
+  const segments: string[] = [TRANSPORTER_BASE_SENTENCE];
+  const location = findChildEvent(node, 'transporterLocation');
+  if (location && location.event.kind === 'transporterLocation') {
+    const locationSummary = describeTransporterLocation(location);
+    if (locationSummary.detailParagraphs.length > 0) {
+      detailParagraphs.push(...locationSummary.detailParagraphs);
+    }
+    if (locationSummary.compactText.length > 0) {
+      segments.push(locationSummary.compactText);
+    }
+  }
+  return { detailParagraphs, compactText: segments.join(' ') };
 }
 
 const CIRCULAR_CHAIN_KINDS = new Set<OutcomeEvent['kind']>([
@@ -3203,8 +3287,10 @@ function circularSentenceForEvent(
       return formatTransmuteType(eventNode.event.result).trim();
     case 'poolAlignment':
       return formatPoolAlignment(eventNode.event.result).trim();
-    case 'transporterLocation':
-      return formatTransporterLocation(eventNode.event.result).trim();
+    case 'transporterLocation': {
+      const summary = describeTransporterLocation(eventNode);
+      return summary.compactText.trim();
+    }
     default:
       return undefined;
   }
