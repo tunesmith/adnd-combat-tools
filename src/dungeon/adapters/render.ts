@@ -528,11 +528,9 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const description = formatPeriodicDoorOnlyEvent(event).trim();
+    const summary = describePeriodicDoorOnly(outcome);
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (description) {
-      nodes2.push({ kind: 'paragraph', text: description });
-    }
+    nodes2.push(...summary.detailParagraphs);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
@@ -1148,8 +1146,10 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — TBD`],
     };
-    const text = "There is a trick or trap. (TODO) -- check again in 30'. ";
-    return [heading, bullet, { kind: 'paragraph', text }];
+    const summary = describeTrickTrap(outcome);
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    nodes2.push(...summary.detailParagraphs);
+    return nodes2;
   }
   if (event.kind === 'monsterLevel') {
     const heading: DungeonMessage = {
@@ -2380,6 +2380,34 @@ function describePassageTurn(node: OutcomeEventNode): {
   return { detailParagraphs, compactText };
 }
 
+function describePeriodicDoorOnly(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'periodicDoorOnly') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const text = formatPeriodicDoorOnlyEvent(node.event);
+  const detailParagraphs: DungeonMessage[] = text.length
+    ? [{ kind: 'paragraph', text }]
+    : [];
+  return { detailParagraphs, compactText: text };
+}
+
+function describeTrickTrap(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'trickTrap') {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  const text = formatTrickTrap(node.event.result);
+  const detailParagraphs: DungeonMessage[] = text.length
+    ? [{ kind: 'paragraph', text }]
+    : [];
+  return { detailParagraphs, compactText: text };
+}
+
 function describeSidePassage(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
@@ -2540,9 +2568,13 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
       return 'The passage reaches a dead end. (TODO) ';
     case PeriodicCheck.TrickTrap:
       const trap = findChildEvent(node, 'trickTrap');
-      return trap && trap.event.kind === 'trickTrap'
-        ? formatTrickTrap(trap.event.result)
-        : "There is a trick or trap. (TODO) -- check again in 30'. ";
+      if (trap && trap.event.kind === 'trickTrap') {
+        const summary = describeTrickTrap(trap);
+        if (summary.compactText.length > 0) {
+          return summary.compactText;
+        }
+      }
+      return "There is a trick or trap. (TODO) -- check again in 30'. ";
     default:
       return `Appears from: ${PeriodicCheck[node.event.result]}. `;
   }
