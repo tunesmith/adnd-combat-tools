@@ -2,7 +2,7 @@ import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { PassageTurns } from '../../../tables/dungeon/passageTurns';
 import { findChildEvent, type AppendPreviewFn } from './shared';
-import { renderCompactPassageWidth } from './passageWidth';
+import { renderPassageWidthCompact } from './passageWidth';
 
 export function renderPassageTurnsDetail(
   outcome: OutcomeEventNode,
@@ -65,7 +65,7 @@ export function describePassageTurn(
   let compactText = detailText;
   const widthNode = findChildEvent(node, 'passageWidth');
   if (widthNode && widthNode.event.kind === 'passageWidth') {
-    compactText += renderCompactPassageWidth(widthNode);
+    compactText += renderPassageWidthCompact(widthNode);
   }
   const detailParagraphs: DungeonMessage[] = [];
   if (detailText.length > 0) {
@@ -74,7 +74,7 @@ export function describePassageTurn(
   return { detailParagraphs, compactText };
 }
 
-export function renderCompactPassageTurn(
+export function renderPassageTurnCompact(
   node: OutcomeEventNode
 ): string {
   if (node.event.kind !== 'passageTurns') return '';

@@ -95,7 +95,7 @@ import {
 import {
   renderDoorLocationDetail,
   renderPeriodicDoorOnlyDetail,
-  renderCompactDoorChain,
+  renderDoorChainCompact,
 } from './render/doorLocation';
 import {
   renderSidePassagesDetail,
@@ -104,15 +104,15 @@ import {
 } from './render/sidePassage';
 import {
   renderPassageTurnsDetail,
-  renderCompactPassageTurn,
+  renderPassageTurnCompact,
 } from './render/passageTurns';
 import {
   renderPassageWidthDetail,
-  renderCompactPassageWidth,
+  renderPassageWidthCompact,
 } from './render/passageWidth';
 import {
   renderSpecialPassageDetail,
-  renderCompactSpecialPassage,
+  renderSpecialPassageCompact,
 } from './render/specialPassage';
 import {
   renderChasmDepthDetail,
@@ -121,7 +121,7 @@ import {
 } from './render/chasm';
 import {
   renderStairsDetail,
-  renderCompactStairs,
+  renderStairsCompact,
 } from './render/stairs';
 import {
   renderEgressDetail,
@@ -1490,7 +1490,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${PassageTurns[event.result] ?? event.result}`],
     };
-    const text = renderCompactPassageTurn(node);
+    const text = renderPassageTurnCompact(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1506,7 +1506,7 @@ export function toCompactRender(
       items: [`roll: ${roll} — ${label}`],
     };
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    const text = renderCompactPassageWidth(node);
+    const text = renderPassageWidthCompact(node);
     if (text.length > 0) {
       nodes2.push({ kind: 'paragraph', text });
     }
@@ -1522,7 +1522,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${Stairs[event.result] ?? event.result}`],
     };
-    const text = renderCompactStairs(node, {
+    const text = renderStairsCompact(node, {
       renderChamberSummary: renderCompactChamberDimensions,
     });
     nodes.push(heading, bullet, { kind: 'paragraph', text });
@@ -1540,7 +1540,7 @@ export function toCompactRender(
         `roll: ${roll} — ${SpecialPassage[event.result] ?? event.result}`,
       ],
     };
-    const text = renderCompactSpecialPassage(node);
+    const text = renderSpecialPassageCompact(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -2020,7 +2020,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
   switch (node.event.result) {
     case PeriodicCheck.Door: {
       const door = findChildEvent(node, 'doorLocation');
-      return renderCompactDoorChain(door);
+      return renderDoorChainCompact(door);
     }
     case PeriodicCheck.SidePassage: {
       const side = findChildEvent(node, 'sidePassages');
@@ -2031,7 +2031,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
       return turn
-        ? renderCompactPassageTurn(turn)
+        ? renderPassageTurnCompact(turn)
         : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
     }
     case PeriodicCheck.Chamber: {
@@ -2042,7 +2042,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
-        ? renderCompactStairs(stairs, {
+        ? renderStairsCompact(stairs, {
             renderChamberSummary: renderCompactChamberDimensions,
           })
         : periodicBaseTexts(PeriodicCheck.Stairs).detail;
@@ -2523,7 +2523,7 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
   const event = node.event;
   switch (event.result) {
     case PeriodicCheck.Door:
-      return renderCompactDoorChain(findChildEvent(node, 'doorLocation'));
+      return renderDoorChainCompact(findChildEvent(node, 'doorLocation'));
     case PeriodicCheck.SidePassage: {
       const side = findChildEvent(node, 'sidePassages');
       if (side && side.event.kind === 'sidePassages') {
@@ -2539,7 +2539,7 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
       return turn
-        ? renderCompactPassageTurn(turn)
+        ? renderPassageTurnCompact(turn)
         : periodicBaseTexts(event.result, {
             avoidMonster: event.avoidMonster ?? false,
           }).compact;
@@ -2552,7 +2552,7 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
-        ? renderCompactStairs(stairs, {
+        ? renderStairsCompact(stairs, {
             renderChamberSummary: renderCompactChamberDimensions,
           })
         : periodicBaseTexts(event.result, {

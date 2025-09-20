@@ -57,7 +57,7 @@ export function renderPeriodicDoorOnlyDetail(
   return nodes;
 }
 
-export function renderCompactDoorChain(
+export function renderDoorChainCompact(
   resolvedNode?: OutcomeEventNode
 ): string {
   if (!resolvedNode) return 'A door is indicated. ';

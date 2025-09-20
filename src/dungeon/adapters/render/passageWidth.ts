@@ -2,7 +2,7 @@ import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { PassageWidth } from '../../../tables/dungeon/passageWidth';
 import { findChildEvent, type AppendPreviewFn } from './shared';
-import { renderCompactSpecialPassage } from './specialPassage';
+import { renderSpecialPassageCompact } from './specialPassage';
 
 export function renderPassageWidthDetail(
   outcome: OutcomeEventNode,
@@ -28,7 +28,7 @@ export function renderPassageWidthDetail(
   return nodes;
 }
 
-export function renderCompactPassageWidth(node: OutcomeEventNode): string {
+export function renderPassageWidthCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'passageWidth') return '';
   switch (node.event.result) {
     case PassageWidth.FiveFeet:
@@ -42,7 +42,7 @@ export function renderCompactPassageWidth(node: OutcomeEventNode): string {
     case PassageWidth.SpecialPassage: {
       const special = findChildEvent(node, 'specialPassage');
       return special
-        ? renderCompactSpecialPassage(special)
+        ? renderSpecialPassageCompact(special)
         : 'A special passage occurs. ';
     }
     default:

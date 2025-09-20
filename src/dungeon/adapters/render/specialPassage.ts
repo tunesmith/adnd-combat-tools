@@ -131,7 +131,7 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
   };
 }
 
-export function renderCompactSpecialPassage(node: OutcomeEventNode): string {
+export function renderSpecialPassageCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'specialPassage') return '';
   const summary = describeSpecialPassage(node);
   return summary.compactText;

@@ -37,7 +37,7 @@ export function renderStairsDetail(
   return nodes;
 }
 
-export function renderCompactStairs(
+export function renderStairsCompact(
   node: OutcomeEventNode,
   deps?: StairsDeps
 ): string {
