@@ -118,6 +118,10 @@ import {
   formatChasmConstruction,
   formatJumpingPlaceWidth,
 } from './render/specialPassage';
+import {
+  renderStairsDetail,
+  renderCompactStairs,
+} from './render/stairs';
 import { findChildEvent } from './render/shared';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
@@ -523,34 +527,9 @@ export function toDetailRender(
     return renderPassageTurnsDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'stairs') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Stairs',
-    };
-    const label = Stairs[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describeStairs(outcome);
-    nodes.push(heading, bullet);
-    if (summary.detailParagraphs.length > 0) {
-      nodes.push(...summary.detailParagraphs);
-    }
-    // Render pending child previews from resolver
-    if (
-      outcome.type === 'event' &&
-      outcome.children &&
-      Array.isArray(outcome.children)
-    ) {
-      for (const child of outcome.children) {
-        if (child.type !== 'pending-roll') continue;
-        const preview = previewForPending(child);
-        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
-      }
-    }
-    return nodes;
+    return renderStairsDetail(outcome, appendPendingPreviews, {
+      renderChamberSummary: renderCompactChamberDimensions,
+    });
   }
   if (event.kind === 'specialPassage') {
     return renderSpecialPassageDetail(outcome, appendPendingPreviews);
@@ -1604,7 +1583,9 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${Stairs[event.result] ?? event.result}`],
     };
-    const text = renderCompactStairs(node);
+    const text = renderCompactStairs(node, {
+      renderChamberSummary: renderCompactChamberDimensions,
+    });
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1935,118 +1916,6 @@ function describeTrickTrap(node: OutcomeEventNode): {
   return { detailParagraphs, compactText: text };
 }
 
-function describeStairs(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'stairs') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const detailParagraphs: DungeonMessage[] = [];
-  const compactSegments: string[] = [];
-  const append = (
-    raw: string,
-    options?: { detail?: boolean; compact?: boolean }
-  ) => {
-    const includeDetail = options?.detail !== false;
-    const includeCompact = options?.compact !== false;
-    const trimmed = raw.trim();
-    if (trimmed.length === 0) return;
-    const endsWithPunctuation = /[.!?]$/.test(trimmed);
-    if (includeDetail) {
-      const detailText = endsWithPunctuation ? `${trimmed} ` : `${trimmed}. `;
-      detailParagraphs.push({ kind: 'paragraph', text: detailText });
-    }
-    if (includeCompact) {
-      compactSegments.push(endsWithPunctuation ? trimmed : `${trimmed}.`);
-    }
-  };
-
-  switch (node.event.result) {
-    case Stairs.DownOne:
-      append('There are stairs here that descend one level.');
-      break;
-    case Stairs.DownTwo:
-      append('There are stairs here that descend two levels.');
-      break;
-    case Stairs.DownThree:
-      append('There are stairs here that descend three levels.');
-      break;
-    case Stairs.UpOne:
-      append('There are stairs here that ascend one level.');
-      break;
-    case Stairs.UpDead:
-      append('There are stairs here that ascend one level to a dead end.');
-      break;
-    case Stairs.DownDead:
-      append('There are stairs here that descend one level to a dead end.');
-      break;
-    case Stairs.ChimneyUpOne:
-      append(
-        "There is a chimney that goes up one level. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.ChimneyUpTwo:
-      append(
-        "There is a chimney that goes up two levels. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.ChimneyDownTwo:
-      append(
-        "There is a chimney that goes down two levels. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.TrapDoorDownOne:
-      append(
-        "There is a trap door that goes down one level. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.TrapDownDownTwo:
-      append(
-        "There is a trap door that goes down two levels. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.UpOneDownTwo:
-      append(
-        'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber.'
-      );
-      break;
-  }
-
-  const egress = findChildEvent(node, 'egress');
-  if (egress && egress.event.kind === 'egress') {
-    if (egress.event.result === Egress.Closed) {
-      append(
-        'After descending, an unnoticed door will close egress for the day.'
-      );
-    }
-  }
-
-  const chuteEvent = findChildEvent(node, 'chute');
-  if (chuteEvent && chuteEvent.event.kind === 'chute') {
-    if (chuteEvent.event.result === Chute.Exists) {
-      append(
-        'The stairs will turn into a chute, descending two levels from the top.'
-      );
-    }
-  }
-
-  if (node.event.result === Stairs.UpOneDownTwo) {
-    const chamber = findChildEvent(node, 'chamberDimensions');
-    if (chamber) {
-      const chamberSummary = renderCompactChamberDimensions(chamber).trim();
-      if (chamberSummary.length > 0) {
-        append(chamberSummary, { detail: false });
-      }
-    }
-  }
-
-  return {
-    detailParagraphs,
-    compactText: joinCompactSegments(compactSegments),
-  };
-}
-
 interface MonsterDescription {
   heading: string;
   label: string;
@@ -2260,7 +2129,9 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
-        ? renderCompactStairs(stairs)
+        ? renderCompactStairs(stairs, {
+            renderChamberSummary: renderCompactChamberDimensions,
+          })
         : periodicBaseTexts(PeriodicCheck.Stairs).detail;
     }
     case PeriodicCheck.TrickTrap: {
@@ -2320,12 +2191,6 @@ function renderChildPassageWidth(node: OutcomeEventNode): string {
 function getChildEvents(node: OutcomeEventNode): OutcomeEventNode[] {
   const children = node.children || [];
   return children.filter((c): c is OutcomeEventNode => c.type === 'event');
-}
-
-function renderCompactStairs(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'stairs') return '';
-  const summary = describeStairs(node);
-  return summary.compactText;
 }
 
 function joinCompactSegments(segments: string[]): string {
@@ -2774,7 +2639,9 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
-        ? renderCompactStairs(stairs)
+        ? renderCompactStairs(stairs, {
+            renderChamberSummary: renderCompactChamberDimensions,
+          })
         : periodicBaseTexts(event.result, {
             avoidMonster: event.avoidMonster ?? false,
           }).compact;

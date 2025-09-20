@@ -1,15 +1,8 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
+import type { OutcomeEventNode } from '../../domain/outcome';
 import { PassageWidth } from '../../../tables/dungeon/passageWidth';
 import { findChildEvent, type AppendPreviewFn } from './shared';
 import { renderCompactSpecialPassage } from './specialPassage';
-
-export function isPassageWidthEvent(
-  event: OutcomeEvent | undefined
-): event is Extract<OutcomeEvent, { kind: 'passageWidth' }> {
-  if (!event) return false;
-  return event.kind === 'passageWidth' && typeof event.result === 'number';
-}
 
 export function renderPassageWidthDetail(
   outcome: OutcomeEventNode,
