@@ -92,7 +92,7 @@ import {
   renderPeriodicCheckDetail,
   periodicBaseTexts,
   TRICK_TRAP_FALLBACK_TEXT,
-} from './render/passages';
+} from './render/periodicOutcome';
 import {
   renderDoorLocationDetail,
   renderPeriodicDoorOnlyDetail,
@@ -1491,7 +1491,7 @@ export function toCompactRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
-  const node = outcome as OutcomeEventNode;
+  const node = outcome;
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = node;
   if (event.kind === 'periodicCheck') {
@@ -1582,8 +1582,7 @@ export function toCompactRender(
       level: 4,
       text: 'Passage Width',
     };
-    const label =
-      PassageWidth[node.event.result] ?? String(node.event.result);
+    const label = PassageWidth[node.event.result] ?? String(node.event.result);
     const bullet: DungeonMessage = {
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],

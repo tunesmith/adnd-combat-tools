@@ -107,9 +107,9 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 
 ### 12. Adapter Modularisation _(in progress)_
 
-- Created `render/passages.ts` for periodic-check helpers and shared fallback text.
+- Created `render/periodicOutcome.ts` for periodic-check helpers and shared fallback text.
 - Created `render/doorChain.ts` for door-location / continuation detail and compact rendering.
-- Remaining work: move passage width/turn helpers into `render/passages.ts`, extract other event families (rooms, monsters, pools) into similar modules, and standardise helper naming.
+- Remaining work: move passage width/turn helpers into `render/periodicOutcome.ts`, extract other event families (rooms, monsters, pools) into similar modules, and standardise helper naming.
 - Suggested next commit: `render: extract passage width/turn helpers`.
 
 ## Open Questions / Future Enhancements
