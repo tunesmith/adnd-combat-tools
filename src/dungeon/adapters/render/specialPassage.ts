@@ -5,13 +5,14 @@ import {
   GalleryStairLocation,
   StreamConstruction,
   RiverConstruction,
-  ChasmDepth,
-  ChasmConstruction,
   RiverBoatBank,
   GalleryStairOccurrence,
-  JumpingPlaceWidth,
 } from '../../../tables/dungeon/specialPassage';
 import { findChildEvent, type AppendPreviewFn } from './shared';
+import {
+  formatChasmDepth,
+  formatChasmConstruction,
+} from './chasm';
 
 export function renderSpecialPassageDetail(
   outcome: OutcomeEventNode,
@@ -114,15 +115,10 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
     case SpecialPassage.TwentyFootChasm: {
       append("A chasm, 20' wide, bisects the passage. ");
       const depth = findChildEvent(node, 'chasmDepth');
-      if (depth) append(formatChasmDepth(depth.event.result as ChasmDepth));
+      if (depth) append(formatChasmDepth(depth.event.result));
       const construction = findChildEvent(node, 'chasmConstruction');
       if (construction)
-        append(
-          formatChasmConstruction(
-            construction.event.result as ChasmConstruction,
-            node
-          )
-        );
+        append(formatChasmConstruction(construction.event.result, node));
       break;
     }
     default:
@@ -139,40 +135,6 @@ export function renderCompactSpecialPassage(node: OutcomeEventNode): string {
   if (node.event.kind !== 'specialPassage') return '';
   const summary = describeSpecialPassage(node);
   return summary.compactText;
-}
-
-export function formatChasmDepth(result: ChasmDepth): string {
-  switch (result) {
-    case ChasmDepth.Feet150:
-      return "The chasm is 150' deep. ";
-    case ChasmDepth.Feet160:
-      return "The chasm is 160' deep. ";
-    case ChasmDepth.Feet170:
-      return "The chasm is 170' deep. ";
-    case ChasmDepth.Feet180:
-      return "The chasm is 180' deep. ";
-    case ChasmDepth.Feet190:
-      return "The chasm is 190' deep. ";
-    case ChasmDepth.Feet200:
-      return "The chasm is 200' deep. ";
-    default:
-      return '';
-  }
-}
-
-export function formatChasmConstruction(
-  result: ChasmConstruction,
-  node: OutcomeEventNode
-): string {
-  if (result === ChasmConstruction.Bridged)
-    return 'A bridge crosses the chasm. ';
-  if (result === ChasmConstruction.Obstacle)
-    return 'It has no bridge, and is too wide to jump across. ';
-  const jump = findChildEvent(node, 'jumpingPlaceWidth');
-  if (jump && jump.event.kind === 'jumpingPlaceWidth') {
-    return `There is a jumping place. ${formatJumpingPlaceWidth(jump.event.result)} `;
-  }
-  return '';
 }
 
 function formatGalleryStairLocation(result: GalleryStairLocation): string {
@@ -220,10 +182,4 @@ export function formatRiverConstruction(
     );
   }
   return '';
-}
-
-export function formatJumpingPlaceWidth(result: JumpingPlaceWidth): string {
-  return result === JumpingPlaceWidth.FiveFeet
-    ? "It is 5' wide."
-    : "It is 10' wide.";
 }

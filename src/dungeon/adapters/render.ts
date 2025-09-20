@@ -86,7 +86,6 @@ import {
   ChasmDepth,
   chasmConstruction,
   ChasmConstruction,
-  JumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
 import {
   renderPeriodicCheckDetail,
@@ -114,10 +113,12 @@ import {
 import {
   renderSpecialPassageDetail,
   renderCompactSpecialPassage,
-  formatChasmDepth,
-  formatChasmConstruction,
-  formatJumpingPlaceWidth,
 } from './render/specialPassage';
+import {
+  renderChasmDepthDetail,
+  renderChasmConstructionDetail,
+  renderJumpingPlaceDetail,
+} from './render/chasm';
 import {
   renderStairsDetail,
   renderCompactStairs,
@@ -535,55 +536,13 @@ export function toDetailRender(
     return renderSpecialPassageDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'chasmDepth') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Chasm Depth',
-    };
-    const label = ChasmDepth[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const depthText = formatChasmDepth(event.result).trim();
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (depthText) nodes2.push({ kind: 'paragraph', text: depthText });
-    return nodes2;
+    return renderChasmDepthDetail(outcome);
   }
   if (event.kind === 'chasmConstruction') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Chasm Construction',
-    };
-    const label = ChasmConstruction[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const constructionText = formatChasmConstruction(
-      event.result,
-      outcome
-    ).trim();
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (constructionText)
-      nodes2.push({ kind: 'paragraph', text: constructionText });
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderChasmConstructionDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'jumpingPlaceWidth') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Jumping Place Width',
-    };
-    const label = JumpingPlaceWidth[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const text = formatJumpingPlaceWidth(event.result);
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return renderJumpingPlaceDetail(outcome);
   }
   if (event.kind === 'egress') {
     const heading: DungeonMessage = {
