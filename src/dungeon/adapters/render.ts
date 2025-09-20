@@ -90,6 +90,11 @@ import {
   GalleryStairOccurrence,
   JumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
+import {
+  renderPeriodicCheckDetail,
+  periodicBaseTexts,
+  TRICK_TRAP_FALLBACK_TEXT,
+} from './render/passages';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
   magicPool,
@@ -368,75 +373,7 @@ export function toDetailRender(
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = outcome;
   if (event.kind === 'periodicCheck') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 3,
-      text: 'Passage',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${PeriodicCheck[event.result]}`],
-    };
-    nodes.push(heading, bullet);
-    switch (event.result) {
-      case PeriodicCheck.ContinueStraight:
-        nodes.push({
-          kind: 'paragraph',
-          text: "Continue straight -- check again in 60'. ",
-        });
-        break;
-      case PeriodicCheck.Door: {
-        nodes.push({ kind: 'paragraph', text: 'A closed door is indicated.' });
-        break;
-      }
-      case PeriodicCheck.SidePassage: {
-        nodes.push({ kind: 'paragraph', text: 'A side passage occurs.' });
-        break;
-      }
-      case PeriodicCheck.PassageTurn: {
-        nodes.push({ kind: 'paragraph', text: 'The passage turns.' });
-        break;
-      }
-      case PeriodicCheck.Chamber: {
-        nodes.push({
-          kind: 'paragraph',
-          text: 'The passage opens into a chamber. ',
-        });
-        break;
-      }
-      case PeriodicCheck.Stairs: {
-        nodes.push({ kind: 'paragraph', text: 'Stairs are indicated here.' });
-        break;
-      }
-      case PeriodicCheck.DeadEnd:
-        nodes.push({
-          kind: 'paragraph',
-          text: DEAD_END_FALLBACK_TEXT,
-        });
-        break;
-      case PeriodicCheck.TrickTrap: {
-        nodes.push({
-          kind: 'paragraph',
-          text: 'There is a trick or trap here.',
-        });
-        break;
-      }
-      case PeriodicCheck.WanderingMonster:
-        nodes.push({
-          kind: 'paragraph',
-          text: 'A wandering monster is indicated.',
-        });
-        break;
-    }
-    // Render any pending child previews supplied by the resolver
-    if (outcome.children && Array.isArray(outcome.children)) {
-      for (const child of outcome.children) {
-        if (child.type !== 'pending-roll') continue;
-        const preview = previewForPending(child);
-        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
-      }
-    }
-    return nodes;
+    return renderPeriodicCheckDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'doorBeyond') {
     const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
@@ -2565,7 +2502,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
       const turn = findChildEvent(node, 'passageTurns');
       return turn
         ? renderCompactPassageTurn(turn)
-        : fallbackPeriodicText(PeriodicCheck.PassageTurn, false);
+        : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
@@ -2576,7 +2513,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderCompactStairs(stairs)
-        : fallbackPeriodicText(PeriodicCheck.Stairs, false);
+        : periodicBaseTexts(PeriodicCheck.Stairs).detail;
     }
     case PeriodicCheck.TrickTrap: {
       const trap = findChildEvent(node, 'trickTrap');
@@ -2589,41 +2526,11 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
       return TRICK_TRAP_FALLBACK_TEXT;
     }
     case PeriodicCheck.ContinueStraight:
-      return fallbackPeriodicText(PeriodicCheck.ContinueStraight, false);
+      return periodicBaseTexts(PeriodicCheck.ContinueStraight).detail;
     case PeriodicCheck.DeadEnd:
-      return DEAD_END_FALLBACK_TEXT;
+      return periodicBaseTexts(PeriodicCheck.DeadEnd).detail;
     default:
-      return fallbackPeriodicText(node.event.result, false);
-  }
-}
-
-function fallbackPeriodicText(
-  result: PeriodicCheck,
-  avoidMonster: boolean
-): string {
-  switch (result) {
-    case PeriodicCheck.ContinueStraight:
-      return "Continue straight -- check again in 60'. ";
-    case PeriodicCheck.Door:
-      return 'A door is indicated.';
-    case PeriodicCheck.SidePassage:
-      return 'A side passage occurs.';
-    case PeriodicCheck.PassageTurn:
-      return 'The passage turns.';
-    case PeriodicCheck.Chamber:
-      return 'The passage opens into a chamber.';
-    case PeriodicCheck.Stairs:
-      return 'Stairs are indicated here.';
-    case PeriodicCheck.WanderingMonster:
-      return avoidMonster
-        ? 'Wandering Monster (ignored this turn). '
-        : 'Wandering Monster: unknown result. ';
-    case PeriodicCheck.DeadEnd:
-      return DEAD_END_FALLBACK_TEXT;
-    case PeriodicCheck.TrickTrap:
-      return TRICK_TRAP_FALLBACK_TEXT;
-    default:
-      return `Appears from: ${PeriodicCheck[result]}. `;
+      return periodicBaseTexts(node.event.result).detail;
   }
 }
 
@@ -3208,11 +3115,8 @@ function formatTransporterLocation(result: TransporterLocation): string {
 }
 
 const TRANSPORTER_BASE_SENTENCE = 'It is a transporter.';
-const DEAD_END_FALLBACK_TEXT = 'The passage reaches a dead end. (TODO) ';
 const DOOR_CHAIN_FALLBACK_TEXT =
   "There are no other doors. The main passage extends -- check again in 30'. ";
-const TRICK_TRAP_FALLBACK_TEXT =
-  "There is a trick or trap. (TODO) -- check again in 30'. ";
 
 function describeTransporterLocation(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
@@ -3333,21 +3237,17 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
           return summary.compactText;
         }
       }
-      return compactPeriodicText(
-        event.level,
-        event.result,
-        event.avoidMonster ?? false
-      );
+      return periodicBaseTexts(event.result, {
+        avoidMonster: event.avoidMonster ?? false,
+      }).compact;
     }
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
       return turn
         ? renderCompactPassageTurn(turn)
-        : compactPeriodicText(
-            event.level,
-            event.result,
-            event.avoidMonster ?? false
-          );
+        : periodicBaseTexts(event.result, {
+            avoidMonster: event.avoidMonster ?? false,
+          }).compact;
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
@@ -3358,7 +3258,9 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderCompactStairs(stairs)
-        : 'Stairs are indicated here. ';
+        : periodicBaseTexts(event.result, {
+            avoidMonster: event.avoidMonster ?? false,
+          }).compact;
     }
     case PeriodicCheck.WanderingMonster: {
       const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
@@ -3374,11 +3276,9 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
       );
     }
     default:
-      return compactPeriodicText(
-        event.level,
-        event.result,
-        event.avoidMonster ?? false
-      );
+      return periodicBaseTexts(event.result, {
+        avoidMonster: event.avoidMonster ?? false,
+      }).compact;
   }
 }
 
@@ -3410,37 +3310,6 @@ function formatSidePassageResult(result: SidePassages): string {
       return "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
     default:
       return "A side passage branches. Passages extend -- check again in 30'. ";
-  }
-}
-
-function compactPeriodicText(
-  _level: number,
-  result: PeriodicCheck,
-  avoidMonster: boolean
-): string {
-  switch (result) {
-    case PeriodicCheck.ContinueStraight:
-      return "Continue straight -- check again in 60'. ";
-    case PeriodicCheck.Door:
-      return 'A door is indicated. ';
-    case PeriodicCheck.SidePassage:
-      return "A side passage branches. Passages extend -- check again in 30'. ";
-    case PeriodicCheck.PassageTurn:
-      return 'The passage turns. ';
-    case PeriodicCheck.Chamber:
-      return 'The passage opens into a chamber. ';
-    case PeriodicCheck.Stairs:
-      return 'Stairs are indicated here. ';
-    case PeriodicCheck.WanderingMonster:
-      return avoidMonster
-        ? 'Wandering Monster (ignored this turn). '
-        : 'Wandering Monster: unknown result. ';
-    case PeriodicCheck.DeadEnd:
-      return DEAD_END_FALLBACK_TEXT;
-    case PeriodicCheck.TrickTrap:
-      return TRICK_TRAP_FALLBACK_TEXT;
-    default:
-      return '';
   }
 }
 
