@@ -86,8 +86,6 @@ import {
   ChasmDepth,
   chasmConstruction,
   ChasmConstruction,
-  RiverBoatBank,
-  GalleryStairOccurrence,
   JumpingPlaceWidth,
 } from '../../tables/dungeon/specialPassage';
 import {
@@ -109,6 +107,18 @@ import {
   renderPassageTurnsDetail,
   renderCompactPassageTurn,
 } from './render/passageTurns';
+import {
+  renderPassageWidthDetail,
+  renderCompactPassageWidth,
+} from './render/passageWidth';
+import {
+  renderSpecialPassageDetail,
+  renderCompactSpecialPassage,
+  formatChasmDepth,
+  formatChasmConstruction,
+  formatJumpingPlaceWidth,
+} from './render/specialPassage';
+import { findChildEvent } from './render/shared';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
   magicPool,
@@ -407,39 +417,8 @@ export function toDetailRender(
   if (event.kind === 'periodicDoorOnly') {
     return renderPeriodicDoorOnlyDetail(outcome, appendPendingPreviews);
   }
-  if (isPassageWidthEvent(event)) {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Passage Width',
-    };
-    const r = (event as { result: number }).result;
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${PassageWidth[r as PassageWidth]}`],
-    };
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    let text = '';
-    switch (r as PassageWidth) {
-      case PassageWidth.FiveFeet:
-        text = "The passage is 5' wide. ";
-        break;
-      case PassageWidth.TenFeet:
-        text = "The passage is 10' wide. ";
-        break;
-      case PassageWidth.TwentyFeet:
-        text = "The passage is 20' wide. ";
-        break;
-      case PassageWidth.ThirtyFeet:
-        text = "The passage is 30' wide. ";
-        break;
-      case PassageWidth.SpecialPassage:
-        text = ''; // defer to special passage child
-        break;
-    }
-    if (text) nodes2.push({ kind: 'paragraph', text });
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+  if (outcome.event.kind === 'passageWidth') {
+    return renderPassageWidthDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'sidePassages') {
     return renderSidePassagesDetail(outcome);
@@ -541,9 +520,7 @@ export function toDetailRender(
     return nodes;
   }
   if (event.kind === 'passageTurns') {
-    return renderPassageTurnsDetail(outcome, appendPendingPreviews, {
-      renderPassageWidth: renderCompactPassageWidth,
-    });
+    return renderPassageTurnsDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'stairs') {
     const heading: DungeonMessage = {
@@ -576,24 +553,7 @@ export function toDetailRender(
     return nodes;
   }
   if (event.kind === 'specialPassage') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Special Passage',
-    };
-    const label = SpecialPassage[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describeSpecialPassage(outcome);
-    const nodes2: DungeonRenderNode[] = [
-      heading,
-      bullet,
-      ...summary.detailParagraphs,
-    ];
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderSpecialPassageDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'chasmDepth') {
     const heading: DungeonMessage = {
@@ -643,52 +603,8 @@ export function toDetailRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${label}`],
     };
-    const text =
-      event.result === JumpingPlaceWidth.FiveFeet
-        ? "It is 5' wide."
-        : "It is 10' wide.";
+    const text = formatJumpingPlaceWidth(event.result);
     return [heading, bullet, { kind: 'paragraph', text }];
-  }
-  if (isPassageWidthEvent(event)) {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Passage Width',
-    };
-    const r = (event as { result: number }).result;
-    const label = PassageWidth[r as PassageWidth] ?? String(r);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    let text = '';
-    switch (r as PassageWidth) {
-      case PassageWidth.FiveFeet:
-        text = "The passage is 5' wide. ";
-        break;
-      case PassageWidth.TenFeet:
-        text = "The passage is 10' wide. ";
-        break;
-      case PassageWidth.TwentyFeet:
-        text = "The passage is 20' wide. ";
-        break;
-      case PassageWidth.ThirtyFeet:
-        text = "The passage is 30' wide. ";
-        break;
-      case PassageWidth.SpecialPassage:
-        text = ''; // defer to special passage preview below
-        break;
-    }
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (text) nodes2.push({ kind: 'paragraph', text });
-    if ((r as PassageWidth) === PassageWidth.SpecialPassage) {
-      const prev = previewForPending({
-        type: 'pending-roll',
-        table: 'specialPassage',
-      });
-      if (prev) nodes2.push(prev);
-    }
-    return nodes2;
   }
   if (event.kind === 'egress') {
     const heading: DungeonMessage = {
@@ -1570,20 +1486,12 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   return undefined;
 }
 
-function isPassageWidthEvent(
-  ev: unknown
-): ev is { kind: 'passageWidth'; result: PassageWidth } {
-  if (!ev || typeof ev !== 'object') return false;
-  const o = ev as { kind?: unknown; result?: unknown };
-  return o.kind === 'passageWidth' && typeof o.result === 'number';
-}
-
 // COMPACT MODE: outcome -> render nodes with auto-resolved text (no previews)
 export function toCompactRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
-  const node = outcome;
+  const node = outcome as OutcomeEventNode;
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = node;
   if (event.kind === 'periodicCheck') {
@@ -1664,11 +1572,28 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${PassageTurns[event.result] ?? event.result}`],
     };
-    const text = renderCompactPassageTurn(node, {
-      renderPassageWidth: renderCompactPassageWidth,
-    });
+    const text = renderCompactPassageTurn(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
+  }
+  if (node.event.kind === 'passageWidth') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Passage Width',
+    };
+    const label =
+      PassageWidth[node.event.result] ?? String(node.event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    const text = renderCompactPassageWidth(node);
+    if (text.length > 0) {
+      nodes2.push({ kind: 'paragraph', text });
+    }
+    return nodes2;
   }
   if (event.kind === 'stairs') {
     const heading: DungeonMessage = {
@@ -2325,9 +2250,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
       return turn
-        ? renderCompactPassageTurn(turn, {
-            renderPassageWidth: renderCompactPassageWidth,
-          })
+        ? renderCompactPassageTurn(turn)
         : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
     }
     case PeriodicCheck.Chamber: {
@@ -2398,127 +2321,6 @@ function renderChildPassageWidth(node: OutcomeEventNode): string {
 function getChildEvents(node: OutcomeEventNode): OutcomeEventNode[] {
   const children = node.children || [];
   return children.filter((c): c is OutcomeEventNode => c.type === 'event');
-}
-
-function findChildEvent<K extends OutcomeEvent['kind']>(
-  node: OutcomeEventNode,
-  kind: K
-): OutcomeEventNode | undefined {
-  return getChildEvents(node).find((child) => child.event.kind === kind);
-}
-
-function renderCompactPassageWidth(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'passageWidth') return '';
-  switch (node.event.result) {
-    case PassageWidth.FiveFeet:
-      return "The passage is 5' wide. ";
-    case PassageWidth.TenFeet:
-      return "The passage is 10' wide. ";
-    case PassageWidth.TwentyFeet:
-      return "The passage is 20' wide. ";
-    case PassageWidth.ThirtyFeet:
-      return "The passage is 30' wide. ";
-    case PassageWidth.SpecialPassage: {
-      const special = findChildEvent(node, 'specialPassage');
-      return special
-        ? renderCompactSpecialPassage(special)
-        : 'A special passage occurs. ';
-    }
-    default:
-      return '';
-  }
-}
-
-function renderCompactSpecialPassage(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'specialPassage') return '';
-  const summary = describeSpecialPassage(node);
-  return summary.compactText;
-}
-
-function formatGalleryStairLocation(result: GalleryStairLocation): string {
-  switch (result) {
-    case GalleryStairLocation.PassageBeginning:
-      return 'Stairs up to the gallery are at the beginning of the passage. ';
-    case GalleryStairLocation.PassageEnd:
-      return 'Stairs up to the gallery will be at the end of the passage. ';
-    default:
-      return '';
-  }
-}
-
-function formatGalleryStairOccurrence(result: GalleryStairOccurrence): string {
-  switch (result) {
-    case GalleryStairOccurrence.Replace:
-      return 'If a stairway is otherwise indicated in or adjacent to the passage, it will replace the end stairs. ';
-    case GalleryStairOccurrence.Supplement:
-      return 'If a stairway is otherwise indicated in or adjacent to the passage, it will supplement the end stairs. ';
-    default:
-      return '';
-  }
-}
-
-function formatStreamConstruction(result: StreamConstruction): string {
-  return result === StreamConstruction.Bridged
-    ? 'A bridge crosses the stream. '
-    : '';
-}
-
-function formatRiverConstruction(
-  result: RiverConstruction,
-  node: OutcomeEventNode
-): string {
-  if (result === RiverConstruction.Bridged)
-    return 'A bridge crosses the river. ';
-  if (result === RiverConstruction.Obstacle) return '';
-  const boat = findChildEvent(node, 'riverBoatBank');
-  if (boat) {
-    return (
-      'There is a boat. ' +
-      (boat.event.result === RiverBoatBank.ThisSide
-        ? 'The boat is on this bank of the river. '
-        : 'The boat is on the opposite bank of the river. ')
-    );
-  }
-  return '';
-}
-
-function formatChasmDepth(result: ChasmDepth): string {
-  switch (result) {
-    case ChasmDepth.Feet150:
-      return "The chasm is 150' deep. ";
-    case ChasmDepth.Feet160:
-      return "The chasm is 160' deep. ";
-    case ChasmDepth.Feet170:
-      return "The chasm is 170' deep. ";
-    case ChasmDepth.Feet180:
-      return "The chasm is 180' deep. ";
-    case ChasmDepth.Feet190:
-      return "The chasm is 190' deep. ";
-    case ChasmDepth.Feet200:
-      return "The chasm is 200' deep. ";
-    default:
-      return '';
-  }
-}
-
-function formatChasmConstruction(
-  result: ChasmConstruction,
-  node: OutcomeEventNode
-): string {
-  if (result === ChasmConstruction.Bridged)
-    return 'A bridge crosses the chasm. ';
-  if (result === ChasmConstruction.Obstacle)
-    return 'It has no bridge, and is too wide to jump across. ';
-  const jump = findChildEvent(node, 'jumpingPlaceWidth');
-  if (jump) {
-    return (
-      'There is a jumping place. ' +
-      (jump.event.result === JumpingPlaceWidth.FiveFeet
-        ? "It is 5' wide. "
-        : "It is 10' wide. ")
-    );
-  }
-  return '';
 }
 
 function renderCompactStairs(node: OutcomeEventNode): string {
@@ -2711,107 +2513,6 @@ function describeUnusualSizeChain(node: OutcomeEventNode): {
       compactSegments.push(sentence);
     }
   }
-  return {
-    detailParagraphs,
-    compactText: compactSegments.join(' '),
-  };
-}
-
-function describeSpecialPassage(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'specialPassage') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const detailParagraphs: DungeonMessage[] = [];
-  const compactSegments: string[] = [];
-  const append = (raw: string | undefined) => {
-    if (!raw) return;
-    const trimmed = raw.trim();
-    if (!trimmed) return;
-    const text = raw.endsWith(' ') ? raw : `${trimmed} `;
-    detailParagraphs.push({ kind: 'paragraph', text });
-    compactSegments.push(trimmed.endsWith('.') ? trimmed : `${trimmed}.`);
-  };
-
-  switch (node.event.result) {
-    case SpecialPassage.FortyFeetColumns:
-      append("The passage is 40' wide, with columns down the center. ");
-      break;
-    case SpecialPassage.FortyFeetDoubleColumns:
-      append("The passage is 40' wide, with a double row of columns. ");
-      break;
-    case SpecialPassage.FiftyFeetDoubleColumns:
-      append("The passage is 50' wide, with a double row of columns. ");
-      break;
-    case SpecialPassage.FiftyFeetGalleries: {
-      append(
-        "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. "
-      );
-      const loc = findChildEvent(node, 'galleryStairLocation');
-      if (loc)
-        append(
-          formatGalleryStairLocation(loc.event.result as GalleryStairLocation)
-        );
-      const occurrence = findChildEvent(node, 'galleryStairOccurrence');
-      if (occurrence)
-        append(
-          formatGalleryStairOccurrence(
-            occurrence.event.result as GalleryStairOccurrence
-          )
-        );
-      break;
-    }
-    case SpecialPassage.TenFootStream: {
-      append("A stream, 10' wide, bisects the passage. ");
-      const construction = findChildEvent(node, 'streamConstruction');
-      if (construction)
-        append(
-          formatStreamConstruction(
-            construction.event.result as StreamConstruction
-          )
-        );
-      break;
-    }
-    case SpecialPassage.TwentyFootRiver:
-    case SpecialPassage.FortyFootRiver:
-    case SpecialPassage.SixtyFootRiver: {
-      const base =
-        node.event.result === SpecialPassage.TwentyFootRiver
-          ? "A river, 20' wide, bisects the passage. "
-          : node.event.result === SpecialPassage.FortyFootRiver
-          ? "A river, 40' wide, bisects the passage. "
-          : "A river, 60' wide, bisects the passage. ";
-      append(base);
-      const construction = findChildEvent(node, 'riverConstruction');
-      if (construction)
-        append(
-          formatRiverConstruction(
-            construction.event.result as RiverConstruction,
-            node
-          )
-        );
-      break;
-    }
-    case SpecialPassage.TwentyFootChasm: {
-      append("A chasm, 20' wide, bisects the passage. ");
-      const depth = findChildEvent(node, 'chasmDepth');
-      if (depth) append(formatChasmDepth(depth.event.result as ChasmDepth));
-      const construction = findChildEvent(node, 'chasmConstruction');
-      if (construction)
-        append(
-          formatChasmConstruction(
-            construction.event.result as ChasmConstruction,
-            node
-          )
-        );
-      break;
-    }
-    default:
-      break;
-  }
-
   return {
     detailParagraphs,
     compactText: compactSegments.join(' '),
@@ -3061,9 +2762,7 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
       return turn
-        ? renderCompactPassageTurn(turn, {
-            renderPassageWidth: renderCompactPassageWidth,
-          })
+        ? renderCompactPassageTurn(turn)
         : periodicBaseTexts(event.result, {
             avoidMonster: event.avoidMonster ?? false,
           }).compact;

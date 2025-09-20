@@ -1,23 +1,14 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { PassageTurns } from '../../../tables/dungeon/passageTurns';
-import type { AppendPreviewFn } from './shared';
-
-export type PassageTurnDeps = {
-  renderPassageWidth?: (node: OutcomeEventNode) => string;
-};
-
-const DEFAULT_DEPS: Required<PassageTurnDeps> = {
-  renderPassageWidth: () => '',
-};
+import { findChildEvent, type AppendPreviewFn } from './shared';
+import { renderCompactPassageWidth } from './passageWidth';
 
 export function renderPassageTurnsDetail(
   outcome: OutcomeEventNode,
-  appendPendingPreviews: AppendPreviewFn,
-  deps?: PassageTurnDeps
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'passageTurns') return [];
-  const resolvedDeps = withDefaults(deps);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -29,7 +20,7 @@ export function renderPassageTurnsDetail(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  const summary = describePassageTurn(outcome, resolvedDeps);
+  const summary = describePassageTurn(outcome);
   if (summary.detailParagraphs.length > 0) {
     nodes.push(...summary.detailParagraphs);
   }
@@ -38,8 +29,7 @@ export function renderPassageTurnsDetail(
 }
 
 export function describePassageTurn(
-  node: OutcomeEventNode,
-  deps?: PassageTurnDeps
+  node: OutcomeEventNode
 ): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
@@ -47,7 +37,6 @@ export function describePassageTurn(
   if (node.event.kind !== 'passageTurns') {
     return { detailParagraphs: [], compactText: '' };
   }
-  const resolvedDeps = withDefaults(deps);
   let detailText = '';
   switch (node.event.result) {
     case PassageTurns.Left90:
@@ -76,7 +65,7 @@ export function describePassageTurn(
   let compactText = detailText;
   const widthNode = findChildEvent(node, 'passageWidth');
   if (widthNode && widthNode.event.kind === 'passageWidth') {
-    compactText += resolvedDeps.renderPassageWidth(widthNode);
+    compactText += renderCompactPassageWidth(widthNode);
   }
   const detailParagraphs: DungeonMessage[] = [];
   if (detailText.length > 0) {
@@ -86,29 +75,9 @@ export function describePassageTurn(
 }
 
 export function renderCompactPassageTurn(
-  node: OutcomeEventNode,
-  deps?: PassageTurnDeps
+  node: OutcomeEventNode
 ): string {
   if (node.event.kind !== 'passageTurns') return '';
-  const summary = describePassageTurn(node, deps);
+  const summary = describePassageTurn(node);
   return summary.compactText;
-}
-
-function withDefaults(deps?: PassageTurnDeps): Required<PassageTurnDeps> {
-  if (!deps) return DEFAULT_DEPS;
-  return {
-    renderPassageWidth: deps.renderPassageWidth ?? DEFAULT_DEPS.renderPassageWidth,
-  };
-}
-
-function findChildEvent(
-  node: OutcomeEventNode,
-  kind: OutcomeEventNode['event']['kind']
-): OutcomeEventNode | undefined {
-  const children = node.children || [];
-  for (const child of children) {
-    if (child.type !== 'event') continue;
-    if (child.event.kind === kind) return child;
-  }
-  return undefined;
 }
