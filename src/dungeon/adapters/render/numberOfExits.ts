@@ -1,6 +1,14 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+  DungeonTablePreview,
+  TableContext,
+} from '../../../types/dungeon';
 import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
-import { NumberOfExits } from '../../../tables/dungeon/numberOfExits';
+import {
+  numberOfExits,
+  NumberOfExits,
+} from '../../../tables/dungeon/numberOfExits';
 
 export function renderNumberOfExitsDetail(
   outcome: OutcomeEventNode
@@ -46,6 +54,23 @@ export function renderNumberOfExitsCompact(
   return nodes;
 }
 
+export function buildNumberOfExitsPreview(
+  tableId: string,
+  context?: TableContext
+): DungeonTablePreview {
+  return {
+    kind: 'table-preview',
+    id: tableId,
+    title: 'Number of Exits',
+    sides: numberOfExits.sides,
+    entries: numberOfExits.entries.map((entry) => ({
+      range: formatRange(entry.range),
+      label: NumberOfExits[entry.command] ?? String(entry.command),
+    })),
+    context,
+  };
+}
+
 export function describeNumberOfExits(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
@@ -85,4 +110,10 @@ function formatNumberOfExitsEvent(
       : '';
   const pronoun = event.count === 1 ? 'its' : 'their';
   return `There ${verb} ${event.count} additional ${plural}${rollInfo}. Determine ${pronoun} location and direction using the exit tables.`;
+}
+
+function formatRange(range: number[]): string {
+  return range.length === 1
+    ? `${range[0]}`
+    : `${range[0]}–${range[range.length - 1]}`;
 }

@@ -134,6 +134,7 @@ import {
 import {
   renderNumberOfExitsDetail,
   renderNumberOfExitsCompact,
+  buildNumberOfExitsPreview,
 } from './render/numberOfExits';
 import { findChildEvent } from './render/shared';
 import { pool, Pool } from '../../tables/dungeon/pool';
@@ -147,10 +148,6 @@ import {
   transporterLocation,
   TransporterLocation,
 } from '../../tables/dungeon/magicPool';
-import {
-  numberOfExits,
-  NumberOfExits,
-} from '../../tables/dungeon/numberOfExits';
 import {
   unusualShape,
   UnusualShape,
@@ -977,17 +974,10 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         })),
       };
     case 'numberOfExits':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Exits',
-        sides: numberOfExits.sides,
-        entries: numberOfExits.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: NumberOfExits[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
+      return buildNumberOfExitsPreview(
+        p.table,
+        isTableContext(p.context) ? p.context : undefined
+      );
     case 'unusualShape':
       return {
         kind: 'table-preview',
@@ -1540,21 +1530,7 @@ export function toCompactRender(
     return renderChuteCompact(node);
   }
   if (event.kind === 'numberOfExits') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Exits',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${NumberOfExits[event.result]}`],
-    };
-    const text = renderNumberOfExitsCompact(node);
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (text.length > 0) {
-      nodes2.push({ kind: 'paragraph', text: `${text} ` });
-    }
-    return nodes2;
+    return renderNumberOfExitsCompact(node);
   }
   if (event.kind === 'circularMagicPool') {
     const heading: DungeonMessage = {
