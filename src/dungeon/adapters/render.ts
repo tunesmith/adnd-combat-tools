@@ -413,7 +413,7 @@ export function toDetailRender(
       case PeriodicCheck.DeadEnd:
         nodes.push({
           kind: 'paragraph',
-          text: 'The passage reaches a dead end. (TODO) ',
+          text: DEAD_END_FALLBACK_TEXT,
         });
         break;
       case PeriodicCheck.TrickTrap: {
@@ -2565,7 +2565,9 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     }
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
-      return turn ? renderCompactPassageTurn(turn) : 'The passage turns. ';
+      return turn
+        ? renderCompactPassageTurn(turn)
+        : fallbackPeriodicText(PeriodicCheck.PassageTurn, false);
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
@@ -2576,7 +2578,7 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderCompactStairs(stairs)
-        : 'Stairs are indicated here. ';
+        : fallbackPeriodicText(PeriodicCheck.Stairs, false);
     }
     case PeriodicCheck.TrickTrap: {
       const trap = findChildEvent(node, 'trickTrap');
@@ -2586,14 +2588,44 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
           return summary.compactText;
         }
       }
-      return "There is a trick or trap. (TODO) -- check again in 30'. ";
+      return TRICK_TRAP_FALLBACK_TEXT;
     }
     case PeriodicCheck.ContinueStraight:
-      return "Continue straight -- check again in 60'. ";
+      return fallbackPeriodicText(PeriodicCheck.ContinueStraight, false);
     case PeriodicCheck.DeadEnd:
-      return 'The passage reaches a dead end. (TODO) ';
+      return DEAD_END_FALLBACK_TEXT;
     default:
-      return `Appears from: ${PeriodicCheck[node.event.result]}. `;
+      return fallbackPeriodicText(node.event.result, false);
+  }
+}
+
+function fallbackPeriodicText(
+  result: PeriodicCheck,
+  avoidMonster: boolean
+): string {
+  switch (result) {
+    case PeriodicCheck.ContinueStraight:
+      return "Continue straight -- check again in 60'. ";
+    case PeriodicCheck.Door:
+      return 'A door is indicated.';
+    case PeriodicCheck.SidePassage:
+      return 'A side passage occurs.';
+    case PeriodicCheck.PassageTurn:
+      return 'The passage turns.';
+    case PeriodicCheck.Chamber:
+      return 'The passage opens into a chamber.';
+    case PeriodicCheck.Stairs:
+      return 'Stairs are indicated here.';
+    case PeriodicCheck.WanderingMonster:
+      return avoidMonster
+        ? 'Wandering Monster (ignored this turn). '
+        : 'Wandering Monster: unknown result. ';
+    case PeriodicCheck.DeadEnd:
+      return DEAD_END_FALLBACK_TEXT;
+    case PeriodicCheck.TrickTrap:
+      return TRICK_TRAP_FALLBACK_TEXT;
+    default:
+      return `Appears from: ${PeriodicCheck[result]}. `;
   }
 }
 
@@ -3178,6 +3210,9 @@ function formatTransporterLocation(result: TransporterLocation): string {
 }
 
 const TRANSPORTER_BASE_SENTENCE = 'It is a transporter.';
+const DEAD_END_FALLBACK_TEXT = 'The passage reaches a dead end. (TODO) ';
+const TRICK_TRAP_FALLBACK_TEXT =
+  "There is a trick or trap. (TODO) -- check again in 30'. ";
 
 function describeTransporterLocation(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
@@ -3401,9 +3436,9 @@ function compactPeriodicText(
         ? 'Wandering Monster (ignored this turn). '
         : 'Wandering Monster: unknown result. ';
     case PeriodicCheck.DeadEnd:
-      return 'The passage reaches a dead end. (TODO) ';
+      return DEAD_END_FALLBACK_TEXT;
     case PeriodicCheck.TrickTrap:
-      return "There is a trick or trap. (TODO) -- check again in 30'. ";
+      return TRICK_TRAP_FALLBACK_TEXT;
     default:
       return '';
   }
