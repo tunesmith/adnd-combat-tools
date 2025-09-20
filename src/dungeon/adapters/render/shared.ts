@@ -1,4 +1,8 @@
-import type { DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonRenderNode,
+  DungeonTablePreview,
+  TableContext,
+} from '../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEvent,
@@ -29,4 +33,38 @@ export function findChildEvent<K extends OutcomeEvent['kind']>(
     if (child.event.kind === kind) return child;
   }
   return undefined;
+}
+
+export type TablePreviewFactory = (
+  tableId: string,
+  context?: TableContext
+) => DungeonTablePreview;
+
+export function buildPreview(
+  tableId: string,
+  options: {
+    title: string;
+    sides: number;
+    entries: Array<{ range: number[]; label: string }>;
+    context?: TableContext;
+  }
+): DungeonTablePreview {
+  const { title, sides, entries, context } = options;
+  return {
+    kind: 'table-preview',
+    id: tableId,
+    title,
+    sides,
+    entries: entries.map((entry) => ({
+      range: formatRange(entry.range),
+      label: entry.label,
+    })),
+    context,
+  };
+}
+
+function formatRange(range: number[]): string {
+  return range.length === 1
+    ? `${range[0]}`
+    : `${range[0]}–${range[range.length - 1]}`;
 }

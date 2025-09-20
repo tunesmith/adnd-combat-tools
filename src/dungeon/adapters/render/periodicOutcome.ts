@@ -1,11 +1,21 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
-import type { AppendPreviewFn } from './shared';
+import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+import { buildPreview } from './shared';
 
 export const DEAD_END_FALLBACK_TEXT = 'The passage reaches a dead end. (TODO) ';
 export const TRICK_TRAP_FALLBACK_TEXT =
   "There is a trick or trap. (TODO) -- check again in 30'. ";
+
+export const buildPeriodicCheckPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Periodic Check',
+    sides: 20,
+    entries: Object.entries(PeriodicCheck)
+      .filter((entry): entry is [string, number] => Number.isNaN(Number(entry[0])))
+      .map(([label, command]) => ({ range: [command], label })),
+  });
 
 export function periodicBaseTexts(
   result: PeriodicCheck,

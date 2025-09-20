@@ -18,7 +18,6 @@ import {
   roomDimensions,
   RoomDimensions,
 } from '../../tables/dungeon/chambersRooms';
-import { doorLocation, DoorLocation } from '../../tables/dungeon/doorLocation';
 import { sidePassages, SidePassages } from '../../tables/dungeon/sidePassages';
 import { passageTurns, PassageTurns } from '../../tables/dungeon/passageTurns';
 import {
@@ -96,6 +95,8 @@ import {
   renderDoorLocationDetail,
   renderPeriodicDoorOnlyDetail,
   renderDoorChainCompact,
+  buildDoorLocationPreview,
+  buildPeriodicDoorOnlyPreview,
 } from './render/doorLocation';
 import {
   renderSidePassagesDetail,
@@ -155,10 +156,6 @@ import {
   CircularContents,
 } from '../../tables/dungeon/unusualShape';
 import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
-import {
-  periodicCheckDoorOnly,
-  PeriodicCheckDoorOnly,
-} from '../../tables/dungeon/periodicCheckDoorOnly';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
 
@@ -895,29 +892,15 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   const base = String(p.table.split(':')[0]);
   switch (base) {
     case 'doorLocation':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Door Location',
-        sides: doorLocation.sides,
-        entries: doorLocation.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: DoorLocation[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
+      return buildDoorLocationPreview(
+        p.table,
+        isTableContext(p.context) ? p.context : undefined
+      );
     case 'periodicCheckDoorOnly':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Door Continuation',
-        sides: periodicCheckDoorOnly.sides,
-        entries: periodicCheckDoorOnly.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: PeriodicCheckDoorOnly[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
+      return buildPeriodicDoorOnlyPreview(
+        p.table,
+        isTableContext(p.context) ? p.context : undefined
+      );
     case 'sidePassages':
       return {
         kind: 'table-preview',

@@ -1,8 +1,18 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
-import { DoorLocation } from '../../../tables/dungeon/doorLocation';
-import { PeriodicCheckDoorOnly } from '../../../tables/dungeon/periodicCheckDoorOnly';
-import type { AppendPreviewFn } from './shared';
+import {
+  DoorLocation,
+  doorLocation,
+} from '../../../tables/dungeon/doorLocation';
+import {
+  PeriodicCheckDoorOnly,
+  periodicCheckDoorOnly,
+} from '../../../tables/dungeon/periodicCheckDoorOnly';
+import type {
+  AppendPreviewFn,
+  TablePreviewFactory,
+} from './shared';
+import { buildPreview } from './shared';
 
 export const DOOR_CHAIN_FALLBACK_TEXT =
   "There are no other doors. The main passage extends -- check again in 30'. ";
@@ -64,6 +74,26 @@ export function renderDoorChainCompact(
   const events = flattenOutcomeTree(resolvedNode);
   return formatDoorChain(events);
 }
+
+export const buildDoorLocationPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Door Location',
+    sides: doorLocation.sides,
+    entries: doorLocation.entries.map((entry) => ({
+      range: entry.range,
+      label: DoorLocation[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export const buildPeriodicDoorOnlyPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Door Continuation',
+    sides: periodicCheckDoorOnly.sides,
+    entries: periodicCheckDoorOnly.entries.map((entry) => ({
+      range: entry.range,
+      label: PeriodicCheckDoorOnly[entry.command] ?? String(entry.command),
+    })),
+  });
 
 export function formatDoorLocationEvent(
   event: Extract<OutcomeEvent, { kind: 'doorLocation' }>
