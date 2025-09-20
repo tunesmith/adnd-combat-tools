@@ -123,6 +123,14 @@ import {
   renderStairsDetail,
   renderCompactStairs,
 } from './render/stairs';
+import {
+  renderEgressDetail,
+  renderEgressCompact,
+} from './render/egress';
+import {
+  renderChuteDetail,
+  renderChuteCompact,
+} from './render/chute';
 import { findChildEvent } from './render/shared';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
@@ -545,38 +553,10 @@ export function toDetailRender(
     return renderJumpingPlaceDetail(outcome);
   }
   if (event.kind === 'egress') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Egress',
-    };
-    const label = Egress[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const suffix =
-      event.result === Egress.Closed
-        ? 'After descending, an unnoticed door will close egress for the day. '
-        : '';
-    return [heading, bullet, { kind: 'paragraph', text: suffix }];
+    return renderEgressDetail(outcome);
   }
   if (event.kind === 'chute') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Chute',
-    };
-    const label = Chute[event.result as 0 | 1] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const text =
-      event.result === Chute.Exists
-        ? 'The stairs will turn into a chute, descending two levels from the top. '
-        : '';
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return renderChuteDetail(outcome);
   }
   if (event.kind === 'numberOfExits') {
     const heading: DungeonMessage = {
@@ -1565,36 +1545,10 @@ export function toCompactRender(
     return nodes;
   }
   if (event.kind === 'egress') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Egress',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${Egress[event.result]}`],
-    };
-    const suffix =
-      event.result === Egress.Closed
-        ? 'After descending, an unnoticed door will close egress for the day. '
-        : '';
-    return [heading, bullet, { kind: 'paragraph', text: suffix }];
+    return renderEgressCompact(node);
   }
   if (event.kind === 'chute') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Chute',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${Chute[event.result as 0 | 1]}`],
-    };
-    const text =
-      event.result === Chute.Exists
-        ? 'The stairs will turn into a chute, descending two levels from the top. '
-        : '';
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return renderChuteCompact(node);
   }
   if (event.kind === 'numberOfExits') {
     const heading: DungeonMessage = {
