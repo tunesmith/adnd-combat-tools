@@ -1,7 +1,11 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { Egress, Stairs, Chute } from '../../../tables/dungeon/stairs';
+import { stairs, Egress, Stairs, Chute } from '../../../tables/dungeon/stairs';
 import { findChildEvent, type AppendPreviewFn } from './shared';
+import { buildPreview, type TablePreviewFactory } from './shared';
 
 export type StairsDeps = {
   renderChamberSummary?: (node: OutcomeEventNode) => string;
@@ -178,3 +182,13 @@ function joinCompactSegments(segments: string[]): string {
   if (normalized.length === 0) return '';
   return `${normalized.join(' ')} `;
 }
+
+export const buildStairsPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Stairs',
+    sides: stairs.sides,
+    entries: stairs.entries.map((entry) => ({
+      range: entry.range,
+      label: Stairs[entry.command] ?? String(entry.command),
+    })),
+  });

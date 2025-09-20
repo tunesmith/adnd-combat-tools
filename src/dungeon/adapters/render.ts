@@ -18,10 +18,9 @@ import {
   roomDimensions,
   RoomDimensions,
 } from '../../tables/dungeon/chambersRooms';
-import { sidePassages, SidePassages } from '../../tables/dungeon/sidePassages';
-import { passageTurns, PassageTurns } from '../../tables/dungeon/passageTurns';
+import { SidePassages } from '../../tables/dungeon/sidePassages';
+import { PassageTurns } from '../../tables/dungeon/passageTurns';
 import {
-  stairs,
   Stairs,
   egressOne,
   egressTwo,
@@ -30,7 +29,7 @@ import {
   chute,
   Chute,
 } from '../../tables/dungeon/stairs';
-import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
+import { PassageWidth } from '../../tables/dungeon/passageWidth';
 import { periodicCheck } from '../../tables/dungeon/periodicCheck';
 import { getMonsterTable } from '../services/wanderingMonsterResult';
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
@@ -102,14 +101,17 @@ import {
   renderSidePassagesDetail,
   describeSidePassage,
   formatSidePassageResult,
+  buildSidePassagePreview,
 } from './render/sidePassage';
 import {
   renderPassageTurnsDetail,
   renderPassageTurnCompact,
+  buildPassageTurnPreview,
 } from './render/passageTurns';
 import {
   renderPassageWidthDetail,
   renderPassageWidthCompact,
+  buildPassageWidthPreview,
 } from './render/passageWidth';
 import {
   renderSpecialPassageDetail,
@@ -123,6 +125,7 @@ import {
 import {
   renderStairsDetail,
   renderStairsCompact,
+  buildStairsPreview,
 } from './render/stairs';
 import {
   renderEgressDetail,
@@ -902,38 +905,11 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         isTableContext(p.context) ? p.context : undefined
       );
     case 'sidePassages':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Side Passages',
-        sides: sidePassages.sides,
-        entries: sidePassages.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: SidePassages[e.command] ?? String(e.command),
-        })),
-      };
+      return buildSidePassagePreview(p.table);
     case 'passageTurns':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Passage Turns',
-        sides: passageTurns.sides,
-        entries: passageTurns.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: PassageTurns[e.command] ?? String(e.command),
-        })),
-      };
+      return buildPassageTurnPreview(p.table);
     case 'passageWidth':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Passage Width',
-        sides: passageWidth.sides,
-        entries: passageWidth.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: PassageWidth[e.command] ?? String(e.command),
-        })),
-      };
+      return buildPassageWidthPreview(p.table);
     case 'roomDimensions':
       return {
         kind: 'table-preview',
@@ -985,16 +961,7 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         context: isTableContext(p.context) ? p.context : undefined,
       };
     case 'stairs':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Stairs',
-        sides: stairs.sides,
-        entries: stairs.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: Stairs[e.command] ?? String(e.command),
-        })),
-      };
+      return buildStairsPreview(p.table);
     case 'specialPassage':
       return {
         kind: 'table-preview',

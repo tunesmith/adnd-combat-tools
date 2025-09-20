@@ -1,7 +1,11 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { PassageWidth } from '../../../tables/dungeon/passageWidth';
+import { passageWidth, PassageWidth } from '../../../tables/dungeon/passageWidth';
 import { findChildEvent, type AppendPreviewFn } from './shared';
+import { buildPreview, type TablePreviewFactory } from './shared';
 import { renderSpecialPassageCompact } from './specialPassage';
 
 export function renderPassageWidthDetail(
@@ -66,3 +70,13 @@ function passageWidthDetailText(result: number): string {
       return '';
   }
 }
+
+export const buildPassageWidthPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Passage Width',
+    sides: passageWidth.sides,
+    entries: passageWidth.entries.map((entry) => ({
+      range: entry.range,
+      label: PassageWidth[entry.command] ?? String(entry.command),
+    })),
+  });

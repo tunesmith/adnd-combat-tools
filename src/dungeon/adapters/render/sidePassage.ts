@@ -1,6 +1,10 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { SidePassages } from '../../../tables/dungeon/sidePassages';
+import { sidePassages, SidePassages } from '../../../tables/dungeon/sidePassages';
+import { buildPreview, type TablePreviewFactory } from './shared';
 
 export function renderSidePassagesDetail(
   outcome: OutcomeEventNode
@@ -65,3 +69,13 @@ export function formatSidePassageResult(result: SidePassages): string {
       return "A side passage branches. Passages extend -- check again in 30'. ";
   }
 }
+
+export const buildSidePassagePreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Side Passages',
+    sides: sidePassages.sides,
+    entries: sidePassages.entries.map((entry) => ({
+      range: entry.range,
+      label: SidePassages[entry.command] ?? String(entry.command),
+    })),
+  });

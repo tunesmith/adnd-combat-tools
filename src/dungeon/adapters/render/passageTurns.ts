@@ -1,7 +1,11 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { PassageTurns } from '../../../tables/dungeon/passageTurns';
+import { passageTurns, PassageTurns } from '../../../tables/dungeon/passageTurns';
 import { findChildEvent, type AppendPreviewFn } from './shared';
+import { buildPreview, type TablePreviewFactory } from './shared';
 import { renderPassageWidthCompact } from './passageWidth';
 
 export function renderPassageTurnsDetail(
@@ -81,3 +85,13 @@ export function renderPassageTurnCompact(
   const summary = describePassageTurn(node);
   return summary.compactText;
 }
+
+export const buildPassageTurnPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Passage Turns',
+    sides: passageTurns.sides,
+    entries: passageTurns.entries.map((entry) => ({
+      range: entry.range,
+      label: PassageTurns[entry.command] ?? String(entry.command),
+    })),
+  });
