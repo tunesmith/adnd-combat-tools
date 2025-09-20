@@ -882,15 +882,9 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   const base = String(p.table.split(':')[0]);
   switch (base) {
     case 'doorLocation':
-      return buildDoorLocationPreview(
-        p.table,
-        isTableContext(p.context) ? p.context : undefined
-      );
+      return buildDoorLocationPreview(p.table);
     case 'periodicCheckDoorOnly':
-      return buildPeriodicDoorOnlyPreview(
-        p.table,
-        isTableContext(p.context) ? p.context : undefined
-      );
+      return buildPeriodicDoorOnlyPreview(p.table);
     case 'sidePassages':
       return buildSidePassagePreview(p.table);
     case 'passageTurns':
