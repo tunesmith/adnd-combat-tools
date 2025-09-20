@@ -1105,230 +1105,25 @@ export function toDetailRender(
     nodes2.push(...summary.detailParagraphs);
     return nodes2;
   }
-  if (event.kind === 'monsterLevel') {
+  const monsterDescription = describeMonsterOutcome(outcome);
+  if (monsterDescription) {
     const heading: DungeonMessage = {
       kind: 'heading',
       level: 4,
-      text: 'Monster Level',
+      text: monsterDescription.heading,
     };
-    const label = MonsterLevel[event.result] ?? String(event.result);
     const bullet: DungeonMessage = {
       kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
+      items: [`roll: ${roll} — ${monsterDescription.label}`],
     };
-    nodes.push(heading, bullet);
-    if (event.result > MonsterLevel.Six) {
-      nodes.push({
-        kind: 'paragraph',
-        text: `(TODO: Monster Level ${MonsterLevel[event.result]} preview)`,
-      });
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (monsterDescription.detailParagraphs.length > 0) {
+      nodes2.push(...monsterDescription.detailParagraphs);
     }
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
-  }
-  if (event.kind === 'monsterOne') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Monster (Level 1)',
-    };
-    const label = MonsterOne[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet);
-    if (event.text) {
-      nodes.push({ kind: 'paragraph', text: event.text });
+    if (monsterDescription.appendPending) {
+      appendPendingPreviews(outcome, nodes2);
     }
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
-  }
-  if (event.kind === 'monsterTwo') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Monster (Level 2)',
-    };
-    const label = MonsterTwo[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet, {
-      kind: 'paragraph',
-      text: event.text,
-    });
-    return nodes;
-  }
-  if (event.kind === 'monsterThree') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Monster (Level 3)',
-    };
-    const label = MonsterThree[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet);
-    if (event.text) {
-      nodes.push({ kind: 'paragraph', text: event.text });
-    }
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
-  }
-  if (event.kind === 'monsterFour') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Monster (Level 4)',
-    };
-    const label = MonsterFour[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet);
-    if (event.text) {
-      nodes.push({ kind: 'paragraph', text: event.text });
-    }
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
-  }
-  if (event.kind === 'monsterFive') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Monster (Level 5)',
-    };
-    const label = MonsterFive[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet);
-    if (event.text) {
-      nodes.push({ kind: 'paragraph', text: event.text });
-    }
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
-  }
-  if (event.kind === 'monsterSix') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Monster (Level 6)',
-    };
-    const label = MonsterSix[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet);
-    if (event.text) {
-      nodes.push({ kind: 'paragraph', text: event.text });
-    }
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
-  }
-  if (event.kind === 'dragonThree') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Dragon (Level 3)',
-    };
-    const label = DragonThree[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
-    return nodes;
-  }
-  if (event.kind === 'dragonFourYounger') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Dragon (Younger)',
-    };
-    const label = DragonFourYounger[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
-    return nodes;
-  }
-  if (event.kind === 'dragonFourOlder') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Dragon (Older)',
-    };
-    const label = DragonFourOlder[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
-    return nodes;
-  }
-  if (event.kind === 'dragonFiveYounger') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Dragon (Younger)',
-    };
-    const label = DragonFiveYounger[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
-    return nodes;
-  }
-  if (event.kind === 'dragonFiveOlder') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Dragon (Older)',
-    };
-    const label = DragonFiveOlder[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
-    return nodes;
-  }
-  if (event.kind === 'dragonSix') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Dragon',
-    };
-    const label = DragonSix[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
-    return nodes;
-  }
-  if (event.kind === 'human') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Human Subtable',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${humanLabel(event.result)}`],
-    };
-    nodes.push(heading, bullet, { kind: 'paragraph', text: event.text });
-    return nodes;
+    return nodes2;
   }
   return nodes;
 }
@@ -2112,6 +1907,29 @@ export function toCompactRender(
     }
     return nodes2;
   }
+  const monsterDescription = describeMonsterOutcome(outcome);
+  if (monsterDescription) {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: monsterDescription.heading,
+    };
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${monsterDescription.label}`],
+    };
+    const nodes2: DungeonRenderNode[] = [heading, bullet];
+    if (monsterDescription.compactText.length > 0) {
+      const paragraphText = monsterDescription.compactText.endsWith(' ')
+        ? monsterDescription.compactText
+        : `${monsterDescription.compactText} `;
+      nodes2.push({ kind: 'paragraph', text: paragraphText });
+    }
+    if (monsterDescription.appendPending) {
+      appendPendingPreviews(outcome, nodes2);
+    }
+    return nodes2;
+  }
   if (event.kind === 'unusualShape') {
     const heading: DungeonMessage = {
       kind: 'heading',
@@ -2544,6 +2362,192 @@ function describeStairs(node: OutcomeEventNode): {
     detailParagraphs,
     compactText: joinCompactSegments(compactSegments),
   };
+}
+
+interface MonsterDescription {
+  heading: string;
+  label: string;
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+  appendPending: boolean;
+}
+
+function monsterTextDescription(text?: string): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (!text || text.length === 0) {
+    return { detailParagraphs: [], compactText: '' };
+  }
+  return {
+    detailParagraphs: [{ kind: 'paragraph', text }],
+    compactText: text.trimEnd(),
+  };
+}
+
+function hasPendingChildren(node: OutcomeEventNode): boolean {
+  return Array.isArray(node.children)
+    ? node.children.some((child) => child.type === 'pending-roll')
+    : false;
+}
+
+function describeMonsterOutcome(
+  node: OutcomeEventNode
+): MonsterDescription | undefined {
+  switch (node.event.kind) {
+    case 'monsterLevel': {
+      const detailParagraphs: DungeonMessage[] = [];
+      let compactText = '';
+      if (node.event.result > MonsterLevel.Six) {
+        const placeholder = `(TODO: Monster Level ${
+          MonsterLevel[node.event.result]
+        } preview)`;
+        detailParagraphs.push({ kind: 'paragraph', text: placeholder });
+        compactText = placeholder;
+      }
+      return {
+        heading: 'Monster Level',
+        label: MonsterLevel[node.event.result] ?? String(node.event.result),
+        detailParagraphs,
+        compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'monsterOne': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Monster (Level 1)',
+        label: MonsterOne[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'monsterTwo': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Monster (Level 2)',
+        label: MonsterTwo[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'monsterThree': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Monster (Level 3)',
+        label: MonsterThree[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'monsterFour': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Monster (Level 4)',
+        label: MonsterFour[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'monsterFive': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Monster (Level 5)',
+        label: MonsterFive[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'monsterSix': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Monster (Level 6)',
+        label: MonsterSix[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'dragonThree': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Dragon (Level 3)',
+        label: DragonThree[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'dragonFourYounger': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Dragon (Younger)',
+        label:
+          DragonFourYounger[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'dragonFourOlder': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Dragon (Older)',
+        label: DragonFourOlder[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'dragonFiveYounger': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Dragon (Younger)',
+        label:
+          DragonFiveYounger[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'dragonFiveOlder': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Dragon (Older)',
+        label: DragonFiveOlder[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'dragonSix': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Dragon',
+        label: DragonSix[node.event.result] ?? String(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    case 'human': {
+      const textInfo = monsterTextDescription(node.event.text);
+      return {
+        heading: 'Human Subtable',
+        label: humanLabel(node.event.result),
+        detailParagraphs: textInfo.detailParagraphs,
+        compactText: textInfo.compactText,
+        appendPending: hasPendingChildren(node),
+      };
+    }
+    default:
+      return undefined;
+  }
 }
 
 function renderWanderingWhereFrom(node: OutcomeEventNode): string {
