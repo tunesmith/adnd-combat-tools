@@ -170,9 +170,7 @@ export const buildGalleryStairLocationPreview: TablePreviewFactory = (
     })),
   });
 
-export const buildStreamConstructionPreview: TablePreviewFactory = (
-  tableId
-) =>
+export const buildStreamConstructionPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Stream Construction',
     sides: streamConstructionTable.sides,
@@ -182,9 +180,7 @@ export const buildStreamConstructionPreview: TablePreviewFactory = (
     })),
   });
 
-export const buildRiverConstructionPreview: TablePreviewFactory = (
-  tableId
-) =>
+export const buildRiverConstructionPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'River Construction',
     sides: riverConstructionTable.sides,

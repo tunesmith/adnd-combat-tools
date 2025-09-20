@@ -133,9 +133,7 @@ export const buildChasmDepthPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
-export const buildChasmConstructionPreview: TablePreviewFactory = (
-  tableId
-) =>
+export const buildChasmConstructionPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Chasm Construction',
     sides: chasmConstructionTable.sides,

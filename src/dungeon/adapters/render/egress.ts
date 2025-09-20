@@ -42,11 +42,7 @@ function buildEgressNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
 export const buildEgressPreview: TablePreviewFactory = (tableId) => {
   const which = tableId.split(':')[1] as 'one' | 'two' | 'three' | undefined;
   const table =
-    which === 'one'
-      ? egressOne
-      : which === 'two'
-      ? egressTwo
-      : egressThree;
+    which === 'one' ? egressOne : which === 'two' ? egressTwo : egressThree;
   const title =
     which === 'one'
       ? 'Egress (1 level)'
