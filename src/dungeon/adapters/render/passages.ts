@@ -1,18 +1,7 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../types/dungeon';
-import type {
-  DungeonOutcomeNode,
-  OutcomeEventNode,
-} from '../../domain/outcome';
+import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type { OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
-
-export type AppendPreviewFn = (
-  outcome: DungeonOutcomeNode,
-  collector: DungeonRenderNode[],
-  seenPreviews?: Set<string>
-) => void;
+import type { AppendPreviewFn } from './shared';
 
 export const DEAD_END_FALLBACK_TEXT = 'The passage reaches a dead end. (TODO) ';
 export const TRICK_TRAP_FALLBACK_TEXT =

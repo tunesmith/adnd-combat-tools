@@ -95,6 +95,11 @@ import {
   periodicBaseTexts,
   TRICK_TRAP_FALLBACK_TEXT,
 } from './render/passages';
+import {
+  renderDoorLocationDetail,
+  renderPeriodicDoorOnlyDetail,
+  renderCompactDoorChain,
+} from './render/doorChain';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
   magicPool,
@@ -388,40 +393,10 @@ export function toDetailRender(
     return nodes;
   }
   if (event.kind === 'doorLocation') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Door Location',
-    };
-    const label = DoorLocation[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const description = formatDoorLocationEvent(event).trim();
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (description) {
-      nodes2.push({ kind: 'paragraph', text: description });
-    }
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderDoorLocationDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'periodicDoorOnly') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Door Continuation',
-    };
-    const label = PeriodicCheckDoorOnly[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describePeriodicDoorOnly(outcome);
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    nodes2.push(...summary.detailParagraphs);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderPeriodicDoorOnlyDetail(outcome, appendPendingPreviews);
   }
   if (isPassageWidthEvent(event)) {
     const heading: DungeonMessage = {
@@ -1946,62 +1921,6 @@ export function toCompactRender(
 }
 
 // Compact helpers live locally in the adapter to avoid service-level string APIs.
-function renderCompactDoorChain(resolvedNode?: OutcomeEventNode): string {
-  if (!resolvedNode) return 'A door is indicated. ';
-  const events = flattenOutcomeTree(resolvedNode);
-  return formatDoorChain(events);
-}
-
-function flattenOutcomeTree(node: OutcomeEventNode): OutcomeEventNode[] {
-  const items: OutcomeEventNode[] = [node];
-  const childEvents = (node.children || []).filter(
-    (child): child is OutcomeEventNode => child.type === 'event'
-  );
-  for (const child of childEvents) {
-    items.push(...flattenOutcomeTree(child));
-  }
-  return items;
-}
-
-function formatDoorChain(events: OutcomeEventNode[]): string {
-  let text = '';
-  for (const ev of events) {
-    if (ev.event.kind === 'doorLocation') {
-      text += formatDoorLocationEvent(ev.event);
-    } else if (ev.event.kind === 'periodicDoorOnly') {
-      text += formatPeriodicDoorOnlyEvent(ev.event);
-    }
-  }
-  return text;
-}
-
-function formatDoorLocationEvent(
-  event: Extract<OutcomeEvent, { kind: 'doorLocation' }>
-): string {
-  if (event.result === DoorLocation.Ahead) return 'A door is Ahead. ';
-  const lateral =
-    event.result === DoorLocation.Left
-      ? 'Left'
-      : event.result === DoorLocation.Right
-      ? 'Right'
-      : undefined;
-  if (!lateral) return '';
-  const repeated = event.doorChain?.repeated ?? false;
-  if (repeated) {
-    return DOOR_CHAIN_FALLBACK_TEXT;
-  }
-  return `A door is to the ${lateral}. `;
-}
-
-function formatPeriodicDoorOnlyEvent(
-  event: Extract<OutcomeEvent, { kind: 'periodicDoorOnly' }>
-): string {
-  if (event.result === PeriodicCheckDoorOnly.Ignore) {
-    return DOOR_CHAIN_FALLBACK_TEXT;
-  }
-  return '';
-}
-
 function formatNumberOfExitsEvent(
   event: Extract<OutcomeEvent, { kind: 'numberOfExits' }>
 ): string {
@@ -2143,20 +2062,6 @@ function describeDoorBeyond(node: OutcomeEventNode): {
 
   const compactText = segments.join(' ');
   return { detailParagraphs, compactText };
-}
-
-function describePeriodicDoorOnly(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'periodicDoorOnly') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const text = formatPeriodicDoorOnlyEvent(node.event);
-  const detailParagraphs: DungeonMessage[] = text.length
-    ? [{ kind: 'paragraph', text }]
-    : [];
-  return { detailParagraphs, compactText: text };
 }
 
 function describeTrickTrap(node: OutcomeEventNode): {
@@ -3115,9 +3020,6 @@ function formatTransporterLocation(result: TransporterLocation): string {
 }
 
 const TRANSPORTER_BASE_SENTENCE = 'It is a transporter.';
-const DOOR_CHAIN_FALLBACK_TEXT =
-  "There are no other doors. The main passage extends -- check again in 30'. ";
-
 function describeTransporterLocation(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
