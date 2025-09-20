@@ -97,7 +97,7 @@ import {
   renderDoorLocationDetail,
   renderPeriodicDoorOnlyDetail,
   renderCompactDoorChain,
-} from './render/doorChain';
+} from './render/doorLocation';
 import {
   renderSidePassagesDetail,
   describeSidePassage,
