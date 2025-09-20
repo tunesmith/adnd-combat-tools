@@ -131,6 +131,10 @@ import {
   renderChuteDetail,
   renderChuteCompact,
 } from './render/chute';
+import {
+  renderNumberOfExitsDetail,
+  renderNumberOfExitsCompact,
+} from './render/numberOfExits';
 import { findChildEvent } from './render/shared';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
@@ -559,22 +563,7 @@ export function toDetailRender(
     return renderChuteDetail(outcome);
   }
   if (event.kind === 'numberOfExits') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Exits',
-    };
-    const label = NumberOfExits[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describeNumberOfExits(outcome);
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (summary.detailParagraphs.length > 0) {
-      nodes2.push(...summary.detailParagraphs);
-    }
-    return nodes2;
+    return renderNumberOfExitsDetail(outcome);
   }
   if (event.kind === 'unusualShape') {
     const heading: DungeonMessage = {
@@ -1560,10 +1549,10 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${NumberOfExits[event.result]}`],
     };
-    const summary = describeNumberOfExits(outcome);
+    const text = renderNumberOfExitsCompact(node);
     const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (summary.detailParagraphs.length > 0) {
-      nodes2.push(...summary.detailParagraphs);
+    if (text.length > 0) {
+      nodes2.push({ kind: 'paragraph', text: `${text} ` });
     }
     return nodes2;
   }
@@ -1713,48 +1702,6 @@ export function toCompactRender(
     return [heading, bullet, { kind: 'paragraph', text }];
   }
   return nodes;
-}
-
-// Compact helpers live locally in the adapter to avoid service-level string APIs.
-function formatNumberOfExitsEvent(
-  event: Extract<OutcomeEvent, { kind: 'numberOfExits' }>
-): string {
-  if (event.result === NumberOfExits.DoorChamberOrPassageRoom) {
-    return event.context.isRoom
-      ? 'There is a passage leaving this room. Determine its location and direction using the exit tables.'
-      : 'There is a door exiting this chamber. Determine its placement using the exit tables.';
-  }
-
-  const nounBase = event.context.isRoom ? 'door' : 'passage';
-  if (event.count <= 0) {
-    const plural = `${nounBase}s`;
-    return `There are no other ${plural}.`;
-  }
-  const plural = event.count === 1 ? nounBase : `${nounBase}s`;
-  const verb = event.count === 1 ? 'is' : 'are';
-  const rollInfo =
-    event.result === NumberOfExits.OneToFour
-      ? ` (1d4 result: ${event.count})`
-      : '';
-  const pronoun = event.count === 1 ? 'its' : 'their';
-  return `There ${verb} ${event.count} additional ${plural}${rollInfo}. Determine ${pronoun} location and direction using the exit tables.`;
-}
-
-function describeNumberOfExits(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'numberOfExits') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const text = formatNumberOfExitsEvent(node.event).trim();
-  if (text.length === 0) {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  return {
-    detailParagraphs: [{ kind: 'paragraph', text: `${text} ` }],
-    compactText: text,
-  };
 }
 
 function describeDoorBeyond(node: OutcomeEventNode): {
@@ -2098,7 +2045,7 @@ function renderCompactDoorBeyond(node: OutcomeEventNode): string {
 
 function renderChildPassageWidth(node: OutcomeEventNode): string {
   const width = findChildEvent(node, 'passageWidth');
-  return width ? renderCompactPassageWidth(width) : '';
+  return width ? renderPassageWidthCompact(width) : '';
 }
 
 function getChildEvents(node: OutcomeEventNode): OutcomeEventNode[] {
@@ -2155,9 +2102,10 @@ function renderCompactRoomDimensions(node: OutcomeEventNode): string {
   }
   const exits = findChildEvent(node, 'numberOfExits');
   if (exits && exits.event.kind === 'numberOfExits') {
-    const summary = describeNumberOfExits(exits);
-    if (summary.compactText.length > 0) {
-      segments.push(summary.compactText);
+    const nodes = renderNumberOfExitsCompact(exits);
+    const paragraph = nodes.find((n) => n.kind === 'paragraph');
+    if (paragraph && paragraph.kind === 'paragraph') {
+      segments.push(paragraph.text.trim());
     }
   }
   return joinCompactSegments(segments);
@@ -2197,9 +2145,10 @@ function renderCompactChamberDimensions(node: OutcomeEventNode): string {
   }
   const exits = findChildEvent(node, 'numberOfExits');
   if (exits && exits.event.kind === 'numberOfExits') {
-    const summary = describeNumberOfExits(exits);
-    if (summary.compactText.length > 0) {
-      segments.push(summary.compactText);
+    const nodes = renderNumberOfExitsCompact(exits);
+    const paragraph = nodes.find((n) => n.kind === 'paragraph');
+    if (paragraph && paragraph.kind === 'paragraph') {
+      segments.push(paragraph.text.trim());
     }
   }
   return joinCompactSegments(segments);
