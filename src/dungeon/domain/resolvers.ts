@@ -331,6 +331,11 @@ export function resolvePeriodicDoorOnly(options?: {
 export function resolveSidePassages(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
+  /**
+   * We do *not* check passage width for side passages, as the "periodic check"
+   * table specifically calls out passage width for "passage turns" but not for
+   * side passages.
+   */
   const usedRoll = options?.roll ?? rollDice(sidePassages.sides);
   const command = getTableEntry(usedRoll, sidePassages);
   const event: OutcomeEvent = {

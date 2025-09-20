@@ -1,8 +1,18 @@
-import { roomMessages } from '../../dungeon/services/roomResult';
-import { chamberMessages } from '../../dungeon/services/chamberResult';
-import { toDetailRender } from '../../dungeon/adapters/render';
-import { resolveNumberOfExits } from '../../dungeon/domain/resolvers';
+import { toDetailRender, toCompactRender } from '../../dungeon/adapters/render';
+import {
+  resolveRoomDimensions,
+  resolveChamberDimensions,
+  resolveNumberOfExits,
+} from '../../dungeon/domain/resolvers';
+import {
+  normalizeOutcomeTree,
+  resolveOutcomeNode,
+} from '../../dungeon/helpers/outcomeTree';
 import type { DungeonMessage } from '../../types/dungeon';
+import type {
+  DungeonOutcomeNode,
+  OutcomeEventNode,
+} from '../../dungeon/domain/outcome';
 import * as dungeonLookup from '../../dungeon/helpers/dungeonLookup';
 
 function isParagraph(
@@ -17,6 +27,20 @@ function findParagraph(
   return messages.find(isParagraph);
 }
 
+function assertEvent(node: DungeonOutcomeNode): OutcomeEventNode {
+  if (node.type !== 'event') {
+    throw new Error('Expected event outcome');
+  }
+  return node;
+}
+
+function compactNodesFor(node: DungeonOutcomeNode): DungeonMessage[] {
+  const normalized = normalizeOutcomeTree(node);
+  const resolved = resolveOutcomeNode(assertEvent(normalized)) ??
+    assertEvent(normalized);
+  return toCompactRender(resolved) as DungeonMessage[];
+}
+
 describe('Compact rendering for exits', () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -26,8 +50,8 @@ describe('Compact rendering for exits', () => {
     const spy = jest
       .spyOn(dungeonLookup, 'rollDice')
       .mockImplementationOnce(() => 1);
-    const { messages } = roomMessages({ roll: 1, detailMode: false });
-    const para = findParagraph(messages as DungeonMessage[]);
+    const messages = compactNodesFor(resolveRoomDimensions({ roll: 1 }));
+    const para = findParagraph(messages);
     expect(para).toBeTruthy();
     expect(para?.text.trim()).toContain('There is 1 additional door');
     expect(para?.text).toContain('Determine its location and direction');
@@ -52,8 +76,8 @@ describe('Compact rendering for exits', () => {
       .spyOn(dungeonLookup, 'rollDice')
       .mockImplementationOnce(() => 17) // selects OneToFour bucket
       .mockImplementationOnce(() => 3); // yields count = 3
-    const { messages } = roomMessages({ roll: 3, detailMode: false });
-    const para = findParagraph(messages as DungeonMessage[]);
+    const messages = compactNodesFor(resolveRoomDimensions({ roll: 3 }));
+    const para = findParagraph(messages);
     expect(para?.text).toContain('(1d4 result: 3)');
     expect(para?.text).toContain('There are 3 additional doors');
     spy.mockRestore();
@@ -63,8 +87,8 @@ describe('Compact rendering for exits', () => {
     const spy = jest
       .spyOn(dungeonLookup, 'rollDice')
       .mockImplementationOnce(() => 4); // TwoThree600 -> 3 passages when area > 600
-    const { messages } = chamberMessages({ roll: 14, detailMode: false });
-    const para = findParagraph(messages as DungeonMessage[]);
+    const messages = compactNodesFor(resolveChamberDimensions({ roll: 14 }));
+    const para = findParagraph(messages);
     expect(para?.text).toContain('There are 3 additional passages');
     spy.mockRestore();
   });
@@ -73,8 +97,8 @@ describe('Compact rendering for exits', () => {
     const spy = jest
       .spyOn(dungeonLookup, 'rollDice')
       .mockImplementationOnce(() => 19);
-    const { messages } = roomMessages({ roll: 2, detailMode: false });
-    const para = findParagraph(messages as DungeonMessage[]);
+    const messages = compactNodesFor(resolveRoomDimensions({ roll: 2 }));
+    const para = findParagraph(messages);
     expect(para?.text).toContain('There is a passage leaving this room');
     spy.mockRestore();
   });
