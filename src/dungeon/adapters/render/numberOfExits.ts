@@ -19,7 +19,8 @@ export function renderNumberOfExitsDetail(
     level: 4,
     text: 'Exits',
   };
-  const label = NumberOfExits[outcome.event.result] ?? String(outcome.event.result);
+  const label =
+    NumberOfExits[outcome.event.result] ?? String(outcome.event.result);
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],

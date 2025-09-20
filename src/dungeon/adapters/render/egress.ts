@@ -14,9 +14,7 @@ export function renderEgressCompact(
   return buildEgressNodes(outcome);
 }
 
-function buildEgressNodes(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
+function buildEgressNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   if (outcome.event.kind !== 'egress') return [];
   const heading: DungeonMessage = {
     kind: 'heading',

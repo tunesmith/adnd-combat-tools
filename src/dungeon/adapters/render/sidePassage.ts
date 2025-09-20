@@ -1,9 +1,9 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../types/dungeon';
+import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { sidePassages, SidePassages } from '../../../tables/dungeon/sidePassages';
+import {
+  sidePassages,
+  SidePassages,
+} from '../../../tables/dungeon/sidePassages';
 import { buildPreview, type TablePreviewFactory } from './shared';
 
 export function renderSidePassagesDetail(

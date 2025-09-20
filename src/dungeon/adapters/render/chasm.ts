@@ -16,7 +16,8 @@ export function renderChasmDepthDetail(
     level: 4,
     text: 'Chasm Depth',
   };
-  const label = ChasmDepth[outcome.event.result] ?? String(outcome.event.result);
+  const label =
+    ChasmDepth[outcome.event.result] ?? String(outcome.event.result);
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
@@ -83,14 +84,14 @@ export function formatChasmConstruction(
     return 'It has no bridge, and is too wide to jump across. ';
   const jump = findChildEvent(node, 'jumpingPlaceWidth');
   if (jump && jump.event.kind === 'jumpingPlaceWidth') {
-    return `There is a jumping place. ${formatJumpingPlaceWidth(jump.event.result)} `;
+    return `There is a jumping place. ${formatJumpingPlaceWidth(
+      jump.event.result
+    )} `;
   }
   return '';
 }
 
-export function formatJumpingPlaceWidth(
-  result: JumpingPlaceWidth
-): string {
+export function formatJumpingPlaceWidth(result: JumpingPlaceWidth): string {
   return result === JumpingPlaceWidth.FiveFeet
     ? "It is 5' wide."
     : "It is 10' wide.";

@@ -1,9 +1,9 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../types/dungeon';
+import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { passageTurns, PassageTurns } from '../../../tables/dungeon/passageTurns';
+import {
+  passageTurns,
+  PassageTurns,
+} from '../../../tables/dungeon/passageTurns';
 import { findChildEvent, type AppendPreviewFn } from './shared';
 import { buildPreview, type TablePreviewFactory } from './shared';
 import { renderPassageWidthCompact } from './passageWidth';
@@ -18,7 +18,8 @@ export function renderPassageTurnsDetail(
     level: 4,
     text: 'Passage Turns',
   };
-  const label = PassageTurns[outcome.event.result] ?? String(outcome.event.result);
+  const label =
+    PassageTurns[outcome.event.result] ?? String(outcome.event.result);
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
@@ -32,9 +33,7 @@ export function renderPassageTurnsDetail(
   return nodes;
 }
 
-export function describePassageTurn(
-  node: OutcomeEventNode
-): {
+export function describePassageTurn(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {
@@ -47,7 +46,8 @@ export function describePassageTurn(
       detailText = "The passage turns left 90 degrees - check again in 30'. ";
       break;
     case PassageTurns.Left45:
-      detailText = "The passage turns left 45 degrees ahead - check again in 30'. ";
+      detailText =
+        "The passage turns left 45 degrees ahead - check again in 30'. ";
       break;
     case PassageTurns.Left135:
       detailText =
@@ -57,7 +57,8 @@ export function describePassageTurn(
       detailText = "The passage turns right 90 degrees - check again in 30'. ";
       break;
     case PassageTurns.Right45:
-      detailText = "The passage turns right 45 degrees ahead - check again in 30'. ";
+      detailText =
+        "The passage turns right 45 degrees ahead - check again in 30'. ";
       break;
     case PassageTurns.Right135:
       detailText =
@@ -78,9 +79,7 @@ export function describePassageTurn(
   return { detailParagraphs, compactText };
 }
 
-export function renderPassageTurnCompact(
-  node: OutcomeEventNode
-): string {
+export function renderPassageTurnCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'passageTurns') return '';
   const summary = describePassageTurn(node);
   return summary.compactText;

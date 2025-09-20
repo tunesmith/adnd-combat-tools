@@ -8,10 +8,7 @@ import {
   PeriodicCheckDoorOnly,
   periodicCheckDoorOnly,
 } from '../../../tables/dungeon/periodicCheckDoorOnly';
-import type {
-  AppendPreviewFn,
-  TablePreviewFactory,
-} from './shared';
+import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { buildPreview } from './shared';
 
 export const DOOR_CHAIN_FALLBACK_TEXT =

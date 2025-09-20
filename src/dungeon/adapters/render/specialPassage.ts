@@ -9,10 +9,7 @@ import {
   GalleryStairOccurrence,
 } from '../../../tables/dungeon/specialPassage';
 import { findChildEvent, type AppendPreviewFn } from './shared';
-import {
-  formatChasmDepth,
-  formatChasmConstruction,
-} from './chasm';
+import { formatChasmDepth, formatChasmConstruction } from './chasm';
 
 export function renderSpecialPassageDetail(
   outcome: OutcomeEventNode,
@@ -24,13 +21,18 @@ export function renderSpecialPassageDetail(
     level: 4,
     text: 'Special Passage',
   };
-  const label = SpecialPassage[outcome.event.result] ?? String(outcome.event.result);
+  const label =
+    SpecialPassage[outcome.event.result] ?? String(outcome.event.result);
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const summary = describeSpecialPassage(outcome);
-  const nodes: DungeonRenderNode[] = [heading, bullet, ...summary.detailParagraphs];
+  const nodes: DungeonRenderNode[] = [
+    heading,
+    bullet,
+    ...summary.detailParagraphs,
+  ];
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }

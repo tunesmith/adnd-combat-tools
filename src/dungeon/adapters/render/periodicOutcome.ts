@@ -13,7 +13,9 @@ export const buildPeriodicCheckPreview: TablePreviewFactory = (tableId) =>
     title: 'Periodic Check',
     sides: 20,
     entries: Object.entries(PeriodicCheck)
-      .filter((entry): entry is [string, number] => Number.isNaN(Number(entry[0])))
+      .filter((entry): entry is [string, number] =>
+        Number.isNaN(Number(entry[0]))
+      )
       .map(([label, command]) => ({ range: [command], label })),
   });
 

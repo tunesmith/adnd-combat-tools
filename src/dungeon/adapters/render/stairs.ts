@@ -1,7 +1,4 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../types/dungeon';
+import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { stairs, Egress, Stairs, Chute } from '../../../tables/dungeon/stairs';
 import { findChildEvent, type AppendPreviewFn } from './shared';

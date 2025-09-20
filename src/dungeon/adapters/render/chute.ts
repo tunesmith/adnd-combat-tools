@@ -14,16 +14,15 @@ export function renderChuteCompact(
   return buildChuteNodes(outcome);
 }
 
-function buildChuteNodes(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
+function buildChuteNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   if (outcome.event.kind !== 'chute') return [];
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
     text: 'Chute',
   };
-  const label = Chute[outcome.event.result as 0 | 1] ?? String(outcome.event.result);
+  const label =
+    Chute[outcome.event.result as 0 | 1] ?? String(outcome.event.result);
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],

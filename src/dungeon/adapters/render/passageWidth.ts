@@ -1,9 +1,9 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../types/dungeon';
+import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { passageWidth, PassageWidth } from '../../../tables/dungeon/passageWidth';
+import {
+  passageWidth,
+  PassageWidth,
+} from '../../../tables/dungeon/passageWidth';
 import { findChildEvent, type AppendPreviewFn } from './shared';
 import { buildPreview, type TablePreviewFactory } from './shared';
 import { renderSpecialPassageCompact } from './specialPassage';
@@ -18,7 +18,8 @@ export function renderPassageWidthDetail(
     level: 4,
     text: 'Passage Width',
   };
-  const label = PassageWidth[outcome.event.result] ?? String(outcome.event.result);
+  const label =
+    PassageWidth[outcome.event.result] ?? String(outcome.event.result);
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],

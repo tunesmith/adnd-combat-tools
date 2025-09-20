@@ -127,14 +127,8 @@ import {
   renderStairsCompact,
   buildStairsPreview,
 } from './render/stairs';
-import {
-  renderEgressDetail,
-  renderEgressCompact,
-} from './render/egress';
-import {
-  renderChuteDetail,
-  renderChuteCompact,
-} from './render/chute';
+import { renderEgressDetail, renderEgressCompact } from './render/egress';
+import { renderChuteDetail, renderChuteCompact } from './render/chute';
 import {
   renderNumberOfExitsDetail,
   renderNumberOfExitsCompact,
