@@ -105,6 +105,10 @@ import {
   describeSidePassage,
   formatSidePassageResult,
 } from './render/sidePassage';
+import {
+  renderPassageTurnsDetail,
+  renderCompactPassageTurn,
+} from './render/passageTurns';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
   magicPool,
@@ -537,30 +541,9 @@ export function toDetailRender(
     return nodes;
   }
   if (event.kind === 'passageTurns') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Passage Turns',
-    };
-    const label = PassageTurns[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describePassageTurn(outcome);
-    nodes.push(heading, bullet);
-    if (summary.detailParagraphs.length > 0) {
-      nodes.push(...summary.detailParagraphs);
-    }
-    // Render any pending child previews supplied by the resolver
-    if (outcome.children && Array.isArray(outcome.children)) {
-      for (const child of outcome.children) {
-        if (child.type !== 'pending-roll') continue;
-        const preview = previewForPending(child);
-        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
-      }
-    }
-    return nodes;
+    return renderPassageTurnsDetail(outcome, appendPendingPreviews, {
+      renderPassageWidth: renderCompactPassageWidth,
+    });
   }
   if (event.kind === 'stairs') {
     const heading: DungeonMessage = {
@@ -1681,7 +1664,9 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${PassageTurns[event.result] ?? event.result}`],
     };
-    const text = renderCompactPassageTurn(node);
+    const text = renderCompactPassageTurn(node, {
+      renderPassageWidth: renderCompactPassageWidth,
+    });
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1952,50 +1937,6 @@ function describeNumberOfExits(node: OutcomeEventNode): {
     detailParagraphs: [{ kind: 'paragraph', text: `${text} ` }],
     compactText: text,
   };
-}
-
-function describePassageTurn(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'passageTurns') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  let detailText = '';
-  switch (node.event.result) {
-    case PassageTurns.Left90:
-      detailText = "The passage turns left 90 degrees - check again in 30'. ";
-      break;
-    case PassageTurns.Left45:
-      detailText =
-        "The passage turns left 45 degrees ahead - check again in 30'. ";
-      break;
-    case PassageTurns.Left135:
-      detailText =
-        "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
-      break;
-    case PassageTurns.Right90:
-      detailText = "The passage turns right 90 degrees - check again in 30'. ";
-      break;
-    case PassageTurns.Right45:
-      detailText =
-        "The passage turns right 45 degrees ahead - check again in 30'. ";
-      break;
-    case PassageTurns.Right135:
-      detailText =
-        "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
-      break;
-  }
-  let compactText = detailText;
-  const widthNode = findChildEvent(node, 'passageWidth');
-  if (widthNode && widthNode.event.kind === 'passageWidth') {
-    compactText += renderCompactPassageWidth(widthNode);
-  }
-  const detailParagraphs: DungeonMessage[] = [];
-  if (detailText.length > 0) {
-    detailParagraphs.push({ kind: 'paragraph', text: detailText });
-  }
-  return { detailParagraphs, compactText };
 }
 
 function describeDoorBeyond(node: OutcomeEventNode): {
@@ -2384,7 +2325,9 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
       return turn
-        ? renderCompactPassageTurn(turn)
+        ? renderCompactPassageTurn(turn, {
+            renderPassageWidth: renderCompactPassageWidth,
+          })
         : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
     }
     case PeriodicCheck.Chamber: {
@@ -2462,12 +2405,6 @@ function findChildEvent<K extends OutcomeEvent['kind']>(
   kind: K
 ): OutcomeEventNode | undefined {
   return getChildEvents(node).find((child) => child.event.kind === kind);
-}
-
-function renderCompactPassageTurn(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'passageTurns') return '';
-  const summary = describePassageTurn(node);
-  return summary.compactText;
 }
 
 function renderCompactPassageWidth(node: OutcomeEventNode): string {
@@ -3124,7 +3061,9 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
       return turn
-        ? renderCompactPassageTurn(turn)
+        ? renderCompactPassageTurn(turn, {
+            renderPassageWidth: renderCompactPassageWidth,
+          })
         : periodicBaseTexts(event.result, {
             avoidMonster: event.avoidMonster ?? false,
           }).compact;
