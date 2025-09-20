@@ -68,8 +68,8 @@ const DungeonIndexPage = () => {
         return v;
       },
     });
-    const renderCache = buildRenderCache(step.outcome);
-    const pendingCount = countPendingNodes(step.outcome);
+    const renderCache = step.renderCache ?? buildRenderCache(step.outcome);
+    const pendingCount = step.pendingCount ?? countPendingNodes(step.outcome);
     const messages = selectMessagesForMode(
       act,
       detailMode,

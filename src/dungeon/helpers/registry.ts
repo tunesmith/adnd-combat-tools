@@ -55,15 +55,15 @@ import {
   resolveUnusualSize,
   resolveWanderingWhereFrom,
 } from '../domain/resolvers';
-import { renderDetailTree, toCompactRender } from '../adapters/render';
+import { renderDetailTree } from '../adapters/render';
 import {
   applyResolvedOutcome,
-  countPendingNodes,
   normalizeOutcomeTree,
   parseDoorChainSequence,
   readDoorChainExisting,
   readExitsContext,
 } from '../helpers/outcomeTree';
+import { createOutcomeRenderSnapshot } from './outcomePipeline';
 
 // Registry resolver type
 type RegistryResolution = {
@@ -443,18 +443,17 @@ export function resolveViaRegistry<T extends FeedLike>(
                   targetKey,
                   normalizedResolution
                 );
-                const updatedOutcome = normalizeOutcomeTree(applied);
-                const detailRender = renderDetailTree(updatedOutcome);
-                const compactRender = toCompactRender(updatedOutcome);
+                const snapshot = createOutcomeRenderSnapshot(applied);
+                if (!snapshot) return fi;
                 return {
                   ...fi,
-                  outcome: updatedOutcome,
-                  pendingCount: countPendingNodes(updatedOutcome),
-                  messages: detailRender,
+                  outcome: snapshot.normalized,
+                  pendingCount: snapshot.pendingCount,
+                  messages: snapshot.detail,
                   renderCache: {
                     ...fi.renderCache,
-                    detail: detailRender,
-                    compact: compactRender,
+                    detail: snapshot.detail,
+                    compact: snapshot.compact,
                   },
                 } as T;
               }

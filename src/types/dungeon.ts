@@ -65,4 +65,9 @@ export type DungeonStep = {
   roll?: number;
   outcome?: DungeonOutcomeNode;
   messages: DungeonRenderNode[];
+  renderCache?: {
+    detail?: DungeonRenderNode[];
+    compact?: DungeonRenderNode[];
+  };
+  pendingCount?: number;
 };

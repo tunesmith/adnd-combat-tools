@@ -8,12 +8,8 @@ import type {
   DungeonRenderNode,
 } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
-import {
-  normalizeOutcomeTree,
-  resolveOutcomeNode,
-} from '../helpers/outcomeTree';
 import { resolvePeriodicCheck } from '../domain/resolvers';
-import { toCompactRender, toDetailRender } from '../adapters/render';
+import { createOutcomeRenderSnapshot } from '../helpers/outcomePipeline';
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -36,6 +32,11 @@ export const passageMessages = (options?: {
   usedRoll?: number;
   messages: DungeonRenderNode[];
   outcome?: DungeonOutcomeNode;
+  renderCache?: {
+    detail?: DungeonRenderNode[];
+    compact?: DungeonRenderNode[];
+  };
+  pendingCount?: number;
 } => {
   const level = options?.level ?? 1;
   if (options?.detailMode && options.roll === undefined) {
@@ -67,14 +68,25 @@ export const passageMessages = (options?: {
     level,
     avoidMonster: options?.avoidMonster,
   });
-  const normalized = node.type === 'event' ? normalizeOutcomeTree(node) : node;
   const usedRoll = node.type === 'event' ? node.roll : undefined;
-  if (options?.detailMode) {
-    const messages = toDetailRender(normalized);
-    return { usedRoll, messages, outcome: normalized };
+  const detailMode = options?.detailMode ?? false;
+  const snapshot = createOutcomeRenderSnapshot(node, {
+    autoResolve: !detailMode,
+  });
+  if (!snapshot) {
+    return { usedRoll, messages: [], outcome: undefined };
   }
-  const resolvedNode = resolveOutcomeNode(normalized) ?? normalized;
-  const finalOutcome = normalizeOutcomeTree(resolvedNode);
-  const messages = toCompactRender(finalOutcome);
-  return { usedRoll, messages, outcome: finalOutcome };
+  const messages = detailMode ? snapshot.detail : snapshot.compact;
+  return {
+    usedRoll,
+    messages,
+    outcome: detailMode ? snapshot.normalized : snapshot.compactOutcome,
+    renderCache: {
+      detail: detailMode ? snapshot.detail : snapshot.detailResolved,
+      compact: snapshot.compact,
+    },
+    pendingCount: detailMode
+      ? snapshot.pendingCount
+      : snapshot.resolvedPendingCount,
+  };
 };

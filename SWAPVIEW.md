@@ -84,7 +84,7 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Render-layer regressions (missing context/target ids) now surface immediately in UI-level specs.
 - Suggested commit: `dungeon: add ui-level preview harness`.
 
-### 9. Render Layer Purification _(in progress)_
+### 9. Render Layer Purification _(status: complete)_
 
 - Special-passage, unusual-size, and circular pool/magic pool chains now use pure "describe" helpers that aggregate child outcomes for both detail and compact renderers.
 - Previews are keyed by `targetId`, and the UI harness verifies the same output the browser shows.

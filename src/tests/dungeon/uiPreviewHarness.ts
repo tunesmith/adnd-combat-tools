@@ -1,11 +1,9 @@
 import { runDungeonStep } from '../../dungeon/services/adapters';
-import {
-  normalizeOutcomeTree,
-  countPendingNodes,
-} from '../../dungeon/helpers/outcomeTree';
+import { countPendingNodes } from '../../dungeon/helpers/outcomeTree';
 import {
   buildRenderCache,
   selectMessagesForMode,
+  type RenderCache,
 } from '../../dungeon/helpers/renderCache';
 import {
   resolveViaRegistry,
@@ -27,7 +25,7 @@ export type FeedSnapshot = {
   roll: number;
   outcome: OutcomeEventNode;
   messages: DungeonRenderNode[];
-  renderCache: ReturnType<typeof buildRenderCache>;
+  renderCache: RenderCache;
   pendingCount: number;
 };
 
@@ -45,15 +43,24 @@ export function createFeedSnapshot(options: {
   if (!step.outcome || step.outcome.type !== 'event') {
     throw new Error('Expected an event outcome from runDungeonStep.');
   }
-  const normalized = normalizeOutcomeTree(step.outcome) as OutcomeEventNode;
+  const outcome = step.outcome;
+  const renderCache: RenderCache =
+    step.renderCache ?? buildRenderCache(outcome);
+  const detailMode = options.detailMode ?? true;
+  const messages = selectMessagesForMode(
+    options.action,
+    detailMode,
+    renderCache,
+    step.messages
+  );
   return {
     id: 'feed',
     action: options.action,
     roll: options.roll,
-    outcome: normalized,
-    messages: step.messages,
-    renderCache: buildRenderCache(normalized),
-    pendingCount: countPendingNodes(normalized),
+    outcome,
+    messages,
+    renderCache,
+    pendingCount: step.pendingCount ?? countPendingNodes(outcome),
   };
 }
 
@@ -82,14 +89,16 @@ export function resolvePreview(
     if (!next || !next.outcome || next.outcome.type !== 'event') {
       throw new Error('Registry update did not return an event outcome.');
     }
+    const renderCache: RenderCache =
+      next.renderCache ?? buildRenderCache(next.outcome);
     nextFeed = {
       id: next.id,
       action: feed.action,
       roll: feed.roll,
-      outcome: normalizeOutcomeTree(next.outcome) as OutcomeEventNode,
+      outcome: next.outcome,
       messages: next.messages,
-      renderCache: buildRenderCache(next.outcome),
-      pendingCount: countPendingNodes(next.outcome),
+      renderCache,
+      pendingCount: next.pendingCount ?? countPendingNodes(next.outcome),
     };
     return updated;
   });

@@ -1,6 +1,6 @@
 import type { DungeonAction, DungeonRenderNode } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
-import { renderDetailTree, toCompactRender } from '../adapters/render';
+import { createOutcomeRenderSnapshot } from './outcomePipeline';
 
 export type RenderCache = {
   detail?: DungeonRenderNode[];
@@ -8,10 +8,11 @@ export type RenderCache = {
 };
 
 export function buildRenderCache(outcome?: DungeonOutcomeNode): RenderCache {
-  if (!outcome || outcome.type !== 'event') return {};
+  const snapshot = createOutcomeRenderSnapshot(outcome, { autoResolve: false });
+  if (!snapshot) return {};
   return {
-    detail: renderDetailTree(outcome),
-    compact: toCompactRender(outcome),
+    detail: snapshot.detail,
+    compact: snapshot.compact,
   };
 }
 

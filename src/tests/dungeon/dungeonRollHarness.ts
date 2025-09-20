@@ -16,6 +16,7 @@ import {
 import {
   buildRenderCache,
   selectMessagesForMode,
+  type RenderCache,
 } from '../../dungeon/helpers/renderCache';
 import { resolveRegistryTable } from '../../dungeon/helpers/registry';
 import type { TableContext } from '../../types/dungeon';
@@ -151,7 +152,9 @@ export function simulateDetailRun(options: {
     );
   }
 
-  const initialCache = buildRenderCache(initialOutcome);
+  const initialCache: RenderCache = step.renderCache ?? {
+    detail: step.messages,
+  };
   const finalCache = buildRenderCache(workingOutcome);
   const initialDetailNodes = selectMessagesForMode(
     options.action,
@@ -206,7 +209,7 @@ export function simulateCompactRun(options: {
     level: options.dungeonLevel,
   });
   const outcome = step.outcome ? normalizeOutcomeTree(step.outcome) : undefined;
-  const cache = buildRenderCache(outcome);
+  const cache = step.renderCache ?? buildRenderCache(outcome);
   const compactNodes = selectMessagesForMode(
     options.action,
     false,
