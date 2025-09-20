@@ -1,10 +1,9 @@
-import { passageMessages } from '../../dungeon/services/passage';
-import { wanderingWhereFromMessages } from '../../dungeon/services/wanderingWhereFrom';
-import { toDetailRender } from '../../dungeon/adapters/render';
 import {
   resolveMonsterOne,
   resolveMonsterThree,
 } from '../../dungeon/domain/resolvers';
+import { toDetailRender } from '../../dungeon/adapters/render';
+import { runDungeonStep } from '../../dungeon/services/adapters';
 import type { DungeonMessage } from '../../types/dungeon';
 import * as dungeonLookup from '../../dungeon/helpers/dungeonLookup';
 
@@ -12,6 +11,15 @@ function isParagraph(
   m: DungeonMessage
 ): m is Extract<DungeonMessage, { kind: 'paragraph'; text: string }> {
   return (m as any).kind === 'paragraph' && typeof (m as any).text === 'string';
+}
+
+function compactPassage(roll: number): DungeonMessage[] {
+  const step = runDungeonStep('passage', {
+    roll,
+    detailMode: false,
+    level: 1,
+  });
+  return step.messages as DungeonMessage[];
 }
 
 describe('Compact: Wandering Monster (adapter)', () => {
@@ -25,12 +33,8 @@ describe('Compact: Wandering Monster (adapter)', () => {
       .mockImplementationOnce(() => 1) // monster level table -> Level One
       .mockImplementationOnce(() => 97) // monsterOne -> Skeletons
       .mockImplementationOnce(() => 3); // d4 -> 3
-    const { messages } = passageMessages({
-      roll: 20,
-      detailMode: false,
-      level: 1,
-    });
-    const para = (messages as DungeonMessage[]).find(isParagraph);
+    const messages = compactPassage(20);
+    const para = messages.find(isParagraph);
     expect(para).toBeTruthy();
     if (!para) throw new Error('Expected paragraph');
     expect(para.text.trim()).toBe(
@@ -50,12 +54,8 @@ describe('Compact: Wandering Monster (adapter)', () => {
       .mockImplementationOnce(() => 1) // level one
       .mockImplementationOnce(() => 10) // fire beetle bucket
       .mockImplementationOnce(() => 2); // d4 -> 2
-    const { messages } = passageMessages({
-      roll: 20,
-      detailMode: false,
-      level: 1,
-    });
-    const para = (messages as DungeonMessage[]).find(isParagraph);
+    const messages = compactPassage(20);
+    const para = messages.find(isParagraph);
     expect(para).toBeTruthy();
     if (!para) throw new Error('Expected paragraph');
     expect(para.text.trim()).toBe(
@@ -66,11 +66,12 @@ describe('Compact: Wandering Monster (adapter)', () => {
 
   test('Where-from Passage Turn stages Passage Turns preview (detail)', () => {
     // Roll 11 -> PassageTurn on periodicCheck
-    const { messages } = wanderingWhereFromMessages({
+    const step = runDungeonStep('passage', {
       roll: 11,
       detailMode: true,
+      level: 1,
     });
-    const hasPassageTurns = messages.some(
+    const hasPassageTurns = step.messages.some(
       (m: any) => m.kind === 'table-preview' && m.id === 'passageTurns'
     );
     expect(hasPassageTurns).toBe(true);
