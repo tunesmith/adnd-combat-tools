@@ -121,15 +121,17 @@ export function simulateDetailRun(options: {
     const nextRoll = queue.shift();
     if (nextRoll === undefined) break;
     usedRolls.push(nextRoll);
+    const targetId = pending.id ?? pending.table;
     const resolution = resolveRegistryTable({
       tableId: pending.table,
       roll: nextRoll,
       context: resolveContext(pending.context),
+      outcome: workingOutcome,
+      targetId,
     });
     if (!resolution || !resolution.outcome) {
       throw new Error(`No outcome available for table ${pending.table}.`);
     }
-    const targetId = pending.id ?? pending.table;
     const normalizedExisting = normalizeOutcomeTree(workingOutcome);
     const normalizedResolution = normalizeOutcomeTree(
       resolution.outcome,

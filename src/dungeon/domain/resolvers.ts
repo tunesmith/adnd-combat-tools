@@ -137,7 +137,6 @@ export function resolvePeriodicCheck(options?: {
       children.push({
         type: 'pending-roll',
         table: 'doorLocation:0',
-        context: { kind: 'doorChain', existing: [] },
       });
       break;
     case PeriodicCheck.SidePassage:
@@ -223,7 +222,6 @@ export function resolveWanderingWhereFrom(options?: {
       children.push({
         type: 'pending-roll',
         table: 'doorLocation:0',
-        context: { kind: 'doorChain', existing: [] },
       });
       break;
     case PeriodicCheck.SidePassage:
@@ -257,23 +255,18 @@ export function resolveDoorLocation(options?: {
   existing?: DoorChainLaterality[];
   sequence?: number;
 }): DungeonOutcomeNode {
-  const existingBefore = options?.existing ? [...options.existing] : [];
+  const existing = options?.existing ? [...options.existing] : [];
   const usedRoll = options?.roll ?? rollDice(doorLocation.sides);
   const command = getTableEntry(usedRoll, doorLocation);
   const lateral = toLaterality(command);
-  const existingAfter = lateral
-    ? existingBefore.includes(lateral)
-      ? existingBefore
-      : [...existingBefore, lateral]
-    : existingBefore;
+  const repeated = lateral ? existing.includes(lateral) : false;
   const sequence =
-    options?.sequence !== undefined ? options.sequence : existingBefore.length;
+    options?.sequence !== undefined ? options.sequence : existing.length;
   const children: DungeonOutcomeNode[] = [];
-  if (lateral && existingAfter.length > existingBefore.length) {
+  if (lateral && !repeated) {
     children.push({
       type: 'pending-roll',
       table: `periodicCheckDoorOnly:${sequence}`,
-      context: { kind: 'doorChain', existing: existingAfter },
     });
   }
   return {
@@ -282,9 +275,12 @@ export function resolveDoorLocation(options?: {
     event: {
       kind: 'doorLocation',
       result: command,
-      existingBefore,
-      existingAfter,
       sequence,
+      doorChain: {
+        existingBefore: existing,
+        repeated,
+        added: !repeated ? lateral : undefined,
+      },
     },
     children: children.length ? children : undefined,
   };
@@ -305,7 +301,6 @@ export function resolvePeriodicDoorOnly(options?: {
     children.push({
       type: 'pending-roll',
       table: `doorLocation:${sequence + 1}`,
-      context: { kind: 'doorChain', existing },
     });
   }
   return {
@@ -314,8 +309,10 @@ export function resolvePeriodicDoorOnly(options?: {
     event: {
       kind: 'periodicDoorOnly',
       result: command,
-      existing,
       sequence,
+      doorChain: {
+        existing,
+      },
     },
     children: children.length ? children : undefined,
   };

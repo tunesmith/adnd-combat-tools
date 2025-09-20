@@ -181,11 +181,9 @@ function previewForEventNode(
       break;
     case 'doorLocation':
       tableId = `doorLocation:${event.sequence}`;
-      context = { kind: 'doorChain', existing: event.existingAfter };
       break;
     case 'periodicDoorOnly':
       tableId = `periodicCheckDoorOnly:${event.sequence}`;
-      context = { kind: 'doorChain', existing: event.existing };
       break;
     case 'sidePassages':
       tableId = 'sidePassages';
@@ -2051,9 +2049,9 @@ function formatDoorLocationEvent(
       ? 'Right'
       : undefined;
   if (!lateral) return '';
-  const repeated = event.existingAfter.length === event.existingBefore.length;
+  const repeated = event.doorChain?.repeated ?? false;
   if (repeated) {
-    return "There are no other doors. The main passage extends -- check again in 30'. ";
+    return DOOR_CHAIN_FALLBACK_TEXT;
   }
   return `A door is to the ${lateral}. `;
 }
@@ -2062,7 +2060,7 @@ function formatPeriodicDoorOnlyEvent(
   event: Extract<OutcomeEvent, { kind: 'periodicDoorOnly' }>
 ): string {
   if (event.result === PeriodicCheckDoorOnly.Ignore) {
-    return "There are no other doors. The main passage extends -- check again in 30'. ";
+    return DOOR_CHAIN_FALLBACK_TEXT;
   }
   return '';
 }
@@ -3211,6 +3209,8 @@ function formatTransporterLocation(result: TransporterLocation): string {
 
 const TRANSPORTER_BASE_SENTENCE = 'It is a transporter.';
 const DEAD_END_FALLBACK_TEXT = 'The passage reaches a dead end. (TODO) ';
+const DOOR_CHAIN_FALLBACK_TEXT =
+  "There are no other doors. The main passage extends -- check again in 30'. ";
 const TRICK_TRAP_FALLBACK_TEXT =
   "There is a trick or trap. (TODO) -- check again in 30'. ";
 

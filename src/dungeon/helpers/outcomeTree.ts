@@ -56,6 +56,7 @@ import {
   RiverConstruction,
   ChasmConstruction,
 } from '../../tables/dungeon/specialPassage';
+import { DoorLocation } from '../../tables/dungeon/doorLocation';
 
 const MAX_DEPTH = 32;
 
@@ -133,20 +134,48 @@ export function readDungeonLevelFromPending(
   return fallback;
 }
 
+function collectDoorChainExisting(
+  ancestors: OutcomeEventNode[]
+): DoorChainLaterality[] {
+  const existing: DoorChainLaterality[] = [];
+  for (const ancestor of ancestors) {
+    if (ancestor.event.kind !== 'doorLocation') continue;
+    const lateral = toDoorChainLaterality(ancestor.event.result);
+    if (!lateral) continue;
+    if (!existing.includes(lateral)) existing.push(lateral);
+  }
+  return existing;
+}
+
+function toDoorChainLaterality(
+  result: DoorLocation
+): DoorChainLaterality | undefined {
+  if (result === DoorLocation.Left) return 'Left';
+  if (result === DoorLocation.Right) return 'Right';
+  return undefined;
+}
+
 export function resolveOutcomeNode(
   node: DungeonOutcomeNode,
-  depth = 0
+  depth = 0,
+  ancestors: OutcomeEventNode[] = []
 ): OutcomeEventNode | undefined {
   if (depth > MAX_DEPTH) return undefined;
   if (node.type === 'event') {
     const baseChildren = node.children;
-    const resolvedChildren = resolveChildren(baseChildren, depth + 1);
+    ancestors.push(node);
+    const resolvedChildren = resolveChildren(
+      baseChildren,
+      depth + 1,
+      ancestors
+    );
+    ancestors.pop();
     const enriched = enrichEventNode(node, resolvedChildren, depth + 1);
     return enriched;
   }
-  const resolved = resolvePendingNode(node);
+  const resolved = resolvePendingNode(node, ancestors);
   if (!resolved) return undefined;
-  return resolveOutcomeNode(resolved, depth + 1);
+  return resolveOutcomeNode(resolved, depth + 1, ancestors);
 }
 
 export function applyResolvedOutcome(
@@ -185,14 +214,37 @@ export function applyResolvedOutcome(
   };
 }
 
+export function findPendingWithAncestors(
+  node: DungeonOutcomeNode | undefined,
+  predicate: (pending: PendingRoll) => boolean
+): { pending: PendingRoll; ancestors: OutcomeEventNode[] } | undefined {
+  return findPendingWithAncestorsInternal(node, predicate, []);
+}
+
+export function deriveDoorChainContext(
+  node: DungeonOutcomeNode | undefined,
+  targetId: string
+): { existing: DoorChainLaterality[]; sequence: number } | undefined {
+  const match = findPendingWithAncestors(
+    node,
+    (pending) =>
+      matchesTarget(pending.id, targetId) || pending.table === targetId
+  );
+  if (!match) return undefined;
+  const existing = collectDoorChainExisting(match.ancestors);
+  const sequence = parseDoorChainSequence(targetId, existing.length);
+  return { existing, sequence };
+}
+
 function resolveChildren(
   children: DungeonOutcomeNode[] | undefined,
-  depth: number
+  depth: number,
+  ancestors: OutcomeEventNode[]
 ): OutcomeEventNode[] {
   if (!children) return [];
   const result: OutcomeEventNode[] = [];
   for (const child of children) {
-    const resolved = resolveOutcomeNode(child, depth + 1);
+    const resolved = resolveOutcomeNode(child, depth + 1, ancestors);
     if (resolved) result.push(resolved);
   }
   return result;
@@ -254,18 +306,44 @@ function enrichEventNode(
   };
 }
 
+function findPendingWithAncestorsInternal(
+  node: DungeonOutcomeNode | undefined,
+  predicate: (pending: PendingRoll) => boolean,
+  ancestors: OutcomeEventNode[]
+): { pending: PendingRoll; ancestors: OutcomeEventNode[] } | undefined {
+  if (!node) return undefined;
+  if (node.type === 'pending-roll') {
+    if (predicate(node)) {
+      return { pending: node, ancestors: [...ancestors] };
+    }
+    return undefined;
+  }
+  if (node.type !== 'event' || !node.children) return undefined;
+  ancestors.push(node);
+  for (const child of node.children) {
+    const match = findPendingWithAncestorsInternal(child, predicate, ancestors);
+    if (match) {
+      ancestors.pop();
+      return match;
+    }
+  }
+  ancestors.pop();
+  return undefined;
+}
+
 function resolvePendingNode(
-  pending: PendingRoll
+  pending: PendingRoll,
+  ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined {
   const base = pending.table.split(':')[0] ?? '';
   switch (base) {
     case 'doorLocation': {
-      const existing = readDoorChainExisting(pending.context);
+      const existing = collectDoorChainExisting(ancestors);
       const sequence = parseDoorChainSequence(pending.table, existing.length);
       return resolveDoorLocation({ existing, sequence });
     }
     case 'periodicCheckDoorOnly': {
-      const existing = readDoorChainExisting(pending.context);
+      const existing = collectDoorChainExisting(ancestors);
       const sequence = parseDoorChainSequence(pending.table, existing.length);
       return resolvePeriodicDoorOnly({ existing, sequence });
     }
@@ -440,15 +518,6 @@ function parseEgressWhich(table: string): 'one' | 'two' | 'three' {
     if (key === 'one' || key === 'two' || key === 'three') return key;
   }
   return 'one';
-}
-
-export function readDoorChainExisting(context: unknown): DoorChainLaterality[] {
-  if (!isTableContext(context)) return [];
-  if (context.kind !== 'doorChain') return [];
-  const arr = Array.isArray(context.existing) ? context.existing : [];
-  return arr.filter(
-    (v): v is DoorChainLaterality => v === 'Left' || v === 'Right'
-  );
 }
 
 export function readExitsContext(

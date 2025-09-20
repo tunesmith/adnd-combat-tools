@@ -4,7 +4,10 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
-import type { DungeonOutcomeNode } from '../domain/outcome';
+import type {
+  DoorChainLaterality,
+  DungeonOutcomeNode,
+} from '../domain/outcome';
 
 // Message services used by the registry
 import {
@@ -58,9 +61,9 @@ import {
 import { renderDetailTree } from '../adapters/render';
 import {
   applyResolvedOutcome,
+  deriveDoorChainContext,
   normalizeOutcomeTree,
   parseDoorChainSequence,
-  readDoorChainExisting,
   readExitsContext,
 } from '../helpers/outcomeTree';
 import { createOutcomeRenderSnapshot } from './outcomePipeline';
@@ -75,6 +78,10 @@ export type RegistryResolver = (opts: {
   roll?: number;
   id: string;
   context?: TableContext;
+  doorChain?: {
+    existing: DoorChainLaterality[];
+    sequence: number;
+  };
 }) => RegistryResolution;
 
 const TABLE_ID_LIST = [
@@ -190,9 +197,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   sidePassages: ({ roll }) => fromOutcome(resolveSidePassages({ roll })),
   passageTurns: ({ roll }) => fromOutcome(resolvePassageTurns({ roll })),
   stairs: ({ roll }) => fromOutcome(resolveStairs({ roll })),
-  doorLocation: ({ roll, context, id }) => {
-    const existing = readDoorChainExisting(context);
-    const sequence = parseDoorChainSequence(id, existing.length);
+  doorLocation: ({ roll, doorChain, id }) => {
+    const existing = doorChain?.existing ?? [];
+    const sequence =
+      doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
     return fromOutcome(resolveDoorLocation({ roll, existing, sequence }));
   },
   doorBeyond: ({ roll }) => fromOutcome(resolveDoorBeyond({ roll })),
@@ -202,9 +210,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
     return fromOutcome(resolvePeriodicCheck({ roll, level }));
   },
-  periodicCheckDoorOnly: ({ roll, context, id }) => {
-    const existing = readDoorChainExisting(context);
-    const sequence = parseDoorChainSequence(id, existing.length);
+  periodicCheckDoorOnly: ({ roll, doorChain, id }) => {
+    const existing = doorChain?.existing ?? [];
+    const sequence =
+      doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
     return fromOutcome(resolvePeriodicDoorOnly({ roll, existing, sequence }));
   },
   wanderingWhereFrom: ({ roll }) =>
@@ -326,11 +335,24 @@ export function resolveRegistryTable(opts: {
   tableId: string;
   roll?: number;
   context?: TableContext;
+  outcome?: DungeonOutcomeNode;
+  targetId?: string;
 }): RegistryResolution | undefined {
   const base = String(opts.tableId.split(':')[0] ?? '');
   if (!isTableId(base)) return undefined;
+  const doorChain =
+    (base === 'doorLocation' || base === 'periodicCheckDoorOnly') &&
+    opts.outcome &&
+    opts.targetId
+      ? deriveDoorChainContext(opts.outcome, opts.targetId)
+      : undefined;
   const resolver = TABLE_RESOLVERS[base];
-  return resolver({ roll: opts.roll, id: opts.tableId, context: opts.context });
+  return resolver({
+    roll: opts.roll,
+    id: opts.tableId,
+    context: opts.context,
+    doorChain,
+  });
 }
 
 function readDungeonLevel(
@@ -416,12 +438,8 @@ export function resolveViaRegistry<T extends FeedLike>(
   if (!isTableId(base)) return false;
 
   const heading = TABLE_HEADINGS[base];
-  const result = resolveRegistryTable({
-    tableId: tp.id,
-    roll: usedRoll,
-    context: tp.context,
-  });
-  if (!result) return false;
+  const targetKey = tp.targetId ?? tp.id;
+  let resolved = false;
 
   if (setFeed) {
     setFeed((prev) =>
@@ -429,9 +447,18 @@ export function resolveViaRegistry<T extends FeedLike>(
         fi.id !== feedItemId
           ? fi
           : (() => {
+              const tableResult = resolveRegistryTable({
+                tableId: tp.id,
+                roll: usedRoll,
+                context: tp.context,
+                outcome: fi.outcome,
+                targetId: targetKey,
+              });
+              if (!tableResult) return fi;
+              resolved = true;
+              const result = tableResult;
               const existingOutcome = fi.outcome;
               if (existingOutcome && result.outcome) {
-                const targetKey = tp.targetId ?? tp.id;
                 const normalizedExisting =
                   normalizeOutcomeTree(existingOutcome);
                 const normalizedResolution = normalizeOutcomeTree(
@@ -460,7 +487,7 @@ export function resolveViaRegistry<T extends FeedLike>(
               return updateResolvedBlock(
                 fi,
                 feedItemId,
-                tp.targetId ?? tp.id,
+                targetKey,
                 result.messages,
                 heading
               );
@@ -468,7 +495,7 @@ export function resolveViaRegistry<T extends FeedLike>(
       )
     );
   }
-  const targetKey = tp.targetId ?? tp.id;
+  if (!resolved) return false;
   if (setCollapsed) {
     setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${targetKey}`]: true }));
   }

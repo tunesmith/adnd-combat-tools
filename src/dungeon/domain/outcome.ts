@@ -73,15 +73,20 @@ export type OutcomeEvent =
   | {
       kind: 'doorLocation';
       result: DoorLocation;
-      existingBefore: DoorChainLaterality[];
-      existingAfter: DoorChainLaterality[];
       sequence: number;
+      doorChain?: {
+        existingBefore: DoorChainLaterality[];
+        repeated: boolean;
+        added?: DoorChainLaterality;
+      };
     }
   | {
       kind: 'periodicDoorOnly';
       result: PeriodicCheckDoorOnly;
-      existing: DoorChainLaterality[];
       sequence: number;
+      doorChain?: {
+        existing: DoorChainLaterality[];
+      };
     }
   | { kind: 'sidePassages'; result: SidePassages }
   | { kind: 'passageTurns'; result: PassageTurns }
