@@ -100,6 +100,11 @@ import {
   renderPeriodicDoorOnlyDetail,
   renderCompactDoorChain,
 } from './render/doorChain';
+import {
+  renderSidePassagesDetail,
+  describeSidePassage,
+  formatSidePassageResult,
+} from './render/sidePassage';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
   magicPool,
@@ -433,20 +438,7 @@ export function toDetailRender(
     return nodes2;
   }
   if (event.kind === 'sidePassages') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Side Passages',
-    };
-    const label = SidePassages[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describeSidePassage(outcome);
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    nodes2.push(...summary.detailParagraphs);
-    return nodes2;
+    return renderSidePassagesDetail(outcome);
   }
   if (event.kind === 'roomDimensions') {
     const heading: DungeonMessage = {
@@ -2078,20 +2070,6 @@ function describeTrickTrap(node: OutcomeEventNode): {
   return { detailParagraphs, compactText: text };
 }
 
-function describeSidePassage(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'sidePassages') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const text = formatSidePassageResult(node.event.result);
-  const detailParagraphs: DungeonMessage[] = text.length
-    ? [{ kind: 'paragraph', text }]
-    : [];
-  return { detailParagraphs, compactText: text };
-}
-
 function describeStairs(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
@@ -3181,37 +3159,6 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
       return periodicBaseTexts(event.result, {
         avoidMonster: event.avoidMonster ?? false,
       }).compact;
-  }
-}
-
-function formatSidePassageResult(result: SidePassages): string {
-  switch (result) {
-    case SidePassages.Left90:
-      return "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";
-    case SidePassages.Right90:
-      return "A side passage branches right 90 degrees. Passages extend -- check again in 30'. ";
-    case SidePassages.Left45:
-      return "A side passage branches left 45 degrees ahead. Passages extend -- check again in 30'. ";
-    case SidePassages.Right45:
-      return "A side passage branches right 45 degrees ahead. Passages extend -- check again in 30'. ";
-    case SidePassages.Left135:
-      return "A side passage branches left 45 degrees behind (left 135 degrees). Passages extend -- check again in 30'. ";
-    case SidePassages.Right135:
-      return "A side passage branches right 45 degrees behind (right 135 degrees). Passages extend -- check again in 30'. ";
-    case SidePassages.LeftCurve45:
-      return "A side passage branches at a curve, 45 degrees left ahead. Passages extend -- check again in 30'. ";
-    case SidePassages.RightCurve45:
-      return "A side passage branches at a curve, 45 degrees right ahead. Passages extend -- check again in 30'. ";
-    case SidePassages.PassageT:
-      return "The passage reaches a 'T' intersection to either side. Passages extend -- check again in 30'. ";
-    case SidePassages.PassageY:
-      return "The passage reaches a 'Y' intersection, ahead 45 degrees to the left and right. Passages extend -- check again in 30'. ";
-    case SidePassages.FourWay:
-      return "The passage reaches a four-way intersection. Passages extend -- check again in 30'. ";
-    case SidePassages.PassageX:
-      return "The passage reaches an 'X' intersection. (If the present passage is horizontal or vertical, it forms a fifth passage into the 'X'.) Passages extend -- check again in 30'. ";
-    default:
-      return "A side passage branches. Passages extend -- check again in 30'. ";
   }
 }
 

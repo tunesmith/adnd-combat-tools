@@ -98,18 +98,21 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Audit the registry for table-specific quirks once everything flows through the shared helper.
 - Suggested commit: `dungeon: unify detail/compact outcome updates`.
 
-### 11. Retire Legacy Preview Services \*(queued)\_
+### 11. Retire Legacy Preview Services _(status: complete)_
 
-- Delete or rewrite the old `doorLocationMessages`, `periodicDoorOnlyMessages`, `trickTrapMessages`, etc., that are exercised only by legacy tests; replace their coverage with pipeline-driven tests where needed.
-- Remove tests (`detail-doorChain`, etc.) that validate behaviour the UI no longer uses, or adapt them to the unified outcome pipeline so they reflect actual behaviour.
-- Suggested commit: `dungeon: remove unused preview services`.
+- Removed `doorLocationMessages`, `periodicDoorOnlyMessages`, `trickTrapMessages`, and other legacy services in favour of pipeline-driven rendering.
+- Updated parity and UI harness tests to call `runDungeonStep` / adapters directly so they exercise the shared outcome pipeline.
+- Shared append-preview type extracted to `render/shared.ts`.
+- Suggested commit: `render: drop legacy preview services`.
 
-### 12. Adapter Modularisation \*(queued)\_
+### 12. Adapter Modularisation _(in progress)_
 
-- Factor the monolithic render adapter into smaller event-family modules (e.g., passage, chamber, monsters) to improve maintainability and make patterns for new tables obvious.
-- Create shared helpers for recurring render shapes (heading + bullet + paragraph) to shrink boilerplate.
-- Update contributor guidance (or inline comments) to describe the extension pattern for new tables and associated tests.
-- Suggested commit: `dungeon: modularize dungeon render adapters`.
+- Created `render/passages.ts` for periodic-check helpers and shared fallback text.
+- Created `render/doorChain.ts` for door-location / continuation detail and compact rendering.
+- Remaining work: move passage width/turn helpers into `render/passages.ts`, extract other event families (rooms, monsters, pools) into similar modules, and standardise helper naming.
+- Suggested next commit: `render: extract passage width/turn helpers`.
+
+
 
 ## Open Questions / Future Enhancements
 
