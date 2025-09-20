@@ -20,15 +20,7 @@ import {
 } from '../../tables/dungeon/chambersRooms';
 import { SidePassages } from '../../tables/dungeon/sidePassages';
 import { PassageTurns } from '../../tables/dungeon/passageTurns';
-import {
-  Stairs,
-  egressOne,
-  egressTwo,
-  egressThree,
-  Egress,
-  chute,
-  Chute,
-} from '../../tables/dungeon/stairs';
+import { Stairs } from '../../tables/dungeon/stairs';
 import { PassageWidth } from '../../tables/dungeon/passageWidth';
 import { periodicCheck } from '../../tables/dungeon/periodicCheck';
 import { getMonsterTable } from '../services/wanderingMonsterResult';
@@ -71,20 +63,7 @@ import {
   dragonSix,
   DragonSix,
 } from '../../tables/dungeon/monster/monsterSix';
-import {
-  specialPassage,
-  SpecialPassage,
-  galleryStairLocation,
-  GalleryStairLocation,
-  streamConstruction,
-  StreamConstruction,
-  riverConstruction,
-  RiverConstruction,
-  chasmDepth,
-  ChasmDepth,
-  chasmConstruction,
-  ChasmConstruction,
-} from '../../tables/dungeon/specialPassage';
+import { SpecialPassage } from '../../tables/dungeon/specialPassage';
 import {
   renderPeriodicCheckDetail,
   periodicBaseTexts,
@@ -116,19 +95,33 @@ import {
 import {
   renderSpecialPassageDetail,
   renderSpecialPassageCompact,
+  buildSpecialPassagePreview,
+  buildGalleryStairLocationPreview,
+  buildStreamConstructionPreview,
+  buildRiverConstructionPreview,
 } from './render/specialPassage';
 import {
   renderChasmDepthDetail,
   renderChasmConstructionDetail,
   renderJumpingPlaceDetail,
+  buildChasmDepthPreview,
+  buildChasmConstructionPreview,
 } from './render/chasm';
 import {
   renderStairsDetail,
   renderStairsCompact,
   buildStairsPreview,
 } from './render/stairs';
-import { renderEgressDetail, renderEgressCompact } from './render/egress';
-import { renderChuteDetail, renderChuteCompact } from './render/chute';
+import {
+  renderEgressDetail,
+  renderEgressCompact,
+  buildEgressPreview,
+} from './render/egress';
+import {
+  renderChuteDetail,
+  renderChuteCompact,
+  buildChutePreview,
+} from './render/chute';
 import {
   renderNumberOfExitsDetail,
   renderNumberOfExitsCompact,
@@ -957,54 +950,11 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
     case 'stairs':
       return buildStairsPreview(p.table);
     case 'specialPassage':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Special Passage',
-        sides: specialPassage.sides,
-        entries: specialPassage.entries.map(
-          (e: typeof specialPassage.entries[number]) => ({
-            range: rangeText(e.range),
-            label: SpecialPassage[e.command] ?? String(e.command),
-          })
-        ),
-      };
-    case 'egress': {
-      const which = p.table.split(':')[1] as
-        | 'one'
-        | 'two'
-        | 'three'
-        | undefined;
-      const table =
-        which === 'one' ? egressOne : which === 'two' ? egressTwo : egressThree;
-      const title =
-        which === 'one'
-          ? 'Egress (1 level)'
-          : which === 'two'
-          ? 'Egress (2 levels)'
-          : 'Egress (3 levels)';
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title,
-        sides: table.sides,
-        entries: table.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: Egress[e.command] ?? String(e.command),
-        })),
-      };
-    }
+      return buildSpecialPassagePreview(p.table);
+    case 'egress':
+      return buildEgressPreview(p.table);
     case 'chute':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Chute',
-        sides: chute.sides,
-        entries: chute.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: Chute[e.command] ?? String(e.command),
-        })),
-      };
+      return buildChutePreview(p.table);
     case 'wanderingWhereFrom':
       return {
         kind: 'table-preview',
@@ -1191,16 +1141,7 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         context: isTableContext(p.context) ? p.context : undefined,
       };
     case 'galleryStairLocation':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Gallery Stair Location',
-        sides: galleryStairLocation.sides,
-        entries: galleryStairLocation.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: GalleryStairLocation[e.command] ?? String(e.command),
-        })),
-      };
+      return buildGalleryStairLocationPreview(p.table);
     case 'circularContents':
       return {
         kind: 'table-preview',
@@ -1270,49 +1211,13 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         })),
       };
     case 'streamConstruction':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Stream Construction',
-        sides: streamConstruction.sides,
-        entries: streamConstruction.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: StreamConstruction[e.command] ?? String(e.command),
-        })),
-      };
+      return buildStreamConstructionPreview(p.table);
     case 'riverConstruction':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'River Construction',
-        sides: riverConstruction.sides,
-        entries: riverConstruction.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: RiverConstruction[e.command] ?? String(e.command),
-        })),
-      };
+      return buildRiverConstructionPreview(p.table);
     case 'chasmDepth':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Chasm Depth',
-        sides: chasmDepth.sides,
-        entries: chasmDepth.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: ChasmDepth[e.command] ?? String(e.command),
-        })),
-      };
+      return buildChasmDepthPreview(p.table);
     case 'chasmConstruction':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Chasm Construction',
-        sides: chasmConstruction.sides,
-        entries: chasmConstruction.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: ChasmConstruction[e.command] ?? String(e.command),
-        })),
-      };
+      return buildChasmConstructionPreview(p.table);
     case 'trickTrap':
       return {
         kind: 'table-preview',

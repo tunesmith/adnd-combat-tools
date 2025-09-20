@@ -1,11 +1,18 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import {
+  chasmDepth as chasmDepthTable,
+  chasmConstruction as chasmConstructionTable,
   ChasmDepth,
   ChasmConstruction,
   JumpingPlaceWidth,
 } from '../../../tables/dungeon/specialPassage';
-import { findChildEvent, type AppendPreviewFn } from './shared';
+import {
+  findChildEvent,
+  buildPreview,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from './shared';
 
 export function renderChasmDepthDetail(
   outcome: OutcomeEventNode
@@ -115,3 +122,25 @@ export function renderJumpingPlaceDetail(
   const text = formatJumpingPlaceWidth(outcome.event.result);
   return [heading, bullet, { kind: 'paragraph', text }];
 }
+
+export const buildChasmDepthPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Chasm Depth',
+    sides: chasmDepthTable.sides,
+    entries: chasmDepthTable.entries.map((entry) => ({
+      range: entry.range,
+      label: ChasmDepth[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export const buildChasmConstructionPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Chasm Construction',
+    sides: chasmConstructionTable.sides,
+    entries: chasmConstructionTable.entries.map((entry) => ({
+      range: entry.range,
+      label: ChasmConstruction[entry.command] ?? String(entry.command),
+    })),
+  });

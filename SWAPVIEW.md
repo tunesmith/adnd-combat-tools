@@ -107,10 +107,10 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 
 ### 12. Adapter Modularisation _(in progress)_
 
-- Created `render/periodicOutcome.ts` for periodic-check helpers and shared fallback text.
-- Created `render/doorLocation.ts` for door-location / continuation detail and compact rendering.
-- Remaining work: move passage width/turn helpers into `render/periodicOutcome.ts`, extract other event families (rooms, monsters, pools) into similar modules, and standardise helper naming.
-- Suggested next commit: `render: extract passage width/turn helpers`.
+- Extracted dedicated adapters for periodic checks, door location/continuation, side passages, passage turns, passage width, stairs, chasms, egress, chute, and number of exits. Each module now exports `render<Table>Detail`, `render<Table>Compact`, and (where applicable) a preview builder consumed by the controller.
+- `render.ts` is down to orchestration: it locates the table node, delegates to the adapter, and wires preview deduplication without duplicating string logic.
+- Preview builders are still inline for the remaining table families (unusual shape/size, room & chamber dimensions, pool/magic pool, monster results). Compact/detail helpers for those families also need relocating to finish the modularisation pass.
+- Suggested next commits: `render: extract unusual shape/size adapters`, `render: move room/chamber renders into modules`, `render: modularise pool & monster adapters`.
 
 ## Open Questions / Future Enhancements
 

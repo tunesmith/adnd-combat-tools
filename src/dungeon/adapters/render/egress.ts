@@ -1,6 +1,12 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { Egress } from '../../../tables/dungeon/stairs';
+import {
+  egressOne,
+  egressTwo,
+  egressThree,
+  Egress,
+} from '../../../tables/dungeon/stairs';
+import { buildPreview, type TablePreviewFactory } from './shared';
 
 export function renderEgressDetail(
   outcome: OutcomeEventNode
@@ -32,3 +38,27 @@ function buildEgressNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
       : '';
   return [heading, bullet, { kind: 'paragraph', text: suffix }];
 }
+
+export const buildEgressPreview: TablePreviewFactory = (tableId) => {
+  const which = tableId.split(':')[1] as 'one' | 'two' | 'three' | undefined;
+  const table =
+    which === 'one'
+      ? egressOne
+      : which === 'two'
+      ? egressTwo
+      : egressThree;
+  const title =
+    which === 'one'
+      ? 'Egress (1 level)'
+      : which === 'two'
+      ? 'Egress (2 levels)'
+      : 'Egress (3 levels)';
+  return buildPreview(tableId, {
+    title,
+    sides: table.sides,
+    entries: table.entries.map((entry) => ({
+      range: entry.range,
+      label: Egress[entry.command] ?? String(entry.command),
+    })),
+  });
+};

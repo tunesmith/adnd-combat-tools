@@ -1,6 +1,10 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import {
+  specialPassage as specialPassageTable,
+  galleryStairLocation as galleryStairLocationTable,
+  streamConstruction as streamConstructionTable,
+  riverConstruction as riverConstructionTable,
   SpecialPassage,
   GalleryStairLocation,
   StreamConstruction,
@@ -8,7 +12,12 @@ import {
   RiverBoatBank,
   GalleryStairOccurrence,
 } from '../../../tables/dungeon/specialPassage';
-import { findChildEvent, type AppendPreviewFn } from './shared';
+import {
+  findChildEvent,
+  buildPreview,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from './shared';
 import { formatChasmDepth, formatChasmConstruction } from './chasm';
 
 export function renderSpecialPassageDetail(
@@ -138,6 +147,52 @@ export function renderSpecialPassageCompact(node: OutcomeEventNode): string {
   const summary = describeSpecialPassage(node);
   return summary.compactText;
 }
+
+export const buildSpecialPassagePreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Special Passage',
+    sides: specialPassageTable.sides,
+    entries: specialPassageTable.entries.map((entry) => ({
+      range: entry.range,
+      label: SpecialPassage[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export const buildGalleryStairLocationPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Gallery Stair Location',
+    sides: galleryStairLocationTable.sides,
+    entries: galleryStairLocationTable.entries.map((entry) => ({
+      range: entry.range,
+      label: GalleryStairLocation[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export const buildStreamConstructionPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Stream Construction',
+    sides: streamConstructionTable.sides,
+    entries: streamConstructionTable.entries.map((entry) => ({
+      range: entry.range,
+      label: StreamConstruction[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export const buildRiverConstructionPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'River Construction',
+    sides: riverConstructionTable.sides,
+    entries: riverConstructionTable.entries.map((entry) => ({
+      range: entry.range,
+      label: RiverConstruction[entry.command] ?? String(entry.command),
+    })),
+  });
 
 function formatGalleryStairLocation(result: GalleryStairLocation): string {
   switch (result) {

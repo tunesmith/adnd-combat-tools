@@ -1,6 +1,7 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import { Chute } from '../../../tables/dungeon/stairs';
+import { chute as chuteTable, Chute } from '../../../tables/dungeon/stairs';
+import { buildPreview, type TablePreviewFactory } from './shared';
 
 export function renderChuteDetail(
   outcome: OutcomeEventNode
@@ -33,3 +34,13 @@ function buildChuteNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
       : '';
   return [heading, bullet, { kind: 'paragraph', text }];
 }
+
+export const buildChutePreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Chute',
+    sides: chuteTable.sides,
+    entries: chuteTable.entries.map((entry) => ({
+      range: entry.range,
+      label: Chute[entry.command] ?? String(entry.command),
+    })),
+  });
