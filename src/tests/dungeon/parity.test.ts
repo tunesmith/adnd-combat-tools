@@ -13,7 +13,10 @@ import {
   ChamberDimensions,
   chamberDimensions,
 } from '../../tables/dungeon/chambersRooms';
-import { SpecialPassage, specialPassage } from '../../tables/dungeon/specialPassage';
+import {
+  SpecialPassage,
+  specialPassage,
+} from '../../tables/dungeon/specialPassage';
 import {
   resolveStairs,
   resolveRoomDimensions,
@@ -82,7 +85,6 @@ function detailNodesFor(node: DungeonOutcomeNode): DungeonRenderNode[] {
   const normalized = normalizeOutcomeTree(node);
   return renderDetailTree(assertEvent(normalized));
 }
-
 
 describe('Passage compact text (adapter)', () => {
   test('ContinueStraight exact text', () => {
@@ -371,7 +373,9 @@ describe('Phase 0 parity: Passage Width behavior', () => {
   test('Passage Width detail mode returns paragraph node', () => {
     const detailNodes = detailNodesFor(resolvePassageWidth({ roll: 1 }));
     const paras = detailNodes.filter(
-      (m): m is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> =>
+      (
+        m
+      ): m is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> =>
         m.kind === 'paragraph'
     );
     expect(paras.length).toBe(1);

@@ -36,8 +36,8 @@ function assertEvent(node: DungeonOutcomeNode): OutcomeEventNode {
 
 function compactNodesFor(node: DungeonOutcomeNode): DungeonMessage[] {
   const normalized = normalizeOutcomeTree(node);
-  const resolved = resolveOutcomeNode(assertEvent(normalized)) ??
-    assertEvent(normalized);
+  const resolved =
+    resolveOutcomeNode(assertEvent(normalized)) ?? assertEvent(normalized);
   return toCompactRender(resolved) as DungeonMessage[];
 }
 

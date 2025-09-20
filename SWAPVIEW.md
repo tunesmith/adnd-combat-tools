@@ -112,8 +112,6 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Remaining work: move passage width/turn helpers into `render/passages.ts`, extract other event families (rooms, monsters, pools) into similar modules, and standardise helper naming.
 - Suggested next commit: `render: extract passage width/turn helpers`.
 
-
-
 ## Open Questions / Future Enhancements
 
 - Should compact mode display an explicit marker when some children are still pending? (Answer: YES)

@@ -75,7 +75,11 @@ export function renderPeriodicCheckDetail(
 ): DungeonRenderNode[] {
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = outcome;
-  const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Passage' };
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 3,
+    text: 'Passage',
+  };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${roll} — ${PeriodicCheck[event.result]}`],
