@@ -105,6 +105,10 @@ import {
   renderCircularContentsCompact,
   renderCircularPoolDetail,
   renderCircularPoolCompact,
+  buildCircularContentsPreview,
+  buildCircularPoolPreview,
+} from './render/circularPools';
+import {
   renderCircularMagicPoolDetail,
   renderCircularMagicPoolCompact,
   renderTransmuteTypeDetail,
@@ -113,8 +117,6 @@ import {
   renderPoolAlignmentCompact,
   renderTransporterLocationDetail,
   renderTransporterLocationCompact,
-  buildCircularContentsPreview,
-  buildCircularPoolPreview,
   buildCircularMagicPoolPreview,
   buildTransmuteTypePreview,
   buildPoolAlignmentPreview,
