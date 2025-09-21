@@ -45,35 +45,8 @@ export function renderRoomDimensionsCompact(
 ): string {
   if (node.event.kind !== 'roomDimensions') return '';
   const segments: string[] = [];
-  switch (node.event.result) {
-    case RoomDimensions.Square10x10:
-      segments.push("The room is square and 10' x 10'.");
-      break;
-    case RoomDimensions.Square20x20:
-      segments.push("The room is square and 20' x 20'.");
-      break;
-    case RoomDimensions.Square30x30:
-      segments.push("The room is square and 30' x 30'.");
-      break;
-    case RoomDimensions.Square40x40:
-      segments.push("The room is square and 40' x 40'.");
-      break;
-    case RoomDimensions.Rectangular10x20:
-      segments.push("The room is rectangular and 10' x 20'.");
-      break;
-    case RoomDimensions.Rectangular20x30:
-      segments.push("The room is rectangular and 20' x 30'.");
-      break;
-    case RoomDimensions.Rectangular20x40:
-      segments.push("The room is rectangular and 20' x 40'.");
-      break;
-    case RoomDimensions.Rectangular30x40:
-      segments.push("The room is rectangular and 30' x 40'.");
-      break;
-    case RoomDimensions.Unusual:
-      segments.push('The room has an unusual shape and size.');
-      break;
-  }
+  const base = describeRoomDimensionsBase(node.event.result).trim();
+  if (base.length > 0) segments.push(base);
   if (node.event.result === RoomDimensions.Unusual) {
     const unusual = renderCompactUnusualDetails(node).trim();
     if (unusual.length > 0) segments.push(unusual);

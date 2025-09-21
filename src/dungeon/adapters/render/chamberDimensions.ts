@@ -45,29 +45,8 @@ export function renderChamberDimensionsCompact(
 ): string {
   if (node.event.kind !== 'chamberDimensions') return '';
   const segments: string[] = [];
-  switch (node.event.result) {
-    case ChamberDimensions.Square20x20:
-      segments.push("The chamber is square and 20' x 20'.");
-      break;
-    case ChamberDimensions.Square30x30:
-      segments.push("The chamber is square and 30' x 30'.");
-      break;
-    case ChamberDimensions.Square40x40:
-      segments.push("The chamber is square and 40' x 40'.");
-      break;
-    case ChamberDimensions.Rectangular20x30:
-      segments.push("The chamber is rectangular and 20' x 30'.");
-      break;
-    case ChamberDimensions.Rectangular30x50:
-      segments.push("The chamber is rectangular and 30' x 50'.");
-      break;
-    case ChamberDimensions.Rectangular40x60:
-      segments.push("The chamber is rectangular and 40' x 60'.");
-      break;
-    case ChamberDimensions.Unusual:
-      segments.push('The chamber has an unusual shape and size.');
-      break;
-  }
+  const base = describeChamberDimensionsBase(node.event.result).trim();
+  if (base.length > 0) segments.push(base);
   if (node.event.result === ChamberDimensions.Unusual) {
     const unusual = renderCompactUnusualDetails(node).trim();
     if (unusual.length > 0) segments.push(unusual);

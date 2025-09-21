@@ -105,53 +105,13 @@ export function renderPoolAlignmentCompact(
 export function renderTransporterLocationDetail(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'transporterLocation') return [];
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Transporter Location',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [
-      `roll: ${outcome.roll} — ${
-        TransporterLocation[outcome.event.result] ??
-        String(outcome.event.result)
-      }`,
-    ],
-  };
-  const summary = describeTransporterLocation(outcome);
-  const nodes: DungeonRenderNode[] = [heading, bullet];
-  if (summary.detailParagraphs.length > 0) {
-    nodes.push(...summary.detailParagraphs);
-  }
-  return nodes;
+  return buildTransporterNodes(outcome, true);
 }
 
 export function renderTransporterLocationCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'transporterLocation') return [];
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Transporter Location',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [
-      `roll: ${outcome.roll} — ${
-        TransporterLocation[outcome.event.result] ??
-        String(outcome.event.result)
-      }`,
-    ],
-  };
-  const summary = describeTransporterLocation(outcome);
-  const nodes: DungeonRenderNode[] = [heading, bullet];
-  if (summary.compactText.length > 0) {
-    nodes.push({ kind: 'paragraph', text: `${summary.compactText} ` });
-  }
-  return nodes;
+  return buildTransporterNodes(outcome, false);
 }
 
 export const buildCircularMagicPoolPreview: TablePreviewFactory = (
@@ -331,6 +291,29 @@ export function collectCircularChainSentences(
     }
   }
   return sentences;
+}
+
+function buildTransporterNodes(
+  outcome: OutcomeEventNode,
+  includeDetailAlignment: boolean
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'transporterLocation') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Transporter Location',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${TransporterLocation[outcome.event.result]}`],
+  };
+  const summary = describeTransporterLocation(outcome);
+  const extras: DungeonRenderNode[] = includeDetailAlignment
+    ? summary.detailParagraphs
+    : summary.compactText.length > 0
+    ? [{ kind: 'paragraph', text: `${summary.compactText} ` }]
+    : [];
+  return extras.length > 0 ? [heading, bullet, ...extras] : [heading, bullet];
 }
 
 function circularSentenceForEvent(
