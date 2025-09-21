@@ -101,6 +101,27 @@ import {
   buildChamberDimensionsPreview,
 } from './render/chamberDimensions';
 import {
+  renderCircularContentsDetail,
+  renderCircularContentsCompact,
+  renderCircularPoolDetail,
+  renderCircularPoolCompact,
+  renderCircularMagicPoolDetail,
+  renderCircularMagicPoolCompact,
+  renderTransmuteTypeDetail,
+  renderTransmuteTypeCompact,
+  renderPoolAlignmentDetail,
+  renderPoolAlignmentCompact,
+  renderTransporterLocationDetail,
+  renderTransporterLocationCompact,
+  buildCircularContentsPreview,
+  buildCircularPoolPreview,
+  buildCircularMagicPoolPreview,
+  buildTransmuteTypePreview,
+  buildPoolAlignmentPreview,
+  buildTransporterLocationPreview,
+  collectCircularChainSentences,
+} from './render/magicPool';
+import {
   renderSpecialPassageDetail,
   renderSpecialPassageCompact,
   buildSpecialPassagePreview,
@@ -142,22 +163,9 @@ import {
   buildUnusualSizePreview,
 } from './render/unusualSize';
 import { findChildEvent } from './render/shared';
-import { pool, Pool } from '../../tables/dungeon/pool';
-import {
-  magicPool,
-  MagicPool,
-  transmuteType,
-  TransmuteType,
-  poolAlignment,
-  PoolAlignment,
-  transporterLocation,
-  TransporterLocation,
-} from '../../tables/dungeon/magicPool';
 import {
   unusualShape,
   UnusualShape,
-  circularContents,
-  CircularContents,
 } from '../../tables/dungeon/unusualShape';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
@@ -523,170 +531,28 @@ export function toDetailRender(
     return nodes2;
   }
   if (event.kind === 'circularContents') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Circular Contents',
-    };
-    const label = CircularContents[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    let text = '';
-    switch (event.result) {
-      case CircularContents.Pool:
-        text = 'There is a pool. ';
-        break;
-      case CircularContents.Well:
-        text = 'There is a well. ';
-        break;
-      case CircularContents.Shaft:
-        text = 'There is a shaft. ';
-        break;
-      case CircularContents.Normal:
-        text = '';
-        break;
-    }
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (text) nodes2.push({ kind: 'paragraph', text });
+    const nodes2 = renderCircularContentsDetail(outcome);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
   if (event.kind === 'circularPool') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Pool',
-    };
-    const label = Pool[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    let text = '';
-    switch (event.result) {
-      case Pool.PoolNoMonster:
-        text = 'There is a pool. ';
-        break;
-      case Pool.PoolMonster:
-        text =
-          'There is a pool. There is a monster in the pool. (TODO Monster) ';
-        break;
-      case Pool.PoolMonsterTreasure:
-        text =
-          'There is a pool. There is a monster and treasure in the pool. (TODO Monster Treasure) ';
-        break;
-      case Pool.MagicPool:
-        text =
-          'There is a pool. It is a magical pool. (In order to find out what it is, characters must enter the magic pool.) ';
-        break;
-      default:
-        text = '';
-        break;
-    }
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (text) nodes2.push({ kind: 'paragraph', text });
+    const nodes2 = renderCircularPoolDetail(outcome);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
   if (event.kind === 'circularMagicPool') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Magic Pool Effect',
-    };
-    const label = MagicPool[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (event.result === MagicPool.Transporter) {
-      const summary = describeMagicPoolTransporter(outcome);
-      if (summary.detailParagraphs.length > 0) {
-        nodes2.push(...summary.detailParagraphs);
-      }
-    } else {
-      let text = '';
-      switch (event.result) {
-        case MagicPool.TransmuteGold:
-          text = 'It transmutes gold. ';
-          break;
-        case MagicPool.AlterCharacteristic:
-          text =
-            'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
-          break;
-        case MagicPool.WishOrDamage:
-          text =
-            'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
-          break;
-        default:
-          text = '';
-          break;
-      }
-      if (text) nodes2.push({ kind: 'paragraph', text });
-    }
+    const nodes2 = renderCircularMagicPoolDetail(outcome);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
   if (event.kind === 'transmuteType') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Transmutation Type',
-    };
-    const label = TransmuteType[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const text =
-      event.result === TransmuteType.GoldToPlatinum
-        ? 'It will turn gold to platinum, one time only. '
-        : 'It will turn gold to lead, one time only. ';
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return renderTransmuteTypeDetail(outcome);
   }
   if (event.kind === 'poolAlignment') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Pool Alignment',
-    };
-    const label = PoolAlignment[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const text =
-      event.result === PoolAlignment.LawfulGood
-        ? 'It is Lawful Good. '
-        : event.result === PoolAlignment.LawfulEvil
-        ? 'It is Lawful Evil. '
-        : event.result === PoolAlignment.ChaoticGood
-        ? 'It is Chaotic Good. '
-        : event.result === PoolAlignment.ChaoticEvil
-        ? 'It is Chaotic Evil. '
-        : 'It is Neutral. ';
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return renderPoolAlignmentDetail(outcome);
   }
   if (event.kind === 'transporterLocation') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Transporter Location',
-    };
-    const label = TransporterLocation[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describeTransporterLocation(outcome);
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (summary.detailParagraphs.length > 0) {
-      nodes2.push(...summary.detailParagraphs);
-    }
-    return nodes2;
+    return renderTransporterLocationDetail(outcome);
   }
   if (event.kind === 'unusualSize') {
     return renderUnusualSizeDetail(outcome, appendPendingPreviews);
@@ -1021,73 +887,17 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
     case 'galleryStairLocation':
       return buildGalleryStairLocationPreview(p.table);
     case 'circularContents':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Circular Contents',
-        sides: circularContents.sides,
-        entries: circularContents.entries.map(
-          (e: typeof circularContents.entries[number]) => ({
-            range: rangeText(e.range),
-            label: CircularContents[e.command] ?? String(e.command),
-          })
-        ),
-      };
+      return buildCircularContentsPreview(p.table);
     case 'circularShapePool':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Pool',
-        sides: pool.sides,
-        entries: pool.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: Pool[e.command] ?? String(e.command),
-        })),
-      };
+      return buildCircularPoolPreview(p.table);
     case 'circularShapeMagicPool':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Magic Pool Effect',
-        sides: magicPool.sides,
-        entries: magicPool.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: MagicPool[e.command] ?? String(e.command),
-        })),
-      };
+      return buildCircularMagicPoolPreview(p.table);
     case 'transmuteType':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Transmutation Type',
-        sides: transmuteType.sides,
-        entries: transmuteType.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: TransmuteType[e.command] ?? String(e.command),
-        })),
-      };
+      return buildTransmuteTypePreview(p.table);
     case 'poolAlignment':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Pool Alignment',
-        sides: poolAlignment.sides,
-        entries: poolAlignment.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: PoolAlignment[e.command] ?? String(e.command),
-        })),
-      };
+      return buildPoolAlignmentPreview(p.table);
     case 'transporterLocation':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Transporter Location',
-        sides: transporterLocation.sides,
-        entries: transporterLocation.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: TransporterLocation[e.command] ?? String(e.command),
-        })),
-      };
+      return buildTransporterLocationPreview(p.table);
     case 'streamConstruction':
       return buildStreamConstructionPreview(p.table);
     case 'riverConstruction':
@@ -1259,50 +1069,29 @@ export function toCompactRender(
   if (event.kind === 'numberOfExits') {
     return renderNumberOfExitsCompact(node);
   }
-  if (event.kind === 'circularMagicPool') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Magic Pool Effect',
-    };
-    const label = MagicPool[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (event.result === MagicPool.Transporter) {
-      const summary = describeMagicPoolTransporter(outcome);
-      if (summary.detailParagraphs.length > 0) {
-        nodes2.push(...summary.detailParagraphs);
-      }
-    } else {
-      const text = formatCircularMagicPoolResult(event.result);
-      if (text.length > 0) {
-        const paragraph = text.endsWith(' ') ? text : `${text.trim()} `;
-        nodes2.push({ kind: 'paragraph', text: paragraph });
-      }
-    }
+  if (event.kind === 'circularContents') {
+    const nodes2 = renderCircularContentsCompact(node);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
-  if (event.kind === 'transporterLocation') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Transporter Location',
-    };
-    const label = TransporterLocation[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describeTransporterLocation(outcome);
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (summary.detailParagraphs.length > 0) {
-      nodes2.push(...summary.detailParagraphs);
-    }
+  if (event.kind === 'circularPool') {
+    const nodes2 = renderCircularPoolCompact(node);
+    appendPendingPreviews(outcome, nodes2);
     return nodes2;
+  }
+  if (event.kind === 'circularMagicPool') {
+    const nodes2 = renderCircularMagicPoolCompact(node);
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
+  }
+  if (event.kind === 'transmuteType') {
+    return renderTransmuteTypeCompact(node);
+  }
+  if (event.kind === 'poolAlignment') {
+    return renderPoolAlignmentCompact(node);
+  }
+  if (event.kind === 'transporterLocation') {
+    return renderTransporterLocationCompact(node);
   }
   const monsterDescription = describeMonsterOutcome(outcome);
   if (monsterDescription) {
@@ -1721,11 +1510,6 @@ function renderChildPassageWidth(node: OutcomeEventNode): string {
   return width ? renderPassageWidthCompact(width) : '';
 }
 
-function getChildEvents(node: OutcomeEventNode): OutcomeEventNode[] {
-  const children = node.children || [];
-  return children.filter((c): c is OutcomeEventNode => c.type === 'event');
-}
-
 function renderCompactUnusualDetails(node: OutcomeEventNode): string {
   let text = '';
   const shape = findChildEvent(node, 'unusualShape');
@@ -1794,187 +1578,6 @@ function formatUnusualShape(result: UnusualShape): string {
     default:
       return '';
   }
-}
-
-function formatCircularContents(result: CircularContents): string {
-  switch (result) {
-    case CircularContents.Well:
-      return 'There is a well. ';
-    case CircularContents.Shaft:
-      return 'There is a shaft. ';
-    default:
-      return '';
-  }
-}
-
-function formatCircularPool(result: Pool): string {
-  switch (result) {
-    case Pool.PoolNoMonster:
-      return 'There is a pool.';
-    case Pool.PoolMonster:
-      return 'There is a pool. There is a monster in the pool. (TODO Monster) ';
-    case Pool.PoolMonsterTreasure:
-      return 'There is a pool. There is a monster and treasure in the pool. (TODO Monster Treasure) ';
-    case Pool.MagicPool:
-      return 'There is a pool. It is a magical pool. (In order to find out what it is, characters must enter the magic pool.) ';
-    default:
-      return '';
-  }
-}
-
-function formatCircularMagicPoolResult(result: MagicPool): string {
-  switch (result) {
-    case MagicPool.TransmuteGold:
-      return 'It transmutes gold.';
-    case MagicPool.AlterCharacteristic:
-      return 'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
-    case MagicPool.WishOrDamage:
-      return 'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
-    case MagicPool.Transporter:
-      return TRANSPORTER_BASE_SENTENCE;
-    default:
-      return '';
-  }
-}
-
-function formatTransmuteType(result: TransmuteType): string {
-  return result === TransmuteType.GoldToPlatinum
-    ? 'It will turn gold to platinum, one time only. '
-    : 'It will turn gold to lead, one time only. ';
-}
-
-function formatPoolAlignment(result: PoolAlignment): string {
-  switch (result) {
-    case PoolAlignment.LawfulGood:
-      return 'It is Lawful Good. ';
-    case PoolAlignment.LawfulEvil:
-      return 'It is Lawful Evil. ';
-    case PoolAlignment.ChaoticGood:
-      return 'It is Chaotic Good. ';
-    case PoolAlignment.ChaoticEvil:
-      return 'It is Chaotic Evil. ';
-    case PoolAlignment.Neutral:
-      return 'It is Neutral. ';
-    default:
-      return '';
-  }
-}
-
-function formatTransporterLocation(result: TransporterLocation): string {
-  switch (result) {
-    case TransporterLocation.Surface:
-      return 'It transports characters back to the surface.';
-    case TransporterLocation.SameLevelElsewhere:
-      return 'It transports characters elsewhere on the same level.';
-    case TransporterLocation.OneLevelDown:
-      return 'It transports characters one level down.';
-    case TransporterLocation.Away100Miles:
-      return 'It transports characters 100 miles away for outdoor adventure.';
-    default:
-      return '';
-  }
-}
-
-const TRANSPORTER_BASE_SENTENCE = 'It is a transporter.';
-function describeTransporterLocation(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'transporterLocation') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const sentence = formatTransporterLocation(node.event.result).trim();
-  if (!sentence) {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  return {
-    detailParagraphs: [{ kind: 'paragraph', text: `${sentence} ` }],
-    compactText: sentence,
-  };
-}
-
-function describeMagicPoolTransporter(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'circularMagicPool') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  if (node.event.result !== MagicPool.Transporter) {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const detailParagraphs: DungeonMessage[] = [
-    { kind: 'paragraph', text: `${TRANSPORTER_BASE_SENTENCE} ` },
-  ];
-  const segments: string[] = [TRANSPORTER_BASE_SENTENCE];
-  const location = findChildEvent(node, 'transporterLocation');
-  if (location && location.event.kind === 'transporterLocation') {
-    const locationSummary = describeTransporterLocation(location);
-    if (locationSummary.detailParagraphs.length > 0) {
-      detailParagraphs.push(...locationSummary.detailParagraphs);
-    }
-    if (locationSummary.compactText.length > 0) {
-      segments.push(locationSummary.compactText);
-    }
-  }
-  return { detailParagraphs, compactText: segments.join(' ') };
-}
-
-const CIRCULAR_CHAIN_KINDS = new Set<OutcomeEvent['kind']>([
-  'circularContents',
-  'circularPool',
-  'circularMagicPool',
-  'transmuteType',
-  'poolAlignment',
-  'transporterLocation',
-]);
-
-function circularSentenceForEvent(
-  eventNode: OutcomeEventNode
-): string | undefined {
-  switch (eventNode.event.kind) {
-    case 'circularContents':
-      return formatCircularContents(eventNode.event.result).trim();
-    case 'circularPool':
-      return formatCircularPool(eventNode.event.result).trim();
-    case 'circularMagicPool':
-      return formatCircularMagicPoolResult(eventNode.event.result).trim();
-    case 'transmuteType':
-      return formatTransmuteType(eventNode.event.result).trim();
-    case 'poolAlignment':
-      return formatPoolAlignment(eventNode.event.result).trim();
-    case 'transporterLocation': {
-      const summary = describeTransporterLocation(eventNode);
-      return summary.compactText.trim();
-    }
-    default:
-      return undefined;
-  }
-}
-
-function collectCircularChainSentences(node: OutcomeEventNode): string[] {
-  const sentences: string[] = [];
-  const visited = new Set<string>();
-  const queue: OutcomeEventNode[] = getChildEvents(node).filter((child) =>
-    CIRCULAR_CHAIN_KINDS.has(child.event.kind)
-  );
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) continue;
-    const key = current.id ?? `${current.event.kind}-${sentences.length}`;
-    if (visited.has(key)) continue;
-    visited.add(key);
-    const sentence = circularSentenceForEvent(current);
-    if (sentence && sentence.length > 0) {
-      sentences.push(sentence);
-    }
-    for (const child of getChildEvents(current)) {
-      if (CIRCULAR_CHAIN_KINDS.has(child.event.kind)) {
-        queue.push(child);
-      }
-    }
-  }
-  return sentences;
 }
 
 function formatTrickTrap(result: number): string {
