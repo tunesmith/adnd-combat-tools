@@ -127,6 +127,12 @@ import {
   renderNumberOfExitsCompact,
   buildNumberOfExitsPreview,
 } from './render/numberOfExits';
+import {
+  renderUnusualSizeDetail,
+  renderUnusualSizeCompact,
+  describeUnusualSizeChain,
+  buildUnusualSizePreview,
+} from './render/unusualSize';
 import { findChildEvent } from './render/shared';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
@@ -145,7 +151,6 @@ import {
   circularContents,
   CircularContents,
 } from '../../tables/dungeon/unusualShape';
-import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
 
@@ -766,21 +771,7 @@ export function toDetailRender(
     return nodes2;
   }
   if (event.kind === 'unusualSize') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Unusual Size',
-    };
-    const label = UnusualSize[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    const summary = describeUnusualSizeChain(outcome);
-    nodes2.push(...summary.detailParagraphs);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderUnusualSizeDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'trickTrap') {
     const heading: DungeonMessage = {
@@ -930,17 +921,10 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         })),
       };
     case 'unusualSize':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Unusual Size',
-        sides: unusualSize.sides,
-        entries: unusualSize.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: UnusualSize[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
+      return buildUnusualSizePreview(
+        p.table,
+        isTableContext(p.context) ? p.context : undefined
+      );
     case 'stairs':
       return buildStairsPreview(p.table);
     case 'specialPassage':
@@ -1484,41 +1468,7 @@ export function toCompactRender(
     return [heading, bullet, { kind: 'paragraph', text }];
   }
   if (event.kind === 'unusualSize') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Unusual Size',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${UnusualSize[event.result]}`],
-    };
-    let size = 3400;
-    switch (event.result) {
-      case UnusualSize.SqFt500:
-        size = 500;
-        break;
-      case UnusualSize.SqFt900:
-        size = 900;
-        break;
-      case UnusualSize.SqFt1300:
-        size = 1300;
-        break;
-      case UnusualSize.SqFt2000:
-        size = 2000;
-        break;
-      case UnusualSize.SqFt2700:
-        size = 2700;
-        break;
-      case UnusualSize.SqFt3400:
-        size = 3400;
-        break;
-      case UnusualSize.RollAgain:
-        size = 3400; // match compact fallback
-        break;
-    }
-    const text = `It is about ${size} sq. ft. `;
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return renderUnusualSizeCompact(node);
   }
   return nodes;
 }
@@ -2024,80 +1974,6 @@ function formatUnusualShape(result: UnusualShape): string {
       return 'It is actually a cave. ';
     default:
       return '';
-  }
-}
-
-function describeUnusualSizeChain(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'unusualSize') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const chain = gatherUnusualSizeChain(node);
-  const detailParagraphs: DungeonMessage[] = [];
-  const compactSegments: string[] = [];
-  let accumulatedExtra = (node.event as { extra?: number }).extra ?? 0;
-  for (const entry of chain) {
-    if (entry.event.kind !== 'unusualSize') continue;
-    const eventExtra =
-      (entry.event as { extra?: number }).extra ?? accumulatedExtra;
-    accumulatedExtra = Math.max(accumulatedExtra, eventExtra);
-    if (entry.event.result === UnusualSize.RollAgain) {
-      accumulatedExtra += 2000;
-      const sentence = `Add 2000 sq. ft. (current total ${accumulatedExtra.toLocaleString()} sq. ft.) and roll again.`;
-      detailParagraphs.push({ kind: 'paragraph', text: sentence });
-      compactSegments.push(sentence);
-      continue;
-    }
-    const baseArea = unusualSizeBase(entry.event.result);
-    if (baseArea !== undefined) {
-      const total = baseArea + accumulatedExtra;
-      const sentence = `It is about ${total.toLocaleString()} sq. ft.`;
-      detailParagraphs.push({ kind: 'paragraph', text: sentence });
-      compactSegments.push(sentence);
-    }
-  }
-  return {
-    detailParagraphs,
-    compactText: compactSegments.join(' '),
-  };
-}
-
-function gatherUnusualSizeChain(node: OutcomeEventNode): OutcomeEventNode[] {
-  const result: OutcomeEventNode[] = [node];
-  let current: OutcomeEventNode | undefined = node;
-  const visited = new Set<string>();
-  while (current) {
-    const next: OutcomeEventNode | undefined = getChildEvents(current).find(
-      (child): child is OutcomeEventNode => child.event.kind === 'unusualSize'
-    );
-    if (!next) break;
-    const key = next.id ?? `${current.id}.unusualSize`;
-    if (visited.has(key)) break;
-    visited.add(key);
-    result.push(next);
-    current = next;
-  }
-  return result;
-}
-
-function unusualSizeBase(result: UnusualSize): number | undefined {
-  switch (result) {
-    case UnusualSize.SqFt500:
-      return 500;
-    case UnusualSize.SqFt900:
-      return 900;
-    case UnusualSize.SqFt1300:
-      return 1300;
-    case UnusualSize.SqFt2000:
-      return 2000;
-    case UnusualSize.SqFt2700:
-      return 2700;
-    case UnusualSize.SqFt3400:
-      return 3400;
-    default:
-      return undefined;
   }
 }
 
