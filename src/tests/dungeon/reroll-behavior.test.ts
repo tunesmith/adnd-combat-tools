@@ -53,7 +53,7 @@ describe('reroll updates', () => {
     const rerollOutcome = normalizeOutcomeTree(
       resolveDoorLocation({
         roll: 2,
-        existing: doorEvent?.event.doorChain?.existingBefore ?? [],
+        existing: doorEvent?.event.doorChain?.existing ?? [],
         sequence: doorEvent?.event.sequence ?? 0,
       }),
       doorEvent?.id

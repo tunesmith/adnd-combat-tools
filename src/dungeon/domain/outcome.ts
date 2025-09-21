@@ -75,7 +75,7 @@ export type OutcomeEvent =
       result: DoorLocation;
       sequence: number;
       doorChain?: {
-        existingBefore: DoorChainLaterality[];
+        existing: DoorChainLaterality[];
         repeated: boolean;
         added?: DoorChainLaterality;
       };

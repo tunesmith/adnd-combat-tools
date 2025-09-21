@@ -9,7 +9,6 @@ import type {
 } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import {
-  applyResolvedOutcome,
   isTableContext,
   normalizeOutcomeTree,
 } from '../../dungeon/helpers/outcomeTree';
@@ -18,7 +17,7 @@ import {
   selectMessagesForMode,
   type RenderCache,
 } from '../../dungeon/helpers/renderCache';
-import { resolveRegistryTable } from '../../dungeon/helpers/registry';
+import { applyOutcomeRoll } from '../../dungeon/helpers/registry';
 import type { TableContext } from '../../types/dungeon';
 
 type RollInput = string | number | number[];
@@ -122,27 +121,17 @@ export function simulateDetailRun(options: {
     if (nextRoll === undefined) break;
     usedRolls.push(nextRoll);
     const targetId = pending.id ?? pending.table;
-    const resolution = resolveRegistryTable({
+    const applied = applyOutcomeRoll({
+      outcome: workingOutcome,
       tableId: pending.table,
+      targetId,
       roll: nextRoll,
       context: resolveContext(pending.context),
-      outcome: workingOutcome,
-      targetId,
     });
-    if (!resolution || !resolution.outcome) {
+    if (!applied) {
       throw new Error(`No outcome available for table ${pending.table}.`);
     }
-    const normalizedExisting = normalizeOutcomeTree(workingOutcome);
-    const normalizedResolution = normalizeOutcomeTree(
-      resolution.outcome,
-      targetId
-    );
-    const applied = applyResolvedOutcome(
-      normalizedExisting,
-      targetId,
-      normalizedResolution
-    );
-    workingOutcome = normalizeOutcomeTree(applied);
+    workingOutcome = applied.outcome;
   }
 
   const finalPending = collectPending(workingOutcome);

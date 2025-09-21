@@ -91,11 +91,11 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Remaining work: apply the same treatment to the remaining table families (e.g., number-of-exits, transporter chains in non-chamber contexts, any lingering ad-hoc string builders) and continue replacing inline concatenation with helpers.
 - Suggested commit: `dungeon: purify preview adapters`.
 
-### 10. Outcome Pipeline Unification \*(queued)\_
+### 10. Outcome Pipeline Unification _(status: complete)_
 
-- Unify the roll-resolution pipeline so detail overrides, compact renders, and automated tests all drive the same helper (e.g., `applyOutcomeRoll`) in both UI and harness contexts.
-- Simplify door-chain state management to avoid duplicating `existingBefore`/`existingAfter` bookkeeping and ensure repeated laterals terminate the chain consistently.
-- Audit the registry for table-specific quirks once everything flows through the shared helper.
+- Introduced `applyOutcomeRoll` in the registry helper so feed updates, UI toggles, and the Jest harness all splice resolved outcomes through the same helper.
+- Updated `simulateDetailRun` and `resolveSequenceWithRolls` to consume the shared helper, keeping test coverage aligned with in-app behaviour.
+- Simplified door-chain state to a single `existing` array while preserving the `repeated` guard so lateral duplicates stop the continuation chain cleanly.
 - Suggested commit: `dungeon: unify detail/compact outcome updates`.
 
 ### 11. Retire Legacy Preview Services _(status: complete)_
@@ -105,12 +105,13 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Shared append-preview type extracted to `render/shared.ts`.
 - Suggested commit: `render: drop legacy preview services`.
 
-### 12. Adapter Modularisation _(in progress)_
+### 12. Adapter Modularisation _(status: complete)_
 
-- Extracted dedicated adapters for periodic checks, door location/continuation, side passages, passage turns, passage width, stairs, chasms, egress, chute, and number of exits. Each module now exports `render<Table>Detail`, `render<Table>Compact`, and (where applicable) a preview builder consumed by the controller.
-- `render.ts` is down to orchestration: it locates the table node, delegates to the adapter, and wires preview deduplication without duplicating string logic.
-- Preview builders are still inline for the remaining table families (unusual shape/size, room & chamber dimensions, pool/magic pool, monster results). Compact/detail helpers for those families also need relocating to finish the modularisation pass.
-- Suggested next commits: `render: extract unusual shape/size adapters`, `render: move room/chamber renders into modules`, `render: modularise pool & monster adapters`.
+- Dedicated adapters now exist for every table family: periodic checks, door location/continuation, side passages, passage turns, passage width, stairs, chasms, egress, chute, number of exits, unusual shape/size, room/chamber dimensions, circular pools, magic-pool effects, and all monster subtables.
+- `render.ts` is down to orchestration only: it locates the table node, delegates to the adapter, and wires preview deduplication without duplicating string logic.
+- Monster handling lives under `render/monsters/` (split by level, standard monsters, dragons, and humans), and circular-pool helpers were separated from the magic-pool module to keep responsibilities narrow.
+- **Remaining clean-up:** the wandering-monster helpers (`compactWanderingMonsterText`, `readMonsterEncounter`, etc.) still compose fallback text inline. Moving them into the monsters module would finish purifying `render.ts`.
+- Suggested follow-up commit: `render: move wandering monster compact text into monsters module`.
 
 ## Open Questions / Future Enhancements
 

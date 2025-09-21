@@ -9,7 +9,7 @@ import {
   isTableContext,
   normalizeOutcomeTree,
 } from '../../dungeon/helpers/outcomeTree';
-import { TABLE_RESOLVERS } from '../../dungeon/helpers/registry';
+import { applyOutcomeRoll } from '../../dungeon/helpers/registry';
 import type { TableContext } from '../../types/dungeon';
 import { resolvePeriodicCheck } from '../../dungeon/domain/resolvers';
 
@@ -26,32 +26,19 @@ export function resolveSequenceWithRolls(
   for (const roll of rolls.slice(1)) {
     const pending = findNextPending(root);
     if (!pending) break;
-    const base = pending.table.split(':')[0] ?? '';
-    const resolver = TABLE_RESOLVERS[base as keyof typeof TABLE_RESOLVERS] as
-      | ((opts: { roll?: number; id: string; context?: TableContext }) => {
-          outcome?: DungeonOutcomeNode;
-        })
-      | undefined;
-    if (!resolver) {
-      throw new Error(`No resolver for table ${base}`);
-    }
-    const resolution = resolver({
+    const applied = applyOutcomeRoll({
+      outcome: root,
+      tableId: pending.table,
+      targetId: pending.id,
       roll,
-      id: pending.table,
       context: isTableContext(pending.context)
         ? (pending.context as TableContext)
         : undefined,
     });
-    if (!resolution.outcome) {
-      throw new Error(`Resolver for ${base} did not return an outcome`);
+    if (!applied) {
+      throw new Error(`No outcome available for table ${pending.table}`);
     }
-    const normalizedOutcome = normalizeOutcomeTree(
-      resolution.outcome,
-      pending.id ?? pending.table
-    );
-    root = normalizeOutcomeTree(
-      applyResolvedOutcome(root, pending.id ?? pending.table, normalizedOutcome)
-    );
+    root = applied.outcome;
   }
   return root;
 }

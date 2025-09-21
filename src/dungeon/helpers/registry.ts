@@ -66,7 +66,10 @@ import {
   parseDoorChainSequence,
   readExitsContext,
 } from '../helpers/outcomeTree';
-import { createOutcomeRenderSnapshot } from './outcomePipeline';
+import {
+  createOutcomeRenderSnapshot,
+  type OutcomeRenderSnapshot,
+} from './outcomePipeline';
 
 // Registry resolver type
 type RegistryResolution = {
@@ -355,6 +358,43 @@ export function resolveRegistryTable(opts: {
   });
 }
 
+export type OutcomeRollApplication = {
+  outcome: DungeonOutcomeNode;
+  snapshot: OutcomeRenderSnapshot;
+};
+
+export function applyOutcomeRoll(opts: {
+  outcome: DungeonOutcomeNode;
+  tableId: string;
+  targetId?: string;
+  roll?: number;
+  context?: TableContext;
+}): OutcomeRollApplication | undefined {
+  const normalizedExisting = normalizeOutcomeTree(opts.outcome);
+  const targetId = opts.targetId ?? opts.tableId;
+  const resolution = resolveRegistryTable({
+    tableId: opts.tableId,
+    roll: opts.roll,
+    context: opts.context,
+    outcome: normalizedExisting,
+    targetId,
+  });
+  if (!resolution || !resolution.outcome) return undefined;
+  const normalizedResolution = normalizeOutcomeTree(
+    resolution.outcome,
+    targetId
+  );
+  const applied = applyResolvedOutcome(
+    normalizedExisting,
+    targetId,
+    normalizedResolution
+  );
+  const normalizedApplied = normalizeOutcomeTree(applied);
+  const snapshot = createOutcomeRenderSnapshot(normalizedApplied);
+  if (!snapshot) return undefined;
+  return { outcome: normalizedApplied, snapshot };
+}
+
 function readDungeonLevel(
   context: TableContext | undefined,
   id: string,
@@ -447,6 +487,31 @@ export function resolveViaRegistry<T extends FeedLike>(
         fi.id !== feedItemId
           ? fi
           : (() => {
+              const existingOutcome = fi.outcome;
+              if (existingOutcome) {
+                const applied = applyOutcomeRoll({
+                  outcome: existingOutcome,
+                  tableId: tp.id,
+                  targetId: targetKey,
+                  roll: usedRoll,
+                  context: tp.context,
+                });
+                if (applied) {
+                  resolved = true;
+                  const { outcome, snapshot } = applied;
+                  return {
+                    ...fi,
+                    outcome,
+                    pendingCount: snapshot.pendingCount,
+                    messages: snapshot.detail,
+                    renderCache: {
+                      ...fi.renderCache,
+                      detail: snapshot.detail,
+                      compact: snapshot.compact,
+                    },
+                  } as T;
+                }
+              }
               const tableResult = resolveRegistryTable({
                 tableId: tp.id,
                 roll: usedRoll,
@@ -456,39 +521,11 @@ export function resolveViaRegistry<T extends FeedLike>(
               });
               if (!tableResult) return fi;
               resolved = true;
-              const result = tableResult;
-              const existingOutcome = fi.outcome;
-              if (existingOutcome && result.outcome) {
-                const normalizedExisting =
-                  normalizeOutcomeTree(existingOutcome);
-                const normalizedResolution = normalizeOutcomeTree(
-                  result.outcome,
-                  targetKey
-                );
-                const applied = applyResolvedOutcome(
-                  normalizedExisting,
-                  targetKey,
-                  normalizedResolution
-                );
-                const snapshot = createOutcomeRenderSnapshot(applied);
-                if (!snapshot) return fi;
-                return {
-                  ...fi,
-                  outcome: snapshot.normalized,
-                  pendingCount: snapshot.pendingCount,
-                  messages: snapshot.detail,
-                  renderCache: {
-                    ...fi.renderCache,
-                    detail: snapshot.detail,
-                    compact: snapshot.compact,
-                  },
-                } as T;
-              }
               return updateResolvedBlock(
                 fi,
                 feedItemId,
                 targetKey,
-                result.messages,
+                tableResult.messages,
                 heading
               );
             })()

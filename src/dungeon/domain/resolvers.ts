@@ -279,6 +279,8 @@ export function resolveDoorLocation(options?: {
       table: `periodicCheckDoorOnly:${sequence}`,
     });
   }
+  const updatedExisting =
+    lateral && !repeated ? [...existing, lateral] : existing;
   return {
     type: 'event',
     roll: usedRoll,
@@ -287,7 +289,7 @@ export function resolveDoorLocation(options?: {
       result: command,
       sequence,
       doorChain: {
-        existingBefore: existing,
+        existing: updatedExisting,
         repeated,
         added: !repeated ? lateral : undefined,
       },
