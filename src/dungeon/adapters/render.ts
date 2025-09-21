@@ -119,7 +119,6 @@ import {
   buildTransmuteTypePreview,
   buildPoolAlignmentPreview,
   buildTransporterLocationPreview,
-  collectCircularChainSentences,
 } from './render/magicPool';
 import {
   renderSpecialPassageDetail,
@@ -162,11 +161,14 @@ import {
   describeUnusualSizeChain,
   buildUnusualSizePreview,
 } from './render/unusualSize';
-import { findChildEvent } from './render/shared';
 import {
-  unusualShape,
-  UnusualShape,
-} from '../../tables/dungeon/unusualShape';
+  renderUnusualShapeDetail,
+  renderUnusualShapeCompact,
+  describeUnusualShapeExtras,
+  buildUnusualShapePreview,
+  formatUnusualShape,
+} from './render/unusualShape';
+import { findChildEvent } from './render/shared';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
 
@@ -481,52 +483,7 @@ export function toDetailRender(
     return renderNumberOfExitsDetail(outcome);
   }
   if (event.kind === 'unusualShape') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Unusual Shape',
-    };
-    const label = UnusualShape[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    let text = '';
-    switch (event.result) {
-      case UnusualShape.Circular:
-        text = 'It is circular. ';
-        break;
-      case UnusualShape.Triangular:
-        text = 'It is triangular. ';
-        break;
-      case UnusualShape.Trapezoidal:
-        text = 'It is trapezoidal. ';
-        break;
-      case UnusualShape.OddShaped:
-        text =
-          'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) ';
-        break;
-      case UnusualShape.Oval:
-        text = 'It is oval-shaped. ';
-        break;
-      case UnusualShape.Hexagonal:
-        text = 'It is hexagonal. ';
-        break;
-      case UnusualShape.Octagonal:
-        text = 'It is octagonal. ';
-        break;
-      case UnusualShape.Cave:
-        text = 'It is actually a cave. ';
-        break;
-    }
-    const nodes2: DungeonRenderNode[] = [
-      heading,
-      bullet,
-      {
-        kind: 'paragraph',
-        text,
-      },
-    ];
+    const nodes2 = renderUnusualShapeDetail(outcome);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }
@@ -676,16 +633,7 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         isTableContext(p.context) ? p.context : undefined
       );
     case 'unusualShape':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Unusual Shape',
-        sides: unusualShape.sides,
-        entries: unusualShape.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: UnusualShape[e.command] ?? String(e.command),
-        })),
-      };
+      return buildUnusualShapePreview(p.table);
     case 'unusualSize':
       return buildUnusualSizePreview(
         p.table,
@@ -1117,44 +1065,7 @@ export function toCompactRender(
     return nodes2;
   }
   if (event.kind === 'unusualShape') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Unusual Shape',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${UnusualShape[event.result]}`],
-    };
-    let text = '';
-    switch (event.result) {
-      case UnusualShape.Circular:
-        text = 'It is circular. ';
-        break;
-      case UnusualShape.Triangular:
-        text = 'It is triangular. ';
-        break;
-      case UnusualShape.Trapezoidal:
-        text = 'It is trapezoidal. ';
-        break;
-      case UnusualShape.OddShaped:
-        text =
-          'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) ';
-        break;
-      case UnusualShape.Oval:
-        text = 'It is oval-shaped. ';
-        break;
-      case UnusualShape.Hexagonal:
-        text = 'It is hexagonal. ';
-        break;
-      case UnusualShape.Octagonal:
-        text = 'It is octagonal. ';
-        break;
-      case UnusualShape.Cave:
-        text = 'It is actually a cave. ';
-        break;
-    }
-    return [heading, bullet, { kind: 'paragraph', text }];
+    return renderUnusualShapeCompact(node);
   }
   if (event.kind === 'unusualSize') {
     return renderUnusualSizeCompact(node);
@@ -1515,17 +1426,9 @@ function renderCompactUnusualDetails(node: OutcomeEventNode): string {
   const shape = findChildEvent(node, 'unusualShape');
   if (shape && shape.event.kind === 'unusualShape') {
     text += formatUnusualShape(shape.event.result);
-    const circularSentences = collectCircularChainSentences(shape);
-    if (circularSentences.length > 0) {
-      text += circularSentences
-        .map((sentence) =>
-          sentence.endsWith('.') ||
-          sentence.endsWith('!') ||
-          sentence.endsWith('?')
-            ? `${sentence} `
-            : `${sentence}. `
-        )
-        .join('');
+    const extras = describeUnusualShapeExtras(shape);
+    if (extras.length > 0) {
+      text += extras;
     }
   }
   const size = findChildEvent(node, 'unusualSize');
@@ -1555,29 +1458,6 @@ function renderChamberDimensionsCompactWithDetails(
   return renderChamberDimensionsCompact(node, {
     renderUnusualDetails: renderCompactUnusualDetails,
   });
-}
-
-function formatUnusualShape(result: UnusualShape): string {
-  switch (result) {
-    case UnusualShape.Circular:
-      return 'It is circular. ';
-    case UnusualShape.Triangular:
-      return 'It is triangular. ';
-    case UnusualShape.Trapezoidal:
-      return 'It is trapezoidal. ';
-    case UnusualShape.OddShaped:
-      return 'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) ';
-    case UnusualShape.Oval:
-      return 'It is oval-shaped. ';
-    case UnusualShape.Hexagonal:
-      return 'It is hexagonal. ';
-    case UnusualShape.Octagonal:
-      return 'It is octagonal. ';
-    case UnusualShape.Cave:
-      return 'It is actually a cave. ';
-    default:
-      return '';
-  }
 }
 
 function formatTrickTrap(result: number): string {
