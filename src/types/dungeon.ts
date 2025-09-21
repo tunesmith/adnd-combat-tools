@@ -1,4 +1,7 @@
-import type { DungeonOutcomeNode } from '../dungeon/domain/outcome';
+import type {
+  DoorChainLaterality,
+  DungeonOutcomeNode,
+} from '../dungeon/domain/outcome';
 
 export type DungeonAction = 'passage' | 'door';
 
@@ -54,7 +57,7 @@ export type DungeonTablePreview = {
 
 export type TableContext =
   | { kind: 'exits'; length: number; width: number; isRoom: boolean }
-  | { kind: 'doorChain'; existing: string[] }
+  | { kind: 'doorChain'; existing: DoorChainLaterality[] }
   | { kind: 'wandering'; level: number }
   | { kind: 'unusualSize'; extra: number };
 

@@ -1,6 +1,5 @@
 import type {
   DungeonOutcomeNode,
-  OutcomeEvent,
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
@@ -21,7 +20,6 @@ import { PassageTurns } from '../../tables/dungeon/passageTurns';
 import { Stairs } from '../../tables/dungeon/stairs';
 import { PassageWidth } from '../../tables/dungeon/passageWidth';
 import { periodicCheck } from '../../tables/dungeon/periodicCheck';
-import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
 import { SpecialPassage } from '../../tables/dungeon/specialPassage';
 import {
   renderPeriodicCheckDetail,
@@ -131,6 +129,7 @@ import {
 import {
   describeMonsterOutcome,
   buildMonsterPreview,
+  renderWanderingMonsterCompact,
 } from './render/monsters';
 import { findChildEvent } from './render/shared';
 // detail-mode preview helpers remain for other flows; compact composition is local
@@ -1058,9 +1057,7 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber
-        ? renderChamberDimensionsCompact(chamber)
-        : '';
+      const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
       return 'The passage opens into a chamber. ' + detail;
     }
     case PeriodicCheck.Stairs: {
@@ -1076,132 +1073,21 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     case PeriodicCheck.WanderingMonster: {
       const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
       const monsterLevelNode = findChildEvent(node, 'monsterLevel');
-      return compactWanderingMonsterText(
-        event.level,
+      const prefix =
         whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
-          ? whereFrom
-          : undefined,
+          ? renderWanderingWhereFrom(whereFrom)
+          : '';
+      const monsterSummary = renderWanderingMonsterCompact(
+        event.level,
         monsterLevelNode && monsterLevelNode.event.kind === 'monsterLevel'
           ? monsterLevelNode
           : undefined
       );
+      return prefix + monsterSummary;
     }
     default:
       return periodicBaseTexts(event.result, {
         avoidMonster: event.avoidMonster ?? false,
       }).compact;
-  }
-}
-
-// Compose compact text for Wandering Monster without legacy helpers.
-function compactWanderingMonsterText(
-  level: number,
-  whereNode?: OutcomeEventNode,
-  levelNode?: OutcomeEventNode
-): string {
-  const prefix =
-    whereNode && whereNode.event.kind === 'wanderingWhereFrom'
-      ? renderWanderingWhereFrom(whereNode)
-      : '';
-  const monsterText = readMonsterEncounter(level, levelNode);
-  return `${prefix}Wandering Monster: ${monsterText}`;
-}
-
-const MONSTER_LEVEL_KIND: Partial<Record<MonsterLevel, OutcomeEvent['kind']>> =
-  {
-    [MonsterLevel.One]: 'monsterOne',
-    [MonsterLevel.Two]: 'monsterTwo',
-    [MonsterLevel.Three]: 'monsterThree',
-    [MonsterLevel.Four]: 'monsterFour',
-    [MonsterLevel.Five]: 'monsterFive',
-    [MonsterLevel.Six]: 'monsterSix',
-  };
-
-function readMonsterEncounter(
-  _dungeonLevel: number,
-  levelNode?: OutcomeEventNode
-): string {
-  if (!levelNode || levelNode.event.kind !== 'monsterLevel') {
-    return fallbackMonsterLevelText(MonsterLevel.One);
-  }
-  return readMonsterEncounterFromLevelNode(levelNode);
-}
-
-function readMonsterEncounterFromLevelNode(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'monsterLevel') {
-    return fallbackMonsterLevelText(MonsterLevel.One);
-  }
-  const mapping = MONSTER_LEVEL_KIND[node.event.result];
-  if (!mapping) {
-    return fallbackMonsterLevelText(node.event.result);
-  }
-  const monsterNode = findChildEvent(node, mapping);
-  if (!monsterNode) {
-    return fallbackMonsterLevelText(node.event.result);
-  }
-  const text = readMonsterEventText(monsterNode);
-  return text ?? fallbackMonsterLevelText(node.event.result);
-}
-
-function readMonsterEventText(node: OutcomeEventNode): string | undefined {
-  switch (node.event.kind) {
-    case 'monsterOne': {
-      if (node.event.text) return node.event.text;
-      const humanNode = findChildEvent(node, 'human');
-      return humanNode ? readMonsterEventText(humanNode) : undefined;
-    }
-    case 'monsterTwo':
-    case 'monsterThree':
-    case 'monsterFour':
-    case 'monsterFive':
-    case 'monsterSix': {
-      if (node.event.text) return node.event.text;
-      if (node.event.kind === 'monsterThree') {
-        const dragon = findChildEvent(node, 'dragonThree');
-        return dragon ? readMonsterEventText(dragon) : undefined;
-      }
-      if (node.event.kind === 'monsterFour') {
-        const younger = findChildEvent(node, 'dragonFourYounger');
-        if (younger) return readMonsterEventText(younger);
-        const older = findChildEvent(node, 'dragonFourOlder');
-        return older ? readMonsterEventText(older) : undefined;
-      }
-      if (node.event.kind === 'monsterFive') {
-        const younger = findChildEvent(node, 'dragonFiveYounger');
-        if (younger) return readMonsterEventText(younger);
-        const older = findChildEvent(node, 'dragonFiveOlder');
-        return older ? readMonsterEventText(older) : undefined;
-      }
-      if (node.event.kind === 'monsterSix') {
-        const dragon = findChildEvent(node, 'dragonSix');
-        return dragon ? readMonsterEventText(dragon) : undefined;
-      }
-      return undefined;
-    }
-    case 'dragonThree':
-    case 'dragonFourYounger':
-    case 'dragonFourOlder':
-    case 'dragonFiveYounger':
-    case 'dragonFiveOlder':
-    case 'dragonSix':
-    case 'human':
-      return node.event.text;
-    default:
-      return undefined;
-  }
-}
-
-function fallbackMonsterLevelText(level: MonsterLevel): string {
-  switch (level) {
-    case MonsterLevel.Seven:
-      return '(TODO: Roll Monster for Level Seven)';
-    case MonsterLevel.Eight:
-      return '(TODO: Roll Monster for Level Eight)';
-    case MonsterLevel.Nine:
-      return '(TODO: Roll Monster for Level Nine)';
-    case MonsterLevel.Ten:
-      return '(TODO: Roll Monster for Level Ten)';
-    default:
-      return '(Unknown Monster Result)';
   }
 }

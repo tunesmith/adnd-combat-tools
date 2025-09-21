@@ -1,4 +1,7 @@
-import type { DungeonTablePreview, TableContext } from '../../../../types/dungeon';
+import type {
+  DungeonTablePreview,
+  TableContext,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { MonsterDescription } from './shared';
 import { describeMonsterLevel, buildMonsterLevelPreview } from './level';
@@ -11,6 +14,8 @@ import {
   isDragonTableId,
 } from './standard';
 import { describeHumanMonster, buildHumanPreview } from './human';
+
+export { renderWanderingMonsterCompact } from './wandering';
 
 export type { MonsterDescription } from './shared';
 

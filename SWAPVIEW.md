@@ -110,8 +110,7 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Dedicated adapters now exist for every table family: periodic checks, door location/continuation, side passages, passage turns, passage width, stairs, chasms, egress, chute, number of exits, unusual shape/size, room/chamber dimensions, circular pools, magic-pool effects, and all monster subtables.
 - `render.ts` is down to orchestration only: it locates the table node, delegates to the adapter, and wires preview deduplication without duplicating string logic.
 - Monster handling lives under `render/monsters/` (split by level, standard monsters, dragons, and humans), and circular-pool helpers were separated from the magic-pool module to keep responsibilities narrow.
-- **Remaining clean-up:** the wandering-monster helpers (`compactWanderingMonsterText`, `readMonsterEncounter`, etc.) still compose fallback text inline. Moving them into the monsters module would finish purifying `render.ts`.
-- Suggested follow-up commit: `render: move wandering monster compact text into monsters module`.
+- Wandering-monster helpers now live in `render/monsters/wandering.ts`, so `render.ts` delegates all monster prose (detail and compact) to the adapter modules.
 
 ## Open Questions / Future Enhancements
 
