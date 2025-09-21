@@ -34,7 +34,11 @@ export function renderUnusualSizeDetail(
     ],
   };
   const summary = describeUnusualSizeChain(outcome);
-  const nodes: DungeonRenderNode[] = [heading, bullet, ...summary.detailParagraphs];
+  const nodes: DungeonRenderNode[] = [
+    heading,
+    bullet,
+    ...summary.detailParagraphs,
+  ];
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -57,11 +61,12 @@ export function renderUnusualSizeCompact(
     ],
   };
   const summary = describeUnusualSizeChain(outcome);
-  const textWithFallback = summary.compactText.length > 0
-    ? `${summary.compactText} `
-    : `It is about ${
-        (unusualSizeBase(outcome.event.result) ?? 3400).toLocaleString()
-      } sq. ft. `;
+  const textWithFallback =
+    summary.compactText.length > 0
+      ? `${summary.compactText} `
+      : `It is about ${(
+          unusualSizeBase(outcome.event.result) ?? 3400
+        ).toLocaleString()} sq. ft. `;
   return [heading, bullet, { kind: 'paragraph', text: textWithFallback }];
 }
 

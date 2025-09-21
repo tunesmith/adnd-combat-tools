@@ -13,10 +13,8 @@ import type {
 import { PeriodicCheck } from '../../tables/dungeon/periodicCheck';
 import { DoorBeyond } from '../../tables/dungeon/doorBeyond';
 import {
-  chamberDimensions,
-  ChamberDimensions,
-  roomDimensions,
   RoomDimensions,
+  ChamberDimensions,
 } from '../../tables/dungeon/chambersRooms';
 import { SidePassages } from '../../tables/dungeon/sidePassages';
 import { PassageTurns } from '../../tables/dungeon/passageTurns';
@@ -92,6 +90,16 @@ import {
   renderPassageWidthCompact,
   buildPassageWidthPreview,
 } from './render/passageWidth';
+import {
+  renderRoomDimensionsDetail,
+  renderRoomDimensionsCompact,
+  buildRoomDimensionsPreview,
+} from './render/roomDimensions';
+import {
+  renderChamberDimensionsDetail,
+  renderChamberDimensionsCompact,
+  buildChamberDimensionsPreview,
+} from './render/chamberDimensions';
 import {
   renderSpecialPassageDetail,
   renderSpecialPassageCompact,
@@ -430,107 +438,17 @@ export function toDetailRender(
     return renderSidePassagesDetail(outcome);
   }
   if (event.kind === 'roomDimensions') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Room Dimensions',
-    };
-    const label = RoomDimensions[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    let baseDesc = '';
-    switch (event.result) {
-      case RoomDimensions.Square10x10:
-        baseDesc = "The room is square and 10' x 10'. ";
-        break;
-      case RoomDimensions.Square20x20:
-        baseDesc = "The room is square and 20' x 20'. ";
-        break;
-      case RoomDimensions.Square30x30:
-        baseDesc = "The room is square and 30' x 30'. ";
-        break;
-      case RoomDimensions.Square40x40:
-        baseDesc = "The room is square and 40' x 40'. ";
-        break;
-      case RoomDimensions.Rectangular10x20:
-        baseDesc = "The room is rectangular and 10' x 20'. ";
-        break;
-      case RoomDimensions.Rectangular20x30:
-        baseDesc = "The room is rectangular and 20' x 30'. ";
-        break;
-      case RoomDimensions.Rectangular20x40:
-        baseDesc = "The room is rectangular and 20' x 40'. ";
-        break;
-      case RoomDimensions.Rectangular30x40:
-        baseDesc = "The room is rectangular and 30' x 40'. ";
-        break;
-      case RoomDimensions.Unusual:
-        baseDesc = 'The room has an unusual shape and size. ';
-        break;
-    }
-    nodes.push(heading, bullet, { kind: 'paragraph', text: baseDesc });
-    if (outcome.children && Array.isArray(outcome.children)) {
-      for (const child of outcome.children) {
-        if (child.type !== 'pending-roll') continue;
-        const preview = previewForPending(child);
-        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
-      }
-    }
-    return nodes;
+    return renderRoomDimensionsDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'chamberDimensions') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Chamber Dimensions',
-    };
-    const label = ChamberDimensions[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    let baseDesc = '';
-    switch (event.result) {
-      case ChamberDimensions.Square20x20:
-        baseDesc = "The chamber is square and 20' x 20'. ";
-        break;
-      case ChamberDimensions.Square30x30:
-        baseDesc = "The chamber is square and 30' x 30'. ";
-        break;
-      case ChamberDimensions.Square40x40:
-        baseDesc = "The chamber is square and 40' x 40'. ";
-        break;
-      case ChamberDimensions.Rectangular20x30:
-        baseDesc = "The chamber is rectangular and 20' x 30'. ";
-        break;
-      case ChamberDimensions.Rectangular30x50:
-        baseDesc = "The chamber is rectangular and 30' x 50'. ";
-        break;
-      case ChamberDimensions.Rectangular40x60:
-        baseDesc = "The chamber is rectangular and 40' x 60'. ";
-        break;
-      case ChamberDimensions.Unusual:
-        baseDesc = 'The chamber has an unusual shape and size. ';
-        break;
-    }
-    nodes.push(heading, bullet, { kind: 'paragraph', text: baseDesc });
-    if (outcome.children && Array.isArray(outcome.children)) {
-      for (const child of outcome.children) {
-        if (child.type !== 'pending-roll') continue;
-        const preview = previewForPending(child);
-        if (preview) nodes.push(withTargetId(preview, child.id ?? child.table));
-      }
-    }
-    return nodes;
+    return renderChamberDimensionsDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'passageTurns') {
     return renderPassageTurnsDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'stairs') {
     return renderStairsDetail(outcome, appendPendingPreviews, {
-      renderChamberSummary: renderCompactChamberDimensions,
+      renderChamberSummary: renderChamberDimensionsCompactWithDetails,
     });
   }
   if (event.kind === 'specialPassage') {
@@ -883,27 +801,9 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
     case 'passageWidth':
       return buildPassageWidthPreview(p.table);
     case 'roomDimensions':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Room Dimensions',
-        sides: roomDimensions.sides,
-        entries: roomDimensions.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: RoomDimensions[e.command] ?? String(e.command),
-        })),
-      };
+      return buildRoomDimensionsPreview(p.table);
     case 'chamberDimensions':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Chamber Dimensions',
-        sides: chamberDimensions.sides,
-        entries: chamberDimensions.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: ChamberDimensions[e.command] ?? String(e.command),
-        })),
-      };
+      return buildChamberDimensionsPreview(p.table);
     case 'numberOfExits':
       return buildNumberOfExitsPreview(
         p.table,
@@ -1252,7 +1152,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${RoomDimensions[event.result]}`],
     };
-    const text = renderCompactRoomDimensions(node);
+    const text = renderRoomDimensionsCompactWithDetails(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1266,7 +1166,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${ChamberDimensions[event.result]}`],
     };
-    const text = renderCompactChamberDimensions(node);
+    const text = renderChamberDimensionsCompactWithDetails(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -1329,7 +1229,7 @@ export function toCompactRender(
       items: [`roll: ${roll} — ${Stairs[event.result] ?? event.result}`],
     };
     const text = renderStairsCompact(node, {
-      renderChamberSummary: renderCompactChamberDimensions,
+      renderChamberSummary: renderChamberDimensionsCompactWithDetails,
     });
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
@@ -1752,14 +1652,16 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? renderCompactChamberDimensions(chamber) : '';
+      const detail = chamber
+        ? renderChamberDimensionsCompactWithDetails(chamber)
+        : '';
       return 'The passage opens into a chamber. ' + detail;
     }
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderStairsCompact(stairs, {
-            renderChamberSummary: renderCompactChamberDimensions,
+            renderChamberSummary: renderChamberDimensionsCompactWithDetails,
           })
         : periodicBaseTexts(PeriodicCheck.Stairs).detail;
     }
@@ -1801,12 +1703,14 @@ function renderCompactDoorBeyond(node: OutcomeEventNode): string {
   }
   if (node.event.result === DoorBeyond.Room) {
     const room = findChildEvent(node, 'roomDimensions');
-    const detail = room ? renderCompactRoomDimensions(room) : '';
+    const detail = room ? renderRoomDimensionsCompactWithDetails(room) : '';
     text += detail;
   }
   if (node.event.result === DoorBeyond.Chamber) {
     const chamber = findChildEvent(node, 'chamberDimensions');
-    const detail = chamber ? renderCompactChamberDimensions(chamber) : '';
+    const detail = chamber
+      ? renderChamberDimensionsCompactWithDetails(chamber)
+      : '';
     text += detail;
   }
   return text;
@@ -1820,107 +1724,6 @@ function renderChildPassageWidth(node: OutcomeEventNode): string {
 function getChildEvents(node: OutcomeEventNode): OutcomeEventNode[] {
   const children = node.children || [];
   return children.filter((c): c is OutcomeEventNode => c.type === 'event');
-}
-
-function joinCompactSegments(segments: string[]): string {
-  const normalized = segments
-    .map((segment) => segment.trim())
-    .filter((segment) => segment.length > 0)
-    .map((segment) => (/[.!?]$/.test(segment) ? segment : `${segment}.`));
-  if (normalized.length === 0) return '';
-  return `${normalized.join(' ')} `;
-}
-
-function renderCompactRoomDimensions(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'roomDimensions') return '';
-  const segments: string[] = [];
-  switch (node.event.result) {
-    case RoomDimensions.Square10x10:
-      segments.push("The room is square and 10' x 10'.");
-      break;
-    case RoomDimensions.Square20x20:
-      segments.push("The room is square and 20' x 20'.");
-      break;
-    case RoomDimensions.Square30x30:
-      segments.push("The room is square and 30' x 30'.");
-      break;
-    case RoomDimensions.Square40x40:
-      segments.push("The room is square and 40' x 40'.");
-      break;
-    case RoomDimensions.Rectangular10x20:
-      segments.push("The room is rectangular and 10' x 20'.");
-      break;
-    case RoomDimensions.Rectangular20x30:
-      segments.push("The room is rectangular and 20' x 30'.");
-      break;
-    case RoomDimensions.Rectangular20x40:
-      segments.push("The room is rectangular and 20' x 40'.");
-      break;
-    case RoomDimensions.Rectangular30x40:
-      segments.push("The room is rectangular and 30' x 40'.");
-      break;
-    case RoomDimensions.Unusual:
-      segments.push('The room has an unusual shape and size.');
-      break;
-  }
-  if (node.event.result === RoomDimensions.Unusual) {
-    const unusual = renderCompactUnusualDetails(node).trim();
-    if (unusual.length > 0) {
-      segments.push(unusual);
-    }
-  }
-  const exits = findChildEvent(node, 'numberOfExits');
-  if (exits && exits.event.kind === 'numberOfExits') {
-    const nodes = renderNumberOfExitsCompact(exits);
-    const paragraph = nodes.find((n) => n.kind === 'paragraph');
-    if (paragraph && paragraph.kind === 'paragraph') {
-      segments.push(paragraph.text.trim());
-    }
-  }
-  return joinCompactSegments(segments);
-}
-
-function renderCompactChamberDimensions(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'chamberDimensions') return '';
-  const segments: string[] = [];
-  switch (node.event.result) {
-    case ChamberDimensions.Square20x20:
-      segments.push("The chamber is square and 20' x 20'.");
-      break;
-    case ChamberDimensions.Square30x30:
-      segments.push("The chamber is square and 30' x 30'.");
-      break;
-    case ChamberDimensions.Square40x40:
-      segments.push("The chamber is square and 40' x 40'.");
-      break;
-    case ChamberDimensions.Rectangular20x30:
-      segments.push("The chamber is rectangular and 20' x 30'.");
-      break;
-    case ChamberDimensions.Rectangular30x50:
-      segments.push("The chamber is rectangular and 30' x 50'.");
-      break;
-    case ChamberDimensions.Rectangular40x60:
-      segments.push("The chamber is rectangular and 40' x 60'.");
-      break;
-    case ChamberDimensions.Unusual:
-      segments.push('The chamber has an unusual shape and size.');
-      break;
-  }
-  if (node.event.result === ChamberDimensions.Unusual) {
-    const unusual = renderCompactUnusualDetails(node).trim();
-    if (unusual.length > 0) {
-      segments.push(unusual);
-    }
-  }
-  const exits = findChildEvent(node, 'numberOfExits');
-  if (exits && exits.event.kind === 'numberOfExits') {
-    const nodes = renderNumberOfExitsCompact(exits);
-    const paragraph = nodes.find((n) => n.kind === 'paragraph');
-    if (paragraph && paragraph.kind === 'paragraph') {
-      segments.push(paragraph.text.trim());
-    }
-  }
-  return joinCompactSegments(segments);
 }
 
 function renderCompactUnusualDetails(node: OutcomeEventNode): string {
@@ -1952,6 +1755,22 @@ function renderCompactUnusualDetails(node: OutcomeEventNode): string {
     text += 'Determine exits, contents, and treasure separately. ';
   }
   return text;
+}
+
+function renderRoomDimensionsCompactWithDetails(
+  node: OutcomeEventNode
+): string {
+  return renderRoomDimensionsCompact(node, {
+    renderUnusualDetails: renderCompactUnusualDetails,
+  });
+}
+
+function renderChamberDimensionsCompactWithDetails(
+  node: OutcomeEventNode
+): string {
+  return renderChamberDimensionsCompact(node, {
+    renderUnusualDetails: renderCompactUnusualDetails,
+  });
 }
 
 function formatUnusualShape(result: UnusualShape): string {
@@ -2190,14 +2009,16 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? renderCompactChamberDimensions(chamber) : '';
+      const detail = chamber
+        ? renderChamberDimensionsCompactWithDetails(chamber)
+        : '';
       return 'The passage opens into a chamber. ' + detail;
     }
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderStairsCompact(stairs, {
-            renderChamberSummary: renderCompactChamberDimensions,
+            renderChamberSummary: renderChamberDimensionsCompactWithDetails,
           })
         : periodicBaseTexts(event.result, {
             avoidMonster: event.avoidMonster ?? false,
