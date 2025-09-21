@@ -21,46 +21,7 @@ import { PassageTurns } from '../../tables/dungeon/passageTurns';
 import { Stairs } from '../../tables/dungeon/stairs';
 import { PassageWidth } from '../../tables/dungeon/passageWidth';
 import { periodicCheck } from '../../tables/dungeon/periodicCheck';
-import { getMonsterTable } from '../services/wanderingMonsterResult';
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
-import {
-  monsterOne,
-  MonsterOne,
-  human,
-  Human,
-} from '../../tables/dungeon/monster/monsterOne';
-import {
-  monsterTwo,
-  MonsterTwo,
-} from '../../tables/dungeon/monster/monsterTwo';
-import {
-  monsterThree,
-  MonsterThree,
-  dragonThree,
-  DragonThree,
-} from '../../tables/dungeon/monster/monsterThree';
-import {
-  monsterFour,
-  MonsterFour,
-  dragonFourYounger,
-  DragonFourYounger,
-  dragonFourOlder,
-  DragonFourOlder,
-} from '../../tables/dungeon/monster/monsterFour';
-import {
-  monsterFive,
-  MonsterFive,
-  dragonFiveYounger,
-  DragonFiveYounger,
-  dragonFiveOlder,
-  DragonFiveOlder,
-} from '../../tables/dungeon/monster/monsterFive';
-import {
-  monsterSix,
-  MonsterSix,
-  dragonSix,
-  DragonSix,
-} from '../../tables/dungeon/monster/monsterSix';
 import { SpecialPassage } from '../../tables/dungeon/specialPassage';
 import {
   renderPeriodicCheckDetail,
@@ -167,6 +128,10 @@ import {
   renderUnusualShapeCompact,
   buildUnusualShapePreview,
 } from './render/unusualShape';
+import {
+  describeMonsterOutcome,
+  buildMonsterPreview,
+} from './render/monsters';
 import { findChildEvent } from './render/shared';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
@@ -395,21 +360,6 @@ function previewForEventNode(
   });
   if (!preview) return undefined;
   return withTargetId(preview, node.id ?? tableId);
-}
-
-function humanLabel(command: Human): string {
-  switch (command) {
-    case Human.Bandit_5to15:
-      return 'Bandit';
-    case Human.Berserker_3to9:
-      return 'Berserker';
-    case Human.Brigand_5to15:
-      return 'Brigand';
-    case Human.Character:
-      return 'Character';
-    default:
-      return Human[command] ?? 'Human';
-  }
 }
 
 // DETAIL MODE: outcome -> render nodes with previews for staged tables
@@ -659,178 +609,24 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
             label: PeriodicCheck[e.command] ?? String(e.command),
           })),
       };
-    case 'monsterLevel': {
-      const parts = p.table.split(':');
-      const lvl = Number(parts[1] ?? 1) || 1;
-      const table = getMonsterTable(lvl);
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Monster Level',
-        sides: table.sides,
-        entries: table.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: MonsterLevel[e.command] ?? String(e.command),
-        })),
-        context: { kind: 'wandering', level: lvl } as TableContext,
-      };
-    }
+    case 'monsterLevel':
     case 'monsterOne':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Monster (Level 1)',
-        sides: monsterOne.sides,
-        entries: monsterOne.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: MonsterOne[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'monsterTwo':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Monster (Level 2)',
-        sides: monsterTwo.sides,
-        entries: monsterTwo.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: MonsterTwo[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'monsterThree':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Monster (Level 3)',
-        sides: monsterThree.sides,
-        entries: monsterThree.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: MonsterThree[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'monsterFour':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Monster (Level 4)',
-        sides: monsterFour.sides,
-        entries: monsterFour.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: MonsterFour[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'monsterFive':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Monster (Level 5)',
-        sides: monsterFive.sides,
-        entries: monsterFive.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: MonsterFive[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'monsterSix':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Monster (Level 6)',
-        sides: monsterSix.sides,
-        entries: monsterSix.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: MonsterSix[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'dragonThree':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Dragon (Level 3)',
-        sides: dragonThree.sides,
-        entries: dragonThree.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: DragonThree[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'dragonFourYounger':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Dragon (Younger)',
-        sides: dragonFourYounger.sides,
-        entries: dragonFourYounger.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: DragonFourYounger[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'dragonFourOlder':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Dragon (Older)',
-        sides: dragonFourOlder.sides,
-        entries: dragonFourOlder.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: DragonFourOlder[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'dragonFiveYounger':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Dragon (Younger)',
-        sides: dragonFiveYounger.sides,
-        entries: dragonFiveYounger.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: DragonFiveYounger[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'dragonFiveOlder':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Dragon (Older)',
-        sides: dragonFiveOlder.sides,
-        entries: dragonFiveOlder.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: DragonFiveOlder[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'dragonSix':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Dragon',
-        sides: dragonSix.sides,
-        entries: dragonSix.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: DragonSix[e.command] ?? String(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
     case 'human':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Human Subtable',
-        sides: human.sides,
-        entries: human.entries.map((e) => ({
-          range: rangeText(e.range),
-          label: humanLabel(e.command),
-        })),
-        context: isTableContext(p.context) ? p.context : undefined,
-      };
+      return buildMonsterPreview(
+        p.table,
+        isTableContext(p.context) ? p.context : undefined
+      );
     case 'galleryStairLocation':
       return buildGalleryStairLocationPreview(p.table);
     case 'circularContents':
@@ -1142,192 +938,6 @@ function describeTrickTrap(node: OutcomeEventNode): {
     ? [{ kind: 'paragraph', text }]
     : [];
   return { detailParagraphs, compactText: text };
-}
-
-interface MonsterDescription {
-  heading: string;
-  label: string;
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-  appendPending: boolean;
-}
-
-function monsterTextDescription(text?: string): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (!text || text.length === 0) {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  return {
-    detailParagraphs: [{ kind: 'paragraph', text }],
-    compactText: text.trimEnd(),
-  };
-}
-
-function hasPendingChildren(node: OutcomeEventNode): boolean {
-  return Array.isArray(node.children)
-    ? node.children.some((child) => child.type === 'pending-roll')
-    : false;
-}
-
-function describeMonsterOutcome(
-  node: OutcomeEventNode
-): MonsterDescription | undefined {
-  switch (node.event.kind) {
-    case 'monsterLevel': {
-      const detailParagraphs: DungeonMessage[] = [];
-      let compactText = '';
-      if (node.event.result > MonsterLevel.Six) {
-        const placeholder = `(TODO: Monster Level ${
-          MonsterLevel[node.event.result]
-        } preview)`;
-        detailParagraphs.push({ kind: 'paragraph', text: placeholder });
-        compactText = placeholder;
-      }
-      return {
-        heading: 'Monster Level',
-        label: MonsterLevel[node.event.result] ?? String(node.event.result),
-        detailParagraphs,
-        compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'monsterOne': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Monster (Level 1)',
-        label: MonsterOne[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'monsterTwo': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Monster (Level 2)',
-        label: MonsterTwo[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'monsterThree': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Monster (Level 3)',
-        label: MonsterThree[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'monsterFour': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Monster (Level 4)',
-        label: MonsterFour[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'monsterFive': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Monster (Level 5)',
-        label: MonsterFive[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'monsterSix': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Monster (Level 6)',
-        label: MonsterSix[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'dragonThree': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Dragon (Level 3)',
-        label: DragonThree[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'dragonFourYounger': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Dragon (Younger)',
-        label:
-          DragonFourYounger[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'dragonFourOlder': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Dragon (Older)',
-        label: DragonFourOlder[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'dragonFiveYounger': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Dragon (Younger)',
-        label:
-          DragonFiveYounger[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'dragonFiveOlder': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Dragon (Older)',
-        label: DragonFiveOlder[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'dragonSix': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Dragon',
-        label: DragonSix[node.event.result] ?? String(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    case 'human': {
-      const textInfo = monsterTextDescription(node.event.text);
-      return {
-        heading: 'Human Subtable',
-        label: humanLabel(node.event.result),
-        detailParagraphs: textInfo.detailParagraphs,
-        compactText: textInfo.compactText,
-        appendPending: hasPendingChildren(node),
-      };
-    }
-    default:
-      return undefined;
-  }
 }
 
 function renderWanderingWhereFrom(node: OutcomeEventNode): string {
