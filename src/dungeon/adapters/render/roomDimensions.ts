@@ -7,6 +7,7 @@ import {
 import {
   buildPreview,
   findChildEvent,
+  joinSegments,
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
@@ -95,13 +96,4 @@ function describeRoomDimensionsBase(result: RoomDimensions): string {
     default:
       return '';
   }
-}
-
-function joinSegments(segments: string[]): string {
-  const normalized = segments
-    .map((segment) => segment.trim())
-    .filter((segment) => segment.length > 0)
-    .map((segment) => (/[.!?]$/.test(segment) ? segment : `${segment}.`));
-  if (normalized.length === 0) return '';
-  return `${normalized.join(' ')} `;
 }
