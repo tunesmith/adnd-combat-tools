@@ -11,6 +11,7 @@ import {
   type TablePreviewFactory,
 } from './shared';
 import { renderNumberOfExitsCompact } from './numberOfExits';
+import { renderCompactUnusualDetails } from './unusualShape';
 
 export function renderRoomDimensionsDetail(
   outcome: OutcomeEventNode,
@@ -39,20 +40,10 @@ export function renderRoomDimensionsDetail(
   return nodes;
 }
 
-export type RoomDimensionsCompactDeps = {
-  renderUnusualDetails: (node: OutcomeEventNode) => string;
-};
-
-const DEFAULT_COMPACT_DEPS: RoomDimensionsCompactDeps = {
-  renderUnusualDetails: () => '',
-};
-
 export function renderRoomDimensionsCompact(
-  node: OutcomeEventNode,
-  deps?: Partial<RoomDimensionsCompactDeps>
+  node: OutcomeEventNode
 ): string {
   if (node.event.kind !== 'roomDimensions') return '';
-  const resolved = withRoomDefaults(deps);
   const segments: string[] = [];
   switch (node.event.result) {
     case RoomDimensions.Square10x10:
@@ -84,10 +75,8 @@ export function renderRoomDimensionsCompact(
       break;
   }
   if (node.event.result === RoomDimensions.Unusual) {
-    const unusual = resolved.renderUnusualDetails(node).trim();
-    if (unusual.length > 0) {
-      segments.push(unusual);
-    }
+    const unusual = renderCompactUnusualDetails(node).trim();
+    if (unusual.length > 0) segments.push(unusual);
   }
   const exits = findChildEvent(node, 'numberOfExits');
   if (exits && exits.event.kind === 'numberOfExits') {
@@ -133,16 +122,6 @@ function describeRoomDimensionsBase(result: RoomDimensions): string {
     default:
       return '';
   }
-}
-
-function withRoomDefaults(
-  deps?: Partial<RoomDimensionsCompactDeps>
-): RoomDimensionsCompactDeps {
-  if (!deps) return DEFAULT_COMPACT_DEPS;
-  return {
-    renderUnusualDetails:
-      deps.renderUnusualDetails ?? DEFAULT_COMPACT_DEPS.renderUnusualDetails,
-  };
 }
 
 function joinSegments(segments: string[]): string {

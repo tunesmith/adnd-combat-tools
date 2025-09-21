@@ -158,15 +158,12 @@ import {
 import {
   renderUnusualSizeDetail,
   renderUnusualSizeCompact,
-  describeUnusualSizeChain,
   buildUnusualSizePreview,
 } from './render/unusualSize';
 import {
   renderUnusualShapeDetail,
   renderUnusualShapeCompact,
-  describeUnusualShapeExtras,
   buildUnusualShapePreview,
-  formatUnusualShape,
 } from './render/unusualShape';
 import { findChildEvent } from './render/shared';
 // detail-mode preview helpers remain for other flows; compact composition is local
@@ -458,7 +455,7 @@ export function toDetailRender(
   }
   if (event.kind === 'stairs') {
     return renderStairsDetail(outcome, appendPendingPreviews, {
-      renderChamberSummary: renderChamberDimensionsCompactWithDetails,
+      renderChamberSummary: renderChamberDimensionsCompact,
     });
   }
   if (event.kind === 'specialPassage') {
@@ -910,7 +907,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${RoomDimensions[event.result]}`],
     };
-    const text = renderRoomDimensionsCompactWithDetails(node);
+    const text = renderRoomDimensionsCompact(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -924,7 +921,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${ChamberDimensions[event.result]}`],
     };
-    const text = renderChamberDimensionsCompactWithDetails(node);
+    const text = renderChamberDimensionsCompact(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -987,7 +984,7 @@ export function toCompactRender(
       items: [`roll: ${roll} — ${Stairs[event.result] ?? event.result}`],
     };
     const text = renderStairsCompact(node, {
-      renderChamberSummary: renderChamberDimensionsCompactWithDetails,
+      renderChamberSummary: renderChamberDimensionsCompact,
     });
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
@@ -1352,16 +1349,14 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber
-        ? renderChamberDimensionsCompactWithDetails(chamber)
-        : '';
+      const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
       return 'The passage opens into a chamber. ' + detail;
     }
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderStairsCompact(stairs, {
-            renderChamberSummary: renderChamberDimensionsCompactWithDetails,
+            renderChamberSummary: renderChamberDimensionsCompact,
           })
         : periodicBaseTexts(PeriodicCheck.Stairs).detail;
     }
@@ -1403,14 +1398,12 @@ function renderCompactDoorBeyond(node: OutcomeEventNode): string {
   }
   if (node.event.result === DoorBeyond.Room) {
     const room = findChildEvent(node, 'roomDimensions');
-    const detail = room ? renderRoomDimensionsCompactWithDetails(room) : '';
+    const detail = room ? renderRoomDimensionsCompact(room) : '';
     text += detail;
   }
   if (node.event.result === DoorBeyond.Chamber) {
     const chamber = findChildEvent(node, 'chamberDimensions');
-    const detail = chamber
-      ? renderChamberDimensionsCompactWithDetails(chamber)
-      : '';
+    const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
     text += detail;
   }
   return text;
@@ -1419,45 +1412,6 @@ function renderCompactDoorBeyond(node: OutcomeEventNode): string {
 function renderChildPassageWidth(node: OutcomeEventNode): string {
   const width = findChildEvent(node, 'passageWidth');
   return width ? renderPassageWidthCompact(width) : '';
-}
-
-function renderCompactUnusualDetails(node: OutcomeEventNode): string {
-  let text = '';
-  const shape = findChildEvent(node, 'unusualShape');
-  if (shape && shape.event.kind === 'unusualShape') {
-    text += formatUnusualShape(shape.event.result);
-    const extras = describeUnusualShapeExtras(shape);
-    if (extras.length > 0) {
-      text += extras;
-    }
-  }
-  const size = findChildEvent(node, 'unusualSize');
-  if (size && size.event.kind === 'unusualSize') {
-    const summary = describeUnusualSizeChain(size);
-    if (summary.compactText.length > 0) {
-      text += summary.compactText + ' ';
-    }
-  }
-  if (shape || size) {
-    text += 'Determine exits, contents, and treasure separately. ';
-  }
-  return text;
-}
-
-function renderRoomDimensionsCompactWithDetails(
-  node: OutcomeEventNode
-): string {
-  return renderRoomDimensionsCompact(node, {
-    renderUnusualDetails: renderCompactUnusualDetails,
-  });
-}
-
-function renderChamberDimensionsCompactWithDetails(
-  node: OutcomeEventNode
-): string {
-  return renderChamberDimensionsCompact(node, {
-    renderUnusualDetails: renderCompactUnusualDetails,
-  });
 }
 
 function formatTrickTrap(result: number): string {
@@ -1493,7 +1447,7 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
       const detail = chamber
-        ? renderChamberDimensionsCompactWithDetails(chamber)
+        ? renderChamberDimensionsCompact(chamber)
         : '';
       return 'The passage opens into a chamber. ' + detail;
     }
@@ -1501,7 +1455,7 @@ function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderStairsCompact(stairs, {
-            renderChamberSummary: renderChamberDimensionsCompactWithDetails,
+            renderChamberSummary: renderChamberDimensionsCompact,
           })
         : periodicBaseTexts(event.result, {
             avoidMonster: event.avoidMonster ?? false,

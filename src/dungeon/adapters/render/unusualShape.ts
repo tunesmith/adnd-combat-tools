@@ -4,8 +4,13 @@ import {
   unusualShape as unusualShapeTable,
   UnusualShape,
 } from '../../../tables/dungeon/unusualShape';
-import { buildPreview, type TablePreviewFactory } from './shared';
+import {
+  buildPreview,
+  findChildEvent,
+  type TablePreviewFactory,
+} from './shared';
 import { collectCircularChainSentences } from './magicPool';
+import { describeUnusualSizeChain } from './unusualSize';
 
 export function renderUnusualShapeDetail(
   outcome: OutcomeEventNode
@@ -62,6 +67,29 @@ export function describeUnusualShapeExtras(
         : `${sentence}. `
     )
     .join('');
+}
+
+export function renderCompactUnusualDetails(node: OutcomeEventNode): string {
+  let text = '';
+  const shape = findChildEvent(node, 'unusualShape');
+  if (shape && shape.event.kind === 'unusualShape') {
+    text += formatUnusualShape(shape.event.result);
+    const extras = describeUnusualShapeExtras(shape);
+    if (extras.length > 0) {
+      text += extras;
+    }
+  }
+  const size = findChildEvent(node, 'unusualSize');
+  if (size && size.event.kind === 'unusualSize') {
+    const summary = describeUnusualSizeChain(size);
+    if (summary.compactText.length > 0) {
+      text += `${summary.compactText} `;
+    }
+  }
+  if (shape || size) {
+    text += 'Determine exits, contents, and treasure separately. ';
+  }
+  return text;
 }
 
 export const buildUnusualShapePreview: TablePreviewFactory = (tableId) =>
