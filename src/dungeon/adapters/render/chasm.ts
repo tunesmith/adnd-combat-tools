@@ -6,11 +6,11 @@ import {
   ChasmDepth,
   chasmDepth as chasmDepthTable,
   JumpingPlaceWidth,
+  jumpingPlaceWidth as jumpingPlaceWidthTable,
 } from '../../../tables/dungeon/specialPassage';
 import {
   type AppendPreviewFn,
   buildPreview,
-  findChildEvent,
   type TablePreviewFactory,
 } from './shared';
 
@@ -54,7 +54,7 @@ export function renderChasmConstructionDetail(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  const text = formatChasmConstruction(outcome.event.result, outcome).trim();
+  const text = formatChasmConstruction(outcome.event.result).trim();
   if (text.length > 0) {
     nodes.push({ kind: 'paragraph', text });
   }
@@ -82,26 +82,30 @@ export function formatChasmDepth(result: ChasmDepth): string {
 }
 
 export function formatChasmConstruction(
-  result: ChasmConstruction,
-  node: OutcomeEventNode
+  result: ChasmConstruction
 ): string {
   if (result === ChasmConstruction.Bridged)
     return 'A bridge crosses the chasm. ';
   if (result === ChasmConstruction.Obstacle)
     return 'It has no bridge, and is too wide to jump across. ';
-  const jump = findChildEvent(node, 'jumpingPlaceWidth');
-  if (jump && jump.event.kind === 'jumpingPlaceWidth') {
-    return `There is a jumping place. ${formatJumpingPlaceWidth(
-      jump.event.result
-    )} `;
-  }
-  return '';
+  return 'There is a jumping place. ';
 }
 
 export function formatJumpingPlaceWidth(result: JumpingPlaceWidth): string {
-  return result === JumpingPlaceWidth.FiveFeet
-    ? "It is 5' wide."
-    : "It is 10' wide.";
+  switch (result) {
+    case JumpingPlaceWidth.FiveFeet:
+      return "It is 5' wide.";
+    case JumpingPlaceWidth.SixFeet:
+      return "It is 6' wide.";
+    case JumpingPlaceWidth.SevenFeet:
+      return "It is 7' wide.";
+    case JumpingPlaceWidth.EightFeet:
+      return "It is 8' wide.";
+    case JumpingPlaceWidth.NineFeet:
+      return "It is 9' wide.";
+    default:
+      return "It is 10' wide.";
+  }
 }
 
 export function renderJumpingPlaceDetail(
@@ -140,5 +144,15 @@ export const buildChasmConstructionPreview: TablePreviewFactory = (tableId) =>
     entries: chasmConstructionTable.entries.map((entry) => ({
       range: entry.range,
       label: ChasmConstruction[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export const buildJumpingPlaceWidthPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Jumping Place Width',
+    sides: jumpingPlaceWidthTable.sides,
+    entries: jumpingPlaceWidthTable.entries.map((entry) => ({
+      range: entry.range,
+      label: JumpingPlaceWidth[entry.command] ?? String(entry.command),
     })),
   });

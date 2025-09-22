@@ -103,6 +103,7 @@ import {
   renderJumpingPlaceDetail,
   buildChasmDepthPreview,
   buildChasmConstructionPreview,
+  buildJumpingPlaceWidthPreview,
 } from './render/chasm';
 import {
   renderStairsDetail,
@@ -688,6 +689,8 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
       return buildChasmDepthPreview(p.table);
     case 'chasmConstruction':
       return buildChasmConstructionPreview(p.table);
+    case 'jumpingPlaceWidth':
+      return buildJumpingPlaceWidthPreview(p.table);
     case 'trickTrap':
       return {
         kind: 'table-preview',
@@ -938,7 +941,7 @@ function describeDoorBeyond(node: OutcomeEventNode): {
       ? `${trimmed} `
       : `${trimmed}. `;
     detailParagraphs.push({ kind: 'paragraph', text: normalized });
-    segments.push(normalized.trim());
+    segments.push(normalized);
   };
 
   switch (node.event.result) {
@@ -974,7 +977,7 @@ function describeDoorBeyond(node: OutcomeEventNode): {
       break;
   }
 
-  const compactText = segments.join(' ');
+  const compactText = segments.join('');
   return { detailParagraphs, compactText };
 }
 

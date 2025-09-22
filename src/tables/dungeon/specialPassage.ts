@@ -131,13 +131,21 @@ export const chasmConstruction: Table<ChasmConstruction> = {
 
 export enum JumpingPlaceWidth {
   FiveFeet,
+  SixFeet,
+  SevenFeet,
+  EightFeet,
+  NineFeet,
   TenFeet,
 }
 
 export const jumpingPlaceWidth: Table<JumpingPlaceWidth> = {
-  sides: 20,
+  sides: 6,
   entries: [
-    { range: [1, 10], command: JumpingPlaceWidth.FiveFeet },
-    { range: [11, 20], command: JumpingPlaceWidth.TenFeet },
+    { range: [1], command: JumpingPlaceWidth.FiveFeet },
+    { range: [2], command: JumpingPlaceWidth.SixFeet },
+    { range: [3], command: JumpingPlaceWidth.SevenFeet },
+    { range: [4], command: JumpingPlaceWidth.EightFeet },
+    { range: [5], command: JumpingPlaceWidth.NineFeet },
+    { range: [6], command: JumpingPlaceWidth.TenFeet },
   ],
 };

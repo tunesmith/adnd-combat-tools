@@ -20,7 +20,11 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { formatChasmDepth, formatChasmConstruction } from './chasm';
+import {
+  formatChasmDepth,
+  formatChasmConstruction,
+  formatJumpingPlaceWidth,
+} from './chasm';
 
 export function renderSpecialPassageDetail(
   outcome: OutcomeEventNode,
@@ -116,10 +120,36 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
     case SpecialPassage.TwentyFootChasm: {
       append("A chasm, 20' wide, bisects the passage. ");
       const depth = findChildEvent(node, 'chasmDepth');
-      if (depth) append(formatChasmDepth(depth.event.result));
+      if (depth) {
+        const depthText = formatChasmDepth(depth.event.result).trim();
+        if (depthText.length > 0) {
+          compactSegments.push(
+            depthText.endsWith('.') ? depthText : `${depthText}.`
+          );
+        }
+      }
       const construction = findChildEvent(node, 'chasmConstruction');
-      if (construction)
-        append(formatChasmConstruction(construction.event.result, node));
+      if (construction) {
+        const constructionText = formatChasmConstruction(
+          construction.event.result
+        ).trim();
+        if (constructionText.length > 0) {
+          compactSegments.push(
+            constructionText.endsWith('.')
+              ? constructionText
+              : `${constructionText}.`
+          );
+        }
+        const jump = findChildEvent(construction, 'jumpingPlaceWidth');
+        if (jump) {
+          const jumpText = formatJumpingPlaceWidth(jump.event.result).trim();
+          if (jumpText.length > 0) {
+            compactSegments.push(
+              jumpText.endsWith('.') ? jumpText : `${jumpText}.`
+            );
+          }
+        }
+      }
       break;
     }
     default:
