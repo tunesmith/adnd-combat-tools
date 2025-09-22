@@ -262,11 +262,6 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       mainSubmit.click();
     });
 
-    const feedEl = requireElement(
-      document.querySelector('.feed'),
-      'feed element'
-    );
-
     const findPreviewContainer = (title: string) =>
       waitFor(() => {
         const heading = Array.from(document.querySelectorAll('div'))

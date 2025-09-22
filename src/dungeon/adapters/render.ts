@@ -34,6 +34,10 @@ import {
   buildPeriodicDoorOnlyPreview,
 } from './render/doorLocation';
 import {
+  renderDoorBeyondDetail,
+  renderDoorBeyondCompact,
+} from './render/doorBeyond';
+import {
   renderSidePassagesDetail,
   describeSidePassage,
   formatSidePassageResult,
@@ -135,6 +139,10 @@ import {
   renderUnusualShapeCompact,
   buildUnusualShapePreview,
 } from './render/unusualShape';
+import {
+  renderTrickTrapDetail,
+  renderTrickTrapCompact,
+} from './render/trickTrap';
 import {
   describeMonsterOutcome,
   buildMonsterPreview,
@@ -381,16 +389,7 @@ export function toDetailRender(
     return renderPeriodicCheckDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'doorBeyond') {
-    const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${DoorBeyond[event.result]}`],
-    };
-    const summary = describeDoorBeyond(outcome);
-    nodes.push(heading, bullet);
-    nodes.push(...summary.detailParagraphs);
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
+    return renderDoorBeyondDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'doorLocation') {
     return renderDoorLocationDetail(outcome, appendPendingPreviews);
@@ -481,19 +480,7 @@ export function toDetailRender(
     return renderUnusualSizeDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'trickTrap') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Trick / Trap',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — TBD`],
-    };
-    const summary = describeTrickTrap(outcome);
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    nodes2.push(...summary.detailParagraphs);
-    return nodes2;
+    return renderTrickTrapDetail(outcome);
   }
   if (event.kind === 'wanderingWhereFrom') {
     const heading: DungeonMessage = {
@@ -733,7 +720,7 @@ export function toCompactRender(
       kind: 'bullet-list',
       items: [`roll: ${roll} — ${DoorBeyond[event.result]}`],
     };
-    const text = renderCompactDoorBeyond(node);
+    const text = renderDoorBeyondCompact(node);
     nodes.push(heading, bullet, { kind: 'paragraph', text });
     return nodes;
   }
@@ -923,78 +910,6 @@ export function toCompactRender(
   return nodes;
 }
 
-function describeDoorBeyond(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'doorBeyond') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const detailParagraphs: DungeonMessage[] = [];
-  const segments: string[] = [];
-  const appendParagraph = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const normalized = trimmed.endsWith(' ')
-      ? trimmed
-      : trimmed.endsWith('.')
-      ? `${trimmed} `
-      : `${trimmed}. `;
-    detailParagraphs.push({ kind: 'paragraph', text: normalized });
-    segments.push(normalized);
-  };
-
-  switch (node.event.result) {
-    case DoorBeyond.ParallelPassageOrCloset:
-      if (node.event.doorAhead) {
-        appendParagraph(
-          "Beyond the door is a 10' x 10' room (check contents, treasure). "
-        );
-      } else {
-        appendParagraph(
-          "Beyond the door is a parallel passage, extending 30' in both directions. "
-        );
-      }
-      break;
-    case DoorBeyond.PassageStraightAhead:
-      appendParagraph('Beyond the door is a passage straight ahead. ');
-      break;
-    case DoorBeyond.Passage45AheadBehind:
-      appendParagraph(
-        'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). '
-      );
-      break;
-    case DoorBeyond.Passage45BehindAhead:
-      appendParagraph(
-        'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). '
-      );
-      break;
-    case DoorBeyond.Room:
-      appendParagraph('Beyond the door is a room. ');
-      break;
-    case DoorBeyond.Chamber:
-      appendParagraph('Beyond the door is a chamber. ');
-      break;
-  }
-
-  const compactText = segments.join('');
-  return { detailParagraphs, compactText };
-}
-
-function describeTrickTrap(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'trickTrap') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const text = formatTrickTrap(node.event.result);
-  const detailParagraphs: DungeonMessage[] = text.length
-    ? [{ kind: 'paragraph', text }]
-    : [];
-  return { detailParagraphs, compactText: text };
-}
-
 function renderWanderingWhereFrom(node: OutcomeEventNode): string {
   if (node.event.kind !== 'wanderingWhereFrom') return '';
   switch (node.event.result) {
@@ -1030,9 +945,9 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     case PeriodicCheck.TrickTrap: {
       const trap = findChildEvent(node, 'trickTrap');
       if (trap && trap.event.kind === 'trickTrap') {
-        const summary = describeTrickTrap(trap);
-        if (summary.compactText.length > 0) {
-          return summary.compactText;
+        const text = renderTrickTrapCompact(trap);
+        if (text.length > 0) {
+          return text;
         }
       }
       return TRICK_TRAP_FALLBACK_TEXT;
@@ -1044,45 +959,6 @@ function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     default:
       return periodicBaseTexts(node.event.result).detail;
   }
-}
-
-function renderCompactDoorBeyond(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'doorBeyond') return '';
-  const summary = describeDoorBeyond(node);
-  let text = summary.compactText;
-  if (
-    node.event.result === DoorBeyond.ParallelPassageOrCloset &&
-    !node.event.doorAhead
-  ) {
-    text += renderChildPassageWidth(node);
-  }
-  if (
-    node.event.result === DoorBeyond.PassageStraightAhead ||
-    node.event.result === DoorBeyond.Passage45AheadBehind ||
-    node.event.result === DoorBeyond.Passage45BehindAhead
-  ) {
-    text += renderChildPassageWidth(node);
-  }
-  if (node.event.result === DoorBeyond.Room) {
-    const room = findChildEvent(node, 'roomDimensions');
-    const detail = room ? renderRoomDimensionsCompact(room) : '';
-    text += detail;
-  }
-  if (node.event.result === DoorBeyond.Chamber) {
-    const chamber = findChildEvent(node, 'chamberDimensions');
-    const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
-    text += detail;
-  }
-  return text;
-}
-
-function renderChildPassageWidth(node: OutcomeEventNode): string {
-  const width = findChildEvent(node, 'passageWidth');
-  return width ? renderPassageWidthCompact(width) : '';
-}
-
-function formatTrickTrap(result: number): string {
-  return `There is a trick or trap. (roll ${result}) -- check again in 30'. `;
 }
 
 function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
