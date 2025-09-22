@@ -356,7 +356,8 @@ export function resolvePassageTurns(options?: {
     kind: 'passageTurns',
     result: command,
   } as OutcomeEvent;
-  // After a turn, determine passage width as a staged child in detail mode
+  // After a turn the generator always stages passage width so both modes can
+  // reuse the same outcome tree and render consistent previews.
   const children: DungeonOutcomeNode[] = [
     { type: 'pending-roll', table: 'passageWidth' },
   ];

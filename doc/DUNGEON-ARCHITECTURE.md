@@ -7,8 +7,8 @@ This document explains how the dungeon generator is wired, what lives in each la
 ```
 Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ Render Adapters ──▶ Page UI
                                │                          │
-                               │                          └──▶ Registry (detail-mode preview resolution)
-                               └──▶ Message Services (detail-mode helpers only)
+                               │                          └──▶ Registry (staged preview resolution updates the tree)
+                               └──▶ Render Cache (detail & compact reuse the same nodes)
 ```
 
 1. **Tables** describe the raw AD&D data: every `entries: [{ range, command }]` pair lives under `src/tables/dungeon/**`.
@@ -40,25 +40,24 @@ Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ 
 
 ### Adapters (`src/dungeon/adapters/render.ts`)
 
-- `toDetailRender(outcome)` renders headings, “roll: n — label” bullets, and any explanatory paragraphs.
-- `toCompactRender(outcome)` produces the final compact prose that historically appeared in the tool.
-- Both helpers recursively walk `pending-roll` children to insert `table-preview` nodes so detail mode knows what to show.
-- Compact mode **never** calls services; every sentence is composed in code here so there is a single source of truth for the prose.
-- Shared helpers live alongside the render functions (e.g., door-chain formatting, exit text, wandering monster composition).
+- `toDetailRender(outcome)` renders headings, “roll: n — label” bullets, paragraphs, and staged previews.
+- `toCompactRender(outcome)` produces the compact prose that historically appeared in the tool.
+- Both helpers work directly from the stored outcome tree; detail mode adds preview nodes while compact mode filters them out.
+- Each helper is pure and composes sentences in TypeScript so there is one source of truth for dungeon prose.
+- Shared helpers live alongside the render functions (door-chain formatting, exit text, wandering monster composition, and so on).
 
 ### Registry (`src/dungeon/helpers/registry.ts`)
 
 - Maps preview ids (e.g., `monsterLevel`, `doorLocation:0`) to resolver functions.
 - Supplies human-readable headings for each table.
-- `resolveViaRegistry` updates the React feed, manages collapsed/resolved state, and triggers the corresponding resolver when the user resolves a preview.
-- Detail mode uses the registry; compact mode skips it entirely.
+- `resolveViaRegistry` updates the outcome tree inside the feed item, refreshes the render cache, and manages collapsed/resolved state when a preview is resolved.
+- Both detail and compact modes consume the updated tree; detail mode shows staged previews while compact mode reflects the latest resolved prose.
 
 ### Services (`src/dungeon/services/**`)
 
-- Small, typed wrappers that keep older call sites convenient.
-- In detail mode and when no roll is provided, they emit a single `table-preview` node to the UI.
-- Internally they just call the appropriate resolver and pass the result to `toDetailRender`/`toCompactRender`.
-- They still exist because the page code paths were historically service-based; today they are thin veneers and safe to bypass when writing new code.
+- Thin wrappers that keep older call sites convenient.
+- Build or reuse the render cache and delegate to the resolvers; no additional rolling happens here.
+- Remain for historical reasons—new code can call resolvers/adapters directly when appropriate.
 
 ### Page (`src/pages/dungeon/index.tsx`)
 
@@ -82,8 +81,8 @@ Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ 
 | ------------------ | ------------------------------------------------------ | ----------------------------------------------- |
 | Audience           | Ref + manual flow control (DM stepping through tables) | Quick prose output akin to the original booklet |
 | Output             | Headings, bullet lists, paragraphs, table previews     | Paragraphs only                                 |
-| Interaction        | User triggers each `pending-roll` via the registry     | Everything auto-resolves in one go              |
-| Data source        | Outcome tree + registry + services for previews        | Outcome tree only                               |
+| Interaction        | User resolves each `pending-roll` via the registry     | Shares the same tree; prose updates after each resolution |
+| Data source        | Outcome tree + render cache (previews included)        | Outcome tree + render cache (previews filtered) |
 | Where to change it | `toDetailRender` + registry                            | `toCompactRender` helpers                       |
 
 ## How to Add a New Table

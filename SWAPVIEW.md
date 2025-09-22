@@ -68,13 +68,11 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Backfill tests that cover reroll/override flows for multi-step tables to confirm updates replace, rather than append, results.
 - Suggested commit: `dungeon: target pending nodes when applying resolved outcomes`.
 
-### 7. Verification & Polish _(in progress)_
+### 7. Verification & Polish _(status: complete)_
 
-- Expand coverage to span cross-mode toggling and partial resolution states, including a pending-indicator experience once compact mode marks unresolved children.
-- The UI-level preview harness now drives the same `render → preview → resolveViaRegistry` loop as the page, and the dungeon roll/feed tests have been migrated to use it.
-- Add any remaining regressions that touch future flows (e.g., pools, exits) once their render helpers are purified.
-- Manually smoke test both modes for passages and doors, including registry overrides and reroll/override replacements.
-- Update documentation or comments if behaviour differs from expectations.
+- Added integration coverage that uses the UI preview harness to exercise cross-mode toggling with staged chasm and circular pool flows.
+- Expanded compact/detail assertions to ensure follow-up prose appears exactly once after resolution.
+- Manual smoke tests verified the UI; documentation and inline comments now reflect the outcome-tree workflow.
 - Suggested commit: `dungeon: cover swapview flow and update docs`.
 
 ### 8. Render Override Harness _(status: complete)_
@@ -105,12 +103,11 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Shared append-preview type extracted to `render/shared.ts`.
 - Suggested commit: `render: drop legacy preview services`.
 
-### 12. Adapter Modularisation _(status: complete)_
+### 12. Adapter Modularisation _(in progress)_
 
-- Dedicated adapters now exist for every table family: periodic checks, door location/continuation, side passages, passage turns, passage width, stairs, chasms, egress, chute, number of exits, unusual shape/size, room/chamber dimensions, circular pools, magic-pool effects, and all monster subtables.
-- `render.ts` is down to orchestration only: it locates the table node, delegates to the adapter, and wires preview deduplication without duplicating string logic.
-- Monster handling lives under `render/monsters/` (split by level, standard monsters, dragons, and humans), and circular-pool helpers were separated from the magic-pool module to keep responsibilities narrow.
-- Wandering-monster helpers now live in `render/monsters/wandering.ts`, so `render.ts` delegates all monster prose (detail and compact) to the adapter modules.
+- Continue moving table-specific rendering branches out of `render.ts` into dedicated modules under `render/` (e.g., migrate remaining helpers for number-of-exits and transporter follow-ups).
+- Audit `render.ts` for any prose assembly that can be delegated to existing adapter helpers to keep the orchestrator lean.
+- Suggested commit: `render: finish adapter extraction`.
 
 ## Open Questions / Future Enhancements
 
