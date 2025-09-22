@@ -124,10 +124,10 @@ describe('uiPreviewHarness', () => {
       .map((n) => n.text.trim())
       .join(' ');
     expect(compactText).toContain(
-      'Add 2000 sq. ft. (current total 2,000 sq. ft.) and roll again.'
-    );
-    expect(compactText).toContain(
       'Add 2000 sq. ft. (current total 4,000 sq. ft.) and roll again.'
+    );
+    expect(compactText).not.toContain(
+      'Add 2000 sq. ft. (current total 2,000 sq. ft.) and roll again.'
     );
     expect(compactText).not.toContain('It is about 4,500 sq. ft.');
   });

@@ -77,33 +77,18 @@ export function describeUnusualSizeChain(node: OutcomeEventNode): {
   if (node.event.kind !== 'unusualSize') {
     return { detailParagraphs: [], compactText: '' };
   }
-  const chain = gatherUnusualSizeChain(node);
   const detailParagraphs: DungeonMessage[] = [];
-  const compactSegments: string[] = [];
-  let accumulatedExtra = (node.event as { extra?: number }).extra ?? 0;
-  for (const entry of chain) {
-    if (entry.event.kind !== 'unusualSize') continue;
-    const eventExtra =
-      (entry.event as { extra?: number }).extra ?? accumulatedExtra;
-    accumulatedExtra = Math.max(accumulatedExtra, eventExtra);
-    if (entry.event.result === UnusualSize.RollAgain) {
-      accumulatedExtra += 2000;
-      const sentence = `Add 2000 sq. ft. (current total ${accumulatedExtra.toLocaleString()} sq. ft.) and roll again.`;
-      detailParagraphs.push({ kind: 'paragraph', text: sentence });
-      compactSegments.push(sentence);
-      continue;
-    }
-    const baseArea = unusualSizeBase(entry.event.result);
-    if (baseArea !== undefined) {
-      const total = baseArea + accumulatedExtra;
-      const sentence = `It is about ${total.toLocaleString()} sq. ft.`;
-      detailParagraphs.push({ kind: 'paragraph', text: sentence });
-      compactSegments.push(sentence);
-    }
+  const current = describeUnusualSizeEntry(node);
+  if (current) {
+    detailParagraphs.push({ kind: 'paragraph', text: current.sentence });
   }
+
+  const deepest = findDeepestUnusualSize(node);
+  const compactEntry = deepest ? describeUnusualSizeEntry(deepest) : undefined;
+
   return {
     detailParagraphs,
-    compactText: compactSegments.join(' '),
+    compactText: compactEntry ? compactEntry.sentence : '',
   };
 }
 
@@ -121,8 +106,29 @@ export const buildUnusualSizePreview: TablePreviewFactory = (
     context,
   });
 
-function gatherUnusualSizeChain(node: OutcomeEventNode): OutcomeEventNode[] {
-  const result: OutcomeEventNode[] = [node];
+function describeUnusualSizeEntry(
+  node: OutcomeEventNode
+): { sentence: string; isPending: boolean } | undefined {
+  const extra = (node.event as { extra?: number }).extra ?? 0;
+  if (node.event.result === UnusualSize.RollAgain) {
+    const nextExtra = extra + 2000;
+    return {
+      sentence: `Add 2000 sq. ft. (current total ${nextExtra.toLocaleString()} sq. ft.) and roll again.`,
+      isPending: true,
+    };
+  }
+  const baseArea = unusualSizeBase(node.event.result);
+  if (baseArea !== undefined) {
+    const total = baseArea + extra;
+    return {
+      sentence: `It is about ${total.toLocaleString()} sq. ft.`,
+      isPending: false,
+    };
+  }
+  return undefined;
+}
+
+function findDeepestUnusualSize(node: OutcomeEventNode): OutcomeEventNode | undefined {
   let current: OutcomeEventNode | undefined = node;
   const visited = new Set<string>();
   while (current) {
@@ -134,10 +140,9 @@ function gatherUnusualSizeChain(node: OutcomeEventNode): OutcomeEventNode[] {
     const key = next.id ?? `${current.id}.unusualSize`;
     if (visited.has(key)) break;
     visited.add(key);
-    result.push(next);
     current = next;
   }
-  return result;
+  return current;
 }
 
 function unusualSizeBase(result: UnusualSize): number | undefined {
