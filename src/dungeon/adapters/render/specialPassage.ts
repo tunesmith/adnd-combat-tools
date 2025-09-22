@@ -3,6 +3,7 @@ import type { OutcomeEventNode } from '../../domain/outcome';
 import {
   specialPassage as specialPassageTable,
   galleryStairLocation as galleryStairLocationTable,
+  galleryStairOccurrence as galleryStairOccurrenceTable,
   streamConstruction as streamConstructionTable,
   riverConstruction as riverConstructionTable,
   riverBoatBank as riverBoatBankTable,
@@ -75,24 +76,11 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
     case SpecialPassage.FiftyFeetDoubleColumns:
       append("The passage is 50' wide, with a double row of columns. ");
       break;
-    case SpecialPassage.FiftyFeetGalleries: {
+    case SpecialPassage.FiftyFeetGalleries:
       append(
         "The passage is 50' wide. Columns 10' right and left support 10' wide upper galleries 20' above. "
       );
-      const loc = findChildEvent(node, 'galleryStairLocation');
-      if (loc)
-        append(
-          formatGalleryStairLocation(loc.event.result as GalleryStairLocation)
-        );
-      const occurrence = findChildEvent(node, 'galleryStairOccurrence');
-      if (occurrence)
-        append(
-          formatGalleryStairOccurrence(
-            occurrence.event.result as GalleryStairOccurrence
-          )
-        );
       break;
-    }
     case SpecialPassage.TenFootStream: {
       append("A stream, 10' wide, bisects the passage. ");
       const construction = findChildEvent(node, 'streamConstruction');
@@ -148,6 +136,92 @@ export function renderSpecialPassageCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'specialPassage') return '';
   const summary = describeSpecialPassage(node);
   return summary.compactText;
+}
+
+export function renderGalleryStairLocationDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'galleryStairLocation') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Gallery Stair Location',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${GalleryStairLocation[outcome.event.result]}`],
+  };
+  const description = formatGalleryStairLocation(outcome.event.result);
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (description.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text: description });
+  }
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderGalleryStairLocationCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'galleryStairLocation') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Gallery Stair Location',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${GalleryStairLocation[outcome.event.result]}`],
+  };
+  const description = formatGalleryStairLocation(outcome.event.result);
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (description.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text: `${description} ` });
+  }
+  return nodes;
+}
+
+export function renderGalleryStairOccurrenceDetail(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'galleryStairOccurrence') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Gallery Stair Occurrence',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${GalleryStairOccurrence[outcome.event.result]}`],
+  };
+  const description = formatGalleryStairOccurrence(outcome.event.result);
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (description.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text: description });
+  }
+  return nodes;
+}
+
+export function renderGalleryStairOccurrenceCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'galleryStairOccurrence') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Gallery Stair Occurrence',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${GalleryStairOccurrence[outcome.event.result]}`],
+  };
+  const description = formatGalleryStairOccurrence(outcome.event.result);
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (description.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text: `${description} ` });
+  }
+  return nodes;
 }
 
 export function renderRiverConstructionDetail(
@@ -228,6 +302,18 @@ export const buildStreamConstructionPreview: TablePreviewFactory = (tableId) =>
     entries: streamConstructionTable.entries.map((entry) => ({
       range: entry.range,
       label: StreamConstruction[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export const buildGalleryStairOccurrencePreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Gallery Stair Occurrence',
+    sides: galleryStairOccurrenceTable.sides,
+    entries: galleryStairOccurrenceTable.entries.map((entry) => ({
+      range: entry.range,
+      label: GalleryStairOccurrence[entry.command] ?? String(entry.command),
     })),
   });
 

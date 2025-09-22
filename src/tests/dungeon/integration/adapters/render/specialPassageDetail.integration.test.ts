@@ -88,4 +88,19 @@ describe('detail rendering with special passage', () => {
       "The passage turns left 90 degrees - check again in 30'. A chasm, 20' wide, bisects the passage. The chasm is 200' deep. A bridge crosses the chasm."
     );
   });
+
+  it('keeps gallery stair occurrence preview pending when passage end is rolled', () => {
+    const resolvedTree = resolveSequenceWithRolls([12, 1, 19, 11, 5], 1);
+    const detailNodes = renderDetailTree(resolvedTree);
+    const locationPreviewIndex = detailNodes.findIndex(
+      (node) =>
+        node.kind === 'table-preview' && node.id === 'galleryStairLocation'
+    );
+    const occurrencePreviewIndex = detailNodes.findIndex(
+      (node) =>
+        node.kind === 'table-preview' && node.id === 'galleryStairOccurrence'
+    );
+    expect(locationPreviewIndex).toBeGreaterThan(-1);
+    expect(occurrencePreviewIndex).toBeGreaterThan(locationPreviewIndex);
+  });
 });

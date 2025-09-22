@@ -84,10 +84,15 @@ import {
 import {
   renderSpecialPassageDetail,
   renderSpecialPassageCompact,
+  renderGalleryStairLocationDetail,
+  renderGalleryStairLocationCompact,
+  renderGalleryStairOccurrenceDetail,
+  renderGalleryStairOccurrenceCompact,
   renderRiverConstructionDetail,
   renderRiverConstructionCompact,
   buildSpecialPassagePreview,
   buildGalleryStairLocationPreview,
+  buildGalleryStairOccurrencePreview,
   buildStreamConstructionPreview,
   buildRiverConstructionPreview,
   buildRiverBoatBankPreview,
@@ -415,6 +420,12 @@ export function toDetailRender(
   if (event.kind === 'specialPassage') {
     return renderSpecialPassageDetail(outcome, appendPendingPreviews);
   }
+  if (event.kind === 'galleryStairLocation') {
+    return renderGalleryStairLocationDetail(outcome, appendPendingPreviews);
+  }
+  if (event.kind === 'galleryStairOccurrence') {
+    return renderGalleryStairOccurrenceDetail(outcome);
+  }
   if (event.kind === 'riverConstruction') {
     return renderRiverConstructionDetail(outcome, appendPendingPreviews);
   }
@@ -653,6 +664,8 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
       );
     case 'galleryStairLocation':
       return buildGalleryStairLocationPreview(p.table);
+    case 'galleryStairOccurrence':
+      return buildGalleryStairOccurrencePreview(p.table);
     case 'circularContents':
       return buildCircularContentsPreview(p.table);
     case 'circularPool':
@@ -857,6 +870,14 @@ export function toCompactRender(
     const nodes2 = renderRiverConstructionCompact(node);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
+  }
+  if (event.kind === 'galleryStairLocation') {
+    const nodes2 = renderGalleryStairLocationCompact(node);
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
+  }
+  if (event.kind === 'galleryStairOccurrence') {
+    return renderGalleryStairOccurrenceCompact(node);
   }
   if (event.kind === 'transmuteType') {
     return renderTransmuteTypeCompact(node);
