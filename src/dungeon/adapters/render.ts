@@ -11,15 +11,7 @@ import type {
 } from '../../types/dungeon';
 import { PeriodicCheck } from '../../tables/dungeon/periodicCheck';
 import { DoorBeyond } from '../../tables/dungeon/doorBeyond';
-import {
-  RoomDimensions,
-  ChamberDimensions,
-} from '../../tables/dungeon/chambersRooms';
-import { PassageTurns } from '../../tables/dungeon/passageTurns';
-import { Stairs } from '../../tables/dungeon/stairs';
-import { PassageWidth } from '../../tables/dungeon/passageWidth';
 import { periodicCheck } from '../../tables/dungeon/periodicCheck';
-import { SpecialPassage } from '../../tables/dungeon/specialPassage';
 import {
   renderPeriodicCheckDetail,
   renderPeriodicCheckCompact,
@@ -42,22 +34,23 @@ import {
 } from './render/sidePassage';
 import {
   renderPassageTurnsDetail,
-  renderPassageTurnCompact,
+  renderPassageTurnsCompactNodes,
   buildPassageTurnPreview,
 } from './render/passageTurns';
 import {
   renderPassageWidthDetail,
-  renderPassageWidthCompact,
+  renderPassageWidthCompactNodes,
   buildPassageWidthPreview,
 } from './render/passageWidth';
 import {
   renderRoomDimensionsDetail,
-  renderRoomDimensionsCompact,
+  renderRoomDimensionsCompactNodes,
   buildRoomDimensionsPreview,
 } from './render/roomDimensions';
 import {
   renderChamberDimensionsDetail,
   renderChamberDimensionsCompact,
+  renderChamberDimensionsCompactNodes,
   buildChamberDimensionsPreview,
 } from './render/chamberDimensions';
 import {
@@ -84,7 +77,7 @@ import {
 } from './render/magicPool';
 import {
   renderSpecialPassageDetail,
-  renderSpecialPassageCompact,
+  renderSpecialPassageCompactNodes,
   renderGalleryStairLocationDetail,
   renderGalleryStairLocationCompact,
   renderGalleryStairOccurrenceDetail,
@@ -108,7 +101,7 @@ import {
 } from './render/chasm';
 import {
   renderStairsDetail,
-  renderStairsCompact,
+  renderStairsCompactNodes,
   buildStairsPreview,
 } from './render/stairs';
 import {
@@ -706,99 +699,27 @@ export function toCompactRender(
     return nodes;
   }
   if (event.kind === 'roomDimensions') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Room Dimensions',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${RoomDimensions[event.result]}`],
-    };
-    const text = renderRoomDimensionsCompact(node);
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
-    return nodes;
+    return renderRoomDimensionsCompactNodes(node);
   }
   if (event.kind === 'chamberDimensions') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Chamber Dimensions',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${ChamberDimensions[event.result]}`],
-    };
-    const text = renderChamberDimensionsCompact(node);
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
-    return nodes;
+    return renderChamberDimensionsCompactNodes(node);
   }
   if (event.kind === 'sidePassages') {
     return renderSidePassagesCompact(node);
   }
   if (event.kind === 'passageTurns') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Passage Turns',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${PassageTurns[event.result] ?? event.result}`],
-    };
-    const text = renderPassageTurnCompact(node);
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
-    return nodes;
+    return renderPassageTurnsCompactNodes(node);
   }
   if (node.event.kind === 'passageWidth') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Passage Width',
-    };
-    const label = PassageWidth[node.event.result] ?? String(node.event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    const text = renderPassageWidthCompact(node);
-    if (text.length > 0) {
-      nodes2.push({ kind: 'paragraph', text });
-    }
-    return nodes2;
+    return renderPassageWidthCompactNodes(node);
   }
   if (event.kind === 'stairs') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Stairs',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${Stairs[event.result] ?? event.result}`],
-    };
-    const text = renderStairsCompact(node, {
+    return renderStairsCompactNodes(node, {
       renderChamberSummary: renderChamberDimensionsCompact,
     });
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
-    return nodes;
   }
   if (event.kind === 'specialPassage') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Special Passage',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [
-        `roll: ${roll} — ${SpecialPassage[event.result] ?? event.result}`,
-      ],
-    };
-    const text = renderSpecialPassageCompact(node);
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
-    return nodes;
+    return renderSpecialPassageCompactNodes(node);
   }
   if (event.kind === 'egress') {
     return renderEgressCompact(node);

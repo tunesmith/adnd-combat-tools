@@ -85,6 +85,23 @@ export function renderPassageTurnCompact(node: OutcomeEventNode): string {
   return summary.compactText;
 }
 
+export function renderPassageTurnsCompactNodes(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'passageTurns') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Passage Turns',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${PassageTurns[outcome.event.result]}`],
+  };
+  const text = renderPassageTurnCompact(outcome);
+  return [heading, bullet, { kind: 'paragraph', text }];
+}
+
 export const buildPassageTurnPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Passage Turns',

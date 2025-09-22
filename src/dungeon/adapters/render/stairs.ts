@@ -47,6 +47,25 @@ export function renderStairsCompact(
   return summary.compactText;
 }
 
+export function renderStairsCompactNodes(
+  outcome: OutcomeEventNode,
+  deps?: StairsDeps
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'stairs') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Stairs',
+  };
+  const label = Stairs[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const text = renderStairsCompact(outcome, deps);
+  return [heading, bullet, { kind: 'paragraph', text }];
+}
+
 export function describeStairs(
   node: OutcomeEventNode,
   deps?: StairsDeps

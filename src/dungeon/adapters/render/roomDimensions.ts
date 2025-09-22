@@ -63,6 +63,25 @@ export function renderRoomDimensionsCompact(
   return joinSegments(segments);
 }
 
+export function renderRoomDimensionsCompactNodes(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'roomDimensions') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Room Dimensions',
+  };
+  const label =
+    RoomDimensions[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const text = renderRoomDimensionsCompact(outcome);
+  return [heading, bullet, { kind: 'paragraph', text }];
+}
+
 export const buildRoomDimensionsPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Room Dimensions',

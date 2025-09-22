@@ -55,6 +55,29 @@ export function renderPassageWidthCompact(node: OutcomeEventNode): string {
   }
 }
 
+export function renderPassageWidthCompactNodes(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'passageWidth') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Passage Width',
+  };
+  const label =
+    PassageWidth[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const resultText = renderPassageWidthCompact(outcome);
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (resultText.length > 0) {
+    nodes.push({ kind: 'paragraph', text: resultText });
+  }
+  return nodes;
+}
+
 function passageWidthDetailText(result: number): string {
   switch (result) {
     case PassageWidth.FiveFeet:

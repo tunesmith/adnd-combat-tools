@@ -168,6 +168,29 @@ export function renderSpecialPassageCompact(node: OutcomeEventNode): string {
   return summary.compactText;
 }
 
+export function renderSpecialPassageCompactNodes(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'specialPassage') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Special Passage',
+  };
+  const label =
+    SpecialPassage[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const text = renderSpecialPassageCompact(outcome);
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (text.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text: `${text.trim()} ` });
+  }
+  return nodes;
+}
+
 export function renderGalleryStairLocationDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
