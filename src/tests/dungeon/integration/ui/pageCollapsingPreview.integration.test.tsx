@@ -99,6 +99,13 @@ async function waitFor<T>(
   }
 }
 
+function requireElement<T>(value: T | null | undefined, message: string): T {
+  if (value == null) {
+    throw new Error(message);
+  }
+  return value;
+}
+
 describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
   it('collapses Door Location preview after submitting override 13', async () => {
     const container = document.createElement('div');
@@ -109,22 +116,27 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     });
 
     // Enable Detail mode
-    const detailLabel = findLabel('Detail mode');
-    expect(detailLabel).not.toBeNull();
-    const detailCheckbox = detailLabel!.querySelector(
-      'input[type="checkbox"]'
-    ) as HTMLInputElement;
+    const detailLabel = requireElement(
+      findLabel('Detail mode'),
+      'detail mode label'
+    );
+    const detailCheckbox = requireElement(
+      detailLabel.querySelector<HTMLInputElement>('input[type="checkbox"]'),
+      'detail mode checkbox'
+    );
     await act(async () => {
       detailCheckbox.click();
     });
 
     // Add a feed item using main override (enter 3) and Submit
-    const rollLabel = findLabel('d20 Roll:');
-    expect(rollLabel).not.toBeNull();
-    const rollInput = rollLabel!.querySelector(
-      'input[type="number"]'
-    ) as HTMLInputElement;
-    expect(rollInput).not.toBeNull();
+    const rollLabel = requireElement(
+      findLabel('d20 Roll:'),
+      'roll label'
+    );
+    const rollInput = requireElement(
+      rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'roll input'
+    );
     await act(async () => {
       // Use React's Simulate to ensure onChange runs
       (rollInput as any).value = '3';
@@ -132,28 +144,35 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
         target: { value: '3' },
       } as any);
     });
-    const mainSubmit = findButtonByText('Submit');
-    expect(mainSubmit).not.toBeNull();
+    const mainSubmit = requireElement(
+      findButtonByText('Submit'),
+      'main submit button'
+    );
     await act(async () => {
-      mainSubmit!.click();
+      mainSubmit.click();
     });
     // Find Door Location preview in feed and lock to its feed item container
-    const feedEl = document.querySelector('.feed');
-    expect(feedEl).not.toBeNull();
-    const feedItemEl = feedEl!.querySelector('.feedItem') as HTMLElement | null;
-    expect(feedItemEl).not.toBeNull();
-    // Sanity check that this feed item contains the Door Location header
-    const headerOk = (feedItemEl!.textContent ?? '').includes(
-      'Door Location (d20)'
+    const feedEl = requireElement(
+      document.querySelector('.feed'),
+      'feed element'
     );
+    const feedItemEl = requireElement(
+      feedEl.querySelector<HTMLElement>('.feedItem'),
+      'feed item container'
+    );
+    // Sanity check that this feed item contains the Door Location header
+    const headerOk = (feedItemEl.textContent ?? '').includes('Door Location (d20)');
     expect(headerOk).toBe(true);
 
     // Set override 13 and submit inside preview
-    const overrideLabel = findLabel('Override next roll:', feedItemEl!);
-    expect(overrideLabel).not.toBeNull();
-    const overrideInput = overrideLabel!.querySelector(
-      'input[type="number"]'
-    ) as HTMLInputElement;
+    const overrideLabel = requireElement(
+      findLabel('Override next roll:', feedItemEl),
+      'door location override label'
+    );
+    const overrideInput = requireElement(
+      overrideLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'door location override input'
+    );
     await act(async () => {
       (overrideInput as any).value = '13';
       ReactTestUtils.Simulate.change(overrideInput, {
@@ -161,10 +180,12 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       } as any);
     });
 
-    const previewSubmit = findButtonByText('Submit', feedItemEl!);
-    expect(previewSubmit).not.toBeNull();
+    const previewSubmit = requireElement(
+      findButtonByText('Submit', feedItemEl),
+      'door location preview submit'
+    );
     await act(async () => {
-      previewSubmit!.click();
+      previewSubmit.click();
     });
     // Allow React to commit state
     // await act(async () => {
@@ -173,21 +194,23 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
 
     // Re-grab the preview block after rerender
     const previewBlockAfter = await waitFor(() =>
-      findDivByText('Door Location (d20)', feedItemEl!)
+      findDivByText('Door Location (d20)', feedItemEl)
     );
 
     // Expect correct behaviour now: preview collapsed, chevron present
-    const chevron = feedItemEl!.querySelector(
-      'button[aria-label="Expand table"]'
-    ) as HTMLButtonElement | null;
-    expect(chevron).not.toBeNull();
+    requireElement(
+      feedItemEl.querySelector<HTMLButtonElement>(
+        'button[aria-label="Expand table"]'
+      ),
+      'preview chevron button'
+    );
     const overrideStillVisible = findLabel(
       'Override next roll:',
-      previewBlockAfter!
+      previewBlockAfter
     );
     expect(overrideStillVisible).toBeNull();
     // Entries should be hidden (not present)
-    const entryLeft = (previewBlockAfter!.textContent ?? '').includes('1–6');
+    const entryLeft = (previewBlockAfter.textContent ?? '').includes('1–6');
     expect(entryLeft).toBe(false);
 
     await act(async () => {
@@ -204,21 +227,26 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       ReactDOM.render(<DungeonIndexPage />, container);
     });
 
-    const detailLabel = findLabel('Detail mode');
-    expect(detailLabel).not.toBeNull();
-    const detailCheckbox = detailLabel!.querySelector(
-      'input[type="checkbox"]'
-    ) as HTMLInputElement;
+    const detailLabel = requireElement(
+      findLabel('Detail mode'),
+      'detail mode label'
+    );
+    const detailCheckbox = requireElement(
+      detailLabel.querySelector<HTMLInputElement>('input[type="checkbox"]'),
+      'detail mode checkbox'
+    );
     await act(async () => {
       detailCheckbox.click();
     });
 
-    const rollLabel = findLabel('d20 Roll:');
-    expect(rollLabel).not.toBeNull();
-    const rollInput = rollLabel!.querySelector(
-      'input[type="number"]'
-    ) as HTMLInputElement;
-    expect(rollInput).not.toBeNull();
+    const rollLabel = requireElement(
+      findLabel('d20 Roll:'),
+      'roll label'
+    );
+    const rollInput = requireElement(
+      rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'roll input'
+    );
     await act(async () => {
       (rollInput as any).value = '3';
       ReactTestUtils.Simulate.change(rollInput, {
@@ -226,14 +254,18 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       } as any);
     });
 
-    const mainSubmit = findButtonByText('Submit');
-    expect(mainSubmit).not.toBeNull();
+    const mainSubmit = requireElement(
+      findButtonByText('Submit'),
+      'main submit button'
+    );
     await act(async () => {
-      mainSubmit!.click();
+      mainSubmit.click();
     });
 
-    const feedEl = document.querySelector('.feed');
-    expect(feedEl).not.toBeNull();
+    const feedEl = requireElement(
+      document.querySelector('.feed'),
+      'feed element'
+    );
 
     const findPreviewContainer = (title: string) =>
       waitFor(() => {
@@ -251,28 +283,30 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       });
 
     const doorLocationBlock = await findPreviewContainer('Door Location (d20)');
-    const doorLocationOverride = findLabel(
-      'Override next roll:',
-      doorLocationBlock!
+    const doorLocationOverride = requireElement(
+      findLabel('Override next roll:', doorLocationBlock),
+      'door location override label'
     );
-    expect(doorLocationOverride).not.toBeNull();
-    const doorLocationInput = doorLocationOverride!.querySelector(
-      'input[type="number"]'
-    ) as HTMLInputElement;
+    const doorLocationInput = requireElement(
+      doorLocationOverride.querySelector<HTMLInputElement>('input[type="number"]'),
+      'door location override input'
+    );
     await act(async () => {
       (doorLocationInput as any).value = '3';
       ReactTestUtils.Simulate.change(doorLocationInput, {
         target: { value: '3' },
       } as any);
     });
-    const doorLocationSubmit = findButtonByText('Submit', doorLocationBlock!);
-    expect(doorLocationSubmit).not.toBeNull();
+    const doorLocationSubmit = requireElement(
+      findButtonByText('Submit', doorLocationBlock),
+      'door location submit button'
+    );
     await act(async () => {
-      doorLocationSubmit!.click();
+      doorLocationSubmit.click();
     });
 
     await waitFor(() =>
-      findLabel('Override next roll:', doorLocationBlock!) ? null : true
+      findLabel('Override next roll:', doorLocationBlock) ? null : true
     );
 
     expect(document.body.textContent ?? '').toContain(
@@ -282,27 +316,26 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     const doorContinuationBlock = await findPreviewContainer(
       'Door Continuation (d20)'
     );
-    const doorContinuationOverride = findLabel(
-      'Override next roll:',
-      doorContinuationBlock!
+    const doorContinuationOverride = requireElement(
+      findLabel('Override next roll:', doorContinuationBlock),
+      'door continuation override label'
     );
-    expect(doorContinuationOverride).not.toBeNull();
-    const doorContinuationInput = doorContinuationOverride!.querySelector(
-      'input[type="number"]'
-    ) as HTMLInputElement;
+    const doorContinuationInput = requireElement(
+      doorContinuationOverride.querySelector<HTMLInputElement>('input[type="number"]'),
+      'door continuation override input'
+    );
     await act(async () => {
       (doorContinuationInput as any).value = '3';
       ReactTestUtils.Simulate.change(doorContinuationInput, {
         target: { value: '3' },
       } as any);
     });
-    const doorContinuationSubmit = findButtonByText(
-      'Submit',
-      doorContinuationBlock!
+    const doorContinuationSubmit = requireElement(
+      findButtonByText('Submit', doorContinuationBlock),
+      'door continuation submit button'
     );
-    expect(doorContinuationSubmit).not.toBeNull();
     await act(async () => {
-      doorContinuationSubmit!.click();
+      doorContinuationSubmit.click();
     });
 
     const doorContinuationBlockAfter = await findPreviewContainer(
@@ -310,16 +343,18 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     );
 
     // Verify the preview collapses and keeps controls hidden once resolved.
-    const chevron = doorContinuationBlockAfter!.querySelector(
-      'button[aria-label="Expand table"]'
-    ) as HTMLButtonElement | null;
-    expect(chevron).not.toBeNull();
+    requireElement(
+      doorContinuationBlockAfter.querySelector<HTMLButtonElement>(
+        'button[aria-label="Expand table"]'
+      ),
+      'door continuation chevron'
+    );
     const overrideStillVisible = findLabel(
       'Override next roll:',
-      doorContinuationBlockAfter!
+      doorContinuationBlockAfter
     );
     expect(overrideStillVisible).toBeNull();
-    const entryDoor = (doorContinuationBlockAfter!.textContent ?? '').includes(
+    const entryDoor = (doorContinuationBlockAfter.textContent ?? '').includes(
       '3–5'
     );
     expect(entryDoor).toBe(false);

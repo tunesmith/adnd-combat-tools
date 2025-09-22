@@ -160,4 +160,127 @@ describe('dungeon feed toggling confidence', () => {
     const widthMatches = compactText.match(/It is 6' wide\./g);
     expect(widthMatches?.length ?? 0).toBe(1);
   });
+
+  it('preserves circular pool previews while modes toggle before resolving the chain', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 18);
+    feed = resolvePendingPreview(feed, 'unusualShape', 2);
+    feed = resolvePendingPreview(feed, 'unusualSize', 1);
+
+    const pendingBefore = listPendingPreviewTargets(feed);
+    expect(pendingBefore).toHaveLength(1);
+    const [pendingId] = pendingBefore;
+    expect(pendingId?.endsWith('circularContents')).toBe(true);
+
+    const detailParagraphs = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim());
+
+    expect(detailParagraphs).toContain('It is circular.');
+    expect(detailParagraphs.some((text) => text.includes('There is a pool.'))).toBe(
+      false
+    );
+
+    const compactParagraphs = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim());
+
+    const compactText = compactParagraphs.join(' ');
+    expect(compactText).toContain('It is circular.');
+    expect(compactText).not.toContain('There is a pool.');
+
+    const detailAfterToggle = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim());
+    expect(detailAfterToggle).toEqual(detailParagraphs);
+    expect(listPendingPreviewTargets(feed)).toEqual(pendingBefore);
+
+    const compactAfterToggle = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactAfterToggle).toBe(compactText);
+  });
+
+  it('outputs circular magic pool chains without duplicate sentences after resolution', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 18);
+    feed = resolvePendingPreview(feed, 'unusualShape', 2);
+    feed = resolvePendingPreview(feed, 'unusualSize', 1);
+    feed = resolvePendingPreview(feed, 'circularContents', 1);
+    feed = resolvePendingPreview(feed, 'circularPool', 19);
+    feed = resolvePendingPreview(feed, 'circularMagicPool', 18);
+    feed = resolvePendingPreview(feed, 'transporterLocation', 8);
+
+    expect(listPendingPreviewTargets(feed)).toHaveLength(0);
+
+    const detailParagraphs = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim());
+
+    expect(detailParagraphs.filter((text) => text === 'It is circular.')).toHaveLength(
+      1
+    );
+    expect(
+      detailParagraphs.filter((text) =>
+        text.startsWith('There is a pool. It is a magical pool.')
+      )
+    ).not.toHaveLength(0);
+    expect(detailParagraphs.filter((text) => text === 'It is a transporter.')).not.toHaveLength(
+      0
+    );
+    expect(
+      detailParagraphs.filter(
+        (text) => text === 'It transports characters elsewhere on the same level.'
+      )
+    ).not.toHaveLength(0);
+
+    const compactParagraphs = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim());
+    const compactJoined = compactParagraphs.join(' ');
+    const expectedSentences = [
+      'It is circular.',
+      'There is a pool.',
+      'It is a magical pool. (In order to find out what it is, characters must enter the magic pool.)',
+      'It transports characters elsewhere on the same level.',
+      'It is about 500 sq. ft.',
+    ];
+    for (const sentence of expectedSentences) {
+      const occurrences = compactJoined.match(
+        new RegExp(sentence.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+      );
+      expect(occurrences?.length ?? 0).toBe(1);
+    }
+  });
 });

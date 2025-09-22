@@ -73,8 +73,12 @@ describe('uiPreviewHarness', () => {
     let collapsed: Record<string, boolean> = {};
     let resolvedMap: Record<string, boolean> = {};
 
+    if (!preview) {
+      throw new Error('Expected periodicCheckDoorOnly preview');
+    }
+
     const result = resolveViaRegistry(
-      preview!,
+      preview,
       feed.id,
       3,
       (updater) => {
@@ -98,7 +102,7 @@ describe('uiPreviewHarness', () => {
     );
 
     expect(result).toBe(true);
-    const keyBase = `${feed.id}:${preview!.targetId ?? preview!.id}`;
+    const keyBase = `${feed.id}:${preview.targetId ?? preview.id}`;
     expect(collapsed[keyBase]).toBe(true);
     expect(resolvedMap[keyBase]).toBe(true);
   });
