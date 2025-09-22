@@ -198,7 +198,7 @@ function previewForEventNode(
     case 'doorLocation':
       tableId = `doorLocation:${event.sequence}`;
       break;
-    case 'periodicDoorOnly':
+    case 'periodicCheckDoorOnly':
       tableId = `periodicCheckDoorOnly:${event.sequence}`;
       break;
     case 'sidePassages':
@@ -220,10 +220,10 @@ function previewForEventNode(
       tableId = 'circularContents';
       break;
     case 'circularPool':
-      tableId = 'circularShapePool';
+      tableId = 'circularPool';
       break;
     case 'circularMagicPool':
-      tableId = 'circularShapeMagicPool';
+      tableId = 'circularMagicPool';
       break;
     case 'transmuteType':
       tableId = 'transmuteType';
@@ -386,7 +386,7 @@ export function toDetailRender(
   if (event.kind === 'doorLocation') {
     return renderDoorLocationDetail(outcome, appendPendingPreviews);
   }
-  if (event.kind === 'periodicDoorOnly') {
+  if (event.kind === 'periodicCheckDoorOnly') {
     return renderPeriodicDoorOnlyDetail(outcome, appendPendingPreviews);
   }
   if (outcome.event.kind === 'passageWidth') {
@@ -630,9 +630,9 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
       return buildGalleryStairLocationPreview(p.table);
     case 'circularContents':
       return buildCircularContentsPreview(p.table);
-    case 'circularShapePool':
+    case 'circularPool':
       return buildCircularPoolPreview(p.table);
-    case 'circularShapeMagicPool':
+    case 'circularMagicPool':
       return buildCircularMagicPoolPreview(p.table);
     case 'transmuteType':
       return buildTransmuteTypePreview(p.table);

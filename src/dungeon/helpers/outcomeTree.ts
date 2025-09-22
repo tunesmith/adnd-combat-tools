@@ -379,9 +379,9 @@ function resolvePendingNode(
     }
     case 'circularContents':
       return resolveCircularContents({});
-    case 'circularShapePool':
+    case 'circularPool':
       return resolveCircularPool({});
-    case 'circularShapeMagicPool':
+    case 'circularMagicPool':
       return resolveCircularMagicPool({});
     case 'transmuteType':
       return resolveTransmuteType({});

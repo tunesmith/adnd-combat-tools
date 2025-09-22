@@ -319,7 +319,7 @@ export function resolvePeriodicDoorOnly(options?: {
     type: 'event',
     roll: usedRoll,
     event: {
-      kind: 'periodicDoorOnly',
+      kind: 'periodicCheckDoorOnly',
       result: command,
       sequence,
       doorChain: {
@@ -728,7 +728,7 @@ export function resolveCircularContents(options?: {
   const command = getTableEntry(usedRoll, circularContents);
   const children: DungeonOutcomeNode[] = [];
   if (command === CircularContents.Pool) {
-    children.push({ type: 'pending-roll', table: 'circularShapePool' });
+    children.push({ type: 'pending-roll', table: 'circularPool' });
   }
   return {
     type: 'event',
@@ -745,7 +745,7 @@ export function resolveCircularPool(options?: {
   const command = getTableEntry(usedRoll, pool);
   const children: DungeonOutcomeNode[] = [];
   if (command === Pool.MagicPool) {
-    children.push({ type: 'pending-roll', table: 'circularShapeMagicPool' });
+    children.push({ type: 'pending-roll', table: 'circularMagicPool' });
   }
   return {
     type: 'event',

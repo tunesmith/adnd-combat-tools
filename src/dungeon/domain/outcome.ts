@@ -81,7 +81,7 @@ export type OutcomeEvent =
       };
     }
   | {
-      kind: 'periodicDoorOnly';
+      kind: 'periodicCheckDoorOnly';
       result: PeriodicCheckDoorOnly;
       sequence: number;
       doorChain?: {

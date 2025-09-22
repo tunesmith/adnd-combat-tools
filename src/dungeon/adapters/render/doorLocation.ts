@@ -43,7 +43,7 @@ export function renderPeriodicDoorOnlyDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'periodicDoorOnly') return [];
+  if (outcome.event.kind !== 'periodicCheckDoorOnly') return [];
   const event = outcome.event;
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -67,7 +67,7 @@ export function renderPeriodicDoorOnlyDetail(
 export function renderDoorChainCompact(
   resolvedNode?: OutcomeEventNode
 ): string {
-  if (!resolvedNode) return 'A door is indicated. ';
+  if (!resolvedNode) return 'A closed door is indicated. ';
   const events = flattenOutcomeTree(resolvedNode);
   return formatDoorChain(events);
 }
@@ -110,7 +110,7 @@ export function formatDoorLocationEvent(
 }
 
 export function formatPeriodicDoorOnlyEvent(
-  event: Extract<OutcomeEvent, { kind: 'periodicDoorOnly' }>
+  event: Extract<OutcomeEvent, { kind: 'periodicCheckDoorOnly' }>
 ): string {
   if (event.result === PeriodicCheckDoorOnly.Ignore) {
     return DOOR_CHAIN_FALLBACK_TEXT;
@@ -134,7 +134,7 @@ function formatDoorChain(events: OutcomeEventNode[]): string {
   for (const ev of events) {
     if (ev.event.kind === 'doorLocation') {
       text += formatDoorLocationEvent(ev.event);
-    } else if (ev.event.kind === 'periodicDoorOnly') {
+    } else if (ev.event.kind === 'periodicCheckDoorOnly') {
       text += formatPeriodicDoorOnlyEvent(ev.event);
     }
   }

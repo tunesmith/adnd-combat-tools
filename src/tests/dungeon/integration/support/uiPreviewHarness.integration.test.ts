@@ -1,9 +1,16 @@
+import type {
+  DungeonRenderNode,
+  DungeonTablePreview,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
 import {
   createFeedSnapshot,
   resolvePendingPreview,
   renderCompact,
+  renderDetail,
   listPendingPreviewTargets,
 } from '../../../support/dungeon/uiPreviewHarness';
+import { resolveViaRegistry } from '../../../../dungeon/helpers/registry';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -27,6 +34,73 @@ describe('uiPreviewHarness', () => {
     expect(compact).toEqual([
       "A door is to the Left. There are no other doors. The main passage extends -- check again in 30'.",
     ]);
+  });
+
+  test('UI collapse maps update for door continuation resolution', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 3,
+      detailMode: true,
+    });
+
+    feed = resolvePendingPreview(feed, 'doorLocation', 1);
+
+    // Locate the door continuation preview after resolving door location.
+    const preview = renderDetail(feed).find(
+      (node): node is DungeonTablePreview =>
+        node.kind === 'table-preview' && node.id.startsWith('periodicCheckDoorOnly')
+    );
+    expect(preview).toBeDefined();
+
+    type FeedState = {
+      id: string;
+      messages: DungeonRenderNode[];
+      outcome?: OutcomeEventNode;
+      renderCache?: { detail?: DungeonRenderNode[]; compact?: DungeonRenderNode[] };
+      pendingCount?: number;
+    };
+
+    let state: FeedState[] = [
+      {
+        id: feed.id,
+        messages: feed.messages,
+        outcome: feed.outcome,
+        renderCache: feed.renderCache,
+        pendingCount: feed.pendingCount,
+      },
+    ];
+
+    let collapsed: Record<string, boolean> = {};
+    let resolvedMap: Record<string, boolean> = {};
+
+    const result = resolveViaRegistry(
+      preview!,
+      feed.id,
+      3,
+      (updater) => {
+        state =
+          typeof updater === 'function'
+            ? (updater as (prev: FeedState[]) => FeedState[])(state)
+            : (updater as FeedState[]);
+      },
+      (updater) => {
+        collapsed =
+          typeof updater === 'function'
+            ? (updater as (prev: Record<string, boolean>) => Record<string, boolean>)(collapsed)
+            : (updater as Record<string, boolean>);
+      },
+      (updater) => {
+        resolvedMap =
+          typeof updater === 'function'
+            ? (updater as (prev: Record<string, boolean>) => Record<string, boolean>)(resolvedMap)
+            : (updater as Record<string, boolean>);
+      }
+    );
+
+    expect(result).toBe(true);
+    const keyBase = `${feed.id}:${preview!.targetId ?? preview!.id}`;
+    expect(collapsed[keyBase]).toBe(true);
+    expect(resolvedMap[keyBase]).toBe(true);
   });
 
   test('captures chamber unusual size reroll behaviour (current UI)', () => {

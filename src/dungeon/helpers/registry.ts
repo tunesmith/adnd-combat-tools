@@ -126,8 +126,8 @@ const TABLE_ID_LIST = [
   'unusualSize',
   'trickTrap',
   'circularContents',
-  'circularShapePool',
-  'circularShapeMagicPool',
+  'circularPool',
+  'circularMagicPool',
   'transmuteType',
   'poolAlignment',
   'transporterLocation',
@@ -181,8 +181,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   unusualSize: 'Unusual Size',
   trickTrap: 'Trick / Trap',
   circularContents: 'Circular Contents',
-  circularShapePool: 'Pool',
-  circularShapeMagicPool: 'Magic Pool Effect',
+  circularPool: 'Pool',
+  circularMagicPool: 'Magic Pool Effect',
   transmuteType: 'Transmutation Type',
   poolAlignment: 'Pool Alignment',
   transporterLocation: 'Transporter Location',
@@ -303,9 +303,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   },
   circularContents: ({ roll }) =>
     fromOutcome(resolveCircularContents({ roll })),
-  circularShapePool: ({ roll }) => fromOutcome(resolveCircularPool({ roll })),
-  circularShapeMagicPool: ({ roll }) =>
-    fromOutcome(resolveCircularMagicPool({ roll })),
+  circularPool: ({ roll }) => fromOutcome(resolveCircularPool({ roll })),
+  circularMagicPool: ({ roll }) => fromOutcome(resolveCircularMagicPool({ roll })),
   transmuteType: ({ roll }) => fromOutcome(resolveTransmuteType({ roll })),
   poolAlignment: ({ roll }) => fromOutcome(resolvePoolAlignment({ roll })),
   transporterLocation: ({ roll }) =>
@@ -503,14 +502,16 @@ export function resolveViaRegistry<T extends FeedLike>(
                   if (setCollapsed) {
                     setCollapsed((prev) => {
                       const next = { ...prev };
-                      for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+                      for (const k of keyVariants)
+                        next[`${feedItemId}:${k}`] = true;
                       return next;
                     });
                   }
                   if (setResolved) {
                     setResolved((prev) => {
                       const next = { ...prev };
-                      for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+                      for (const k of keyVariants)
+                        next[`${feedItemId}:${k}`] = true;
                       return next;
                     });
                   }
@@ -539,14 +540,16 @@ export function resolveViaRegistry<T extends FeedLike>(
               if (setCollapsed) {
                 setCollapsed((prev) => {
                   const next = { ...prev };
-                  for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+                  for (const k of keyVariants)
+                    next[`${feedItemId}:${k}`] = true;
                   return next;
                 });
               }
               if (setResolved) {
                 setResolved((prev) => {
                   const next = { ...prev };
-                  for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+                  for (const k of keyVariants)
+                    next[`${feedItemId}:${k}`] = true;
                   return next;
                 });
               }
@@ -589,6 +592,7 @@ function collectKeyVariants(primary: string, fallbackId?: string): string[] {
   };
   add(primary);
   add(fallbackId);
+
   return Array.from(variants);
 }
 

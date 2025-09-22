@@ -33,7 +33,7 @@ export function periodicBaseTexts(
     case PeriodicCheck.Door:
       return {
         detail: 'A closed door is indicated.',
-        compact: 'A door is indicated. ',
+        compact: 'A closed door is indicated. ',
       };
     case PeriodicCheck.SidePassage:
       return {
