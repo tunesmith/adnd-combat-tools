@@ -23,13 +23,12 @@ import { periodicCheck } from '../../tables/dungeon/periodicCheck';
 import { SpecialPassage } from '../../tables/dungeon/specialPassage';
 import {
   renderPeriodicCheckDetail,
-  periodicBaseTexts,
-  TRICK_TRAP_FALLBACK_TEXT,
+  renderPeriodicCheckCompact,
+  renderWanderingWhereFrom,
 } from './render/periodicOutcome';
 import {
   renderDoorLocationDetail,
   renderPeriodicDoorOnlyDetail,
-  renderDoorChainCompact,
   buildDoorLocationPreview,
   buildPeriodicDoorOnlyPreview,
 } from './render/doorLocation';
@@ -40,7 +39,6 @@ import {
 import {
   renderSidePassagesDetail,
   describeSidePassage,
-  formatSidePassageResult,
   buildSidePassagePreview,
 } from './render/sidePassage';
 import {
@@ -139,16 +137,11 @@ import {
   renderUnusualShapeCompact,
   buildUnusualShapePreview,
 } from './render/unusualShape';
-import {
-  renderTrickTrapDetail,
-  renderTrickTrapCompact,
-} from './render/trickTrap';
+import { renderTrickTrapDetail } from './render/trickTrap';
 import {
   describeMonsterOutcome,
   buildMonsterPreview,
-  renderWanderingMonsterCompact,
 } from './render/monsters';
-import { findChildEvent } from './render/shared';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
 
@@ -701,18 +694,7 @@ export function toCompactRender(
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = node;
   if (event.kind === 'periodicCheck') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 3,
-      text: 'Passage',
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${PeriodicCheck[event.result]}`],
-    };
-    const text = renderCompactPeriodicOutcome(node);
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
-    return nodes;
+    return renderPeriodicCheckCompact(node);
   }
   if (event.kind === 'doorBeyond') {
     const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
@@ -908,118 +890,4 @@ export function toCompactRender(
     return renderUnusualSizeCompact(node);
   }
   return nodes;
-}
-
-function renderWanderingWhereFrom(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'wanderingWhereFrom') return '';
-  switch (node.event.result) {
-    case PeriodicCheck.Door: {
-      const door = findChildEvent(node, 'doorLocation');
-      return renderDoorChainCompact(door);
-    }
-    case PeriodicCheck.SidePassage: {
-      const side = findChildEvent(node, 'sidePassages');
-      return side && side.event.kind === 'sidePassages'
-        ? formatSidePassageResult(side.event.result)
-        : 'A side passage occurs. ';
-    }
-    case PeriodicCheck.PassageTurn: {
-      const turn = findChildEvent(node, 'passageTurns');
-      return turn
-        ? renderPassageTurnCompact(turn)
-        : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
-    }
-    case PeriodicCheck.Chamber: {
-      const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
-      return 'The passage opens into a chamber. ' + detail;
-    }
-    case PeriodicCheck.Stairs: {
-      const stairs = findChildEvent(node, 'stairs');
-      return stairs
-        ? renderStairsCompact(stairs, {
-            renderChamberSummary: renderChamberDimensionsCompact,
-          })
-        : periodicBaseTexts(PeriodicCheck.Stairs).detail;
-    }
-    case PeriodicCheck.TrickTrap: {
-      const trap = findChildEvent(node, 'trickTrap');
-      if (trap && trap.event.kind === 'trickTrap') {
-        const text = renderTrickTrapCompact(trap);
-        if (text.length > 0) {
-          return text;
-        }
-      }
-      return TRICK_TRAP_FALLBACK_TEXT;
-    }
-    case PeriodicCheck.ContinueStraight:
-      return periodicBaseTexts(PeriodicCheck.ContinueStraight).detail;
-    case PeriodicCheck.DeadEnd:
-      return periodicBaseTexts(PeriodicCheck.DeadEnd).detail;
-    default:
-      return periodicBaseTexts(node.event.result).detail;
-  }
-}
-
-function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'periodicCheck') return '';
-  const event = node.event;
-  switch (event.result) {
-    case PeriodicCheck.Door:
-      return renderDoorChainCompact(findChildEvent(node, 'doorLocation'));
-    case PeriodicCheck.SidePassage: {
-      const side = findChildEvent(node, 'sidePassages');
-      if (side && side.event.kind === 'sidePassages') {
-        const summary = describeSidePassage(side);
-        if (summary.compactText.length > 0) {
-          return summary.compactText;
-        }
-      }
-      return periodicBaseTexts(event.result, {
-        avoidMonster: event.avoidMonster ?? false,
-      }).compact;
-    }
-    case PeriodicCheck.PassageTurn: {
-      const turn = findChildEvent(node, 'passageTurns');
-      return turn
-        ? renderPassageTurnCompact(turn)
-        : periodicBaseTexts(event.result, {
-            avoidMonster: event.avoidMonster ?? false,
-          }).compact;
-    }
-    case PeriodicCheck.Chamber: {
-      const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
-      return 'The passage opens into a chamber. ' + detail;
-    }
-    case PeriodicCheck.Stairs: {
-      const stairs = findChildEvent(node, 'stairs');
-      return stairs
-        ? renderStairsCompact(stairs, {
-            renderChamberSummary: renderChamberDimensionsCompact,
-          })
-        : periodicBaseTexts(event.result, {
-            avoidMonster: event.avoidMonster ?? false,
-          }).compact;
-    }
-    case PeriodicCheck.WanderingMonster: {
-      const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
-      const monsterLevelNode = findChildEvent(node, 'monsterLevel');
-      const prefix =
-        whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
-          ? renderWanderingWhereFrom(whereFrom)
-          : '';
-      const monsterSummary = renderWanderingMonsterCompact(
-        event.level,
-        monsterLevelNode && monsterLevelNode.event.kind === 'monsterLevel'
-          ? monsterLevelNode
-          : undefined
-      );
-      return prefix + monsterSummary;
-    }
-    default:
-      return periodicBaseTexts(event.result, {
-        avoidMonster: event.avoidMonster ?? false,
-      }).compact;
-  }
 }

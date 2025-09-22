@@ -2,7 +2,13 @@ import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
-import { buildPreview } from './shared';
+import { buildPreview, findChildEvent } from './shared';
+import { renderDoorChainCompact } from './doorLocation';
+import { describeSidePassage } from './sidePassage';
+import { renderPassageTurnCompact } from './passageTurns';
+import { renderChamberDimensionsCompact } from './chamberDimensions';
+import { renderStairsCompact } from './stairs';
+import { renderWanderingMonsterCompact } from './monsters';
 
 export const DEAD_END_FALLBACK_TEXT = 'The passage reaches a dead end. (TODO) ';
 export const TRICK_TRAP_FALLBACK_TEXT =
@@ -103,4 +109,131 @@ export function renderPeriodicCheckDetail(
   }
   appendPendingPreviews(outcome, nodes);
   return nodes;
+}
+
+export function renderPeriodicCheckCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'periodicCheck') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 3,
+    text: 'Passage',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${PeriodicCheck[outcome.event.result]}`],
+  };
+  const text = renderCompactPeriodicOutcome(outcome);
+  return [heading, bullet, { kind: 'paragraph', text }];
+}
+
+export function renderCompactPeriodicOutcome(
+  node: OutcomeEventNode
+): string {
+  if (node.event.kind !== 'periodicCheck') return '';
+  const event = node.event;
+  switch (event.result) {
+    case PeriodicCheck.Door:
+      return renderDoorChainCompact(findChildEvent(node, 'doorLocation'));
+    case PeriodicCheck.SidePassage: {
+      const side = findChildEvent(node, 'sidePassages');
+      if (side && side.event.kind === 'sidePassages') {
+        const summary = describeSidePassage(side);
+        if (summary.compactText.length > 0) {
+          return summary.compactText;
+        }
+      }
+      return 'A side passage occurs. ';
+    }
+    case PeriodicCheck.PassageTurn: {
+      const turn = findChildEvent(node, 'passageTurns');
+      return turn
+        ? renderPassageTurnCompact(turn)
+        : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
+    }
+    case PeriodicCheck.Chamber: {
+      const chamber = findChildEvent(node, 'chamberDimensions');
+      const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
+      return 'The passage opens into a chamber. ' + detail;
+    }
+    case PeriodicCheck.Stairs: {
+      const stairs = findChildEvent(node, 'stairs');
+      return stairs
+        ? renderStairsCompact(stairs, {
+            renderChamberSummary: renderChamberDimensionsCompact,
+          })
+        : periodicBaseTexts(PeriodicCheck.Stairs).detail;
+    }
+    case PeriodicCheck.TrickTrap:
+      return TRICK_TRAP_FALLBACK_TEXT;
+    case PeriodicCheck.WanderingMonster: {
+      const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
+      const monsterLevelNode = findChildEvent(node, 'monsterLevel');
+      const prefix =
+        whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
+          ? renderWanderingWhereFrom(whereFrom)
+          : '';
+      const monsterSummary = renderWanderingMonsterCompact(
+        event.level,
+        monsterLevelNode && monsterLevelNode.event.kind === 'monsterLevel'
+          ? monsterLevelNode
+          : undefined
+      );
+      return prefix + monsterSummary;
+    }
+    case PeriodicCheck.ContinueStraight:
+      return periodicBaseTexts(PeriodicCheck.ContinueStraight).detail;
+    case PeriodicCheck.DeadEnd:
+      return periodicBaseTexts(PeriodicCheck.DeadEnd).detail;
+    default:
+      return periodicBaseTexts(event.result).detail;
+  }
+}
+
+export function renderWanderingWhereFrom(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'wanderingWhereFrom') return '';
+  switch (node.event.result) {
+    case PeriodicCheck.Door: {
+      const door = findChildEvent(node, 'doorLocation');
+      return renderDoorChainCompact(door);
+    }
+    case PeriodicCheck.SidePassage: {
+      const side = findChildEvent(node, 'sidePassages');
+      if (side && side.event.kind === 'sidePassages') {
+        const summary = describeSidePassage(side);
+        if (summary.compactText.length > 0) {
+          return summary.compactText;
+        }
+      }
+      return 'A side passage occurs. ';
+    }
+    case PeriodicCheck.PassageTurn: {
+      const turn = findChildEvent(node, 'passageTurns');
+      return turn
+        ? renderPassageTurnCompact(turn)
+        : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
+    }
+    case PeriodicCheck.Chamber: {
+      const chamber = findChildEvent(node, 'chamberDimensions');
+      const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
+      return 'The passage opens into a chamber. ' + detail;
+    }
+    case PeriodicCheck.Stairs: {
+      const stairs = findChildEvent(node, 'stairs');
+      return stairs
+        ? renderStairsCompact(stairs, {
+            renderChamberSummary: renderChamberDimensionsCompact,
+          })
+        : periodicBaseTexts(PeriodicCheck.Stairs).detail;
+    }
+    case PeriodicCheck.TrickTrap:
+      return TRICK_TRAP_FALLBACK_TEXT;
+    case PeriodicCheck.ContinueStraight:
+      return periodicBaseTexts(PeriodicCheck.ContinueStraight).detail;
+    case PeriodicCheck.DeadEnd:
+      return periodicBaseTexts(PeriodicCheck.DeadEnd).detail;
+    default:
+      return periodicBaseTexts(node.event.result).detail;
+  }
 }
