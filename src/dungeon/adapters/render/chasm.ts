@@ -1,16 +1,16 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import {
-  chasmDepth as chasmDepthTable,
   chasmConstruction as chasmConstructionTable,
-  ChasmDepth,
   ChasmConstruction,
+  ChasmDepth,
+  chasmDepth as chasmDepthTable,
   JumpingPlaceWidth,
 } from '../../../tables/dungeon/specialPassage';
 import {
-  findChildEvent,
-  buildPreview,
   type AppendPreviewFn,
+  buildPreview,
+  findChildEvent,
   type TablePreviewFactory,
 } from './shared';
 

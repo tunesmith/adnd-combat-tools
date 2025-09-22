@@ -238,7 +238,7 @@ function previewForEventNode(
       tableId = 'transporterLocation';
       break;
     case 'specialPassage':
-      tableId = undefined; // handled directly in detail render
+      tableId = 'specialPassage';
       break;
     case 'stairs':
       tableId = 'stairs';

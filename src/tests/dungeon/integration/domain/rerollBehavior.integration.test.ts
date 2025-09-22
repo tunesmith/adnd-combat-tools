@@ -122,7 +122,7 @@ describe('reroll updates', () => {
     const previews = detailNodes.filter(
       (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
     );
-    expect(previews).toHaveLength(0);
+    expect(previews).toHaveLength(1);
     expect(countPendingNodes(rerolledTree)).toBeGreaterThan(0);
   });
 });

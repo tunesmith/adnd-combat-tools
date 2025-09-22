@@ -50,7 +50,7 @@ describe('detail rendering with special passage', () => {
     const specialPassagePreviews = detailNodes.filter(
       (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
     );
-    expect(specialPassagePreviews).toHaveLength(0);
+    expect(specialPassagePreviews).toHaveLength(1);
   });
 
   it('verifies that proper output shows in deep chasms', () => {
