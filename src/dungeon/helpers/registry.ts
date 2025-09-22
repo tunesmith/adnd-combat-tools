@@ -479,6 +479,7 @@ export function resolveViaRegistry<T extends FeedLike>(
 
   const heading = TABLE_HEADINGS[base];
   const targetKey = tp.targetId ?? tp.id;
+  const keyVariants = collectKeyVariants(targetKey, tp.id);
   let resolved = false;
 
   if (setFeed) {
@@ -499,6 +500,21 @@ export function resolveViaRegistry<T extends FeedLike>(
                 if (applied) {
                   resolved = true;
                   const { outcome, snapshot } = applied;
+                  // Mark this preview as resolved/collapsed for all key variants
+                  if (setCollapsed) {
+                    setCollapsed((prev) => {
+                      const next = { ...prev };
+                      for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+                      return next;
+                    });
+                  }
+                  if (setResolved) {
+                    setResolved((prev) => {
+                      const next = { ...prev };
+                      for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+                      return next;
+                    });
+                  }
                   return {
                     ...fi,
                     outcome,
@@ -521,6 +537,20 @@ export function resolveViaRegistry<T extends FeedLike>(
               });
               if (!tableResult) return fi;
               resolved = true;
+              if (setCollapsed) {
+                setCollapsed((prev) => {
+                  const next = { ...prev };
+                  for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+                  return next;
+                });
+              }
+              if (setResolved) {
+                setResolved((prev) => {
+                  const next = { ...prev };
+                  for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+                  return next;
+                });
+              }
               return updateResolvedBlock(
                 fi,
                 feedItemId,
@@ -534,10 +564,39 @@ export function resolveViaRegistry<T extends FeedLike>(
   }
   if (!resolved) return false;
   if (setCollapsed) {
-    setCollapsed((prev) => ({ ...prev, [`${feedItemId}:${targetKey}`]: true }));
+    setCollapsed((prev) => {
+      const next = { ...prev };
+      for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+      return next;
+    });
   }
   if (setResolved) {
-    setResolved((prev) => ({ ...prev, [`${feedItemId}:${targetKey}`]: true }));
+    setResolved((prev) => {
+      const next = { ...prev };
+      for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+      return next;
+    });
   }
   return true;
+}
+
+function collectKeyVariants(primary: string, fallbackId?: string): string[] {
+  const variants = new Set<string>();
+  const add = (k?: string) => {
+    if (!k || k.length === 0) return;
+    variants.add(k);
+    const norm = normalizeKey(k);
+    if (norm) variants.add(norm);
+  };
+  add(primary);
+  add(fallbackId);
+  return Array.from(variants);
+}
+
+function normalizeKey(key: string): string | undefined {
+  const idx = key.lastIndexOf(':');
+  if (idx === -1) return undefined;
+  const tail = key.slice(idx + 1);
+  if (/^\d+$/.test(tail)) return key.slice(0, idx);
+  return undefined;
 }

@@ -41,6 +41,7 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-unused-imports": "^2.0.0",
     "gh-pages": "^3.2.3",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^27.5.1",
     "prettier": "^2.6.1",
     "serve": "^13.0.2",
