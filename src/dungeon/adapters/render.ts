@@ -84,10 +84,13 @@ import {
 import {
   renderSpecialPassageDetail,
   renderSpecialPassageCompact,
+  renderRiverConstructionDetail,
+  renderRiverConstructionCompact,
   buildSpecialPassagePreview,
   buildGalleryStairLocationPreview,
   buildStreamConstructionPreview,
   buildRiverConstructionPreview,
+  buildRiverBoatBankPreview,
 } from './render/specialPassage';
 import {
   renderChasmDepthDetail,
@@ -412,6 +415,9 @@ export function toDetailRender(
   if (event.kind === 'specialPassage') {
     return renderSpecialPassageDetail(outcome, appendPendingPreviews);
   }
+  if (event.kind === 'riverConstruction') {
+    return renderRiverConstructionDetail(outcome, appendPendingPreviews);
+  }
   if (event.kind === 'chasmDepth') {
     return renderChasmDepthDetail(outcome);
   }
@@ -663,6 +669,8 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
       return buildStreamConstructionPreview(p.table);
     case 'riverConstruction':
       return buildRiverConstructionPreview(p.table);
+    case 'riverBoatBank':
+      return buildRiverBoatBankPreview(p.table);
     case 'chasmDepth':
       return buildChasmDepthPreview(p.table);
     case 'chasmConstruction':
@@ -842,6 +850,11 @@ export function toCompactRender(
   }
   if (event.kind === 'circularMagicPool') {
     const nodes2 = renderCircularMagicPoolCompact(node);
+    appendPendingPreviews(outcome, nodes2);
+    return nodes2;
+  }
+  if (event.kind === 'riverConstruction') {
+    const nodes2 = renderRiverConstructionCompact(node);
     appendPendingPreviews(outcome, nodes2);
     return nodes2;
   }

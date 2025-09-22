@@ -5,6 +5,7 @@ import {
   galleryStairLocation as galleryStairLocationTable,
   streamConstruction as streamConstructionTable,
   riverConstruction as riverConstructionTable,
+  riverBoatBank as riverBoatBankTable,
   SpecialPassage,
   GalleryStairLocation,
   StreamConstruction,
@@ -114,13 +115,14 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
           : "A river, 60' wide, bisects the passage. ";
       append(base);
       const construction = findChildEvent(node, 'riverConstruction');
-      if (construction)
-        append(
-          formatRiverConstruction(
-            construction.event.result as RiverConstruction,
-            node
-          )
-        );
+      if (construction) {
+        const summary = describeRiverConstruction(construction);
+        for (const paragraph of summary.detailParagraphs) {
+          if (paragraph.kind === 'paragraph') {
+            append(paragraph.text);
+          }
+        }
+      }
       break;
     }
     case SpecialPassage.TwentyFootChasm: {
@@ -146,6 +148,55 @@ export function renderSpecialPassageCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'specialPassage') return '';
   const summary = describeSpecialPassage(node);
   return summary.compactText;
+}
+
+export function renderRiverConstructionDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'riverConstruction') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'River Construction',
+  };
+  const label =
+    RiverConstruction[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const summary = describeRiverConstruction(outcome);
+  const nodes: DungeonRenderNode[] = [
+    heading,
+    bullet,
+    ...summary.detailParagraphs,
+  ];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderRiverConstructionCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'riverConstruction') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'River Construction',
+  };
+  const label =
+    RiverConstruction[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const summary = describeRiverConstruction(outcome);
+  const paragraphNodes: DungeonMessage[] =
+    summary.compactText.length > 0
+      ? [{ kind: 'paragraph', text: `${summary.compactText} ` }]
+      : [];
+  return [heading, bullet, ...paragraphNodes];
 }
 
 export const buildSpecialPassagePreview: TablePreviewFactory = (tableId) =>
@@ -190,6 +241,16 @@ export const buildRiverConstructionPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
+export const buildRiverBoatBankPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Boat Bank',
+    sides: riverBoatBankTable.sides,
+    entries: riverBoatBankTable.entries.map((entry) => ({
+      range: entry.range,
+      label: RiverBoatBank[entry.command] ?? String(entry.command),
+    })),
+  });
+
 function formatGalleryStairLocation(result: GalleryStairLocation): string {
   switch (result) {
     case GalleryStairLocation.PassageBeginning:
@@ -218,21 +279,48 @@ function formatStreamConstruction(result: StreamConstruction): string {
     : '';
 }
 
-export function formatRiverConstruction(
-  result: RiverConstruction,
-  node: OutcomeEventNode
-): string {
-  if (result === RiverConstruction.Bridged)
-    return 'A bridge crosses the river. ';
-  if (result === RiverConstruction.Obstacle) return '';
-  const boat = findChildEvent(node, 'riverBoatBank');
-  if (boat) {
-    return (
-      'There is a boat. ' +
-      (boat.event.result === RiverBoatBank.ThisSide
-        ? 'The boat is on this bank of the river. '
-        : 'The boat is on the opposite bank of the river. ')
-    );
+export function describeRiverConstruction(node: OutcomeEventNode): {
+  detailParagraphs: DungeonMessage[];
+  compactText: string;
+} {
+  if (node.event.kind !== 'riverConstruction') {
+    return { detailParagraphs: [], compactText: '' };
   }
-  return '';
+  const detailParagraphs: DungeonMessage[] = [];
+  const compactSegments: string[] = [];
+  const append = (text: string | undefined) => {
+    if (!text) return;
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const normalized = text.endsWith(' ') ? text : `${trimmed} `;
+    detailParagraphs.push({ kind: 'paragraph', text: normalized });
+    compactSegments.push(trimmed.endsWith('.') ? trimmed : `${trimmed}.`);
+  };
+
+  switch (node.event.result) {
+    case RiverConstruction.Bridged:
+      append('A bridge crosses the river. ');
+      break;
+    case RiverConstruction.Boat: {
+      append('There is a boat. ');
+      const boat = findChildEvent(node, 'riverBoatBank');
+      if (boat) {
+        append(
+          boat.event.result === RiverBoatBank.ThisSide
+            ? 'The boat is on this bank of the river. '
+            : 'The boat is on the opposite bank of the river. '
+        );
+      }
+      break;
+    }
+    case RiverConstruction.Obstacle:
+      break;
+    default:
+      break;
+  }
+
+  return {
+    detailParagraphs,
+    compactText: compactSegments.join(' '),
+  };
 }
