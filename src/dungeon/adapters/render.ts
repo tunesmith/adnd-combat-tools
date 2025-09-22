@@ -477,6 +477,25 @@ export function toDetailRender(
     nodes2.push(...summary.detailParagraphs);
     return nodes2;
   }
+  if (event.kind === 'wanderingWhereFrom') {
+    const heading: DungeonMessage = {
+      kind: 'heading',
+      level: 4,
+      text: 'Where From',
+    };
+    const label = PeriodicCheck[event.result] ?? String(event.result);
+    const bullet: DungeonMessage = {
+      kind: 'bullet-list',
+      items: [`roll: ${roll} — ${label}`],
+    };
+    const detailText = renderWanderingWhereFrom(outcome);
+    nodes.push(heading, bullet);
+    if (detailText.trim().length > 0) {
+      nodes.push({ kind: 'paragraph', text: detailText });
+    }
+    appendPendingPreviews(outcome, nodes);
+    return nodes;
+  }
   const monsterDescription = describeMonsterOutcome(outcome);
   if (monsterDescription) {
     const heading: DungeonMessage = {

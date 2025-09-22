@@ -20,8 +20,7 @@ export function renderCircularContentsDetail(
     kind: 'bullet-list',
     items: [
       `roll: ${outcome.roll} — ${
-        CircularContents[outcome.event.result] ??
-        String(outcome.event.result)
+        CircularContents[outcome.event.result] ?? String(outcome.event.result)
       }`,
     ],
   };
@@ -70,8 +69,7 @@ export const buildCircularContentsPreview: TablePreviewFactory = (tableId) =>
     sides: circularContents.sides,
     entries: circularContents.entries.map((entry) => ({
       range: entry.range,
-      label: CircularContents[entry.command] ??
-        String(entry.command),
+      label: CircularContents[entry.command] ?? String(entry.command),
     })),
   });
 
@@ -88,7 +86,7 @@ export const buildCircularPoolPreview: TablePreviewFactory = (tableId) =>
 export function formatCircularContents(result: CircularContents): string {
   switch (result) {
     case CircularContents.Pool:
-      return 'There is a pool.';
+      return '';
     case CircularContents.Well:
       return 'There is a well. ';
     case CircularContents.Shaft:
