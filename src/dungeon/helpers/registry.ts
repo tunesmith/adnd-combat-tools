@@ -500,7 +500,6 @@ export function resolveViaRegistry<T extends FeedLike>(
                 if (applied) {
                   resolved = true;
                   const { outcome, snapshot } = applied;
-                  // Mark this preview as resolved/collapsed for all key variants
                   if (setCollapsed) {
                     setCollapsed((prev) => {
                       const next = { ...prev };
