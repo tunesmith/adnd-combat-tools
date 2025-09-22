@@ -25,6 +25,25 @@ export function renderSidePassagesDetail(
   return [heading, bullet, ...summary.detailParagraphs];
 }
 
+export function renderSidePassagesCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'sidePassages') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Side Passages',
+  };
+  const label =
+    SidePassages[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const summary = describeSidePassage(outcome);
+  return [heading, bullet, ...summary.detailParagraphs];
+}
+
 export function describeSidePassage(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;

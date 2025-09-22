@@ -15,7 +15,6 @@ import {
   RoomDimensions,
   ChamberDimensions,
 } from '../../tables/dungeon/chambersRooms';
-import { SidePassages } from '../../tables/dungeon/sidePassages';
 import { PassageTurns } from '../../tables/dungeon/passageTurns';
 import { Stairs } from '../../tables/dungeon/stairs';
 import { PassageWidth } from '../../tables/dungeon/passageWidth';
@@ -38,7 +37,7 @@ import {
 } from './render/doorBeyond';
 import {
   renderSidePassagesDetail,
-  describeSidePassage,
+  renderSidePassagesCompact,
   buildSidePassagePreview,
 } from './render/sidePassage';
 import {
@@ -735,20 +734,7 @@ export function toCompactRender(
     return nodes;
   }
   if (event.kind === 'sidePassages') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Side Passages',
-    };
-    const label = SidePassages[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const summary = describeSidePassage(node);
-    nodes.push(heading, bullet);
-    nodes.push(...summary.detailParagraphs);
-    return nodes;
+    return renderSidePassagesCompact(node);
   }
   if (event.kind === 'passageTurns') {
     const heading: DungeonMessage = {
