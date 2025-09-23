@@ -15,7 +15,8 @@ import { periodicCheck } from '../../tables/dungeon/periodicCheck';
 import {
   renderPeriodicCheckDetail,
   renderPeriodicCheckCompact,
-  renderWanderingWhereFrom,
+  renderWanderingWhereFromDetail,
+  renderWanderingWhereFromCompactNodes,
 } from './render/periodicOutcome';
 import {
   renderDoorLocationDetail,
@@ -468,23 +469,7 @@ export function toDetailRender(
     return renderTrickTrapDetail(outcome);
   }
   if (event.kind === 'wanderingWhereFrom') {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: 'Where From',
-    };
-    const label = PeriodicCheck[event.result] ?? String(event.result);
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${label}`],
-    };
-    const detailText = renderWanderingWhereFrom(outcome);
-    nodes.push(heading, bullet);
-    if (detailText.trim().length > 0) {
-      nodes.push({ kind: 'paragraph', text: detailText });
-    }
-    appendPendingPreviews(outcome, nodes);
-    return nodes;
+    return renderWanderingWhereFromDetail(outcome, appendPendingPreviews);
   }
   const monsterDescription = describeMonsterOutcome(outcome);
   if (monsterDescription) {
@@ -766,6 +751,9 @@ export function toCompactRender(
   }
   if (event.kind === 'transporterLocation') {
     return renderTransporterLocationCompact(node);
+  }
+  if (event.kind === 'wanderingWhereFrom') {
+    return renderWanderingWhereFromCompactNodes(node);
   }
   const monsterDescription = describeMonsterOutcome(outcome);
   if (monsterDescription) {

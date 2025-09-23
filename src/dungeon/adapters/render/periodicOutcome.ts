@@ -237,3 +237,51 @@ export function renderWanderingWhereFrom(node: OutcomeEventNode): string {
       return periodicBaseTexts(node.event.result).detail;
   }
 }
+
+export function renderWanderingWhereFromDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'wanderingWhereFrom') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Where From',
+  };
+  const label =
+    PeriodicCheck[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const detailText = renderWanderingWhereFrom(outcome);
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (detailText.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text: detailText });
+  }
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderWanderingWhereFromCompactNodes(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'wanderingWhereFrom') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Where From',
+  };
+  const label =
+    PeriodicCheck[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const text = renderWanderingWhereFrom(outcome);
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (text.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text });
+  }
+  return nodes;
+}
