@@ -81,9 +81,7 @@ export function formatChasmDepth(result: ChasmDepth): string {
   }
 }
 
-export function formatChasmConstruction(
-  result: ChasmConstruction
-): string {
+export function formatChasmConstruction(result: ChasmConstruction): string {
   if (result === ChasmConstruction.Bridged)
     return 'A bridge crosses the chasm. ';
   if (result === ChasmConstruction.Obstacle)
@@ -108,7 +106,7 @@ export function formatJumpingPlaceWidth(result: JumpingPlaceWidth): string {
   }
 }
 
-export function renderJumpingPlaceDetail(
+export function renderJumpingPlaceWidthDetail(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'jumpingPlaceWidth') return [];

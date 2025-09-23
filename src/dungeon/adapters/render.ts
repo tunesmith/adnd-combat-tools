@@ -9,14 +9,13 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
-import { PeriodicCheck } from '../../tables/dungeon/periodicCheck';
 import { DoorBeyond } from '../../tables/dungeon/doorBeyond';
-import { periodicCheck } from '../../tables/dungeon/periodicCheck';
 import {
   renderPeriodicCheckDetail,
   renderPeriodicCheckCompact,
   renderWanderingWhereFromDetail,
   renderWanderingWhereFromCompactNodes,
+  buildWanderingWhereFromPreview,
 } from './render/periodicOutcome';
 import {
   renderDoorLocationDetail,
@@ -95,7 +94,7 @@ import {
 import {
   renderChasmDepthDetail,
   renderChasmConstructionDetail,
-  renderJumpingPlaceDetail,
+  renderJumpingPlaceWidthDetail,
   buildChasmDepthPreview,
   buildChasmConstructionPreview,
   buildJumpingPlaceWidthPreview,
@@ -130,7 +129,10 @@ import {
   renderUnusualShapeCompact,
   buildUnusualShapePreview,
 } from './render/unusualShape';
-import { renderTrickTrapDetail, buildTrickTrapPreview } from './render/trickTrap';
+import {
+  renderTrickTrapDetail,
+  buildTrickTrapPreview,
+} from './render/trickTrap';
 import {
   buildMonsterPreview,
   renderMonsterDetailNodes,
@@ -138,12 +140,6 @@ import {
 } from './render/monsters';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
-
-function rangeText(range: number[]): string {
-  return range.length === 1
-    ? `${range[0]}`
-    : `${range[0]}–${range[range.length - 1]}`;
-}
 
 function withTargetId(
   preview: DungeonTablePreview,
@@ -423,7 +419,7 @@ export function toDetailRender(
     return renderChasmConstructionDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'jumpingPlaceWidth') {
-    return renderJumpingPlaceDetail(outcome);
+    return renderJumpingPlaceWidthDetail(outcome);
   }
   if (event.kind === 'egress') {
     return renderEgressDetail(outcome);
@@ -575,18 +571,7 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
     case 'chute':
       return buildChutePreview(p.table);
     case 'wanderingWhereFrom':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Where From',
-        sides: periodicCheck.sides,
-        entries: periodicCheck.entries
-          .filter((e) => e.command !== PeriodicCheck.WanderingMonster)
-          .map((e) => ({
-            range: rangeText(e.range),
-            label: PeriodicCheck[e.command] ?? String(e.command),
-          })),
-      };
+      return buildWanderingWhereFromPreview(p.table);
     case 'monsterLevel':
     case 'monsterOne':
     case 'monsterTwo':

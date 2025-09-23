@@ -1,6 +1,11 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+  DungeonTablePreview,
+} from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
+import { periodicCheck } from '../../../tables/dungeon/periodicCheck';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { buildPreview, findChildEvent } from './shared';
 import { renderDoorChainCompact } from './doorLocation';
@@ -284,4 +289,19 @@ export function renderWanderingWhereFromCompactNodes(
     nodes.push({ kind: 'paragraph', text });
   }
   return nodes;
+}
+
+export function buildWanderingWhereFromPreview(
+  tableId: string
+): DungeonTablePreview {
+  return buildPreview(tableId, {
+    title: 'Where From',
+    sides: periodicCheck.sides,
+    entries: periodicCheck.entries
+      .filter((entry) => entry.command !== PeriodicCheck.WanderingMonster)
+      .map((entry) => ({
+        range: entry.range,
+        label: PeriodicCheck[entry.command] ?? String(entry.command),
+      })),
+  });
 }
