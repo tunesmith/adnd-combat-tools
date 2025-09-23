@@ -4,12 +4,10 @@ import type {
   PendingRoll,
 } from '../domain/outcome';
 import type {
-  DungeonMessage,
   DungeonRenderNode,
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
-import { DoorBeyond } from '../../tables/dungeon/doorBeyond';
 import {
   renderPeriodicCheckDetail,
   renderPeriodicCheckCompact,
@@ -25,7 +23,7 @@ import {
 } from './render/doorLocation';
 import {
   renderDoorBeyondDetail,
-  renderDoorBeyondCompact,
+  renderDoorBeyondCompactNodes,
 } from './render/doorBeyond';
 import {
   renderSidePassagesDetail,
@@ -366,7 +364,6 @@ export function toDetailRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
-  const nodes: DungeonRenderNode[] = [];
   const { event } = outcome;
   if (event.kind === 'periodicCheck') {
     return renderPeriodicCheckDetail(outcome, appendPendingPreviews);
@@ -472,7 +469,7 @@ export function toDetailRender(
   if (monsterNodes.length > 0) {
     return monsterNodes;
   }
-  return nodes;
+  return [];
 }
 
 export function renderDetailTree(
@@ -630,20 +627,12 @@ export function toCompactRender(
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
   const node = outcome;
-  const nodes: DungeonRenderNode[] = [];
-  const { event, roll } = node;
+  const { event } = node;
   if (event.kind === 'periodicCheck') {
     return renderPeriodicCheckCompact(node);
   }
   if (event.kind === 'doorBeyond') {
-    const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${DoorBeyond[event.result]}`],
-    };
-    const text = renderDoorBeyondCompact(node);
-    nodes.push(heading, bullet, { kind: 'paragraph', text });
-    return nodes;
+    return renderDoorBeyondCompactNodes(node);
   }
   if (event.kind === 'roomDimensions') {
     return renderRoomDimensionsCompactNodes(node);
@@ -730,5 +719,5 @@ export function toCompactRender(
   if (event.kind === 'unusualSize') {
     return renderUnusualSizeCompact(node);
   }
-  return nodes;
+  return [];
 }

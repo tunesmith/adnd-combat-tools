@@ -103,10 +103,10 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Shared append-preview type extracted to `render/shared.ts`.
 - Suggested commit: `render: drop legacy preview services`.
 
-### 12. Adapter Modularisation _(in progress)_
+### 12. Adapter Modularisation _(status: complete)_
 
-- Continue moving table-specific rendering branches out of `render.ts` into dedicated modules under `render/` (e.g., migrate remaining helpers for number-of-exits and transporter follow-ups).
-- Audit `render.ts` for any prose assembly that can be delegated to existing adapter helpers to keep the orchestrator lean.
+- Table-specific detail/compact renderers (door beyond, periodic flows, side passages, passage widths/turns, rooms/chambers, stairs, special passages, monsters, trick/traps) now live in their own modules under `render/`.
+- `render.ts` is reduced to orchestration, delegating preview and prose work to adapters while handling preview deduplication.
 - Suggested commit: `render: finish adapter extraction`.
 
 ## Open Questions / Future Enhancements

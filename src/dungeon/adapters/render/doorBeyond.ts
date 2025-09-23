@@ -119,3 +119,16 @@ function renderChildPassageWidth(node: OutcomeEventNode): string {
   const width = findChildEvent(node, 'passageWidth');
   return width ? renderPassageWidthCompact(width) : '';
 }
+
+export function renderDoorBeyondCompactNodes(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'doorBeyond') return [];
+  const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${DoorBeyond[outcome.event.result]}`],
+  };
+  const text = renderDoorBeyondCompact(outcome);
+  return [heading, bullet, { kind: 'paragraph', text }];
+}
