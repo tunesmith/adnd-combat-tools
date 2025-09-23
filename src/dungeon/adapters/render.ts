@@ -30,7 +30,7 @@ import {
 } from './render/doorBeyond';
 import {
   renderSidePassagesDetail,
-  renderSidePassagesCompact,
+  renderSidePassagesCompactNodes,
   buildSidePassagePreview,
 } from './render/sidePassage';
 import {
@@ -130,10 +130,11 @@ import {
   renderUnusualShapeCompact,
   buildUnusualShapePreview,
 } from './render/unusualShape';
-import { renderTrickTrapDetail } from './render/trickTrap';
+import { renderTrickTrapDetail, buildTrickTrapPreview } from './render/trickTrap';
 import {
-  describeMonsterOutcome,
   buildMonsterPreview,
+  renderMonsterDetailNodes,
+  renderMonsterCompactNodes,
 } from './render/monsters';
 // detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
@@ -370,7 +371,7 @@ export function toDetailRender(
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
   const nodes: DungeonRenderNode[] = [];
-  const { event, roll } = outcome;
+  const { event } = outcome;
   if (event.kind === 'periodicCheck') {
     return renderPeriodicCheckDetail(outcome, appendPendingPreviews);
   }
@@ -471,25 +472,9 @@ export function toDetailRender(
   if (event.kind === 'wanderingWhereFrom') {
     return renderWanderingWhereFromDetail(outcome, appendPendingPreviews);
   }
-  const monsterDescription = describeMonsterOutcome(outcome);
-  if (monsterDescription) {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: monsterDescription.heading,
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${monsterDescription.label}`],
-    };
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (monsterDescription.detailParagraphs.length > 0) {
-      nodes2.push(...monsterDescription.detailParagraphs);
-    }
-    if (monsterDescription.appendPending) {
-      appendPendingPreviews(outcome, nodes2);
-    }
-    return nodes2;
+  const monsterNodes = renderMonsterDetailNodes(outcome, appendPendingPreviews);
+  if (monsterNodes.length > 0) {
+    return monsterNodes;
   }
   return nodes;
 }
@@ -649,15 +634,7 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
     case 'jumpingPlaceWidth':
       return buildJumpingPlaceWidthPreview(p.table);
     case 'trickTrap':
-      return {
-        kind: 'table-preview',
-        id: p.table,
-        title: 'Trick / Trap',
-        sides: 20,
-        entries: [
-          { range: '1–20', label: 'Not yet implemented — use GM judgment' },
-        ],
-      };
+      return buildTrickTrapPreview(p.table);
   }
   return undefined;
 }
@@ -690,7 +667,7 @@ export function toCompactRender(
     return renderChamberDimensionsCompactNodes(node);
   }
   if (event.kind === 'sidePassages') {
-    return renderSidePassagesCompact(node);
+    return renderSidePassagesCompactNodes(node);
   }
   if (event.kind === 'passageTurns') {
     return renderPassageTurnsCompactNodes(node);
@@ -755,28 +732,12 @@ export function toCompactRender(
   if (event.kind === 'wanderingWhereFrom') {
     return renderWanderingWhereFromCompactNodes(node);
   }
-  const monsterDescription = describeMonsterOutcome(outcome);
-  if (monsterDescription) {
-    const heading: DungeonMessage = {
-      kind: 'heading',
-      level: 4,
-      text: monsterDescription.heading,
-    };
-    const bullet: DungeonMessage = {
-      kind: 'bullet-list',
-      items: [`roll: ${roll} — ${monsterDescription.label}`],
-    };
-    const nodes2: DungeonRenderNode[] = [heading, bullet];
-    if (monsterDescription.compactText.length > 0) {
-      const paragraphText = monsterDescription.compactText.endsWith(' ')
-        ? monsterDescription.compactText
-        : `${monsterDescription.compactText} `;
-      nodes2.push({ kind: 'paragraph', text: paragraphText });
-    }
-    if (monsterDescription.appendPending) {
-      appendPendingPreviews(outcome, nodes2);
-    }
-    return nodes2;
+  const monsterCompactNodes = renderMonsterCompactNodes(
+    node,
+    appendPendingPreviews
+  );
+  if (monsterCompactNodes.length > 0) {
+    return monsterCompactNodes;
   }
   if (event.kind === 'unusualShape') {
     return renderUnusualShapeCompact(node);

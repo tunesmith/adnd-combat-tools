@@ -1,4 +1,8 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+  DungeonTablePreview,
+} from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 
 export function renderTrickTrapDetail(
@@ -37,6 +41,18 @@ export function describeTrickTrap(node: OutcomeEventNode): {
 export function renderTrickTrapCompact(node: OutcomeEventNode): string {
   const summary = describeTrickTrap(node);
   return summary.compactText;
+}
+
+export function buildTrickTrapPreview(tableId: string): DungeonTablePreview {
+  return {
+    kind: 'table-preview',
+    id: tableId,
+    title: 'Trick / Trap',
+    sides: 20,
+    entries: [
+      { range: '1–20', label: 'Not yet implemented — use GM judgment' },
+    ],
+  };
 }
 
 function formatTrickTrap(result: number): string {
