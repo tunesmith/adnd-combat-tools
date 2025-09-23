@@ -74,39 +74,11 @@ export function describeDoorBeyond(node: OutcomeEventNode): {
     segments.push(normalized);
   };
 
-  switch (node.event.result) {
-    case DoorBeyond.ParallelPassageOrCloset:
-      if (node.event.doorAhead) {
-        appendParagraph(
-          "Beyond the door is a 10' x 10' room (check contents, treasure). "
-        );
-      } else {
-        appendParagraph(
-          "Beyond the door is a parallel passage, extending 30' in both directions. "
-        );
-      }
-      break;
-    case DoorBeyond.PassageStraightAhead:
-      appendParagraph('Beyond the door is a passage straight ahead. ');
-      break;
-    case DoorBeyond.Passage45AheadBehind:
-      appendParagraph(
-        'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). '
-      );
-      break;
-    case DoorBeyond.Passage45BehindAhead:
-      appendParagraph(
-        'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). '
-      );
-      break;
-    case DoorBeyond.Room:
-      appendParagraph('Beyond the door is a room. ');
-      break;
-    case DoorBeyond.Chamber:
-      appendParagraph('Beyond the door is a chamber. ');
-      break;
-    default:
-      break;
+  const baseText = formatDoorBeyond(node.event.result, {
+    doorAhead: node.event.doorAhead ?? false,
+  });
+  if (baseText.length > 0) {
+    appendParagraph(baseText);
   }
 
   const compactText = segments.join('');
@@ -129,4 +101,28 @@ export function renderDoorBeyondCompactNodes(
   };
   const text = renderDoorBeyondCompact(outcome);
   return [heading, bullet, { kind: 'paragraph', text }];
+}
+
+function formatDoorBeyond(
+  result: DoorBeyond,
+  options?: { doorAhead?: boolean }
+): string {
+  switch (result) {
+    case DoorBeyond.ParallelPassageOrCloset:
+      return options?.doorAhead
+        ? "Beyond the door is a 10' x 10' room (check contents, treasure). "
+        : "Beyond the door is a parallel passage, extending 30' in both directions. ";
+    case DoorBeyond.PassageStraightAhead:
+      return 'Beyond the door is a passage straight ahead. ';
+    case DoorBeyond.Passage45AheadBehind:
+      return 'Beyond the door is a passage 45 degrees ahead/behind (ahead in preference to behind). ';
+    case DoorBeyond.Passage45BehindAhead:
+      return 'Beyond the door is a passage 45 degrees behind/ahead (behind in preference to ahead). ';
+    case DoorBeyond.Room:
+      return 'Beyond the door is a room. ';
+    case DoorBeyond.Chamber:
+      return 'Beyond the door is a chamber. ';
+    default:
+      return '';
+  }
 }

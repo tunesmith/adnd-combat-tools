@@ -82,7 +82,7 @@ export function describeNumberOfExits(node: OutcomeEventNode): {
   if (node.event.kind !== 'numberOfExits') {
     return { detailParagraphs: [], compactText: '' };
   }
-  const text = formatNumberOfExitsEvent(node.event).trim();
+  const text = formatNumberOfExits(node.event).trim();
   if (text.length === 0) {
     return { detailParagraphs: [], compactText: '' };
   }
@@ -92,7 +92,7 @@ export function describeNumberOfExits(node: OutcomeEventNode): {
   };
 }
 
-function formatNumberOfExitsEvent(
+function formatNumberOfExits(
   event: Extract<OutcomeEvent, { kind: 'numberOfExits' }>
 ): string {
   if (event.result === NumberOfExits.DoorChamberOrPassageRoom) {

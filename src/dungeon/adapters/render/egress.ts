@@ -39,10 +39,7 @@ function buildEgressNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const suffix =
-    outcome.event.result === Egress.Closed
-      ? 'After descending, an unnoticed door will close egress for the day. '
-      : '';
+  const suffix = formatEgress(outcome.event.result);
   return [heading, bullet, { kind: 'paragraph', text: suffix }];
 }
 
@@ -65,3 +62,9 @@ export const buildEgressPreview: TablePreviewFactory = (tableId) => {
     })),
   });
 };
+
+function formatEgress(result: Egress): string {
+  return result === Egress.Closed
+    ? 'After descending, an unnoticed door will close egress for the day. '
+    : '';
+}

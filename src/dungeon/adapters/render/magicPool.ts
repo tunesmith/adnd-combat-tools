@@ -42,7 +42,7 @@ function buildCircularMagicPoolNodes(
       nodes.push(...summary.detailParagraphs);
     }
   } else {
-    const text = formatCircularMagicPoolResult(outcome.event.result);
+    const text = formatCircularMagicPool(outcome.event.result);
     if (text.length > 0) nodes.push({ kind: 'paragraph', text });
   }
   return nodes;
@@ -182,7 +182,7 @@ export const buildTransporterLocationPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
-export function formatCircularMagicPoolResult(result: MagicPool): string {
+function formatCircularMagicPool(result: MagicPool): string {
   switch (result) {
     case MagicPool.TransmuteGold:
       return 'It transmutes gold. ';
@@ -195,13 +195,13 @@ export function formatCircularMagicPoolResult(result: MagicPool): string {
   }
 }
 
-export function formatTransmuteType(result: TransmuteType): string {
+function formatTransmuteType(result: TransmuteType): string {
   return result === TransmuteType.GoldToPlatinum
     ? 'It will turn gold to platinum, one time only. '
     : 'It will turn gold to lead, one time only. ';
 }
 
-export function formatPoolAlignment(result: PoolAlignment): string {
+function formatPoolAlignment(result: PoolAlignment): string {
   switch (result) {
     case PoolAlignment.LawfulGood:
       return 'It is Lawful Good. ';
@@ -351,7 +351,7 @@ function circularSentenceForEvent(
     case 'circularPool':
       return formatCircularPool(eventNode.event.result).trim();
     case 'circularMagicPool':
-      return formatCircularMagicPoolResult(eventNode.event.result).trim();
+      return formatCircularMagicPool(eventNode.event.result).trim();
     case 'transmuteType':
       return formatTransmuteType(eventNode.event.result).trim();
     case 'poolAlignment':

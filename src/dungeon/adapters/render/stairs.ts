@@ -97,55 +97,9 @@ export function describeStairs(
     }
   };
 
-  switch (node.event.result) {
-    case Stairs.DownOne:
-      append('There are stairs here that descend one level.');
-      break;
-    case Stairs.DownTwo:
-      append('There are stairs here that descend two levels.');
-      break;
-    case Stairs.DownThree:
-      append('There are stairs here that descend three levels.');
-      break;
-    case Stairs.UpOne:
-      append('There are stairs here that ascend one level.');
-      break;
-    case Stairs.UpDead:
-      append('There are stairs here that ascend one level to a dead end.');
-      break;
-    case Stairs.DownDead:
-      append('There are stairs here that descend one level to a dead end.');
-      break;
-    case Stairs.ChimneyUpOne:
-      append(
-        "There is a chimney that goes up one level. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.ChimneyUpTwo:
-      append(
-        "There is a chimney that goes up two levels. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.ChimneyDownTwo:
-      append(
-        "There is a chimney that goes down two levels. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.TrapDoorDownOne:
-      append(
-        "There is a trap door that goes down one level. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.TrapDownDownTwo:
-      append(
-        "There is a trap door that goes down two levels. The current passage continues, check again in 30'."
-      );
-      break;
-    case Stairs.UpOneDownTwo:
-      append(
-        'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber.'
-      );
-      break;
+  const baseDescription = formatStairs(node.event.result);
+  if (baseDescription.length > 0) {
+    append(baseDescription);
   }
 
   const egress = findChildEvent(node, 'egress');
@@ -208,3 +162,34 @@ export const buildStairsPreview: TablePreviewFactory = (tableId) =>
       label: Stairs[entry.command] ?? String(entry.command),
     })),
   });
+
+function formatStairs(result: Stairs): string {
+  switch (result) {
+    case Stairs.DownOne:
+      return 'There are stairs here that descend one level.';
+    case Stairs.DownTwo:
+      return 'There are stairs here that descend two levels.';
+    case Stairs.DownThree:
+      return 'There are stairs here that descend three levels.';
+    case Stairs.UpOne:
+      return 'There are stairs here that ascend one level.';
+    case Stairs.UpDead:
+      return 'There are stairs here that ascend one level to a dead end.';
+    case Stairs.DownDead:
+      return 'There are stairs here that descend one level to a dead end.';
+    case Stairs.ChimneyUpOne:
+      return "There is a chimney that goes up one level. The current passage continues, check again in 30'.";
+    case Stairs.ChimneyUpTwo:
+      return "There is a chimney that goes up two levels. The current passage continues, check again in 30'.";
+    case Stairs.ChimneyDownTwo:
+      return "There is a chimney that goes down two levels. The current passage continues, check again in 30'.";
+    case Stairs.TrapDoorDownOne:
+      return "There is a trap door that goes down one level. The current passage continues, check again in 30'.";
+    case Stairs.TrapDownDownTwo:
+      return "There is a trap door that goes down two levels. The current passage continues, check again in 30'.";
+    case Stairs.UpOneDownTwo:
+      return 'There are stairs here that ascend one level and then descend two levels. The stairs descend into a chamber.';
+    default:
+      return '';
+  }
+}

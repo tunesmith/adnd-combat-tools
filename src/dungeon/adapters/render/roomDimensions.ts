@@ -33,7 +33,7 @@ export function renderRoomDimensionsDetail(
     ],
   };
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  const paragraph = describeRoomDimensionsBase(outcome.event.result).trim();
+  const paragraph = formatRoomDimensions(outcome.event.result).trim();
   if (paragraph.length > 0) {
     nodes.push({ kind: 'paragraph', text: `${paragraph} ` });
   }
@@ -44,7 +44,7 @@ export function renderRoomDimensionsDetail(
 export function renderRoomDimensionsCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'roomDimensions') return '';
   const segments: string[] = [];
-  const base = describeRoomDimensionsBase(node.event.result).trim();
+  const base = formatRoomDimensions(node.event.result).trim();
   if (base.length > 0) segments.push(base);
   if (node.event.result === RoomDimensions.Unusual) {
     const unusual = renderCompactUnusualDetails(node).trim();
@@ -90,7 +90,7 @@ export const buildRoomDimensionsPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
-function describeRoomDimensionsBase(result: RoomDimensions): string {
+function formatRoomDimensions(result: RoomDimensions): string {
   switch (result) {
     case RoomDimensions.Square10x10:
       return "The room is square and 10' x 10'.";

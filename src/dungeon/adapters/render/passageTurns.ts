@@ -40,33 +40,7 @@ export function describePassageTurn(node: OutcomeEventNode): {
   if (node.event.kind !== 'passageTurns') {
     return { detailParagraphs: [], compactText: '' };
   }
-  let detailText = '';
-  switch (node.event.result) {
-    case PassageTurns.Left90:
-      detailText = "The passage turns left 90 degrees - check again in 30'. ";
-      break;
-    case PassageTurns.Left45:
-      detailText =
-        "The passage turns left 45 degrees ahead - check again in 30'. ";
-      break;
-    case PassageTurns.Left135:
-      detailText =
-        "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
-      break;
-    case PassageTurns.Right90:
-      detailText = "The passage turns right 90 degrees - check again in 30'. ";
-      break;
-    case PassageTurns.Right45:
-      detailText =
-        "The passage turns right 45 degrees ahead - check again in 30'. ";
-      break;
-    case PassageTurns.Right135:
-      detailText =
-        "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
-      break;
-    default:
-      detailText = '';
-  }
+  const detailText = formatPassageTurn(node.event.result);
   let compactText = detailText;
   const widthNode = findChildEvent(node, 'passageWidth');
   if (widthNode && widthNode.event.kind === 'passageWidth') {
@@ -111,3 +85,22 @@ export const buildPassageTurnPreview: TablePreviewFactory = (tableId) =>
       label: PassageTurns[entry.command] ?? String(entry.command),
     })),
   });
+
+function formatPassageTurn(result: PassageTurns): string {
+  switch (result) {
+    case PassageTurns.Left90:
+      return "The passage turns left 90 degrees - check again in 30'. ";
+    case PassageTurns.Left45:
+      return "The passage turns left 45 degrees ahead - check again in 30'. ";
+    case PassageTurns.Left135:
+      return "The passage turns left 45 degrees behind (135 degrees) - check again in 30'. ";
+    case PassageTurns.Right90:
+      return "The passage turns right 90 degrees - check again in 30'. ";
+    case PassageTurns.Right45:
+      return "The passage turns right 45 degrees ahead - check again in 30'. ";
+    case PassageTurns.Right135:
+      return "The passage turns right 45 degrees behind (135 degrees) - check again in 30'. ";
+    default:
+      return '';
+  }
+}

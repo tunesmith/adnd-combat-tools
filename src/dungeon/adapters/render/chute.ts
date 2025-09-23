@@ -49,7 +49,7 @@ function buildChuteNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   return [heading, bullet, { kind: 'paragraph', text }];
 }
 
-export function formatChute(result: Chute): string {
+function formatChute(result: Chute): string {
   return result === Chute.Exists
     ? 'The stairs will turn into a chute, descending two levels from the top. '
     : '';

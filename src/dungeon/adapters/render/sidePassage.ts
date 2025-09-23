@@ -45,14 +45,14 @@ export function describeSidePassage(node: OutcomeEventNode): {
   if (node.event.kind !== 'sidePassages') {
     return { detailParagraphs: [], compactText: '' };
   }
-  const text = formatSidePassageResult(node.event.result);
+  const text = formatSidePassage(node.event.result);
   const detailParagraphs: DungeonMessage[] = text.length
     ? [{ kind: 'paragraph', text }]
     : [];
   return { detailParagraphs, compactText: text };
 }
 
-export function formatSidePassageResult(result: SidePassages): string {
+function formatSidePassage(result: SidePassages): string {
   switch (result) {
     case SidePassages.Left90:
       return "A side passage branches left 90 degrees. Passages extend -- check again in 30'. ";

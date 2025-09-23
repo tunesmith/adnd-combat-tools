@@ -31,7 +31,7 @@ export function renderDoorLocationDetail(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  const description = formatDoorLocationEvent(event).trim();
+  const description = formatDoorLocation(event).trim();
   if (description) {
     nodes.push({ kind: 'paragraph', text: description });
   }
@@ -56,7 +56,7 @@ export function renderPeriodicDoorOnlyDetail(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  const summary = formatPeriodicDoorOnlyEvent(event);
+  const summary = formatPeriodicDoorOnly(event);
   if (summary) {
     nodes.push({ kind: 'paragraph', text: summary });
   }
@@ -92,7 +92,7 @@ export const buildPeriodicDoorOnlyPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
-export function formatDoorLocationEvent(
+function formatDoorLocation(
   event: Extract<OutcomeEvent, { kind: 'doorLocation' }>
 ): string {
   if (event.result === DoorLocation.Ahead) return 'A door is Ahead. ';
@@ -109,7 +109,7 @@ export function formatDoorLocationEvent(
   return `A door is to the ${lateral}. `;
 }
 
-export function formatPeriodicDoorOnlyEvent(
+function formatPeriodicDoorOnly(
   event: Extract<OutcomeEvent, { kind: 'periodicCheckDoorOnly' }>
 ): string {
   if (event.result === PeriodicCheckDoorOnly.Ignore) {
@@ -133,9 +133,9 @@ function formatDoorChain(events: OutcomeEventNode[]): string {
   let text = '';
   for (const ev of events) {
     if (ev.event.kind === 'doorLocation') {
-      text += formatDoorLocationEvent(ev.event);
+      text += formatDoorLocation(ev.event);
     } else if (ev.event.kind === 'periodicCheckDoorOnly') {
-      text += formatPeriodicDoorOnlyEvent(ev.event);
+      text += formatPeriodicDoorOnly(ev.event);
     }
   }
   return text;

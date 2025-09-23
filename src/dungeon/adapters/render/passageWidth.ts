@@ -25,7 +25,7 @@ export function renderPassageWidthDetail(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  const detail = passageWidthDetailText(outcome.event.result);
+  const detail = formatPassageWidth(outcome.event.result);
   if (detail.length > 0) {
     nodes.push({ kind: 'paragraph', text: detail });
   }
@@ -35,24 +35,13 @@ export function renderPassageWidthDetail(
 
 export function renderPassageWidthCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'passageWidth') return '';
-  switch (node.event.result) {
-    case PassageWidth.FiveFeet:
-      return "The passage is 5' wide. ";
-    case PassageWidth.TenFeet:
-      return "The passage is 10' wide. ";
-    case PassageWidth.TwentyFeet:
-      return "The passage is 20' wide. ";
-    case PassageWidth.ThirtyFeet:
-      return "The passage is 30' wide. ";
-    case PassageWidth.SpecialPassage: {
-      const special = findChildEvent(node, 'specialPassage');
-      return special
-        ? renderSpecialPassageCompact(special)
-        : 'A special passage occurs. ';
-    }
-    default:
-      return '';
+  if (node.event.result === PassageWidth.SpecialPassage) {
+    const special = findChildEvent(node, 'specialPassage');
+    return special
+      ? renderSpecialPassageCompact(special)
+      : 'A special passage occurs. ';
   }
+  return formatPassageWidth(node.event.result);
 }
 
 export function renderPassageWidthCompactNodes(
@@ -78,7 +67,17 @@ export function renderPassageWidthCompactNodes(
   return nodes;
 }
 
-function passageWidthDetailText(result: number): string {
+export const buildPassageWidthPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Passage Width',
+    sides: passageWidth.sides,
+    entries: passageWidth.entries.map((entry) => ({
+      range: entry.range,
+      label: PassageWidth[entry.command] ?? String(entry.command),
+    })),
+  });
+
+function formatPassageWidth(result: PassageWidth): string {
   switch (result) {
     case PassageWidth.FiveFeet:
       return "The passage is 5' wide. ";
@@ -94,13 +93,3 @@ function passageWidthDetailText(result: number): string {
       return '';
   }
 }
-
-export const buildPassageWidthPreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Passage Width',
-    sides: passageWidth.sides,
-    entries: passageWidth.entries.map((entry) => ({
-      range: entry.range,
-      label: PassageWidth[entry.command] ?? String(entry.command),
-    })),
-  });
