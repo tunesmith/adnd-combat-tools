@@ -33,7 +33,7 @@ export function renderChamberDimensionsDetail(
     ],
   };
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  const paragraph = describeChamberDimensionsBase(outcome.event.result).trim();
+  const paragraph = formatChamberDimensions(outcome.event.result).trim();
   if (paragraph.length > 0) {
     nodes.push({ kind: 'paragraph', text: `${paragraph} ` });
   }
@@ -41,12 +41,10 @@ export function renderChamberDimensionsDetail(
   return nodes;
 }
 
-export function renderChamberDimensionsCompact(
-  node: OutcomeEventNode
-): string {
+export function renderChamberDimensionsCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'chamberDimensions') return '';
   const segments: string[] = [];
-  const base = describeChamberDimensionsBase(node.event.result).trim();
+  const base = formatChamberDimensions(node.event.result).trim();
   if (base.length > 0) segments.push(base);
   if (node.event.result === ChamberDimensions.Unusual) {
     const unusual = renderCompactUnusualDetails(node).trim();
@@ -92,7 +90,7 @@ export const buildChamberDimensionsPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
-function describeChamberDimensionsBase(result: ChamberDimensions): string {
+function formatChamberDimensions(result: ChamberDimensions): string {
   switch (result) {
     case ChamberDimensions.Square20x20:
       return "The chamber is square and 20' x 20'.";

@@ -16,6 +16,16 @@ export function renderChuteDetail(
   return nodes;
 }
 
+export const buildChutePreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Chute',
+    sides: chuteTable.sides,
+    entries: chuteTable.entries.map((entry) => ({
+      range: entry.range,
+      label: Chute[entry.command] ?? String(entry.command),
+    })),
+  });
+
 export function renderChuteCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
@@ -35,19 +45,12 @@ function buildChuteNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const text =
-    outcome.event.result === Chute.Exists
-      ? 'The stairs will turn into a chute, descending two levels from the top. '
-      : '';
+  const text = formatChute(outcome.event.result);
   return [heading, bullet, { kind: 'paragraph', text }];
 }
 
-export const buildChutePreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Chute',
-    sides: chuteTable.sides,
-    entries: chuteTable.entries.map((entry) => ({
-      range: entry.range,
-      label: Chute[entry.command] ?? String(entry.command),
-    })),
-  });
+export function formatChute(result: Chute): string {
+  return result === Chute.Exists
+    ? 'The stairs will turn into a chute, descending two levels from the top. '
+    : '';
+}
