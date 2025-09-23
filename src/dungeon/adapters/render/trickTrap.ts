@@ -4,9 +4,11 @@ import type {
   DungeonTablePreview,
 } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
+import type { AppendPreviewFn } from './shared';
 
 export function renderTrickTrapDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'trickTrap') return [];
   const heading: DungeonMessage = {
@@ -21,6 +23,7 @@ export function renderTrickTrapDetail(
   const summary = describeTrickTrap(outcome);
   const nodes: DungeonRenderNode[] = [heading, bullet];
   nodes.push(...summary.detailParagraphs);
+  appendPendingPreviews(outcome, nodes);
   return nodes;
 }
 

@@ -236,7 +236,8 @@ export function renderGalleryStairLocationCompact(
 }
 
 export function renderGalleryStairOccurrenceDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'galleryStairOccurrence') return [];
   const heading: DungeonMessage = {
@@ -253,6 +254,7 @@ export function renderGalleryStairOccurrenceDetail(
   if (description.trim().length > 0) {
     nodes.push({ kind: 'paragraph', text: description });
   }
+  appendPendingPreviews(outcome, nodes);
   return nodes;
 }
 

@@ -7,13 +7,15 @@ import {
 import {
   buildPreview,
   findChildEvent,
+  type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
 import { collectCircularChainSentences } from './magicPool';
 import { describeUnusualSizeChain } from './unusualSize';
 
 export function renderUnusualShapeDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'unusualShape') return [];
   const heading: DungeonMessage = {
@@ -30,7 +32,9 @@ export function renderUnusualShapeDetail(
     ],
   };
   const text = formatUnusualShape(outcome.event.result);
-  return [heading, bullet, { kind: 'paragraph', text }];
+  const nodes: DungeonRenderNode[] = [heading, bullet, { kind: 'paragraph', text }];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export function renderUnusualShapeCompact(

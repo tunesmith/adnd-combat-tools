@@ -9,9 +9,11 @@ import {
   numberOfExits,
   NumberOfExits,
 } from '../../../tables/dungeon/numberOfExits';
+import type { AppendPreviewFn } from './shared';
 
 export function renderNumberOfExitsDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'numberOfExits') return [];
   const heading: DungeonMessage = {
@@ -30,6 +32,7 @@ export function renderNumberOfExitsDetail(
   if (summary.detailParagraphs.length > 0) {
     nodes.push(...summary.detailParagraphs);
   }
+  appendPendingPreviews(outcome, nodes);
   return nodes;
 }
 

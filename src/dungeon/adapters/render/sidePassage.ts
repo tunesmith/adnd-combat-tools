@@ -4,12 +4,19 @@ import {
   sidePassages,
   SidePassages,
 } from '../../../tables/dungeon/sidePassages';
-import { buildPreview, type TablePreviewFactory } from './shared';
+import {
+  buildPreview,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from './shared';
 
 export function renderSidePassagesDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return renderSidePassagesCompactNodes(outcome);
+  const nodes = renderSidePassagesCompactNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export function renderSidePassagesCompactNodes(

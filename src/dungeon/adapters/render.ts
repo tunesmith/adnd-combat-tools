@@ -381,7 +381,7 @@ export function toDetailRender(
     return renderPassageWidthDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'sidePassages') {
-    return renderSidePassagesDetail(outcome);
+    return renderSidePassagesDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'roomDimensions') {
     return renderRoomDimensionsDetail(outcome, appendPendingPreviews);
@@ -404,63 +404,55 @@ export function toDetailRender(
     return renderGalleryStairLocationDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'galleryStairOccurrence') {
-    return renderGalleryStairOccurrenceDetail(outcome);
+    return renderGalleryStairOccurrenceDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'riverConstruction') {
     return renderRiverConstructionDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'chasmDepth') {
-    return renderChasmDepthDetail(outcome);
+    return renderChasmDepthDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'chasmConstruction') {
     return renderChasmConstructionDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'jumpingPlaceWidth') {
-    return renderJumpingPlaceWidthDetail(outcome);
+    return renderJumpingPlaceWidthDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'egress') {
-    return renderEgressDetail(outcome);
+    return renderEgressDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'chute') {
-    return renderChuteDetail(outcome);
+    return renderChuteDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'numberOfExits') {
-    return renderNumberOfExitsDetail(outcome);
+    return renderNumberOfExitsDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'unusualShape') {
-    const nodes2 = renderUnusualShapeDetail(outcome);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderUnusualShapeDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'circularContents') {
-    const nodes2 = renderCircularContentsDetail(outcome);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderCircularContentsDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'circularPool') {
-    const nodes2 = renderCircularPoolDetail(outcome);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderCircularPoolDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'circularMagicPool') {
-    const nodes2 = renderCircularMagicPoolDetail(outcome);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderCircularMagicPoolDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'transmuteType') {
-    return renderTransmuteTypeDetail(outcome);
+    return renderTransmuteTypeDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'poolAlignment') {
-    return renderPoolAlignmentDetail(outcome);
+    return renderPoolAlignmentDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'transporterLocation') {
-    return renderTransporterLocationDetail(outcome);
+    return renderTransporterLocationDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'unusualSize') {
     return renderUnusualSizeDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'trickTrap') {
-    return renderTrickTrapDetail(outcome);
+    return renderTrickTrapDetail(outcome, appendPendingPreviews);
   }
   if (event.kind === 'wanderingWhereFrom') {
     return renderWanderingWhereFromDetail(outcome, appendPendingPreviews);

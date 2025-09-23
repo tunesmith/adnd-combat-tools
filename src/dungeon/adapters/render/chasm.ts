@@ -15,7 +15,8 @@ import {
 } from './shared';
 
 export function renderChasmDepthDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'chasmDepth') return [];
   const heading: DungeonMessage = {
@@ -34,6 +35,7 @@ export function renderChasmDepthDetail(
   if (depthText) {
     nodes.push({ kind: 'paragraph', text: depthText });
   }
+  appendPendingPreviews(outcome, nodes);
   return nodes;
 }
 
@@ -107,7 +109,8 @@ export function formatJumpingPlaceWidth(result: JumpingPlaceWidth): string {
 }
 
 export function renderJumpingPlaceWidthDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'jumpingPlaceWidth') return [];
   const heading: DungeonMessage = {
@@ -122,7 +125,9 @@ export function renderJumpingPlaceWidthDetail(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const text = formatJumpingPlaceWidth(outcome.event.result);
-  return [heading, bullet, { kind: 'paragraph', text }];
+  const nodes: DungeonRenderNode[] = [heading, bullet, { kind: 'paragraph', text }];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export const buildChasmDepthPreview: TablePreviewFactory = (tableId) =>

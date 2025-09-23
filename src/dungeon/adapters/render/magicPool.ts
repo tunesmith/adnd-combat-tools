@@ -16,11 +16,12 @@ import {
 import {
   buildPreview,
   findChildEvent,
+  type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
 import { formatCircularContents, formatCircularPool } from './circularPools';
 
-export function renderCircularMagicPoolDetail(
+function buildCircularMagicPoolNodes(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'circularMagicPool') return [];
@@ -50,13 +51,22 @@ export function renderCircularMagicPoolDetail(
   return nodes;
 }
 
+export function renderCircularMagicPoolDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildCircularMagicPoolNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function renderCircularMagicPoolCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
-  return renderCircularMagicPoolDetail(outcome);
+  return buildCircularMagicPoolNodes(outcome);
 }
 
-export function renderTransmuteTypeDetail(
+function buildTransmuteTypeNodes(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'transmuteType') return [];
@@ -73,13 +83,22 @@ export function renderTransmuteTypeDetail(
   return [heading, bullet, { kind: 'paragraph', text }];
 }
 
+export function renderTransmuteTypeDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildTransmuteTypeNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function renderTransmuteTypeCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
-  return renderTransmuteTypeDetail(outcome);
+  return buildTransmuteTypeNodes(outcome);
 }
 
-export function renderPoolAlignmentDetail(
+function buildPoolAlignmentNodes(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'poolAlignment') return [];
@@ -96,16 +115,28 @@ export function renderPoolAlignmentDetail(
   return [heading, bullet, { kind: 'paragraph', text }];
 }
 
+export function renderPoolAlignmentDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildPoolAlignmentNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function renderPoolAlignmentCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
-  return renderPoolAlignmentDetail(outcome);
+  return buildPoolAlignmentNodes(outcome);
 }
 
 export function renderTransporterLocationDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return buildTransporterNodes(outcome, true);
+  const nodes = buildTransporterNodes(outcome, true);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export function renderTransporterLocationCompact(

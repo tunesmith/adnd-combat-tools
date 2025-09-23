@@ -109,6 +109,16 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - `render.ts` is reduced to orchestration, delegating preview and prose work to adapters while handling preview deduplication.
 - Suggested commit: `render: finish adapter extraction`.
 
+### 13. Render Adapter Convention Audit _(status: new)_
+
+- Most adapters already follow a consistent skeleton of `heading` → `bullet` → optional paragraphs (e.g. `src/dungeon/adapters/render/periodicOutcome.ts:95` and `src/dungeon/adapters/render/chamberDimensions.ts:17`); let's codify that pattern so future tables inherit it automatically.
+- Detail renderers split between accepting `appendPendingPreviews` (such as `src/dungeon/adapters/render/chamberDimensions.ts:17`) and returning nodes for the orchestrator to patch (`src/dungeon/adapters/render/circularPools.ts:10`, `src/dungeon/adapters/render/unusualShape.ts:15`), forcing special casing in `src/dungeon/adapters/render.ts:431`; standardize on a shared helper signature (even if the helpers object is unused) to keep module contracts uniform.
+- Compact exports currently mix raw strings (`src/dungeon/adapters/render/passageWidth.ts:36`, `src/dungeon/adapters/render/doorBeyond.ts:26`), prebuilt node arrays (`src/dungeon/adapters/render/circularPools.ts:35`), and direct aliases of the detail path (`src/dungeon/adapters/render/sidePassage.ts:11`); adopting a consistent `render<Thing>CompactNodes` + optional `summarize<Thing>` helper would make the flow predictable.
+- Preview builders mostly rely on `TablePreviewFactory` (`src/dungeon/adapters/render/chamberDimensions.ts:85`), but some hand-roll the object to inject context (`src/dungeon/adapters/render/numberOfExits.ts:58`); wrapping those bespoke branches in helpers that still satisfy the shared factory keeps call sites symmetric.
+- Sentence formatting varies—some helpers append trailing spaces (`src/dungeon/adapters/render/chamberDimensions.ts:38`, `src/dungeon/adapters/render/numberOfExits.ts:53`), while others return bare text that the caller must normalize (`src/dungeon/adapters/render/circularPools.ts:55`, `src/dungeon/adapters/render/doorBeyond.ts:31`); a single normalization helper (like `joinSegments`) would prevent blank or double-spaced paragraphs.
+- Helper naming alternates between `describe` objects (`src/dungeon/adapters/render/passageTurns.ts:24`, `src/dungeon/adapters/render/doorBeyond.ts:58`) and ad-hoc `format*` functions (`src/dungeon/adapters/render/circularPools.ts:86`, `src/dungeon/adapters/render/trickTrap.ts:33`); leaning into the `describe<X>` pattern used by the monster adapters (`src/dungeon/adapters/render/monsters/index.ts:25`) keeps detail/compact parity obvious.
+- The large `if` dispatchers in `render.ts` (`src/dungeon/adapters/render.ts:368`) duplicate wiring and encode the above inconsistencies; registering table renderers in a data-driven map (renderer + preview helpers) would collapse the switchboard and enforce the unified contract at the call site.
+
 ## Open Questions / Future Enhancements
 
 - Should compact mode display an explicit marker when some children are still pending? (Answer: YES)

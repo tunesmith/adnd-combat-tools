@@ -5,9 +5,13 @@ import {
   CircularContents,
 } from '../../../tables/dungeon/unusualShape';
 import { pool, Pool } from '../../../tables/dungeon/pool';
-import { buildPreview, type TablePreviewFactory } from './shared';
+import {
+  buildPreview,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from './shared';
 
-export function renderCircularContentsDetail(
+function buildCircularContentsNodes(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'circularContents') return [];
@@ -32,13 +36,22 @@ export function renderCircularContentsDetail(
   return nodes;
 }
 
+export function renderCircularContentsDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildCircularContentsNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function renderCircularContentsCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
-  return renderCircularContentsDetail(outcome);
+  return buildCircularContentsNodes(outcome);
 }
 
-export function renderCircularPoolDetail(
+function buildCircularPoolNodes(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'circularPool') return [];
@@ -57,10 +70,19 @@ export function renderCircularPoolDetail(
   return nodes;
 }
 
+export function renderCircularPoolDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildCircularPoolNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function renderCircularPoolCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
-  return renderCircularPoolDetail(outcome);
+  return buildCircularPoolNodes(outcome);
 }
 
 export const buildCircularContentsPreview: TablePreviewFactory = (tableId) =>

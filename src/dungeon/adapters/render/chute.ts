@@ -1,12 +1,19 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { chute as chuteTable, Chute } from '../../../tables/dungeon/stairs';
-import { buildPreview, type TablePreviewFactory } from './shared';
+import {
+  buildPreview,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from './shared';
 
 export function renderChuteDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return buildChuteNodes(outcome);
+  const nodes = buildChuteNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export function renderChuteCompact(

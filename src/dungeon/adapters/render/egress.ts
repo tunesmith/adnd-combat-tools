@@ -6,12 +6,19 @@ import {
   egressThree,
   Egress,
 } from '../../../tables/dungeon/stairs';
-import { buildPreview, type TablePreviewFactory } from './shared';
+import {
+  buildPreview,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from './shared';
 
 export function renderEgressDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return buildEgressNodes(outcome);
+  const nodes = buildEgressNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export function renderEgressCompact(
