@@ -26,9 +26,7 @@ function detailNodesFor(node: DungeonOutcomeNode) {
 
 describe('Special passage detail previews', () => {
   test('FiftyFeetGalleries -> Gallery Stair Location preview', () => {
-    const roll = pickRollForSpecialPassage(
-      SpecialPassage.FiftyFeetGalleries
-    );
+    const roll = pickRollForSpecialPassage(SpecialPassage.FiftyFeetGalleries);
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'

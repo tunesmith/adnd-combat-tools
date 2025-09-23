@@ -129,10 +129,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     });
 
     // Add a feed item using main override (enter 3) and Submit
-    const rollLabel = requireElement(
-      findLabel('d20 Roll:'),
-      'roll label'
-    );
+    const rollLabel = requireElement(findLabel('d20 Roll:'), 'roll label');
     const rollInput = requireElement(
       rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
       'roll input'
@@ -161,7 +158,9 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       'feed item container'
     );
     // Sanity check that this feed item contains the Door Location header
-    const headerOk = (feedItemEl.textContent ?? '').includes('Door Location (d20)');
+    const headerOk = (feedItemEl.textContent ?? '').includes(
+      'Door Location (d20)'
+    );
     expect(headerOk).toBe(true);
 
     // Set override 13 and submit inside preview
@@ -239,10 +238,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       detailCheckbox.click();
     });
 
-    const rollLabel = requireElement(
-      findLabel('d20 Roll:'),
-      'roll label'
-    );
+    const rollLabel = requireElement(findLabel('d20 Roll:'), 'roll label');
     const rollInput = requireElement(
       rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
       'roll input'
@@ -283,7 +279,9 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       'door location override label'
     );
     const doorLocationInput = requireElement(
-      doorLocationOverride.querySelector<HTMLInputElement>('input[type="number"]'),
+      doorLocationOverride.querySelector<HTMLInputElement>(
+        'input[type="number"]'
+      ),
       'door location override input'
     );
     await act(async () => {
@@ -316,7 +314,9 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       'door continuation override label'
     );
     const doorContinuationInput = requireElement(
-      doorContinuationOverride.querySelector<HTMLInputElement>('input[type="number"]'),
+      doorContinuationOverride.querySelector<HTMLInputElement>(
+        'input[type="number"]'
+      ),
       'door continuation override input'
     );
     await act(async () => {

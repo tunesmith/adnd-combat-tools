@@ -23,9 +23,7 @@ export function renderDoorBeyondDetail(
   return nodes;
 }
 
-export function renderDoorBeyondCompact(
-  outcome: OutcomeEventNode
-): string {
+export function renderDoorBeyondCompact(outcome: OutcomeEventNode): string {
   if (outcome.event.kind !== 'doorBeyond') return '';
   const summary = describeDoorBeyond(outcome);
   let text = summary.compactText;

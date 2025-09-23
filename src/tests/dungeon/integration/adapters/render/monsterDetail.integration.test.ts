@@ -1,4 +1,7 @@
-import { toCompactRender, toDetailRender } from '../../../../../dungeon/adapters/render';
+import {
+  toCompactRender,
+  toDetailRender,
+} from '../../../../../dungeon/adapters/render';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import { MonsterOne } from '../../../../../tables/dungeon/monster/monsterOne';

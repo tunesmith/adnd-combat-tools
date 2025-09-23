@@ -203,7 +203,9 @@ export function renderGalleryStairLocationDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${GalleryStairLocation[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${GalleryStairLocation[outcome.event.result]}`,
+    ],
   };
   const description = formatGalleryStairLocation(outcome.event.result);
   const nodes: DungeonRenderNode[] = [heading, bullet];
@@ -225,7 +227,9 @@ export function renderGalleryStairLocationCompact(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${GalleryStairLocation[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${GalleryStairLocation[outcome.event.result]}`,
+    ],
   };
   const description = formatGalleryStairLocation(outcome.event.result);
   const nodes: DungeonRenderNode[] = [heading, bullet];
@@ -247,7 +251,9 @@ export function renderGalleryStairOccurrenceDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${GalleryStairOccurrence[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${GalleryStairOccurrence[outcome.event.result]}`,
+    ],
   };
   const description = formatGalleryStairOccurrence(outcome.event.result);
   const nodes: DungeonRenderNode[] = [heading, bullet];
@@ -269,7 +275,9 @@ export function renderGalleryStairOccurrenceCompact(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${GalleryStairOccurrence[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${GalleryStairOccurrence[outcome.event.result]}`,
+    ],
   };
   const description = formatGalleryStairOccurrence(outcome.event.result);
   const nodes: DungeonRenderNode[] = [heading, bullet];

@@ -125,7 +125,11 @@ export function renderJumpingPlaceWidthDetail(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const text = formatJumpingPlaceWidth(outcome.event.result);
-  const nodes: DungeonRenderNode[] = [heading, bullet, { kind: 'paragraph', text }];
+  const nodes: DungeonRenderNode[] = [
+    heading,
+    bullet,
+    { kind: 'paragraph', text },
+  ];
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }

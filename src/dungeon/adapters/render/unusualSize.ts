@@ -128,7 +128,9 @@ function describeUnusualSizeEntry(
   return undefined;
 }
 
-function findDeepestUnusualSize(node: OutcomeEventNode): OutcomeEventNode | undefined {
+function findDeepestUnusualSize(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
   let current: OutcomeEventNode | undefined = node;
   const visited = new Set<string>();
   while (current) {

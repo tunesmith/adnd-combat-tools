@@ -133,9 +133,7 @@ export function renderPeriodicCheckCompact(
   return [heading, bullet, { kind: 'paragraph', text }];
 }
 
-export function renderCompactPeriodicOutcome(
-  node: OutcomeEventNode
-): string {
+export function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
   if (node.event.kind !== 'periodicCheck') return '';
   const event = node.event;
   switch (event.result) {

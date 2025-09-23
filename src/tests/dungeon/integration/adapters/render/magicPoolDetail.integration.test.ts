@@ -1,4 +1,7 @@
-import { toCompactRender, toDetailRender } from '../../../../../dungeon/adapters/render';
+import {
+  toCompactRender,
+  toDetailRender,
+} from '../../../../../dungeon/adapters/render';
 import {
   resolveCircularMagicPool,
   resolveTransporterLocation,

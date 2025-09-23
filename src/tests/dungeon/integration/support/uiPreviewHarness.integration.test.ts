@@ -48,7 +48,8 @@ describe('uiPreviewHarness', () => {
     // Locate the door continuation preview after resolving door location.
     const preview = renderDetail(feed).find(
       (node): node is DungeonTablePreview =>
-        node.kind === 'table-preview' && node.id.startsWith('periodicCheckDoorOnly')
+        node.kind === 'table-preview' &&
+        node.id.startsWith('periodicCheckDoorOnly')
     );
     expect(preview).toBeDefined();
 
@@ -56,7 +57,10 @@ describe('uiPreviewHarness', () => {
       id: string;
       messages: DungeonRenderNode[];
       outcome?: OutcomeEventNode;
-      renderCache?: { detail?: DungeonRenderNode[]; compact?: DungeonRenderNode[] };
+      renderCache?: {
+        detail?: DungeonRenderNode[];
+        compact?: DungeonRenderNode[];
+      };
       pendingCount?: number;
     };
 
@@ -90,13 +94,21 @@ describe('uiPreviewHarness', () => {
       (updater) => {
         collapsed =
           typeof updater === 'function'
-            ? (updater as (prev: Record<string, boolean>) => Record<string, boolean>)(collapsed)
+            ? (
+                updater as (
+                  prev: Record<string, boolean>
+                ) => Record<string, boolean>
+              )(collapsed)
             : (updater as Record<string, boolean>);
       },
       (updater) => {
         resolvedMap =
           typeof updater === 'function'
-            ? (updater as (prev: Record<string, boolean>) => Record<string, boolean>)(resolvedMap)
+            ? (
+                updater as (
+                  prev: Record<string, boolean>
+                ) => Record<string, boolean>
+              )(resolvedMap)
             : (updater as Record<string, boolean>);
       }
     );

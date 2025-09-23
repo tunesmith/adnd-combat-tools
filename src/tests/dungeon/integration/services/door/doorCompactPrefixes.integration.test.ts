@@ -1,5 +1,8 @@
 import { doorBeyondMessages } from '../../../../../dungeon/services/doorBeyondResult';
-import { doorBeyond, DoorBeyond } from '../../../../../tables/dungeon/doorBeyond';
+import {
+  doorBeyond,
+  DoorBeyond,
+} from '../../../../../tables/dungeon/doorBeyond';
 import type { DungeonMessage } from '../../../../../types/dungeon';
 
 function isParagraph(

@@ -1,4 +1,7 @@
-import type { DungeonTablePreview, TableContext } from '../../../../types/dungeon';
+import type {
+  DungeonTablePreview,
+  TableContext,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   monsterOne,
@@ -59,37 +62,83 @@ type DragonTableId =
   | 'dragonFiveOlder'
   | 'dragonSix';
 
-const STANDARD_CONFIG: Record<StandardTableId, {
-  title: string;
-  table: typeof monsterOne | typeof monsterTwo | typeof monsterThree | typeof monsterFour | typeof monsterFive | typeof monsterSix;
-  labels: typeof MonsterOne | typeof MonsterTwo | typeof MonsterThree | typeof MonsterFour | typeof MonsterFive | typeof MonsterSix;
-}> = {
-  monsterOne: { title: 'Monster (Level 1)', table: monsterOne, labels: MonsterOne },
-  monsterTwo: { title: 'Monster (Level 2)', table: monsterTwo, labels: MonsterTwo },
-  monsterThree: { title: 'Monster (Level 3)', table: monsterThree, labels: MonsterThree },
-  monsterFour: { title: 'Monster (Level 4)', table: monsterFour, labels: MonsterFour },
-  monsterFive: { title: 'Monster (Level 5)', table: monsterFive, labels: MonsterFive },
-  monsterSix: { title: 'Monster (Level 6)', table: monsterSix, labels: MonsterSix },
+const STANDARD_CONFIG: Record<
+  StandardTableId,
+  {
+    title: string;
+    table:
+      | typeof monsterOne
+      | typeof monsterTwo
+      | typeof monsterThree
+      | typeof monsterFour
+      | typeof monsterFive
+      | typeof monsterSix;
+    labels:
+      | typeof MonsterOne
+      | typeof MonsterTwo
+      | typeof MonsterThree
+      | typeof MonsterFour
+      | typeof MonsterFive
+      | typeof MonsterSix;
+  }
+> = {
+  monsterOne: {
+    title: 'Monster (Level 1)',
+    table: monsterOne,
+    labels: MonsterOne,
+  },
+  monsterTwo: {
+    title: 'Monster (Level 2)',
+    table: monsterTwo,
+    labels: MonsterTwo,
+  },
+  monsterThree: {
+    title: 'Monster (Level 3)',
+    table: monsterThree,
+    labels: MonsterThree,
+  },
+  monsterFour: {
+    title: 'Monster (Level 4)',
+    table: monsterFour,
+    labels: MonsterFour,
+  },
+  monsterFive: {
+    title: 'Monster (Level 5)',
+    table: monsterFive,
+    labels: MonsterFive,
+  },
+  monsterSix: {
+    title: 'Monster (Level 6)',
+    table: monsterSix,
+    labels: MonsterSix,
+  },
 };
 
-const DRAGON_CONFIG: Record<DragonTableId, {
-  title: string;
-  table:
-    | typeof dragonThree
-    | typeof dragonFourYounger
-    | typeof dragonFourOlder
-    | typeof dragonFiveYounger
-    | typeof dragonFiveOlder
-    | typeof dragonSix;
-  labels:
-    | typeof DragonThree
-    | typeof DragonFourYounger
-    | typeof DragonFourOlder
-    | typeof DragonFiveYounger
-    | typeof DragonFiveOlder
-    | typeof DragonSix;
-}> = {
-  dragonThree: { title: 'Dragon (Level 3)', table: dragonThree, labels: DragonThree },
+const DRAGON_CONFIG: Record<
+  DragonTableId,
+  {
+    title: string;
+    table:
+      | typeof dragonThree
+      | typeof dragonFourYounger
+      | typeof dragonFourOlder
+      | typeof dragonFiveYounger
+      | typeof dragonFiveOlder
+      | typeof dragonSix;
+    labels:
+      | typeof DragonThree
+      | typeof DragonFourYounger
+      | typeof DragonFourOlder
+      | typeof DragonFiveYounger
+      | typeof DragonFiveOlder
+      | typeof DragonSix;
+  }
+> = {
+  dragonThree: {
+    title: 'Dragon (Level 3)',
+    table: dragonThree,
+    labels: DragonThree,
+  },
   dragonFourYounger: {
     title: 'Dragon (Younger)',
     table: dragonFourYounger,

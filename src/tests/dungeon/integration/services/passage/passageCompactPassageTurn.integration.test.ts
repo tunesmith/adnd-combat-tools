@@ -9,7 +9,10 @@ import {
   periodicCheck,
   PeriodicCheck,
 } from '../../../../../tables/dungeon/periodicCheck';
-import type { DungeonMessage, DungeonRenderNode } from '../../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 function isParagraph(

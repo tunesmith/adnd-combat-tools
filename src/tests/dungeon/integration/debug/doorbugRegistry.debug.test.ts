@@ -1,4 +1,7 @@
-import { createFeedSnapshot, renderDetail } from '../../../support/dungeon/uiPreviewHarness';
+import {
+  createFeedSnapshot,
+  renderDetail,
+} from '../../../support/dungeon/uiPreviewHarness';
 import {
   resolveViaRegistry,
   type FeedLike,

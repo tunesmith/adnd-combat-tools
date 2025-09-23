@@ -77,13 +77,13 @@ Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ 
 
 ## Detail vs. Compact Mode
 
-| Concern            | Detail Mode                                            | Compact Mode                                    |
-| ------------------ | ------------------------------------------------------ | ----------------------------------------------- |
-| Audience           | Ref + manual flow control (DM stepping through tables) | Quick prose output akin to the original booklet |
-| Output             | Headings, bullet lists, paragraphs, table previews     | Paragraphs only                                 |
+| Concern            | Detail Mode                                            | Compact Mode                                              |
+| ------------------ | ------------------------------------------------------ | --------------------------------------------------------- |
+| Audience           | Ref + manual flow control (DM stepping through tables) | Quick prose output akin to the original booklet           |
+| Output             | Headings, bullet lists, paragraphs, table previews     | Paragraphs only                                           |
 | Interaction        | User resolves each `pending-roll` via the registry     | Shares the same tree; prose updates after each resolution |
-| Data source        | Outcome tree + render cache (previews included)        | Outcome tree + render cache (previews filtered) |
-| Where to change it | `toDetailRender` + registry                            | `toCompactRender` helpers                       |
+| Data source        | Outcome tree + render cache (previews included)        | Outcome tree + render cache (previews filtered)           |
+| Where to change it | `toDetailRender` + registry                            | `toCompactRender` helpers                                 |
 
 ## How to Add a New Table
 

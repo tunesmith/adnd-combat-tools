@@ -1,12 +1,12 @@
-import type { DungeonTablePreview, TableContext } from '../../../../types/dungeon';
+import type {
+  DungeonTablePreview,
+  TableContext,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { MonsterLevel } from '../../../../tables/dungeon/monster/monsterLevel';
 import { getMonsterTable } from '../../../services/wanderingMonsterResult';
 import { buildPreview } from '../shared';
-import {
-  hasPendingChildren,
-  type MonsterDescription,
-} from './shared';
+import { hasPendingChildren, type MonsterDescription } from './shared';
 
 export function describeMonsterLevel(
   node: OutcomeEventNode

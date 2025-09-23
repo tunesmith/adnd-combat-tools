@@ -141,8 +141,8 @@ describe('dungeon feed toggling confidence', () => {
     );
     expect(jumpingPlaceMentions).toEqual(['There is a jumping place.']);
 
-    const widthMentions = detailParagraphs.filter((text) =>
-      text === "It is 6' wide."
+    const widthMentions = detailParagraphs.filter(
+      (text) => text === "It is 6' wide."
     );
     expect(widthMentions).toHaveLength(1);
 
@@ -154,7 +154,9 @@ describe('dungeon feed toggling confidence', () => {
       .map((node) => node.text.trim())
       .join(' ');
 
-    const jumpingPlaceMatches = compactText.match(/There is a jumping place\./g);
+    const jumpingPlaceMatches = compactText.match(
+      /There is a jumping place\./g
+    );
     expect(jumpingPlaceMatches?.length ?? 0).toBe(1);
 
     const widthMatches = compactText.match(/It is 6' wide\./g);
@@ -186,9 +188,9 @@ describe('dungeon feed toggling confidence', () => {
       .map((node) => node.text.trim());
 
     expect(detailParagraphs).toContain('It is circular.');
-    expect(detailParagraphs.some((text) => text.includes('There is a pool.'))).toBe(
-      false
-    );
+    expect(
+      detailParagraphs.some((text) => text.includes('There is a pool.'))
+    ).toBe(false);
 
     const compactParagraphs = renderCompact(feed)
       .filter(
@@ -245,20 +247,21 @@ describe('dungeon feed toggling confidence', () => {
       )
       .map((node) => node.text.trim());
 
-    expect(detailParagraphs.filter((text) => text === 'It is circular.')).toHaveLength(
-      1
-    );
+    expect(
+      detailParagraphs.filter((text) => text === 'It is circular.')
+    ).toHaveLength(1);
     expect(
       detailParagraphs.filter((text) =>
         text.startsWith('There is a pool. It is a magical pool.')
       )
     ).not.toHaveLength(0);
-    expect(detailParagraphs.filter((text) => text === 'It is a transporter.')).not.toHaveLength(
-      0
-    );
+    expect(
+      detailParagraphs.filter((text) => text === 'It is a transporter.')
+    ).not.toHaveLength(0);
     expect(
       detailParagraphs.filter(
-        (text) => text === 'It transports characters elsewhere on the same level.'
+        (text) =>
+          text === 'It transports characters elsewhere on the same level.'
       )
     ).not.toHaveLength(0);
 

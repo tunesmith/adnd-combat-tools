@@ -32,7 +32,11 @@ export function renderUnusualShapeDetail(
     ],
   };
   const text = formatUnusualShape(outcome.event.result);
-  const nodes: DungeonRenderNode[] = [heading, bullet, { kind: 'paragraph', text }];
+  const nodes: DungeonRenderNode[] = [
+    heading,
+    bullet,
+    { kind: 'paragraph', text },
+  ];
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -58,9 +62,7 @@ export function renderUnusualShapeCompact(
   return nodes;
 }
 
-export function describeUnusualShapeExtras(
-  node: OutcomeEventNode
-): string {
+export function describeUnusualShapeExtras(node: OutcomeEventNode): string {
   if (node.event.kind !== 'unusualShape') return '';
   const sentences = collectCircularChainSentences(node);
   if (sentences.length === 0) return '';
@@ -115,9 +117,7 @@ export function formatUnusualShape(result: UnusualShape): string {
     case UnusualShape.Trapezoidal:
       return 'It is trapezoidal. ';
     case UnusualShape.OddShaped:
-      return (
-        'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) '
-      );
+      return 'It is odd-shaped. (Draw what shape you desire or what will fit the map -- it is a special shape if desired.) ';
     case UnusualShape.Oval:
       return 'It is oval-shaped. ';
     case UnusualShape.Hexagonal:

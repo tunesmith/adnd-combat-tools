@@ -1,8 +1,5 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type {
-  OutcomeEvent,
-  OutcomeEventNode,
-} from '../../domain/outcome';
+import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
 import {
   magicPool,
   MagicPool,
@@ -145,9 +142,7 @@ export function renderTransporterLocationCompact(
   return buildTransporterNodes(outcome, false);
 }
 
-export const buildCircularMagicPoolPreview: TablePreviewFactory = (
-  tableId
-) =>
+export const buildCircularMagicPoolPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Magic Pool Effect',
     sides: magicPool.sides,
@@ -177,9 +172,7 @@ export const buildPoolAlignmentPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
-export const buildTransporterLocationPreview: TablePreviewFactory = (
-  tableId
-) =>
+export const buildTransporterLocationPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Transporter Location',
     sides: transporterLocation.sides,
@@ -336,7 +329,9 @@ function buildTransporterNodes(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${TransporterLocation[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${TransporterLocation[outcome.event.result]}`,
+    ],
   };
   const summary = describeTransporterLocation(outcome);
   const extras: DungeonRenderNode[] = includeDetailAlignment

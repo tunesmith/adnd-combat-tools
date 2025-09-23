@@ -1,4 +1,7 @@
-import type { DungeonTablePreview, TableContext } from '../../../../types/dungeon';
+import type {
+  DungeonTablePreview,
+  TableContext,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { human, Human } from '../../../../tables/dungeon/monster/monsterOne';
 import { buildPreview } from '../shared';
@@ -13,7 +16,9 @@ export function describeHumanMonster(
 ): MonsterDescription | undefined {
   if (node.event.kind !== 'human') return undefined;
   const event = node.event;
-  const textInfo = monsterTextDescription('text' in event ? event.text : undefined);
+  const textInfo = monsterTextDescription(
+    'text' in event ? event.text : undefined
+  );
   return {
     heading: 'Human Subtable',
     label: humanLabel(event.result),

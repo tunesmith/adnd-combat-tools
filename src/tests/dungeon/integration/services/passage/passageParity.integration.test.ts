@@ -3,7 +3,10 @@ import {
   periodicCheck,
   PeriodicCheck,
 } from '../../../../../tables/dungeon/periodicCheck';
-import type { DungeonMessage, DungeonTablePreview } from '../../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonTablePreview,
+} from '../../../../../types/dungeon';
 
 function isParagraph(
   m: DungeonMessage

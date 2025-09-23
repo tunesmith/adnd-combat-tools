@@ -41,9 +41,7 @@ export function renderRoomDimensionsDetail(
   return nodes;
 }
 
-export function renderRoomDimensionsCompact(
-  node: OutcomeEventNode
-): string {
+export function renderRoomDimensionsCompact(node: OutcomeEventNode): string {
   if (node.event.kind !== 'roomDimensions') return '';
   const segments: string[] = [];
   const base = describeRoomDimensionsBase(node.event.result).trim();

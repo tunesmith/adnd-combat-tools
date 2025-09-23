@@ -1,4 +1,7 @@
-import { toDetailRender, toCompactRender } from '../../../../../dungeon/adapters/render';
+import {
+  toDetailRender,
+  toCompactRender,
+} from '../../../../../dungeon/adapters/render';
 import {
   resolveRoomDimensions,
   resolveChamberDimensions,

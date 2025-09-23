@@ -304,7 +304,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   circularContents: ({ roll }) =>
     fromOutcome(resolveCircularContents({ roll })),
   circularPool: ({ roll }) => fromOutcome(resolveCircularPool({ roll })),
-  circularMagicPool: ({ roll }) => fromOutcome(resolveCircularMagicPool({ roll })),
+  circularMagicPool: ({ roll }) =>
+    fromOutcome(resolveCircularMagicPool({ roll })),
   transmuteType: ({ roll }) => fromOutcome(resolveTransmuteType({ roll })),
   poolAlignment: ({ roll }) => fromOutcome(resolvePoolAlignment({ roll })),
   transporterLocation: ({ roll }) =>

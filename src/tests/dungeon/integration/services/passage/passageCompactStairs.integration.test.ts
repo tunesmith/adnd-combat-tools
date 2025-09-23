@@ -1,12 +1,18 @@
 import { toDetailRender } from '../../../../../dungeon/adapters/render';
-import { resolveEgress, resolveStairs } from '../../../../../dungeon/domain/resolvers';
+import {
+  resolveEgress,
+  resolveStairs,
+} from '../../../../../dungeon/domain/resolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import { passageMessages } from '../../../../../dungeon/services/passage';
 import {
   periodicCheck,
   PeriodicCheck,
 } from '../../../../../tables/dungeon/periodicCheck';
-import type { DungeonMessage, DungeonRenderNode } from '../../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 function isParagraph(
