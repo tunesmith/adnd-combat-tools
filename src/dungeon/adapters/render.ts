@@ -62,10 +62,7 @@ import {
 import {
   renderCircularMagicPoolDetail,
   renderCircularMagicPoolCompact,
-  renderTransporterLocationDetail,
-  renderTransporterLocationCompact,
   buildCircularMagicPoolPreview,
-  buildTransporterLocationPreview,
 } from './render/magicPool';
 import {
   renderTransmuteTypeDetail,
@@ -77,6 +74,11 @@ import {
   renderPoolAlignmentCompact,
   buildPoolAlignmentPreview,
 } from './render/poolAlignment';
+import {
+  renderTransporterLocationDetail,
+  renderTransporterLocationCompact,
+  buildTransporterLocationPreview,
+} from './render/transporterLocation';
 import {
   renderSpecialPassageDetail,
   renderSpecialPassageCompactNodes,

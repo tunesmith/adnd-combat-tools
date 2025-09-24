@@ -1,11 +1,6 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
-import {
-  magicPool,
-  MagicPool,
-  transporterLocation,
-  TransporterLocation,
-} from '../../../tables/dungeon/magicPool';
+import { magicPool, MagicPool } from '../../../tables/dungeon/magicPool';
 import {
   buildPreview,
   findChildEvent,
@@ -15,6 +10,7 @@ import {
 import { formatCircularContents, formatCircularPool } from './circularPools';
 import { formatTransmuteType } from './transmuteType';
 import { formatPoolAlignment } from './poolAlignment';
+import { describeTransporterLocation } from './transporterLocation';
 
 export function renderCircularMagicPoolDetail(
   outcome: OutcomeEventNode,
@@ -71,31 +67,6 @@ function buildCircularMagicPoolNodes(
   return nodes;
 }
 
-export function renderTransporterLocationDetail(
-  outcome: OutcomeEventNode,
-  appendPendingPreviews: AppendPreviewFn
-): DungeonRenderNode[] {
-  const nodes = buildTransporterNodes(outcome, true);
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
-}
-
-export function renderTransporterLocationCompact(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
-  return buildTransporterNodes(outcome, false);
-}
-
-export const buildTransporterLocationPreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Transporter Location',
-    sides: transporterLocation.sides,
-    entries: transporterLocation.entries.map((entry) => ({
-      range: entry.range,
-      label: TransporterLocation[entry.command] ?? String(entry.command),
-    })),
-  });
-
 function pushParagraph(nodes: DungeonRenderNode[], text: string): void {
   const trimmed = text.trim();
   if (trimmed.length === 0) return;
@@ -139,38 +110,6 @@ function describeMagicPoolTransporter(node: OutcomeEventNode): {
   return { detailParagraphs, compactText: segments.join(' ') };
 }
 
-function describeTransporterLocation(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'transporterLocation') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const sentence = formatTransporterLocation(node.event.result).trim();
-  if (!sentence) {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  return {
-    detailParagraphs: [{ kind: 'paragraph', text: `${sentence} ` }],
-    compactText: sentence,
-  };
-}
-
-function formatTransporterLocation(result: TransporterLocation): string {
-  switch (result) {
-    case TransporterLocation.Surface:
-      return 'It transports characters back to the surface.';
-    case TransporterLocation.SameLevelElsewhere:
-      return 'It transports characters elsewhere on the same level.';
-    case TransporterLocation.OneLevelDown:
-      return 'It transports characters one level down.';
-    case TransporterLocation.Away100Miles:
-      return 'It transports characters 100 miles away for outdoor adventure.';
-    default:
-      return '';
-  }
-}
-
 const CIRCULAR_CHAIN_KINDS = new Set<OutcomeEvent['kind']>([
   'circularContents',
   'circularPool',
@@ -207,31 +146,6 @@ export function collectCircularChainSentences(
     }
   }
   return sentences;
-}
-
-function buildTransporterNodes(
-  outcome: OutcomeEventNode,
-  includeDetailAlignment: boolean
-): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'transporterLocation') return [];
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Transporter Location',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [
-      `roll: ${outcome.roll} — ${TransporterLocation[outcome.event.result]}`,
-    ],
-  };
-  const summary = describeTransporterLocation(outcome);
-  const extras: DungeonRenderNode[] = includeDetailAlignment
-    ? summary.detailParagraphs
-    : summary.compactText.length > 0
-    ? [{ kind: 'paragraph', text: `${summary.compactText} ` }]
-    : [];
-  return extras.length > 0 ? [heading, bullet, ...extras] : [heading, bullet];
 }
 
 function circularSentenceForEvent(

@@ -114,7 +114,7 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Adopt a consistent module shape: `render<Table>Detail(outcome, appendPendingPreviews)` and `render<Table>Compact|render<Table>CompactNodes(outcome)` act as the only public entry points, each delegating to a shared `build<Table>Nodes` helper that assembles `DungeonRenderNode[]` once.
 - Local `format<Table>` helpers return the plain prose fragment for a single roll; keep them module-scoped unless another adapter truly consumes the text (e.g., circular chain helpers). This keeps exports minimal while guaranteeing related flows reuse identical copy.
 - Detail paths should own preview wiring by invoking `appendPendingPreviews` internally after node composition. That removes the need for special cases in `render.ts` and keeps cross-table chains (stairs, circular pools, monsters) predictable.
-- Use describe helpers only when a table must simultaneously expose detail paragraph(s) *and* a compact summary string. When the table is a leaf, prefer `build<Table>Nodes` + `format<Table>` to avoid duplicated switch statements.
+- Use describe helpers only when a table must simultaneously expose detail paragraph(s) _and_ a compact summary string. When the table is a leaf, prefer `build<Table>Nodes` + `format<Table>` to avoid duplicated switch statements.
 - Longer term, replace the `if`/`switch` dispatch in `render.ts` with a map of `{ kind, renderDetail, renderCompact }`. Once adapters expose the uniform shape above, the registry can enforce the contract and make variation (e.g., multi-step chains vs. leaf tables) explicit rather than ad hoc.
 
 ## Open Questions / Future Enhancements
