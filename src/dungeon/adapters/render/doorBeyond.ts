@@ -10,97 +10,68 @@ export function renderDoorBeyondDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
+  const nodes = buildDoorBeyondNodes(outcome);
+  if (nodes.length === 0) return nodes;
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderDoorBeyondCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  return buildDoorBeyondNodes(outcome);
+}
+
+function buildDoorBeyondNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   if (outcome.event.kind !== 'doorBeyond') return [];
   const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${DoorBeyond[outcome.event.result]}`],
   };
-  const summary = describeDoorBeyond(outcome);
-  const nodes: DungeonRenderNode[] = [heading, bullet];
-  nodes.push(...summary.detailParagraphs);
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
-}
-
-export function renderDoorBeyondCompact(outcome: OutcomeEventNode): string {
-  if (outcome.event.kind !== 'doorBeyond') return '';
-  const summary = describeDoorBeyond(outcome);
-  let text = summary.compactText;
+  const description = formatDoorBeyond(outcome.event.result, {
+    doorAhead: outcome.event.doorAhead ?? false,
+  });
+  const paragraphs: DungeonMessage[] = [];
+  if (description.trim().length > 0) {
+    paragraphs.push({ kind: 'paragraph', text: description });
+  }
   if (
     outcome.event.result === DoorBeyond.ParallelPassageOrCloset &&
     !outcome.event.doorAhead
   ) {
-    text += renderChildPassageWidth(outcome);
+    const width = findChildEvent(outcome, 'passageWidth');
+    const widthText = width ? renderPassageWidthCompact(width) : '';
+    if (widthText.length > 0) {
+      paragraphs.push({ kind: 'paragraph', text: widthText });
+    }
   }
   if (
     outcome.event.result === DoorBeyond.PassageStraightAhead ||
     outcome.event.result === DoorBeyond.Passage45AheadBehind ||
     outcome.event.result === DoorBeyond.Passage45BehindAhead
   ) {
-    text += renderChildPassageWidth(outcome);
+    const width = findChildEvent(outcome, 'passageWidth');
+    const widthText = width ? renderPassageWidthCompact(width) : '';
+    if (widthText.length > 0) {
+      paragraphs.push({ kind: 'paragraph', text: widthText });
+    }
   }
   if (outcome.event.result === DoorBeyond.Room) {
     const room = findChildEvent(outcome, 'roomDimensions');
     const detail = room ? renderRoomDimensionsCompact(room) : '';
-    text += detail;
+    if (detail.length > 0) {
+      paragraphs.push({ kind: 'paragraph', text: detail });
+    }
   }
   if (outcome.event.result === DoorBeyond.Chamber) {
     const chamber = findChildEvent(outcome, 'chamberDimensions');
     const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
-    text += detail;
+    if (detail.length > 0) {
+      paragraphs.push({ kind: 'paragraph', text: detail });
+    }
   }
-  return text;
-}
-
-export function describeDoorBeyond(node: OutcomeEventNode): {
-  detailParagraphs: DungeonMessage[];
-  compactText: string;
-} {
-  if (node.event.kind !== 'doorBeyond') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  const detailParagraphs: DungeonMessage[] = [];
-  const segments: string[] = [];
-  const appendParagraph = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const normalized = trimmed.endsWith(' ')
-      ? trimmed
-      : trimmed.endsWith('.')
-      ? `${trimmed} `
-      : `${trimmed}. `;
-    detailParagraphs.push({ kind: 'paragraph', text: normalized });
-    segments.push(normalized);
-  };
-
-  const baseText = formatDoorBeyond(node.event.result, {
-    doorAhead: node.event.doorAhead ?? false,
-  });
-  if (baseText.length > 0) {
-    appendParagraph(baseText);
-  }
-
-  const compactText = segments.join('');
-  return { detailParagraphs, compactText };
-}
-
-function renderChildPassageWidth(node: OutcomeEventNode): string {
-  const width = findChildEvent(node, 'passageWidth');
-  return width ? renderPassageWidthCompact(width) : '';
-}
-
-export function renderDoorBeyondCompactNodes(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'doorBeyond') return [];
-  const heading: DungeonMessage = { kind: 'heading', level: 3, text: 'Door' };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${DoorBeyond[outcome.event.result]}`],
-  };
-  const text = renderDoorBeyondCompact(outcome);
-  return [heading, bullet, { kind: 'paragraph', text }];
+  return [heading, bullet, ...paragraphs];
 }
 
 function formatDoorBeyond(

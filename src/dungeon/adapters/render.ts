@@ -21,10 +21,7 @@ import {
   buildDoorLocationPreview,
   buildPeriodicDoorOnlyPreview,
 } from './render/doorLocation';
-import {
-  renderDoorBeyondDetail,
-  renderDoorBeyondCompactNodes,
-} from './render/doorBeyond';
+import { renderDoorBeyondDetail, renderDoorBeyondCompact } from './render/doorBeyond';
 import {
   renderSidePassagesDetail,
   renderSidePassagesCompactNodes,
@@ -624,7 +621,7 @@ export function toCompactRender(
     return renderPeriodicCheckCompact(node);
   }
   if (event.kind === 'doorBeyond') {
-    return renderDoorBeyondCompactNodes(node);
+    return renderDoorBeyondCompact(node);
   }
   if (event.kind === 'roomDimensions') {
     return renderRoomDimensionsCompactNodes(node);
