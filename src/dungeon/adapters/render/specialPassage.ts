@@ -257,7 +257,9 @@ function buildGalleryStairLocationNodes(
   const description = formatGalleryStairLocation(outcome.event.result);
   const nodes: DungeonRenderNode[] = [heading, bullet];
   if (description.trim().length > 0) {
-    const normalized = description.endsWith(' ') ? description : `${description} `;
+    const normalized = description.endsWith(' ')
+      ? description
+      : `${description} `;
     nodes.push({ kind: 'paragraph', text: normalized });
   }
   return nodes;
@@ -281,7 +283,9 @@ function buildGalleryStairOccurrenceNodes(
   const description = formatGalleryStairOccurrence(outcome.event.result);
   const nodes: DungeonRenderNode[] = [heading, bullet];
   if (description.trim().length > 0) {
-    const normalized = description.endsWith(' ') ? description : `${description} `;
+    const normalized = description.endsWith(' ')
+      ? description
+      : `${description} `;
     nodes.push({ kind: 'paragraph', text: normalized });
   }
   return nodes;
@@ -309,12 +313,14 @@ function buildRiverConstructionNodes(
   }
   const compactParagraph =
     summary.compactText.length > 0
-      ? [{
-          kind: 'paragraph',
-          text: summary.compactText.endsWith(' ')
-            ? summary.compactText
-            : `${summary.compactText} `,
-        } as DungeonMessage]
+      ? [
+          {
+            kind: 'paragraph',
+            text: summary.compactText.endsWith(' ')
+              ? summary.compactText
+              : `${summary.compactText} `,
+          } as DungeonMessage,
+        ]
       : [];
   return [heading, bullet, ...compactParagraph];
 }

@@ -21,7 +21,10 @@ import {
   buildDoorLocationPreview,
   buildPeriodicDoorOnlyPreview,
 } from './render/doorLocation';
-import { renderDoorBeyondDetail, renderDoorBeyondCompact } from './render/doorBeyond';
+import {
+  renderDoorBeyondDetail,
+  renderDoorBeyondCompact,
+} from './render/doorBeyond';
 import {
   renderSidePassagesDetail,
   renderSidePassagesCompactNodes,
@@ -59,17 +62,21 @@ import {
 import {
   renderCircularMagicPoolDetail,
   renderCircularMagicPoolCompact,
-  renderTransmuteTypeDetail,
-  renderTransmuteTypeCompact,
-  renderPoolAlignmentDetail,
-  renderPoolAlignmentCompact,
   renderTransporterLocationDetail,
   renderTransporterLocationCompact,
   buildCircularMagicPoolPreview,
-  buildTransmuteTypePreview,
-  buildPoolAlignmentPreview,
   buildTransporterLocationPreview,
 } from './render/magicPool';
+import {
+  renderTransmuteTypeDetail,
+  renderTransmuteTypeCompact,
+  buildTransmuteTypePreview,
+} from './render/transmuteType';
+import {
+  renderPoolAlignmentDetail,
+  renderPoolAlignmentCompact,
+  buildPoolAlignmentPreview,
+} from './render/poolAlignment';
 import {
   renderSpecialPassageDetail,
   renderSpecialPassageCompactNodes,

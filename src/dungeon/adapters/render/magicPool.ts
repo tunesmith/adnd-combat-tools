@@ -3,10 +3,6 @@ import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
 import {
   magicPool,
   MagicPool,
-  transmuteType,
-  TransmuteType,
-  poolAlignment,
-  PoolAlignment,
   transporterLocation,
   TransporterLocation,
 } from '../../../tables/dungeon/magicPool';
@@ -17,6 +13,8 @@ import {
   type TablePreviewFactory,
 } from './shared';
 import { formatCircularContents, formatCircularPool } from './circularPools';
+import { formatTransmuteType } from './transmuteType';
+import { formatPoolAlignment } from './poolAlignment';
 
 export function renderCircularMagicPoolDetail(
   outcome: OutcomeEventNode,
@@ -73,74 +71,6 @@ function buildCircularMagicPoolNodes(
   return nodes;
 }
 
-function buildTransmuteTypeNodes(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'transmuteType') return [];
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Transmutation Type',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${TransmuteType[outcome.event.result]}`],
-  };
-  const nodes: DungeonRenderNode[] = [heading, bullet];
-  pushParagraph(nodes, formatTransmuteType(outcome.event.result));
-  return nodes;
-}
-
-export function renderTransmuteTypeDetail(
-  outcome: OutcomeEventNode,
-  appendPendingPreviews: AppendPreviewFn
-): DungeonRenderNode[] {
-  const nodes = buildTransmuteTypeNodes(outcome);
-  if (nodes.length === 0) return nodes;
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
-}
-
-export function renderTransmuteTypeCompact(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
-  return buildTransmuteTypeNodes(outcome);
-}
-
-function buildPoolAlignmentNodes(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'poolAlignment') return [];
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Pool Alignment',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${PoolAlignment[outcome.event.result]}`],
-  };
-  const nodes: DungeonRenderNode[] = [heading, bullet];
-  pushParagraph(nodes, formatPoolAlignment(outcome.event.result));
-  return nodes;
-}
-
-export function renderPoolAlignmentDetail(
-  outcome: OutcomeEventNode,
-  appendPendingPreviews: AppendPreviewFn
-): DungeonRenderNode[] {
-  const nodes = buildPoolAlignmentNodes(outcome);
-  if (nodes.length === 0) return nodes;
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
-}
-
-export function renderPoolAlignmentCompact(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
-  return buildPoolAlignmentNodes(outcome);
-}
-
 export function renderTransporterLocationDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
@@ -155,26 +85,6 @@ export function renderTransporterLocationCompact(
 ): DungeonRenderNode[] {
   return buildTransporterNodes(outcome, false);
 }
-
-export const buildTransmuteTypePreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Transmutation Type',
-    sides: transmuteType.sides,
-    entries: transmuteType.entries.map((entry) => ({
-      range: entry.range,
-      label: TransmuteType[entry.command] ?? String(entry.command),
-    })),
-  });
-
-export const buildPoolAlignmentPreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Pool Alignment',
-    sides: poolAlignment.sides,
-    entries: poolAlignment.entries.map((entry) => ({
-      range: entry.range,
-      label: PoolAlignment[entry.command] ?? String(entry.command),
-    })),
-  });
 
 export const buildTransporterLocationPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
@@ -201,29 +111,6 @@ function formatCircularMagicPool(result: MagicPool): string {
       return 'It will, on a one-time only basis, add (1–3) or subtract (4–6) 1–3 points from one characteristic of all who stand within it: (d6) 1-STR, 2-INT, 3-WIS, 4-DEX, 5-CON, 6-CHA. Roll chances, amount, and characteristic separately for each character. ';
     case MagicPool.WishOrDamage:
       return 'It is a talking pool, and will grant one wish to characters of its alignment, and damage others for 1–20 points. Wish can be withheld for up to 1 day. ';
-    default:
-      return '';
-  }
-}
-
-function formatTransmuteType(result: TransmuteType): string {
-  return result === TransmuteType.GoldToPlatinum
-    ? 'It will turn gold to platinum, one time only. '
-    : 'It will turn gold to lead, one time only. ';
-}
-
-function formatPoolAlignment(result: PoolAlignment): string {
-  switch (result) {
-    case PoolAlignment.LawfulGood:
-      return 'It is Lawful Good. ';
-    case PoolAlignment.LawfulEvil:
-      return 'It is Lawful Evil. ';
-    case PoolAlignment.ChaoticGood:
-      return 'It is Chaotic Good. ';
-    case PoolAlignment.ChaoticEvil:
-      return 'It is Chaotic Evil. ';
-    case PoolAlignment.Neutral:
-      return 'It is Neutral. ';
     default:
       return '';
   }
