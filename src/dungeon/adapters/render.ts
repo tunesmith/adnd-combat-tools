@@ -665,19 +665,13 @@ export function toCompactRender(
     return renderNumberOfExitsCompact(node);
   }
   if (event.kind === 'circularContents') {
-    const nodes2 = renderCircularContentsCompact(node);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderCircularContentsCompact(node, appendPendingPreviews);
   }
   if (event.kind === 'circularPool') {
-    const nodes2 = renderCircularPoolCompact(node);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderCircularPoolCompact(node, appendPendingPreviews);
   }
   if (event.kind === 'circularMagicPool') {
-    const nodes2 = renderCircularMagicPoolCompact(node);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderCircularMagicPoolCompact(node, appendPendingPreviews);
   }
   if (event.kind === 'riverConstruction') {
     const nodes2 = renderRiverConstructionCompact(node);

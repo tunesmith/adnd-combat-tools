@@ -41,14 +41,19 @@ export function renderCircularContentsDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   const nodes = buildCircularContentsNodes(outcome);
+  if (nodes.length === 0) return nodes;
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
 
 export function renderCircularContentsCompact(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return buildCircularContentsNodes(outcome);
+  const nodes = buildCircularContentsNodes(outcome);
+  if (nodes.length === 0) return nodes;
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 function buildCircularPoolNodes(
@@ -75,14 +80,19 @@ export function renderCircularPoolDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   const nodes = buildCircularPoolNodes(outcome);
+  if (nodes.length === 0) return nodes;
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
 
 export function renderCircularPoolCompact(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return buildCircularPoolNodes(outcome);
+  const nodes = buildCircularPoolNodes(outcome);
+  if (nodes.length === 0) return nodes;
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export const buildCircularContentsPreview: TablePreviewFactory = (tableId) =>

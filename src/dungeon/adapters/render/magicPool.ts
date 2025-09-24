@@ -28,9 +28,13 @@ export const buildCircularMagicPoolPreview: TablePreviewFactory = (tableId) =>
   });
 
 export function renderCircularMagicPoolCompact(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return buildCircularMagicPoolNodes(outcome);
+  const nodes = buildCircularMagicPoolNodes(outcome);
+  if (nodes.length === 0) return nodes;
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 function buildCircularMagicPoolNodes(
