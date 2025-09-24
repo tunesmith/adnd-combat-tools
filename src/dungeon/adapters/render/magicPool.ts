@@ -18,6 +18,32 @@ import {
 } from './shared';
 import { formatCircularContents, formatCircularPool } from './circularPools';
 
+export function renderCircularMagicPoolDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildCircularMagicPoolNodes(outcome);
+  if (nodes.length === 0) return nodes;
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildCircularMagicPoolPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Magic Pool Effect',
+    sides: magicPool.sides,
+    entries: magicPool.entries.map((entry) => ({
+      range: entry.range,
+      label: MagicPool[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export function renderCircularMagicPoolCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  return buildCircularMagicPoolNodes(outcome);
+}
+
 function buildCircularMagicPoolNodes(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
@@ -42,25 +68,9 @@ function buildCircularMagicPoolNodes(
       nodes.push(...summary.detailParagraphs);
     }
   } else {
-    const text = formatCircularMagicPool(outcome.event.result);
-    if (text.length > 0) nodes.push({ kind: 'paragraph', text });
+    pushParagraph(nodes, formatCircularMagicPool(outcome.event.result));
   }
   return nodes;
-}
-
-export function renderCircularMagicPoolDetail(
-  outcome: OutcomeEventNode,
-  appendPendingPreviews: AppendPreviewFn
-): DungeonRenderNode[] {
-  const nodes = buildCircularMagicPoolNodes(outcome);
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
-}
-
-export function renderCircularMagicPoolCompact(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
-  return buildCircularMagicPoolNodes(outcome);
 }
 
 function buildTransmuteTypeNodes(
@@ -76,8 +86,9 @@ function buildTransmuteTypeNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${TransmuteType[outcome.event.result]}`],
   };
-  const text = formatTransmuteType(outcome.event.result);
-  return [heading, bullet, { kind: 'paragraph', text }];
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  pushParagraph(nodes, formatTransmuteType(outcome.event.result));
+  return nodes;
 }
 
 export function renderTransmuteTypeDetail(
@@ -85,6 +96,7 @@ export function renderTransmuteTypeDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   const nodes = buildTransmuteTypeNodes(outcome);
+  if (nodes.length === 0) return nodes;
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -108,8 +120,9 @@ function buildPoolAlignmentNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${PoolAlignment[outcome.event.result]}`],
   };
-  const text = formatPoolAlignment(outcome.event.result);
-  return [heading, bullet, { kind: 'paragraph', text }];
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  pushParagraph(nodes, formatPoolAlignment(outcome.event.result));
+  return nodes;
 }
 
 export function renderPoolAlignmentDetail(
@@ -117,6 +130,7 @@ export function renderPoolAlignmentDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   const nodes = buildPoolAlignmentNodes(outcome);
+  if (nodes.length === 0) return nodes;
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -141,16 +155,6 @@ export function renderTransporterLocationCompact(
 ): DungeonRenderNode[] {
   return buildTransporterNodes(outcome, false);
 }
-
-export const buildCircularMagicPoolPreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Magic Pool Effect',
-    sides: magicPool.sides,
-    entries: magicPool.entries.map((entry) => ({
-      range: entry.range,
-      label: MagicPool[entry.command] ?? String(entry.command),
-    })),
-  });
 
 export const buildTransmuteTypePreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
@@ -181,6 +185,13 @@ export const buildTransporterLocationPreview: TablePreviewFactory = (tableId) =>
       label: TransporterLocation[entry.command] ?? String(entry.command),
     })),
   });
+
+function pushParagraph(nodes: DungeonRenderNode[], text: string): void {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return;
+  const normalized = trimmed.endsWith(' ') ? trimmed : `${trimmed} `;
+  nodes.push({ kind: 'paragraph', text: normalized });
+}
 
 function formatCircularMagicPool(result: MagicPool): string {
   switch (result) {
@@ -220,16 +231,10 @@ function formatPoolAlignment(result: PoolAlignment): string {
 
 export const TRANSPORTER_BASE_SENTENCE = 'It is a transporter.';
 
-export function describeMagicPoolTransporter(node: OutcomeEventNode): {
+function describeMagicPoolTransporter(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {
-  if (node.event.kind !== 'circularMagicPool') {
-    return { detailParagraphs: [], compactText: '' };
-  }
-  if (node.event.result !== MagicPool.Transporter) {
-    return { detailParagraphs: [], compactText: '' };
-  }
   const detailParagraphs: DungeonMessage[] = [
     { kind: 'paragraph', text: `${TRANSPORTER_BASE_SENTENCE} ` },
   ];
@@ -247,7 +252,7 @@ export function describeMagicPoolTransporter(node: OutcomeEventNode): {
   return { detailParagraphs, compactText: segments.join(' ') };
 }
 
-export function describeTransporterLocation(node: OutcomeEventNode): {
+function describeTransporterLocation(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {
