@@ -116,6 +116,7 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Detail paths should own preview wiring by invoking `appendPendingPreviews` internally after node composition. That removes the need for special cases in `render.ts` and keeps cross-table chains (stairs, circular pools, monsters) predictable.
 - Use describe helpers only when a table must simultaneously expose detail paragraph(s) _and_ a compact summary string. When the table is a leaf, prefer `build<Table>Nodes` + `format<Table>` to avoid duplicated switch statements.
 - Longer term, replace the `if`/`switch` dispatch in `render.ts` with a map of `{ kind, renderDetail, renderCompact }`. Once adapters expose the uniform shape above, the registry can enforce the contract and make variation (e.g., multi-step chains vs. leaf tables) explicit rather than ad hoc.
+- Watch for "extra" describe helpers that simply reshape a table’s own output (e.g. the former `describeMagicPoolTransporter`). If the resolver already materialises the child event, the parent adapter should just reuse the standard `format → buildNodes → render` flow and let recursion handle the child; bespoke helpers tend to hide this and add maintenance burden.
 
 ## Open Questions / Future Enhancements
 

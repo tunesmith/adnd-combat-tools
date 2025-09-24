@@ -202,9 +202,13 @@ export function renderGalleryStairLocationDetail(
 }
 
 export function renderGalleryStairLocationCompact(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return buildGalleryStairLocationNodes(outcome);
+  const nodes = buildGalleryStairLocationNodes(outcome);
+  if (nodes.length === 0) return nodes;
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export function renderGalleryStairOccurrenceDetail(
@@ -234,9 +238,13 @@ export function renderRiverConstructionDetail(
 }
 
 export function renderRiverConstructionCompact(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  return buildRiverConstructionNodes(outcome, false);
+  const nodes = buildRiverConstructionNodes(outcome, false);
+  if (nodes.length === 0) return nodes;
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 function buildGalleryStairLocationNodes(

@@ -674,14 +674,10 @@ export function toCompactRender(
     return renderCircularMagicPoolCompact(node, appendPendingPreviews);
   }
   if (event.kind === 'riverConstruction') {
-    const nodes2 = renderRiverConstructionCompact(node);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderRiverConstructionCompact(node, appendPendingPreviews);
   }
   if (event.kind === 'galleryStairLocation') {
-    const nodes2 = renderGalleryStairLocationCompact(node);
-    appendPendingPreviews(outcome, nodes2);
-    return nodes2;
+    return renderGalleryStairLocationCompact(node, appendPendingPreviews);
   }
   if (event.kind === 'galleryStairOccurrence') {
     return renderGalleryStairOccurrenceCompact(node);
