@@ -1,5 +1,5 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
+import type { OutcomeEventNode } from '../../domain/outcome';
 import { magicPool, MagicPool } from '../../../tables/dungeon/magicPool';
 import {
   buildPreview,
@@ -7,9 +7,6 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { formatCircularContents, formatCircularPool } from './circularPools';
-import { formatTransmuteType } from './transmuteType';
-import { formatPoolAlignment } from './poolAlignment';
 import { describeTransporterLocation } from './transporterLocation';
 
 export function renderCircularMagicPoolDetail(
@@ -74,7 +71,7 @@ function pushParagraph(nodes: DungeonRenderNode[], text: string): void {
   nodes.push({ kind: 'paragraph', text: normalized });
 }
 
-function formatCircularMagicPool(result: MagicPool): string {
+export function formatCircularMagicPool(result: MagicPool): string {
   switch (result) {
     case MagicPool.TransmuteGold:
       return 'It transmutes gold. ';
@@ -108,65 +105,4 @@ function describeMagicPoolTransporter(node: OutcomeEventNode): {
     }
   }
   return { detailParagraphs, compactText: segments.join(' ') };
-}
-
-const CIRCULAR_CHAIN_KINDS = new Set<OutcomeEvent['kind']>([
-  'circularContents',
-  'circularPool',
-  'circularMagicPool',
-  'transmuteType',
-  'poolAlignment',
-  'transporterLocation',
-]);
-
-export function collectCircularChainSentences(
-  node: OutcomeEventNode
-): string[] {
-  const sentences: string[] = [];
-  const visited = new Set<string>();
-  const queue: OutcomeEventNode[] = (node.children || []).filter(
-    (child): child is OutcomeEventNode =>
-      child.type === 'event' && CIRCULAR_CHAIN_KINDS.has(child.event.kind)
-  );
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) continue;
-    const key = current.id ?? `${current.event.kind}-${sentences.length}`;
-    if (visited.has(key)) continue;
-    visited.add(key);
-    const sentence = circularSentenceForEvent(current);
-    if (sentence && sentence.length > 0) {
-      sentences.push(sentence);
-    }
-    for (const child of current.children || []) {
-      if (child.type !== 'event') continue;
-      if (CIRCULAR_CHAIN_KINDS.has(child.event.kind)) {
-        queue.push(child);
-      }
-    }
-  }
-  return sentences;
-}
-
-function circularSentenceForEvent(
-  eventNode: OutcomeEventNode
-): string | undefined {
-  switch (eventNode.event.kind) {
-    case 'circularContents':
-      return formatCircularContents(eventNode.event.result).trim();
-    case 'circularPool':
-      return formatCircularPool(eventNode.event.result).trim();
-    case 'circularMagicPool':
-      return formatCircularMagicPool(eventNode.event.result).trim();
-    case 'transmuteType':
-      return formatTransmuteType(eventNode.event.result).trim();
-    case 'poolAlignment':
-      return formatPoolAlignment(eventNode.event.result).trim();
-    case 'transporterLocation': {
-      const summary = describeTransporterLocation(eventNode);
-      return summary.compactText.trim();
-    }
-    default:
-      return undefined;
-  }
 }

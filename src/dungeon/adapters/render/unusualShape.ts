@@ -1,5 +1,5 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
 import {
   unusualShape as unusualShapeTable,
   UnusualShape,
@@ -10,7 +10,11 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { collectCircularChainSentences } from './magicPool';
+import { formatCircularContents, formatCircularPool } from './circularPools';
+import { formatCircularMagicPool } from './magicPool';
+import { formatTransmuteType } from './transmuteType';
+import { formatPoolAlignment } from './poolAlignment';
+import { describeTransporterLocation } from './transporterLocation';
 import { describeUnusualSizeChain } from './unusualSize';
 
 export function renderUnusualShapeDetail(
@@ -73,6 +77,65 @@ export function describeUnusualShapeExtras(node: OutcomeEventNode): string {
         : `${sentence}. `
     )
     .join('');
+}
+
+const CIRCULAR_CHAIN_KINDS = new Set<OutcomeEvent['kind']>([
+  'circularContents',
+  'circularPool',
+  'circularMagicPool',
+  'transmuteType',
+  'poolAlignment',
+  'transporterLocation',
+]);
+
+function collectCircularChainSentences(node: OutcomeEventNode): string[] {
+  const sentences: string[] = [];
+  const visited = new Set<string>();
+  const queue: OutcomeEventNode[] = (node.children || []).filter(
+    (child): child is OutcomeEventNode =>
+      child.type === 'event' && CIRCULAR_CHAIN_KINDS.has(child.event.kind)
+  );
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+    const key = current.id ?? `${current.event.kind}-${sentences.length}`;
+    if (visited.has(key)) continue;
+    visited.add(key);
+    const sentence = circularSentenceForEvent(current);
+    if (sentence && sentence.length > 0) {
+      sentences.push(sentence);
+    }
+    for (const child of current.children || []) {
+      if (child.type !== 'event') continue;
+      if (CIRCULAR_CHAIN_KINDS.has(child.event.kind)) {
+        queue.push(child);
+      }
+    }
+  }
+  return sentences;
+}
+
+function circularSentenceForEvent(
+  eventNode: OutcomeEventNode
+): string | undefined {
+  switch (eventNode.event.kind) {
+    case 'circularContents':
+      return formatCircularContents(eventNode.event.result).trim();
+    case 'circularPool':
+      return formatCircularPool(eventNode.event.result).trim();
+    case 'circularMagicPool':
+      return formatCircularMagicPool(eventNode.event.result).trim();
+    case 'transmuteType':
+      return formatTransmuteType(eventNode.event.result).trim();
+    case 'poolAlignment':
+      return formatPoolAlignment(eventNode.event.result).trim();
+    case 'transporterLocation': {
+      const summary = describeTransporterLocation(eventNode);
+      return summary.compactText.trim();
+    }
+    default:
+      return undefined;
+  }
 }
 
 export function renderCompactUnusualDetails(node: OutcomeEventNode): string {
