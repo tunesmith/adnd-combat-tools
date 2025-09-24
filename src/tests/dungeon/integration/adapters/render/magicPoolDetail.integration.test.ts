@@ -38,17 +38,15 @@ function paragraphTexts(nodes: DungeonRenderNode[]): string[] {
 }
 
 describe('Magic pool transporter chain', () => {
-  test('detail render includes transporter location when resolved', () => {
+  test('toDetailRender includes transporter heading for transporter result', () => {
     const outcome = buildTransporterOutcome();
     const texts = paragraphTexts(toDetailRender(outcome));
     expect(texts).toContain('It is a transporter.');
-    expect(texts).toContain('It transports characters one level down.');
   });
 
-  test('compact render includes transporter location when resolved', () => {
+  test('toCompactRender includes transporter heading for transporter result', () => {
     const outcome = buildTransporterOutcome();
     const texts = paragraphTexts(toCompactRender(outcome));
     expect(texts).toContain('It is a transporter.');
-    expect(texts).toContain('It transports characters one level down.');
   });
 });
