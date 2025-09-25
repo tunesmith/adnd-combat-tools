@@ -54,7 +54,7 @@ export const buildTrickTrapPreview: TablePreviewFactory = (tableId) =>
     sides: trickTrap.sides,
     entries: trickTrap.entries.map((entry) => ({
       range: entry.range,
-      label: TRICK_TRAP_LABELS[entry.command],
+      label: TRICK_TRAP_DETAILS[entry.command].trim(),
     })),
   });
 
