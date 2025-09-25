@@ -7,6 +7,7 @@ import type {
   DungeonMessage,
   DungeonTablePreview,
 } from '../../../../../types/dungeon';
+import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 function isParagraph(
   m: DungeonMessage
@@ -37,11 +38,14 @@ describe('Passage compact text (adapter)', () => {
 
   test('TrickTrap exact text', () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.TrickTrap);
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
+    spy.mockReturnValueOnce(14);
     const { messages } = passageMessages({ roll, detailMode: false, level: 1 });
     const para = (messages as DungeonMessage[]).find(isParagraph);
     expect(para && para.text).toBe(
-      "There is a trick or trap. (TODO) -- check again in 30'. "
+      "Pit, 10' deep, 3 in 6 to fall in, pit walls move together to crush victim(s) in 2–5 rounds. "
     );
+    spy.mockRestore();
   });
 });
 

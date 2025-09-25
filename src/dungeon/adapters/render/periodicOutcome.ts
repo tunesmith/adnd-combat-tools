@@ -14,6 +14,7 @@ import { renderPassageTurnCompact } from './passageTurns';
 import { describeChamberDimensions } from './chamberDimensions';
 import { renderStairsCompact } from './stairs';
 import { renderWanderingMonsterCompact } from './monsters';
+import { renderTrickTrapCompact } from './trickTrap';
 
 export const DEAD_END_FALLBACK_TEXT = 'The passage reaches a dead end. (TODO) ';
 export const TRICK_TRAP_FALLBACK_TEXT =
@@ -239,8 +240,10 @@ function summarizePeriodicResult(
           })
         : base.compact;
     }
-    case PeriodicCheck.TrickTrap:
-      return TRICK_TRAP_FALLBACK_TEXT;
+    case PeriodicCheck.TrickTrap: {
+      const trap = findChildEvent(node, 'trickTrap');
+      return trap ? renderTrickTrapCompact(trap) : TRICK_TRAP_FALLBACK_TEXT;
+    }
     case PeriodicCheck.WanderingMonster: {
       if (node.event.kind !== 'periodicCheck') return base.compact;
       const whereFrom = findChildEvent(node, 'wanderingWhereFrom');

@@ -29,7 +29,7 @@ describe('Detail helpers for door chains and traps', () => {
     const outcome = resolveTrickTrap({ roll: 12 }) as OutcomeEventNode;
     const paragraphs = toDetailRender(outcome).filter(isParagraph);
     expect(paragraphs.map((p) => p.text)).toEqual([
-      "There is a trick or trap. (roll 12) -- check again in 30'. ",
+      "Wall 10' behind slides across passage blocking it for 40–60 turns. ",
     ]);
   });
 });

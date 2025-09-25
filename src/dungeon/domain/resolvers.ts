@@ -43,6 +43,7 @@ import {
   poolAlignment,
   transporterLocation,
 } from '../../tables/dungeon/magicPool';
+import { trickTrap } from '../../tables/dungeon/trickTrap';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import {
   roomDimensions,
@@ -816,11 +817,12 @@ export function resolveTransporterLocation(options?: {
 export function resolveTrickTrap(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(20);
+  const usedRoll = options?.roll ?? rollDice(trickTrap.sides);
+  const command = getTableEntry(usedRoll, trickTrap);
   return {
     type: 'event',
     roll: usedRoll,
-    event: { kind: 'trickTrap', result: usedRoll } as OutcomeEvent,
+    event: { kind: 'trickTrap', result: command } as OutcomeEvent,
   };
 }
 

@@ -58,6 +58,7 @@ import type {
   MonsterSix,
   DragonSix,
 } from '../../tables/dungeon/monster/monsterSix';
+import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
@@ -111,7 +112,7 @@ export type OutcomeEvent =
   | { kind: 'poolAlignment'; result: PoolAlignment }
   | { kind: 'transporterLocation'; result: TransporterLocation }
   | { kind: 'unusualSize'; result: UnusualSize; extra: number }
-  | { kind: 'trickTrap'; result: number }
+  | { kind: 'trickTrap'; result: TrickTrap }
   | { kind: 'wanderingWhereFrom'; result: PeriodicCheck }
   | { kind: 'galleryStairLocation'; result: GalleryStairLocation }
   | { kind: 'galleryStairOccurrence'; result: GalleryStairOccurrence }

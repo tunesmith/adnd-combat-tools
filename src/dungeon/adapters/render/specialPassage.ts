@@ -133,10 +133,9 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
       }
       const construction = findChildEvent(node, 'chasmConstruction');
       if (construction) {
-        append(
-          formatChasmConstruction(construction.event.result),
-          { detail: false }
-        );
+        append(formatChasmConstruction(construction.event.result), {
+          detail: false,
+        });
         const jump = findChildEvent(construction, 'jumpingPlaceWidth');
         if (jump) {
           append(formatJumpingPlaceWidth(jump.event.result), {
