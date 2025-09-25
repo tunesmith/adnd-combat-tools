@@ -52,11 +52,8 @@ import {
   buildChamberDimensionsPreview,
 } from './render/chamberDimensions';
 import {
-  renderCircularContentsDetail,
-  renderCircularContentsCompact,
   renderCircularPoolDetail,
   renderCircularPoolCompact,
-  buildCircularContentsPreview,
   buildCircularPoolPreview,
 } from './render/circularPools';
 import {
@@ -142,8 +139,12 @@ import {
   renderMonsterDetailNodes,
   renderMonsterCompactNodes,
 } from './render/monsters';
-// detail-mode preview helpers remain for other flows; compact composition is local
 import { isTableContext } from '../helpers/outcomeTree';
+import {
+  buildCircularContentsPreview,
+  renderCircularContentsCompact,
+  renderCircularContentsDetail,
+} from './render/circularContents';
 
 function withTargetId(
   preview: DungeonTablePreview,

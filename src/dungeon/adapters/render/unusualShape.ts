@@ -10,12 +10,13 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { formatCircularContents, formatCircularPool } from './circularPools';
+import { formatCircularPool } from './circularPools';
 import { formatCircularMagicPool } from './magicPool';
 import { formatTransmuteType } from './transmuteType';
 import { formatPoolAlignment } from './poolAlignment';
 import { describeTransporterLocation } from './transporterLocation';
 import { describeUnusualSizeChain } from './unusualSize';
+import { formatCircularContents } from './circularContents';
 
 export function renderUnusualShapeDetail(
   outcome: OutcomeEventNode,
