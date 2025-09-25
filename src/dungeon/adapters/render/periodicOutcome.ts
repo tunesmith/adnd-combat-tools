@@ -129,116 +129,15 @@ export function renderPeriodicCheckCompact(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${PeriodicCheck[outcome.event.result]}`],
   };
-  const text = renderCompactPeriodicOutcome(outcome);
+  const text = summarizePeriodicResult(outcome.event.result, outcome, {
+    avoidMonster: outcome.event.avoidMonster,
+  });
   return [heading, bullet, { kind: 'paragraph', text }];
-}
-
-export function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'periodicCheck') return '';
-  const event = node.event;
-  switch (event.result) {
-    case PeriodicCheck.Door:
-      return renderDoorChainCompact(findChildEvent(node, 'doorLocation'));
-    case PeriodicCheck.SidePassage: {
-      const side = findChildEvent(node, 'sidePassages');
-      if (side && side.event.kind === 'sidePassages') {
-        const summary = describeSidePassage(side);
-        if (summary.compactText.length > 0) {
-          return summary.compactText;
-        }
-      }
-      return 'A side passage occurs. ';
-    }
-    case PeriodicCheck.PassageTurn: {
-      const turn = findChildEvent(node, 'passageTurns');
-      return turn
-        ? renderPassageTurnCompact(turn)
-        : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
-    }
-    case PeriodicCheck.Chamber: {
-      const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? describeChamberDimensions(chamber) : '';
-      return 'The passage opens into a chamber. ' + detail;
-    }
-    case PeriodicCheck.Stairs: {
-      const stairs = findChildEvent(node, 'stairs');
-      return stairs
-        ? renderStairsCompact(stairs, {
-            renderChamberSummary: describeChamberDimensions,
-          })
-        : periodicBaseTexts(PeriodicCheck.Stairs).detail;
-    }
-    case PeriodicCheck.TrickTrap:
-      return TRICK_TRAP_FALLBACK_TEXT;
-    case PeriodicCheck.WanderingMonster: {
-      const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
-      const monsterLevelNode = findChildEvent(node, 'monsterLevel');
-      const prefix =
-        whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
-          ? renderWanderingWhereFrom(whereFrom)
-          : '';
-      const monsterSummary = renderWanderingMonsterCompact(
-        event.level,
-        monsterLevelNode && monsterLevelNode.event.kind === 'monsterLevel'
-          ? monsterLevelNode
-          : undefined
-      );
-      return prefix + monsterSummary;
-    }
-    case PeriodicCheck.ContinueStraight:
-      return periodicBaseTexts(PeriodicCheck.ContinueStraight).detail;
-    case PeriodicCheck.DeadEnd:
-      return periodicBaseTexts(PeriodicCheck.DeadEnd).detail;
-    default:
-      return periodicBaseTexts(event.result).detail;
-  }
 }
 
 export function renderWanderingWhereFrom(node: OutcomeEventNode): string {
   if (node.event.kind !== 'wanderingWhereFrom') return '';
-  switch (node.event.result) {
-    case PeriodicCheck.Door: {
-      const door = findChildEvent(node, 'doorLocation');
-      return renderDoorChainCompact(door);
-    }
-    case PeriodicCheck.SidePassage: {
-      const side = findChildEvent(node, 'sidePassages');
-      if (side && side.event.kind === 'sidePassages') {
-        const summary = describeSidePassage(side);
-        if (summary.compactText.length > 0) {
-          return summary.compactText;
-        }
-      }
-      return 'A side passage occurs. ';
-    }
-    case PeriodicCheck.PassageTurn: {
-      const turn = findChildEvent(node, 'passageTurns');
-      return turn
-        ? renderPassageTurnCompact(turn)
-        : periodicBaseTexts(PeriodicCheck.PassageTurn).detail;
-    }
-    case PeriodicCheck.Chamber: {
-      const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? describeChamberDimensions(chamber) : '';
-      return 'The passage opens into a chamber. ' + detail;
-    }
-    case PeriodicCheck.Stairs: {
-      const stairs = findChildEvent(node, 'stairs');
-      return stairs
-        ? renderStairsCompact(stairs, {
-            renderChamberSummary: describeChamberDimensions,
-          })
-        : periodicBaseTexts(PeriodicCheck.Stairs).detail;
-    }
-    case PeriodicCheck.TrickTrap:
-      return TRICK_TRAP_FALLBACK_TEXT;
-    case PeriodicCheck.ContinueStraight:
-      return periodicBaseTexts(PeriodicCheck.ContinueStraight).detail;
-    case PeriodicCheck.DeadEnd:
-      return periodicBaseTexts(PeriodicCheck.DeadEnd).detail;
-    default:
-      return periodicBaseTexts(node.event.result).detail;
-  }
+  return summarizePeriodicResult(node.event.result, node);
 }
 
 export function renderWanderingWhereFromDetail(
@@ -302,4 +201,66 @@ export function buildWanderingWhereFromPreview(
         label: PeriodicCheck[entry.command] ?? String(entry.command),
       })),
   });
+}
+
+function summarizePeriodicResult(
+  result: PeriodicCheck,
+  node: OutcomeEventNode,
+  options?: { avoidMonster?: boolean }
+): string {
+  const base = periodicBaseTexts(result, options);
+  switch (result) {
+    case PeriodicCheck.Door:
+      return renderDoorChainCompact(findChildEvent(node, 'doorLocation'));
+    case PeriodicCheck.SidePassage: {
+      const side = findChildEvent(node, 'sidePassages');
+      if (side && side.event.kind === 'sidePassages') {
+        const summary = describeSidePassage(side);
+        if (summary.compactText.length > 0) {
+          return summary.compactText;
+        }
+      }
+      return base.compact;
+    }
+    case PeriodicCheck.PassageTurn: {
+      const turn = findChildEvent(node, 'passageTurns');
+      return turn ? renderPassageTurnCompact(turn) : base.compact;
+    }
+    case PeriodicCheck.Chamber: {
+      const chamber = findChildEvent(node, 'chamberDimensions');
+      const detail = chamber ? describeChamberDimensions(chamber) : '';
+      return `${base.compact}${detail}`.trimEnd() + ' ';
+    }
+    case PeriodicCheck.Stairs: {
+      const stairs = findChildEvent(node, 'stairs');
+      return stairs
+        ? renderStairsCompact(stairs, {
+            renderChamberSummary: describeChamberDimensions,
+          })
+        : base.compact;
+    }
+    case PeriodicCheck.TrickTrap:
+      return TRICK_TRAP_FALLBACK_TEXT;
+    case PeriodicCheck.WanderingMonster: {
+      if (node.event.kind !== 'periodicCheck') return base.compact;
+      const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
+      const prefix =
+        whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
+          ? summarizePeriodicResult(whereFrom.event.result, whereFrom)
+          : '';
+      const monsterLevelNode = findChildEvent(node, 'monsterLevel');
+      const monsterSummary = renderWanderingMonsterCompact(
+        node.event.level,
+        monsterLevelNode && monsterLevelNode.event.kind === 'monsterLevel'
+          ? monsterLevelNode
+          : undefined
+      );
+      return prefix + monsterSummary;
+    }
+    case PeriodicCheck.ContinueStraight:
+    case PeriodicCheck.DeadEnd:
+      return base.compact;
+    default:
+      return base.compact;
+  }
 }

@@ -61,13 +61,22 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
   }
   const detailParagraphs: DungeonMessage[] = [];
   const compactSegments: string[] = [];
-  const append = (raw: string | undefined) => {
+  const append = (
+    raw: string | undefined,
+    options?: { detail?: boolean; compact?: boolean }
+  ) => {
     if (!raw) return;
     const trimmed = raw.trim();
     if (!trimmed) return;
-    const text = raw.endsWith(' ') ? raw : `${trimmed} `;
-    detailParagraphs.push({ kind: 'paragraph', text });
-    compactSegments.push(trimmed.endsWith('.') ? trimmed : `${trimmed}.`);
+    const includeDetail = options?.detail !== false;
+    const includeCompact = options?.compact !== false;
+    if (includeDetail) {
+      const text = raw.endsWith(' ') ? raw : `${trimmed} `;
+      detailParagraphs.push({ kind: 'paragraph', text });
+    }
+    if (includeCompact) {
+      compactSegments.push(trimmed.endsWith('.') ? trimmed : `${trimmed}.`);
+    }
   };
 
   switch (node.event.result) {
@@ -92,7 +101,8 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
         append(
           formatStreamConstruction(
             construction.event.result as StreamConstruction
-          )
+          ),
+          { detail: false }
         );
       break;
     }
@@ -109,10 +119,8 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
       const construction = findChildEvent(node, 'riverConstruction');
       if (construction) {
         const summary = describeRiverConstruction(construction);
-        for (const paragraph of summary.detailParagraphs) {
-          if (paragraph.kind === 'paragraph') {
-            append(paragraph.text);
-          }
+        if (summary.compactText.length > 0) {
+          append(summary.compactText, { detail: false });
         }
       }
       break;
@@ -121,33 +129,19 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
       append("A chasm, 20' wide, bisects the passage. ");
       const depth = findChildEvent(node, 'chasmDepth');
       if (depth) {
-        const depthText = formatChasmDepth(depth.event.result).trim();
-        if (depthText.length > 0) {
-          compactSegments.push(
-            depthText.endsWith('.') ? depthText : `${depthText}.`
-          );
-        }
+        append(formatChasmDepth(depth.event.result), { detail: false });
       }
       const construction = findChildEvent(node, 'chasmConstruction');
       if (construction) {
-        const constructionText = formatChasmConstruction(
-          construction.event.result
-        ).trim();
-        if (constructionText.length > 0) {
-          compactSegments.push(
-            constructionText.endsWith('.')
-              ? constructionText
-              : `${constructionText}.`
-          );
-        }
+        append(
+          formatChasmConstruction(construction.event.result),
+          { detail: false }
+        );
         const jump = findChildEvent(construction, 'jumpingPlaceWidth');
         if (jump) {
-          const jumpText = formatJumpingPlaceWidth(jump.event.result).trim();
-          if (jumpText.length > 0) {
-            compactSegments.push(
-              jumpText.endsWith('.') ? jumpText : `${jumpText}.`
-            );
-          }
+          append(formatJumpingPlaceWidth(jump.event.result), {
+            detail: false,
+          });
         }
       }
       break;
