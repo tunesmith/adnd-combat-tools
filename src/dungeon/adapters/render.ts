@@ -145,6 +145,248 @@ import {
   renderCircularContentsCompact,
   renderCircularContentsDetail,
 } from './render/circularContents';
+import type { AppendPreviewFn } from './render/shared';
+
+type OutcomeEventKind = OutcomeEventNode['event']['kind'];
+
+type RenderDetailFn = (
+  node: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+) => DungeonRenderNode[];
+
+type RenderCompactFn = (
+  node: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+) => DungeonRenderNode[];
+
+type RenderAdapter = {
+  renderDetail: RenderDetailFn;
+  renderCompact: RenderCompactFn;
+};
+
+const NO_COMPACT_RENDER: RenderCompactFn = (_node, _append) => [];
+
+const withoutAppend =
+  (
+    renderer: (node: OutcomeEventNode) => DungeonRenderNode[]
+  ): RenderCompactFn =>
+  (node, _append) =>
+    renderer(node);
+
+const renderStairsDetailWithChamberSummary: RenderDetailFn = (node, append) =>
+  renderStairsDetail(node, append, {
+    renderChamberSummary: describeChamberDimensions,
+  });
+
+const renderStairsCompactWithChamberSummary: RenderCompactFn = withoutAppend(
+  (node) =>
+    renderStairsCompactNodes(node, {
+      renderChamberSummary: describeChamberDimensions,
+    })
+);
+
+const monsterAdapter: RenderAdapter = {
+  renderDetail: renderMonsterDetailNodes,
+  renderCompact: renderMonsterCompactNodes,
+};
+
+const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
+  periodicCheck: {
+    renderDetail: renderPeriodicCheckDetail,
+    renderCompact: withoutAppend(renderPeriodicCheckCompact),
+  },
+  doorBeyond: {
+    renderDetail: renderDoorBeyondDetail,
+    renderCompact: withoutAppend(renderDoorBeyondCompact),
+  },
+  doorLocation: {
+    renderDetail: renderDoorLocationDetail,
+    renderCompact: NO_COMPACT_RENDER,
+  },
+  periodicCheckDoorOnly: {
+    renderDetail: renderPeriodicDoorOnlyDetail,
+    renderCompact: NO_COMPACT_RENDER,
+  },
+  sidePassages: {
+    renderDetail: renderSidePassagesDetail,
+    renderCompact: withoutAppend(renderSidePassagesCompactNodes),
+  },
+  passageTurns: {
+    renderDetail: renderPassageTurnsDetail,
+    renderCompact: withoutAppend(renderPassageTurnsCompactNodes),
+  },
+  passageWidth: {
+    renderDetail: renderPassageWidthDetail,
+    renderCompact: withoutAppend(renderPassageWidthCompactNodes),
+  },
+  roomDimensions: {
+    renderDetail: renderRoomDimensionsDetail,
+    renderCompact: withoutAppend(renderRoomDimensionsCompactNodes),
+  },
+  chamberDimensions: {
+    renderDetail: renderChamberDimensionsDetail,
+    renderCompact: withoutAppend(renderChamberDimensionsCompact),
+  },
+  circularContents: {
+    renderDetail: renderCircularContentsDetail,
+    renderCompact: renderCircularContentsCompact,
+  },
+  circularPool: {
+    renderDetail: renderCircularPoolDetail,
+    renderCompact: renderCircularPoolCompact,
+  },
+  circularMagicPool: {
+    renderDetail: renderCircularMagicPoolDetail,
+    renderCompact: renderCircularMagicPoolCompact,
+  },
+  transmuteType: {
+    renderDetail: renderTransmuteTypeDetail,
+    renderCompact: withoutAppend(renderTransmuteTypeCompact),
+  },
+  poolAlignment: {
+    renderDetail: renderPoolAlignmentDetail,
+    renderCompact: withoutAppend(renderPoolAlignmentCompact),
+  },
+  transporterLocation: {
+    renderDetail: renderTransporterLocationDetail,
+    renderCompact: withoutAppend(renderTransporterLocationCompact),
+  },
+  specialPassage: {
+    renderDetail: renderSpecialPassageDetail,
+    renderCompact: withoutAppend(renderSpecialPassageCompactNodes),
+  },
+  galleryStairLocation: {
+    renderDetail: renderGalleryStairLocationDetail,
+    renderCompact: renderGalleryStairLocationCompact,
+  },
+  galleryStairOccurrence: {
+    renderDetail: renderGalleryStairOccurrenceDetail,
+    renderCompact: withoutAppend(renderGalleryStairOccurrenceCompact),
+  },
+  riverConstruction: {
+    renderDetail: renderRiverConstructionDetail,
+    renderCompact: renderRiverConstructionCompact,
+  },
+  chasmDepth: {
+    renderDetail: renderChasmDepthDetail,
+    renderCompact: NO_COMPACT_RENDER,
+  },
+  chasmConstruction: {
+    renderDetail: renderChasmConstructionDetail,
+    renderCompact: NO_COMPACT_RENDER,
+  },
+  jumpingPlaceWidth: {
+    renderDetail: renderJumpingPlaceWidthDetail,
+    renderCompact: NO_COMPACT_RENDER,
+  },
+  stairs: {
+    renderDetail: renderStairsDetailWithChamberSummary,
+    renderCompact: renderStairsCompactWithChamberSummary,
+  },
+  egress: {
+    renderDetail: renderEgressDetail,
+    renderCompact: withoutAppend(renderEgressCompact),
+  },
+  chute: {
+    renderDetail: renderChuteDetail,
+    renderCompact: withoutAppend(renderChuteCompact),
+  },
+  numberOfExits: {
+    renderDetail: renderNumberOfExitsDetail,
+    renderCompact: withoutAppend(renderNumberOfExitsCompact),
+  },
+  unusualShape: {
+    renderDetail: renderUnusualShapeDetail,
+    renderCompact: withoutAppend(renderUnusualShapeCompact),
+  },
+  unusualSize: {
+    renderDetail: renderUnusualSizeDetail,
+    renderCompact: withoutAppend(renderUnusualSizeCompact),
+  },
+  trickTrap: {
+    renderDetail: renderTrickTrapDetail,
+    renderCompact: NO_COMPACT_RENDER,
+  },
+  wanderingWhereFrom: {
+    renderDetail: renderWanderingWhereFromDetail,
+    renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
+  },
+  monsterLevel: monsterAdapter,
+  monsterOne: monsterAdapter,
+  monsterTwo: monsterAdapter,
+  monsterThree: monsterAdapter,
+  monsterFour: monsterAdapter,
+  monsterFive: monsterAdapter,
+  monsterSix: monsterAdapter,
+  dragonThree: monsterAdapter,
+  dragonFourYounger: monsterAdapter,
+  dragonFourOlder: monsterAdapter,
+  dragonFiveYounger: monsterAdapter,
+  dragonFiveOlder: monsterAdapter,
+  dragonSix: monsterAdapter,
+  human: monsterAdapter,
+} as const;
+
+type PendingPreviewBuilder = (
+  tableId: string,
+  context?: TableContext
+) => DungeonTablePreview | undefined;
+
+const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
+  doorLocation: buildDoorLocationPreview,
+  periodicCheckDoorOnly: buildPeriodicDoorOnlyPreview,
+  sidePassages: buildSidePassagePreview,
+  passageTurns: buildPassageTurnPreview,
+  passageWidth: buildPassageWidthPreview,
+  roomDimensions: buildRoomDimensionsPreview,
+  chamberDimensions: buildChamberDimensionsPreview,
+  numberOfExits: (tableId, context) =>
+    buildNumberOfExitsPreview(tableId, context),
+  unusualShape: buildUnusualShapePreview,
+  unusualSize: (tableId, context) => buildUnusualSizePreview(tableId, context),
+  stairs: buildStairsPreview,
+  specialPassage: buildSpecialPassagePreview,
+  egress: buildEgressPreview,
+  chute: buildChutePreview,
+  wanderingWhereFrom: buildWanderingWhereFromPreview,
+  galleryStairLocation: buildGalleryStairLocationPreview,
+  galleryStairOccurrence: buildGalleryStairOccurrencePreview,
+  circularContents: buildCircularContentsPreview,
+  circularPool: buildCircularPoolPreview,
+  circularMagicPool: buildCircularMagicPoolPreview,
+  transmuteType: buildTransmuteTypePreview,
+  poolAlignment: buildPoolAlignmentPreview,
+  transporterLocation: buildTransporterLocationPreview,
+  streamConstruction: buildStreamConstructionPreview,
+  riverConstruction: buildRiverConstructionPreview,
+  riverBoatBank: buildRiverBoatBankPreview,
+  chasmDepth: buildChasmDepthPreview,
+  chasmConstruction: buildChasmConstructionPreview,
+  jumpingPlaceWidth: buildJumpingPlaceWidthPreview,
+  trickTrap: buildTrickTrapPreview,
+};
+
+const MONSTER_PREVIEW_BASES = [
+  'monsterLevel',
+  'monsterOne',
+  'monsterTwo',
+  'monsterThree',
+  'monsterFour',
+  'monsterFive',
+  'monsterSix',
+  'dragonThree',
+  'dragonFourYounger',
+  'dragonFourOlder',
+  'dragonFiveYounger',
+  'dragonFiveOlder',
+  'dragonSix',
+  'human',
+];
+
+for (const base of MONSTER_PREVIEW_BASES) {
+  PENDING_PREVIEW_FACTORIES[base] = (tableId, context) =>
+    buildMonsterPreview(tableId, context);
+}
 
 function withTargetId(
   preview: DungeonTablePreview,
@@ -371,98 +613,9 @@ export function toDetailRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
-  const { event } = outcome;
-  if (event.kind === 'periodicCheck') {
-    return renderPeriodicCheckDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'doorBeyond') {
-    return renderDoorBeyondDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'doorLocation') {
-    return renderDoorLocationDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'periodicCheckDoorOnly') {
-    return renderPeriodicDoorOnlyDetail(outcome, appendPendingPreviews);
-  }
-  if (outcome.event.kind === 'passageWidth') {
-    return renderPassageWidthDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'sidePassages') {
-    return renderSidePassagesDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'roomDimensions') {
-    return renderRoomDimensionsDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'chamberDimensions') {
-    return renderChamberDimensionsDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'passageTurns') {
-    return renderPassageTurnsDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'stairs') {
-    return renderStairsDetail(outcome, appendPendingPreviews, {
-      renderChamberSummary: describeChamberDimensions,
-    });
-  }
-  if (event.kind === 'specialPassage') {
-    return renderSpecialPassageDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'galleryStairLocation') {
-    return renderGalleryStairLocationDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'galleryStairOccurrence') {
-    return renderGalleryStairOccurrenceDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'riverConstruction') {
-    return renderRiverConstructionDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'chasmDepth') {
-    return renderChasmDepthDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'chasmConstruction') {
-    return renderChasmConstructionDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'jumpingPlaceWidth') {
-    return renderJumpingPlaceWidthDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'egress') {
-    return renderEgressDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'chute') {
-    return renderChuteDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'numberOfExits') {
-    return renderNumberOfExitsDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'unusualShape') {
-    return renderUnusualShapeDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'circularContents') {
-    return renderCircularContentsDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'circularPool') {
-    return renderCircularPoolDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'circularMagicPool') {
-    return renderCircularMagicPoolDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'transmuteType') {
-    return renderTransmuteTypeDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'poolAlignment') {
-    return renderPoolAlignmentDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'transporterLocation') {
-    return renderTransporterLocationDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'unusualSize') {
-    return renderUnusualSizeDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'trickTrap') {
-    return renderTrickTrapDetail(outcome, appendPendingPreviews);
-  }
-  if (event.kind === 'wanderingWhereFrom') {
-    return renderWanderingWhereFromDetail(outcome, appendPendingPreviews);
+  const adapter = RENDER_ADAPTERS[outcome.event.kind];
+  if (adapter) {
+    return adapter.renderDetail(outcome, appendPendingPreviews);
   }
   const monsterNodes = renderMonsterDetailNodes(outcome, appendPendingPreviews);
   if (monsterNodes.length > 0) {
@@ -531,93 +684,10 @@ export function renderDetailTree(
 
 function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   const base = String(p.table.split(':')[0]);
-  switch (base) {
-    case 'doorLocation':
-      return buildDoorLocationPreview(p.table);
-    case 'periodicCheckDoorOnly':
-      return buildPeriodicDoorOnlyPreview(p.table);
-    case 'sidePassages':
-      return buildSidePassagePreview(p.table);
-    case 'passageTurns':
-      return buildPassageTurnPreview(p.table);
-    case 'passageWidth':
-      return buildPassageWidthPreview(p.table);
-    case 'roomDimensions':
-      return buildRoomDimensionsPreview(p.table);
-    case 'chamberDimensions':
-      return buildChamberDimensionsPreview(p.table);
-    case 'numberOfExits':
-      return buildNumberOfExitsPreview(
-        p.table,
-        isTableContext(p.context) ? p.context : undefined
-      );
-    case 'unusualShape':
-      return buildUnusualShapePreview(p.table);
-    case 'unusualSize':
-      return buildUnusualSizePreview(
-        p.table,
-        isTableContext(p.context) ? p.context : undefined
-      );
-    case 'stairs':
-      return buildStairsPreview(p.table);
-    case 'specialPassage':
-      return buildSpecialPassagePreview(p.table);
-    case 'egress':
-      return buildEgressPreview(p.table);
-    case 'chute':
-      return buildChutePreview(p.table);
-    case 'wanderingWhereFrom':
-      return buildWanderingWhereFromPreview(p.table);
-    case 'monsterLevel':
-    case 'monsterOne':
-    case 'monsterTwo':
-    case 'monsterThree':
-    case 'monsterFour':
-    case 'monsterFive':
-    case 'monsterSix':
-    case 'dragonThree':
-    case 'dragonFourYounger':
-    case 'dragonFourOlder':
-    case 'dragonFiveYounger':
-    case 'dragonFiveOlder':
-    case 'dragonSix':
-    case 'human':
-      return buildMonsterPreview(
-        p.table,
-        isTableContext(p.context) ? p.context : undefined
-      );
-    case 'galleryStairLocation':
-      return buildGalleryStairLocationPreview(p.table);
-    case 'galleryStairOccurrence':
-      return buildGalleryStairOccurrencePreview(p.table);
-    case 'circularContents':
-      return buildCircularContentsPreview(p.table);
-    case 'circularPool':
-      return buildCircularPoolPreview(p.table);
-    case 'circularMagicPool':
-      return buildCircularMagicPoolPreview(p.table);
-    case 'transmuteType':
-      return buildTransmuteTypePreview(p.table);
-    case 'poolAlignment':
-      return buildPoolAlignmentPreview(p.table);
-    case 'transporterLocation':
-      return buildTransporterLocationPreview(p.table);
-    case 'streamConstruction':
-      return buildStreamConstructionPreview(p.table);
-    case 'riverConstruction':
-      return buildRiverConstructionPreview(p.table);
-    case 'riverBoatBank':
-      return buildRiverBoatBankPreview(p.table);
-    case 'chasmDepth':
-      return buildChasmDepthPreview(p.table);
-    case 'chasmConstruction':
-      return buildChasmConstructionPreview(p.table);
-    case 'jumpingPlaceWidth':
-      return buildJumpingPlaceWidthPreview(p.table);
-    case 'trickTrap':
-      return buildTrickTrapPreview(p.table);
-  }
-  return undefined;
+  const factory = PENDING_PREVIEW_FACTORIES[base];
+  if (!factory) return undefined;
+  const context = isTableContext(p.context) ? p.context : undefined;
+  return factory(p.table, context);
 }
 
 // COMPACT MODE: outcome -> render nodes with auto-resolved text (no previews)
@@ -625,88 +695,16 @@ export function toCompactRender(
   outcome: DungeonOutcomeNode
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
-  const node = outcome;
-  const { event } = node;
-  if (event.kind === 'periodicCheck') {
-    return renderPeriodicCheckCompact(node);
-  }
-  if (event.kind === 'doorBeyond') {
-    return renderDoorBeyondCompact(node);
-  }
-  if (event.kind === 'roomDimensions') {
-    return renderRoomDimensionsCompactNodes(node);
-  }
-  if (event.kind === 'chamberDimensions') {
-    return renderChamberDimensionsCompact(node);
-  }
-  if (event.kind === 'sidePassages') {
-    return renderSidePassagesCompactNodes(node);
-  }
-  if (event.kind === 'passageTurns') {
-    return renderPassageTurnsCompactNodes(node);
-  }
-  if (node.event.kind === 'passageWidth') {
-    return renderPassageWidthCompactNodes(node);
-  }
-  if (event.kind === 'stairs') {
-    return renderStairsCompactNodes(node, {
-      renderChamberSummary: describeChamberDimensions,
-    });
-  }
-  if (event.kind === 'specialPassage') {
-    return renderSpecialPassageCompactNodes(node);
-  }
-  if (event.kind === 'egress') {
-    return renderEgressCompact(node);
-  }
-  if (event.kind === 'chute') {
-    return renderChuteCompact(node);
-  }
-  if (event.kind === 'numberOfExits') {
-    return renderNumberOfExitsCompact(node);
-  }
-  if (event.kind === 'circularContents') {
-    return renderCircularContentsCompact(node, appendPendingPreviews);
-  }
-  if (event.kind === 'circularPool') {
-    return renderCircularPoolCompact(node, appendPendingPreviews);
-  }
-  if (event.kind === 'circularMagicPool') {
-    return renderCircularMagicPoolCompact(node, appendPendingPreviews);
-  }
-  if (event.kind === 'riverConstruction') {
-    return renderRiverConstructionCompact(node, appendPendingPreviews);
-  }
-  if (event.kind === 'galleryStairLocation') {
-    return renderGalleryStairLocationCompact(node, appendPendingPreviews);
-  }
-  if (event.kind === 'galleryStairOccurrence') {
-    return renderGalleryStairOccurrenceCompact(node);
-  }
-  if (event.kind === 'transmuteType') {
-    return renderTransmuteTypeCompact(node);
-  }
-  if (event.kind === 'poolAlignment') {
-    return renderPoolAlignmentCompact(node);
-  }
-  if (event.kind === 'transporterLocation') {
-    return renderTransporterLocationCompact(node);
-  }
-  if (event.kind === 'wanderingWhereFrom') {
-    return renderWanderingWhereFromCompactNodes(node);
+  const adapter = RENDER_ADAPTERS[outcome.event.kind];
+  if (adapter) {
+    return adapter.renderCompact(outcome, appendPendingPreviews);
   }
   const monsterCompactNodes = renderMonsterCompactNodes(
-    node,
+    outcome,
     appendPendingPreviews
   );
   if (monsterCompactNodes.length > 0) {
     return monsterCompactNodes;
-  }
-  if (event.kind === 'unusualShape') {
-    return renderUnusualShapeCompact(node);
-  }
-  if (event.kind === 'unusualSize') {
-    return renderUnusualSizeCompact(node);
   }
   return [];
 }

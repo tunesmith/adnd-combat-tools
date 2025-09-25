@@ -118,6 +118,19 @@ The current dungeon feed stores only rendered message arrays. When the UI switch
 - Longer term, replace the `if`/`switch` dispatch in `render.ts` with a map of `{ kind, renderDetail, renderCompact }`. Once adapters expose the uniform shape above, the registry can enforce the contract and make variation (e.g., multi-step chains vs. leaf tables) explicit rather than ad hoc.
 - Watch for "extra" describe helpers that simply reshape a table’s own output (e.g. the former `describeMagicPoolTransporter`). If the resolver already materialises the child event, the parent adapter should just reuse the standard `format → buildNodes → render` flow and let recursion handle the child; bespoke helpers tend to hide this and add maintenance burden.
 
+#### Adapter Blueprint
+
+To make future tables predictable, every render module should answer these questions before exporting anything:
+
+1. **Is this outcome self-contained?** If it never produces child events, implement a `build<Table>Nodes` helper that returns heading, roll bullet, and detail paragraphs. Export `render<Table>Detail` / `render<Table>Compact` as thin wrappers around that builder (detail also calls `appendPendingPreviews` only when children exist).
+2. **Does it spawn pending rolls?** When the resolver yields `PendingRoll` children, both detail and compact renderers must invoke the provided `appendPendingPreviews(outcome, nodes)` after assembling their base nodes so the UI shows “what’s next.” Leaf tables without pending rolls skip this step entirely.
+3. **Are child outcomes summarised inline?** Aggregators such as periodic checks, stairs, or special passages may need to mention what a child represents (e.g., “descends into a chamber”). Keep that copy in a focused helper that returns `{ detailNodes, compactText }`, but let recursion render the child event itself so the child adapter owns its prose and previews.
+4. **Should the table show a preview before resolution?** If yes, expose `build<Table>Preview(tableId, context?)` that describes the die and entries. Register it in `PENDING_PREVIEW_FACTORIES` so pending rolls automatically reuse the copy; no extra logic belongs in the adapter.
+5. **Does compact mode differ structurally?** When compact output is just the same nodes, reuse `build<Table>Nodes`. When it needs a condensed string (for summaries or list views), add a `render<Table>CompactText` helper and wrap it with `withoutAppend` so the registry can still drive both modes uniformly.
+6. **Are extra dependencies required?** Accept them via a small `deps` object with sensible defaults (see stairs for chamber summaries). The registry always calls adapters with the standard `(outcome, appendPendingPreviews)` signature, keeping cross-table wiring simple.
+
+Following that checklist keeps renderers pure, makes pending-preview behaviour consistent, and gives new tables a copy/paste template while the registry stays the single place that wires detail/compact functions together.
+
 ## Open Questions / Future Enhancements
 
 - Should compact mode display an explicit marker when some children are still pending? (Answer: YES)
