@@ -146,6 +146,11 @@ import {
   renderCircularContentsDetail,
 } from './render/circularContents';
 import type { AppendPreviewFn } from './render/shared';
+import {
+  renderIllusoryWallNatureDetail,
+  renderIllusoryWallNatureCompact,
+  buildIllusoryWallNaturePreview,
+} from './render/illusoryWallNature';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
@@ -311,6 +316,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
   },
+  illusoryWallNature: {
+    renderDetail: renderIllusoryWallNatureDetail,
+    renderCompact: renderIllusoryWallNatureCompact,
+  },
   monsterLevel: monsterAdapter,
   monsterOne: monsterAdapter,
   monsterTwo: monsterAdapter,
@@ -364,6 +373,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   chasmConstruction: buildChasmConstructionPreview,
   jumpingPlaceWidth: buildJumpingPlaceWidthPreview,
   trickTrap: buildTrickTrapPreview,
+  illusoryWallNature: buildIllusoryWallNaturePreview,
 };
 
 const MONSTER_PREVIEW_BASES = [

@@ -39,11 +39,11 @@ describe('Passage compact text (adapter)', () => {
   test('TrickTrap exact text', () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.TrickTrap);
     const spy = jest.spyOn(dungeonLookup, 'rollDice');
-    spy.mockReturnValueOnce(14);
+    spy.mockReturnValueOnce(19).mockReturnValueOnce(12);
     const { messages } = passageMessages({ roll, detailMode: false, level: 1 });
     const para = (messages as DungeonMessage[]).find(isParagraph);
     expect(para && para.text).toBe(
-      "Pit, 10' deep, 3 in 6 to fall in, pit walls move together to crush victim(s) in 2–5 rounds. "
+      'There is an illusionary wall. It conceals a chamber with a monster and treasure. '
     );
     spy.mockRestore();
   });
@@ -113,11 +113,14 @@ describe('Phase 0 parity: Passage detail previews', () => {
 
   test('Trick/Trap roll => includes Trick/Trap preview', () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.TrickTrap);
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
+    spy.mockImplementation(() => 19);
     const { messages } = passageMessages({ roll, detailMode: true, level: 1 });
     const previews = messages.filter(
       (m) => m.kind === 'table-preview'
     ) as DungeonTablePreview[];
     const hasTrick = previews.some((p) => p.id === 'trickTrap');
     expect(hasTrick).toBe(true);
+    spy.mockRestore();
   });
 });

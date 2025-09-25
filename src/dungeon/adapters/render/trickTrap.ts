@@ -6,6 +6,10 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
+import {
+  renderIllusoryWallNatureDetail,
+  describeIllusoryWallNature,
+} from './illusoryWallNature';
 
 export function renderTrickTrapDetail(
   outcome: OutcomeEventNode,
@@ -25,6 +29,15 @@ export function renderTrickTrapDetail(
   const summary = describeTrickTrap(outcome);
   const nodes: DungeonRenderNode[] = [heading, bullet];
   nodes.push(...summary.detailParagraphs);
+  if (outcome.children) {
+    for (const child of outcome.children) {
+      if (child.type === 'event' && child.event.kind === 'illusoryWallNature') {
+        nodes.push(
+          ...renderIllusoryWallNatureDetail(child, appendPendingPreviews)
+        );
+      }
+    }
+  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -44,8 +57,17 @@ export function describeTrickTrap(node: OutcomeEventNode): {
 }
 
 export function renderTrickTrapCompact(node: OutcomeEventNode): string {
-  const summary = describeTrickTrap(node);
-  return summary.compactText;
+  if (node.event.kind !== 'trickTrap') return '';
+  const base = describeTrickTrap(node).compactText;
+  if (!node.children) return base;
+  const extras: string[] = [];
+  for (const child of node.children) {
+    if (child.type !== 'event') continue;
+    if (child.event.kind === 'illusoryWallNature') {
+      extras.push(describeIllusoryWallNature(child));
+    }
+  }
+  return extras.length > 0 ? `${base}${extras.join(' ')}` : base;
 }
 
 export const buildTrickTrapPreview: TablePreviewFactory = (tableId) =>
@@ -102,8 +124,7 @@ const TRICK_TRAP_DETAILS: Record<TrickTrap, string> = {
     "Gas; party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. (See TABLE VII. A.) ",
   [TrickTrap.FallingDoorOrStone]:
     'Door falls outward causing 1–10 hit points, or stone falls from ceiling causing 2–20 hit points of damage to each person failing his saving throw versus petrification. ',
-  [TrickTrap.IllusionaryWall]:
-    'Illusionary wall concealing 8 (pit) above (1–6), 20 (chute) below (7–10), or chamber with monster and treasure (11–20) (see TABLE V.). ',
+  [TrickTrap.IllusionaryWall]: 'There is an illusionary wall. ',
   [TrickTrap.ChuteDown]:
     'Chute down 1 level (cannot be ascended in any manner). ',
 };

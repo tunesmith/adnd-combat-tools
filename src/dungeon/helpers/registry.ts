@@ -54,6 +54,7 @@ import {
   resolvePoolAlignment,
   resolveTransporterLocation,
   resolveTrickTrap,
+  resolveIllusoryWallNature,
   resolveUnusualShape,
   resolveUnusualSize,
   resolveWanderingWhereFrom,
@@ -125,6 +126,7 @@ const TABLE_ID_LIST = [
   'unusualShape',
   'unusualSize',
   'trickTrap',
+  'illusoryWallNature',
   'circularContents',
   'circularPool',
   'circularMagicPool',
@@ -180,6 +182,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   unusualShape: 'Unusual Shape',
   unusualSize: 'Unusual Size',
   trickTrap: 'Trick / Trap',
+  illusoryWallNature: 'What Lies Beyond',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
   circularMagicPool: 'Magic Pool Effect',
@@ -311,6 +314,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   transporterLocation: ({ roll }) =>
     fromOutcome(resolveTransporterLocation({ roll })),
   trickTrap: ({ roll }) => fromOutcome(resolveTrickTrap({ roll })),
+  illusoryWallNature: ({ roll }) =>
+    fromOutcome(resolveIllusoryWallNature({ roll })),
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';

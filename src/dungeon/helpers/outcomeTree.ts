@@ -14,6 +14,7 @@ import {
   resolveEgress,
   resolveChute,
   resolveSpecialPassage,
+  resolveIllusoryWallNature,
   resolveRoomDimensions,
   resolveChamberDimensions,
   resolveUnusualShape,
@@ -409,6 +410,8 @@ function resolvePendingNode(
       return resolveJumpingPlaceWidth({});
     case 'trickTrap':
       return resolveTrickTrap({});
+    case 'illusoryWallNature':
+      return resolveIllusoryWallNature({});
     case 'numberOfExits': {
       const context = readExitsContext(pending.context);
       if (!context) return undefined;

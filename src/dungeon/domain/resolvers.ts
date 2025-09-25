@@ -43,7 +43,11 @@ import {
   poolAlignment,
   transporterLocation,
 } from '../../tables/dungeon/magicPool';
-import { trickTrap } from '../../tables/dungeon/trickTrap';
+import { trickTrap, TrickTrap } from '../../tables/dungeon/trickTrap';
+import {
+  illusoryWallNature,
+  IllusoryWallNature,
+} from '../../tables/dungeon/illusoryWallNature';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import {
   roomDimensions,
@@ -819,10 +823,35 @@ export function resolveTrickTrap(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(trickTrap.sides);
   const command = getTableEntry(usedRoll, trickTrap);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TrickTrap.IllusionaryWall) {
+    children.push({ type: 'pending-roll', table: 'illusoryWallNature' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'trickTrap', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveIllusoryWallNature(options?: {
+  roll?: number;
+  takeOverride?: (tableId: string) => number | undefined;
+}): DungeonOutcomeNode {
+  const overridden = options?.takeOverride?.('illusoryWallNature');
+  const usedRoll =
+    overridden ?? options?.roll ?? rollDice(illusoryWallNature.sides);
+  const command = getTableEntry(usedRoll, illusoryWallNature);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === IllusoryWallNature.Chamber) {
+    children.push({ type: 'pending-roll', table: 'chamberDimensions' });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'illusoryWallNature', result: command } as OutcomeEvent,
+    children: children.length ? children : undefined,
   };
 }
 

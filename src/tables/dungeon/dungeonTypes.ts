@@ -55,6 +55,7 @@ import type { CharacterRace } from './monster/character/characterRace';
 import type { CharacterClassTable } from './monster/character/characterClass';
 import type { PeriodicCheckDoorOnly } from './periodicCheckDoorOnly';
 import type { TrickTrap } from './trickTrap';
+import type { IllusoryWallNature } from './illusoryWallNature';
 
 export type Table<T> = {
   sides: number;
@@ -129,4 +130,5 @@ export type Command =
   | CharacterClassTable
   | CharacterRace
   | PeriodicCheckDoorOnly
-  | TrickTrap;
+  | TrickTrap
+  | IllusoryWallNature;
