@@ -1,4 +1,7 @@
-import { toDetailRender } from '../../../../../dungeon/adapters/render';
+import {
+  renderDetailTree,
+  toDetailRender,
+} from '../../../../../dungeon/adapters/render';
 import {
   resolvePeriodicDoorOnly,
   resolveTrickTrap,
@@ -11,6 +14,12 @@ function isParagraph(
   node: DungeonRenderNode
 ): node is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> {
   return node.kind === 'paragraph';
+}
+
+function isPreview(
+  node: DungeonRenderNode
+): node is Extract<DungeonRenderNode, { kind: 'table-preview' }> {
+  return node.kind === 'table-preview';
 }
 
 describe('Detail helpers for door chains and traps', () => {
@@ -34,14 +43,19 @@ describe('Detail helpers for door chains and traps', () => {
     ]);
   });
 
-  test('illusory wall trap includes concealed result', () => {
+  test('illusory wall detail tree includes preview and resolved description', () => {
     const trap = resolveTrickTrap({ roll: 19 }) as OutcomeEventNode;
     const nature = resolveIllusoryWallNature({ roll: 12 }) as OutcomeEventNode;
     const resolved: OutcomeEventNode = { ...trap, children: [nature] };
-    const paragraphs = toDetailRender(resolved).filter(isParagraph);
-    expect(paragraphs.map((p) => p.text)).toEqual([
-      'There is an illusionary wall. ',
-      'It conceals a chamber with a monster and treasure. ',
-    ]);
+    const nodes = renderDetailTree(resolved);
+    const paragraphs = nodes.filter(isParagraph).map((p) => p.text);
+    expect(paragraphs).toContain('There is an illusionary wall. ');
+    expect(paragraphs).toContain(
+      'It conceals a chamber with a monster and treasure. '
+    );
+    const previews = nodes.filter(isPreview);
+    expect(previews.map((preview) => preview.id)).toContain(
+      'illusoryWallNature'
+    );
   });
 });

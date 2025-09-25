@@ -6,10 +6,7 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import {
-  renderIllusoryWallNatureDetail,
-  describeIllusoryWallNature,
-} from './illusoryWallNature';
+import { describeIllusoryWallNature } from './illusoryWallNature';
 
 export function renderTrickTrapDetail(
   outcome: OutcomeEventNode,
@@ -29,15 +26,6 @@ export function renderTrickTrapDetail(
   const summary = describeTrickTrap(outcome);
   const nodes: DungeonRenderNode[] = [heading, bullet];
   nodes.push(...summary.detailParagraphs);
-  if (outcome.children) {
-    for (const child of outcome.children) {
-      if (child.type === 'event' && child.event.kind === 'illusoryWallNature') {
-        nodes.push(
-          ...renderIllusoryWallNatureDetail(child, appendPendingPreviews)
-        );
-      }
-    }
-  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }

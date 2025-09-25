@@ -500,6 +500,9 @@ function previewForEventNode(
     case 'trickTrap':
       tableId = 'trickTrap';
       break;
+    case 'illusoryWallNature':
+      tableId = 'illusoryWallNature';
+      break;
     case 'egress':
       tableId = `egress:${event.which}`;
       break;

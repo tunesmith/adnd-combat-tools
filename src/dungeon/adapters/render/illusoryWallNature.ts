@@ -1,5 +1,5 @@
 import type { OutcomeEventNode } from '../../domain/outcome';
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type { DungeonRenderNode } from '../../../types/dungeon';
 import {
   illusoryWallNature,
   IllusoryWallNature,
@@ -15,18 +15,8 @@ export function renderIllusoryWallNatureDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'illusoryWallNature') return [];
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'What Lies Beyond',
-  };
-  const label = ILLUSORY_LABELS[outcome.event.result];
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${label}`],
-  };
   const detail = describeIllusoryWallNature(outcome);
-  const nodes: DungeonRenderNode[] = [heading, bullet];
+  const nodes: DungeonRenderNode[] = [];
   if (detail.length > 0) {
     nodes.push({ kind: 'paragraph', text: detail });
   }
@@ -39,18 +29,8 @@ export function renderIllusoryWallNatureCompact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'illusoryWallNature') return [];
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'What Lies Beyond',
-  };
-  const label = ILLUSORY_LABELS[outcome.event.result];
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${label}`],
-  };
   const detail = describeIllusoryWallNature(outcome);
-  const nodes: DungeonRenderNode[] = [heading, bullet];
+  const nodes: DungeonRenderNode[] = [];
   if (detail.length > 0) {
     nodes.push({ kind: 'paragraph', text: detail });
   }
@@ -72,12 +52,6 @@ export const buildIllusoryWallNaturePreview: TablePreviewFactory = (tableId) =>
       label: ILLUSORY_DETAILS[entry.command].trim(),
     })),
   });
-
-const ILLUSORY_LABELS: Record<IllusoryWallNature, string> = {
-  [IllusoryWallNature.Pit]: 'Conceals a pit',
-  [IllusoryWallNature.Chute]: 'Conceals a chute',
-  [IllusoryWallNature.Chamber]: 'Conceals a chamber',
-};
 
 const ILLUSORY_DETAILS: Record<IllusoryWallNature, string> = {
   [IllusoryWallNature.Pit]: "It conceals a pit, 10' deep, 3 in 6 to fall in. ",
