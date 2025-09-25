@@ -39,6 +39,35 @@ export function renderChasmDepthDetail(
   return nodes;
 }
 
+export const buildChasmDepthPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Chasm Depth',
+    sides: chasmDepthTable.sides,
+    entries: chasmDepthTable.entries.map((entry) => ({
+      range: entry.range,
+      label: ChasmDepth[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export function formatChasmDepth(result: ChasmDepth): string {
+  switch (result) {
+    case ChasmDepth.Feet150:
+      return "The chasm is 150' deep. ";
+    case ChasmDepth.Feet160:
+      return "The chasm is 160' deep. ";
+    case ChasmDepth.Feet170:
+      return "The chasm is 170' deep. ";
+    case ChasmDepth.Feet180:
+      return "The chasm is 180' deep. ";
+    case ChasmDepth.Feet190:
+      return "The chasm is 190' deep. ";
+    case ChasmDepth.Feet200:
+      return "The chasm is 200' deep. ";
+    default:
+      return '';
+  }
+}
+
 export function renderChasmConstructionDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
@@ -64,24 +93,15 @@ export function renderChasmConstructionDetail(
   return nodes;
 }
 
-export function formatChasmDepth(result: ChasmDepth): string {
-  switch (result) {
-    case ChasmDepth.Feet150:
-      return "The chasm is 150' deep. ";
-    case ChasmDepth.Feet160:
-      return "The chasm is 160' deep. ";
-    case ChasmDepth.Feet170:
-      return "The chasm is 170' deep. ";
-    case ChasmDepth.Feet180:
-      return "The chasm is 180' deep. ";
-    case ChasmDepth.Feet190:
-      return "The chasm is 190' deep. ";
-    case ChasmDepth.Feet200:
-      return "The chasm is 200' deep. ";
-    default:
-      return '';
-  }
-}
+export const buildChasmConstructionPreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Chasm Construction',
+    sides: chasmConstructionTable.sides,
+    entries: chasmConstructionTable.entries.map((entry) => ({
+      range: entry.range,
+      label: ChasmConstruction[entry.command] ?? String(entry.command),
+    })),
+  });
 
 export function formatChasmConstruction(result: ChasmConstruction): string {
   if (result === ChasmConstruction.Bridged)
@@ -89,23 +109,6 @@ export function formatChasmConstruction(result: ChasmConstruction): string {
   if (result === ChasmConstruction.Obstacle)
     return 'It has no bridge, and is too wide to jump across. ';
   return 'There is a jumping place. ';
-}
-
-export function formatJumpingPlaceWidth(result: JumpingPlaceWidth): string {
-  switch (result) {
-    case JumpingPlaceWidth.FiveFeet:
-      return "It is 5' wide.";
-    case JumpingPlaceWidth.SixFeet:
-      return "It is 6' wide.";
-    case JumpingPlaceWidth.SevenFeet:
-      return "It is 7' wide.";
-    case JumpingPlaceWidth.EightFeet:
-      return "It is 8' wide.";
-    case JumpingPlaceWidth.NineFeet:
-      return "It is 9' wide.";
-    default:
-      return "It is 10' wide.";
-  }
 }
 
 export function renderJumpingPlaceWidthDetail(
@@ -134,26 +137,6 @@ export function renderJumpingPlaceWidthDetail(
   return nodes;
 }
 
-export const buildChasmDepthPreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Chasm Depth',
-    sides: chasmDepthTable.sides,
-    entries: chasmDepthTable.entries.map((entry) => ({
-      range: entry.range,
-      label: ChasmDepth[entry.command] ?? String(entry.command),
-    })),
-  });
-
-export const buildChasmConstructionPreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Chasm Construction',
-    sides: chasmConstructionTable.sides,
-    entries: chasmConstructionTable.entries.map((entry) => ({
-      range: entry.range,
-      label: ChasmConstruction[entry.command] ?? String(entry.command),
-    })),
-  });
-
 export const buildJumpingPlaceWidthPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Jumping Place Width',
@@ -163,3 +146,20 @@ export const buildJumpingPlaceWidthPreview: TablePreviewFactory = (tableId) =>
       label: JumpingPlaceWidth[entry.command] ?? String(entry.command),
     })),
   });
+
+export function formatJumpingPlaceWidth(result: JumpingPlaceWidth): string {
+  switch (result) {
+    case JumpingPlaceWidth.FiveFeet:
+      return "It is 5' wide.";
+    case JumpingPlaceWidth.SixFeet:
+      return "It is 6' wide.";
+    case JumpingPlaceWidth.SevenFeet:
+      return "It is 7' wide.";
+    case JumpingPlaceWidth.EightFeet:
+      return "It is 8' wide.";
+    case JumpingPlaceWidth.NineFeet:
+      return "It is 9' wide.";
+    default:
+      return "It is 10' wide.";
+  }
+}

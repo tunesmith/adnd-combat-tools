@@ -41,6 +41,25 @@ export function renderChamberDimensionsDetail(
   return nodes;
 }
 
+export function renderChamberDimensionsCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'chamberDimensions') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Chamber Dimensions',
+  };
+  const label =
+    ChamberDimensions[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const text = describeChamberDimensions(outcome);
+  return [heading, bullet, { kind: 'paragraph', text }];
+}
+
 export function describeChamberDimensions(node: OutcomeEventNode): string {
   if (node.event.kind !== 'chamberDimensions') return '';
   const segments: string[] = [];
@@ -59,25 +78,6 @@ export function describeChamberDimensions(node: OutcomeEventNode): string {
     }
   }
   return joinSegments(segments);
-}
-
-export function renderChamberDimensionsCompact(
-  outcome: OutcomeEventNode
-): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'chamberDimensions') return [];
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Chamber Dimensions',
-  };
-  const label =
-    ChamberDimensions[outcome.event.result] ?? String(outcome.event.result);
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${label}`],
-  };
-  const text = describeChamberDimensions(outcome);
-  return [heading, bullet, { kind: 'paragraph', text }];
 }
 
 export const buildChamberDimensionsPreview: TablePreviewFactory = (tableId) =>
