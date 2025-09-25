@@ -4,7 +4,7 @@ import {
   resolveStairs,
 } from '../../../../../dungeon/domain/resolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
-import { passageMessages } from '../../../../../dungeon/services/passage';
+import { passageMessages } from '../../../../../dungeon/services/passageMessages';
 import {
   periodicCheck,
   PeriodicCheck,

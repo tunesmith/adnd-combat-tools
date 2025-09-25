@@ -1,4 +1,4 @@
-import { doorBeyondMessages } from '../../../../../dungeon/services/doorBeyondResult';
+import { doorBeyondMessages } from '../../../../../dungeon/services/doorBeyondMessages';
 import {
   doorBeyond,
   DoorBeyond,

@@ -1,5 +1,5 @@
-import { passageMessages } from './passage';
-import { doorBeyondMessages } from './doorBeyondResult';
+import { passageMessages } from './passageMessages';
+import { doorBeyondMessages } from './doorBeyondMessages';
 import type { DungeonAction, DungeonStep } from '../../types/dungeon';
 
 export function runDungeonStep(

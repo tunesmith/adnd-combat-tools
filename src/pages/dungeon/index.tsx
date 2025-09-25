@@ -10,8 +10,8 @@ import type {
   DungeonTablePreview,
 } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
-import { doorBeyondMessages } from '../../dungeon/services/doorBeyondResult';
-import { passageMessages } from '../../dungeon/services/passage';
+import { doorBeyondMessages } from '../../dungeon/services/doorBeyondMessages';
+import { passageMessages } from '../../dungeon/services/passageMessages';
 import { resolveViaRegistry } from '../../dungeon/helpers/registry';
 import {
   buildRenderCache,
