@@ -47,8 +47,8 @@ import {
 } from './render/roomDimensions';
 import {
   renderChamberDimensionsDetail,
+  describeChamberDimensions,
   renderChamberDimensionsCompact,
-  renderChamberDimensionsCompactNodes,
   buildChamberDimensionsPreview,
 } from './render/chamberDimensions';
 import {
@@ -400,7 +400,7 @@ export function toDetailRender(
   }
   if (event.kind === 'stairs') {
     return renderStairsDetail(outcome, appendPendingPreviews, {
-      renderChamberSummary: renderChamberDimensionsCompact,
+      renderChamberSummary: describeChamberDimensions,
     });
   }
   if (event.kind === 'specialPassage') {
@@ -636,7 +636,7 @@ export function toCompactRender(
     return renderRoomDimensionsCompactNodes(node);
   }
   if (event.kind === 'chamberDimensions') {
-    return renderChamberDimensionsCompactNodes(node);
+    return renderChamberDimensionsCompact(node);
   }
   if (event.kind === 'sidePassages') {
     return renderSidePassagesCompactNodes(node);
@@ -649,7 +649,7 @@ export function toCompactRender(
   }
   if (event.kind === 'stairs') {
     return renderStairsCompactNodes(node, {
-      renderChamberSummary: renderChamberDimensionsCompact,
+      renderChamberSummary: describeChamberDimensions,
     });
   }
   if (event.kind === 'specialPassage') {

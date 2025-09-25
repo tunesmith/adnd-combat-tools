@@ -11,7 +11,7 @@ import { buildPreview, findChildEvent } from './shared';
 import { renderDoorChainCompact } from './doorLocation';
 import { describeSidePassage } from './sidePassage';
 import { renderPassageTurnCompact } from './passageTurns';
-import { renderChamberDimensionsCompact } from './chamberDimensions';
+import { describeChamberDimensions } from './chamberDimensions';
 import { renderStairsCompact } from './stairs';
 import { renderWanderingMonsterCompact } from './monsters';
 
@@ -157,14 +157,14 @@ export function renderCompactPeriodicOutcome(node: OutcomeEventNode): string {
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
+      const detail = chamber ? describeChamberDimensions(chamber) : '';
       return 'The passage opens into a chamber. ' + detail;
     }
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderStairsCompact(stairs, {
-            renderChamberSummary: renderChamberDimensionsCompact,
+            renderChamberSummary: describeChamberDimensions,
           })
         : periodicBaseTexts(PeriodicCheck.Stairs).detail;
     }
@@ -219,14 +219,14 @@ export function renderWanderingWhereFrom(node: OutcomeEventNode): string {
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
+      const detail = chamber ? describeChamberDimensions(chamber) : '';
       return 'The passage opens into a chamber. ' + detail;
     }
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       return stairs
         ? renderStairsCompact(stairs, {
-            renderChamberSummary: renderChamberDimensionsCompact,
+            renderChamberSummary: describeChamberDimensions,
           })
         : periodicBaseTexts(PeriodicCheck.Stairs).detail;
     }

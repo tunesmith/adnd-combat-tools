@@ -4,7 +4,7 @@ import { DoorBeyond } from '../../../tables/dungeon/doorBeyond';
 import { findChildEvent, type AppendPreviewFn } from './shared';
 import { renderPassageWidthCompact } from './passageWidth';
 import { renderRoomDimensionsCompact } from './roomDimensions';
-import { renderChamberDimensionsCompact } from './chamberDimensions';
+import { describeChamberDimensions } from './chamberDimensions';
 
 export function renderDoorBeyondDetail(
   outcome: OutcomeEventNode,
@@ -66,7 +66,7 @@ function buildDoorBeyondNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   }
   if (outcome.event.result === DoorBeyond.Chamber) {
     const chamber = findChildEvent(outcome, 'chamberDimensions');
-    const detail = chamber ? renderChamberDimensionsCompact(chamber) : '';
+    const detail = chamber ? describeChamberDimensions(chamber) : '';
     if (detail.length > 0) {
       paragraphs.push({ kind: 'paragraph', text: detail });
     }

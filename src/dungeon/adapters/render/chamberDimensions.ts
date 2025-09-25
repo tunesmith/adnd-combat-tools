@@ -41,7 +41,7 @@ export function renderChamberDimensionsDetail(
   return nodes;
 }
 
-export function renderChamberDimensionsCompact(node: OutcomeEventNode): string {
+export function describeChamberDimensions(node: OutcomeEventNode): string {
   if (node.event.kind !== 'chamberDimensions') return '';
   const segments: string[] = [];
   const base = formatChamberDimensions(node.event.result).trim();
@@ -61,7 +61,7 @@ export function renderChamberDimensionsCompact(node: OutcomeEventNode): string {
   return joinSegments(segments);
 }
 
-export function renderChamberDimensionsCompactNodes(
+export function renderChamberDimensionsCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'chamberDimensions') return [];
@@ -76,7 +76,7 @@ export function renderChamberDimensionsCompactNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const text = renderChamberDimensionsCompact(outcome);
+  const text = describeChamberDimensions(outcome);
   return [heading, bullet, { kind: 'paragraph', text }];
 }
 
