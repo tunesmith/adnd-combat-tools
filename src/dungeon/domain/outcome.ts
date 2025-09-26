@@ -59,6 +59,11 @@ import type {
   DragonSix,
 } from '../../tables/dungeon/monster/monsterSix';
 import type { IllusoryWallNature } from '../../tables/dungeon/illusoryWallNature';
+import type {
+  ExitAlternative,
+  ExitLocation,
+} from '../../tables/dungeon/exitLocation';
+import type { ExitDirection } from '../../tables/dungeon/exitDirection';
 import type { GasTrapEffect } from '../../tables/dungeon/gasTrapEffect';
 import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 
@@ -116,6 +121,32 @@ export type OutcomeEvent =
   | { kind: 'unusualSize'; result: UnusualSize; extra: number }
   | { kind: 'trickTrap'; result: TrickTrap }
   | { kind: 'illusoryWallNature'; result: IllusoryWallNature }
+  | {
+      kind: 'passageExitLocation';
+      result: ExitLocation;
+      index: number;
+      total: number;
+      origin: 'room' | 'chamber';
+    }
+  | {
+      kind: 'doorExitLocation';
+      result: ExitLocation;
+      index: number;
+      total: number;
+      origin: 'room' | 'chamber';
+    }
+  | {
+      kind: 'exitDirection';
+      result: ExitDirection;
+      index: number;
+      total: number;
+      origin: 'room' | 'chamber';
+    }
+  | {
+      kind: 'exitAlternative';
+      result: ExitAlternative;
+      exitType?: 'door' | 'passage';
+    }
   | { kind: 'gasTrapEffect'; result: GasTrapEffect }
   | { kind: 'wanderingWhereFrom'; result: PeriodicCheck }
   | { kind: 'galleryStairLocation'; result: GalleryStairLocation }

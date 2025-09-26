@@ -4,12 +4,15 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../../types/dungeon';
-import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
+import type { OutcomeEventNode } from '../../domain/outcome';
 import {
   numberOfExits,
   NumberOfExits,
 } from '../../../tables/dungeon/numberOfExits';
-import type { AppendPreviewFn } from './shared';
+import { ExitLocation } from '../../../tables/dungeon/exitLocation';
+import { ExitDirection } from '../../../tables/dungeon/exitDirection';
+import { findChildEvent, type AppendPreviewFn } from './shared';
+import { formatInlineAlternative } from './exitLocation';
 
 export function renderNumberOfExitsDetail(
   outcome: OutcomeEventNode,
@@ -27,7 +30,7 @@ export function renderNumberOfExitsDetail(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const summary = describeNumberOfExits(outcome);
+  const summary = describeNumberOfExits(outcome, { includeInstructions: true });
   const nodes: DungeonRenderNode[] = [heading, bullet];
   if (summary.detailParagraphs.length > 0) {
     nodes.push(...summary.detailParagraphs);
@@ -50,10 +53,15 @@ export function renderNumberOfExitsCompact(
     kind: 'bullet-list',
     items: [`roll: ${node.roll} — ${label}`],
   };
-  const summary = describeNumberOfExits(node);
+  const summary = describeNumberOfExits(node, { includeInstructions: false });
+  const exitSummaries = collectExitSummaries(node);
+  const combined = [summary.compactText, ...exitSummaries]
+    .map((text) => text.trim())
+    .filter((text) => text.length > 0)
+    .join(' ');
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  if (summary.compactText.length > 0) {
-    nodes.push({ kind: 'paragraph', text: `${summary.compactText} ` });
+  if (combined.length > 0) {
+    nodes.push({ kind: 'paragraph', text: `${combined} ` });
   }
   return nodes;
 }
@@ -75,30 +83,53 @@ export function buildNumberOfExitsPreview(
   };
 }
 
-export function describeNumberOfExits(node: OutcomeEventNode): {
+export function describeNumberOfExits(
+  node: OutcomeEventNode,
+  options: { includeInstructions: boolean }
+): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {
   if (node.event.kind !== 'numberOfExits') {
     return { detailParagraphs: [], compactText: '' };
   }
-  const text = formatNumberOfExits(node.event).trim();
-  if (text.length === 0) {
+  const detailText = formatNumberOfExits(node, {
+    includeInstructions: options.includeInstructions,
+  }).trim();
+  const compactText = formatNumberOfExits(node, {
+    includeInstructions: false,
+  }).trim();
+  if (detailText.length === 0 && compactText.length === 0) {
     return { detailParagraphs: [], compactText: '' };
   }
+  const detailParagraphs: DungeonMessage[] =
+    detailText.length > 0
+      ? [{ kind: 'paragraph', text: `${detailText} ` }]
+      : [];
   return {
-    detailParagraphs: [{ kind: 'paragraph', text: `${text} ` }],
-    compactText: text,
+    detailParagraphs,
+    compactText,
   };
 }
 
 function formatNumberOfExits(
-  event: Extract<OutcomeEvent, { kind: 'numberOfExits' }>
+  node: OutcomeEventNode,
+  options: { includeInstructions: boolean }
 ): string {
+  if (node.event.kind !== 'numberOfExits') return '';
+  const event = node.event;
+  const hasResolvedExitPlacement = collectExitSummaries(node).length > 0;
+  const shouldAppendInstructions =
+    options.includeInstructions && !hasResolvedExitPlacement;
   if (event.result === NumberOfExits.DoorChamberOrPassageRoom) {
-    return event.context.isRoom
-      ? 'There is a passage leaving this room. Determine its location and direction using the exit tables.'
-      : 'There is a door exiting this chamber. Determine its placement using the exit tables.';
+    const detail = event.context.isRoom ? 'passage' : 'door';
+    const followup = event.context.isRoom
+      ? 'See the exit location and direction rolls below.'
+      : 'See the exit location roll below.';
+    const instructions = shouldAppendInstructions ? ` ${followup}` : '';
+    return `There is a ${detail} leaving this ${
+      event.context.isRoom ? 'room' : 'chamber'
+    }.${instructions}`.trim();
   }
 
   const nounBase = event.context.isRoom ? 'door' : 'passage';
@@ -112,8 +143,82 @@ function formatNumberOfExits(
     event.result === NumberOfExits.OneToFour
       ? ` (1d4 result: ${event.count})`
       : '';
-  const pronoun = event.count === 1 ? 'its' : 'their';
-  return `There ${verb} ${event.count} additional ${plural}${rollInfo}. Determine ${pronoun} location and direction using the exit tables.`;
+  const baseType = event.context.isRoom ? 'door' : 'passage';
+  const followup =
+    baseType === 'passage'
+      ? 'See the exit location and direction rolls below to place them.'
+      : 'See the exit location rolls below to place them.';
+  const instructions = shouldAppendInstructions ? ` ${followup}` : '';
+  return `There ${verb} ${event.count} additional ${plural}${rollInfo}.${instructions}`.trim();
+}
+
+function collectExitSummaries(node: OutcomeEventNode): string[] {
+  if (!node.children) return [];
+  const summaries: string[] = [];
+  for (const child of node.children) {
+    if (child.type !== 'event') continue;
+    if (child.event.kind === 'doorExitLocation') {
+      summaries.push(formatExitLocationSummary('door', child));
+    } else if (child.event.kind === 'passageExitLocation') {
+      summaries.push(formatExitLocationSummary('passage', child));
+    }
+  }
+  return summaries;
+}
+
+function formatExitLocationSummary(
+  exitType: 'door' | 'passage',
+  node: OutcomeEventNode
+): string {
+  if (
+    node.event.kind !== 'doorExitLocation' &&
+    node.event.kind !== 'passageExitLocation'
+  )
+    return '';
+  const { index, total, result } = node.event;
+  const noun = exitType === 'door' ? 'Door' : 'Passage';
+  const suffix = total > 1 ? ` of ${total}` : '';
+  const location = formatExitLocationResult(result);
+  let sentence = `${noun} ${index}${suffix} is on the ${location}.`;
+  if (exitType === 'passage') {
+    const direction = findChildEvent(node, 'exitDirection');
+    if (direction && direction.event.kind === 'exitDirection') {
+      sentence += ` ${formatExitDirectionResult(direction.event.result)}`;
+    }
+  }
+  const alternative = findChildEvent(node, 'exitAlternative');
+  if (alternative && alternative.event.kind === 'exitAlternative') {
+    sentence += formatInlineAlternative(exitType, alternative.event.result);
+  }
+  return sentence;
+}
+
+function formatExitLocationResult(result: ExitLocation): string {
+  switch (result) {
+    case ExitLocation.OppositeWall:
+      return 'opposite wall';
+    case ExitLocation.LeftWall:
+      return 'left wall';
+    case ExitLocation.RightWall:
+      return 'right wall';
+    case ExitLocation.SameWall:
+      return 'same wall';
+    default:
+      return 'unknown wall';
+  }
+}
+
+function formatExitDirectionResult(result: ExitDirection): string {
+  switch (result) {
+    case ExitDirection.StraightAhead:
+      return 'The passage continues straight ahead.';
+    case ExitDirection.LeftRight45:
+      return 'The passage angles 45° to the left.';
+    case ExitDirection.RightLeft45:
+      return 'The passage angles 45° to the right.';
+    default:
+      return 'The passage takes an unusual course.';
+  }
 }
 
 function formatRange(range: number[]): string {

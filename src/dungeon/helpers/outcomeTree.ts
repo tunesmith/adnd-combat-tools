@@ -117,6 +117,32 @@ export function isTableContext(x: unknown): x is TableContext {
   if (kind === 'unusualSize') {
     return typeof (x as { extra?: unknown }).extra === 'number';
   }
+  if (kind === 'exit') {
+    const obj = x as {
+      exitType?: unknown;
+      index?: unknown;
+      total?: unknown;
+      origin?: unknown;
+    };
+    return (
+      (obj.exitType === 'door' || obj.exitType === 'passage') &&
+      typeof obj.index === 'number' &&
+      typeof obj.total === 'number' &&
+      (obj.origin === 'room' || obj.origin === 'chamber')
+    );
+  }
+  if (kind === 'exitDirection') {
+    const obj = x as { index?: unknown; total?: unknown; origin?: unknown };
+    return (
+      typeof obj.index === 'number' &&
+      typeof obj.total === 'number' &&
+      (obj.origin === 'room' || obj.origin === 'chamber')
+    );
+  }
+  if (kind === 'exitAlternative') {
+    const obj = x as { exitType?: unknown };
+    return obj.exitType === 'door' || obj.exitType === 'passage';
+  }
   return false;
 }
 

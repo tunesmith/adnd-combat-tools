@@ -19,7 +19,7 @@ import type { ChamberDimensions, RoomDimensions } from './chambersRooms';
 import type { CircularContents, UnusualShape } from './unusualShape';
 import type { UnusualSize } from './unusualSize';
 import type { NumberOfExits, OneToFour } from './numberOfExits';
-import type { ExitLocation, StrangeDoor } from './exitLocation';
+import type { ExitLocation, ExitAlternative } from './exitLocation';
 import type { ExitDirection } from './exitDirection';
 import type { Chute, Egress, Stairs } from './stairs';
 import type { Pool } from './pool';
@@ -95,7 +95,7 @@ export type Command =
   | NumberOfExits
   | OneToFour
   | ExitLocation
-  | StrangeDoor
+  | ExitAlternative
   | ExitDirection
   | Stairs
   | Egress

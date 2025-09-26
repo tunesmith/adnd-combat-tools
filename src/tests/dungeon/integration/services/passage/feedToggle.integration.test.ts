@@ -286,4 +286,43 @@ describe('dungeon feed toggling confidence', () => {
       expect(occurrences?.length ?? 0).toBe(1);
     }
   });
+
+  it('shows resolved exit placement in compact mode after chamber resolution', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 1);
+    feed = resolvePendingPreview(feed, 'numberOfExits', 1);
+    feed = resolvePendingPreview(feed, 'passageExitLocation', 1);
+    feed = resolvePendingPreview(feed, 'exitDirection', 1);
+
+    let pendingTargets = listPendingPreviewTargets(feed);
+    expect(
+      pendingTargets.some((target) => target.includes('exitAlternative'))
+    ).toBe(true);
+
+    feed = resolvePendingPreview(feed, 'exitAlternative', 1);
+
+    pendingTargets = listPendingPreviewTargets(feed);
+    expect(pendingTargets).toEqual([]);
+
+    const compactParagraphs = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim());
+    const compactText = compactParagraphs.join(' ');
+
+    expect(compactText).toContain('Passage 1 is on the opposite wall.');
+    expect(compactText).toContain('The passage continues straight ahead.');
+    expect(compactText).toContain(
+      'If the passage is indicated in a wall where the space immediately beyond the wall has already been mapped, then the exit is a secret door.'
+    );
+    expect(compactText).not.toContain('See the exit location');
+  });
 });

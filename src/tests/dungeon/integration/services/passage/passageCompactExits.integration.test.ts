@@ -57,7 +57,7 @@ describe('Compact rendering for exits', () => {
     const para = findParagraph(messages);
     expect(para).toBeTruthy();
     expect(para?.text.trim()).toContain('There is 1 additional door');
-    expect(para?.text).toContain('Determine its location and direction');
+    expect(para?.text).not.toContain('See the exit location rolls below');
     spy.mockRestore();
 
     const detail = resolveNumberOfExits({
@@ -71,6 +71,9 @@ describe('Compact rendering for exits', () => {
     );
     expect(detailParagraph?.text.trim()).toContain(
       'There is 1 additional door'
+    );
+    expect(detailParagraph?.text).toContain(
+      'See the exit location rolls below'
     );
   });
 
@@ -93,6 +96,7 @@ describe('Compact rendering for exits', () => {
     const messages = compactNodesFor(resolveChamberDimensions({ roll: 14 }));
     const para = findParagraph(messages);
     expect(para?.text).toContain('There are 3 additional passages');
+    expect(para?.text).not.toContain('location and direction rolls below');
     spy.mockRestore();
   });
 
@@ -103,6 +107,9 @@ describe('Compact rendering for exits', () => {
     const messages = compactNodesFor(resolveRoomDimensions({ roll: 2 }));
     const para = findParagraph(messages);
     expect(para?.text).toContain('There is a passage leaving this room');
+    expect(para?.text).not.toContain(
+      'See the exit location and direction rolls below'
+    );
     spy.mockRestore();
   });
 });

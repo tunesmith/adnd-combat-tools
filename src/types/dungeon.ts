@@ -59,7 +59,24 @@ export type TableContext =
   | { kind: 'exits'; length: number; width: number; isRoom: boolean }
   | { kind: 'doorChain'; existing: DoorChainLaterality[] }
   | { kind: 'wandering'; level: number }
-  | { kind: 'unusualSize'; extra: number };
+  | { kind: 'unusualSize'; extra: number }
+  | {
+      kind: 'exit';
+      exitType: 'door' | 'passage';
+      index: number;
+      total: number;
+      origin: 'room' | 'chamber';
+    }
+  | {
+      kind: 'exitDirection';
+      index: number;
+      total: number;
+      origin: 'room' | 'chamber';
+    }
+  | {
+      kind: 'exitAlternative';
+      exitType: 'door' | 'passage';
+    };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;
 

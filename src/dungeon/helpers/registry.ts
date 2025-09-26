@@ -55,6 +55,10 @@ import {
   resolveTransporterLocation,
   resolveTrickTrap,
   resolveIllusoryWallNature,
+  resolvePassageExitLocation,
+  resolveDoorExitLocation,
+  resolveExitDirection,
+  resolveExitAlternative,
   resolveGasTrapEffect,
   resolveUnusualShape,
   resolveUnusualSize,
@@ -128,6 +132,10 @@ const TABLE_ID_LIST = [
   'unusualSize',
   'trickTrap',
   'illusoryWallNature',
+  'passageExitLocation',
+  'doorExitLocation',
+  'exitDirection',
+  'exitAlternative',
   'gasTrapEffect',
   'circularContents',
   'circularPool',
@@ -185,6 +193,10 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   unusualSize: 'Unusual Size',
   trickTrap: 'Trick / Trap',
   illusoryWallNature: 'What Lies Beyond',
+  passageExitLocation: 'Passage Exit Location',
+  doorExitLocation: 'Door Exit Location',
+  exitDirection: 'Exit Direction',
+  exitAlternative: 'Exit Alternative',
   gasTrapEffect: 'Gas Effect',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
@@ -319,6 +331,58 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   trickTrap: ({ roll }) => fromOutcome(resolveTrickTrap({ roll })),
   illusoryWallNature: ({ roll }) =>
     fromOutcome(resolveIllusoryWallNature({ roll })),
+  passageExitLocation: ({ roll, context }) =>
+    fromOutcome(
+      resolvePassageExitLocation({
+        roll,
+        context:
+          context && context.kind === 'exit'
+            ? {
+                index: context.index,
+                total: context.total,
+                origin: context.origin,
+              }
+            : undefined,
+      })
+    ),
+  doorExitLocation: ({ roll, context }) =>
+    fromOutcome(
+      resolveDoorExitLocation({
+        roll,
+        context:
+          context && context.kind === 'exit'
+            ? {
+                index: context.index,
+                total: context.total,
+                origin: context.origin,
+              }
+            : undefined,
+      })
+    ),
+  exitDirection: ({ roll, context }) =>
+    fromOutcome(
+      resolveExitDirection({
+        roll,
+        context:
+          context && context.kind === 'exitDirection'
+            ? {
+                index: context.index,
+                total: context.total,
+                origin: context.origin,
+              }
+            : undefined,
+      })
+    ),
+  exitAlternative: ({ roll, context }) =>
+    fromOutcome(
+      resolveExitAlternative({
+        roll,
+        context:
+          context && context.kind === 'exitAlternative'
+            ? { exitType: context.exitType }
+            : undefined,
+      })
+    ),
   gasTrapEffect: ({ roll }) => fromOutcome(resolveGasTrapEffect({ roll })),
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {

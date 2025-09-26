@@ -48,6 +48,11 @@ import {
   illusoryWallNature,
   IllusoryWallNature,
 } from '../../tables/dungeon/illusoryWallNature';
+import {
+  exitAlternative,
+  exitLocation,
+} from '../../tables/dungeon/exitLocation';
+import { exitDirection } from '../../tables/dungeon/exitDirection';
 import { gasTrapEffect } from '../../tables/dungeon/gasTrapEffect';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import {
@@ -526,6 +531,33 @@ export function resolveNumberOfExits(options: {
       count = 1;
       break;
   }
+  const origin: 'room' | 'chamber' = options.isRoom ? 'room' : 'chamber';
+  const baseExitType: 'door' | 'passage' = options.isRoom ? 'door' : 'passage';
+  const exitType =
+    command === NumberOfExits.DoorChamberOrPassageRoom
+      ? baseExitType === 'door'
+        ? 'passage'
+        : 'door'
+      : baseExitType;
+
+  const children: DungeonOutcomeNode[] = [];
+  if (count > 0) {
+    for (let index = 1; index <= count; index += 1) {
+      children.push({
+        type: 'pending-roll',
+        table: exitType === 'door' ? 'doorExitLocation' : 'passageExitLocation',
+        id: `exit:${exitType}:${index}`,
+        context: {
+          kind: 'exit',
+          exitType,
+          index,
+          total: count,
+          origin,
+        },
+      });
+    }
+  }
+
   return {
     type: 'event',
     roll: usedRoll,
@@ -539,6 +571,7 @@ export function resolveNumberOfExits(options: {
       },
       count,
     } as OutcomeEvent,
+    children: children.length > 0 ? children : undefined,
   };
 }
 
@@ -855,6 +888,126 @@ export function resolveIllusoryWallNature(options?: {
     roll: usedRoll,
     event: { kind: 'illusoryWallNature', result: command } as OutcomeEvent,
     children: children.length ? children : undefined,
+  };
+}
+
+export function resolvePassageExitLocation(options?: {
+  roll?: number;
+  context?: {
+    index?: number;
+    total?: number;
+    origin?: 'room' | 'chamber';
+  };
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(exitLocation.sides);
+  const command = getTableEntry(usedRoll, exitLocation);
+  const index = options?.context?.index ?? 1;
+  const total = options?.context?.total ?? 1;
+  const origin = options?.context?.origin ?? 'room';
+  const children: DungeonOutcomeNode[] = [
+    {
+      type: 'pending-roll',
+      table: 'exitDirection',
+      id: `exit:direction:${index}`,
+      context: { kind: 'exitDirection', index, total, origin },
+    },
+    {
+      type: 'pending-roll',
+      table: 'exitAlternative',
+      id: `exitAlternative:passage:${index}`,
+      context: { kind: 'exitAlternative', exitType: 'passage' },
+    },
+  ];
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'passageExitLocation',
+      result: command,
+      index,
+      total,
+      origin,
+    } as OutcomeEvent,
+    children,
+  };
+}
+
+export function resolveDoorExitLocation(options?: {
+  roll?: number;
+  context?: {
+    index?: number;
+    total?: number;
+    origin?: 'room' | 'chamber';
+  };
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(exitLocation.sides);
+  const command = getTableEntry(usedRoll, exitLocation);
+  const index = options?.context?.index ?? 1;
+  const total = options?.context?.total ?? 1;
+  const origin = options?.context?.origin ?? 'room';
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'doorExitLocation',
+      result: command,
+      index,
+      total,
+      origin,
+    } as OutcomeEvent,
+    children: [
+      {
+        type: 'pending-roll',
+        table: 'exitAlternative',
+        id: `exitAlternative:door:${index}`,
+        context: { kind: 'exitAlternative', exitType: 'door' },
+      },
+    ],
+  };
+}
+
+export function resolveExitDirection(options?: {
+  roll?: number;
+  context?: {
+    index?: number;
+    total?: number;
+    origin?: 'room' | 'chamber';
+  };
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(exitDirection.sides);
+  const command = getTableEntry(usedRoll, exitDirection);
+  const index = options?.context?.index ?? 1;
+  const total = options?.context?.total ?? 1;
+  const origin = options?.context?.origin ?? 'room';
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'exitDirection',
+      result: command,
+      index,
+      total,
+      origin,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveExitAlternative(options?: {
+  roll?: number;
+  context?: {
+    exitType?: 'door' | 'passage';
+  };
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(exitAlternative.sides);
+  const command = getTableEntry(usedRoll, exitAlternative);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'exitAlternative',
+      result: command,
+      exitType: options?.context?.exitType,
+    } as OutcomeEvent,
   };
 }
 

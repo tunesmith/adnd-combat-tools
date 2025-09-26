@@ -156,6 +156,20 @@ import {
   renderGasTrapEffectCompact,
   buildGasTrapEffectPreview,
 } from './render/gasTrapEffect';
+import {
+  renderPassageExitLocationDetail,
+  renderPassageExitLocationCompact,
+  renderDoorExitLocationDetail,
+  renderDoorExitLocationCompact,
+  renderExitDirectionDetail,
+  renderExitDirectionCompact,
+  renderExitAlternativeDetail,
+  renderExitAlternativeCompact,
+  buildPassageExitLocationPreview,
+  buildDoorExitLocationPreview,
+  buildExitDirectionPreview,
+  buildExitAlternativePreview,
+} from './render/exitLocation';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
@@ -329,6 +343,22 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderGasTrapEffectDetail,
     renderCompact: renderGasTrapEffectCompact,
   },
+  passageExitLocation: {
+    renderDetail: renderPassageExitLocationDetail,
+    renderCompact: renderPassageExitLocationCompact,
+  },
+  doorExitLocation: {
+    renderDetail: renderDoorExitLocationDetail,
+    renderCompact: renderDoorExitLocationCompact,
+  },
+  exitDirection: {
+    renderDetail: renderExitDirectionDetail,
+    renderCompact: renderExitDirectionCompact,
+  },
+  exitAlternative: {
+    renderDetail: renderExitAlternativeDetail,
+    renderCompact: renderExitAlternativeCompact,
+  },
   monsterLevel: monsterAdapter,
   monsterOne: monsterAdapter,
   monsterTwo: monsterAdapter,
@@ -384,6 +414,10 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   trickTrap: buildTrickTrapPreview,
   illusoryWallNature: buildIllusoryWallNaturePreview,
   gasTrapEffect: buildGasTrapEffectPreview,
+  passageExitLocation: buildPassageExitLocationPreview,
+  doorExitLocation: buildDoorExitLocationPreview,
+  exitDirection: buildExitDirectionPreview,
+  exitAlternative: buildExitAlternativePreview,
 };
 
 const MONSTER_PREVIEW_BASES = [
@@ -515,6 +549,18 @@ function previewForEventNode(
       break;
     case 'gasTrapEffect':
       tableId = 'gasTrapEffect';
+      break;
+    case 'passageExitLocation':
+      tableId = 'passageExitLocation';
+      break;
+    case 'doorExitLocation':
+      tableId = 'doorExitLocation';
+      break;
+    case 'exitDirection':
+      tableId = 'exitDirection';
+      break;
+    case 'exitAlternative':
+      tableId = 'exitAlternative';
       break;
     case 'egress':
       tableId = `egress:${event.which}`;
