@@ -64,6 +64,14 @@ describe('Detail: PeriodicCheck Stairs (adapter)', () => {
     const paragraphs = rendered.filter(isRenderParagraph);
     expect(paragraphs.map((p) => p.text)).toEqual([
       'There are stairs here that descend one level. ',
+    ]);
+  });
+
+  test('egress detail contributes closure note', () => {
+    const egress = resolveEgress({ roll: 1, which: 'one' }) as OutcomeEventNode;
+    const rendered = toDetailRender(egress);
+    const paragraphs = rendered.filter(isRenderParagraph);
+    expect(paragraphs.map((p) => p.text)).toEqual([
       'After descending, an unnoticed door will close egress for the day. ',
     ]);
   });

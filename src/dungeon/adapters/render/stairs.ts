@@ -106,7 +106,8 @@ export function describeStairs(
   if (egress && egress.event.kind === 'egress') {
     if (egress.event.result === Egress.Closed) {
       append(
-        'After descending, an unnoticed door will close egress for the day.'
+        'After descending, an unnoticed door will close egress for the day.',
+        { detail: false }
       );
     }
   }

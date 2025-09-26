@@ -554,6 +554,7 @@ export function resolveViaRegistry<T extends FeedLike>(
   const targetKey = tp.targetId ?? tp.id;
   const keyVariants = collectKeyVariants(targetKey, tp.id);
   let resolved = false;
+  const extraKeyVariants = new Set<string>();
 
   if (setFeed) {
     setFeed((prev) =>
@@ -573,10 +574,17 @@ export function resolveViaRegistry<T extends FeedLike>(
                 if (applied) {
                   resolved = true;
                   const { outcome, snapshot } = applied;
+                  const previewTargets = collectPreviewTargetsForTable(
+                    snapshot.detail,
+                    tp.id
+                  );
+                  for (const key of previewTargets) extraKeyVariants.add(key);
                   if (setCollapsed) {
                     setCollapsed((prev) => {
                       const next = { ...prev };
                       for (const k of keyVariants)
+                        next[`${feedItemId}:${k}`] = true;
+                      for (const k of previewTargets)
                         next[`${feedItemId}:${k}`] = true;
                       return next;
                     });
@@ -585,6 +593,8 @@ export function resolveViaRegistry<T extends FeedLike>(
                     setResolved((prev) => {
                       const next = { ...prev };
                       for (const k of keyVariants)
+                        next[`${feedItemId}:${k}`] = true;
+                      for (const k of previewTargets)
                         next[`${feedItemId}:${k}`] = true;
                       return next;
                     });
@@ -611,10 +621,17 @@ export function resolveViaRegistry<T extends FeedLike>(
               });
               if (!tableResult) return fi;
               resolved = true;
+              const previewTargets = collectPreviewTargetsForTable(
+                tableResult.messages,
+                tp.id
+              );
+              for (const key of previewTargets) extraKeyVariants.add(key);
               if (setCollapsed) {
                 setCollapsed((prev) => {
                   const next = { ...prev };
                   for (const k of keyVariants)
+                    next[`${feedItemId}:${k}`] = true;
+                  for (const k of previewTargets)
                     next[`${feedItemId}:${k}`] = true;
                   return next;
                 });
@@ -623,6 +640,8 @@ export function resolveViaRegistry<T extends FeedLike>(
                 setResolved((prev) => {
                   const next = { ...prev };
                   for (const k of keyVariants)
+                    next[`${feedItemId}:${k}`] = true;
+                  for (const k of previewTargets)
                     next[`${feedItemId}:${k}`] = true;
                   return next;
                 });
@@ -639,21 +658,42 @@ export function resolveViaRegistry<T extends FeedLike>(
     );
   }
   if (!resolved) return false;
+  const combinedKeyVariantSet = new Set<string>(keyVariants);
+  extraKeyVariants.forEach((key) => {
+    combinedKeyVariantSet.add(key);
+  });
+  const combinedKeyVariants = Array.from(combinedKeyVariantSet);
   if (setCollapsed) {
     setCollapsed((prev) => {
       const next = { ...prev };
-      for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+      for (const k of combinedKeyVariants) next[`${feedItemId}:${k}`] = true;
       return next;
     });
   }
   if (setResolved) {
     setResolved((prev) => {
       const next = { ...prev };
-      for (const k of keyVariants) next[`${feedItemId}:${k}`] = true;
+      for (const k of combinedKeyVariants) next[`${feedItemId}:${k}`] = true;
       return next;
     });
   }
   return true;
+}
+
+function collectPreviewTargetsForTable(
+  nodes: DungeonRenderNode[] | undefined,
+  tableId: string
+): string[] {
+  if (!nodes) return [];
+  const targets = new Set<string>();
+  for (const node of nodes) {
+    if (node.kind !== 'table-preview') continue;
+    if (node.id !== tableId) continue;
+    const target =
+      node.targetId && node.targetId.length > 0 ? node.targetId : node.id;
+    targets.add(target);
+  }
+  return Array.from(targets);
 }
 
 function collectKeyVariants(primary: string, fallbackId?: string): string[] {
