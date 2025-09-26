@@ -56,6 +56,7 @@ import type { CharacterClassTable } from './monster/character/characterClass';
 import type { PeriodicCheckDoorOnly } from './periodicCheckDoorOnly';
 import type { TrickTrap } from './trickTrap';
 import type { IllusoryWallNature } from './illusoryWallNature';
+import type { GasTrapEffect } from './gasTrapEffect';
 
 export type Table<T> = {
   sides: number;
@@ -131,4 +132,5 @@ export type Command =
   | CharacterRace
   | PeriodicCheckDoorOnly
   | TrickTrap
-  | IllusoryWallNature;
+  | IllusoryWallNature
+  | GasTrapEffect;

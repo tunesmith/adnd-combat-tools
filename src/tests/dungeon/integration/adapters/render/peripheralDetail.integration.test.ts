@@ -6,6 +6,7 @@ import {
   resolvePeriodicDoorOnly,
   resolveTrickTrap,
   resolveIllusoryWallNature,
+  resolveGasTrapEffect,
 } from '../../../../../dungeon/domain/resolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
@@ -57,5 +58,21 @@ describe('Detail helpers for door chains and traps', () => {
     expect(previews.map((preview) => preview.id)).toContain(
       'illusoryWallNature'
     );
+  });
+
+  test('gas trap detail tree includes preview and resolved description', () => {
+    const trap = resolveTrickTrap({ roll: 17 }) as OutcomeEventNode;
+    const gas = resolveGasTrapEffect({ roll: 20 }) as OutcomeEventNode;
+    const resolved: OutcomeEventNode = { ...trap, children: [gas] };
+    const nodes = renderDetailTree(resolved);
+    const paragraphs = nodes.filter(isParagraph).map((p) => p.text);
+    expect(paragraphs).toContain(
+      "Gas; party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. (See TABLE VII. A.) "
+    );
+    expect(paragraphs).toContain(
+      'Poison: killed unless saving throw versus poison is made. '
+    );
+    const previews = nodes.filter(isPreview);
+    expect(previews.map((preview) => preview.id)).toContain('gasTrapEffect');
   });
 });

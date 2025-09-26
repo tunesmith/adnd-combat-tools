@@ -48,6 +48,7 @@ import {
   illusoryWallNature,
   IllusoryWallNature,
 } from '../../tables/dungeon/illusoryWallNature';
+import { gasTrapEffect } from '../../tables/dungeon/gasTrapEffect';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import {
   roomDimensions,
@@ -826,6 +827,8 @@ export function resolveTrickTrap(options?: {
   const children: DungeonOutcomeNode[] = [];
   if (command === TrickTrap.IllusionaryWall) {
     children.push({ type: 'pending-roll', table: 'illusoryWallNature' });
+  } else if (command === TrickTrap.GasCorridor) {
+    children.push({ type: 'pending-roll', table: 'gasTrapEffect' });
   }
   return {
     type: 'event',
@@ -852,6 +855,20 @@ export function resolveIllusoryWallNature(options?: {
     roll: usedRoll,
     event: { kind: 'illusoryWallNature', result: command } as OutcomeEvent,
     children: children.length ? children : undefined,
+  };
+}
+
+export function resolveGasTrapEffect(options?: {
+  roll?: number;
+  takeOverride?: (tableId: string) => number | undefined;
+}): DungeonOutcomeNode {
+  const overridden = options?.takeOverride?.('gasTrapEffect');
+  const usedRoll = overridden ?? options?.roll ?? rollDice(gasTrapEffect.sides);
+  const command = getTableEntry(usedRoll, gasTrapEffect);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: { kind: 'gasTrapEffect', result: command } as OutcomeEvent,
   };
 }
 

@@ -59,6 +59,7 @@ import type {
   DragonSix,
 } from '../../tables/dungeon/monster/monsterSix';
 import type { IllusoryWallNature } from '../../tables/dungeon/illusoryWallNature';
+import type { GasTrapEffect } from '../../tables/dungeon/gasTrapEffect';
 import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 
 export type DoorChainLaterality = 'Left' | 'Right';
@@ -115,6 +116,7 @@ export type OutcomeEvent =
   | { kind: 'unusualSize'; result: UnusualSize; extra: number }
   | { kind: 'trickTrap'; result: TrickTrap }
   | { kind: 'illusoryWallNature'; result: IllusoryWallNature }
+  | { kind: 'gasTrapEffect'; result: GasTrapEffect }
   | { kind: 'wanderingWhereFrom'; result: PeriodicCheck }
   | { kind: 'galleryStairLocation'; result: GalleryStairLocation }
   | { kind: 'galleryStairOccurrence'; result: GalleryStairOccurrence }

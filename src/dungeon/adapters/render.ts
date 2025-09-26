@@ -151,6 +151,11 @@ import {
   renderIllusoryWallNatureCompact,
   buildIllusoryWallNaturePreview,
 } from './render/illusoryWallNature';
+import {
+  renderGasTrapEffectDetail,
+  renderGasTrapEffectCompact,
+  buildGasTrapEffectPreview,
+} from './render/gasTrapEffect';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
@@ -320,6 +325,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderIllusoryWallNatureDetail,
     renderCompact: renderIllusoryWallNatureCompact,
   },
+  gasTrapEffect: {
+    renderDetail: renderGasTrapEffectDetail,
+    renderCompact: renderGasTrapEffectCompact,
+  },
   monsterLevel: monsterAdapter,
   monsterOne: monsterAdapter,
   monsterTwo: monsterAdapter,
@@ -374,6 +383,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   jumpingPlaceWidth: buildJumpingPlaceWidthPreview,
   trickTrap: buildTrickTrapPreview,
   illusoryWallNature: buildIllusoryWallNaturePreview,
+  gasTrapEffect: buildGasTrapEffectPreview,
 };
 
 const MONSTER_PREVIEW_BASES = [
@@ -502,6 +512,9 @@ function previewForEventNode(
       break;
     case 'illusoryWallNature':
       tableId = 'illusoryWallNature';
+      break;
+    case 'gasTrapEffect':
+      tableId = 'gasTrapEffect';
       break;
     case 'egress':
       tableId = `egress:${event.which}`;

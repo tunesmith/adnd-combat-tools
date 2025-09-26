@@ -7,6 +7,7 @@ import {
   type TablePreviewFactory,
 } from './shared';
 import { describeIllusoryWallNature } from './illusoryWallNature';
+import { describeGasTrapEffect } from './gasTrapEffect';
 
 export function renderTrickTrapDetail(
   outcome: OutcomeEventNode,
@@ -53,6 +54,8 @@ export function renderTrickTrapCompact(node: OutcomeEventNode): string {
     if (child.type !== 'event') continue;
     if (child.event.kind === 'illusoryWallNature') {
       extras.push(describeIllusoryWallNature(child));
+    } else if (child.event.kind === 'gasTrapEffect') {
+      extras.push(describeGasTrapEffect(child));
     }
   }
   return extras.length > 0 ? `${base}${extras.join(' ')}` : base;
