@@ -36,6 +36,10 @@ import {
   resolveChasmConstruction,
   resolveJumpingPlaceWidth,
   resolveNumberOfExits,
+  resolvePassageExitLocation,
+  resolveDoorExitLocation,
+  resolveExitDirection,
+  resolveExitAlternative,
   resolveMonsterLevel,
   resolveMonsterOne,
   resolveMonsterTwo,
@@ -447,6 +451,27 @@ function resolvePendingNode(
         isRoom: context.isRoom,
       });
     }
+    case 'passageExitLocation': {
+      const context = readExitContext(pending.context);
+      if (!context) return undefined;
+      return resolvePassageExitLocation({ context });
+    }
+    case 'doorExitLocation': {
+      const context = readExitContext(pending.context);
+      if (!context) return undefined;
+      return resolveDoorExitLocation({ context });
+    }
+    case 'exitDirection': {
+      const context = readExitDirectionContext(pending.context);
+      if (!context) return undefined;
+      return resolveExitDirection({ context });
+    }
+    case 'exitAlternative': {
+      const exitType = readExitAlternativeContext(pending.context);
+      return resolveExitAlternative({
+        context: { exitType: exitType ?? undefined },
+      });
+    }
     case 'monsterLevel': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterLevel({ dungeonLevel });
@@ -562,6 +587,54 @@ export function readExitsContext(
   if (length === undefined || width === undefined || isRoom === undefined)
     return undefined;
   return { length, width, isRoom };
+}
+
+function readExitContext(
+  context: unknown
+): { index: number; total: number; origin: 'room' | 'chamber' } | undefined {
+  if (!isTableContext(context)) return undefined;
+  if (context.kind !== 'exit') return undefined;
+  const index =
+    typeof context.index === 'number' && Number.isInteger(context.index)
+      ? context.index
+      : undefined;
+  const total =
+    typeof context.total === 'number' && Number.isInteger(context.total)
+      ? context.total
+      : undefined;
+  const origin = context.origin;
+  if (index === undefined || total === undefined) return undefined;
+  if (origin !== 'room' && origin !== 'chamber') return undefined;
+  return { index, total, origin };
+}
+
+function readExitDirectionContext(
+  context: unknown
+): { index: number; total: number; origin: 'room' | 'chamber' } | undefined {
+  if (!isTableContext(context)) return undefined;
+  if (context.kind !== 'exitDirection') return undefined;
+  const index =
+    typeof context.index === 'number' && Number.isInteger(context.index)
+      ? context.index
+      : undefined;
+  const total =
+    typeof context.total === 'number' && Number.isInteger(context.total)
+      ? context.total
+      : undefined;
+  const origin = context.origin;
+  if (index === undefined || total === undefined) return undefined;
+  if (origin !== 'room' && origin !== 'chamber') return undefined;
+  return { index, total, origin };
+}
+
+function readExitAlternativeContext(
+  context: unknown
+): 'door' | 'passage' | null {
+  if (!isTableContext(context)) return null;
+  if (context.kind !== 'exitAlternative') return null;
+  return context.exitType === 'door' || context.exitType === 'passage'
+    ? context.exitType
+    : null;
 }
 
 export function countPendingNodes(
