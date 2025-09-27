@@ -2,6 +2,7 @@ import type {
   DoorChainLaterality,
   DungeonOutcomeNode,
 } from '../dungeon/domain/outcome';
+import type { PartySummary } from '../dungeon/helpers/party/formatPartyResult';
 
 export type DungeonAction = 'passage' | 'door';
 
@@ -21,10 +22,17 @@ export type DungeonBulletList = {
   items: string[];
 };
 
+export type DungeonCharacterPartyMessage = {
+  kind: 'character-party';
+  summary: PartySummary;
+  display: 'detail' | 'compact';
+};
+
 export type DungeonMessage =
   | DungeonParagraph
   | DungeonHeading
-  | DungeonBulletList;
+  | DungeonBulletList
+  | DungeonCharacterPartyMessage;
 
 export type RollTraceItem = {
   table: string;

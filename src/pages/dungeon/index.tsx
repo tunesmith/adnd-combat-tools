@@ -313,6 +313,75 @@ function renderNode(
           ))}
         </ul>
       );
+    case 'character-party': {
+      const { summary, display } = m;
+      const isCompact = display === 'compact';
+      const containerStyle: React.CSSProperties = {
+        margin: isCompact ? '0.25rem 0' : '0.5rem 0',
+      };
+      const listStyle: React.CSSProperties = {
+        listStyle: 'none',
+        margin: isCompact ? 0 : '0 0 0 1.25rem',
+        padding: 0,
+      };
+      const followerListStyle: React.CSSProperties = {
+        listStyle: 'none',
+        margin: '0.25rem 0 0 1rem',
+        padding: 0,
+        fontSize: isCompact ? '0.9em' : undefined,
+        opacity: isCompact ? 0.9 : 1,
+      };
+
+      return (
+        <div key={key} style={containerStyle}>
+          {summary.main.length > 0 && (
+            <div>
+              <p
+                style={{
+                  margin: '0 0 0.25rem',
+                  fontWeight: isCompact ? 500 : 600,
+                }}
+              >
+                Main characters
+              </p>
+              <ul style={listStyle}>
+                {summary.main.map(({ member, followers }, idx) => (
+                  <li
+                    key={idx}
+                    style={{
+                      marginBottom: followers.length > 0 ? 6 : 2,
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    <span style={{ fontWeight: isCompact ? 500 : 600 }}>
+                      {member}
+                    </span>
+                    {followers.length > 0 && (
+                      <ul style={followerListStyle}>
+                        {followers.map((follower, followerIdx) => (
+                          <li key={followerIdx}>{follower}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {summary.includesHenchmen && (
+            <p
+              style={{
+                margin: '0.25rem 0 0',
+                fontStyle: isCompact ? 'italic' : 'normal',
+                fontSize: isCompact ? '0.9em' : undefined,
+              }}
+            >
+              They are accompanied by henchmen ready to assist.
+            </p>
+          )}
+        </div>
+      );
+    }
     case 'table-preview': {
       const tp = m;
       const targetKey = tp.targetId ?? tp.id;
@@ -519,5 +588,7 @@ function getRootPreviewNodes(
   });
   return messages.filter((m) => m.kind === 'table-preview');
 }
+
+export { renderNode };
 
 export default DungeonIndexPage;

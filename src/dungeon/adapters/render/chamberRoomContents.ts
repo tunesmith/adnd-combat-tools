@@ -14,6 +14,7 @@ import {
 import { describeChamberRoomStairs } from './chamberRoomStairs';
 import { describeMonsterOutcome } from './monsters';
 import { renderTrickTrapCompact } from './trickTrap';
+import { compactMessagesToText } from './monsters/partySummary';
 
 export function renderChamberRoomContentsDetail(
   outcome: OutcomeEventNode,
@@ -117,8 +118,18 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
 
   const visit = (current: OutcomeEventNode): void => {
     const description = describeMonsterOutcome(current);
-    const text = description?.compactText.trim();
-    if (text) summaries.push(text);
+    if (description) {
+      if (
+        description.compactMessages &&
+        description.compactMessages.length > 0
+      ) {
+        const text = compactMessagesToText(description.compactMessages);
+        if (text.length > 0) summaries.push(text);
+      } else {
+        const text = description.compactText.trim();
+        if (text) summaries.push(text);
+      }
+    }
     current.children?.forEach((child) => {
       if (child.type === 'event') visit(child);
     });

@@ -15,6 +15,18 @@ import {
   summarizePartyResult,
   type PartySummary,
 } from '../../../helpers/party/formatPartyResult';
+import { buildPartyCompactSummary } from './partySummary';
+
+export function buildPartyCharacterMessage(
+  summary: PartySummary,
+  display: 'detail' | 'compact'
+): DungeonMessage {
+  return {
+    kind: 'character-party',
+    summary,
+    display,
+  };
+}
 
 export function describeHumanMonster(
   node: OutcomeEventNode
@@ -24,13 +36,13 @@ export function describeHumanMonster(
 
   if (event.party) {
     const summary = summarizePartyResult(event.party);
-    const detailParagraphs = buildPartyDetailMessages(summary);
     const compactText = buildPartyCompactText(summary);
     return {
       heading: 'Human Subtable',
       label: humanLabel(event.result),
-      detailParagraphs,
+      detailParagraphs: [buildPartyCharacterMessage(summary, 'detail')],
       compactText,
+      compactMessages: [buildPartyCharacterMessage(summary, 'compact')],
       appendPending: hasPendingChildren(node),
     };
   }
@@ -62,51 +74,8 @@ export function buildHumanPreview(
   });
 }
 
-export function buildPartyDetailMessages(
-  summary: PartySummary
-): DungeonMessage[] {
-  const messages: DungeonMessage[] = [];
-
-  if (summary.main.length > 0) {
-    messages.push({ kind: 'paragraph', text: 'Main characters:' });
-    const items: string[] = [];
-    summary.main.forEach(({ member, followers }) => {
-      items.push(member);
-      followers.forEach((follower) => {
-        items.push(`  - ${follower}`);
-      });
-    });
-    messages.push({ kind: 'bullet-list', items });
-  }
-
-  if (summary.includesHenchmen) {
-    messages.push({
-      kind: 'paragraph',
-      text: 'They are accompanied by henchmen ready to assist.',
-    });
-  }
-
-  return messages;
-}
-
 export function buildPartyCompactText(summary: PartySummary): string {
-  const lines: string[] = [];
-
-  if (summary.main.length > 0) {
-    lines.push('Main characters:');
-    summary.main.forEach(({ member, followers }) => {
-      lines.push(`- ${member}`);
-      followers.forEach((follower) => {
-        lines.push(`  - ${follower}`);
-      });
-    });
-  }
-
-  if (summary.includesHenchmen) {
-    lines.push('Includes henchmen ready to accompany them.');
-  }
-
-  return lines.join('\n');
+  return buildPartyCompactSummary(summary);
 }
 
 function humanLabel(command: Human): string {

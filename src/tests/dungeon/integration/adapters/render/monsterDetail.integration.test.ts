@@ -82,13 +82,10 @@ function isPreview(
   return node.kind === 'table-preview';
 }
 
-function isBulletList(
+function isCharacterParty(
   node: DungeonRenderNode
-): node is Extract<
-  DungeonRenderNode,
-  { kind: 'bullet-list'; items: string[] }
-> {
-  return node.kind === 'bullet-list';
+): node is Extract<DungeonRenderNode, { kind: 'character-party' }> {
+  return node.kind === 'character-party';
 }
 
 describe('Monster describe helpers', () => {
@@ -177,23 +174,18 @@ describe('Monster describe helpers', () => {
     };
 
     const detailNodes = toDetailRender(outcome);
-    const detailBullets = detailNodes.filter(isBulletList);
-    expect(
-      detailBullets.some((list) =>
-        list.items.some((item) => item.trim().startsWith('- '))
-      )
-    ).toBe(true);
+    const detailParty = detailNodes.find(isCharacterParty);
+    expect(detailParty).toBeDefined();
+    expect(detailParty?.summary.main.length).toBeGreaterThan(0);
+    expect(detailParty?.summary.includesHenchmen).toBe(true);
+    expect(detailParty?.display).toBe('detail');
 
-    const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
-    expect(compactParagraphs.length).toBeGreaterThan(2);
-    const compactTexts = compactParagraphs.map((p) => p.text.trim());
-    expect(compactTexts).toContain('Main characters:');
-    expect(compactTexts.some((text) => text.startsWith('- '))).toBe(true);
-    expect(
-      compactTexts.some((text) =>
-        text.includes('Includes henchmen ready to accompany them.')
-      )
-    ).toBe(true);
+    const compactNodes = toCompactRender(outcome);
+    const compactParty = compactNodes.find(isCharacterParty);
+    expect(compactParty).toBeDefined();
+    expect(compactParty?.summary.main.length).toBeGreaterThan(0);
+    expect(compactParty?.summary.includesHenchmen).toBe(true);
+    expect(compactParty?.display).toBe('compact');
   });
 
   test('monsterTwo character parties render structured output', () => {
@@ -212,20 +204,15 @@ describe('Monster describe helpers', () => {
     };
 
     const detailNodes = toDetailRender(outcome);
-    const detailBullets = detailNodes.filter(isBulletList);
-    expect(detailBullets).not.toHaveLength(0);
-    expect(
-      detailBullets.some((list) =>
-        list.items.some((item) => item.trim().startsWith('- '))
-      )
-    ).toBe(true);
+    const detailParty = detailNodes.find(isCharacterParty);
+    expect(detailParty).toBeDefined();
+    expect(detailParty?.summary.main.length).toBeGreaterThan(0);
+    expect(detailParty?.display).toBe('detail');
 
-    const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
-    expect(compactParagraphs.map((p) => p.text.trim())).toEqual(
-      expect.arrayContaining(['Main characters:'])
-    );
-    expect(compactParagraphs.some((p) => p.text.trim().startsWith('- '))).toBe(
-      true
-    );
+    const compactNodes = toCompactRender(outcome);
+    const compactParty = compactNodes.find(isCharacterParty);
+    expect(compactParty).toBeDefined();
+    expect(compactParty?.summary.main.length).toBeGreaterThan(0);
+    expect(compactParty?.display).toBe('compact');
   });
 });

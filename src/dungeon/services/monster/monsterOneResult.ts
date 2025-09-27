@@ -11,7 +11,6 @@ import {
 } from '../../../tables/dungeon/monster/monsterOne';
 import { characterResult } from './characterResult';
 import type { PartyResult } from '../../models/character/characterSheet';
-import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 
 export const monsterOneTextForCommand = (
   dungeonLevel: number,
@@ -154,7 +153,7 @@ export const humanTextForCommand = (
     }
     case Human.Character: {
       const characters = characterResult(1, dungeonLevel);
-      text = formatPartyResult(characters);
+      text = '';
       party = characters;
       break;
     }

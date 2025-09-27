@@ -386,6 +386,18 @@ function cloneRenderNode(node: DungeonRenderNode): DungeonRenderNode {
       return { kind: 'bullet-list', items: [...node.items] };
     case 'roll-trace':
       return cloneRollTrace(node);
+    case 'character-party':
+      return {
+        kind: 'character-party',
+        display: node.display,
+        summary: {
+          includesHenchmen: node.summary.includesHenchmen,
+          main: node.summary.main.map(({ member, followers }) => ({
+            member,
+            followers: [...followers],
+          })),
+        },
+      };
     case 'table-preview':
       return {
         kind: 'table-preview',
@@ -417,6 +429,10 @@ function freezeRenderNode<T extends DungeonRenderNode>(node: T): T {
   if (node.kind === 'roll-trace') {
     node.items.forEach(freezeTraceItem);
     Object.freeze(node.items);
+  }
+  if (node.kind === 'character-party') {
+    node.summary.main.forEach((entry) => Object.freeze(entry.followers));
+    Object.freeze(node.summary.main);
   }
   return Object.freeze(node);
 }

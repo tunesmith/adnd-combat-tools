@@ -131,15 +131,23 @@ export function renderPeriodicCheckCompact(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${PeriodicCheck[outcome.event.result]}`],
   };
-  const text = summarizePeriodicResult(outcome.event.result, outcome, {
+  const summary = summarizePeriodicResult(outcome.event.result, outcome, {
     avoidMonster: outcome.event.avoidMonster,
   });
-  return [heading, bullet, { kind: 'paragraph', text }];
+  const nodes: DungeonRenderNode[] = [
+    heading,
+    bullet,
+    { kind: 'paragraph', text: summary.text },
+  ];
+  if (summary.nodes) {
+    nodes.push(...summary.nodes);
+  }
+  return nodes;
 }
 
 export function renderWanderingWhereFrom(node: OutcomeEventNode): string {
   if (node.event.kind !== 'wanderingWhereFrom') return '';
-  return summarizePeriodicResult(node.event.result, node);
+  return summarizePeriodicResult(node.event.result, node).text;
 }
 
 export function renderWanderingWhereFromDetail(
@@ -158,10 +166,13 @@ export function renderWanderingWhereFromDetail(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const detailText = renderWanderingWhereFrom(outcome);
+  const detailSummary = summarizePeriodicResult(outcome.event.result, outcome);
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  if (detailText.trim().length > 0) {
-    nodes.push({ kind: 'paragraph', text: detailText });
+  if (detailSummary.text.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text: detailSummary.text });
+  }
+  if (detailSummary.nodes) {
+    nodes.push(...detailSummary.nodes);
   }
   appendPendingPreviews(outcome, nodes);
   return nodes;
@@ -182,10 +193,13 @@ export function renderWanderingWhereFromCompactNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const text = renderWanderingWhereFrom(outcome);
+  const summary = summarizePeriodicResult(outcome.event.result, outcome);
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  if (text.trim().length > 0) {
-    nodes.push({ kind: 'paragraph', text });
+  if (summary.text.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text: summary.text });
+  }
+  if (summary.nodes) {
+    nodes.push(...summary.nodes);
   }
   return nodes;
 }
@@ -205,53 +219,70 @@ export function buildWanderingWhereFromPreview(
   });
 }
 
+type PeriodicSummary = {
+  text: string;
+  nodes?: DungeonRenderNode[];
+};
+
 function summarizePeriodicResult(
   result: PeriodicCheck,
   node: OutcomeEventNode,
   options?: { avoidMonster?: boolean }
-): string {
+): PeriodicSummary {
   const base = periodicBaseTexts(result, options);
   switch (result) {
     case PeriodicCheck.Door:
-      return renderDoorChainCompact(findChildEvent(node, 'doorLocation'));
+      return {
+        text: renderDoorChainCompact(findChildEvent(node, 'doorLocation')),
+      };
     case PeriodicCheck.SidePassage: {
       const side = findChildEvent(node, 'sidePassages');
       if (side && side.event.kind === 'sidePassages') {
         const summary = describeSidePassage(side);
         if (summary.compactText.length > 0) {
-          return summary.compactText;
+          return { text: summary.compactText };
         }
       }
-      return base.compact;
+      return { text: base.compact };
     }
     case PeriodicCheck.PassageTurn: {
       const turn = findChildEvent(node, 'passageTurns');
-      return turn ? renderPassageTurnCompact(turn) : base.compact;
+      return {
+        text: turn ? renderPassageTurnCompact(turn) : base.compact,
+      };
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
       const detail = chamber ? describeChamberDimensions(chamber) : '';
-      return `${base.compact}${detail}`.trimEnd() + ' ';
+      return {
+        text: `${base.compact}${detail}`.trimEnd() + ' ',
+      };
     }
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
-      return stairs
-        ? renderStairsCompact(stairs, {
-            renderChamberSummary: describeChamberDimensions,
-          })
-        : base.compact;
+      return {
+        text: stairs
+          ? renderStairsCompact(stairs, {
+              renderChamberSummary: describeChamberDimensions,
+            })
+          : base.compact,
+      };
     }
     case PeriodicCheck.TrickTrap: {
       const trap = findChildEvent(node, 'trickTrap');
-      return trap ? renderTrickTrapCompact(trap) : TRICK_TRAP_FALLBACK_TEXT;
+      return {
+        text: trap ? renderTrickTrapCompact(trap) : TRICK_TRAP_FALLBACK_TEXT,
+      };
     }
     case PeriodicCheck.WanderingMonster: {
-      if (node.event.kind !== 'periodicCheck') return base.compact;
+      if (node.event.kind !== 'periodicCheck') {
+        return { text: base.compact };
+      }
       const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
-      const prefix =
+      const prefixSummary =
         whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
           ? summarizePeriodicResult(whereFrom.event.result, whereFrom)
-          : '';
+          : { text: '' };
       const monsterLevelNode = findChildEvent(node, 'monsterLevel');
       const monsterSummary = renderWanderingMonsterCompact(
         node.event.level,
@@ -259,12 +290,19 @@ function summarizePeriodicResult(
           ? monsterLevelNode
           : undefined
       );
-      return prefix + monsterSummary;
+      const combinedNodes = [
+        ...(prefixSummary.nodes ?? []),
+        ...(monsterSummary.nodes ?? []),
+      ];
+      return {
+        text: `${prefixSummary.text}${monsterSummary.text}`,
+        nodes: combinedNodes.length > 0 ? combinedNodes : undefined,
+      };
     }
     case PeriodicCheck.ContinueStraight:
     case PeriodicCheck.DeadEnd:
-      return base.compact;
+      return { text: base.compact };
     default:
-      return base.compact;
+      return { text: base.compact };
   }
 }

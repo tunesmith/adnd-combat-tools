@@ -177,7 +177,7 @@ export type OutcomeEvent =
       kind: 'monsterTwo';
       result: MonsterTwo;
       dungeonLevel: number;
-      text: string;
+      text?: string;
       party?: PartyResult;
     }
   | {
@@ -248,7 +248,7 @@ export type OutcomeEvent =
       kind: 'human';
       result: Human;
       dungeonLevel: number;
-      text: string;
+      text?: string;
       party?: PartyResult;
     };
 

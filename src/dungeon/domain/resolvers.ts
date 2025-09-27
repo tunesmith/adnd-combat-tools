@@ -1340,6 +1340,7 @@ export function resolveMonsterTwo(options?: {
   const usedRoll = options?.roll ?? rollDice(monsterTwo.sides);
   const result = getTableEntry(usedRoll, monsterTwo);
   const { text, party } = monsterTwoTextForCommand(dungeonLevel, result);
+  const eventText = party ? undefined : text;
   return {
     type: 'event',
     roll: usedRoll,
@@ -1347,7 +1348,7 @@ export function resolveMonsterTwo(options?: {
       kind: 'monsterTwo',
       result,
       dungeonLevel,
-      text,
+      text: eventText,
       party,
     },
   };
@@ -1371,7 +1372,7 @@ export function resolveMonsterThree(options?: {
     });
   } else {
     const resolved = monsterThreeTextForCommand(dungeonLevel, result);
-    text = resolved.text;
+    text = resolved.party ? undefined : resolved.text;
     party = resolved.party;
   }
   return {
@@ -1432,7 +1433,7 @@ export function resolveMonsterFour(options?: {
     });
   } else {
     const resolved = monsterFourTextForCommand(dungeonLevel, result);
-    text = resolved.text;
+    text = resolved.party ? undefined : resolved.text;
     party = resolved.party;
   }
   return {
@@ -1513,7 +1514,7 @@ export function resolveMonsterFive(options?: {
     });
   } else {
     const resolved = monsterFiveTextForCommand(dungeonLevel, result);
-    text = resolved.text;
+    text = resolved.party ? undefined : resolved.text;
     party = resolved.party;
   }
   return {
@@ -1588,7 +1589,7 @@ export function resolveMonsterSix(options?: {
     });
   } else {
     const resolved = monsterSixTextForCommand(dungeonLevel, result);
-    text = resolved.text;
+    text = resolved.party ? undefined : resolved.text;
     party = resolved.party;
   }
   return {
@@ -1633,6 +1634,7 @@ export function resolveHuman(options?: {
   const usedRoll = options?.roll ?? rollDice(human.sides);
   const result = getTableEntry(usedRoll, human);
   const { text, party } = humanTextForCommand(dungeonLevel, result);
+  const eventText = party ? undefined : text;
   return {
     type: 'event',
     roll: usedRoll,
@@ -1640,7 +1642,7 @@ export function resolveHuman(options?: {
       kind: 'human',
       result,
       dungeonLevel,
-      text,
+      text: eventText,
       party,
     },
   };

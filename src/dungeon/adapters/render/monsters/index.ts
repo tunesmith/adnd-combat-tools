@@ -39,6 +39,7 @@ export function renderMonsterDetailNodes(
 ): DungeonRenderNode[] {
   const description = describeMonsterOutcome(outcome);
   if (!description) return [];
+  // console.log('renderMonsterCompactNodes', description);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -75,7 +76,9 @@ export function renderMonsterCompactNodes(
   };
   const nodes: DungeonRenderNode[] = [heading, bullet];
   const compactText = description.compactText;
-  if (compactText.length > 0) {
+  if (description.compactMessages && description.compactMessages.length > 0) {
+    nodes.push(...description.compactMessages);
+  } else if (compactText.length > 0) {
     const segments = compactText
       .split('\n')
       .map((segment) => segment.trim())

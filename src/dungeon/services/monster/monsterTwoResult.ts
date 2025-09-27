@@ -8,7 +8,6 @@ import {
   monsterTwo,
 } from '../../../tables/dungeon/monster/monsterTwo';
 import { characterResult } from './characterResult';
-import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 import type { PartyResult } from '../../models/character/characterSheet';
 
 type MonsterTextResult = {
@@ -44,7 +43,7 @@ export const monsterTwoTextForCommand = (
     }
     case MonsterTwo.Character: {
       const characters = characterResult(2, dungeonLevel);
-      text = formatPartyResult(characters);
+      text = '';
       party = characters;
       break;
     }

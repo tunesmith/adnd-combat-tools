@@ -6,6 +6,7 @@ export interface MonsterDescription {
   label: string;
   detailParagraphs: DungeonMessage[];
   compactText: string;
+  compactMessages?: DungeonMessage[];
   appendPending: boolean;
 }
 
