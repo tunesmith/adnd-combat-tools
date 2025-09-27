@@ -68,6 +68,7 @@ import type { GasTrapEffect } from '../../tables/dungeon/gasTrapEffect';
 import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
+import type { PartyResult } from '../models/character/characterSheet';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
@@ -243,6 +244,7 @@ export type OutcomeEvent =
       result: Human;
       dungeonLevel: number;
       text: string;
+      party?: PartyResult;
     };
 
 export type PendingRoll = {

@@ -10,6 +10,7 @@ import {
   monsterOne,
 } from '../../../tables/dungeon/monster/monsterOne';
 import { characterResult } from './characterResult';
+import type { PartyResult } from '../../models/character/characterSheet';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 
 export const monsterOneTextForCommand = (
@@ -117,8 +118,9 @@ export const monsterOneResult = (dungeonLevel: number): string => {
 export const humanTextForCommand = (
   dungeonLevel: number,
   command: Human
-): string => {
+): { text: string; party?: PartyResult } => {
   let text = '';
+  let party: PartyResult | undefined;
   switch (command) {
     case Human.Bandit_5to15: {
       const bandits = getNumberOfMonsters(1, dungeonLevel, 2, 6, 3);
@@ -153,14 +155,15 @@ export const humanTextForCommand = (
     case Human.Character: {
       const characters = characterResult(1, dungeonLevel);
       text = formatPartyResult(characters);
+      party = characters;
       break;
     }
   }
-  return text;
+  return { text, party };
 };
 
 export const humanResult = (dungeonLevel: number): string => {
   const roll = rollDice(human.sides);
   const command = getTableEntry(roll, human);
-  return humanTextForCommand(dungeonLevel, command);
+  return humanTextForCommand(dungeonLevel, command).text;
 };

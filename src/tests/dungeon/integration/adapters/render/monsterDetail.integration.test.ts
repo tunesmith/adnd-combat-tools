@@ -4,8 +4,20 @@ import {
 } from '../../../../../dungeon/adapters/render';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
-import { MonsterOne } from '../../../../../tables/dungeon/monster/monsterOne';
+import {
+  MonsterOne,
+  Human,
+} from '../../../../../tables/dungeon/monster/monsterOne';
 import { MonsterLevel } from '../../../../../tables/dungeon/monster/monsterLevel';
+import type {
+  PartyResult,
+  CharacterSheet,
+} from '../../../../../dungeon/models/character/characterSheet';
+import { CharacterClass } from '../../../../../dungeon/models/characterClass';
+import { CharacterRace } from '../../../../../tables/dungeon/monster/character/characterRace';
+import { Gender } from '../../../../../dungeon/models/character/gender';
+import type { Attributes } from '../../../../../dungeon/models/attributes';
+import { formatPartyResult } from '../../../../../dungeon/helpers/party/formatPartyResult';
 
 function isParagraph(
   node: DungeonRenderNode
@@ -17,6 +29,15 @@ function isPreview(
   node: DungeonRenderNode
 ): node is Extract<DungeonRenderNode, { kind: 'table-preview'; id: string }> {
   return node.kind === 'table-preview';
+}
+
+function isBulletList(
+  node: DungeonRenderNode
+): node is Extract<
+  DungeonRenderNode,
+  { kind: 'bullet-list'; items: string[] }
+> {
+  return node.kind === 'bullet-list';
 }
 
 describe('Monster describe helpers', () => {
@@ -87,5 +108,80 @@ describe('Monster describe helpers', () => {
     expect(compactParagraphs.map((p) => p.text.trim())).toEqual([
       '(TODO: Monster Level Seven preview)',
     ]);
+  });
+
+  test('human parties render structured detail and compact output', () => {
+    const attributes = {
+      STR: 15,
+      INT: 12,
+      WIS: 11,
+      DEX: 13,
+      CON: 14,
+      CHA: 10,
+    } as Attributes;
+    const follower: CharacterSheet = {
+      professions: [{ level: 2, characterClass: CharacterClass.Cleric }],
+      characterRace: CharacterRace.Dwarf,
+      attributes,
+      gender: Gender.Female,
+      hitPoints: 9,
+      isBard: false,
+      bardLevels: {
+        [CharacterClass.Fighter]: 0,
+        [CharacterClass.Thief]: 0,
+        [CharacterClass.Bard]: 0,
+      },
+      followers: [],
+    };
+    const leader: CharacterSheet = {
+      professions: [{ level: 3, characterClass: CharacterClass.Fighter }],
+      characterRace: CharacterRace.Human,
+      attributes,
+      gender: Gender.Male,
+      hitPoints: 18,
+      isBard: false,
+      bardLevels: {
+        [CharacterClass.Fighter]: 0,
+        [CharacterClass.Thief]: 0,
+        [CharacterClass.Bard]: 0,
+      },
+      followers: [follower],
+    };
+    const party: PartyResult = {
+      mainCharacters: [leader],
+      otherCharacters: [],
+      henchmen: true,
+    };
+
+    const outcome: OutcomeEventNode = {
+      type: 'event',
+      roll: 46,
+      event: {
+        kind: 'human',
+        result: Human.Character,
+        dungeonLevel: 1,
+        text: formatPartyResult(party),
+        party,
+      },
+    };
+
+    const detailNodes = toDetailRender(outcome);
+    const detailBullets = detailNodes.filter(isBulletList);
+    expect(
+      detailBullets.some((list) =>
+        list.items.some((item) => item.includes('Followers'))
+      )
+    ).toBe(true);
+
+    const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
+    expect(compactParagraphs.length).toBeGreaterThan(2);
+    const compactTexts = compactParagraphs.map((p) => p.text.trim());
+    expect(compactTexts).toContain('Main characters:');
+    expect(compactTexts.some((text) => text.includes('Follower:'))).toBe(true);
+    expect(
+      compactTexts.some((text) =>
+        text.includes('Includes henchmen ready to accompany them.')
+      )
+    ).toBe(true);
   });
 });

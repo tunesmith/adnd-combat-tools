@@ -73,13 +73,20 @@ export function renderMonsterCompactNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${description.label}`],
   };
-  const compactText = description.compactText;
-  const paragraphText = compactText.endsWith(' ')
-    ? compactText
-    : `${compactText} `;
   const nodes: DungeonRenderNode[] = [heading, bullet];
+  const compactText = description.compactText;
   if (compactText.length > 0) {
-    nodes.push({ kind: 'paragraph', text: paragraphText });
+    const segments = compactText
+      .split('\n')
+      .map((segment) => segment.trim())
+      .filter((segment) => segment.length > 0);
+    if (segments.length === 0) {
+      nodes.push({ kind: 'paragraph', text: `${compactText.trim()} ` });
+    } else {
+      segments.forEach((segment) => {
+        nodes.push({ kind: 'paragraph', text: `${segment} ` });
+      });
+    }
   }
   if (description.appendPending) {
     appendPendingPreviews(outcome, nodes);

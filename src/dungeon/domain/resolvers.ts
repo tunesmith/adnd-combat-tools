@@ -1614,7 +1614,7 @@ export function resolveHuman(options?: {
   const dungeonLevel = options?.dungeonLevel ?? 1;
   const usedRoll = options?.roll ?? rollDice(human.sides);
   const result = getTableEntry(usedRoll, human);
-  const text = humanTextForCommand(dungeonLevel, result);
+  const { text, party } = humanTextForCommand(dungeonLevel, result);
   return {
     type: 'event',
     roll: usedRoll,
@@ -1623,6 +1623,7 @@ export function resolveHuman(options?: {
       result,
       dungeonLevel,
       text,
+      party,
     },
   };
 }
