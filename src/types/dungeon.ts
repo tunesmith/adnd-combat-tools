@@ -59,7 +59,7 @@ export type TableContext =
   | { kind: 'exits'; length: number; width: number; isRoom: boolean }
   | { kind: 'doorChain'; existing: DoorChainLaterality[] }
   | { kind: 'wandering'; level: number }
-  | { kind: 'unusualSize'; extra: number }
+  | { kind: 'unusualSize'; extra: number; isRoom?: boolean }
   | {
       kind: 'exit';
       exitType: 'door' | 'passage';

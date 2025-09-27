@@ -317,7 +317,9 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   unusualShape: ({ roll }) => fromOutcome(resolveUnusualShape({ roll })),
   unusualSize: ({ roll, context }) => {
     const extra = context && context.kind === 'unusualSize' ? context.extra : 0;
-    return fromOutcome(resolveUnusualSize({ roll, extra }));
+    const isRoom =
+      context && context.kind === 'unusualSize' ? context.isRoom : undefined;
+    return fromOutcome(resolveUnusualSize({ roll, extra, isRoom }));
   },
   circularContents: ({ roll }) =>
     fromOutcome(resolveCircularContents({ roll })),
@@ -463,8 +465,22 @@ export function applyOutcomeRoll(opts: {
     normalizedResolution
   );
   const normalizedApplied = normalizeOutcomeTree(applied);
-  const snapshot = createOutcomeRenderSnapshot(normalizedApplied);
-  if (!snapshot) return undefined;
+  const detailSnapshot = createOutcomeRenderSnapshot(normalizedApplied, {
+    autoResolve: false,
+  });
+  const compactSnapshot = createOutcomeRenderSnapshot(normalizedApplied, {
+    autoResolve: false,
+  });
+  if (!detailSnapshot || !compactSnapshot) return undefined;
+  const snapshot: OutcomeRenderSnapshot = {
+    normalized: detailSnapshot.normalized,
+    compactOutcome: compactSnapshot.compactOutcome,
+    detail: detailSnapshot.detail,
+    detailResolved: compactSnapshot.detailResolved,
+    compact: compactSnapshot.compact,
+    pendingCount: detailSnapshot.pendingCount,
+    resolvedPendingCount: compactSnapshot.resolvedPendingCount,
+  };
   return { outcome: normalizedApplied, snapshot };
 }
 
@@ -577,7 +593,7 @@ export function resolveViaRegistry<T extends FeedLike>(
                   const previewTargets = collectPreviewTargetsForTable(
                     snapshot.detail,
                     tp.id
-                  );
+                  ).filter((key) => key === targetKey);
                   for (const key of previewTargets) extraKeyVariants.add(key);
                   if (setCollapsed) {
                     setCollapsed((prev) => {
@@ -624,7 +640,7 @@ export function resolveViaRegistry<T extends FeedLike>(
               const previewTargets = collectPreviewTargetsForTable(
                 tableResult.messages,
                 tp.id
-              );
+              ).filter((key) => key === targetKey);
               for (const key of previewTargets) extraKeyVariants.add(key);
               if (setCollapsed) {
                 setCollapsed((prev) => {

@@ -5,6 +5,10 @@ import {
   renderCompact,
   renderDetail,
 } from '../../../../support/dungeon/uiPreviewHarness';
+import type {
+  DungeonOutcomeNode,
+  OutcomeEventNode,
+} from '../../../../../dungeon/domain/outcome';
 
 describe('dungeon feed toggling confidence', () => {
   it('reduces pending count as registry resolutions complete a passage chain', () => {
@@ -176,9 +180,11 @@ describe('dungeon feed toggling confidence', () => {
     feed = resolvePendingPreview(feed, 'unusualSize', 1);
 
     const pendingBefore = listPendingPreviewTargets(feed);
-    expect(pendingBefore).toHaveLength(1);
-    const [pendingId] = pendingBefore;
-    expect(pendingId?.endsWith('circularContents')).toBe(true);
+    expect(pendingBefore).toHaveLength(2);
+    expect(pendingBefore.some((id) => id.endsWith('circularContents'))).toBe(
+      true
+    );
+    expect(pendingBefore.some((id) => id.endsWith('numberOfExits'))).toBe(true);
 
     const detailParagraphs = renderDetail(feed)
       .filter(
@@ -237,6 +243,10 @@ describe('dungeon feed toggling confidence', () => {
     feed = resolvePendingPreview(feed, 'circularPool', 19);
     feed = resolvePendingPreview(feed, 'circularMagicPool', 18);
     feed = resolvePendingPreview(feed, 'transporterLocation', 8);
+    feed = resolvePendingPreview(feed, 'numberOfExits', 1);
+    feed = resolvePendingPreview(feed, 'passageExitLocation', 6);
+    feed = resolvePendingPreview(feed, 'exitDirection', 1);
+    feed = resolvePendingPreview(feed, 'exitAlternative', 4);
 
     expect(listPendingPreviewTargets(feed)).toHaveLength(0);
 
@@ -285,6 +295,59 @@ describe('dungeon feed toggling confidence', () => {
       );
       expect(occurrences?.length ?? 0).toBe(1);
     }
+    expect(compactJoined).toContain('TODO contents and treasure.');
+    expect(compactJoined).toContain('There is 1 additional passage');
+    expect(compactJoined).toContain('Passage 1 is on the opposite wall.');
+  });
+
+  it('keeps independent previews for multiple exit locations', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'numberOfExits', 5);
+
+    const exitEvent = findEvent(feed.outcome, 'numberOfExits');
+    expect(exitEvent).toBeDefined();
+    if (!exitEvent) throw new Error('missing exits');
+    expect(
+      exitEvent.children?.filter((child) => child.type === 'pending-roll')
+    ).not.toHaveLength(0);
+
+    const initialPending = listPendingPreviewTargets(feed);
+    expect(initialPending).toHaveLength(3);
+    expect(
+      initialPending.some((id) => id.endsWith('.0.passageExitLocation'))
+    ).toBe(true);
+    expect(
+      initialPending.some((id) => id.endsWith('.1.passageExitLocation'))
+    ).toBe(true);
+    expect(
+      initialPending.some((id) => id.endsWith('.2.passageExitLocation'))
+    ).toBe(true);
+
+    feed = resolvePendingPreview(feed, 'passageExitLocation', 1);
+
+    const afterFirst = listPendingPreviewTargets(feed);
+    const locationTargets = afterFirst.filter((id) =>
+      id.endsWith('.passageExitLocation')
+    );
+    expect(locationTargets).toHaveLength(2);
+    expect(
+      locationTargets.some((id) => id.endsWith('.1.passageExitLocation'))
+    ).toBe(true);
+    expect(
+      locationTargets.some((id) => id.endsWith('.2.passageExitLocation'))
+    ).toBe(true);
+    expect(afterFirst.some((id) => id.endsWith('.0.passageExitLocation'))).toBe(
+      false
+    );
+    expect(afterFirst.some((id) => id.endsWith('.exitDirection'))).toBe(true);
+    expect(afterFirst.some((id) => id.endsWith('.exitAlternative'))).toBe(true);
   });
 
   it('shows resolved exit placement in compact mode after chamber resolution', () => {
@@ -326,3 +389,20 @@ describe('dungeon feed toggling confidence', () => {
     expect(compactText).not.toContain('See the exit location');
   });
 });
+
+function findEvent(
+  node: DungeonOutcomeNode | undefined,
+  kind: OutcomeEventNode['event']['kind']
+): OutcomeEventNode | undefined {
+  if (!node) return undefined;
+  if (node.type === 'event') {
+    if (node.event.kind === kind) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findEvent(child, kind);
+        if (found) return found;
+      }
+    }
+  }
+  return undefined;
+}

@@ -157,7 +157,7 @@ export function renderCompactUnusualDetails(node: OutcomeEventNode): string {
     }
   }
   if (shape || size) {
-    text += 'Determine exits, contents, and treasure separately. ';
+    text += 'TODO contents and treasure. ';
   }
   return text;
 }

@@ -118,7 +118,7 @@ export type OutcomeEvent =
   | { kind: 'transmuteType'; result: TransmuteType }
   | { kind: 'poolAlignment'; result: PoolAlignment }
   | { kind: 'transporterLocation'; result: TransporterLocation }
-  | { kind: 'unusualSize'; result: UnusualSize; extra: number }
+  | { kind: 'unusualSize'; result: UnusualSize; extra: number; area?: number }
   | { kind: 'trickTrap'; result: TrickTrap }
   | { kind: 'illusoryWallNature'; result: IllusoryWallNature }
   | {

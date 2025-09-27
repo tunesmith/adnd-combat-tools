@@ -70,9 +70,28 @@ export const passageMessages = (options?: {
   });
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   const detailMode = options?.detailMode ?? false;
-  const snapshot = createOutcomeRenderSnapshot(node, {
-    autoResolve: !detailMode,
-  });
+  const shouldAutoResolve = !detailMode;
+  if (shouldAutoResolve) {
+    const snapshot = createOutcomeRenderSnapshot(node, { autoResolve: true });
+    if (!snapshot) {
+      return { usedRoll, messages: [], outcome: undefined };
+    }
+    const detailMessages = snapshot.detailResolved;
+    const compactMessages = snapshot.compact;
+    const messages = detailMode ? detailMessages : compactMessages;
+    return {
+      usedRoll,
+      messages,
+      outcome: snapshot.compactOutcome,
+      renderCache: {
+        detail: detailMessages,
+        compact: compactMessages,
+      },
+      pendingCount: snapshot.resolvedPendingCount,
+    };
+  }
+
+  const snapshot = createOutcomeRenderSnapshot(node, { autoResolve: false });
   if (!snapshot) {
     return { usedRoll, messages: [], outcome: undefined };
   }
@@ -82,7 +101,7 @@ export const passageMessages = (options?: {
     messages,
     outcome: detailMode ? snapshot.normalized : snapshot.compactOutcome,
     renderCache: {
-      detail: detailMode ? snapshot.detail : snapshot.detailResolved,
+      detail: snapshot.detail,
       compact: snapshot.compact,
     },
     pendingCount: detailMode

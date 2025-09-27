@@ -119,7 +119,11 @@ export function isTableContext(x: unknown): x is TableContext {
     );
   }
   if (kind === 'unusualSize') {
-    return typeof (x as { extra?: unknown }).extra === 'number';
+    const obj = x as { extra?: unknown; isRoom?: unknown };
+    const extraIsNumber = typeof obj.extra === 'number';
+    const isRoomOk =
+      obj.isRoom === undefined || typeof obj.isRoom === 'boolean';
+    return extraIsNumber && isRoomOk;
   }
   if (kind === 'exit') {
     const obj = x as {
@@ -286,8 +290,67 @@ function enrichEventNode(
   resolvedChildren: OutcomeEventNode[],
   depth: number
 ): OutcomeEventNode {
-  const children = [...resolvedChildren];
+  let children = [...resolvedChildren];
   switch (node.event.kind) {
+    case 'roomDimensions':
+    case 'chamberDimensions': {
+      const unusualSizeIndex = children.findIndex(
+        (child) => child.event.kind === 'unusualSize'
+      );
+      const unusualSizeNode =
+        unusualSizeIndex >= 0 ? children[unusualSizeIndex] : undefined;
+      const area = unusualSizeNode
+        ? totalAreaFromUnusualSize(unusualSizeNode)
+        : undefined;
+
+      let promotedExit: OutcomeEventNode | undefined;
+      if (unusualSizeNode && Array.isArray(unusualSizeNode.children)) {
+        const remainingNested: DungeonOutcomeNode[] = [];
+        for (const nestedChild of unusualSizeNode.children) {
+          if (
+            !promotedExit &&
+            nestedChild.type === 'event' &&
+            nestedChild.event.kind === 'numberOfExits'
+          ) {
+            promotedExit = nestedChild;
+            continue;
+          }
+          remainingNested.push(nestedChild);
+        }
+        if (promotedExit) {
+          const nextChildren = [...children];
+          nextChildren[unusualSizeIndex] = {
+            ...unusualSizeNode,
+            children: remainingNested.length > 0 ? remainingNested : undefined,
+          } as OutcomeEventNode;
+          children = nextChildren;
+        }
+      }
+      if (promotedExit) {
+        children = [...children, promotedExit];
+      }
+
+      const hasNumberOfExits = children.some(
+        (child) => child.event.kind === 'numberOfExits'
+      );
+      if (!hasNumberOfExits && area !== undefined && area > 0) {
+        const pending: PendingRoll = {
+          type: 'pending-roll',
+          table: 'numberOfExits',
+          context: {
+            kind: 'exits',
+            length: area,
+            width: 1,
+            isRoom: node.event.kind === 'roomDimensions',
+          },
+        };
+        const resolved = resolveOutcomeNode(pending, depth + 1, []);
+        if (resolved) {
+          children.push(resolved);
+        }
+      }
+      break;
+    }
     case 'galleryStairLocation': {
       if (
         node.event.result === GalleryStairLocation.PassageEnd &&
@@ -295,7 +358,8 @@ function enrichEventNode(
       ) {
         const occurrence = resolveOutcomeNode(
           resolveGalleryStairOccurrence({}),
-          depth + 1
+          depth + 1,
+          []
         );
         if (occurrence) children.push(occurrence);
       }
@@ -306,7 +370,11 @@ function enrichEventNode(
         node.event.result === RiverConstruction.Boat &&
         !children.some((c) => c.event.kind === 'riverBoatBank')
       ) {
-        const bank = resolveOutcomeNode(resolveRiverBoatBank({}), depth + 1);
+        const bank = resolveOutcomeNode(
+          resolveRiverBoatBank({}),
+          depth + 1,
+          []
+        );
         if (bank) children.push(bank);
       }
       break;
@@ -318,7 +386,8 @@ function enrichEventNode(
       ) {
         const width = resolveOutcomeNode(
           resolveJumpingPlaceWidth({}),
-          depth + 1
+          depth + 1,
+          []
         );
         if (width) children.push(width);
       }
@@ -401,12 +470,11 @@ function resolvePendingNode(
     case 'unusualShape':
       return resolveUnusualShape({});
     case 'unusualSize': {
-      const extra =
-        isTableContext(pending.context) &&
-        pending.context.kind === 'unusualSize'
-          ? pending.context.extra
-          : 0;
-      return resolveUnusualSize({ extra });
+      const context = readUnusualSizeContext(pending.context);
+      return resolveUnusualSize({
+        extra: context?.extra,
+        isRoom: context?.isRoom,
+      });
     }
     case 'circularContents':
       return resolveCircularContents({});
@@ -608,6 +676,20 @@ function readExitContext(
   return { index, total, origin };
 }
 
+function readUnusualSizeContext(
+  context: unknown
+): { extra: number; isRoom?: boolean } | undefined {
+  if (!isTableContext(context)) return undefined;
+  if (context.kind !== 'unusualSize') return undefined;
+  const extra = typeof context.extra === 'number' ? context.extra : undefined;
+  if (extra === undefined) return undefined;
+  const isRoom =
+    context.isRoom === undefined || typeof context.isRoom === 'boolean'
+      ? context.isRoom
+      : undefined;
+  return { extra, isRoom };
+}
+
 function readExitDirectionContext(
   context: unknown
 ): { index: number; total: number; origin: 'room' | 'chamber' } | undefined {
@@ -635,6 +717,19 @@ function readExitAlternativeContext(
   return context.exitType === 'door' || context.exitType === 'passage'
     ? context.exitType
     : null;
+}
+
+function totalAreaFromUnusualSize(node: OutcomeEventNode): number | undefined {
+  if (node.event.kind !== 'unusualSize') return undefined;
+  const area = (node.event as { area?: number }).area;
+  if (area !== undefined) return area;
+  if (!node.children) return undefined;
+  for (const child of node.children) {
+    if (child.type !== 'event') continue;
+    const childArea = totalAreaFromUnusualSize(child);
+    if (childArea !== undefined) return childArea;
+  }
+  return undefined;
 }
 
 export function countPendingNodes(

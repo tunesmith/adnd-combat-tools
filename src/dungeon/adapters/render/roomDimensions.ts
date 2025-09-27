@@ -50,7 +50,13 @@ export function renderRoomDimensionsCompact(node: OutcomeEventNode): string {
     const unusual = renderCompactUnusualDetails(node).trim();
     if (unusual.length > 0) segments.push(unusual);
   }
-  const exits = findChildEvent(node, 'numberOfExits');
+  let exits = findChildEvent(node, 'numberOfExits');
+  if (!exits) {
+    const unusualSize = findChildEvent(node, 'unusualSize');
+    if (unusualSize && unusualSize.event.kind === 'unusualSize') {
+      exits = findChildEvent(unusualSize, 'numberOfExits');
+    }
+  }
   if (exits && exits.event.kind === 'numberOfExits') {
     const exitNodes = renderNumberOfExitsCompact(exits);
     const paragraph = exitNodes.find((n) => n.kind === 'paragraph');
