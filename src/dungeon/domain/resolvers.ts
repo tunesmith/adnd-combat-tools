@@ -891,10 +891,19 @@ export function resolveCircularContents(options?: {
 
 export function resolveCircularPool(options?: {
   roll?: number;
+  level?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(pool.sides);
   const command = getTableEntry(usedRoll, pool);
   const children: DungeonOutcomeNode[] = [];
+  const level = options?.level ?? 1;
+  if (command === Pool.PoolMonster || command === Pool.PoolMonsterTreasure) {
+    children.push({
+      type: 'pending-roll',
+      table: `monsterLevel:${level}`,
+      context: { kind: 'wandering', level },
+    });
+  }
   if (command === Pool.MagicPool) {
     children.push({ type: 'pending-roll', table: 'circularMagicPool' });
   }

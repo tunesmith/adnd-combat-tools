@@ -10,7 +10,7 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { formatCircularPool } from './circularPools';
+import { describeCircularPool } from './circularPools';
 import { formatCircularMagicPool } from './magicPool';
 import { formatTransmuteType } from './transmuteType';
 import { formatPoolAlignment } from './poolAlignment';
@@ -123,7 +123,7 @@ function circularSentenceForEvent(
     case 'circularContents':
       return formatCircularContents(eventNode.event.result).trim();
     case 'circularPool':
-      return formatCircularPool(eventNode.event.result).trim();
+      return describeCircularPool(eventNode).trim();
     case 'circularMagicPool':
       return formatCircularMagicPool(eventNode.event.result).trim();
     case 'transmuteType':

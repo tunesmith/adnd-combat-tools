@@ -486,8 +486,10 @@ function resolvePendingNode(
       return resolveChamberRoomStairs({});
     case 'circularContents':
       return resolveCircularContents({});
-    case 'circularPool':
-      return resolveCircularPool({});
+    case 'circularPool': {
+      const level = deriveDungeonLevelFromAncestors(ancestors) ?? 1;
+      return resolveCircularPool({ level });
+    }
     case 'circularMagicPool':
       return resolveCircularMagicPool({});
     case 'transmuteType':

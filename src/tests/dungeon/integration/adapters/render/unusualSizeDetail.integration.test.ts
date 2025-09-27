@@ -1,5 +1,13 @@
-import { renderDetailTree } from '../../../../../dungeon/adapters/render';
-import { resolveSequenceWithRolls } from '../../../../support/dungeon/detail-utils';
+import {
+  renderDetailTree,
+  toCompactRender,
+  toDetailRender,
+} from '../../../../../dungeon/adapters/render';
+import {
+  resolveSequenceWithRolls,
+  findEventByKind,
+  isParagraphNode,
+} from '../../../../support/dungeon/detail-utils';
 
 describe('detail rendering for chamber unusual size rerolls', () => {
   it('keeps unusual size pending when a reroll is indicated', () => {
@@ -61,6 +69,27 @@ describe('detail rendering for chamber unusual size rerolls', () => {
           node.kind === 'paragraph' &&
           node.text.trim() === 'It transports characters back to the surface.'
       )
+    ).toBe(true);
+  });
+
+  it('includes resolved monster summaries for circular pools', () => {
+    const resolvedTree = resolveSequenceWithRolls([14, 18, 1, 1, 11, 1, 1], 1);
+    const poolEvent = findEventByKind(resolvedTree, 'circularPool');
+    expect(poolEvent).toBeDefined();
+    if (!poolEvent) return;
+
+    const detailNodes = toDetailRender(poolEvent);
+    expect(
+      detailNodes
+        .filter(isParagraphNode)
+        .some((node) => node.text.toLowerCase().includes('giant ant'))
+    ).toBe(true);
+
+    const compactNodes = toCompactRender(poolEvent);
+    expect(
+      compactNodes
+        .filter(isParagraphNode)
+        .some((node) => node.text.toLowerCase().includes('giant ant'))
     ).toBe(true);
   });
 });
