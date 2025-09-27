@@ -15,6 +15,11 @@ import { getMultiClassCharacterForRace } from '../../helpers/character/getMultiC
 import { CharacterClass } from '../../models/characterClass';
 import { canPartyHireHenchmen } from '../../helpers/party/canPartyHireHenchmen';
 import { getMaxHenchmenForMember } from '../../helpers/character/henchmen/getMaxHenchmenForMember';
+import {
+  isAlignmentCompatible,
+  areAlignmentsCompatible,
+} from '../../helpers/party/isAlignmentCompatible';
+import { createMenAtArms } from '../../helpers/character/createMenAtArms';
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -66,14 +71,19 @@ export const createCharacters = (
     const numClasses = getNumberOfClasses(characterRace);
 
     // Generate the character sheet
-    const characterSheet =
-      numClasses === 1
-        ? getSingleClassCharacterForRace(characterRace, characterLevel)
-        : getMultiClassCharacterForRace(
-            characterRace,
-            numClasses,
-            characterLevel
-          );
+    let characterSheet: CharacterSheet;
+    try {
+      characterSheet =
+        numClasses === 1
+          ? getSingleClassCharacterForRace(characterRace, characterLevel)
+          : getMultiClassCharacterForRace(
+              characterRace,
+              numClasses,
+              characterLevel
+            );
+    } catch {
+      continue;
+    }
 
     // Check compatibility and limits
     const exceedsLimits = characterSheet.professions.some(
@@ -88,6 +98,14 @@ export const createCharacters = (
 
     if (exceedsLimits) {
       continue; // Skip this character sheet entirely if any class is incompatible or exceeds the limit
+    }
+
+    const alignmentCompatible = isAlignmentCompatible(
+      characterSheet.alignment,
+      [...newMembers, ...existingParty]
+    );
+    if (!alignmentCompatible) {
+      continue;
     }
 
     // Update counts and add to the party
@@ -132,19 +150,43 @@ export const generateFollowers = (
   followerLevel: number
 ): void => {
   let remainingFollowers = numFollowers;
+  const isMenAtArms = followerLevel <= 0;
   while (remainingFollowers > 0) {
     let generatedFollowersThisPass = 0;
     for (const member of mainParty) {
       // TODO I forgot to check compatible followers for monks/assassins
-      if (getMaxHenchmenForMember(member, mainParty) > 0) {
+      const maxFollowersForMember = getMaxHenchmenForMember(member, mainParty);
+      if (member.followers.length >= maxFollowersForMember) continue;
+
+      let follower: CharacterSheet | undefined;
+
+      if (isMenAtArms) {
+        const candidate = createMenAtArms(member);
+        follower = candidate;
+      } else {
         const henchmen = createCharacters(1, followerLevel, mainParty);
-        member.followers.push(...henchmen);
-        // get CharacterSheet of henchman
-        // add it to this member's followers[]
-        remainingFollowers--;
-        generatedFollowersThisPass++;
-        if (remainingFollowers <= 0) break;
+        if (henchmen.length === 0) continue;
+        const candidate = henchmen[0];
+        if (!candidate) continue;
+        if (!areAlignmentsCompatible(member.alignment, candidate.alignment)) {
+          continue;
+        }
+        follower = candidate;
       }
+
+      const assignedFollower = follower;
+      if (!assignedFollower) continue;
+
+      const followerCharacter: CharacterSheet = assignedFollower;
+      const followerAlignment = followerCharacter.alignment;
+      if (!areAlignmentsCompatible(member.alignment, followerAlignment)) {
+        continue;
+      }
+
+      member.followers.push(followerCharacter);
+      remainingFollowers--;
+      generatedFollowersThisPass++;
+      if (remainingFollowers <= 0) break;
     }
     // If no henchmen were generated in this pass, break to avoid infinite loop
     if (generatedFollowersThisPass === 0) {
@@ -205,8 +247,6 @@ export const characterResult = (
   //       : CharacterRole.ManAtArms,
   //   })
   // );
-
-  console.log(`othersCount: ${othersCount}, otherLevel: ${otherLevel}`);
 
   return {
     mainCharacters: mainParty,

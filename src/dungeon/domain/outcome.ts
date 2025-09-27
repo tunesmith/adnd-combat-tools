@@ -178,30 +178,35 @@ export type OutcomeEvent =
       result: MonsterTwo;
       dungeonLevel: number;
       text: string;
+      party?: PartyResult;
     }
   | {
       kind: 'monsterThree';
       result: MonsterThree;
       dungeonLevel: number;
       text?: string;
+      party?: PartyResult;
     }
   | {
       kind: 'monsterFour';
       result: MonsterFour;
       dungeonLevel: number;
       text?: string;
+      party?: PartyResult;
     }
   | {
       kind: 'monsterFive';
       result: MonsterFive;
       dungeonLevel: number;
       text?: string;
+      party?: PartyResult;
     }
   | {
       kind: 'monsterSix';
       result: MonsterSix;
       dungeonLevel: number;
       text?: string;
+      party?: PartyResult;
     }
   | {
       kind: 'dragonThree';

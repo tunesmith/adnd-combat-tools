@@ -45,6 +45,8 @@ import {
   hasPendingChildren,
   type MonsterDescription,
 } from './shared';
+import { buildPartyDetailMessages, buildPartyCompactText } from './human';
+import { summarizePartyResult } from '../../../helpers/party/formatPartyResult';
 
 type StandardTableId =
   | 'monsterOne'
@@ -168,6 +170,16 @@ export function describeStandardMonster(
   const config = STANDARD_CONFIG[node.event.kind as StandardTableId];
   if (!config) return undefined;
   const event = node.event;
+  if ('party' in event && event.party) {
+    const summary = summarizePartyResult(event.party);
+    return {
+      heading: config.title,
+      label: config.labels[event.result] ?? String(event.result),
+      detailParagraphs: buildPartyDetailMessages(summary),
+      compactText: buildPartyCompactText(summary),
+      appendPending: hasPendingChildren(node),
+    };
+  }
   const textInfo = monsterTextDescription(
     'text' in event ? event.text : undefined
   );

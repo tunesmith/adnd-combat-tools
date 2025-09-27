@@ -7,6 +7,7 @@ import { getCharacterClass } from './class/getCharacterClass';
 import { getCharacterGender } from './getCharacterGender';
 import { getHitPoints } from './getHitPoints';
 import { CharacterClass } from '../../models/characterClass';
+import { getAlignmentForClasses } from './getAlignment';
 import { getBardLevels } from './level/getBardLevels';
 import { getBardHitPoints } from './hitpoints/getBardHitPoints';
 
@@ -106,6 +107,7 @@ export function getSingleClassCharacterForRace(
           isBard: candidateClass === CharacterClass.Bard,
           bardLevels: bardLevels,
           followers: [],
+          alignment: getAlignmentForClasses([candidateClass]),
         };
       }
     }

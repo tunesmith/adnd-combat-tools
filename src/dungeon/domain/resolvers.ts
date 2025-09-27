@@ -1,4 +1,5 @@
 import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
+import type { PartyResult } from '../models/character/characterSheet';
 import {
   periodicCheck,
   PeriodicCheck,
@@ -1338,7 +1339,7 @@ export function resolveMonsterTwo(options?: {
   const dungeonLevel = options?.dungeonLevel ?? 1;
   const usedRoll = options?.roll ?? rollDice(monsterTwo.sides);
   const result = getTableEntry(usedRoll, monsterTwo);
-  const text = monsterTwoTextForCommand(dungeonLevel, result);
+  const { text, party } = monsterTwoTextForCommand(dungeonLevel, result);
   return {
     type: 'event',
     roll: usedRoll,
@@ -1347,6 +1348,7 @@ export function resolveMonsterTwo(options?: {
       result,
       dungeonLevel,
       text,
+      party,
     },
   };
 }
@@ -1360,6 +1362,7 @@ export function resolveMonsterThree(options?: {
   const result = getTableEntry(usedRoll, monsterThree);
   const children: DungeonOutcomeNode[] = [];
   let text: string | undefined;
+  let party: PartyResult | undefined;
   if (result === MonsterThree.Dragon) {
     children.push({
       type: 'pending-roll',
@@ -1367,7 +1370,9 @@ export function resolveMonsterThree(options?: {
       context: { kind: 'wandering', level: dungeonLevel },
     });
   } else {
-    text = monsterThreeTextForCommand(dungeonLevel, result);
+    const resolved = monsterThreeTextForCommand(dungeonLevel, result);
+    text = resolved.text;
+    party = resolved.party;
   }
   return {
     type: 'event',
@@ -1377,6 +1382,7 @@ export function resolveMonsterThree(options?: {
       result,
       dungeonLevel,
       text,
+      party,
     },
     children: children.length ? children : undefined,
   };
@@ -1411,6 +1417,7 @@ export function resolveMonsterFour(options?: {
   const result = getTableEntry(usedRoll, monsterFour);
   const children: DungeonOutcomeNode[] = [];
   let text: string | undefined;
+  let party: PartyResult | undefined;
   if (result === MonsterFour.DragonYounger) {
     children.push({
       type: 'pending-roll',
@@ -1424,7 +1431,9 @@ export function resolveMonsterFour(options?: {
       context: { kind: 'wandering', level: dungeonLevel },
     });
   } else {
-    text = monsterFourTextForCommand(dungeonLevel, result);
+    const resolved = monsterFourTextForCommand(dungeonLevel, result);
+    text = resolved.text;
+    party = resolved.party;
   }
   return {
     type: 'event',
@@ -1434,6 +1443,7 @@ export function resolveMonsterFour(options?: {
       result,
       dungeonLevel,
       text,
+      party,
     },
     children: children.length ? children : undefined,
   };
@@ -1488,6 +1498,7 @@ export function resolveMonsterFive(options?: {
   const result = getTableEntry(usedRoll, monsterFive);
   const children: DungeonOutcomeNode[] = [];
   let text: string | undefined;
+  let party: PartyResult | undefined;
   if (result === MonsterFive.DragonYounger) {
     children.push({
       type: 'pending-roll',
@@ -1501,7 +1512,9 @@ export function resolveMonsterFive(options?: {
       context: { kind: 'wandering', level: dungeonLevel },
     });
   } else {
-    text = monsterFiveTextForCommand(dungeonLevel, result);
+    const resolved = monsterFiveTextForCommand(dungeonLevel, result);
+    text = resolved.text;
+    party = resolved.party;
   }
   return {
     type: 'event',
@@ -1511,6 +1524,7 @@ export function resolveMonsterFive(options?: {
       result,
       dungeonLevel,
       text,
+      party,
     },
     children: children.length ? children : undefined,
   };
@@ -1565,6 +1579,7 @@ export function resolveMonsterSix(options?: {
   const result = getTableEntry(usedRoll, monsterSix);
   const children: DungeonOutcomeNode[] = [];
   let text: string | undefined;
+  let party: PartyResult | undefined;
   if (result === MonsterSix.Dragon) {
     children.push({
       type: 'pending-roll',
@@ -1572,7 +1587,9 @@ export function resolveMonsterSix(options?: {
       context: { kind: 'wandering', level: dungeonLevel },
     });
   } else {
-    text = monsterSixTextForCommand(dungeonLevel, result);
+    const resolved = monsterSixTextForCommand(dungeonLevel, result);
+    text = resolved.text;
+    party = resolved.party;
   }
   return {
     type: 'event',
@@ -1582,6 +1599,7 @@ export function resolveMonsterSix(options?: {
       result,
       dungeonLevel,
       text,
+      party,
     },
     children: children.length ? children : undefined,
   };

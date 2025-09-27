@@ -62,19 +62,21 @@ export function buildHumanPreview(
   });
 }
 
-function buildPartyDetailMessages(summary: PartySummary): DungeonMessage[] {
+export function buildPartyDetailMessages(
+  summary: PartySummary
+): DungeonMessage[] {
   const messages: DungeonMessage[] = [];
 
   if (summary.main.length > 0) {
     messages.push({ kind: 'paragraph', text: 'Main characters:' });
-    messages.push({
-      kind: 'bullet-list',
-      items: summary.main.map(({ member, followers }) =>
-        followers.length > 0
-          ? `${member} — Followers: ${followers.join('; ')}`
-          : member
-      ),
+    const items: string[] = [];
+    summary.main.forEach(({ member, followers }) => {
+      items.push(member);
+      followers.forEach((follower) => {
+        items.push(`  - ${follower}`);
+      });
     });
+    messages.push({ kind: 'bullet-list', items });
   }
 
   if (summary.includesHenchmen) {
@@ -87,7 +89,7 @@ function buildPartyDetailMessages(summary: PartySummary): DungeonMessage[] {
   return messages;
 }
 
-function buildPartyCompactText(summary: PartySummary): string {
+export function buildPartyCompactText(summary: PartySummary): string {
   const lines: string[] = [];
 
   if (summary.main.length > 0) {
@@ -95,7 +97,7 @@ function buildPartyCompactText(summary: PartySummary): string {
     summary.main.forEach(({ member, followers }) => {
       lines.push(`- ${member}`);
       followers.forEach((follower) => {
-        lines.push(`Follower: ${follower}`);
+        lines.push(`  - ${follower}`);
       });
     });
   }

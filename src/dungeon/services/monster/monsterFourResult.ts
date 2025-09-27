@@ -13,115 +13,145 @@ import {
   monsterFour,
 } from '../../../tables/dungeon/monster/monsterFour';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
+import type { PartyResult } from '../../models/character/characterSheet';
+
+type MonsterTextResult = {
+  text: string;
+  party?: PartyResult;
+};
 
 export const monsterFourTextForCommand = (
   dungeonLevel: number,
   command: MonsterFour
-): string => {
+): MonsterTextResult => {
+  let text = '';
+  let party: PartyResult | undefined;
   switch (command) {
     case MonsterFour.ApeCarnivorous_1to3: {
       const apes = getNumberOfMonsters(4, dungeonLevel, 1, 3);
-      return formatMonsterCount(apes, 'carnivorous ape', 'carnivorous apes');
+      text = formatMonsterCount(apes, 'carnivorous ape', 'carnivorous apes');
+      break;
     }
     case MonsterFour.BlinkDog_2to5: {
       const blinkDogs = getNumberOfMonsters(4, dungeonLevel, 1, 4, 1);
-      return formatMonsterCount(blinkDogs, 'blink dog', 'blink dogs');
+      text = formatMonsterCount(blinkDogs, 'blink dog', 'blink dogs');
+      break;
     }
     case MonsterFour.Character: {
       const characters = characterResult(4, dungeonLevel);
-      return formatPartyResult(characters);
+      text = formatPartyResult(characters);
+      party = characters;
+      break;
     }
     case MonsterFour.DragonYounger:
-      return dragonFourYoungerResult(dungeonLevel);
+      text = dragonFourYoungerResult(dungeonLevel);
+      break;
     case MonsterFour.DragonOlder:
-      return dragonFourOlderResult(dungeonLevel);
+      text = dragonFourOlderResult(dungeonLevel);
+      break;
     case MonsterFour.Gargoyle_1to2: {
       const gargoyles = getNumberOfMonsters(4, dungeonLevel, 1, 2);
-      return formatMonsterCount(gargoyles, 'gargoyle', 'gargoyles');
+      text = formatMonsterCount(gargoyles, 'gargoyle', 'gargoyles');
+      break;
     }
     case MonsterFour.Ghast_1to4: {
       const ghasts = getNumberOfMonsters(4, dungeonLevel, 1, 4);
-      return formatMonsterCount(ghasts, 'ghast', 'ghasts');
+      text = formatMonsterCount(ghasts, 'ghast', 'ghasts');
+      break;
     }
     case MonsterFour.GrayOoze: {
       const oozes = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return formatMonsterCount(oozes, 'gray ooze', 'gray oozes');
+      text = formatMonsterCount(oozes, 'gray ooze', 'gray oozes');
+      break;
     }
     case MonsterFour.Hellhound_1to2: {
       const hounds = getNumberOfMonsters(4, dungeonLevel, 1, 2);
-      return formatMonsterCount(hounds, 'hell hound', 'hell hounds');
+      text = formatMonsterCount(hounds, 'hell hound', 'hell hounds');
+      break;
     }
     case MonsterFour.Hydra_5to6Heads: {
       const heads = getNumberOfMonsters(4, dungeonLevel, 1, 2, 4);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         heads,
         `${heads}-headed hydra`,
         `${heads}-headed hydra`
       );
+      break;
     }
     case MonsterFour.HydroPyro_5Heads: {
       const heads = getNumberOfMonsters(4, dungeonLevel, 1, 1, 5);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         heads,
         `${heads}-headed pyrohydra`,
         `${heads}-headed pyrohydra`
       );
+      break;
     }
     case MonsterFour.LycanthropeWerewolf_1to2: {
       const werewolves = getNumberOfMonsters(4, dungeonLevel, 1, 2);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         werewolves,
         'werewolf lycanthrope',
         'werewolf lycanthropes'
       );
+      break;
     }
     case MonsterFour.MoldYellow: {
       const yellowMolds = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         yellowMolds,
         'patch of yellow mold',
         'patches of yellow mold'
       );
+      break;
     }
     case MonsterFour.Owlbear_1to2: {
       const owlbears = getNumberOfMonsters(4, dungeonLevel, 1, 2);
-      return formatMonsterCount(owlbears, 'owlbear', 'owlbears');
+      text = formatMonsterCount(owlbears, 'owlbear', 'owlbears');
+      break;
     }
     case MonsterFour.RustMonster: {
       const rustMonsters = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return formatMonsterCount(rustMonsters, 'rust monster', 'rust monsters');
+      text = formatMonsterCount(rustMonsters, 'rust monster', 'rust monsters');
+      break;
     }
     case MonsterFour.Shadow_1to3: {
       const shadows = getNumberOfMonsters(4, dungeonLevel, 1, 3);
-      return formatMonsterCount(shadows, 'shadow', 'shadows');
+      text = formatMonsterCount(shadows, 'shadow', 'shadows');
+      break;
     }
     case MonsterFour.SnakeGiantConstrictor: {
       const snakes = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         snakes,
         'giant constrictor snake',
         'giant constrictor snakes'
       );
+      break;
     }
     case MonsterFour.SuMonster_1to2: {
       const suMonsters = getNumberOfMonsters(4, dungeonLevel, 1, 2);
-      return formatMonsterCount(suMonsters, 'su-monster', 'su-monsters');
+      text = formatMonsterCount(suMonsters, 'su-monster', 'su-monsters');
+      break;
     }
     case MonsterFour.ToadIce: {
       const iceToads = getNumberOfMonsters(4, dungeonLevel, 1, 1);
-      return formatMonsterCount(iceToads, 'ice toad', 'ice toads');
+      text = formatMonsterCount(iceToads, 'ice toad', 'ice toads');
+      break;
     }
     case MonsterFour.ToadPoisonous_1to3: {
       const toads = getNumberOfMonsters(4, dungeonLevel, 1, 3);
-      return formatMonsterCount(toads, 'poisonous toad', 'poisonous toads');
+      text = formatMonsterCount(toads, 'poisonous toad', 'poisonous toads');
+      break;
     }
   }
+  return { text, party };
 };
 
 export const monsterFourResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterFour.sides);
   const command = getTableEntry(roll, monsterFour);
-  return monsterFourTextForCommand(dungeonLevel, command);
+  return monsterFourTextForCommand(dungeonLevel, command).text;
 };
 
 export const dragonFourYoungerTextForCommand = (

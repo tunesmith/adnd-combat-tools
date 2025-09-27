@@ -11,149 +11,185 @@ import {
   monsterSix,
 } from '../../../tables/dungeon/monster/monsterSix';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
+import type { PartyResult } from '../../models/character/characterSheet';
+
+type MonsterTextResult = {
+  text: string;
+  party?: PartyResult;
+};
 
 export const monsterSixTextForCommand = (
   dungeonLevel: number,
   command: MonsterSix
-): string => {
+): MonsterTextResult => {
+  let text = '';
+  let party: PartyResult | undefined;
   switch (command) {
     case MonsterSix.Basilisk: {
       const basilisks = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(basilisks, 'basilisk', 'basilisks');
+      text = formatMonsterCount(basilisks, 'basilisk', 'basilisks');
+      break;
     }
     case MonsterSix.CarrionCrawler_1to2: {
       const crawlers = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         crawlers,
         'carrion crawler',
         'carrion crawlers'
       );
+      break;
     }
     case MonsterSix.Character: {
       const characters = characterResult(6, dungeonLevel);
-      return formatPartyResult(characters);
+      text = formatPartyResult(characters);
+      party = characters;
+      break;
     }
     case MonsterSix.DevilErinyes_1to2: {
       const erinyes = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(erinyes, 'erinyes', 'erinyes');
+      text = formatMonsterCount(erinyes, 'erinyes', 'erinyes');
+      break;
     }
     case MonsterSix.Djinni: {
       const djinni = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(djinni, 'djinni', 'djinn');
+      text = formatMonsterCount(djinni, 'djinni', 'djinn');
+      break;
     }
     case MonsterSix.Dragon:
-      return dragonSixResult(dungeonLevel);
+      text = dragonSixResult(dungeonLevel);
+      break;
     case MonsterSix.GreenSlime: {
       const slime = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         slime,
         'patch of green slime',
         'patches of green slime'
       );
+      break;
     }
     case MonsterSix.Hydra_8to9Heads: {
       const heads = getNumberOfMonsters(6, dungeonLevel, 1, 2, 7);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         heads,
         `${heads}-headed hydra`,
         `${heads}-headed hydra`
       );
+      break;
     }
     case MonsterSix.Jackalwere_1to2: {
       const jackalwere = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(jackalwere, `jackalwere`, `jackalwere`);
+      text = formatMonsterCount(jackalwere, `jackalwere`, `jackalwere`);
+      break;
     }
     case MonsterSix.Lammasu_1to3: {
       const lammasu = getNumberOfMonsters(6, dungeonLevel, 1, 3);
-      return formatMonsterCount(lammasu, 'lammasu', 'lammasu');
+      text = formatMonsterCount(lammasu, 'lammasu', 'lammasu');
+      break;
     }
     case MonsterSix.LycanthropeWerebear: {
       const werebears = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         werebears,
         'werebear lycanthrope',
         'werebear lycanthropes'
       );
+      break;
     }
     case MonsterSix.LycanthropeWeretiger_1to2: {
       const weretigers = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         weretigers,
         'weretiger lycanthrope',
         'weretiger lycanthropes'
       );
+      break;
     }
     case MonsterSix.Manticore_1to2: {
       const manticores = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(manticores, 'manticore', 'manticores');
+      text = formatMonsterCount(manticores, 'manticore', 'manticores');
+      break;
     }
     case MonsterSix.Medusa: {
       const medusae = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(medusae, 'medusa', 'medusae');
+      text = formatMonsterCount(medusae, 'medusa', 'medusae');
+      break;
     }
     case MonsterSix.MoldBrown: {
       const yellowMolds = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         yellowMolds,
         'patch of brown mold',
         'patches of brown mold'
       );
+      break;
     }
     case MonsterSix.MoldYellow: {
       const yellowMolds = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         yellowMolds,
         'patch of yellow mold',
         'patches of yellow mold'
       );
+      break;
     }
     case MonsterSix.OgreMagi_1to2: {
       const ogreMagi = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(ogreMagi, 'ogre mage', 'ogre magi');
+      text = formatMonsterCount(ogreMagi, 'ogre mage', 'ogre magi');
+      break;
     }
     case MonsterSix.Otyugh: {
       const otyugh = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(otyugh, 'otyugh', 'otyugh');
+      text = formatMonsterCount(otyugh, 'otyugh', 'otyugh');
+      break;
     }
     case MonsterSix.Rakshasa: {
       const rakshasas = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(rakshasas, 'rakshasa', 'rakshasas');
+      text = formatMonsterCount(rakshasas, 'rakshasa', 'rakshasas');
+      break;
     }
     case MonsterSix.Salamander_1to2: {
       const salamanders = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(salamanders, 'salamander', 'salamanders');
+      text = formatMonsterCount(salamanders, 'salamander', 'salamanders');
+      break;
     }
     case MonsterSix.SpiderPhase_1to3: {
       const spiders = getNumberOfMonsters(6, dungeonLevel, 1, 3);
-      return formatMonsterCount(spiders, 'phase spiders', 'phase spiders');
+      text = formatMonsterCount(spiders, 'phase spiders', 'phase spiders');
+      break;
     }
     case MonsterSix.Troll_1to3: {
       const trolls = getNumberOfMonsters(6, dungeonLevel, 1, 3);
-      return formatMonsterCount(trolls, 'troll', 'trolls');
+      text = formatMonsterCount(trolls, 'troll', 'trolls');
+      break;
     }
     case MonsterSix.Wight_1to4: {
       const wights = getNumberOfMonsters(6, dungeonLevel, 1, 4);
-      return formatMonsterCount(wights, 'wight', 'wights');
+      text = formatMonsterCount(wights, 'wight', 'wights');
+      break;
     }
     case MonsterSix.WindWalker_1to2: {
       const windWalkers = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(windWalkers, 'wind walker', 'wind walkers');
+      text = formatMonsterCount(windWalkers, 'wind walker', 'wind walkers');
+      break;
     }
     case MonsterSix.Wraith_1to2: {
       const wraiths = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      return formatMonsterCount(wraiths, 'wraith', 'wraiths');
+      text = formatMonsterCount(wraiths, 'wraith', 'wraiths');
+      break;
     }
     case MonsterSix.Wyvern: {
       const wyverns = getNumberOfMonsters(6, dungeonLevel, 1, 1);
-      return formatMonsterCount(wyverns, 'wyvern', 'wyverns');
+      text = formatMonsterCount(wyverns, 'wyvern', 'wyverns');
+      break;
     }
   }
+  return { text, party };
 };
 
 export const monsterSixResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterSix.sides);
   const command = getTableEntry(roll, monsterSix);
-  return monsterSixTextForCommand(dungeonLevel, command);
+  return monsterSixTextForCommand(dungeonLevel, command).text;
 };
 
 export const dragonSixTextForCommand = (

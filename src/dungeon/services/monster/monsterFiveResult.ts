@@ -13,139 +13,171 @@ import {
   monsterFive,
 } from '../../../tables/dungeon/monster/monsterFive';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
+import type { PartyResult } from '../../models/character/characterSheet';
+
+type MonsterTextResult = {
+  text: string;
+  party?: PartyResult;
+};
 
 export const monsterFiveTextForCommand = (
   dungeonLevel: number,
   command: MonsterFive
-): string => {
+): MonsterTextResult => {
+  let text = '';
+  let party: PartyResult | undefined;
   switch (command) {
     case MonsterFive.Character: {
       const characters = characterResult(5, dungeonLevel);
-      return formatPartyResult(characters);
+      text = formatPartyResult(characters);
+      party = characters;
+      break;
     }
     case MonsterFive.Cockatrice_1to2: {
       const cockatrices = getNumberOfMonsters(5, dungeonLevel, 1, 2);
-      return formatMonsterCount(cockatrices, 'cockatrice', 'cockatrices');
+      text = formatMonsterCount(cockatrices, 'cockatrice', 'cockatrices');
+      break;
     }
     case MonsterFive.DisplacerBeast_1to2: {
       const beasts = getNumberOfMonsters(5, dungeonLevel, 1, 2);
-      return formatMonsterCount(beasts, 'displacer beast', 'displacer beasts');
+      text = formatMonsterCount(beasts, 'displacer beast', 'displacer beasts');
+      break;
     }
     case MonsterFive.Doppleganger_1to3: {
       const dopplegangers = getNumberOfMonsters(5, dungeonLevel, 1, 3);
-      return formatMonsterCount(dopplegangers, 'doppleganger', 'dopplegangers');
+      text = formatMonsterCount(dopplegangers, 'doppleganger', 'dopplegangers');
+      break;
     }
     case MonsterFive.DragonYounger:
-      return dragonFiveYoungerResult(dungeonLevel);
+      text = dragonFiveYoungerResult(dungeonLevel);
+      break;
     case MonsterFive.DragonOlder:
-      return dragonFiveOlderResult(dungeonLevel);
+      text = dragonFiveOlderResult(dungeonLevel);
+      break;
     case MonsterFive.Hydra_7Heads: {
       const heads = getNumberOfMonsters(5, dungeonLevel, 1, 1, 6);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         heads,
         `${heads}-headed hydra`,
         `${heads}-headed hydra`
       );
+      break;
     }
     case MonsterFive.HydraPyro_6Heads: {
       const heads = getNumberOfMonsters(5, dungeonLevel, 1, 1, 5);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         heads,
         `${heads}-headed pyrohydra`,
         `${heads}-headed pyrohydra`
       );
+      break;
     }
     case MonsterFive.Imp_1to2: {
       const imps = getNumberOfMonsters(5, dungeonLevel, 1, 2);
-      return formatMonsterCount(imps, 'imp', 'imps');
+      text = formatMonsterCount(imps, 'imp', 'imps');
+      break;
     }
     case MonsterFive.Leucrotta_1to2: {
       const leucrottas = getNumberOfMonsters(5, dungeonLevel, 1, 2);
-      return formatMonsterCount(leucrottas, 'leucrotta', 'leucrottas');
+      text = formatMonsterCount(leucrottas, 'leucrotta', 'leucrottas');
+      break;
     }
     case MonsterFive.LizardSubterranean_1to3: {
       const lizards = getNumberOfMonsters(5, dungeonLevel, 1, 3);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         lizards,
         'subterranean lizard',
         `subterranean lizards`
       );
+      break;
     }
     case MonsterFive.LycanthropeWereboar_1to3: {
       const wereboars = getNumberOfMonsters(5, dungeonLevel, 1, 3);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         wereboars,
         'wereboar lycanthrope',
         'wereboar lycanthropes'
       );
+      break;
     }
     case MonsterFive.Minotaur_1to3: {
       const minotaurs = getNumberOfMonsters(5, dungeonLevel, 1, 3);
-      return formatMonsterCount(minotaurs, 'minotaur', 'minotaurs');
+      text = formatMonsterCount(minotaurs, 'minotaur', 'minotaurs');
+      break;
     }
     case MonsterFive.MoldYellow: {
       const yellowMolds = getNumberOfMonsters(5, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         yellowMolds,
         'patch of yellow mold',
         'patches of yellow mold'
       );
+      break;
     }
     case MonsterFive.Quasit: {
       const quasits = getNumberOfMonsters(5, dungeonLevel, 1, 1);
-      return formatMonsterCount(quasits, 'quasit', 'quasits');
+      text = formatMonsterCount(quasits, 'quasit', 'quasits');
+      break;
     }
     case MonsterFive.RustMonster: {
       const rustMonsters = getNumberOfMonsters(5, dungeonLevel, 1, 1);
-      return formatMonsterCount(rustMonsters, 'rust monster', 'rust monsters');
+      text = formatMonsterCount(rustMonsters, 'rust monster', 'rust monsters');
+      break;
     }
     case MonsterFive.Shrieker_2to5: {
       const shriekers = getNumberOfMonsters(5, dungeonLevel, 1, 4, 1);
-      return formatMonsterCount(shriekers, 'shrieker', 'shriekers');
+      text = formatMonsterCount(shriekers, 'shrieker', 'shriekers');
+      break;
     }
     case MonsterFive.SlitheringTracker: {
       const trackers = getNumberOfMonsters(5, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         trackers,
         'slithering tracker',
         'slithering trackers'
       );
+      break;
     }
     case MonsterFive.SnakeGiantAmphisbaena: {
       const snakes = getNumberOfMonsters(5, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         snakes,
         'giant amphisbaena snake',
         'giant amphisbaena snakes'
       );
+      break;
     }
     case MonsterFive.SnakeGiantPoisonous: {
       const snakes = getNumberOfMonsters(5, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         snakes,
         'giant poisonous snake',
         'giant poisonous snakes'
       );
+      break;
     }
     case MonsterFive.SnakeGiantSpitting: {
       const snakes = getNumberOfMonsters(5, dungeonLevel, 1, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         snakes,
         'giant spitting snake',
         'giant spitting snakes'
       );
+      break;
     }
     case MonsterFive.SpiderGiant_1to2: {
       const spiders = getNumberOfMonsters(5, dungeonLevel, 1, 2);
-      return formatMonsterCount(spiders, 'giant spider', 'giant spiders');
+      text = formatMonsterCount(spiders, 'giant spider', 'giant spiders');
+      break;
     }
   }
+  return { text, party };
 };
 
 export const monsterFiveResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterFive.sides);
   const command = getTableEntry(roll, monsterFive);
-  return monsterFiveTextForCommand(dungeonLevel, command);
+  return monsterFiveTextForCommand(dungeonLevel, command).text;
 };
 
 export const dragonFiveYoungerTextForCommand = (

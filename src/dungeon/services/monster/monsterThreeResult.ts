@@ -11,93 +11,121 @@ import {
 } from '../../../tables/dungeon/monster/monsterThree';
 import { characterResult } from './characterResult';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
+import type { PartyResult } from '../../models/character/characterSheet';
+
+type MonsterTextResult = {
+  text: string;
+  party?: PartyResult;
+};
 
 export const monsterThreeTextForCommand = (
   dungeonLevel: number,
   command: MonsterThree
-): string => {
+): MonsterTextResult => {
+  let text = '';
+  let party: PartyResult | undefined;
   switch (command) {
     case MonsterThree.BeetleBoring_1to3: {
       const beetles = getNumberOfMonsters(3, dungeonLevel, 1, 3);
-      return formatMonsterCount(beetles, 'boring beetle', 'boring beetles');
+      text = formatMonsterCount(beetles, 'boring beetle', 'boring beetles');
+      break;
     }
     case MonsterThree.Bugbear_2to7: {
       const bugbears = getNumberOfMonsters(3, dungeonLevel, 1, 6, 1);
-      return formatMonsterCount(bugbears, 'bugbear', 'bugbears');
+      text = formatMonsterCount(bugbears, 'bugbear', 'bugbears');
+      break;
     }
     case MonsterThree.Character: {
       const characters = characterResult(2, dungeonLevel);
-      return formatPartyResult(characters);
+      text = formatPartyResult(characters);
+      party = characters;
+      break;
     }
     case MonsterThree.Dragon:
-      return dragonThreeResult(dungeonLevel);
+      text = dragonThreeResult(dungeonLevel);
+      break;
     case MonsterThree.FungiViolet_1to3: {
       const fungi = getNumberOfMonsters(3, dungeonLevel, 1, 3);
-      return formatMonsterCount(fungi, 'violet fungus', 'violet fungi');
+      text = formatMonsterCount(fungi, 'violet fungus', 'violet fungi');
+      break;
     }
     case MonsterThree.GelatinousCube: {
       const cubes = getNumberOfMonsters(3, dungeonLevel, 1, 1);
-      return formatMonsterCount(cubes, 'gelatinous cube', 'gelatinous cubes');
+      text = formatMonsterCount(cubes, 'gelatinous cube', 'gelatinous cubes');
+      break;
     }
     case MonsterThree.Ghoul_1to4: {
       const ghouls = getNumberOfMonsters(3, dungeonLevel, 1, 4);
-      return formatMonsterCount(ghouls, 'ghoul', 'ghouls');
+      text = formatMonsterCount(ghouls, 'ghoul', 'ghouls');
+      break;
     }
     case MonsterThree.LizardGiant_1to3: {
       const lizards = getNumberOfMonsters(3, dungeonLevel, 1, 3);
-      return formatMonsterCount(lizards, 'giant lizard', 'giant lizards');
+      text = formatMonsterCount(lizards, 'giant lizard', 'giant lizards');
+      break;
     }
     case MonsterThree.LycanthropeWererat_2to5: {
       const wererats = getNumberOfMonsters(3, dungeonLevel, 1, 4, 1);
-      return formatMonsterCount(
+      text = formatMonsterCount(
         wererats,
         'wererat lycanthrope',
         'wererat lycanthropes'
       );
+      break;
     }
     case MonsterThree.OchreJelly: {
       const jelly = getNumberOfMonsters(3, dungeonLevel, 1, 1);
-      return formatMonsterCount(jelly, 'jelly', 'jelly');
+      text = formatMonsterCount(jelly, 'jelly', 'jelly');
+      break;
     }
     case MonsterThree.Ogre_1to3: {
       const ogres = getNumberOfMonsters(3, dungeonLevel, 1, 3);
-      return formatMonsterCount(ogres, 'ogre', 'ogres');
+      text = formatMonsterCount(ogres, 'ogre', 'ogres');
+      break;
     }
     case MonsterThree.Piercer_2to5: {
       const piercers = getNumberOfMonsters(3, dungeonLevel, 1, 4, 1);
-      return formatMonsterCount(piercers, 'piercer', 'piercers');
+      text = formatMonsterCount(piercers, 'piercer', 'piercers');
+      break;
     }
     case MonsterThree.RotGrub_1to4: {
       const rotGrubs = getNumberOfMonsters(3, dungeonLevel, 1, 4);
-      return formatMonsterCount(rotGrubs, 'rot grub', 'rot grubs');
+      text = formatMonsterCount(rotGrubs, 'rot grub', 'rot grubs');
+      break;
     }
     case MonsterThree.Shrieker_2to5: {
       const shriekers = getNumberOfMonsters(3, dungeonLevel, 1, 4, 1);
-      return formatMonsterCount(shriekers, 'shrieker', 'shriekers');
+      text = formatMonsterCount(shriekers, 'shrieker', 'shriekers');
+      break;
     }
     case MonsterThree.SpiderHuge_1to3: {
       const spiders = getNumberOfMonsters(3, dungeonLevel, 1, 3);
-      return formatMonsterCount(spiders, 'huge spider', 'huge spiders');
+      text = formatMonsterCount(spiders, 'huge spider', 'huge spiders');
+      break;
     }
     case MonsterThree.SpiderLarge_2to5: {
       const spiders = getNumberOfMonsters(3, dungeonLevel, 1, 4, 1);
-      return formatMonsterCount(spiders, 'large spider', 'large spiders');
+      text = formatMonsterCount(spiders, 'large spider', 'large spiders');
+      break;
     }
     case MonsterThree.TickGiant_1to3: {
       const ticks = getNumberOfMonsters(3, dungeonLevel, 1, 3);
-      return formatMonsterCount(ticks, 'giant tick', 'giant ticks');
+      text = formatMonsterCount(ticks, 'giant tick', 'giant ticks');
+      break;
     }
     case MonsterThree.WeaselGiant_1to4: {
       const weasels = getNumberOfMonsters(3, dungeonLevel, 1, 4);
-      return formatMonsterCount(weasels, 'giant weasel', 'giant weasels');
+      text = formatMonsterCount(weasels, 'giant weasel', 'giant weasels');
+      break;
     }
   }
+  return { text, party };
 };
 
 export const monsterThreeResult = (dungeonLevel: number): string => {
   const roll = rollDice(monsterThree.sides);
   const command = getTableEntry(roll, monsterThree);
-  return monsterThreeTextForCommand(dungeonLevel, command);
+  return monsterThreeTextForCommand(dungeonLevel, command).text;
 };
 
 export const dragonThreeTextForCommand = (

@@ -6,6 +6,7 @@ import { getAttributes } from './attributes/getAttributes';
 import { getProfessions } from './getProfessions';
 import { getHitPoints } from './getHitPoints';
 import { CharacterClass } from '../../models/characterClass';
+import { getAlignmentForClasses } from './getAlignment';
 
 /**
  * Similar to {@link getSingleClassCharacterForRace}, although simpler to meet
@@ -44,5 +45,6 @@ export function getMultiClassCharacterForRace(
       [CharacterClass.Bard]: 0,
     },
     followers: [],
+    alignment: getAlignmentForClasses(selectedClasses),
   };
 }

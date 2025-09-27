@@ -289,7 +289,10 @@ export const monsterTwoMessages = (options?: {
   const messages: DungeonRenderNode[] = [
     heading,
     bullet,
-    { kind: 'paragraph', text: monsterTwoTextForCommand(dungeonLevel, cmd) },
+    {
+      kind: 'paragraph',
+      text: monsterTwoTextForCommand(dungeonLevel, cmd).text,
+    },
   ];
   return { usedRoll, messages };
 };
@@ -342,7 +345,7 @@ export const monsterThreeMessages = (options?: {
   } else {
     messages.push({
       kind: 'paragraph',
-      text: monsterThreeTextForCommand(dungeonLevel, cmd),
+      text: monsterThreeTextForCommand(dungeonLevel, cmd).text,
     });
   }
   return { usedRoll, messages };
@@ -408,7 +411,7 @@ export const monsterFourMessages = (options?: {
   } else {
     messages.push({
       kind: 'paragraph',
-      text: monsterFourTextForCommand(dungeonLevel, cmd),
+      text: monsterFourTextForCommand(dungeonLevel, cmd).text,
     });
   }
   return { usedRoll, messages };
@@ -474,7 +477,7 @@ export const monsterFiveMessages = (options?: {
   } else {
     messages.push({
       kind: 'paragraph',
-      text: monsterFiveTextForCommand(dungeonLevel, cmd),
+      text: monsterFiveTextForCommand(dungeonLevel, cmd).text,
     });
   }
   return { usedRoll, messages };
@@ -528,7 +531,7 @@ export const monsterSixMessages = (options?: {
   } else {
     messages.push({
       kind: 'paragraph',
-      text: monsterSixTextForCommand(dungeonLevel, cmd),
+      text: monsterSixTextForCommand(dungeonLevel, cmd).text,
     });
   }
   return { usedRoll, messages };

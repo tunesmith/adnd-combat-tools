@@ -4,6 +4,7 @@ import type {
 } from '../../models/character/characterSheet';
 import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
 import { CharacterClass } from '../../models/characterClass';
+import { Alignment } from '../../models/allowedAlignmentsByClass';
 
 export type PartySummaryMember = {
   member: string;
@@ -35,28 +36,26 @@ export const summarizePartyResult = (result: PartyResult): PartySummary => {
  */
 export const formatPartyResult = (result: PartyResult): string => {
   const summary = summarizePartyResult(result);
-  const charactersText = summary.main
-    .map((entry) => {
-      const followerText = entry.followers
-        .map((follower) => `    Follower: ${follower}`)
-        .join('\n');
-      return followerText.length > 0
-        ? `${entry.member}\n${followerText}`
-        : entry.member;
-    })
-    .join(',\n ');
+  const lines: string[] = ['Main Characters:'];
+  summary.main.forEach((entry) => {
+    lines.push(`- ${entry.member}`);
+    entry.followers.forEach((follower) => {
+      lines.push(`  - ${follower}`);
+    });
+  });
 
-  const henchmenText = summary.includesHenchmen
-    ? '\n Includes henchmen capable of accompanying the party.'
-    : '';
+  if (summary.includesHenchmen) {
+    lines.push('- Includes henchmen capable of accompanying the party.');
+  }
 
-  return `
-    Main Characters:\n ${charactersText}${henchmenText}
-  `.trim();
+  return lines.join('\n');
 };
 
 function formatCharacter(character: CharacterSheet): string {
-  const classText = character.isBard
+  const alignmentCode = alignmentToCode(character.alignment);
+  const classText = character.isManAtArms
+    ? 'Man-at-Arms'
+    : character.isBard
     ? `${CharacterClass[CharacterClass.Bard]} (F${
         character.bardLevels[CharacterClass.Fighter]
       }/T${character.bardLevels[CharacterClass.Thief]}/B${
@@ -72,11 +71,27 @@ function formatCharacter(character: CharacterSheet): string {
         .join(', ');
 
   return (
-    `${character.gender} ${
+    `[${alignmentCode}] ${character.gender} ${
       CharacterRace[character.characterRace]
     } ${classText} ` +
     `STR${character.attributes.STR} INT${character.attributes.INT} WIS${character.attributes.WIS} ` +
     `DEX${character.attributes.DEX} CON${character.attributes.CON} CHA${character.attributes.CHA} ` +
     `(hp: ${character.hitPoints})`
   );
+}
+
+const alignmentCodeMap: Record<Alignment, string> = {
+  [Alignment.LawfulGood]: 'LG',
+  [Alignment.LawfulNeutral]: 'LN',
+  [Alignment.LawfulEvil]: 'LE',
+  [Alignment.NeutralGood]: 'NG',
+  [Alignment.TrueNeutral]: 'N',
+  [Alignment.NeutralEvil]: 'NE',
+  [Alignment.ChaoticGood]: 'CG',
+  [Alignment.ChaoticNeutral]: 'CN',
+  [Alignment.ChaoticEvil]: 'CE',
+};
+
+function alignmentToCode(alignment: Alignment): string {
+  return alignmentCodeMap[alignment] ?? 'N';
 }
