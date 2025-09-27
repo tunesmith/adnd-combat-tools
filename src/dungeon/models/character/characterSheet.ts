@@ -26,6 +26,12 @@ export interface BardLevels {
   [CharacterClass.Thief]: number;
   [CharacterClass.Bard]: number;
 }
+
+export type CharacterMagicItem = {
+  table: 'I' | 'II' | 'III' | 'IV';
+  count: number;
+};
+
 export interface CharacterSheet {
   professions: CharacterProfession[];
   characterRace: CharacterRace;
@@ -37,6 +43,7 @@ export interface CharacterSheet {
   followers: CharacterSheet[];
   alignment: Alignment;
   isManAtArms?: boolean;
+  magicItems?: CharacterMagicItem[];
 }
 
 export interface PartyResult {

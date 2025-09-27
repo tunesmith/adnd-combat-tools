@@ -24,6 +24,7 @@ import {
   areAlignmentsCompatible,
 } from '../../helpers/party/isAlignmentCompatible';
 import { createMenAtArms } from '../../helpers/character/createMenAtArms';
+import { assignMagicItemsToParty } from '../../helpers/party/assignMagicItems';
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -257,6 +258,7 @@ export const characterResult = (
   );
 
   generateFollowers(mainParty, othersCount, otherLevel);
+  assignMagicItemsToParty(mainParty);
   // At this point, the main party is populated, and it's time to roll men-at-arms
   // or henchmen.
   //

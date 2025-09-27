@@ -1,11 +1,15 @@
 import type { FC } from 'react';
 import React from 'react';
 import { CharacterRace } from '../../tables/dungeon/monster/character/characterRace';
-import type { PartySummary, PartyCharacterSummary } from '../../dungeon/helpers/party/formatPartyResult';
+import type {
+  PartySummary,
+  PartyCharacterSummary,
+} from '../../dungeon/helpers/party/formatPartyResult';
 import {
   alignmentToCode,
   describeClasses,
 } from '../../dungeon/helpers/party/formatPartyResult';
+import type { MagicItemTableId } from '../../dungeon/helpers/party/assignMagicItems';
 
 const listResetStyle: React.CSSProperties = {
   listStyle: 'none',
@@ -26,6 +30,23 @@ const followerListStyle: React.CSSProperties = {
   opacity: 0.9,
 };
 
+const MAGIC_TABLE_LABELS: Record<MagicItemTableId, string> = {
+  I: 'Table I',
+  II: 'Table II',
+  III: 'Table III',
+  IV: 'Table IV',
+};
+
+const DMG_REFERENCE = 'DMG p.176';
+
+function summarizeMagicItems(items: PartyCharacterSummary['magicItems']): string {
+  if (items.length === 0) return '';
+  const parts = items.map(
+    (item) => `${MAGIC_TABLE_LABELS[item.table]} ×${item.count}`
+  );
+  return `${parts.join(', ')} (${DMG_REFERENCE})`;
+}
+
 const CharacterCompactRow: FC<CharacterProps> = ({ character, followers }) => {
   const race = CharacterRace[character.characterRace] ?? 'Unknown';
   const classText = describeClasses(character);
@@ -41,6 +62,11 @@ const CharacterCompactRow: FC<CharacterProps> = ({ character, followers }) => {
       <span>
         {character.gender} {race} — {classText} (hp: {character.hitPoints})
       </span>
+      {character.magicItems.length > 0 && (
+        <div style={{ marginTop: 4, fontSize: '0.85em' }}>
+          Magic items: {summarizeMagicItems(character.magicItems)}
+        </div>
+      )}
       {followers.length > 0 && (
         <ul style={followerListStyle}>
           {followers.map((follower, index) => (
@@ -48,6 +74,11 @@ const CharacterCompactRow: FC<CharacterProps> = ({ character, followers }) => {
               <span style={{ fontWeight: 500 }}>[{alignmentToCode(follower.alignment)}]</span>{' '}
               {follower.gender} {CharacterRace[follower.characterRace] ?? 'Unknown'} —{' '}
               {describeClasses(follower)} (hp: {follower.hitPoints})
+              {follower.magicItems.length > 0 && (
+                <div style={{ marginTop: 2 }}>
+                  Magic items: {summarizeMagicItems(follower.magicItems)}
+                </div>
+              )}
             </li>
           ))}
         </ul>

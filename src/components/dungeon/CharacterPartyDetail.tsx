@@ -2,12 +2,16 @@ import type { FC } from 'react';
 import React from 'react';
 import { CharacterRace } from '../../tables/dungeon/monster/character/characterRace';
 import { Attribute } from '../../dungeon/models/attributes';
-import type { PartySummary, PartyCharacterSummary } from '../../dungeon/helpers/party/formatPartyResult';
+import type {
+  PartySummary,
+  PartyCharacterSummary,
+} from '../../dungeon/helpers/party/formatPartyResult';
 import {
   alignmentToCode,
   alignmentToName,
   describeClasses,
 } from '../../dungeon/helpers/party/formatPartyResult';
+import type { MagicItemTableId } from '../../dungeon/helpers/party/assignMagicItems';
 
 const attributeOrder: Attribute[] = [
   Attribute.Strength,
@@ -30,6 +34,38 @@ const followerListStyle: React.CSSProperties = {
   marginLeft: 18,
   fontSize: '0.95em',
 };
+
+const MAGIC_TABLE_LABELS: Record<MagicItemTableId, string> = {
+  I: 'Table I',
+  II: 'Table II',
+  III: 'Table III',
+  IV: 'Table IV',
+};
+
+const DMG_REFERENCE = 'DMG p.176';
+
+const magicItemListStyle: React.CSSProperties = {
+  ...listResetStyle,
+  marginTop: 4,
+  marginLeft: 18,
+  fontSize: '0.9em',
+};
+
+function pluralize(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+function renderMagicItems(items: PartyCharacterSummary['magicItems']): JSX.Element {
+  return (
+    <ul style={magicItemListStyle}>
+      {items.map((item, index) => (
+        <li key={index}>
+          {MAGIC_TABLE_LABELS[item.table]} — {pluralize(item.count, 'item')} ({DMG_REFERENCE})
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 interface CharacterProps {
   character: PartyCharacterSummary;
@@ -66,6 +102,12 @@ const CharacterDetailRow: FC<CharacterProps> = ({ character, followers }) => {
           </span>
         ))}
       </div>
+      {character.magicItems.length > 0 && (
+        <div style={{ marginTop: 6 }}>
+          <span style={{ fontWeight: 600 }}>Magic items:</span>
+          {renderMagicItems(character.magicItems)}
+        </div>
+      )}
       {followers.length > 0 && (
         <ul style={followerListStyle}>
           {followers.map((follower, index) => (
@@ -73,6 +115,12 @@ const CharacterDetailRow: FC<CharacterProps> = ({ character, followers }) => {
               <span style={{ fontWeight: 500 }}>[{alignmentToCode(follower.alignment)}]</span>{' '}
               {follower.gender} {CharacterRace[follower.characterRace] ?? 'Unknown'} —{' '}
               {describeClasses(follower)} (hp: {follower.hitPoints})
+              {follower.magicItems.length > 0 && (
+                <div style={{ marginTop: 4 }}>
+                  <span style={{ fontWeight: 500 }}>Magic items:</span>
+                  {renderMagicItems(follower.magicItems)}
+                </div>
+              )}
             </li>
           ))}
         </ul>

@@ -3,6 +3,7 @@ import type {
   PartyResult,
   CharacterProfession,
   BardLevels,
+  CharacterMagicItem,
 } from '../../models/character/characterSheet';
 import type { Attributes } from '../../models/attributes';
 import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
@@ -20,6 +21,7 @@ export type PartyCharacterSummary = {
   isBard: boolean;
   bardLevels: BardLevels;
   isManAtArms?: boolean;
+  magicItems: CharacterMagicItem[];
 };
 
 export type PartySummaryMember = {
@@ -127,6 +129,7 @@ function toSummaryCharacter(character: CharacterSheet): PartyCharacterSummary {
     isBard: character.isBard,
     bardLevels: { ...character.bardLevels },
     isManAtArms: character.isManAtArms,
+    magicItems: (character.magicItems ?? []).map((item) => ({ ...item })),
   };
 }
 

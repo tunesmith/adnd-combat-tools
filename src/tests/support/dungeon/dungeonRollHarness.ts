@@ -458,6 +458,7 @@ function clonePartyCharacterSummary(
     isBard: character.isBard,
     bardLevels: { ...character.bardLevels },
     isManAtArms: character.isManAtArms,
+    magicItems: character.magicItems.map((item) => ({ ...item })),
   };
 }
 
@@ -466,6 +467,8 @@ function freezePartyCharacterSummary(character: PartyCharacterSummary): void {
   Object.freeze(character.professions);
   Object.freeze(character.bardLevels);
   Object.freeze(character.attributes);
+  character.magicItems.forEach(Object.freeze);
+  Object.freeze(character.magicItems);
   Object.freeze(character);
 }
 
