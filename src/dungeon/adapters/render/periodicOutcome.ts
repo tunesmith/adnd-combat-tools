@@ -16,7 +16,8 @@ import { renderStairsCompact } from './stairs';
 import { renderWanderingMonsterCompact } from './monsters';
 import { renderTrickTrapCompact } from './trickTrap';
 
-export const DEAD_END_FALLBACK_TEXT = 'The passage reaches a dead end. (TODO) ';
+export const DEAD_END_FALLBACK_TEXT =
+  'The passage reaches a dead end. Walls left, right, and ahead can each be checked for 25% chance of secret door. Characters would still need to detect. ';
 export const TRICK_TRAP_FALLBACK_TEXT =
   "There is a trick or trap. (TODO) -- check again in 30'. ";
 
