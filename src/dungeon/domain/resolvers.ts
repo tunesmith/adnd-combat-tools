@@ -253,6 +253,9 @@ export function resolveWanderingWhereFrom(options?: {
     case PeriodicCheck.Stairs:
       children.push({ type: 'pending-roll', table: 'stairs' });
       break;
+    case PeriodicCheck.TrickTrap:
+      children.push({ type: 'pending-roll', table: 'trickTrap' });
+      break;
     default:
       break;
   }
