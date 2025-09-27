@@ -19,6 +19,7 @@ import {
 } from '../../../dungeon/helpers/renderCache';
 import { applyOutcomeRoll } from '../../../dungeon/helpers/registry';
 import type { TableContext } from '../../../types/dungeon';
+import type { PartyCharacterSummary } from '../../../dungeon/helpers/party/formatPartyResult';
 
 type RollInput = string | number | number[];
 
@@ -393,8 +394,8 @@ function cloneRenderNode(node: DungeonRenderNode): DungeonRenderNode {
         summary: {
           includesHenchmen: node.summary.includesHenchmen,
           main: node.summary.main.map(({ member, followers }) => ({
-            member,
-            followers: [...followers],
+            member: clonePartyCharacterSummary(member),
+            followers: followers.map(clonePartyCharacterSummary),
           })),
         },
       };
@@ -431,10 +432,41 @@ function freezeRenderNode<T extends DungeonRenderNode>(node: T): T {
     Object.freeze(node.items);
   }
   if (node.kind === 'character-party') {
-    node.summary.main.forEach((entry) => Object.freeze(entry.followers));
+    node.summary.main.forEach((entry) => {
+      entry.followers.forEach(freezePartyCharacterSummary);
+      Object.freeze(entry.followers);
+      freezePartyCharacterSummary(entry.member);
+    });
     Object.freeze(node.summary.main);
   }
   return Object.freeze(node);
+}
+
+function clonePartyCharacterSummary(
+  character: PartyCharacterSummary
+): PartyCharacterSummary {
+  return {
+    alignment: character.alignment,
+    gender: character.gender,
+    characterRace: character.characterRace,
+    hitPoints: character.hitPoints,
+    attributes: { ...character.attributes },
+    professions: character.professions.map((profession) => ({
+      characterClass: profession.characterClass,
+      level: profession.level,
+    })),
+    isBard: character.isBard,
+    bardLevels: { ...character.bardLevels },
+    isManAtArms: character.isManAtArms,
+  };
+}
+
+function freezePartyCharacterSummary(character: PartyCharacterSummary): void {
+  character.professions.forEach(Object.freeze);
+  Object.freeze(character.professions);
+  Object.freeze(character.bardLevels);
+  Object.freeze(character.attributes);
+  Object.freeze(character);
 }
 
 function clonePreview(preview: DungeonTablePreview): DungeonTablePreview {

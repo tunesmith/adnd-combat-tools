@@ -1,12 +1,16 @@
+import { formatCharacterSummary } from '../../../helpers/party/formatPartyResult';
 import type { PartySummary } from '../../../helpers/party/formatPartyResult';
 import type { DungeonMessage } from '../../../../types/dungeon';
 
 export function buildPartyCompactSummary(summary: PartySummary): string {
-  const mainDescriptions = summary.main.map(({ member, followers }) =>
-    followers.length > 0
-      ? `${member} (followers: ${followers.join(', ')})`
-      : member
-  );
+  const mainDescriptions = summary.main.map(({ member, followers }) => {
+    const memberText = formatCharacterSummary(member);
+    if (followers.length === 0) return memberText;
+    const followerText = followers
+      .map((follower) => formatCharacterSummary(follower))
+      .join(', ');
+    return `${memberText} (followers: ${followerText})`;
+  });
   const parts: string[] = [];
   if (mainDescriptions.length > 0) {
     parts.push(`Main characters: ${mainDescriptions.join('; ')}`);

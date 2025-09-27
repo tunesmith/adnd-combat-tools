@@ -1,14 +1,30 @@
 import type {
   CharacterSheet,
   PartyResult,
+  CharacterProfession,
+  BardLevels,
 } from '../../models/character/characterSheet';
+import type { Attributes } from '../../models/attributes';
 import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
 import { CharacterClass } from '../../models/characterClass';
 import { Alignment } from '../../models/allowedAlignmentsByClass';
+import { Gender } from '../../models/character/gender';
+
+export type PartyCharacterSummary = {
+  alignment: Alignment;
+  gender: Gender;
+  characterRace: CharacterRace;
+  hitPoints: number;
+  attributes: Attributes;
+  professions: CharacterProfession[];
+  isBard: boolean;
+  bardLevels: BardLevels;
+  isManAtArms?: boolean;
+};
 
 export type PartySummaryMember = {
-  member: string;
-  followers: string[];
+  member: PartyCharacterSummary;
+  followers: PartyCharacterSummary[];
 };
 
 export type PartySummary = {
@@ -18,8 +34,8 @@ export type PartySummary = {
 
 export const summarizePartyResult = (result: PartyResult): PartySummary => {
   const main = result.mainCharacters.map((member) => ({
-    member: formatCharacter(member),
-    followers: member.followers.map((follower) => formatCharacter(follower)),
+    member: toSummaryCharacter(member),
+    followers: member.followers.map((follower) => toSummaryCharacter(follower)),
   }));
 
   return {
@@ -38,9 +54,9 @@ export const formatPartyResult = (result: PartyResult): string => {
   const summary = summarizePartyResult(result);
   const lines: string[] = ['Main Characters:'];
   summary.main.forEach((entry) => {
-    lines.push(`- ${entry.member}`);
+    lines.push(`- ${formatCharacterSummary(entry.member)}`);
     entry.followers.forEach((follower) => {
-      lines.push(`  - ${follower}`);
+      lines.push(`  - ${formatCharacterSummary(follower)}`);
     });
   });
 
@@ -51,24 +67,9 @@ export const formatPartyResult = (result: PartyResult): string => {
   return lines.join('\n');
 };
 
-function formatCharacter(character: CharacterSheet): string {
+export function formatCharacterSummary(character: PartyCharacterSummary): string {
   const alignmentCode = alignmentToCode(character.alignment);
-  const classText = character.isManAtArms
-    ? 'Man-at-Arms'
-    : character.isBard
-    ? `${CharacterClass[CharacterClass.Bard]} (F${
-        character.bardLevels[CharacterClass.Fighter]
-      }/T${character.bardLevels[CharacterClass.Thief]}/B${
-        character.bardLevels[CharacterClass.Bard]
-      })`
-    : character.professions
-        .map(
-          (profession) =>
-            `${CharacterClass[profession.characterClass]} (L${
-              profession.level
-            })`
-        )
-        .join(', ');
+  const classText = describeClasses(character);
 
   return (
     `[${alignmentCode}] ${character.gender} ${
@@ -92,6 +93,55 @@ const alignmentCodeMap: Record<Alignment, string> = {
   [Alignment.ChaoticEvil]: 'CE',
 };
 
-function alignmentToCode(alignment: Alignment): string {
+export function alignmentToCode(alignment: Alignment): string {
   return alignmentCodeMap[alignment] ?? 'N';
+}
+
+export const alignmentNameMap: Record<Alignment, string> = {
+  [Alignment.LawfulGood]: 'Lawful Good',
+  [Alignment.LawfulNeutral]: 'Lawful Neutral',
+  [Alignment.LawfulEvil]: 'Lawful Evil',
+  [Alignment.NeutralGood]: 'Neutral Good',
+  [Alignment.TrueNeutral]: 'True Neutral',
+  [Alignment.NeutralEvil]: 'Neutral Evil',
+  [Alignment.ChaoticGood]: 'Chaotic Good',
+  [Alignment.ChaoticNeutral]: 'Chaotic Neutral',
+  [Alignment.ChaoticEvil]: 'Chaotic Evil',
+};
+
+export function alignmentToName(alignment: Alignment): string {
+  return alignmentNameMap[alignment] ?? 'Neutral';
+}
+
+function toSummaryCharacter(character: CharacterSheet): PartyCharacterSummary {
+  return {
+    alignment: character.alignment,
+    gender: character.gender,
+    characterRace: character.characterRace,
+    hitPoints: character.hitPoints,
+    attributes: { ...character.attributes },
+    professions: character.professions.map((profession) => ({
+      characterClass: profession.characterClass,
+      level: profession.level,
+    })),
+    isBard: character.isBard,
+    bardLevels: { ...character.bardLevels },
+    isManAtArms: character.isManAtArms,
+  };
+}
+
+export function describeClasses(character: PartyCharacterSummary): string {
+  if (character.isManAtArms) return 'Man-at-Arms';
+  if (character.isBard) {
+    const fighter = character.bardLevels[CharacterClass.Fighter];
+    const thief = character.bardLevels[CharacterClass.Thief];
+    const bardLevel = character.bardLevels[CharacterClass.Bard];
+    return `Bard (F${fighter}/T${thief}/B${bardLevel})`;
+  }
+  if (character.professions.length === 0) return 'Unknown';
+  return character.professions
+    .map((profession) =>
+      `${CharacterClass[profession.characterClass]} (L${profession.level})`
+    )
+    .join(', ');
 }
