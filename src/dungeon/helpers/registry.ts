@@ -12,6 +12,8 @@ import type {
 // Message services used by the registry
 import {
   resolveChamberDimensions,
+  resolveChamberRoomContents,
+  resolveChamberRoomStairs,
   resolveChasmConstruction,
   resolveChasmDepth,
   resolveChute,
@@ -122,6 +124,8 @@ const TABLE_ID_LIST = [
   'specialPassage',
   'roomDimensions',
   'chamberDimensions',
+  'chamberRoomContents',
+  'chamberRoomStairs',
   'streamConstruction',
   'riverConstruction',
   'riverBoatBank',
@@ -183,6 +187,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   specialPassage: 'Special Passage',
   roomDimensions: 'Room Dimensions',
   chamberDimensions: 'Chamber Dimensions',
+  chamberRoomContents: 'Contents',
+  chamberRoomStairs: 'Stairway',
   streamConstruction: 'Stream Construction',
   riverConstruction: 'River Construction',
   riverBoatBank: 'Boat Bank',
@@ -304,6 +310,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   roomDimensions: ({ roll }) => fromOutcome(resolveRoomDimensions({ roll })),
   chamberDimensions: ({ roll }) =>
     fromOutcome(resolveChamberDimensions({ roll })),
+  chamberRoomContents: ({ roll }) =>
+    fromOutcome(resolveChamberRoomContents({ roll })),
+  chamberRoomStairs: ({ roll }) =>
+    fromOutcome(resolveChamberRoomStairs({ roll })),
   streamConstruction: ({ roll }) =>
     fromOutcome(resolveStreamConstruction({ roll })),
   riverConstruction: ({ roll }) =>

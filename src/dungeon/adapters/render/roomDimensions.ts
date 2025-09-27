@@ -13,6 +13,7 @@ import {
 } from './shared';
 import { renderNumberOfExitsCompact } from './numberOfExits';
 import { renderCompactUnusualDetails } from './unusualShape';
+import { describeChamberRoomContents } from './chamberRoomContents';
 
 export function renderRoomDimensionsDetail(
   outcome: OutcomeEventNode,
@@ -49,6 +50,11 @@ export function renderRoomDimensionsCompact(node: OutcomeEventNode): string {
   if (node.event.result === RoomDimensions.Unusual) {
     const unusual = renderCompactUnusualDetails(node).trim();
     if (unusual.length > 0) segments.push(unusual);
+  }
+  const contents = findChildEvent(node, 'chamberRoomContents');
+  if (contents && contents.event.kind === 'chamberRoomContents') {
+    const summary = describeChamberRoomContents(contents).trim();
+    if (summary.length > 0) segments.push(summary);
   }
   let exits = findChildEvent(node, 'numberOfExits');
   if (!exits) {

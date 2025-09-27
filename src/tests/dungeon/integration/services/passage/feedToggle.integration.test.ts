@@ -180,7 +180,10 @@ describe('dungeon feed toggling confidence', () => {
     feed = resolvePendingPreview(feed, 'unusualSize', 1);
 
     const pendingBefore = listPendingPreviewTargets(feed);
-    expect(pendingBefore).toHaveLength(2);
+    expect(pendingBefore).toHaveLength(3);
+    expect(pendingBefore.some((id) => id.endsWith('chamberRoomContents'))).toBe(
+      true
+    );
     expect(pendingBefore.some((id) => id.endsWith('circularContents'))).toBe(
       true
     );
@@ -239,6 +242,7 @@ describe('dungeon feed toggling confidence', () => {
     feed = resolvePendingPreview(feed, 'chamberDimensions', 18);
     feed = resolvePendingPreview(feed, 'unusualShape', 2);
     feed = resolvePendingPreview(feed, 'unusualSize', 1);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 1);
     feed = resolvePendingPreview(feed, 'circularContents', 1);
     feed = resolvePendingPreview(feed, 'circularPool', 19);
     feed = resolvePendingPreview(feed, 'circularMagicPool', 18);
@@ -319,7 +323,10 @@ describe('dungeon feed toggling confidence', () => {
     ).not.toHaveLength(0);
 
     const initialPending = listPendingPreviewTargets(feed);
-    expect(initialPending).toHaveLength(3);
+    expect(initialPending).toHaveLength(4);
+    expect(
+      initialPending.some((id) => id.endsWith('chamberRoomContents'))
+    ).toBe(true);
     expect(
       initialPending.some((id) => id.endsWith('.0.passageExitLocation'))
     ).toBe(true);
@@ -360,6 +367,7 @@ describe('dungeon feed toggling confidence', () => {
 
     feed = resolvePendingPreview(feed, 'chamberDimensions', 1);
     feed = resolvePendingPreview(feed, 'numberOfExits', 1);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 1);
     feed = resolvePendingPreview(feed, 'passageExitLocation', 1);
     feed = resolvePendingPreview(feed, 'exitDirection', 1);
 

@@ -66,6 +66,8 @@ import type {
 import type { ExitDirection } from '../../tables/dungeon/exitDirection';
 import type { GasTrapEffect } from '../../tables/dungeon/gasTrapEffect';
 import type { TrickTrap } from '../../tables/dungeon/trickTrap';
+import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
+import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
@@ -119,6 +121,8 @@ export type OutcomeEvent =
   | { kind: 'poolAlignment'; result: PoolAlignment }
   | { kind: 'transporterLocation'; result: TransporterLocation }
   | { kind: 'unusualSize'; result: UnusualSize; extra: number; area?: number }
+  | { kind: 'chamberRoomContents'; result: ChamberRoomContents }
+  | { kind: 'chamberRoomStairs'; result: ChamberRoomStairs }
   | { kind: 'trickTrap'; result: TrickTrap }
   | { kind: 'illusoryWallNature'; result: IllusoryWallNature }
   | {

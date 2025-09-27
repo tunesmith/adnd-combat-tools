@@ -131,6 +131,16 @@ import {
   buildUnusualShapePreview,
 } from './render/unusualShape';
 import {
+  renderChamberRoomContentsDetail,
+  renderChamberRoomContentsCompact,
+  buildChamberRoomContentsPreview,
+} from './render/chamberRoomContents';
+import {
+  renderChamberRoomStairsDetail,
+  renderChamberRoomStairsCompact,
+  buildChamberRoomStairsPreview,
+} from './render/chamberRoomStairs';
+import {
   renderTrickTrapDetail,
   buildTrickTrapPreview,
 } from './render/trickTrap';
@@ -327,6 +337,14 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderUnusualSizeDetail,
     renderCompact: withoutAppend(renderUnusualSizeCompact),
   },
+  chamberRoomContents: {
+    renderDetail: renderChamberRoomContentsDetail,
+    renderCompact: renderChamberRoomContentsCompact,
+  },
+  chamberRoomStairs: {
+    renderDetail: renderChamberRoomStairsDetail,
+    renderCompact: renderChamberRoomStairsCompact,
+  },
   trickTrap: {
     renderDetail: renderTrickTrapDetail,
     renderCompact: NO_COMPACT_RENDER,
@@ -392,6 +410,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
     buildNumberOfExitsPreview(tableId, context),
   unusualShape: buildUnusualShapePreview,
   unusualSize: (tableId, context) => buildUnusualSizePreview(tableId, context),
+  chamberRoomContents: buildChamberRoomContentsPreview,
+  chamberRoomStairs: buildChamberRoomStairsPreview,
   stairs: buildStairsPreview,
   specialPassage: buildSpecialPassagePreview,
   egress: buildEgressPreview,
@@ -582,6 +602,12 @@ function previewForEventNode(
       break;
     case 'unusualSize':
       tableId = 'unusualSize';
+      break;
+    case 'chamberRoomContents':
+      tableId = 'chamberRoomContents';
+      break;
+    case 'chamberRoomStairs':
+      tableId = 'chamberRoomStairs';
       break;
     case 'wanderingWhereFrom':
       tableId = 'wanderingWhereFrom';

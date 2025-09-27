@@ -130,8 +130,15 @@ describe('uiPreviewHarness', () => {
     feed = resolvePendingPreview(feed, 'unusualSize', 15);
     feed = resolvePendingPreview(feed, 'unusualSize', 15);
 
-    expect(feed.pendingCount).toBe(1);
-    expect(listPendingPreviewTargets(feed)).toHaveLength(1);
+    expect(feed.pendingCount).toBe(2);
+    const pendingTargets = listPendingPreviewTargets(feed);
+    expect(pendingTargets).toHaveLength(2);
+    expect(
+      pendingTargets.some((target) => target.includes('chamberRoomContents'))
+    ).toBe(true);
+    expect(
+      pendingTargets.some((target) => target.includes('unusualSize'))
+    ).toBe(true);
 
     const compactText = renderCompact(feed)
       .filter(
@@ -160,10 +167,15 @@ describe('uiPreviewHarness', () => {
     feed = resolvePendingPreview(feed, 'unusualSize', 15);
     feed = resolvePendingPreview(feed, 'unusualSize', 1);
 
-    expect(feed.pendingCount).toBe(1);
+    expect(feed.pendingCount).toBe(2);
     const pendingAfter = listPendingPreviewTargets(feed);
-    expect(pendingAfter).toHaveLength(1);
-    expect(pendingAfter[0]?.includes('numberOfExits')).toBe(true);
+    expect(pendingAfter).toHaveLength(2);
+    expect(
+      pendingAfter.some((target) => target.includes('chamberRoomContents'))
+    ).toBe(true);
+    expect(
+      pendingAfter.some((target) => target.includes('numberOfExits'))
+    ).toBe(true);
 
     const compactView = renderCompact(feed);
     const compactText = compactView

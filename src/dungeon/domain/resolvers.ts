@@ -69,6 +69,11 @@ import {
 } from '../../tables/dungeon/unusualShape';
 import { unusualSize, UnusualSize } from '../../tables/dungeon/unusualSize';
 import {
+  chamberRoomContents,
+  ChamberRoomContents,
+} from '../../tables/dungeon/chamberRoomContents';
+import { chamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
+import {
   periodicCheckDoorOnly,
   PeriodicCheckDoorOnly,
 } from '../../tables/dungeon/periodicCheckDoorOnly';
@@ -651,6 +656,7 @@ export function resolveRoomDimensions(options?: {
       });
       break;
   }
+  children.push({ type: 'pending-roll', table: 'chamberRoomContents' });
   return {
     type: 'event',
     roll: usedRoll,
@@ -721,6 +727,7 @@ export function resolveChamberDimensions(options?: {
       });
       break;
   }
+  children.push({ type: 'pending-roll', table: 'chamberRoomContents' });
   return {
     type: 'event',
     roll: usedRoll,
@@ -810,6 +817,59 @@ function unusualSizeBaseArea(result: UnusualSize): number | undefined {
     default:
       return undefined;
   }
+}
+
+export function resolveChamberRoomContents(options?: {
+  roll?: number;
+  level?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(chamberRoomContents.sides);
+  const command = getTableEntry(usedRoll, chamberRoomContents);
+  const level = options?.level ?? 1;
+  const children: DungeonOutcomeNode[] = [];
+  switch (command) {
+    case ChamberRoomContents.MonsterOnly:
+    case ChamberRoomContents.MonsterAndTreasure: {
+      children.push({
+        type: 'pending-roll',
+        table: `monsterLevel:${level}`,
+        context: { kind: 'wandering', level },
+      });
+      break;
+    }
+    case ChamberRoomContents.Special:
+      children.push({ type: 'pending-roll', table: 'chamberRoomStairs' });
+      break;
+    case ChamberRoomContents.TrickTrap:
+      children.push({ type: 'pending-roll', table: 'trickTrap' });
+      break;
+    default:
+      break;
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'chamberRoomContents',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveChamberRoomStairs(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(chamberRoomStairs.sides);
+  const command = getTableEntry(usedRoll, chamberRoomStairs);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'chamberRoomStairs',
+      result: command,
+    } as OutcomeEvent,
+  };
 }
 
 export function resolveCircularContents(options?: {

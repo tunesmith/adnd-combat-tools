@@ -57,6 +57,8 @@ import type { PeriodicCheckDoorOnly } from './periodicCheckDoorOnly';
 import type { TrickTrap } from './trickTrap';
 import type { IllusoryWallNature } from './illusoryWallNature';
 import type { GasTrapEffect } from './gasTrapEffect';
+import type { ChamberRoomContents } from './chamberRoomContents';
+import type { ChamberRoomStairs } from './chamberRoomStairs';
 
 export type Table<T> = {
   sides: number;
@@ -133,4 +135,6 @@ export type Command =
   | PeriodicCheckDoorOnly
   | TrickTrap
   | IllusoryWallNature
-  | GasTrapEffect;
+  | GasTrapEffect
+  | ChamberRoomContents
+  | ChamberRoomStairs;

@@ -19,6 +19,8 @@ import {
   resolveChamberDimensions,
   resolveUnusualShape,
   resolveUnusualSize,
+  resolveChamberRoomContents,
+  resolveChamberRoomStairs,
   resolveCircularContents,
   resolveCircularPool,
   resolveCircularMagicPool,
@@ -476,6 +478,12 @@ function resolvePendingNode(
         isRoom: context?.isRoom,
       });
     }
+    case 'chamberRoomContents': {
+      const level = deriveDungeonLevelFromAncestors(ancestors) ?? 1;
+      return resolveChamberRoomContents({ level });
+    }
+    case 'chamberRoomStairs':
+      return resolveChamberRoomStairs({});
     case 'circularContents':
       return resolveCircularContents({});
     case 'circularPool':
@@ -717,6 +725,22 @@ function readExitAlternativeContext(
   return context.exitType === 'door' || context.exitType === 'passage'
     ? context.exitType
     : null;
+}
+
+function deriveDungeonLevelFromAncestors(
+  ancestors: OutcomeEventNode[]
+): number | undefined {
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const ancestor = ancestors[index];
+    if (!ancestor) continue;
+    if (
+      ancestor.event.kind === 'periodicCheck' &&
+      typeof ancestor.event.level === 'number'
+    ) {
+      return ancestor.event.level;
+    }
+  }
+  return undefined;
 }
 
 function totalAreaFromUnusualSize(node: OutcomeEventNode): number | undefined {
