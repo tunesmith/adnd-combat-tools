@@ -10,9 +10,13 @@ import { isCompatibleRace } from '../../helpers/party/isCompatibleRace';
 import { isCompatibleClass } from '../../helpers/party/isCompatibleClass';
 import { getNumberOfClasses } from '../../helpers/character/class/getNumberOfClasses';
 import { getCharacterRace } from '../../helpers/character/getCharacterRace';
-import { getSingleClassCharacterForRace } from '../../helpers/character/getSingleClassCharacterForRace';
+import {
+  getSingleClassCharacterForRace,
+  LimitedClassFallbackError,
+} from '../../helpers/character/getSingleClassCharacterForRace';
 import { getMultiClassCharacterForRace } from '../../helpers/character/getMultiClassCharacterForRace';
 import { CharacterClass } from '../../models/characterClass';
+import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
 import { canPartyHireHenchmen } from '../../helpers/party/canPartyHireHenchmen';
 import { getMaxHenchmenForMember } from '../../helpers/character/henchmen/getMaxHenchmenForMember';
 import {
@@ -81,8 +85,38 @@ export const createCharacters = (
               numClasses,
               characterLevel
             );
-    } catch {
-      continue;
+    } catch (error) {
+      if (error instanceof LimitedClassFallbackError) {
+        const fallbackCounts: number[] = [2];
+        if (
+          characterRace === CharacterRace.Elf ||
+          characterRace === CharacterRace.HalfElf
+        ) {
+          fallbackCounts.push(3);
+        }
+
+        let generatedFallback: CharacterSheet | undefined;
+        for (const fallbackCount of fallbackCounts) {
+          try {
+            generatedFallback = getMultiClassCharacterForRace(
+              characterRace,
+              fallbackCount,
+              characterLevel,
+              [error.characterClass]
+            );
+            break;
+          } catch {
+            generatedFallback = undefined;
+          }
+        }
+
+        if (!generatedFallback) {
+          continue;
+        }
+        characterSheet = generatedFallback;
+      } else {
+        continue;
+      }
     }
 
     // Check compatibility and limits

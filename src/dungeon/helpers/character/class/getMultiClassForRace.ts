@@ -19,14 +19,31 @@ import type { CharacterClass } from '../../../models/characterClass';
  */
 export const getMultiClassForRace = (
   characterRace: CharacterRace,
-  numClasses: number
+  numClasses: number,
+  requiredClasses: CharacterClass[] = []
 ): CharacterClass[] => {
-  const selectedClasses: CharacterClass[] = [];
+  const uniqueRequired = Array.from(new Set(requiredClasses));
+  if (uniqueRequired.length !== requiredClasses.length) {
+    throw new Error('Duplicate classes provided in requiredClasses');
+  }
+  if (uniqueRequired.length > numClasses) {
+    throw new Error('Required classes exceed desired class count');
+  }
+
+  const selectedClasses: CharacterClass[] = [...uniqueRequired];
 
   // Step 1: Pre-filter valid combinations by race and number of classes
   let validCombinations = allowedMultiClassCombinationsByRace[
     characterRace
-  ]?.filter((combo) => combo.length === numClasses); // Only combos of the correct size
+  ]?.filter(
+    (combo) =>
+      combo.length === numClasses &&
+      uniqueRequired.every((required) => combo.includes(required))
+  ); // Only combos of the correct size that include required classes
+
+  if (!validCombinations || validCombinations.length === 0) {
+    throw new Error('No valid multi-class combination available for race');
+  }
 
   // Step 2: Generate classes until all are selected
   while (selectedClasses.length < numClasses) {

@@ -10,6 +10,15 @@ import { CharacterClass } from '../../models/characterClass';
 import { getAlignmentForClasses } from './getAlignment';
 import { getBardLevels } from './level/getBardLevels';
 import { getBardHitPoints } from './hitpoints/getBardHitPoints';
+import { CharacterRace as RaceEnum } from '../../../tables/dungeon/monster/character/characterRace';
+
+export class LimitedClassFallbackError extends Error {
+  constructor(public readonly characterClass: CharacterClass) {
+    super('Class requires multi-class fallback');
+    this.name = 'LimitedClassFallbackError';
+    Object.setPrototypeOf(this, LimitedClassFallbackError.prototype);
+  }
+}
 
 /**
  * Level restrictions are tricky here because the DMG leaves this fairly
@@ -109,8 +118,13 @@ export function getSingleClassCharacterForRace(
           followers: [],
           alignment: getAlignmentForClasses([candidateClass]),
         };
+      } else if (characterRace !== RaceEnum.Human) {
+        throw new LimitedClassFallbackError(candidateClass);
       }
     }
-    // Otherwise, re-roll
+    if (characterRace !== RaceEnum.Human) {
+      throw new LimitedClassFallbackError(candidateClass);
+    }
+    // Otherwise, re-roll for humans who cannot multi-class
   }
 }

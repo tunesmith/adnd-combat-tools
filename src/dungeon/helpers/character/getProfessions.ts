@@ -26,64 +26,104 @@ export const getProfessions = (
   characterRace: CharacterRace,
   selectedClasses: CharacterClass[],
   attributes: Attributes,
-  characterLevel: number,
-  numClasses: number
+  characterLevel: number
 ): CharacterProfession[] => {
-  const levelDistributor: Record<CharacterClass, number> = Object.fromEntries(
-    selectedClasses.map((characterClass) => [characterClass, 0])
-  ) as Record<CharacterClass, number>;
-
-  // Calculate max levels for each class
   const classMaxLevels = selectedClasses.map((characterClass) => ({
     characterClass,
     maxLevel: getMaxLevel(characterRace, characterClass, attributes),
   }));
 
-  // Level of Multi-Classed Individuals:
-  // Determine level for a single profession, add 2, and divide by 2, dropping fractions below one-half.
-  // For a triple class, add three, divide by three, and drop fractions below one-half.
   const baseLevel = Math.round(
     (characterLevel + selectedClasses.length) / selectedClasses.length
   );
 
-  // Assign base levels, capped at max levels
-  classMaxLevels.forEach(({ characterClass, maxLevel }) => {
-    levelDistributor[characterClass] = Math.min(baseLevel, maxLevel);
-  });
+  const levelDistributor: number[] = new Array(selectedClasses.length).fill(
+    baseLevel
+  );
 
-  // Calculate remaining levels to distribute
-  let excessLevels =
-    baseLevel -
-    Object.values(levelDistributor).reduce((sum, level) => sum + level, 0);
+  const getIndex = (cls: CharacterClass): number =>
+    selectedClasses.findIndex((value) => value === cls);
 
-  // Distribute excess levels to classes under their maxLevel
-  while (excessLevels > 0) {
-    const eligibleClasses = classMaxLevels.filter(
-      ({ characterClass, maxLevel }) =>
-        levelDistributor[characterClass] < maxLevel
+  const applyExcess = (fromIndex: number, excess: number): void => {
+    if (excess <= 0) return;
+    const totalClasses = selectedClasses.length;
+    const recipients = selectedClasses
+      .map((_, idx) => idx)
+      .filter((idx) => idx !== fromIndex);
+
+    if (recipients.length === 0) return;
+
+    if (totalClasses === 2) {
+      const target = recipients[0];
+      if (target === undefined) return;
+      const targetMax = classMaxLevels[target];
+      if (!targetMax) return;
+      const capacity = targetMax.maxLevel - (levelDistributor[target] ?? 0);
+      if (capacity <= 0) return;
+      const addition = Math.min(Math.ceil(excess / 2), capacity);
+      levelDistributor[target] = (levelDistributor[target] ?? 0) + addition;
+      return;
+    }
+
+    let remaining = excess;
+    let activeRecipients = recipients.filter(
+      (idx) =>
+        (levelDistributor[idx] ?? 0) < (classMaxLevels[idx]?.maxLevel ?? 0)
     );
 
-    if (eligibleClasses.length === 0) break;
+    if (activeRecipients.length === 0) return;
 
-    // If one class is thereby exceeded, take one-half the excess levels and assign them to the other.
-    // In a triple-classed individual, divide excess levels and assign to the two remaining classes.
-    const excessPerClass = Math.floor(
-      (numClasses === 2 ? Math.round(excessLevels / 2) : excessLevels) /
-        eligibleClasses.length
-    );
+    while (remaining > 0 && activeRecipients.length > 0) {
+      const share = Math.floor(remaining / activeRecipients.length);
+      let remainder = remaining % activeRecipients.length;
+      let progress = 0;
 
-    eligibleClasses.forEach(({ characterClass, maxLevel }) => {
-      const allocatable = Math.min(
-        excessPerClass,
-        maxLevel - levelDistributor[characterClass]
+      activeRecipients.forEach((idx) => {
+        let addition = share;
+        if (remainder > 0) {
+          addition += 1;
+          remainder -= 1;
+        }
+        if (addition <= 0) return;
+        const maxInfo = classMaxLevels[idx];
+        if (!maxInfo) return;
+        const capacity = maxInfo.maxLevel - (levelDistributor[idx] ?? 0);
+        if (capacity <= 0) return;
+        const applied = Math.min(addition, capacity);
+        levelDistributor[idx] = (levelDistributor[idx] ?? 0) + applied;
+        remaining -= applied;
+        if (applied > 0) {
+          progress += applied;
+        }
+      });
+
+      if (progress === 0) break;
+
+      activeRecipients = activeRecipients.filter(
+        (idx) =>
+          (levelDistributor[idx] ?? 0) < (classMaxLevels[idx]?.maxLevel ?? 0)
       );
-      levelDistributor[characterClass] += allocatable;
-      excessLevels -= allocatable;
+    }
+  };
+
+  let adjusted = true;
+  while (adjusted) {
+    adjusted = false;
+    classMaxLevels.forEach(({ characterClass, maxLevel }) => {
+      const idx = getIndex(characterClass);
+      if (idx === -1) return;
+      const currentLevel = levelDistributor[idx] ?? baseLevel;
+      if (currentLevel > maxLevel) {
+        const excess = currentLevel - maxLevel;
+        levelDistributor[idx] = maxLevel;
+        applyExcess(idx, excess);
+        adjusted = true;
+      }
     });
   }
 
-  return selectedClasses.map((selectedClass) => ({
+  return selectedClasses.map((selectedClass, index) => ({
     characterClass: selectedClass,
-    level: levelDistributor[selectedClass],
+    level: Math.max(levelDistributor[index] ?? baseLevel, 1),
   }));
 };

@@ -19,17 +19,21 @@ import { getAlignmentForClasses } from './getAlignment';
 export function getMultiClassCharacterForRace(
   characterRace: CharacterRace,
   numClasses: number,
-  characterLevel: number
+  characterLevel: number,
+  requiredClasses: CharacterClass[] = []
 ): CharacterSheet {
-  const selectedClasses = getMultiClassForRace(characterRace, numClasses);
+  const selectedClasses = getMultiClassForRace(
+    characterRace,
+    numClasses,
+    requiredClasses
+  );
   const gender = getCharacterGender();
   const attributes = getAttributes(selectedClasses, characterRace, gender);
   const professions = getProfessions(
     characterRace,
     selectedClasses,
     attributes,
-    characterLevel,
-    numClasses
+    characterLevel
   );
 
   return {
