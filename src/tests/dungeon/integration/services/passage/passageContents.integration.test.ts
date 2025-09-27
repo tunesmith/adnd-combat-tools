@@ -130,6 +130,45 @@ describe('passage contents', () => {
       );
     }
   });
+
+  it('describes trick or trap results in contents summary', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    let pendingTargets = listPendingPreviewTargets(feed);
+    let pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('chamberRoomContents');
+
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 19);
+
+    pendingTargets = listPendingPreviewTargets(feed);
+    pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('trickTrap');
+
+    feed = resolvePendingPreview(feed, 'trickTrap', 6);
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ')
+      .toLowerCase();
+    expect(compactText).toContain("pit, 10' deep");
+
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent).toBeDefined();
+    if (contentsEvent) {
+      const detail = describeChamberRoomContents(contentsEvent).toLowerCase();
+      expect(detail).toContain("pit, 10' deep");
+    }
+  });
 });
 
 function findOutcomeEvent(

@@ -13,6 +13,7 @@ import {
 } from './shared';
 import { describeChamberRoomStairs } from './chamberRoomStairs';
 import { describeMonsterOutcome } from './monsters';
+import { renderTrickTrapCompact } from './trickTrap';
 
 export function renderChamberRoomContentsDetail(
   outcome: OutcomeEventNode,
@@ -82,6 +83,7 @@ export function describeChamberRoomContents(node: OutcomeEventNode): string {
     }
     case ChamberRoomContents.TrickTrap:
       segments.push('A trick or trap is present.');
+      addResolvedTrickTrapSummary(node, segments);
       break;
     case ChamberRoomContents.Treasure:
       segments.push('Treasure is present. TODO treasure.');
@@ -117,6 +119,44 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
     const description = describeMonsterOutcome(current);
     const text = description?.compactText.trim();
     if (text) summaries.push(text);
+    current.children?.forEach((child) => {
+      if (child.type === 'event') visit(child);
+    });
+  };
+
+  node.children?.forEach((child) => {
+    if (child.type === 'event') visit(child);
+  });
+
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const summary of summaries) {
+    if (!seen.has(summary)) {
+      unique.push(summary);
+      seen.add(summary);
+    }
+  }
+  return unique;
+}
+
+function addResolvedTrickTrapSummary(
+  node: OutcomeEventNode,
+  segments: string[]
+): void {
+  const summaries = collectTrickTrapSummaries(node);
+  for (const summary of summaries) {
+    if (summary.length > 0) segments.push(summary);
+  }
+}
+
+function collectTrickTrapSummaries(node: OutcomeEventNode): string[] {
+  const summaries: string[] = [];
+
+  const visit = (current: OutcomeEventNode): void => {
+    if (current.event.kind === 'trickTrap') {
+      const text = renderTrickTrapCompact(current).trim();
+      if (text.length > 0) summaries.push(text);
+    }
     current.children?.forEach((child) => {
       if (child.type === 'event') visit(child);
     });
