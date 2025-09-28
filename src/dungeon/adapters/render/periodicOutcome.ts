@@ -13,9 +13,12 @@ import { describeSidePassage } from './sidePassage';
 import { renderPassageTurnCompact } from './passageTurns';
 import { describeChamberDimensions } from './chamberDimensions';
 import { renderStairsCompact } from './stairs';
-import { renderWanderingMonsterCompact } from './monsters';
-import { collectCharacterPartyMessages } from './monsters';
-import { renderTrickTrapCompact } from './trickTrap';
+import {
+  renderWanderingMonsterCompact,
+  collectCharacterPartyMessages,
+} from './monsters';
+import { renderTrickTrapCompact, renderTrickTrapDetail } from './trickTrap';
+import { renderChamberDimensionsCompact } from './chamberDimensions';
 
 export const DEAD_END_FALLBACK_TEXT =
   'The passage reaches a dead end. Walls left, right, and ahead can each be checked for 25% chance of secret door. Characters would still need to detect. ';
@@ -176,6 +179,13 @@ export function renderWanderingWhereFromDetail(
     nodes.push(...detailSummary.nodes);
   }
   appendPendingPreviews(outcome, nodes);
+  const trickTrapEvent = findChildEvent(outcome, 'trickTrap');
+  if (trickTrapEvent && trickTrapEvent.type === 'event') {
+    const trickNodes = renderTrickTrapDetail(trickTrapEvent, appendPendingPreviews);
+    if (trickNodes.length > 0) {
+      nodes.push(...trickNodes);
+    }
+  }
   return nodes;
 }
 
@@ -275,8 +285,25 @@ function summarizePeriodicResult(
     }
     case PeriodicCheck.TrickTrap: {
       const trap = findChildEvent(node, 'trickTrap');
+      if (!trap) {
+        return { text: TRICK_TRAP_FALLBACK_TEXT };
+      }
+      const trickText = renderTrickTrapCompact(trap);
+      const partyMessages = collectCharacterPartyMessages(trap, 'compact');
+      const chamberNodes: DungeonRenderNode[] = [];
+      trap.children?.forEach((child) => {
+        if (child.type !== 'event') return;
+        if (child.event.kind === 'illusoryWallNature') {
+          const chamber = findChildEvent(child, 'chamberDimensions');
+          if (chamber && chamber.type === 'event') {
+            chamberNodes.push(...renderChamberDimensionsCompact(chamber));
+          }
+        }
+      });
+      const combinedNodes = [...partyMessages, ...chamberNodes];
       return {
-        text: trap ? renderTrickTrapCompact(trap) : TRICK_TRAP_FALLBACK_TEXT,
+        text: trickText,
+        nodes: combinedNodes.length > 0 ? combinedNodes : undefined,
       };
     }
     case PeriodicCheck.WanderingMonster: {
