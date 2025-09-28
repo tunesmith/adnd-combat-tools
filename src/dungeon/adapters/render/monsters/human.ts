@@ -36,12 +36,11 @@ export function describeHumanMonster(
 
   if (event.party) {
     const summary = summarizePartyResult(event.party);
-    const compactText = buildPartyCompactText(summary);
     return {
       heading: 'Human Subtable',
       label: humanLabel(event.result),
       detailParagraphs: [buildPartyCharacterMessage(summary, 'detail')],
-      compactText,
+      compactText: '',
       compactMessages: [buildPartyCharacterMessage(summary, 'compact')],
       appendPending: hasPendingChildren(node),
     };

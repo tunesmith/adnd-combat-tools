@@ -119,13 +119,17 @@ export function assignMagicItemsToCharacter(character: CharacterSheet): void {
     );
   }
 
-  character.magicItems = MAGIC_TABLE_ORDER.filter((table) => aggregate.has(table))
-    .map((table) => ({ table, count: aggregate.get(table)! }));
+  character.magicItems = MAGIC_TABLE_ORDER.flatMap((table) => {
+    const count = aggregate.get(table);
+    return count && count > 0 ? [{ table, count }] : [];
+  });
 }
 
 export function assignMagicItemsToParty(party: CharacterSheet[]): void {
   party.forEach((member) => {
     assignMagicItemsToCharacter(member);
-    member.followers.forEach((follower) => assignMagicItemsToCharacter(follower));
+    member.followers.forEach((follower) =>
+      assignMagicItemsToCharacter(follower)
+    );
   });
 }

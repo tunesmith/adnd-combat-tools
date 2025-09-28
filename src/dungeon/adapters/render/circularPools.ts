@@ -7,7 +7,10 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { describeMonsterOutcome } from './monsters';
+import {
+  describeMonsterOutcome,
+  collectCharacterPartyMessages,
+} from './monsters';
 
 export function renderCircularPoolDetail(
   outcome: OutcomeEventNode,
@@ -25,6 +28,10 @@ export function renderCircularPoolCompact(
 ): DungeonRenderNode[] {
   const nodes = buildCircularPoolNodes(outcome);
   if (nodes.length === 0) return nodes;
+  const partyMessages = collectCharacterPartyMessages(outcome, 'compact');
+  if (partyMessages.length > 0) {
+    nodes.push(...partyMessages);
+  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -94,8 +101,26 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
 
   const visit = (current: OutcomeEventNode): void => {
     const description = describeMonsterOutcome(current);
-    const text = description?.compactText.trim();
-    if (text) summaries.push(text);
+    if (description) {
+      const hasPartyMessage = description.compactMessages?.some(
+        (message) => message.kind === 'character-party'
+      );
+      if (!hasPartyMessage) {
+        if (
+          description.compactMessages &&
+          description.compactMessages.length > 0
+        ) {
+          for (const message of description.compactMessages) {
+            if (message.kind === 'paragraph') {
+              const text = message.text.trim();
+              if (text.length > 0) summaries.push(text);
+            }
+          }
+        }
+        const text = description.compactText.trim();
+        if (text.length > 0) summaries.push(text);
+      }
+    }
     current.children?.forEach((child) => {
       if (child.type === 'event') visit(child);
     });

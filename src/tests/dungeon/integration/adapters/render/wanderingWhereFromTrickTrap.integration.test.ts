@@ -10,7 +10,7 @@ import type { AppendPreviewFn } from '../../../../../dungeon/adapters/render/sha
 const noopAppend: AppendPreviewFn = () => undefined;
 
 const GAS_CORRIDOR_TEXT =
-  'Gas; party has detected it, but must breathe it to continue along corridor, as it covers 60\' ahead. Mark map accordingly regardless of turning back or not. (See TABLE VII. A.) ';
+  "Gas; party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. (See TABLE VII. A.) ";
 
 describe('renderWanderingWhereFrom with trick trap', () => {
   test('includes trick/trap details in both modes', () => {
@@ -29,7 +29,10 @@ describe('renderWanderingWhereFrom with trick trap', () => {
       children: [trickTrapNode],
     };
 
-    const detailNodes = renderWanderingWhereFromDetail(whereFromNode, noopAppend);
+    const detailNodes = renderWanderingWhereFromDetail(
+      whereFromNode,
+      noopAppend
+    );
     const detailParagraph = detailNodes.find(
       (node): node is { kind: 'paragraph'; text: string } =>
         node.kind === 'paragraph'

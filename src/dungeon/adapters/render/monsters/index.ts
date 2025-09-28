@@ -33,6 +33,43 @@ export function describeMonsterOutcome(
   );
 }
 
+export function collectCharacterPartyMessages(
+  node: OutcomeEventNode,
+  display: 'detail' | 'compact'
+): DungeonMessage[] {
+  const messages: DungeonMessage[] = [];
+  const seen = new Set<string>();
+
+  const visit = (current: OutcomeEventNode): void => {
+    const description = describeMonsterOutcome(current);
+    if (description) {
+      const source =
+        display === 'detail'
+          ? description.detailParagraphs
+          : description.compactMessages ?? [];
+      for (const message of source) {
+        if (message.kind !== 'character-party') continue;
+        if (message.display !== display) continue;
+        const key = `${message.display}-${JSON.stringify(message.summary)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        messages.push({
+          kind: 'character-party',
+          display: message.display,
+          summary: message.summary,
+        });
+      }
+    }
+    current.children?.forEach((child) => {
+      if (child.type === 'event') visit(child);
+    });
+  };
+
+  visit(node);
+
+  return messages;
+}
+
 export function renderMonsterDetailNodes(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn

@@ -39,7 +39,9 @@ const MAGIC_TABLE_LABELS: Record<MagicItemTableId, string> = {
 
 const DMG_REFERENCE = 'DMG p.176';
 
-function summarizeMagicItems(items: PartyCharacterSummary['magicItems']): string {
+function summarizeMagicItems(
+  items: PartyCharacterSummary['magicItems']
+): string {
   if (items.length === 0) return '';
   const parts = items.map(
     (item) => `${MAGIC_TABLE_LABELS[item.table]} ×${item.count}`
@@ -58,7 +60,9 @@ const CharacterCompactRow: FC<CharacterProps> = ({ character, followers }) => {
         lineHeight: 1.25,
       }}
     >
-      <span style={{ fontWeight: 600, marginRight: 6 }}>[{alignmentToCode(character.alignment)}]</span>
+      <span style={{ fontWeight: 600, marginRight: 6 }}>
+        [{alignmentToCode(character.alignment)}]
+      </span>
       <span>
         {character.gender} {race} — {classText} (hp: {character.hitPoints})
       </span>
@@ -71,8 +75,11 @@ const CharacterCompactRow: FC<CharacterProps> = ({ character, followers }) => {
         <ul style={followerListStyle}>
           {followers.map((follower, index) => (
             <li key={index}>
-              <span style={{ fontWeight: 500 }}>[{alignmentToCode(follower.alignment)}]</span>{' '}
-              {follower.gender} {CharacterRace[follower.characterRace] ?? 'Unknown'} —{' '}
+              <span style={{ fontWeight: 500 }}>
+                [{alignmentToCode(follower.alignment)}]
+              </span>{' '}
+              {follower.gender}{' '}
+              {CharacterRace[follower.characterRace] ?? 'Unknown'} —{' '}
               {describeClasses(follower)} (hp: {follower.hitPoints})
               {follower.magicItems.length > 0 && (
                 <div style={{ marginTop: 2 }}>
@@ -91,12 +98,16 @@ interface CharacterPartyCompactProps {
   summary: PartySummary;
 }
 
-export const CharacterPartyCompact: FC<CharacterPartyCompactProps> = ({ summary }) => {
+export const CharacterPartyCompact: FC<CharacterPartyCompactProps> = ({
+  summary,
+}) => {
   return (
     <div style={{ margin: '0.25rem 0' }}>
       {summary.main.length > 0 && (
         <div>
-          <p style={{ margin: '0 0 0.25rem', fontWeight: 500 }}>Main characters</p>
+          <p style={{ margin: '0 0 0.25rem', fontWeight: 500 }}>
+            Main characters
+          </p>
           <ul style={{ ...listResetStyle, marginLeft: 14 }}>
             {summary.main.map(({ member, followers }, index) => (
               <CharacterCompactRow
@@ -109,7 +120,13 @@ export const CharacterPartyCompact: FC<CharacterPartyCompactProps> = ({ summary 
         </div>
       )}
       {summary.includesHenchmen && (
-        <p style={{ margin: '0.25rem 0 0', fontStyle: 'italic', fontSize: '0.9em' }}>
+        <p
+          style={{
+            margin: '0.25rem 0 0',
+            fontStyle: 'italic',
+            fontSize: '0.9em',
+          }}
+        >
           Includes henchmen ready to accompany them.
         </p>
       )}

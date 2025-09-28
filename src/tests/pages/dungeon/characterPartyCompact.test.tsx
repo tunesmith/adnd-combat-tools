@@ -1,4 +1,3 @@
-import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { renderNode } from '../../../pages/dungeon/index';
 import { renderPeriodicCheckCompact } from '../../../dungeon/adapters/render/periodicOutcome';
@@ -11,8 +10,12 @@ import { Alignment } from '../../../dungeon/models/allowedAlignmentsByClass';
 import { Gender } from '../../../dungeon/models/character/gender';
 import { Attribute } from '../../../dungeon/models/attributes';
 import type { Attributes } from '../../../dungeon/models/attributes';
-import type { PartyResult, CharacterSheet } from '../../../dungeon/models/character/characterSheet';
+import type {
+  PartyResult,
+  CharacterSheet,
+} from '../../../dungeon/models/character/characterSheet';
 import type { OutcomeEventNode } from '../../../dungeon/domain/outcome';
+import type { DungeonRenderNode } from '../../../types/dungeon';
 
 const baseAttributes: Attributes = {
   [Attribute.Strength]: 12,
@@ -29,11 +32,12 @@ const emptyBardLevels = {
   [CharacterClass.Bard]: 0,
 };
 
-function createFollower(nameSuffix: string, alignment: Alignment): CharacterSheet {
+function createFollower(
+  nameSuffix: string,
+  alignment: Alignment
+): CharacterSheet {
   return {
-    professions: [
-      { characterClass: CharacterClass.ManAtArms, level: 0 },
-    ],
+    professions: [{ characterClass: CharacterClass.ManAtArms, level: 0 }],
     characterRace: CharacterRace.Human,
     attributes: { ...baseAttributes },
     gender: nameSuffix === 'A' ? Gender.Male : Gender.Female,
@@ -51,9 +55,7 @@ function createPartyResult(): PartyResult {
   const followerB = createFollower('B', Alignment.LawfulNeutral);
 
   const mainCharacter: CharacterSheet = {
-    professions: [
-      { characterClass: CharacterClass.Fighter, level: 2 },
-    ],
+    professions: [{ characterClass: CharacterClass.Fighter, level: 2 }],
     characterRace: CharacterRace.Human,
     attributes: { ...baseAttributes },
     gender: Gender.Male,
@@ -112,15 +114,19 @@ describe('character party compact rendering', () => {
     const nodes = renderPeriodicCheckCompact(periodicNode);
     const paragraph = nodes.find((n) => n.kind === 'paragraph');
     expect(paragraph).toBeDefined();
-    expect(paragraph && paragraph.kind === 'paragraph' ? paragraph.text : '').not.toContain('followers:');
+    expect(
+      paragraph && paragraph.kind === 'paragraph' ? paragraph.text : ''
+    ).not.toContain('followers:');
 
     const partyMessage = nodes.find(
-      (n) => n.kind === 'character-party' && n.display === 'compact'
+      (n): n is Extract<DungeonRenderNode, { kind: 'character-party' }> =>
+        n.kind === 'character-party' && n.display === 'compact'
     );
     expect(partyMessage).toBeDefined();
+    if (!partyMessage) return;
 
     const element = renderNode(
-      partyMessage!,
+      partyMessage,
       0,
       'party-test',
       {},

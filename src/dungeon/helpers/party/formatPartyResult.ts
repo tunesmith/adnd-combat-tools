@@ -9,7 +9,7 @@ import type { Attributes } from '../../models/attributes';
 import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
 import { CharacterClass } from '../../models/characterClass';
 import { Alignment } from '../../models/allowedAlignmentsByClass';
-import { Gender } from '../../models/character/gender';
+import type { Gender } from '../../models/character/gender';
 
 export type PartyCharacterSummary = {
   alignment: Alignment;
@@ -69,7 +69,9 @@ export const formatPartyResult = (result: PartyResult): string => {
   return lines.join('\n');
 };
 
-export function formatCharacterSummary(character: PartyCharacterSummary): string {
+export function formatCharacterSummary(
+  character: PartyCharacterSummary
+): string {
   const alignmentCode = alignmentToCode(character.alignment);
   const classText = describeClasses(character);
 
@@ -143,8 +145,9 @@ export function describeClasses(character: PartyCharacterSummary): string {
   }
   if (character.professions.length === 0) return 'Unknown';
   return character.professions
-    .map((profession) =>
-      `${CharacterClass[profession.characterClass]} (L${profession.level})`
+    .map(
+      (profession) =>
+        `${CharacterClass[profession.characterClass]} (L${profession.level})`
     )
     .join(', ');
 }

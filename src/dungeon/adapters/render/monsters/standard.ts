@@ -45,7 +45,7 @@ import {
   hasPendingChildren,
   type MonsterDescription,
 } from './shared';
-import { buildPartyCharacterMessage, buildPartyCompactText } from './human';
+import { buildPartyCharacterMessage } from './human';
 import { summarizePartyResult } from '../../../helpers/party/formatPartyResult';
 
 type StandardTableId =
@@ -176,7 +176,7 @@ export function describeStandardMonster(
       heading: config.title,
       label: config.labels[event.result] ?? String(event.result),
       detailParagraphs: [buildPartyCharacterMessage(summary, 'detail')],
-      compactText: buildPartyCompactText(summary),
+      compactText: '',
       compactMessages: [buildPartyCharacterMessage(summary, 'compact')],
       appendPending: hasPendingChildren(node),
     };

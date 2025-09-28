@@ -14,6 +14,7 @@ import { renderPassageTurnCompact } from './passageTurns';
 import { describeChamberDimensions } from './chamberDimensions';
 import { renderStairsCompact } from './stairs';
 import { renderWanderingMonsterCompact } from './monsters';
+import { collectCharacterPartyMessages } from './monsters';
 import { renderTrickTrapCompact } from './trickTrap';
 
 export const DEAD_END_FALLBACK_TEXT =
@@ -254,8 +255,12 @@ function summarizePeriodicResult(
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
       const detail = chamber ? describeChamberDimensions(chamber) : '';
+      const partyMessages = chamber
+        ? collectCharacterPartyMessages(chamber, 'compact')
+        : [];
       return {
         text: `${base.compact}${detail}`.trimEnd() + ' ',
+        nodes: partyMessages.length > 0 ? partyMessages : undefined,
       };
     }
     case PeriodicCheck.Stairs: {

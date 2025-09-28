@@ -52,7 +52,7 @@ describe('Compact passage rendering for unusual chambers', () => {
 
     expect(compactText).toContain('It is triangular.');
     expect(compactText).toContain('It is about 2,700 sq. ft.');
-    expect(compactText).toContain('TODO contents and treasure.');
+    expect(compactText).toContain('TODO treasure.');
     expect(compactText).toContain('There are 2 additional passages');
     expect(compactText).toContain('Passage 1 of 2 is on the opposite wall.');
     expect(compactText).toContain('The passage continues straight ahead.');

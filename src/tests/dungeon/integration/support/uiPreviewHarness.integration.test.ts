@@ -191,7 +191,7 @@ describe('uiPreviewHarness', () => {
     //   'Add 2000 sq. ft. (current total 4,000 sq. ft.) and roll again.'
     // );
     expect(compactText).toContain('It is about 4,500 sq. ft.');
-    expect(compactText).toContain('TODO contents and treasure.');
+    expect(compactText).toContain('TODO treasure.');
     // expect(compactText).toBe(
     //   'The passage opens into a chamber. The chamber has an unusual shape and size. It is triangular. It is about 4,500 sq. ft. Determine exits, contents, and treasure separately.'
     // );

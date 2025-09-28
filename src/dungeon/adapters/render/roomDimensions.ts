@@ -14,6 +14,7 @@ import {
 import { renderNumberOfExitsCompact } from './numberOfExits';
 import { renderCompactUnusualDetails } from './unusualShape';
 import { describeChamberRoomContents } from './chamberRoomContents';
+import { collectCharacterPartyMessages } from './monsters';
 
 export function renderRoomDimensionsDetail(
   outcome: OutcomeEventNode,
@@ -89,7 +90,27 @@ export function renderRoomDimensionsCompactNodes(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const text = renderRoomDimensionsCompact(outcome);
-  return [heading, bullet, { kind: 'paragraph', text }];
+  const nodes: DungeonRenderNode[] = [
+    heading,
+    bullet,
+    { kind: 'paragraph', text },
+  ];
+  const seen = new Set<string>();
+  const appendParties = (messages: DungeonMessage[]) => {
+    for (const message of messages) {
+      if (message.kind !== 'character-party') continue;
+      const key = JSON.stringify(message.summary);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      nodes.push(message);
+    }
+  };
+  appendParties(collectCharacterPartyMessages(outcome, 'compact'));
+  const contents = findChildEvent(outcome, 'chamberRoomContents');
+  if (contents && contents.type === 'event') {
+    appendParties(collectCharacterPartyMessages(contents, 'compact'));
+  }
+  return nodes;
 }
 
 export const buildRoomDimensionsPreview: TablePreviewFactory = (tableId) =>

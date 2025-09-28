@@ -55,12 +55,15 @@ function pluralize(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? '' : 's'}`;
 }
 
-function renderMagicItems(items: PartyCharacterSummary['magicItems']): JSX.Element {
+function renderMagicItems(
+  items: PartyCharacterSummary['magicItems']
+): JSX.Element {
   return (
     <ul style={magicItemListStyle}>
       {items.map((item, index) => (
         <li key={index}>
-          {MAGIC_TABLE_LABELS[item.table]} — {pluralize(item.count, 'item')} ({DMG_REFERENCE})
+          {MAGIC_TABLE_LABELS[item.table]} — {pluralize(item.count, 'item')} (
+          {DMG_REFERENCE})
         </li>
       ))}
     </ul>
@@ -87,7 +90,9 @@ const CharacterDetailRow: FC<CharacterProps> = ({ character, followers }) => {
     >
       <div style={{ fontWeight: 600, marginBottom: 4 }}>
         <span style={{ marginRight: 8 }}>[{alignmentCode}]</span>
-        <span style={{ fontStyle: 'italic', marginRight: 8 }}>{alignmentName}</span>
+        <span style={{ fontStyle: 'italic', marginRight: 8 }}>
+          {alignmentName}
+        </span>
         <span>
           {character.gender} {race} — {classText}
         </span>
@@ -95,7 +100,14 @@ const CharacterDetailRow: FC<CharacterProps> = ({ character, followers }) => {
       <div style={{ fontSize: '0.95em', marginBottom: 4 }}>
         Hit points: <strong>{character.hitPoints}</strong>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.9em' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+          fontSize: '0.9em',
+        }}
+      >
         {attributeOrder.map((attr) => (
           <span key={attr}>
             <strong>{attr}</strong>&nbsp;{character.attributes[attr]}
@@ -112,8 +124,11 @@ const CharacterDetailRow: FC<CharacterProps> = ({ character, followers }) => {
         <ul style={followerListStyle}>
           {followers.map((follower, index) => (
             <li key={index}>
-              <span style={{ fontWeight: 500 }}>[{alignmentToCode(follower.alignment)}]</span>{' '}
-              {follower.gender} {CharacterRace[follower.characterRace] ?? 'Unknown'} —{' '}
+              <span style={{ fontWeight: 500 }}>
+                [{alignmentToCode(follower.alignment)}]
+              </span>{' '}
+              {follower.gender}{' '}
+              {CharacterRace[follower.characterRace] ?? 'Unknown'} —{' '}
               {describeClasses(follower)} (hp: {follower.hitPoints})
               {follower.magicItems.length > 0 && (
                 <div style={{ marginTop: 4 }}>
@@ -133,12 +148,16 @@ interface CharacterPartyDetailProps {
   summary: PartySummary;
 }
 
-export const CharacterPartyDetail: FC<CharacterPartyDetailProps> = ({ summary }) => {
+export const CharacterPartyDetail: FC<CharacterPartyDetailProps> = ({
+  summary,
+}) => {
   return (
     <div style={{ margin: '0.5rem 0' }}>
       {summary.main.length > 0 && (
         <div>
-          <p style={{ margin: '0 0 0.5rem', fontWeight: 600 }}>Main characters</p>
+          <p style={{ margin: '0 0 0.5rem', fontWeight: 600 }}>
+            Main characters
+          </p>
           <ul style={{ ...listResetStyle, marginLeft: 18 }}>
             {summary.main.map(({ member, followers }, index) => (
               <CharacterDetailRow

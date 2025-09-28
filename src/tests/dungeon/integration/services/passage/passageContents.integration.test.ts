@@ -3,9 +3,11 @@ import {
   resolvePendingPreview,
   renderCompact,
   listPendingPreviewTargets,
+  resolvePreview,
 } from '../../../../support/dungeon/uiPreviewHarness';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import { describeChamberRoomContents } from '../../../../../dungeon/adapters/render/chamberRoomContents';
+import { collectCharacterPartyMessages } from '../../../../../dungeon/adapters/render/monsters';
 
 describe('passage contents', () => {
   it('shows empty chamber contents once resolved', () => {
@@ -70,24 +72,40 @@ describe('passage contents', () => {
     expect(monsterTableBase).toBeDefined();
 
     if (monsterTableBase) {
-      feed = resolvePendingPreview(feed, monsterTableBase, 1);
+      feed = resolvePendingPreview(feed, monsterTableBase, 40);
     }
 
-    const compactText = renderCompact(feed)
+    const humanTargets = listPendingPreviewTargets(feed).filter((target) =>
+      target.includes('human')
+    );
+    if (humanTargets.length > 0) {
+      const humanTarget = humanTargets[0];
+      if (humanTarget) {
+        feed = resolvePreview(feed, humanTarget, 90);
+      }
+    }
+
+    const compactNodes = renderCompact(feed);
+    const compactParagraphs = compactNodes
       .filter(
         (node): node is { kind: 'paragraph'; text: string } =>
           node.kind === 'paragraph'
       )
-      .map((node) => node.text.trim())
-      .join(' ')
-      .toLowerCase();
-    expect(compactText).toContain('giant ant');
+      .map((node) => node.text.trim().toLowerCase());
+    expect(compactParagraphs.join(' ')).toContain('a monster is present');
+    expect(compactNodes.some((node) => node.kind === 'character-party')).toBe(
+      true
+    );
     const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
     expect(contentsEvent).toBeDefined();
     if (contentsEvent) {
-      expect(describeChamberRoomContents(contentsEvent)).toContain(
-        'A monster is present.'
+      const partyMessages = collectCharacterPartyMessages(
+        contentsEvent,
+        'compact'
       );
+      expect(partyMessages.length).toBeGreaterThan(0);
+      const detailText = describeChamberRoomContents(contentsEvent);
+      expect(detailText).toContain('A monster is present.');
     }
   });
 

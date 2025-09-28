@@ -1,7 +1,4 @@
-import type {
-  OutcomeEvent,
-  OutcomeEventNode,
-} from '../../../domain/outcome';
+import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import type { DungeonRenderNode } from '../../../../types/dungeon';
 import { MonsterLevel } from '../../../../tables/dungeon/monster/monsterLevel';
 import { findChildEvent } from '../shared';
@@ -69,7 +66,9 @@ function readMonsterEncounterFromLevelNode(
   return summary;
 }
 
-function readMonsterEvent(node: OutcomeEventNode): MonsterCompactSummary | undefined {
+function readMonsterEvent(
+  node: OutcomeEventNode
+): MonsterCompactSummary | undefined {
   const description = describeMonsterOutcome(node);
   if (description) {
     if (description.compactMessages && description.compactMessages.length > 0) {

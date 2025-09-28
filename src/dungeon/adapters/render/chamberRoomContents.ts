@@ -12,7 +12,10 @@ import {
   type TablePreviewFactory,
 } from './shared';
 import { describeChamberRoomStairs } from './chamberRoomStairs';
-import { describeMonsterOutcome } from './monsters';
+import {
+  describeMonsterOutcome,
+  collectCharacterPartyMessages,
+} from './monsters';
 import { renderTrickTrapCompact } from './trickTrap';
 import { compactMessagesToText } from './monsters/partySummary';
 
@@ -32,11 +35,14 @@ export function renderChamberRoomContentsDetail(
       `roll: ${outcome.roll} — ${ChamberRoomContents[outcome.event.result]}`,
     ],
   };
-  const nodes: DungeonRenderNode[] = [
-    heading,
-    bullet,
-    { kind: 'paragraph', text: `${describeChamberRoomContents(outcome)} ` },
-  ];
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  const partyMessages = collectCharacterPartyMessages(outcome, 'detail');
+  if (partyMessages.length === 0) {
+    nodes.push({
+      kind: 'paragraph',
+      text: `${describeChamberRoomContents(outcome)} `,
+    });
+  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -55,6 +61,10 @@ export function renderChamberRoomContentsCompact(
     heading,
     { kind: 'paragraph', text: `${describeChamberRoomContents(outcome)} ` },
   ];
+  const partyMessages = collectCharacterPartyMessages(outcome, 'compact');
+  if (partyMessages.length > 0) {
+    nodes.push(...partyMessages);
+  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -107,6 +117,10 @@ function addResolvedMonsterSummary(
   node: OutcomeEventNode,
   segments: string[]
 ): void {
+  const partyMessages = collectCharacterPartyMessages(node, 'compact');
+  if (partyMessages.length > 0) {
+    return;
+  }
   const summaries = collectMonsterSummaries(node);
   for (const summary of summaries) {
     if (summary.length > 0) segments.push(summary);
@@ -119,13 +133,17 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
   const visit = (current: OutcomeEventNode): void => {
     const description = describeMonsterOutcome(current);
     if (description) {
-      if (
-        description.compactMessages &&
-        description.compactMessages.length > 0
-      ) {
-        const text = compactMessagesToText(description.compactMessages);
-        if (text.length > 0) summaries.push(text);
-      } else {
+      const hasPartyMessage = description.compactMessages?.some(
+        (message) => message.kind === 'character-party'
+      );
+      if (!hasPartyMessage) {
+        if (
+          description.compactMessages &&
+          description.compactMessages.length > 0
+        ) {
+          const text = compactMessagesToText(description.compactMessages);
+          if (text.length > 0) summaries.push(text);
+        }
         const text = description.compactText.trim();
         if (text) summaries.push(text);
       }

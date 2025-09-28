@@ -157,7 +157,7 @@ export function renderCompactUnusualDetails(node: OutcomeEventNode): string {
     }
   }
   if (shape || size) {
-    text += 'TODO contents and treasure. ';
+    text += 'TODO treasure. ';
   }
   return text;
 }
