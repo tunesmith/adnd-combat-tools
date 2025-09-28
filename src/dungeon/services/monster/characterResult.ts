@@ -190,8 +190,11 @@ export const generateFollowers = (
     let generatedFollowersThisPass = 0;
     for (const member of mainParty) {
       // TODO I forgot to check compatible followers for monks/assassins
-      const maxFollowersForMember = getMaxHenchmenForMember(member, mainParty);
-      if (member.followers.length >= maxFollowersForMember) continue;
+      if (!isMenAtArms) {
+        // Henchmen limits (class restrictions and CHA caps) do not apply to men-at-arms.
+        const maxFollowersForMember = getMaxHenchmenForMember(member, mainParty);
+        if (member.followers.length >= maxFollowersForMember) continue;
+      }
 
       let follower: CharacterSheet | undefined;
 
