@@ -247,6 +247,29 @@ describe('uiPreviewHarness', () => {
     });
     expect(pendingBases).not.toContain('chamberRoomContents');
   });
+
+  test('wandering trick trap retains generic summary before wall detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 20,
+      detailMode: true,
+    });
+
+    feed = resolvePendingPreview(feed, 'wanderingWhereFrom', 19);
+    feed = resolvePendingPreview(feed, 'trickTrap', 19);
+
+    const detailNodes = renderDetail(feed);
+    const paragraphTexts = detailNodes
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim());
+    const illusionarySummaries = paragraphTexts.filter(
+      (text) => text === 'There is an illusionary wall.'
+    );
+    expect(illusionarySummaries.length).toBe(1);
+  });
 });
 
 function findOutcomeEvent(

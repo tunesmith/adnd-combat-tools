@@ -17,7 +17,7 @@ import {
   renderWanderingMonsterCompact,
   collectCharacterPartyMessages,
 } from './monsters';
-import { renderTrickTrapCompact, renderTrickTrapDetail } from './trickTrap';
+import { renderTrickTrapCompact } from './trickTrap';
 import { renderChamberDimensionsCompact } from './chamberDimensions';
 
 export const DEAD_END_FALLBACK_TEXT =
@@ -137,6 +137,7 @@ export function renderPeriodicCheckCompact(
   };
   const summary = summarizePeriodicResult(outcome.event.result, outcome, {
     avoidMonster: outcome.event.avoidMonster,
+    mode: 'compact',
   });
   const nodes: DungeonRenderNode[] = [
     heading,
@@ -151,7 +152,9 @@ export function renderPeriodicCheckCompact(
 
 export function renderWanderingWhereFrom(node: OutcomeEventNode): string {
   if (node.event.kind !== 'wanderingWhereFrom') return '';
-  return summarizePeriodicResult(node.event.result, node).text;
+  return summarizePeriodicResult(node.event.result, node, {
+    mode: 'compact',
+  }).text;
 }
 
 export function renderWanderingWhereFromDetail(
@@ -170,7 +173,9 @@ export function renderWanderingWhereFromDetail(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const detailSummary = summarizePeriodicResult(outcome.event.result, outcome);
+  const detailSummary = summarizePeriodicResult(outcome.event.result, outcome, {
+    mode: 'detail',
+  });
   const nodes: DungeonRenderNode[] = [heading, bullet];
   if (detailSummary.text.trim().length > 0) {
     nodes.push({ kind: 'paragraph', text: detailSummary.text });
@@ -179,16 +184,6 @@ export function renderWanderingWhereFromDetail(
     nodes.push(...detailSummary.nodes);
   }
   appendPendingPreviews(outcome, nodes);
-  const trickTrapEvent = findChildEvent(outcome, 'trickTrap');
-  if (trickTrapEvent && trickTrapEvent.type === 'event') {
-    const trickNodes = renderTrickTrapDetail(
-      trickTrapEvent,
-      appendPendingPreviews
-    );
-    if (trickNodes.length > 0) {
-      nodes.push(...trickNodes);
-    }
-  }
   return nodes;
 }
 
@@ -207,7 +202,9 @@ export function renderWanderingWhereFromCompactNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const summary = summarizePeriodicResult(outcome.event.result, outcome);
+  const summary = summarizePeriodicResult(outcome.event.result, outcome, {
+    mode: 'compact',
+  });
   const nodes: DungeonRenderNode[] = [heading, bullet];
   if (summary.text.trim().length > 0) {
     nodes.push({ kind: 'paragraph', text: summary.text });
@@ -241,9 +238,10 @@ type PeriodicSummary = {
 function summarizePeriodicResult(
   result: PeriodicCheck,
   node: OutcomeEventNode,
-  options?: { avoidMonster?: boolean }
+  options?: { avoidMonster?: boolean; mode?: 'detail' | 'compact' }
 ): PeriodicSummary {
   const base = periodicBaseTexts(result, options);
+  const mode: 'detail' | 'compact' = options?.mode ?? 'compact';
   switch (result) {
     case PeriodicCheck.Door:
       return {
@@ -291,6 +289,9 @@ function summarizePeriodicResult(
       if (!trap) {
         return { text: TRICK_TRAP_FALLBACK_TEXT };
       }
+      if (mode === 'detail') {
+        return { text: TRICK_TRAP_FALLBACK_TEXT };
+      }
       const trickText = renderTrickTrapCompact(trap);
       const chamberNodes: DungeonRenderNode[] = [];
       trap.children?.forEach((child) => {
@@ -321,7 +322,9 @@ function summarizePeriodicResult(
       const whereFrom = findChildEvent(node, 'wanderingWhereFrom');
       const prefixSummary =
         whereFrom && whereFrom.event.kind === 'wanderingWhereFrom'
-          ? summarizePeriodicResult(whereFrom.event.result, whereFrom)
+          ? summarizePeriodicResult(whereFrom.event.result, whereFrom, {
+              mode: 'compact',
+            })
           : { text: '' };
       const monsterLevelNode = findChildEvent(node, 'monsterLevel');
       const monsterSummary = renderWanderingMonsterCompact(
