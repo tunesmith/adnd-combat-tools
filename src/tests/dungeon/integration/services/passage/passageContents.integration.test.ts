@@ -390,7 +390,7 @@ describe('passage contents', () => {
     const potionCategoryTarget = magicTargets[0];
     if (!potionCategoryTarget)
       throw new Error('missing potion category target');
-    feed = resolvePreview(feed, potionCategoryTarget, 10);
+    feed = resolvePreview(feed, potionCategoryTarget, 2);
 
     const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
       (target.split('.').pop() ?? '').startsWith('treasurePotion')
@@ -398,13 +398,21 @@ describe('passage contents', () => {
     expect(potionTargets).toHaveLength(1);
     const potionTarget = potionTargets[0];
     if (!potionTarget) throw new Error('missing potion target');
-    feed = resolvePreview(feed, potionTarget, 47);
+    feed = resolvePreview(feed, potionTarget, 2);
 
     const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
     expect(potionEvent).toBeDefined();
     if (potionEvent && potionEvent.event.kind === 'treasurePotion') {
-      expect(potionEvent.event.result).toBe(TreasurePotion.Healing);
+      expect(potionEvent.event.result).toBe(TreasurePotion.AnimalControl);
     }
+
+    const animalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotionAnimalControl')
+    );
+    expect(animalTargets).toHaveLength(1);
+    const animalTarget = animalTargets[0];
+    if (!animalTarget) throw new Error('missing animal control target');
+    feed = resolvePreview(feed, animalTarget, 3);
 
     const detailNodes = renderDetail(feed)
       .filter(
@@ -412,7 +420,9 @@ describe('passage contents', () => {
           node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase());
-    expect(detailNodes).toContain('there is a potion of healing.');
+    expect(detailNodes).toContain(
+      'there is a potion of mammal/marsupial control.'
+    );
 
     const compactText = renderCompact(feed)
       .filter(
@@ -421,7 +431,9 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain('there is a potion of healing.');
+    expect(compactText).toContain(
+      'there is a potion of mammal/marsupial control.'
+    );
   });
 
   it('rolls treasure twice when monsters guard it', () => {

@@ -5,7 +5,12 @@ import {
   TreasurePotion,
 } from '../../../tables/dungeon/treasurePotions';
 import {
+  treasurePotionAnimalControl,
+  TreasurePotionAnimalControl,
+} from '../../../tables/dungeon/treasurePotionAnimalControl';
+import {
   buildPreview,
+  findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
@@ -69,7 +74,7 @@ export function renderTreasurePotionDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: potionSentence(outcome.event.result),
+    text: resolvedPotionSentence(outcome),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -88,7 +93,7 @@ export function renderTreasurePotionCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: potionSentence(outcome.event.result),
+    text: resolvedPotionSentence(outcome),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -104,3 +109,98 @@ export const buildTreasurePotionPreview: TablePreviewFactory = (tableId) =>
       label: TreasurePotion[entry.command] ?? String(entry.command),
     })),
   });
+
+export function renderTreasurePotionAnimalControlDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionAnimalControl') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Animal Control Target',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasurePotionAnimalControl[outcome.event.result]
+      }`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: animalControlSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasurePotionAnimalControlCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionAnimalControl') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Animal Control Target',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: animalControlSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasurePotionAnimalControlPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Animal Control Target',
+    sides: treasurePotionAnimalControl.sides,
+    entries: treasurePotionAnimalControl.entries.map((entry) => ({
+      range: entry.range,
+      label: animalControlLabel(entry.command),
+    })),
+  });
+
+function animalControlSentence(result: TreasurePotionAnimalControl): string {
+  const label = animalControlLabel(result);
+  return `There is a potion of ${label} control.`;
+}
+
+function animalControlLabel(result: TreasurePotionAnimalControl): string {
+  switch (result) {
+    case TreasurePotionAnimalControl.MammalMarsupial:
+      return 'mammal/marsupial';
+    case TreasurePotionAnimalControl.Avian:
+      return 'avian';
+    case TreasurePotionAnimalControl.ReptileAmphibian:
+      return 'reptile/amphibian';
+    case TreasurePotionAnimalControl.Fish:
+      return 'fish';
+    case TreasurePotionAnimalControl.MammalMarsupialAvian:
+      return 'mammal/marsupial/avian';
+    case TreasurePotionAnimalControl.ReptileAmphibianFish:
+      return 'reptile/amphibian/fish';
+    case TreasurePotionAnimalControl.AnyAnimal:
+      return 'any animal';
+    default:
+      return 'animal';
+  }
+}
+
+export function resolvedPotionSentence(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'treasurePotion') return '';
+  if (node.event.result === TreasurePotion.AnimalControl) {
+    const child = findChildEvent(node, 'treasurePotionAnimalControl');
+    if (child && child.event.kind === 'treasurePotionAnimalControl') {
+      return animalControlSentence(child.event.result);
+    }
+  }
+  return potionSentence(node.event.result);
+}

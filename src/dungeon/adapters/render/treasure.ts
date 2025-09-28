@@ -5,7 +5,7 @@ import {
   treasureWithoutMonster,
   TreasureWithoutMonster,
 } from '../../../tables/dungeon/treasure';
-import { potionSentence } from './treasurePotion';
+import { resolvedPotionSentence } from './treasurePotion';
 import {
   buildPreview,
   joinSegments,
@@ -26,6 +26,7 @@ export function renderTreasureDetail(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasure') return [];
   const { entries, withMonster, rollIndex, totalRolls } = outcome.event;
+  const resolvedMagicDetail = describeResolvedMagic(outcome);
 
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -47,7 +48,11 @@ export function renderTreasureDetail(
   const nodes: DungeonRenderNode[] = [heading, bullet];
   for (const entry of entries) {
     const description = describeTreasureEntry(entry);
-    nodes.push({ kind: 'paragraph', text: description.detail });
+    if (entry.command === TreasureWithoutMonster.Magic && resolvedMagicDetail) {
+      nodes.push({ kind: 'paragraph', text: resolvedMagicDetail });
+    } else {
+      nodes.push({ kind: 'paragraph', text: description.detail });
+    }
   }
 
   appendPendingPreviews(outcome, nodes);
@@ -93,9 +98,13 @@ export const buildTreasurePreview: TablePreviewFactory = (tableId, context) => {
 export function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
   if (outcome.event.kind !== 'treasure') return '';
   const { entries } = outcome.event;
-  const segments = entries.map((entry) => describeTreasureEntry(entry).compact);
-  const magicDetail = describeResolvedMagic(outcome);
-  if (magicDetail) segments.push(magicDetail);
+  const resolvedMagic = describeResolvedMagic(outcome);
+  const segments = entries.map((entry) => {
+    if (entry.command === TreasureWithoutMonster.Magic && resolvedMagic) {
+      return resolvedMagic;
+    }
+    return describeTreasureEntry(entry).compact;
+  });
   const container = findChildEvent(outcome, 'treasureContainer');
   if (container && container.event.kind === 'treasureContainer') {
     const containerText = describeTreasureContainerResult(
@@ -113,7 +122,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   if (!magic || magic.event.kind !== 'treasureMagicCategory') return undefined;
   const potion = findChildEvent(magic, 'treasurePotion');
   if (potion && potion.event.kind === 'treasurePotion') {
-    return potionSentence(potion.event.result);
+    return resolvedPotionSentence(potion);
   }
   return undefined;
 }

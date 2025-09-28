@@ -68,6 +68,7 @@ import type {
 import type { TreasureContainer } from './treasureContainer';
 import type { TreasureMagicCategory } from './treasureMagic';
 import type { TreasurePotion } from './treasurePotions';
+import type { TreasurePotionAnimalControl } from './treasurePotionAnimalControl';
 
 export type Table<T> = {
   sides: number;
@@ -153,4 +154,5 @@ export type Command =
   | TreasureProtectionHiddenBy
   | TreasureContainer
   | TreasureMagicCategory
-  | TreasurePotion;
+  | TreasurePotion
+  | TreasurePotionAnimalControl;
