@@ -135,7 +135,7 @@ function formatNumberOfExits(
   const nounBase = event.context.isRoom ? 'door' : 'passage';
   if (event.count <= 0) {
     const plural = `${nounBase}s`;
-    return `There are no other ${plural}. Check once per 10' for 25% chance of secret door.`;
+    return `There are no other ${plural}. Check once per 10' for 25% chance of secret door (characters would still need to detect).`;
   }
   const plural = event.count === 1 ? nounBase : `${nounBase}s`;
   const verb = event.count === 1 ? 'is' : 'are';
