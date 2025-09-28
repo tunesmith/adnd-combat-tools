@@ -109,6 +109,7 @@ export const buildUnusualSizePreview: TablePreviewFactory = (
 function describeUnusualSizeEntry(
   node: OutcomeEventNode
 ): { sentence: string; isPending: boolean } | undefined {
+  if (node.event.kind !== 'unusualSize') return undefined;
   const extra = (node.event as { extra?: number }).extra ?? 0;
   if (node.event.result === UnusualSize.RollAgain) {
     const nextExtra = extra + 2000;

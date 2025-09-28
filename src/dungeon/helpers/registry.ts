@@ -64,6 +64,7 @@ import {
   resolveUnusualShape,
   resolveUnusualSize,
   resolveWanderingWhereFrom,
+  resolveTreasure,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -140,6 +141,7 @@ const TABLE_ID_LIST = [
   'exitDirection',
   'exitAlternative',
   'gasTrapEffect',
+  'treasure',
   'circularContents',
   'circularPool',
   'circularMagicPool',
@@ -203,6 +205,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   exitDirection: 'Exit Direction',
   exitAlternative: 'Exit Alternative',
   gasTrapEffect: 'Gas Effect',
+  treasure: 'Treasure',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
   circularMagicPool: 'Magic Pool Effect',
@@ -328,8 +331,15 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       })
     );
   },
-  chamberRoomContents: ({ roll }) =>
-    fromOutcome(resolveChamberRoomContents({ roll })),
+  chamberRoomContents: ({ roll, context, id }) => {
+    let level = 1;
+    if (context && context.kind === 'chamberContents') {
+      level = context.level;
+    } else {
+      level = readDungeonLevel(context, id, 1);
+    }
+    return fromOutcome(resolveChamberRoomContents({ roll, level }));
+  },
   chamberRoomStairs: ({ roll }) =>
     fromOutcome(resolveChamberRoomStairs({ roll })),
   streamConstruction: ({ roll }) =>
@@ -414,6 +424,31 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       })
     ),
   gasTrapEffect: ({ roll }) => fromOutcome(resolveGasTrapEffect({ roll })),
+  treasure: ({ roll, context }) => {
+    const treasureContext =
+      context && context.kind === 'treasure'
+        ? {
+            level: context.level,
+            withMonster: context.withMonster,
+            rollIndex: context.rollIndex,
+            totalRolls: context.totalRolls,
+          }
+        : {
+            level: 1,
+            withMonster: false,
+            rollIndex: undefined,
+            totalRolls: undefined,
+          };
+    return fromOutcome(
+      resolveTreasure({
+        roll,
+        level: treasureContext.level,
+        withMonster: treasureContext.withMonster,
+        rollIndex: treasureContext.rollIndex,
+        totalRolls: treasureContext.totalRolls,
+      })
+    );
+  },
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';

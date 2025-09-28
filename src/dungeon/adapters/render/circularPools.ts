@@ -84,7 +84,7 @@ export function describeCircularPool(node: OutcomeEventNode): string {
       segments.push('There is a monster in the pool.');
     }
     if (result === Pool.PoolMonsterTreasure) {
-      segments.push('Treasure is present. TODO treasure.');
+      segments.push('Treasure is present.');
     }
     return joinSegments(segments);
   }

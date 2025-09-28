@@ -90,6 +90,17 @@ export type TableContext =
       kind: 'chamberDimensions';
       forcedContents?: ChamberRoomContents;
       level?: number;
+    }
+  | {
+      kind: 'chamberContents';
+      level: number;
+    }
+  | {
+      kind: 'treasure';
+      level: number;
+      withMonster: boolean;
+      rollIndex?: number;
+      totalRolls?: number;
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

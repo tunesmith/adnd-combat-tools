@@ -75,6 +75,12 @@ import {
 } from '../../tables/dungeon/chamberRoomContents';
 import { chamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import {
+  treasureWithoutMonster,
+  treasureWithMonster,
+  TreasureWithoutMonster,
+} from '../../tables/dungeon/treasure';
+import type { TreasureEntry } from './outcome';
+import {
   periodicCheckDoorOnly,
   PeriodicCheckDoorOnly,
 } from '../../tables/dungeon/periodicCheckDoorOnly';
@@ -163,7 +169,11 @@ export function resolvePeriodicCheck(options?: {
       children.push({ type: 'pending-roll', table: 'passageTurns' });
       break;
     case PeriodicCheck.Chamber:
-      children.push({ type: 'pending-roll', table: 'chamberDimensions' });
+      children.push({
+        type: 'pending-roll',
+        table: 'chamberDimensions',
+        context: { kind: 'chamberDimensions', level },
+      });
       break;
     case PeriodicCheck.Stairs:
       children.push({ type: 'pending-roll', table: 'stairs' });
@@ -685,6 +695,7 @@ export function resolveChamberDimensions(options?: {
   const children: DungeonOutcomeNode[] = [];
   const forcedContents = options?.context?.forcedContents;
   const forcedContentsLevel = options?.context?.level;
+  const dungeonLevel = options?.context?.level ?? 1;
   switch (command) {
     case ChamberDimensions.Square20x20:
       children.push({
@@ -740,12 +751,16 @@ export function resolveChamberDimensions(options?: {
   if (forcedContents !== undefined) {
     children.push(
       resolveChamberRoomContents({
-        level: forcedContentsLevel,
+        level: forcedContentsLevel ?? dungeonLevel,
         forcedResult: forcedContents,
       })
     );
   } else {
-    children.push({ type: 'pending-roll', table: 'chamberRoomContents' });
+    children.push({
+      type: 'pending-roll',
+      table: 'chamberRoomContents',
+      context: { kind: 'chamberContents', level: dungeonLevel },
+    });
   }
   return {
     type: 'event',
@@ -876,6 +891,27 @@ export function resolveChamberRoomContents(options?: {
     default:
       break;
   }
+  if (
+    command === ChamberRoomContents.MonsterAndTreasure ||
+    command === ChamberRoomContents.Treasure
+  ) {
+    const totalRolls =
+      command === ChamberRoomContents.MonsterAndTreasure ? 2 : 1;
+    for (let index = 1; index <= totalRolls; index += 1) {
+      children.push({
+        type: 'pending-roll',
+        table: 'treasure',
+        id: totalRolls > 1 ? `treasure:${index}` : undefined,
+        context: {
+          kind: 'treasure',
+          level,
+          withMonster: command === ChamberRoomContents.MonsterAndTreasure,
+          rollIndex: index,
+          totalRolls,
+        },
+      });
+    }
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -901,6 +937,99 @@ export function resolveChamberRoomStairs(options?: {
       result: command,
     } as OutcomeEvent,
   };
+}
+
+export function resolveTreasure(options?: {
+  roll?: number;
+  level?: number;
+  withMonster?: boolean;
+  rollIndex?: number;
+  totalRolls?: number;
+}): DungeonOutcomeNode {
+  const level = options?.level ?? 1;
+  const withMonster = options?.withMonster ?? false;
+  const table = withMonster ? treasureWithMonster : treasureWithoutMonster;
+  const sides = table.sides;
+
+  const usedRoll = options?.roll ?? rollDice(sides);
+  const command = getTableEntry(usedRoll, table);
+  const entry: TreasureEntry = { roll: usedRoll, command };
+  enrichTreasureEntry(entry, level);
+
+  const event: OutcomeEvent = {
+    kind: 'treasure',
+    level,
+    withMonster,
+    entries: [entry],
+    rollIndex: options?.rollIndex,
+    totalRolls: options?.totalRolls,
+  } as OutcomeEvent;
+
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event,
+  };
+}
+
+function enrichTreasureEntry(entry: TreasureEntry, level: number): void {
+  switch (entry.command) {
+    case TreasureWithoutMonster.CopperPerLevel:
+      setCoinEntry(entry, 1000 * level, 'copper piece', 'copper pieces');
+      break;
+    case TreasureWithoutMonster.SilverPerLevel:
+      setCoinEntry(entry, 1000 * level, 'silver piece', 'silver pieces');
+      break;
+    case TreasureWithoutMonster.ElectrumPerLevel:
+      setCoinEntry(entry, 750 * level, 'electrum piece', 'electrum pieces');
+      break;
+    case TreasureWithoutMonster.GoldPerLevel:
+      setCoinEntry(entry, 250 * level, 'gold piece', 'gold pieces');
+      break;
+    case TreasureWithoutMonster.PlatinumPerLevel:
+      setCoinEntry(entry, 100 * level, 'platinum piece', 'platinum pieces');
+      break;
+    case TreasureWithoutMonster.GemsPerLevel: {
+      const quantity = rollDice(4, level);
+      setCountEntry(entry, quantity, 'gem', 'gems');
+      break;
+    }
+    case TreasureWithoutMonster.JewelryPerLevel: {
+      setCountEntry(entry, level, 'piece of jewelry', 'pieces of jewelry');
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+function setCoinEntry(
+  entry: TreasureEntry,
+  quantity: number,
+  singular: string,
+  plural: string
+): void {
+  entry.quantity = quantity;
+  entry.display = formatQuantity(quantity, singular, plural);
+}
+
+function setCountEntry(
+  entry: TreasureEntry,
+  quantity: number,
+  singular: string,
+  plural: string
+): void {
+  entry.quantity = quantity;
+  entry.display = formatQuantity(quantity, singular, plural);
+}
+
+function formatQuantity(
+  quantity: number,
+  singular: string,
+  plural: string
+): string {
+  const unit = quantity === 1 ? singular : plural;
+  return `${quantity.toLocaleString()} ${unit}`;
 }
 
 function representativeRollForChamberContents(
@@ -955,6 +1084,22 @@ export function resolveCircularPool(options?: {
       table: `monsterLevel:${level}`,
       context: { kind: 'wandering', level },
     });
+  }
+  if (command === Pool.PoolMonsterTreasure) {
+    for (let index = 1; index <= 2; index += 1) {
+      children.push({
+        type: 'pending-roll',
+        table: 'treasure',
+        id: `treasure:${index}`,
+        context: {
+          kind: 'treasure',
+          level,
+          withMonster: true,
+          rollIndex: index,
+          totalRolls: 2,
+        },
+      });
+    }
   }
   if (command === Pool.MagicPool) {
     children.push({ type: 'pending-roll', table: 'circularMagicPool' });

@@ -149,6 +149,11 @@ import {
   renderMonsterDetailNodes,
   renderMonsterCompactNodes,
 } from './render/monsters';
+import {
+  renderTreasureDetail,
+  renderTreasureCompactNodes,
+  buildTreasurePreview,
+} from './render/treasure';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -349,6 +354,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTrickTrapDetail,
     renderCompact: NO_COMPACT_RENDER,
   },
+  treasure: {
+    renderDetail: renderTreasureDetail,
+    renderCompact: withoutAppend(renderTreasureCompactNodes),
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -434,6 +443,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   trickTrap: buildTrickTrapPreview,
   illusionaryWallNature: buildIllusionaryWallNaturePreview,
   gasTrapEffect: buildGasTrapEffectPreview,
+  treasure: buildTreasurePreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,

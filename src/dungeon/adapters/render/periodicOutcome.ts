@@ -6,6 +6,7 @@ import type {
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { periodicCheck } from '../../../tables/dungeon/periodicCheck';
+import { TrickTrap } from '../../../tables/dungeon/trickTrap';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { buildPreview, findChildEvent } from './shared';
 import { renderDoorChainCompact } from './doorLocation';
@@ -104,6 +105,7 @@ export function renderPeriodicCheckDetail(
 ): DungeonRenderNode[] {
   const nodes: DungeonRenderNode[] = [];
   const { event, roll } = outcome;
+  if (event.kind !== 'periodicCheck') return nodes;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 3,
@@ -289,10 +291,15 @@ function summarizePeriodicResult(
       if (!trap) {
         return { text: TRICK_TRAP_FALLBACK_TEXT };
       }
-      if (mode === 'detail') {
-        return { text: TRICK_TRAP_FALLBACK_TEXT };
-      }
       const trickText = renderTrickTrapCompact(trap);
+      if (mode === 'detail') {
+        const trapResult =
+          trap.event.kind === 'trickTrap' ? trap.event.result : undefined;
+        if (trapResult === TrickTrap.IllusionaryWall) {
+          return { text: TRICK_TRAP_FALLBACK_TEXT };
+        }
+        return { text: trickText };
+      }
       const chamberNodes: DungeonRenderNode[] = [];
       trap.children?.forEach((child) => {
         if (child.type !== 'event') return;

@@ -59,6 +59,7 @@ import type { IllusionaryWallNature } from './illusionaryWallNature';
 import type { GasTrapEffect } from './gasTrapEffect';
 import type { ChamberRoomContents } from './chamberRoomContents';
 import type { ChamberRoomStairs } from './chamberRoomStairs';
+import type { TreasureWithoutMonster } from './treasure';
 
 export type Table<T> = {
   sides: number;
@@ -137,4 +138,5 @@ export type Command =
   | IllusionaryWallNature
   | GasTrapEffect
   | ChamberRoomContents
-  | ChamberRoomStairs;
+  | ChamberRoomStairs
+  | TreasureWithoutMonster;

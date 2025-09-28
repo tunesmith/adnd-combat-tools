@@ -65,6 +65,9 @@ export function describeTransporterLocation(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {
+  if (node.event.kind !== 'transporterLocation') {
+    return { detailParagraphs: [], compactText: '' };
+  }
   const sentence = formatTransporterLocation(node.event.result).trim();
   if (!sentence) {
     return { detailParagraphs: [], compactText: '' };

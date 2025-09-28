@@ -93,7 +93,10 @@ describe('Room and chamber detail previews', () => {
     ) as OutcomeEventNode | undefined;
     expect(contentsNode).toBeDefined();
     expect(contentsNode?.event.kind).toBe('chamberRoomContents');
-    expect(contentsNode?.event.result).toBe(
+    if (!contentsNode || contentsNode.event.kind !== 'chamberRoomContents') {
+      throw new Error('Expected chamber contents event');
+    }
+    expect(contentsNode.event.result).toBe(
       ChamberRoomContents.MonsterAndTreasure
     );
     const monsterPending = contentsNode?.children?.find(

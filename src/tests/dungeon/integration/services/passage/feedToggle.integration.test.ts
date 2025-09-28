@@ -299,7 +299,6 @@ describe('dungeon feed toggling confidence', () => {
       );
       expect(occurrences?.length ?? 0).toBe(1);
     }
-    expect(compactJoined).toContain('TODO treasure.');
     expect(compactJoined).toContain('There is 1 additional passage');
     expect(compactJoined).toContain('Passage 1 is on the opposite wall.');
   });

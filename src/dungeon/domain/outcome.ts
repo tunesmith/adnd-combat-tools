@@ -68,6 +68,7 @@ import type { GasTrapEffect } from '../../tables/dungeon/gasTrapEffect';
 import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
+import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
 import type { PartyResult } from '../models/character/characterSheet';
 
 export type DoorChainLaterality = 'Left' | 'Right';
@@ -254,7 +255,22 @@ export type OutcomeEvent =
       dungeonLevel: number;
       text?: string;
       party?: PartyResult;
+    }
+  | {
+      kind: 'treasure';
+      level: number;
+      withMonster: boolean;
+      entries: TreasureEntry[];
+      rollIndex?: number;
+      totalRolls?: number;
     };
+
+export type TreasureEntry = {
+  roll: number;
+  command: TreasureWithoutMonster;
+  quantity?: number;
+  display?: string;
+};
 
 export type PendingRoll = {
   type: 'pending-roll';

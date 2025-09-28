@@ -170,6 +170,7 @@ export function describeStandardMonster(
   const config = STANDARD_CONFIG[node.event.kind as StandardTableId];
   if (!config) return undefined;
   const event = node.event;
+  if (!('result' in event)) return undefined;
   if ('party' in event && event.party) {
     const summary = summarizePartyResult(event.party);
     return {
@@ -199,6 +200,7 @@ export function describeDragonMonster(
   const config = DRAGON_CONFIG[node.event.kind as DragonTableId];
   if (!config) return undefined;
   const event = node.event;
+  if (!('result' in event)) return undefined;
   const textInfo = monsterTextDescription(
     'text' in event ? event.text : undefined
   );

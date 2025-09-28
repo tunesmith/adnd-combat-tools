@@ -18,6 +18,7 @@ import {
 } from './monsters';
 import { renderTrickTrapCompact } from './trickTrap';
 import { compactMessagesToText } from './monsters/partySummary';
+import { collectTreasureCompactSummaries } from './treasure';
 
 export function renderChamberRoomContentsDetail(
   outcome: OutcomeEventNode,
@@ -81,8 +82,9 @@ export function describeChamberRoomContents(node: OutcomeEventNode): string {
       addResolvedMonsterSummary(node, segments);
       break;
     case ChamberRoomContents.MonsterAndTreasure:
-      segments.push('A monster and treasure are present. TODO treasure.');
+      segments.push('A monster and treasure are present.');
       addResolvedMonsterSummary(node, segments);
+      addResolvedTreasureSummary(node, segments);
       break;
     case ChamberRoomContents.Special: {
       const stairs = findChildEvent(node, 'chamberRoomStairs');
@@ -97,7 +99,8 @@ export function describeChamberRoomContents(node: OutcomeEventNode): string {
       addResolvedTrickTrapSummary(node, segments);
       break;
     case ChamberRoomContents.Treasure:
-      segments.push('Treasure is present. TODO treasure.');
+      segments.push('Treasure is present.');
+      addResolvedTreasureSummary(node, segments);
       break;
     default:
       break;
@@ -178,6 +181,16 @@ function addResolvedTrickTrapSummary(
   }
 }
 
+function addResolvedTreasureSummary(
+  node: OutcomeEventNode,
+  segments: string[]
+): void {
+  const summaries = collectTreasureCompactSummaries(node);
+  for (const summary of summaries) {
+    if (summary.length > 0) segments.push(summary);
+  }
+}
+
 function collectTrickTrapSummaries(node: OutcomeEventNode): string[] {
   const summaries: string[] = [];
 
@@ -206,7 +219,10 @@ function collectTrickTrapSummaries(node: OutcomeEventNode): string[] {
   return unique;
 }
 
-export const buildChamberRoomContentsPreview: TablePreviewFactory = (tableId) =>
+export const buildChamberRoomContentsPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Chamber or Room Contents',
     sides: chamberRoomContents.sides,
@@ -214,4 +230,5 @@ export const buildChamberRoomContentsPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: ChamberRoomContents[entry.command] ?? String(entry.command),
     })),
+    context,
   });

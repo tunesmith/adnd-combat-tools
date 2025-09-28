@@ -56,6 +56,7 @@ import {
   resolveDragonFiveOlder,
   resolveDragonSix,
   resolveHuman,
+  resolveTreasure,
 } from '../domain/resolvers';
 import type { TableContext } from '../../types/dungeon';
 import {
@@ -164,6 +165,24 @@ export function isTableContext(x: unknown): x is TableContext {
       typeof obj.forcedContents === 'number';
     const levelOk = obj.level === undefined || typeof obj.level === 'number';
     return forcedOk && levelOk;
+  }
+  if (kind === 'chamberContents') {
+    const obj = x as { level?: unknown };
+    return typeof obj.level === 'number';
+  }
+  if (kind === 'treasure') {
+    const obj = x as {
+      level?: unknown;
+      withMonster?: unknown;
+      rollIndex?: unknown;
+      totalRolls?: unknown;
+    };
+    return (
+      typeof obj.level === 'number' &&
+      typeof obj.withMonster === 'boolean' &&
+      (obj.rollIndex === undefined || typeof obj.rollIndex === 'number') &&
+      (obj.totalRolls === undefined || typeof obj.totalRolls === 'number')
+    );
   }
   return false;
 }
@@ -538,6 +557,20 @@ function resolvePendingNode(
     }
     case 'circularMagicPool':
       return resolveCircularMagicPool({});
+    case 'treasure': {
+      const rawContext = pending.context as TableContext | undefined;
+      const ctx =
+        rawContext && rawContext.kind === 'treasure' ? rawContext : undefined;
+      const level =
+        ctx?.level ?? deriveDungeonLevelFromAncestors(ancestors) ?? 1;
+      const withMonster = ctx?.withMonster ?? false;
+      return resolveTreasure({
+        level,
+        withMonster,
+        rollIndex: ctx?.rollIndex,
+        totalRolls: ctx?.totalRolls,
+      });
+    }
     case 'transmuteType':
       return resolveTransmuteType({});
     case 'poolAlignment':

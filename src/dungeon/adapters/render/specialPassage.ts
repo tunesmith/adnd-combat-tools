@@ -97,13 +97,10 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
     case SpecialPassage.TenFootStream: {
       append("A stream, 10' wide, bisects the passage. ");
       const construction = findChildEvent(node, 'streamConstruction');
-      if (construction)
-        append(
-          formatStreamConstruction(
-            construction.event.result as StreamConstruction
-          ),
-          { detail: false }
-        );
+      if (construction && construction.event.kind === 'streamConstruction')
+        append(formatStreamConstruction(construction.event.result), {
+          detail: false,
+        });
       break;
     }
     case SpecialPassage.TwentyFootRiver:
@@ -117,7 +114,7 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
           : "A river, 60' wide, bisects the passage. ";
       append(base);
       const construction = findChildEvent(node, 'riverConstruction');
-      if (construction) {
+      if (construction && construction.event.kind === 'riverConstruction') {
         const summary = describeRiverConstruction(construction);
         if (summary.compactText.length > 0) {
           append(summary.compactText, { detail: false });
@@ -128,16 +125,16 @@ export function describeSpecialPassage(node: OutcomeEventNode): {
     case SpecialPassage.TwentyFootChasm: {
       append("A chasm, 20' wide, bisects the passage. ");
       const depth = findChildEvent(node, 'chasmDepth');
-      if (depth) {
+      if (depth && depth.event.kind === 'chasmDepth') {
         append(formatChasmDepth(depth.event.result), { detail: false });
       }
       const construction = findChildEvent(node, 'chasmConstruction');
-      if (construction) {
+      if (construction && construction.event.kind === 'chasmConstruction') {
         append(formatChasmConstruction(construction.event.result), {
           detail: false,
         });
         const jump = findChildEvent(construction, 'jumpingPlaceWidth');
-        if (jump) {
+        if (jump && jump.event.kind === 'jumpingPlaceWidth') {
           append(formatJumpingPlaceWidth(jump.event.result), {
             detail: false,
           });
@@ -443,7 +440,7 @@ export function describeRiverConstruction(node: OutcomeEventNode): {
     case RiverConstruction.Boat: {
       append('There is a boat. ');
       const boat = findChildEvent(node, 'riverBoatBank');
-      if (boat) {
+      if (boat && boat.event.kind === 'riverBoatBank') {
         append(
           boat.event.result === RiverBoatBank.ThisSide
             ? 'The boat is on this bank of the river. '
