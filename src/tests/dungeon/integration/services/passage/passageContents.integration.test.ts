@@ -12,6 +12,8 @@ import type {
 } from '../../../../../dungeon/domain/outcome';
 import { describeChamberRoomContents } from '../../../../../dungeon/adapters/render/chamberRoomContents';
 import { collectCharacterPartyMessages } from '../../../../../dungeon/adapters/render/monsters';
+import { renderTreasureContainerCompact } from '../../../../../dungeon/adapters/render/treasureContainer';
+import { resolveTreasureContainer } from '../../../../../dungeon/domain/resolvers';
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 
 describe('passage contents', () => {
@@ -221,6 +223,15 @@ describe('passage contents', () => {
 
     feed = resolvePendingPreview(feed, 'treasure', 80);
 
+    const containerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureContainer')
+    );
+    expect(containerTargets).toHaveLength(1);
+    const firstContainerTarget = containerTargets[0];
+    if (!firstContainerTarget) throw new Error('missing container target');
+
+    feed = resolvePreview(feed, firstContainerTarget, 6);
+
     const treasureEvent = findOutcomeEvent(feed.outcome, 'treasure');
     expect(treasureEvent).toBeDefined();
     if (treasureEvent && treasureEvent.event.kind === 'treasure') {
@@ -240,7 +251,7 @@ describe('passage contents', () => {
       .join(' ')
       .toLowerCase();
     expect(compactText).toContain('750 gold pieces');
-    expect(compactText).toContain('determine treasure container');
+    expect(compactText).toContain('contained in small coffers');
     expect(compactText).toContain('determine treasure protection');
   });
 
@@ -273,7 +284,24 @@ describe('passage contents', () => {
     expect(treasureTargets).toHaveLength(2);
 
     feed = resolvePendingPreview(feed, 'treasure', 30);
+
+    let containerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureContainer')
+    );
+    expect(containerTargets).toHaveLength(1);
+    const firstMonsterContainer = containerTargets[0];
+    if (!firstMonsterContainer) throw new Error('missing monster container');
+    feed = resolvePreview(feed, firstMonsterContainer, 19);
+
     feed = resolvePendingPreview(feed, 'treasure', 97);
+
+    containerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureContainer')
+    );
+    expect(containerTargets).toHaveLength(1);
+    const secondMonsterContainer = containerTargets[0];
+    if (!secondMonsterContainer) throw new Error('missing second monster container');
+    feed = resolvePreview(feed, secondMonsterContainer, 4);
 
     const treasureEvents = findOutcomeEvents(feed.outcome, 'treasure');
     const treasureNodes = treasureEvents.filter(
@@ -310,6 +338,14 @@ describe('passage contents', () => {
     expect(compactText).toContain(
       'magic item (roll once on magic items table)'
     );
+    expect(compactText).toContain('contained in sacks');
+    expect(compactText).not.toContain('contained in loose');
+  });
+
+  it('omits container text when treasure is loose', () => {
+    const node = resolveTreasureContainer({ roll: 19 }) as OutcomeEventNode;
+    const compactNodes = renderTreasureContainerCompact(node);
+    expect(compactNodes).toHaveLength(0);
   });
 });
 

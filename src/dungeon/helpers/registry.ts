@@ -65,6 +65,7 @@ import {
   resolveUnusualSize,
   resolveWanderingWhereFrom,
   resolveTreasure,
+  resolveTreasureContainer,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -142,6 +143,7 @@ const TABLE_ID_LIST = [
   'exitAlternative',
   'gasTrapEffect',
   'treasure',
+  'treasureContainer',
   'circularContents',
   'circularPool',
   'circularMagicPool',
@@ -206,6 +208,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   exitAlternative: 'Exit Alternative',
   gasTrapEffect: 'Gas Effect',
   treasure: 'Treasure',
+  treasureContainer: 'Treasure Container',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
   circularMagicPool: 'Magic Pool Effect',
@@ -449,6 +452,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       })
     );
   },
+  treasureContainer: ({ roll }) =>
+    fromOutcome(resolveTreasureContainer({ roll })),
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';

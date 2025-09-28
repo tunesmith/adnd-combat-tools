@@ -101,6 +101,9 @@ export type TableContext =
       withMonster: boolean;
       rollIndex?: number;
       totalRolls?: number;
+    }
+  | {
+      kind: 'treasureContainer';
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

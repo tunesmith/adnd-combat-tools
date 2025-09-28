@@ -6,7 +6,7 @@ import {
 } from '../../tables/dungeon/periodicCheck';
 import { doorBeyond, DoorBeyond } from '../../tables/dungeon/doorBeyond';
 import { doorLocation, DoorLocation } from '../../tables/dungeon/doorLocation';
-import type { DungeonOutcomeNode, OutcomeEvent } from './outcome';
+import type { DungeonOutcomeNode, OutcomeEvent, OutcomeEventNode } from './outcome';
 import { sidePassages } from '../../tables/dungeon/sidePassages';
 import { passageTurns } from '../../tables/dungeon/passageTurns';
 import {
@@ -79,6 +79,7 @@ import {
   treasureWithMonster,
   TreasureWithoutMonster,
 } from '../../tables/dungeon/treasure';
+import { treasureContainer } from '../../tables/dungeon/treasureContainer';
 import type { TreasureEntry } from './outcome';
 import {
   periodicCheckDoorOnly,
@@ -965,11 +966,22 @@ export function resolveTreasure(options?: {
     totalRolls: options?.totalRolls,
   } as OutcomeEvent;
 
-  return {
+  const node: OutcomeEventNode = {
     type: 'event',
     roll: usedRoll,
     event,
+    children: [
+      {
+        type: 'pending-roll',
+        table: 'treasureContainer',
+        context: {
+          kind: 'treasureContainer',
+        },
+      },
+    ],
   };
+
+  return node;
 }
 
 function enrichTreasureEntry(entry: TreasureEntry, level: number): void {
@@ -1030,6 +1042,21 @@ function formatQuantity(
 ): string {
   const unit = quantity === 1 ? singular : plural;
   return `${quantity.toLocaleString()} ${unit}`;
+}
+
+export function resolveTreasureContainer(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureContainer.sides);
+  const command = getTableEntry(usedRoll, treasureContainer);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureContainer',
+      result: command,
+    } as OutcomeEvent,
+  };
 }
 
 function representativeRollForChamberContents(

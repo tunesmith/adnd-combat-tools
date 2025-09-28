@@ -8,18 +8,18 @@ import {
 import {
   buildPreview,
   joinSegments,
+  findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
+import { describeTreasureContainerResult } from './treasureContainer';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasure') return [];
-  const entries = outcome.event.entries;
-  const withMonster = outcome.event.withMonster ?? false;
-  const { rollIndex, totalRolls } = outcome.event;
+  const { entries, withMonster, rollIndex, totalRolls } = outcome.event;
 
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -43,10 +43,15 @@ export function renderTreasureDetail(
     const description = describeTreasureEntry(entry);
     nodes.push({ kind: 'paragraph', text: description.detail });
   }
-  nodes.push({
-    kind: 'paragraph',
-    text: 'TODO: Determine treasure container.',
-  });
+  const container = findChildEvent(outcome, 'treasureContainer');
+  if (container && container.event.kind === 'treasureContainer') {
+    const containerText = describeTreasureContainerResult(
+      container.event.result
+    );
+    if (containerText) {
+      nodes.push({ kind: 'paragraph', text: containerText });
+    }
+  }
   nodes.push({
     kind: 'paragraph',
     text: 'TODO: Determine treasure protection.',
@@ -94,9 +99,13 @@ export const buildTreasurePreview: TablePreviewFactory = (tableId, context) => {
 
 export function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
   if (outcome.event.kind !== 'treasure') return '';
-  const entries = outcome.event.entries;
+  const { entries } = outcome.event;
   const segments = entries.map((entry) => describeTreasureEntry(entry).compact);
-  segments.push('TODO: Determine treasure container.');
+  const container = findChildEvent(outcome, 'treasureContainer');
+  if (container && container.event.kind === 'treasureContainer') {
+    const containerText = describeTreasureContainerResult(container.event.result);
+    if (containerText) segments.push(containerText);
+  }
   segments.push('TODO: Determine treasure protection.');
   return joinSegments(segments).trim();
 }

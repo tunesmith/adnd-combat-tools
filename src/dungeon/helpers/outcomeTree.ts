@@ -57,6 +57,7 @@ import {
   resolveDragonSix,
   resolveHuman,
   resolveTreasure,
+  resolveTreasureContainer,
 } from '../domain/resolvers';
 import type { TableContext } from '../../types/dungeon';
 import {
@@ -183,6 +184,9 @@ export function isTableContext(x: unknown): x is TableContext {
       (obj.rollIndex === undefined || typeof obj.rollIndex === 'number') &&
       (obj.totalRolls === undefined || typeof obj.totalRolls === 'number')
     );
+  }
+  if (kind === 'treasureContainer') {
+    return true;
   }
   return false;
 }
@@ -571,6 +575,8 @@ function resolvePendingNode(
         totalRolls: ctx?.totalRolls,
       });
     }
+    case 'treasureContainer':
+      return resolveTreasureContainer({});
     case 'transmuteType':
       return resolveTransmuteType({});
     case 'poolAlignment':

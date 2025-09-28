@@ -69,6 +69,7 @@ import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
+import type { TreasureContainer } from '../../tables/dungeon/treasureContainer';
 import type { PartyResult } from '../models/character/characterSheet';
 
 export type DoorChainLaterality = 'Left' | 'Right';
@@ -263,6 +264,10 @@ export type OutcomeEvent =
       entries: TreasureEntry[];
       rollIndex?: number;
       totalRolls?: number;
+    }
+  | {
+      kind: 'treasureContainer';
+      result: TreasureContainer;
     };
 
 export type TreasureEntry = {

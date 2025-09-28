@@ -60,6 +60,7 @@ import type { GasTrapEffect } from './gasTrapEffect';
 import type { ChamberRoomContents } from './chamberRoomContents';
 import type { ChamberRoomStairs } from './chamberRoomStairs';
 import type { TreasureWithoutMonster } from './treasure';
+import type { TreasureContainer } from './treasureContainer';
 
 export type Table<T> = {
   sides: number;
@@ -139,4 +140,5 @@ export type Command =
   | GasTrapEffect
   | ChamberRoomContents
   | ChamberRoomStairs
-  | TreasureWithoutMonster;
+  | TreasureWithoutMonster
+  | TreasureContainer;
