@@ -11,6 +11,7 @@ import {
   listPendingPreviewTargets,
 } from '../../../support/dungeon/uiPreviewHarness';
 import { resolveViaRegistry } from '../../../../dungeon/helpers/registry';
+import type { OutcomeEvent } from '../../../../dungeon/domain/outcome';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -196,4 +197,71 @@ describe('uiPreviewHarness', () => {
     //   'The passage opens into a chamber. The chamber has an unusual shape and size. It is triangular. It is about 4,500 sq. ft. Determine exits, contents, and treasure separately.'
     // );
   });
+
+  test('illusory wall chamber skips contents preview when forcing monster result', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 19,
+      detailMode: true,
+    });
+
+    feed = resolvePendingPreview(feed, 'trickTrap', 19);
+    feed = resolvePendingPreview(feed, 'illusoryWallNature', 12);
+
+    const previewsBefore = renderDetail(feed).filter(
+      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+    );
+    const chamberPreviewBefore = previewsBefore.find((node) =>
+      node.id.split(':')[0] === 'chamberDimensions'
+    );
+    expect(chamberPreviewBefore).toBeDefined();
+    expect(chamberPreviewBefore?.context).toEqual(
+      expect.objectContaining({ kind: 'chamberDimensions' })
+    );
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 1);
+
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent?.event.kind).toBe('chamberRoomContents');
+    expect((contentsEvent?.event as any).autoResolved).toBe(true);
+
+    const detail = renderDetail(feed);
+    const previews = detail.filter(
+      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+    );
+    const hasContentsPreview = previews.some((preview) => {
+      const previewBase = preview.id.split(':')[0];
+      const targetBase = (preview.targetId ?? '')
+        .split('.')
+        .pop()
+        ?.split(':')[0];
+      return (
+        previewBase === 'chamberRoomContents' ||
+        targetBase === 'chamberRoomContents'
+      );
+    });
+    expect(hasContentsPreview).toBe(false);
+    const pendingTargets = listPendingPreviewTargets(feed);
+    const pendingBases = pendingTargets.map((target) => {
+      const last = target.split('.').pop() ?? target;
+      return last.split(':')[0];
+    });
+    expect(pendingBases).not.toContain('chamberRoomContents');
+  });
 });
+
+function findOutcomeEvent(
+  node: OutcomeEventNode | undefined,
+  kind: OutcomeEvent['kind']
+): OutcomeEventNode | undefined {
+  if (!node || node.type !== 'event') return undefined;
+  if (node.event.kind === kind) return node;
+  if (node.children) {
+    for (const child of node.children) {
+      if (child.type === 'event') {
+        const candidate = findOutcomeEvent(child, kind);
+        if (candidate) return candidate;
+      }
+    }
+  }
+  return undefined;
+}

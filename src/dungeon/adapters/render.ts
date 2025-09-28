@@ -604,6 +604,7 @@ function previewForEventNode(
       tableId = 'unusualSize';
       break;
     case 'chamberRoomContents':
+      if (event.autoResolved) return undefined;
       tableId = 'chamberRoomContents';
       break;
     case 'chamberRoomStairs':

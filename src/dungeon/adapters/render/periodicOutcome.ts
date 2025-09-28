@@ -23,7 +23,7 @@ import { renderChamberDimensionsCompact } from './chamberDimensions';
 export const DEAD_END_FALLBACK_TEXT =
   'The passage reaches a dead end. Walls left, right, and ahead can each be checked for 25% chance of secret door. Characters would still need to detect. ';
 export const TRICK_TRAP_FALLBACK_TEXT =
-  "There is a trick or trap. (TODO) -- check again in 30'. ";
+  "There is a trick or trap -- check again in 30'. ";
 
 export const buildPeriodicCheckPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
@@ -181,7 +181,10 @@ export function renderWanderingWhereFromDetail(
   appendPendingPreviews(outcome, nodes);
   const trickTrapEvent = findChildEvent(outcome, 'trickTrap');
   if (trickTrapEvent && trickTrapEvent.type === 'event') {
-    const trickNodes = renderTrickTrapDetail(trickTrapEvent, appendPendingPreviews);
+    const trickNodes = renderTrickTrapDetail(
+      trickTrapEvent,
+      appendPendingPreviews
+    );
     if (trickNodes.length > 0) {
       nodes.push(...trickNodes);
     }
@@ -289,7 +292,6 @@ function summarizePeriodicResult(
         return { text: TRICK_TRAP_FALLBACK_TEXT };
       }
       const trickText = renderTrickTrapCompact(trap);
-      const partyMessages = collectCharacterPartyMessages(trap, 'compact');
       const chamberNodes: DungeonRenderNode[] = [];
       trap.children?.forEach((child) => {
         if (child.type !== 'event') return;
@@ -300,7 +302,13 @@ function summarizePeriodicResult(
           }
         }
       });
-      const combinedNodes = [...partyMessages, ...chamberNodes];
+      let combinedNodes: DungeonRenderNode[] = [];
+      if (chamberNodes.length > 0) {
+        combinedNodes = chamberNodes;
+      } else {
+        const partyMessages = collectCharacterPartyMessages(trap, 'compact');
+        combinedNodes = partyMessages;
+      }
       return {
         text: trickText,
         nodes: combinedNodes.length > 0 ? combinedNodes : undefined,

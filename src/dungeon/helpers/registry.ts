@@ -8,6 +8,7 @@ import type {
   DoorChainLaterality,
   DungeonOutcomeNode,
 } from '../domain/outcome';
+import { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 
 // Message services used by the registry
 import {
@@ -308,8 +309,27 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   passageWidth: ({ roll }) => fromOutcome(resolvePassageWidth({ roll })),
   specialPassage: ({ roll }) => fromOutcome(resolveSpecialPassage({ roll })),
   roomDimensions: ({ roll }) => fromOutcome(resolveRoomDimensions({ roll })),
-  chamberDimensions: ({ roll }) =>
-    fromOutcome(resolveChamberDimensions({ roll })),
+  chamberDimensions: ({ roll, context }) => {
+    let forcedContents: ChamberRoomContents | undefined;
+    let forcedLevel: number | undefined;
+    if (context && context.kind === 'chamberDimensions') {
+      if (typeof context.forcedContents === 'number') {
+        forcedContents = context.forcedContents as ChamberRoomContents;
+      }
+      if (typeof context.level === 'number') {
+        forcedLevel = context.level;
+      }
+    }
+    return fromOutcome(
+      resolveChamberDimensions({
+        roll,
+        context:
+          forcedContents !== undefined || forcedLevel !== undefined
+            ? { forcedContents, level: forcedLevel }
+            : undefined,
+      })
+    );
+  },
   chamberRoomContents: ({ roll }) =>
     fromOutcome(resolveChamberRoomContents({ roll })),
   chamberRoomStairs: ({ roll }) =>

@@ -10,6 +10,7 @@ import {
 } from '../../../../../dungeon/domain/resolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
+import { ChamberRoomContents } from '../../../../../tables/dungeon/chamberRoomContents';
 
 function isParagraph(
   node: DungeonRenderNode
@@ -47,13 +48,24 @@ describe('Detail helpers for door chains and traps', () => {
   test('illusory wall detail tree includes preview and resolved description', () => {
     const trap = resolveTrickTrap({ roll: 19 }) as OutcomeEventNode;
     const nature = resolveIllusoryWallNature({ roll: 12 }) as OutcomeEventNode;
+    const chamberPending = nature.children?.find(
+      (child) => child.type === 'pending-roll' && child.table === 'chamberDimensions'
+    );
+    expect(chamberPending).toBeDefined();
+    if (!chamberPending || chamberPending.type !== 'pending-roll') {
+      throw new Error('Expected chamber dimensions pending roll');
+    }
+    expect(chamberPending.context).toEqual(
+      expect.objectContaining({
+        kind: 'chamberDimensions',
+        forcedContents: ChamberRoomContents.MonsterAndTreasure,
+      })
+    );
     const resolved: OutcomeEventNode = { ...trap, children: [nature] };
     const nodes = renderDetailTree(resolved);
     const paragraphs = nodes.filter(isParagraph).map((p) => p.text);
     expect(paragraphs).toContain('There is an illusionary wall. ');
-    expect(paragraphs).toContain(
-      'It conceals a chamber with a monster and treasure. '
-    );
+    expect(paragraphs).toContain('It conceals a chamber. ');
     const previews = nodes.filter(isPreview);
     expect(previews.map((preview) => preview.id)).toContain(
       'illusoryWallNature'

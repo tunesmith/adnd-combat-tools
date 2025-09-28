@@ -64,6 +64,7 @@ import {
   ChasmConstruction,
 } from '../../tables/dungeon/specialPassage';
 import { DoorLocation } from '../../tables/dungeon/doorLocation';
+import { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 
 const MAX_DEPTH = 32;
 
@@ -153,7 +154,36 @@ export function isTableContext(x: unknown): x is TableContext {
     const obj = x as { exitType?: unknown };
     return obj.exitType === 'door' || obj.exitType === 'passage';
   }
+  if (kind === 'chamberDimensions') {
+    const obj = x as {
+      forcedContents?: unknown;
+      level?: unknown;
+    };
+    const forcedOk =
+      obj.forcedContents === undefined || typeof obj.forcedContents === 'number';
+    const levelOk = obj.level === undefined || typeof obj.level === 'number';
+    return forcedOk && levelOk;
+  }
   return false;
+}
+
+function readChamberDimensionsContext(
+  context: unknown
+): { forcedContents?: ChamberRoomContents } | undefined {
+  if (!context || typeof context !== 'object') return undefined;
+  const kind = (context as { kind?: unknown }).kind;
+  if (kind !== 'chamberDimensions') return undefined;
+  const forced = (context as { forcedContents?: unknown }).forcedContents;
+  if (typeof forced === 'number') {
+    const numeric = forced as number;
+    if (
+      numeric >= ChamberRoomContents.Empty &&
+      numeric <= ChamberRoomContents.Treasure
+    ) {
+      return { forcedContents: numeric as ChamberRoomContents };
+    }
+  }
+  return {};
 }
 
 export function readDungeonLevelFromPending(
@@ -467,8 +497,23 @@ function resolvePendingNode(
       return resolveSpecialPassage({});
     case 'roomDimensions':
       return resolveRoomDimensions({});
-    case 'chamberDimensions':
-      return resolveChamberDimensions({});
+    case 'chamberDimensions': {
+      const chamberContext = readChamberDimensionsContext(pending.context);
+      const level = deriveDungeonLevelFromAncestors(ancestors);
+      const hasContext =
+        (chamberContext && chamberContext.forcedContents !== undefined) ||
+        level !== undefined;
+      return resolveChamberDimensions(
+        hasContext
+          ? {
+              context: {
+                forcedContents: chamberContext?.forcedContents,
+                level,
+              },
+            }
+          : undefined
+      );
+    }
     case 'unusualShape':
       return resolveUnusualShape({});
     case 'unusualSize': {

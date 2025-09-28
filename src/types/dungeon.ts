@@ -2,6 +2,7 @@ import type {
   DoorChainLaterality,
   DungeonOutcomeNode,
 } from '../dungeon/domain/outcome';
+import type { ChamberRoomContents } from '../tables/dungeon/chamberRoomContents';
 import type { PartySummary } from '../dungeon/helpers/party/formatPartyResult';
 
 export type DungeonAction = 'passage' | 'door';
@@ -84,6 +85,11 @@ export type TableContext =
   | {
       kind: 'exitAlternative';
       exitType: 'door' | 'passage';
+    }
+  | {
+      kind: 'chamberDimensions';
+      forcedContents?: ChamberRoomContents;
+      level?: number;
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

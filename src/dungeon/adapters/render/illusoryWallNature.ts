@@ -57,6 +57,5 @@ const ILLUSORY_DETAILS: Record<IllusoryWallNature, string> = {
   [IllusoryWallNature.Pit]: "It conceals a pit, 10' deep, 3 in 6 to fall in. ",
   [IllusoryWallNature.Chute]:
     'It conceals a chute down 1 level (cannot be ascended in any manner). ',
-  [IllusoryWallNature.Chamber]:
-    'It conceals a chamber with a monster and treasure. ',
+  [IllusoryWallNature.Chamber]: 'It conceals a chamber. ',
 };

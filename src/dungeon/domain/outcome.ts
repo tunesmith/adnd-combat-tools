@@ -122,7 +122,11 @@ export type OutcomeEvent =
   | { kind: 'poolAlignment'; result: PoolAlignment }
   | { kind: 'transporterLocation'; result: TransporterLocation }
   | { kind: 'unusualSize'; result: UnusualSize; extra: number; area?: number }
-  | { kind: 'chamberRoomContents'; result: ChamberRoomContents }
+  | {
+      kind: 'chamberRoomContents';
+      result: ChamberRoomContents;
+      autoResolved?: boolean;
+    }
   | { kind: 'chamberRoomStairs'; result: ChamberRoomStairs }
   | { kind: 'trickTrap'; result: TrickTrap }
   | { kind: 'illusoryWallNature'; result: IllusoryWallNature }

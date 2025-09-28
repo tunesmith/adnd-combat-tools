@@ -671,6 +671,10 @@ export function resolveRoomDimensions(options?: {
 
 export function resolveChamberDimensions(options?: {
   roll?: number;
+  context?: {
+    forcedContents?: ChamberRoomContents;
+    level?: number;
+  };
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(chamberDimensions.sides);
   const command = getTableEntry(usedRoll, chamberDimensions);
@@ -679,6 +683,8 @@ export function resolveChamberDimensions(options?: {
     result: command,
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
+  const forcedContents = options?.context?.forcedContents;
+  const forcedContentsLevel = options?.context?.level;
   switch (command) {
     case ChamberDimensions.Square20x20:
       children.push({
@@ -731,7 +737,16 @@ export function resolveChamberDimensions(options?: {
       });
       break;
   }
-  children.push({ type: 'pending-roll', table: 'chamberRoomContents' });
+  if (forcedContents !== undefined) {
+    children.push(
+      resolveChamberRoomContents({
+        level: forcedContentsLevel,
+        forcedResult: forcedContents,
+      })
+    );
+  } else {
+    children.push({ type: 'pending-roll', table: 'chamberRoomContents' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -826,10 +841,21 @@ function unusualSizeBaseArea(result: UnusualSize): number | undefined {
 export function resolveChamberRoomContents(options?: {
   roll?: number;
   level?: number;
+  forcedResult?: ChamberRoomContents;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(chamberRoomContents.sides);
-  const command = getTableEntry(usedRoll, chamberRoomContents);
+  const forcedResult = options?.forcedResult;
   const level = options?.level ?? 1;
+  let usedRoll: number;
+  let command: ChamberRoomContents;
+
+  if (forcedResult !== undefined) {
+    command = forcedResult;
+    usedRoll =
+      options?.roll ?? representativeRollForChamberContents(forcedResult);
+  } else {
+    usedRoll = options?.roll ?? rollDice(chamberRoomContents.sides);
+    command = getTableEntry(usedRoll, chamberRoomContents);
+  }
   const children: DungeonOutcomeNode[] = [];
   switch (command) {
     case ChamberRoomContents.MonsterOnly:
@@ -856,6 +882,7 @@ export function resolveChamberRoomContents(options?: {
     event: {
       kind: 'chamberRoomContents',
       result: command,
+      autoResolved: forcedResult !== undefined,
     } as OutcomeEvent,
     children: children.length ? children : undefined,
   };
@@ -874,6 +901,27 @@ export function resolveChamberRoomStairs(options?: {
       result: command,
     } as OutcomeEvent,
   };
+}
+
+function representativeRollForChamberContents(
+  result: ChamberRoomContents
+): number {
+  switch (result) {
+    case ChamberRoomContents.Empty:
+      return 1;
+    case ChamberRoomContents.MonsterOnly:
+      return 13;
+    case ChamberRoomContents.MonsterAndTreasure:
+      return 15;
+    case ChamberRoomContents.Special:
+      return 18;
+    case ChamberRoomContents.TrickTrap:
+      return 19;
+    case ChamberRoomContents.Treasure:
+      return 20;
+    default:
+      return 1;
+  }
 }
 
 export function resolveCircularContents(options?: {
@@ -1005,7 +1053,14 @@ export function resolveIllusoryWallNature(options?: {
   const command = getTableEntry(usedRoll, illusoryWallNature);
   const children: DungeonOutcomeNode[] = [];
   if (command === IllusoryWallNature.Chamber) {
-    children.push({ type: 'pending-roll', table: 'chamberDimensions' });
+    children.push({
+      type: 'pending-roll',
+      table: 'chamberDimensions',
+      context: {
+        kind: 'chamberDimensions',
+        forcedContents: ChamberRoomContents.MonsterAndTreasure,
+      },
+    });
   }
   return {
     type: 'event',

@@ -113,7 +113,10 @@ export function describeChamberDimensions(node: OutcomeEventNode): string {
   return joinSegments(segments);
 }
 
-export const buildChamberDimensionsPreview: TablePreviewFactory = (tableId) =>
+export const buildChamberDimensionsPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Chamber Dimensions',
     sides: chamberDimensions.sides,
@@ -121,6 +124,7 @@ export const buildChamberDimensionsPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: ChamberDimensions[entry.command] ?? String(entry.command),
     })),
+    context,
   });
 
 function formatChamberDimensions(result: ChamberDimensions): string {
