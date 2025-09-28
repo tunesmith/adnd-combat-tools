@@ -197,6 +197,18 @@ export function isTableContext(x: unknown): x is TableContext {
   if (kind === 'treasureContainer') {
     return true;
   }
+  if (kind === 'treasureMagic') {
+    const obj = x as {
+      level?: unknown;
+      treasureRoll?: unknown;
+      rollIndex?: unknown;
+    };
+    return (
+      typeof obj.level === 'number' &&
+      typeof obj.treasureRoll === 'number' &&
+      (obj.rollIndex === undefined || typeof obj.rollIndex === 'number')
+    );
+  }
   return false;
 }
 

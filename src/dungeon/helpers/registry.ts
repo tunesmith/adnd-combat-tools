@@ -69,6 +69,7 @@ import {
   resolveTreasureProtectionType,
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
+  resolveTreasureMagicCategory,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -150,6 +151,7 @@ const TABLE_ID_LIST = [
   'treasureProtectionType',
   'treasureProtectionGuardedBy',
   'treasureProtectionHiddenBy',
+  'treasureMagicCategory',
   'circularContents',
   'circularPool',
   'circularMagicPool',
@@ -218,6 +220,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureProtectionType: 'Treasure Protection',
   treasureProtectionGuardedBy: 'Treasure Guarded By',
   treasureProtectionHiddenBy: 'Treasure Hidden By',
+  treasureMagicCategory: 'Magical Treasure',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
   circularMagicPool: 'Magic Pool Effect',
@@ -469,6 +472,26 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureProtectionGuardedBy({ roll })),
   treasureProtectionHiddenBy: ({ roll }) =>
     fromOutcome(resolveTreasureProtectionHiddenBy({ roll })),
+  treasureMagicCategory: ({ roll, context }) => {
+    const level =
+      context && context.kind === 'treasureMagic' ? context.level : 1;
+    const treasureRoll =
+      context && context.kind === 'treasureMagic'
+        ? context.treasureRoll
+        : undefined;
+    const rollIndex =
+      context && context.kind === 'treasureMagic'
+        ? context.rollIndex
+        : undefined;
+    return fromOutcome(
+      resolveTreasureMagicCategory({
+        roll,
+        level,
+        treasureRoll,
+        rollIndex,
+      })
+    );
+  },
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';

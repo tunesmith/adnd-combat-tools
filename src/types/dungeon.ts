@@ -108,6 +108,12 @@ export type TableContext =
     }
   | {
       kind: 'treasureContainer';
+    }
+  | {
+      kind: 'treasureMagic';
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

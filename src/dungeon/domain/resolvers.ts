@@ -84,6 +84,7 @@ import {
   TreasureWithoutMonster,
 } from '../../tables/dungeon/treasure';
 import { treasureContainer } from '../../tables/dungeon/treasureContainer';
+import { treasureMagicCategory } from '../../tables/dungeon/treasureMagic';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -976,27 +977,46 @@ export function resolveTreasure(options?: {
     totalRolls: options?.totalRolls,
   } as OutcomeEvent;
 
+  const children: DungeonOutcomeNode[] = [];
+  if (entry.command === TreasureWithoutMonster.Magic) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureMagicCategory',
+      id: options?.rollIndex
+        ? `treasureMagicCategory:${options.rollIndex}`
+        : undefined,
+      context: {
+        kind: 'treasureMagic',
+        level,
+        treasureRoll: usedRoll,
+        rollIndex: options?.rollIndex,
+      },
+    });
+  }
+
+  children.push(
+    {
+      type: 'pending-roll',
+      table: 'treasureContainer',
+      context: {
+        kind: 'treasureContainer',
+      },
+    },
+    {
+      type: 'pending-roll',
+      table: 'treasureProtectionType',
+      context: {
+        kind: 'treasureProtection',
+        treasureRoll: usedRoll,
+      },
+    }
+  );
+
   const node: OutcomeEventNode = {
     type: 'event',
     roll: usedRoll,
     event,
-    children: [
-      {
-        type: 'pending-roll',
-        table: 'treasureContainer',
-        context: {
-          kind: 'treasureContainer',
-        },
-      },
-      {
-        type: 'pending-roll',
-        table: 'treasureProtectionType',
-        context: {
-          kind: 'treasureProtection',
-          treasureRoll: usedRoll,
-        },
-      },
-    ],
+    children,
   };
 
   return node;
@@ -1028,6 +1048,9 @@ function enrichTreasureEntry(entry: TreasureEntry, level: number): void {
       setCountEntry(entry, level, 'piece of jewelry', 'pieces of jewelry');
       break;
     }
+    case TreasureWithoutMonster.Magic:
+      entry.magicCategory = undefined;
+      break;
     default:
       break;
   }
@@ -1116,6 +1139,27 @@ export function resolveTreasureProtectionHiddenBy(options?: {
     event: {
       kind: 'treasureProtectionHiddenBy',
       result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureMagicCategory(options?: {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureMagicCategory.sides);
+  const command = getTableEntry(usedRoll, treasureMagicCategory);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureMagicCategory',
+      result: command,
+      level: options?.level ?? 1,
+      treasureRoll: options?.treasureRoll ?? usedRoll,
+      rollIndex: options?.rollIndex,
     } as OutcomeEvent,
   };
 }

@@ -2,6 +2,7 @@ import {
   createFeedSnapshot,
   resolvePendingPreview,
   renderCompact,
+  renderDetail,
   listPendingPreviewTargets,
   resolvePreview,
 } from '../../../../support/dungeon/uiPreviewHarness';
@@ -14,6 +15,7 @@ import { describeChamberRoomContents } from '../../../../../dungeon/adapters/ren
 import { collectCharacterPartyMessages } from '../../../../../dungeon/adapters/render/monsters';
 import { renderTreasureContainerCompact } from '../../../../../dungeon/adapters/render/treasureContainer';
 import { resolveTreasureContainer } from '../../../../../dungeon/domain/resolvers';
+import { TreasureMagicCategory } from '../../../../../tables/dungeon/treasureMagic';
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 
 describe('passage contents', () => {
@@ -274,6 +276,99 @@ describe('passage contents', () => {
     );
   });
 
+  it('queues magical treasure category rolls', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const pendingAfterMagic = pendingTableBases(
+      listPendingPreviewTargets(feed)
+    );
+    expect(pendingAfterMagic).toContain('treasureMagicCategory');
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const magicTarget = magicTargets[0];
+    if (!magicTarget) throw new Error('missing treasure magic target');
+
+    feed = resolvePreview(feed, magicTarget, 44);
+
+    const treasureEvent = findOutcomeEvent(feed.outcome, 'treasure');
+    expect(treasureEvent).toBeDefined();
+    if (treasureEvent && treasureEvent.event.kind === 'treasure') {
+      expect(treasureEvent.event.entries[0]?.command).toBe(
+        TreasureWithoutMonster.Magic
+      );
+    }
+
+    const magicEvent = findOutcomeEvent(feed.outcome, 'treasureMagicCategory');
+    expect(magicEvent).toBeDefined();
+    if (magicEvent && magicEvent.event.kind === 'treasureMagicCategory') {
+      expect(magicEvent.event.result).toBe(
+        TreasureMagicCategory.RodsStavesWands
+      );
+    }
+
+    const containerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureContainer')
+    );
+    expect(containerTargets).toHaveLength(1);
+    const containerTarget = containerTargets[0];
+    if (!containerTarget) throw new Error('missing container target');
+    feed = resolvePreview(feed, containerTarget, 7);
+
+    const protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionType')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const protectionTarget = protectionTargets[0];
+    if (!protectionTarget) throw new Error('missing protection target');
+    feed = resolvePreview(feed, protectionTarget, 18);
+
+    const guardedTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionHiddenBy')
+    );
+    expect(guardedTargets).toHaveLength(1);
+    const hiddenTarget = guardedTargets[0];
+    if (!hiddenTarget) throw new Error('missing hidden protection target');
+    feed = resolvePreview(feed, hiddenTarget, 14);
+
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent).toBeDefined();
+    if (contentsEvent) {
+      const detail = describeChamberRoomContents(contentsEvent).toLowerCase();
+      expect(detail).toContain('there is magical treasure');
+    }
+
+    const compactParagraphs = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('there is magical treasure');
+    const detailNodes = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase());
+    expect(detailNodes).toContain(
+      'roll on table d to determine the rod, staff, or wand.'
+    );
+  });
+
   it('rolls treasure twice when monsters guard it', () => {
     let feed = createFeedSnapshot({
       action: 'passage',
@@ -390,9 +485,7 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('2,000 silver pieces');
-    expect(compactText).toContain(
-      'magic item (roll once on magic items table)'
-    );
+    expect(compactText).toContain('there is magical treasure.');
     expect(compactText).toContain('contained in sacks');
     expect(compactText).toContain(
       'if desired, the treasure is guarded by spears released from the walls when the container is opened.'

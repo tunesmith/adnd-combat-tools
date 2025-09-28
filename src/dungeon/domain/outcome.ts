@@ -70,6 +70,7 @@ import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomConten
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
 import type { TreasureContainer } from '../../tables/dungeon/treasureContainer';
+import type { TreasureMagicCategory } from '../../tables/dungeon/treasureMagic';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -285,6 +286,13 @@ export type OutcomeEvent =
   | {
       kind: 'treasureProtectionHiddenBy';
       result: TreasureProtectionHiddenBy;
+    }
+  | {
+      kind: 'treasureMagicCategory';
+      result: TreasureMagicCategory;
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
     };
 
 export type TreasureEntry = {
@@ -292,6 +300,7 @@ export type TreasureEntry = {
   command: TreasureWithoutMonster;
   quantity?: number;
   display?: string;
+  magicCategory?: TreasureMagicCategory;
   protection?: {
     type?: TreasureProtectionType;
     guardedBy?: TreasureProtectionGuardedBy;

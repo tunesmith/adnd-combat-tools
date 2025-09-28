@@ -168,6 +168,11 @@ import {
   buildTreasureProtectionGuardedByPreview,
   buildTreasureProtectionHiddenByPreview,
 } from './render/treasureProtection';
+import {
+  renderTreasureMagicCategoryDetail,
+  renderTreasureMagicCategoryCompact,
+  buildTreasureMagicCategoryPreview,
+} from './render/treasureMagic';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -388,6 +393,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureProtectionHiddenByDetail,
     renderCompact: NO_COMPACT_RENDER,
   },
+  treasureMagicCategory: {
+    renderDetail: renderTreasureMagicCategoryDetail,
+    renderCompact: renderTreasureMagicCategoryCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -478,6 +487,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureProtectionType: buildTreasureProtectionTypePreview,
   treasureProtectionGuardedBy: buildTreasureProtectionGuardedByPreview,
   treasureProtectionHiddenBy: buildTreasureProtectionHiddenByPreview,
+  treasureMagicCategory: buildTreasureMagicCategoryPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -614,6 +624,17 @@ function previewForEventNode(
     case 'gasTrapEffect':
       tableId = 'gasTrapEffect';
       break;
+    case 'treasureMagicCategory': {
+      const treasureMagic = event;
+      tableId = 'treasureMagicCategory';
+      context = {
+        kind: 'treasureMagic',
+        level: treasureMagic.level,
+        treasureRoll: treasureMagic.treasureRoll,
+        rollIndex: treasureMagic.rollIndex,
+      };
+      break;
+    }
     case 'treasure': {
       const treasure = event;
       tableId = 'treasure';

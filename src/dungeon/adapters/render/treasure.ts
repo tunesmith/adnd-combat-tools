@@ -142,7 +142,7 @@ function describeTreasureEntry(entry: TreasureEntry): TreasureDescription {
     case TreasureWithoutMonster.JewelryPerLevel:
       return quantifiedDescription(entry);
     case TreasureWithoutMonster.Magic:
-      return rewardDescription('Magic item (roll once on Magic Items table).');
+      return rewardDescription('There is magical treasure.');
     default:
       return rewardDescription('Treasure.');
   }
