@@ -84,7 +84,11 @@ import {
   TreasureWithoutMonster,
 } from '../../tables/dungeon/treasure';
 import { treasureContainer } from '../../tables/dungeon/treasureContainer';
-import { treasureMagicCategory } from '../../tables/dungeon/treasureMagic';
+import {
+  treasureMagicCategory,
+  TreasureMagicCategory,
+} from '../../tables/dungeon/treasureMagic';
+import { treasurePotion } from '../../tables/dungeon/treasurePotions';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1151,11 +1155,47 @@ export function resolveTreasureMagicCategory(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureMagicCategory.sides);
   const command = getTableEntry(usedRoll, treasureMagicCategory);
+  const event: OutcomeEvent = {
+    kind: 'treasureMagicCategory',
+    result: command,
+    level: options?.level ?? 1,
+    treasureRoll: options?.treasureRoll ?? usedRoll,
+    rollIndex: options?.rollIndex,
+  };
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureMagicCategory.Potions) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePotion',
+      context: {
+        kind: 'treasureMagic',
+        level: event.level,
+        treasureRoll: usedRoll,
+        rollIndex: event.rollIndex,
+      },
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasurePotion(options?: {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePotion.sides);
+  const command = getTableEntry(usedRoll, treasurePotion);
   return {
     type: 'event',
     roll: usedRoll,
     event: {
-      kind: 'treasureMagicCategory',
+      kind: 'treasurePotion',
       result: command,
       level: options?.level ?? 1,
       treasureRoll: options?.treasureRoll ?? usedRoll,

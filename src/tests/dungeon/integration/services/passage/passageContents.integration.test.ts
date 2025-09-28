@@ -17,6 +17,7 @@ import { renderTreasureContainerCompact } from '../../../../../dungeon/adapters/
 import { resolveTreasureContainer } from '../../../../../dungeon/domain/resolvers';
 import { TreasureMagicCategory } from '../../../../../tables/dungeon/treasureMagic';
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
+import { TreasurePotion } from '../../../../../tables/dungeon/treasurePotions';
 
 describe('passage contents', () => {
   it('shows empty chamber contents once resolved', () => {
@@ -367,6 +368,60 @@ describe('passage contents', () => {
     expect(detailNodes).toContain(
       'roll on table d to determine the rod, staff, or wand.'
     );
+  });
+
+  it('resolves potions from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const potionCategoryTarget = magicTargets[0];
+    if (!potionCategoryTarget)
+      throw new Error('missing potion category target');
+    feed = resolvePreview(feed, potionCategoryTarget, 10);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+    feed = resolvePreview(feed, potionTarget, 47);
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (potionEvent && potionEvent.event.kind === 'treasurePotion') {
+      expect(potionEvent.event.result).toBe(TreasurePotion.Healing);
+    }
+
+    const detailNodes = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase());
+    expect(detailNodes).toContain('there is a potion of healing.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a potion of healing.');
   });
 
   it('rolls treasure twice when monsters guard it', () => {

@@ -5,6 +5,7 @@ import {
   treasureWithoutMonster,
   TreasureWithoutMonster,
 } from '../../../tables/dungeon/treasure';
+import { potionSentence } from './treasurePotion';
 import {
   buildPreview,
   joinSegments,
@@ -93,6 +94,8 @@ export function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
   if (outcome.event.kind !== 'treasure') return '';
   const { entries } = outcome.event;
   const segments = entries.map((entry) => describeTreasureEntry(entry).compact);
+  const magicDetail = describeResolvedMagic(outcome);
+  if (magicDetail) segments.push(magicDetail);
   const container = findChildEvent(outcome, 'treasureContainer');
   if (container && container.event.kind === 'treasureContainer') {
     const containerText = describeTreasureContainerResult(
@@ -103,6 +106,16 @@ export function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
   const protection = describeTreasureProtection(outcome);
   if (protection) segments.push(protection);
   return joinSegments(segments).trim();
+}
+
+function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
+  const magic = findChildEvent(outcome, 'treasureMagicCategory');
+  if (!magic || magic.event.kind !== 'treasureMagicCategory') return undefined;
+  const potion = findChildEvent(magic, 'treasurePotion');
+  if (potion && potion.event.kind === 'treasurePotion') {
+    return potionSentence(potion.event.result);
+  }
+  return undefined;
 }
 
 export function collectTreasureCompactSummaries(

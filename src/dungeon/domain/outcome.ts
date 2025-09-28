@@ -71,6 +71,7 @@ import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
 import type { TreasureContainer } from '../../tables/dungeon/treasureContainer';
 import type { TreasureMagicCategory } from '../../tables/dungeon/treasureMagic';
+import type { TreasurePotion } from '../../tables/dungeon/treasurePotions';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -290,6 +291,13 @@ export type OutcomeEvent =
   | {
       kind: 'treasureMagicCategory';
       result: TreasureMagicCategory;
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
+    }
+  | {
+      kind: 'treasurePotion';
+      result: TreasurePotion;
       level: number;
       treasureRoll: number;
       rollIndex?: number;
