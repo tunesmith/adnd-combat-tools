@@ -198,7 +198,7 @@ describe('uiPreviewHarness', () => {
     // );
   });
 
-  test('illusory wall chamber skips contents preview when forcing monster result', () => {
+  test('illusionary wall chamber skips contents preview when forcing monster result', () => {
     let feed = createFeedSnapshot({
       action: 'passage',
       roll: 19,
@@ -206,13 +206,13 @@ describe('uiPreviewHarness', () => {
     });
 
     feed = resolvePendingPreview(feed, 'trickTrap', 19);
-    feed = resolvePendingPreview(feed, 'illusoryWallNature', 12);
+    feed = resolvePendingPreview(feed, 'illusionaryWallNature', 12);
 
     const previewsBefore = renderDetail(feed).filter(
       (node): node is DungeonTablePreview => node.kind === 'table-preview'
     );
-    const chamberPreviewBefore = previewsBefore.find((node) =>
-      node.id.split(':')[0] === 'chamberDimensions'
+    const chamberPreviewBefore = previewsBefore.find(
+      (node) => node.id.split(':')[0] === 'chamberDimensions'
     );
     expect(chamberPreviewBefore).toBeDefined();
     expect(chamberPreviewBefore?.context).toEqual(

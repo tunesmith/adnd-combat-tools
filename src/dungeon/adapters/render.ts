@@ -157,10 +157,10 @@ import {
 } from './render/circularContents';
 import type { AppendPreviewFn } from './render/shared';
 import {
-  renderIllusoryWallNatureDetail,
-  renderIllusoryWallNatureCompact,
-  buildIllusoryWallNaturePreview,
-} from './render/illusoryWallNature';
+  renderIllusionaryWallNatureDetail,
+  renderIllusionaryWallNatureCompact,
+  buildIllusionaryWallNaturePreview,
+} from './render/illusionaryWallNature';
 import {
   renderGasTrapEffectDetail,
   renderGasTrapEffectCompact,
@@ -353,9 +353,9 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
   },
-  illusoryWallNature: {
-    renderDetail: renderIllusoryWallNatureDetail,
-    renderCompact: renderIllusoryWallNatureCompact,
+  illusionaryWallNature: {
+    renderDetail: renderIllusionaryWallNatureDetail,
+    renderCompact: renderIllusionaryWallNatureCompact,
   },
   gasTrapEffect: {
     renderDetail: renderGasTrapEffectDetail,
@@ -432,7 +432,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   chasmConstruction: buildChasmConstructionPreview,
   jumpingPlaceWidth: buildJumpingPlaceWidthPreview,
   trickTrap: buildTrickTrapPreview,
-  illusoryWallNature: buildIllusoryWallNaturePreview,
+  illusionaryWallNature: buildIllusionaryWallNaturePreview,
   gasTrapEffect: buildGasTrapEffectPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
@@ -564,8 +564,8 @@ function previewForEventNode(
     case 'trickTrap':
       tableId = 'trickTrap';
       break;
-    case 'illusoryWallNature':
-      tableId = 'illusoryWallNature';
+    case 'illusionaryWallNature':
+      tableId = 'illusionaryWallNature';
       break;
     case 'gasTrapEffect':
       tableId = 'gasTrapEffect';

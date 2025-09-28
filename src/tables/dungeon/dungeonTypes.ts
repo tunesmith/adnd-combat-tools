@@ -55,7 +55,7 @@ import type { CharacterRace } from './monster/character/characterRace';
 import type { CharacterClassTable } from './monster/character/characterClass';
 import type { PeriodicCheckDoorOnly } from './periodicCheckDoorOnly';
 import type { TrickTrap } from './trickTrap';
-import type { IllusoryWallNature } from './illusoryWallNature';
+import type { IllusionaryWallNature } from './illusionaryWallNature';
 import type { GasTrapEffect } from './gasTrapEffect';
 import type { ChamberRoomContents } from './chamberRoomContents';
 import type { ChamberRoomStairs } from './chamberRoomStairs';
@@ -134,7 +134,7 @@ export type Command =
   | CharacterRace
   | PeriodicCheckDoorOnly
   | TrickTrap
-  | IllusoryWallNature
+  | IllusionaryWallNature
   | GasTrapEffect
   | ChamberRoomContents
   | ChamberRoomStairs;

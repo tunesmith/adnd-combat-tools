@@ -5,7 +5,7 @@ import {
 import {
   resolvePeriodicDoorOnly,
   resolveTrickTrap,
-  resolveIllusoryWallNature,
+  resolveIllusionaryWallNature,
   resolveGasTrapEffect,
 } from '../../../../../dungeon/domain/resolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
@@ -45,11 +45,14 @@ describe('Detail helpers for door chains and traps', () => {
     ]);
   });
 
-  test('illusory wall detail tree includes preview and resolved description', () => {
+  test('illusionary wall detail tree includes preview and resolved description', () => {
     const trap = resolveTrickTrap({ roll: 19 }) as OutcomeEventNode;
-    const nature = resolveIllusoryWallNature({ roll: 12 }) as OutcomeEventNode;
+    const nature = resolveIllusionaryWallNature({
+      roll: 12,
+    }) as OutcomeEventNode;
     const chamberPending = nature.children?.find(
-      (child) => child.type === 'pending-roll' && child.table === 'chamberDimensions'
+      (child) =>
+        child.type === 'pending-roll' && child.table === 'chamberDimensions'
     );
     expect(chamberPending).toBeDefined();
     if (!chamberPending || chamberPending.type !== 'pending-roll') {
@@ -68,7 +71,7 @@ describe('Detail helpers for door chains and traps', () => {
     expect(paragraphs).toContain('It conceals a chamber. ');
     const previews = nodes.filter(isPreview);
     expect(previews.map((preview) => preview.id)).toContain(
-      'illusoryWallNature'
+      'illusionaryWallNature'
     );
   });
 

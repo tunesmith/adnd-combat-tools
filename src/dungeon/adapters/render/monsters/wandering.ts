@@ -26,8 +26,9 @@ export function renderWanderingMonsterCompact(
   const encounter = readMonsterEncounter(level, levelNode);
   const suffix = encounter.text.trim();
   const rawText =
-    suffix.length > 0 ? `Wandering Monster: ${suffix}` : 'Wandering Monster:';
-  const text = rawText.endsWith(' ') ? rawText : `${rawText} `;
+    suffix.length > 0 ? `Wandering Monster: ${suffix}` : 'Wandering Monster.';
+  const text =
+    rawText.endsWith(' ') || rawText.endsWith('.') ? rawText : `${rawText} `;
   return {
     text,
     nodes: encounter.nodes,
@@ -140,7 +141,7 @@ function fallbackMonsterLevelText(level: MonsterLevel): string {
     case MonsterLevel.Ten:
       return '(TODO: Roll Monster for Level Ten)';
     default:
-      return '(Unknown Monster Result)';
+      return '';
   }
 }
 

@@ -68,7 +68,7 @@ describe('Room and chamber detail previews', () => {
     ).toBe(true);
   });
 
-  test('Illusory wall chamber auto-resolves contents to monster and treasure', () => {
+  test('Illusionary wall chamber auto-resolves contents to monster and treasure', () => {
     const roll = pickRollForChamber(ChamberDimensions.Square20x20);
     const outcome = resolveChamberDimensions({
       roll,
@@ -88,7 +88,8 @@ describe('Room and chamber detail previews', () => {
       ).length ?? 0;
     expect(pendingContentsCount).toBe(0);
     const contentsNode = normalized.children?.find(
-      (child) => child.type === 'event' && child.event.kind === 'chamberRoomContents'
+      (child) =>
+        child.type === 'event' && child.event.kind === 'chamberRoomContents'
     ) as OutcomeEventNode | undefined;
     expect(contentsNode).toBeDefined();
     expect(contentsNode?.event.kind).toBe('chamberRoomContents');

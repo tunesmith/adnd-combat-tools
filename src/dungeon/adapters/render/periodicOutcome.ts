@@ -295,7 +295,7 @@ function summarizePeriodicResult(
       const chamberNodes: DungeonRenderNode[] = [];
       trap.children?.forEach((child) => {
         if (child.type !== 'event') return;
-        if (child.event.kind === 'illusoryWallNature') {
+        if (child.event.kind === 'illusionaryWallNature') {
           const chamber = findChildEvent(child, 'chamberDimensions');
           if (chamber && chamber.type === 'event') {
             chamberNodes.push(...renderChamberDimensionsCompact(chamber));

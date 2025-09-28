@@ -58,7 +58,7 @@ import type {
   MonsterSix,
   DragonSix,
 } from '../../tables/dungeon/monster/monsterSix';
-import type { IllusoryWallNature } from '../../tables/dungeon/illusoryWallNature';
+import type { IllusionaryWallNature } from '../../tables/dungeon/illusionaryWallNature';
 import type {
   ExitAlternative,
   ExitLocation,
@@ -129,7 +129,7 @@ export type OutcomeEvent =
     }
   | { kind: 'chamberRoomStairs'; result: ChamberRoomStairs }
   | { kind: 'trickTrap'; result: TrickTrap }
-  | { kind: 'illusoryWallNature'; result: IllusoryWallNature }
+  | { kind: 'illusionaryWallNature'; result: IllusionaryWallNature }
   | {
       kind: 'passageExitLocation';
       result: ExitLocation;

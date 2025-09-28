@@ -46,9 +46,9 @@ import {
 } from '../../tables/dungeon/magicPool';
 import { trickTrap, TrickTrap } from '../../tables/dungeon/trickTrap';
 import {
-  illusoryWallNature,
-  IllusoryWallNature,
-} from '../../tables/dungeon/illusoryWallNature';
+  illusionaryWallNature,
+  IllusionaryWallNature,
+} from '../../tables/dungeon/illusionaryWallNature';
 import {
   exitAlternative,
   exitLocation,
@@ -1031,7 +1031,7 @@ export function resolveTrickTrap(options?: {
   const command = getTableEntry(usedRoll, trickTrap);
   const children: DungeonOutcomeNode[] = [];
   if (command === TrickTrap.IllusionaryWall) {
-    children.push({ type: 'pending-roll', table: 'illusoryWallNature' });
+    children.push({ type: 'pending-roll', table: 'illusionaryWallNature' });
   } else if (command === TrickTrap.GasCorridor) {
     children.push({ type: 'pending-roll', table: 'gasTrapEffect' });
   }
@@ -1043,16 +1043,16 @@ export function resolveTrickTrap(options?: {
   };
 }
 
-export function resolveIllusoryWallNature(options?: {
+export function resolveIllusionaryWallNature(options?: {
   roll?: number;
   takeOverride?: (tableId: string) => number | undefined;
 }): DungeonOutcomeNode {
-  const overridden = options?.takeOverride?.('illusoryWallNature');
+  const overridden = options?.takeOverride?.('illusionaryWallNature');
   const usedRoll =
-    overridden ?? options?.roll ?? rollDice(illusoryWallNature.sides);
-  const command = getTableEntry(usedRoll, illusoryWallNature);
+    overridden ?? options?.roll ?? rollDice(illusionaryWallNature.sides);
+  const command = getTableEntry(usedRoll, illusionaryWallNature);
   const children: DungeonOutcomeNode[] = [];
-  if (command === IllusoryWallNature.Chamber) {
+  if (command === IllusionaryWallNature.Chamber) {
     children.push({
       type: 'pending-roll',
       table: 'chamberDimensions',
@@ -1065,7 +1065,7 @@ export function resolveIllusoryWallNature(options?: {
   return {
     type: 'event',
     roll: usedRoll,
-    event: { kind: 'illusoryWallNature', result: command } as OutcomeEvent,
+    event: { kind: 'illusionaryWallNature', result: command } as OutcomeEvent,
     children: children.length ? children : undefined,
   };
 }

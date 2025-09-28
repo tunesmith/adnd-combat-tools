@@ -6,7 +6,7 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { describeIllusoryWallNature } from './illusoryWallNature';
+import { describeIllusionaryWallNature } from './illusionaryWallNature';
 import { describeGasTrapEffect } from './gasTrapEffect';
 
 export function renderTrickTrapDetail(
@@ -52,8 +52,8 @@ export function renderTrickTrapCompact(node: OutcomeEventNode): string {
   const extras: string[] = [];
   for (const child of node.children) {
     if (child.type !== 'event') continue;
-    if (child.event.kind === 'illusoryWallNature') {
-      extras.push(describeIllusoryWallNature(child));
+    if (child.event.kind === 'illusionaryWallNature') {
+      extras.push(describeIllusionaryWallNature(child));
     } else if (child.event.kind === 'gasTrapEffect') {
       extras.push(describeGasTrapEffect(child));
     }

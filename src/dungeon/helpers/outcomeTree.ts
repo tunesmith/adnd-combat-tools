@@ -14,7 +14,7 @@ import {
   resolveEgress,
   resolveChute,
   resolveSpecialPassage,
-  resolveIllusoryWallNature,
+  resolveIllusionaryWallNature,
   resolveRoomDimensions,
   resolveChamberDimensions,
   resolveUnusualShape,
@@ -160,7 +160,8 @@ export function isTableContext(x: unknown): x is TableContext {
       level?: unknown;
     };
     const forcedOk =
-      obj.forcedContents === undefined || typeof obj.forcedContents === 'number';
+      obj.forcedContents === undefined ||
+      typeof obj.forcedContents === 'number';
     const levelOk = obj.level === undefined || typeof obj.level === 'number';
     return forcedOk && levelOk;
   }
@@ -175,7 +176,7 @@ function readChamberDimensionsContext(
   if (kind !== 'chamberDimensions') return undefined;
   const forced = (context as { forcedContents?: unknown }).forcedContents;
   if (typeof forced === 'number') {
-    const numeric = forced as number;
+    const numeric = forced;
     if (
       numeric >= ChamberRoomContents.Empty &&
       numeric <= ChamberRoomContents.Treasure
@@ -563,8 +564,8 @@ function resolvePendingNode(
       return resolveJumpingPlaceWidth({});
     case 'trickTrap':
       return resolveTrickTrap({});
-    case 'illusoryWallNature':
-      return resolveIllusoryWallNature({});
+    case 'illusionaryWallNature':
+      return resolveIllusionaryWallNature({});
     case 'numberOfExits': {
       const context = readExitsContext(pending.context);
       if (!context) return undefined;

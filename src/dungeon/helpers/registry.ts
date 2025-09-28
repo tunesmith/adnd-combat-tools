@@ -8,9 +8,7 @@ import type {
   DoorChainLaterality,
   DungeonOutcomeNode,
 } from '../domain/outcome';
-import { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
-
-// Message services used by the registry
+import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 import {
   resolveChamberDimensions,
   resolveChamberRoomContents,
@@ -57,7 +55,7 @@ import {
   resolvePoolAlignment,
   resolveTransporterLocation,
   resolveTrickTrap,
-  resolveIllusoryWallNature,
+  resolveIllusionaryWallNature,
   resolvePassageExitLocation,
   resolveDoorExitLocation,
   resolveExitDirection,
@@ -136,7 +134,7 @@ const TABLE_ID_LIST = [
   'unusualShape',
   'unusualSize',
   'trickTrap',
-  'illusoryWallNature',
+  'illusionaryWallNature',
   'passageExitLocation',
   'doorExitLocation',
   'exitDirection',
@@ -199,7 +197,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   unusualShape: 'Unusual Shape',
   unusualSize: 'Unusual Size',
   trickTrap: 'Trick / Trap',
-  illusoryWallNature: 'What Lies Beyond',
+  illusionaryWallNature: 'What Lies Beyond',
   passageExitLocation: 'Passage Exit Location',
   doorExitLocation: 'Door Exit Location',
   exitDirection: 'Exit Direction',
@@ -314,7 +312,7 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     let forcedLevel: number | undefined;
     if (context && context.kind === 'chamberDimensions') {
       if (typeof context.forcedContents === 'number') {
-        forcedContents = context.forcedContents as ChamberRoomContents;
+        forcedContents = context.forcedContents;
       }
       if (typeof context.level === 'number') {
         forcedLevel = context.level;
@@ -361,8 +359,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   transporterLocation: ({ roll }) =>
     fromOutcome(resolveTransporterLocation({ roll })),
   trickTrap: ({ roll }) => fromOutcome(resolveTrickTrap({ roll })),
-  illusoryWallNature: ({ roll }) =>
-    fromOutcome(resolveIllusoryWallNature({ roll })),
+  illusionaryWallNature: ({ roll }) =>
+    fromOutcome(resolveIllusionaryWallNature({ roll })),
   passageExitLocation: ({ roll, context }) =>
     fromOutcome(
       resolvePassageExitLocation({
