@@ -58,6 +58,9 @@ import {
   resolveHuman,
   resolveTreasure,
   resolveTreasureContainer,
+  resolveTreasureProtectionType,
+  resolveTreasureProtectionGuardedBy,
+  resolveTreasureProtectionHiddenBy,
 } from '../domain/resolvers';
 import type { TableContext } from '../../types/dungeon';
 import {
@@ -183,6 +186,12 @@ export function isTableContext(x: unknown): x is TableContext {
       typeof obj.withMonster === 'boolean' &&
       (obj.rollIndex === undefined || typeof obj.rollIndex === 'number') &&
       (obj.totalRolls === undefined || typeof obj.totalRolls === 'number')
+    );
+  }
+  if (kind === 'treasureProtection') {
+    const obj = x as { treasureRoll?: unknown };
+    return (
+      obj.treasureRoll === undefined || typeof obj.treasureRoll === 'number'
     );
   }
   if (kind === 'treasureContainer') {
@@ -577,6 +586,12 @@ function resolvePendingNode(
     }
     case 'treasureContainer':
       return resolveTreasureContainer({});
+    case 'treasureProtectionType':
+      return resolveTreasureProtectionType({});
+    case 'treasureProtectionGuardedBy':
+      return resolveTreasureProtectionGuardedBy({});
+    case 'treasureProtectionHiddenBy':
+      return resolveTreasureProtectionHiddenBy({});
     case 'transmuteType':
       return resolveTransmuteType({});
     case 'poolAlignment':

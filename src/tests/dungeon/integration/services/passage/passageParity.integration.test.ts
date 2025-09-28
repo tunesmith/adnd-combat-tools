@@ -34,7 +34,7 @@ describe('Passage compact text (adapter)', () => {
     const { messages } = passageMessages({ roll, detailMode: false, level: 1 });
     const para = (messages as DungeonMessage[]).find(isParagraph);
     expect(para && para.text).toBe(
-      'The passage reaches a dead end. Walls left, right, and ahead can each be checked for 25% chance of secret door. Characters would still need to detect. '
+      'The passage reaches a dead end. Walls left, right, and ahead can each be checked for a 25% chance of a secret door. Characters would still need to roll to detect. '
     );
   });
 

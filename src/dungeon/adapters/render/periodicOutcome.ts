@@ -22,7 +22,7 @@ import { renderTrickTrapCompact } from './trickTrap';
 import { renderChamberDimensionsCompact } from './chamberDimensions';
 
 export const DEAD_END_FALLBACK_TEXT =
-  'The passage reaches a dead end. Walls left, right, and ahead can each be checked for 25% chance of secret door. Characters would still need to detect. ';
+  'The passage reaches a dead end. Walls left, right, and ahead can each be checked for a 25% chance of a secret door. Characters would still need to roll to detect. ';
 export const TRICK_TRAP_FALLBACK_TEXT =
   "There is a trick or trap -- check again in 30'. ";
 

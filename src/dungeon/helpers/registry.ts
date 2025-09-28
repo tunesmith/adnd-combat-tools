@@ -66,6 +66,9 @@ import {
   resolveWanderingWhereFrom,
   resolveTreasure,
   resolveTreasureContainer,
+  resolveTreasureProtectionType,
+  resolveTreasureProtectionGuardedBy,
+  resolveTreasureProtectionHiddenBy,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -144,6 +147,9 @@ const TABLE_ID_LIST = [
   'gasTrapEffect',
   'treasure',
   'treasureContainer',
+  'treasureProtectionType',
+  'treasureProtectionGuardedBy',
+  'treasureProtectionHiddenBy',
   'circularContents',
   'circularPool',
   'circularMagicPool',
@@ -209,6 +215,9 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   gasTrapEffect: 'Gas Effect',
   treasure: 'Treasure',
   treasureContainer: 'Treasure Container',
+  treasureProtectionType: 'Treasure Protection',
+  treasureProtectionGuardedBy: 'Treasure Guarded By',
+  treasureProtectionHiddenBy: 'Treasure Hidden By',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
   circularMagicPool: 'Magic Pool Effect',
@@ -454,6 +463,12 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   },
   treasureContainer: ({ roll }) =>
     fromOutcome(resolveTreasureContainer({ roll })),
+  treasureProtectionType: ({ roll }) =>
+    fromOutcome(resolveTreasureProtectionType({ roll })),
+  treasureProtectionGuardedBy: ({ roll }) =>
+    fromOutcome(resolveTreasureProtectionGuardedBy({ roll })),
+  treasureProtectionHiddenBy: ({ roll }) =>
+    fromOutcome(resolveTreasureProtectionHiddenBy({ roll })),
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';

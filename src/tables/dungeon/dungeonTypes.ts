@@ -60,6 +60,11 @@ import type { GasTrapEffect } from './gasTrapEffect';
 import type { ChamberRoomContents } from './chamberRoomContents';
 import type { ChamberRoomStairs } from './chamberRoomStairs';
 import type { TreasureWithoutMonster } from './treasure';
+import type {
+  TreasureProtectionType,
+  TreasureProtectionGuardedBy,
+  TreasureProtectionHiddenBy,
+} from './treasureProtection';
 import type { TreasureContainer } from './treasureContainer';
 
 export type Table<T> = {
@@ -141,4 +146,7 @@ export type Command =
   | ChamberRoomContents
   | ChamberRoomStairs
   | TreasureWithoutMonster
+  | TreasureProtectionType
+  | TreasureProtectionGuardedBy
+  | TreasureProtectionHiddenBy
   | TreasureContainer;

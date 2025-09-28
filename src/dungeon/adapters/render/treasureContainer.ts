@@ -13,12 +13,14 @@ import {
 const TREASURE_CONTAINER_TEXT: Record<TreasureContainer, string | null> = {
   [TreasureContainer.Bags]: 'The treasure is contained in bags.',
   [TreasureContainer.Sacks]: 'The treasure is contained in sacks.',
-  [TreasureContainer.SmallCoffers]: 'The treasure is contained in small coffers.',
+  [TreasureContainer.SmallCoffers]:
+    'The treasure is contained in small coffers.',
   [TreasureContainer.Chests]: 'The treasure is contained in chests.',
   [TreasureContainer.HugeChests]: 'The treasure is contained in huge chests.',
   [TreasureContainer.PotteryJars]: 'The treasure is contained in pottery jars.',
   [TreasureContainer.MetalUrns]: 'The treasure is contained in metal urns.',
-  [TreasureContainer.StoneContainers]: 'The treasure is contained in stone containers.',
+  [TreasureContainer.StoneContainers]:
+    'The treasure is contained in stone containers.',
   [TreasureContainer.IronTrunks]: 'The treasure is contained in iron trunks.',
   [TreasureContainer.Loose]: null,
 };

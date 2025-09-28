@@ -6,7 +6,11 @@ import {
 } from '../../tables/dungeon/periodicCheck';
 import { doorBeyond, DoorBeyond } from '../../tables/dungeon/doorBeyond';
 import { doorLocation, DoorLocation } from '../../tables/dungeon/doorLocation';
-import type { DungeonOutcomeNode, OutcomeEvent, OutcomeEventNode } from './outcome';
+import type {
+  DungeonOutcomeNode,
+  OutcomeEvent,
+  OutcomeEventNode,
+} from './outcome';
 import { sidePassages } from '../../tables/dungeon/sidePassages';
 import { passageTurns } from '../../tables/dungeon/passageTurns';
 import {
@@ -80,6 +84,12 @@ import {
   TreasureWithoutMonster,
 } from '../../tables/dungeon/treasure';
 import { treasureContainer } from '../../tables/dungeon/treasureContainer';
+import {
+  treasureProtectionType,
+  TreasureProtectionType,
+  treasureProtectionGuardedBy,
+  treasureProtectionHiddenBy,
+} from '../../tables/dungeon/treasureProtection';
 import type { TreasureEntry } from './outcome';
 import {
   periodicCheckDoorOnly,
@@ -978,6 +988,14 @@ export function resolveTreasure(options?: {
           kind: 'treasureContainer',
         },
       },
+      {
+        type: 'pending-roll',
+        table: 'treasureProtectionType',
+        context: {
+          kind: 'treasureProtection',
+          treasureRoll: usedRoll,
+        },
+      },
     ],
   };
 
@@ -1042,6 +1060,64 @@ function formatQuantity(
 ): string {
   const unit = quantity === 1 ? singular : plural;
   return `${quantity.toLocaleString()} ${unit}`;
+}
+
+export function resolveTreasureProtectionType(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureProtectionType.sides);
+  const command = getTableEntry(usedRoll, treasureProtectionType);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureProtectionType.Guarded) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureProtectionGuardedBy',
+    });
+  } else {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureProtectionHiddenBy',
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureProtectionType',
+      result: command,
+    } as OutcomeEvent,
+    children,
+  };
+}
+
+export function resolveTreasureProtectionGuardedBy(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureProtectionGuardedBy.sides);
+  const command = getTableEntry(usedRoll, treasureProtectionGuardedBy);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureProtectionGuardedBy',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureProtectionHiddenBy(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureProtectionHiddenBy.sides);
+  const command = getTableEntry(usedRoll, treasureProtectionHiddenBy);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureProtectionHiddenBy',
+      result: command,
+    } as OutcomeEvent,
+  };
 }
 
 export function resolveTreasureContainer(options?: {

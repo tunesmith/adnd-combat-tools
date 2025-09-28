@@ -232,6 +232,23 @@ describe('passage contents', () => {
 
     feed = resolvePreview(feed, firstContainerTarget, 6);
 
+    const protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionType')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const protectionTarget = protectionTargets[0];
+    if (!protectionTarget) throw new Error('missing protection target');
+
+    feed = resolvePreview(feed, protectionTarget, 12);
+
+    const hiddenTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionHiddenBy')
+    );
+    expect(hiddenTargets).toHaveLength(1);
+    const hiddenTarget = hiddenTargets[0];
+    if (!hiddenTarget) throw new Error('missing hidden protection target');
+    feed = resolvePreview(feed, hiddenTarget, 11);
+
     const treasureEvent = findOutcomeEvent(feed.outcome, 'treasure');
     expect(treasureEvent).toBeDefined();
     if (treasureEvent && treasureEvent.event.kind === 'treasure') {
@@ -252,7 +269,9 @@ describe('passage contents', () => {
       .toLowerCase();
     expect(compactText).toContain('750 gold pieces');
     expect(compactText).toContain('contained in small coffers');
-    expect(compactText).toContain('determine treasure protection');
+    expect(compactText).toContain(
+      'if desired, the treasure is hidden under a heap of trash or dung.'
+    );
   });
 
   it('rolls treasure twice when monsters guard it', () => {
@@ -293,6 +312,23 @@ describe('passage contents', () => {
     if (!firstMonsterContainer) throw new Error('missing monster container');
     feed = resolvePreview(feed, firstMonsterContainer, 19);
 
+    let protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionType')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const firstProtectionTarget = protectionTargets[0];
+    if (!firstProtectionTarget)
+      throw new Error('missing first treasure protection target');
+    feed = resolvePreview(feed, firstProtectionTarget, 4);
+
+    let guardedTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionGuardedBy')
+    );
+    expect(guardedTargets).toHaveLength(1);
+    const guardedTarget = guardedTargets[0];
+    if (!guardedTarget) throw new Error('missing guarded protection target');
+    feed = resolvePreview(feed, guardedTarget, 18);
+
     feed = resolvePendingPreview(feed, 'treasure', 97);
 
     containerTargets = listPendingPreviewTargets(feed).filter((target) =>
@@ -300,8 +336,27 @@ describe('passage contents', () => {
     );
     expect(containerTargets).toHaveLength(1);
     const secondMonsterContainer = containerTargets[0];
-    if (!secondMonsterContainer) throw new Error('missing second monster container');
+    if (!secondMonsterContainer)
+      throw new Error('missing second monster container');
     feed = resolvePreview(feed, secondMonsterContainer, 4);
+
+    protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionType')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const secondProtectionTarget = protectionTargets[0];
+    if (!secondProtectionTarget)
+      throw new Error('missing second treasure protection target');
+    feed = resolvePreview(feed, secondProtectionTarget, 15);
+
+    guardedTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionHiddenBy')
+    );
+    expect(guardedTargets).toHaveLength(1);
+    const hiddenProtectionTarget = guardedTargets[0];
+    if (!hiddenProtectionTarget)
+      throw new Error('missing hidden protection target');
+    feed = resolvePreview(feed, hiddenProtectionTarget, 14);
 
     const treasureEvents = findOutcomeEvents(feed.outcome, 'treasure');
     const treasureNodes = treasureEvents.filter(
@@ -339,6 +394,12 @@ describe('passage contents', () => {
       'magic item (roll once on magic items table)'
     );
     expect(compactText).toContain('contained in sacks');
+    expect(compactText).toContain(
+      'if desired, the treasure is guarded by spears released from the walls when the container is opened.'
+    );
+    expect(compactText).toContain(
+      'if desired, the treasure is hidden behind a loose stone in the wall.'
+    );
     expect(compactText).not.toContain('contained in loose');
   });
 

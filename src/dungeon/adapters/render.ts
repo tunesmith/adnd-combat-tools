@@ -159,6 +159,15 @@ import {
   renderTreasureContainerCompact,
   buildTreasureContainerPreview,
 } from './render/treasureContainer';
+import {
+  renderTreasureProtectionTypeDetail,
+  renderTreasureProtectionTypeCompact,
+  renderTreasureProtectionGuardedByDetail,
+  renderTreasureProtectionHiddenByDetail,
+  buildTreasureProtectionTypePreview,
+  buildTreasureProtectionGuardedByPreview,
+  buildTreasureProtectionHiddenByPreview,
+} from './render/treasureProtection';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -367,6 +376,18 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureContainerDetail,
     renderCompact: withoutAppend(renderTreasureContainerCompact),
   },
+  treasureProtectionType: {
+    renderDetail: renderTreasureProtectionTypeDetail,
+    renderCompact: renderTreasureProtectionTypeCompact,
+  },
+  treasureProtectionGuardedBy: {
+    renderDetail: renderTreasureProtectionGuardedByDetail,
+    renderCompact: NO_COMPACT_RENDER,
+  },
+  treasureProtectionHiddenBy: {
+    renderDetail: renderTreasureProtectionHiddenByDetail,
+    renderCompact: NO_COMPACT_RENDER,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -454,6 +475,9 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   gasTrapEffect: buildGasTrapEffectPreview,
   treasure: buildTreasurePreview,
   treasureContainer: buildTreasureContainerPreview,
+  treasureProtectionType: buildTreasureProtectionTypePreview,
+  treasureProtectionGuardedBy: buildTreasureProtectionGuardedByPreview,
+  treasureProtectionHiddenBy: buildTreasureProtectionHiddenByPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -589,6 +613,34 @@ function previewForEventNode(
       break;
     case 'gasTrapEffect':
       tableId = 'gasTrapEffect';
+      break;
+    case 'treasure': {
+      const treasure = event;
+      tableId = 'treasure';
+      context = {
+        kind: 'treasure',
+        level: treasure.level,
+        withMonster: treasure.withMonster,
+        rollIndex: treasure.rollIndex,
+        totalRolls: treasure.totalRolls,
+      };
+      break;
+    }
+    case 'treasureContainer':
+      tableId = 'treasureContainer';
+      context = { kind: 'treasureContainer' };
+      break;
+    case 'treasureProtectionType':
+      tableId = 'treasureProtectionType';
+      context = { kind: 'treasureProtection', treasureRoll: node.roll };
+      break;
+    case 'treasureProtectionGuardedBy':
+      tableId = 'treasureProtectionGuardedBy';
+      context = { kind: 'treasureProtection', treasureRoll: node.roll };
+      break;
+    case 'treasureProtectionHiddenBy':
+      tableId = 'treasureProtectionHiddenBy';
+      context = { kind: 'treasureProtection', treasureRoll: node.roll };
       break;
     case 'passageExitLocation':
       tableId = 'passageExitLocation';

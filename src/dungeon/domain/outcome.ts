@@ -70,6 +70,11 @@ import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomConten
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
 import type { TreasureContainer } from '../../tables/dungeon/treasureContainer';
+import type {
+  TreasureProtectionType,
+  TreasureProtectionGuardedBy,
+  TreasureProtectionHiddenBy,
+} from '../../tables/dungeon/treasureProtection';
 import type { PartyResult } from '../models/character/characterSheet';
 
 export type DoorChainLaterality = 'Left' | 'Right';
@@ -268,6 +273,18 @@ export type OutcomeEvent =
   | {
       kind: 'treasureContainer';
       result: TreasureContainer;
+    }
+  | {
+      kind: 'treasureProtectionType';
+      result: TreasureProtectionType;
+    }
+  | {
+      kind: 'treasureProtectionGuardedBy';
+      result: TreasureProtectionGuardedBy;
+    }
+  | {
+      kind: 'treasureProtectionHiddenBy';
+      result: TreasureProtectionHiddenBy;
     };
 
 export type TreasureEntry = {
@@ -275,6 +292,11 @@ export type TreasureEntry = {
   command: TreasureWithoutMonster;
   quantity?: number;
   display?: string;
+  protection?: {
+    type?: TreasureProtectionType;
+    guardedBy?: TreasureProtectionGuardedBy;
+    hiddenBy?: TreasureProtectionHiddenBy;
+  };
 };
 
 export type PendingRoll = {

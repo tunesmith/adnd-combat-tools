@@ -13,6 +13,11 @@ import {
   type TablePreviewFactory,
 } from './shared';
 import { describeTreasureContainerResult } from './treasureContainer';
+import {
+  describeTreasureProtectionGuardedBy,
+  describeTreasureProtectionHiddenBy,
+} from './treasureProtection';
+import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,
@@ -43,19 +48,6 @@ export function renderTreasureDetail(
     const description = describeTreasureEntry(entry);
     nodes.push({ kind: 'paragraph', text: description.detail });
   }
-  const container = findChildEvent(outcome, 'treasureContainer');
-  if (container && container.event.kind === 'treasureContainer') {
-    const containerText = describeTreasureContainerResult(
-      container.event.result
-    );
-    if (containerText) {
-      nodes.push({ kind: 'paragraph', text: containerText });
-    }
-  }
-  nodes.push({
-    kind: 'paragraph',
-    text: 'TODO: Determine treasure protection.',
-  });
 
   appendPendingPreviews(outcome, nodes);
   return nodes;
@@ -103,10 +95,13 @@ export function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
   const segments = entries.map((entry) => describeTreasureEntry(entry).compact);
   const container = findChildEvent(outcome, 'treasureContainer');
   if (container && container.event.kind === 'treasureContainer') {
-    const containerText = describeTreasureContainerResult(container.event.result);
+    const containerText = describeTreasureContainerResult(
+      container.event.result
+    );
     if (containerText) segments.push(containerText);
   }
-  segments.push('TODO: Determine treasure protection.');
+  const protection = describeTreasureProtection(outcome);
+  if (protection) segments.push(protection);
   return joinSegments(segments).trim();
 }
 
@@ -145,7 +140,7 @@ function describeTreasureEntry(entry: TreasureEntry): TreasureDescription {
     case TreasureWithoutMonster.PlatinumPerLevel:
     case TreasureWithoutMonster.GemsPerLevel:
     case TreasureWithoutMonster.JewelryPerLevel:
-      return quantifiedDescription(entry.display ?? 'Treasure');
+      return quantifiedDescription(entry);
     case TreasureWithoutMonster.Magic:
       return rewardDescription('Magic item (roll once on Magic Items table).');
     default:
@@ -153,13 +148,17 @@ function describeTreasureEntry(entry: TreasureEntry): TreasureDescription {
   }
 }
 
-function quantifiedDescription(display: string): TreasureDescription {
-  const trimmed = display.trim();
-  const sentence = trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
+function quantifiedDescription(entry: TreasureEntry): TreasureDescription {
+  const trimmed = entry.display?.trim() ?? 'Treasure';
+  const quantity = entry.quantity;
+  const verb = quantity === 1 ? 'is' : 'are';
+  const detail = quantity
+    ? `There ${verb} ${trimmed} here.`
+    : `There is ${trimmed}.`;
   return {
     label: trimmed,
-    detail: sentence,
-    compact: sentence,
+    detail: detail.endsWith('.') ? detail : `${detail}.`,
+    compact: detail.endsWith('.') ? detail : `${detail}.`,
   };
 }
 
@@ -170,6 +169,36 @@ function rewardDescription(base: string): TreasureDescription {
     detail: normalized,
     compact: normalized,
   };
+}
+
+function describeTreasureProtection(
+  outcome: OutcomeEventNode
+): string | undefined {
+  const protectionType = findChildEvent(outcome, 'treasureProtectionType');
+  if (
+    !protectionType ||
+    protectionType.event.kind !== 'treasureProtectionType'
+  ) {
+    return undefined;
+  }
+  const guard = findChildEvent(protectionType, 'treasureProtectionGuardedBy');
+  if (guard && guard.event.kind === 'treasureProtectionGuardedBy') {
+    const detail = describeTreasureProtectionGuardedBy(guard.event.result);
+    if (detail) return `If desired, the treasure is guarded by ${detail}.`;
+  }
+  const hidden = findChildEvent(protectionType, 'treasureProtectionHiddenBy');
+  if (hidden && hidden.event.kind === 'treasureProtectionHiddenBy') {
+    const detail = describeTreasureProtectionHiddenBy(hidden.event.result);
+    if (detail) return `If desired, the treasure is hidden ${detail}.`;
+  }
+  switch (protectionType.event.result) {
+    case TreasureProtectionType.Guarded:
+      return 'If desired, the treasure is guarded.';
+    case TreasureProtectionType.Hidden:
+      return 'If desired, the treasure is hidden.';
+    default:
+      return 'If desired, the treasure is protected.';
+  }
 }
 
 function previewLabelForCommand(command: TreasureWithoutMonster): string {

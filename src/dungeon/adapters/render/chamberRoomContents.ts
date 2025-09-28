@@ -41,7 +41,7 @@ export function renderChamberRoomContentsDetail(
   if (partyMessages.length === 0) {
     nodes.push({
       kind: 'paragraph',
-      text: `${describeChamberRoomContents(outcome)} `,
+      text: `${describeChamberRoomContents(outcome, 'detail')} `,
     });
   }
   appendPendingPreviews(outcome, nodes);
@@ -70,7 +70,10 @@ export function renderChamberRoomContentsCompact(
   return nodes;
 }
 
-export function describeChamberRoomContents(node: OutcomeEventNode): string {
+export function describeChamberRoomContents(
+  node: OutcomeEventNode,
+  mode: 'compact' | 'detail' = 'compact'
+): string {
   if (node.event.kind !== 'chamberRoomContents') return '';
   const segments: string[] = [];
   switch (node.event.result) {
@@ -79,12 +82,12 @@ export function describeChamberRoomContents(node: OutcomeEventNode): string {
       break;
     case ChamberRoomContents.MonsterOnly:
       segments.push('A monster is present.');
-      addResolvedMonsterSummary(node, segments);
+      addResolvedMonsterSummary(node, segments, mode);
       break;
     case ChamberRoomContents.MonsterAndTreasure:
       segments.push('A monster and treasure are present.');
-      addResolvedMonsterSummary(node, segments);
-      addResolvedTreasureSummary(node, segments);
+      addResolvedMonsterSummary(node, segments, mode);
+      addResolvedTreasureSummary(node, segments, mode);
       break;
     case ChamberRoomContents.Special: {
       const stairs = findChildEvent(node, 'chamberRoomStairs');
@@ -100,7 +103,7 @@ export function describeChamberRoomContents(node: OutcomeEventNode): string {
       break;
     case ChamberRoomContents.Treasure:
       segments.push('Treasure is present.');
-      addResolvedTreasureSummary(node, segments);
+      addResolvedTreasureSummary(node, segments, mode);
       break;
     default:
       break;
@@ -118,8 +121,12 @@ export function describeChamberRoomContents(node: OutcomeEventNode): string {
 
 function addResolvedMonsterSummary(
   node: OutcomeEventNode,
-  segments: string[]
+  segments: string[],
+  mode: 'compact' | 'detail'
 ): void {
+  if (mode === 'detail') {
+    return;
+  }
   const partyMessages = collectCharacterPartyMessages(node, 'compact');
   if (partyMessages.length > 0) {
     return;
@@ -183,8 +190,12 @@ function addResolvedTrickTrapSummary(
 
 function addResolvedTreasureSummary(
   node: OutcomeEventNode,
-  segments: string[]
+  segments: string[],
+  mode: 'compact' | 'detail'
 ): void {
+  if (mode === 'detail') {
+    return;
+  }
   const summaries = collectTreasureCompactSummaries(node);
   for (const summary of summaries) {
     if (summary.length > 0) segments.push(summary);

@@ -103,6 +103,10 @@ export type TableContext =
       totalRolls?: number;
     }
   | {
+      kind: 'treasureProtection';
+      treasureRoll?: number;
+    }
+  | {
       kind: 'treasureContainer';
     };
 
