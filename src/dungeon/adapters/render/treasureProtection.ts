@@ -84,10 +84,6 @@ export function renderTreasureProtectionTypeDetail(
     },
   ];
   nodes.push({ kind: 'paragraph', text: baseProtectionText(outcome) });
-  const childSummary = describeProtectionChild(outcome);
-  if (childSummary) {
-    nodes.push({ kind: 'paragraph', text: childSummary });
-  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
