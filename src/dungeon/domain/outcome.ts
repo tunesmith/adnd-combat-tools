@@ -78,6 +78,7 @@ import type { TreasurePotionGiantControl } from '../../tables/dungeon/treasurePo
 import type { TreasurePotionGiantStrength } from '../../tables/dungeon/treasurePotionGiantStrength';
 import type { TreasurePotionHumanControl } from '../../tables/dungeon/treasurePotionHumanControl';
 import type { TreasurePotionUndeadControl } from '../../tables/dungeon/treasurePotionUndeadControl';
+import type { TreasureScroll } from '../../tables/dungeon/treasureScrolls';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -349,6 +350,27 @@ export type OutcomeEvent =
       level: number;
       treasureRoll: number;
       rollIndex?: number;
+    }
+  | {
+      kind: 'treasureScroll';
+      result: TreasureScroll;
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
+      scroll:
+        | {
+            type: 'spells';
+            caster: 'magic-user' | 'illusionist' | 'cleric' | 'druid';
+            spellLevels: number[];
+          }
+        | {
+            type: 'protection';
+            protection: TreasureScroll;
+            xp?: number;
+          }
+        | {
+            type: 'curse';
+          };
     };
 
 export type TreasureEntry = {

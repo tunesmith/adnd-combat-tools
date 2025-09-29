@@ -18,6 +18,7 @@ import { resolveTreasureContainer } from '../../../../../dungeon/domain/resolver
 import { TreasureMagicCategory } from '../../../../../tables/dungeon/treasureMagic';
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 import { TreasurePotion } from '../../../../../tables/dungeon/treasurePotions';
+import { TreasureScroll } from '../../../../../tables/dungeon/treasureScrolls';
 
 describe('passage contents', () => {
   it('shows empty chamber contents once resolved', () => {
@@ -670,6 +671,151 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a potion of wraith control.');
+  });
+
+  it('resolves spell scrolls with caster and spell levels', () => {
+    const randomSpy = jest.spyOn(Math, 'random');
+    randomSpy
+      .mockReturnValueOnce(0.845) // cleric/druid roll -> clerical
+      .mockReturnValueOnce(0.2) // druid selection
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.3)
+      .mockReturnValueOnce(0.6)
+      .mockReturnValueOnce(0.05)
+      .mockReturnValueOnce(0.8)
+      .mockReturnValueOnce(0.4)
+      .mockReturnValueOnce(0.6);
+
+    try {
+      let feed = createFeedSnapshot({
+        action: 'passage',
+        roll: 14,
+        detailMode: true,
+        dungeonLevel: 5,
+      });
+
+      feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+      feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+      feed = resolvePendingPreview(feed, 'treasure', 99);
+
+      const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+      );
+      expect(magicTargets).toHaveLength(1);
+      const categoryTarget = magicTargets[0];
+      if (!categoryTarget) throw new Error('missing scroll category target');
+      feed = resolvePreview(feed, categoryTarget, 25);
+
+      const scrollTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureScroll')
+      );
+      expect(scrollTargets).toHaveLength(1);
+      const scrollTarget = scrollTargets[0];
+      if (!scrollTarget) throw new Error('missing scroll target');
+      feed = resolvePreview(feed, scrollTarget, 60);
+
+      const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
+      expect(scrollEvent).toBeDefined();
+      if (!scrollEvent || scrollEvent.event.kind !== 'treasureScroll') {
+        throw new Error('scroll event missing');
+      }
+      expect(scrollEvent.event.result).toBe(TreasureScroll.SpellSevenLevel4to9);
+      expect(scrollEvent.event.scroll.type).toBe('spells');
+      if (scrollEvent.event.scroll.type === 'spells') {
+        expect(scrollEvent.event.scroll.caster).toBe('druid');
+        expect(scrollEvent.event.scroll.spellLevels).toEqual([
+          4, 5, 6, 4, 7, 5, 6,
+        ]);
+      }
+
+      const detailText = renderDetail(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(detailText).toContain(
+        'a druid scroll of seven spells (4th, 5th, 6th, 4th, 7th, 5th, 6th).'
+      );
+
+      const compactText = renderCompact(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(compactText).toContain(
+        'a druid scroll of seven spells (4th, 5th, 6th, 4th, 7th, 5th, 6th).'
+      );
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
+  it('resolves protection scrolls with xp detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing scroll category target');
+    feed = resolvePreview(feed, categoryTarget, 30);
+
+    const scrollTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureScroll')
+    );
+    expect(scrollTargets).toHaveLength(1);
+    const scrollTarget = scrollTargets[0];
+    if (!scrollTarget) throw new Error('missing scroll target');
+    feed = resolvePreview(feed, scrollTarget, 61);
+
+    const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
+    expect(scrollEvent).toBeDefined();
+    if (!scrollEvent || scrollEvent.event.kind !== 'treasureScroll') {
+      throw new Error('scroll event missing');
+    }
+    expect(scrollEvent.event.scroll.type).toBe('protection');
+    if (scrollEvent.event.scroll.type === 'protection') {
+      expect(scrollEvent.event.scroll.protection).toBe(
+        TreasureScroll.ProtectionDemons
+      );
+      expect(scrollEvent.event.scroll.xp).toBe(2500);
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'a protection scroll against demons (2,500 xp).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'a protection scroll against demons (2,500 xp).'
+    );
   });
 
   it('rolls treasure twice when monsters guard it', () => {
