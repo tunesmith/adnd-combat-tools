@@ -115,7 +115,11 @@ import { treasureRingRegeneration } from '../../tables/dungeon/treasureRingRegen
 import { treasureRingTelekinesis } from '../../tables/dungeon/treasureRingTelekinesis';
 import { treasureRingThreeWishes } from '../../tables/dungeon/treasureRingThreeWishes';
 import { treasureRingWizardry } from '../../tables/dungeon/treasureRingWizardry';
-import { treasureRodsStavesWands } from '../../tables/dungeon/treasureRodsStavesWands';
+import {
+  treasureRodsStavesWands,
+  TreasureRodStaffWand,
+} from '../../tables/dungeon/treasureRodsStavesWands';
+import { treasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1893,11 +1897,34 @@ export function resolveTreasureRodStaffWand(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureRodsStavesWands.sides);
   const command = getTableEntry(usedRoll, treasureRodsStavesWands);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureRodStaffWand.StaffSerpent) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureStaffSerpent',
+    });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: {
       kind: 'treasureRodStaffWand',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureStaffSerpent(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureStaffSerpent.sides);
+  const command = getTableEntry(usedRoll, treasureStaffSerpent);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureStaffSerpent',
       result: command,
     } as OutcomeEvent,
   };

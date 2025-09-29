@@ -86,6 +86,7 @@ import type { TreasureRingTelekinesis } from './treasureRingTelekinesis';
 import type { TreasureRingThreeWishes } from './treasureRingThreeWishes';
 import type { TreasureRingWizardry } from './treasureRingWizardry';
 import type { TreasureRodStaffWand } from './treasureRodsStavesWands';
+import type { TreasureStaffSerpent } from './treasureStaffSerpent';
 
 export type Table<T> = {
   sides: number;
@@ -189,4 +190,5 @@ export type Command =
   | TreasureRingTelekinesis
   | TreasureRingThreeWishes
   | TreasureRingWizardry
-  | TreasureRodStaffWand;
+  | TreasureRodStaffWand
+  | TreasureStaffSerpent;

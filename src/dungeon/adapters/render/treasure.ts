@@ -8,6 +8,7 @@ import {
 import { resolvedPotionSentence } from './treasurePotion';
 import { resolvedScrollSentence } from './treasureScroll';
 import { ringSentence } from './treasureRing';
+import { resolveRodStaffWandLabel } from './treasureRodStaffWand';
 import {
   buildPreview,
   joinSegments,
@@ -133,6 +134,11 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   const ring = findChildEvent(magic, 'treasureRing');
   if (ring && ring.event.kind === 'treasureRing') {
     return ringSentence(ring.event.result, ring);
+  }
+  const rod = findChildEvent(magic, 'treasureRodStaffWand');
+  if (rod && rod.event.kind === 'treasureRodStaffWand') {
+    const label = resolveRodStaffWandLabel(rod);
+    return label.length > 0 ? `There is a ${label}.` : undefined;
   }
   return undefined;
 }

@@ -6,9 +6,11 @@ import {
 } from '../../../tables/dungeon/treasureRodsStavesWands';
 import {
   buildPreview,
+  findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
+import { TreasureStaffSerpent } from '../../../tables/dungeon/treasureStaffSerpent';
 
 const LABELS: Record<TreasureRodStaffWand, string> = {
   [TreasureRodStaffWand.RodAbsorption]: 'Rod of Absorption',
@@ -57,11 +59,11 @@ export function renderTreasureRodStaffWandDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${LABELS[outcome.event.result]}`],
+    items: [`roll: ${outcome.roll} — ${resolveRodStaffWandLabel(outcome)}`],
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: `There is a ${LABELS[outcome.event.result]}.`,
+    text: `There is a ${resolveRodStaffWandLabel(outcome)}.`,
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -80,7 +82,7 @@ export function renderTreasureRodStaffWandCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: `There is a ${LABELS[outcome.event.result]}.`,
+    text: `There is a ${resolveRodStaffWandLabel(outcome)}.`,
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -98,3 +100,23 @@ export const buildTreasureRodStaffWandPreview: TablePreviewFactory = (
       label: LABELS[entry.command],
     })),
   });
+
+export function resolveRodStaffWandLabel(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'treasureRodStaffWand') {
+    return '';
+  }
+  const base = LABELS[node.event.result];
+  if (node.event.result !== TreasureRodStaffWand.StaffSerpent) {
+    return base;
+  }
+  const variant = findChildEvent(node, 'treasureStaffSerpent');
+  if (variant && variant.event.kind === 'treasureStaffSerpent') {
+    return `${base} "${SERPENT_LABELS[variant.event.result]}"`;
+  }
+  return base;
+}
+
+const SERPENT_LABELS: Record<TreasureStaffSerpent, string> = {
+  [TreasureStaffSerpent.Python]: 'Python',
+  [TreasureStaffSerpent.Adder]: 'Adder',
+};

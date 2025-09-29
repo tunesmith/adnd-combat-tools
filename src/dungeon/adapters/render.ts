@@ -238,6 +238,11 @@ import {
   renderTreasureRodStaffWandCompact,
   buildTreasureRodStaffWandPreview,
 } from './render/treasureRodStaffWand';
+import {
+  renderTreasureStaffSerpentDetail,
+  renderTreasureStaffSerpentCompact,
+  buildTreasureStaffSerpentPreview,
+} from './render/treasureStaffSerpent';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -538,6 +543,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureRodStaffWandDetail,
     renderCompact: renderTreasureRodStaffWandCompact,
   },
+  treasureStaffSerpent: {
+    renderDetail: renderTreasureStaffSerpentDetail,
+    renderCompact: renderTreasureStaffSerpentCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -650,6 +659,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureRingThreeWishes: buildTreasureRingThreeWishesPreview,
   treasureRingWizardry: buildTreasureRingWizardryPreview,
   treasureRodStaffWand: buildTreasureRodStaffWandPreview,
+  treasureStaffSerpent: buildTreasureStaffSerpentPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -914,6 +924,9 @@ function previewForEventNode(
       break;
     case 'treasureRodStaffWand':
       tableId = 'treasureRodStaffWand';
+      break;
+    case 'treasureStaffSerpent':
+      tableId = 'treasureStaffSerpent';
       break;
     case 'treasurePotionAnimalControl': {
       const potionCategory = event;
