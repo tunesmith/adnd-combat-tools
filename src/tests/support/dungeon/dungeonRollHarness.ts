@@ -243,6 +243,7 @@ export function simulateCompactRunWithSequence(options: {
   rolls: RollInput;
   dungeonLevel?: number;
   allowUnusedRolls?: boolean;
+  fallbackToRandom?: boolean;
 }): CompactRunResult {
   const rolls = parseRollSequence(options.rolls);
   const initialRoll = rolls[0];
@@ -252,12 +253,15 @@ export function simulateCompactRunWithSequence(options: {
     );
   }
   const queued = rolls.slice(1);
-  const { result, unused } = executeWithMockedDice(queued, () =>
-    simulateCompactRun({
-      action: options.action,
-      roll: initialRoll,
-      dungeonLevel: options.dungeonLevel,
-    })
+  const { result, unused } = executeWithMockedDice(
+    queued,
+    () =>
+      simulateCompactRun({
+        action: options.action,
+        roll: initialRoll,
+        dungeonLevel: options.dungeonLevel,
+      }),
+    { fallbackToRandom: options.fallbackToRandom }
   );
   if (!options.allowUnusedRolls && unused.length > 0) {
     throw new Error(
@@ -276,16 +280,25 @@ function assertDieRoll(input: number): number {
 
 function executeWithMockedDice<T>(
   rolls: number[],
-  fn: () => T
+  fn: () => T,
+  options?: { fallbackToRandom?: boolean }
 ): { result: T; unused: number[] } {
   const queue = [...rolls];
+  const originalRollDice = dungeonLookup.rollDice;
   const spy = jest
     .spyOn(dungeonLookup, 'rollDice')
     .mockImplementation((sides: number, count = 1) => {
       let total = 0;
       for (let i = 0; i < count; i += 1) {
         if (queue.length === 0) {
-          throw new Error('Ran out of predetermined rolls for rollDice.');
+          if (!options?.fallbackToRandom) {
+            throw new Error('Ran out of predetermined rolls for rollDice.');
+          }
+          const remaining = count - i;
+          if (remaining > 0) {
+            total += originalRollDice.call(dungeonLookup, sides, remaining);
+          }
+          return total;
         }
         const value = queue.shift();
         if (value === undefined) {
