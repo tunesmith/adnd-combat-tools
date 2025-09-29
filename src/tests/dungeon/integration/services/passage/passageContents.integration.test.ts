@@ -521,12 +521,6 @@ describe('passage contents', () => {
     if (!potionTarget) throw new Error('missing potion target');
     feed = resolvePreview(feed, potionTarget, 38);
 
-    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
-    expect(potionEvent).toBeDefined();
-    if (potionEvent && potionEvent.event.kind === 'treasurePotion') {
-      expect(potionEvent.event.result).toBe(TreasurePotion.GiantStrength);
-    }
-
     const giantTargets = listPendingPreviewTargets(feed).filter((target) =>
       (target.split('.').pop() ?? '').startsWith('treasurePotionGiantStrength')
     );
@@ -534,6 +528,12 @@ describe('passage contents', () => {
     const giantTarget = giantTargets[0];
     if (!giantTarget) throw new Error('missing giant control target');
     feed = resolvePreview(feed, giantTarget, 8);
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (potionEvent && potionEvent.event.kind === 'treasurePotion') {
+      expect(potionEvent.event.result).toBe(TreasurePotion.GiantStrength);
+    }
 
     const detailText = renderDetail(feed)
       .filter(
@@ -552,6 +552,62 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a potion of stone giant strength.');
+  });
+
+  it('resolves human control potions with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing potion category target');
+    feed = resolvePreview(feed, categoryTarget, 5);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+    feed = resolvePreview(feed, potionTarget, 50);
+
+    const humanTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotionHumanControl')
+    );
+    expect(humanTargets).toHaveLength(1);
+    const humanTarget = humanTargets[0];
+    if (!humanTarget) throw new Error('missing human control target');
+    feed = resolvePreview(feed, humanTarget, 5);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a potion of gnome control.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a potion of gnome control.');
   });
 
   it('rolls treasure twice when monsters guard it', () => {

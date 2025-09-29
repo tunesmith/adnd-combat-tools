@@ -21,6 +21,10 @@ import {
   TreasurePotionGiantStrength,
 } from '../../../tables/dungeon/treasurePotionGiantStrength';
 import {
+  treasurePotionHumanControl,
+  TreasurePotionHumanControl,
+} from '../../../tables/dungeon/treasurePotionHumanControl';
+import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
@@ -354,6 +358,64 @@ export const buildTreasurePotionGiantStrengthPreview: TablePreviewFactory = (
     })),
   });
 
+export function renderTreasurePotionHumanControlDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionHumanControl') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Human Control Target',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasurePotionHumanControl[outcome.event.result]
+      }`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: humanControlSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasurePotionHumanControlCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionHumanControl') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Human Control Target',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: humanControlSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasurePotionHumanControlPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Human Control Target',
+    sides: treasurePotionHumanControl.sides,
+    entries: treasurePotionHumanControl.entries.map((entry) => ({
+      range: entry.range,
+      label: humanControlLabel(entry.command),
+    })),
+  });
+
 function animalControlSentence(result: TreasurePotionAnimalControl): string {
   const label = animalControlLabel(result);
   return `There is a potion of ${label} control.`;
@@ -432,6 +494,11 @@ export function resolvedPotionSentence(node: OutcomeEventNode): string {
     if (child && child.event.kind === 'treasurePotionGiantStrength') {
       return giantStrengthSentence(child.event.result);
     }
+  } else if (node.event.result === TreasurePotion.HumanControl) {
+    const child = findChildEvent(node, 'treasurePotionHumanControl');
+    if (child && child.event.kind === 'treasurePotionHumanControl') {
+      return humanControlSentence(child.event.result);
+    }
   } else if (node.event.result === TreasurePotion.DragonControl) {
     const child = findChildEvent(node, 'treasurePotionDragonControl');
     if (child && child.event.kind === 'treasurePotionDragonControl') {
@@ -484,5 +551,32 @@ function giantStrengthLabel(result: TreasurePotionGiantStrength): string {
       return 'storm';
     default:
       return 'giant';
+  }
+}
+
+function humanControlSentence(result: TreasurePotionHumanControl): string {
+  return `There is a potion of ${humanControlLabel(result)} control.`;
+}
+
+function humanControlLabel(result: TreasurePotionHumanControl): string {
+  switch (result) {
+    case TreasurePotionHumanControl.Dwarves:
+      return 'dwarf';
+    case TreasurePotionHumanControl.ElvesHalfElves:
+      return 'elf/half-elf';
+    case TreasurePotionHumanControl.Gnomes:
+      return 'gnome';
+    case TreasurePotionHumanControl.Halflings:
+      return 'halfling';
+    case TreasurePotionHumanControl.HalfOrcs:
+      return 'half-orc';
+    case TreasurePotionHumanControl.Humans:
+      return 'human (not demi-human or humanoid)';
+    case TreasurePotionHumanControl.Humanoids:
+      return 'humanoid (gnoll/orc/goblin/etc.)';
+    case TreasurePotionHumanControl.AlliedElvesHumans:
+      return 'elf/half-elf/human';
+    default:
+      return 'humanoid';
   }
 }

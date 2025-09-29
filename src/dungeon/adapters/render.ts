@@ -189,6 +189,9 @@ import {
   renderTreasurePotionGiantStrengthDetail,
   renderTreasurePotionGiantStrengthCompact,
   buildTreasurePotionGiantStrengthPreview,
+  renderTreasurePotionHumanControlDetail,
+  renderTreasurePotionHumanControlCompact,
+  buildTreasurePotionHumanControlPreview,
 } from './render/treasurePotion';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
@@ -434,6 +437,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasurePotionGiantStrengthDetail,
     renderCompact: renderTreasurePotionGiantStrengthCompact,
   },
+  treasurePotionHumanControl: {
+    renderDetail: renderTreasurePotionHumanControlDetail,
+    renderCompact: renderTreasurePotionHumanControlCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -530,6 +537,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasurePotionDragonControl: buildTreasurePotionDragonControlPreview,
   treasurePotionGiantControl: buildTreasurePotionGiantControlPreview,
   treasurePotionGiantStrength: buildTreasurePotionGiantStrengthPreview,
+  treasurePotionHumanControl: buildTreasurePotionHumanControlPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -688,17 +696,6 @@ function previewForEventNode(
       };
       break;
     }
-    case 'treasurePotionAnimalControl': {
-      const animal = event;
-      tableId = 'treasurePotionAnimalControl';
-      context = {
-        kind: 'treasureMagic',
-        level: animal.level,
-        treasureRoll: animal.treasureRoll,
-        rollIndex: animal.rollIndex,
-      };
-      break;
-    }
     case 'treasurePotionDragonControl': {
       const dragon = event;
       tableId = 'treasurePotionDragonControl';
@@ -729,6 +726,17 @@ function previewForEventNode(
         level: strength.level,
         treasureRoll: strength.treasureRoll,
         rollIndex: strength.rollIndex,
+      };
+      break;
+    }
+    case 'treasurePotionHumanControl': {
+      const human = event;
+      tableId = 'treasurePotionHumanControl';
+      context = {
+        kind: 'treasureMagic',
+        level: human.level,
+        treasureRoll: human.treasureRoll,
+        rollIndex: human.rollIndex,
       };
       break;
     }
