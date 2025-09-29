@@ -16,7 +16,7 @@ describe('passage compact trick/trap gas handling', () => {
     const wallEvent = findEvent(trapEvent, 'illusionaryWallNature');
     expect(wallEvent).toBeDefined();
   });
-  it('currently drops the gas trap preview when autorolled in compact mode', () => {
+  it('resolves the gas trap branch in compact mode', () => {
     const result = simulateCompactRunWithSequence({
       action: 'passage',
       rolls: [19, 17],
@@ -28,7 +28,7 @@ describe('passage compact trick/trap gas handling', () => {
     const trapEvent = findEvent(result.outcome, 'trickTrap');
     expect(trapEvent).toBeDefined();
     const gasEvent = findEvent(trapEvent, 'gasTrapEffect');
-    expect(gasEvent).toBeUndefined();
+    expect(gasEvent).toBeDefined();
   });
 });
 
