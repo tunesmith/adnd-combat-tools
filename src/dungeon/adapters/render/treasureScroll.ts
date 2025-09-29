@@ -243,7 +243,7 @@ export function resolvedScrollSentence(node: OutcomeEventNode): string {
   return 'A cursed scroll.';
 }
 
-function formatOrdinal(level: number): string {
+export function formatOrdinal(level: number): string {
   const remainder = level % 10;
   const teen = Math.floor(level / 10) % 10 === 1;
   const suffix = teen

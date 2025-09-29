@@ -311,6 +311,20 @@ function rollSpellLevels(count: number, range: [number, number]): number[] {
   return levels;
 }
 
+function rollSpellStoringLevels(count: number, caster: ScrollCaster): number[] {
+  const levels: number[] = [];
+  for (let i = 0; i < count; i += 1) {
+    if (caster === 'cleric' || caster === 'druid') {
+      const baseRoll = rollDice(6);
+      levels.push(baseRoll === 6 ? rollDice(4) : baseRoll);
+    } else {
+      const baseRoll = rollDice(8);
+      levels.push(baseRoll === 8 ? rollDice(6) : baseRoll);
+    }
+  }
+  return levels;
+}
+
 function toLaterality(loc: DoorLocation): DoorChainLaterality | undefined {
   if (loc === DoorLocation.Left) return 'Left';
   if (loc === DoorLocation.Right) return 'Right';
@@ -1691,6 +1705,12 @@ export function resolveTreasureRing(options?: {
   const usedRoll = options?.roll ?? rollDice(treasureRings.sides);
   const command = getTableEntry(usedRoll, treasureRings);
   const children: DungeonOutcomeNode[] = [];
+  let spellStoring:
+    | {
+        caster: 'magic-user' | 'illusionist' | 'cleric' | 'druid';
+        spellLevels: number[];
+      }
+    | undefined;
   if (command === TreasureRing.Contrariness) {
     children.push({
       type: 'pending-roll',
@@ -1706,6 +1726,11 @@ export function resolveTreasureRing(options?: {
       type: 'pending-roll',
       table: 'treasureRingProtection',
     });
+  } else if (command === TreasureRing.SpellStoring) {
+    const spellCount = rollDice(4) + 1;
+    const caster = rollCasterType();
+    const spellLevels = rollSpellStoringLevels(spellCount, caster);
+    spellStoring = { caster, spellLevels };
   } else if (command === TreasureRing.Regeneration) {
     children.push({
       type: 'pending-roll',
@@ -1721,6 +1746,7 @@ export function resolveTreasureRing(options?: {
       level: options?.level ?? 1,
       treasureRoll: options?.treasureRoll ?? usedRoll,
       rollIndex: options?.rollIndex,
+      spellStoring,
     } as OutcomeEvent,
     children: children.length ? children : undefined,
   };

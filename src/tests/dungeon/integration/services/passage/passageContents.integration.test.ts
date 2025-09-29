@@ -19,6 +19,7 @@ import { TreasureMagicCategory } from '../../../../../tables/dungeon/treasureMag
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 import { TreasurePotion } from '../../../../../tables/dungeon/treasurePotions';
 import { TreasureScroll } from '../../../../../tables/dungeon/treasureScrolls';
+import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage contents', () => {
   it('shows empty chamber contents once resolved', () => {
@@ -1061,6 +1062,70 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a vampiric regeneration ring.');
+  });
+
+  it('resolves spell storing rings with detail copy', () => {
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
+    spy
+      .mockImplementationOnce(() => 2) // spell count d4 => 3 spells
+      .mockImplementationOnce(() => 50) // cleric roll -> magic-user branch
+      .mockImplementationOnce(() => 20) // illusionist roll -> magic-user
+      .mockImplementationOnce(() => 2)
+      .mockImplementationOnce(() => 4)
+      .mockImplementationOnce(() => 5);
+
+    try {
+      let feed = createFeedSnapshot({
+        action: 'passage',
+        roll: 14,
+        detailMode: true,
+        dungeonLevel: 4,
+      });
+
+      feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+      feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+      feed = resolvePendingPreview(feed, 'treasure', 99);
+
+      const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+      );
+      expect(magicTargets).toHaveLength(1);
+      const categoryTarget = magicTargets[0];
+      if (!categoryTarget) throw new Error('missing ring category target');
+      feed = resolvePreview(feed, categoryTarget, 36);
+
+      const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureRing')
+      );
+      expect(ringTargets).toHaveLength(1);
+      const ringTarget = ringTargets[0];
+      if (!ringTarget) throw new Error('missing ring target');
+      feed = resolvePreview(feed, ringTarget, 64);
+
+      const detailText = renderDetail(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(detailText).toContain(
+        'there is a ring of magic-user spell storing (2nd, 4th, 5th).'
+      );
+
+      const compactText = renderCompact(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(compactText).toContain(
+        'there is a ring of magic-user spell storing (2nd, 4th, 5th).'
+      );
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('resolves contrariness rings with effect detail', () => {

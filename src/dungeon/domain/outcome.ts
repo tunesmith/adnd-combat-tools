@@ -394,6 +394,10 @@ export type OutcomeEvent =
       level: number;
       treasureRoll: number;
       rollIndex?: number;
+      spellStoring?: {
+        caster: 'magic-user' | 'illusionist' | 'cleric' | 'druid';
+        spellLevels: number[];
+      };
     }
   | {
       kind: 'treasureRingContrariness';

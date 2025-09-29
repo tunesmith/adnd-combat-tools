@@ -26,6 +26,7 @@ import {
   treasureRingRegeneration,
   TreasureRingRegeneration,
 } from '../../../tables/dungeon/treasureRingRegeneration';
+import { formatOrdinal } from './treasureScroll';
 
 const RING_LABELS: Record<TreasureRing, string> = {
   [TreasureRing.Contrariness]: 'contrariness',
@@ -392,6 +393,11 @@ export function ringSentence(
     if (child && child.event.kind === 'treasureRingProtection') {
       return protectionRingSentence(child.event.result);
     }
+  } else if (result === TreasureRing.SpellStoring && node) {
+    const { event } = node;
+    if (event.kind === 'treasureRing' && event.spellStoring) {
+      return spellStoringRingSentence(event.spellStoring);
+    }
   } else if (result === TreasureRing.Regeneration && node) {
     const child = findChildEvent(node, 'treasureRingRegeneration');
     if (child && child.event.kind === 'treasureRingRegeneration') {
@@ -491,4 +497,18 @@ function regenerationRingSentence(result: TreasureRingRegeneration): string {
     default:
       return 'There is a ring of regeneration.';
   }
+}
+
+function spellStoringRingSentence({
+  caster,
+  spellLevels,
+}: {
+  caster: 'magic-user' | 'illusionist' | 'cleric' | 'druid';
+  spellLevels: number[];
+}): string {
+  const casterLabel = `${caster} spell storing`;
+  const levelText = spellLevels.length
+    ? ` (${spellLevels.map(formatOrdinal).join(', ')})`
+    : '';
+  return `There is a ring of ${casterLabel}${levelText}.`;
 }
