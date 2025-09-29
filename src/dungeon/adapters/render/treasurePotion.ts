@@ -25,6 +25,10 @@ import {
   TreasurePotionHumanControl,
 } from '../../../tables/dungeon/treasurePotionHumanControl';
 import {
+  treasurePotionUndeadControl,
+  TreasurePotionUndeadControl,
+} from '../../../tables/dungeon/treasurePotionUndeadControl';
+import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
@@ -416,6 +420,64 @@ export const buildTreasurePotionHumanControlPreview: TablePreviewFactory = (
     })),
   });
 
+export function renderTreasurePotionUndeadControlDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionUndeadControl') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Undead Control Target',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasurePotionUndeadControl[outcome.event.result]
+      }`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: undeadControlSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasurePotionUndeadControlCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionUndeadControl') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Undead Control Target',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: undeadControlSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasurePotionUndeadControlPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Undead Control Target',
+    sides: treasurePotionUndeadControl.sides,
+    entries: treasurePotionUndeadControl.entries.map((entry) => ({
+      range: entry.range,
+      label: undeadControlLabel(entry.command),
+    })),
+  });
+
 function animalControlSentence(result: TreasurePotionAnimalControl): string {
   const label = animalControlLabel(result);
   return `There is a potion of ${label} control.`;
@@ -504,6 +566,11 @@ export function resolvedPotionSentence(node: OutcomeEventNode): string {
     if (child && child.event.kind === 'treasurePotionDragonControl') {
       return dragonControlSentence(child.event.result);
     }
+  } else if (node.event.result === TreasurePotion.UndeadControl) {
+    const child = findChildEvent(node, 'treasurePotionUndeadControl');
+    if (child && child.event.kind === 'treasurePotionUndeadControl') {
+      return undeadControlSentence(child.event.result);
+    }
   }
   return potionSentence(node.event.result);
 }
@@ -578,5 +645,36 @@ function humanControlLabel(result: TreasurePotionHumanControl): string {
       return 'elf/half-elf/human';
     default:
       return 'humanoid';
+  }
+}
+
+function undeadControlSentence(result: TreasurePotionUndeadControl): string {
+  return `There is a potion of ${undeadControlLabel(result)} control.`;
+}
+
+function undeadControlLabel(result: TreasurePotionUndeadControl): string {
+  switch (result) {
+    case TreasurePotionUndeadControl.Ghasts:
+      return 'ghast';
+    case TreasurePotionUndeadControl.Ghosts:
+      return 'ghost';
+    case TreasurePotionUndeadControl.Ghouls:
+      return 'ghoul';
+    case TreasurePotionUndeadControl.Shadows:
+      return 'shadow';
+    case TreasurePotionUndeadControl.Skeletons:
+      return 'skeleton';
+    case TreasurePotionUndeadControl.Spectres:
+      return 'spectre';
+    case TreasurePotionUndeadControl.Wights:
+      return 'wight';
+    case TreasurePotionUndeadControl.Wraiths:
+      return 'wraith';
+    case TreasurePotionUndeadControl.Vampires:
+      return 'vampire';
+    case TreasurePotionUndeadControl.Zombies:
+      return 'zombie';
+    default:
+      return 'undead';
   }
 }

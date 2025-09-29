@@ -192,6 +192,9 @@ import {
   renderTreasurePotionHumanControlDetail,
   renderTreasurePotionHumanControlCompact,
   buildTreasurePotionHumanControlPreview,
+  renderTreasurePotionUndeadControlDetail,
+  renderTreasurePotionUndeadControlCompact,
+  buildTreasurePotionUndeadControlPreview,
 } from './render/treasurePotion';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
@@ -441,6 +444,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasurePotionHumanControlDetail,
     renderCompact: renderTreasurePotionHumanControlCompact,
   },
+  treasurePotionUndeadControl: {
+    renderDetail: renderTreasurePotionUndeadControlDetail,
+    renderCompact: renderTreasurePotionUndeadControlCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -538,6 +545,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasurePotionGiantControl: buildTreasurePotionGiantControlPreview,
   treasurePotionGiantStrength: buildTreasurePotionGiantStrengthPreview,
   treasurePotionHumanControl: buildTreasurePotionHumanControlPreview,
+  treasurePotionUndeadControl: buildTreasurePotionUndeadControlPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -737,6 +745,17 @@ function previewForEventNode(
         level: human.level,
         treasureRoll: human.treasureRoll,
         rollIndex: human.rollIndex,
+      };
+      break;
+    }
+    case 'treasurePotionUndeadControl': {
+      const undead = event;
+      tableId = 'treasurePotionUndeadControl';
+      context = {
+        kind: 'treasureMagic',
+        level: undead.level,
+        treasureRoll: undead.treasureRoll,
+        rollIndex: undead.rollIndex,
       };
       break;
     }

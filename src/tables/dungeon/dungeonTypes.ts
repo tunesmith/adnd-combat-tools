@@ -73,6 +73,7 @@ import type { TreasurePotionDragonControl } from './treasurePotionDragonControl'
 import type { TreasurePotionGiantControl } from './treasurePotionGiantControl';
 import type { TreasurePotionGiantStrength } from './treasurePotionGiantStrength';
 import type { TreasurePotionHumanControl } from './treasurePotionHumanControl';
+import type { TreasurePotionUndeadControl } from './treasurePotionUndeadControl';
 
 export type Table<T> = {
   sides: number;
@@ -163,4 +164,5 @@ export type Command =
   | TreasurePotionDragonControl
   | TreasurePotionGiantControl
   | TreasurePotionGiantStrength
-  | TreasurePotionHumanControl;
+  | TreasurePotionHumanControl
+  | TreasurePotionUndeadControl;
