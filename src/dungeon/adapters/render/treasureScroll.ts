@@ -14,6 +14,10 @@ import {
   treasureScrollProtectionElementals,
   TreasureScrollProtectionElementals,
 } from '../../../tables/dungeon/treasureScrollProtectionElementals';
+import {
+  treasureScrollProtectionLycanthropes,
+  TreasureScrollProtectionLycanthropes,
+} from '../../../tables/dungeon/treasureScrollProtectionLycanthropes';
 
 const SCROLL_LABELS: Record<TreasureScroll, string> = {
   [TreasureScroll.SpellOneLevel1to4]: '1 spell (levels 1-4)',
@@ -162,6 +166,63 @@ export const buildTreasureScrollProtectionElementalsPreview: TablePreviewFactory
       })),
     });
 
+export function renderTreasureScrollProtectionLycanthropesDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureScrollProtectionLycanthropes') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Lycanthrope Protection',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasureScrollProtectionLycanthropes[outcome.event.result]
+      }`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: lycanthropeProtectionSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureScrollProtectionLycanthropesCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureScrollProtectionLycanthropes') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Lycanthrope Protection',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: lycanthropeProtectionSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasureScrollProtectionLycanthropesPreview: TablePreviewFactory =
+  (tableId) =>
+    buildPreview(tableId, {
+      title: 'Lycanthrope Protection',
+      sides: treasureScrollProtectionLycanthropes.sides,
+      entries: treasureScrollProtectionLycanthropes.entries.map((entry) => ({
+        range: entry.range,
+        label: lycanthropePreviewLabel(entry.command),
+      })),
+    });
+
 export function resolvedScrollSentence(node: OutcomeEventNode): string {
   if (node.event.kind !== 'treasureScroll') return '';
   const { scroll } = node.event;
@@ -248,10 +309,30 @@ function elementalProtectionSentence(
   return `Protection from ${elementalsLabel(result).toLowerCase()}.`;
 }
 
+function lycanthropeProtectionSentence(
+  result: TreasureScrollProtectionLycanthropes
+): string {
+  return `Protection from ${lycanthropeLabel(result)}.`;
+}
+
 function protectionText(node: OutcomeEventNode): string {
   if (node.event.kind !== 'treasureScroll') return 'unknown foes';
   if (node.event.scroll.type !== 'protection') return 'unknown foes';
   if (node.event.scroll.protection !== TreasureScroll.ProtectionElementals) {
+    if (
+      node.event.scroll.protection === TreasureScroll.ProtectionLycanthropes
+    ) {
+      const child = findChildEvent(
+        node,
+        'treasureScrollProtectionLycanthropes'
+      );
+      if (
+        child &&
+        child.event.kind === 'treasureScrollProtectionLycanthropes'
+      ) {
+        return lycanthropeLabel(child.event.result);
+      }
+    }
     return protectionLabel(node.event.scroll.protection);
   }
   const child = findChildEvent(node, 'treasureScrollProtectionElementals');
@@ -259,4 +340,33 @@ function protectionText(node: OutcomeEventNode): string {
     return elementalsLabel(child.event.result).toLowerCase();
   }
   return 'elementals';
+}
+
+function lycanthropePreviewLabel(
+  result: TreasureScrollProtectionLycanthropes
+): string {
+  switch (result) {
+    case TreasureScrollProtectionLycanthropes.Werebears:
+      return 'Werebears';
+    case TreasureScrollProtectionLycanthropes.Wereboars:
+      return 'Wereboars';
+    case TreasureScrollProtectionLycanthropes.Wererats:
+      return 'Wererats';
+    case TreasureScrollProtectionLycanthropes.Weretigers:
+      return 'Weretigers';
+    case TreasureScrollProtectionLycanthropes.Werewolves:
+      return 'Werewolves';
+    case TreasureScrollProtectionLycanthropes.AllLycanthropes:
+      return 'All Lycanthropes';
+    case TreasureScrollProtectionLycanthropes.ShapeChangers:
+      return 'Shape-Changers';
+    default:
+      return 'Lycanthropes';
+  }
+}
+
+function lycanthropeLabel(
+  result: TreasureScrollProtectionLycanthropes
+): string {
+  return lycanthropePreviewLabel(result).toLowerCase();
 }

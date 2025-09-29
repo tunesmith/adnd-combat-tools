@@ -103,6 +103,7 @@ import {
   TreasureScroll,
 } from '../../tables/dungeon/treasureScrolls';
 import { treasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
+import { treasureScrollProtectionLycanthropes } from '../../tables/dungeon/treasureScrollProtectionLycanthropes';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1606,6 +1607,17 @@ export function resolveTreasureScroll(options?: {
           rollIndex: event.rollIndex,
         },
       });
+    } else if (command === TreasureScroll.ProtectionLycanthropes) {
+      children.push({
+        type: 'pending-roll',
+        table: 'treasureScrollProtectionLycanthropes',
+        context: {
+          kind: 'treasureMagic',
+          level: event.level,
+          treasureRoll: usedRoll,
+          rollIndex: event.rollIndex,
+        },
+      });
     }
   } else {
     event.scroll = { type: 'curse' };
@@ -1630,6 +1642,22 @@ export function resolveTreasureScrollProtectionElementals(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureScrollProtectionElementals',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureScrollProtectionLycanthropes(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureScrollProtectionLycanthropes.sides);
+  const command = getTableEntry(usedRoll, treasureScrollProtectionLycanthropes);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureScrollProtectionLycanthropes',
       result: command,
     } as OutcomeEvent,
   };

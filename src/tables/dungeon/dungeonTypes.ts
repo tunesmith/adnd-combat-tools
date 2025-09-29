@@ -76,6 +76,7 @@ import type { TreasurePotionHumanControl } from './treasurePotionHumanControl';
 import type { TreasurePotionUndeadControl } from './treasurePotionUndeadControl';
 import type { TreasureScroll } from './treasureScrolls';
 import type { TreasureScrollProtectionElementals } from './treasureScrollProtectionElementals';
+import type { TreasureScrollProtectionLycanthropes } from './treasureScrollProtectionLycanthropes';
 
 export type Table<T> = {
   sides: number;
@@ -169,4 +170,5 @@ export type Command =
   | TreasurePotionHumanControl
   | TreasurePotionUndeadControl
   | TreasureScroll
-  | TreasureScrollProtectionElementals;
+  | TreasureScrollProtectionElementals
+  | TreasureScrollProtectionLycanthropes;

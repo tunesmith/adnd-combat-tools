@@ -203,6 +203,9 @@ import {
   renderTreasureScrollProtectionElementalsDetail,
   renderTreasureScrollProtectionElementalsCompact,
   buildTreasureScrollProtectionElementalsPreview,
+  renderTreasureScrollProtectionLycanthropesDetail,
+  renderTreasureScrollProtectionLycanthropesCompact,
+  buildTreasureScrollProtectionLycanthropesPreview,
 } from './render/treasureScroll';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
@@ -464,6 +467,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureScrollProtectionElementalsDetail,
     renderCompact: renderTreasureScrollProtectionElementalsCompact,
   },
+  treasureScrollProtectionLycanthropes: {
+    renderDetail: renderTreasureScrollProtectionLycanthropesDetail,
+    renderCompact: renderTreasureScrollProtectionLycanthropesCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -565,6 +572,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureScroll: buildTreasureScrollPreview,
   treasureScrollProtectionElementals:
     buildTreasureScrollProtectionElementalsPreview,
+  treasureScrollProtectionLycanthropes:
+    buildTreasureScrollProtectionLycanthropesPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -791,6 +800,9 @@ function previewForEventNode(
     }
     case 'treasureScrollProtectionElementals':
       tableId = 'treasureScrollProtectionElementals';
+      break;
+    case 'treasureScrollProtectionLycanthropes':
+      tableId = 'treasureScrollProtectionLycanthropes';
       break;
     case 'treasurePotionAnimalControl': {
       const potionCategory = event;

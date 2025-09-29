@@ -888,6 +888,67 @@ describe('passage contents', () => {
     );
   });
 
+  it('resolves lycanthrope protection scrolls with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing scroll category target');
+    feed = resolvePreview(feed, categoryTarget, 30);
+
+    const scrollTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureScroll')
+    );
+    expect(scrollTargets).toHaveLength(1);
+    const scrollTarget = scrollTargets[0];
+    if (!scrollTarget) throw new Error('missing scroll target');
+    feed = resolvePreview(feed, scrollTarget, 72);
+
+    const lycanTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScrollProtectionLycanthropes'
+      )
+    );
+    expect(lycanTargets).toHaveLength(1);
+    const lycanTarget = lycanTargets[0];
+    if (!lycanTarget) throw new Error('missing lycanthrope protection target');
+    feed = resolvePreview(feed, lycanTarget, 45);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'a protection scroll against all lycanthropes.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'a protection scroll against all lycanthropes.'
+    );
+  });
+
   it('rolls treasure twice when monsters guard it', () => {
     let feed = createFeedSnapshot({
       action: 'passage',

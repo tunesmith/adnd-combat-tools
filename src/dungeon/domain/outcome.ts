@@ -80,6 +80,7 @@ import type { TreasurePotionHumanControl } from '../../tables/dungeon/treasurePo
 import type { TreasurePotionUndeadControl } from '../../tables/dungeon/treasurePotionUndeadControl';
 import type { TreasureScroll } from '../../tables/dungeon/treasureScrolls';
 import type { TreasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
+import type { TreasureScrollProtectionLycanthropes } from '../../tables/dungeon/treasureScrollProtectionLycanthropes';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -368,6 +369,7 @@ export type OutcomeEvent =
             type: 'protection';
             protection: TreasureScroll;
             elementals?: TreasureScrollProtectionElementals;
+            lycanthropes?: TreasureScrollProtectionLycanthropes;
           }
         | {
             type: 'curse';
@@ -376,6 +378,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureScrollProtectionElementals';
       result: TreasureScrollProtectionElementals;
+    }
+  | {
+      kind: 'treasureScrollProtectionLycanthropes';
+      result: TreasureScrollProtectionLycanthropes;
     };
 
 export type TreasureEntry = {
