@@ -14,6 +14,10 @@ import {
   treasureRingContrariness,
   TreasureRingContrariness,
 } from '../../../tables/dungeon/treasureRingContrariness';
+import {
+  treasureRingElementalCommand,
+  TreasureRingElementalCommand,
+} from '../../../tables/dungeon/treasureRingElementalCommand';
 
 const RING_LABELS: Record<TreasureRing, string> = {
   [TreasureRing.Contrariness]: 'contrariness',
@@ -50,6 +54,14 @@ const CONTRARIANNESS_PREVIEW: Record<TreasureRingContrariness, string> = {
   [TreasureRingContrariness.SpellTurning]: 'Spell Turning',
   [TreasureRingContrariness.Strength]: 'Strength',
 };
+
+const ELEMENTAL_COMMAND_PREVIEW: Record<TreasureRingElementalCommand, string> =
+  {
+    [TreasureRingElementalCommand.Air]: 'Air',
+    [TreasureRingElementalCommand.Earth]: 'Earth',
+    [TreasureRingElementalCommand.Fire]: 'Fire',
+    [TreasureRingElementalCommand.Water]: 'Water',
+  };
 
 export function renderTreasureRingDetail(
   outcome: OutcomeEventNode,
@@ -115,6 +127,18 @@ export const buildTreasureRingContrarinessPreview: TablePreviewFactory = (
     })),
   });
 
+export const buildTreasureRingElementalCommandPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Elemental Focus',
+    sides: treasureRingElementalCommand.sides,
+    entries: treasureRingElementalCommand.entries.map((entry) => ({
+      range: entry.range,
+      label: elementalCommandPreviewLabel(entry.command),
+    })),
+  });
+
 export function renderTreasureRingContrarinessDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
@@ -161,6 +185,52 @@ export function renderTreasureRingContrarinessCompact(
   return nodes;
 }
 
+export function renderTreasureRingElementalCommandDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingElementalCommand') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Elemental Focus',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasureRingElementalCommand[outcome.event.result]
+      }`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: elementalCommandSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureRingElementalCommandCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingElementalCommand') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Elemental Focus',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: elementalCommandSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function ringSentence(
   result: TreasureRing,
   node?: OutcomeEventNode
@@ -172,6 +242,14 @@ export function ringSentence(
       const effect = contrarinessPreviewLabel(child.event.result);
       return `There is a ring of contrariness (${effect}).`;
     }
+  } else if (result === TreasureRing.ElementalCommand && node) {
+    const child = findChildEvent(node, 'treasureRingElementalCommand');
+    if (child && child.event.kind === 'treasureRingElementalCommand') {
+      const focus = elementalCommandPreviewLabel(
+        child.event.result
+      ).toLowerCase();
+      return `There is a ring of ${focus} elemental command.`;
+    }
   }
   return `There is a ring of ${label}.`;
 }
@@ -182,4 +260,16 @@ function contrarinessPreviewLabel(result: TreasureRingContrariness): string {
 
 function contrarinessSentence(result: TreasureRingContrariness): string {
   return `Contrariness effect: ${contrarinessPreviewLabel(result)}.`;
+}
+
+function elementalCommandSentence(
+  result: TreasureRingElementalCommand
+): string {
+  return `Elemental focus: ${elementalCommandPreviewLabel(result)}.`;
+}
+
+function elementalCommandPreviewLabel(
+  result: TreasureRingElementalCommand
+): string {
+  return ELEMENTAL_COMMAND_PREVIEW[result] ?? 'Elemental';
 }
