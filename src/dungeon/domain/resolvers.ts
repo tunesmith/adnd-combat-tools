@@ -102,6 +102,7 @@ import {
   treasureScrolls,
   TreasureScroll,
 } from '../../tables/dungeon/treasureScrolls';
+import { treasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1572,6 +1573,7 @@ export function resolveTreasureScroll(options?: {
     rollIndex: options?.rollIndex,
     scroll: { type: 'curse' },
   };
+  const children: DungeonOutcomeNode[] = [];
 
   if (isSpellScroll(command)) {
     const detail = SCROLL_SPELL_DETAILS[command];
@@ -1593,6 +1595,18 @@ export function resolveTreasureScroll(options?: {
       type: 'protection',
       protection: command,
     };
+    if (command === TreasureScroll.ProtectionElementals) {
+      children.push({
+        type: 'pending-roll',
+        table: 'treasureScrollProtectionElementals',
+        context: {
+          kind: 'treasureMagic',
+          level: event.level,
+          treasureRoll: usedRoll,
+          rollIndex: event.rollIndex,
+        },
+      });
+    }
   } else {
     event.scroll = { type: 'curse' };
   }
@@ -1601,6 +1615,23 @@ export function resolveTreasureScroll(options?: {
     type: 'event',
     roll: usedRoll,
     event,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureScrollProtectionElementals(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureScrollProtectionElementals.sides);
+  const command = getTableEntry(usedRoll, treasureScrollProtectionElementals);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureScrollProtectionElementals',
+      result: command,
+    } as OutcomeEvent,
   };
 }
 

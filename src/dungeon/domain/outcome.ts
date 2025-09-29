@@ -79,6 +79,7 @@ import type { TreasurePotionGiantStrength } from '../../tables/dungeon/treasureP
 import type { TreasurePotionHumanControl } from '../../tables/dungeon/treasurePotionHumanControl';
 import type { TreasurePotionUndeadControl } from '../../tables/dungeon/treasurePotionUndeadControl';
 import type { TreasureScroll } from '../../tables/dungeon/treasureScrolls';
+import type { TreasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -366,10 +367,15 @@ export type OutcomeEvent =
         | {
             type: 'protection';
             protection: TreasureScroll;
+            elementals?: TreasureScrollProtectionElementals;
           }
         | {
             type: 'curse';
           };
+    }
+  | {
+      kind: 'treasureScrollProtectionElementals';
+      result: TreasureScrollProtectionElementals;
     };
 
 export type TreasureEntry = {

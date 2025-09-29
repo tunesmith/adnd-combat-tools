@@ -782,6 +782,13 @@ describe('passage contents', () => {
     if (!scrollTarget) throw new Error('missing scroll target');
     feed = resolvePreview(feed, scrollTarget, 61);
 
+    const elementalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScrollProtectionElementals'
+      )
+    );
+    expect(elementalTargets).toHaveLength(0);
+
     const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
     expect(scrollEvent).toBeDefined();
     if (!scrollEvent || scrollEvent.event.kind !== 'treasureScroll') {
@@ -811,6 +818,74 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('a protection scroll against demons.');
+  });
+
+  it('resolves elemental protection scrolls with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing scroll category target');
+    feed = resolvePreview(feed, categoryTarget, 30);
+
+    const scrollTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureScroll')
+    );
+    expect(scrollTargets).toHaveLength(1);
+    const scrollTarget = scrollTargets[0];
+    if (!scrollTarget) throw new Error('missing scroll target');
+    feed = resolvePreview(feed, scrollTarget, 65);
+
+    const elementalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScrollProtectionElementals'
+      )
+    );
+    expect(elementalTargets).toHaveLength(1);
+    const elementalTarget = elementalTargets[0];
+    if (!elementalTarget)
+      throw new Error('missing elemental protection target');
+    feed = resolvePreview(feed, elementalTarget, 20);
+
+    const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
+    expect(scrollEvent).toBeDefined();
+    if (!scrollEvent || scrollEvent.event.kind !== 'treasureScroll') {
+      throw new Error('scroll event missing');
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'a protection scroll against earth elementals.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'a protection scroll against earth elementals.'
+    );
   });
 
   it('rolls treasure twice when monsters guard it', () => {

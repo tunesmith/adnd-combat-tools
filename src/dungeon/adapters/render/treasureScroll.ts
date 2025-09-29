@@ -6,9 +6,14 @@ import {
 } from '../../../tables/dungeon/treasureScrolls';
 import {
   buildPreview,
+  findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
+import {
+  treasureScrollProtectionElementals,
+  TreasureScrollProtectionElementals,
+} from '../../../tables/dungeon/treasureScrollProtectionElementals';
 
 const SCROLL_LABELS: Record<TreasureScroll, string> = {
   [TreasureScroll.SpellOneLevel1to4]: '1 spell (levels 1-4)',
@@ -100,6 +105,63 @@ export const buildTreasureScrollPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
+export function renderTreasureScrollProtectionElementalsDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureScrollProtectionElementals') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Elemental Protection',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasureScrollProtectionElementals[outcome.event.result]
+      }`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: elementalProtectionSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureScrollProtectionElementalsCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureScrollProtectionElementals') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Elemental Protection',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: elementalProtectionSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasureScrollProtectionElementalsPreview: TablePreviewFactory =
+  (tableId) =>
+    buildPreview(tableId, {
+      title: 'Elemental Protection',
+      sides: treasureScrollProtectionElementals.sides,
+      entries: treasureScrollProtectionElementals.entries.map((entry) => ({
+        range: entry.range,
+        label: elementalsLabel(entry.command),
+      })),
+    });
+
 export function resolvedScrollSentence(node: OutcomeEventNode): string {
   if (node.event.kind !== 'treasureScroll') return '';
   const { scroll } = node.event;
@@ -114,7 +176,7 @@ export function resolvedScrollSentence(node: OutcomeEventNode): string {
     return `${article} ${casterLabel} scroll of ${countWord} ${spellNoun}${levelText}.`;
   }
   if (scroll.type === 'protection') {
-    const protection = protectionLabel(scroll.protection);
+    const protection = protectionText(node);
     return `A protection scroll against ${protection}.`;
   }
   return 'A cursed scroll.';
@@ -161,4 +223,40 @@ function protectionLabel(result: TreasureScroll): string {
     default:
       return 'unknown foes';
   }
+}
+
+function elementalsLabel(result: TreasureScrollProtectionElementals): string {
+  switch (result) {
+    case TreasureScrollProtectionElementals.Air:
+      return 'Air Elementals';
+    case TreasureScrollProtectionElementals.Earth:
+      return 'Earth Elementals';
+    case TreasureScrollProtectionElementals.Fire:
+      return 'Fire Elementals';
+    case TreasureScrollProtectionElementals.Water:
+      return 'Water Elementals';
+    case TreasureScrollProtectionElementals.All:
+      return 'All Elementals';
+    default:
+      return 'Elementals';
+  }
+}
+
+function elementalProtectionSentence(
+  result: TreasureScrollProtectionElementals
+): string {
+  return `Protection from ${elementalsLabel(result).toLowerCase()}.`;
+}
+
+function protectionText(node: OutcomeEventNode): string {
+  if (node.event.kind !== 'treasureScroll') return 'unknown foes';
+  if (node.event.scroll.type !== 'protection') return 'unknown foes';
+  if (node.event.scroll.protection !== TreasureScroll.ProtectionElementals) {
+    return protectionLabel(node.event.scroll.protection);
+  }
+  const child = findChildEvent(node, 'treasureScrollProtectionElementals');
+  if (child && child.event.kind === 'treasureScrollProtectionElementals') {
+    return elementalsLabel(child.event.result).toLowerCase();
+  }
+  return 'elementals';
 }

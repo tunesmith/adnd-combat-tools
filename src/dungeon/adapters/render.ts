@@ -200,6 +200,9 @@ import {
   renderTreasureScrollDetail,
   renderTreasureScrollCompact,
   buildTreasureScrollPreview,
+  renderTreasureScrollProtectionElementalsDetail,
+  renderTreasureScrollProtectionElementalsCompact,
+  buildTreasureScrollProtectionElementalsPreview,
 } from './render/treasureScroll';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
@@ -457,6 +460,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureScrollDetail,
     renderCompact: renderTreasureScrollCompact,
   },
+  treasureScrollProtectionElementals: {
+    renderDetail: renderTreasureScrollProtectionElementalsDetail,
+    renderCompact: renderTreasureScrollProtectionElementalsCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -556,6 +563,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasurePotionHumanControl: buildTreasurePotionHumanControlPreview,
   treasurePotionUndeadControl: buildTreasurePotionUndeadControlPreview,
   treasureScroll: buildTreasureScrollPreview,
+  treasureScrollProtectionElementals:
+    buildTreasureScrollProtectionElementalsPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -780,6 +789,9 @@ function previewForEventNode(
       };
       break;
     }
+    case 'treasureScrollProtectionElementals':
+      tableId = 'treasureScrollProtectionElementals';
+      break;
     case 'treasurePotionAnimalControl': {
       const potionCategory = event;
       tableId = 'treasurePotionAnimalControl';
