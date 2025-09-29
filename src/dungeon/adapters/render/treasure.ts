@@ -7,6 +7,7 @@ import {
 } from '../../../tables/dungeon/treasure';
 import { resolvedPotionSentence } from './treasurePotion';
 import { resolvedScrollSentence } from './treasureScroll';
+import { ringSentence } from './treasureRing';
 import {
   buildPreview,
   joinSegments,
@@ -128,6 +129,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   const scroll = findChildEvent(magic, 'treasureScroll');
   if (scroll && scroll.event.kind === 'treasureScroll') {
     return resolvedScrollSentence(scroll);
+  }
+  const ring = findChildEvent(magic, 'treasureRing');
+  if (ring && ring.event.kind === 'treasureRing') {
+    return ringSentence(ring.event.result);
   }
   return undefined;
 }

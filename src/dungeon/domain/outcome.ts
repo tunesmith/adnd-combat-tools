@@ -79,6 +79,7 @@ import type { TreasurePotionGiantStrength } from '../../tables/dungeon/treasureP
 import type { TreasurePotionHumanControl } from '../../tables/dungeon/treasurePotionHumanControl';
 import type { TreasurePotionUndeadControl } from '../../tables/dungeon/treasurePotionUndeadControl';
 import type { TreasureScroll } from '../../tables/dungeon/treasureScrolls';
+import type { TreasureRing } from '../../tables/dungeon/treasureRings';
 import type { TreasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
 import type { TreasureScrollProtectionLycanthropes } from '../../tables/dungeon/treasureScrollProtectionLycanthropes';
 import type {
@@ -382,6 +383,13 @@ export type OutcomeEvent =
   | {
       kind: 'treasureScrollProtectionLycanthropes';
       result: TreasureScrollProtectionLycanthropes;
+    }
+  | {
+      kind: 'treasureRing';
+      result: TreasureRing;
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
     };
 
 export type TreasureEntry = {

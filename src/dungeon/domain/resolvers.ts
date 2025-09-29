@@ -104,6 +104,7 @@ import {
 } from '../../tables/dungeon/treasureScrolls';
 import { treasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
 import { treasureScrollProtectionLycanthropes } from '../../tables/dungeon/treasureScrollProtectionLycanthropes';
+import { treasureRings } from '../../tables/dungeon/treasureRings';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1332,6 +1333,17 @@ export function resolveTreasureMagicCategory(options?: {
         rollIndex: event.rollIndex,
       },
     });
+  } else if (command === TreasureMagicCategory.Rings) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureRing',
+      context: {
+        kind: 'treasureMagic',
+        level: event.level,
+        treasureRoll: usedRoll,
+        rollIndex: event.rollIndex,
+      },
+    });
   }
   return {
     type: 'event',
@@ -1659,6 +1671,27 @@ export function resolveTreasureScrollProtectionLycanthropes(options?: {
     event: {
       kind: 'treasureScrollProtectionLycanthropes',
       result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureRing(options?: {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureRings.sides);
+  const command = getTableEntry(usedRoll, treasureRings);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureRing',
+      result: command,
+      level: options?.level ?? 1,
+      treasureRoll: options?.treasureRoll ?? usedRoll,
+      rollIndex: options?.rollIndex,
     } as OutcomeEvent,
   };
 }
