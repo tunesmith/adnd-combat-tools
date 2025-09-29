@@ -73,6 +73,7 @@ import {
   resolveTreasurePotion,
   resolveTreasurePotionAnimalControl,
   resolveTreasurePotionDragonControl,
+  resolveTreasurePotionGiantControl,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -158,6 +159,7 @@ const TABLE_ID_LIST = [
   'treasurePotion',
   'treasurePotionAnimalControl',
   'treasurePotionDragonControl',
+  'treasurePotionGiantControl',
   'circularContents',
   'circularPool',
   'circularMagicPool',
@@ -230,6 +232,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasurePotion: 'Potion',
   treasurePotionAnimalControl: 'Animal Control Target',
   treasurePotionDragonControl: 'Dragon Control Target',
+  treasurePotionGiantControl: 'Giant Control Target',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
   circularMagicPool: 'Magic Pool Effect',
@@ -554,6 +557,26 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
         : undefined;
     return fromOutcome(
       resolveTreasurePotionDragonControl({
+        roll,
+        level,
+        treasureRoll,
+        rollIndex,
+      })
+    );
+  },
+  treasurePotionGiantControl: ({ roll, context }) => {
+    const level =
+      context && context.kind === 'treasureMagic' ? context.level : 1;
+    const treasureRoll =
+      context && context.kind === 'treasureMagic'
+        ? context.treasureRoll
+        : undefined;
+    const rollIndex =
+      context && context.kind === 'treasureMagic'
+        ? context.rollIndex
+        : undefined;
+    return fromOutcome(
+      resolveTreasurePotionGiantControl({
         roll,
         level,
         treasureRoll,

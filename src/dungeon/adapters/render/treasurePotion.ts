@@ -13,6 +13,10 @@ import {
   TreasurePotionDragonControl,
 } from '../../../tables/dungeon/treasurePotionDragonControl';
 import {
+  treasurePotionGiantControl,
+  TreasurePotionGiantControl,
+} from '../../../tables/dungeon/treasurePotionGiantControl';
+import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
@@ -230,6 +234,60 @@ export const buildTreasurePotionDragonControlPreview: TablePreviewFactory = (
     })),
   });
 
+export function renderTreasurePotionGiantControlDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionGiantControl') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Giant Control Target',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${TreasurePotionGiantControl[outcome.event.result]}`],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: giantControlSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasurePotionGiantControlCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionGiantControl') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Giant Control Target',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: giantControlSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasurePotionGiantControlPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Giant Control Target',
+    sides: treasurePotionGiantControl.sides,
+    entries: treasurePotionGiantControl.entries.map((entry) => ({
+      range: entry.range,
+      label: giantControlLabel(entry.command),
+    })),
+  });
+
 function animalControlSentence(result: TreasurePotionAnimalControl): string {
   const label = animalControlLabel(result);
   return `There is a potion of ${label} control.`;
@@ -298,6 +356,11 @@ export function resolvedPotionSentence(node: OutcomeEventNode): string {
     if (child && child.event.kind === 'treasurePotionAnimalControl') {
       return animalControlSentence(child.event.result);
     }
+  } else if (node.event.result === TreasurePotion.GiantControl) {
+    const child = findChildEvent(node, 'treasurePotionGiantControl');
+    if (child && child.event.kind === 'treasurePotionGiantControl') {
+      return giantControlSentence(child.event.result);
+    }
   } else if (node.event.result === TreasurePotion.DragonControl) {
     const child = findChildEvent(node, 'treasurePotionDragonControl');
     if (child && child.event.kind === 'treasurePotionDragonControl') {
@@ -305,4 +368,27 @@ export function resolvedPotionSentence(node: OutcomeEventNode): string {
     }
   }
   return potionSentence(node.event.result);
+}
+
+function giantControlSentence(result: TreasurePotionGiantControl): string {
+  return `There is a potion of ${giantControlLabel(result)} giant control.`;
+}
+
+function giantControlLabel(result: TreasurePotionGiantControl): string {
+  switch (result) {
+    case TreasurePotionGiantControl.Hill:
+      return 'hill';
+    case TreasurePotionGiantControl.Stone:
+      return 'stone';
+    case TreasurePotionGiantControl.Frost:
+      return 'frost';
+    case TreasurePotionGiantControl.Fire:
+      return 'fire';
+    case TreasurePotionGiantControl.Cloud:
+      return 'cloud';
+    case TreasurePotionGiantControl.Storm:
+      return 'storm';
+    default:
+      return 'giant';
+  }
 }

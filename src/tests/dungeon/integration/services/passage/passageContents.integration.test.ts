@@ -455,7 +455,7 @@ describe('passage contents', () => {
     expect(magicTargets).toHaveLength(1);
     const categoryTarget = magicTargets[0];
     if (!categoryTarget) throw new Error('missing potion category target');
-    feed = resolvePreview(feed, categoryTarget, 19);
+    feed = resolvePreview(feed, categoryTarget, 5);
 
     const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
       (target.split('.').pop() ?? '').startsWith('treasurePotion')
@@ -463,7 +463,7 @@ describe('passage contents', () => {
     expect(potionTargets).toHaveLength(1);
     const potionTarget = potionTargets[0];
     if (!potionTarget) throw new Error('missing potion target');
-    feed = resolvePreview(feed, potionTarget, 20);
+    feed = resolvePreview(feed, potionTarget, 19);
 
     const dragonTargets = listPendingPreviewTargets(feed).filter((target) =>
       (target.split('.').pop() ?? '').startsWith('treasurePotionDragonControl')
@@ -490,6 +490,62 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a potion of blue dragon control.');
+  });
+
+  it('resolves giant control potions with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 5,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing potion category target');
+    feed = resolvePreview(feed, categoryTarget, 5);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+    feed = resolvePreview(feed, potionTarget, 35);
+
+    const giantTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotionGiantControl')
+    );
+    expect(giantTargets).toHaveLength(1);
+    const giantTarget = giantTargets[0];
+    if (!giantTarget) throw new Error('missing giant control target');
+    feed = resolvePreview(feed, giantTarget, 8);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a potion of stone giant control.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a potion of stone giant control.');
   });
 
   it('rolls treasure twice when monsters guard it', () => {

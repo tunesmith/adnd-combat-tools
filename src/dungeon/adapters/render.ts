@@ -183,6 +183,9 @@ import {
   renderTreasurePotionDragonControlDetail,
   renderTreasurePotionDragonControlCompact,
   buildTreasurePotionDragonControlPreview,
+  renderTreasurePotionGiantControlDetail,
+  renderTreasurePotionGiantControlCompact,
+  buildTreasurePotionGiantControlPreview,
 } from './render/treasurePotion';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
@@ -420,6 +423,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasurePotionDragonControlDetail,
     renderCompact: renderTreasurePotionDragonControlCompact,
   },
+  treasurePotionGiantControl: {
+    renderDetail: renderTreasurePotionGiantControlDetail,
+    renderCompact: renderTreasurePotionGiantControlCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -514,6 +521,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasurePotion: buildTreasurePotionPreview,
   treasurePotionAnimalControl: buildTreasurePotionAnimalControlPreview,
   treasurePotionDragonControl: buildTreasurePotionDragonControlPreview,
+  treasurePotionGiantControl: buildTreasurePotionGiantControlPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -691,6 +699,17 @@ function previewForEventNode(
         level: dragon.level,
         treasureRoll: dragon.treasureRoll,
         rollIndex: dragon.rollIndex,
+      };
+      break;
+    }
+    case 'treasurePotionGiantControl': {
+      const giant = event;
+      tableId = 'treasurePotionGiantControl';
+      context = {
+        kind: 'treasureMagic',
+        level: giant.level,
+        treasureRoll: giant.treasureRoll,
+        rollIndex: giant.rollIndex,
       };
       break;
     }

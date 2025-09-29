@@ -94,6 +94,7 @@ import {
 } from '../../tables/dungeon/treasurePotions';
 import { treasurePotionAnimalControl } from '../../tables/dungeon/treasurePotionAnimalControl';
 import { treasurePotionDragonControl } from '../../tables/dungeon/treasurePotionDragonControl';
+import { treasurePotionGiantControl } from '../../tables/dungeon/treasurePotionGiantControl';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1226,6 +1227,17 @@ export function resolveTreasurePotion(options?: {
         rollIndex: event.rollIndex,
       },
     });
+  } else if (command === TreasurePotion.GiantControl) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePotionGiantControl',
+      context: {
+        kind: 'treasureMagic',
+        level: event.level,
+        treasureRoll: usedRoll,
+        rollIndex: event.rollIndex,
+      },
+    });
   }
   return {
     type: 'event',
@@ -1269,6 +1281,27 @@ export function resolveTreasurePotionDragonControl(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasurePotionDragonControl',
+      result: command,
+      level: options?.level ?? 1,
+      treasureRoll: options?.treasureRoll ?? usedRoll,
+      rollIndex: options?.rollIndex,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasurePotionGiantControl(options?: {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePotionGiantControl.sides);
+  const command = getTableEntry(usedRoll, treasurePotionGiantControl);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePotionGiantControl',
       result: command,
       level: options?.level ?? 1,
       treasureRoll: options?.treasureRoll ?? usedRoll,
