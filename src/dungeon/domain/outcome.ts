@@ -366,7 +366,6 @@ export type OutcomeEvent =
         | {
             type: 'protection';
             protection: TreasureScroll;
-            xp?: number;
           }
         | {
             type: 'curse';

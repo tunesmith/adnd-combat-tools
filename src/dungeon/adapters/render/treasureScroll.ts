@@ -115,8 +115,7 @@ export function resolvedScrollSentence(node: OutcomeEventNode): string {
   }
   if (scroll.type === 'protection') {
     const protection = protectionLabel(scroll.protection);
-    const xpText = scroll.xp ? ` (${formatXp(scroll.xp)})` : '';
-    return `A protection scroll against ${protection}${xpText}.`;
+    return `A protection scroll against ${protection}.`;
   }
   return 'A cursed scroll.';
 }
@@ -162,8 +161,4 @@ function protectionLabel(result: TreasureScroll): string {
     default:
       return 'unknown foes';
   }
-}
-
-function formatXp(xp: number): string {
-  return `${xp.toLocaleString()} XP`;
 }

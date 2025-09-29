@@ -792,7 +792,6 @@ describe('passage contents', () => {
       expect(scrollEvent.event.scroll.protection).toBe(
         TreasureScroll.ProtectionDemons
       );
-      expect(scrollEvent.event.scroll.xp).toBe(2500);
     }
 
     const detailText = renderDetail(feed)
@@ -802,9 +801,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(detailText).toContain(
-      'a protection scroll against demons (2,500 xp).'
-    );
+    expect(detailText).toContain('a protection scroll against demons.');
 
     const compactText = renderCompact(feed)
       .filter(
@@ -813,9 +810,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain(
-      'a protection scroll against demons (2,500 xp).'
-    );
+    expect(compactText).toContain('a protection scroll against demons.');
   });
 
   it('rolls treasure twice when monsters guard it', () => {

@@ -261,17 +261,6 @@ const SCROLL_SPELL_DETAILS: Partial<Record<TreasureScroll, ScrollSpellDetail>> =
     },
   };
 
-const SCROLL_PROTECTION_XP: Partial<Record<TreasureScroll, number>> = {
-  [TreasureScroll.ProtectionDemons]: 2500,
-  [TreasureScroll.ProtectionDevils]: 2500,
-  [TreasureScroll.ProtectionElementals]: 1500,
-  [TreasureScroll.ProtectionLycanthropes]: 1000,
-  [TreasureScroll.ProtectionMagic]: 1500,
-  [TreasureScroll.ProtectionPetrification]: 2000,
-  [TreasureScroll.ProtectionPossession]: 2000,
-  [TreasureScroll.ProtectionUndead]: 1500,
-};
-
 function isSpellScroll(result: TreasureScroll): boolean {
   return Object.prototype.hasOwnProperty.call(SCROLL_SPELL_DETAILS, result);
 }
@@ -1603,7 +1592,6 @@ export function resolveTreasureScroll(options?: {
     event.scroll = {
       type: 'protection',
       protection: command,
-      xp: SCROLL_PROTECTION_XP[command],
     };
   } else {
     event.scroll = { type: 'curse' };
