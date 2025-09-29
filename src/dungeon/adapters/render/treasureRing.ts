@@ -34,6 +34,10 @@ import {
   treasureRingThreeWishes,
   TreasureRingThreeWishes,
 } from '../../../tables/dungeon/treasureRingThreeWishes';
+import {
+  treasureRingWizardry,
+  TreasureRingWizardry,
+} from '../../../tables/dungeon/treasureRingWizardry';
 import { formatOrdinal } from './treasureScroll';
 
 const RING_LABELS: Record<TreasureRing, string> = {
@@ -106,6 +110,20 @@ const TELEKINESIS_PREVIEW: Record<TreasureRingTelekinesis, string> = {
 const THREE_WISHES_PREVIEW: Record<TreasureRingThreeWishes, string> = {
   [TreasureRingThreeWishes.Limited]: 'limited',
   [TreasureRingThreeWishes.Standard]: 'standard',
+};
+
+const WIZARDRY_PREVIEW: Record<TreasureRingWizardry, string> = {
+  [TreasureRingWizardry.DoubleFirst]: 'doubles first level spells',
+  [TreasureRingWizardry.DoubleSecond]: 'doubles second level spells',
+  [TreasureRingWizardry.DoubleThird]: 'doubles third level spells',
+  [TreasureRingWizardry.DoubleFirstSecond]:
+    'doubles first and second level spells',
+  [TreasureRingWizardry.DoubleFourth]: 'doubles fourth level spells',
+  [TreasureRingWizardry.DoubleFifth]: 'doubles fifth level spells',
+  [TreasureRingWizardry.DoubleFirstThroughThird]:
+    'doubles first through third level spells',
+  [TreasureRingWizardry.DoubleFourthFifth]:
+    'doubles fourth and fifth level spells',
 };
 
 export function renderTreasureRingDetail(
@@ -229,6 +247,18 @@ export const buildTreasureRingThreeWishesPreview: TablePreviewFactory = (
     entries: treasureRingThreeWishes.entries.map((entry) => ({
       range: entry.range,
       label: threeWishesPreviewLabel(entry.command),
+    })),
+  });
+
+export const buildTreasureRingWizardryPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Spell Doubling',
+    sides: treasureRingWizardry.sides,
+    entries: treasureRingWizardry.entries.map((entry) => ({
+      range: entry.range,
+      label: wizardryPreviewLabel(entry.command),
     })),
   });
 
@@ -506,6 +536,50 @@ export function renderTreasureRingThreeWishesCompact(
   return nodes;
 }
 
+export function renderTreasureRingWizardryDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingWizardry') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Spell Doubling',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${wizardryPreviewLabel(outcome.event.result)}`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: wizardrySentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureRingWizardryCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingWizardry') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Spell Doubling',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: wizardrySentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function ringSentence(
   result: TreasureRing,
   node?: OutcomeEventNode
@@ -549,6 +623,11 @@ export function ringSentence(
     const child = findChildEvent(node, 'treasureRingThreeWishes');
     if (child && child.event.kind === 'treasureRingThreeWishes') {
       return threeWishesRingSentence(child.event.result);
+    }
+  } else if (result === TreasureRing.Wizardry && node) {
+    const child = findChildEvent(node, 'treasureRingWizardry');
+    if (child && child.event.kind === 'treasureRingWizardry') {
+      return wizardryRingSentence(child.event.result);
     }
   }
   return `There is a ring of ${label}.`;
@@ -685,4 +764,16 @@ function threeWishesRingSentence(result: TreasureRingThreeWishes): string {
   return `There is a ring of three wishes (${threeWishesPreviewLabel(
     result
   )}).`;
+}
+
+function wizardryPreviewLabel(result: TreasureRingWizardry): string {
+  return WIZARDRY_PREVIEW[result] ?? 'doubles first level spells';
+}
+
+function wizardrySentence(result: TreasureRingWizardry): string {
+  return `Spell doubling: ${wizardryPreviewLabel(result)}.`;
+}
+
+function wizardryRingSentence(result: TreasureRingWizardry): string {
+  return `There is a ring of wizardry (${wizardryPreviewLabel(result)}).`;
 }
