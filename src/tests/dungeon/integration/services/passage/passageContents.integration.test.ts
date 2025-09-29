@@ -519,10 +519,16 @@ describe('passage contents', () => {
     expect(potionTargets).toHaveLength(1);
     const potionTarget = potionTargets[0];
     if (!potionTarget) throw new Error('missing potion target');
-    feed = resolvePreview(feed, potionTarget, 35);
+    feed = resolvePreview(feed, potionTarget, 38);
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (potionEvent && potionEvent.event.kind === 'treasurePotion') {
+      expect(potionEvent.event.result).toBe(TreasurePotion.GiantStrength);
+    }
 
     const giantTargets = listPendingPreviewTargets(feed).filter((target) =>
-      (target.split('.').pop() ?? '').startsWith('treasurePotionGiantControl')
+      (target.split('.').pop() ?? '').startsWith('treasurePotionGiantStrength')
     );
     expect(giantTargets).toHaveLength(1);
     const giantTarget = giantTargets[0];
@@ -536,7 +542,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(detailText).toContain('there is a potion of stone giant control.');
+    expect(detailText).toContain('there is a potion of stone giant strength.');
 
     const compactText = renderCompact(feed)
       .filter(
@@ -545,7 +551,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain('there is a potion of stone giant control.');
+    expect(compactText).toContain('there is a potion of stone giant strength.');
   });
 
   it('rolls treasure twice when monsters guard it', () => {

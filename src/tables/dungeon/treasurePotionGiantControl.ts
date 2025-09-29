@@ -20,4 +20,3 @@ export const treasurePotionGiantControl: Table<TreasurePotionGiantControl> = {
     { range: [20], command: TreasurePotionGiantControl.Storm },
   ],
 };
-

@@ -75,6 +75,7 @@ import type { TreasurePotion } from '../../tables/dungeon/treasurePotions';
 import type { TreasurePotionAnimalControl } from '../../tables/dungeon/treasurePotionAnimalControl';
 import type { TreasurePotionDragonControl } from '../../tables/dungeon/treasurePotionDragonControl';
 import type { TreasurePotionGiantControl } from '../../tables/dungeon/treasurePotionGiantControl';
+import type { TreasurePotionGiantStrength } from '../../tables/dungeon/treasurePotionGiantStrength';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -322,6 +323,13 @@ export type OutcomeEvent =
   | {
       kind: 'treasurePotionGiantControl';
       result: TreasurePotionGiantControl;
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
+    }
+  | {
+      kind: 'treasurePotionGiantStrength';
+      result: TreasurePotionGiantStrength;
       level: number;
       treasureRoll: number;
       rollIndex?: number;

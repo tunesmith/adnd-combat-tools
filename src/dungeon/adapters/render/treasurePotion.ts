@@ -17,6 +17,10 @@ import {
   TreasurePotionGiantControl,
 } from '../../../tables/dungeon/treasurePotionGiantControl';
 import {
+  treasurePotionGiantStrength,
+  TreasurePotionGiantStrength,
+} from '../../../tables/dungeon/treasurePotionGiantStrength';
+import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
@@ -246,7 +250,11 @@ export function renderTreasurePotionGiantControlDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${TreasurePotionGiantControl[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasurePotionGiantControl[outcome.event.result]
+      }`,
+    ],
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
@@ -285,6 +293,64 @@ export const buildTreasurePotionGiantControlPreview: TablePreviewFactory = (
     entries: treasurePotionGiantControl.entries.map((entry) => ({
       range: entry.range,
       label: giantControlLabel(entry.command),
+    })),
+  });
+
+export function renderTreasurePotionGiantStrengthDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionGiantStrength') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Giant Strength Target',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasurePotionGiantStrength[outcome.event.result]
+      }`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: giantStrengthSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasurePotionGiantStrengthCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasurePotionGiantStrength') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Giant Strength Target',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: giantStrengthSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasurePotionGiantStrengthPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Giant Strength Target',
+    sides: treasurePotionGiantStrength.sides,
+    entries: treasurePotionGiantStrength.entries.map((entry) => ({
+      range: entry.range,
+      label: giantStrengthLabel(entry.command),
     })),
   });
 
@@ -361,6 +427,11 @@ export function resolvedPotionSentence(node: OutcomeEventNode): string {
     if (child && child.event.kind === 'treasurePotionGiantControl') {
       return giantControlSentence(child.event.result);
     }
+  } else if (node.event.result === TreasurePotion.GiantStrength) {
+    const child = findChildEvent(node, 'treasurePotionGiantStrength');
+    if (child && child.event.kind === 'treasurePotionGiantStrength') {
+      return giantStrengthSentence(child.event.result);
+    }
   } else if (node.event.result === TreasurePotion.DragonControl) {
     const child = findChildEvent(node, 'treasurePotionDragonControl');
     if (child && child.event.kind === 'treasurePotionDragonControl') {
@@ -387,6 +458,29 @@ function giantControlLabel(result: TreasurePotionGiantControl): string {
     case TreasurePotionGiantControl.Cloud:
       return 'cloud';
     case TreasurePotionGiantControl.Storm:
+      return 'storm';
+    default:
+      return 'giant';
+  }
+}
+
+function giantStrengthSentence(result: TreasurePotionGiantStrength): string {
+  return `There is a potion of ${giantStrengthLabel(result)} giant strength.`;
+}
+
+function giantStrengthLabel(result: TreasurePotionGiantStrength): string {
+  switch (result) {
+    case TreasurePotionGiantStrength.Hill:
+      return 'hill';
+    case TreasurePotionGiantStrength.Stone:
+      return 'stone';
+    case TreasurePotionGiantStrength.Frost:
+      return 'frost';
+    case TreasurePotionGiantStrength.Fire:
+      return 'fire';
+    case TreasurePotionGiantStrength.Cloud:
+      return 'cloud';
+    case TreasurePotionGiantStrength.Storm:
       return 'storm';
     default:
       return 'giant';
