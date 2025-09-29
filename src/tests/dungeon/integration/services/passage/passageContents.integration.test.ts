@@ -1008,6 +1008,61 @@ describe('passage contents', () => {
     );
   });
 
+  it('resolves regeneration rings with detail copy', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing ring category target');
+    feed = resolvePreview(feed, categoryTarget, 36);
+
+    const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRing')
+    );
+    expect(ringTargets).toHaveLength(1);
+    const ringTarget = ringTargets[0];
+    if (!ringTarget) throw new Error('missing ring target');
+    feed = resolvePreview(feed, ringTarget, 61); // Regeneration
+
+    const regenTargets = listPendingPreviewTargets(feed).filter((target) =>
+      target.includes('treasureRingRegeneration')
+    );
+    expect(regenTargets).toHaveLength(1);
+    const regenTarget = regenTargets[0];
+    if (!regenTarget) throw new Error('missing regeneration target');
+    feed = resolvePreview(feed, regenTarget, 95);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a vampiric regeneration ring.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a vampiric regeneration ring.');
+  });
+
   it('resolves contrariness rings with effect detail', () => {
     let feed = createFeedSnapshot({
       action: 'passage',

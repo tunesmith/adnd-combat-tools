@@ -22,6 +22,10 @@ import {
   treasureRingProtection,
   TreasureRingProtection,
 } from '../../../tables/dungeon/treasureRingProtection';
+import {
+  treasureRingRegeneration,
+  TreasureRingRegeneration,
+} from '../../../tables/dungeon/treasureRingRegeneration';
 
 const RING_LABELS: Record<TreasureRing, string> = {
   [TreasureRing.Contrariness]: 'contrariness',
@@ -75,6 +79,11 @@ const PROTECTION_PREVIEW: Record<TreasureRingProtection, string> = {
   [TreasureRingProtection.PlusThreeRadius]: "+3 (5' radius)",
   [TreasureRingProtection.PlusFourTwo]: '+4 AC / +2 saves',
   [TreasureRingProtection.PlusSixOne]: '+6 AC / +1 saves',
+};
+
+const REGENERATION_PREVIEW: Record<TreasureRingRegeneration, string> = {
+  [TreasureRingRegeneration.Standard]: 'Standard',
+  [TreasureRingRegeneration.Vampiric]: 'Vampiric',
 };
 
 export function renderTreasureRingDetail(
@@ -162,6 +171,18 @@ export const buildTreasureRingProtectionPreview: TablePreviewFactory = (
     entries: treasureRingProtection.entries.map((entry) => ({
       range: entry.range,
       label: protectionPreviewLabel(entry.command),
+    })),
+  });
+
+export const buildTreasureRingRegenerationPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Regeneration Type',
+    sides: treasureRingRegeneration.sides,
+    entries: treasureRingRegeneration.entries.map((entry) => ({
+      range: entry.range,
+      label: regenerationPreviewLabel(entry.command),
     })),
   });
 
@@ -301,6 +322,52 @@ export function renderTreasureRingProtectionCompact(
   return nodes;
 }
 
+export function renderTreasureRingRegenerationDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingRegeneration') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Regeneration Type',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${regenerationPreviewLabel(
+        outcome.event.result
+      )}`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: regenerationSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureRingRegenerationCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingRegeneration') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Regeneration Type',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: regenerationSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function ringSentence(
   result: TreasureRing,
   node?: OutcomeEventNode
@@ -324,6 +391,11 @@ export function ringSentence(
     const child = findChildEvent(node, 'treasureRingProtection');
     if (child && child.event.kind === 'treasureRingProtection') {
       return protectionRingSentence(child.event.result);
+    }
+  } else if (result === TreasureRing.Regeneration && node) {
+    const child = findChildEvent(node, 'treasureRingRegeneration');
+    if (child && child.event.kind === 'treasureRingRegeneration') {
+      return regenerationRingSentence(child.event.result);
     }
   }
   return `There is a ring of ${label}.`;
@@ -392,5 +464,31 @@ function protectionRingSentence(result: TreasureRingProtection): string {
       return 'There is a ring of protection granting +6 to AC and +1 on saving throws.';
     default:
       return 'There is a ring of protection.';
+  }
+}
+
+function regenerationPreviewLabel(result: TreasureRingRegeneration): string {
+  return REGENERATION_PREVIEW[result] ?? 'Standard';
+}
+
+function regenerationSentence(result: TreasureRingRegeneration): string {
+  switch (result) {
+    case TreasureRingRegeneration.Standard:
+      return 'Regeneration type: standard regeneration.';
+    case TreasureRingRegeneration.Vampiric:
+      return 'Regeneration type: vampiric regeneration.';
+    default:
+      return 'Regeneration type: standard regeneration.';
+  }
+}
+
+function regenerationRingSentence(result: TreasureRingRegeneration): string {
+  switch (result) {
+    case TreasureRingRegeneration.Standard:
+      return 'There is a ring of regeneration (standard).';
+    case TreasureRingRegeneration.Vampiric:
+      return 'There is a vampiric regeneration ring.';
+    default:
+      return 'There is a ring of regeneration.';
   }
 }

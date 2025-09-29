@@ -83,6 +83,7 @@ import type { TreasureRing } from '../../tables/dungeon/treasureRings';
 import type { TreasureRingContrariness } from '../../tables/dungeon/treasureRingContrariness';
 import type { TreasureRingElementalCommand } from '../../tables/dungeon/treasureRingElementalCommand';
 import type { TreasureRingProtection } from '../../tables/dungeon/treasureRingProtection';
+import type { TreasureRingRegeneration } from '../../tables/dungeon/treasureRingRegeneration';
 import type { TreasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
 import type { TreasureScrollProtectionLycanthropes } from '../../tables/dungeon/treasureScrollProtectionLycanthropes';
 import type {
@@ -405,6 +406,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureRingProtection';
       result: TreasureRingProtection;
+    }
+  | {
+      kind: 'treasureRingRegeneration';
+      result: TreasureRingRegeneration;
     };
 
 export type TreasureEntry = {
