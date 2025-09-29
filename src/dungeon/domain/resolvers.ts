@@ -115,6 +115,7 @@ import { treasureRingRegeneration } from '../../tables/dungeon/treasureRingRegen
 import { treasureRingTelekinesis } from '../../tables/dungeon/treasureRingTelekinesis';
 import { treasureRingThreeWishes } from '../../tables/dungeon/treasureRingThreeWishes';
 import { treasureRingWizardry } from '../../tables/dungeon/treasureRingWizardry';
+import { treasureRodsStavesWands } from '../../tables/dungeon/treasureRodsStavesWands';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1368,6 +1369,17 @@ export function resolveTreasureMagicCategory(options?: {
         rollIndex: event.rollIndex,
       },
     });
+  } else if (command === TreasureMagicCategory.RodsStavesWands) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureRodStaffWand',
+      context: {
+        kind: 'treasureMagic',
+        level: event.level,
+        treasureRoll: usedRoll,
+        rollIndex: event.rollIndex,
+      },
+    });
   }
   return {
     type: 'event',
@@ -1871,6 +1883,21 @@ export function resolveTreasureRingWizardry(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureRingWizardry',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureRodStaffWand(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureRodsStavesWands.sides);
+  const command = getTableEntry(usedRoll, treasureRodsStavesWands);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureRodStaffWand',
       result: command,
     } as OutcomeEvent,
   };

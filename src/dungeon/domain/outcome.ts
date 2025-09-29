@@ -89,6 +89,7 @@ import type { TreasureRingThreeWishes } from '../../tables/dungeon/treasureRingT
 import type { TreasureRingWizardry } from '../../tables/dungeon/treasureRingWizardry';
 import type { TreasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
 import type { TreasureScrollProtectionLycanthropes } from '../../tables/dungeon/treasureScrollProtectionLycanthropes';
+import type { TreasureRodStaffWand } from '../../tables/dungeon/treasureRodsStavesWands';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -429,6 +430,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureRingWizardry';
       result: TreasureRingWizardry;
+    }
+  | {
+      kind: 'treasureRodStaffWand';
+      result: TreasureRodStaffWand;
     };
 
 export type TreasureEntry = {
