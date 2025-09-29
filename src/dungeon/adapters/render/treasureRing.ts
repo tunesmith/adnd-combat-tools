@@ -30,6 +30,10 @@ import {
   treasureRingTelekinesis,
   TreasureRingTelekinesis,
 } from '../../../tables/dungeon/treasureRingTelekinesis';
+import {
+  treasureRingThreeWishes,
+  TreasureRingThreeWishes,
+} from '../../../tables/dungeon/treasureRingThreeWishes';
 import { formatOrdinal } from './treasureScroll';
 
 const RING_LABELS: Record<TreasureRing, string> = {
@@ -97,6 +101,11 @@ const TELEKINESIS_PREVIEW: Record<TreasureRingTelekinesis, string> = {
   [TreasureRingTelekinesis.OneThousand]: '1,000 g.p. maximum',
   [TreasureRingTelekinesis.TwoThousand]: '2,000 g.p. maximum',
   [TreasureRingTelekinesis.FourThousand]: '4,000 g.p. maximum',
+};
+
+const THREE_WISHES_PREVIEW: Record<TreasureRingThreeWishes, string> = {
+  [TreasureRingThreeWishes.Limited]: 'limited',
+  [TreasureRingThreeWishes.Standard]: 'standard',
 };
 
 export function renderTreasureRingDetail(
@@ -208,6 +217,18 @@ export const buildTreasureRingTelekinesisPreview: TablePreviewFactory = (
     entries: treasureRingTelekinesis.entries.map((entry) => ({
       range: entry.range,
       label: telekinesisPreviewLabel(entry.command),
+    })),
+  });
+
+export const buildTreasureRingThreeWishesPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Wish Capacity',
+    sides: treasureRingThreeWishes.sides,
+    entries: treasureRingThreeWishes.entries.map((entry) => ({
+      range: entry.range,
+      label: threeWishesPreviewLabel(entry.command),
     })),
   });
 
@@ -439,6 +460,52 @@ export function renderTreasureRingTelekinesisCompact(
   return nodes;
 }
 
+export function renderTreasureRingThreeWishesDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingThreeWishes') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Wish Capacity',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${threeWishesPreviewLabel(
+        outcome.event.result
+      )}`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: threeWishesSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureRingThreeWishesCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingThreeWishes') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Wish Capacity',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: threeWishesSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function ringSentence(
   result: TreasureRing,
   node?: OutcomeEventNode
@@ -477,6 +544,11 @@ export function ringSentence(
     const child = findChildEvent(node, 'treasureRingTelekinesis');
     if (child && child.event.kind === 'treasureRingTelekinesis') {
       return telekinesisRingSentence(child.event.result);
+    }
+  } else if (result === TreasureRing.ThreeWishes && node) {
+    const child = findChildEvent(node, 'treasureRingThreeWishes');
+    if (child && child.event.kind === 'treasureRingThreeWishes') {
+      return threeWishesRingSentence(child.event.result);
     }
   }
   return `There is a ring of ${label}.`;
@@ -599,4 +671,18 @@ function telekinesisSentence(result: TreasureRingTelekinesis): string {
 function telekinesisRingSentence(result: TreasureRingTelekinesis): string {
   const label = telekinesisPreviewLabel(result);
   return `There is a ring of telekinesis (${label}).`;
+}
+
+function threeWishesPreviewLabel(result: TreasureRingThreeWishes): string {
+  return THREE_WISHES_PREVIEW[result] ?? 'standard';
+}
+
+function threeWishesSentence(result: TreasureRingThreeWishes): string {
+  return `Wish capacity: ${threeWishesPreviewLabel(result)}.`;
+}
+
+function threeWishesRingSentence(result: TreasureRingThreeWishes): string {
+  return `There is a ring of three wishes (${threeWishesPreviewLabel(
+    result
+  )}).`;
 }

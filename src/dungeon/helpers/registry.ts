@@ -86,6 +86,7 @@ import {
   resolveTreasureRingProtection,
   resolveTreasureRingRegeneration,
   resolveTreasureRingTelekinesis,
+  resolveTreasureRingThreeWishes,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -184,6 +185,7 @@ const TABLE_ID_LIST = [
   'treasureRingProtection',
   'treasureRingRegeneration',
   'treasureRingTelekinesis',
+  'treasureRingThreeWishes',
   'circularContents',
   'circularPool',
   'circularMagicPool',
@@ -269,6 +271,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureRingProtection: 'Protection Bonus',
   treasureRingRegeneration: 'Regeneration Type',
   treasureRingTelekinesis: 'Telekinetic Capacity',
+  treasureRingThreeWishes: 'Wish Capacity',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
   circularMagicPool: 'Magic Pool Effect',
@@ -734,6 +737,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureRingRegeneration({ roll })),
   treasureRingTelekinesis: ({ roll }) =>
     fromOutcome(resolveTreasureRingTelekinesis({ roll })),
+  treasureRingThreeWishes: ({ roll }) =>
+    fromOutcome(resolveTreasureRingThreeWishes({ roll })),
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';
