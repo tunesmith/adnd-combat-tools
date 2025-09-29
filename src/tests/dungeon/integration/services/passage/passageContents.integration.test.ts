@@ -977,6 +977,14 @@ describe('passage contents', () => {
     if (!ringTarget) throw new Error('missing ring target');
     feed = resolvePreview(feed, ringTarget, 45);
 
+    const protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      target.includes('treasureRingProtection')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const protectionTarget = protectionTargets[0];
+    if (!protectionTarget) throw new Error('missing ring protection target');
+    feed = resolvePreview(feed, protectionTarget, 92);
+
     const detailText = renderDetail(feed)
       .filter(
         (node): node is { kind: 'paragraph'; text: string } =>
@@ -984,7 +992,9 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(detailText).toContain('there is a ring of protection.');
+    expect(detailText).toContain(
+      'there is a ring of protection granting +4 to ac and +2 on saving throws.'
+    );
 
     const compactText = renderCompact(feed)
       .filter(
@@ -993,7 +1003,9 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain('there is a ring of protection.');
+    expect(compactText).toContain(
+      'there is a ring of protection granting +4 to ac and +2 on saving throws.'
+    );
   });
 
   it('resolves contrariness rings with effect detail', () => {

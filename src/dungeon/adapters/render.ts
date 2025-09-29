@@ -217,6 +217,9 @@ import {
   renderTreasureRingElementalCommandDetail,
   renderTreasureRingElementalCommandCompact,
   buildTreasureRingElementalCommandPreview,
+  renderTreasureRingProtectionDetail,
+  renderTreasureRingProtectionCompact,
+  buildTreasureRingProtectionPreview,
 } from './render/treasureRing';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
@@ -494,6 +497,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureRingElementalCommandDetail,
     renderCompact: renderTreasureRingElementalCommandCompact,
   },
+  treasureRingProtection: {
+    renderDetail: renderTreasureRingProtectionDetail,
+    renderCompact: renderTreasureRingProtectionCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -600,6 +607,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureRing: buildTreasureRingPreview,
   treasureRingContrariness: buildTreasureRingContrarinessPreview,
   treasureRingElementalCommand: buildTreasureRingElementalCommandPreview,
+  treasureRingProtection: buildTreasureRingProtectionPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
@@ -846,6 +854,9 @@ function previewForEventNode(
       break;
     case 'treasureRingElementalCommand':
       tableId = 'treasureRingElementalCommand';
+      break;
+    case 'treasureRingProtection':
+      tableId = 'treasureRingProtection';
       break;
     case 'treasurePotionAnimalControl': {
       const potionCategory = event;

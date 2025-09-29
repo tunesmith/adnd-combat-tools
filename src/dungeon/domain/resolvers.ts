@@ -110,6 +110,7 @@ import {
 } from '../../tables/dungeon/treasureRings';
 import { treasureRingContrariness } from '../../tables/dungeon/treasureRingContrariness';
 import { treasureRingElementalCommand } from '../../tables/dungeon/treasureRingElementalCommand';
+import { treasureRingProtection } from '../../tables/dungeon/treasureRingProtection';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1699,6 +1700,11 @@ export function resolveTreasureRing(options?: {
       type: 'pending-roll',
       table: 'treasureRingElementalCommand',
     });
+  } else if (command === TreasureRing.Protection) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureRingProtection',
+    });
   }
   return {
     type: 'event',
@@ -1740,6 +1746,21 @@ export function resolveTreasureRingElementalCommand(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureRingElementalCommand',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureRingProtection(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureRingProtection.sides);
+  const command = getTableEntry(usedRoll, treasureRingProtection);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureRingProtection',
       result: command,
     } as OutcomeEvent,
   };

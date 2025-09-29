@@ -18,6 +18,10 @@ import {
   treasureRingElementalCommand,
   TreasureRingElementalCommand,
 } from '../../../tables/dungeon/treasureRingElementalCommand';
+import {
+  treasureRingProtection,
+  TreasureRingProtection,
+} from '../../../tables/dungeon/treasureRingProtection';
 
 const RING_LABELS: Record<TreasureRing, string> = {
   [TreasureRing.Contrariness]: 'contrariness',
@@ -62,6 +66,16 @@ const ELEMENTAL_COMMAND_PREVIEW: Record<TreasureRingElementalCommand, string> =
     [TreasureRingElementalCommand.Fire]: 'Fire',
     [TreasureRingElementalCommand.Water]: 'Water',
   };
+
+const PROTECTION_PREVIEW: Record<TreasureRingProtection, string> = {
+  [TreasureRingProtection.PlusOne]: '+1',
+  [TreasureRingProtection.PlusTwo]: '+2',
+  [TreasureRingProtection.PlusTwoRadius]: "+2 (5' radius)",
+  [TreasureRingProtection.PlusThree]: '+3',
+  [TreasureRingProtection.PlusThreeRadius]: "+3 (5' radius)",
+  [TreasureRingProtection.PlusFourTwo]: '+4 AC / +2 saves',
+  [TreasureRingProtection.PlusSixOne]: '+6 AC / +1 saves',
+};
 
 export function renderTreasureRingDetail(
   outcome: OutcomeEventNode,
@@ -136,6 +150,18 @@ export const buildTreasureRingElementalCommandPreview: TablePreviewFactory = (
     entries: treasureRingElementalCommand.entries.map((entry) => ({
       range: entry.range,
       label: elementalCommandPreviewLabel(entry.command),
+    })),
+  });
+
+export const buildTreasureRingProtectionPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Protection Bonus',
+    sides: treasureRingProtection.sides,
+    entries: treasureRingProtection.entries.map((entry) => ({
+      range: entry.range,
+      label: protectionPreviewLabel(entry.command),
     })),
   });
 
@@ -231,6 +257,50 @@ export function renderTreasureRingElementalCommandCompact(
   return nodes;
 }
 
+export function renderTreasureRingProtectionDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingProtection') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Protection Bonus',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${protectionPreviewLabel(outcome.event.result)}`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: protectionSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureRingProtectionCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingProtection') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Protection Bonus',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: protectionSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function ringSentence(
   result: TreasureRing,
   node?: OutcomeEventNode
@@ -249,6 +319,11 @@ export function ringSentence(
         child.event.result
       ).toLowerCase();
       return `There is a ring of ${focus} elemental command.`;
+    }
+  } else if (result === TreasureRing.Protection && node) {
+    const child = findChildEvent(node, 'treasureRingProtection');
+    if (child && child.event.kind === 'treasureRingProtection') {
+      return protectionRingSentence(child.event.result);
     }
   }
   return `There is a ring of ${label}.`;
@@ -272,4 +347,50 @@ function elementalCommandPreviewLabel(
   result: TreasureRingElementalCommand
 ): string {
   return ELEMENTAL_COMMAND_PREVIEW[result] ?? 'Elemental';
+}
+
+function protectionPreviewLabel(result: TreasureRingProtection): string {
+  return PROTECTION_PREVIEW[result] ?? '+1';
+}
+
+function protectionSentence(result: TreasureRingProtection): string {
+  switch (result) {
+    case TreasureRingProtection.PlusOne:
+      return 'Protection bonus: +1 to AC and saving throws.';
+    case TreasureRingProtection.PlusTwo:
+      return 'Protection bonus: +2 to AC and saving throws.';
+    case TreasureRingProtection.PlusTwoRadius:
+      return "Protection bonus: +2 to AC and saving throws within a 5' radius.";
+    case TreasureRingProtection.PlusThree:
+      return 'Protection bonus: +3 to AC and saving throws.';
+    case TreasureRingProtection.PlusThreeRadius:
+      return "Protection bonus: +3 to AC and saving throws within a 5' radius.";
+    case TreasureRingProtection.PlusFourTwo:
+      return 'Protection bonus: +4 to AC and +2 on saving throws.';
+    case TreasureRingProtection.PlusSixOne:
+      return 'Protection bonus: +6 to AC and +1 on saving throws.';
+    default:
+      return 'Protection bonus: +1 to AC and saving throws.';
+  }
+}
+
+function protectionRingSentence(result: TreasureRingProtection): string {
+  switch (result) {
+    case TreasureRingProtection.PlusOne:
+      return 'There is a ring of protection +1.';
+    case TreasureRingProtection.PlusTwo:
+      return 'There is a ring of protection +2.';
+    case TreasureRingProtection.PlusTwoRadius:
+      return "There is a ring of protection +2 (5' radius).";
+    case TreasureRingProtection.PlusThree:
+      return 'There is a ring of protection +3.';
+    case TreasureRingProtection.PlusThreeRadius:
+      return "There is a ring of protection +3 (5' radius).";
+    case TreasureRingProtection.PlusFourTwo:
+      return 'There is a ring of protection granting +4 to AC and +2 on saving throws.';
+    case TreasureRingProtection.PlusSixOne:
+      return 'There is a ring of protection granting +6 to AC and +1 on saving throws.';
+    default:
+      return 'There is a ring of protection.';
+  }
 }
