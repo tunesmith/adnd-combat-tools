@@ -89,6 +89,7 @@ import {
   resolveTreasureRingThreeWishes,
   resolveTreasureRingWizardry,
   resolveTreasureRodStaffWand,
+  resolveTreasureMiscMagicE1,
   resolveTreasureStaffSerpent,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
@@ -191,6 +192,7 @@ const TABLE_ID_LIST = [
   'treasureRingThreeWishes',
   'treasureRingWizardry',
   'treasureRodStaffWand',
+  'treasureMiscMagicE1',
   'treasureStaffSerpent',
   'circularContents',
   'circularPool',
@@ -280,6 +282,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureRingThreeWishes: 'Wish Capacity',
   treasureRingWizardry: 'Spell Doubling',
   treasureRodStaffWand: 'Rod/Staff/Wand',
+  treasureMiscMagicE1: 'Miscellaneous Magic (Table E.1)',
   treasureStaffSerpent: 'Serpent Form',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
@@ -752,6 +755,26 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureRingWizardry({ roll })),
   treasureRodStaffWand: ({ roll }) =>
     fromOutcome(resolveTreasureRodStaffWand({ roll })),
+  treasureMiscMagicE1: ({ roll, context }) => {
+    const level =
+      context && context.kind === 'treasureMagic' ? context.level : undefined;
+    const treasureRoll =
+      context && context.kind === 'treasureMagic'
+        ? context.treasureRoll
+        : undefined;
+    const rollIndex =
+      context && context.kind === 'treasureMagic'
+        ? context.rollIndex
+        : undefined;
+    return fromOutcome(
+      resolveTreasureMiscMagicE1({
+        roll,
+        level,
+        treasureRoll,
+        rollIndex,
+      })
+    );
+  },
   treasureStaffSerpent: ({ roll }) =>
     fromOutcome(resolveTreasureStaffSerpent({ roll })),
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),

@@ -20,8 +20,27 @@ import {
 import { applyOutcomeRoll } from '../../../dungeon/helpers/registry';
 import type { TableContext } from '../../../types/dungeon';
 import type { PartyCharacterSummary } from '../../../dungeon/helpers/party/formatPartyResult';
+import { createOutcomeRenderSnapshot } from '../../../dungeon/helpers/outcomePipeline';
 
-type RollInput = string | number | number[];
+type TargetedRoll = {
+  roll: number;
+  tableId?: string;
+  targetId?: string;
+};
+
+type RollInput = string | number | number[] | Array<number | TargetedRoll>;
+
+type ParsedRoll = {
+  roll: number;
+  tableId?: string;
+  targetId?: string;
+};
+
+export enum DirectiveMode {
+  Auto = 'auto',
+  Manual = 'manual',
+  ManualThenAuto = 'manual_then_auto',
+}
 
 type PendingDescriptor = {
   id: string;
@@ -60,6 +79,16 @@ export type CompactRunResult = {
   unusedRolls: number[];
 };
 
+type CompactExecution = {
+  rollUsed: number;
+  rollsUsed: number[];
+  outcome?: DungeonOutcomeNode;
+  compactNodes: DungeonRenderNode[];
+  detailNodes: DungeonRenderNode[];
+  cache: RenderCache;
+  fallbackMessages: DungeonRenderNode[];
+};
+
 export interface RenderSnapshot {
   nodes: ReadonlyArray<SnapshotEntry>;
   headings(): string[];
@@ -72,16 +101,18 @@ export interface RenderSnapshot {
   rollTrace(): DungeonRollTrace | undefined;
 }
 
-export function parseRollSequence(input: RollInput): number[] {
+export function parseRollSequence(input: RollInput): ParsedRoll[] {
   if (Array.isArray(input)) {
-    return input.map(assertDieRoll);
+    return input.map(normalizeDirective);
   }
   if (typeof input === 'number') {
-    return [assertDieRoll(input)];
+    return [normalizeDirective(input)];
   }
   const trimmed = input.trim();
   if (trimmed.length === 0) return [];
-  return trimmed.split(',').map((part) => assertDieRoll(Number(part.trim())));
+  return trimmed
+    .split(',')
+    .map((part) => normalizeDirective(Number(part.trim())));
 }
 
 export function simulateDetailRun(options: {
@@ -90,12 +121,13 @@ export function simulateDetailRun(options: {
   dungeonLevel?: number;
   resolveAll?: boolean;
 }): DetailRunResult {
-  const rolls = parseRollSequence(options.rolls);
-  const firstRoll = rolls[0];
+  const directives = parseRollSequence(options.rolls);
+  const firstDirective = directives[0];
+  const firstRoll = firstDirective?.roll;
   if (firstRoll === undefined) {
     throw new Error('simulateDetailRun requires at least one roll value.');
   }
-  const remaining = rolls.slice(1);
+  const remaining = directives.slice(1);
   const step = runDungeonStep(options.action, {
     roll: firstRoll,
     detailMode: true,
@@ -116,17 +148,17 @@ export function simulateDetailRun(options: {
   while (workingOutcome && queue.length > 0) {
     const pendingList = collectPending(workingOutcome);
     if (pendingList.length === 0) break;
-    const pending = pendingList[0];
+    const directive = queue.shift();
+    if (!directive) break;
+    const pending = selectPendingFromDirective(pendingList, directive);
     if (!pending) break;
-    const nextRoll = queue.shift();
-    if (nextRoll === undefined) break;
-    usedRolls.push(nextRoll);
-    const targetId = pending.id ?? pending.table;
+    usedRolls.push(directive.roll);
+    const targetId = directive.targetId ?? pending.id ?? pending.table;
     const applied = applyOutcomeRoll({
       outcome: workingOutcome,
       tableId: pending.table,
       targetId,
-      roll: nextRoll,
+      roll: directive.roll,
       context: resolveContext(pending.context),
     });
     if (!applied) {
@@ -181,7 +213,7 @@ export function simulateDetailRun(options: {
       detail: createSnapshot(finalDetailNodes),
       compact: createSnapshot(finalCompactNodes),
     },
-    unusedRolls: [...queue],
+    unusedRolls: queue.map((directive) => directive.roll),
   };
 }
 
@@ -191,17 +223,188 @@ export function simulateCompactRun(options: {
   dungeonLevel?: number;
 }): CompactRunResult {
   const parsedRolls = parseRollSequence(options.roll);
-  const rollValue = parsedRolls[0];
+  const rollValue = parsedRolls[0]?.roll;
   if (rollValue === undefined) {
     throw new Error('simulateCompactRun requires a roll value.');
   }
-  const step = runDungeonStep(options.action, {
+  const execution = executeCompactStep({
+    action: options.action,
     roll: rollValue,
-    detailMode: false,
+    dungeonLevel: options.dungeonLevel,
+    autoResolve: true,
+  });
+
+  return {
+    action: options.action,
+    rollUsed: execution.rollUsed,
+    rollsUsed: execution.rollsUsed,
+    outcome: execution.outcome,
+    pending: collectPending(execution.outcome),
+    compact: createSnapshot(execution.compactNodes),
+    detail: createSnapshot(execution.detailNodes),
+    unusedRolls: [],
+  };
+}
+
+export function simulateCompactRunWithSequence(options: {
+  action: DungeonAction;
+  rolls: RollInput;
+  dungeonLevel?: number;
+  allowUnusedRolls?: boolean;
+  mode?: DirectiveMode;
+}): CompactRunResult {
+  const directives = parseRollSequence(options.rolls);
+  const initialDirective = directives[0];
+  const initialRoll = initialDirective?.roll;
+  if (initialRoll === undefined) {
+    throw new Error(
+      'simulateCompactRunWithSequence requires at least one roll.'
+    );
+  }
+  const mode = options.mode ?? DirectiveMode.Auto;
+  const queued = directives.slice(1);
+
+  if (mode === DirectiveMode.Auto) {
+    if (queued.some((directive) => directive.tableId || directive.targetId)) {
+      throw new Error(
+        'Targeted rolls require mode DirectiveMode.Manual or DirectiveMode.ManualThenAuto.'
+      );
+    }
+    const { result, unused } = executeWithMockedDice(
+      queued.map((directive) => directive.roll),
+      () =>
+        simulateCompactRun({
+          action: options.action,
+          roll: initialRoll,
+          dungeonLevel: options.dungeonLevel,
+        }),
+      { fallbackToRandom: true }
+    );
+    if (!options.allowUnusedRolls && unused.length > 0) {
+      throw new Error(
+        `Unused mock rolls remain after compact run: ${unused.join(', ')}`
+      );
+    }
+    return { ...result, unusedRolls: unused };
+  }
+
+  const execution = executeCompactStep({
+    action: options.action,
+    roll: initialRoll,
+    dungeonLevel: options.dungeonLevel,
+    autoResolve: false,
+  });
+
+  let workingOutcome = execution.outcome;
+  const usedRolls = [...execution.rollsUsed];
+  const remaining = [...queued];
+
+  while (workingOutcome && remaining.length > 0) {
+    const pendingList = collectPending(workingOutcome);
+    if (pendingList.length === 0) break;
+    const directive = remaining.shift();
+    if (!directive) break;
+    usedRolls.push(directive.roll);
+    const pending = selectPendingFromDirective(pendingList, directive);
+    if (!pending) {
+      throw new Error(
+        `No pending table found for directive targeting ${
+          directive.targetId ?? directive.tableId ?? 'first pending table'
+        }.`
+      );
+    }
+    const targetId = directive.targetId ?? pending.id ?? pending.table;
+    const applied = applyOutcomeRoll({
+      outcome: workingOutcome,
+      tableId: pending.table,
+      targetId,
+      roll: directive.roll,
+      context: resolveContext(pending.context),
+    });
+    if (!applied) {
+      throw new Error(`No outcome available for table ${pending.table}.`);
+    }
+    workingOutcome = applied.outcome;
+  }
+
+  if (!options.allowUnusedRolls && remaining.length > 0) {
+    throw new Error(
+      `Unused rolls remain after compact run: ${remaining
+        .map((directive) => directive.roll)
+        .join(', ')}`
+    );
+  }
+
+  let finalOutcome = workingOutcome;
+  let compactNodes: DungeonRenderNode[];
+  let detailNodes: DungeonRenderNode[];
+
+  if (mode === DirectiveMode.ManualThenAuto) {
+    const autoSnapshot = workingOutcome
+      ? createOutcomeRenderSnapshot(workingOutcome, { autoResolve: true })
+      : undefined;
+    if (autoSnapshot) {
+      finalOutcome = autoSnapshot.compactOutcome;
+      compactNodes = autoSnapshot.compact;
+      detailNodes = autoSnapshot.detailResolved;
+    } else {
+      const fallbackCache = buildRenderCache(workingOutcome);
+      compactNodes = selectMessagesForMode(
+        options.action,
+        false,
+        fallbackCache,
+        execution.fallbackMessages
+      );
+      detailNodes = selectMessagesForMode(
+        options.action,
+        true,
+        fallbackCache,
+        execution.fallbackMessages
+      );
+    }
+  } else {
+    const refreshedCache = buildRenderCache(workingOutcome);
+    compactNodes = selectMessagesForMode(
+      options.action,
+      false,
+      refreshedCache,
+      execution.fallbackMessages
+    );
+    detailNodes = selectMessagesForMode(
+      options.action,
+      true,
+      refreshedCache,
+      execution.fallbackMessages
+    );
+  }
+
+  return {
+    action: options.action,
+    rollUsed: execution.rollUsed,
+    rollsUsed: usedRolls,
+    outcome: finalOutcome,
+    pending: collectPending(finalOutcome),
+    compact: createSnapshot(compactNodes),
+    detail: createSnapshot(detailNodes),
+    unusedRolls: remaining.map((directive) => directive.roll),
+  };
+}
+
+function executeCompactStep(options: {
+  action: DungeonAction;
+  roll: number;
+  dungeonLevel?: number;
+  autoResolve?: boolean;
+}): CompactExecution {
+  const detailMode = options.autoResolve === false;
+  const step = runDungeonStep(options.action, {
+    roll: options.roll,
+    detailMode,
     level: options.dungeonLevel,
   });
   const outcome = step.outcome ? normalizeOutcomeTree(step.outcome) : undefined;
-  const cache = step.renderCache ?? buildRenderCache(outcome);
+  const baseCache = step.renderCache ?? buildRenderCache(outcome);
+  const cache = detailMode ? buildRenderCache(outcome) : baseCache;
   const compactNodes = selectMessagesForMode(
     options.action,
     false,
@@ -214,12 +417,11 @@ export function simulateCompactRun(options: {
     cache,
     step.messages
   );
-
   const rollsUsed: number[] = [];
   if (step.roll !== undefined) {
     rollsUsed.push(step.roll);
   } else {
-    rollsUsed.push(rollValue);
+    rollsUsed.push(options.roll);
   }
   const rollUsed = rollsUsed[0];
   if (rollUsed === undefined) {
@@ -227,48 +429,27 @@ export function simulateCompactRun(options: {
   }
 
   return {
-    action: options.action,
     rollUsed,
     rollsUsed,
     outcome,
-    pending: collectPending(outcome),
-    compact: createSnapshot(compactNodes),
-    detail: createSnapshot(detailNodes),
-    unusedRolls: [],
+    compactNodes,
+    detailNodes,
+    cache,
+    fallbackMessages: step.messages,
   };
 }
 
-export function simulateCompactRunWithSequence(options: {
-  action: DungeonAction;
-  rolls: RollInput;
-  dungeonLevel?: number;
-  allowUnusedRolls?: boolean;
-  fallbackToRandom?: boolean;
-}): CompactRunResult {
-  const rolls = parseRollSequence(options.rolls);
-  const initialRoll = rolls[0];
-  if (initialRoll === undefined) {
-    throw new Error(
-      'simulateCompactRunWithSequence requires at least one roll.'
-    );
+function normalizeDirective(
+  directive: number | TargetedRoll
+): ParsedRoll {
+  if (typeof directive === 'number') {
+    return { roll: assertDieRoll(directive) };
   }
-  const queued = rolls.slice(1);
-  const { result, unused } = executeWithMockedDice(
-    queued,
-    () =>
-      simulateCompactRun({
-        action: options.action,
-        roll: initialRoll,
-        dungeonLevel: options.dungeonLevel,
-      }),
-    { fallbackToRandom: options.fallbackToRandom }
-  );
-  if (!options.allowUnusedRolls && unused.length > 0) {
-    throw new Error(
-      `Unused mock rolls remain after compact run: ${unused.join(', ')}`
-    );
-  }
-  return { ...result, unusedRolls: unused };
+  return {
+    roll: assertDieRoll(directive.roll),
+    tableId: directive.tableId,
+    targetId: directive.targetId,
+  };
 }
 
 function assertDieRoll(input: number): number {
@@ -339,6 +520,27 @@ function collectPending(outcome?: DungeonOutcomeNode): PendingDescriptor[] {
   };
   visit(outcome);
   return results.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function selectPendingFromDirective(
+  pendingList: PendingDescriptor[],
+  directive: ParsedRoll
+): PendingDescriptor | undefined {
+  if (directive.targetId) {
+    const directMatch = pendingList.find((pending) => {
+      if (pending.id && pending.id === directive.targetId) return true;
+      return pending.table === directive.targetId;
+    });
+    if (directMatch) return directMatch;
+  }
+  if (directive.tableId) {
+    const tableMatch = pendingList.find((pending) =>
+      pending.table === directive.tableId ||
+      pending.table.startsWith(`${directive.tableId}:`)
+    );
+    if (tableMatch) return tableMatch;
+  }
+  return pendingList[0];
 }
 
 function resolveContext(context: unknown): TableContext | undefined {

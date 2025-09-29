@@ -81,6 +81,7 @@ import {
   resolveTreasureRingThreeWishes,
   resolveTreasureRingWizardry,
   resolveTreasureRodStaffWand,
+  resolveTreasureMiscMagicE1,
   resolveTreasureStaffSerpent,
   resolveGasTrapEffect,
 } from '../domain/resolvers';
@@ -682,6 +683,10 @@ function resolvePendingNode(
       return resolveTreasureRingWizardry({});
     case 'treasureRodStaffWand':
       return resolveTreasureRodStaffWand({});
+    case 'treasureMiscMagicE1': {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasureMiscMagicE1(context);
+    }
     case 'treasureStaffSerpent':
       return resolveTreasureStaffSerpent({});
     case 'treasureProtectionType':

@@ -21,6 +21,7 @@ import {
   describeTreasureProtectionGuardedBy,
   describeTreasureProtectionHiddenBy,
 } from './treasureProtection';
+import { treasureMiscMagicE1Sentence } from './treasureMiscMagicE1';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
 
 export function renderTreasureDetail(
@@ -139,6 +140,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   if (rod && rod.event.kind === 'treasureRodStaffWand') {
     const label = resolveRodStaffWandLabel(rod);
     return label.length > 0 ? `There is a ${label}.` : undefined;
+  }
+  const miscMagicE1 = findChildEvent(magic, 'treasureMiscMagicE1');
+  if (miscMagicE1 && miscMagicE1.event.kind === 'treasureMiscMagicE1') {
+    return treasureMiscMagicE1Sentence(miscMagicE1.event.result);
   }
   return undefined;
 }

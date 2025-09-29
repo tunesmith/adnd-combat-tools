@@ -1,14 +1,23 @@
-import { simulateCompactRunWithSequence } from '../../../../support/dungeon/dungeonRollHarness';
+import {
+  simulateCompactRunWithSequence,
+  DirectiveMode,
+} from '../../../../support/dungeon/dungeonRollHarness';
 import type { DungeonOutcomeNode } from '../../../../../dungeon/domain/outcome';
 
 describe('passage compact trick/trap gas handling', () => {
   it('fully resolves the illusionary wall branch in compact mode', () => {
     const result = simulateCompactRunWithSequence({
       action: 'passage',
-      rolls: [19, 19],
+      rolls: [
+        19,
+        { tableId: 'trickTrap', roll: 19 },
+        { tableId: 'illusionaryWallNature', roll: 11 },
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 1 },
+      ],
       dungeonLevel: 1,
       allowUnusedRolls: true,
-      fallbackToRandom: true,
+      mode: DirectiveMode.ManualThenAuto,
     });
 
     const trapEvent = findEvent(result.outcome, 'trickTrap');
@@ -19,10 +28,14 @@ describe('passage compact trick/trap gas handling', () => {
   it('resolves the gas trap branch in compact mode', () => {
     const result = simulateCompactRunWithSequence({
       action: 'passage',
-      rolls: [19, 17],
+      rolls: [
+        19,
+        { tableId: 'trickTrap', roll: 17 },
+        { tableId: 'gasTrapEffect', roll: 7 },
+      ],
       dungeonLevel: 1,
       allowUnusedRolls: true,
-      fallbackToRandom: true,
+      mode: DirectiveMode.ManualThenAuto,
     });
 
     const trapEvent = findEvent(result.outcome, 'trickTrap');

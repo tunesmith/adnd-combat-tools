@@ -26,7 +26,7 @@ This project wires every dungeon table through several layers. When you add a ne
 
 ## 6. Tests
 - Detail mode: extend or create an integration test under `src/tests/dungeon/integration/...` that drives the parent resolver and verifies the new table appears/resolves.
-- Compact mode: use `simulateCompactRunWithSequence` with `fallbackToRandom: true` and scripted rolls for the path you care about. This confirms autorolling reaches the subtable (after the `resolvePendingNode` wiring).
+- Compact mode: use `simulateCompactRunWithSequence` with the directive `mode` you need (`Auto`, `Manual`, or `ManualThenAuto`) so you can drive the DAG deterministically while letting the harness autoroll the rest.
 - Unit/snapshot tests: add coverage for new render helpers if they have logic.
 
 ## 7. Checklist before closing the update
