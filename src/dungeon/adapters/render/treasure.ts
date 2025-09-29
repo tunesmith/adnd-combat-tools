@@ -132,7 +132,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   }
   const ring = findChildEvent(magic, 'treasureRing');
   if (ring && ring.event.kind === 'treasureRing') {
-    return ringSentence(ring.event.result);
+    return ringSentence(ring.event.result, ring);
   }
   return undefined;
 }

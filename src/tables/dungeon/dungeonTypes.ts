@@ -78,6 +78,7 @@ import type { TreasureScroll } from './treasureScrolls';
 import type { TreasureScrollProtectionElementals } from './treasureScrollProtectionElementals';
 import type { TreasureScrollProtectionLycanthropes } from './treasureScrollProtectionLycanthropes';
 import type { TreasureRing } from './treasureRings';
+import type { TreasureRingContrariness } from './treasureRingContrariness';
 
 export type Table<T> = {
   sides: number;
@@ -173,4 +174,5 @@ export type Command =
   | TreasureScroll
   | TreasureScrollProtectionElementals
   | TreasureScrollProtectionLycanthropes
-  | TreasureRing;
+  | TreasureRing
+  | TreasureRingContrariness;

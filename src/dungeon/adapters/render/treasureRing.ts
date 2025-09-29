@@ -6,9 +6,14 @@ import {
 } from '../../../tables/dungeon/treasureRings';
 import {
   buildPreview,
+  findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
+import {
+  treasureRingContrariness,
+  TreasureRingContrariness,
+} from '../../../tables/dungeon/treasureRingContrariness';
 
 const RING_LABELS: Record<TreasureRing, string> = {
   [TreasureRing.Contrariness]: 'contrariness',
@@ -37,6 +42,15 @@ const RING_LABELS: Record<TreasureRing, string> = {
   [TreasureRing.XRayVision]: 'x-ray vision',
 };
 
+const CONTRARIANNESS_PREVIEW: Record<TreasureRingContrariness, string> = {
+  [TreasureRingContrariness.Flying]: 'Flying',
+  [TreasureRingContrariness.Invisibility]: 'Invisibility',
+  [TreasureRingContrariness.Levitation]: 'Levitation',
+  [TreasureRingContrariness.ShockingGrasp]: 'Shocking Grasp',
+  [TreasureRingContrariness.SpellTurning]: 'Spell Turning',
+  [TreasureRingContrariness.Strength]: 'Strength',
+};
+
 export function renderTreasureRingDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
@@ -53,7 +67,7 @@ export function renderTreasureRingDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: ringSentence(outcome.event.result),
+    text: ringSentence(outcome.event.result, outcome),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -72,7 +86,7 @@ export function renderTreasureRingCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: ringSentence(outcome.event.result),
+    text: ringSentence(outcome.event.result, outcome),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -89,7 +103,83 @@ export const buildTreasureRingPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
-export function ringSentence(result: TreasureRing): string {
+export const buildTreasureRingContrarinessPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Contrariness Effect',
+    sides: treasureRingContrariness.sides,
+    entries: treasureRingContrariness.entries.map((entry) => ({
+      range: entry.range,
+      label: contrarinessPreviewLabel(entry.command),
+    })),
+  });
+
+export function renderTreasureRingContrarinessDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingContrariness') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Contrariness Effect',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${
+        TreasureRingContrariness[outcome.event.result]
+      }`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: contrarinessSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureRingContrarinessCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingContrariness') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Contrariness Effect',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: contrarinessSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function ringSentence(
+  result: TreasureRing,
+  node?: OutcomeEventNode
+): string {
   const label = RING_LABELS[result];
+  if (result === TreasureRing.Contrariness && node) {
+    const child = findChildEvent(node, 'treasureRingContrariness');
+    if (child && child.event.kind === 'treasureRingContrariness') {
+      const effect = contrarinessPreviewLabel(child.event.result);
+      return `There is a ring of contrariness (${effect}).`;
+    }
+  }
   return `There is a ring of ${label}.`;
+}
+
+function contrarinessPreviewLabel(result: TreasureRingContrariness): string {
+  return CONTRARIANNESS_PREVIEW[result] ?? 'Contrary Effect';
+}
+
+function contrarinessSentence(result: TreasureRingContrariness): string {
+  return `Contrariness effect: ${contrarinessPreviewLabel(result)}.`;
 }

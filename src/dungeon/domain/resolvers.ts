@@ -104,7 +104,11 @@ import {
 } from '../../tables/dungeon/treasureScrolls';
 import { treasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
 import { treasureScrollProtectionLycanthropes } from '../../tables/dungeon/treasureScrollProtectionLycanthropes';
-import { treasureRings } from '../../tables/dungeon/treasureRings';
+import {
+  treasureRings,
+  TreasureRing,
+} from '../../tables/dungeon/treasureRings';
+import { treasureRingContrariness } from '../../tables/dungeon/treasureRingContrariness';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1683,6 +1687,13 @@ export function resolveTreasureRing(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureRings.sides);
   const command = getTableEntry(usedRoll, treasureRings);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureRing.Contrariness) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureRingContrariness',
+    });
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -1692,6 +1703,22 @@ export function resolveTreasureRing(options?: {
       level: options?.level ?? 1,
       treasureRoll: options?.treasureRoll ?? usedRoll,
       rollIndex: options?.rollIndex,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureRingContrariness(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureRingContrariness.sides);
+  const command = getTableEntry(usedRoll, treasureRingContrariness);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureRingContrariness',
+      result: command,
     } as OutcomeEvent,
   };
 }

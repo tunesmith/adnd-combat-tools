@@ -81,6 +81,7 @@ import {
   resolveTreasureScrollProtectionElementals,
   resolveTreasureScrollProtectionLycanthropes,
   resolveTreasureRing,
+  resolveTreasureRingContrariness,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -174,6 +175,7 @@ const TABLE_ID_LIST = [
   'treasureScrollProtectionElementals',
   'treasureScrollProtectionLycanthropes',
   'treasureRing',
+  'treasureRingContrariness',
   'circularContents',
   'circularPool',
   'circularMagicPool',
@@ -254,6 +256,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureScrollProtectionElementals: 'Protection from Elementals',
   treasureScrollProtectionLycanthropes: 'Protection from Lycanthropes',
   treasureRing: 'Ring',
+  treasureRingContrariness: 'Contrariness Effect',
   circularContents: 'Circular Contents',
   circularPool: 'Pool',
   circularMagicPool: 'Magic Pool Effect',
@@ -709,6 +712,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       })
     );
   },
+  treasureRingContrariness: ({ roll }) =>
+    fromOutcome(resolveTreasureRingContrariness({ roll })),
   chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
   egress: ({ roll, id }) => {
     const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';

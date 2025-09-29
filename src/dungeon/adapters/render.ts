@@ -211,6 +211,9 @@ import {
   renderTreasureRingDetail,
   renderTreasureRingCompact,
   buildTreasureRingPreview,
+  renderTreasureRingContrarinessDetail,
+  renderTreasureRingContrarinessCompact,
+  buildTreasureRingContrarinessPreview,
 } from './render/treasureRing';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
@@ -480,6 +483,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureRingDetail,
     renderCompact: renderTreasureRingCompact,
   },
+  treasureRingContrariness: {
+    renderDetail: renderTreasureRingContrarinessDetail,
+    renderCompact: renderTreasureRingContrarinessCompact,
+  },
   wanderingWhereFrom: {
     renderDetail: renderWanderingWhereFromDetail,
     renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
@@ -584,6 +591,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureScrollProtectionLycanthropes:
     buildTreasureScrollProtectionLycanthropesPreview,
   treasureRing: buildTreasureRingPreview,
+  treasureRingContrariness: buildTreasureRingContrarinessPreview,
   passageExitLocation: buildPassageExitLocationPreview,
   doorExitLocation: buildDoorExitLocationPreview,
   exitDirection: buildExitDirectionPreview,
