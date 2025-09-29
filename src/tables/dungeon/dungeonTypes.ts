@@ -82,6 +82,7 @@ import type { TreasureRingContrariness } from './treasureRingContrariness';
 import type { TreasureRingElementalCommand } from './treasureRingElementalCommand';
 import type { TreasureRingProtection } from './treasureRingProtection';
 import type { TreasureRingRegeneration } from './treasureRingRegeneration';
+import type { TreasureRingTelekinesis } from './treasureRingTelekinesis';
 
 export type Table<T> = {
   sides: number;
@@ -181,4 +182,5 @@ export type Command =
   | TreasureRingContrariness
   | TreasureRingElementalCommand
   | TreasureRingProtection
-  | TreasureRingRegeneration;
+  | TreasureRingRegeneration
+  | TreasureRingTelekinesis;

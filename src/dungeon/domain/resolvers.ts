@@ -112,6 +112,7 @@ import { treasureRingContrariness } from '../../tables/dungeon/treasureRingContr
 import { treasureRingElementalCommand } from '../../tables/dungeon/treasureRingElementalCommand';
 import { treasureRingProtection } from '../../tables/dungeon/treasureRingProtection';
 import { treasureRingRegeneration } from '../../tables/dungeon/treasureRingRegeneration';
+import { treasureRingTelekinesis } from '../../tables/dungeon/treasureRingTelekinesis';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -1736,6 +1737,11 @@ export function resolveTreasureRing(options?: {
       type: 'pending-roll',
       table: 'treasureRingRegeneration',
     });
+  } else if (command === TreasureRing.Telekinesis) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureRingTelekinesis',
+    });
   }
   return {
     type: 'event',
@@ -1808,6 +1814,21 @@ export function resolveTreasureRingRegeneration(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureRingRegeneration',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureRingTelekinesis(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureRingTelekinesis.sides);
+  const command = getTableEntry(usedRoll, treasureRingTelekinesis);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureRingTelekinesis',
       result: command,
     } as OutcomeEvent,
   };

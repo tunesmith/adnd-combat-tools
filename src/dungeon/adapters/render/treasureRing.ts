@@ -26,6 +26,10 @@ import {
   treasureRingRegeneration,
   TreasureRingRegeneration,
 } from '../../../tables/dungeon/treasureRingRegeneration';
+import {
+  treasureRingTelekinesis,
+  TreasureRingTelekinesis,
+} from '../../../tables/dungeon/treasureRingTelekinesis';
 import { formatOrdinal } from './treasureScroll';
 
 const RING_LABELS: Record<TreasureRing, string> = {
@@ -85,6 +89,14 @@ const PROTECTION_PREVIEW: Record<TreasureRingProtection, string> = {
 const REGENERATION_PREVIEW: Record<TreasureRingRegeneration, string> = {
   [TreasureRingRegeneration.Standard]: 'Standard',
   [TreasureRingRegeneration.Vampiric]: 'Vampiric',
+};
+
+const TELEKINESIS_PREVIEW: Record<TreasureRingTelekinesis, string> = {
+  [TreasureRingTelekinesis.TwoHundredFifty]: '250 g.p. maximum',
+  [TreasureRingTelekinesis.FiveHundred]: '500 g.p. maximum',
+  [TreasureRingTelekinesis.OneThousand]: '1,000 g.p. maximum',
+  [TreasureRingTelekinesis.TwoThousand]: '2,000 g.p. maximum',
+  [TreasureRingTelekinesis.FourThousand]: '4,000 g.p. maximum',
 };
 
 export function renderTreasureRingDetail(
@@ -184,6 +196,18 @@ export const buildTreasureRingRegenerationPreview: TablePreviewFactory = (
     entries: treasureRingRegeneration.entries.map((entry) => ({
       range: entry.range,
       label: regenerationPreviewLabel(entry.command),
+    })),
+  });
+
+export const buildTreasureRingTelekinesisPreview: TablePreviewFactory = (
+  tableId
+) =>
+  buildPreview(tableId, {
+    title: 'Telekinetic Capacity',
+    sides: treasureRingTelekinesis.sides,
+    entries: treasureRingTelekinesis.entries.map((entry) => ({
+      range: entry.range,
+      label: telekinesisPreviewLabel(entry.command),
     })),
   });
 
@@ -369,6 +393,52 @@ export function renderTreasureRingRegenerationCompact(
   return nodes;
 }
 
+export function renderTreasureRingTelekinesisDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingTelekinesis') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Telekinetic Capacity',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll} — ${telekinesisPreviewLabel(
+        outcome.event.result
+      )}`,
+    ],
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: telekinesisSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureRingTelekinesisCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureRingTelekinesis') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Telekinetic Capacity',
+  };
+  const text: DungeonMessage = {
+    kind: 'paragraph',
+    text: telekinesisSentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, text];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export function ringSentence(
   result: TreasureRing,
   node?: OutcomeEventNode
@@ -402,6 +472,11 @@ export function ringSentence(
     const child = findChildEvent(node, 'treasureRingRegeneration');
     if (child && child.event.kind === 'treasureRingRegeneration') {
       return regenerationRingSentence(child.event.result);
+    }
+  } else if (result === TreasureRing.Telekinesis && node) {
+    const child = findChildEvent(node, 'treasureRingTelekinesis');
+    if (child && child.event.kind === 'treasureRingTelekinesis') {
+      return telekinesisRingSentence(child.event.result);
     }
   }
   return `There is a ring of ${label}.`;
@@ -511,4 +586,17 @@ function spellStoringRingSentence({
     ? ` (${spellLevels.map(formatOrdinal).join(', ')})`
     : '';
   return `There is a ring of ${casterLabel}${levelText}.`;
+}
+
+function telekinesisPreviewLabel(result: TreasureRingTelekinesis): string {
+  return TELEKINESIS_PREVIEW[result] ?? 'Telekinesis';
+}
+
+function telekinesisSentence(result: TreasureRingTelekinesis): string {
+  return `Telekinetic capacity: ${telekinesisPreviewLabel(result)}.`;
+}
+
+function telekinesisRingSentence(result: TreasureRingTelekinesis): string {
+  const label = telekinesisPreviewLabel(result);
+  return `There is a ring of telekinesis (${label}).`;
 }
