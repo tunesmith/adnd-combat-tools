@@ -5,18 +5,8 @@ import {
   BAG_OF_HOLDING_STATS,
   TreasureBagOfHolding,
 } from '../../../tables/dungeon/treasureBagOfHolding';
-import {
-  buildPreview,
-  type AppendPreviewFn,
-  type TablePreviewFactory,
-} from './shared';
-
-const LABELS: Record<TreasureBagOfHolding, string> = {
-  [TreasureBagOfHolding.TypeI]: 'Type I',
-  [TreasureBagOfHolding.TypeII]: 'Type II',
-  [TreasureBagOfHolding.TypeIII]: 'Type III',
-  [TreasureBagOfHolding.TypeIV]: 'Type IV',
-};
+import { buildPreview } from './shared';
+import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 
 export function renderTreasureBagOfHoldingDetail(
   outcome: OutcomeEventNode,
@@ -31,7 +21,7 @@ export function renderTreasureBagOfHoldingDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${LABELS[outcome.event.result]}`],
+    items: [`roll: ${outcome.roll} — ${labelForType(outcome.event.result)}`],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -74,6 +64,16 @@ export const buildTreasureBagOfHoldingPreview: TablePreviewFactory = (
     })),
   });
 
+function labelForType(command: TreasureBagOfHolding): string {
+  const labels: Record<TreasureBagOfHolding, string> = {
+    [TreasureBagOfHolding.TypeI]: 'Type I',
+    [TreasureBagOfHolding.TypeII]: 'Type II',
+    [TreasureBagOfHolding.TypeIII]: 'Type III',
+    [TreasureBagOfHolding.TypeIV]: 'Type IV',
+  };
+  return labels[command];
+}
+
 export function bagOfHoldingSentence({
   bagWeight,
   weightLimit,
@@ -87,6 +87,7 @@ export function bagOfHoldingSentence({
 }
 
 function previewLabel(command: TreasureBagOfHolding): string {
-  const stats = BAG_OF_HOLDING_STATS[command];
-  return `${LABELS[command]} (${stats.volumeLimit} cu. ft.)`;
+  return `${labelForType(command)} (${
+    BAG_OF_HOLDING_STATS[command].volumeLimit
+  } cu. ft.)`;
 }

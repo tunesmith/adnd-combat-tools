@@ -5,6 +5,7 @@ import {
 import type { DungeonOutcomeNode } from '../../../../../dungeon/domain/outcome';
 import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
 import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
+import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOfTricks';
 
 describe('passage compact treasure misc magic E1 handling', () => {
   it('resolves the bag of beans result in compact mode', () => {
@@ -70,6 +71,49 @@ describe('passage compact treasure misc magic E1 handling', () => {
     expect(compactParagraphs).toContain(
       'there is a bag of holding (250 cu. ft., 1,500 lb capacity; bag weight 60 lb).'
     );
+  });
+
+  it('resolves bag of tricks type in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 46 },
+        { tableId: 'treasureMiscMagicE1', roll: 28 },
+        { tableId: 'treasureBagOfTricks', roll: 9 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE1');
+    expect(miscEvent).toBeDefined();
+    if (miscEvent && miscEvent.event.kind === 'treasureMiscMagicE1') {
+      expect(miscEvent.event.result).toBe(TreasureMiscMagicE1.BagOfTricks);
+    } else {
+      throw new Error('treasureMiscMagicE1 event not found');
+    }
+
+    const bagOfTricksEvent = findEvent(result.outcome, 'treasureBagOfTricks');
+    expect(bagOfTricksEvent).toBeDefined();
+    if (
+      bagOfTricksEvent &&
+      bagOfTricksEvent.event.kind === 'treasureBagOfTricks'
+    ) {
+      expect(bagOfTricksEvent.event.result).toBe(TreasureBagOfTricks.Jackal);
+    } else {
+      throw new Error('treasureBagOfTricks event not found');
+    }
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('there is a bag of tricks, "jackal".');
   });
 });
 

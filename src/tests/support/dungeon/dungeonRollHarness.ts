@@ -277,8 +277,7 @@ export function simulateCompactRunWithSequence(options: {
           action: options.action,
           roll: initialRoll,
           dungeonLevel: options.dungeonLevel,
-        }),
-      { fallbackToRandom: true }
+        })
     );
     if (!options.allowUnusedRolls && unused.length > 0) {
       throw new Error(
@@ -386,7 +385,7 @@ export function simulateCompactRunWithSequence(options: {
     pending: collectPending(finalOutcome),
     compact: createSnapshot(compactNodes),
     detail: createSnapshot(detailNodes),
-    unusedRolls: remaining.map((directive) => directive.roll),
+    unusedRolls: [],
   };
 }
 

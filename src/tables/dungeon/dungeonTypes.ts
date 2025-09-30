@@ -87,6 +87,7 @@ import type { TreasureRingThreeWishes } from './treasureRingThreeWishes';
 import type { TreasureRingWizardry } from './treasureRingWizardry';
 import type { TreasureRodStaffWand } from './treasureRodsStavesWands';
 import type { TreasureBagOfHolding } from './treasureBagOfHolding';
+import type { TreasureBagOfTricks } from './treasureBagOfTricks';
 import type { TreasureMiscMagicE1 } from './treasureMiscMagicE1';
 import type { TreasureStaffSerpent } from './treasureStaffSerpent';
 
@@ -194,5 +195,6 @@ export type Command =
   | TreasureRingWizardry
   | TreasureRodStaffWand
   | TreasureBagOfHolding
+  | TreasureBagOfTricks
   | TreasureMiscMagicE1
   | TreasureStaffSerpent;
