@@ -92,6 +92,7 @@ import type { TreasureScrollProtectionLycanthropes } from '../../tables/dungeon/
 import type { TreasureRodStaffWand } from '../../tables/dungeon/treasureRodsStavesWands';
 import type { TreasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
 import type { TreasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
+import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
 import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type {
@@ -446,6 +447,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureBagOfTricks';
       result: TreasureBagOfTricks;
+    }
+  | {
+      kind: 'treasureBracersOfDefense';
+      result: TreasureBracersOfDefense;
     }
   | {
       kind: 'treasureMiscMagicE1';

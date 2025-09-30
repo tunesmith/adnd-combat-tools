@@ -21,6 +21,7 @@ import { TreasurePotion } from '../../../../../tables/dungeon/treasurePotions';
 import { TreasureScroll } from '../../../../../tables/dungeon/treasureScrolls';
 import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
 import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
+import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage contents', () => {
@@ -617,6 +618,71 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a bag of tricks, "jackal".');
+  });
+
+  it('resolves bracers of defense from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(categoryTargets).toHaveLength(1);
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 46);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    expect(miscTargets).toHaveLength(1);
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 60);
+
+    const bracerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureBracersOfDefense')
+    );
+    expect(bracerTargets).toHaveLength(1);
+    const bracerTarget = bracerTargets[0];
+    if (!bracerTarget) throw new Error('missing bracers target');
+    feed = resolvePreview(feed, bracerTarget, 60);
+
+    const bracersEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureBracersOfDefense'
+    );
+    expect(bracersEvent).toBeDefined();
+    if (!bracersEvent || bracersEvent.event.kind !== 'treasureBracersOfDefense') {
+      throw new Error('bracers event not found');
+    }
+    expect(bracersEvent.event.result).toBe(TreasureBracersOfDefense.AC4);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('pair of bracers of defense ac4.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('pair of bracers of defense ac4.');
   });
 
   it('resolves dragon control potions with subtype detail', () => {

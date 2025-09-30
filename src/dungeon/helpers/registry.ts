@@ -91,6 +91,7 @@ import {
   resolveTreasureRodStaffWand,
   resolveTreasureBagOfHolding,
   resolveTreasureBagOfTricks,
+  resolveTreasureBracersOfDefense,
   resolveTreasureMiscMagicE1,
   resolveTreasureStaffSerpent,
 } from '../domain/resolvers';
@@ -196,6 +197,7 @@ const TABLE_ID_LIST = [
   'treasureRodStaffWand',
   'treasureBagOfHolding',
   'treasureBagOfTricks',
+  'treasureBracersOfDefense',
   'treasureMiscMagicE1',
   'treasureStaffSerpent',
   'circularContents',
@@ -288,6 +290,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureRodStaffWand: 'Rod/Staff/Wand',
   treasureBagOfHolding: 'Bag of Holding Capacity',
   treasureBagOfTricks: 'Bag of Tricks Type',
+  treasureBracersOfDefense: 'Bracers of Defense Armor Class',
   treasureMiscMagicE1: 'Miscellaneous Magic (Table E.1)',
   treasureStaffSerpent: 'Serpent Form',
   circularContents: 'Circular Contents',
@@ -765,6 +768,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureBagOfHolding({ roll })),
   treasureBagOfTricks: ({ roll }) =>
     fromOutcome(resolveTreasureBagOfTricks({ roll })),
+  treasureBracersOfDefense: ({ roll }) =>
+    fromOutcome(resolveTreasureBracersOfDefense({ roll })),
   treasureMiscMagicE1: ({ roll, context }) => {
     const level =
       context && context.kind === 'treasureMagic' ? context.level : undefined;

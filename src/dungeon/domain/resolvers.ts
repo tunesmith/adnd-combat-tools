@@ -121,6 +121,8 @@ import {
 } from '../../tables/dungeon/treasureRodsStavesWands';
 import { treasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
 import { treasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
+import { treasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
+import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
 import {
   treasureMiscMagicE1,
   TreasureMiscMagicE1,
@@ -1963,6 +1965,14 @@ export function resolveTreasureMiscMagicE1(options?: {
         ? `treasureBagOfTricks:${options.rollIndex}`
         : undefined,
     });
+  } else if (command === TreasureMiscMagicE1.BracersOfDefense) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureBracersOfDefense',
+      id: options?.rollIndex
+        ? `treasureBracersOfDefense:${options.rollIndex}`
+        : undefined,
+    });
   }
   return {
     type: 'event',
@@ -2003,6 +2013,24 @@ export function resolveTreasureBagOfTricks(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureBagOfTricks',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureBracersOfDefense(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureBracersOfDefense.sides);
+  const command: TreasureBracersOfDefense = getTableEntry(
+    usedRoll,
+    treasureBracersOfDefense
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureBracersOfDefense',
       result: command,
     } as OutcomeEvent,
   };

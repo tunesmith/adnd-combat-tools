@@ -11,7 +11,12 @@ import {
   type TablePreviewFactory,
 } from './shared';
 import type { TreasureBagOfTricks } from '../../../tables/dungeon/treasureBagOfTricks';
+import type { TreasureBracersOfDefense } from '../../../tables/dungeon/treasureBracersOfDefense';
 import { bagOfTricksSentence } from './treasureBagOfTricks';
+import {
+  labelForResult as bracersLabel,
+  bracersSentence,
+} from './treasureBracersOfDefense';
 
 const ITEM_NAMES: Record<TreasureMiscMagicE1, string> = {
   [TreasureMiscMagicE1.AlchemyJug]: 'alchemy jug',
@@ -67,6 +72,7 @@ export function renderTreasureMiscMagicE1Detail(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE1') return [];
   const bagOfTricksChild = findChildEvent(outcome, 'treasureBagOfTricks');
+  const bracersChild = findChildEvent(outcome, 'treasureBracersOfDefense');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -80,13 +86,20 @@ export function renderTreasureMiscMagicE1Detail(
         bagOfTricksChild &&
           bagOfTricksChild.event.kind === 'treasureBagOfTricks'
           ? bagOfTricksChild.event.result
+          : undefined,
+        bracersChild && bracersChild.event.kind === 'treasureBracersOfDefense'
+          ? bracersChild.event.result
           : undefined
       )}`,
     ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, bagOfTricksChild),
+    text: resolvedSentence(
+      outcome.event.result,
+      bagOfTricksChild,
+      bracersChild
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -99,6 +112,7 @@ export function renderTreasureMiscMagicE1Compact(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE1') return [];
   const bagOfTricksChild = findChildEvent(outcome, 'treasureBagOfTricks');
+  const bracersChild = findChildEvent(outcome, 'treasureBracersOfDefense');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -106,7 +120,7 @@ export function renderTreasureMiscMagicE1Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, bagOfTricksChild),
+    text: resolvedSentence(outcome.event.result, bagOfTricksChild, bracersChild),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -125,10 +139,14 @@ export const buildTreasureMiscMagicE1Preview: TablePreviewFactory = (tableId) =>
 
 function formatItemName(
   command: TreasureMiscMagicE1,
-  bagOfTricks?: TreasureBagOfTricks
+  bagOfTricks?: TreasureBagOfTricks,
+  bracers?: TreasureBracersOfDefense
 ): string {
   if (command === TreasureMiscMagicE1.BagOfTricks && bagOfTricks) {
     return `Bag of Tricks ("${BAG_OF_TRICKS_LABELS[bagOfTricks]}")`;
+  }
+  if (command === TreasureMiscMagicE1.BracersOfDefense && bracers) {
+    return bracersLabel(bracers);
   }
   switch (command) {
     case TreasureMiscMagicE1.ArtifactOrRelic:
@@ -173,7 +191,8 @@ export function treasureMiscMagicE1Sentence(
 
 function resolvedSentence(
   result: TreasureMiscMagicE1,
-  bagOfTricksChild?: OutcomeEventNode
+  bagOfTricksChild?: OutcomeEventNode,
+  bracersChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE1.BagOfTricks &&
@@ -181,6 +200,13 @@ function resolvedSentence(
     bagOfTricksChild.event.kind === 'treasureBagOfTricks'
   ) {
     return bagOfTricksSentence(bagOfTricksChild.event.result);
+  }
+  if (
+    result === TreasureMiscMagicE1.BracersOfDefense &&
+    bracersChild &&
+    bracersChild.event.kind === 'treasureBracersOfDefense'
+  ) {
+    return bracersSentence(bracersChild.event.result);
   }
   return treasureMiscMagicE1Sentence(result);
 }
