@@ -46,4 +46,3 @@ export const BAG_OF_HOLDING_STATS: Record<
     volumeLimit: 250,
   },
 };
-

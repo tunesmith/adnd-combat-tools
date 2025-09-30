@@ -94,9 +94,7 @@ export function renderTreasureMiscMagicE1Compact(
   return nodes;
 }
 
-export const buildTreasureMiscMagicE1Preview: TablePreviewFactory = (
-  tableId
-) =>
+export const buildTreasureMiscMagicE1Preview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Miscellaneous Magic (Table E.1)',
     sides: treasureMiscMagicE1.sides,

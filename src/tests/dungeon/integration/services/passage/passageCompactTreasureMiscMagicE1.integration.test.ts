@@ -31,8 +31,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
       throw new Error('treasureMiscMagicE1 event not found');
     }
 
-    const compactParagraphs = result
-      .compact
+    const compactParagraphs = result.compact
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');
@@ -64,8 +63,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
       throw new Error('treasureBagOfHolding event not found');
     }
 
-    const compactParagraphs = result
-      .compact
+    const compactParagraphs = result.compact
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');

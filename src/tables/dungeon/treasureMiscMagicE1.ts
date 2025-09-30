@@ -48,8 +48,7 @@ export const treasureMiscMagicE1: Table<TreasureMiscMagicE1> = {
     { range: [6, 7], command: TreasureMiscMagicE1.AmuletOfThePlanes },
     {
       range: [8, 11],
-      command:
-        TreasureMiscMagicE1.AmuletOfProofAgainstDetectionAndLocation,
+      command: TreasureMiscMagicE1.AmuletOfProofAgainstDetectionAndLocation,
     },
     { range: [12, 13], command: TreasureMiscMagicE1.ApparatusOfKwalish },
     { range: [14, 16], command: TreasureMiscMagicE1.ArrowOfDirection },

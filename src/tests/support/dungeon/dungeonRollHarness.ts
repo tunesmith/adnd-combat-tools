@@ -439,9 +439,7 @@ function executeCompactStep(options: {
   };
 }
 
-function normalizeDirective(
-  directive: number | TargetedRoll
-): ParsedRoll {
+function normalizeDirective(directive: number | TargetedRoll): ParsedRoll {
   if (typeof directive === 'number') {
     return { roll: assertDieRoll(directive) };
   }
@@ -534,9 +532,10 @@ function selectPendingFromDirective(
     if (directMatch) return directMatch;
   }
   if (directive.tableId) {
-    const tableMatch = pendingList.find((pending) =>
-      pending.table === directive.tableId ||
-      pending.table.startsWith(`${directive.tableId}:`)
+    const tableMatch = pendingList.find(
+      (pending) =>
+        pending.table === directive.tableId ||
+        pending.table.startsWith(`${directive.tableId}:`)
     );
     if (tableMatch) return tableMatch;
   }

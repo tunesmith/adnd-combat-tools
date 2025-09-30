@@ -472,10 +472,7 @@ describe('passage contents', () => {
 
     const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE1');
     expect(miscEvent).toBeDefined();
-    if (
-      miscEvent &&
-      miscEvent.event.kind === 'treasureMiscMagicE1'
-    ) {
+    if (miscEvent && miscEvent.event.kind === 'treasureMiscMagicE1') {
       expect(miscEvent.event.result).toBe(TreasureMiscMagicE1.BootsOfDancing);
     }
 

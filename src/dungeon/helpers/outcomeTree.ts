@@ -940,10 +940,11 @@ function readTreasureMagicContext(
   ancestors: OutcomeEventNode[]
 ): { level?: number; treasureRoll?: number; rollIndex?: number } {
   if (isTableContext(context) && context.kind === 'treasureMagic') {
-    const level =
-      typeof context.level === 'number' ? context.level : undefined;
+    const level = typeof context.level === 'number' ? context.level : undefined;
     const treasureRoll =
-      typeof context.treasureRoll === 'number' ? context.treasureRoll : undefined;
+      typeof context.treasureRoll === 'number'
+        ? context.treasureRoll
+        : undefined;
     const rollIndex =
       typeof context.rollIndex === 'number' ? context.rollIndex : undefined;
     return { level, treasureRoll, rollIndex };
@@ -972,7 +973,10 @@ function readTreasureMagicContext(
         if (level === undefined && typeof event.level === 'number') {
           level = event.level;
         }
-        if (treasureRoll === undefined && typeof event.treasureRoll === 'number') {
+        if (
+          treasureRoll === undefined &&
+          typeof event.treasureRoll === 'number'
+        ) {
           treasureRoll = event.treasureRoll;
         }
         if (rollIndex === undefined && typeof event.rollIndex === 'number') {
