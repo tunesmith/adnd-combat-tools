@@ -22,7 +22,12 @@ import {
   describeTreasureProtectionHiddenBy,
 } from './treasureProtection';
 import { treasureMiscMagicE1Sentence } from './treasureMiscMagicE1';
+import { bagOfHoldingSentence } from './treasureBagOfHolding';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
+import {
+  BAG_OF_HOLDING_STATS,
+  TreasureBagOfHolding,
+} from '../../../tables/dungeon/treasureBagOfHolding';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,
@@ -143,6 +148,11 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   }
   const miscMagicE1 = findChildEvent(magic, 'treasureMiscMagicE1');
   if (miscMagicE1 && miscMagicE1.event.kind === 'treasureMiscMagicE1') {
+    const bag = findChildEvent(miscMagicE1, 'treasureBagOfHolding');
+    if (bag && bag.event.kind === 'treasureBagOfHolding') {
+      const stats = BAG_OF_HOLDING_STATS[bag.event.result as TreasureBagOfHolding];
+      return bagOfHoldingSentence(stats);
+    }
     return treasureMiscMagicE1Sentence(miscMagicE1.event.result);
   }
   return undefined;

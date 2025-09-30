@@ -20,6 +20,7 @@ import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 import { TreasurePotion } from '../../../../../tables/dungeon/treasurePotions';
 import { TreasureScroll } from '../../../../../tables/dungeon/treasureScrolls';
 import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
+import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage contents', () => {
@@ -495,6 +496,73 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a pair of boots of dancing.');
+  });
+
+  it('resolves bag of holding capacities from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const miscCategoryTarget = magicTargets[0];
+    if (!miscCategoryTarget)
+      throw new Error('missing miscellaneous magic category target');
+    feed = resolvePreview(feed, miscCategoryTarget, 46);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    expect(miscTargets).toHaveLength(1);
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing miscellaneous magic target');
+    feed = resolvePreview(feed, miscTarget, 24);
+
+    const bagTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureBagOfHolding')
+    );
+    expect(bagTargets).toHaveLength(1);
+    const bagTarget = bagTargets[0];
+    if (!bagTarget) throw new Error('missing bag of holding target');
+    feed = resolvePreview(feed, bagTarget, 95);
+
+    const bagEvent = findOutcomeEvent(feed.outcome, 'treasureBagOfHolding');
+    expect(bagEvent).toBeDefined();
+    if (bagEvent && bagEvent.event.kind === 'treasureBagOfHolding') {
+      expect(bagEvent.event.result).toBe(TreasureBagOfHolding.TypeIV);
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a bag of holding (250 cu. ft., 1,500 lb capacity; bag weight 60 lb).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a bag of holding (250 cu. ft., 1,500 lb capacity; bag weight 60 lb).'
+    );
   });
 
   it('resolves dragon control potions with subtype detail', () => {

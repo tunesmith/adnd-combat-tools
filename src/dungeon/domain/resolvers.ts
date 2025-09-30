@@ -119,8 +119,11 @@ import {
   treasureRodsStavesWands,
   TreasureRodStaffWand,
 } from '../../tables/dungeon/treasureRodsStavesWands';
-import { treasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
-import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
+import { treasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
+import {
+  treasureMiscMagicE1,
+  TreasureMiscMagicE1,
+} from '../../tables/dungeon/treasureMiscMagicE1';
 import { treasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import {
   treasureProtectionType,
@@ -1942,6 +1945,16 @@ export function resolveTreasureMiscMagicE1(options?: {
     usedRoll,
     treasureMiscMagicE1
   );
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureMiscMagicE1.BagOfHolding) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureBagOfHolding',
+      id: options?.rollIndex
+        ? `treasureBagOfHolding:${options.rollIndex}`
+        : undefined,
+    });
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -1951,6 +1964,22 @@ export function resolveTreasureMiscMagicE1(options?: {
       level: options?.level,
       treasureRoll: options?.treasureRoll,
       rollIndex: options?.rollIndex,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureBagOfHolding(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureBagOfHolding.sides);
+  const command = getTableEntry(usedRoll, treasureBagOfHolding);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureBagOfHolding',
+      result: command,
     } as OutcomeEvent,
   };
 }

@@ -4,6 +4,7 @@ import {
 } from '../../../../support/dungeon/dungeonRollHarness';
 import type { DungeonOutcomeNode } from '../../../../../dungeon/domain/outcome';
 import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
+import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
 
 describe('passage compact treasure misc magic E1 handling', () => {
   it('resolves the bag of beans result in compact mode', () => {
@@ -36,6 +37,41 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('there is a bag of beans.');
+  });
+
+  it('resolves bag of holding capacity in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 46 },
+        { tableId: 'treasureMiscMagicE1', roll: 24 },
+        { tableId: 'treasureBagOfHolding', roll: 95 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const bagEvent = findEvent(result.outcome, 'treasureBagOfHolding');
+    expect(bagEvent).toBeDefined();
+    if (bagEvent && bagEvent.event.kind === 'treasureBagOfHolding') {
+      expect(bagEvent.event.result).toBe(TreasureBagOfHolding.TypeIV);
+    } else {
+      throw new Error('treasureBagOfHolding event not found');
+    }
+
+    const compactParagraphs = result
+      .compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is a bag of holding (250 cu. ft., 1,500 lb capacity; bag weight 60 lb).'
+    );
   });
 });
 
