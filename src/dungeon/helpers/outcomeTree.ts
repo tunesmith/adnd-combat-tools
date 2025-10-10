@@ -85,6 +85,7 @@ import {
   resolveTreasureBagOfTricks,
   resolveTreasureBracersOfDefense,
   resolveTreasureBucknardsEverfullPurse,
+  resolveTreasureArtifactOrRelic,
   resolveTreasureMiscMagicE1,
   resolveTreasureStaffSerpent,
   resolveGasTrapEffect,
@@ -695,6 +696,8 @@ function resolvePendingNode(
       return resolveTreasureBracersOfDefense({});
     case 'treasureBucknardsEverfullPurse':
       return resolveTreasureBucknardsEverfullPurse({});
+    case 'treasureArtifactOrRelic':
+      return resolveTreasureArtifactOrRelic({});
     case 'treasureMiscMagicE1': {
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureMiscMagicE1(context);

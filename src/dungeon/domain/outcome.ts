@@ -94,6 +94,7 @@ import type { TreasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHol
 import type { TreasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
 import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
 import type { TreasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
+import type { TreasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
 import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type {
@@ -456,6 +457,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureBucknardsEverfullPurse';
       result: TreasureBucknardsEverfullPurse;
+    }
+  | {
+      kind: 'treasureArtifactOrRelic';
+      result: TreasureArtifactOrRelic;
     }
   | {
       kind: 'treasureMiscMagicE1';

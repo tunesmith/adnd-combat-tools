@@ -90,6 +90,7 @@ import type { TreasureBagOfHolding } from './treasureBagOfHolding';
 import type { TreasureBagOfTricks } from './treasureBagOfTricks';
 import type { TreasureBracersOfDefense } from './treasureBracersOfDefense';
 import type { TreasureBucknardsEverfullPurse } from './treasureBucknardsEverfullPurse';
+import type { TreasureArtifactOrRelic } from './treasureArtifactOrRelic';
 import type { TreasureMiscMagicE1 } from './treasureMiscMagicE1';
 import type { TreasureStaffSerpent } from './treasureStaffSerpent';
 
@@ -200,5 +201,6 @@ export type Command =
   | TreasureBagOfTricks
   | TreasureBracersOfDefense
   | TreasureBucknardsEverfullPurse
+  | TreasureArtifactOrRelic
   | TreasureMiscMagicE1
   | TreasureStaffSerpent;

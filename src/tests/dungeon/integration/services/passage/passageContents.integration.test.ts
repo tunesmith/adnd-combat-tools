@@ -23,6 +23,7 @@ import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
+import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage contents', () => {
@@ -763,6 +764,73 @@ describe('passage contents', () => {
     expect(compactText).toContain(
       "bucknard's everfull purse of platinum is here."
     );
+  });
+
+  it('resolves artifacts or relics from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 46);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 17);
+
+    const artifactTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureArtifactOrRelic')
+    );
+    const artifactTarget = artifactTargets[0];
+    if (!artifactTarget) throw new Error('missing artifact target');
+    feed = resolvePreview(feed, artifactTarget, 25);
+
+    const artifactEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureArtifactOrRelic'
+    );
+    expect(artifactEvent).toBeDefined();
+    if (
+      !artifactEvent ||
+      artifactEvent.event.kind !== 'treasureArtifactOrRelic'
+    ) {
+      throw new Error('artifact event not found');
+    }
+    expect(artifactEvent.event.result).toBe(
+      TreasureArtifactOrRelic.HandOfVecna
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a hand of vecna.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a hand of vecna.');
   });
 
   it('resolves dragon control potions with subtype detail', () => {

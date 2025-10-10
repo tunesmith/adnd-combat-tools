@@ -6,6 +6,7 @@ import type { DungeonOutcomeNode } from '../../../../../dungeon/domain/outcome';
 import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
 import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
 import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOfTricks';
+import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 
@@ -209,6 +210,49 @@ describe('passage compact treasure misc magic E1 handling', () => {
     expect(compactParagraphs).toContain(
       "bucknard's everfull purse of platinum is here."
     );
+  });
+
+  it('resolves artifact or relic details in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 46 },
+        { tableId: 'treasureMiscMagicE1', roll: 17 },
+        { tableId: 'treasureArtifactOrRelic', roll: 25 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE1');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE1') {
+      throw new Error('treasureMiscMagicE1 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE1.ArtifactOrRelic);
+
+    const artifactEvent = findEvent(result.outcome, 'treasureArtifactOrRelic');
+    expect(artifactEvent).toBeDefined();
+    if (
+      !artifactEvent ||
+      artifactEvent.event.kind !== 'treasureArtifactOrRelic'
+    ) {
+      throw new Error('treasureArtifactOrRelic event not found');
+    }
+    expect(artifactEvent.event.result).toBe(
+      TreasureArtifactOrRelic.HandOfVecna
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('there is a hand of vecna.');
   });
 });
 
