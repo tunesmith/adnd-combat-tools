@@ -31,12 +31,17 @@ function exitSummary(
   exitType: 'door' | 'passage',
   index: number,
   total: number,
-  result: ExitLocation
+  result: ExitLocation,
+  alternative?: ExitAlternative
 ): string {
   const noun = exitType === 'door' ? 'Door' : 'Passage';
-  const position = formatExitLocation(result);
   const suffix = total > 1 ? ` of ${total}` : '';
-  return `${noun} ${index}${suffix} is on the ${position}.`;
+  const position = formatExitLocation(result);
+  let summary = `${noun} ${index}${suffix}: ${position}`;
+  if (alternative !== undefined) {
+    summary += ` ${formatInlineAlternative(exitType, alternative)}`;
+  }
+  return `${summary}.`;
 }
 
 function buildDetailNodes(
@@ -57,11 +62,15 @@ function buildDetailNodes(
       `roll: ${outcome.roll} — ${ExitLocation[event.result]}`,
     ],
   };
+  const alternative = findChildEvent(outcome, 'exitAlternative');
   const summaryText = exitSummary(
     exitType,
     event.index,
     event.total,
-    event.result
+    event.result,
+    alternative && alternative.event.kind === 'exitAlternative'
+      ? alternative.event.result
+      : undefined
   );
   const nodes: DungeonRenderNode[] = [
     heading,
@@ -98,11 +107,16 @@ function buildCompactNodes(
     level: 4,
     text: exitHeading(exitType, event.index),
   };
-  let summary = exitSummary(exitType, event.index, event.total, event.result);
   const alternative = findChildEvent(outcome, 'exitAlternative');
-  if (alternative && alternative.event.kind === 'exitAlternative') {
-    summary += formatInlineAlternative(exitType, alternative.event.result);
-  }
+  const summary = exitSummary(
+    exitType,
+    event.index,
+    event.total,
+    event.result,
+    alternative && alternative.event.kind === 'exitAlternative'
+      ? alternative.event.result
+      : undefined
+  );
   const nodes: DungeonRenderNode[] = [
     heading,
     {
@@ -232,14 +246,10 @@ export function renderExitAlternativeDetail(
     bullet,
     {
       kind: 'paragraph',
-      text: `${
-        outcome.event.exitType
-          ? formatInlineAlternative(
-              outcome.event.exitType,
-              outcome.event.result
-            ).trim()
-          : formatExitAlternative(outcome.event.result)
-      } `,
+      text: `${formatExitAlternativeSentence(
+        outcome.event.exitType,
+        outcome.event.result
+      )} `,
     },
   ];
   appendPendingPreviews(outcome, nodes);
@@ -253,7 +263,10 @@ export function renderExitAlternativeCompact(
   return [
     {
       kind: 'paragraph',
-      text: `${formatExitAlternative(outcome.event.result)} `,
+      text: `${formatExitAlternativeSentence(
+        outcome.event.exitType,
+        outcome.event.result
+      )} `,
     },
   ];
 }
@@ -323,7 +336,7 @@ function formatExitLocation(result: ExitLocation): string {
     case ExitLocation.RightWall:
       return 'right wall';
     case ExitLocation.SameWall:
-      return 'same wall';
+      return 'entry wall';
     default:
       return 'unknown wall';
   }
@@ -360,32 +373,37 @@ function formatExitDirectionLabel(result: ExitDirection): string {
   }
 }
 
-function formatExitAlternative(result: ExitAlternative): string {
+export function formatInlineAlternative(
+  _exitType: 'door' | 'passage',
+  result: ExitAlternative
+): string {
   switch (result) {
     case ExitAlternative.SecretDoor:
-      return 'Treat this exit as a secret door into the mapped space.';
+      return '(or secret door)';
     case ExitAlternative.OneWayDoor:
-      return 'Treat this exit as a one-way door into the mapped space.';
+      return '(or one-way door)';
     case ExitAlternative.OppositeDirection:
-      return 'Place this exit on the opposite wall instead.';
+      return '(or opposite direction)';
     default:
-      return 'Use a suitable alternative for the mapped space.';
+      return '(or alternative placement)';
   }
 }
 
-export function formatInlineAlternative(
-  exitType: 'door' | 'passage',
+function formatExitAlternativeSentence(
+  exitType: 'door' | 'passage' | undefined,
   result: ExitAlternative
 ): string {
   const subject = exitType === 'door' ? 'door' : 'passage';
-  const prefix = ` (If the ${subject} is indicated in a wall where the space immediately beyond the wall has already been mapped, then the exit is `;
-  const suffix =
-    result === ExitAlternative.SecretDoor
-      ? 'a secret door.)'
-      : result === ExitAlternative.OneWayDoor
-      ? 'a one-way door.)'
-      : 'in the opposite direction.)';
-  return `${prefix}${suffix}`;
+  switch (result) {
+    case ExitAlternative.SecretDoor:
+      return `If this ${subject} abuts mapped space, treat it as a secret door.`;
+    case ExitAlternative.OneWayDoor:
+      return `If this ${subject} abuts mapped space, treat it as a one-way door.`;
+    case ExitAlternative.OppositeDirection:
+      return `If this ${subject} abuts mapped space, place it on the opposite wall.`;
+    default:
+      return `If this ${subject} abuts mapped space, choose a suitable alternative.`;
+  }
 }
 
 function formatExitAlternativeLabel(result: ExitAlternative): string {

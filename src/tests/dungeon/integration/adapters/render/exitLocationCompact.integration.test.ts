@@ -106,9 +106,13 @@ describe('exit location compact rendering', () => {
       .map((node) => node.text)
       .join('\n');
 
-    expect(text).toContain('Passage 1 is on the');
-    expect(text).toContain('The passage angles 45° to the right.');
-    expect(text).toContain('If the passage is indicated in a wall');
+    expect(text).toContain('Passage 1:');
+    expect(text).toContain(
+      'The passage angles 45° to the right (or opposite direction).'
+    );
+    expect(text).toContain(
+      'If an exit abuts mapped space, use the option shown in parentheses.'
+    );
   });
 
   test('door exits include location sentence without direction', () => {
@@ -124,8 +128,10 @@ describe('exit location compact rendering', () => {
       .map((node) => node.text)
       .join('\n');
 
-    expect(text).toContain('Door 1 is on the');
-    expect(text).toContain('If the door is indicated in a wall');
+    expect(text).toContain('Door 1:');
+    expect(text).toContain(
+      'If an exit abuts mapped space, use the option shown in parentheses.'
+    );
     expect(text).not.toContain('The passage angles');
   });
 });

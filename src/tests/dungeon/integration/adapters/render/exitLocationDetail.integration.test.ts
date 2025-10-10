@@ -53,14 +53,10 @@ describe('exit location detail rendering', () => {
       ): node is Extract<typeof node, { kind: 'paragraph'; text: string }> =>
         node.kind === 'paragraph'
     );
-    expect(textNodes.some((p) => p.text.includes('Door 1'))).toBe(true);
     expect(
-      textNodes.some((p) =>
-        p.text.includes(
-          '(If the door is indicated in a wall where the space immediately beyond the wall has already been mapped'
-        )
-      )
-    ).toBe(false);
+      textNodes.some((p) => p.text.includes('Door 1') && p.text.includes(':'))
+    ).toBe(true);
+    expect(textNodes.some((p) => p.text.includes('(or'))).toBe(false);
     const previewNodes = nodes.filter(
       (node): node is Extract<typeof node, { kind: 'table-preview' }> =>
         node.kind === 'table-preview'
@@ -92,15 +88,19 @@ describe('exit location detail rendering', () => {
     );
     expect(
       resolvedParagraphs.some(
-        (p) =>
-          p.text.includes('Door 1') &&
-          p.text.includes('is on the') &&
-          p.text.includes('If the door is indicated')
+        (p) => p.text.includes('Door 1') && p.text.includes('(or')
       )
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      resolvedParagraphs.some((p) =>
+        p.text.includes(
+          'If an exit abuts mapped space, use the option shown in parentheses.'
+        )
+      )
+    ).toBe(true);
     const alternativeParagraph = resolvedParagraphs.find((p) =>
       p.text.includes(
-        'If the door is indicated in a wall where the space immediately beyond the wall has already been mapped'
+        'If this door abuts mapped space, treat it as a secret door.'
       )
     );
     expect(alternativeParagraph).toBeDefined();
@@ -168,7 +168,7 @@ describe('exit location detail rendering', () => {
     );
     expect(
       paragraphs.some(
-        (p) => p.text.includes('Passage 1') && p.text.includes('is on the')
+        (p) => p.text.includes('Passage 1') && p.text.includes(':')
       )
     ).toBe(true);
     expect(

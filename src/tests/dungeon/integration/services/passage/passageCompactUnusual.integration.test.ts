@@ -53,11 +53,17 @@ describe('Compact passage rendering for unusual chambers', () => {
     expect(compactText).toContain('It is triangular.');
     expect(compactText).toContain('It is about 2,700 sq. ft.');
     expect(compactText).toContain('There are 2 additional passages');
-    expect(compactText).toContain('Passage 1 of 2 is on the opposite wall.');
-    expect(compactText).toContain('The passage continues straight ahead.');
-    expect(compactText).toContain('Passage 2 of 2 is on the right wall.');
-    expect(compactText).toContain('The passage angles 45° to the left.');
-    expect(compactText).toContain('If the passage is indicated');
+    expect(compactText).toContain('Passage 1 of 2: opposite wall.');
+    expect(compactText).toContain(
+      'The passage continues straight ahead (or secret door).'
+    );
+    expect(compactText).toContain('Passage 2 of 2: right wall.');
+    expect(compactText).toContain(
+      'The passage angles 45° to the left (or one-way door).'
+    );
+    expect(compactText).toContain(
+      'If an exit abuts mapped space, use the option shown in parentheses.'
+    );
 
     spy.mockRestore();
   });

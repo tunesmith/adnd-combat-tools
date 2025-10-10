@@ -14,6 +14,9 @@ import { ExitDirection } from '../../../tables/dungeon/exitDirection';
 import { findChildEvent, type AppendPreviewFn } from './shared';
 import { formatInlineAlternative } from './exitLocation';
 
+const EXIT_ALTERNATIVE_NOTE =
+  'If an exit abuts mapped space, use the option shown in parentheses.';
+
 export function renderNumberOfExitsDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
@@ -35,6 +38,9 @@ export function renderNumberOfExitsDetail(
   if (summary.detailParagraphs.length > 0) {
     nodes.push(...summary.detailParagraphs);
   }
+  if (summary.includeAlternativeNote) {
+    nodes.push({ kind: 'paragraph', text: `${EXIT_ALTERNATIVE_NOTE} ` });
+  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -54,8 +60,12 @@ export function renderNumberOfExitsCompact(
     items: [`roll: ${node.roll} — ${label}`],
   };
   const summary = describeNumberOfExits(node, { includeInstructions: false });
-  const exitSummaries = collectExitSummaries(node);
-  const combined = [summary.compactText, ...exitSummaries]
+  const exitMeta = collectExitSummariesWithMeta(node);
+  const combinedParts = [summary.compactText, ...exitMeta.sentences];
+  if (exitMeta.hasAlternative) {
+    combinedParts.push(EXIT_ALTERNATIVE_NOTE);
+  }
+  const combined = combinedParts
     .map((text) => text.trim())
     .filter((text) => text.length > 0)
     .join(' ');
@@ -89,9 +99,14 @@ export function describeNumberOfExits(
 ): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
+  includeAlternativeNote: boolean;
 } {
   if (node.event.kind !== 'numberOfExits') {
-    return { detailParagraphs: [], compactText: '' };
+    return {
+      detailParagraphs: [],
+      compactText: '',
+      includeAlternativeNote: false,
+    };
   }
   const detailText = formatNumberOfExits(node, {
     includeInstructions: options.includeInstructions,
@@ -100,7 +115,11 @@ export function describeNumberOfExits(
     includeInstructions: false,
   }).trim();
   if (detailText.length === 0 && compactText.length === 0) {
-    return { detailParagraphs: [], compactText: '' };
+    return {
+      detailParagraphs: [],
+      compactText: '',
+      includeAlternativeNote: false,
+    };
   }
   const detailParagraphs: DungeonMessage[] =
     detailText.length > 0
@@ -109,6 +128,7 @@ export function describeNumberOfExits(
   return {
     detailParagraphs,
     compactText,
+    includeAlternativeNote: collectExitSummariesWithMeta(node).hasAlternative,
   };
 }
 
@@ -118,7 +138,8 @@ function formatNumberOfExits(
 ): string {
   if (node.event.kind !== 'numberOfExits') return '';
   const event = node.event;
-  const hasResolvedExitPlacement = collectExitSummaries(node).length > 0;
+  const hasResolvedExitPlacement =
+    collectExitSummariesWithMeta(node).sentences.length > 0;
   const shouldAppendInstructions =
     options.includeInstructions && !hasResolvedExitPlacement;
   if (event.result === NumberOfExits.DoorChamberOrPassageRoom) {
@@ -152,45 +173,72 @@ function formatNumberOfExits(
   return `There ${verb} ${event.count} additional ${plural}${rollInfo}.${instructions}`.trim();
 }
 
-function collectExitSummaries(node: OutcomeEventNode): string[] {
-  if (!node.children) return [];
-  const summaries: string[] = [];
+function collectExitSummariesWithMeta(node: OutcomeEventNode): {
+  sentences: string[];
+  hasAlternative: boolean;
+} {
+  if (!node.children) return { sentences: [], hasAlternative: false };
+  const sentences: string[] = [];
+  let hasAlternative = false;
   for (const child of node.children) {
     if (child.type !== 'event') continue;
-    if (child.event.kind === 'doorExitLocation') {
-      summaries.push(formatExitLocationSummary('door', child));
-    } else if (child.event.kind === 'passageExitLocation') {
-      summaries.push(formatExitLocationSummary('passage', child));
+    if (
+      child.event.kind === 'doorExitLocation' ||
+      child.event.kind === 'passageExitLocation'
+    ) {
+      const summary = formatExitLocationSummary(
+        child.event.kind === 'doorExitLocation' ? 'door' : 'passage',
+        child
+      );
+      if (summary.text.length > 0) {
+        sentences.push(summary.text);
+      }
+      hasAlternative = hasAlternative || summary.hasAlternative;
     }
   }
-  return summaries;
+  return { sentences, hasAlternative };
 }
 
 function formatExitLocationSummary(
   exitType: 'door' | 'passage',
   node: OutcomeEventNode
-): string {
+): { text: string; hasAlternative: boolean } {
   if (
     node.event.kind !== 'doorExitLocation' &&
     node.event.kind !== 'passageExitLocation'
   )
-    return '';
+    return { text: '', hasAlternative: false };
   const { index, total, result } = node.event;
   const noun = exitType === 'door' ? 'Door' : 'Passage';
   const suffix = total > 1 ? ` of ${total}` : '';
   const location = formatExitLocationResult(result);
-  let sentence = `${noun} ${index}${suffix} is on the ${location}.`;
+  let sentence = `${noun} ${index}${suffix}: ${location}`;
   if (exitType === 'passage') {
     const direction = findChildEvent(node, 'exitDirection');
     if (direction && direction.event.kind === 'exitDirection') {
+      sentence += `.`;
       sentence += ` ${formatExitDirectionResult(direction.event.result)}`;
     }
+  } else {
+    sentence += `.`;
   }
+  let hasAlternative = false;
   const alternative = findChildEvent(node, 'exitAlternative');
   if (alternative && alternative.event.kind === 'exitAlternative') {
-    sentence += formatInlineAlternative(exitType, alternative.event.result);
+    // remove trailing period before appending
+    if (sentence.endsWith('.')) {
+      sentence = sentence.slice(0, -1);
+    }
+    sentence += ` ${formatInlineAlternative(
+      exitType,
+      alternative.event.result
+    )}.`;
+    hasAlternative = true;
   }
-  return sentence;
+  if (!sentence.endsWith('.')) {
+    sentence += '.';
+  }
+  return { text: sentence, hasAlternative };
 }
 
 function formatExitLocationResult(result: ExitLocation): string {
@@ -202,7 +250,7 @@ function formatExitLocationResult(result: ExitLocation): string {
     case ExitLocation.RightWall:
       return 'right wall';
     case ExitLocation.SameWall:
-      return 'same wall';
+      return 'entry wall';
     default:
       return 'unknown wall';
   }

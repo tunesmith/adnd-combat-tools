@@ -300,7 +300,7 @@ describe('dungeon feed toggling confidence', () => {
       expect(occurrences?.length ?? 0).toBe(1);
     }
     expect(compactJoined).toContain('There is 1 additional passage');
-    expect(compactJoined).toContain('Passage 1 is on the opposite wall.');
+    expect(compactJoined).toContain('Passage 1: opposite wall.');
   });
 
   it('keeps independent previews for multiple exit locations', () => {
@@ -388,10 +388,12 @@ describe('dungeon feed toggling confidence', () => {
       .map((node) => node.text.trim());
     const compactText = compactParagraphs.join(' ');
 
-    expect(compactText).toContain('Passage 1 is on the opposite wall.');
-    expect(compactText).toContain('The passage continues straight ahead.');
+    expect(compactText).toContain('Passage 1: opposite wall.');
     expect(compactText).toContain(
-      'If the passage is indicated in a wall where the space immediately beyond the wall has already been mapped, then the exit is a secret door.'
+      'The passage continues straight ahead (or secret door).'
+    );
+    expect(compactText).toContain(
+      'If an exit abuts mapped space, use the option shown in parentheses.'
     );
     expect(compactText).not.toContain('See the exit location');
   });
