@@ -123,6 +123,8 @@ import { treasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding'
 import { treasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
 import { treasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
 import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
+import { treasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
+import type { TreasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
 import {
   treasureMiscMagicE1,
   TreasureMiscMagicE1,
@@ -1973,6 +1975,14 @@ export function resolveTreasureMiscMagicE1(options?: {
         ? `treasureBracersOfDefense:${options.rollIndex}`
         : undefined,
     });
+  } else if (command === TreasureMiscMagicE1.BucknardsEverfullPurse) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureBucknardsEverfullPurse',
+      id: options?.rollIndex
+        ? `treasureBucknardsEverfullPurse:${options.rollIndex}`
+        : undefined,
+    });
   }
   return {
     type: 'event',
@@ -2031,6 +2041,25 @@ export function resolveTreasureBracersOfDefense(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureBracersOfDefense',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureBucknardsEverfullPurse(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureBucknardsEverfullPurse.sides);
+  const command: TreasureBucknardsEverfullPurse = getTableEntry(
+    usedRoll,
+    treasureBucknardsEverfullPurse
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureBucknardsEverfullPurse',
       result: command,
     } as OutcomeEvent,
   };

@@ -93,6 +93,7 @@ import type { TreasureRodStaffWand } from '../../tables/dungeon/treasureRodsStav
 import type { TreasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
 import type { TreasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
 import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
+import type { TreasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
 import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type {
@@ -451,6 +452,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureBracersOfDefense';
       result: TreasureBracersOfDefense;
+    }
+  | {
+      kind: 'treasureBucknardsEverfullPurse';
+      result: TreasureBucknardsEverfullPurse;
     }
   | {
       kind: 'treasureMiscMagicE1';

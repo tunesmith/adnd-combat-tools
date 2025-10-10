@@ -76,5 +76,7 @@ export function labelForResult(result: TreasureBracersOfDefense): string {
 }
 
 export function bracersSentence(result: TreasureBracersOfDefense): string {
-  return `There is a pair of bracers of defense ${AC_LABELS[result].toUpperCase()}.`;
+  return `There is a pair of bracers of defense ${AC_LABELS[
+    result
+  ].toUpperCase()}.`;
 }

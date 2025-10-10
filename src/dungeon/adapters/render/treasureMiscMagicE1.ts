@@ -12,11 +12,16 @@ import {
 } from './shared';
 import type { TreasureBagOfTricks } from '../../../tables/dungeon/treasureBagOfTricks';
 import type { TreasureBracersOfDefense } from '../../../tables/dungeon/treasureBracersOfDefense';
+import type { TreasureBucknardsEverfullPurse } from '../../../tables/dungeon/treasureBucknardsEverfullPurse';
 import { bagOfTricksSentence } from './treasureBagOfTricks';
 import {
   labelForResult as bracersLabel,
   bracersSentence,
 } from './treasureBracersOfDefense';
+import {
+  labelForResult as purseLabel,
+  purseSentence,
+} from './treasureBucknardsEverfullPurse';
 
 const ITEM_NAMES: Record<TreasureMiscMagicE1, string> = {
   [TreasureMiscMagicE1.AlchemyJug]: 'alchemy jug',
@@ -73,6 +78,7 @@ export function renderTreasureMiscMagicE1Detail(
   if (outcome.event.kind !== 'treasureMiscMagicE1') return [];
   const bagOfTricksChild = findChildEvent(outcome, 'treasureBagOfTricks');
   const bracersChild = findChildEvent(outcome, 'treasureBracersOfDefense');
+  const purseChild = findChildEvent(outcome, 'treasureBucknardsEverfullPurse');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -89,6 +95,9 @@ export function renderTreasureMiscMagicE1Detail(
           : undefined,
         bracersChild && bracersChild.event.kind === 'treasureBracersOfDefense'
           ? bracersChild.event.result
+          : undefined,
+        purseChild && purseChild.event.kind === 'treasureBucknardsEverfullPurse'
+          ? purseChild.event.result
           : undefined
       )}`,
     ],
@@ -98,7 +107,8 @@ export function renderTreasureMiscMagicE1Detail(
     text: resolvedSentence(
       outcome.event.result,
       bagOfTricksChild,
-      bracersChild
+      bracersChild,
+      purseChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -113,6 +123,7 @@ export function renderTreasureMiscMagicE1Compact(
   if (outcome.event.kind !== 'treasureMiscMagicE1') return [];
   const bagOfTricksChild = findChildEvent(outcome, 'treasureBagOfTricks');
   const bracersChild = findChildEvent(outcome, 'treasureBracersOfDefense');
+  const purseChild = findChildEvent(outcome, 'treasureBucknardsEverfullPurse');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -120,7 +131,12 @@ export function renderTreasureMiscMagicE1Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, bagOfTricksChild, bracersChild),
+    text: resolvedSentence(
+      outcome.event.result,
+      bagOfTricksChild,
+      bracersChild,
+      purseChild
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -140,13 +156,17 @@ export const buildTreasureMiscMagicE1Preview: TablePreviewFactory = (tableId) =>
 function formatItemName(
   command: TreasureMiscMagicE1,
   bagOfTricks?: TreasureBagOfTricks,
-  bracers?: TreasureBracersOfDefense
+  bracers?: TreasureBracersOfDefense,
+  purse?: TreasureBucknardsEverfullPurse
 ): string {
   if (command === TreasureMiscMagicE1.BagOfTricks && bagOfTricks) {
     return `Bag of Tricks ("${BAG_OF_TRICKS_LABELS[bagOfTricks]}")`;
   }
   if (command === TreasureMiscMagicE1.BracersOfDefense && bracers) {
     return bracersLabel(bracers);
+  }
+  if (command === TreasureMiscMagicE1.BucknardsEverfullPurse && purse) {
+    return purseLabel(purse);
   }
   switch (command) {
     case TreasureMiscMagicE1.ArtifactOrRelic:
@@ -192,7 +212,8 @@ export function treasureMiscMagicE1Sentence(
 function resolvedSentence(
   result: TreasureMiscMagicE1,
   bagOfTricksChild?: OutcomeEventNode,
-  bracersChild?: OutcomeEventNode
+  bracersChild?: OutcomeEventNode,
+  purseChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE1.BagOfTricks &&
@@ -207,6 +228,13 @@ function resolvedSentence(
     bracersChild.event.kind === 'treasureBracersOfDefense'
   ) {
     return bracersSentence(bracersChild.event.result);
+  }
+  if (
+    result === TreasureMiscMagicE1.BucknardsEverfullPurse &&
+    purseChild &&
+    purseChild.event.kind === 'treasureBucknardsEverfullPurse'
+  ) {
+    return purseSentence(purseChild.event.result);
   }
   return treasureMiscMagicE1Sentence(result);
 }

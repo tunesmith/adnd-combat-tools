@@ -25,6 +25,7 @@ import { treasureMiscMagicE1Sentence } from './treasureMiscMagicE1';
 import { bagOfHoldingSentence } from './treasureBagOfHolding';
 import { bagOfTricksSentence } from './treasureBagOfTricks';
 import { bracersSentence } from './treasureBracersOfDefense';
+import { purseSentence } from './treasureBucknardsEverfullPurse';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
 
@@ -159,6 +160,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const bracers = findChildEvent(miscMagicE1, 'treasureBracersOfDefense');
     if (bracers && bracers.event.kind === 'treasureBracersOfDefense') {
       return bracersSentence(bracers.event.result);
+    }
+    const purse = findChildEvent(miscMagicE1, 'treasureBucknardsEverfullPurse');
+    if (purse && purse.event.kind === 'treasureBucknardsEverfullPurse') {
+      return purseSentence(purse.event.result);
     }
     return treasureMiscMagicE1Sentence(miscMagicE1.event.result);
   }

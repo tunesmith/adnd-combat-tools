@@ -7,6 +7,7 @@ import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
 import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOfTricks';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
+import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 
 describe('passage compact treasure misc magic E1 handling', () => {
   it('resolves the bag of beans result in compact mode', () => {
@@ -143,18 +144,70 @@ describe('passage compact treasure misc magic E1 handling', () => {
 
     const bracersEvent = findEvent(result.outcome, 'treasureBracersOfDefense');
     expect(bracersEvent).toBeDefined();
-    if (!bracersEvent || bracersEvent.event.kind !== 'treasureBracersOfDefense') {
+    if (
+      !bracersEvent ||
+      bracersEvent.event.kind !== 'treasureBracersOfDefense'
+    ) {
       throw new Error('treasureBracersOfDefense event not found');
     }
     expect(bracersEvent.event.result).toBe(TreasureBracersOfDefense.AC4);
 
-    const compactParagraphs = result
-      .compact
+    const compactParagraphs = result.compact
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain(
       'there is a pair of bracers of defense ac4.'
+    );
+  });
+
+  it("resolves Bucknard's everfull purse contents in compact mode", () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 46 },
+        { tableId: 'treasureMiscMagicE1', roll: 99 },
+        { tableId: 'treasureBucknardsEverfullPurse', roll: 55 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE1');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE1') {
+      throw new Error('treasureMiscMagicE1 event not found');
+    }
+    expect(miscEvent.event.result).toBe(
+      TreasureMiscMagicE1.BucknardsEverfullPurse
+    );
+
+    const purseEvent = findEvent(
+      result.outcome,
+      'treasureBucknardsEverfullPurse'
+    );
+    expect(purseEvent).toBeDefined();
+    if (
+      !purseEvent ||
+      purseEvent.event.kind !== 'treasureBucknardsEverfullPurse'
+    ) {
+      throw new Error('treasureBucknardsEverfullPurse event not found');
+    }
+    expect(purseEvent.event.result).toBe(
+      TreasureBucknardsEverfullPurse.Platinum
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      "bucknard's everfull purse of platinum is here."
     );
   });
 });
