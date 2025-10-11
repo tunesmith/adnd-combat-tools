@@ -136,6 +136,7 @@ import {
   TreasureMiscMagicE2,
 } from '../../tables/dungeon/treasureMiscMagicE2';
 import { treasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
+import { treasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
 import { treasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import {
   treasureProtectionType,
@@ -2038,6 +2039,8 @@ export function resolveTreasureMiscMagicE2(options?: {
   const children: DungeonOutcomeNode[] = [];
   if (command === TreasureMiscMagicE2.CarpetOfFlying) {
     children.push({ type: 'pending-roll', table: 'treasureCarpetOfFlying' });
+  } else if (command === TreasureMiscMagicE2.CloakOfProtection) {
+    children.push({ type: 'pending-roll', table: 'treasureCloakOfProtection' });
   }
   return {
     type: 'event',
@@ -2127,6 +2130,21 @@ export function resolveTreasureCarpetOfFlying(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureCarpetOfFlying',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureCloakOfProtection(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureCloakOfProtection.sides);
+  const command = getTableEntry(usedRoll, treasureCloakOfProtection);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureCloakOfProtection',
       result: command,
     } as OutcomeEvent,
   };

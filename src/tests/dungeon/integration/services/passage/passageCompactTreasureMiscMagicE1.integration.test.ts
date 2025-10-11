@@ -288,6 +288,37 @@ describe('passage compact treasure misc magic E1 handling', () => {
       "there is a carpet of flying (4' × 6')."
     );
   });
+
+  it('resolves cloak of protection bonus in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 50 },
+        { tableId: 'treasureMiscMagicE2', roll: 33 },
+        { tableId: 'treasureCloakOfProtection', roll: 90 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const cloakEvent = findEvent(result.outcome, 'treasureCloakOfProtection');
+    expect(cloakEvent).toBeDefined();
+    if (!cloakEvent || cloakEvent.event.kind !== 'treasureCloakOfProtection') {
+      throw new Error('cloak event not found');
+    }
+    expect(cloakEvent.event.result).toBe('+4');
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('there is a cloak of protection +4.');
+  });
 });
 
 type EventNode = Extract<DungeonOutcomeNode, { type: 'event' }>;

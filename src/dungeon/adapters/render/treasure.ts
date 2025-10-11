@@ -28,6 +28,7 @@ import { bracersSentence } from './treasureBracersOfDefense';
 import { purseSentence } from './treasureBucknardsEverfullPurse';
 import { artifactSentence } from './treasureArtifactOrRelic';
 import { miscMagicE2Sentence } from './treasureMiscMagicE2';
+import { cloakSentence } from './treasureCloakOfProtection';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
 
@@ -178,6 +179,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const carpet = findChildEvent(miscMagicE2, 'treasureCarpetOfFlying');
     if (carpet && carpet.event.kind === 'treasureCarpetOfFlying') {
       return `There is a carpet of flying (${carpet.event.result}).`;
+    }
+    const cloak = findChildEvent(miscMagicE2, 'treasureCloakOfProtection');
+    if (cloak && cloak.event.kind === 'treasureCloakOfProtection') {
+      return cloakSentence(cloak.event.result);
     }
     return miscMagicE2Sentence(miscMagicE2.event.result);
   }

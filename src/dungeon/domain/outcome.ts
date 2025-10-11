@@ -98,6 +98,7 @@ import type { TreasureArtifactOrRelic } from '../../tables/dungeon/treasureArtif
 import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
 import type { TreasureMiscMagicE2 } from '../../tables/dungeon/treasureMiscMagicE2';
 import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
+import type { TreasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type {
   TreasureProtectionType,
@@ -478,6 +479,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureCarpetOfFlying';
       result: TreasureCarpetOfFlying;
+    }
+  | {
+      kind: 'treasureCloakOfProtection';
+      result: TreasureCloakOfProtection;
     }
   | {
       kind: 'treasureStaffSerpent';

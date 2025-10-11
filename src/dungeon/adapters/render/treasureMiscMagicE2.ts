@@ -6,6 +6,7 @@ import {
 } from '../../../tables/dungeon/treasureMiscMagicE2';
 import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+import { cloakSentence } from './treasureCloakOfProtection';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE2, string> = {
   [TreasureMiscMagicE2.CandleOfInvocation]: 'Candle of Invocation (C)',
@@ -49,6 +50,7 @@ export function renderTreasureMiscMagicE2Detail(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE2') return [];
   const carpetChild = findChildEvent(outcome, 'treasureCarpetOfFlying');
+  const cloakChild = findChildEvent(outcome, 'treasureCloakOfProtection');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -60,7 +62,7 @@ export function renderTreasureMiscMagicE2Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, carpetChild),
+    text: resolvedSentence(outcome.event.result, carpetChild, cloakChild),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -73,6 +75,7 @@ export function renderTreasureMiscMagicE2Compact(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE2') return [];
   const carpetChild = findChildEvent(outcome, 'treasureCarpetOfFlying');
+  const cloakChild = findChildEvent(outcome, 'treasureCloakOfProtection');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -80,7 +83,7 @@ export function renderTreasureMiscMagicE2Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, carpetChild),
+    text: resolvedSentence(outcome.event.result, carpetChild, cloakChild),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -109,7 +112,8 @@ function articleFor(label: string): 'a' | 'an' {
 
 function resolvedSentence(
   result: TreasureMiscMagicE2,
-  carpetChild?: OutcomeEventNode
+  carpetChild?: OutcomeEventNode,
+  cloakChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE2.CarpetOfFlying &&
@@ -117,6 +121,13 @@ function resolvedSentence(
     carpetChild.event.kind === 'treasureCarpetOfFlying'
   ) {
     return `There is a carpet of flying (${carpetChild.event.result}).`;
+  }
+  if (
+    result === TreasureMiscMagicE2.CloakOfProtection &&
+    cloakChild &&
+    cloakChild.event.kind === 'treasureCloakOfProtection'
+  ) {
+    return cloakSentence(cloakChild.event.result);
   }
   return miscMagicE2Sentence(result);
 }
