@@ -279,6 +279,11 @@ import {
   buildTreasureCloakOfProtectionPreview,
 } from './render/treasureCloakOfProtection';
 import {
+  renderTreasureCrystalBallDetail,
+  renderTreasureCrystalBallCompact,
+  buildTreasureCrystalBallPreview,
+} from './render/treasureCrystalBall';
+import {
   renderTreasureMiscMagicE1Detail,
   renderTreasureMiscMagicE1Compact,
   buildTreasureMiscMagicE1Preview,
@@ -620,6 +625,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureCloakOfProtectionDetail,
     renderCompact: renderTreasureCloakOfProtectionCompact,
   },
+  treasureCrystalBall: {
+    renderDetail: renderTreasureCrystalBallDetail,
+    renderCompact: renderTreasureCrystalBallCompact,
+  },
   treasureMiscMagicE1: {
     renderDetail: renderTreasureMiscMagicE1Detail,
     renderCompact: renderTreasureMiscMagicE1Compact,
@@ -748,6 +757,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureMiscMagicE2: buildTreasureMiscMagicE2Preview,
   treasureCarpetOfFlying: buildTreasureCarpetOfFlyingPreview,
   treasureCloakOfProtection: buildTreasureCloakOfProtectionPreview,
+  treasureCrystalBall: buildTreasureCrystalBallPreview,
   treasureMiscMagicE1: buildTreasureMiscMagicE1Preview,
   treasureStaffSerpent: buildTreasureStaffSerpentPreview,
   passageExitLocation: buildPassageExitLocationPreview,
@@ -1038,6 +1048,9 @@ function previewForEventNode(
       break;
     case 'treasureCloakOfProtection':
       tableId = 'treasureCloakOfProtection';
+      break;
+    case 'treasureCrystalBall':
+      tableId = 'treasureCrystalBall';
       break;
     case 'treasureMiscMagicE1':
       tableId = 'treasureMiscMagicE1';

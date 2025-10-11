@@ -7,6 +7,7 @@ import {
 import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { cloakSentence } from './treasureCloakOfProtection';
+import { sentence as crystalBallSentence } from './treasureCrystalBall';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE2, string> = {
   [TreasureMiscMagicE2.CandleOfInvocation]: 'Candle of Invocation (C)',
@@ -51,6 +52,7 @@ export function renderTreasureMiscMagicE2Detail(
   if (outcome.event.kind !== 'treasureMiscMagicE2') return [];
   const carpetChild = findChildEvent(outcome, 'treasureCarpetOfFlying');
   const cloakChild = findChildEvent(outcome, 'treasureCloakOfProtection');
+  const crystalChild = findChildEvent(outcome, 'treasureCrystalBall');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -62,7 +64,12 @@ export function renderTreasureMiscMagicE2Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, carpetChild, cloakChild),
+    text: resolvedSentence(
+      outcome.event.result,
+      carpetChild,
+      cloakChild,
+      crystalChild
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -76,6 +83,7 @@ export function renderTreasureMiscMagicE2Compact(
   if (outcome.event.kind !== 'treasureMiscMagicE2') return [];
   const carpetChild = findChildEvent(outcome, 'treasureCarpetOfFlying');
   const cloakChild = findChildEvent(outcome, 'treasureCloakOfProtection');
+  const crystalChild = findChildEvent(outcome, 'treasureCrystalBall');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -83,7 +91,12 @@ export function renderTreasureMiscMagicE2Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, carpetChild, cloakChild),
+    text: resolvedSentence(
+      outcome.event.result,
+      carpetChild,
+      cloakChild,
+      crystalChild
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -113,7 +126,8 @@ function articleFor(label: string): 'a' | 'an' {
 function resolvedSentence(
   result: TreasureMiscMagicE2,
   carpetChild?: OutcomeEventNode,
-  cloakChild?: OutcomeEventNode
+  cloakChild?: OutcomeEventNode,
+  crystalChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE2.CarpetOfFlying &&
@@ -128,6 +142,13 @@ function resolvedSentence(
     cloakChild.event.kind === 'treasureCloakOfProtection'
   ) {
     return cloakSentence(cloakChild.event.result);
+  }
+  if (
+    result === TreasureMiscMagicE2.CrystalBall &&
+    crystalChild &&
+    crystalChild.event.kind === 'treasureCrystalBall'
+  ) {
+    return crystalBallSentence(crystalChild.event.result);
   }
   return miscMagicE2Sentence(result);
 }

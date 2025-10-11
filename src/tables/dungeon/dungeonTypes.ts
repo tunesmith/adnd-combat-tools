@@ -95,6 +95,7 @@ import type { TreasureMiscMagicE1 } from './treasureMiscMagicE1';
 import type { TreasureMiscMagicE2 } from './treasureMiscMagicE2';
 import type { TreasureCarpetOfFlying } from './treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from './treasureCloakOfProtection';
+import type { TreasureCrystalBall } from './treasureCrystalBall';
 import type { TreasureStaffSerpent } from './treasureStaffSerpent';
 
 export type Table<T> = {
@@ -209,4 +210,5 @@ export type Command =
   | TreasureMiscMagicE1
   | TreasureStaffSerpent
   | TreasureCarpetOfFlying
-  | TreasureCloakOfProtection;
+  | TreasureCloakOfProtection
+  | TreasureCrystalBall;

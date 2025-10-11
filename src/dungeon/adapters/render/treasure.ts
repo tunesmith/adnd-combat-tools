@@ -28,6 +28,7 @@ import { bracersSentence } from './treasureBracersOfDefense';
 import { purseSentence } from './treasureBucknardsEverfullPurse';
 import { artifactSentence } from './treasureArtifactOrRelic';
 import { miscMagicE2Sentence } from './treasureMiscMagicE2';
+import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { cloakSentence } from './treasureCloakOfProtection';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
@@ -183,6 +184,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const cloak = findChildEvent(miscMagicE2, 'treasureCloakOfProtection');
     if (cloak && cloak.event.kind === 'treasureCloakOfProtection') {
       return cloakSentence(cloak.event.result);
+    }
+    const crystal = findChildEvent(miscMagicE2, 'treasureCrystalBall');
+    if (crystal && crystal.event.kind === 'treasureCrystalBall') {
+      return crystalBallSentence(crystal.event.result);
     }
     return miscMagicE2Sentence(miscMagicE2.event.result);
   }

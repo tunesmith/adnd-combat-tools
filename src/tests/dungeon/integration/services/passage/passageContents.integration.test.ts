@@ -24,6 +24,7 @@ import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagO
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
+import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage contents', () => {
@@ -893,6 +894,65 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain("there is a carpet of flying (4' × 6').");
+  });
+
+  it('resolves crystal ball variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 50);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE2')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 60);
+
+    const crystalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureCrystalBall')
+    );
+    const crystalTarget = crystalTargets[0];
+    if (!crystalTarget) throw new Error('missing crystal ball target');
+    feed = resolvePreview(feed, crystalTarget, 77);
+
+    const crystalEvent = findOutcomeEvent(feed.outcome, 'treasureCrystalBall');
+    expect(crystalEvent).toBeDefined();
+    if (!crystalEvent || crystalEvent.event.kind !== 'treasureCrystalBall') {
+      throw new Error('crystal event not found');
+    }
+    expect(crystalEvent.event.result).toBe(TreasureCrystalBall.Esp);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a crystal ball with esp.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a crystal ball with esp.');
   });
 
   it('resolves cloak of protection bonus from miscellaneous magic', () => {

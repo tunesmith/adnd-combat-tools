@@ -99,6 +99,7 @@ import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagic
 import type { TreasureMiscMagicE2 } from '../../tables/dungeon/treasureMiscMagicE2';
 import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
+import type { TreasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type {
   TreasureProtectionType,
@@ -483,6 +484,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureCloakOfProtection';
       result: TreasureCloakOfProtection;
+    }
+  | {
+      kind: 'treasureCrystalBall';
+      result: TreasureCrystalBall;
     }
   | {
       kind: 'treasureStaffSerpent';

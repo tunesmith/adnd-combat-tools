@@ -8,6 +8,7 @@ import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagO
 import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOfTricks';
 import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
 import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
+import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 
@@ -318,6 +319,37 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('there is a cloak of protection +4.');
+  });
+
+  it('resolves crystal ball variants in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 50 },
+        { tableId: 'treasureMiscMagicE2', roll: 60 },
+        { tableId: 'treasureCrystalBall', roll: 77 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const crystalEvent = findEvent(result.outcome, 'treasureCrystalBall');
+    expect(crystalEvent).toBeDefined();
+    if (!crystalEvent || crystalEvent.event.kind !== 'treasureCrystalBall') {
+      throw new Error('crystal event not found');
+    }
+    expect(crystalEvent.event.result).toBe(TreasureCrystalBall.Esp);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('there is a crystal ball with esp.');
   });
 });
 
