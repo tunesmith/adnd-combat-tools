@@ -92,6 +92,7 @@ import type { TreasureBracersOfDefense } from './treasureBracersOfDefense';
 import type { TreasureBucknardsEverfullPurse } from './treasureBucknardsEverfullPurse';
 import type { TreasureArtifactOrRelic } from './treasureArtifactOrRelic';
 import type { TreasureMiscMagicE1 } from './treasureMiscMagicE1';
+import type { TreasureMiscMagicE2 } from './treasureMiscMagicE2';
 import type { TreasureStaffSerpent } from './treasureStaffSerpent';
 
 export type Table<T> = {
@@ -202,5 +203,6 @@ export type Command =
   | TreasureBracersOfDefense
   | TreasureBucknardsEverfullPurse
   | TreasureArtifactOrRelic
+  | TreasureMiscMagicE2
   | TreasureMiscMagicE1
   | TreasureStaffSerpent;

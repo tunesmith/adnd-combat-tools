@@ -94,6 +94,7 @@ import {
   resolveTreasureBracersOfDefense,
   resolveTreasureBucknardsEverfullPurse,
   resolveTreasureArtifactOrRelic,
+  resolveTreasureMiscMagicE2,
   resolveTreasureMiscMagicE1,
   resolveTreasureStaffSerpent,
 } from '../domain/resolvers';
@@ -202,6 +203,7 @@ const TABLE_ID_LIST = [
   'treasureBracersOfDefense',
   'treasureBucknardsEverfullPurse',
   'treasureArtifactOrRelic',
+  'treasureMiscMagicE2',
   'treasureMiscMagicE1',
   'treasureStaffSerpent',
   'circularContents',
@@ -297,6 +299,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureBracersOfDefense: 'Bracers of Defense Armor Class',
   treasureBucknardsEverfullPurse: "Bucknard's Everfull Purse Contents",
   treasureArtifactOrRelic: 'Artifact or Relic',
+  treasureMiscMagicE2: 'Miscellaneous Magic (Table E.2)',
   treasureMiscMagicE1: 'Miscellaneous Magic (Table E.1)',
   treasureStaffSerpent: 'Serpent Form',
   circularContents: 'Circular Contents',
@@ -778,6 +781,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureBracersOfDefense({ roll })),
   treasureBucknardsEverfullPurse: ({ roll }) =>
     fromOutcome(resolveTreasureBucknardsEverfullPurse({ roll })),
+  treasureMiscMagicE2: ({ roll }) =>
+    fromOutcome(resolveTreasureMiscMagicE2({ roll })),
   treasureArtifactOrRelic: ({ roll }) =>
     fromOutcome(resolveTreasureArtifactOrRelic({ roll })),
   treasureMiscMagicE1: ({ roll, context }) => {

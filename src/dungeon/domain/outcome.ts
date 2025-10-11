@@ -96,6 +96,7 @@ import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBrac
 import type { TreasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
 import type { TreasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
 import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
+import type { TreasureMiscMagicE2 } from '../../tables/dungeon/treasureMiscMagicE2';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type {
   TreasureProtectionType,
@@ -468,6 +469,10 @@ export type OutcomeEvent =
       level?: number;
       treasureRoll?: number;
       rollIndex?: number;
+    }
+  | {
+      kind: 'treasureMiscMagicE2';
+      result: TreasureMiscMagicE2;
     }
   | {
       kind: 'treasureStaffSerpent';

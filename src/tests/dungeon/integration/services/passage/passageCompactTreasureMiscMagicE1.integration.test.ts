@@ -7,6 +7,7 @@ import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
 import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOfTricks';
 import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
+import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 
@@ -253,6 +254,36 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('there is a hand of vecna.');
+  });
+
+  it('resolves miscellaneous magic E.2 items in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 50 },
+        { tableId: 'treasureMiscMagicE2', roll: 8 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE2');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE2') {
+      throw new Error('treasureMiscMagicE2 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE2.CarpetOfFlying);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('there is a carpet of flying.');
   });
 });
 
