@@ -93,6 +93,7 @@ import type { TreasureBucknardsEverfullPurse } from './treasureBucknardsEverfull
 import type { TreasureArtifactOrRelic } from './treasureArtifactOrRelic';
 import type { TreasureMiscMagicE1 } from './treasureMiscMagicE1';
 import type { TreasureMiscMagicE2 } from './treasureMiscMagicE2';
+import type { TreasureMiscMagicE3 } from './treasureMiscMagicE3';
 import type { TreasureDeckOfManyThings } from './treasureDeckOfManyThings';
 import type { TreasureEyesOfPetrification } from './treasureEyesOfPetrification';
 import type { TreasureCarpetOfFlying } from './treasureCarpetOfFlying';
@@ -210,6 +211,7 @@ export type Command =
   | TreasureArtifactOrRelic
   | TreasureDeckOfManyThings
   | TreasureMiscMagicE2
+  | TreasureMiscMagicE3
   | TreasureMiscMagicE1
   | TreasureStaffSerpent
   | TreasureCarpetOfFlying

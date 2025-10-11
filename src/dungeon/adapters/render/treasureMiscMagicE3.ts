@@ -1,0 +1,115 @@
+import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type { OutcomeEventNode } from '../../domain/outcome';
+import {
+  treasureMiscMagicE3,
+  TreasureMiscMagicE3,
+} from '../../../tables/dungeon/treasureMiscMagicE3';
+import { buildPreview } from './shared';
+import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+
+const ITEM_LABELS: Record<TreasureMiscMagicE3, string> = {
+  [TreasureMiscMagicE3.FigurineOfWondrousPower]: 'Figurine of Wondrous Power',
+  [TreasureMiscMagicE3.FlaskOfCurses]: 'Flask of Curses',
+  [TreasureMiscMagicE3.GauntletsOfDexterity]: 'Gauntlets of Dexterity',
+  [TreasureMiscMagicE3.GauntletsOfFumbling]: 'Gauntlets of Fumbling',
+  [TreasureMiscMagicE3.GauntletsOfOgrePower]: 'Gauntlets of Ogre Power',
+  [TreasureMiscMagicE3.GauntletsOfSwimmingAndClimbing]:
+    'Gauntlets of Swimming and Climbing (C, F, T)',
+  [TreasureMiscMagicE3.GemOfBrightness]: 'Gem of Brightness',
+  [TreasureMiscMagicE3.GemOfSeeing]: 'Gem of Seeing',
+  [TreasureMiscMagicE3.GirdleOfFemininityMasculinity]:
+    'Girdle of Femininity/Masculinity (C, F, T)',
+  [TreasureMiscMagicE3.GirdleOfGiantStrength]:
+    'Girdle of Giant Strength (C, F, T)',
+  [TreasureMiscMagicE3.HelmOfBrilliance]: 'Helm of Brilliance',
+  [TreasureMiscMagicE3.HelmOfComprehendingLanguagesAndReadingMagic]:
+    'Helm of Comprehending Languages & Reading Magic',
+  [TreasureMiscMagicE3.HelmOfOppositeAlignment]: 'Helm of Opposite Alignment',
+  [TreasureMiscMagicE3.HelmOfTelepathy]: 'Helm of Telepathy',
+  [TreasureMiscMagicE3.HelmOfTeleportation]: 'Helm of Teleportation',
+  [TreasureMiscMagicE3.HelmOfUnderwaterAction]: 'Helm of Underwater Action',
+  [TreasureMiscMagicE3.HornOfBlasting]: 'Horn of Blasting',
+  [TreasureMiscMagicE3.HornOfBubbles]: 'Horn of Bubbles',
+  [TreasureMiscMagicE3.HornOfCollapsing]: 'Horn of Collapsing',
+  [TreasureMiscMagicE3.HornOfTheTritons]: 'Horn of the Tritons (C, F)',
+  [TreasureMiscMagicE3.HornOfValhalla]: 'Horn of Valhalla',
+  [TreasureMiscMagicE3.HorseshoesOfSpeed]: 'Horseshoes of Speed',
+  [TreasureMiscMagicE3.HorseshoesOfAZephyr]: 'Horseshoes of a Zephyr',
+  [TreasureMiscMagicE3.IncenseOfMeditation]: 'Incense of Meditation (C)',
+  [TreasureMiscMagicE3.IncenseOfObsession]: 'Incense of Obsession (C)',
+  [TreasureMiscMagicE3.IounStones]: 'Ioun Stones',
+  [TreasureMiscMagicE3.InstrumentOfTheBards]: 'Instrument of the Bards',
+  [TreasureMiscMagicE3.IronFlask]: 'Iron Flask',
+  [TreasureMiscMagicE3.JavelinOfLightning]: 'Javelin of Lightning (F)',
+  [TreasureMiscMagicE3.JavelinOfPiercing]: 'Javelin of Piercing (F)',
+  [TreasureMiscMagicE3.JewelOfAttacks]: 'Jewel of Attacks',
+  [TreasureMiscMagicE3.JewelOfFlawlessness]: 'Jewel of Flawlessness',
+  [TreasureMiscMagicE3.KeoghtomsOintment]: "Keoghtom's Ointment",
+};
+
+export function renderTreasureMiscMagicE3Detail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureMiscMagicE3') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Miscellaneous Magic (Table E.3)',
+  };
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${ITEM_LABELS[outcome.event.result]}`],
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: miscMagicE3Sentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureMiscMagicE3Compact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureMiscMagicE3') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Miscellaneous Magic',
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: miscMagicE3Sentence(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasureMiscMagicE3Preview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Miscellaneous Magic (Table E.3)',
+    sides: treasureMiscMagicE3.sides,
+    entries: treasureMiscMagicE3.entries.map(({ range, command }) => ({
+      range,
+      label: ITEM_LABELS[command],
+    })),
+  });
+
+export function miscMagicE3Sentence(result: TreasureMiscMagicE3): string {
+  const label = ITEM_LABELS[result];
+  const normalized = stripUsageTag(label);
+  return `There is ${articleFor(normalized)} ${normalized}.`;
+}
+
+function stripUsageTag(label: string): string {
+  return label.replace(/\s+\(([A-Z],?\s?)+\)/, '').trim();
+}
+
+function articleFor(label: string): 'a' | 'an' {
+  const first = label.trim().charAt(0).toLowerCase();
+  return 'aeiou'.includes(first) ? 'an' : 'a';
+}

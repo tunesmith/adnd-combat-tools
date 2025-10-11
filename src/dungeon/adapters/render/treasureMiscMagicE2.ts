@@ -125,12 +125,16 @@ export const buildTreasureMiscMagicE2Preview: TablePreviewFactory = (tableId) =>
 
 export function miscMagicE2Sentence(result: TreasureMiscMagicE2): string {
   const label = ITEM_LABELS[result];
-  return `There is ${articleFor(label)} ${label.replace(/ \(M\)| \(C\)/, '')}.`;
+  return `There is ${articleFor(label)} ${stripUsageTag(label)}.`;
 }
 
 function articleFor(label: string): 'a' | 'an' {
   const first = label.trim().charAt(0).toLowerCase();
   return 'aeiou'.includes(first) ? 'an' : 'a';
+}
+
+function stripUsageTag(label: string): string {
+  return label.replace(/\s+\(([A-Z],?\s?)+\)/, '').trim();
 }
 
 function resolvedSentence(

@@ -87,6 +87,7 @@ import {
   resolveTreasureBucknardsEverfullPurse,
   resolveTreasureArtifactOrRelic,
   resolveTreasureDeckOfManyThings,
+  resolveTreasureMiscMagicE3,
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE2,
   resolveTreasureCarpetOfFlying,
@@ -706,6 +707,8 @@ function resolvePendingNode(
       return resolveTreasureArtifactOrRelic({});
     case 'treasureMiscMagicE2':
       return resolveTreasureMiscMagicE2({});
+    case 'treasureMiscMagicE3':
+      return resolveTreasureMiscMagicE3({});
     case 'treasureCarpetOfFlying':
       return resolveTreasureCarpetOfFlying({});
     case 'treasureCloakOfProtection':

@@ -4,7 +4,7 @@ This project wires every dungeon table through several layers. When you add a ne
 
 ## 1. Define the data
 
-- Create the table under `src/tables/...`. Follow the existing enum + `Table<T>` pattern.
+- Create the table under `src/tables/...`. Follow the existing enum + `Table<T>` pattern. For single-value entries, use a single-element range like `[29]` instead of `[29, 29]` so the intent stays clear.
 - Export the new enum type through `src/tables/dungeon/dungeonTypes.ts` if other layers need it.
 
 ## 2. Return the pending roll from the parent resolver

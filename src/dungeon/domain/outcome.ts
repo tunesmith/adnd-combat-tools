@@ -97,6 +97,7 @@ import type { TreasureBucknardsEverfullPurse } from '../../tables/dungeon/treasu
 import type { TreasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
 import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
 import type { TreasureMiscMagicE2 } from '../../tables/dungeon/treasureMiscMagicE2';
+import type { TreasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagicE3';
 import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
 import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
@@ -486,6 +487,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureMiscMagicE2';
       result: TreasureMiscMagicE2;
+    }
+  | {
+      kind: 'treasureMiscMagicE3';
+      result: TreasureMiscMagicE3;
     }
   | {
       kind: 'treasureCarpetOfFlying';
