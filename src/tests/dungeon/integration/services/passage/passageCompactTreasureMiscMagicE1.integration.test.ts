@@ -10,6 +10,7 @@ import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureA
 import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
+import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 
@@ -385,6 +386,39 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .join(' ');
     expect(compactParagraphs).toContain(
       'there is a deck of many things containing 22 plaques.'
+    );
+  });
+
+  it('resolves eyes of petrification variant in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 50 },
+        { tableId: 'treasureMiscMagicE2', roll: 100 },
+        { tableId: 'treasureEyesOfPetrification', roll: 12 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const eyesEvent = findEvent(result.outcome, 'treasureEyesOfPetrification');
+    expect(eyesEvent).toBeDefined();
+    if (!eyesEvent || eyesEvent.event.kind !== 'treasureEyesOfPetrification') {
+      throw new Error('eyes event not found');
+    }
+    expect(eyesEvent.event.result).toBe(TreasureEyesOfPetrification.Basilisk);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there are eyes of petrification (basilisk).'
     );
   });
 });

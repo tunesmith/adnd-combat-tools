@@ -137,6 +137,8 @@ import {
 } from '../../tables/dungeon/treasureMiscMagicE2';
 import { treasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
+import { treasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
+import type { TreasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
 import { treasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import { treasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
 import { treasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
@@ -2046,6 +2048,11 @@ export function resolveTreasureMiscMagicE2(options?: {
     children.push({ type: 'pending-roll', table: 'treasureCrystalBall' });
   } else if (command === TreasureMiscMagicE2.DeckOfManyThings) {
     children.push({ type: 'pending-roll', table: 'treasureDeckOfManyThings' });
+  } else if (command === TreasureMiscMagicE2.EyesOfPetrification) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureEyesOfPetrification',
+    });
   } else if (command === TreasureMiscMagicE2.CloakOfProtection) {
     children.push({ type: 'pending-roll', table: 'treasureCloakOfProtection' });
   }
@@ -2185,6 +2192,24 @@ export function resolveTreasureDeckOfManyThings(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureDeckOfManyThings',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureEyesOfPetrification(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureEyesOfPetrification.sides);
+  const command: TreasureEyesOfPetrification = getTableEntry(
+    usedRoll,
+    treasureEyesOfPetrification
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureEyesOfPetrification',
       result: command,
     } as OutcomeEvent,
   };

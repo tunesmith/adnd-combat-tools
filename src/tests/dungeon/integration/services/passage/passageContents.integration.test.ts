@@ -26,6 +26,7 @@ import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/tr
 import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
+import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage contents', () => {
@@ -1021,6 +1022,70 @@ describe('passage contents', () => {
       .join(' ');
     expect(compactText).toContain(
       'there is a deck of many things containing 22 plaques.'
+    );
+  });
+
+  it('resolves eyes of petrification variant from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 50);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE2')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 100);
+
+    const eyesTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureEyesOfPetrification')
+    );
+    const eyesTarget = eyesTargets[0];
+    if (!eyesTarget) throw new Error('missing eyes target');
+    feed = resolvePreview(feed, eyesTarget, 12);
+
+    const eyesEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureEyesOfPetrification'
+    );
+    expect(eyesEvent).toBeDefined();
+    if (!eyesEvent || eyesEvent.event.kind !== 'treasureEyesOfPetrification') {
+      throw new Error('eyes event not found');
+    }
+    expect(eyesEvent.event.result).toBe(TreasureEyesOfPetrification.Basilisk);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there are eyes of petrification (basilisk).');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there are eyes of petrification (basilisk).'
     );
   });
 

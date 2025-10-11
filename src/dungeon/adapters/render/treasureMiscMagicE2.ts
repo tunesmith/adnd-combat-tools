@@ -9,6 +9,7 @@ import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { cloakSentence } from './treasureCloakOfProtection';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
+import { sentence as eyesSentence } from './treasureEyesOfPetrification';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE2, string> = {
   [TreasureMiscMagicE2.CandleOfInvocation]: 'Candle of Invocation (C)',
@@ -55,6 +56,7 @@ export function renderTreasureMiscMagicE2Detail(
   const cloakChild = findChildEvent(outcome, 'treasureCloakOfProtection');
   const crystalChild = findChildEvent(outcome, 'treasureCrystalBall');
   const deckChild = findChildEvent(outcome, 'treasureDeckOfManyThings');
+  const eyesChild = findChildEvent(outcome, 'treasureEyesOfPetrification');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -71,7 +73,8 @@ export function renderTreasureMiscMagicE2Detail(
       carpetChild,
       cloakChild,
       crystalChild,
-      deckChild
+      deckChild,
+      eyesChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -88,6 +91,7 @@ export function renderTreasureMiscMagicE2Compact(
   const cloakChild = findChildEvent(outcome, 'treasureCloakOfProtection');
   const crystalChild = findChildEvent(outcome, 'treasureCrystalBall');
   const deckChild = findChildEvent(outcome, 'treasureDeckOfManyThings');
+  const eyesChild = findChildEvent(outcome, 'treasureEyesOfPetrification');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -100,7 +104,8 @@ export function renderTreasureMiscMagicE2Compact(
       carpetChild,
       cloakChild,
       crystalChild,
-      deckChild
+      deckChild,
+      eyesChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
@@ -133,7 +138,8 @@ function resolvedSentence(
   carpetChild?: OutcomeEventNode,
   cloakChild?: OutcomeEventNode,
   crystalChild?: OutcomeEventNode,
-  deckChild?: OutcomeEventNode
+  deckChild?: OutcomeEventNode,
+  eyesChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE2.CarpetOfFlying &&
@@ -162,6 +168,13 @@ function resolvedSentence(
     deckChild.event.kind === 'treasureDeckOfManyThings'
   ) {
     return deckSentence(deckChild.event.result);
+  }
+  if (
+    result === TreasureMiscMagicE2.EyesOfPetrification &&
+    eyesChild &&
+    eyesChild.event.kind === 'treasureEyesOfPetrification'
+  ) {
+    return eyesSentence(eyesChild.event.result);
   }
   return miscMagicE2Sentence(result);
 }

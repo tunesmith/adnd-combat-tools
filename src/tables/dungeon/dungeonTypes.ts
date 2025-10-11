@@ -94,6 +94,7 @@ import type { TreasureArtifactOrRelic } from './treasureArtifactOrRelic';
 import type { TreasureMiscMagicE1 } from './treasureMiscMagicE1';
 import type { TreasureMiscMagicE2 } from './treasureMiscMagicE2';
 import type { TreasureDeckOfManyThings } from './treasureDeckOfManyThings';
+import type { TreasureEyesOfPetrification } from './treasureEyesOfPetrification';
 import type { TreasureCarpetOfFlying } from './treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from './treasureCloakOfProtection';
 import type { TreasureCrystalBall } from './treasureCrystalBall';
@@ -213,4 +214,5 @@ export type Command =
   | TreasureStaffSerpent
   | TreasureCarpetOfFlying
   | TreasureCloakOfProtection
-  | TreasureCrystalBall;
+  | TreasureCrystalBall
+  | TreasureEyesOfPetrification;

@@ -1,28 +1,26 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import {
-  treasureCrystalBall,
-  TreasureCrystalBall,
-} from '../../../tables/dungeon/treasureCrystalBall';
+  treasureEyesOfPetrification,
+  TreasureEyesOfPetrification,
+} from '../../../tables/dungeon/treasureEyesOfPetrification';
 import { buildPreview } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 
-const LABELS: Record<TreasureCrystalBall, string> = {
-  [TreasureCrystalBall.Standard]: 'crystal ball (normal)',
-  [TreasureCrystalBall.Clairaudience]: 'crystal ball with clairaudience',
-  [TreasureCrystalBall.Esp]: 'crystal ball with ESP',
-  [TreasureCrystalBall.Telepathy]: 'crystal ball with telepathy',
+const LABELS: Record<TreasureEyesOfPetrification, string> = {
+  [TreasureEyesOfPetrification.Basilisk]: 'eyes of petrification (basilisk)',
+  [TreasureEyesOfPetrification.Normal]: 'eyes of petrification (normal)',
 };
 
-export function renderTreasureCrystalBallDetail(
+export function renderTreasureEyesOfPetrificationDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'treasureCrystalBall') return [];
+  if (outcome.event.kind !== 'treasureEyesOfPetrification') return [];
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
-    text: 'Crystal Ball',
+    text: 'Eyes of Petrification Variant',
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
@@ -37,15 +35,15 @@ export function renderTreasureCrystalBallDetail(
   return nodes;
 }
 
-export function renderTreasureCrystalBallCompact(
+export function renderTreasureEyesOfPetrificationCompact(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
-  if (outcome.event.kind !== 'treasureCrystalBall') return [];
+  if (outcome.event.kind !== 'treasureEyesOfPetrification') return [];
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
-    text: 'Crystal Ball',
+    text: 'Eyes of Petrification',
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -56,16 +54,18 @@ export function renderTreasureCrystalBallCompact(
   return nodes;
 }
 
-export const buildTreasureCrystalBallPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasureEyesOfPetrificationPreview: TablePreviewFactory = (
+  tableId
+) =>
   buildPreview(tableId, {
-    title: 'Crystal Ball Variant',
-    sides: treasureCrystalBall.sides,
-    entries: treasureCrystalBall.entries.map(({ range, command }) => ({
+    title: 'Eyes of Petrification Variant',
+    sides: treasureEyesOfPetrification.sides,
+    entries: treasureEyesOfPetrification.entries.map(({ range, command }) => ({
       range,
       label: LABELS[command],
     })),
   });
 
-export function sentence(result: TreasureCrystalBall): string {
-  return `There is a ${LABELS[result]}.`;
+export function sentence(result: TreasureEyesOfPetrification): string {
+  return `There are ${LABELS[result]}.`;
 }
