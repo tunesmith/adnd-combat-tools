@@ -11,6 +11,7 @@ import {
   describeMonsterOutcome,
   collectCharacterPartyMessages,
 } from './monsters';
+import { collectTreasureCompactSummaries } from './treasure';
 
 export function renderCircularPoolDetail(
   outcome: OutcomeEventNode,
@@ -85,6 +86,10 @@ export function describeCircularPool(node: OutcomeEventNode): string {
     }
     if (result === Pool.PoolMonsterTreasure) {
       segments.push('Treasure is present.');
+      const treasureSummaries = collectTreasureCompactSummaries(node);
+      if (treasureSummaries.length > 0) {
+        segments.push(...treasureSummaries);
+      }
     }
     return joinSegments(segments);
   }
