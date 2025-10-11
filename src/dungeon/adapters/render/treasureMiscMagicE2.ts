@@ -4,7 +4,7 @@ import {
   treasureMiscMagicE2,
   TreasureMiscMagicE2,
 } from '../../../tables/dungeon/treasureMiscMagicE2';
-import { buildPreview } from './shared';
+import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE2, string> = {
@@ -48,6 +48,7 @@ export function renderTreasureMiscMagicE2Detail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE2') return [];
+  const carpetChild = findChildEvent(outcome, 'treasureCarpetOfFlying');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -59,7 +60,7 @@ export function renderTreasureMiscMagicE2Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: miscMagicE2Sentence(outcome.event.result),
+    text: resolvedSentence(outcome.event.result, carpetChild),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -71,6 +72,7 @@ export function renderTreasureMiscMagicE2Compact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE2') return [];
+  const carpetChild = findChildEvent(outcome, 'treasureCarpetOfFlying');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -78,7 +80,7 @@ export function renderTreasureMiscMagicE2Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: miscMagicE2Sentence(outcome.event.result),
+    text: resolvedSentence(outcome.event.result, carpetChild),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -103,4 +105,18 @@ export function miscMagicE2Sentence(result: TreasureMiscMagicE2): string {
 function articleFor(label: string): 'a' | 'an' {
   const first = label.trim().charAt(0).toLowerCase();
   return 'aeiou'.includes(first) ? 'an' : 'a';
+}
+
+function resolvedSentence(
+  result: TreasureMiscMagicE2,
+  carpetChild?: OutcomeEventNode
+): string {
+  if (
+    result === TreasureMiscMagicE2.CarpetOfFlying &&
+    carpetChild &&
+    carpetChild.event.kind === 'treasureCarpetOfFlying'
+  ) {
+    return `There is a carpet of flying (${carpetChild.event.result}).`;
+  }
+  return miscMagicE2Sentence(result);
 }

@@ -175,6 +175,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   }
   const miscMagicE2 = findChildEvent(magic, 'treasureMiscMagicE2');
   if (miscMagicE2 && miscMagicE2.event.kind === 'treasureMiscMagicE2') {
+    const carpet = findChildEvent(miscMagicE2, 'treasureCarpetOfFlying');
+    if (carpet && carpet.event.kind === 'treasureCarpetOfFlying') {
+      return `There is a carpet of flying (${carpet.event.result}).`;
+    }
     return miscMagicE2Sentence(miscMagicE2.event.result);
   }
   return undefined;

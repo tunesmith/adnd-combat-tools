@@ -175,7 +175,9 @@ export function describeStandardMonster(
     const summary = summarizePartyResult(event.party);
     return {
       heading: config.title,
-      label: config.labels[event.result] ?? String(event.result),
+      label:
+        config.labels[event.result as keyof typeof config.labels] ??
+        String(event.result),
       detailParagraphs: [buildPartyCharacterMessage(summary, 'detail')],
       compactText: '',
       compactMessages: [buildPartyCharacterMessage(summary, 'compact')],
@@ -187,7 +189,9 @@ export function describeStandardMonster(
   );
   return {
     heading: config.title,
-    label: config.labels[event.result] ?? String(event.result),
+    label:
+      config.labels[event.result as keyof typeof config.labels] ??
+      String(event.result),
     detailParagraphs: textInfo.detailParagraphs,
     compactText: textInfo.compactText,
     appendPending: hasPendingChildren(node),
@@ -206,7 +210,9 @@ export function describeDragonMonster(
   );
   return {
     heading: config.title,
-    label: config.labels[event.result] ?? String(event.result),
+    label:
+      config.labels[event.result as keyof typeof config.labels] ??
+      String(event.result),
     detailParagraphs: textInfo.detailParagraphs,
     compactText: textInfo.compactText,
     appendPending: hasPendingChildren(node),

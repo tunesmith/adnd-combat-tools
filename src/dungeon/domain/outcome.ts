@@ -97,6 +97,7 @@ import type { TreasureBucknardsEverfullPurse } from '../../tables/dungeon/treasu
 import type { TreasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
 import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
 import type { TreasureMiscMagicE2 } from '../../tables/dungeon/treasureMiscMagicE2';
+import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type {
   TreasureProtectionType,
@@ -473,6 +474,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureMiscMagicE2';
       result: TreasureMiscMagicE2;
+    }
+  | {
+      kind: 'treasureCarpetOfFlying';
+      result: TreasureCarpetOfFlying;
     }
   | {
       kind: 'treasureStaffSerpent';

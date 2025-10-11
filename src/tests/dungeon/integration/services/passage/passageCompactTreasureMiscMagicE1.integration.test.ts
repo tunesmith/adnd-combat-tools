@@ -266,6 +266,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
         { tableId: 'treasure', roll: 98 },
         { tableId: 'treasureMagicCategory', roll: 50 },
         { tableId: 'treasureMiscMagicE2', roll: 8 },
+        { tableId: 'treasureCarpetOfFlying', roll: 55 },
       ],
       dungeonLevel: 1,
       allowUnusedRolls: true,
@@ -283,7 +284,9 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');
-    expect(compactParagraphs).toContain('there is a carpet of flying.');
+    expect(compactParagraphs).toContain(
+      "there is a carpet of flying (4' × 6')."
+    );
   });
 });
 
