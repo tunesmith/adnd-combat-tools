@@ -25,6 +25,7 @@ import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasure
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
+import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage contents', () => {
@@ -953,6 +954,74 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a crystal ball with esp.');
+  });
+
+  it('resolves deck of many things composition from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 50);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE2')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 74);
+
+    const deckTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureDeckOfManyThings')
+    );
+    const deckTarget = deckTargets[0];
+    if (!deckTarget) throw new Error('missing deck target');
+    feed = resolvePreview(feed, deckTarget, 90);
+
+    const deckEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureDeckOfManyThings'
+    );
+    expect(deckEvent).toBeDefined();
+    if (!deckEvent || deckEvent.event.kind !== 'treasureDeckOfManyThings') {
+      throw new Error('deck event not found');
+    }
+    expect(deckEvent.event.result).toBe(
+      TreasureDeckOfManyThings.TwentyTwoPlaques
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a deck of many things containing 22 plaques.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a deck of many things containing 22 plaques.'
+    );
   });
 
   it('resolves cloak of protection bonus from miscellaneous magic', () => {

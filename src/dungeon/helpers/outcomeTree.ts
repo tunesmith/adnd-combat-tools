@@ -86,6 +86,7 @@ import {
   resolveTreasureBracersOfDefense,
   resolveTreasureBucknardsEverfullPurse,
   resolveTreasureArtifactOrRelic,
+  resolveTreasureDeckOfManyThings,
   resolveTreasureMiscMagicE2,
   resolveTreasureCarpetOfFlying,
   resolveTreasureCloakOfProtection,
@@ -710,6 +711,8 @@ function resolvePendingNode(
       return resolveTreasureCloakOfProtection({});
     case 'treasureCrystalBall':
       return resolveTreasureCrystalBall({});
+    case 'treasureDeckOfManyThings':
+      return resolveTreasureDeckOfManyThings({});
     case 'treasureMiscMagicE1': {
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureMiscMagicE1(context);

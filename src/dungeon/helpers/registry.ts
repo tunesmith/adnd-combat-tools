@@ -97,6 +97,7 @@ import {
   resolveTreasureCarpetOfFlying,
   resolveTreasureCloakOfProtection,
   resolveTreasureCrystalBall,
+  resolveTreasureDeckOfManyThings,
   resolveTreasureMiscMagicE2,
   resolveTreasureMiscMagicE1,
   resolveTreasureStaffSerpent,
@@ -210,6 +211,7 @@ const TABLE_ID_LIST = [
   'treasureCarpetOfFlying',
   'treasureCloakOfProtection',
   'treasureCrystalBall',
+  'treasureDeckOfManyThings',
   'treasureMiscMagicE1',
   'treasureStaffSerpent',
   'circularContents',
@@ -309,6 +311,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureCarpetOfFlying: 'Carpet of Flying Size',
   treasureCloakOfProtection: 'Cloak of Protection Bonus',
   treasureCrystalBall: 'Crystal Ball Variant',
+  treasureDeckOfManyThings: 'Deck Composition',
   treasureMiscMagicE1: 'Miscellaneous Magic (Table E.1)',
   treasureStaffSerpent: 'Serpent Form',
   circularContents: 'Circular Contents',
@@ -798,6 +801,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureCloakOfProtection({ roll })),
   treasureCrystalBall: ({ roll }) =>
     fromOutcome(resolveTreasureCrystalBall({ roll })),
+  treasureDeckOfManyThings: ({ roll }) =>
+    fromOutcome(resolveTreasureDeckOfManyThings({ roll })),
   treasureArtifactOrRelic: ({ roll }) =>
     fromOutcome(resolveTreasureArtifactOrRelic({ roll })),
   treasureMiscMagicE1: ({ roll, context }) => {

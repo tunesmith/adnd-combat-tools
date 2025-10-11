@@ -9,6 +9,7 @@ import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOf
 import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
 import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
+import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 
@@ -350,6 +351,41 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('there is a crystal ball with esp.');
+  });
+
+  it('resolves deck of many things composition in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 50 },
+        { tableId: 'treasureMiscMagicE2', roll: 74 },
+        { tableId: 'treasureDeckOfManyThings', roll: 90 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const deckEvent = findEvent(result.outcome, 'treasureDeckOfManyThings');
+    expect(deckEvent).toBeDefined();
+    if (!deckEvent || deckEvent.event.kind !== 'treasureDeckOfManyThings') {
+      throw new Error('deck event not found');
+    }
+    expect(deckEvent.event.result).toBe(
+      TreasureDeckOfManyThings.TwentyTwoPlaques
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is a deck of many things containing 22 plaques.'
+    );
   });
 });
 

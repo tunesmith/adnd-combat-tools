@@ -29,6 +29,7 @@ import { purseSentence } from './treasureBucknardsEverfullPurse';
 import { artifactSentence } from './treasureArtifactOrRelic';
 import { miscMagicE2Sentence } from './treasureMiscMagicE2';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
+import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { cloakSentence } from './treasureCloakOfProtection';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
@@ -188,6 +189,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const crystal = findChildEvent(miscMagicE2, 'treasureCrystalBall');
     if (crystal && crystal.event.kind === 'treasureCrystalBall') {
       return crystalBallSentence(crystal.event.result);
+    }
+    const deck = findChildEvent(miscMagicE2, 'treasureDeckOfManyThings');
+    if (deck && deck.event.kind === 'treasureDeckOfManyThings') {
+      return deckSentence(deck.event.result);
     }
     return miscMagicE2Sentence(miscMagicE2.event.result);
   }
