@@ -30,6 +30,7 @@ import { artifactSentence } from './treasureArtifactOrRelic';
 import { miscMagicE2Sentence } from './treasureMiscMagicE2';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
 import { girdleSentence } from './treasureGirdleOfGiantStrength';
+import { instrumentOfTheBardsSentence } from './treasureInstrumentOfTheBards';
 import { hornSentence } from './treasureHornOfValhalla';
 import { miscMagicE3Sentence } from './treasureMiscMagicE3';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
@@ -230,6 +231,16 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const girdle = findChildEvent(miscMagicE3, 'treasureGirdleOfGiantStrength');
     if (girdle && girdle.event.kind === 'treasureGirdleOfGiantStrength') {
       return girdleSentence(girdle.event.result);
+    }
+    const instrument = findChildEvent(
+      miscMagicE3,
+      'treasureInstrumentOfTheBards'
+    );
+    if (
+      instrument &&
+      instrument.event.kind === 'treasureInstrumentOfTheBards'
+    ) {
+      return instrumentOfTheBardsSentence(instrument.event.result);
     }
     const iounStones = findIounStonesEvent(outcome);
     if (iounStones) return '';

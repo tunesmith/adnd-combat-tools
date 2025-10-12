@@ -98,6 +98,7 @@ import type { TreasureDeckOfManyThings } from './treasureDeckOfManyThings';
 import type { TreasureFigurineOfWondrousPower } from './treasureFigurineOfWondrousPower';
 import type { TreasureFigurineMarbleElephant } from './treasureFigurineMarbleElephant';
 import type { TreasureGirdleOfGiantStrength } from './treasureGirdleOfGiantStrength';
+import type { TreasureInstrumentOfTheBards } from './treasureInstrumentOfTheBards';
 import type { TreasureHornOfValhallaType } from './treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaAttunement } from './treasureHornOfValhallaAttunement';
 import type { TreasureHornOfValhallaAlignment } from './treasureHornOfValhallaAlignment';
@@ -223,6 +224,7 @@ export type Command =
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant
   | TreasureGirdleOfGiantStrength
+  | TreasureInstrumentOfTheBards
   | TreasureHornOfValhallaType
   | TreasureHornOfValhallaAttunement
   | TreasureHornOfValhallaAlignment

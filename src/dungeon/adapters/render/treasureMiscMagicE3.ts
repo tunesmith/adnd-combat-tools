@@ -8,6 +8,7 @@ import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
 import { girdleSentence } from './treasureGirdleOfGiantStrength';
+import { instrumentOfTheBardsSentence } from './treasureInstrumentOfTheBards';
 import { toIounStonesSummary } from './treasureIounStones';
 import { hornSentence } from './treasureHornOfValhalla';
 
@@ -62,6 +63,10 @@ export function renderTreasureMiscMagicE3Detail(
   );
   const girdleChild = findChildEvent(outcome, 'treasureGirdleOfGiantStrength');
   const hornTypeChild = findChildEvent(outcome, 'treasureHornOfValhallaType');
+  const instrumentChild = findChildEvent(
+    outcome,
+    'treasureInstrumentOfTheBards'
+  );
   const iounChild = findChildEvent(outcome, 'treasureIounStones');
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -79,6 +84,7 @@ export function renderTreasureMiscMagicE3Detail(
       figurineChild,
       girdleChild,
       hornTypeChild,
+      instrumentChild,
       iounChild
     ),
   };
@@ -98,6 +104,10 @@ export function renderTreasureMiscMagicE3Compact(
   );
   const girdleChild = findChildEvent(outcome, 'treasureGirdleOfGiantStrength');
   const hornTypeChild = findChildEvent(outcome, 'treasureHornOfValhallaType');
+  const instrumentChild = findChildEvent(
+    outcome,
+    'treasureInstrumentOfTheBards'
+  );
   const iounChild = findChildEvent(outcome, 'treasureIounStones');
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -111,6 +121,7 @@ export function renderTreasureMiscMagicE3Compact(
       figurineChild,
       girdleChild,
       hornTypeChild,
+      instrumentChild,
       iounChild
     ),
   };
@@ -150,6 +161,7 @@ function resolvedSentence(
   figurineChild?: OutcomeEventNode,
   girdleChild?: OutcomeEventNode,
   hornTypeChild?: OutcomeEventNode,
+  instrumentChild?: OutcomeEventNode,
   iounChild?: OutcomeEventNode
 ): string {
   if (
@@ -169,6 +181,13 @@ function resolvedSentence(
     girdleChild.event.kind === 'treasureGirdleOfGiantStrength'
   ) {
     return girdleSentence(girdleChild.event.result);
+  }
+  if (
+    result === TreasureMiscMagicE3.InstrumentOfTheBards &&
+    instrumentChild &&
+    instrumentChild.event.kind === 'treasureInstrumentOfTheBards'
+  ) {
+    return instrumentOfTheBardsSentence(instrumentChild.event.result);
   }
   if (
     result === TreasureMiscMagicE3.IounStones &&

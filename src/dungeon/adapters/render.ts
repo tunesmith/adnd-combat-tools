@@ -289,6 +289,11 @@ import {
   buildTreasureGirdleOfGiantStrengthPreview,
 } from './render/treasureGirdleOfGiantStrength';
 import {
+  renderTreasureInstrumentOfTheBardsDetail,
+  renderTreasureInstrumentOfTheBardsCompact,
+  buildTreasureInstrumentOfTheBardsPreview,
+} from './render/treasureInstrumentOfTheBards';
+import {
   renderTreasureIounStonesDetail,
   renderTreasureIounStonesCompact,
 } from './render/treasureIounStones';
@@ -678,6 +683,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureGirdleOfGiantStrengthDetail,
     renderCompact: renderTreasureGirdleOfGiantStrengthCompact,
   },
+  treasureInstrumentOfTheBards: {
+    renderDetail: renderTreasureInstrumentOfTheBardsDetail,
+    renderCompact: renderTreasureInstrumentOfTheBardsCompact,
+  },
   treasureIounStones: {
     renderDetail: renderTreasureIounStonesDetail,
     renderCompact: renderTreasureIounStonesCompact,
@@ -844,6 +853,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
   treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
   treasureGirdleOfGiantStrength: buildTreasureGirdleOfGiantStrengthPreview,
+  treasureInstrumentOfTheBards: buildTreasureInstrumentOfTheBardsPreview,
   treasureHornOfValhallaType: buildTreasureHornOfValhallaTypePreview,
   treasureHornOfValhallaAttunement:
     buildTreasureHornOfValhallaAttunementPreview,
@@ -1167,6 +1177,9 @@ function previewForEventNode(
       break;
     case 'treasureGirdleOfGiantStrength':
       tableId = 'treasureGirdleOfGiantStrength';
+      break;
+    case 'treasureInstrumentOfTheBards':
+      tableId = 'treasureInstrumentOfTheBards';
       break;
     case 'treasureDeckOfManyThings':
       tableId = 'treasureDeckOfManyThings';

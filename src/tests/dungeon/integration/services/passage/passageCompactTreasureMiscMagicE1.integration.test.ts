@@ -13,6 +13,7 @@ import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
+import { TreasureInstrumentOfTheBards } from '../../../../../tables/dungeon/treasureInstrumentOfTheBards';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
@@ -427,6 +428,47 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .join(' ');
     expect(compactParagraphs).toContain(
       'there is a girdle of fire giant strength (c, f, t).'
+    );
+  });
+
+  it('resolves instrument of the bards variants in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 52 },
+        { tableId: 'treasureMiscMagicE3', roll: 75 },
+        { tableId: 'treasureInstrumentOfTheBards', roll: 18 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const instrumentEvent = findEvent(
+      result.outcome,
+      'treasureInstrumentOfTheBards'
+    );
+    expect(instrumentEvent).toBeDefined();
+    if (
+      !instrumentEvent ||
+      instrumentEvent.event.kind !== 'treasureInstrumentOfTheBards'
+    ) {
+      throw new Error('instrument of the bards event not found');
+    }
+    expect(instrumentEvent.event.result).toBe(
+      TreasureInstrumentOfTheBards.AnstruthHarp
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is an instrument of the bards: anstruth harp.'
     );
   });
 

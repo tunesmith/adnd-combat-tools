@@ -147,6 +147,8 @@ import { treasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFig
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
 import { treasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
 import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
+import { treasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
+import type { TreasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
 import {
   treasureIounStones,
   TreasureIounStoneType,
@@ -2131,6 +2133,11 @@ export function resolveTreasureMiscMagicE3(options?: {
     });
   } else if (command === TreasureMiscMagicE3.IounStones) {
     children.push(resolveTreasureIounStones());
+  } else if (command === TreasureMiscMagicE3.InstrumentOfTheBards) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureInstrumentOfTheBards',
+    });
   } else if (command === TreasureMiscMagicE3.HornOfValhalla) {
     children.push({
       type: 'pending-roll',
@@ -2429,6 +2436,25 @@ export function resolveTreasureCloakOfProtection(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureCloakOfProtection',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureInstrumentOfTheBards(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureInstrumentOfTheBards.sides);
+  const command: TreasureInstrumentOfTheBards = getTableEntry(
+    usedRoll,
+    treasureInstrumentOfTheBards
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureInstrumentOfTheBards',
       result: command,
     } as OutcomeEvent,
   };

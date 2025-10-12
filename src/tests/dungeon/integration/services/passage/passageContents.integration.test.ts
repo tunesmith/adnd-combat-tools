@@ -30,6 +30,7 @@ import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
+import { TreasureInstrumentOfTheBards } from '../../../../../tables/dungeon/treasureInstrumentOfTheBards';
 import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
 import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
@@ -1180,6 +1181,86 @@ describe('passage contents', () => {
           node.kind === 'ioun-stones'
       )
     ).toBe(true);
+  });
+
+  it('renders instrument of the bards with structured output', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 75);
+
+    const instrumentTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureInstrumentOfTheBards')
+    );
+    const instrumentTarget = instrumentTargets[0];
+    if (!instrumentTarget)
+      throw new Error('missing instrument of the bards target');
+    feed = resolvePreview(feed, instrumentTarget, 6);
+
+    const instrumentEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureInstrumentOfTheBards'
+    );
+    expect(instrumentEvent).toBeDefined();
+    if (
+      !instrumentEvent ||
+      instrumentEvent.event.kind !== 'treasureInstrumentOfTheBards'
+    ) {
+      throw new Error('instrument of the bards event not found');
+    }
+    expect(instrumentEvent.event.result).toBe(
+      TreasureInstrumentOfTheBards.MacFuirmidhCittern
+    );
+
+    const detailText = renderDetail(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(detailText).toContain(
+      'there is an instrument of the bards: mac-fuirmidh cittern.'
+    );
+
+    const compactText = renderCompact(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(compactText).toContain(
+      'there is an instrument of the bards: mac-fuirmidh cittern.'
+    );
   });
 
   it('resolves horn of valhalla alignment from miscellaneous magic', () => {
