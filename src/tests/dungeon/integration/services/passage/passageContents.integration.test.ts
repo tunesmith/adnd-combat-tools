@@ -34,6 +34,7 @@ import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasu
 import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
+import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage contents', () => {
@@ -1125,6 +1126,60 @@ describe('passage contents', () => {
     expect(compactText).toContain(
       'there is a girdle of stone giant strength (c, f, t).'
     );
+  });
+
+  it('renders ioun stones with structured output', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 72);
+
+    const detailText = renderDetail(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(detailText).toContain('ioun stones');
+
+    const stonesEvent = findOutcomeEvent(feed.outcome, 'treasureIounStones');
+    expect(stonesEvent).toBeDefined();
+    if (stonesEvent && stonesEvent.event.kind === 'treasureIounStones') {
+      expect(stonesEvent.event.result.stones.length).toBeGreaterThan(0);
+    }
+
+    const compactNodes = renderCompact(feed);
+    expect(
+      compactNodes.some(
+        (node): node is Extract<DungeonRenderNode, { kind: 'ioun-stones' }> =>
+          node.kind === 'ioun-stones'
+      )
+    ).toBe(true);
   });
 
   it('resolves horn of valhalla alignment from miscellaneous magic', () => {

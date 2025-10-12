@@ -101,6 +101,7 @@ import type { TreasureGirdleOfGiantStrength } from './treasureGirdleOfGiantStren
 import type { TreasureHornOfValhallaType } from './treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaAttunement } from './treasureHornOfValhallaAttunement';
 import type { TreasureHornOfValhallaAlignment } from './treasureHornOfValhallaAlignment';
+import type { TreasureIounStoneType } from './treasureIounStones';
 import type { TreasureEyesOfPetrification } from './treasureEyesOfPetrification';
 import type { TreasureCarpetOfFlying } from './treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from './treasureCloakOfProtection';
@@ -225,6 +226,7 @@ export type Command =
   | TreasureHornOfValhallaType
   | TreasureHornOfValhallaAttunement
   | TreasureHornOfValhallaAlignment
+  | TreasureIounStoneType
   | TreasureStaffSerpent
   | TreasureCarpetOfFlying
   | TreasureCloakOfProtection

@@ -147,6 +147,11 @@ import { treasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFig
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
 import { treasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
 import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
+import {
+  treasureIounStones,
+  TreasureIounStoneType,
+  IOUN_STONE_DEFINITIONS,
+} from '../../tables/dungeon/treasureIounStones';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -169,7 +174,11 @@ import {
   treasureProtectionGuardedBy,
   treasureProtectionHiddenBy,
 } from '../../tables/dungeon/treasureProtection';
-import type { TreasureEntry } from './outcome';
+import type {
+  TreasureEntry,
+  TreasureIounStonesResult,
+  TreasureIounStoneStatus,
+} from './outcome';
 import {
   periodicCheckDoorOnly,
   PeriodicCheckDoorOnly,
@@ -2120,6 +2129,8 @@ export function resolveTreasureMiscMagicE3(options?: {
       type: 'pending-roll',
       table: 'treasureGirdleOfGiantStrength',
     });
+  } else if (command === TreasureMiscMagicE3.IounStones) {
+    children.push(resolveTreasureIounStones());
   } else if (command === TreasureMiscMagicE3.HornOfValhalla) {
     children.push({
       type: 'pending-roll',
@@ -2198,6 +2209,62 @@ export function resolveTreasureGirdleOfGiantStrength(options?: {
     event: {
       kind: 'treasureGirdleOfGiantStrength',
       result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureIounStones(options?: {
+  countRoll?: number;
+  stoneRolls?: number[];
+}): DungeonOutcomeNode {
+  const countRoll = options?.countRoll ?? rollDice(10);
+  const count = Math.max(1, Math.min(10, countRoll));
+  const rolls = options?.stoneRolls ?? [];
+  const stones: TreasureIounStonesResult['stones'] = [];
+  const seen = new Map<TreasureIounStoneType, number>();
+
+  for (let index = 0; index < count; index += 1) {
+    const preset = rolls[index];
+    const usedRoll =
+      preset !== undefined ? preset : rollDice(treasureIounStones.sides);
+    const type: TreasureIounStoneType = getTableEntry(
+      usedRoll,
+      treasureIounStones
+    );
+    const definition = IOUN_STONE_DEFINITIONS[type];
+    const firstIndex = seen.get(type);
+    const status: TreasureIounStoneStatus =
+      type === TreasureIounStoneType.DullGray
+        ? 'dead'
+        : firstIndex !== undefined
+        ? 'duplicate'
+        : 'active';
+    if (firstIndex === undefined) {
+      seen.set(type, index);
+    }
+    stones.push({
+      index: index + 1,
+      roll: usedRoll,
+      type,
+      color: definition.color,
+      shape: definition.shape,
+      effect: definition.effect,
+      status,
+      duplicateOf: firstIndex !== undefined ? firstIndex + 1 : undefined,
+    });
+  }
+
+  const result: TreasureIounStonesResult = {
+    countRoll,
+    stones,
+  };
+
+  return {
+    type: 'event',
+    roll: countRoll,
+    event: {
+      kind: 'treasureIounStones',
+      result,
     } as OutcomeEvent,
   };
 }

@@ -289,6 +289,10 @@ import {
   buildTreasureGirdleOfGiantStrengthPreview,
 } from './render/treasureGirdleOfGiantStrength';
 import {
+  renderTreasureIounStonesDetail,
+  renderTreasureIounStonesCompact,
+} from './render/treasureIounStones';
+import {
   renderTreasureHornOfValhallaTypeDetail,
   renderTreasureHornOfValhallaTypeCompact,
   renderTreasureHornOfValhallaAttunementDetail,
@@ -673,6 +677,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasureGirdleOfGiantStrength: {
     renderDetail: renderTreasureGirdleOfGiantStrengthDetail,
     renderCompact: renderTreasureGirdleOfGiantStrengthCompact,
+  },
+  treasureIounStones: {
+    renderDetail: renderTreasureIounStonesDetail,
+    renderCompact: renderTreasureIounStonesCompact,
   },
   treasureHornOfValhallaType: {
     renderDetail: renderTreasureHornOfValhallaTypeDetail,

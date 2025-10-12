@@ -612,6 +612,16 @@ function cloneRenderNode(node: DungeonRenderNode): DungeonRenderNode {
           })),
         },
       };
+    case 'ioun-stones':
+      return {
+        kind: 'ioun-stones',
+        display: node.display,
+        summary: {
+          count: node.summary.count,
+          countRoll: node.summary.countRoll,
+          stones: node.summary.stones.map((stone) => ({ ...stone })),
+        },
+      };
     case 'table-preview':
       return {
         kind: 'table-preview',
@@ -651,6 +661,9 @@ function freezeRenderNode<T extends DungeonRenderNode>(node: T): T {
       freezePartyCharacterSummary(entry.member);
     });
     Object.freeze(node.summary.main);
+  }
+  if (node.kind === 'ioun-stones') {
+    Object.freeze(node.summary.stones);
   }
   return Object.freeze(node);
 }

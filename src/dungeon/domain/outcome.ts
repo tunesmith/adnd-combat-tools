@@ -105,6 +105,7 @@ import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasur
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaAttunement } from '../../tables/dungeon/treasureHornOfValhallaAttunement';
 import type { TreasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
+import type { TreasureIounStoneType } from '../../tables/dungeon/treasureIounStones';
 import type { TreasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
 import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
@@ -504,6 +505,10 @@ export type OutcomeEvent =
       result: TreasureHornOfValhallaAlignment;
     }
   | {
+      kind: 'treasureIounStones';
+      result: TreasureIounStonesResult;
+    }
+  | {
       kind: 'treasureEyesOfPetrification';
       result: TreasureEyesOfPetrification;
     }
@@ -550,6 +555,24 @@ export type TreasureEntry = {
     guardedBy?: TreasureProtectionGuardedBy;
     hiddenBy?: TreasureProtectionHiddenBy;
   };
+};
+
+export type TreasureIounStoneStatus = 'active' | 'duplicate' | 'dead';
+
+export type TreasureIounStone = {
+  index: number;
+  roll: number;
+  type: TreasureIounStoneType;
+  color: string;
+  shape: string;
+  effect: string;
+  status: TreasureIounStoneStatus;
+  duplicateOf?: number;
+};
+
+export type TreasureIounStonesResult = {
+  countRoll: number;
+  stones: TreasureIounStone[];
 };
 
 export type PendingRoll = {

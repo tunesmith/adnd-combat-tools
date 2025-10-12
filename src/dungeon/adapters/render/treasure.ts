@@ -38,6 +38,7 @@ import { sentence as eyesSentence } from './treasureEyesOfPetrification';
 import { cloakSentence } from './treasureCloakOfProtection';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
+import { toIounStonesSummary } from './treasureIounStones';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,
@@ -90,8 +91,19 @@ export function renderTreasureCompactNodes(
     text: headingLabel(withMonster, rollIndex, totalRolls),
   };
   const text = summarizeTreasureCompact(outcome);
-  const paragraph: DungeonMessage = { kind: 'paragraph', text };
-  return [heading, paragraph];
+  const nodes: DungeonRenderNode[] = [heading];
+  if (text.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', text });
+  }
+  const iounStones = findIounStonesEvent(outcome);
+  if (iounStones && iounStones.event.kind === 'treasureIounStones') {
+    nodes.push({
+      kind: 'ioun-stones',
+      summary: toIounStonesSummary(iounStones.event.result),
+      display: 'compact',
+    });
+  }
+  return nodes;
 }
 
 export const buildTreasurePreview: TablePreviewFactory = (tableId, context) => {
@@ -219,6 +231,8 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     if (girdle && girdle.event.kind === 'treasureGirdleOfGiantStrength') {
       return girdleSentence(girdle.event.result);
     }
+    const iounStones = findIounStonesEvent(outcome);
+    if (iounStones) return '';
     const hornType = findChildEvent(miscMagicE3, 'treasureHornOfValhallaType');
     if (hornType && hornType.event.kind === 'treasureHornOfValhallaType') {
       const attunement = findChildEvent(
@@ -267,6 +281,47 @@ export function collectTreasureCompactSummaries(
   };
   visit(node);
   return summaries;
+}
+
+export function collectTreasureCompactMessages(
+  node: OutcomeEventNode
+): DungeonMessage[] {
+  const messages: DungeonMessage[] = [];
+  const visited = new Set<OutcomeEventNode>();
+  const visit = (current: OutcomeEventNode): void => {
+    if (visited.has(current)) return;
+    visited.add(current);
+    if (current.event.kind === 'treasure') {
+      const iounStones = findIounStonesEvent(current);
+      if (iounStones && iounStones.event.kind === 'treasureIounStones') {
+        messages.push({
+          kind: 'ioun-stones',
+          summary: toIounStonesSummary(iounStones.event.result),
+          display: 'compact',
+        });
+      }
+    }
+    current.children?.forEach((child) => {
+      if (child.type === 'event') visit(child);
+    });
+  };
+  visit(node);
+  return messages;
+}
+
+function findIounStonesEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureIounStones') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findIounStonesEvent(child);
+    if (match) return match;
+  }
+  return undefined;
 }
 
 type TreasureDescription = {

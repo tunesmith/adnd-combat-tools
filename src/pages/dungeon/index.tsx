@@ -21,6 +21,8 @@ import type { RenderCache } from '../../dungeon/helpers/renderCache';
 import { countPendingNodes } from '../../dungeon/helpers/outcomeTree';
 import { CharacterPartyDetail } from '../../components/dungeon/CharacterPartyDetail';
 import { CharacterPartyCompact } from '../../components/dungeon/CharacterPartyCompact';
+import { IounStonesDetail } from '../../components/dungeon/IounStonesDetail';
+import { IounStonesCompact } from '../../components/dungeon/IounStonesCompact';
 
 type ActionKind = 'passage' | 'door';
 
@@ -320,6 +322,12 @@ function renderNode(
         <CharacterPartyCompact key={key} summary={m.summary} />
       ) : (
         <CharacterPartyDetail key={key} summary={m.summary} />
+      );
+    case 'ioun-stones':
+      return m.display === 'compact' ? (
+        <IounStonesCompact key={key} summary={m.summary} />
+      ) : (
+        <IounStonesDetail key={key} summary={m.summary} />
       );
     case 'table-preview': {
       const tp = m;

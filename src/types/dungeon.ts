@@ -29,11 +29,33 @@ export type DungeonCharacterPartyMessage = {
   display: 'detail' | 'compact';
 };
 
+export type IounStoneListEntry = {
+  index: number;
+  color: string;
+  shape: string;
+  effect: string;
+  status: 'active' | 'duplicate' | 'dead';
+  duplicateOf?: number;
+};
+
+export type IounStonesSummary = {
+  count: number;
+  countRoll: number;
+  stones: IounStoneListEntry[];
+};
+
+export type DungeonIounStonesMessage = {
+  kind: 'ioun-stones';
+  summary: IounStonesSummary;
+  display: 'detail' | 'compact';
+};
+
 export type DungeonMessage =
   | DungeonParagraph
   | DungeonHeading
   | DungeonBulletList
-  | DungeonCharacterPartyMessage;
+  | DungeonCharacterPartyMessage
+  | DungeonIounStonesMessage;
 
 export type RollTraceItem = {
   table: string;

@@ -3,6 +3,7 @@ import {
   DirectiveMode,
 } from '../../../../support/dungeon/dungeonRollHarness';
 import type { DungeonOutcomeNode } from '../../../../../dungeon/domain/outcome';
+import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
 import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
 import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOfTricks';
@@ -20,6 +21,8 @@ import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/tr
 import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
 import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
+import { TreasureIounStoneType } from '../../../../../tables/dungeon/treasureIounStones';
+import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage compact treasure misc magic E1 handling', () => {
   it('resolves the bag of beans result in compact mode', () => {
@@ -628,6 +631,57 @@ describe('passage compact treasure misc magic E1 handling', () => {
     expect(compactParagraphs).toContain('there is a crystal ball with esp.');
   });
 
+  it('resolves ioun stones with duplicates in compact mode', () => {
+    const { result, unused } = withMockedDice([4, 2, 2, 15, 8], () =>
+      simulateCompactRunWithSequence({
+        action: 'passage',
+        rolls: [
+          14,
+          { tableId: 'chamberDimensions', roll: 1 },
+          { tableId: 'chamberRoomContents', roll: 20 },
+          { tableId: 'treasure', roll: 98 },
+          { tableId: 'treasureMagicCategory', roll: 52 },
+          { tableId: 'treasureMiscMagicE3', roll: 72 },
+        ],
+        dungeonLevel: 1,
+        allowUnusedRolls: true,
+        mode: DirectiveMode.ManualThenAuto,
+      })
+    );
+
+    expect(unused).toHaveLength(0);
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE3');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE3') {
+      throw new Error('treasureMiscMagicE3 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE3.IounStones);
+
+    const stonesEvent = findEvent(result.outcome, 'treasureIounStones');
+    expect(stonesEvent).toBeDefined();
+    if (!stonesEvent || stonesEvent.event.kind !== 'treasureIounStones') {
+      throw new Error('treasureIounStones event not found');
+    }
+
+    const { stones, countRoll } = stonesEvent.event.result;
+    expect(countRoll).toBe(4);
+    expect(stones).toHaveLength(4);
+    expect(stones[0]?.type).toBe(TreasureIounStoneType.ScarletAndBlue);
+    expect(stones[0]?.status).toBe('active');
+    expect(stones[1]?.status).toBe('duplicate');
+    expect(stones[1]?.duplicateOf).toBe(1);
+    expect(stones[2]?.status).toBe('dead');
+    expect(stones[3]?.status).toBe('active');
+
+    expect(
+      result.compact.nodes.some(
+        (node): node is Extract<DungeonRenderNode, { kind: 'ioun-stones' }> =>
+          node.kind === 'ioun-stones'
+      )
+    ).toBe(true);
+  });
+
   it('resolves deck of many things composition in compact mode', () => {
     const result = simulateCompactRunWithSequence({
       action: 'passage',
@@ -696,6 +750,45 @@ describe('passage compact treasure misc magic E1 handling', () => {
     );
   });
 });
+
+function withMockedDice<T>(
+  rolls: number[],
+  fn: () => T
+): {
+  result: T;
+  unused: number[];
+} {
+  const queue = [...rolls];
+  const originalRollDice = dungeonLookup.rollDice;
+  const spy = jest
+    .spyOn(dungeonLookup, 'rollDice')
+    .mockImplementation((sides: number, count = 1) => {
+      let total = 0;
+      for (let i = 0; i < count; i += 1) {
+        if (queue.length === 0) {
+          total += originalRollDice.call(dungeonLookup, sides, count - i);
+          break;
+        }
+        const value = queue.shift();
+        if (value === undefined) {
+          throw new Error('Ran out of predetermined rolls for rollDice.');
+        }
+        if (value < 1 || value > sides) {
+          throw new Error(
+            `Predetermined roll ${value} is invalid for d${sides}.`
+          );
+        }
+        total += value;
+      }
+      return total;
+    });
+  try {
+    const result = fn();
+    return { result, unused: [...queue] };
+  } finally {
+    spy.mockRestore();
+  }
+}
 
 type EventNode = Extract<DungeonOutcomeNode, { type: 'event' }>;
 function findEvent(

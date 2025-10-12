@@ -20,6 +20,7 @@ import {
 } from './monsters';
 import { renderTrickTrapCompact } from './trickTrap';
 import { renderChamberDimensionsCompact } from './chamberDimensions';
+import { collectTreasureCompactMessages } from './treasure';
 
 export const DEAD_END_FALLBACK_TEXT =
   'The passage reaches a dead end. Walls left, right, and ahead can each be checked for a 25% chance of a secret door. Characters would still need to roll to detect. ';
@@ -271,9 +272,13 @@ function summarizePeriodicResult(
       const partyMessages = chamber
         ? collectCharacterPartyMessages(chamber, 'compact')
         : [];
+      const treasureMessages = chamber
+        ? collectTreasureCompactMessages(chamber)
+        : [];
+      const extraNodes = [...partyMessages, ...treasureMessages];
       return {
         text: `${base.compact}${detail}`.trimEnd() + ' ',
-        nodes: partyMessages.length > 0 ? partyMessages : undefined,
+        nodes: extraNodes.length > 0 ? extraNodes : undefined,
       };
     }
     case PeriodicCheck.Stairs: {

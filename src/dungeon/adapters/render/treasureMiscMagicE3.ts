@@ -8,6 +8,7 @@ import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
 import { girdleSentence } from './treasureGirdleOfGiantStrength';
+import { toIounStonesSummary } from './treasureIounStones';
 import { hornSentence } from './treasureHornOfValhalla';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE3, string> = {
@@ -61,6 +62,7 @@ export function renderTreasureMiscMagicE3Detail(
   );
   const girdleChild = findChildEvent(outcome, 'treasureGirdleOfGiantStrength');
   const hornTypeChild = findChildEvent(outcome, 'treasureHornOfValhallaType');
+  const iounChild = findChildEvent(outcome, 'treasureIounStones');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -76,7 +78,8 @@ export function renderTreasureMiscMagicE3Detail(
       outcome.event.result,
       figurineChild,
       girdleChild,
-      hornTypeChild
+      hornTypeChild,
+      iounChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -95,6 +98,7 @@ export function renderTreasureMiscMagicE3Compact(
   );
   const girdleChild = findChildEvent(outcome, 'treasureGirdleOfGiantStrength');
   const hornTypeChild = findChildEvent(outcome, 'treasureHornOfValhallaType');
+  const iounChild = findChildEvent(outcome, 'treasureIounStones');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -106,10 +110,18 @@ export function renderTreasureMiscMagicE3Compact(
       outcome.event.result,
       figurineChild,
       girdleChild,
-      hornTypeChild
+      hornTypeChild,
+      iounChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
+  if (iounChild && iounChild.event.kind === 'treasureIounStones') {
+    nodes.push({
+      kind: 'ioun-stones',
+      summary: toIounStonesSummary(iounChild.event.result),
+      display: 'compact',
+    });
+  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -127,6 +139,9 @@ export const buildTreasureMiscMagicE3Preview: TablePreviewFactory = (tableId) =>
 export function miscMagicE3Sentence(result: TreasureMiscMagicE3): string {
   const label = ITEM_LABELS[result];
   const normalized = stripUsageTag(label);
+  if (normalized.toLowerCase() === 'ioun stones') {
+    return 'There are ioun stones awaiting identification.';
+  }
   return `There is ${articleFor(normalized)} ${normalized}.`;
 }
 
@@ -134,7 +149,8 @@ function resolvedSentence(
   result: TreasureMiscMagicE3,
   figurineChild?: OutcomeEventNode,
   girdleChild?: OutcomeEventNode,
-  hornTypeChild?: OutcomeEventNode
+  hornTypeChild?: OutcomeEventNode,
+  iounChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE3.FigurineOfWondrousPower &&
@@ -153,6 +169,20 @@ function resolvedSentence(
     girdleChild.event.kind === 'treasureGirdleOfGiantStrength'
   ) {
     return girdleSentence(girdleChild.event.result);
+  }
+  if (
+    result === TreasureMiscMagicE3.IounStones &&
+    iounChild &&
+    iounChild.event.kind === 'treasureIounStones'
+  ) {
+    const summary = toIounStonesSummary(iounChild.event.result);
+    if (summary.count === 0) {
+      return 'There are no ioun stones.';
+    }
+    if (summary.count === 1) {
+      return 'There is 1 ioun stone awaiting identification.';
+    }
+    return `There are ${summary.count} ioun stones awaiting identification.`;
   }
   if (
     result === TreasureMiscMagicE3.HornOfValhalla &&
