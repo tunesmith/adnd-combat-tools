@@ -31,6 +31,7 @@ import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/t
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
 import { TreasureInstrumentOfTheBards } from '../../../../../tables/dungeon/treasureInstrumentOfTheBards';
+import { TreasureIronFlaskContent } from '../../../../../tables/dungeon/treasureIronFlask';
 import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
 import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
@@ -1260,6 +1261,79 @@ describe('passage contents', () => {
       .join(' ');
     expect(compactText).toContain(
       'there is an instrument of the bards: mac-fuirmidh cittern.'
+    );
+  });
+
+  it('renders iron flask contents with structured output', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 79);
+
+    const ironTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureIronFlask')
+    );
+    const ironTarget = ironTargets[0];
+    if (!ironTarget) throw new Error('missing iron flask target');
+    feed = resolvePreview(feed, ironTarget, 52);
+
+    const ironFlaskEvent = findOutcomeEvent(feed.outcome, 'treasureIronFlask');
+    expect(ironFlaskEvent).toBeDefined();
+    if (!ironFlaskEvent || ironFlaskEvent.event.kind !== 'treasureIronFlask') {
+      throw new Error('iron flask event not found');
+    }
+    expect(ironFlaskEvent.event.result).toBe(
+      TreasureIronFlaskContent.AirElemental
+    );
+
+    const detailText = renderDetail(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(detailText).toContain(
+      'there is an iron flask. it contains an air elemental.'
+    );
+
+    const compactText = renderCompact(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(compactText).toContain(
+      'there is an iron flask. it contains an air elemental.'
     );
   });
 

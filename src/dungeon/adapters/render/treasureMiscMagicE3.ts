@@ -9,6 +9,7 @@ import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
 import { girdleSentence } from './treasureGirdleOfGiantStrength';
 import { instrumentOfTheBardsSentence } from './treasureInstrumentOfTheBards';
+import { ironFlaskSentence } from './treasureIronFlask';
 import { toIounStonesSummary } from './treasureIounStones';
 import { hornSentence } from './treasureHornOfValhalla';
 
@@ -67,6 +68,7 @@ export function renderTreasureMiscMagicE3Detail(
     outcome,
     'treasureInstrumentOfTheBards'
   );
+  const ironFlaskChild = findChildEvent(outcome, 'treasureIronFlask');
   const iounChild = findChildEvent(outcome, 'treasureIounStones');
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -85,6 +87,7 @@ export function renderTreasureMiscMagicE3Detail(
       girdleChild,
       hornTypeChild,
       instrumentChild,
+      ironFlaskChild,
       iounChild
     ),
   };
@@ -108,6 +111,7 @@ export function renderTreasureMiscMagicE3Compact(
     outcome,
     'treasureInstrumentOfTheBards'
   );
+  const ironFlaskChild = findChildEvent(outcome, 'treasureIronFlask');
   const iounChild = findChildEvent(outcome, 'treasureIounStones');
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -122,6 +126,7 @@ export function renderTreasureMiscMagicE3Compact(
       girdleChild,
       hornTypeChild,
       instrumentChild,
+      ironFlaskChild,
       iounChild
     ),
   };
@@ -162,6 +167,7 @@ function resolvedSentence(
   girdleChild?: OutcomeEventNode,
   hornTypeChild?: OutcomeEventNode,
   instrumentChild?: OutcomeEventNode,
+  ironFlaskChild?: OutcomeEventNode,
   iounChild?: OutcomeEventNode
 ): string {
   if (
@@ -188,6 +194,13 @@ function resolvedSentence(
     instrumentChild.event.kind === 'treasureInstrumentOfTheBards'
   ) {
     return instrumentOfTheBardsSentence(instrumentChild.event.result);
+  }
+  if (
+    result === TreasureMiscMagicE3.IronFlask &&
+    ironFlaskChild &&
+    ironFlaskChild.event.kind === 'treasureIronFlask'
+  ) {
+    return ironFlaskSentence(ironFlaskChild.event.result);
   }
   if (
     result === TreasureMiscMagicE3.IounStones &&

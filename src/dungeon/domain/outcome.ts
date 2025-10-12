@@ -110,6 +110,7 @@ import type { TreasureEyesOfPetrification } from '../../tables/dungeon/treasureE
 import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
 import type { TreasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
+import type { TreasureIronFlaskContent } from '../../tables/dungeon/treasureIronFlask';
 import type { TreasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type {
@@ -539,6 +540,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureInstrumentOfTheBards';
       result: TreasureInstrumentOfTheBards;
+    }
+  | {
+      kind: 'treasureIronFlask';
+      result: TreasureIronFlaskContent;
     }
   | {
       kind: 'treasureCrystalBall';

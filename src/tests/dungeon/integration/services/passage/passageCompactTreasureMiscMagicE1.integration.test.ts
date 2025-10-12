@@ -14,6 +14,7 @@ import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/t
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
 import { TreasureInstrumentOfTheBards } from '../../../../../tables/dungeon/treasureInstrumentOfTheBards';
+import { TreasureIronFlaskContent } from '../../../../../tables/dungeon/treasureIronFlask';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
@@ -469,6 +470,41 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .join(' ');
     expect(compactParagraphs).toContain(
       'there is an instrument of the bards: anstruth harp.'
+    );
+  });
+
+  it('resolves iron flask contents in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 52 },
+        { tableId: 'treasureMiscMagicE3', roll: 79 },
+        { tableId: 'treasureIronFlask', roll: 52 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const ironFlaskEvent = findEvent(result.outcome, 'treasureIronFlask');
+    expect(ironFlaskEvent).toBeDefined();
+    if (!ironFlaskEvent || ironFlaskEvent.event.kind !== 'treasureIronFlask') {
+      throw new Error('iron flask event not found');
+    }
+    expect(ironFlaskEvent.event.result).toBe(
+      TreasureIronFlaskContent.AirElemental
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is an iron flask. it contains an air elemental.'
     );
   });
 

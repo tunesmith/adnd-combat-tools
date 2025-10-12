@@ -149,6 +149,8 @@ import { treasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGird
 import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
 import { treasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
 import type { TreasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
+import { treasureIronFlask } from '../../tables/dungeon/treasureIronFlask';
+import type { TreasureIronFlaskContent } from '../../tables/dungeon/treasureIronFlask';
 import {
   treasureIounStones,
   TreasureIounStoneType,
@@ -2138,6 +2140,8 @@ export function resolveTreasureMiscMagicE3(options?: {
       type: 'pending-roll',
       table: 'treasureInstrumentOfTheBards',
     });
+  } else if (command === TreasureMiscMagicE3.IronFlask) {
+    children.push({ type: 'pending-roll', table: 'treasureIronFlask' });
   } else if (command === TreasureMiscMagicE3.HornOfValhalla) {
     children.push({
       type: 'pending-roll',
@@ -2455,6 +2459,24 @@ export function resolveTreasureInstrumentOfTheBards(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureInstrumentOfTheBards',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureIronFlask(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureIronFlask.sides);
+  const command: TreasureIronFlaskContent = getTableEntry(
+    usedRoll,
+    treasureIronFlask
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureIronFlask',
       result: command,
     } as OutcomeEvent,
   };

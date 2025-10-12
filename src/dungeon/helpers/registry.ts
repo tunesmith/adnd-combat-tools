@@ -102,6 +102,7 @@ import {
   resolveTreasureFigurineMarbleElephant,
   resolveTreasureGirdleOfGiantStrength,
   resolveTreasureInstrumentOfTheBards,
+  resolveTreasureIronFlask,
   resolveTreasureIounStones,
   resolveTreasureHornOfValhallaType,
   resolveTreasureHornOfValhallaAttunement,
@@ -223,6 +224,7 @@ const TABLE_ID_LIST = [
   'treasureFigurineMarbleElephant',
   'treasureGirdleOfGiantStrength',
   'treasureInstrumentOfTheBards',
+  'treasureIronFlask',
   'treasureHornOfValhallaType',
   'treasureHornOfValhallaAttunement',
   'treasureHornOfValhallaAlignment',
@@ -333,6 +335,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureFigurineMarbleElephant: 'Marble Elephant Form',
   treasureGirdleOfGiantStrength: 'Giant Strength Type',
   treasureInstrumentOfTheBards: 'Instrument of the Bards',
+  treasureIronFlask: 'Iron Flask Contents',
   treasureHornOfValhallaType: 'Horn Type',
   treasureHornOfValhallaAttunement: 'Attunement',
   treasureHornOfValhallaAlignment: 'Alignment',
@@ -835,6 +838,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureGirdleOfGiantStrength({ roll })),
   treasureInstrumentOfTheBards: ({ roll }) =>
     fromOutcome(resolveTreasureInstrumentOfTheBards({ roll })),
+  treasureIronFlask: ({ roll }) =>
+    fromOutcome(resolveTreasureIronFlask({ roll })),
   treasureIounStones: ({ roll }) =>
     fromOutcome(resolveTreasureIounStones({ countRoll: roll })),
   treasureHornOfValhallaType: ({ roll }) =>
