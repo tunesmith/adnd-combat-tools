@@ -11,6 +11,7 @@ import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
+import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
@@ -381,6 +382,45 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .join(' ');
     expect(compactParagraphs).toContain(
       'there is a figurine of wondrous power. the figurine is a marble elephant (african loxodont).'
+    );
+  });
+
+  it('resolves girdle of giant strength variants in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 52 },
+        { tableId: 'treasureMiscMagicE3', roll: 29 },
+        { tableId: 'treasureGirdleOfGiantStrength', roll: 72 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const girdleEvent = findEvent(
+      result.outcome,
+      'treasureGirdleOfGiantStrength'
+    );
+    expect(girdleEvent).toBeDefined();
+    if (
+      !girdleEvent ||
+      girdleEvent.event.kind !== 'treasureGirdleOfGiantStrength'
+    ) {
+      throw new Error('girdle event not found');
+    }
+    expect(girdleEvent.event.result).toBe(TreasureGirdleOfGiantStrength.Fire);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is a girdle of fire giant strength (c, f, t).'
     );
   });
 

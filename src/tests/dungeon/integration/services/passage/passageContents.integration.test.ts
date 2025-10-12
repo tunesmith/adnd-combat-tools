@@ -29,6 +29,7 @@ import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasure
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
+import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
@@ -1049,6 +1050,77 @@ describe('passage contents', () => {
       .join(' ');
     expect(compactText).toContain(
       'there is a figurine of wondrous power. the figurine is a marble elephant (prehistoric (mammoth)).'
+    );
+  });
+
+  it('resolves girdle of giant strength variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 29);
+
+    const girdleTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureGirdleOfGiantStrength'
+      )
+    );
+    const girdleTarget = girdleTargets[0];
+    if (!girdleTarget) throw new Error('missing girdle target');
+    feed = resolvePreview(feed, girdleTarget, 40);
+
+    const girdleEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureGirdleOfGiantStrength'
+    );
+    expect(girdleEvent).toBeDefined();
+    if (
+      !girdleEvent ||
+      girdleEvent.event.kind !== 'treasureGirdleOfGiantStrength'
+    ) {
+      throw new Error('girdle event not found');
+    }
+    expect(girdleEvent.event.result).toBe(TreasureGirdleOfGiantStrength.Stone);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a girdle of stone giant strength (c, f, t).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a girdle of stone giant strength (c, f, t).'
     );
   });
 

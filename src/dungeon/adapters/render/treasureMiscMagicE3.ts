@@ -7,6 +7,7 @@ import {
 import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
+import { girdleSentence } from './treasureGirdleOfGiantStrength';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE3, string> = {
   [TreasureMiscMagicE3.FigurineOfWondrousPower]: 'Figurine of Wondrous Power',
@@ -57,6 +58,7 @@ export function renderTreasureMiscMagicE3Detail(
     outcome,
     'treasureFigurineOfWondrousPower'
   );
+  const girdleChild = findChildEvent(outcome, 'treasureGirdleOfGiantStrength');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -68,7 +70,7 @@ export function renderTreasureMiscMagicE3Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, figurineChild),
+    text: resolvedSentence(outcome.event.result, figurineChild, girdleChild),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -84,6 +86,7 @@ export function renderTreasureMiscMagicE3Compact(
     outcome,
     'treasureFigurineOfWondrousPower'
   );
+  const girdleChild = findChildEvent(outcome, 'treasureGirdleOfGiantStrength');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -91,7 +94,7 @@ export function renderTreasureMiscMagicE3Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, figurineChild),
+    text: resolvedSentence(outcome.event.result, figurineChild, girdleChild),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -116,7 +119,8 @@ export function miscMagicE3Sentence(result: TreasureMiscMagicE3): string {
 
 function resolvedSentence(
   result: TreasureMiscMagicE3,
-  figurineChild?: OutcomeEventNode
+  figurineChild?: OutcomeEventNode,
+  girdleChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE3.FigurineOfWondrousPower &&
@@ -128,6 +132,13 @@ function resolvedSentence(
       'treasureFigurineMarbleElephant'
     );
     return figurineSentence(figurineChild.event.result, marbleChild);
+  }
+  if (
+    result === TreasureMiscMagicE3.GirdleOfGiantStrength &&
+    girdleChild &&
+    girdleChild.event.kind === 'treasureGirdleOfGiantStrength'
+  ) {
+    return girdleSentence(girdleChild.event.result);
   }
   return miscMagicE3Sentence(result);
 }

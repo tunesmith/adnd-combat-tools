@@ -145,6 +145,8 @@ import {
 } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { treasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
+import { treasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
+import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
 import { treasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import { treasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
@@ -2105,6 +2107,11 @@ export function resolveTreasureMiscMagicE3(options?: {
       type: 'pending-roll',
       table: 'treasureFigurineOfWondrousPower',
     });
+  } else if (command === TreasureMiscMagicE3.GirdleOfGiantStrength) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureGirdleOfGiantStrength',
+    });
   }
   return {
     type: 'event',
@@ -2158,6 +2165,25 @@ export function resolveTreasureFigurineMarbleElephant(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureFigurineMarbleElephant',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureGirdleOfGiantStrength(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureGirdleOfGiantStrength.sides);
+  const command: TreasureGirdleOfGiantStrength = getTableEntry(
+    usedRoll,
+    treasureGirdleOfGiantStrength
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureGirdleOfGiantStrength',
       result: command,
     } as OutcomeEvent,
   };

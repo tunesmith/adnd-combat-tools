@@ -29,6 +29,7 @@ import { purseSentence } from './treasureBucknardsEverfullPurse';
 import { artifactSentence } from './treasureArtifactOrRelic';
 import { miscMagicE2Sentence } from './treasureMiscMagicE2';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
+import { girdleSentence } from './treasureGirdleOfGiantStrength';
 import { miscMagicE3Sentence } from './treasureMiscMagicE3';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
@@ -212,6 +213,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     if (figurine && figurine.event.kind === 'treasureFigurineOfWondrousPower') {
       const marble = findChildEvent(figurine, 'treasureFigurineMarbleElephant');
       return figurineSentence(figurine.event.result, marble);
+    }
+    const girdle = findChildEvent(miscMagicE3, 'treasureGirdleOfGiantStrength');
+    if (girdle && girdle.event.kind === 'treasureGirdleOfGiantStrength') {
+      return girdleSentence(girdle.event.result);
     }
     return miscMagicE3Sentence(miscMagicE3.event.result);
   }

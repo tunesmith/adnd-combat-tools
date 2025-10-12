@@ -89,6 +89,7 @@ import {
   resolveTreasureDeckOfManyThings,
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
+  resolveTreasureGirdleOfGiantStrength,
   resolveTreasureMiscMagicE3,
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE2,
@@ -723,6 +724,8 @@ function resolvePendingNode(
       return resolveTreasureFigurineOfWondrousPower({});
     case 'treasureFigurineMarbleElephant':
       return resolveTreasureFigurineMarbleElephant({});
+    case 'treasureGirdleOfGiantStrength':
+      return resolveTreasureGirdleOfGiantStrength({});
     case 'treasureEyesOfPetrification':
       return resolveTreasureEyesOfPetrification({});
     case 'treasureMiscMagicE1': {

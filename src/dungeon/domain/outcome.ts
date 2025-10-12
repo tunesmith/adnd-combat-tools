@@ -101,6 +101,7 @@ import type { TreasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagic
 import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureFigurineOfWondrousPower } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
+import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
 import type { TreasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
 import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
@@ -482,6 +483,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureFigurineMarbleElephant';
       result: TreasureFigurineMarbleElephant;
+    }
+  | {
+      kind: 'treasureGirdleOfGiantStrength';
+      result: TreasureGirdleOfGiantStrength;
     }
   | {
       kind: 'treasureEyesOfPetrification';
