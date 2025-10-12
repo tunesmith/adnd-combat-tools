@@ -87,6 +87,8 @@ import {
   resolveTreasureBucknardsEverfullPurse,
   resolveTreasureArtifactOrRelic,
   resolveTreasureDeckOfManyThings,
+  resolveTreasureFigurineOfWondrousPower,
+  resolveTreasureFigurineMarbleElephant,
   resolveTreasureMiscMagicE3,
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE2,
@@ -717,6 +719,10 @@ function resolvePendingNode(
       return resolveTreasureCrystalBall({});
     case 'treasureDeckOfManyThings':
       return resolveTreasureDeckOfManyThings({});
+    case 'treasureFigurineOfWondrousPower':
+      return resolveTreasureFigurineOfWondrousPower({});
+    case 'treasureFigurineMarbleElephant':
+      return resolveTreasureFigurineMarbleElephant({});
     case 'treasureEyesOfPetrification':
       return resolveTreasureEyesOfPetrification({});
     case 'treasureMiscMagicE1': {

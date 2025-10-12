@@ -95,6 +95,8 @@ import type { TreasureMiscMagicE1 } from './treasureMiscMagicE1';
 import type { TreasureMiscMagicE2 } from './treasureMiscMagicE2';
 import type { TreasureMiscMagicE3 } from './treasureMiscMagicE3';
 import type { TreasureDeckOfManyThings } from './treasureDeckOfManyThings';
+import type { TreasureFigurineOfWondrousPower } from './treasureFigurineOfWondrousPower';
+import type { TreasureFigurineMarbleElephant } from './treasureFigurineMarbleElephant';
 import type { TreasureEyesOfPetrification } from './treasureEyesOfPetrification';
 import type { TreasureCarpetOfFlying } from './treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from './treasureCloakOfProtection';
@@ -213,6 +215,8 @@ export type Command =
   | TreasureMiscMagicE2
   | TreasureMiscMagicE3
   | TreasureMiscMagicE1
+  | TreasureFigurineOfWondrousPower
+  | TreasureFigurineMarbleElephant
   | TreasureStaffSerpent
   | TreasureCarpetOfFlying
   | TreasureCloakOfProtection

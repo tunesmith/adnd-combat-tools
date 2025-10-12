@@ -9,6 +9,8 @@ import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOf
 import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
 import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
+import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
+import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
@@ -323,6 +325,63 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('there is a helm of teleportation.');
+  });
+
+  it('resolves figurine of wondrous power variants in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 52 },
+        { tableId: 'treasureMiscMagicE3', roll: 8 },
+        { tableId: 'treasureFigurineOfWondrousPower', roll: 45 },
+        { tableId: 'treasureFigurineMarbleElephant', roll: 70 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const figurineEvent = findEvent(
+      result.outcome,
+      'treasureFigurineOfWondrousPower'
+    );
+    expect(figurineEvent).toBeDefined();
+    if (
+      !figurineEvent ||
+      figurineEvent.event.kind !== 'treasureFigurineOfWondrousPower'
+    ) {
+      throw new Error('figurine event not found');
+    }
+    expect(figurineEvent.event.result).toBe(
+      TreasureFigurineOfWondrousPower.MarbleElephant
+    );
+
+    const marbleEvent = findEvent(
+      result.outcome,
+      'treasureFigurineMarbleElephant'
+    );
+    expect(marbleEvent).toBeDefined();
+    if (
+      !marbleEvent ||
+      marbleEvent.event.kind !== 'treasureFigurineMarbleElephant'
+    ) {
+      throw new Error('marble elephant event not found');
+    }
+    expect(marbleEvent.event.result).toBe(
+      TreasureFigurineMarbleElephant.African
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is a figurine of wondrous power. the figurine is a marble elephant (african loxodont).'
+    );
   });
 
   it('resolves cloak of protection bonus in compact mode', () => {

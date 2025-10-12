@@ -4,8 +4,9 @@ import {
   treasureMiscMagicE3,
   TreasureMiscMagicE3,
 } from '../../../tables/dungeon/treasureMiscMagicE3';
-import { buildPreview } from './shared';
+import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+import { figurineSentence } from './treasureFigurineOfWondrousPower';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE3, string> = {
   [TreasureMiscMagicE3.FigurineOfWondrousPower]: 'Figurine of Wondrous Power',
@@ -52,6 +53,10 @@ export function renderTreasureMiscMagicE3Detail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE3') return [];
+  const figurineChild = findChildEvent(
+    outcome,
+    'treasureFigurineOfWondrousPower'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -63,7 +68,7 @@ export function renderTreasureMiscMagicE3Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: miscMagicE3Sentence(outcome.event.result),
+    text: resolvedSentence(outcome.event.result, figurineChild),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -75,6 +80,10 @@ export function renderTreasureMiscMagicE3Compact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE3') return [];
+  const figurineChild = findChildEvent(
+    outcome,
+    'treasureFigurineOfWondrousPower'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -82,7 +91,7 @@ export function renderTreasureMiscMagicE3Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: miscMagicE3Sentence(outcome.event.result),
+    text: resolvedSentence(outcome.event.result, figurineChild),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -103,6 +112,24 @@ export function miscMagicE3Sentence(result: TreasureMiscMagicE3): string {
   const label = ITEM_LABELS[result];
   const normalized = stripUsageTag(label);
   return `There is ${articleFor(normalized)} ${normalized}.`;
+}
+
+function resolvedSentence(
+  result: TreasureMiscMagicE3,
+  figurineChild?: OutcomeEventNode
+): string {
+  if (
+    result === TreasureMiscMagicE3.FigurineOfWondrousPower &&
+    figurineChild &&
+    figurineChild.event.kind === 'treasureFigurineOfWondrousPower'
+  ) {
+    const marbleChild = findChildEvent(
+      figurineChild,
+      'treasureFigurineMarbleElephant'
+    );
+    return figurineSentence(figurineChild.event.result, marbleChild);
+  }
+  return miscMagicE3Sentence(result);
 }
 
 function stripUsageTag(label: string): string {

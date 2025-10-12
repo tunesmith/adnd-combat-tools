@@ -274,6 +274,16 @@ import {
   buildTreasureMiscMagicE3Preview,
 } from './render/treasureMiscMagicE3';
 import {
+  renderTreasureFigurineOfWondrousPowerDetail,
+  renderTreasureFigurineOfWondrousPowerCompact,
+  buildTreasureFigurineOfWondrousPowerPreview,
+} from './render/treasureFigurineOfWondrousPower';
+import {
+  renderTreasureFigurineMarbleElephantDetail,
+  renderTreasureFigurineMarbleElephantCompact,
+  buildTreasureFigurineMarbleElephantPreview,
+} from './render/treasureFigurineMarbleElephant';
+import {
   renderTreasureCarpetOfFlyingDetail,
   renderTreasureCarpetOfFlyingCompact,
   buildTreasureCarpetOfFlyingPreview,
@@ -636,6 +646,14 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureMiscMagicE3Detail,
     renderCompact: renderTreasureMiscMagicE3Compact,
   },
+  treasureFigurineOfWondrousPower: {
+    renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
+    renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
+  },
+  treasureFigurineMarbleElephant: {
+    renderDetail: renderTreasureFigurineMarbleElephantDetail,
+    renderCompact: renderTreasureFigurineMarbleElephantCompact,
+  },
   treasureCarpetOfFlying: {
     renderDetail: renderTreasureCarpetOfFlyingDetail,
     renderCompact: renderTreasureCarpetOfFlyingCompact,
@@ -783,6 +801,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureArtifactOrRelic: buildTreasureArtifactOrRelicPreview,
   treasureMiscMagicE2: buildTreasureMiscMagicE2Preview,
   treasureMiscMagicE3: buildTreasureMiscMagicE3Preview,
+  treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
+  treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
   treasureCarpetOfFlying: buildTreasureCarpetOfFlyingPreview,
   treasureCloakOfProtection: buildTreasureCloakOfProtectionPreview,
   treasureCrystalBall: buildTreasureCrystalBallPreview,
@@ -1084,6 +1104,12 @@ function previewForEventNode(
       break;
     case 'treasureMiscMagicE3':
       tableId = 'treasureMiscMagicE3';
+      break;
+    case 'treasureFigurineOfWondrousPower':
+      tableId = 'treasureFigurineOfWondrousPower';
+      break;
+    case 'treasureFigurineMarbleElephant':
+      tableId = 'treasureFigurineMarbleElephant';
       break;
     case 'treasureDeckOfManyThings':
       tableId = 'treasureDeckOfManyThings';

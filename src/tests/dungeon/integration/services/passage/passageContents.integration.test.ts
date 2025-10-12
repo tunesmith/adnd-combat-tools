@@ -27,6 +27,8 @@ import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureA
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
+import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
+import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
@@ -951,6 +953,103 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a helm of teleportation.');
+  });
+
+  it('resolves figurine of wondrous power variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 10);
+
+    const figurineTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureFigurineOfWondrousPower'
+      )
+    );
+    const figurineTarget = figurineTargets[0];
+    if (!figurineTarget) throw new Error('missing figurine target');
+    feed = resolvePreview(feed, figurineTarget, 44);
+
+    const marbleTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureFigurineMarbleElephant'
+      )
+    );
+    const marbleTarget = marbleTargets[0];
+    if (!marbleTarget) throw new Error('missing marble elephant target');
+    feed = resolvePreview(feed, marbleTarget, 92);
+
+    const figurineEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureFigurineOfWondrousPower'
+    );
+    expect(figurineEvent).toBeDefined();
+    if (
+      !figurineEvent ||
+      figurineEvent.event.kind !== 'treasureFigurineOfWondrousPower'
+    ) {
+      throw new Error('figurine event not found');
+    }
+    expect(figurineEvent.event.result).toBe(
+      TreasureFigurineOfWondrousPower.MarbleElephant
+    );
+
+    const marbleEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureFigurineMarbleElephant'
+    );
+    expect(marbleEvent).toBeDefined();
+    if (
+      !marbleEvent ||
+      marbleEvent.event.kind !== 'treasureFigurineMarbleElephant'
+    ) {
+      throw new Error('marble elephant event not found');
+    }
+    expect(marbleEvent.event.result).toBe(
+      TreasureFigurineMarbleElephant.PrehistoricMammoth
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a figurine of wondrous power. the figurine is a marble elephant (prehistoric (mammoth)).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a figurine of wondrous power. the figurine is a marble elephant (prehistoric (mammoth)).'
+    );
   });
 
   it('resolves crystal ball variants from miscellaneous magic', () => {

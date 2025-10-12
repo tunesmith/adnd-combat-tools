@@ -135,8 +135,16 @@ import {
   treasureMiscMagicE2,
   TreasureMiscMagicE2,
 } from '../../tables/dungeon/treasureMiscMagicE2';
-import { treasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagicE3';
-import type { TreasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagicE3';
+import {
+  treasureMiscMagicE3,
+  TreasureMiscMagicE3,
+} from '../../tables/dungeon/treasureMiscMagicE3';
+import {
+  treasureFigurineOfWondrousPower,
+  TreasureFigurineOfWondrousPower,
+} from '../../tables/dungeon/treasureFigurineOfWondrousPower';
+import { treasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
+import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
 import { treasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import { treasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
@@ -2091,11 +2099,65 @@ export function resolveTreasureMiscMagicE3(options?: {
     usedRoll,
     treasureMiscMagicE3
   );
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureMiscMagicE3.FigurineOfWondrousPower) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureFigurineOfWondrousPower',
+    });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: {
       kind: 'treasureMiscMagicE3',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureFigurineOfWondrousPower(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureFigurineOfWondrousPower.sides);
+  const command: TreasureFigurineOfWondrousPower = getTableEntry(
+    usedRoll,
+    treasureFigurineOfWondrousPower
+  );
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureFigurineOfWondrousPower.MarbleElephant) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureFigurineMarbleElephant',
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureFigurineOfWondrousPower',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureFigurineMarbleElephant(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureFigurineMarbleElephant.sides);
+  const command: TreasureFigurineMarbleElephant = getTableEntry(
+    usedRoll,
+    treasureFigurineMarbleElephant
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureFigurineMarbleElephant',
       result: command,
     } as OutcomeEvent,
   };
