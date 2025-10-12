@@ -17,6 +17,9 @@ import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasure
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
 import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
+import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
+import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
+import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
 
 describe('passage compact treasure misc magic E1 handling', () => {
   it('resolves the bag of beans result in compact mode', () => {
@@ -421,6 +424,145 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .join(' ');
     expect(compactParagraphs).toContain(
       'there is a girdle of fire giant strength (c, f, t).'
+    );
+  });
+
+  it('resolves non-aligned horn of valhalla in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 52 },
+        { tableId: 'treasureMiscMagicE3', roll: 56 },
+        { tableId: 'treasureHornOfValhallaType', roll: 19 },
+        { tableId: 'treasureHornOfValhallaAttunement', roll: 18 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE3');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE3') {
+      throw new Error('treasureMiscMagicE3 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE3.HornOfValhalla);
+
+    const hornTypeEvent = findEvent(
+      result.outcome,
+      'treasureHornOfValhallaType'
+    );
+    expect(hornTypeEvent).toBeDefined();
+    if (
+      !hornTypeEvent ||
+      hornTypeEvent.event.kind !== 'treasureHornOfValhallaType'
+    ) {
+      throw new Error('horn type event not found');
+    }
+    expect(hornTypeEvent.event.result).toBe(TreasureHornOfValhallaType.Iron);
+
+    const attunementEvent = findEvent(
+      result.outcome,
+      'treasureHornOfValhallaAttunement'
+    );
+    expect(attunementEvent).toBeDefined();
+    if (
+      !attunementEvent ||
+      attunementEvent.event.kind !== 'treasureHornOfValhallaAttunement'
+    ) {
+      throw new Error('horn attunement event not found');
+    }
+    expect(attunementEvent.event.result).toBe(
+      TreasureHornOfValhallaAttunement.NonAligned
+    );
+
+    const alignmentEvent = findEvent(
+      result.outcome,
+      'treasureHornOfValhallaAlignment'
+    );
+    expect(alignmentEvent).toBeUndefined();
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is an iron horn of valhalla (non-aligned).'
+    );
+  });
+
+  it('resolves aligned horn of valhalla in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 52 },
+        { tableId: 'treasureMiscMagicE3', roll: 54 },
+        { tableId: 'treasureHornOfValhallaType', roll: 4 },
+        { tableId: 'treasureHornOfValhallaAttunement', roll: 96 },
+        { tableId: 'treasureHornOfValhallaAlignment', roll: 2 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const hornTypeEvent = findEvent(
+      result.outcome,
+      'treasureHornOfValhallaType'
+    );
+    expect(hornTypeEvent).toBeDefined();
+    if (
+      !hornTypeEvent ||
+      hornTypeEvent.event.kind !== 'treasureHornOfValhallaType'
+    ) {
+      throw new Error('horn type event not found');
+    }
+    expect(hornTypeEvent.event.result).toBe(TreasureHornOfValhallaType.Silver);
+
+    const attunementEvent = findEvent(
+      result.outcome,
+      'treasureHornOfValhallaAttunement'
+    );
+    expect(attunementEvent).toBeDefined();
+    if (
+      !attunementEvent ||
+      attunementEvent.event.kind !== 'treasureHornOfValhallaAttunement'
+    ) {
+      throw new Error('horn attunement event not found');
+    }
+    expect(attunementEvent.event.result).toBe(
+      TreasureHornOfValhallaAttunement.Aligned
+    );
+
+    const alignmentEvent = findEvent(
+      result.outcome,
+      'treasureHornOfValhallaAlignment'
+    );
+    expect(alignmentEvent).toBeDefined();
+    if (
+      !alignmentEvent ||
+      alignmentEvent.event.kind !== 'treasureHornOfValhallaAlignment'
+    ) {
+      throw new Error('horn alignment event not found');
+    }
+    expect(alignmentEvent.event.result).toBe(
+      TreasureHornOfValhallaAlignment.LawfulNeutral
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is a silver horn of valhalla (lawful neutral).'
     );
   });
 

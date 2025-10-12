@@ -8,6 +8,7 @@ import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
 import { girdleSentence } from './treasureGirdleOfGiantStrength';
+import { hornSentence } from './treasureHornOfValhalla';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE3, string> = {
   [TreasureMiscMagicE3.FigurineOfWondrousPower]: 'Figurine of Wondrous Power',
@@ -59,6 +60,7 @@ export function renderTreasureMiscMagicE3Detail(
     'treasureFigurineOfWondrousPower'
   );
   const girdleChild = findChildEvent(outcome, 'treasureGirdleOfGiantStrength');
+  const hornTypeChild = findChildEvent(outcome, 'treasureHornOfValhallaType');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -70,7 +72,12 @@ export function renderTreasureMiscMagicE3Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, figurineChild, girdleChild),
+    text: resolvedSentence(
+      outcome.event.result,
+      figurineChild,
+      girdleChild,
+      hornTypeChild
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -87,6 +94,7 @@ export function renderTreasureMiscMagicE3Compact(
     'treasureFigurineOfWondrousPower'
   );
   const girdleChild = findChildEvent(outcome, 'treasureGirdleOfGiantStrength');
+  const hornTypeChild = findChildEvent(outcome, 'treasureHornOfValhallaType');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -94,7 +102,12 @@ export function renderTreasureMiscMagicE3Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, figurineChild, girdleChild),
+    text: resolvedSentence(
+      outcome.event.result,
+      figurineChild,
+      girdleChild,
+      hornTypeChild
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -120,7 +133,8 @@ export function miscMagicE3Sentence(result: TreasureMiscMagicE3): string {
 function resolvedSentence(
   result: TreasureMiscMagicE3,
   figurineChild?: OutcomeEventNode,
-  girdleChild?: OutcomeEventNode
+  girdleChild?: OutcomeEventNode,
+  hornTypeChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE3.FigurineOfWondrousPower &&
@@ -139,6 +153,34 @@ function resolvedSentence(
     girdleChild.event.kind === 'treasureGirdleOfGiantStrength'
   ) {
     return girdleSentence(girdleChild.event.result);
+  }
+  if (
+    result === TreasureMiscMagicE3.HornOfValhalla &&
+    hornTypeChild &&
+    hornTypeChild.event.kind === 'treasureHornOfValhallaType'
+  ) {
+    const attunementChild = findChildEvent(
+      hornTypeChild,
+      'treasureHornOfValhallaAttunement'
+    );
+    const alignmentChild =
+      attunementChild &&
+      attunementChild.event.kind === 'treasureHornOfValhallaAttunement'
+        ? findChildEvent(attunementChild, 'treasureHornOfValhallaAlignment')
+        : undefined;
+    return hornSentence({
+      type: hornTypeChild.event.result,
+      attunement:
+        attunementChild &&
+        attunementChild.event.kind === 'treasureHornOfValhallaAttunement'
+          ? attunementChild.event.result
+          : undefined,
+      alignment:
+        alignmentChild &&
+        alignmentChild.event.kind === 'treasureHornOfValhallaAlignment'
+          ? alignmentChild.event.result
+          : undefined,
+    });
   }
   return miscMagicE3Sentence(result);
 }

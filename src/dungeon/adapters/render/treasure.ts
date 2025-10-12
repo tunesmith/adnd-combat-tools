@@ -30,6 +30,7 @@ import { artifactSentence } from './treasureArtifactOrRelic';
 import { miscMagicE2Sentence } from './treasureMiscMagicE2';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
 import { girdleSentence } from './treasureGirdleOfGiantStrength';
+import { hornSentence } from './treasureHornOfValhalla';
 import { miscMagicE3Sentence } from './treasureMiscMagicE3';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
@@ -217,6 +218,31 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const girdle = findChildEvent(miscMagicE3, 'treasureGirdleOfGiantStrength');
     if (girdle && girdle.event.kind === 'treasureGirdleOfGiantStrength') {
       return girdleSentence(girdle.event.result);
+    }
+    const hornType = findChildEvent(miscMagicE3, 'treasureHornOfValhallaType');
+    if (hornType && hornType.event.kind === 'treasureHornOfValhallaType') {
+      const attunement = findChildEvent(
+        hornType,
+        'treasureHornOfValhallaAttunement'
+      );
+      const alignment =
+        attunement &&
+        attunement.event.kind === 'treasureHornOfValhallaAttunement'
+          ? findChildEvent(attunement, 'treasureHornOfValhallaAlignment')
+          : undefined;
+      return hornSentence({
+        type: hornType.event.result,
+        attunement:
+          attunement &&
+          attunement.event.kind === 'treasureHornOfValhallaAttunement'
+            ? attunement.event.result
+            : undefined,
+        alignment:
+          alignment &&
+          alignment.event.kind === 'treasureHornOfValhallaAlignment'
+            ? alignment.event.result
+            : undefined,
+      });
     }
     return miscMagicE3Sentence(miscMagicE3.event.result);
   }

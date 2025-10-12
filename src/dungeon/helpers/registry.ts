@@ -101,6 +101,9 @@ import {
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
   resolveTreasureGirdleOfGiantStrength,
+  resolveTreasureHornOfValhallaType,
+  resolveTreasureHornOfValhallaAttunement,
+  resolveTreasureHornOfValhallaAlignment,
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE3,
   resolveTreasureMiscMagicE2,
@@ -217,6 +220,9 @@ const TABLE_ID_LIST = [
   'treasureFigurineOfWondrousPower',
   'treasureFigurineMarbleElephant',
   'treasureGirdleOfGiantStrength',
+  'treasureHornOfValhallaType',
+  'treasureHornOfValhallaAttunement',
+  'treasureHornOfValhallaAlignment',
   'treasureCarpetOfFlying',
   'treasureCloakOfProtection',
   'treasureCrystalBall',
@@ -322,6 +328,9 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureFigurineOfWondrousPower: 'Figurine of Wondrous Power',
   treasureFigurineMarbleElephant: 'Marble Elephant Form',
   treasureGirdleOfGiantStrength: 'Giant Strength Type',
+  treasureHornOfValhallaType: 'Horn Type',
+  treasureHornOfValhallaAttunement: 'Attunement',
+  treasureHornOfValhallaAlignment: 'Alignment',
   treasureCarpetOfFlying: 'Carpet of Flying Size',
   treasureCloakOfProtection: 'Cloak of Protection Bonus',
   treasureCrystalBall: 'Crystal Ball Variant',
@@ -818,6 +827,12 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureFigurineMarbleElephant({ roll })),
   treasureGirdleOfGiantStrength: ({ roll }) =>
     fromOutcome(resolveTreasureGirdleOfGiantStrength({ roll })),
+  treasureHornOfValhallaType: ({ roll }) =>
+    fromOutcome(resolveTreasureHornOfValhallaType({ roll })),
+  treasureHornOfValhallaAttunement: ({ roll }) =>
+    fromOutcome(resolveTreasureHornOfValhallaAttunement({ roll })),
+  treasureHornOfValhallaAlignment: ({ roll }) =>
+    fromOutcome(resolveTreasureHornOfValhallaAlignment({ roll })),
   treasureCarpetOfFlying: ({ roll }) =>
     fromOutcome(resolveTreasureCarpetOfFlying({ roll })),
   treasureCloakOfProtection: ({ roll }) =>

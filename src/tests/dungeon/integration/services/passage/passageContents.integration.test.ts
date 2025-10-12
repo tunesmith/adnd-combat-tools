@@ -30,6 +30,9 @@ import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
+import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
+import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
+import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
@@ -1121,6 +1124,123 @@ describe('passage contents', () => {
       .join(' ');
     expect(compactText).toContain(
       'there is a girdle of stone giant strength (c, f, t).'
+    );
+  });
+
+  it('resolves horn of valhalla alignment from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 58);
+
+    const typeTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureHornOfValhallaType')
+    );
+    const typeTarget = typeTargets[0];
+    if (!typeTarget) throw new Error('missing horn type target');
+    feed = resolvePreview(feed, typeTarget, 12);
+
+    const attunementTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureHornOfValhallaAttunement'
+      )
+    );
+    const attunementTarget = attunementTargets[0];
+    if (!attunementTarget) throw new Error('missing horn attunement target');
+    feed = resolvePreview(feed, attunementTarget, 82);
+
+    const alignmentTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureHornOfValhallaAlignment'
+      )
+    );
+    const alignmentTarget = alignmentTargets[0];
+    if (!alignmentTarget) throw new Error('missing horn alignment target');
+    feed = resolvePreview(feed, alignmentTarget, 7);
+
+    const hornTypeEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureHornOfValhallaType'
+    );
+    expect(hornTypeEvent).toBeDefined();
+    if (
+      !hornTypeEvent ||
+      hornTypeEvent.event.kind !== 'treasureHornOfValhallaType'
+    ) {
+      throw new Error('horn type event not found');
+    }
+    expect(hornTypeEvent.event.result).toBe(TreasureHornOfValhallaType.Brass);
+
+    const attunementEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureHornOfValhallaAttunement'
+    );
+    expect(attunementEvent).toBeDefined();
+    if (
+      !attunementEvent ||
+      attunementEvent.event.kind !== 'treasureHornOfValhallaAttunement'
+    ) {
+      throw new Error('horn attunement event not found');
+    }
+    expect(attunementEvent.event.result).toBe(
+      TreasureHornOfValhallaAttunement.Aligned
+    );
+
+    const alignmentEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureHornOfValhallaAlignment'
+    );
+    expect(alignmentEvent).toBeDefined();
+    if (
+      !alignmentEvent ||
+      alignmentEvent.event.kind !== 'treasureHornOfValhallaAlignment'
+    ) {
+      throw new Error('horn alignment event not found');
+    }
+    expect(alignmentEvent.event.result).toBe(
+      TreasureHornOfValhallaAlignment.ChaoticGood
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a brass horn of valhalla (chaotic good).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a brass horn of valhalla (chaotic good).'
     );
   });
 

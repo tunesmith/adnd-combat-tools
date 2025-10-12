@@ -90,6 +90,9 @@ import {
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
   resolveTreasureGirdleOfGiantStrength,
+  resolveTreasureHornOfValhallaType,
+  resolveTreasureHornOfValhallaAttunement,
+  resolveTreasureHornOfValhallaAlignment,
   resolveTreasureMiscMagicE3,
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE2,
@@ -726,6 +729,12 @@ function resolvePendingNode(
       return resolveTreasureFigurineMarbleElephant({});
     case 'treasureGirdleOfGiantStrength':
       return resolveTreasureGirdleOfGiantStrength({});
+    case 'treasureHornOfValhallaType':
+      return resolveTreasureHornOfValhallaType({});
+    case 'treasureHornOfValhallaAttunement':
+      return resolveTreasureHornOfValhallaAttunement({});
+    case 'treasureHornOfValhallaAlignment':
+      return resolveTreasureHornOfValhallaAlignment({});
     case 'treasureEyesOfPetrification':
       return resolveTreasureEyesOfPetrification({});
     case 'treasureMiscMagicE1': {

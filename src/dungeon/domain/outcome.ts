@@ -102,6 +102,9 @@ import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeck
 import type { TreasureFigurineOfWondrousPower } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
 import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
+import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
+import type { TreasureHornOfValhallaAttunement } from '../../tables/dungeon/treasureHornOfValhallaAttunement';
+import type { TreasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
 import type { TreasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
 import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
@@ -487,6 +490,18 @@ export type OutcomeEvent =
   | {
       kind: 'treasureGirdleOfGiantStrength';
       result: TreasureGirdleOfGiantStrength;
+    }
+  | {
+      kind: 'treasureHornOfValhallaType';
+      result: TreasureHornOfValhallaType;
+    }
+  | {
+      kind: 'treasureHornOfValhallaAttunement';
+      result: TreasureHornOfValhallaAttunement;
+    }
+  | {
+      kind: 'treasureHornOfValhallaAlignment';
+      result: TreasureHornOfValhallaAlignment;
     }
   | {
       kind: 'treasureEyesOfPetrification';

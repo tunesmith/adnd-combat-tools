@@ -147,6 +147,14 @@ import { treasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFig
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
 import { treasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
 import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
+import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
+import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
+import {
+  treasureHornOfValhallaAttunement,
+  TreasureHornOfValhallaAttunement,
+} from '../../tables/dungeon/treasureHornOfValhallaAttunement';
+import { treasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
+import type { TreasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
 import { treasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import { treasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
@@ -2112,6 +2120,11 @@ export function resolveTreasureMiscMagicE3(options?: {
       type: 'pending-roll',
       table: 'treasureGirdleOfGiantStrength',
     });
+  } else if (command === TreasureMiscMagicE3.HornOfValhalla) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureHornOfValhallaType',
+    });
   }
   return {
     type: 'event',
@@ -2184,6 +2197,74 @@ export function resolveTreasureGirdleOfGiantStrength(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureGirdleOfGiantStrength',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureHornOfValhallaType(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureHornOfValhallaType.sides);
+  const command: TreasureHornOfValhallaType = getTableEntry(
+    usedRoll,
+    treasureHornOfValhallaType
+  );
+  const children: DungeonOutcomeNode[] = [
+    { type: 'pending-roll', table: 'treasureHornOfValhallaAttunement' },
+  ];
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureHornOfValhallaType',
+      result: command,
+    } as OutcomeEvent,
+    children,
+  };
+}
+
+export function resolveTreasureHornOfValhallaAttunement(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureHornOfValhallaAttunement.sides);
+  const command: TreasureHornOfValhallaAttunement = getTableEntry(
+    usedRoll,
+    treasureHornOfValhallaAttunement
+  );
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureHornOfValhallaAttunement.Aligned) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureHornOfValhallaAlignment',
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureHornOfValhallaAttunement',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureHornOfValhallaAlignment(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureHornOfValhallaAlignment.sides);
+  const command: TreasureHornOfValhallaAlignment = getTableEntry(
+    usedRoll,
+    treasureHornOfValhallaAlignment
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureHornOfValhallaAlignment',
       result: command,
     } as OutcomeEvent,
   };

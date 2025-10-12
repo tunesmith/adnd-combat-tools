@@ -289,6 +289,17 @@ import {
   buildTreasureGirdleOfGiantStrengthPreview,
 } from './render/treasureGirdleOfGiantStrength';
 import {
+  renderTreasureHornOfValhallaTypeDetail,
+  renderTreasureHornOfValhallaTypeCompact,
+  renderTreasureHornOfValhallaAttunementDetail,
+  renderTreasureHornOfValhallaAttunementCompact,
+  renderTreasureHornOfValhallaAlignmentDetail,
+  renderTreasureHornOfValhallaAlignmentCompact,
+  buildTreasureHornOfValhallaTypePreview,
+  buildTreasureHornOfValhallaAttunementPreview,
+  buildTreasureHornOfValhallaAlignmentPreview,
+} from './render/treasureHornOfValhalla';
+import {
   renderTreasureCarpetOfFlyingDetail,
   renderTreasureCarpetOfFlyingCompact,
   buildTreasureCarpetOfFlyingPreview,
@@ -663,6 +674,18 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureGirdleOfGiantStrengthDetail,
     renderCompact: renderTreasureGirdleOfGiantStrengthCompact,
   },
+  treasureHornOfValhallaType: {
+    renderDetail: renderTreasureHornOfValhallaTypeDetail,
+    renderCompact: renderTreasureHornOfValhallaTypeCompact,
+  },
+  treasureHornOfValhallaAttunement: {
+    renderDetail: renderTreasureHornOfValhallaAttunementDetail,
+    renderCompact: renderTreasureHornOfValhallaAttunementCompact,
+  },
+  treasureHornOfValhallaAlignment: {
+    renderDetail: renderTreasureHornOfValhallaAlignmentDetail,
+    renderCompact: renderTreasureHornOfValhallaAlignmentCompact,
+  },
   treasureCarpetOfFlying: {
     renderDetail: renderTreasureCarpetOfFlyingDetail,
     renderCompact: renderTreasureCarpetOfFlyingCompact,
@@ -813,6 +836,10 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
   treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
   treasureGirdleOfGiantStrength: buildTreasureGirdleOfGiantStrengthPreview,
+  treasureHornOfValhallaType: buildTreasureHornOfValhallaTypePreview,
+  treasureHornOfValhallaAttunement:
+    buildTreasureHornOfValhallaAttunementPreview,
+  treasureHornOfValhallaAlignment: buildTreasureHornOfValhallaAlignmentPreview,
   treasureCarpetOfFlying: buildTreasureCarpetOfFlyingPreview,
   treasureCloakOfProtection: buildTreasureCloakOfProtectionPreview,
   treasureCrystalBall: buildTreasureCrystalBallPreview,
@@ -1096,6 +1123,15 @@ function previewForEventNode(
       break;
     case 'treasureBucknardsEverfullPurse':
       tableId = 'treasureBucknardsEverfullPurse';
+      break;
+    case 'treasureHornOfValhallaType':
+      tableId = 'treasureHornOfValhallaType';
+      break;
+    case 'treasureHornOfValhallaAttunement':
+      tableId = 'treasureHornOfValhallaAttunement';
+      break;
+    case 'treasureHornOfValhallaAlignment':
+      tableId = 'treasureHornOfValhallaAlignment';
       break;
     case 'treasureArtifactOrRelic':
       tableId = 'treasureArtifactOrRelic';
