@@ -95,27 +95,31 @@ const TRICK_TRAP_LABELS: Record<TrickTrap, string> = {
 
 const TRICK_TRAP_DETAILS: Record<TrickTrap, string> = {
   [TrickTrap.SecretDoor]:
-    'Secret door unless unlocated: Non-elf locates 3 in 20, elf locates 5 in 20; magical device locates 18 in 20 (then see TABLE II.). Unlocated secret doors go to die 6, 7 below. ',
-  [TrickTrap.Pit]: "Pit, 10' deep, 3 in 6 to fall in. ",
-  [TrickTrap.SpikedPit]: "Pit, 10' deep with spikes, 3 in 6 to fall in. ",
+    "There is a secret door if it is located: Non-elf locates 3 in 20, elf locates 5 in 20; magical device locates 18 in 20. If the secret door is not located, there is a pit, 10' deep (3 in 6 to fall in). ",
+  [TrickTrap.Pit]: "There is a pit, 10' deep (3 in 6 to fall in). ",
+  [TrickTrap.SpikedPit]:
+    "There is a pit, 10' deep with spikes (3 in 6 to fall in). ",
   [TrickTrap.ElevatorRoomOne]:
-    "20' × 20' elevator room (party has entered door directly ahead and is in room), descends 1 level and will not ascend for 30 turns. ",
-  [TrickTrap.ElevatorRoomTwo]: 'As entry 9 above, but room descends 2 levels. ',
+    "There is a 20' × 20' elevator room (the party has entered the door directly ahead and is in the room). It descends 1 level and will not ascend for 30 turns. ",
+  [TrickTrap.ElevatorRoomTwo]:
+    "There is a 20' × 20' elevator room (the party has entered the door directly ahead and is in the room). It descends 2 levels and will not ascend for 30 turns. ",
   [TrickTrap.ElevatorRoomMulti]:
-    'As entry 9 above, but room descends 2–5 levels — 1 upon entering and 1 additional level each time an unsuccessful attempt at door opening is made, or until it descends as far as it can. This will not ascend for 60 turns. ',
+    "There is a 20' × 20' elevator room (the party has entered the door directly ahead and is in the room). It descends 2-5 levels - 1 upon entering and 1 additional level each time an unsuccessful attempt at a door opening is made, or until it descends as far as it can. This will not ascend for 60 turns. ",
   [TrickTrap.SlidingWall]:
-    "Wall 10' behind slides across passage blocking it for 40–60 turns. ",
+    "A wall 10' behind slides across the passage, blocking it for 40–60 turns. ",
   [TrickTrap.OilAndFlame]:
-    'Oil (equal to one flask) pours on random person from hole in ceiling, followed by flaming cinder (2–12 h.p. damage unless successful save vs. magic is made, which indicates only 1–3 h.p. damage). ',
+    'Oil (equal to one flask) pours on a random person from a hole in the ceiling, followed by flaming cinder (2–12 h.p. damage unless successful save vs. magic is made, which indicates only 1–3 h.p. damage). ',
   [TrickTrap.CrushingPit]:
-    "Pit, 10' deep, 3 in 6 to fall in, pit walls move together to crush victim(s) in 2–5 rounds. ",
-  [TrickTrap.ArrowTrap]: 'Arrow trap, 1–3 arrows, 1 in 20 is poisoned. ',
-  [TrickTrap.SpearTrap]: 'Spear trap, 1–3 spears, 1 in 20 is poisoned. ',
+    "There is a pit, 10' deep (3 in 6 to fall in). Pit walls move together to crush victim(s) in 2–5 rounds. ",
+  [TrickTrap.ArrowTrap]:
+    'There is an arrow trap of 1–3 arrows. 1 in 20 is poisoned. ',
+  [TrickTrap.SpearTrap]:
+    'There is a pear trap of 1–3 spears. 1 in 20 is poisoned. ',
   [TrickTrap.GasCorridor]:
-    "Gas; party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. (See TABLE VII. A.) ",
+    "Gas is here. The party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. ",
   [TrickTrap.FallingDoorOrStone]:
-    'Door falls outward causing 1–10 hit points, or stone falls from ceiling causing 2–20 hit points of damage to each person failing his saving throw versus petrification. ',
+    'A door falls outward causing 1–10 hit points, or stone falls from ceiling causing 2–20 hit points of damage to each person failing his saving throw versus petrification. ',
   [TrickTrap.IllusionaryWall]: 'There is an illusionary wall. ',
   [TrickTrap.ChuteDown]:
-    'Chute down 1 level (cannot be ascended in any manner). ',
+    'There is a chute down 1 level. It cannot be ascended in any manner. ',
 };

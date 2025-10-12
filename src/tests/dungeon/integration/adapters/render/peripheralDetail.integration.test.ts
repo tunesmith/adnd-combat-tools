@@ -41,7 +41,7 @@ describe('Detail helpers for door chains and traps', () => {
     const outcome = resolveTrickTrap({ roll: 12 }) as OutcomeEventNode;
     const paragraphs = toDetailRender(outcome).filter(isParagraph);
     expect(paragraphs.map((p) => p.text)).toEqual([
-      "Wall 10' behind slides across passage blocking it for 40–60 turns. ",
+      "A wall 10' behind slides across the passage, blocking it for 40–60 turns. ",
     ]);
   });
 
@@ -82,7 +82,7 @@ describe('Detail helpers for door chains and traps', () => {
     const nodes = renderDetailTree(resolved);
     const paragraphs = nodes.filter(isParagraph).map((p) => p.text);
     expect(paragraphs).toContain(
-      "Gas; party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. (See TABLE VII. A.) "
+      "Gas is here. The party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. "
     );
     expect(paragraphs).toContain(
       'Poison: killed unless saving throw versus poison is made. '
