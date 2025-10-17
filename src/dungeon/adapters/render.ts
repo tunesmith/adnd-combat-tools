@@ -274,6 +274,11 @@ import {
   buildTreasureMiscMagicE3Preview,
 } from './render/treasureMiscMagicE3';
 import {
+  renderTreasureMiscMagicE4Detail,
+  renderTreasureMiscMagicE4Compact,
+  buildTreasureMiscMagicE4Preview,
+} from './render/treasureMiscMagicE4';
+import {
   renderTreasureFigurineOfWondrousPowerDetail,
   renderTreasureFigurineOfWondrousPowerCompact,
   buildTreasureFigurineOfWondrousPowerPreview,
@@ -676,6 +681,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureMiscMagicE3Detail,
     renderCompact: renderTreasureMiscMagicE3Compact,
   },
+  treasureMiscMagicE4: {
+    renderDetail: renderTreasureMiscMagicE4Detail,
+    renderCompact: renderTreasureMiscMagicE4Compact,
+  },
   treasureFigurineOfWondrousPower: {
     renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
     renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
@@ -859,6 +868,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureArtifactOrRelic: buildTreasureArtifactOrRelicPreview,
   treasureMiscMagicE2: buildTreasureMiscMagicE2Preview,
   treasureMiscMagicE3: buildTreasureMiscMagicE3Preview,
+  treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
   treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
   treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
   treasureGirdleOfGiantStrength: buildTreasureGirdleOfGiantStrengthPreview,
@@ -1178,6 +1188,9 @@ function previewForEventNode(
       break;
     case 'treasureMiscMagicE3':
       tableId = 'treasureMiscMagicE3';
+      break;
+    case 'treasureMiscMagicE4':
+      tableId = 'treasureMiscMagicE4';
       break;
     case 'treasureFigurineOfWondrousPower':
       tableId = 'treasureFigurineOfWondrousPower';

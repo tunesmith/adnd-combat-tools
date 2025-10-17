@@ -34,6 +34,7 @@ import { instrumentOfTheBardsSentence } from './treasureInstrumentOfTheBards';
 import { ironFlaskSentence } from './treasureIronFlask';
 import { hornSentence } from './treasureHornOfValhalla';
 import { miscMagicE3Sentence } from './treasureMiscMagicE3';
+import { miscMagicE4Sentence } from './treasureMiscMagicE4';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
@@ -275,6 +276,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       });
     }
     return miscMagicE3Sentence(miscMagicE3.event.result);
+  }
+  const miscMagicE4 = findChildEvent(magic, 'treasureMiscMagicE4');
+  if (miscMagicE4 && miscMagicE4.event.kind === 'treasureMiscMagicE4') {
+    return miscMagicE4Sentence(miscMagicE4.event.result);
   }
   return undefined;
 }

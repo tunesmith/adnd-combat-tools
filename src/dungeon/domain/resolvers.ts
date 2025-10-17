@@ -140,6 +140,10 @@ import {
   TreasureMiscMagicE3,
 } from '../../tables/dungeon/treasureMiscMagicE3';
 import {
+  treasureMiscMagicE4,
+  TreasureMiscMagicE4,
+} from '../../tables/dungeon/treasureMiscMagicE4';
+import {
   treasureFigurineOfWondrousPower,
   TreasureFigurineOfWondrousPower,
 } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
@@ -1495,6 +1499,20 @@ export function resolveTreasureMagicCategory(options?: {
         rollIndex: event.rollIndex,
       },
     });
+  } else if (command === TreasureMagicCategory.MiscMagicE4) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureMiscMagicE4',
+      id: event.rollIndex
+        ? `treasureMiscMagicE4:${event.rollIndex}`
+        : undefined,
+      context: {
+        kind: 'treasureMagic',
+        level: event.level,
+        treasureRoll: usedRoll,
+        rollIndex: event.rollIndex,
+      },
+    });
   }
   return {
     type: 'event',
@@ -2166,6 +2184,26 @@ export function resolveTreasureMiscMagicE3(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureMiscMagicE3',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureMiscMagicE4(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureMiscMagicE4.sides);
+  const command: TreasureMiscMagicE4 = getTableEntry(
+    usedRoll,
+    treasureMiscMagicE4
+  );
+  const children: DungeonOutcomeNode[] = [];
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureMiscMagicE4',
       result: command,
     } as OutcomeEvent,
     children: children.length ? children : undefined,

@@ -96,6 +96,7 @@ import {
   resolveTreasureHornOfValhallaAttunement,
   resolveTreasureHornOfValhallaAlignment,
   resolveTreasureMiscMagicE3,
+  resolveTreasureMiscMagicE4,
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE2,
   resolveTreasureCarpetOfFlying,
@@ -737,6 +738,8 @@ function resolvePendingNode(
       return resolveTreasureMiscMagicE2({});
     case 'treasureMiscMagicE3':
       return resolveTreasureMiscMagicE3({});
+    case 'treasureMiscMagicE4':
+      return resolveTreasureMiscMagicE4({});
     case 'treasureCarpetOfFlying':
       return resolveTreasureCarpetOfFlying({});
     case 'treasureCloakOfProtection':
