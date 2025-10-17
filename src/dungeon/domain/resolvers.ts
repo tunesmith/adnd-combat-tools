@@ -160,6 +160,10 @@ import {
   TreasureIounStoneType,
   IOUN_STONE_DEFINITIONS,
 } from '../../tables/dungeon/treasureIounStones';
+import {
+  treasureManualOfGolems,
+  TreasureManualOfGolems,
+} from '../../tables/dungeon/treasureManualOfGolems';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2199,6 +2203,9 @@ export function resolveTreasureMiscMagicE4(options?: {
     treasureMiscMagicE4
   );
   const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureMiscMagicE4.ManualOfGolems) {
+    children.push({ type: 'pending-roll', table: 'treasureManualOfGolems' });
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -2207,6 +2214,24 @@ export function resolveTreasureMiscMagicE4(options?: {
       result: command,
     } as OutcomeEvent,
     children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureManualOfGolems(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureManualOfGolems.sides);
+  const command: TreasureManualOfGolems = getTableEntry(
+    usedRoll,
+    treasureManualOfGolems
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureManualOfGolems',
+      result: command,
+    } as OutcomeEvent,
   };
 }
 

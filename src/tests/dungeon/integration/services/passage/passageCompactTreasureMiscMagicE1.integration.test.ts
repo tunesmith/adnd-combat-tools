@@ -11,6 +11,7 @@ import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureA
 import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
+import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -367,6 +368,46 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('there is a mirror of opposition.');
+  });
+
+  it('resolves manual of golems variants in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 7 },
+        { tableId: 'treasureManualOfGolems', roll: 18 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE4');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE4') {
+      throw new Error('treasureMiscMagicE4 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE4.ManualOfGolems);
+
+    const manualEvent = findEvent(result.outcome, 'treasureManualOfGolems');
+    expect(manualEvent).toBeDefined();
+    if (!manualEvent || manualEvent.event.kind !== 'treasureManualOfGolems') {
+      throw new Error('treasureManualOfGolems event not found');
+    }
+    expect(manualEvent.event.result).toBe(TreasureManualOfGolems.Iron);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is a manual of iron golems.'
+    );
   });
 
   it('resolves figurine of wondrous power variants in compact mode', () => {

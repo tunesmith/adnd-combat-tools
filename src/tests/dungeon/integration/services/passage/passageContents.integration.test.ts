@@ -28,6 +28,7 @@ import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCryst
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
+import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -1015,6 +1016,65 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a mirror of opposition.');
+  });
+
+  it('resolves manual of golems variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 7);
+
+    const manualTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureManualOfGolems')
+    );
+    const manualTarget = manualTargets[0];
+    if (!manualTarget) throw new Error('missing manual of golems target');
+    feed = resolvePreview(feed, manualTarget, 18);
+
+    const manualEvent = findOutcomeEvent(feed.outcome, 'treasureManualOfGolems');
+    expect(manualEvent).toBeDefined();
+    if (!manualEvent || manualEvent.event.kind !== 'treasureManualOfGolems') {
+      throw new Error('treasureManualOfGolems event not found');
+    }
+    expect(manualEvent.event.result).toBe(TreasureManualOfGolems.Iron);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a manual of iron golems.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a manual of iron golems.');
   });
 
   it('resolves figurine of wondrous power variants from miscellaneous magic', () => {

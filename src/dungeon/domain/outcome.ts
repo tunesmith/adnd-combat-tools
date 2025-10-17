@@ -114,6 +114,7 @@ import type { TreasureInstrumentOfTheBards } from '../../tables/dungeon/treasure
 import type { TreasureIronFlaskContent } from '../../tables/dungeon/treasureIronFlask';
 import type { TreasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
+import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -538,6 +539,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureMiscMagicE4';
       result: TreasureMiscMagicE4;
+    }
+  | {
+      kind: 'treasureManualOfGolems';
+      result: TreasureManualOfGolems;
     }
   | {
       kind: 'treasureCarpetOfFlying';

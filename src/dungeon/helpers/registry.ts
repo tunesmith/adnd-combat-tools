@@ -112,6 +112,7 @@ import {
   resolveTreasureMiscMagicE3,
   resolveTreasureMiscMagicE2,
   resolveTreasureMiscMagicE1,
+  resolveTreasureManualOfGolems,
   resolveTreasureStaffSerpent,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
@@ -222,6 +223,7 @@ const TABLE_ID_LIST = [
   'treasureMiscMagicE2',
   'treasureMiscMagicE3',
   'treasureMiscMagicE4',
+  'treasureManualOfGolems',
   'treasureFigurineOfWondrousPower',
   'treasureFigurineMarbleElephant',
   'treasureGirdleOfGiantStrength',
@@ -334,6 +336,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureMiscMagicE2: 'Miscellaneous Magic (Table E.2)',
   treasureMiscMagicE3: 'Miscellaneous Magic (Table E.3)',
   treasureMiscMagicE4: 'Miscellaneous Magic (Table E.4)',
+  treasureManualOfGolems: 'Manual of Golems',
   treasureFigurineOfWondrousPower: 'Figurine of Wondrous Power',
   treasureFigurineMarbleElephant: 'Marble Elephant Form',
   treasureGirdleOfGiantStrength: 'Giant Strength Type',
@@ -835,6 +838,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureMiscMagicE3({ roll })),
   treasureMiscMagicE4: ({ roll }) =>
     fromOutcome(resolveTreasureMiscMagicE4({ roll })),
+  treasureManualOfGolems: ({ roll }) =>
+    fromOutcome(resolveTreasureManualOfGolems({ roll })),
   treasureFigurineOfWondrousPower: ({ roll }) =>
     fromOutcome(resolveTreasureFigurineOfWondrousPower({ roll })),
   treasureFigurineMarbleElephant: ({ roll }) =>

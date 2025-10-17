@@ -110,6 +110,7 @@ import type { TreasureCarpetOfFlying } from './treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from './treasureCloakOfProtection';
 import type { TreasureCrystalBall } from './treasureCrystalBall';
 import type { TreasureStaffSerpent } from './treasureStaffSerpent';
+import type { TreasureManualOfGolems } from './treasureManualOfGolems';
 
 export type Table<T> = {
   sides: number;
@@ -223,6 +224,7 @@ export type Command =
   | TreasureMiscMagicE2
   | TreasureMiscMagicE3
   | TreasureMiscMagicE4
+  | TreasureManualOfGolems
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant

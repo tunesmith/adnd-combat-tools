@@ -4,8 +4,9 @@ import {
   treasureMiscMagicE4,
   TreasureMiscMagicE4,
 } from '../../../tables/dungeon/treasureMiscMagicE4';
-import { buildPreview } from './shared';
+import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+import { manualOfGolemsSentence } from './treasureManualOfGolems';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:
@@ -66,6 +67,7 @@ export function renderTreasureMiscMagicE4Detail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE4') return [];
+  const manualChild = findChildEvent(outcome, 'treasureManualOfGolems');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -77,7 +79,7 @@ export function renderTreasureMiscMagicE4Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result),
+    text: resolvedSentence(outcome.event.result, manualChild),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -89,6 +91,7 @@ export function renderTreasureMiscMagicE4Compact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE4') return [];
+  const manualChild = findChildEvent(outcome, 'treasureManualOfGolems');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -96,7 +99,7 @@ export function renderTreasureMiscMagicE4Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result),
+    text: resolvedSentence(outcome.event.result, manualChild),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -118,7 +121,17 @@ export function miscMagicE4Sentence(result: TreasureMiscMagicE4): string {
   return `There is ${articleFor(label)} ${stripUsageTag(label)}.`;
 }
 
-function resolvedSentence(result: TreasureMiscMagicE4): string {
+function resolvedSentence(
+  result: TreasureMiscMagicE4,
+  manualChild?: OutcomeEventNode
+): string {
+  if (
+    result === TreasureMiscMagicE4.ManualOfGolems &&
+    manualChild &&
+    manualChild.event.kind === 'treasureManualOfGolems'
+  ) {
+    return manualOfGolemsSentence(manualChild.event.result);
+  }
   return miscMagicE4Sentence(result);
 }
 
