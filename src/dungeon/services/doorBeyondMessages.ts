@@ -21,6 +21,7 @@ export const doorBeyondMessages = (options?: {
   doorAhead?: boolean;
   detailMode?: boolean;
   takeOverride?: (tableId: string) => number | undefined;
+  level?: number;
 }): {
   usedRoll?: number;
   messages: DungeonRenderNode[];
@@ -54,7 +55,11 @@ export const doorBeyondMessages = (options?: {
     )[] = [{ kind: 'heading', level: 3, text: 'Door' }, preview];
     return { usedRoll: undefined, messages, outcome: undefined };
   }
-  const node = resolveDoorBeyond({ roll: options?.roll, doorAhead });
+  const node = resolveDoorBeyond({
+    roll: options?.roll,
+    doorAhead,
+    level: options?.level,
+  });
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   const detailMode = options?.detailMode ?? false;
   const snapshot = createOutcomeRenderSnapshot(node, {

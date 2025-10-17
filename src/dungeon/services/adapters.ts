@@ -34,6 +34,7 @@ export function runDungeonStep(
           roll: options?.roll,
           doorAhead: options?.doorAhead,
           detailMode: options?.detailMode,
+          level: options?.level,
           takeOverride: options?.takeOverride,
         });
       return {

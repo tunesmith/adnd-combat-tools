@@ -455,14 +455,20 @@ export function resolvePeriodicCheck(options?: {
 export function resolveDoorBeyond(options?: {
   roll?: number;
   doorAhead?: boolean;
+  level?: number;
 }): DungeonOutcomeNode {
+  const level = options?.level ?? 1;
   const usedRoll = options?.roll ?? rollDice(doorBeyond.sides);
   const command = getTableEntry(usedRoll, doorBeyond);
   const children: DungeonOutcomeNode[] = [];
   if (command === DoorBeyond.Room) {
     children.push({ type: 'pending-roll', table: 'roomDimensions' });
   } else if (command === DoorBeyond.Chamber) {
-    children.push({ type: 'pending-roll', table: 'chamberDimensions' });
+    children.push({
+      type: 'pending-roll',
+      table: 'chamberDimensions',
+      context: { kind: 'chamberDimensions', level },
+    });
   } else if (
     command === DoorBeyond.PassageStraightAhead ||
     command === DoorBeyond.Passage45AheadBehind ||
@@ -478,6 +484,7 @@ export function resolveDoorBeyond(options?: {
       kind: 'doorBeyond',
       result: command,
       doorAhead: options?.doorAhead,
+      level,
     },
     children: children.length ? children : undefined,
   };
@@ -845,9 +852,11 @@ export function resolveNumberOfExits(options: {
 
 export function resolveRoomDimensions(options?: {
   roll?: number;
+  level?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(roomDimensions.sides);
   const command = getTableEntry(usedRoll, roomDimensions);
+  const dungeonLevel = options?.level ?? 1;
   const event: OutcomeEvent = {
     kind: 'roomDimensions',
     result: command,
@@ -919,7 +928,11 @@ export function resolveRoomDimensions(options?: {
       });
       break;
   }
-  children.push({ type: 'pending-roll', table: 'chamberRoomContents' });
+  children.push({
+    type: 'pending-roll',
+    table: 'chamberRoomContents',
+    context: { kind: 'chamberContents', level: dungeonLevel },
+  });
   return {
     type: 'event',
     roll: usedRoll,

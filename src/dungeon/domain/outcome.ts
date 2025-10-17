@@ -130,7 +130,12 @@ export type OutcomeEvent =
       level: number;
       avoidMonster?: boolean;
     }
-  | { kind: 'doorBeyond'; result: DoorBeyond; doorAhead?: boolean }
+  | {
+      kind: 'doorBeyond';
+      result: DoorBeyond;
+      doorAhead?: boolean;
+      level?: number;
+    }
   | {
       kind: 'doorLocation';
       result: DoorLocation;

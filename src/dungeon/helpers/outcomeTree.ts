@@ -257,21 +257,29 @@ export function isTableContext(x: unknown): x is TableContext {
 
 function readChamberDimensionsContext(
   context: unknown
-): { forcedContents?: ChamberRoomContents } | undefined {
+): { forcedContents?: ChamberRoomContents; level?: number } | undefined {
   if (!context || typeof context !== 'object') return undefined;
   const kind = (context as { kind?: unknown }).kind;
   if (kind !== 'chamberDimensions') return undefined;
   const forced = (context as { forcedContents?: unknown }).forcedContents;
+  const levelValue = (context as { level?: unknown }).level;
+  const result: {
+    forcedContents?: ChamberRoomContents;
+    level?: number;
+  } = {};
   if (typeof forced === 'number') {
     const numeric = forced;
     if (
       numeric >= ChamberRoomContents.Empty &&
       numeric <= ChamberRoomContents.Treasure
     ) {
-      return { forcedContents: numeric as ChamberRoomContents };
+      result.forcedContents = numeric as ChamberRoomContents;
     }
   }
-  return {};
+  if (typeof levelValue === 'number' && Number.isFinite(levelValue)) {
+    result.level = levelValue;
+  }
+  return result;
 }
 
 export function readDungeonLevelFromPending(
@@ -584,10 +592,16 @@ function resolvePendingNode(
     case 'specialPassage':
       return resolveSpecialPassage({});
     case 'roomDimensions':
-      return resolveRoomDimensions({});
+      return resolveRoomDimensions({
+        level: deriveDungeonLevelFromAncestors(ancestors) ?? 1,
+      });
     case 'chamberDimensions': {
       const chamberContext = readChamberDimensionsContext(pending.context);
-      const level = deriveDungeonLevelFromAncestors(ancestors);
+      const derivedLevel = deriveDungeonLevelFromAncestors(ancestors);
+      const level =
+        chamberContext?.level !== undefined
+          ? chamberContext.level
+          : derivedLevel;
       const hasContext =
         (chamberContext && chamberContext.forcedContents !== undefined) ||
         level !== undefined;
@@ -612,7 +626,13 @@ function resolvePendingNode(
       });
     }
     case 'chamberRoomContents': {
-      const level = deriveDungeonLevelFromAncestors(ancestors) ?? 1;
+      const contextLevel =
+        isTableContext(pending.context) &&
+        pending.context.kind === 'chamberContents'
+          ? pending.context.level
+          : undefined;
+      const derivedLevel = deriveDungeonLevelFromAncestors(ancestors);
+      const level = contextLevel ?? derivedLevel ?? 1;
       return resolveChamberRoomContents({ level });
     }
     case 'chamberRoomStairs':
@@ -1059,6 +1079,12 @@ function deriveDungeonLevelFromAncestors(
       typeof ancestor.event.level === 'number'
     ) {
       return ancestor.event.level;
+    }
+    if (ancestor.event.kind === 'doorBeyond') {
+      const doorLevel = ancestor.event.level;
+      if (typeof doorLevel === 'number') {
+        return doorLevel;
+      }
     }
   }
   return undefined;
