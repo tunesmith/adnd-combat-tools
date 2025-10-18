@@ -1198,6 +1198,80 @@ describe('passage contents', () => {
     expect(compactText).toContain("there is a medallion of thought projection (60').");
   });
 
+  it('resolves necklace of missiles variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 26);
+
+    const necklaceTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureNecklaceOfMissiles')
+    );
+    const necklaceTarget = necklaceTargets[0];
+    if (!necklaceTarget) throw new Error('missing necklace target');
+    feed = resolvePreview(feed, necklaceTarget, 14);
+
+    const necklaceEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureNecklaceOfMissiles'
+    );
+    expect(necklaceEvent).toBeDefined();
+    if (
+      !necklaceEvent ||
+      necklaceEvent.event.kind !== 'treasureNecklaceOfMissiles'
+    ) {
+      throw new Error('treasureNecklaceOfMissiles event not found');
+    }
+    expect(necklaceEvent.event.result.missiles).toEqual([
+      { dice: 8, count: 1 },
+      { dice: 6, count: 2 },
+      { dice: 4, count: 2 },
+      { dice: 2, count: 4 },
+    ]);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a necklace of missiles (1x8, 2x6, 2x4, 4x2).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a necklace of missiles (1x8, 2x6, 2x4, 4x2).'
+    );
+  });
+
   it('resolves figurine of wondrous power variants from miscellaneous magic', () => {
     let feed = createFeedSnapshot({
       action: 'passage',

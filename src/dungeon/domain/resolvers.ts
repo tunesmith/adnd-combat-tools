@@ -168,6 +168,10 @@ import {
   treasureMedallionRange,
   TreasureMedallionRange,
 } from '../../tables/dungeon/treasureMedallionEspRange';
+import {
+  treasureNecklaceOfMissiles,
+  type TreasureNecklaceOfMissiles,
+} from '../../tables/dungeon/treasureNecklaceOfMissiles';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2213,6 +2217,11 @@ export function resolveTreasureMiscMagicE4(options?: {
     children.push({ type: 'pending-roll', table: 'treasureMedallionRange' });
   } else if (command === TreasureMiscMagicE4.MedallionOfThoughtProjection) {
     children.push({ type: 'pending-roll', table: 'treasureMedallionRange' });
+  } else if (command === TreasureMiscMagicE4.NecklaceOfMissiles) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureNecklaceOfMissiles',
+    });
   }
   return {
     type: 'event',
@@ -2256,6 +2265,24 @@ export function resolveTreasureMedallionRange(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureMedallionRange',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureNecklaceOfMissiles(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureNecklaceOfMissiles.sides);
+  const command: TreasureNecklaceOfMissiles = getTableEntry(
+    usedRoll,
+    treasureNecklaceOfMissiles
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureNecklaceOfMissiles',
       result: command,
     } as OutcomeEvent,
   };

@@ -289,6 +289,11 @@ import {
   buildTreasureMedallionRangePreview,
 } from './render/treasureMedallionRange';
 import {
+  renderTreasureNecklaceOfMissilesDetail,
+  renderTreasureNecklaceOfMissilesCompact,
+  buildTreasureNecklaceOfMissilesPreview,
+} from './render/treasureNecklaceOfMissiles';
+import {
   renderTreasureFigurineOfWondrousPowerDetail,
   renderTreasureFigurineOfWondrousPowerCompact,
   buildTreasureFigurineOfWondrousPowerPreview,
@@ -703,6 +708,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureMedallionRangeDetail,
     renderCompact: renderTreasureMedallionRangeCompact,
   },
+  treasureNecklaceOfMissiles: {
+    renderDetail: renderTreasureNecklaceOfMissilesDetail,
+    renderCompact: renderTreasureNecklaceOfMissilesCompact,
+  },
   treasureFigurineOfWondrousPower: {
     renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
     renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
@@ -889,6 +898,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
   treasureManualOfGolems: buildTreasureManualOfGolemsPreview,
   treasureMedallionRange: buildTreasureMedallionRangePreview,
+  treasureNecklaceOfMissiles: buildTreasureNecklaceOfMissilesPreview,
   treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
   treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
   treasureGirdleOfGiantStrength: buildTreasureGirdleOfGiantStrengthPreview,
@@ -1217,6 +1227,9 @@ function previewForEventNode(
       break;
     case 'treasureMedallionRange':
       tableId = 'treasureMedallionRange';
+      break;
+    case 'treasureNecklaceOfMissiles':
+      tableId = 'treasureNecklaceOfMissiles';
       break;
     case 'treasureFigurineOfWondrousPower':
       tableId = 'treasureFigurineOfWondrousPower';

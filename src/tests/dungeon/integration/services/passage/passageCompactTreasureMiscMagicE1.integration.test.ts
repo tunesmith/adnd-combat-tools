@@ -497,6 +497,59 @@ describe('passage compact treasure misc magic E1 handling', () => {
     );
   });
 
+  it('resolves necklace of missiles variants in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 25 },
+        { tableId: 'treasureNecklaceOfMissiles', roll: 14 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE4');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE4') {
+      throw new Error('treasureMiscMagicE4 event not found');
+    }
+    expect(miscEvent.event.result).toBe(
+      TreasureMiscMagicE4.NecklaceOfMissiles
+    );
+
+    const necklaceEvent = findEvent(
+      result.outcome,
+      'treasureNecklaceOfMissiles'
+    );
+    expect(necklaceEvent).toBeDefined();
+    if (
+      !necklaceEvent ||
+      necklaceEvent.event.kind !== 'treasureNecklaceOfMissiles'
+    ) {
+      throw new Error('treasureNecklaceOfMissiles event not found');
+    }
+    expect(necklaceEvent.event.result.missiles).toEqual([
+      { dice: 8, count: 1 },
+      { dice: 6, count: 2 },
+      { dice: 4, count: 2 },
+      { dice: 2, count: 4 },
+    ]);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is a necklace of missiles (1x8, 2x6, 2x4, 4x2).'
+    );
+  });
+
   it('resolves figurine of wondrous power variants in compact mode', () => {
     const result = simulateCompactRunWithSequence({
       action: 'passage',
