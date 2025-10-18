@@ -41,6 +41,7 @@ import { manualOfGolemsSentence } from './treasureManualOfGolems';
 import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
 import { pearlParenthetical } from './treasurePearlOfPower';
 import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
+import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
@@ -346,6 +347,22 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     ) {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = pearlOfWisdomParenthetical(pearlWisdom.event.result);
+      return `${base.slice(0, -1)} (${suffix}).`;
+    }
+    const periaptPoison = findChildEvent(
+      miscMagicE4,
+      'treasurePeriaptProofAgainstPoison'
+    );
+    if (
+      periaptPoison &&
+      periaptPoison.event.kind === 'treasurePeriaptProofAgainstPoison' &&
+      miscMagicE4.event.result ===
+        TreasureMiscMagicE4.PeriaptOfProofAgainstPoison
+    ) {
+      const base = miscMagicE4Sentence(miscMagicE4.event.result);
+      const suffix = periaptPoisonParenthetical(
+        periaptPoison.event.result
+      );
       return `${base.slice(0, -1)} (${suffix}).`;
     }
     return miscMagicE4Sentence(miscMagicE4.event.result);

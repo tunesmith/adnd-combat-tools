@@ -182,6 +182,10 @@ import {
   treasurePearlOfWisdom,
   TreasurePearlOfWisdomOutcome,
 } from '../../tables/dungeon/treasurePearlOfWisdom';
+import {
+  treasurePeriaptPoisonBonus,
+  TreasurePeriaptPoisonBonus,
+} from '../../tables/dungeon/treasurePeriaptProofAgainstPoison';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2242,6 +2246,11 @@ export function resolveTreasureMiscMagicE4(options?: {
       type: 'pending-roll',
       table: 'treasurePearlOfWisdom',
     });
+  } else if (command === TreasureMiscMagicE4.PeriaptOfProofAgainstPoison) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePeriaptProofAgainstPoison',
+    });
   }
   return {
     type: 'event',
@@ -2362,6 +2371,25 @@ export function resolveTreasurePearlOfWisdom(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasurePearlOfWisdom',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasurePeriaptProofAgainstPoison(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasurePeriaptPoisonBonus.sides);
+  const command = getTableEntry(
+    usedRoll,
+    treasurePeriaptPoisonBonus
+  ) as TreasurePeriaptPoisonBonus;
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePeriaptProofAgainstPoison',
       result: command,
     } as OutcomeEvent,
   };

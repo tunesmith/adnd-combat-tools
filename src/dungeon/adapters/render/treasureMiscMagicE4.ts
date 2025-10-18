@@ -11,6 +11,7 @@ import { medallionRangeParenthetical } from './treasureMedallionRange';
 import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
 import { pearlParenthetical } from './treasurePearlOfPower';
 import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
+import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:
@@ -76,6 +77,10 @@ export function renderTreasureMiscMagicE4Detail(
   const necklaceChild = findChildEvent(outcome, 'treasureNecklaceOfMissiles');
   const pearlEffectChild = findChildEvent(outcome, 'treasurePearlOfPowerEffect');
   const pearlWisdomChild = findChildEvent(outcome, 'treasurePearlOfWisdom');
+  const periaptPoisonChild = findChildEvent(
+    outcome,
+    'treasurePeriaptProofAgainstPoison'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -93,7 +98,8 @@ export function renderTreasureMiscMagicE4Detail(
       medallionChild,
       necklaceChild,
       pearlEffectChild,
-      pearlWisdomChild
+      pearlWisdomChild,
+      periaptPoisonChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -111,6 +117,10 @@ export function renderTreasureMiscMagicE4Compact(
   const necklaceChild = findChildEvent(outcome, 'treasureNecklaceOfMissiles');
   const pearlEffectChild = findChildEvent(outcome, 'treasurePearlOfPowerEffect');
   const pearlWisdomChild = findChildEvent(outcome, 'treasurePearlOfWisdom');
+  const periaptPoisonChild = findChildEvent(
+    outcome,
+    'treasurePeriaptProofAgainstPoison'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -124,7 +134,8 @@ export function renderTreasureMiscMagicE4Compact(
       medallionChild,
       necklaceChild,
       pearlEffectChild,
-      pearlWisdomChild
+      pearlWisdomChild,
+      periaptPoisonChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
@@ -153,7 +164,8 @@ function resolvedSentence(
   medallionChild?: OutcomeEventNode,
   necklaceChild?: OutcomeEventNode,
   pearlEffectChild?: OutcomeEventNode,
-  pearlWisdomChild?: OutcomeEventNode
+  pearlWisdomChild?: OutcomeEventNode,
+  periaptPoisonChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE4.ManualOfGolems &&
@@ -206,6 +218,15 @@ function resolvedSentence(
   ) {
     const base = miscMagicE4Sentence(result);
     const suffix = pearlOfWisdomParenthetical(pearlWisdomChild.event.result);
+    return `${base.slice(0, -1)} (${suffix}).`;
+  }
+  if (
+    result === TreasureMiscMagicE4.PeriaptOfProofAgainstPoison &&
+    periaptPoisonChild &&
+    periaptPoisonChild.event.kind === 'treasurePeriaptProofAgainstPoison'
+  ) {
+    const base = miscMagicE4Sentence(result);
+    const suffix = periaptPoisonParenthetical(periaptPoisonChild.event.result);
     return `${base.slice(0, -1)} (${suffix}).`;
   }
   return miscMagicE4Sentence(result);

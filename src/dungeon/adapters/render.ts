@@ -307,6 +307,11 @@ import {
   buildTreasurePearlOfWisdomPreview,
 } from './render/treasurePearlOfWisdom';
 import {
+  renderTreasurePeriaptProofAgainstPoisonDetail,
+  renderTreasurePeriaptProofAgainstPoisonCompact,
+  buildTreasurePeriaptProofAgainstPoisonPreview,
+} from './render/treasurePeriaptProofAgainstPoison';
+import {
   renderTreasureFigurineOfWondrousPowerDetail,
   renderTreasureFigurineOfWondrousPowerCompact,
   buildTreasureFigurineOfWondrousPowerPreview,
@@ -737,6 +742,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasurePearlOfWisdomDetail,
     renderCompact: renderTreasurePearlOfWisdomCompact,
   },
+  treasurePeriaptProofAgainstPoison: {
+    renderDetail: renderTreasurePeriaptProofAgainstPoisonDetail,
+    renderCompact: renderTreasurePeriaptProofAgainstPoisonCompact,
+  },
   treasureFigurineOfWondrousPower: {
     renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
     renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
@@ -927,6 +936,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasurePearlOfPowerEffect: buildTreasurePearlOfPowerEffectPreview,
   treasurePearlOfPowerRecall: buildTreasurePearlOfPowerRecallPreview,
   treasurePearlOfWisdom: buildTreasurePearlOfWisdomPreview,
+  treasurePeriaptProofAgainstPoison: buildTreasurePeriaptProofAgainstPoisonPreview,
   treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
   treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
   treasureGirdleOfGiantStrength: buildTreasureGirdleOfGiantStrengthPreview,
@@ -1267,6 +1277,9 @@ function previewForEventNode(
       break;
     case 'treasurePearlOfWisdom':
       tableId = 'treasurePearlOfWisdom';
+      break;
+    case 'treasurePeriaptProofAgainstPoison':
+      tableId = 'treasurePeriaptProofAgainstPoison';
       break;
     case 'treasureFigurineOfWondrousPower':
       tableId = 'treasureFigurineOfWondrousPower';

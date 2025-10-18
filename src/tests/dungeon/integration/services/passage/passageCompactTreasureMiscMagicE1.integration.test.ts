@@ -679,6 +679,43 @@ describe('passage compact treasure misc magic E1 handling', () => {
     expect(compactParagraphs).toContain('pearl of wisdom (+1)');
   });
 
+  it('handles periapt of proof against poison in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 54 },
+        { tableId: 'treasurePeriaptProofAgainstPoison', roll: 17 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+  const periaptEvent = findEvent(
+      result.outcome,
+      'treasurePeriaptProofAgainstPoison'
+    );
+    expect(periaptEvent).toBeDefined();
+    if (
+      !periaptEvent ||
+      periaptEvent.event.kind !== 'treasurePeriaptProofAgainstPoison'
+    ) {
+      throw new Error('treasurePeriaptProofAgainstPoison event not found');
+    }
+    expect(periaptEvent.event.result).toBe(3);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('proof against poison (+3)');
+  });
+
   it('resolves figurine of wondrous power variants in compact mode', () => {
     const result = simulateCompactRunWithSequence({
       action: 'passage',
