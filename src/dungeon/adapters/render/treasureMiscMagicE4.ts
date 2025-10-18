@@ -12,6 +12,7 @@ import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
 import { pearlParenthetical } from './treasurePearlOfPower';
 import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
 import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
+import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:
@@ -81,6 +82,10 @@ export function renderTreasureMiscMagicE4Detail(
     outcome,
     'treasurePeriaptProofAgainstPoison'
   );
+  const phylacteryLongYearsChild = findChildEvent(
+    outcome,
+    'treasurePhylacteryLongYears'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -99,7 +104,8 @@ export function renderTreasureMiscMagicE4Detail(
       necklaceChild,
       pearlEffectChild,
       pearlWisdomChild,
-      periaptPoisonChild
+      periaptPoisonChild,
+      phylacteryLongYearsChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -121,6 +127,10 @@ export function renderTreasureMiscMagicE4Compact(
     outcome,
     'treasurePeriaptProofAgainstPoison'
   );
+  const phylacteryLongYearsChild = findChildEvent(
+    outcome,
+    'treasurePhylacteryLongYears'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -135,7 +145,8 @@ export function renderTreasureMiscMagicE4Compact(
       necklaceChild,
       pearlEffectChild,
       pearlWisdomChild,
-      periaptPoisonChild
+      periaptPoisonChild,
+      phylacteryLongYearsChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
@@ -165,7 +176,8 @@ function resolvedSentence(
   necklaceChild?: OutcomeEventNode,
   pearlEffectChild?: OutcomeEventNode,
   pearlWisdomChild?: OutcomeEventNode,
-  periaptPoisonChild?: OutcomeEventNode
+  periaptPoisonChild?: OutcomeEventNode,
+  phylacteryLongYearsChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE4.ManualOfGolems &&
@@ -227,6 +239,17 @@ function resolvedSentence(
   ) {
     const base = miscMagicE4Sentence(result);
     const suffix = periaptPoisonParenthetical(periaptPoisonChild.event.result);
+    return `${base.slice(0, -1)} (${suffix}).`;
+  }
+  if (
+    result === TreasureMiscMagicE4.PhylacteryOfLongYears &&
+    phylacteryLongYearsChild &&
+    phylacteryLongYearsChild.event.kind === 'treasurePhylacteryLongYears'
+  ) {
+    const base = miscMagicE4Sentence(result);
+    const suffix = phylacteryLongYearsParenthetical(
+      phylacteryLongYearsChild.event.result
+    );
     return `${base.slice(0, -1)} (${suffix}).`;
   }
   return miscMagicE4Sentence(result);

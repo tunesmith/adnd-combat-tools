@@ -123,6 +123,7 @@ import type {
 } from '../../tables/dungeon/treasurePearlOfPower';
 import type { TreasurePearlOfWisdomOutcome } from '../../tables/dungeon/treasurePearlOfWisdom';
 import type { TreasurePeriaptPoisonBonus } from '../../tables/dungeon/treasurePeriaptProofAgainstPoison';
+import type { TreasurePhylacteryLongYearsOutcome } from '../../tables/dungeon/treasurePhylacteryLongYears';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -575,6 +576,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasurePeriaptProofAgainstPoison';
       result: TreasurePeriaptPoisonBonus;
+    }
+  | {
+      kind: 'treasurePhylacteryLongYears';
+      result: TreasurePhylacteryLongYearsOutcome;
     }
   | {
       kind: 'treasureCarpetOfFlying';

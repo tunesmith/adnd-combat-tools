@@ -312,6 +312,11 @@ import {
   buildTreasurePeriaptProofAgainstPoisonPreview,
 } from './render/treasurePeriaptProofAgainstPoison';
 import {
+  renderTreasurePhylacteryLongYearsDetail,
+  renderTreasurePhylacteryLongYearsCompact,
+  buildTreasurePhylacteryLongYearsPreview,
+} from './render/treasurePhylacteryLongYears';
+import {
   renderTreasureFigurineOfWondrousPowerDetail,
   renderTreasureFigurineOfWondrousPowerCompact,
   buildTreasureFigurineOfWondrousPowerPreview,
@@ -746,6 +751,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasurePeriaptProofAgainstPoisonDetail,
     renderCompact: renderTreasurePeriaptProofAgainstPoisonCompact,
   },
+  treasurePhylacteryLongYears: {
+    renderDetail: renderTreasurePhylacteryLongYearsDetail,
+    renderCompact: renderTreasurePhylacteryLongYearsCompact,
+  },
   treasureFigurineOfWondrousPower: {
     renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
     renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
@@ -937,6 +946,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasurePearlOfPowerRecall: buildTreasurePearlOfPowerRecallPreview,
   treasurePearlOfWisdom: buildTreasurePearlOfWisdomPreview,
   treasurePeriaptProofAgainstPoison: buildTreasurePeriaptProofAgainstPoisonPreview,
+  treasurePhylacteryLongYears: buildTreasurePhylacteryLongYearsPreview,
   treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
   treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
   treasureGirdleOfGiantStrength: buildTreasureGirdleOfGiantStrengthPreview,
@@ -1280,6 +1290,9 @@ function previewForEventNode(
       break;
     case 'treasurePeriaptProofAgainstPoison':
       tableId = 'treasurePeriaptProofAgainstPoison';
+      break;
+    case 'treasurePhylacteryLongYears':
+      tableId = 'treasurePhylacteryLongYears';
       break;
     case 'treasureFigurineOfWondrousPower':
       tableId = 'treasureFigurineOfWondrousPower';

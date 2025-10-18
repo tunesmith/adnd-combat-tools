@@ -122,6 +122,9 @@ import type { TreasurePearlOfWisdomOutcome } from './treasurePearlOfWisdom';
 import type {
   TreasurePeriaptPoisonBonus,
 } from './treasurePeriaptProofAgainstPoison';
+import type {
+  TreasurePhylacteryLongYearsOutcome,
+} from './treasurePhylacteryLongYears';
 
 export type Table<T> = {
   sides: number;
@@ -243,6 +246,7 @@ export type Command =
   | TreasurePearlOfPowerRecallResult
   | TreasurePearlOfWisdomOutcome
   | TreasurePeriaptPoisonBonus
+  | TreasurePhylacteryLongYearsOutcome
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant

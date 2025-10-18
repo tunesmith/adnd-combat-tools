@@ -42,6 +42,7 @@ import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
 import { pearlParenthetical } from './treasurePearlOfPower';
 import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
 import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
+import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
@@ -362,6 +363,21 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = periaptPoisonParenthetical(
         periaptPoison.event.result
+      );
+      return `${base.slice(0, -1)} (${suffix}).`;
+    }
+    const phylacteryLongYears = findChildEvent(
+      miscMagicE4,
+      'treasurePhylacteryLongYears'
+    );
+    if (
+      phylacteryLongYears &&
+      phylacteryLongYears.event.kind === 'treasurePhylacteryLongYears' &&
+      miscMagicE4.event.result === TreasureMiscMagicE4.PhylacteryOfLongYears
+    ) {
+      const base = miscMagicE4Sentence(miscMagicE4.event.result);
+      const suffix = phylacteryLongYearsParenthetical(
+        phylacteryLongYears.event.result
       );
       return `${base.slice(0, -1)} (${suffix}).`;
     }

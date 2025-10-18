@@ -15,6 +15,7 @@ import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureMa
 import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
 import { TreasurePearlOfPowerEffect } from '../../../../../tables/dungeon/treasurePearlOfPower';
 import { TreasurePearlOfWisdomOutcome } from '../../../../../tables/dungeon/treasurePearlOfWisdom';
+import { TreasurePhylacteryLongYearsOutcome } from '../../../../../tables/dungeon/treasurePhylacteryLongYears';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -714,6 +715,45 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('proof against poison (+3)');
+  });
+
+  it('handles phylactery of long years in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 72 },
+        { tableId: 'treasurePhylacteryLongYears', roll: 1 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const phylacteryEvent = findEvent(
+      result.outcome,
+      'treasurePhylacteryLongYears'
+    );
+    expect(phylacteryEvent).toBeDefined();
+    if (
+      !phylacteryEvent ||
+      phylacteryEvent.event.kind !== 'treasurePhylacteryLongYears'
+    ) {
+      throw new Error('treasurePhylacteryLongYears event not found');
+    }
+    expect(phylacteryEvent.event.result).toBe(
+      TreasurePhylacteryLongYearsOutcome.FastAging
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('phylactery of long years (fast aging)');
   });
 
   it('resolves figurine of wondrous power variants in compact mode', () => {
