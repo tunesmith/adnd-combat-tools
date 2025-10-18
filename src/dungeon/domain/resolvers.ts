@@ -178,6 +178,10 @@ import {
   TreasurePearlOfPowerEffect,
   resolvePearlRecallResult,
 } from '../../tables/dungeon/treasurePearlOfPower';
+import {
+  treasurePearlOfWisdom,
+  TreasurePearlOfWisdomOutcome,
+} from '../../tables/dungeon/treasurePearlOfWisdom';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2233,6 +2237,11 @@ export function resolveTreasureMiscMagicE4(options?: {
       type: 'pending-roll',
       table: 'treasurePearlOfPowerEffect',
     });
+  } else if (command === TreasureMiscMagicE4.PearlOfWisdom) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePearlOfWisdom',
+    });
   }
   return {
     type: 'event',
@@ -2336,6 +2345,24 @@ export function resolveTreasurePearlOfPowerRecall(options?: {
     event: {
       kind: 'treasurePearlOfPowerRecall',
       result,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasurePearlOfWisdom(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePearlOfWisdom.sides);
+  const command = getTableEntry(
+    usedRoll,
+    treasurePearlOfWisdom
+  ) as TreasurePearlOfWisdomOutcome;
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePearlOfWisdom',
+      result: command,
     } as OutcomeEvent,
   };
 }

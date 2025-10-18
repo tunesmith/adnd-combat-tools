@@ -1383,6 +1383,106 @@ describe('passage contents', () => {
     expect(compactText).toContain('pearl of power (recalls 4th level)');
   });
 
+  it('handles pearl of wisdom loss from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 47);
+
+    const wisdomTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePearlOfWisdom')
+    );
+    const wisdomTarget = wisdomTargets[0];
+    if (!wisdomTarget) throw new Error('missing pearl wisdom target');
+    feed = resolvePreview(feed, wisdomTarget, 1);
+
+    const detailText = renderDetail(feed)
+      .filter((node): node is { kind: 'paragraph'; text: string } =>
+        node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('pearl of wisdom (-1)');
+
+    const compactText = renderCompact(feed)
+      .filter((node): node is { kind: 'paragraph'; text: string } =>
+        node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('pearl of wisdom (-1)');
+  });
+
+  it('resolves pearl of wisdom gain from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 48);
+
+    const wisdomTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePearlOfWisdom')
+    );
+    const wisdomTarget = wisdomTargets[0];
+    if (!wisdomTarget) throw new Error('missing pearl wisdom target');
+    feed = resolvePreview(feed, wisdomTarget, 10);
+
+    const detailText = renderDetail(feed)
+      .filter((node): node is { kind: 'paragraph'; text: string } =>
+        node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('pearl of wisdom (+1)');
+
+    const compactText = renderCompact(feed)
+      .filter((node): node is { kind: 'paragraph'; text: string } =>
+        node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('pearl of wisdom (+1)');
+  });
+
   it('resolves figurine of wondrous power variants from miscellaneous magic', () => {
     let feed = createFeedSnapshot({
       action: 'passage',

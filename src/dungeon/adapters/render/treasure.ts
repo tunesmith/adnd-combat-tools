@@ -40,6 +40,7 @@ import { TreasureMiscMagicE4 } from '../../../tables/dungeon/treasureMiscMagicE4
 import { manualOfGolemsSentence } from './treasureManualOfGolems';
 import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
 import { pearlParenthetical } from './treasurePearlOfPower';
+import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
@@ -335,6 +336,16 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
         pearlEffect.event.result,
         recallResult
       );
+      return `${base.slice(0, -1)} (${suffix}).`;
+    }
+    const pearlWisdom = findChildEvent(miscMagicE4, 'treasurePearlOfWisdom');
+    if (
+      pearlWisdom &&
+      pearlWisdom.event.kind === 'treasurePearlOfWisdom' &&
+      miscMagicE4.event.result === TreasureMiscMagicE4.PearlOfWisdom
+    ) {
+      const base = miscMagicE4Sentence(miscMagicE4.event.result);
+      const suffix = pearlOfWisdomParenthetical(pearlWisdom.event.result);
       return `${base.slice(0, -1)} (${suffix}).`;
     }
     return miscMagicE4Sentence(miscMagicE4.event.result);

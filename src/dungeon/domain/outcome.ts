@@ -121,6 +121,7 @@ import type {
   TreasurePearlOfPowerEffect,
   TreasurePearlOfPowerRecallResult,
 } from '../../tables/dungeon/treasurePearlOfPower';
+import type { TreasurePearlOfWisdomOutcome } from '../../tables/dungeon/treasurePearlOfWisdom';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -565,6 +566,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasurePearlOfPowerRecall';
       result: TreasurePearlOfPowerRecallResult;
+    }
+  | {
+      kind: 'treasurePearlOfWisdom';
+      result: TreasurePearlOfWisdomOutcome;
     }
   | {
       kind: 'treasureCarpetOfFlying';

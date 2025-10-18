@@ -118,6 +118,7 @@ import type {
   TreasurePearlOfPowerRecall,
   TreasurePearlOfPowerRecallResult,
 } from './treasurePearlOfPower';
+import type { TreasurePearlOfWisdomOutcome } from './treasurePearlOfWisdom';
 
 export type Table<T> = {
   sides: number;
@@ -237,6 +238,7 @@ export type Command =
   | TreasurePearlOfPowerEffect
   | TreasurePearlOfPowerRecall
   | TreasurePearlOfPowerRecallResult
+  | TreasurePearlOfWisdomOutcome
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant

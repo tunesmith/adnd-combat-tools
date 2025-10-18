@@ -14,6 +14,7 @@ import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
 import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
 import { TreasurePearlOfPowerEffect } from '../../../../../tables/dungeon/treasurePearlOfPower';
+import { TreasurePearlOfWisdomOutcome } from '../../../../../tables/dungeon/treasurePearlOfWisdom';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -614,6 +615,68 @@ describe('passage compact treasure misc magic E1 handling', () => {
     expect(compactParagraphs).toContain(
       'pearl of power (recalls 4th level)'
     );
+  });
+
+  it('handles pearl of wisdom loss in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 47 },
+        { tableId: 'treasurePearlOfWisdom', roll: 1 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const wisdomEvent = findEvent(result.outcome, 'treasurePearlOfWisdom');
+    expect(wisdomEvent).toBeDefined();
+    if (!wisdomEvent || wisdomEvent.event.kind !== 'treasurePearlOfWisdom') {
+      throw new Error('treasurePearlOfWisdom event not found');
+    }
+    expect(wisdomEvent.event.result).toBe(TreasurePearlOfWisdomOutcome.LoseOne);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('pearl of wisdom (-1)');
+  });
+
+  it('handles pearl of wisdom gain in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 48 },
+        { tableId: 'treasurePearlOfWisdom', roll: 10 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const wisdomEvent = findEvent(result.outcome, 'treasurePearlOfWisdom');
+    expect(wisdomEvent).toBeDefined();
+    if (!wisdomEvent || wisdomEvent.event.kind !== 'treasurePearlOfWisdom') {
+      throw new Error('treasurePearlOfWisdom event not found');
+    }
+    expect(wisdomEvent.event.result).toBe(TreasurePearlOfWisdomOutcome.GainOne);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('pearl of wisdom (+1)');
   });
 
   it('resolves figurine of wondrous power variants in compact mode', () => {
