@@ -39,6 +39,7 @@ import { medallionRangeParenthetical } from './treasureMedallionRange';
 import { TreasureMiscMagicE4 } from '../../../tables/dungeon/treasureMiscMagicE4';
 import { manualOfGolemsSentence } from './treasureManualOfGolems';
 import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
+import { pearlParenthetical } from './treasurePearlOfPower';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
@@ -310,6 +311,30 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     ) {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = necklaceOfMissilesParenthetical(necklace.event.result);
+      return `${base.slice(0, -1)} (${suffix}).`;
+    }
+    const pearlEffect = findChildEvent(
+      miscMagicE4,
+      'treasurePearlOfPowerEffect'
+    );
+    if (
+      pearlEffect &&
+      pearlEffect.event.kind === 'treasurePearlOfPowerEffect' &&
+      miscMagicE4.event.result === TreasureMiscMagicE4.PearlOfPower
+    ) {
+      const recallChild = findChildEvent(
+        pearlEffect,
+        'treasurePearlOfPowerRecall'
+      );
+      const recallResult =
+        recallChild && recallChild.event.kind === 'treasurePearlOfPowerRecall'
+          ? recallChild.event.result
+          : undefined;
+      const base = miscMagicE4Sentence(miscMagicE4.event.result);
+      const suffix = pearlParenthetical(
+        pearlEffect.event.result,
+        recallResult
+      );
       return `${base.slice(0, -1)} (${suffix}).`;
     }
     return miscMagicE4Sentence(miscMagicE4.event.result);

@@ -113,6 +113,11 @@ import type { TreasureStaffSerpent } from './treasureStaffSerpent';
 import type { TreasureManualOfGolems } from './treasureManualOfGolems';
 import type { TreasureMedallionRange } from './treasureMedallionEspRange';
 import type { TreasureNecklaceOfMissiles } from './treasureNecklaceOfMissiles';
+import type {
+  TreasurePearlOfPowerEffect,
+  TreasurePearlOfPowerRecall,
+  TreasurePearlOfPowerRecallResult,
+} from './treasurePearlOfPower';
 
 export type Table<T> = {
   sides: number;
@@ -229,6 +234,9 @@ export type Command =
   | TreasureManualOfGolems
   | TreasureMedallionRange
   | TreasureNecklaceOfMissiles
+  | TreasurePearlOfPowerEffect
+  | TreasurePearlOfPowerRecall
+  | TreasurePearlOfPowerRecallResult
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant

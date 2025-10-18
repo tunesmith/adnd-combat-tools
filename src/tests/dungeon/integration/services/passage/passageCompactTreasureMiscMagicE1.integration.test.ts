@@ -13,6 +13,7 @@ import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
 import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
 import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
+import { TreasurePearlOfPowerEffect } from '../../../../../tables/dungeon/treasurePearlOfPower';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -547,6 +548,71 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .join(' ');
     expect(compactParagraphs).toContain(
       'there is a necklace of missiles (1x8, 2x6, 2x4, 4x2).'
+    );
+  });
+
+  it('handles pearl of power forgetting in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 45 },
+        { tableId: 'treasurePearlOfPowerEffect', roll: 1 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const effectEvent = findEvent(result.outcome, 'treasurePearlOfPowerEffect');
+    expect(effectEvent).toBeDefined();
+    if (!effectEvent || effectEvent.event.kind !== 'treasurePearlOfPowerEffect') {
+      throw new Error('treasurePearlOfPowerEffect event not found');
+    }
+    expect(effectEvent.event.result).toBe(TreasurePearlOfPowerEffect.Forgetting);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('pearl of power (forgetting)');
+  });
+
+  it('resolves pearl of power recall in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 46 },
+        { tableId: 'treasurePearlOfPowerEffect', roll: 5 },
+        { tableId: 'treasurePearlOfPowerRecall', roll: 70 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const recallEvent = findEvent(result.outcome, 'treasurePearlOfPowerRecall');
+    expect(recallEvent).toBeDefined();
+    if (!recallEvent || recallEvent.event.kind !== 'treasurePearlOfPowerRecall') {
+      throw new Error('treasurePearlOfPowerRecall event not found');
+    }
+    expect(recallEvent.event.result).toEqual({ type: 'single', level: 4 });
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'pearl of power (recalls 4th level)'
     );
   });
 

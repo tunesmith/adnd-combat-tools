@@ -9,6 +9,7 @@ import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { manualOfGolemsSentence } from './treasureManualOfGolems';
 import { medallionRangeParenthetical } from './treasureMedallionRange';
 import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
+import { pearlParenthetical } from './treasurePearlOfPower';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:
@@ -72,6 +73,7 @@ export function renderTreasureMiscMagicE4Detail(
   const manualChild = findChildEvent(outcome, 'treasureManualOfGolems');
   const medallionChild = findChildEvent(outcome, 'treasureMedallionRange');
   const necklaceChild = findChildEvent(outcome, 'treasureNecklaceOfMissiles');
+  const pearlEffectChild = findChildEvent(outcome, 'treasurePearlOfPowerEffect');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -87,7 +89,8 @@ export function renderTreasureMiscMagicE4Detail(
       outcome.event.result,
       manualChild,
       medallionChild,
-      necklaceChild
+      necklaceChild,
+      pearlEffectChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -103,6 +106,7 @@ export function renderTreasureMiscMagicE4Compact(
   const manualChild = findChildEvent(outcome, 'treasureManualOfGolems');
   const medallionChild = findChildEvent(outcome, 'treasureMedallionRange');
   const necklaceChild = findChildEvent(outcome, 'treasureNecklaceOfMissiles');
+  const pearlEffectChild = findChildEvent(outcome, 'treasurePearlOfPowerEffect');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -114,7 +118,8 @@ export function renderTreasureMiscMagicE4Compact(
       outcome.event.result,
       manualChild,
       medallionChild,
-      necklaceChild
+      necklaceChild,
+      pearlEffectChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
@@ -141,7 +146,8 @@ function resolvedSentence(
   result: TreasureMiscMagicE4,
   manualChild?: OutcomeEventNode,
   medallionChild?: OutcomeEventNode,
-  necklaceChild?: OutcomeEventNode
+  necklaceChild?: OutcomeEventNode,
+  pearlEffectChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE4.ManualOfGolems &&
@@ -167,6 +173,24 @@ function resolvedSentence(
   ) {
     const base = miscMagicE4Sentence(result);
     const suffix = necklaceOfMissilesParenthetical(necklaceChild.event.result);
+    return `${base.slice(0, -1)} (${suffix}).`;
+  }
+  if (
+    result === TreasureMiscMagicE4.PearlOfPower &&
+    pearlEffectChild &&
+    pearlEffectChild.event.kind === 'treasurePearlOfPowerEffect'
+  ) {
+    const effect = pearlEffectChild.event.result;
+    const recallChild = findChildEvent(
+      pearlEffectChild,
+      'treasurePearlOfPowerRecall'
+    );
+    const recallResult =
+      recallChild && recallChild.event.kind === 'treasurePearlOfPowerRecall'
+        ? recallChild.event.result
+        : undefined;
+    const base = miscMagicE4Sentence(result);
+    const suffix = pearlParenthetical(effect, recallResult);
     return `${base.slice(0, -1)} (${suffix}).`;
   }
   return miscMagicE4Sentence(result);

@@ -115,6 +115,8 @@ import {
   resolveTreasureManualOfGolems,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
+  resolveTreasurePearlOfPowerEffect,
+  resolveTreasurePearlOfPowerRecall,
   resolveTreasureStaffSerpent,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
@@ -228,6 +230,8 @@ const TABLE_ID_LIST = [
   'treasureManualOfGolems',
   'treasureMedallionRange',
   'treasureNecklaceOfMissiles',
+  'treasurePearlOfPowerEffect',
+  'treasurePearlOfPowerRecall',
   'treasureFigurineOfWondrousPower',
   'treasureFigurineMarbleElephant',
   'treasureGirdleOfGiantStrength',
@@ -343,6 +347,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureManualOfGolems: 'Manual of Golems',
   treasureMedallionRange: 'Medallion Details',
   treasureNecklaceOfMissiles: 'Necklace of Missiles',
+  treasurePearlOfPowerEffect: 'Pearl of Power Effect',
+  treasurePearlOfPowerRecall: 'Pearl of Power Recall',
   treasureFigurineOfWondrousPower: 'Figurine of Wondrous Power',
   treasureFigurineMarbleElephant: 'Marble Elephant Form',
   treasureGirdleOfGiantStrength: 'Giant Strength Type',
@@ -850,6 +856,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureMedallionRange({ roll })),
   treasureNecklaceOfMissiles: ({ roll }) =>
     fromOutcome(resolveTreasureNecklaceOfMissiles({ roll })),
+  treasurePearlOfPowerEffect: ({ roll }) =>
+    fromOutcome(resolveTreasurePearlOfPowerEffect({ roll })),
+  treasurePearlOfPowerRecall: ({ roll }) =>
+    fromOutcome(resolveTreasurePearlOfPowerRecall({ roll })),
   treasureFigurineOfWondrousPower: ({ roll }) =>
     fromOutcome(resolveTreasureFigurineOfWondrousPower({ roll })),
   treasureFigurineMarbleElephant: ({ roll }) =>

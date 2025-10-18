@@ -294,6 +294,14 @@ import {
   buildTreasureNecklaceOfMissilesPreview,
 } from './render/treasureNecklaceOfMissiles';
 import {
+  renderTreasurePearlOfPowerEffectDetail,
+  renderTreasurePearlOfPowerEffectCompact,
+  renderTreasurePearlOfPowerRecallDetail,
+  renderTreasurePearlOfPowerRecallCompact,
+  buildTreasurePearlOfPowerEffectPreview,
+  buildTreasurePearlOfPowerRecallPreview,
+} from './render/treasurePearlOfPower';
+import {
   renderTreasureFigurineOfWondrousPowerDetail,
   renderTreasureFigurineOfWondrousPowerCompact,
   buildTreasureFigurineOfWondrousPowerPreview,
@@ -712,6 +720,14 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureNecklaceOfMissilesDetail,
     renderCompact: renderTreasureNecklaceOfMissilesCompact,
   },
+  treasurePearlOfPowerEffect: {
+    renderDetail: renderTreasurePearlOfPowerEffectDetail,
+    renderCompact: renderTreasurePearlOfPowerEffectCompact,
+  },
+  treasurePearlOfPowerRecall: {
+    renderDetail: renderTreasurePearlOfPowerRecallDetail,
+    renderCompact: renderTreasurePearlOfPowerRecallCompact,
+  },
   treasureFigurineOfWondrousPower: {
     renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
     renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
@@ -899,6 +915,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureManualOfGolems: buildTreasureManualOfGolemsPreview,
   treasureMedallionRange: buildTreasureMedallionRangePreview,
   treasureNecklaceOfMissiles: buildTreasureNecklaceOfMissilesPreview,
+  treasurePearlOfPowerEffect: buildTreasurePearlOfPowerEffectPreview,
+  treasurePearlOfPowerRecall: buildTreasurePearlOfPowerRecallPreview,
   treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
   treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
   treasureGirdleOfGiantStrength: buildTreasureGirdleOfGiantStrengthPreview,
@@ -1230,6 +1248,12 @@ function previewForEventNode(
       break;
     case 'treasureNecklaceOfMissiles':
       tableId = 'treasureNecklaceOfMissiles';
+      break;
+    case 'treasurePearlOfPowerEffect':
+      tableId = 'treasurePearlOfPowerEffect';
+      break;
+    case 'treasurePearlOfPowerRecall':
+      tableId = 'treasurePearlOfPowerRecall';
       break;
     case 'treasureFigurineOfWondrousPower':
       tableId = 'treasureFigurineOfWondrousPower';

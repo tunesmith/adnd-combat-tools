@@ -118,6 +118,10 @@ import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManual
 import type { TreasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
 import type { TreasureNecklaceOfMissiles } from '../../tables/dungeon/treasureNecklaceOfMissiles';
 import type {
+  TreasurePearlOfPowerEffect,
+  TreasurePearlOfPowerRecallResult,
+} from '../../tables/dungeon/treasurePearlOfPower';
+import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
   TreasureProtectionHiddenBy,
@@ -553,6 +557,14 @@ export type OutcomeEvent =
   | {
       kind: 'treasureNecklaceOfMissiles';
       result: TreasureNecklaceOfMissiles;
+    }
+  | {
+      kind: 'treasurePearlOfPowerEffect';
+      result: TreasurePearlOfPowerEffect;
+    }
+  | {
+      kind: 'treasurePearlOfPowerRecall';
+      result: TreasurePearlOfPowerRecallResult;
     }
   | {
       kind: 'treasureCarpetOfFlying';

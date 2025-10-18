@@ -99,6 +99,8 @@ import {
   resolveTreasureMiscMagicE4,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
+  resolveTreasurePearlOfPowerEffect,
+  resolveTreasurePearlOfPowerRecall,
   resolveTreasureManualOfGolems,
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE2,
@@ -747,6 +749,10 @@ function resolvePendingNode(
       return resolveTreasureManualOfGolems({});
     case 'treasureNecklaceOfMissiles':
       return resolveTreasureNecklaceOfMissiles({});
+    case 'treasurePearlOfPowerEffect':
+      return resolveTreasurePearlOfPowerEffect({});
+    case 'treasurePearlOfPowerRecall':
+      return resolveTreasurePearlOfPowerRecall({});
     case 'treasureMedallionRange':
       return resolveTreasureMedallionRange({});
     case 'treasureCarpetOfFlying':

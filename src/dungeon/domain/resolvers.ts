@@ -172,6 +172,12 @@ import {
   treasureNecklaceOfMissiles,
   type TreasureNecklaceOfMissiles,
 } from '../../tables/dungeon/treasureNecklaceOfMissiles';
+import {
+  treasurePearlOfPowerEffect,
+  treasurePearlOfPowerRecall,
+  TreasurePearlOfPowerEffect,
+  resolvePearlRecallResult,
+} from '../../tables/dungeon/treasurePearlOfPower';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2222,6 +2228,11 @@ export function resolveTreasureMiscMagicE4(options?: {
       type: 'pending-roll',
       table: 'treasureNecklaceOfMissiles',
     });
+  } else if (command === TreasureMiscMagicE4.PearlOfPower) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePearlOfPowerEffect',
+    });
   }
   return {
     type: 'event',
@@ -2284,6 +2295,47 @@ export function resolveTreasureNecklaceOfMissiles(options?: {
     event: {
       kind: 'treasureNecklaceOfMissiles',
       result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasurePearlOfPowerEffect(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePearlOfPowerEffect.sides);
+  const command = getTableEntry(usedRoll, treasurePearlOfPowerEffect);
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasurePearlOfPowerEffect.Recall) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePearlOfPowerRecall',
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePearlOfPowerEffect',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasurePearlOfPowerRecall(options?: {
+  roll?: number;
+  d6?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePearlOfPowerRecall.sides);
+  const command = getTableEntry(usedRoll, treasurePearlOfPowerRecall);
+  const d6Roll = options?.d6 ?? rollDice(6);
+  const result = resolvePearlRecallResult(command, () => d6Roll);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePearlOfPowerRecall',
+      result,
     } as OutcomeEvent,
   };
 }
