@@ -7,6 +7,7 @@ import {
 import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { manualOfGolemsSentence } from './treasureManualOfGolems';
+import { medallionRangeParenthetical } from './treasureMedallionRange';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:
@@ -68,6 +69,7 @@ export function renderTreasureMiscMagicE4Detail(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE4') return [];
   const manualChild = findChildEvent(outcome, 'treasureManualOfGolems');
+  const medallionChild = findChildEvent(outcome, 'treasureMedallionRange');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -79,7 +81,7 @@ export function renderTreasureMiscMagicE4Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, manualChild),
+    text: resolvedSentence(outcome.event.result, manualChild, medallionChild),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -92,6 +94,7 @@ export function renderTreasureMiscMagicE4Compact(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE4') return [];
   const manualChild = findChildEvent(outcome, 'treasureManualOfGolems');
+  const medallionChild = findChildEvent(outcome, 'treasureMedallionRange');
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -99,7 +102,7 @@ export function renderTreasureMiscMagicE4Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, manualChild),
+    text: resolvedSentence(outcome.event.result, manualChild, medallionChild),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -123,7 +126,8 @@ export function miscMagicE4Sentence(result: TreasureMiscMagicE4): string {
 
 function resolvedSentence(
   result: TreasureMiscMagicE4,
-  manualChild?: OutcomeEventNode
+  manualChild?: OutcomeEventNode,
+  medallionChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE4.ManualOfGolems &&
@@ -131,6 +135,16 @@ function resolvedSentence(
     manualChild.event.kind === 'treasureManualOfGolems'
   ) {
     return manualOfGolemsSentence(manualChild.event.result);
+  }
+  if (
+    (result === TreasureMiscMagicE4.MedallionOfESP ||
+      result === TreasureMiscMagicE4.MedallionOfThoughtProjection) &&
+    medallionChild &&
+    medallionChild.event.kind === 'treasureMedallionRange'
+  ) {
+    const base = miscMagicE4Sentence(result);
+    const suffix = medallionRangeParenthetical(medallionChild.event.result);
+    return `${base.slice(0, -1)} (${suffix}).`;
   }
   return miscMagicE4Sentence(result);
 }

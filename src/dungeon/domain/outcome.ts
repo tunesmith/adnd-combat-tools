@@ -115,6 +115,7 @@ import type { TreasureIronFlaskContent } from '../../tables/dungeon/treasureIron
 import type { TreasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
 import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
+import type { TreasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -543,6 +544,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureManualOfGolems';
       result: TreasureManualOfGolems;
+    }
+  | {
+      kind: 'treasureMedallionRange';
+      result: TreasureMedallionRange;
     }
   | {
       kind: 'treasureCarpetOfFlying';

@@ -12,6 +12,7 @@ import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscM
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
 import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
+import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -407,6 +408,92 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .join(' ');
     expect(compactParagraphs).toContain(
       'there is a manual of iron golems.'
+    );
+  });
+
+  it('resolves medallion of ESP variants in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 15 },
+        { tableId: 'treasureMedallionRange', roll: 17 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE4');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE4') {
+      throw new Error('treasureMiscMagicE4 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE4.MedallionOfESP);
+
+    const medallionEvent = findEvent(result.outcome, 'treasureMedallionRange');
+    expect(medallionEvent).toBeDefined();
+    if (!medallionEvent || medallionEvent.event.kind !== 'treasureMedallionRange') {
+      throw new Error('treasureMedallionRange event not found');
+    }
+    expect(medallionEvent.event.result).toBe(
+      TreasureMedallionRange.ThirtyFeetWithEmpathy
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      "there is a medallion of esp (30', empathy)."
+    );
+  });
+
+  it('resolves medallion of thought projection variants in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 17 },
+        { tableId: 'treasureMedallionRange', roll: 20 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE4');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE4') {
+      throw new Error('treasureMiscMagicE4 event not found');
+    }
+    expect(miscEvent.event.result).toBe(
+      TreasureMiscMagicE4.MedallionOfThoughtProjection
+    );
+
+    const medallionEvent = findEvent(result.outcome, 'treasureMedallionRange');
+    expect(medallionEvent).toBeDefined();
+    if (!medallionEvent || medallionEvent.event.kind !== 'treasureMedallionRange') {
+      throw new Error('treasureMedallionRange event not found');
+    }
+    expect(medallionEvent.event.result).toBe(
+      TreasureMedallionRange.NinetyFeet
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      "there is a medallion of thought projection (90')."
     );
   });
 

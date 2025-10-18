@@ -29,6 +29,7 @@ import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasure
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
 import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
+import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -1075,6 +1076,126 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a manual of iron golems.');
+  });
+
+  it('resolves medallion of ESP variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 14);
+
+    const medallionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMedallionRange')
+    );
+    const medallionTarget = medallionTargets[0];
+    if (!medallionTarget) throw new Error('missing medallion target');
+    feed = resolvePreview(feed, medallionTarget, 17);
+
+    const medallionEvent = findOutcomeEvent(feed.outcome, 'treasureMedallionRange');
+    expect(medallionEvent).toBeDefined();
+    if (!medallionEvent || medallionEvent.event.kind !== 'treasureMedallionRange') {
+      throw new Error('treasureMedallionRange event not found');
+    }
+    expect(medallionEvent.event.result).toBe(
+      TreasureMedallionRange.ThirtyFeetWithEmpathy
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain("there is a medallion of esp (30', empathy).");
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain("there is a medallion of esp (30', empathy).");
+  });
+
+  it('resolves medallion of thought projection variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 17);
+
+    const medallionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMedallionRange')
+    );
+    const medallionTarget = medallionTargets[0];
+    if (!medallionTarget) throw new Error('missing medallion target');
+    feed = resolvePreview(feed, medallionTarget, 19);
+
+    const medallionEvent = findOutcomeEvent(feed.outcome, 'treasureMedallionRange');
+    expect(medallionEvent).toBeDefined();
+    if (!medallionEvent || medallionEvent.event.kind !== 'treasureMedallionRange') {
+      throw new Error('treasureMedallionRange event not found');
+    }
+    expect(medallionEvent.event.result).toBe(TreasureMedallionRange.SixtyFeet);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain("there is a medallion of thought projection (60').");
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain("there is a medallion of thought projection (60').");
   });
 
   it('resolves figurine of wondrous power variants from miscellaneous magic', () => {

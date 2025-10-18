@@ -164,6 +164,10 @@ import {
   treasureManualOfGolems,
   TreasureManualOfGolems,
 } from '../../tables/dungeon/treasureManualOfGolems';
+import {
+  treasureMedallionRange,
+  TreasureMedallionRange,
+} from '../../tables/dungeon/treasureMedallionEspRange';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2205,6 +2209,10 @@ export function resolveTreasureMiscMagicE4(options?: {
   const children: DungeonOutcomeNode[] = [];
   if (command === TreasureMiscMagicE4.ManualOfGolems) {
     children.push({ type: 'pending-roll', table: 'treasureManualOfGolems' });
+  } else if (command === TreasureMiscMagicE4.MedallionOfESP) {
+    children.push({ type: 'pending-roll', table: 'treasureMedallionRange' });
+  } else if (command === TreasureMiscMagicE4.MedallionOfThoughtProjection) {
+    children.push({ type: 'pending-roll', table: 'treasureMedallionRange' });
   }
   return {
     type: 'event',
@@ -2230,6 +2238,24 @@ export function resolveTreasureManualOfGolems(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureManualOfGolems',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureMedallionRange(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureMedallionRange.sides);
+  const command: TreasureMedallionRange = getTableEntry(
+    usedRoll,
+    treasureMedallionRange
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureMedallionRange',
       result: command,
     } as OutcomeEvent,
   };

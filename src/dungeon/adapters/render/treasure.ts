@@ -35,6 +35,8 @@ import { ironFlaskSentence } from './treasureIronFlask';
 import { hornSentence } from './treasureHornOfValhalla';
 import { miscMagicE3Sentence } from './treasureMiscMagicE3';
 import { miscMagicE4Sentence } from './treasureMiscMagicE4';
+import { medallionRangeParenthetical } from './treasureMedallionRange';
+import { TreasureMiscMagicE4 } from '../../../tables/dungeon/treasureMiscMagicE4';
 import { manualOfGolemsSentence } from './treasureManualOfGolems';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
@@ -283,6 +285,18 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const manual = findChildEvent(miscMagicE4, 'treasureManualOfGolems');
     if (manual && manual.event.kind === 'treasureManualOfGolems') {
       return manualOfGolemsSentence(manual.event.result);
+    }
+    const medallion = findChildEvent(miscMagicE4, 'treasureMedallionRange');
+    if (
+      medallion &&
+      medallion.event.kind === 'treasureMedallionRange' &&
+      (miscMagicE4.event.result === TreasureMiscMagicE4.MedallionOfESP ||
+        miscMagicE4.event.result ===
+          TreasureMiscMagicE4.MedallionOfThoughtProjection)
+    ) {
+      const base = miscMagicE4Sentence(miscMagicE4.event.result);
+      const suffix = medallionRangeParenthetical(medallion.event.result);
+      return `${base.slice(0, -1)} (${suffix}).`;
     }
     return miscMagicE4Sentence(miscMagicE4.event.result);
   }
