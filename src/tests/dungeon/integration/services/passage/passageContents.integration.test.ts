@@ -1639,6 +1639,49 @@ describe('passage contents', () => {
     expect(compactText).toContain("feather token (whip)");
   });
 
+  it('resolves necklace of prayer beads from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 30);
+
+    const detailText = renderDetail(feed)
+      .filter((node): node is { kind: 'paragraph'; text: string } =>
+        node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('necklace of prayer beads');
+
+    const compactText = renderCompact(feed)
+      .filter((node): node is { kind: 'paragraph'; text: string } =>
+        node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('necklace of prayer beads');
+  });
+
   it('resolves figurine of wondrous power variants from miscellaneous magic', () => {
     let feed = createFeedSnapshot({
       action: 'passage',

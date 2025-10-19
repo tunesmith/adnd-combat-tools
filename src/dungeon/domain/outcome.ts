@@ -125,6 +125,7 @@ import type { TreasurePearlOfWisdomOutcome } from '../../tables/dungeon/treasure
 import type { TreasurePeriaptPoisonBonus } from '../../tables/dungeon/treasurePeriaptProofAgainstPoison';
 import type { TreasurePhylacteryLongYearsOutcome } from '../../tables/dungeon/treasurePhylacteryLongYears';
 import type { TreasureQuaalFeatherToken } from '../../tables/dungeon/treasureQuaalFeatherToken';
+import type { TreasureNecklacePrayerBead } from '../../tables/dungeon/treasureNecklacePrayerBeads';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
@@ -563,6 +564,10 @@ export type OutcomeEvent =
       result: TreasureNecklaceOfMissiles;
     }
   | {
+      kind: 'treasureNecklaceOfPrayerBeads';
+      result: TreasureNecklaceOfPrayerBeadsResult;
+    }
+  | {
       kind: 'treasurePearlOfPowerEffect';
       result: TreasurePearlOfPowerEffect;
     }
@@ -635,6 +640,18 @@ export type TreasureIounStone = {
   effect: string;
   status: TreasureIounStoneStatus;
   duplicateOf?: number;
+};
+
+export type TreasureNecklacePrayerBeadSpecial = {
+  roll: number;
+  type: TreasureNecklacePrayerBead;
+};
+
+export type TreasureNecklaceOfPrayerBeadsResult = {
+  totalBeads: number;
+  semiPrecious: number;
+  fancy: number;
+  specialBeads: TreasureNecklacePrayerBeadSpecial[];
 };
 
 export type TreasureIounStonesResult = {

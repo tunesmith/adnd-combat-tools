@@ -23,6 +23,8 @@ import { CharacterPartyDetail } from '../../components/dungeon/CharacterPartyDet
 import { CharacterPartyCompact } from '../../components/dungeon/CharacterPartyCompact';
 import { IounStonesDetail } from '../../components/dungeon/IounStonesDetail';
 import { IounStonesCompact } from '../../components/dungeon/IounStonesCompact';
+import { PrayerBeadsDetail } from '../../components/dungeon/PrayerBeadsDetail';
+import { PrayerBeadsCompact } from '../../components/dungeon/PrayerBeadsCompact';
 
 type ActionKind = 'passage' | 'door';
 
@@ -328,6 +330,12 @@ function renderNode(
         <IounStonesCompact key={key} summary={m.summary} />
       ) : (
         <IounStonesDetail key={key} summary={m.summary} />
+      );
+    case 'prayer-beads':
+      return m.display === 'compact' ? (
+        <PrayerBeadsCompact key={key} summary={m.summary} />
+      ) : (
+        <PrayerBeadsDetail key={key} summary={m.summary} />
       );
     case 'table-preview': {
       const tp = m;

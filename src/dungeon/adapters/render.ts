@@ -322,6 +322,10 @@ import {
   buildTreasureQuaalFeatherTokenPreview,
 } from './render/treasureQuaalFeatherToken';
 import {
+  renderTreasureNecklaceOfPrayerBeadsDetail,
+  renderTreasureNecklaceOfPrayerBeadsCompact,
+} from './render/treasureNecklaceOfPrayerBeads';
+import {
   renderTreasureFigurineOfWondrousPowerDetail,
   renderTreasureFigurineOfWondrousPowerCompact,
   buildTreasureFigurineOfWondrousPowerPreview,
@@ -763,6 +767,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasureQuaalFeatherToken: {
     renderDetail: renderTreasureQuaalFeatherTokenDetail,
     renderCompact: renderTreasureQuaalFeatherTokenCompact,
+  },
+  treasureNecklaceOfPrayerBeads: {
+    renderDetail: renderTreasureNecklaceOfPrayerBeadsDetail,
+    renderCompact: renderTreasureNecklaceOfPrayerBeadsCompact,
   },
   treasureFigurineOfWondrousPower: {
     renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
@@ -1306,6 +1314,9 @@ function previewForEventNode(
       break;
     case 'treasureQuaalFeatherToken':
       tableId = 'treasureQuaalFeatherToken';
+      break;
+    case 'treasureNecklaceOfPrayerBeads':
+      tableId = 'treasureNecklaceOfPrayerBeads';
       break;
     case 'treasureFigurineOfWondrousPower':
       tableId = 'treasureFigurineOfWondrousPower';

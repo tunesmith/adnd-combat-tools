@@ -791,6 +791,56 @@ describe('passage compact treasure misc magic E1 handling', () => {
     expect(compactParagraphs).toContain("feather token (tree)");
   });
 
+  it('handles necklace of prayer beads in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 30 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const necklaceEvent = findEvent(
+      result.outcome,
+      'treasureNecklaceOfPrayerBeads'
+    );
+    expect(necklaceEvent).toBeDefined();
+    if (
+      !necklaceEvent ||
+      necklaceEvent.event.kind !== 'treasureNecklaceOfPrayerBeads'
+    ) {
+      throw new Error('treasureNecklaceOfPrayerBeads event not found');
+    }
+    expect(necklaceEvent.event.result.specialBeads.length).toBeGreaterThanOrEqual(3);
+    expect(necklaceEvent.event.result.specialBeads.length).toBeLessThanOrEqual(6);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('necklace of prayer beads');
+
+    const prayerBeadsNode = result.compact.nodes.find(
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'prayer-beads' }> =>
+        node.kind === 'prayer-beads'
+    );
+    expect(prayerBeadsNode).toBeDefined();
+    if (!prayerBeadsNode) {
+      throw new Error('prayer-beads render node not found');
+    }
+    expect(prayerBeadsNode.summary.totalBeads).toBeGreaterThanOrEqual(25);
+    expect(prayerBeadsNode.summary.breakdown.length).toBeGreaterThan(0);
+  });
+
   it('resolves figurine of wondrous power variants in compact mode', () => {
     const result = simulateCompactRunWithSequence({
       action: 'passage',

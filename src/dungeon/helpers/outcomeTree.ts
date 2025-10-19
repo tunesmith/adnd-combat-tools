@@ -99,6 +99,7 @@ import {
   resolveTreasureMiscMagicE4,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
+  resolveTreasureNecklaceOfPrayerBeads,
   resolveTreasurePearlOfPowerEffect,
   resolveTreasurePearlOfPowerRecall,
   resolveTreasurePearlOfWisdom,
@@ -753,6 +754,8 @@ function resolvePendingNode(
       return resolveTreasureManualOfGolems({});
     case 'treasureNecklaceOfMissiles':
       return resolveTreasureNecklaceOfMissiles({});
+    case 'treasureNecklaceOfPrayerBeads':
+      return resolveTreasureNecklaceOfPrayerBeads({});
     case 'treasurePearlOfPowerEffect':
       return resolveTreasurePearlOfPowerEffect({});
     case 'treasurePearlOfPowerRecall':
@@ -765,6 +768,8 @@ function resolvePendingNode(
       return resolveTreasurePhylacteryLongYears({});
     case 'treasureQuaalFeatherToken':
       return resolveTreasureQuaalFeatherToken({});
+    case 'treasureNecklaceOfPrayerBeads':
+      return resolveTreasureNecklaceOfPrayerBeads({});
     case 'treasureMedallionRange':
       return resolveTreasureMedallionRange({});
     case 'treasureCarpetOfFlying':

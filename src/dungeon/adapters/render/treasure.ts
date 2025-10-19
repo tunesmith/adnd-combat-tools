@@ -44,6 +44,7 @@ import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
 import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
 import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
 import { quaalFeatherTokenParenthetical } from './treasureQuaalFeatherToken';
+import { toPrayerBeadsSummary } from './treasureNecklaceOfPrayerBeads';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
@@ -112,6 +113,17 @@ export function renderTreasureCompactNodes(
     nodes.push({
       kind: 'ioun-stones',
       summary: toIounStonesSummary(iounStones.event.result),
+      display: 'compact',
+    });
+  }
+  const prayerBeads = findPrayerBeadsEvent(outcome);
+  if (
+    prayerBeads &&
+    prayerBeads.event.kind === 'treasureNecklaceOfPrayerBeads'
+  ) {
+    nodes.push({
+      kind: 'prayer-beads',
+      summary: toPrayerBeadsSummary(prayerBeads.event.result),
       display: 'compact',
     });
   }
@@ -395,6 +407,17 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       const suffix = quaalFeatherTokenParenthetical(quaalToken.event.result);
       return `${base.slice(0, -1)} (${suffix}).`;
     }
+    const prayerBeads = findChildEvent(
+      miscMagicE4,
+      'treasureNecklaceOfPrayerBeads'
+    );
+    if (
+      prayerBeads &&
+      prayerBeads.event.kind === 'treasureNecklaceOfPrayerBeads' &&
+      miscMagicE4.event.result === TreasureMiscMagicE4.NecklaceOfPrayerBeads
+    ) {
+      return miscMagicE4Sentence(miscMagicE4.event.result);
+    }
     return miscMagicE4Sentence(miscMagicE4.event.result);
   }
   return undefined;
@@ -437,6 +460,17 @@ export function collectTreasureCompactMessages(
           display: 'compact',
         });
       }
+      const prayerBeads = findPrayerBeadsEvent(current);
+      if (
+        prayerBeads &&
+        prayerBeads.event.kind === 'treasureNecklaceOfPrayerBeads'
+      ) {
+        messages.push({
+          kind: 'prayer-beads',
+          summary: toPrayerBeadsSummary(prayerBeads.event.result),
+          display: 'compact',
+        });
+      }
     }
     current.children?.forEach((child) => {
       if (child.type === 'event') visit(child);
@@ -456,6 +490,21 @@ function findIounStonesEvent(
   for (const child of children) {
     if (child.type !== 'event') continue;
     const match = findIounStonesEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function findPrayerBeadsEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureNecklaceOfPrayerBeads') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findPrayerBeadsEvent(child);
     if (match) return match;
   }
   return undefined;

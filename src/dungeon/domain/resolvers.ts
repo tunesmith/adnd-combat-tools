@@ -194,6 +194,10 @@ import {
   treasureQuaalFeatherToken,
   TreasureQuaalFeatherToken,
 } from '../../tables/dungeon/treasureQuaalFeatherToken';
+import {
+  treasureNecklacePrayerBeads,
+  TreasureNecklacePrayerBead,
+} from '../../tables/dungeon/treasureNecklacePrayerBeads';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2244,6 +2248,8 @@ export function resolveTreasureMiscMagicE4(options?: {
       type: 'pending-roll',
       table: 'treasureNecklaceOfMissiles',
     });
+  } else if (command === TreasureMiscMagicE4.NecklaceOfPrayerBeads) {
+    children.push(resolveTreasureNecklaceOfPrayerBeads());
   } else if (command === TreasureMiscMagicE4.PearlOfPower) {
     children.push({
       type: 'pending-roll',
@@ -2428,6 +2434,42 @@ export function resolveTreasurePhylacteryLongYears(options?: {
     event: {
       kind: 'treasurePhylacteryLongYears',
       result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureNecklaceOfPrayerBeads(options?: {
+  totalRoll?: number;
+  specialCountRoll?: number;
+  specialRolls?: number[];
+}): DungeonOutcomeNode {
+  const totalBase = options?.totalRoll ?? rollDice(6);
+  const totalBeads = 24 + totalBase;
+  const semiPrecious = Math.round(totalBeads * 0.6);
+  const fancy = totalBeads - semiPrecious;
+
+  const countBase = options?.specialCountRoll ?? rollDice(4);
+  const specialCount = countBase + 2;
+  const specialRolls: number[] = options?.specialRolls ?? [];
+  const specialBeads: { roll: number; type: TreasureNecklacePrayerBead }[] =
+    Array.from({ length: specialCount }, (_, index) => {
+      const roll =
+        specialRolls[index] ?? rollDice(treasureNecklacePrayerBeads.sides);
+      const type = getTableEntry(roll, treasureNecklacePrayerBeads);
+      return { type, roll };
+    });
+
+  return {
+    type: 'event',
+    roll: totalBeads,
+    event: {
+      kind: 'treasureNecklaceOfPrayerBeads',
+      result: {
+        totalBeads,
+        semiPrecious,
+        fancy,
+        specialBeads,
+      },
     } as OutcomeEvent,
   };
 }

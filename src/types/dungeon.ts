@@ -50,12 +50,32 @@ export type DungeonIounStonesMessage = {
   display: 'detail' | 'compact';
 };
 
+export type PrayerBeadsBreakdownEntry = {
+  label: string;
+  count: number;
+};
+
+export type PrayerBeadsSummary = {
+  totalBeads: number;
+  semiPrecious: number;
+  fancy: number;
+  specialCount: number;
+  breakdown: PrayerBeadsBreakdownEntry[];
+};
+
+export type DungeonPrayerBeadsMessage = {
+  kind: 'prayer-beads';
+  summary: PrayerBeadsSummary;
+  display: 'detail' | 'compact';
+};
+
 export type DungeonMessage =
   | DungeonParagraph
   | DungeonHeading
   | DungeonBulletList
   | DungeonCharacterPartyMessage
-  | DungeonIounStonesMessage;
+  | DungeonIounStonesMessage
+  | DungeonPrayerBeadsMessage;
 
 export type RollTraceItem = {
   table: string;

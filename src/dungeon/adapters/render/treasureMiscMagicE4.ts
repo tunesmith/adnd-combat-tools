@@ -14,6 +14,10 @@ import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
 import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
 import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
 import { quaalFeatherTokenParenthetical } from './treasureQuaalFeatherToken';
+import {
+  necklaceOfPrayerBeadsParenthetical,
+  toPrayerBeadsSummary,
+} from './treasureNecklaceOfPrayerBeads';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:
@@ -91,6 +95,10 @@ export function renderTreasureMiscMagicE4Detail(
     outcome,
     'treasureQuaalFeatherToken'
   );
+  const prayerBeadsChild = findChildEvent(
+    outcome,
+    'treasureNecklaceOfPrayerBeads'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -111,7 +119,9 @@ export function renderTreasureMiscMagicE4Detail(
       pearlWisdomChild,
       periaptPoisonChild,
       phylacteryLongYearsChild,
-      quaalTokenChild
+      quaalTokenChild,
+      prayerBeadsChild,
+      true
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -141,6 +151,10 @@ export function renderTreasureMiscMagicE4Compact(
     outcome,
     'treasureQuaalFeatherToken'
   );
+  const prayerBeadsChild = findChildEvent(
+    outcome,
+    'treasureNecklaceOfPrayerBeads'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -157,10 +171,22 @@ export function renderTreasureMiscMagicE4Compact(
       pearlWisdomChild,
       periaptPoisonChild,
       phylacteryLongYearsChild,
-      quaalTokenChild
+      quaalTokenChild,
+      prayerBeadsChild,
+      false
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
+  if (
+    prayerBeadsChild &&
+    prayerBeadsChild.event.kind === 'treasureNecklaceOfPrayerBeads'
+  ) {
+    nodes.push({
+      kind: 'prayer-beads',
+      summary: toPrayerBeadsSummary(prayerBeadsChild.event.result),
+      display: 'compact',
+    });
+  }
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
@@ -189,7 +215,9 @@ function resolvedSentence(
   pearlWisdomChild?: OutcomeEventNode,
   periaptPoisonChild?: OutcomeEventNode,
   phylacteryLongYearsChild?: OutcomeEventNode,
-  quaalTokenChild?: OutcomeEventNode
+  quaalTokenChild?: OutcomeEventNode,
+  prayerBeadsChild?: OutcomeEventNode,
+  includePrayerBeadsParenthetical = true
 ): string {
   if (
     result === TreasureMiscMagicE4.ManualOfGolems &&
@@ -271,6 +299,20 @@ function resolvedSentence(
   ) {
     const base = miscMagicE4Sentence(result);
     const suffix = quaalFeatherTokenParenthetical(quaalTokenChild.event.result);
+    return `${base.slice(0, -1)} (${suffix}).`;
+  }
+  if (
+    result === TreasureMiscMagicE4.NecklaceOfPrayerBeads &&
+    prayerBeadsChild &&
+    prayerBeadsChild.event.kind === 'treasureNecklaceOfPrayerBeads'
+  ) {
+    const base = miscMagicE4Sentence(result);
+    if (!includePrayerBeadsParenthetical) {
+      return base;
+    }
+    const suffix = necklaceOfPrayerBeadsParenthetical(
+      prayerBeadsChild.event.result.specialBeads.map((bead) => bead.type)
+    );
     return `${base.slice(0, -1)} (${suffix}).`;
   }
   return miscMagicE4Sentence(result);
