@@ -43,6 +43,7 @@ import { pearlParenthetical } from './treasurePearlOfPower';
 import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
 import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
 import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
+import { quaalFeatherTokenParenthetical } from './treasureQuaalFeatherToken';
 import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
@@ -379,6 +380,19 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       const suffix = phylacteryLongYearsParenthetical(
         phylacteryLongYears.event.result
       );
+      return `${base.slice(0, -1)} (${suffix}).`;
+    }
+    const quaalToken = findChildEvent(
+      miscMagicE4,
+      'treasureQuaalFeatherToken'
+    );
+    if (
+      quaalToken &&
+      quaalToken.event.kind === 'treasureQuaalFeatherToken' &&
+      miscMagicE4.event.result === TreasureMiscMagicE4.QuaalsFeatherToken
+    ) {
+      const base = miscMagicE4Sentence(miscMagicE4.event.result);
+      const suffix = quaalFeatherTokenParenthetical(quaalToken.event.result);
       return `${base.slice(0, -1)} (${suffix}).`;
     }
     return miscMagicE4Sentence(miscMagicE4.event.result);

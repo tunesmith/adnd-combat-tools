@@ -16,6 +16,7 @@ import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMe
 import { TreasurePearlOfPowerEffect } from '../../../../../tables/dungeon/treasurePearlOfPower';
 import { TreasurePearlOfWisdomOutcome } from '../../../../../tables/dungeon/treasurePearlOfWisdom';
 import { TreasurePhylacteryLongYearsOutcome } from '../../../../../tables/dungeon/treasurePhylacteryLongYears';
+import { TreasureQuaalFeatherToken } from '../../../../../tables/dungeon/treasureQuaalFeatherToken';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -754,6 +755,40 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('phylactery of long years (fast aging)');
+  });
+
+  it("handles Quaal's feather token in compact mode", () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 55 },
+        { tableId: 'treasureMiscMagicE4', roll: 90 },
+        { tableId: 'treasureQuaalFeatherToken', roll: 14 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const tokenEvent = findEvent(result.outcome, 'treasureQuaalFeatherToken');
+    expect(tokenEvent).toBeDefined();
+    if (
+      !tokenEvent ||
+      tokenEvent.event.kind !== 'treasureQuaalFeatherToken'
+    ) {
+      throw new Error("treasureQuaalFeatherToken event not found");
+    }
+    expect(tokenEvent.event.result).toBe(TreasureQuaalFeatherToken.Tree);
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain("feather token (tree)");
   });
 
   it('resolves figurine of wondrous power variants in compact mode', () => {

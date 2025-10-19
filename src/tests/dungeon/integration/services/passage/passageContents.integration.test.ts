@@ -1589,6 +1589,56 @@ describe('passage contents', () => {
     expect(compactText).toContain('phylactery of long years (slow aging)');
   });
 
+  it("resolves Quaal's feather token from miscellaneous magic", () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 90);
+
+    const tokenTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureQuaalFeatherToken')
+    );
+    const tokenTarget = tokenTargets[0];
+    if (!tokenTarget) throw new Error("missing quaal's feather token target");
+    feed = resolvePreview(feed, tokenTarget, 19);
+
+    const detailText = renderDetail(feed)
+      .filter((node): node is { kind: 'paragraph'; text: string } =>
+        node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain("feather token (whip)");
+
+    const compactText = renderCompact(feed)
+      .filter((node): node is { kind: 'paragraph'; text: string } =>
+        node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain("feather token (whip)");
+  });
+
   it('resolves figurine of wondrous power variants from miscellaneous magic', () => {
     let feed = createFeedSnapshot({
       action: 'passage',

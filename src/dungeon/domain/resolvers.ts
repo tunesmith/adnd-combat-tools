@@ -190,6 +190,10 @@ import {
   treasurePhylacteryLongYears,
   TreasurePhylacteryLongYearsOutcome,
 } from '../../tables/dungeon/treasurePhylacteryLongYears';
+import {
+  treasureQuaalFeatherToken,
+  TreasureQuaalFeatherToken,
+} from '../../tables/dungeon/treasureQuaalFeatherToken';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2260,6 +2264,11 @@ export function resolveTreasureMiscMagicE4(options?: {
       type: 'pending-roll',
       table: 'treasurePeriaptProofAgainstPoison',
     });
+  } else if (command === TreasureMiscMagicE4.QuaalsFeatherToken) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureQuaalFeatherToken',
+    });
   }
   return {
     type: 'event',
@@ -2418,6 +2427,25 @@ export function resolveTreasurePhylacteryLongYears(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasurePhylacteryLongYears',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureQuaalFeatherToken(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureQuaalFeatherToken.sides);
+  const command = getTableEntry(
+    usedRoll,
+    treasureQuaalFeatherToken
+  ) as TreasureQuaalFeatherToken;
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureQuaalFeatherToken',
       result: command,
     } as OutcomeEvent,
   };

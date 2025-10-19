@@ -13,6 +13,7 @@ import { pearlParenthetical } from './treasurePearlOfPower';
 import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
 import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
 import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
+import { quaalFeatherTokenParenthetical } from './treasureQuaalFeatherToken';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:
@@ -86,6 +87,10 @@ export function renderTreasureMiscMagicE4Detail(
     outcome,
     'treasurePhylacteryLongYears'
   );
+  const quaalTokenChild = findChildEvent(
+    outcome,
+    'treasureQuaalFeatherToken'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -105,7 +110,8 @@ export function renderTreasureMiscMagicE4Detail(
       pearlEffectChild,
       pearlWisdomChild,
       periaptPoisonChild,
-      phylacteryLongYearsChild
+      phylacteryLongYearsChild,
+      quaalTokenChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -131,6 +137,10 @@ export function renderTreasureMiscMagicE4Compact(
     outcome,
     'treasurePhylacteryLongYears'
   );
+  const quaalTokenChild = findChildEvent(
+    outcome,
+    'treasureQuaalFeatherToken'
+  );
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -146,7 +156,8 @@ export function renderTreasureMiscMagicE4Compact(
       pearlEffectChild,
       pearlWisdomChild,
       periaptPoisonChild,
-      phylacteryLongYearsChild
+      phylacteryLongYearsChild,
+      quaalTokenChild
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
@@ -177,7 +188,8 @@ function resolvedSentence(
   pearlEffectChild?: OutcomeEventNode,
   pearlWisdomChild?: OutcomeEventNode,
   periaptPoisonChild?: OutcomeEventNode,
-  phylacteryLongYearsChild?: OutcomeEventNode
+  phylacteryLongYearsChild?: OutcomeEventNode,
+  quaalTokenChild?: OutcomeEventNode
 ): string {
   if (
     result === TreasureMiscMagicE4.ManualOfGolems &&
@@ -250,6 +262,15 @@ function resolvedSentence(
     const suffix = phylacteryLongYearsParenthetical(
       phylacteryLongYearsChild.event.result
     );
+    return `${base.slice(0, -1)} (${suffix}).`;
+  }
+  if (
+    result === TreasureMiscMagicE4.QuaalsFeatherToken &&
+    quaalTokenChild &&
+    quaalTokenChild.event.kind === 'treasureQuaalFeatherToken'
+  ) {
+    const base = miscMagicE4Sentence(result);
+    const suffix = quaalFeatherTokenParenthetical(quaalTokenChild.event.result);
     return `${base.slice(0, -1)} (${suffix}).`;
   }
   return miscMagicE4Sentence(result);

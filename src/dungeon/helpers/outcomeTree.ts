@@ -104,6 +104,7 @@ import {
   resolveTreasurePearlOfWisdom,
   resolveTreasurePeriaptProofAgainstPoison,
   resolveTreasurePhylacteryLongYears,
+  resolveTreasureQuaalFeatherToken,
   resolveTreasureManualOfGolems,
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE2,
@@ -762,6 +763,8 @@ function resolvePendingNode(
       return resolveTreasurePeriaptProofAgainstPoison({});
     case 'treasurePhylacteryLongYears':
       return resolveTreasurePhylacteryLongYears({});
+    case 'treasureQuaalFeatherToken':
+      return resolveTreasureQuaalFeatherToken({});
     case 'treasureMedallionRange':
       return resolveTreasureMedallionRange({});
     case 'treasureCarpetOfFlying':

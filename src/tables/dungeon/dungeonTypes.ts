@@ -125,6 +125,7 @@ import type {
 import type {
   TreasurePhylacteryLongYearsOutcome,
 } from './treasurePhylacteryLongYears';
+import type { TreasureQuaalFeatherToken } from './treasureQuaalFeatherToken';
 
 export type Table<T> = {
   sides: number;
@@ -247,6 +248,7 @@ export type Command =
   | TreasurePearlOfWisdomOutcome
   | TreasurePeriaptPoisonBonus
   | TreasurePhylacteryLongYearsOutcome
+  | TreasureQuaalFeatherToken
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant
