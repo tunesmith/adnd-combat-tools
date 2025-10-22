@@ -108,6 +108,7 @@ import {
   resolveTreasureHornOfValhallaAttunement,
   resolveTreasureHornOfValhallaAlignment,
   resolveTreasureEyesOfPetrification,
+  resolveTreasureMiscMagicE5,
   resolveTreasureMiscMagicE4,
   resolveTreasureMiscMagicE3,
   resolveTreasureMiscMagicE2,
@@ -231,6 +232,7 @@ const TABLE_ID_LIST = [
   'treasureMiscMagicE2',
   'treasureMiscMagicE3',
   'treasureMiscMagicE4',
+  'treasureMiscMagicE5',
   'treasureManualOfGolems',
   'treasureMedallionRange',
   'treasureNecklaceOfMissiles',
@@ -352,6 +354,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureMiscMagicE2: 'Miscellaneous Magic (Table E.2)',
   treasureMiscMagicE3: 'Miscellaneous Magic (Table E.3)',
   treasureMiscMagicE4: 'Miscellaneous Magic (Table E.4)',
+  treasureMiscMagicE5: 'Miscellaneous Magic (Table E.5)',
   treasureManualOfGolems: 'Manual of Golems',
   treasureMedallionRange: 'Medallion Details',
   treasureNecklaceOfMissiles: 'Necklace of Missiles',
@@ -862,6 +865,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureMiscMagicE3({ roll })),
   treasureMiscMagicE4: ({ roll }) =>
     fromOutcome(resolveTreasureMiscMagicE4({ roll })),
+  treasureMiscMagicE5: ({ roll }) =>
+    fromOutcome(resolveTreasureMiscMagicE5({ roll })),
   treasureManualOfGolems: ({ roll }) =>
     fromOutcome(resolveTreasureManualOfGolems({ roll })),
   treasureMedallionRange: ({ roll }) =>

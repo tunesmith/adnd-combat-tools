@@ -99,6 +99,7 @@ import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagic
 import type { TreasureMiscMagicE2 } from '../../tables/dungeon/treasureMiscMagicE2';
 import type { TreasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagicE3';
 import type { TreasureMiscMagicE4 } from '../../tables/dungeon/treasureMiscMagicE4';
+import type { TreasureMiscMagicE5 } from '../../tables/dungeon/treasureMiscMagicE5';
 import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureFigurineOfWondrousPower } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
@@ -550,6 +551,10 @@ export type OutcomeEvent =
   | {
       kind: 'treasureMiscMagicE4';
       result: TreasureMiscMagicE4;
+    }
+  | {
+      kind: 'treasureMiscMagicE5';
+      result: TreasureMiscMagicE5;
     }
   | {
       kind: 'treasureManualOfGolems';

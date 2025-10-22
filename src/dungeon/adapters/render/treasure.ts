@@ -35,6 +35,7 @@ import { ironFlaskSentence } from './treasureIronFlask';
 import { hornSentence } from './treasureHornOfValhalla';
 import { miscMagicE3Sentence } from './treasureMiscMagicE3';
 import { miscMagicE4Sentence } from './treasureMiscMagicE4';
+import { miscMagicE5Sentence } from './treasureMiscMagicE5';
 import { medallionRangeParenthetical } from './treasureMedallionRange';
 import { TreasureMiscMagicE4 } from '../../../tables/dungeon/treasureMiscMagicE4';
 import { manualOfGolemsSentence } from './treasureManualOfGolems';
@@ -419,6 +420,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       return miscMagicE4Sentence(miscMagicE4.event.result);
     }
     return miscMagicE4Sentence(miscMagicE4.event.result);
+  }
+  const miscMagicE5 = findChildEvent(magic, 'treasureMiscMagicE5');
+  if (miscMagicE5 && miscMagicE5.event.kind === 'treasureMiscMagicE5') {
+    return miscMagicE5Sentence(miscMagicE5.event.result);
   }
   return undefined;
 }

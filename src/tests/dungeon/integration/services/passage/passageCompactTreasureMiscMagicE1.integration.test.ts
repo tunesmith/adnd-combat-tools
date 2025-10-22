@@ -11,6 +11,7 @@ import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureA
 import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
+import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
 import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
 import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
 import { TreasurePearlOfPowerEffect } from '../../../../../tables/dungeon/treasurePearlOfPower';
@@ -373,6 +374,38 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('there is a mirror of opposition.');
+  });
+
+  it('resolves miscellaneous magic E.5 items in compact mode', () => {
+    const result = simulateCompactRunWithSequence({
+      action: 'passage',
+      rolls: [
+        14,
+        { tableId: 'chamberDimensions', roll: 1 },
+        { tableId: 'chamberRoomContents', roll: 20 },
+        { tableId: 'treasure', roll: 98 },
+        { tableId: 'treasureMagicCategory', roll: 58 },
+        { tableId: 'treasureMiscMagicE5', roll: 79 },
+      ],
+      dungeonLevel: 1,
+      allowUnusedRolls: true,
+      mode: DirectiveMode.ManualThenAuto,
+    });
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE5');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE5') {
+      throw new Error('treasureMiscMagicE5 event not found');
+    }
+    expect(miscEvent.event.result).toBe(
+      TreasureMiscMagicE5.TridentOfWarning
+    );
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('there is a trident of warning.');
   });
 
   it('resolves manual of golems variants in compact mode', () => {
