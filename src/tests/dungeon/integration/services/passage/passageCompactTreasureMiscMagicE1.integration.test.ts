@@ -11,6 +11,7 @@ import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureA
 import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
+import { TreasureRobeOfTheArchmagi } from '../../../../../tables/dungeon/treasureRobeOfTheArchmagi';
 import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
 import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
 import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
@@ -385,7 +386,8 @@ describe('passage compact treasure misc magic E1 handling', () => {
         { tableId: 'chamberRoomContents', roll: 20 },
         { tableId: 'treasure', roll: 98 },
         { tableId: 'treasureMagicCategory', roll: 58 },
-        { tableId: 'treasureMiscMagicE5', roll: 79 },
+        { tableId: 'treasureMiscMagicE5', roll: 1 },
+        { tableId: 'treasureRobeOfTheArchmagi', roll: 60 },
       ],
       dungeonLevel: 1,
       allowUnusedRolls: true,
@@ -398,14 +400,23 @@ describe('passage compact treasure misc magic E1 handling', () => {
       throw new Error('treasureMiscMagicE5 event not found');
     }
     expect(miscEvent.event.result).toBe(
-      TreasureMiscMagicE5.TridentOfWarning
+      TreasureMiscMagicE5.RobeOfTheArchmagi
     );
+
+    const robeEvent = findEvent(result.outcome, 'treasureRobeOfTheArchmagi');
+    expect(robeEvent).toBeDefined();
+    if (!robeEvent || robeEvent.event.kind !== 'treasureRobeOfTheArchmagi') {
+      throw new Error('treasureRobeOfTheArchmagi event not found');
+    }
+    expect(robeEvent.event.result).toBe(TreasureRobeOfTheArchmagi.Neutral);
 
     const compactParagraphs = result.compact
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');
-    expect(compactParagraphs).toContain('there is a trident of warning.');
+    expect(compactParagraphs).toContain(
+      'there is a robe of the archmagi (neutral).'
+    );
   });
 
   it('resolves manual of golems variants in compact mode', () => {

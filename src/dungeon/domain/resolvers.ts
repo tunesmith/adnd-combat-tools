@@ -148,6 +148,10 @@ import {
   TreasureMiscMagicE5,
 } from '../../tables/dungeon/treasureMiscMagicE5';
 import {
+  treasureRobeOfTheArchmagi,
+  TreasureRobeOfTheArchmagi,
+} from '../../tables/dungeon/treasureRobeOfTheArchmagi';
+import {
   treasureFigurineOfWondrousPower,
   TreasureFigurineOfWondrousPower,
 } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
@@ -2313,11 +2317,38 @@ export function resolveTreasureMiscMagicE5(options?: {
     usedRoll,
     treasureMiscMagicE5
   );
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureMiscMagicE5.RobeOfTheArchmagi) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureRobeOfTheArchmagi',
+    });
+  }
   return {
     type: 'event',
     roll: usedRoll,
     event: {
       kind: 'treasureMiscMagicE5',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureRobeOfTheArchmagi(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureRobeOfTheArchmagi.sides);
+  const command: TreasureRobeOfTheArchmagi = getTableEntry(
+    usedRoll,
+    treasureRobeOfTheArchmagi
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureRobeOfTheArchmagi',
       result: command,
     } as OutcomeEvent,
   };

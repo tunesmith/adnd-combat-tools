@@ -29,6 +29,7 @@ import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasure
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
 import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
+import { TreasureRobeOfTheArchmagi } from '../../../../../tables/dungeon/treasureRobeOfTheArchmagi';
 import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
 import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
 import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
@@ -1046,6 +1047,13 @@ describe('passage contents', () => {
     if (!miscTarget) throw new Error('missing misc magic E5 target');
     feed = resolvePreview(feed, miscTarget, 1);
 
+    const robeTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRobeOfTheArchmagi')
+    );
+    const robeTarget = robeTargets[0];
+    if (!robeTarget) throw new Error('missing robe of the archmagi target');
+    feed = resolvePreview(feed, robeTarget, 60);
+
     const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE5');
     expect(miscEvent).toBeDefined();
     if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE5') {
@@ -1055,6 +1063,16 @@ describe('passage contents', () => {
       TreasureMiscMagicE5.RobeOfTheArchmagi
     );
 
+    const robeEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureRobeOfTheArchmagi'
+    );
+    expect(robeEvent).toBeDefined();
+    if (!robeEvent || robeEvent.event.kind !== 'treasureRobeOfTheArchmagi') {
+      throw new Error('treasureRobeOfTheArchmagi event not found');
+    }
+    expect(robeEvent.event.result).toBe(TreasureRobeOfTheArchmagi.Neutral);
+
     const detailText = renderDetail(feed)
       .filter(
         (node): node is { kind: 'paragraph'; text: string } =>
@@ -1062,7 +1080,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(detailText).toContain('there is a robe of the archmagi.');
+    expect(detailText).toContain('there is a robe of the archmagi (neutral).');
 
     const compactText = renderCompact(feed)
       .filter(
@@ -1071,7 +1089,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain('there is a robe of the archmagi.');
+    expect(compactText).toContain('there is a robe of the archmagi (neutral).');
   });
 
   it('resolves manual of golems variants from miscellaneous magic', () => {

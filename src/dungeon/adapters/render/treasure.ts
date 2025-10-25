@@ -423,7 +423,15 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   }
   const miscMagicE5 = findChildEvent(magic, 'treasureMiscMagicE5');
   if (miscMagicE5 && miscMagicE5.event.kind === 'treasureMiscMagicE5') {
-    return miscMagicE5Sentence(miscMagicE5.event.result);
+    const robeChild = findChildEvent(
+      miscMagicE5,
+      'treasureRobeOfTheArchmagi'
+    );
+    const robeAlignment =
+      robeChild && robeChild.event.kind === 'treasureRobeOfTheArchmagi'
+        ? robeChild.event.result
+        : undefined;
+    return miscMagicE5Sentence(miscMagicE5.event.result, robeAlignment);
   }
   return undefined;
 }

@@ -4,11 +4,16 @@ import {
   treasureMiscMagicE5,
   TreasureMiscMagicE5,
 } from '../../../tables/dungeon/treasureMiscMagicE5';
-import { buildPreview } from './shared';
+import type { TreasureRobeOfTheArchmagi } from '../../../tables/dungeon/treasureRobeOfTheArchmagi';
+import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+import {
+  robeOfTheArchmagiAlignmentDisplay,
+  robeOfTheArchmagiParenthetical,
+} from './treasureRobeOfTheArchmagi';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE5, string> = {
-  [TreasureMiscMagicE5.RobeOfTheArchmagi]: 'Robe of the Archmagi (M)',
+  [TreasureMiscMagicE5.RobeOfTheArchmagi]: 'Robe of the Archmagi',
   [TreasureMiscMagicE5.RobeOfBlending]: 'Robe of Blending',
   [TreasureMiscMagicE5.RobeOfEyes]: 'Robe of Eyes (M)',
   [TreasureMiscMagicE5.RobeOfPowerlessness]: 'Robe of Powerlessness (M)',
@@ -58,6 +63,11 @@ export function renderTreasureMiscMagicE5Detail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE5') return [];
+  const robeChild = findChildEvent(outcome, 'treasureRobeOfTheArchmagi');
+  const robeAlignment =
+    robeChild && robeChild.event.kind === 'treasureRobeOfTheArchmagi'
+      ? robeChild.event.result
+      : undefined;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -65,11 +75,16 @@ export function renderTreasureMiscMagicE5Detail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${ITEM_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${resolvedLabel(
+        outcome.event.result,
+        robeAlignment
+      )}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result),
+    text: resolvedSentence(outcome.event.result, robeAlignment),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -81,6 +96,11 @@ export function renderTreasureMiscMagicE5Compact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureMiscMagicE5') return [];
+  const robeChild = findChildEvent(outcome, 'treasureRobeOfTheArchmagi');
+  const robeAlignment =
+    robeChild && robeChild.event.kind === 'treasureRobeOfTheArchmagi'
+      ? robeChild.event.result
+      : undefined;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -88,7 +108,7 @@ export function renderTreasureMiscMagicE5Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result),
+    text: resolvedSentence(outcome.event.result, robeAlignment),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -107,13 +127,27 @@ export const buildTreasureMiscMagicE5Preview: TablePreviewFactory = (
     })),
   });
 
-export function miscMagicE5Sentence(result: TreasureMiscMagicE5): string {
+export function miscMagicE5Sentence(
+  result: TreasureMiscMagicE5,
+  robeAlignment?: TreasureRobeOfTheArchmagi
+): string {
+  if (
+    result === TreasureMiscMagicE5.RobeOfTheArchmagi &&
+    robeAlignment !== undefined
+  ) {
+    const alignment = robeOfTheArchmagiAlignmentDisplay(robeAlignment);
+    const item = ITEM_LABELS[TreasureMiscMagicE5.RobeOfTheArchmagi];
+    return `There is a ${item} (${alignment}).`;
+  }
   const label = ITEM_LABELS[result];
   return `There is ${articleFor(label)} ${stripUsageTag(label)}.`;
 }
 
-function resolvedSentence(result: TreasureMiscMagicE5): string {
-  return miscMagicE5Sentence(result);
+function resolvedSentence(
+  result: TreasureMiscMagicE5,
+  robeAlignment?: TreasureRobeOfTheArchmagi
+): string {
+  return miscMagicE5Sentence(result, robeAlignment);
 }
 
 function articleFor(label: string): 'a' | 'an' {
@@ -123,4 +157,16 @@ function articleFor(label: string): 'a' | 'an' {
 
 function stripUsageTag(label: string): string {
   return label.replace(/\s+\(([A-Z],?\s?)+\)/, '').trim();
+}
+
+function resolvedLabel(
+  result: TreasureMiscMagicE5,
+  robeAlignment?: TreasureRobeOfTheArchmagi
+): string {
+  if (result === TreasureMiscMagicE5.RobeOfTheArchmagi) {
+    const base = ITEM_LABELS[TreasureMiscMagicE5.RobeOfTheArchmagi];
+    if (robeAlignment === undefined) return base;
+    return `${base} (${robeOfTheArchmagiParenthetical(robeAlignment)})`;
+  }
+  return ITEM_LABELS[result];
 }
