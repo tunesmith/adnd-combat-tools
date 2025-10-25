@@ -69,13 +69,34 @@ export type DungeonPrayerBeadsMessage = {
   display: 'detail' | 'compact';
 };
 
+export type RobeOfUsefulItemsSummaryEntry = {
+  label: string;
+  count: number;
+  category: 'base' | 'extra';
+};
+
+export type RobeOfUsefulItemsSummary = {
+  totalPatches: number;
+  basePatchCount: number;
+  extraPatchCount: number;
+  requestedExtraPatchCount: number;
+  entries: RobeOfUsefulItemsSummaryEntry[];
+};
+
+export type DungeonRobeOfUsefulItemsMessage = {
+  kind: 'robe-of-useful-items';
+  summary: RobeOfUsefulItemsSummary;
+  display: 'detail' | 'compact';
+};
+
 export type DungeonMessage =
   | DungeonParagraph
   | DungeonHeading
   | DungeonBulletList
   | DungeonCharacterPartyMessage
   | DungeonIounStonesMessage
-  | DungeonPrayerBeadsMessage;
+  | DungeonPrayerBeadsMessage
+  | DungeonRobeOfUsefulItemsMessage;
 
 export type RollTraceItem = {
   table: string;

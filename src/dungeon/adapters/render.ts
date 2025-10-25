@@ -332,6 +332,10 @@ import {
   buildTreasureQuaalFeatherTokenPreview,
 } from './render/treasureQuaalFeatherToken';
 import {
+  renderTreasureRobeOfUsefulItemsDetail,
+  renderTreasureRobeOfUsefulItemsCompact,
+} from './render/treasureRobeOfUsefulItems';
+import {
   renderTreasureNecklaceOfPrayerBeadsDetail,
   renderTreasureNecklaceOfPrayerBeadsCompact,
 } from './render/treasureNecklaceOfPrayerBeads';
@@ -789,6 +793,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasureNecklaceOfPrayerBeads: {
     renderDetail: renderTreasureNecklaceOfPrayerBeadsDetail,
     renderCompact: renderTreasureNecklaceOfPrayerBeadsCompact,
+  },
+  treasureRobeOfUsefulItems: {
+    renderDetail: renderTreasureRobeOfUsefulItemsDetail,
+    renderCompact: renderTreasureRobeOfUsefulItemsCompact,
   },
   treasureFigurineOfWondrousPower: {
     renderDetail: renderTreasureFigurineOfWondrousPowerDetail,

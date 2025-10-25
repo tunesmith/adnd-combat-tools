@@ -25,6 +25,8 @@ import { IounStonesDetail } from '../../components/dungeon/IounStonesDetail';
 import { IounStonesCompact } from '../../components/dungeon/IounStonesCompact';
 import { PrayerBeadsDetail } from '../../components/dungeon/PrayerBeadsDetail';
 import { PrayerBeadsCompact } from '../../components/dungeon/PrayerBeadsCompact';
+import { RobeOfUsefulItemsDetail } from '../../components/dungeon/RobeOfUsefulItemsDetail';
+import { RobeOfUsefulItemsCompact } from '../../components/dungeon/RobeOfUsefulItemsCompact';
 
 type ActionKind = 'passage' | 'door';
 
@@ -336,6 +338,12 @@ function renderNode(
         <PrayerBeadsCompact key={key} summary={m.summary} />
       ) : (
         <PrayerBeadsDetail key={key} summary={m.summary} />
+      );
+    case 'robe-of-useful-items':
+      return m.display === 'compact' ? (
+        <RobeOfUsefulItemsCompact key={key} summary={m.summary} />
+      ) : (
+        <RobeOfUsefulItemsDetail key={key} summary={m.summary} />
       );
     case 'table-preview': {
       const tp = m;

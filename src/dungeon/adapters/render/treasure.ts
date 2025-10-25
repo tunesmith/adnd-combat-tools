@@ -36,6 +36,8 @@ import { hornSentence } from './treasureHornOfValhalla';
 import { miscMagicE3Sentence } from './treasureMiscMagicE3';
 import { miscMagicE4Sentence } from './treasureMiscMagicE4';
 import { miscMagicE5Sentence } from './treasureMiscMagicE5';
+import { TreasureMiscMagicE5 } from '../../../tables/dungeon/treasureMiscMagicE5';
+import { toRobeOfUsefulItemsSummary } from './treasureRobeOfUsefulItems';
 import { medallionRangeParenthetical } from './treasureMedallionRange';
 import { TreasureMiscMagicE4 } from '../../../tables/dungeon/treasureMiscMagicE4';
 import { manualOfGolemsSentence } from './treasureManualOfGolems';
@@ -128,6 +130,14 @@ export function renderTreasureCompactNodes(
       display: 'compact',
     });
   }
+  const robeItems = findRobeOfUsefulItemsEvent(outcome);
+  if (robeItems && robeItems.event.kind === 'treasureRobeOfUsefulItems') {
+    nodes.push({
+      kind: 'robe-of-useful-items',
+      summary: toRobeOfUsefulItemsSummary(robeItems.event.result),
+      display: 'compact',
+    });
+  }
   return nodes;
 }
 
@@ -155,9 +165,18 @@ export function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
   if (outcome.event.kind !== 'treasure') return '';
   const { entries } = outcome.event;
   const resolvedMagic = describeResolvedMagic(outcome);
+  const robeSummaryTarget = findRobeOfUsefulItemsEvent(outcome);
   const segments = entries.map((entry) => {
-    if (entry.command === TreasureWithoutMonster.Magic && resolvedMagic) {
-      return resolvedMagic;
+    if (entry.command === TreasureWithoutMonster.Magic) {
+      if (
+        robeSummaryTarget &&
+        robeSummaryTarget.event.kind === 'treasureRobeOfUsefulItems'
+      ) {
+        return 'There is a Robe of Useful Items:';
+      }
+      if (resolvedMagic) {
+        return resolvedMagic;
+      }
     }
     return describeTreasureEntry(entry).compact;
   });
@@ -423,6 +442,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   }
   const miscMagicE5 = findChildEvent(magic, 'treasureMiscMagicE5');
   if (miscMagicE5 && miscMagicE5.event.kind === 'treasureMiscMagicE5') {
+    if (miscMagicE5.event.result === TreasureMiscMagicE5.RobeOfUsefulItems) {
+      const robeItems = findRobeOfUsefulItemsEvent(outcome);
+      if (robeItems) return '';
+    }
     const robeChild = findChildEvent(
       miscMagicE5,
       'treasureRobeOfTheArchmagi'
@@ -484,6 +507,14 @@ export function collectTreasureCompactMessages(
           display: 'compact',
         });
       }
+      const robeItems = findRobeOfUsefulItemsEvent(current);
+      if (robeItems && robeItems.event.kind === 'treasureRobeOfUsefulItems') {
+        messages.push({
+          kind: 'robe-of-useful-items',
+          summary: toRobeOfUsefulItemsSummary(robeItems.event.result),
+          display: 'compact',
+        });
+      }
     }
     current.children?.forEach((child) => {
       if (child.type === 'event') visit(child);
@@ -518,6 +549,21 @@ function findPrayerBeadsEvent(
   for (const child of children) {
     if (child.type !== 'event') continue;
     const match = findPrayerBeadsEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function findRobeOfUsefulItemsEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureRobeOfUsefulItems') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findRobeOfUsefulItemsEvent(child);
     if (match) return match;
   }
   return undefined;

@@ -1,4 +1,5 @@
 import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
+import { ROBE_OF_USEFUL_ITEMS_BASE_PATCHES } from '../helpers/robeOfUsefulItems';
 import type { PartyResult } from '../models/character/characterSheet';
 import {
   periodicCheck,
@@ -152,6 +153,10 @@ import {
   TreasureRobeOfTheArchmagi,
 } from '../../tables/dungeon/treasureRobeOfTheArchmagi';
 import {
+  treasureRobeOfUsefulItems,
+  RobeOfUsefulItemsExtraPatch,
+} from '../../tables/dungeon/treasureRobeOfUsefulItems';
+import {
   treasureFigurineOfWondrousPower,
   TreasureFigurineOfWondrousPower,
 } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
@@ -232,6 +237,7 @@ import type {
   TreasureEntry,
   TreasureIounStonesResult,
   TreasureIounStoneStatus,
+  RobeOfUsefulItemsResult,
 } from './outcome';
 import {
   periodicCheckDoorOnly,
@@ -2323,6 +2329,8 @@ export function resolveTreasureMiscMagicE5(options?: {
       type: 'pending-roll',
       table: 'treasureRobeOfTheArchmagi',
     });
+  } else if (command === TreasureMiscMagicE5.RobeOfUsefulItems) {
+    children.push(resolveTreasureRobeOfUsefulItems());
   }
   return {
     type: 'event',
@@ -2350,6 +2358,69 @@ export function resolveTreasureRobeOfTheArchmagi(options?: {
     event: {
       kind: 'treasureRobeOfTheArchmagi',
       result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureRobeOfUsefulItems(options?: {
+  countRolls?: number[];
+  patchRolls?: number[];
+}): DungeonOutcomeNode {
+  const countRolls: number[] = [];
+  for (let i = 0; i < 4; i += 1) {
+    const preset = options?.countRolls?.[i];
+    const roll = preset ?? rollDice(4);
+    countRolls.push(roll);
+  }
+  const requestedExtraPatchCount = countRolls.reduce(
+    (sum, roll) => sum + roll,
+    0
+  );
+  const extraPatches: RobeOfUsefulItemsResult['extraPatches'] = [];
+  const presetPatchRolls = options?.patchRolls ?? [];
+  let remaining = requestedExtraPatchCount;
+  let index = 0;
+  while (remaining > 0) {
+    remaining -= 1;
+    const preset = presetPatchRolls[index];
+    const usedRoll =
+      preset !== undefined ? preset : rollDice(treasureRobeOfUsefulItems.sides);
+    const patch: RobeOfUsefulItemsExtraPatch = getTableEntry(
+      usedRoll,
+      treasureRobeOfUsefulItems
+    );
+    if (patch === RobeOfUsefulItemsExtraPatch.RollTwiceMore) {
+      remaining += 2;
+    } else {
+      extraPatches.push({
+        roll: usedRoll,
+        item: patch as Exclude<
+          RobeOfUsefulItemsExtraPatch,
+          RobeOfUsefulItemsExtraPatch.RollTwiceMore
+        >,
+      });
+    }
+    index += 1;
+  }
+
+  const basePatches = ROBE_OF_USEFUL_ITEMS_BASE_PATCHES.map((definition) => ({
+    type: definition.type,
+    count: definition.count,
+  }));
+
+  const result: RobeOfUsefulItemsResult = {
+    basePatches,
+    extraPatchCountRolls: countRolls,
+    requestedExtraPatchCount,
+    extraPatches,
+  };
+
+  return {
+    type: 'event',
+    roll: requestedExtraPatchCount,
+    event: {
+      kind: 'treasureRobeOfUsefulItems',
+      result,
     } as OutcomeEvent,
   };
 }

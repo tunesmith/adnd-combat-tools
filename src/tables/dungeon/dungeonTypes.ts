@@ -97,6 +97,7 @@ import type { TreasureMiscMagicE3 } from './treasureMiscMagicE3';
 import type { TreasureMiscMagicE4 } from './treasureMiscMagicE4';
 import type { TreasureMiscMagicE5 } from './treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from './treasureRobeOfTheArchmagi';
+import type { RobeOfUsefulItemsExtraPatch } from './treasureRobeOfUsefulItems';
 import type { TreasureDeckOfManyThings } from './treasureDeckOfManyThings';
 import type { TreasureFigurineOfWondrousPower } from './treasureFigurineOfWondrousPower';
 import type { TreasureFigurineMarbleElephant } from './treasureFigurineMarbleElephant';
@@ -244,6 +245,7 @@ export type Command =
   | TreasureMiscMagicE4
   | TreasureMiscMagicE5
   | TreasureRobeOfTheArchmagi
+  | RobeOfUsefulItemsExtraPatch
   | TreasureManualOfGolems
   | TreasureMedallionRange
   | TreasureNecklaceOfMissiles

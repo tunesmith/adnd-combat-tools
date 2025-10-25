@@ -101,6 +101,8 @@ import type { TreasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagic
 import type { TreasureMiscMagicE4 } from '../../tables/dungeon/treasureMiscMagicE4';
 import type { TreasureMiscMagicE5 } from '../../tables/dungeon/treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from '../../tables/dungeon/treasureRobeOfTheArchmagi';
+import type { RobeOfUsefulItemsExtraPatch } from '../../tables/dungeon/treasureRobeOfUsefulItems';
+import type { RobeOfUsefulItemsBasePatchType } from '../helpers/robeOfUsefulItems';
 import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureFigurineOfWondrousPower } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
@@ -562,6 +564,10 @@ export type OutcomeEvent =
       result: TreasureRobeOfTheArchmagi;
     }
   | {
+      kind: 'treasureRobeOfUsefulItems';
+      result: RobeOfUsefulItemsResult;
+    }
+  | {
       kind: 'treasureManualOfGolems';
       result: TreasureManualOfGolems;
     }
@@ -667,6 +673,26 @@ export type TreasureNecklaceOfPrayerBeadsResult = {
 export type TreasureIounStonesResult = {
   countRoll: number;
   stones: TreasureIounStone[];
+};
+
+export type RobeOfUsefulItemsBasePatchResult = {
+  type: RobeOfUsefulItemsBasePatchType;
+  count: number;
+};
+
+export type RobeOfUsefulItemsExtraPatchResult = {
+  roll: number;
+  item: Exclude<
+    RobeOfUsefulItemsExtraPatch,
+    RobeOfUsefulItemsExtraPatch.RollTwiceMore
+  >;
+};
+
+export type RobeOfUsefulItemsResult = {
+  basePatches: RobeOfUsefulItemsBasePatchResult[];
+  extraPatchCountRolls: number[];
+  requestedExtraPatchCount: number;
+  extraPatches: RobeOfUsefulItemsExtraPatchResult[];
 };
 
 export type PendingRoll = {

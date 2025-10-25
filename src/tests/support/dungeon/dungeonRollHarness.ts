@@ -634,6 +634,18 @@ function cloneRenderNode(node: DungeonRenderNode): DungeonRenderNode {
           breakdown: node.summary.breakdown.map((entry) => ({ ...entry })),
         },
       };
+    case 'robe-of-useful-items':
+      return {
+        kind: 'robe-of-useful-items',
+        display: node.display,
+        summary: {
+          totalPatches: node.summary.totalPatches,
+          basePatchCount: node.summary.basePatchCount,
+          extraPatchCount: node.summary.extraPatchCount,
+          requestedExtraPatchCount: node.summary.requestedExtraPatchCount,
+          entries: node.summary.entries.map((entry) => ({ ...entry })),
+        },
+      };
     case 'table-preview':
       return {
         kind: 'table-preview',
@@ -680,6 +692,10 @@ function freezeRenderNode<T extends DungeonRenderNode>(node: T): T {
   if (node.kind === 'prayer-beads') {
     node.summary.breakdown.forEach(Object.freeze);
     Object.freeze(node.summary.breakdown);
+  }
+  if (node.kind === 'robe-of-useful-items') {
+    node.summary.entries.forEach(Object.freeze);
+    Object.freeze(node.summary.entries);
   }
   return Object.freeze(node);
 }

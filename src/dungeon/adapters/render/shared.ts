@@ -67,7 +67,7 @@ export function joinSegments(segments: string[]): string {
   const normalized = segments
     .map((segment) => segment.trim())
     .filter((segment) => segment.length > 0)
-    .map((segment) => (/[.!?]$/.test(segment) ? segment : `${segment}.`));
+    .map((segment) => (/[.!?:;]$/.test(segment) ? segment : `${segment}.`));
   if (normalized.length === 0) return '';
   return `${normalized.join(' ')} `;
 }

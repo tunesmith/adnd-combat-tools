@@ -13,6 +13,7 @@ import type {
 } from '../../../../../dungeon/domain/outcome';
 import { describeChamberRoomContents } from '../../../../../dungeon/adapters/render/chamberRoomContents';
 import { collectCharacterPartyMessages } from '../../../../../dungeon/adapters/render/monsters';
+import { collectTreasureCompactMessages } from '../../../../../dungeon/adapters/render/treasure';
 import { renderTreasureContainerCompact } from '../../../../../dungeon/adapters/render/treasureContainer';
 import { resolveTreasureContainer } from '../../../../../dungeon/domain/resolvers';
 import { TreasureMagicCategory } from '../../../../../tables/dungeon/treasureMagic';
@@ -1090,6 +1091,99 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a robe of the archmagi (neutral).');
+
+  });
+
+  it('summarizes robe of useful items patches from miscellaneous magic E.5', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 58);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE5')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E5 target');
+    feed = resolvePreview(feed, miscTarget, 12);
+
+    const robeItemsEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureRobeOfUsefulItems'
+    );
+    expect(robeItemsEvent).toBeDefined();
+    if (
+      !robeItemsEvent ||
+      robeItemsEvent.event.kind !== 'treasureRobeOfUsefulItems'
+    ) {
+      throw new Error('treasureRobeOfUsefulItems event not found');
+    }
+
+    const detailNodes = renderDetail(feed);
+    const robeDetailNode = detailNodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        node.kind === 'robe-of-useful-items'
+    );
+    expect(robeDetailNode).toBeDefined();
+    if (!robeDetailNode) {
+      throw new Error('robe-of-useful-items detail node not found');
+    }
+    const detailOccurrences = detailNodes.filter(
+      (node): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        node.kind === 'robe-of-useful-items'
+    );
+    expect(detailOccurrences).toHaveLength(1);
+    expect(robeDetailNode.summary.basePatchCount).toBe(12);
+    expect(robeDetailNode.summary.entries.length).toBeGreaterThan(0);
+
+    const compactNodes = renderCompact(feed);
+    const robeCompactNode = compactNodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        node.kind === 'robe-of-useful-items'
+    );
+    expect(robeCompactNode).toBeDefined();
+    if (!robeCompactNode) {
+      throw new Error('robe-of-useful-items compact node not found');
+    }
+    const compactOccurrences = compactNodes.filter(
+      (node): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        node.kind === 'robe-of-useful-items'
+    );
+    expect(compactOccurrences).toHaveLength(1);
+    const compactParagraph = compactNodes
+      .filter(
+        (node): node is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text)
+      .join(' ');
+    expect(compactParagraph).toContain('There is a Robe of Useful Items:');
+    expect(compactParagraph).not.toContain('There is magical treasure.');
+    expect(robeCompactNode.summary.entries.length).toBeGreaterThan(0);
+    expect(robeCompactNode.summary.basePatchCount).toBe(12);
+    const treasureMessages = collectTreasureCompactMessages(feed.outcome);
+    const aggregatedRobeMessage = treasureMessages.find(
+      (message): message is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        message.kind === 'robe-of-useful-items'
+    );
+    expect(aggregatedRobeMessage).toBeDefined();
+    if (!aggregatedRobeMessage) {
+      throw new Error('robe-of-useful-items aggregated message not found');
+    }
+    expect(aggregatedRobeMessage.summary.entries.length).toBeGreaterThan(0);
   });
 
   it('resolves manual of golems variants from miscellaneous magic', () => {
