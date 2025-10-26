@@ -1412,7 +1412,7 @@ describe('passage contents', () => {
     );
     const unusualTarget = unusualTargets[0];
     if (!unusualTarget) throw new Error('missing swords unusual target');
-    feed = resolvePreview(feed, unusualTarget, 1);
+    feed = resolvePreview(feed, unusualTarget, 80);
 
     const swordEvent = findOutcomeEvent(feed.outcome, 'treasureSwords');
     expect(swordEvent).toBeDefined();
@@ -1439,7 +1439,12 @@ describe('passage contents', () => {
     ) {
       throw new Error('treasureSwordUnusual event not found');
     }
-    expect(swordUnusualEvent.event.result).toBe(TreasureSwordUnusual.Normal);
+    expect(swordUnusualEvent.event.result.variant).toBe(
+      TreasureSwordUnusual.Intelligence12
+    );
+    expect(swordUnusualEvent.event.result.intelligence).toBe(12);
+    expect(swordUnusualEvent.event.result.primaryAbilityCount).toBe(1);
+    expect(swordUnusualEvent.event.result.communication).toBe('semi-empathy');
 
     const detailNodes = renderDetail(feed);
     const swordPreview = detailNodes.find(
@@ -1457,6 +1462,8 @@ describe('passage contents', () => {
       .map((node) => node.text.trim())
       .join(' ');
     expect(detailText).toContain('There is a Broadsword +1.');
+    expect(detailText.toLowerCase()).toContain('intelligence 12');
+    expect(detailText.toLowerCase()).toContain('semi-empathy');
 
     const compactText = renderCompact(feed)
       .filter(

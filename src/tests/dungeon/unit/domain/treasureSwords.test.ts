@@ -38,7 +38,7 @@ describe('resolveTreasureSwords', () => {
     const node = resolveTreasureSwords({
       roll: 26,
       kindRoll: 80,
-      unusualRoll: 42,
+      unusualRoll: 90,
     });
 
     if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
@@ -69,6 +69,12 @@ describe('resolveTreasureSwords', () => {
     if (!unusualEvent || unusualEvent.event.kind !== 'treasureSwordUnusual') {
       throw new Error('Expected treasureSwordUnusual child event');
     }
-    expect(unusualEvent.event.result).toBe(TreasureSwordUnusual.Normal);
+    expect(unusualEvent.event.result.variant).toBe(
+      TreasureSwordUnusual.Intelligence14
+    );
+    expect(unusualEvent.event.result.intelligence).toBe(14);
+    expect(unusualEvent.event.result.primaryAbilityCount).toBe(2);
+    expect(unusualEvent.event.result.communication).toBe('speech');
+    expect(unusualEvent.event.result.requiresAlignment).toBe(true);
   });
 });

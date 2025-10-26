@@ -170,11 +170,13 @@ import {
   treasureSwords,
   treasureSwordKind,
   treasureSwordUnusual,
+  SWORD_UNUSUAL_DETAILS,
 } from '../../tables/dungeon/treasureSwords';
 import type {
   TreasureSword,
   TreasureSwordKind,
   TreasureSwordUnusual,
+  TreasureSwordUnusualResult,
 } from '../../tables/dungeon/treasureSwords';
 import {
   treasureMiscWeapons,
@@ -2640,12 +2642,17 @@ export function resolveTreasureSwordUnusual(options?: {
     usedRoll,
     treasureSwordUnusual
   );
+  const details = SWORD_UNUSUAL_DETAILS[command];
+  const result: TreasureSwordUnusualResult = {
+    ...details,
+    variant: command,
+  };
   return {
     type: 'event',
     roll: usedRoll,
     event: {
       kind: 'treasureSwordUnusual',
-      result: command,
+      result,
     } as OutcomeEvent,
   };
 }

@@ -39,6 +39,12 @@ export enum TreasureSwordKind {
 
 export enum TreasureSwordUnusual {
   Normal,
+  Intelligence12,
+  Intelligence13,
+  Intelligence14,
+  Intelligence15,
+  Intelligence16,
+  Intelligence17,
 }
 
 export const treasureSwords: Table<TreasureSword> = {
@@ -87,6 +93,124 @@ export const treasureSwordKind: Table<TreasureSwordKind> = {
 export const treasureSwordUnusual: Table<TreasureSwordUnusual> = {
   sides: 100,
   entries: [
-    { range: [1, 100], command: TreasureSwordUnusual.Normal },
+    { range: [1, 75], command: TreasureSwordUnusual.Normal },
+    { range: [76, 83], command: TreasureSwordUnusual.Intelligence12 },
+    { range: [84, 89], command: TreasureSwordUnusual.Intelligence13 },
+    { range: [90, 94], command: TreasureSwordUnusual.Intelligence14 },
+    { range: [95, 97], command: TreasureSwordUnusual.Intelligence15 },
+    { range: [98, 99], command: TreasureSwordUnusual.Intelligence16 },
+    { range: [100], command: TreasureSwordUnusual.Intelligence17 },
   ],
+};
+
+export type SwordCommunicationMode =
+  | 'none'
+  | 'semi-empathy'
+  | 'empathy'
+  | 'speech'
+  | 'speech and telepathy';
+
+export type SwordLanguageCapability = 'none' | 'mundane' | 'magical';
+
+export type SwordUnusualDetails = {
+  label: string;
+  category: 'normal' | 'intelligent';
+  intelligence?: number;
+  primaryAbilityCount: number;
+  communication: SwordCommunicationMode;
+  communicationNotes?: string;
+  languageCapability: SwordLanguageCapability;
+  extraordinaryPower: boolean;
+  requiresAlignment: boolean;
+};
+
+export type TreasureSwordUnusualResult = SwordUnusualDetails & {
+  variant: TreasureSwordUnusual;
+};
+
+export const SWORD_UNUSUAL_DETAILS: Record<
+  TreasureSwordUnusual,
+  SwordUnusualDetails
+> = {
+  [TreasureSwordUnusual.Normal]: {
+    label: 'Not unusual',
+    category: 'normal',
+    primaryAbilityCount: 0,
+    communication: 'none',
+    languageCapability: 'none',
+    extraordinaryPower: false,
+    requiresAlignment: false,
+  },
+  [TreasureSwordUnusual.Intelligence12]: {
+    label: 'Intelligence 12 (1 primary ability, semi-empathy)',
+    category: 'intelligent',
+    intelligence: 12,
+    primaryAbilityCount: 1,
+    communication: 'semi-empathy',
+    communicationNotes:
+      'The possessor senses urges when its ability functions.',
+    languageCapability: 'none',
+    extraordinaryPower: false,
+    requiresAlignment: true,
+  },
+  [TreasureSwordUnusual.Intelligence13]: {
+    label: 'Intelligence 13 (2 primary abilities, empathy)',
+    category: 'intelligent',
+    intelligence: 13,
+    primaryAbilityCount: 2,
+    communication: 'empathy',
+    languageCapability: 'none',
+    extraordinaryPower: false,
+    requiresAlignment: true,
+  },
+  [TreasureSwordUnusual.Intelligence14]: {
+    label: 'Intelligence 14 (2 primary abilities, speech)',
+    category: 'intelligent',
+    intelligence: 14,
+    primaryAbilityCount: 2,
+    communication: 'speech',
+    communicationNotes:
+      'Speaks its alignment language plus one or more other tongues (to be determined).',
+    languageCapability: 'none',
+    extraordinaryPower: false,
+    requiresAlignment: true,
+  },
+  [TreasureSwordUnusual.Intelligence15]: {
+    label: 'Intelligence 15 (3 primary abilities, speech, reads languages/maps)',
+    category: 'intelligent',
+    intelligence: 15,
+    primaryAbilityCount: 3,
+    communication: 'speech',
+    communicationNotes:
+      'Speaks its alignment language plus additional tongues (to be determined).',
+    languageCapability: 'mundane',
+    extraordinaryPower: false,
+    requiresAlignment: true,
+  },
+  [TreasureSwordUnusual.Intelligence16]: {
+    label:
+      'Intelligence 16 (3 primary abilities, speech, reads magical writings)',
+    category: 'intelligent',
+    intelligence: 16,
+    primaryAbilityCount: 3,
+    communication: 'speech',
+    communicationNotes:
+      'Speaks its alignment language plus additional tongues (to be determined).',
+    languageCapability: 'magical',
+    extraordinaryPower: false,
+    requiresAlignment: true,
+  },
+  [TreasureSwordUnusual.Intelligence17]: {
+    label:
+      'Intelligence 17 (3 primary abilities, extraordinary power, speech & telepathy)',
+    category: 'intelligent',
+    intelligence: 17,
+    primaryAbilityCount: 3,
+    communication: 'speech and telepathy',
+    communicationNotes:
+      'Speaks and can communicate telepathically at will.',
+    languageCapability: 'magical',
+    extraordinaryPower: true,
+    requiresAlignment: true,
+  },
 };

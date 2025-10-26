@@ -6,7 +6,8 @@ import {
   treasureSwordKind,
   TreasureSwordKind,
   treasureSwordUnusual,
-  TreasureSwordUnusual,
+  SWORD_UNUSUAL_DETAILS,
+  type TreasureSwordUnusualResult,
 } from '../../../tables/dungeon/treasureSwords';
 import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
@@ -51,10 +52,6 @@ const SWORD_KIND_LABELS: Record<TreasureSwordKind, string> = {
   [TreasureSwordKind.ShortSword]: 'Short Sword',
   [TreasureSwordKind.BastardSword]: 'Bastard Sword',
   [TreasureSwordKind.TwoHandedSword]: 'Two-Handed Sword',
-};
-
-const SWORD_UNUSUAL_LABELS: Record<TreasureSwordUnusual, string> = {
-  [TreasureSwordUnusual.Normal]: 'Not unusual',
 };
 
 function applySwordKindLabel(
@@ -211,8 +208,7 @@ export function renderTreasureSwordUnusualDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordUnusual') return [];
-  const { result } = outcome.event;
-  const label = SWORD_UNUSUAL_LABELS[result];
+  const result = outcome.event.result;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -220,14 +216,11 @@ export function renderTreasureSwordUnusualDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${label}`],
+    items: [`roll: ${outcome.roll} — ${result.label}`],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text:
-      result === TreasureSwordUnusual.Normal
-        ? 'The sword has no unusual traits.'
-        : label,
+    text: swordUnusualDescription(result),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -239,8 +232,7 @@ export function renderTreasureSwordUnusualCompact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordUnusual') return [];
-  const { result } = outcome.event;
-  const label = SWORD_UNUSUAL_LABELS[result];
+  const result = outcome.event.result;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -248,10 +240,7 @@ export function renderTreasureSwordUnusualCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text:
-      result === TreasureSwordUnusual.Normal
-        ? 'The sword has no unusual traits.'
-        : label,
+    text: swordUnusualDescription(result),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -266,6 +255,66 @@ export const buildTreasureSwordUnusualPreview: TablePreviewFactory = (
     sides: treasureSwordUnusual.sides,
     entries: treasureSwordUnusual.entries.map(({ range, command }) => ({
       range,
-      label: SWORD_UNUSUAL_LABELS[command],
+      label: SWORD_UNUSUAL_DETAILS[command].label,
     })),
   });
+
+function swordUnusualDescription(
+  result: TreasureSwordUnusualResult
+): string {
+  if (result.category === 'normal') {
+    return 'The sword has no unusual intelligence or additional capabilities.';
+  }
+
+  const segments: string[] = [];
+  segments.push(`The sword has intelligence ${result.intelligence}.`);
+  const abilityCount = result.primaryAbilityCount;
+  const abilityText =
+    abilityCount === 1
+      ? '1 primary ability'
+      : `${abilityCount} primary abilities`;
+  segments.push(`It provides ${abilityText}.`);
+
+  switch (result.communication) {
+    case 'semi-empathy':
+      segments.push(
+        'It communicates by semi-empathy, urging its possessor when abilities trigger.'
+      );
+      break;
+    case 'empathy':
+      segments.push('It communicates via empathy.');
+      break;
+    case 'speech': {
+      const note =
+        result.communicationNotes ??
+        'It can speak aloud in its alignment language and additional tongues.';
+      segments.push(note);
+      break;
+    }
+    case 'speech and telepathy': {
+      const note =
+        result.communicationNotes ??
+        'It can speak and communicate telepathically at will.';
+      segments.push(note);
+      break;
+    }
+    default:
+      segments.push('It does not communicate.');
+  }
+
+  if (result.languageCapability === 'mundane') {
+    segments.push('It can read any non-magical languages or maps.');
+  } else if (result.languageCapability === 'magical') {
+    segments.push('It can read all languages as well as magical writings.');
+  }
+
+  if (result.extraordinaryPower) {
+    segments.push('It also has an extraordinary power.');
+  }
+
+  if (result.requiresAlignment) {
+    segments.push('Determine the sword’s alignment separately.');
+  }
+
+  return segments.join(' ');
+}
