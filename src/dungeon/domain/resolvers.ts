@@ -167,6 +167,16 @@ import {
   TreasureArmorShield,
 } from '../../tables/dungeon/treasureArmorShields';
 import {
+  treasureSwords,
+  treasureSwordKind,
+  treasureSwordUnusual,
+} from '../../tables/dungeon/treasureSwords';
+import type {
+  TreasureSword,
+  TreasureSwordKind,
+  TreasureSwordUnusual,
+} from '../../tables/dungeon/treasureSwords';
+import {
   treasureMiscWeapons,
   TreasureMiscWeapon,
 } from '../../tables/dungeon/treasureMiscWeapons';
@@ -1607,6 +1617,18 @@ export function resolveTreasureMagicCategory(options?: {
         rollIndex: event.rollIndex,
       },
     });
+  } else if (command === TreasureMagicCategory.Swords) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureSwords',
+      id: event.rollIndex ? `treasureSwords:${event.rollIndex}` : undefined,
+      context: {
+        kind: 'treasureMagic',
+        level: event.level,
+        treasureRoll: usedRoll,
+        rollIndex: event.rollIndex,
+      },
+    });
   } else if (command === TreasureMagicCategory.MiscWeapons) {
     children.push({
       type: 'pending-roll',
@@ -2541,6 +2563,90 @@ export function resolveTreasureArmorShields(options?: {
     type: 'event',
     roll: usedRoll,
     event,
+  };
+}
+
+export function resolveTreasureSwords(options?: {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+  kindRoll?: number;
+  unusualRoll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureSwords.sides);
+  const command: TreasureSword = getTableEntry(usedRoll, treasureSwords);
+  const event: OutcomeEvent = {
+    kind: 'treasureSwords',
+    result: command,
+    level: options?.level ?? 1,
+    treasureRoll: options?.treasureRoll ?? usedRoll,
+    rollIndex: options?.rollIndex,
+  };
+  const children: DungeonOutcomeNode[] = [];
+  if (options?.kindRoll !== undefined) {
+    children.push(resolveTreasureSwordKind({ roll: options.kindRoll }));
+  } else {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureSwordKind',
+      id: options?.rollIndex
+        ? `treasureSwordKind:${options.rollIndex}`
+        : undefined,
+    });
+  }
+  if (options?.unusualRoll !== undefined) {
+    children.push(resolveTreasureSwordUnusual({ roll: options.unusualRoll }));
+  } else {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureSwordUnusual',
+      id: options?.rollIndex
+        ? `treasureSwordUnusual:${options.rollIndex}`
+        : undefined,
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event,
+    children,
+  };
+}
+
+export function resolveTreasureSwordKind(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureSwordKind.sides);
+  const command: TreasureSwordKind = getTableEntry(
+    usedRoll,
+    treasureSwordKind
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureSwordKind',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureSwordUnusual(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureSwordUnusual.sides);
+  const command: TreasureSwordUnusual = getTableEntry(
+    usedRoll,
+    treasureSwordUnusual
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureSwordUnusual',
+      result: command,
+    } as OutcomeEvent,
   };
 }
 

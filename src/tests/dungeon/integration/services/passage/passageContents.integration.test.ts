@@ -47,6 +47,11 @@ import {
   TreasureScarabOfProtectionCurseResolution,
 } from '../../../../../tables/dungeon/treasureScarabOfProtection';
 import { TreasureMiscWeapon } from '../../../../../tables/dungeon/treasureMiscWeapons';
+import {
+  TreasureSword,
+  TreasureSwordKind,
+  TreasureSwordUnusual,
+} from '../../../../../tables/dungeon/treasureSwords';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
@@ -1366,6 +1371,101 @@ describe('passage contents', () => {
     expect(compactText).toContain(
       'There is a Scarab of Protection (+1).'
     );
+  });
+
+  it('resolves swords from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 80);
+
+    const swordTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureSwords')
+    );
+    const swordTarget = swordTargets[0];
+    if (!swordTarget) throw new Error('missing swords target');
+
+    feed = resolvePreview(feed, swordTarget, 1);
+
+    const kindTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureSwordKind')
+    );
+    const kindTarget = kindTargets[0];
+    if (!kindTarget) throw new Error('missing swords kind target');
+    feed = resolvePreview(feed, kindTarget, 80);
+
+    const unusualTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureSwordUnusual')
+    );
+    const unusualTarget = unusualTargets[0];
+    if (!unusualTarget) throw new Error('missing swords unusual target');
+    feed = resolvePreview(feed, unusualTarget, 1);
+
+    const swordEvent = findOutcomeEvent(feed.outcome, 'treasureSwords');
+    expect(swordEvent).toBeDefined();
+    if (!swordEvent || swordEvent.event.kind !== 'treasureSwords') {
+      throw new Error('treasureSwords event not found');
+    }
+    expect(swordEvent.event.result).toBe(TreasureSword.SwordPlus1);
+
+    const swordKindEvent = findOutcomeEvent(feed.outcome, 'treasureSwordKind');
+    expect(swordKindEvent).toBeDefined();
+    if (!swordKindEvent || swordKindEvent.event.kind !== 'treasureSwordKind') {
+      throw new Error('treasureSwordKind event not found');
+    }
+    expect(swordKindEvent.event.result).toBe(TreasureSwordKind.Broadsword);
+
+    const swordUnusualEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureSwordUnusual'
+    );
+    expect(swordUnusualEvent).toBeDefined();
+    if (
+      !swordUnusualEvent ||
+      swordUnusualEvent.event.kind !== 'treasureSwordUnusual'
+    ) {
+      throw new Error('treasureSwordUnusual event not found');
+    }
+    expect(swordUnusualEvent.event.result).toBe(TreasureSwordUnusual.Normal);
+
+    const detailNodes = renderDetail(feed);
+    const swordPreview = detailNodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'table-preview' }> =>
+        node.kind === 'table-preview' &&
+        node.id.startsWith('treasureSwords')
+    );
+    expect(swordPreview).toBeDefined();
+
+    const detailText = detailNodes
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(detailText).toContain('There is a Broadsword +1.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain('There is a Broadsword +1.');
   });
 
   it('resolves miscellaneous weapons from magical treasure', () => {

@@ -128,6 +128,9 @@ import {
   resolveTreasureScarabOfProtectionCurse,
   resolveTreasureScarabOfProtectionCurseResolution,
   resolveTreasureArmorShields,
+  resolveTreasureSwords,
+  resolveTreasureSwordKind,
+  resolveTreasureSwordUnusual,
   resolveTreasureMiscWeapons,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
@@ -240,6 +243,9 @@ const TABLE_ID_LIST = [
   'treasureMiscMagicE4',
   'treasureMiscMagicE5',
   'treasureArmorShields',
+  'treasureSwords',
+  'treasureSwordKind',
+  'treasureSwordUnusual',
   'treasureMiscWeapons',
   'treasureRobeOfUsefulItems',
   'treasureRobeOfTheArchmagi',
@@ -368,6 +374,9 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureMiscMagicE4: 'Miscellaneous Magic (Table E.4)',
   treasureMiscMagicE5: 'Miscellaneous Magic (Table E.5)',
   treasureArmorShields: 'Armor & Shields (Table F)',
+  treasureSwords: 'Swords (Table G)',
+  treasureSwordKind: 'Sword Type',
+  treasureSwordUnusual: 'Sword Unusual Traits',
   treasureMiscWeapons: 'Miscellaneous Weapons (Table H)',
   treasureRobeOfUsefulItems: 'Robe of Useful Items',
   treasureRobeOfTheArchmagi: 'Robe of the Archmagi Alignment',
@@ -906,6 +915,30 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       })
     );
   },
+  treasureSwords: ({ roll, context }) => {
+    const level =
+      context && context.kind === 'treasureMagic' ? context.level : 1;
+    const treasureRoll =
+      context && context.kind === 'treasureMagic'
+        ? context.treasureRoll
+        : undefined;
+    const rollIndex =
+      context && context.kind === 'treasureMagic'
+        ? context.rollIndex
+        : undefined;
+    return fromOutcome(
+      resolveTreasureSwords({
+        roll,
+        level,
+        treasureRoll,
+        rollIndex,
+      })
+    );
+  },
+  treasureSwordKind: ({ roll }) =>
+    fromOutcome(resolveTreasureSwordKind({ roll })),
+  treasureSwordUnusual: ({ roll }) =>
+    fromOutcome(resolveTreasureSwordUnusual({ roll })),
   treasureMiscWeapons: ({ roll, context }) => {
     const level =
       context && context.kind === 'treasureMagic' ? context.level : 1;

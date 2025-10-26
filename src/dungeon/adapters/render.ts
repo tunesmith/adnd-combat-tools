@@ -374,6 +374,17 @@ import {
   buildTreasureArmorShieldsPreview,
 } from './render/treasureArmorShields';
 import {
+  renderTreasureSwordsDetail,
+  renderTreasureSwordsCompact,
+  buildTreasureSwordsPreview,
+  renderTreasureSwordKindDetail,
+  renderTreasureSwordKindCompact,
+  buildTreasureSwordKindPreview,
+  renderTreasureSwordUnusualDetail,
+  renderTreasureSwordUnusualCompact,
+  buildTreasureSwordUnusualPreview,
+} from './render/treasureSwords';
+import {
   renderTreasureMiscWeaponsDetail,
   renderTreasureMiscWeaponsCompact,
   buildTreasureMiscWeaponsPreview,
@@ -772,6 +783,18 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureArmorShieldsDetail,
     renderCompact: renderTreasureArmorShieldsCompact,
   },
+  treasureSwords: {
+    renderDetail: renderTreasureSwordsDetail,
+    renderCompact: renderTreasureSwordsCompact,
+  },
+  treasureSwordKind: {
+    renderDetail: renderTreasureSwordKindDetail,
+    renderCompact: renderTreasureSwordKindCompact,
+  },
+  treasureSwordUnusual: {
+    renderDetail: renderTreasureSwordUnusualDetail,
+    renderCompact: renderTreasureSwordUnusualCompact,
+  },
   treasureMiscWeapons: {
     renderDetail: renderTreasureMiscWeaponsDetail,
     renderCompact: renderTreasureMiscWeaponsCompact,
@@ -1018,6 +1041,9 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
   treasureMiscMagicE5: buildTreasureMiscMagicE5Preview,
   treasureArmorShields: buildTreasureArmorShieldsPreview,
+  treasureSwords: buildTreasureSwordsPreview,
+  treasureSwordKind: buildTreasureSwordKindPreview,
+  treasureSwordUnusual: buildTreasureSwordUnusualPreview,
   treasureRobeOfTheArchmagi: buildTreasureRobeOfTheArchmagiPreview,
   treasureScarabOfProtectionCurse:
     buildTreasureScarabOfProtectionCursePreview,
@@ -1301,6 +1327,23 @@ function previewForEventNode(
       };
       break;
     }
+    case 'treasureSwords': {
+      const sword = event;
+      tableId = 'treasureSwords';
+      context = {
+        kind: 'treasureMagic',
+        level: sword.level,
+        treasureRoll: sword.treasureRoll,
+        rollIndex: sword.rollIndex,
+      };
+      break;
+    }
+    case 'treasureSwordKind':
+      tableId = 'treasureSwordKind';
+      break;
+    case 'treasureSwordUnusual':
+      tableId = 'treasureSwordUnusual';
+      break;
     case 'treasureMiscWeapons': {
       const weapon = event;
       tableId = 'treasureMiscWeapons';

@@ -104,6 +104,9 @@ import {
   resolveTreasureScarabOfProtectionCurseResolution,
   resolveTreasureMiscWeapons,
   resolveTreasureArmorShields,
+  resolveTreasureSwords,
+  resolveTreasureSwordKind,
+  resolveTreasureSwordUnusual,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
   resolveTreasureNecklaceOfPrayerBeads,
@@ -763,6 +766,14 @@ function resolvePendingNode(
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureArmorShields(context);
     }
+    case 'treasureSwords': {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasureSwords(context);
+    }
+    case 'treasureSwordKind':
+      return resolveTreasureSwordKind({});
+    case 'treasureSwordUnusual':
+      return resolveTreasureSwordUnusual({});
     case 'treasureMiscWeapons': {
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureMiscWeapons(context);
@@ -1108,6 +1119,7 @@ function readTreasureMagicContext(
       case 'treasureScroll':
       case 'treasureRing':
       case 'treasureArmorShields':
+      case 'treasureSwords':
       case 'treasureMiscWeapons':
         if (level === undefined && typeof event.level === 'number') {
           level = event.level;

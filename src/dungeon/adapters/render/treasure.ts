@@ -57,6 +57,7 @@ import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtecti
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
 import { toIounStonesSummary } from './treasureIounStones';
 import { armorShieldSentence } from './treasureArmorShields';
+import { swordSentence } from './treasureSwords';
 import { miscWeaponSentence } from './treasureMiscWeapons';
 
 export function renderTreasureDetail(
@@ -222,6 +223,19 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     magic.event.result === TreasureMagicCategory.ArmorShields
   ) {
     return armorShieldSentence(armorShieldsEvent.event.result);
+  }
+  const swordsEvent = findSwordsEvent(magic);
+  if (
+    swordsEvent &&
+    swordsEvent.event.kind === 'treasureSwords' &&
+    magic.event.result === TreasureMagicCategory.Swords
+  ) {
+    const kindEvent = findChildEvent(swordsEvent, 'treasureSwordKind');
+    const kind =
+      kindEvent && kindEvent.event.kind === 'treasureSwordKind'
+        ? kindEvent.event.result
+        : undefined;
+    return swordSentence(swordsEvent.event.result, kind);
   }
   const miscWeaponsEvent = findMiscWeaponsEvent(magic);
   if (
@@ -623,6 +637,21 @@ function findArmorShieldsEvent(
   for (const child of children) {
     if (child.type !== 'event') continue;
     const match = findArmorShieldsEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function findSwordsEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureSwords') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findSwordsEvent(child);
     if (match) return match;
   }
   return undefined;

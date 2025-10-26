@@ -140,6 +140,11 @@ import type {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
 } from '../../tables/dungeon/treasureScarabOfProtection';
+import type {
+  TreasureSword,
+  TreasureSwordKind,
+  TreasureSwordUnusual,
+} from '../../tables/dungeon/treasureSwords';
 import type { TreasureMiscWeapon } from '../../tables/dungeon/treasureMiscWeapons';
 import type { TreasureArmorShield } from '../../tables/dungeon/treasureArmorShields';
 
@@ -580,6 +585,15 @@ export type OutcomeEvent =
       treasureRoll: number;
       rollIndex?: number;
     }
+  | {
+      kind: 'treasureSwords';
+      result: TreasureSword;
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
+    }
+  | { kind: 'treasureSwordKind'; result: TreasureSwordKind }
+  | { kind: 'treasureSwordUnusual'; result: TreasureSwordUnusual }
   | {
       kind: 'treasureMiscWeapons';
       result: TreasureMiscWeaponResult;
