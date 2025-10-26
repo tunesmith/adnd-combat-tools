@@ -140,6 +140,7 @@ import type {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
 } from '../../tables/dungeon/treasureScarabOfProtection';
+import type { TreasureArmorShield } from '../../tables/dungeon/treasureArmorShields';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
@@ -570,6 +571,13 @@ export type OutcomeEvent =
   | {
       kind: 'treasureScarabOfProtectionCurseResolution';
       result: TreasureScarabOfProtectionCurseResolution;
+    }
+  | {
+      kind: 'treasureArmorShields';
+      result: TreasureArmorShield;
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
     }
   | {
       kind: 'treasureRobeOfTheArchmagi';

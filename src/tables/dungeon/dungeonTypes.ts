@@ -134,6 +134,7 @@ import type {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
 } from './treasureScarabOfProtection';
+import type { TreasureArmorShield } from './treasureArmorShields';
 
 export type Table<T> = {
   sides: number;
@@ -263,6 +264,7 @@ export type Command =
   | TreasureNecklacePrayerBead
   | TreasureScarabOfProtectionCurse
   | TreasureScarabOfProtectionCurseResolution
+  | TreasureArmorShield
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant

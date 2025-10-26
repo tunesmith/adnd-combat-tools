@@ -369,6 +369,11 @@ import {
   renderTreasureIounStonesCompact,
 } from './render/treasureIounStones';
 import {
+  renderTreasureArmorShieldsDetail,
+  renderTreasureArmorShieldsCompact,
+  buildTreasureArmorShieldsPreview,
+} from './render/treasureArmorShields';
+import {
   renderTreasureScarabOfProtectionCurseDetail,
   renderTreasureScarabOfProtectionCurseCompact,
   buildTreasureScarabOfProtectionCursePreview,
@@ -758,6 +763,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureMiscMagicE5Detail,
     renderCompact: renderTreasureMiscMagicE5Compact,
   },
+  treasureArmorShields: {
+    renderDetail: renderTreasureArmorShieldsDetail,
+    renderCompact: renderTreasureArmorShieldsCompact,
+  },
   treasureRobeOfTheArchmagi: {
     renderDetail: renderTreasureRobeOfTheArchmagiDetail,
     renderCompact: renderTreasureRobeOfTheArchmagiCompact,
@@ -999,6 +1008,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureMiscMagicE3: buildTreasureMiscMagicE3Preview,
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
   treasureMiscMagicE5: buildTreasureMiscMagicE5Preview,
+  treasureArmorShields: buildTreasureArmorShieldsPreview,
   treasureRobeOfTheArchmagi: buildTreasureRobeOfTheArchmagiPreview,
   treasureScarabOfProtectionCurse:
     buildTreasureScarabOfProtectionCursePreview,
@@ -1267,6 +1277,17 @@ function previewForEventNode(
         level: ring.level,
         treasureRoll: ring.treasureRoll,
         rollIndex: ring.rollIndex,
+      };
+      break;
+    }
+    case 'treasureArmorShields': {
+      const armor = event;
+      tableId = 'treasureArmorShields';
+      context = {
+        kind: 'treasureMagic',
+        level: armor.level,
+        treasureRoll: armor.treasureRoll,
+        rollIndex: armor.rollIndex,
       };
       break;
     }

@@ -163,6 +163,10 @@ import {
   TreasureScarabOfProtectionCurseResolution,
 } from '../../tables/dungeon/treasureScarabOfProtection';
 import {
+  treasureArmorShields,
+  TreasureArmorShield,
+} from '../../tables/dungeon/treasureArmorShields';
+import {
   treasureFigurineOfWondrousPower,
   TreasureFigurineOfWondrousPower,
 } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
@@ -1585,6 +1589,20 @@ export function resolveTreasureMagicCategory(options?: {
         rollIndex: event.rollIndex,
       },
     });
+  } else if (command === TreasureMagicCategory.ArmorShields) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureArmorShields',
+      id: event.rollIndex
+        ? `treasureArmorShields:${event.rollIndex}`
+        : undefined,
+      context: {
+        kind: 'treasureMagic',
+        level: event.level,
+        treasureRoll: usedRoll,
+        rollIndex: event.rollIndex,
+      },
+    });
   }
   return {
     type: 'event',
@@ -2480,6 +2498,31 @@ export function resolveTreasureScarabOfProtectionCurseResolution(options?: {
       kind: 'treasureScarabOfProtectionCurseResolution',
       result: command,
     } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureArmorShields(options?: {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureArmorShields.sides);
+  const command: TreasureArmorShield = getTableEntry(
+    usedRoll,
+    treasureArmorShields
+  );
+  const event: OutcomeEvent = {
+    kind: 'treasureArmorShields',
+    result: command,
+    level: options?.level ?? 1,
+    treasureRoll: options?.treasureRoll ?? usedRoll,
+    rollIndex: options?.rollIndex,
+  };
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event,
   };
 }
 

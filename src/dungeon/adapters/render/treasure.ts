@@ -37,6 +37,7 @@ import { miscMagicE3Sentence } from './treasureMiscMagicE3';
 import { miscMagicE4Sentence } from './treasureMiscMagicE4';
 import { miscMagicE5Sentence } from './treasureMiscMagicE5';
 import { TreasureMiscMagicE5 } from '../../../tables/dungeon/treasureMiscMagicE5';
+import { TreasureMagicCategory } from '../../../tables/dungeon/treasureMagic';
 import { toRobeOfUsefulItemsSummary } from './treasureRobeOfUsefulItems';
 import { medallionRangeParenthetical } from './treasureMedallionRange';
 import { TreasureMiscMagicE4 } from '../../../tables/dungeon/treasureMiscMagicE4';
@@ -55,6 +56,7 @@ import { cloakSentence } from './treasureCloakOfProtection';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
 import { toIounStonesSummary } from './treasureIounStones';
+import { armorShieldSentence } from './treasureArmorShields';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,
@@ -211,6 +213,14 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
   if (rod && rod.event.kind === 'treasureRodStaffWand') {
     const label = resolveRodStaffWandLabel(rod);
     return label.length > 0 ? `There is a ${label}.` : undefined;
+  }
+  const armorShieldsEvent = findChildEvent(magic, 'treasureArmorShields');
+  if (
+    armorShieldsEvent &&
+    armorShieldsEvent.event.kind === 'treasureArmorShields' &&
+    magic.event.result === TreasureMagicCategory.ArmorShields
+  ) {
+    return armorShieldSentence(armorShieldsEvent.event.result);
   }
   const miscMagicE1 = findChildEvent(magic, 'treasureMiscMagicE1');
   if (miscMagicE1 && miscMagicE1.event.kind === 'treasureMiscMagicE1') {
