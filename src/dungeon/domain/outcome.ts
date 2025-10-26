@@ -140,6 +140,7 @@ import type {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
 } from '../../tables/dungeon/treasureScarabOfProtection';
+import type { TreasureMiscWeapon } from '../../tables/dungeon/treasureMiscWeapons';
 import type { TreasureArmorShield } from '../../tables/dungeon/treasureArmorShields';
 
 export type DoorChainLaterality = 'Left' | 'Right';
@@ -580,6 +581,13 @@ export type OutcomeEvent =
       rollIndex?: number;
     }
   | {
+      kind: 'treasureMiscWeapons';
+      result: TreasureMiscWeaponResult;
+      level: number;
+      treasureRoll: number;
+      rollIndex?: number;
+    }
+  | {
       kind: 'treasureRobeOfTheArchmagi';
       result: TreasureRobeOfTheArchmagi;
     }
@@ -713,6 +721,11 @@ export type RobeOfUsefulItemsResult = {
   extraPatchCountRolls: number[];
   requestedExtraPatchCount: number;
   extraPatches: RobeOfUsefulItemsExtraPatchResult[];
+};
+
+export type TreasureMiscWeaponResult = {
+  item: TreasureMiscWeapon;
+  quantity?: number;
 };
 
 export type PendingRoll = {

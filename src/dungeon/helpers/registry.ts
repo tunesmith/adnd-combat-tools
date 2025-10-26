@@ -128,6 +128,7 @@ import {
   resolveTreasureScarabOfProtectionCurse,
   resolveTreasureScarabOfProtectionCurseResolution,
   resolveTreasureArmorShields,
+  resolveTreasureMiscWeapons,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -239,6 +240,7 @@ const TABLE_ID_LIST = [
   'treasureMiscMagicE4',
   'treasureMiscMagicE5',
   'treasureArmorShields',
+  'treasureMiscWeapons',
   'treasureRobeOfUsefulItems',
   'treasureRobeOfTheArchmagi',
   'treasureScarabOfProtectionCurse',
@@ -366,6 +368,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureMiscMagicE4: 'Miscellaneous Magic (Table E.4)',
   treasureMiscMagicE5: 'Miscellaneous Magic (Table E.5)',
   treasureArmorShields: 'Armor & Shields (Table F)',
+  treasureMiscWeapons: 'Miscellaneous Weapons (Table H)',
   treasureRobeOfUsefulItems: 'Robe of Useful Items',
   treasureRobeOfTheArchmagi: 'Robe of the Archmagi Alignment',
   treasureScarabOfProtectionCurse: 'Scarab of Protection (curse check)',
@@ -896,6 +899,26 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
         : undefined;
     return fromOutcome(
       resolveTreasureArmorShields({
+        roll,
+        level,
+        treasureRoll,
+        rollIndex,
+      })
+    );
+  },
+  treasureMiscWeapons: ({ roll, context }) => {
+    const level =
+      context && context.kind === 'treasureMagic' ? context.level : 1;
+    const treasureRoll =
+      context && context.kind === 'treasureMagic'
+        ? context.treasureRoll
+        : undefined;
+    const rollIndex =
+      context && context.kind === 'treasureMagic'
+        ? context.rollIndex
+        : undefined;
+    return fromOutcome(
+      resolveTreasureMiscWeapons({
         roll,
         level,
         treasureRoll,

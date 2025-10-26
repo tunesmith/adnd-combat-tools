@@ -167,6 +167,10 @@ import {
   TreasureArmorShield,
 } from '../../tables/dungeon/treasureArmorShields';
 import {
+  treasureMiscWeapons,
+  TreasureMiscWeapon,
+} from '../../tables/dungeon/treasureMiscWeapons';
+import {
   treasureFigurineOfWondrousPower,
   TreasureFigurineOfWondrousPower,
 } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
@@ -1603,6 +1607,20 @@ export function resolveTreasureMagicCategory(options?: {
         rollIndex: event.rollIndex,
       },
     });
+  } else if (command === TreasureMagicCategory.MiscWeapons) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureMiscWeapons',
+      id: event.rollIndex
+        ? `treasureMiscWeapons:${event.rollIndex}`
+        : undefined,
+      context: {
+        kind: 'treasureMagic',
+        level: event.level,
+        treasureRoll: usedRoll,
+        rollIndex: event.rollIndex,
+      },
+    });
   }
   return {
     type: 'event',
@@ -2515,6 +2533,52 @@ export function resolveTreasureArmorShields(options?: {
   const event: OutcomeEvent = {
     kind: 'treasureArmorShields',
     result: command,
+    level: options?.level ?? 1,
+    treasureRoll: options?.treasureRoll ?? usedRoll,
+    rollIndex: options?.rollIndex,
+  };
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event,
+  };
+}
+
+export function resolveTreasureMiscWeapons(options?: {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureMiscWeapons.sides);
+  const item: TreasureMiscWeapon = getTableEntry(
+    usedRoll,
+    treasureMiscWeapons
+  );
+  let quantity: number | undefined;
+  switch (item) {
+    case TreasureMiscWeapon.ArrowPlus1:
+      quantity = rollDice(12, 2);
+      break;
+    case TreasureMiscWeapon.ArrowPlus2:
+      quantity = rollDice(8, 2);
+      break;
+    case TreasureMiscWeapon.ArrowPlus3:
+      quantity = rollDice(6, 2);
+      break;
+    case TreasureMiscWeapon.BoltPlus2:
+      quantity = rollDice(10, 2);
+      break;
+    default:
+      quantity = undefined;
+      break;
+  }
+  const event: OutcomeEvent = {
+    kind: 'treasureMiscWeapons',
+    result: {
+      item,
+      quantity,
+    },
     level: options?.level ?? 1,
     treasureRoll: options?.treasureRoll ?? usedRoll,
     rollIndex: options?.rollIndex,

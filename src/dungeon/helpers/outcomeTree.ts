@@ -102,6 +102,7 @@ import {
   resolveTreasureRobeOfTheArchmagi,
   resolveTreasureScarabOfProtectionCurse,
   resolveTreasureScarabOfProtectionCurseResolution,
+  resolveTreasureMiscWeapons,
   resolveTreasureArmorShields,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
@@ -762,6 +763,10 @@ function resolvePendingNode(
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureArmorShields(context);
     }
+    case 'treasureMiscWeapons': {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasureMiscWeapons(context);
+    }
     case 'treasureRobeOfUsefulItems':
       return resolveTreasureRobeOfUsefulItems({});
     case 'treasureRobeOfTheArchmagi':
@@ -1103,6 +1108,7 @@ function readTreasureMagicContext(
       case 'treasureScroll':
       case 'treasureRing':
       case 'treasureArmorShields':
+      case 'treasureMiscWeapons':
         if (level === undefined && typeof event.level === 'number') {
           level = event.level;
         }

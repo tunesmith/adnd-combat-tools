@@ -46,6 +46,7 @@ import {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
 } from '../../../../../tables/dungeon/treasureScarabOfProtection';
+import { TreasureMiscWeapon } from '../../../../../tables/dungeon/treasureMiscWeapons';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
@@ -1365,6 +1366,81 @@ describe('passage contents', () => {
     expect(compactText).toContain(
       'There is a Scarab of Protection (+1).'
     );
+  });
+
+  it('resolves miscellaneous weapons from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 90);
+
+    const miscWeaponTargets = listPendingPreviewTargets(feed).filter(
+      (target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMiscWeapons')
+    );
+    const miscWeaponTarget = miscWeaponTargets[0];
+    if (!miscWeaponTarget) throw new Error('missing misc weapons target');
+
+    const randomSpy = jest.spyOn(Math, 'random');
+    randomSpy.mockReturnValueOnce(0); // first d12 -> 1
+    randomSpy.mockReturnValueOnce(0); // second d12 -> 1 (total 2 arrows)
+    feed = resolvePreview(feed, miscWeaponTarget, 1);
+    randomSpy.mockRestore();
+
+    const miscWeaponEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureMiscWeapons'
+    );
+    expect(miscWeaponEvent).toBeDefined();
+    if (
+      !miscWeaponEvent ||
+      miscWeaponEvent.event.kind !== 'treasureMiscWeapons'
+    ) {
+      throw new Error('treasureMiscWeapons event not found');
+    }
+    expect(miscWeaponEvent.event.result.item).toBe(
+      TreasureMiscWeapon.ArrowPlus1
+    );
+    expect(miscWeaponEvent.event.result.quantity).toBe(2);
+
+    const detailNodes = renderDetail(feed);
+    const miscPreview = detailNodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'table-preview' }> =>
+        node.kind === 'table-preview' &&
+        node.id.startsWith('treasureMiscWeapons')
+    );
+    expect(miscPreview).toBeDefined();
+
+    const detailText = detailNodes
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(detailText).toContain('There are 2 arrows +1.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain('There are 2 arrows +1.');
   });
 
   it('resolves manual of golems variants from miscellaneous magic', () => {

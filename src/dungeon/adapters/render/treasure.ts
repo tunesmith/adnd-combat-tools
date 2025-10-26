@@ -57,6 +57,7 @@ import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtecti
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
 import { toIounStonesSummary } from './treasureIounStones';
 import { armorShieldSentence } from './treasureArmorShields';
+import { miscWeaponSentence } from './treasureMiscWeapons';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,
@@ -214,13 +215,21 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const label = resolveRodStaffWandLabel(rod);
     return label.length > 0 ? `There is a ${label}.` : undefined;
   }
-  const armorShieldsEvent = findChildEvent(magic, 'treasureArmorShields');
+  const armorShieldsEvent = findArmorShieldsEvent(magic);
   if (
     armorShieldsEvent &&
     armorShieldsEvent.event.kind === 'treasureArmorShields' &&
     magic.event.result === TreasureMagicCategory.ArmorShields
   ) {
     return armorShieldSentence(armorShieldsEvent.event.result);
+  }
+  const miscWeaponsEvent = findMiscWeaponsEvent(magic);
+  if (
+    miscWeaponsEvent &&
+    miscWeaponsEvent.event.kind === 'treasureMiscWeapons' &&
+    magic.event.result === TreasureMagicCategory.MiscWeapons
+  ) {
+    return miscWeaponSentence(miscWeaponsEvent.event.result);
   }
   const miscMagicE1 = findChildEvent(magic, 'treasureMiscMagicE1');
   if (miscMagicE1 && miscMagicE1.event.kind === 'treasureMiscMagicE1') {
@@ -599,6 +608,36 @@ function findRobeOfUsefulItemsEvent(
   for (const child of children) {
     if (child.type !== 'event') continue;
     const match = findRobeOfUsefulItemsEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function findArmorShieldsEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureArmorShields') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findArmorShieldsEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function findMiscWeaponsEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureMiscWeapons') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findMiscWeaponsEvent(child);
     if (match) return match;
   }
   return undefined;

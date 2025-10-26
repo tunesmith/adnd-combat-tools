@@ -279,4 +279,5 @@ export type Command =
   | TreasureCarpetOfFlying
   | TreasureCloakOfProtection
   | TreasureCrystalBall
-  | TreasureEyesOfPetrification;
+  | TreasureEyesOfPetrification
+  | TreasureMiscWeapon;
