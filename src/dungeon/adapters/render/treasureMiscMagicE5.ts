@@ -5,12 +5,17 @@ import {
   TreasureMiscMagicE5,
 } from '../../../tables/dungeon/treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from '../../../tables/dungeon/treasureRobeOfTheArchmagi';
+import type {
+  TreasureScarabOfProtectionCurse,
+  TreasureScarabOfProtectionCurseResolution,
+} from '../../../tables/dungeon/treasureScarabOfProtection';
 import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import {
   robeOfTheArchmagiAlignmentDisplay,
   robeOfTheArchmagiParenthetical,
 } from './treasureRobeOfTheArchmagi';
+import { scarabOfProtectionParenthetical } from './treasureScarabOfProtection';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE5, string> = {
   [TreasureMiscMagicE5.RobeOfTheArchmagi]: 'Robe of the Archmagi',
@@ -68,6 +73,26 @@ export function renderTreasureMiscMagicE5Detail(
     robeChild && robeChild.event.kind === 'treasureRobeOfTheArchmagi'
       ? robeChild.event.result
       : undefined;
+  const scarabCurse = findChildEvent(
+    outcome,
+    'treasureScarabOfProtectionCurse'
+  );
+  const scarabCurseResult =
+    scarabCurse && scarabCurse.event.kind === 'treasureScarabOfProtectionCurse'
+      ? scarabCurse.event.result
+      : undefined;
+  const scarabResolution = scarabCurse
+    ? findChildEvent(
+        scarabCurse,
+        'treasureScarabOfProtectionCurseResolution'
+      )
+    : undefined;
+  const scarabResolutionResult =
+    scarabResolution &&
+    scarabResolution.event.kind ===
+      'treasureScarabOfProtectionCurseResolution'
+      ? scarabResolution.event.result
+      : undefined;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -78,13 +103,20 @@ export function renderTreasureMiscMagicE5Detail(
     items: [
       `roll: ${outcome.roll} — ${resolvedLabel(
         outcome.event.result,
-        robeAlignment
+        robeAlignment,
+        scarabCurseResult,
+        scarabResolutionResult
       )}`,
     ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, robeAlignment),
+    text: resolvedSentence(
+      outcome.event.result,
+      robeAlignment,
+      scarabCurseResult,
+      scarabResolutionResult
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -101,6 +133,26 @@ export function renderTreasureMiscMagicE5Compact(
     robeChild && robeChild.event.kind === 'treasureRobeOfTheArchmagi'
       ? robeChild.event.result
       : undefined;
+  const scarabCurse = findChildEvent(
+    outcome,
+    'treasureScarabOfProtectionCurse'
+  );
+  const scarabCurseResult =
+    scarabCurse && scarabCurse.event.kind === 'treasureScarabOfProtectionCurse'
+      ? scarabCurse.event.result
+      : undefined;
+  const scarabResolution = scarabCurse
+    ? findChildEvent(
+        scarabCurse,
+        'treasureScarabOfProtectionCurseResolution'
+      )
+    : undefined;
+  const scarabResolutionResult =
+    scarabResolution &&
+    scarabResolution.event.kind ===
+      'treasureScarabOfProtectionCurseResolution'
+      ? scarabResolution.event.result
+      : undefined;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -108,7 +160,12 @@ export function renderTreasureMiscMagicE5Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(outcome.event.result, robeAlignment),
+    text: resolvedSentence(
+      outcome.event.result,
+      robeAlignment,
+      scarabCurseResult,
+      scarabResolutionResult
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -129,7 +186,9 @@ export const buildTreasureMiscMagicE5Preview: TablePreviewFactory = (
 
 export function miscMagicE5Sentence(
   result: TreasureMiscMagicE5,
-  robeAlignment?: TreasureRobeOfTheArchmagi
+  robeAlignment?: TreasureRobeOfTheArchmagi,
+  scarabCurse?: TreasureScarabOfProtectionCurse,
+  scarabResolution?: TreasureScarabOfProtectionCurseResolution
 ): string {
   if (
     result === TreasureMiscMagicE5.RobeOfTheArchmagi &&
@@ -139,15 +198,32 @@ export function miscMagicE5Sentence(
     const item = ITEM_LABELS[TreasureMiscMagicE5.RobeOfTheArchmagi];
     return `There is a ${item} (${alignment}).`;
   }
+  if (result === TreasureMiscMagicE5.ScarabOfProtection) {
+    const parenthetical = scarabOfProtectionParenthetical(
+      scarabCurse,
+      scarabResolution
+    );
+    if (parenthetical) {
+      return `There is a Scarab of Protection (${parenthetical}).`;
+    }
+    return 'There is a Scarab of Protection.';
+  }
   const label = ITEM_LABELS[result];
   return `There is ${articleFor(label)} ${stripUsageTag(label)}.`;
 }
 
 function resolvedSentence(
   result: TreasureMiscMagicE5,
-  robeAlignment?: TreasureRobeOfTheArchmagi
+  robeAlignment?: TreasureRobeOfTheArchmagi,
+  scarabCurse?: TreasureScarabOfProtectionCurse,
+  scarabResolution?: TreasureScarabOfProtectionCurseResolution
 ): string {
-  return miscMagicE5Sentence(result, robeAlignment);
+  return miscMagicE5Sentence(
+    result,
+    robeAlignment,
+    scarabCurse,
+    scarabResolution
+  );
 }
 
 function articleFor(label: string): 'a' | 'an' {
@@ -161,12 +237,22 @@ function stripUsageTag(label: string): string {
 
 function resolvedLabel(
   result: TreasureMiscMagicE5,
-  robeAlignment?: TreasureRobeOfTheArchmagi
+  robeAlignment?: TreasureRobeOfTheArchmagi,
+  scarabCurse?: TreasureScarabOfProtectionCurse,
+  scarabResolution?: TreasureScarabOfProtectionCurseResolution
 ): string {
   if (result === TreasureMiscMagicE5.RobeOfTheArchmagi) {
     const base = ITEM_LABELS[TreasureMiscMagicE5.RobeOfTheArchmagi];
     if (robeAlignment === undefined) return base;
     return `${base} (${robeOfTheArchmagiParenthetical(robeAlignment)})`;
+  }
+  if (result === TreasureMiscMagicE5.ScarabOfProtection) {
+    const base = ITEM_LABELS[TreasureMiscMagicE5.ScarabOfProtection];
+    if (!scarabCurse) return base;
+    return `${base} (${scarabOfProtectionParenthetical(
+      scarabCurse,
+      scarabResolution
+    )})`;
   }
   return ITEM_LABELS[result];
 }

@@ -136,6 +136,10 @@ import type {
   TreasureProtectionHiddenBy,
 } from '../../tables/dungeon/treasureProtection';
 import type { PartyResult } from '../models/character/characterSheet';
+import type {
+  TreasureScarabOfProtectionCurse,
+  TreasureScarabOfProtectionCurseResolution,
+} from '../../tables/dungeon/treasureScarabOfProtection';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
@@ -558,6 +562,14 @@ export type OutcomeEvent =
   | {
       kind: 'treasureMiscMagicE5';
       result: TreasureMiscMagicE5;
+    }
+  | {
+      kind: 'treasureScarabOfProtectionCurse';
+      result: TreasureScarabOfProtectionCurse;
+    }
+  | {
+      kind: 'treasureScarabOfProtectionCurseResolution';
+      result: TreasureScarabOfProtectionCurseResolution;
     }
   | {
       kind: 'treasureRobeOfTheArchmagi';

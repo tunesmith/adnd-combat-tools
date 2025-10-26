@@ -369,6 +369,14 @@ import {
   renderTreasureIounStonesCompact,
 } from './render/treasureIounStones';
 import {
+  renderTreasureScarabOfProtectionCurseDetail,
+  renderTreasureScarabOfProtectionCurseCompact,
+  buildTreasureScarabOfProtectionCursePreview,
+  renderTreasureScarabOfProtectionCurseResolutionDetail,
+  renderTreasureScarabOfProtectionCurseResolutionCompact,
+  buildTreasureScarabOfProtectionCurseResolutionPreview,
+} from './render/treasureScarabOfProtection';
+import {
   renderTreasureHornOfValhallaTypeDetail,
   renderTreasureHornOfValhallaTypeCompact,
   renderTreasureHornOfValhallaAttunementDetail,
@@ -754,6 +762,14 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureRobeOfTheArchmagiDetail,
     renderCompact: renderTreasureRobeOfTheArchmagiCompact,
   },
+  treasureScarabOfProtectionCurse: {
+    renderDetail: renderTreasureScarabOfProtectionCurseDetail,
+    renderCompact: renderTreasureScarabOfProtectionCurseCompact,
+  },
+  treasureScarabOfProtectionCurseResolution: {
+    renderDetail: renderTreasureScarabOfProtectionCurseResolutionDetail,
+    renderCompact: renderTreasureScarabOfProtectionCurseResolutionCompact,
+  },
   treasureManualOfGolems: {
     renderDetail: renderTreasureManualOfGolemsDetail,
     renderCompact: renderTreasureManualOfGolemsCompact,
@@ -984,6 +1000,10 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
   treasureMiscMagicE5: buildTreasureMiscMagicE5Preview,
   treasureRobeOfTheArchmagi: buildTreasureRobeOfTheArchmagiPreview,
+  treasureScarabOfProtectionCurse:
+    buildTreasureScarabOfProtectionCursePreview,
+  treasureScarabOfProtectionCurseResolution:
+    buildTreasureScarabOfProtectionCurseResolutionPreview,
   treasureManualOfGolems: buildTreasureManualOfGolemsPreview,
   treasureMedallionRange: buildTreasureMedallionRangePreview,
   treasureNecklaceOfMissiles: buildTreasureNecklaceOfMissilesPreview,
@@ -1321,6 +1341,12 @@ function previewForEventNode(
       break;
     case 'treasureRobeOfTheArchmagi':
       tableId = 'treasureRobeOfTheArchmagi';
+      break;
+    case 'treasureScarabOfProtectionCurse':
+      tableId = 'treasureScarabOfProtectionCurse';
+      break;
+    case 'treasureScarabOfProtectionCurseResolution':
+      tableId = 'treasureScarabOfProtectionCurseResolution';
       break;
     case 'treasureManualOfGolems':
       tableId = 'treasureManualOfGolems';

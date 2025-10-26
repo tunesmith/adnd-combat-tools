@@ -125,6 +125,8 @@ import {
   resolveTreasurePhylacteryLongYears,
   resolveTreasureQuaalFeatherToken,
   resolveTreasureStaffSerpent,
+  resolveTreasureScarabOfProtectionCurse,
+  resolveTreasureScarabOfProtectionCurseResolution,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
@@ -237,6 +239,8 @@ const TABLE_ID_LIST = [
   'treasureMiscMagicE5',
   'treasureRobeOfUsefulItems',
   'treasureRobeOfTheArchmagi',
+  'treasureScarabOfProtectionCurse',
+  'treasureScarabOfProtectionCurseResolution',
   'treasureManualOfGolems',
   'treasureMedallionRange',
   'treasureNecklaceOfMissiles',
@@ -361,6 +365,9 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureMiscMagicE5: 'Miscellaneous Magic (Table E.5)',
   treasureRobeOfUsefulItems: 'Robe of Useful Items',
   treasureRobeOfTheArchmagi: 'Robe of the Archmagi Alignment',
+  treasureScarabOfProtectionCurse: 'Scarab of Protection (curse check)',
+  treasureScarabOfProtectionCurseResolution:
+    'Scarab of Protection (curse resolution)',
   treasureManualOfGolems: 'Manual of Golems',
   treasureMedallionRange: 'Medallion Details',
   treasureNecklaceOfMissiles: 'Necklace of Missiles',
@@ -877,6 +884,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveTreasureRobeOfUsefulItems()),
   treasureRobeOfTheArchmagi: ({ roll }) =>
     fromOutcome(resolveTreasureRobeOfTheArchmagi({ roll })),
+  treasureScarabOfProtectionCurse: ({ roll }) =>
+    fromOutcome(resolveTreasureScarabOfProtectionCurse({ roll })),
+  treasureScarabOfProtectionCurseResolution: ({ roll }) =>
+    fromOutcome(resolveTreasureScarabOfProtectionCurseResolution({ roll })),
   treasureManualOfGolems: ({ roll }) =>
     fromOutcome(resolveTreasureManualOfGolems({ roll })),
   treasureMedallionRange: ({ roll }) =>

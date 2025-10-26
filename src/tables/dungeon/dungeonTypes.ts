@@ -130,6 +130,10 @@ import type {
 } from './treasurePhylacteryLongYears';
 import type { TreasureQuaalFeatherToken } from './treasureQuaalFeatherToken';
 import type { TreasureNecklacePrayerBead } from './treasureNecklacePrayerBeads';
+import type {
+  TreasureScarabOfProtectionCurse,
+  TreasureScarabOfProtectionCurseResolution,
+} from './treasureScarabOfProtection';
 
 export type Table<T> = {
   sides: number;
@@ -257,6 +261,8 @@ export type Command =
   | TreasurePhylacteryLongYearsOutcome
   | TreasureQuaalFeatherToken
   | TreasureNecklacePrayerBead
+  | TreasureScarabOfProtectionCurse
+  | TreasureScarabOfProtectionCurseResolution
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant

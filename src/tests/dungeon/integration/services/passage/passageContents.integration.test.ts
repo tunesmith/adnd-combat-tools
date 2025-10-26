@@ -42,6 +42,10 @@ import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasu
 import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
+import {
+  TreasureScarabOfProtectionCurse,
+  TreasureScarabOfProtectionCurseResolution,
+} from '../../../../../tables/dungeon/treasureScarabOfProtection';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
@@ -1184,6 +1188,183 @@ describe('passage contents', () => {
       throw new Error('robe-of-useful-items aggregated message not found');
     }
     expect(aggregatedRobeMessage.summary.entries.length).toBeGreaterThan(0);
+  });
+
+  it('annotates cursed scarab of protection with removable parenthetical', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 58);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE5')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E5 target');
+    feed = resolvePreview(feed, miscTarget, 45);
+
+    const curseTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScarabOfProtectionCurse'
+      )
+    );
+    const curseTarget = curseTargets[0];
+    if (!curseTarget) throw new Error('missing scarab curse target');
+    feed = resolvePreview(feed, curseTarget, 1);
+
+    const resolutionTargets = listPendingPreviewTargets(feed).filter(
+      (target) =>
+        (target.split('.').pop() ?? '').startsWith(
+          'treasureScarabOfProtectionCurseResolution'
+        )
+    );
+    const resolutionTarget = resolutionTargets[0];
+    if (!resolutionTarget)
+      throw new Error('missing scarab curse resolution target');
+    feed = resolvePreview(feed, resolutionTarget, 1);
+
+    const scarabCurseEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureScarabOfProtectionCurse'
+    );
+    expect(scarabCurseEvent).toBeDefined();
+    if (
+      !scarabCurseEvent ||
+      scarabCurseEvent.event.kind !== 'treasureScarabOfProtectionCurse'
+    ) {
+      throw new Error('treasureScarabOfProtectionCurse event not found');
+    }
+    expect(scarabCurseEvent.event.result).toBe(
+      TreasureScarabOfProtectionCurse.Cursed
+    );
+    const scarabResolutionEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureScarabOfProtectionCurseResolution'
+    );
+    expect(scarabResolutionEvent).toBeDefined();
+    if (
+      !scarabResolutionEvent ||
+      scarabResolutionEvent.event.kind !==
+        'treasureScarabOfProtectionCurseResolution'
+    ) {
+      throw new Error('treasureScarabOfProtectionCurseResolution not found');
+    }
+    expect(scarabResolutionEvent.event.result).toBe(
+      TreasureScarabOfProtectionCurseResolution.Removable
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(detailText).toContain(
+      'There is a Scarab of Protection (-2, cursed, removable).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain(
+      'There is a Scarab of Protection (-2, cursed, removable).'
+    );
+  });
+
+  it('annotates normal scarab of protection as +1', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 58);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE5')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E5 target');
+    feed = resolvePreview(feed, miscTarget, 45);
+
+    const curseTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScarabOfProtectionCurse'
+      )
+    );
+    const curseTarget = curseTargets[0];
+    if (!curseTarget) throw new Error('missing scarab curse target');
+    feed = resolvePreview(feed, curseTarget, 12);
+
+    const scarabCurseEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureScarabOfProtectionCurse'
+    );
+    expect(scarabCurseEvent).toBeDefined();
+    if (
+      !scarabCurseEvent ||
+      scarabCurseEvent.event.kind !== 'treasureScarabOfProtectionCurse'
+    ) {
+      throw new Error('treasureScarabOfProtectionCurse event not found');
+    }
+    expect(scarabCurseEvent.event.result).toBe(
+      TreasureScarabOfProtectionCurse.Normal
+    );
+    const scarabResolutionEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureScarabOfProtectionCurseResolution'
+    );
+    expect(scarabResolutionEvent).toBeUndefined();
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(detailText).toContain(
+      'There is a Scarab of Protection (+1).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain(
+      'There is a Scarab of Protection (+1).'
+    );
   });
 
   it('resolves manual of golems variants from miscellaneous magic', () => {

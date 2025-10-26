@@ -454,7 +454,32 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       robeChild && robeChild.event.kind === 'treasureRobeOfTheArchmagi'
         ? robeChild.event.result
         : undefined;
-    return miscMagicE5Sentence(miscMagicE5.event.result, robeAlignment);
+    const scarabCurse = findChildEvent(
+      miscMagicE5,
+      'treasureScarabOfProtectionCurse'
+    );
+    const scarabCurseResult =
+      scarabCurse && scarabCurse.event.kind === 'treasureScarabOfProtectionCurse'
+        ? scarabCurse.event.result
+        : undefined;
+    const scarabResolution = scarabCurse
+      ? findChildEvent(
+          scarabCurse,
+          'treasureScarabOfProtectionCurseResolution'
+        )
+      : undefined;
+    const scarabResolutionResult =
+      scarabResolution &&
+      scarabResolution.event.kind ===
+        'treasureScarabOfProtectionCurseResolution'
+        ? scarabResolution.event.result
+        : undefined;
+    return miscMagicE5Sentence(
+      miscMagicE5.event.result,
+      robeAlignment,
+      scarabCurseResult,
+      scarabResolutionResult
+    );
   }
   return undefined;
 }

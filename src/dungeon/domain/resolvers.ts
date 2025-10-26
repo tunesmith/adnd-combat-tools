@@ -157,6 +157,12 @@ import {
   RobeOfUsefulItemsExtraPatch,
 } from '../../tables/dungeon/treasureRobeOfUsefulItems';
 import {
+  treasureScarabOfProtectionCurse,
+  TreasureScarabOfProtectionCurse,
+  treasureScarabOfProtectionCursedResolution,
+  TreasureScarabOfProtectionCurseResolution,
+} from '../../tables/dungeon/treasureScarabOfProtection';
+import {
   treasureFigurineOfWondrousPower,
   TreasureFigurineOfWondrousPower,
 } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
@@ -2331,6 +2337,11 @@ export function resolveTreasureMiscMagicE5(options?: {
     });
   } else if (command === TreasureMiscMagicE5.RobeOfUsefulItems) {
     children.push(resolveTreasureRobeOfUsefulItems());
+  } else if (command === TreasureMiscMagicE5.ScarabOfProtection) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureScarabOfProtectionCurse',
+    });
   }
   return {
     type: 'event',
@@ -2421,6 +2432,53 @@ export function resolveTreasureRobeOfUsefulItems(options?: {
     event: {
       kind: 'treasureRobeOfUsefulItems',
       result,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureScarabOfProtectionCurse(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ?? rollDice(treasureScarabOfProtectionCurse.sides);
+  const command: TreasureScarabOfProtectionCurse = getTableEntry(
+    usedRoll,
+    treasureScarabOfProtectionCurse
+  );
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureScarabOfProtectionCurse.Cursed) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureScarabOfProtectionCurseResolution',
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureScarabOfProtectionCurse',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureScarabOfProtectionCurseResolution(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll =
+    options?.roll ??
+    rollDice(treasureScarabOfProtectionCursedResolution.sides);
+  const command: TreasureScarabOfProtectionCurseResolution = getTableEntry(
+    usedRoll,
+    treasureScarabOfProtectionCursedResolution
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureScarabOfProtectionCurseResolution',
+      result: command,
     } as OutcomeEvent,
   };
 }
