@@ -57,7 +57,11 @@ import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtecti
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
 import { toIounStonesSummary } from './treasureIounStones';
 import { armorShieldSentence } from './treasureArmorShields';
-import { swordSentence, formatSwordIntelligence } from './treasureSwords';
+import {
+  swordSentence,
+  formatSwordIntelligence,
+  summarizePrimaryAbilities,
+} from './treasureSwords';
 import { miscWeaponSentence } from './treasureMiscWeapons';
 
 export function renderTreasureDetail(
@@ -240,6 +244,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
         ? formatSwordIntelligence(unusualEvent.event.result)
         : undefined;
+    const abilitySummaries =
+      unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
+        ? summarizePrimaryAbilities(unusualEvent)
+        : summarizePrimaryAbilities(swordsEvent);
     const alignmentEvent = findSwordAlignmentEvent(swordsEvent);
     const alignmentResult =
       alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
@@ -249,7 +257,8 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       swordsEvent.event.result,
       kind,
       alignmentResult,
-      intelligenceLabel
+      intelligenceLabel,
+      abilitySummaries
     );
   }
   const miscWeaponsEvent = findMiscWeaponsEvent(magic);

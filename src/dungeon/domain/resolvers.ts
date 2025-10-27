@@ -11,6 +11,7 @@ import type {
   DungeonOutcomeNode,
   OutcomeEvent,
   OutcomeEventNode,
+  PendingRoll,
 } from './outcome';
 import { sidePassages } from '../../tables/dungeon/sidePassages';
 import { passageTurns } from '../../tables/dungeon/passageTurns';
@@ -171,12 +172,18 @@ import {
   TreasureSword,
   treasureSwordKind,
   treasureSwordUnusual,
+  TreasureSwordPrimaryAbility,
   SWORD_UNUSUAL_DETAILS,
+  treasureSwordPrimaryAbility,
+  treasureSwordPrimaryAbilityRestricted,
+  TreasureSwordPrimaryAbilityCommand,
+  describeSwordPrimaryAbility,
 } from '../../tables/dungeon/treasureSwords';
 import type {
   TreasureSwordKind,
   TreasureSwordUnusual,
   TreasureSwordUnusualResult,
+  TreasureSwordPrimaryAbilityResult,
 } from '../../tables/dungeon/treasureSwords';
 import {
   treasureMiscWeapons,
@@ -2585,6 +2592,7 @@ export function resolveTreasureSwords(options?: {
   unusualRoll?: number;
   alignmentRoll?: number;
   languageRolls?: number[];
+  primaryAbilityRolls?: number[];
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwords.sides);
   const command: TreasureSword = getTableEntry(usedRoll, treasureSwords);
@@ -2615,6 +2623,7 @@ export function resolveTreasureSwords(options?: {
         rollIndex: options?.rollIndex,
         alignmentRoll: options?.alignmentRoll,
         languageRolls: options?.languageRolls,
+        primaryAbilityRolls: options?.primaryAbilityRolls,
       })
     );
   } else {
@@ -2630,6 +2639,9 @@ export function resolveTreasureSwords(options?: {
         rollIndex: options?.rollIndex,
         languageRolls: options?.languageRolls
           ? [...options.languageRolls]
+          : undefined,
+        primaryAbilityRolls: options?.primaryAbilityRolls
+          ? [...options.primaryAbilityRolls]
           : undefined,
       },
     });
@@ -2709,6 +2721,7 @@ export function resolveTreasureSwordUnusual(options?: {
   rollIndex?: number;
   alignmentRoll?: number;
   languageRolls?: number[];
+  primaryAbilityRolls?: number[];
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwordUnusual.sides);
   const command: TreasureSwordUnusual = getTableEntry(
@@ -2737,6 +2750,37 @@ export function resolveTreasureSwordUnusual(options?: {
     const languagesKnown = rollSwordLanguages(languageRolls);
     result.languagesKnown = languagesKnown;
   }
+  if (result.primaryAbilityCount > 0) {
+    const abilityNodes: DungeonOutcomeNode[] = [];
+    const queuedRolls = options?.primaryAbilityRolls
+      ? [...options.primaryAbilityRolls]
+      : [];
+    for (let index = 0; index < result.primaryAbilityCount; index += 1) {
+      const slotKey = `auto-${index}`;
+      const forcedRoll = queuedRolls.shift();
+      if (forcedRoll !== undefined) {
+        abilityNodes.push(
+          resolveTreasureSwordPrimaryAbility({
+            rollIndex: options?.rollIndex,
+            slotKey,
+            roll: forcedRoll,
+            tableVariant: 'standard',
+          })
+        );
+      } else {
+        abilityNodes.push(
+          buildSwordPrimaryAbilityPending({
+            slotKey,
+            rollIndex: options?.rollIndex,
+            tableVariant: 'standard',
+          })
+        );
+      }
+    }
+    if (abilityNodes.length > 0) {
+      children.push(...abilityNodes);
+    }
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -2746,6 +2790,127 @@ export function resolveTreasureSwordUnusual(options?: {
     } as OutcomeEvent,
     children: children.length ? children : undefined,
   };
+}
+
+export function resolveTreasureSwordPrimaryAbility(options?: {
+  roll?: number;
+  rollIndex?: number;
+  slotKey?: string;
+  tableVariant?: 'standard' | 'restricted';
+}): DungeonOutcomeNode {
+  const rollIndex = options?.rollIndex;
+  const slotKey =
+    options?.slotKey ?? `auto-${Math.random().toString(36).slice(2)}`;
+  const variant = options?.tableVariant ?? 'standard';
+  const table =
+    variant === 'restricted'
+      ? treasureSwordPrimaryAbilityRestricted
+      : treasureSwordPrimaryAbility;
+
+  const resolveRoll = (): number => {
+    if (options?.roll !== undefined) {
+      const provided = Math.trunc(options.roll);
+      if (!Number.isFinite(provided) || provided < 1) {
+        return 1;
+      }
+      if (provided > table.sides) {
+        return table.sides;
+      }
+      return provided;
+    }
+    return rollDice(table.sides);
+  };
+
+  const usedRoll = resolveRoll();
+  const command = getTableEntry(usedRoll, table);
+
+  if (
+    command === TreasureSwordPrimaryAbilityCommand.RollTwice &&
+    variant === 'standard'
+  ) {
+    const nodeId = primaryAbilityNodeId(slotKey, rollIndex);
+    const node: OutcomeEventNode = {
+      type: 'event',
+      roll: usedRoll,
+      id: nodeId,
+      event: {
+        kind: 'treasureSwordPrimaryAbility',
+        result: {
+          kind: 'instruction',
+          instruction: 'rollTwice',
+          roll: usedRoll,
+          note: 'Roll twice on this table (ignore 93-00).',
+          tableVariant: 'standard',
+        },
+      } as OutcomeEvent,
+      children: [
+        buildSwordPrimaryAbilityPending({
+          slotKey: `${slotKey}:a`,
+          rollIndex,
+          tableVariant: 'restricted',
+        }),
+        buildSwordPrimaryAbilityPending({
+          slotKey: `${slotKey}:b`,
+          rollIndex,
+          tableVariant: 'restricted',
+        }),
+      ],
+    };
+    return node;
+  }
+
+  const ability =
+    command === TreasureSwordPrimaryAbilityCommand.ExtraordinaryPower
+      ? TreasureSwordPrimaryAbility.ExtraordinaryPower
+      : (command as unknown as TreasureSwordPrimaryAbility);
+  const result: TreasureSwordPrimaryAbilityResult = {
+    kind: 'ability',
+    ability,
+    rolls: [usedRoll],
+    multiplier: 1,
+    description: describeSwordPrimaryAbility(ability, 1),
+    tableVariant: variant,
+  };
+  const node: OutcomeEventNode = {
+    type: 'event',
+    roll: usedRoll,
+    id: primaryAbilityNodeId(slotKey, rollIndex),
+    event: {
+      kind: 'treasureSwordPrimaryAbility',
+      result,
+    } as OutcomeEvent,
+  };
+  return node;
+}
+
+function buildSwordPrimaryAbilityPending(options: {
+  slotKey: string;
+  rollIndex?: number;
+  tableVariant?: 'standard' | 'restricted';
+}): PendingRoll {
+  const { slotKey, rollIndex, tableVariant } = options;
+  const variant = tableVariant ?? 'standard';
+  const tableName =
+    variant === 'restricted'
+      ? 'treasureSwordPrimaryAbilityRestricted'
+      : 'treasureSwordPrimaryAbility';
+  return {
+    type: 'pending-roll',
+    table: tableName,
+    id: primaryAbilityNodeId(slotKey, rollIndex),
+    context: {
+      kind: 'treasureSwordPrimaryAbility',
+      slotKey,
+      rollIndex,
+      tableVariant: variant,
+    },
+  };
+}
+
+function primaryAbilityNodeId(slotKey: string, rollIndex?: number): string {
+  return rollIndex !== undefined
+    ? `treasureSwordPrimaryAbility:${rollIndex}:${slotKey}`
+    : `treasureSwordPrimaryAbility:${slotKey}`;
 }
 
 type SwordAlignmentVariant = 'standard' | 'chaotic' | 'lawful';

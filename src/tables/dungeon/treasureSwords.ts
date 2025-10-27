@@ -47,6 +47,35 @@ export enum TreasureSwordUnusual {
   Intelligence17,
 }
 
+export enum TreasureSwordPrimaryAbility {
+  DetectShiftingRooms,
+  DetectSlopingPassages,
+  DetectLargeTraps,
+  DetectAlignment,
+  DetectPreciousMetals,
+  DetectGems,
+  DetectMagic,
+  DetectSecretDoors,
+  DetectInvisibleObjects,
+  LocateObject,
+  ExtraordinaryPower,
+}
+
+export enum TreasureSwordPrimaryAbilityCommand {
+  DetectShiftingRooms,
+  DetectSlopingPassages,
+  DetectLargeTraps,
+  DetectAlignment,
+  DetectPreciousMetals,
+  DetectGems,
+  DetectMagic,
+  DetectSecretDoors,
+  DetectInvisibleObjects,
+  LocateObject,
+  RollTwice,
+  ExtraordinaryPower,
+}
+
 export const treasureSwords: Table<TreasureSword> = {
   sides: 100,
   entries: [
@@ -210,3 +239,194 @@ export const SWORD_UNUSUAL_DETAILS: Record<
     requiresAlignment: true,
   },
 };
+
+export const treasureSwordPrimaryAbility: Table<TreasureSwordPrimaryAbilityCommand> =
+  {
+    sides: 100,
+    entries: [
+      {
+        range: [1, 11],
+        command: TreasureSwordPrimaryAbilityCommand.DetectShiftingRooms,
+      },
+      {
+        range: [12, 22],
+        command: TreasureSwordPrimaryAbilityCommand.DetectSlopingPassages,
+      },
+      {
+        range: [23, 33],
+        command: TreasureSwordPrimaryAbilityCommand.DetectLargeTraps,
+      },
+      {
+        range: [34, 44],
+        command: TreasureSwordPrimaryAbilityCommand.DetectAlignment,
+      },
+      {
+        range: [45, 55],
+        command: TreasureSwordPrimaryAbilityCommand.DetectPreciousMetals,
+      },
+      {
+        range: [56, 66],
+        command: TreasureSwordPrimaryAbilityCommand.DetectGems,
+      },
+      {
+        range: [67, 77],
+        command: TreasureSwordPrimaryAbilityCommand.DetectMagic,
+      },
+      {
+        range: [78, 82],
+        command: TreasureSwordPrimaryAbilityCommand.DetectSecretDoors,
+      },
+      {
+        range: [83, 87],
+        command: TreasureSwordPrimaryAbilityCommand.DetectInvisibleObjects,
+      },
+      {
+        range: [88, 92],
+        command: TreasureSwordPrimaryAbilityCommand.LocateObject,
+      },
+      {
+        range: [93, 98],
+        command: TreasureSwordPrimaryAbilityCommand.RollTwice,
+      },
+      {
+        range: [99, 100],
+        command: TreasureSwordPrimaryAbilityCommand.ExtraordinaryPower,
+      },
+    ],
+  };
+
+type PrimaryAbilityEntry =
+  (typeof treasureSwordPrimaryAbility.entries)[number];
+
+const PRIMARY_ABILITY_RESTRICTED_ENTRIES =
+  treasureSwordPrimaryAbility.entries.filter(
+    ({ range }) => range[0] <= 92
+  ) as [PrimaryAbilityEntry, ...PrimaryAbilityEntry[]];
+
+export const treasureSwordPrimaryAbilityRestricted: Table<TreasureSwordPrimaryAbilityCommand> =
+  {
+    sides: 92,
+    entries: PRIMARY_ABILITY_RESTRICTED_ENTRIES,
+  };
+
+type SwordPrimaryAbilityDetail =
+  | {
+      type: 'radius';
+      template: string;
+      baseRadius: number;
+    }
+  | {
+      type: 'extraordinary';
+      template: string;
+    };
+
+export type TreasureSwordPrimaryAbilityResult =
+  | {
+      kind: 'ability';
+      ability: TreasureSwordPrimaryAbility;
+      rolls: number[];
+      multiplier: number;
+      description: string;
+      tableVariant: 'standard' | 'restricted';
+    }
+  | {
+      kind: 'instruction';
+      instruction: 'rollTwice';
+      roll: number;
+      note: string;
+      tableVariant: 'standard';
+    };
+
+export const SWORD_PRIMARY_ABILITY_DETAILS: Record<
+  TreasureSwordPrimaryAbility,
+  SwordPrimaryAbilityDetail
+> = {
+  [TreasureSwordPrimaryAbility.DetectShiftingRooms]: {
+    type: 'radius',
+    template: 'detect "elevator"/shifting rooms/walls in a {RADIUS} radius',
+    baseRadius: 1,
+  },
+  [TreasureSwordPrimaryAbility.DetectSlopingPassages]: {
+    type: 'radius',
+    template: 'detect sloping passages in a {RADIUS} radius',
+    baseRadius: 1,
+  },
+  [TreasureSwordPrimaryAbility.DetectLargeTraps]: {
+    type: 'radius',
+    template: 'detect traps of large size in a {RADIUS} radius',
+    baseRadius: 1,
+  },
+  [TreasureSwordPrimaryAbility.DetectAlignment]: {
+    type: 'radius',
+    template: 'detect evil/good in a {RADIUS} radius',
+    baseRadius: 1,
+  },
+  [TreasureSwordPrimaryAbility.DetectPreciousMetals]: {
+    type: 'radius',
+    template:
+      'detect precious metals, kind, and amount in a {RADIUS} radius',
+    baseRadius: 2,
+  },
+  [TreasureSwordPrimaryAbility.DetectGems]: {
+    type: 'radius',
+    template: 'detect gems, kind, and number in a {RADIUS} radius',
+    baseRadius: 0.5,
+  },
+  [TreasureSwordPrimaryAbility.DetectMagic]: {
+    type: 'radius',
+    template: 'detect magic in a {RADIUS} radius',
+    baseRadius: 1,
+  },
+  [TreasureSwordPrimaryAbility.DetectSecretDoors]: {
+    type: 'radius',
+    template: 'detect secret doors in a {RADIUS} radius',
+    baseRadius: 0.5,
+  },
+  [TreasureSwordPrimaryAbility.DetectInvisibleObjects]: {
+    type: 'radius',
+    template: 'detect invisible objects in a {RADIUS} radius',
+    baseRadius: 1,
+  },
+  [TreasureSwordPrimaryAbility.LocateObject]: {
+    type: 'radius',
+    template: 'locate object in a {RADIUS} radius',
+    baseRadius: 12,
+  },
+  [TreasureSwordPrimaryAbility.ExtraordinaryPower]: {
+    type: 'extraordinary',
+    template: 'manifest an extraordinary power (roll separately)',
+  },
+};
+
+function formatSwordPrimaryAbilityRadius(radiusInches: number): string {
+  const halfInches = Math.round(radiusInches * 2);
+  const wholeInches = Math.floor(halfInches / 2);
+  const hasHalf = halfInches % 2 === 1;
+  if (!hasHalf) {
+    return `${wholeInches}"`;
+  }
+  if (wholeInches === 0) {
+    return '1/2"';
+  }
+  return `${wholeInches} 1/2"`;
+}
+
+export function describeSwordPrimaryAbility(
+  ability: TreasureSwordPrimaryAbility,
+  multiplier = 1
+): string {
+  const detail = SWORD_PRIMARY_ABILITY_DETAILS[ability];
+  if (detail.type === 'radius') {
+    const radiusLabel = formatSwordPrimaryAbilityRadius(
+      detail.baseRadius * multiplier
+    );
+    return detail.template.replace('{RADIUS}', radiusLabel);
+  }
+  if (multiplier <= 1) {
+    return detail.template;
+  }
+  return detail.template.replace(
+    'an extraordinary power',
+    `${multiplier} extraordinary powers`
+  );
+}

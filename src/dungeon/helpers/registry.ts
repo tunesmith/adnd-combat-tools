@@ -133,6 +133,7 @@ import {
   resolveTreasureSwordAlignment,
   resolveTreasureSwordKind,
   resolveTreasureSwordUnusual,
+  resolveTreasureSwordPrimaryAbility,
   resolveTreasureMiscWeapons,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
@@ -248,6 +249,8 @@ const TABLE_ID_LIST = [
   'treasureSwords',
   'treasureSwordKind',
   'treasureSwordUnusual',
+  'treasureSwordPrimaryAbility',
+  'treasureSwordPrimaryAbilityRestricted',
   'treasureSwordAlignment',
   'treasureSwordAlignmentChaotic',
   'treasureSwordAlignmentLawful',
@@ -382,6 +385,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureSwords: 'Swords (Table G)',
   treasureSwordKind: 'Sword Type',
   treasureSwordUnusual: 'Sword Unusual Traits',
+  treasureSwordPrimaryAbility: 'Primary Ability',
+  treasureSwordPrimaryAbilityRestricted: 'Primary Ability (01-92)',
   treasureSwordAlignment: 'Sword Alignment',
   treasureSwordAlignmentChaotic: 'Sword Alignment (Chaotic)',
   treasureSwordAlignmentLawful: 'Sword Alignment (Lawful)',
@@ -949,11 +954,13 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     let sword: TreasureSword | undefined;
     let rollIndex: number | undefined;
     let languageRolls: number[] | undefined;
+    let primaryAbilityRolls: number[] | undefined;
     if (context && typeof context === 'object') {
       const candidate = context as {
         sword?: unknown;
         rollIndex?: unknown;
         languageRolls?: unknown;
+        primaryAbilityRolls?: unknown;
       };
       if (typeof candidate.sword === 'number') {
         sword = candidate.sword as TreasureSword;
@@ -964,6 +971,9 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       if (Array.isArray(candidate.languageRolls)) {
         languageRolls = [...candidate.languageRolls];
       }
+      if (Array.isArray(candidate.primaryAbilityRolls)) {
+        primaryAbilityRolls = [...candidate.primaryAbilityRolls];
+      }
     }
     return fromOutcome(
       resolveTreasureSwordUnusual({
@@ -971,6 +981,57 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
         sword,
         rollIndex,
         languageRolls,
+        primaryAbilityRolls,
+      })
+    );
+  },
+  treasureSwordPrimaryAbility: ({ roll, context }) => {
+    const parsed =
+      context && typeof context === 'object'
+        ? (context as {
+            slotKey?: unknown;
+            tableVariant?: unknown;
+            ignoreHigh?: unknown;
+            rollIndex?: unknown;
+          })
+        : {};
+    const slotKey =
+      typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
+    const rollIndex =
+      typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    let tableVariant: 'standard' | 'restricted' = 'standard';
+    if (parsed.tableVariant === 'restricted') {
+      tableVariant = 'restricted';
+    } else if (parsed.ignoreHigh === true) {
+      tableVariant = 'restricted';
+    }
+    return fromOutcome(
+      resolveTreasureSwordPrimaryAbility({
+        roll,
+        slotKey,
+        rollIndex,
+        tableVariant,
+      })
+    );
+  },
+  treasureSwordPrimaryAbilityRestricted: ({ roll, context }) => {
+    const parsed =
+      context && typeof context === 'object'
+        ? (context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+          })
+        : {};
+    const slotKey =
+      typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
+    const rollIndex =
+      typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    return fromOutcome(
+      resolveTreasureSwordPrimaryAbility({
+        roll,
+        slotKey,
+        rollIndex,
+        tableVariant: 'restricted',
       })
     );
   },

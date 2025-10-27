@@ -383,6 +383,9 @@ import {
   renderTreasureSwordUnusualDetail,
   renderTreasureSwordUnusualCompact,
   buildTreasureSwordUnusualPreview,
+  renderTreasureSwordPrimaryAbilityDetail,
+  renderTreasureSwordPrimaryAbilityCompact,
+  buildTreasureSwordPrimaryAbilityPreview,
   renderTreasureSwordAlignmentDetail,
   renderTreasureSwordAlignmentCompact,
   buildTreasureSwordAlignmentPreview,
@@ -800,6 +803,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureSwordUnusualDetail,
     renderCompact: renderTreasureSwordUnusualCompact,
   },
+  treasureSwordPrimaryAbility: {
+    renderDetail: renderTreasureSwordPrimaryAbilityDetail,
+    renderCompact: renderTreasureSwordPrimaryAbilityCompact,
+  },
   treasureSwordAlignment: {
     renderDetail: renderTreasureSwordAlignmentDetail,
     renderCompact: renderTreasureSwordAlignmentCompact,
@@ -1053,6 +1060,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureSwords: buildTreasureSwordsPreview,
   treasureSwordKind: buildTreasureSwordKindPreview,
   treasureSwordUnusual: buildTreasureSwordUnusualPreview,
+  treasureSwordPrimaryAbility: buildTreasureSwordPrimaryAbilityPreview,
+  treasureSwordPrimaryAbilityRestricted: buildTreasureSwordPrimaryAbilityPreview,
   treasureSwordAlignment: buildTreasureSwordAlignmentPreview,
   treasureSwordAlignmentChaotic: buildTreasureSwordAlignmentChaoticPreview,
   treasureSwordAlignmentLawful: buildTreasureSwordAlignmentLawfulPreview,
@@ -1356,6 +1365,20 @@ function previewForEventNode(
     case 'treasureSwordUnusual':
       tableId = 'treasureSwordUnusual';
       break;
+    case 'treasureSwordPrimaryAbility': {
+      const result = event.result;
+      if (result.kind !== 'instruction') {
+        return undefined;
+      }
+      const hasPendingChildren =
+        Array.isArray(node.children) &&
+        node.children.some((child) => child.type === 'pending-roll');
+      if (!hasPendingChildren) {
+        return undefined;
+      }
+      tableId = 'treasureSwordPrimaryAbility';
+      break;
+    }
     case 'treasureSwordAlignment': {
       const alignmentSource = event.result.source;
       if (alignmentSource === 'fixed') {

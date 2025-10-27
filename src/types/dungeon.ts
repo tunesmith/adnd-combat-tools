@@ -189,6 +189,13 @@ export type TableContext =
       kind: 'treasureSwordAlignment';
       variant: 'standard' | 'chaotic' | 'lawful';
       sword?: TreasureSword;
+    }
+  | {
+      kind: 'treasureSwordPrimaryAbility';
+      slotKey?: string;
+      rollIndex?: number;
+      tableVariant?: 'standard' | 'restricted';
+      ignoreHigh?: boolean;
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

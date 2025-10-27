@@ -109,6 +109,7 @@ import {
   resolveTreasureSwordKind,
   resolveTreasureSwordUnusual,
   resolveTreasureSwordAlignment,
+  resolveTreasureSwordPrimaryAbility,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
   resolveTreasureNecklaceOfPrayerBeads,
@@ -799,6 +800,22 @@ function resolvePendingNode(
       const context = readTreasureSwordContext(pending.context, ancestors);
       return resolveTreasureSwordUnusual(context);
     }
+    case 'treasureSwordPrimaryAbility': {
+      const context = readSwordPrimaryAbilityContext(pending.context);
+      return resolveTreasureSwordPrimaryAbility({
+        slotKey: context.slotKey,
+        rollIndex: context.rollIndex,
+        tableVariant: context.tableVariant ?? 'standard',
+      });
+    }
+    case 'treasureSwordPrimaryAbilityRestricted': {
+      const context = readSwordPrimaryAbilityContext(pending.context);
+      return resolveTreasureSwordPrimaryAbility({
+        slotKey: context.slotKey,
+        rollIndex: context.rollIndex,
+        tableVariant: 'restricted',
+      });
+    }
     case 'treasureSwordAlignment':
       return resolveTreasureSwordAlignment({ variant: 'standard' });
     case 'treasureSwordAlignmentChaotic':
@@ -1181,6 +1198,7 @@ function readTreasureSwordContext(
   rollIndex?: number;
   alignmentRoll?: number;
   languageRolls?: number[];
+  primaryAbilityRolls?: number[];
 } {
   if (
     context &&
@@ -1193,6 +1211,9 @@ function readTreasureSwordContext(
       .alignmentRoll;
     const languageRollsValue = (context as { languageRolls?: unknown })
       .languageRolls;
+    const primaryAbilityRollsValue = (
+      context as { primaryAbilityRolls?: unknown }
+    ).primaryAbilityRolls;
     return {
       sword:
         typeof swordValue === 'number'
@@ -1205,9 +1226,39 @@ function readTreasureSwordContext(
       languageRolls: Array.isArray(languageRollsValue)
         ? [...(languageRollsValue as number[])]
         : undefined,
+      primaryAbilityRolls: Array.isArray(primaryAbilityRollsValue)
+        ? [...(primaryAbilityRollsValue as number[])]
+        : undefined,
     };
   }
   return { sword: findSwordFromAncestors(ancestors) };
+}
+
+function readSwordPrimaryAbilityContext(context: unknown): {
+  slotKey?: string;
+  rollIndex?: number;
+  tableVariant?: 'standard' | 'restricted';
+} {
+  if (!context || typeof context !== 'object') {
+    return {};
+  }
+  const candidate = context as {
+    slotKey?: unknown;
+    rollIndex?: unknown;
+    tableVariant?: unknown;
+    ignoreHigh?: unknown;
+  };
+  const slotKey =
+    typeof candidate.slotKey === 'string' ? candidate.slotKey : undefined;
+  const rollIndex =
+    typeof candidate.rollIndex === 'number' ? candidate.rollIndex : undefined;
+  let tableVariant: 'standard' | 'restricted' | undefined;
+  if (candidate.tableVariant === 'restricted' || candidate.ignoreHigh === true) {
+    tableVariant = 'restricted';
+  } else if (candidate.tableVariant === 'standard') {
+    tableVariant = 'standard';
+  }
+  return { slotKey, rollIndex, tableVariant };
 }
 
 function findSwordFromAncestors(
