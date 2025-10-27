@@ -168,12 +168,12 @@ import {
 } from '../../tables/dungeon/treasureArmorShields';
 import {
   treasureSwords,
+  TreasureSword,
   treasureSwordKind,
   treasureSwordUnusual,
   SWORD_UNUSUAL_DETAILS,
 } from '../../tables/dungeon/treasureSwords';
 import type {
-  TreasureSword,
   TreasureSwordKind,
   TreasureSwordUnusual,
   TreasureSwordUnusualResult,
@@ -182,6 +182,14 @@ import {
   treasureMiscWeapons,
   TreasureMiscWeapon,
 } from '../../tables/dungeon/treasureMiscWeapons';
+import {
+  treasureSwordAlignment,
+  treasureSwordAlignmentChaotic,
+  treasureSwordAlignmentLawful,
+  TreasureSwordAlignment,
+  SWORD_ALIGNMENT_DETAILS as SWORD_ALIGNMENT,
+  type TreasureSwordAlignmentResult,
+} from '../../tables/dungeon/treasureSwordAlignment';
 import {
   treasureFigurineOfWondrousPower,
   TreasureFigurineOfWondrousPower,
@@ -2575,6 +2583,7 @@ export function resolveTreasureSwords(options?: {
   rollIndex?: number;
   kindRoll?: number;
   unusualRoll?: number;
+  alignmentRoll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwords.sides);
   const command: TreasureSword = getTableEntry(usedRoll, treasureSwords);
@@ -2598,7 +2607,14 @@ export function resolveTreasureSwords(options?: {
     });
   }
   if (options?.unusualRoll !== undefined) {
-    children.push(resolveTreasureSwordUnusual({ roll: options.unusualRoll }));
+    children.push(
+      resolveTreasureSwordUnusual({
+        roll: options.unusualRoll,
+        sword: command,
+        rollIndex: options?.rollIndex,
+        alignmentRoll: options?.alignmentRoll,
+      })
+    );
   } else {
     children.push({
       type: 'pending-roll',
@@ -2606,7 +2622,55 @@ export function resolveTreasureSwords(options?: {
       id: options?.rollIndex
         ? `treasureSwordUnusual:${options.rollIndex}`
         : undefined,
+      context: {
+        kind: 'treasureSword',
+        sword: command,
+        rollIndex: options?.rollIndex,
+      },
     });
+  }
+  switch (command) {
+    case TreasureSword.SwordPlus5HolyAvenger: {
+      children.push(
+        createFixedSwordAlignmentNode(
+          TreasureSwordAlignment.LawfulGood,
+          'holyAvenger'
+        )
+      );
+      break;
+    }
+    case TreasureSword.SwordOfSharpness: {
+      if (options?.alignmentRoll !== undefined) {
+        children.push(
+          resolveTreasureSwordAlignment({
+            roll: options.alignmentRoll,
+            variant: 'chaotic',
+          })
+        );
+      } else {
+        children.push(
+          buildPendingSwordAlignmentNode('chaotic', command, options?.rollIndex)
+        );
+      }
+      break;
+    }
+    case TreasureSword.SwordVorpalWeapon: {
+      if (options?.alignmentRoll !== undefined) {
+        children.push(
+          resolveTreasureSwordAlignment({
+            roll: options.alignmentRoll,
+            variant: 'lawful',
+          })
+        );
+      } else {
+        children.push(
+          buildPendingSwordAlignmentNode('lawful', command, options?.rollIndex)
+        );
+      }
+      break;
+    }
+    default:
+      break;
   }
   return {
     type: 'event',
@@ -2636,6 +2700,9 @@ export function resolveTreasureSwordKind(options?: {
 
 export function resolveTreasureSwordUnusual(options?: {
   roll?: number;
+  sword?: TreasureSword;
+  rollIndex?: number;
+  alignmentRoll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwordUnusual.sides);
   const command: TreasureSwordUnusual = getTableEntry(
@@ -2647,6 +2714,16 @@ export function resolveTreasureSwordUnusual(options?: {
     ...details,
     variant: command,
   };
+  const children: DungeonOutcomeNode[] = [];
+  const sword = options?.sword;
+  if (sword !== undefined) {
+    const instruction = determineSwordAlignmentInstruction(sword, result);
+    applySwordAlignmentInstruction(children, instruction, {
+      sword,
+      rollIndex: options?.rollIndex,
+      alignmentRoll: options?.alignmentRoll,
+    });
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -2654,6 +2731,168 @@ export function resolveTreasureSwordUnusual(options?: {
       kind: 'treasureSwordUnusual',
       result,
     } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+type SwordAlignmentVariant = 'standard' | 'chaotic' | 'lawful';
+
+export function resolveTreasureSwordAlignment(options?: {
+  roll?: number;
+  variant?: SwordAlignmentVariant;
+}): DungeonOutcomeNode {
+  const variant = options?.variant ?? 'standard';
+  const table =
+    variant === 'chaotic'
+      ? treasureSwordAlignmentChaotic
+      : variant === 'lawful'
+      ? treasureSwordAlignmentLawful
+      : treasureSwordAlignment;
+  const usedRoll = options?.roll ?? rollDice(table.sides);
+  const alignment: TreasureSwordAlignment = getTableEntry(usedRoll, table);
+  const result = buildSwordAlignmentResult(alignment, variant);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureSwordAlignment',
+      result,
+    } as OutcomeEvent,
+  };
+}
+
+type SwordAlignmentInstruction =
+  | { kind: 'none' }
+  | {
+      kind: 'fixed';
+      alignment: TreasureSwordAlignment;
+      source: 'holyAvenger' | 'cursedUnusual';
+    }
+  | { kind: 'pending'; variant: SwordAlignmentVariant };
+
+function determineSwordAlignmentInstruction(
+  sword: TreasureSword,
+  unusual: TreasureSwordUnusualResult
+): SwordAlignmentInstruction {
+  if (isFixedAlignmentSword(sword)) {
+    return { kind: 'none' };
+  }
+  if (!unusual || unusual.category !== 'intelligent') {
+    return { kind: 'none' };
+  }
+  if (
+    sword === TreasureSword.SwordPlus1Cursed ||
+    sword === TreasureSword.SwordMinus2Cursed ||
+    sword === TreasureSword.SwordCursedBerserking
+  ) {
+    return {
+      kind: 'fixed',
+      alignment: TreasureSwordAlignment.NeutralAbsolute,
+      source: 'cursedUnusual',
+    };
+  }
+  return { kind: 'pending', variant: 'standard' };
+}
+
+function isFixedAlignmentSword(sword: TreasureSword): boolean {
+  return (
+    sword === TreasureSword.SwordPlus5HolyAvenger ||
+    sword === TreasureSword.SwordOfSharpness ||
+    sword === TreasureSword.SwordVorpalWeapon
+  );
+}
+
+function applySwordAlignmentInstruction(
+  collector: DungeonOutcomeNode[],
+  instruction: SwordAlignmentInstruction,
+  options: {
+    sword: TreasureSword;
+    rollIndex?: number;
+    alignmentRoll?: number;
+  }
+): void {
+  switch (instruction.kind) {
+    case 'none':
+      return;
+    case 'fixed': {
+      collector.push(
+        createFixedSwordAlignmentNode(instruction.alignment, instruction.source)
+      );
+      break;
+    }
+    case 'pending': {
+      if (instruction.variant === 'standard' && options.alignmentRoll !== undefined) {
+        collector.push(
+          resolveTreasureSwordAlignment({
+            roll: options.alignmentRoll,
+            variant: instruction.variant,
+          })
+        );
+        break;
+      }
+      collector.push(
+        buildPendingSwordAlignmentNode(
+          instruction.variant,
+          options.sword,
+          options.rollIndex
+        )
+      );
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+function createFixedSwordAlignmentNode(
+  alignment: TreasureSwordAlignment,
+  source: 'holyAvenger' | 'cursedUnusual'
+): DungeonOutcomeNode {
+  const result = buildSwordAlignmentResult(alignment, 'fixed');
+  const rollValue = source === 'holyAvenger' ? 0 : 0;
+  return {
+    type: 'event',
+    roll: rollValue,
+    event: {
+      kind: 'treasureSwordAlignment',
+      result,
+    } as OutcomeEvent,
+  };
+}
+
+function buildPendingSwordAlignmentNode(
+  variant: SwordAlignmentVariant,
+  sword: TreasureSword,
+  rollIndex?: number
+): DungeonOutcomeNode {
+  const tableId =
+    variant === 'chaotic'
+      ? 'treasureSwordAlignmentChaotic'
+      : variant === 'lawful'
+      ? 'treasureSwordAlignmentLawful'
+      : 'treasureSwordAlignment';
+  return {
+    type: 'pending-roll',
+    table: tableId,
+    id: rollIndex ? `${tableId}:${rollIndex}` : undefined,
+    context: {
+      kind: 'treasureSwordAlignment',
+      variant,
+      sword,
+    },
+  };
+}
+
+function buildSwordAlignmentResult(
+  alignment: TreasureSwordAlignment,
+  variant: SwordAlignmentVariant | 'fixed'
+): TreasureSwordAlignmentResult {
+  const detail = SWORD_ALIGNMENT[alignment];
+  return {
+    alignment,
+    label: detail.label,
+    source: variant,
+    requiresLanguageTable: detail.requiresLanguageTable,
   };
 }
 

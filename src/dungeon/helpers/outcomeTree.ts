@@ -4,6 +4,7 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
+import type { TreasureSword } from '../../tables/dungeon/treasureSwords';
 import {
   resolveDoorLocation,
   resolvePeriodicDoorOnly,
@@ -107,6 +108,7 @@ import {
   resolveTreasureSwords,
   resolveTreasureSwordKind,
   resolveTreasureSwordUnusual,
+  resolveTreasureSwordAlignment,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
   resolveTreasureNecklaceOfPrayerBeads,
@@ -271,6 +273,21 @@ export function isTableContext(x: unknown): x is TableContext {
       typeof obj.level === 'number' &&
       typeof obj.treasureRoll === 'number' &&
       (obj.rollIndex === undefined || typeof obj.rollIndex === 'number')
+    );
+  }
+  if (kind === 'treasureSword') {
+    const obj = x as { sword?: unknown; rollIndex?: unknown };
+    const swordOk = typeof obj.sword === 'number';
+    const indexOk =
+      obj.rollIndex === undefined || typeof obj.rollIndex === 'number';
+    return swordOk && indexOk;
+  }
+  if (kind === 'treasureSwordAlignment') {
+    const obj = x as { variant?: unknown };
+    return (
+      obj.variant === 'standard' ||
+      obj.variant === 'chaotic' ||
+      obj.variant === 'lawful'
     );
   }
   return false;
@@ -772,8 +789,16 @@ function resolvePendingNode(
     }
     case 'treasureSwordKind':
       return resolveTreasureSwordKind({});
-    case 'treasureSwordUnusual':
-      return resolveTreasureSwordUnusual({});
+    case 'treasureSwordUnusual': {
+      const context = readTreasureSwordContext(pending.context, ancestors);
+      return resolveTreasureSwordUnusual(context);
+    }
+    case 'treasureSwordAlignment':
+      return resolveTreasureSwordAlignment({ variant: 'standard' });
+    case 'treasureSwordAlignmentChaotic':
+      return resolveTreasureSwordAlignment({ variant: 'chaotic' });
+    case 'treasureSwordAlignmentLawful':
+      return resolveTreasureSwordAlignment({ variant: 'lawful' });
     case 'treasureMiscWeapons': {
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureMiscWeapons(context);
@@ -1140,6 +1165,50 @@ function readTreasureMagicContext(
   }
 
   return { level, treasureRoll, rollIndex };
+}
+
+function readTreasureSwordContext(
+  context: unknown,
+  ancestors: OutcomeEventNode[]
+): {
+  sword?: TreasureSword;
+  rollIndex?: number;
+  alignmentRoll?: number;
+} {
+  if (
+    context &&
+    typeof context === 'object' &&
+    (context as { kind?: unknown }).kind === 'treasureSword'
+  ) {
+    const swordValue = (context as { sword?: unknown }).sword;
+    const rollIndexValue = (context as { rollIndex?: unknown }).rollIndex;
+    const alignmentRollValue = (context as { alignmentRoll?: unknown })
+      .alignmentRoll;
+    return {
+      sword:
+        typeof swordValue === 'number'
+          ? (swordValue as TreasureSword)
+          : findSwordFromAncestors(ancestors),
+      rollIndex:
+        typeof rollIndexValue === 'number' ? rollIndexValue : undefined,
+      alignmentRoll:
+        typeof alignmentRollValue === 'number' ? alignmentRollValue : undefined,
+    };
+  }
+  return { sword: findSwordFromAncestors(ancestors) };
+}
+
+function findSwordFromAncestors(
+  ancestors: OutcomeEventNode[]
+): TreasureSword | undefined {
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const ancestor = ancestors[index];
+    if (!ancestor || ancestor.type !== 'event') continue;
+    if (ancestor.event.kind === 'treasureSwords') {
+      return ancestor.event.result as TreasureSword;
+    }
+  }
+  return undefined;
 }
 
 function deriveDungeonLevelFromAncestors(

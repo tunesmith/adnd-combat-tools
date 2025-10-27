@@ -9,6 +9,7 @@ import type {
   DungeonOutcomeNode,
 } from '../domain/outcome';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
+import type { TreasureSword } from '../../tables/dungeon/treasureSwords';
 import {
   resolveChamberDimensions,
   resolveChamberRoomContents,
@@ -129,6 +130,7 @@ import {
   resolveTreasureScarabOfProtectionCurseResolution,
   resolveTreasureArmorShields,
   resolveTreasureSwords,
+  resolveTreasureSwordAlignment,
   resolveTreasureSwordKind,
   resolveTreasureSwordUnusual,
   resolveTreasureMiscWeapons,
@@ -246,6 +248,9 @@ const TABLE_ID_LIST = [
   'treasureSwords',
   'treasureSwordKind',
   'treasureSwordUnusual',
+  'treasureSwordAlignment',
+  'treasureSwordAlignmentChaotic',
+  'treasureSwordAlignmentLawful',
   'treasureMiscWeapons',
   'treasureRobeOfUsefulItems',
   'treasureRobeOfTheArchmagi',
@@ -377,6 +382,9 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureSwords: 'Swords (Table G)',
   treasureSwordKind: 'Sword Type',
   treasureSwordUnusual: 'Sword Unusual Traits',
+  treasureSwordAlignment: 'Sword Alignment',
+  treasureSwordAlignmentChaotic: 'Sword Alignment (Chaotic)',
+  treasureSwordAlignmentLawful: 'Sword Alignment (Lawful)',
   treasureMiscWeapons: 'Miscellaneous Weapons (Table H)',
   treasureRobeOfUsefulItems: 'Robe of Useful Items',
   treasureRobeOfTheArchmagi: 'Robe of the Archmagi Alignment',
@@ -937,8 +945,32 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   },
   treasureSwordKind: ({ roll }) =>
     fromOutcome(resolveTreasureSwordKind({ roll })),
-  treasureSwordUnusual: ({ roll }) =>
-    fromOutcome(resolveTreasureSwordUnusual({ roll })),
+  treasureSwordUnusual: ({ roll, context }) => {
+    let sword: TreasureSword | undefined;
+    let rollIndex: number | undefined;
+    if (context && typeof context === 'object') {
+      const candidate = context as { sword?: unknown; rollIndex?: unknown };
+      if (typeof candidate.sword === 'number') {
+        sword = candidate.sword as TreasureSword;
+      }
+      if (typeof candidate.rollIndex === 'number') {
+        rollIndex = candidate.rollIndex;
+      }
+    }
+    return fromOutcome(
+      resolveTreasureSwordUnusual({
+        roll,
+        sword,
+        rollIndex,
+      })
+    );
+  },
+  treasureSwordAlignment: ({ roll }) =>
+    fromOutcome(resolveTreasureSwordAlignment({ roll, variant: 'standard' })),
+  treasureSwordAlignmentChaotic: ({ roll }) =>
+    fromOutcome(resolveTreasureSwordAlignment({ roll, variant: 'chaotic' })),
+  treasureSwordAlignmentLawful: ({ roll }) =>
+    fromOutcome(resolveTreasureSwordAlignment({ roll, variant: 'lawful' })),
   treasureMiscWeapons: ({ roll, context }) => {
     const level =
       context && context.kind === 'treasureMagic' ? context.level : 1;

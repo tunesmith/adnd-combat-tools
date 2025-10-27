@@ -1414,6 +1414,14 @@ describe('passage contents', () => {
     if (!unusualTarget) throw new Error('missing swords unusual target');
     feed = resolvePreview(feed, unusualTarget, 80);
 
+    const alignmentTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureSwordAlignment')
+    );
+    const alignmentTarget = alignmentTargets[0];
+    expect(alignmentTarget).toBeDefined();
+    if (!alignmentTarget) throw new Error('missing sword alignment target');
+    feed = resolvePreview(feed, alignmentTarget, 70);
+
     const swordEvent = findOutcomeEvent(feed.outcome, 'treasureSwords');
     expect(swordEvent).toBeDefined();
     if (!swordEvent || swordEvent.event.kind !== 'treasureSwords') {
@@ -1461,9 +1469,10 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim())
       .join(' ');
-    expect(detailText).toContain('There is a Broadsword +1.');
+    expect(detailText).toContain('There is a Broadsword +1 (I12).');
     expect(detailText.toLowerCase()).toContain('intelligence 12');
     expect(detailText.toLowerCase()).toContain('semi-empathy');
+    expect(detailText).toContain('The sword is True Neutral.');
 
     const compactText = renderCompact(feed)
       .filter(
@@ -1472,7 +1481,8 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim())
       .join(' ');
-    expect(compactText).toContain('There is a Broadsword +1.');
+    expect(compactText).toContain('There is a Broadsword +1 (I12).');
+    expect(compactText).toContain('The sword is True Neutral.');
   });
 
   it('resolves miscellaneous weapons from magical treasure', () => {

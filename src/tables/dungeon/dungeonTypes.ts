@@ -141,6 +141,7 @@ import type {
   TreasureSwordKind,
   TreasureSwordUnusual,
 } from './treasureSwords';
+import type { TreasureSwordAlignment } from './treasureSwordAlignment';
 
 export type Table<T> = {
   sides: number;
@@ -274,6 +275,7 @@ export type Command =
   | TreasureSword
   | TreasureSwordKind
   | TreasureSwordUnusual
+  | TreasureSwordAlignment
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower
   | TreasureFigurineMarbleElephant

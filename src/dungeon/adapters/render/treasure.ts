@@ -57,7 +57,7 @@ import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtecti
 import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
 import { toIounStonesSummary } from './treasureIounStones';
 import { armorShieldSentence } from './treasureArmorShields';
-import { swordSentence } from './treasureSwords';
+import { swordSentence, formatSwordIntelligence } from './treasureSwords';
 import { miscWeaponSentence } from './treasureMiscWeapons';
 
 export function renderTreasureDetail(
@@ -235,7 +235,22 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       kindEvent && kindEvent.event.kind === 'treasureSwordKind'
         ? kindEvent.event.result
         : undefined;
-    return swordSentence(swordsEvent.event.result, kind);
+    const unusualEvent = findChildEvent(swordsEvent, 'treasureSwordUnusual');
+    const intelligenceLabel =
+      unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
+        ? formatSwordIntelligence(unusualEvent.event.result)
+        : undefined;
+    const alignmentEvent = findSwordAlignmentEvent(swordsEvent);
+    const alignmentResult =
+      alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
+        ? alignmentEvent.event.result
+        : undefined;
+    return swordSentence(
+      swordsEvent.event.result,
+      kind,
+      alignmentResult,
+      intelligenceLabel
+    );
   }
   const miscWeaponsEvent = findMiscWeaponsEvent(magic);
   if (
@@ -652,6 +667,21 @@ function findSwordsEvent(
   for (const child of children) {
     if (child.type !== 'event') continue;
     const match = findSwordsEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function findSwordAlignmentEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureSwordAlignment') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findSwordAlignmentEvent(child);
     if (match) return match;
   }
   return undefined;

@@ -1,5 +1,10 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+  TableContext,
+} from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
+import type { Table } from '../../../tables/dungeon/dungeonTypes';
 import {
   treasureSwords,
   TreasureSword,
@@ -9,6 +14,16 @@ import {
   SWORD_UNUSUAL_DETAILS,
   type TreasureSwordUnusualResult,
 } from '../../../tables/dungeon/treasureSwords';
+import {
+  treasureSwordAlignment,
+  treasureSwordAlignmentChaotic,
+  treasureSwordAlignmentLawful,
+  SWORD_ALIGNMENT_DETAILS,
+} from '../../../tables/dungeon/treasureSwordAlignment';
+import type {
+  TreasureSwordAlignment,
+  TreasureSwordAlignmentResult,
+} from '../../../tables/dungeon/treasureSwordAlignment';
 import { buildPreview, findChildEvent } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 
@@ -80,11 +95,18 @@ export function swordLabel(
 
 export function swordSentence(
   sword: TreasureSword,
-  kind?: TreasureSwordKind
+  kind?: TreasureSwordKind,
+  alignment?: TreasureSwordAlignmentResult,
+  intelligenceLabel?: string
 ): string {
-  const label = swordLabel(sword, kind);
-  const article = articleFor(label);
-  return `There is ${article} ${label}.`;
+  const baseLabel = swordLabel(sword, kind);
+  const decoratedLabel = intelligenceLabel
+    ? `${baseLabel} (${intelligenceLabel})`
+    : baseLabel;
+  const article = articleFor(decoratedLabel);
+  const base = `There is ${article} ${decoratedLabel}.`;
+  if (!alignment) return base;
+  return `${base} ${alignmentStatement(alignment)}`;
 }
 
 export function renderTreasureSwordsDetail(
@@ -97,20 +119,41 @@ export function renderTreasureSwordsDetail(
     kindEvent && kindEvent.event.kind === 'treasureSwordKind'
       ? kindEvent.event.result
       : undefined;
+  const unusualEvent = findChildEvent(outcome, 'treasureSwordUnusual');
+  const intelligenceLabel =
+    unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
+      ? formatSwordIntelligence(unusualEvent.event.result)
+      : undefined;
+  const alignmentEvent = findSwordAlignmentEvent(outcome);
+  const alignmentResult =
+    alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
+      ? alignmentEvent.event.result
+      : undefined;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
     text: 'Swords (Table G)',
   };
+  const bulletItems = [
+    intelligenceLabel
+      ? `roll: ${outcome.roll} — ${swordLabel(outcome.event.result, kind)} (${intelligenceLabel})`
+      : `roll: ${outcome.roll} — ${swordLabel(outcome.event.result, kind)}`,
+  ];
+  if (alignmentResult) {
+    bulletItems.push(`alignment: ${alignmentResult.label}`);
+  }
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [
-      `roll: ${outcome.roll} — ${swordLabel(outcome.event.result, kind)}`,
-    ],
+    items: bulletItems,
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: swordSentence(outcome.event.result, kind),
+    text: swordSentence(
+      outcome.event.result,
+      kind,
+      alignmentResult,
+      intelligenceLabel
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -127,6 +170,16 @@ export function renderTreasureSwordsCompact(
     kindEvent && kindEvent.event.kind === 'treasureSwordKind'
       ? kindEvent.event.result
       : undefined;
+  const alignmentEvent = findSwordAlignmentEvent(outcome);
+  const alignmentResult =
+    alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
+      ? alignmentEvent.event.result
+      : undefined;
+  const unusualEvent = findChildEvent(outcome, 'treasureSwordUnusual');
+  const intelligenceLabel =
+    unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
+      ? formatSwordIntelligence(unusualEvent.event.result)
+      : undefined;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -134,7 +187,12 @@ export function renderTreasureSwordsCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: swordSentence(outcome.event.result, kind),
+    text: swordSentence(
+      outcome.event.result,
+      kind,
+      alignmentResult,
+      intelligenceLabel
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -209,18 +267,27 @@ export function renderTreasureSwordUnusualDetail(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordUnusual') return [];
   const result = outcome.event.result;
+  const alignmentEvent = findSwordAlignmentEvent(outcome);
+  const alignmentResult =
+    alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
+      ? alignmentEvent.event.result
+      : undefined;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
     text: 'Sword Unusual Traits',
   };
+  const bulletItems = [`roll: ${outcome.roll} — ${result.label}`];
+  if (alignmentResult) {
+    bulletItems.push(`alignment: ${alignmentResult.label}`);
+  }
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${result.label}`],
+    items: bulletItems,
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: swordUnusualDescription(result),
+    text: swordUnusualDescription(result, alignmentResult),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -233,6 +300,11 @@ export function renderTreasureSwordUnusualCompact(
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordUnusual') return [];
   const result = outcome.event.result;
+  const alignmentEvent = findSwordAlignmentEvent(outcome);
+  const alignmentResult =
+    alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
+      ? alignmentEvent.event.result
+      : undefined;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -240,7 +312,7 @@ export function renderTreasureSwordUnusualCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: swordUnusualDescription(result),
+    text: swordUnusualDescription(result, alignmentResult),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -248,7 +320,8 @@ export function renderTreasureSwordUnusualCompact(
 }
 
 export const buildTreasureSwordUnusualPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Sword Unusual Traits',
@@ -257,10 +330,27 @@ export const buildTreasureSwordUnusualPreview: TablePreviewFactory = (
       range,
       label: SWORD_UNUSUAL_DETAILS[command].label,
     })),
+    context,
   });
 
+function findSwordAlignmentEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureSwordAlignment') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findSwordAlignmentEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
 function swordUnusualDescription(
-  result: TreasureSwordUnusualResult
+  result: TreasureSwordUnusualResult,
+  alignment?: TreasureSwordAlignmentResult
 ): string {
   if (result.category === 'normal') {
     return 'The sword has no unusual intelligence or additional capabilities.';
@@ -312,9 +402,134 @@ function swordUnusualDescription(
     segments.push('It also has an extraordinary power.');
   }
 
-  if (result.requiresAlignment) {
+  if (alignment) {
+    segments.push(alignmentStatement(alignment));
+  } else if (result.requiresAlignment) {
     segments.push('Determine the sword’s alignment separately.');
   }
 
   return segments.join(' ');
+}
+
+export function renderTreasureSwordAlignmentDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureSwordAlignment') return [];
+  const result = outcome.event.result;
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Sword Alignment',
+  };
+  const bulletLabel =
+    result.source === 'fixed'
+      ? `alignment: ${result.label}`
+      : `roll: ${outcome.roll} — ${result.label}`;
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [bulletLabel],
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: swordAlignmentDescription(result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureSwordAlignmentCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureSwordAlignment') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Sword Alignment',
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: swordAlignmentDescription(outcome.event.result),
+  };
+  const nodes: DungeonRenderNode[] = [heading, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasureSwordAlignmentPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
+  buildSwordAlignmentPreview(
+    tableId,
+    'Sword Alignment',
+    treasureSwordAlignment,
+    context
+  );
+
+export const buildTreasureSwordAlignmentChaoticPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
+  buildSwordAlignmentPreview(
+    tableId,
+    'Sword Alignment (Chaotic)',
+    treasureSwordAlignmentChaotic,
+    context
+  );
+
+export const buildTreasureSwordAlignmentLawfulPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
+  buildSwordAlignmentPreview(
+    tableId,
+    'Sword Alignment (Lawful)',
+    treasureSwordAlignmentLawful,
+    context
+  );
+
+function buildSwordAlignmentPreview(
+  tableId: string,
+  title: string,
+  table: Table<TreasureSwordAlignment>,
+  context?: TableContext
+): ReturnType<TablePreviewFactory> {
+  return buildPreview(tableId, {
+    title,
+    sides: table.sides,
+    entries: table.entries.map(({ range, command }) => ({
+      range,
+      label: treasureSwordAlignmentLabel(command),
+    })),
+    context,
+  });
+}
+
+function treasureSwordAlignmentLabel(
+  alignment: TreasureSwordAlignment
+): string {
+  return SWORD_ALIGNMENT_DETAILS[alignment].label;
+}
+
+function swordAlignmentDescription(
+  result: TreasureSwordAlignmentResult
+): string {
+  return alignmentStatement(result);
+}
+
+function alignmentStatement(result: TreasureSwordAlignmentResult): string {
+  const base = `The sword is ${result.label}.`;
+  return result.requiresLanguageTable
+    ? `${base} Determine additional languages separately.`
+    : base;
+}
+
+export function formatSwordIntelligence(
+  result: TreasureSwordUnusualResult
+): string | undefined {
+  if (result.intelligence === undefined) return undefined;
+  return `I${result.intelligence}`;
 }

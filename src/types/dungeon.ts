@@ -3,6 +3,7 @@ import type {
   DungeonOutcomeNode,
 } from '../dungeon/domain/outcome';
 import type { ChamberRoomContents } from '../tables/dungeon/chamberRoomContents';
+import type { TreasureSword } from '../tables/dungeon/treasureSwords';
 import type { PartySummary } from '../dungeon/helpers/party/formatPartyResult';
 
 export type DungeonAction = 'passage' | 'door';
@@ -177,6 +178,16 @@ export type TableContext =
       level: number;
       treasureRoll: number;
       rollIndex?: number;
+    }
+  | {
+      kind: 'treasureSword';
+      sword: TreasureSword;
+      rollIndex?: number;
+    }
+  | {
+      kind: 'treasureSwordAlignment';
+      variant: 'standard' | 'chaotic' | 'lawful';
+      sword?: TreasureSword;
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

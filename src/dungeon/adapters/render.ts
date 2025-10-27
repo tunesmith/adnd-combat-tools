@@ -383,6 +383,11 @@ import {
   renderTreasureSwordUnusualDetail,
   renderTreasureSwordUnusualCompact,
   buildTreasureSwordUnusualPreview,
+  renderTreasureSwordAlignmentDetail,
+  renderTreasureSwordAlignmentCompact,
+  buildTreasureSwordAlignmentPreview,
+  buildTreasureSwordAlignmentChaoticPreview,
+  buildTreasureSwordAlignmentLawfulPreview,
 } from './render/treasureSwords';
 import {
   renderTreasureMiscWeaponsDetail,
@@ -795,6 +800,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureSwordUnusualDetail,
     renderCompact: renderTreasureSwordUnusualCompact,
   },
+  treasureSwordAlignment: {
+    renderDetail: renderTreasureSwordAlignmentDetail,
+    renderCompact: renderTreasureSwordAlignmentCompact,
+  },
   treasureMiscWeapons: {
     renderDetail: renderTreasureMiscWeaponsDetail,
     renderCompact: renderTreasureMiscWeaponsCompact,
@@ -1044,6 +1053,9 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureSwords: buildTreasureSwordsPreview,
   treasureSwordKind: buildTreasureSwordKindPreview,
   treasureSwordUnusual: buildTreasureSwordUnusualPreview,
+  treasureSwordAlignment: buildTreasureSwordAlignmentPreview,
+  treasureSwordAlignmentChaotic: buildTreasureSwordAlignmentChaoticPreview,
+  treasureSwordAlignmentLawful: buildTreasureSwordAlignmentLawfulPreview,
   treasureRobeOfTheArchmagi: buildTreasureRobeOfTheArchmagiPreview,
   treasureScarabOfProtectionCurse:
     buildTreasureScarabOfProtectionCursePreview,
@@ -1344,6 +1356,20 @@ function previewForEventNode(
     case 'treasureSwordUnusual':
       tableId = 'treasureSwordUnusual';
       break;
+    case 'treasureSwordAlignment': {
+      const alignmentSource = event.result.source;
+      if (alignmentSource === 'fixed') {
+        return undefined;
+      }
+      if (alignmentSource === 'chaotic') {
+        tableId = 'treasureSwordAlignmentChaotic';
+      } else if (alignmentSource === 'lawful') {
+        tableId = 'treasureSwordAlignmentLawful';
+      } else {
+        tableId = 'treasureSwordAlignment';
+      }
+      break;
+    }
     case 'treasureMiscWeapons': {
       const weapon = event;
       tableId = 'treasureMiscWeapons';
