@@ -948,13 +948,21 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   treasureSwordUnusual: ({ roll, context }) => {
     let sword: TreasureSword | undefined;
     let rollIndex: number | undefined;
+    let languageRolls: number[] | undefined;
     if (context && typeof context === 'object') {
-      const candidate = context as { sword?: unknown; rollIndex?: unknown };
+      const candidate = context as {
+        sword?: unknown;
+        rollIndex?: unknown;
+        languageRolls?: unknown;
+      };
       if (typeof candidate.sword === 'number') {
         sword = candidate.sword as TreasureSword;
       }
       if (typeof candidate.rollIndex === 'number') {
         rollIndex = candidate.rollIndex;
+      }
+      if (Array.isArray(candidate.languageRolls)) {
+        languageRolls = [...candidate.languageRolls];
       }
     }
     return fromOutcome(
@@ -962,6 +970,7 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
         roll,
         sword,
         rollIndex,
+        languageRolls,
       })
     );
   },

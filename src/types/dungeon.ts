@@ -183,6 +183,7 @@ export type TableContext =
       kind: 'treasureSword';
       sword: TreasureSword;
       rollIndex?: number;
+      languageRolls?: number[];
     }
   | {
       kind: 'treasureSwordAlignment';

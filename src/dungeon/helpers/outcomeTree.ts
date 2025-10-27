@@ -276,11 +276,17 @@ export function isTableContext(x: unknown): x is TableContext {
     );
   }
   if (kind === 'treasureSword') {
-    const obj = x as { sword?: unknown; rollIndex?: unknown };
+    const obj = x as {
+      sword?: unknown;
+      rollIndex?: unknown;
+      languageRolls?: unknown;
+    };
     const swordOk = typeof obj.sword === 'number';
     const indexOk =
       obj.rollIndex === undefined || typeof obj.rollIndex === 'number';
-    return swordOk && indexOk;
+    const languageOk =
+      obj.languageRolls === undefined || Array.isArray(obj.languageRolls);
+    return swordOk && indexOk && languageOk;
   }
   if (kind === 'treasureSwordAlignment') {
     const obj = x as { variant?: unknown };
@@ -1174,6 +1180,7 @@ function readTreasureSwordContext(
   sword?: TreasureSword;
   rollIndex?: number;
   alignmentRoll?: number;
+  languageRolls?: number[];
 } {
   if (
     context &&
@@ -1184,6 +1191,8 @@ function readTreasureSwordContext(
     const rollIndexValue = (context as { rollIndex?: unknown }).rollIndex;
     const alignmentRollValue = (context as { alignmentRoll?: unknown })
       .alignmentRoll;
+    const languageRollsValue = (context as { languageRolls?: unknown })
+      .languageRolls;
     return {
       sword:
         typeof swordValue === 'number'
@@ -1193,6 +1202,9 @@ function readTreasureSwordContext(
         typeof rollIndexValue === 'number' ? rollIndexValue : undefined,
       alignmentRoll:
         typeof alignmentRollValue === 'number' ? alignmentRollValue : undefined,
+      languageRolls: Array.isArray(languageRollsValue)
+        ? [...(languageRollsValue as number[])]
+        : undefined,
     };
   }
   return { sword: findSwordFromAncestors(ancestors) };

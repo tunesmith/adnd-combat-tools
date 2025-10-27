@@ -122,10 +122,12 @@ export type SwordUnusualDetails = {
   languageCapability: SwordLanguageCapability;
   extraordinaryPower: boolean;
   requiresAlignment: boolean;
+  languagesKnown?: number;
 };
 
 export type TreasureSwordUnusualResult = SwordUnusualDetails & {
   variant: TreasureSwordUnusual;
+  languagesKnown?: number;
 };
 
 export const SWORD_UNUSUAL_DETAILS: Record<
@@ -169,8 +171,6 @@ export const SWORD_UNUSUAL_DETAILS: Record<
     intelligence: 14,
     primaryAbilityCount: 2,
     communication: 'speech',
-    communicationNotes:
-      'Speaks its alignment language plus one or more other tongues (to be determined).',
     languageCapability: 'none',
     extraordinaryPower: false,
     requiresAlignment: true,
@@ -181,8 +181,6 @@ export const SWORD_UNUSUAL_DETAILS: Record<
     intelligence: 15,
     primaryAbilityCount: 3,
     communication: 'speech',
-    communicationNotes:
-      'Speaks its alignment language plus additional tongues (to be determined).',
     languageCapability: 'mundane',
     extraordinaryPower: false,
     requiresAlignment: true,
@@ -194,8 +192,6 @@ export const SWORD_UNUSUAL_DETAILS: Record<
     intelligence: 16,
     primaryAbilityCount: 3,
     communication: 'speech',
-    communicationNotes:
-      'Speaks its alignment language plus additional tongues (to be determined).',
     languageCapability: 'magical',
     extraordinaryPower: false,
     requiresAlignment: true,

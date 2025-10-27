@@ -365,6 +365,8 @@ function swordUnusualDescription(
       : `${abilityCount} primary abilities`;
   segments.push(`It provides ${abilityText}.`);
 
+  let mentionedLanguages = false;
+
   switch (result.communication) {
     case 'semi-empathy':
       segments.push(
@@ -375,10 +377,16 @@ function swordUnusualDescription(
       segments.push('It communicates via empathy.');
       break;
     case 'speech': {
-      const note =
-        result.communicationNotes ??
-        'It can speak aloud in its alignment language and additional tongues.';
-      segments.push(note);
+      if (result.languagesKnown !== undefined) {
+        const tonguesLabel =
+          result.languagesKnown === 1
+            ? '1 additional tongue'
+            : `${result.languagesKnown} additional tongues`;
+        segments.push(`It speaks its alignment language plus ${tonguesLabel}.`);
+        mentionedLanguages = true;
+      } else {
+        segments.push('It can speak aloud in its alignment language.');
+      }
       break;
     }
     case 'speech and telepathy': {
@@ -406,6 +414,16 @@ function swordUnusualDescription(
     segments.push(alignmentStatement(alignment));
   } else if (result.requiresAlignment) {
     segments.push('Determine the sword’s alignment separately.');
+  }
+
+  if (result.languagesKnown !== undefined) {
+    if (!mentionedLanguages) {
+      const label =
+        result.languagesKnown === 1
+          ? 'It speaks 1 additional language.'
+          : `It speaks ${result.languagesKnown} additional languages.`;
+      segments.push(label);
+    }
   }
 
   return segments.join(' ');
@@ -522,14 +540,20 @@ function swordAlignmentDescription(
 
 function alignmentStatement(result: TreasureSwordAlignmentResult): string {
   const base = `The sword is ${result.label}.`;
-  return result.requiresLanguageTable
-    ? `${base} Determine additional languages separately.`
-    : base;
+  return base;
 }
 
 export function formatSwordIntelligence(
   result: TreasureSwordUnusualResult
 ): string | undefined {
   if (result.intelligence === undefined) return undefined;
-  return `I${result.intelligence}`;
+  const parts = [`I${result.intelligence}`];
+  if (result.languagesKnown !== undefined) {
+    const label =
+      result.languagesKnown === 1
+        ? '1 language'
+        : `${result.languagesKnown} languages`;
+    parts.push(label);
+  }
+  return parts.join(', ');
 }

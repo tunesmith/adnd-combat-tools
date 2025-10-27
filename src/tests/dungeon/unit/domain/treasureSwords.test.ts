@@ -40,6 +40,7 @@ describe('resolveTreasureSwords', () => {
       roll: 26,
       kindRoll: 80,
       unusualRoll: 90,
+      languageRolls: [41],
     });
 
     if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
@@ -77,6 +78,7 @@ describe('resolveTreasureSwords', () => {
     expect(unusualEvent.event.result.primaryAbilityCount).toBe(2);
     expect(unusualEvent.event.result.communication).toBe('speech');
     expect(unusualEvent.event.result.requiresAlignment).toBe(true);
+    expect(unusualEvent.event.result.languagesKnown).toBe(2);
 
     const unusualChildren = unusualEvent.children || [];
     const alignmentPending = unusualChildren.find(
@@ -84,6 +86,17 @@ describe('resolveTreasureSwords', () => {
         child.type === 'pending-roll' && child.table === 'treasureSwordAlignment'
     );
     expect(alignmentPending).toBeDefined();
+
+    const detailNodes = renderDetailTree(node);
+    const detailText = detailNodes
+      .filter(
+        (child): child is { kind: 'paragraph'; text: string } =>
+          child.kind === 'paragraph'
+      )
+      .map((child) => child.text)
+      .join(' ');
+    expect(detailText).toContain('(I14, 2 languages)');
+    expect(detailText).toContain('plus 2 additional tongues.');
   });
 
   it('assigns lawful good alignment to holy avenger swords', () => {

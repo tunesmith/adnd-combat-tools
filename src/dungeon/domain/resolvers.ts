@@ -2584,6 +2584,7 @@ export function resolveTreasureSwords(options?: {
   kindRoll?: number;
   unusualRoll?: number;
   alignmentRoll?: number;
+  languageRolls?: number[];
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwords.sides);
   const command: TreasureSword = getTableEntry(usedRoll, treasureSwords);
@@ -2613,6 +2614,7 @@ export function resolveTreasureSwords(options?: {
         sword: command,
         rollIndex: options?.rollIndex,
         alignmentRoll: options?.alignmentRoll,
+        languageRolls: options?.languageRolls,
       })
     );
   } else {
@@ -2626,6 +2628,9 @@ export function resolveTreasureSwords(options?: {
         kind: 'treasureSword',
         sword: command,
         rollIndex: options?.rollIndex,
+        languageRolls: options?.languageRolls
+          ? [...options.languageRolls]
+          : undefined,
       },
     });
   }
@@ -2703,6 +2708,7 @@ export function resolveTreasureSwordUnusual(options?: {
   sword?: TreasureSword;
   rollIndex?: number;
   alignmentRoll?: number;
+  languageRolls?: number[];
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwordUnusual.sides);
   const command: TreasureSwordUnusual = getTableEntry(
@@ -2723,6 +2729,13 @@ export function resolveTreasureSwordUnusual(options?: {
       rollIndex: options?.rollIndex,
       alignmentRoll: options?.alignmentRoll,
     });
+  }
+  if (result.intelligence !== undefined && result.intelligence >= 14) {
+    const languageRolls = options?.languageRolls
+      ? [...options.languageRolls]
+      : [];
+    const languagesKnown = rollSwordLanguages(languageRolls);
+    result.languagesKnown = languagesKnown;
   }
   return {
     type: 'event',
@@ -2894,6 +2907,34 @@ function buildSwordAlignmentResult(
     source: variant,
     requiresLanguageTable: detail.requiresLanguageTable,
   };
+}
+
+function rollSwordLanguages(languageRolls: number[]): number {
+  const useProvided =
+    languageRolls.length > 0 ? languageRolls.shift() : undefined;
+  const rollValue = useProvided ?? rollDice(100);
+  if (rollValue === 100) {
+    let total = 0;
+    for (let i = 0; i < 2; i += 1) {
+      let extraRoll: number;
+      do {
+        extraRoll =
+          languageRolls.length > 0 ? languageRolls.shift() ?? rollDice(100) : rollDice(100);
+      } while (extraRoll === 100);
+      total += mapSwordLanguageRoll(extraRoll);
+    }
+    return Math.max(6, total);
+  }
+  return mapSwordLanguageRoll(rollValue);
+}
+
+function mapSwordLanguageRoll(roll: number): number {
+  if (roll <= 40) return 1;
+  if (roll <= 70) return 2;
+  if (roll <= 85) return 3;
+  if (roll <= 95) return 4;
+  if (roll <= 99) return 5;
+  return 6;
 }
 
 export function resolveTreasureMiscWeapons(options?: {
