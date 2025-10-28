@@ -126,6 +126,7 @@ export type DungeonTablePreview = {
   sides: number;
   entries: TablePreviewEntry[];
   context?: TableContext;
+  autoCollapse?: boolean;
 };
 
 export type TableContext =
@@ -192,6 +193,13 @@ export type TableContext =
     }
   | {
       kind: 'treasureSwordPrimaryAbility';
+      slotKey?: string;
+      rollIndex?: number;
+      tableVariant?: 'standard' | 'restricted';
+      ignoreHigh?: boolean;
+    }
+  | {
+      kind: 'treasureSwordExtraordinaryPower';
       slotKey?: string;
       rollIndex?: number;
       tableVariant?: 'standard' | 'restricted';

@@ -349,8 +349,12 @@ function renderNode(
       const tp = m;
       const targetKey = tp.targetId ?? tp.id;
       const keyId = `${feedItemId}:${targetKey}`;
-      const isCollapsed = !!(collapsed && collapsed[keyId]);
-      const hasResolved = !!(resolved && resolved[keyId]);
+      const defaultCollapsed = tp.autoCollapse === true;
+      const collapsedState = collapsed ? collapsed[keyId] : undefined;
+      const isCollapsed =
+        collapsedState !== undefined ? collapsedState : defaultCollapsed;
+      const hasResolved =
+        !!(resolved && resolved[keyId]) || defaultCollapsed;
       return (
         <div
           key={key}

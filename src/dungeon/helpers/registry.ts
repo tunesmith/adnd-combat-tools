@@ -134,6 +134,7 @@ import {
   resolveTreasureSwordKind,
   resolveTreasureSwordUnusual,
   resolveTreasureSwordPrimaryAbility,
+  resolveTreasureSwordExtraordinaryPower,
   resolveTreasureMiscWeapons,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
@@ -251,6 +252,8 @@ const TABLE_ID_LIST = [
   'treasureSwordUnusual',
   'treasureSwordPrimaryAbility',
   'treasureSwordPrimaryAbilityRestricted',
+  'treasureSwordExtraordinaryPower',
+  'treasureSwordExtraordinaryPowerRestricted',
   'treasureSwordAlignment',
   'treasureSwordAlignmentChaotic',
   'treasureSwordAlignmentLawful',
@@ -387,6 +390,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureSwordUnusual: 'Sword Unusual Traits',
   treasureSwordPrimaryAbility: 'Primary Ability',
   treasureSwordPrimaryAbilityRestricted: 'Primary Ability (01-92)',
+  treasureSwordExtraordinaryPower: 'Extraordinary Power',
+  treasureSwordExtraordinaryPowerRestricted: 'Extraordinary Power (01-97)',
   treasureSwordAlignment: 'Sword Alignment',
   treasureSwordAlignmentChaotic: 'Sword Alignment (Chaotic)',
   treasureSwordAlignmentLawful: 'Sword Alignment (Lawful)',
@@ -1028,6 +1033,56 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
     return fromOutcome(
       resolveTreasureSwordPrimaryAbility({
+        roll,
+        slotKey,
+        rollIndex,
+        tableVariant: 'restricted',
+      })
+    );
+  },
+  treasureSwordExtraordinaryPower: ({ roll, context }) => {
+    const parsed =
+      context && typeof context === 'object'
+        ? (context as {
+            slotKey?: unknown;
+            tableVariant?: unknown;
+            ignoreHigh?: unknown;
+            rollIndex?: unknown;
+          })
+        : {};
+    const slotKey =
+      typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
+    const rollIndex =
+      typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    let tableVariant: 'standard' | 'restricted' = 'standard';
+    if (parsed.tableVariant === 'restricted') {
+      tableVariant = 'restricted';
+    } else if (parsed.ignoreHigh === true) {
+      tableVariant = 'restricted';
+    }
+    return fromOutcome(
+      resolveTreasureSwordExtraordinaryPower({
+        roll,
+        slotKey,
+        rollIndex,
+        tableVariant,
+      })
+    );
+  },
+  treasureSwordExtraordinaryPowerRestricted: ({ roll, context }) => {
+    const parsed =
+      context && typeof context === 'object'
+        ? (context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+          })
+        : {};
+    const slotKey =
+      typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
+    const rollIndex =
+      typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    return fromOutcome(
+      resolveTreasureSwordExtraordinaryPower({
         roll,
         slotKey,
         rollIndex,

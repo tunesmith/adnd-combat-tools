@@ -5,6 +5,7 @@ import type {
 import {
   resolveTreasureSwords,
   resolveTreasureSwordPrimaryAbility,
+  resolveTreasureSwordExtraordinaryPower,
 } from '../../../../dungeon/domain/resolvers';
 import {
   renderDetailTree,
@@ -15,8 +16,10 @@ import {
   TreasureSwordKind,
   TreasureSwordUnusual,
   TreasureSwordPrimaryAbility,
+  TreasureSwordExtraordinaryPower,
 } from '../../../../tables/dungeon/treasureSwords';
 import type { TreasureSwordPrimaryAbilityResult } from '../../../../tables/dungeon/treasureSwords';
+import { summarizePrimaryAbilities } from '../../../../dungeon/adapters/render/treasureSwords';
 
   describe('resolveTreasureSwords', () => {
   it('creates pending rolls for kind and unusual tables by default', () => {
@@ -147,6 +150,33 @@ import type { TreasureSwordPrimaryAbilityResult } from '../../../../tables/dunge
     expect(pendingAbilities).toHaveLength(
       unusualEvent.event.result.primaryAbilityCount
     );
+  });
+
+  it('queues extraordinary power rolls when unusual results grant one', () => {
+    const node = resolveTreasureSwords({
+      roll: 26,
+      kindRoll: 80,
+      unusualRoll: 100,
+    });
+
+    if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasureSwords event');
+    }
+
+    const unusualEvent = (node.children || []).find(
+      (child): child is OutcomeEventNode =>
+        child.type === 'event' && child.event.kind === 'treasureSwordUnusual'
+    );
+    if (!unusualEvent) {
+      throw new Error('Expected treasureSwordUnusual event');
+    }
+
+    const extraPending = (unusualEvent.children || []).filter(
+      (child): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordExtraordinaryPower'
+    );
+    expect(extraPending).toHaveLength(1);
   });
 
   it('assigns lawful good alignment to holy avenger swords', () => {
@@ -498,13 +528,132 @@ import type { TreasureSwordPrimaryAbilityResult } from '../../../../tables/dunge
         child.id.startsWith('treasureSwordPrimaryAbility') &&
         !child.id.startsWith('treasureSwordPrimaryAbilityRestricted')
     );
-    expect(standardPreviews).toHaveLength(1);
+    expect(standardPreviews).toHaveLength(2);
+    const collapsedPreviews = standardPreviews.filter(
+      (preview) => (preview as { autoCollapse?: boolean }).autoCollapse === true
+    );
+    expect(collapsedPreviews.length).toBeGreaterThan(0);
     const restrictedPreviews = detailNodes.filter(
       (child) =>
         child.kind === 'table-preview' &&
         child.id.startsWith('treasureSwordPrimaryAbilityRestricted')
     );
     expect(restrictedPreviews.length).toBeGreaterThan(0);
+  });
+
+  it('queues extraordinary power rolls when a primary ability result indicates one', () => {
+    const abilityNode = resolveTreasureSwordPrimaryAbility({
+      roll: 100,
+      slotKey: 'test-slot',
+    });
+
+    if (abilityNode.type !== 'event') {
+      throw new Error('Expected event node');
+    }
+
+    if (abilityNode.event.kind !== 'treasureSwordPrimaryAbility') {
+      throw new Error('Expected primary ability event');
+    }
+
+    const result = abilityNode.event.result;
+    if (result.kind !== 'instruction') {
+      throw new Error('Expected instruction result');
+    }
+    expect(result.instruction).toBe('extraordinaryPower');
+
+    const extraPending = (abilityNode.children || []).filter(
+      (child): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordExtraordinaryPower'
+    );
+    expect(extraPending).toHaveLength(1);
+  });
+
+  it('keeps the extraordinary power table collapsed when resolving restricted rolls', () => {
+    const instructionNode = resolveTreasureSwordExtraordinaryPower({
+      roll: 96,
+      slotKey: 'extra-slot',
+      rollIndex: 2,
+    });
+
+    if (instructionNode.type !== 'event') {
+      throw new Error('Expected event node');
+    }
+
+    if (instructionNode.event.kind !== 'treasureSwordExtraordinaryPower') {
+      throw new Error('Expected extraordinary power event');
+    }
+
+    const result = instructionNode.event.result;
+    if (result.kind !== 'instruction') {
+      throw new Error('Expected instruction result');
+    }
+    expect(result.instruction).toBe('rollTwice');
+
+    const pendingRestricted = (instructionNode.children || []).filter(
+      (child): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordExtraordinaryPowerRestricted'
+    );
+    expect(pendingRestricted).toHaveLength(2);
+
+    const firstContext = pendingRestricted[0]?.context;
+    if (!firstContext || typeof firstContext !== 'object') {
+      throw new Error('Missing restricted context');
+    }
+
+    const resolvedFirst = resolveTreasureSwordExtraordinaryPower({
+      roll: 42,
+      slotKey:
+        typeof (firstContext as { slotKey?: unknown }).slotKey === 'string'
+          ? ((firstContext as { slotKey?: string }).slotKey as string)
+          : undefined,
+      rollIndex:
+        typeof (firstContext as { rollIndex?: unknown }).rollIndex === 'number'
+          ? ((firstContext as { rollIndex?: number }).rollIndex as number)
+          : undefined,
+      tableVariant: 'restricted',
+    });
+
+    const updatedChildren = [...(instructionNode.children || [])];
+    updatedChildren[0] = resolvedFirst;
+    instructionNode.children = updatedChildren;
+
+    const remaining = updatedChildren.filter(
+      (child): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordExtraordinaryPowerRestricted'
+    );
+    expect(remaining).toHaveLength(1);
+
+    const remainingContext = remaining[0]?.context;
+    if (!remainingContext || typeof remainingContext !== 'object') {
+      throw new Error('Missing remaining restricted context');
+    }
+
+    const resolvedSecond = resolveTreasureSwordExtraordinaryPower({
+      roll: 12,
+      slotKey:
+        typeof (remainingContext as { slotKey?: unknown }).slotKey === 'string'
+          ? ((remainingContext as { slotKey?: string }).slotKey as string)
+          : undefined,
+      rollIndex:
+        typeof (remainingContext as { rollIndex?: unknown }).rollIndex ===
+        'number'
+          ? ((remainingContext as { rollIndex?: number }).rollIndex as number)
+          : undefined,
+      tableVariant: 'restricted',
+    });
+
+    instructionNode.children = [resolvedFirst, resolvedSecond];
+
+    const detailNodes = renderDetailTree(instructionNode);
+    const previewIds = detailNodes
+      .filter((child) => child.kind === 'table-preview')
+      .map((child) => (child as { targetId?: string }).targetId ?? '');
+    expect(
+      previewIds.some((id) => id.startsWith('treasureSwordExtraordinaryPower'))
+    ).toBe(true);
   });
 
   it('adds extra abilities when 93-98 is rolled', () => {
@@ -601,7 +750,7 @@ import type { TreasureSwordPrimaryAbilityResult } from '../../../../tables/dunge
         child.kind === 'table-preview' &&
         child.id.startsWith('treasureSwordPrimaryAbilityRestricted')
     );
-    expect(remainingRestrictedPreviews).toHaveLength(0);
+    expect(remainingRestrictedPreviews.length).toBeGreaterThan(0);
   });
 
   it('records extraordinary powers when rolled on the primary table', () => {
@@ -611,6 +760,7 @@ import type { TreasureSwordPrimaryAbilityResult } from '../../../../tables/dunge
       unusualRoll: 100,
       languageRolls: [20],
       primaryAbilityRolls: [100, 34, 45],
+      extraordinaryPowerRolls: [42],
     });
 
     if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
@@ -627,14 +777,15 @@ import type { TreasureSwordPrimaryAbilityResult } from '../../../../tables/dunge
     ) {
       throw new Error('Expected unusual event');
     }
-    const abilityEvents = collectAbilityEvents(unusualEvent);
-    const counts = aggregateAbilityCounts(abilityEvents);
-    expect(counts.get(TreasureSwordPrimaryAbility.ExtraordinaryPower)).toBe(1);
-    const abilityDescriptions = summarizeAbilityDescriptions(unusualEvent);
-    const extraordinary = abilityDescriptions.find((text) =>
-      text.includes('extraordinary power')
+    const summaries = summarizePrimaryAbilities(unusualEvent);
+    const extraordinary = summaries.find(
+      (summary) =>
+        summary.extraordinaryPower ===
+        TreasureSwordExtraordinaryPower.Heal
     );
     expect(extraordinary).toBeDefined();
+    expect(extraordinary?.description).toBe('heal — 1 time/day');
+    expect(extraordinary?.count).toBe(1);
   });
 });
 
@@ -665,14 +816,6 @@ function collectAbilityEvents(node: OutcomeEventNode): AbilityEventNode[] {
     }
   }
   return result;
-}
-
-function summarizeAbilityDescriptions(node: OutcomeEventNode): string[] {
-  const detailNodes = renderDetailTree(node);
-  return detailNodes
-    .filter((child) => child.kind === 'paragraph')
-    .map((child) => (child as { text: string }).text)
-    .filter((text) => text.startsWith('The sword can'));
 }
 
 function aggregateAbilityCounts(

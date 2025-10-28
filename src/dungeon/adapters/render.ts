@@ -1,5 +1,6 @@
 import type {
   DungeonOutcomeNode,
+  OutcomeEvent,
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
@@ -386,6 +387,9 @@ import {
   renderTreasureSwordPrimaryAbilityDetail,
   renderTreasureSwordPrimaryAbilityCompact,
   buildTreasureSwordPrimaryAbilityPreview,
+  renderTreasureSwordExtraordinaryPowerDetail,
+  renderTreasureSwordExtraordinaryPowerCompact,
+  buildTreasureSwordExtraordinaryPowerPreview,
   renderTreasureSwordAlignmentDetail,
   renderTreasureSwordAlignmentCompact,
   buildTreasureSwordAlignmentPreview,
@@ -807,6 +811,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureSwordPrimaryAbilityDetail,
     renderCompact: renderTreasureSwordPrimaryAbilityCompact,
   },
+  treasureSwordExtraordinaryPower: {
+    renderDetail: renderTreasureSwordExtraordinaryPowerDetail,
+    renderCompact: renderTreasureSwordExtraordinaryPowerCompact,
+  },
   treasureSwordAlignment: {
     renderDetail: renderTreasureSwordAlignmentDetail,
     renderCompact: renderTreasureSwordAlignmentCompact,
@@ -1062,6 +1070,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureSwordUnusual: buildTreasureSwordUnusualPreview,
   treasureSwordPrimaryAbility: buildTreasureSwordPrimaryAbilityPreview,
   treasureSwordPrimaryAbilityRestricted: buildTreasureSwordPrimaryAbilityPreview,
+  treasureSwordExtraordinaryPower: buildTreasureSwordExtraordinaryPowerPreview,
+  treasureSwordExtraordinaryPowerRestricted: buildTreasureSwordExtraordinaryPowerPreview,
   treasureSwordAlignment: buildTreasureSwordAlignmentPreview,
   treasureSwordAlignmentChaotic: buildTreasureSwordAlignmentChaoticPreview,
   treasureSwordAlignmentLawful: buildTreasureSwordAlignmentLawfulPreview,
@@ -1138,6 +1148,107 @@ function previewKey(preview: DungeonTablePreview): string {
     : preview.id;
 }
 
+function parseNodeContextFromId(
+  id: string | undefined,
+  prefix: string
+): { slotKey?: string; rollIndex?: number } {
+  if (!id || !id.startsWith(prefix)) {
+    return {};
+  }
+  const remainder = id.slice(prefix.length);
+  if (!remainder) return {};
+  const colonIndex = remainder.indexOf(':');
+  if (colonIndex === -1) {
+    return { slotKey: remainder };
+  }
+  const maybeIndex = remainder.slice(0, colonIndex);
+  const potentialSlot = remainder.slice(colonIndex + 1);
+  const parsedIndex = Number.parseInt(maybeIndex, 10);
+  if (Number.isNaN(parsedIndex)) {
+    return { slotKey: remainder };
+  }
+  return {
+    slotKey: potentialSlot,
+    rollIndex: parsedIndex,
+  };
+}
+
+function extractTableVariant(result: unknown): 'standard' | 'restricted' {
+  if (result && typeof result === 'object') {
+    const tableVariant = (result as { tableVariant?: unknown }).tableVariant;
+    if (tableVariant === 'restricted') {
+      return 'restricted';
+    }
+  }
+  return 'standard';
+}
+
+function shouldSuppressPreview(
+  parentEvent: OutcomeEvent,
+  childEvent: OutcomeEvent
+): boolean {
+  if (childEvent.kind !== parentEvent.kind) return false;
+  if (
+    childEvent.kind === 'treasureSwordPrimaryAbility' &&
+    parentEvent.kind === 'treasureSwordPrimaryAbility'
+  ) {
+    const parentVariant = extractTableVariant(parentEvent.result);
+    const childVariant = extractTableVariant(childEvent.result);
+    if (parentVariant === 'standard' && childVariant === 'restricted') {
+      return false;
+    }
+  }
+  if (
+    childEvent.kind === 'treasureSwordExtraordinaryPower' &&
+    parentEvent.kind === 'treasureSwordExtraordinaryPower'
+  ) {
+    const parentVariant = extractTableVariant(parentEvent.result);
+    const childVariant = extractTableVariant(childEvent.result);
+    if (parentVariant === 'standard' && childVariant === 'restricted') {
+      return false;
+    }
+  }
+  return true;
+}
+
+function abilityPreviewContextFromNode(
+  node: OutcomeEventNode,
+  variant: 'standard' | 'restricted'
+): TableContext | undefined {
+  const info = parseNodeContextFromId(
+    node.id,
+    'treasureSwordPrimaryAbility:'
+  );
+  if (!info.slotKey && info.rollIndex === undefined) {
+    return undefined;
+  }
+  return {
+    kind: 'treasureSwordPrimaryAbility',
+    slotKey: info.slotKey,
+    rollIndex: info.rollIndex,
+    tableVariant: variant,
+  };
+}
+
+function extraordinaryPreviewContextFromNode(
+  node: OutcomeEventNode,
+  variant: 'standard' | 'restricted'
+): TableContext | undefined {
+  const info = parseNodeContextFromId(
+    node.id,
+    'treasureSwordExtraordinaryPower:'
+  );
+  if (!info.slotKey && info.rollIndex === undefined) {
+    return undefined;
+  }
+  return {
+    kind: 'treasureSwordExtraordinaryPower',
+    slotKey: info.slotKey,
+    rollIndex: info.rollIndex,
+    tableVariant: variant,
+  };
+}
+
 function appendPendingPreviews(
   outcome: DungeonOutcomeNode,
   collector: DungeonRenderNode[],
@@ -1171,6 +1282,7 @@ function previewForEventNode(
   const event = node.event;
   let tableId: string | undefined;
   let context: TableContext | undefined;
+  let autoCollapse = false;
   switch (event.kind) {
     case 'periodicCheck':
       tableId = 'periodicCheck';
@@ -1367,16 +1479,40 @@ function previewForEventNode(
       break;
     case 'treasureSwordPrimaryAbility': {
       const result = event.result;
-      if (result.kind !== 'instruction') {
-        return undefined;
+      const variant =
+        result.kind === 'ability'
+          ? result.tableVariant
+          : result.tableVariant ?? 'standard';
+      tableId =
+        variant === 'restricted'
+          ? 'treasureSwordPrimaryAbilityRestricted'
+          : 'treasureSwordPrimaryAbility';
+      const abilityContext = abilityPreviewContextFromNode(node, variant);
+      if (abilityContext) {
+        context = abilityContext;
       }
-      const hasPendingChildren =
-        Array.isArray(node.children) &&
-        node.children.some((child) => child.type === 'pending-roll');
-      if (!hasPendingChildren) {
-        return undefined;
+      if (result.kind === 'ability' || result.kind === 'instruction') {
+        autoCollapse = true;
       }
-      tableId = 'treasureSwordPrimaryAbility';
+      break;
+    }
+    case 'treasureSwordExtraordinaryPower': {
+      const result = event.result;
+      const variant =
+        result.kind === 'power'
+          ? result.tableVariant
+          : result.tableVariant ?? 'standard';
+      tableId =
+        variant === 'restricted'
+          ? 'treasureSwordExtraordinaryPowerRestricted'
+          : 'treasureSwordExtraordinaryPower';
+      const extraContext = extraordinaryPreviewContextFromNode(node, variant);
+      if (extraContext) {
+        context = extraContext;
+      }
+      if (result.kind === 'power' || result.kind === 'instruction') {
+        autoCollapse = true;
+      }
       break;
     }
     case 'treasureSwordAlignment': {
@@ -1712,6 +1848,9 @@ function previewForEventNode(
     context,
   });
   if (!preview) return undefined;
+  if (autoCollapse) {
+    preview.autoCollapse = true;
+  }
   return withTargetId(preview, node.id ?? tableId);
 }
 
@@ -1756,7 +1895,8 @@ export function renderDetailTree(
   const hasChildEventSameKind = Array.isArray(outcome.children)
     ? outcome.children.some(
         (child): child is OutcomeEventNode =>
-          child.type === 'event' && child.event.kind === outcome.event.kind
+          child.type === 'event' &&
+          shouldSuppressPreview(outcome.event, child.event)
       )
     : false;
   if (preview && !hasChildEventSameKind) {

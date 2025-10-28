@@ -141,6 +141,7 @@ import type {
   TreasureSwordKind,
   TreasureSwordUnusual,
   TreasureSwordPrimaryAbilityCommand,
+  TreasureSwordExtraordinaryPowerCommand,
 } from './treasureSwords';
 import type { TreasureSwordAlignment } from './treasureSwordAlignment';
 
@@ -277,6 +278,7 @@ export type Command =
   | TreasureSwordKind
   | TreasureSwordUnusual
   | TreasureSwordPrimaryAbilityCommand
+  | TreasureSwordExtraordinaryPowerCommand
   | TreasureSwordAlignment
   | TreasureMiscMagicE1
   | TreasureFigurineOfWondrousPower

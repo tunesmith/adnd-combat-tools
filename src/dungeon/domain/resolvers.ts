@@ -178,12 +178,18 @@ import {
   treasureSwordPrimaryAbilityRestricted,
   TreasureSwordPrimaryAbilityCommand,
   describeSwordPrimaryAbility,
+  treasureSwordExtraordinaryPower,
+  treasureSwordExtraordinaryPowerRestricted,
+  TreasureSwordExtraordinaryPower,
+  TreasureSwordExtraordinaryPowerCommand,
+  describeSwordExtraordinaryPower,
 } from '../../tables/dungeon/treasureSwords';
 import type {
   TreasureSwordKind,
   TreasureSwordUnusual,
   TreasureSwordUnusualResult,
   TreasureSwordPrimaryAbilityResult,
+  TreasureSwordExtraordinaryPowerResult,
 } from '../../tables/dungeon/treasureSwords';
 import {
   treasureMiscWeapons,
@@ -2593,6 +2599,7 @@ export function resolveTreasureSwords(options?: {
   alignmentRoll?: number;
   languageRolls?: number[];
   primaryAbilityRolls?: number[];
+  extraordinaryPowerRolls?: number[];
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwords.sides);
   const command: TreasureSword = getTableEntry(usedRoll, treasureSwords);
@@ -2624,6 +2631,7 @@ export function resolveTreasureSwords(options?: {
         alignmentRoll: options?.alignmentRoll,
         languageRolls: options?.languageRolls,
         primaryAbilityRolls: options?.primaryAbilityRolls,
+        extraordinaryPowerRolls: options?.extraordinaryPowerRolls,
       })
     );
   } else {
@@ -2642,6 +2650,9 @@ export function resolveTreasureSwords(options?: {
           : undefined,
         primaryAbilityRolls: options?.primaryAbilityRolls
           ? [...options.primaryAbilityRolls]
+          : undefined,
+        extraordinaryPowerRolls: options?.extraordinaryPowerRolls
+          ? [...options.extraordinaryPowerRolls]
           : undefined,
       },
     });
@@ -2722,6 +2733,7 @@ export function resolveTreasureSwordUnusual(options?: {
   alignmentRoll?: number;
   languageRolls?: number[];
   primaryAbilityRolls?: number[];
+  extraordinaryPowerRolls?: number[];
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwordUnusual.sides);
   const command: TreasureSwordUnusual = getTableEntry(
@@ -2779,6 +2791,33 @@ export function resolveTreasureSwordUnusual(options?: {
     }
     if (abilityNodes.length > 0) {
       children.push(...abilityNodes);
+    }
+  }
+  if (result.extraordinaryPower) {
+    const slotKey = 'extra-0';
+    const queuedExtra =
+      options?.extraordinaryPowerRolls &&
+      options.extraordinaryPowerRolls.length > 0
+        ? [...options.extraordinaryPowerRolls]
+        : undefined;
+    const forcedExtra = queuedExtra ? queuedExtra.shift() : undefined;
+    if (forcedExtra !== undefined) {
+      children.push(
+        resolveTreasureSwordExtraordinaryPower({
+          roll: forcedExtra,
+          slotKey,
+          rollIndex: options?.rollIndex,
+          tableVariant: 'standard',
+        })
+      );
+    } else {
+      children.push(
+        buildSwordExtraordinaryPowerPending({
+          slotKey,
+          rollIndex: options?.rollIndex,
+          tableVariant: 'standard',
+        })
+      );
     }
   }
   return {
@@ -2859,10 +2898,35 @@ export function resolveTreasureSwordPrimaryAbility(options?: {
     return node;
   }
 
+  if (command === TreasureSwordPrimaryAbilityCommand.ExtraordinaryPower) {
+    const nodeId = primaryAbilityNodeId(slotKey, rollIndex);
+    const node: OutcomeEventNode = {
+      type: 'event',
+      roll: usedRoll,
+      id: nodeId,
+      event: {
+        kind: 'treasureSwordPrimaryAbility',
+        result: {
+          kind: 'instruction',
+          instruction: 'extraordinaryPower',
+          roll: usedRoll,
+          note: 'Roll on the Extraordinary Power table.',
+          tableVariant: 'standard',
+        },
+      } as OutcomeEvent,
+      children: [
+        buildSwordExtraordinaryPowerPending({
+          slotKey: `${slotKey}:extra`,
+          rollIndex,
+          tableVariant: 'standard',
+        }),
+      ],
+    };
+    return node;
+  }
+
   const ability =
-    command === TreasureSwordPrimaryAbilityCommand.ExtraordinaryPower
-      ? TreasureSwordPrimaryAbility.ExtraordinaryPower
-      : (command as unknown as TreasureSwordPrimaryAbility);
+    command as unknown as TreasureSwordPrimaryAbility;
   const result: TreasureSwordPrimaryAbilityResult = {
     kind: 'ability',
     ability,
@@ -2911,6 +2975,131 @@ function primaryAbilityNodeId(slotKey: string, rollIndex?: number): string {
   return rollIndex !== undefined
     ? `treasureSwordPrimaryAbility:${rollIndex}:${slotKey}`
     : `treasureSwordPrimaryAbility:${slotKey}`;
+}
+
+export function resolveTreasureSwordExtraordinaryPower(options?: {
+  roll?: number;
+  rollIndex?: number;
+  slotKey?: string;
+  tableVariant?: 'standard' | 'restricted';
+}): DungeonOutcomeNode {
+  const rollIndex = options?.rollIndex;
+  const slotKey =
+    options?.slotKey ?? `extra-${Math.random().toString(36).slice(2)}`;
+  const variant = options?.tableVariant ?? 'standard';
+  const table =
+    variant === 'restricted'
+      ? treasureSwordExtraordinaryPowerRestricted
+      : treasureSwordExtraordinaryPower;
+
+  const resolveRoll = (): number => {
+    if (options?.roll !== undefined) {
+      const provided = Math.trunc(options.roll);
+      if (!Number.isFinite(provided) || provided < 1) {
+        return 1;
+      }
+      if (provided > table.sides) {
+        return table.sides;
+      }
+      return provided;
+    }
+    return rollDice(table.sides);
+  };
+
+  const usedRoll = resolveRoll();
+  const command = getTableEntry(usedRoll, table);
+
+  if (
+    command === TreasureSwordExtraordinaryPowerCommand.RollTwice &&
+    variant === 'standard'
+  ) {
+    const node: OutcomeEventNode = {
+      type: 'event',
+      roll: usedRoll,
+      id: extraordinaryPowerNodeId(slotKey, rollIndex),
+      event: {
+        kind: 'treasureSwordExtraordinaryPower',
+        result: {
+          kind: 'instruction',
+          instruction: 'rollTwice',
+          roll: usedRoll,
+          note: 'Roll twice on this table ignoring scores of 95-97.',
+          tableVariant: 'standard',
+        },
+      } as OutcomeEvent,
+      children: [
+        buildSwordExtraordinaryPowerPending({
+          slotKey: `${slotKey}:a`,
+          rollIndex,
+          tableVariant: 'restricted',
+        }),
+        buildSwordExtraordinaryPowerPending({
+          slotKey: `${slotKey}:b`,
+          rollIndex,
+          tableVariant: 'restricted',
+        }),
+      ],
+    };
+    return node;
+  }
+
+  const power =
+    command === TreasureSwordExtraordinaryPowerCommand.ChooseAny
+      ? TreasureSwordExtraordinaryPower.ChooseAny
+      : command ===
+        TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose
+      ? TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose
+      : (command as unknown as TreasureSwordExtraordinaryPower);
+  const result: TreasureSwordExtraordinaryPowerResult = {
+    kind: 'power',
+    power,
+    rolls: [usedRoll],
+    multiplier: 1,
+    description: describeSwordExtraordinaryPower(power, 1),
+    tableVariant: variant,
+  };
+  return {
+    type: 'event',
+    roll: usedRoll,
+    id: extraordinaryPowerNodeId(slotKey, rollIndex),
+    event: {
+      kind: 'treasureSwordExtraordinaryPower',
+      result,
+    } as OutcomeEvent,
+  };
+}
+
+function buildSwordExtraordinaryPowerPending(options: {
+  slotKey: string;
+  rollIndex?: number;
+  tableVariant?: 'standard' | 'restricted';
+}): PendingRoll {
+  const { slotKey, rollIndex, tableVariant } = options;
+  const variant = tableVariant ?? 'standard';
+  const tableName =
+    variant === 'restricted'
+      ? 'treasureSwordExtraordinaryPowerRestricted'
+      : 'treasureSwordExtraordinaryPower';
+  return {
+    type: 'pending-roll',
+    table: tableName,
+    id: extraordinaryPowerNodeId(slotKey, rollIndex),
+    context: {
+      kind: 'treasureSwordExtraordinaryPower',
+      slotKey,
+      rollIndex,
+      tableVariant: variant,
+    },
+  };
+}
+
+function extraordinaryPowerNodeId(
+  slotKey: string,
+  rollIndex?: number
+): string {
+  return rollIndex !== undefined
+    ? `treasureSwordExtraordinaryPower:${rollIndex}:${slotKey}`
+    : `treasureSwordExtraordinaryPower:${slotKey}`;
 }
 
 type SwordAlignmentVariant = 'standard' | 'chaotic' | 'lawful';

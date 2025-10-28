@@ -76,6 +76,45 @@ export enum TreasureSwordPrimaryAbilityCommand {
   ExtraordinaryPower,
 }
 
+export enum TreasureSwordExtraordinaryPower {
+  CharmPersonOnContact,
+  Clairaudience,
+  Clairvoyance,
+  DetermineDirectionsAndDepth,
+  Esp,
+  Flying,
+  Heal,
+  Illusion,
+  Levitation,
+  Strength,
+  Telekinesis,
+  Telepathy,
+  Teleportation,
+  XRayVision,
+  ChooseAny,
+  ChooseAnyAndSpecialPurpose,
+}
+
+export enum TreasureSwordExtraordinaryPowerCommand {
+  CharmPersonOnContact,
+  Clairaudience,
+  Clairvoyance,
+  DetermineDirectionsAndDepth,
+  Esp,
+  Flying,
+  Heal,
+  Illusion,
+  Levitation,
+  Strength,
+  Telekinesis,
+  Telepathy,
+  Teleportation,
+  XRayVision,
+  RollTwice,
+  ChooseAny,
+  ChooseAnyAndSpecialPurpose,
+}
+
 export const treasureSwords: Table<TreasureSword> = {
   sides: 100,
   entries: [
@@ -309,6 +348,105 @@ export const treasureSwordPrimaryAbilityRestricted: Table<TreasureSwordPrimaryAb
     entries: PRIMARY_ABILITY_RESTRICTED_ENTRIES,
   };
 
+export const treasureSwordExtraordinaryPower: Table<TreasureSwordExtraordinaryPowerCommand> =
+  {
+    sides: 100,
+    entries: [
+      {
+        range: [1, 7],
+        command: TreasureSwordExtraordinaryPowerCommand.CharmPersonOnContact,
+      },
+      {
+        range: [8, 15],
+        command: TreasureSwordExtraordinaryPowerCommand.Clairaudience,
+      },
+      {
+        range: [16, 22],
+        command: TreasureSwordExtraordinaryPowerCommand.Clairvoyance,
+      },
+      {
+        range: [23, 28],
+        command:
+          TreasureSwordExtraordinaryPowerCommand.DetermineDirectionsAndDepth,
+      },
+      {
+        range: [29, 34],
+        command: TreasureSwordExtraordinaryPowerCommand.Esp,
+      },
+      {
+        range: [35, 41],
+        command: TreasureSwordExtraordinaryPowerCommand.Flying,
+      },
+      {
+        range: [42, 47],
+        command: TreasureSwordExtraordinaryPowerCommand.Heal,
+      },
+      {
+        range: [48, 54],
+        command: TreasureSwordExtraordinaryPowerCommand.Illusion,
+      },
+      {
+        range: [55, 61],
+        command: TreasureSwordExtraordinaryPowerCommand.Levitation,
+      },
+      {
+        range: [62, 67],
+        command: TreasureSwordExtraordinaryPowerCommand.Strength,
+      },
+      {
+        range: [68, 75],
+        command: TreasureSwordExtraordinaryPowerCommand.Telekinesis,
+      },
+      {
+        range: [76, 81],
+        command: TreasureSwordExtraordinaryPowerCommand.Telepathy,
+      },
+      {
+        range: [82, 88],
+        command: TreasureSwordExtraordinaryPowerCommand.Teleportation,
+      },
+      {
+        range: [89, 94],
+        command: TreasureSwordExtraordinaryPowerCommand.XRayVision,
+      },
+      {
+        range: [95, 97],
+        command: TreasureSwordExtraordinaryPowerCommand.RollTwice,
+      },
+      {
+        range: [98, 99],
+        command: TreasureSwordExtraordinaryPowerCommand.ChooseAny,
+      },
+      {
+        range: [100],
+        command: TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose,
+      },
+    ],
+  };
+
+type ExtraordinaryEntry =
+  (typeof treasureSwordExtraordinaryPower.entries)[number];
+
+const EXTRAORDINARY_RESTRICTED_ENTRIES =
+  treasureSwordExtraordinaryPower.entries
+    .filter(({ range }) => range[0] <= 94)
+    .concat([
+      {
+        range: [95, 96],
+        command: TreasureSwordExtraordinaryPowerCommand.ChooseAny,
+      },
+      {
+        range: [97],
+        command: TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose,
+      },
+    ]) as [ExtraordinaryEntry, ...ExtraordinaryEntry[]];
+
+export const treasureSwordExtraordinaryPowerRestricted: Table<TreasureSwordExtraordinaryPowerCommand> =
+  {
+    sides: 97,
+    entries: EXTRAORDINARY_RESTRICTED_ENTRIES,
+  };
+
 type SwordPrimaryAbilityDetail =
   | {
       type: 'radius';
@@ -324,6 +462,23 @@ export type TreasureSwordPrimaryAbilityResult =
   | {
       kind: 'ability';
       ability: TreasureSwordPrimaryAbility;
+      rolls: number[];
+      multiplier: number;
+      description: string;
+      tableVariant: 'standard' | 'restricted';
+    }
+  | {
+      kind: 'instruction';
+      instruction: 'rollTwice' | 'extraordinaryPower';
+      roll: number;
+      note: string;
+      tableVariant: 'standard' | 'restricted';
+    };
+
+export type TreasureSwordExtraordinaryPowerResult =
+  | {
+      kind: 'power';
+      power: TreasureSwordExtraordinaryPower;
       rolls: number[];
       multiplier: number;
       description: string;
@@ -429,4 +584,150 @@ export function describeSwordPrimaryAbility(
     'an extraordinary power',
     `${multiplier} extraordinary powers`
   );
+}
+
+type SwordExtraordinaryPowerDetail =
+  | {
+      type: 'timesPerDay';
+      template: string;
+      baseUses: number;
+    }
+  | {
+      type: 'hoursPerDay';
+      template: string;
+      baseHours: number;
+    }
+  | {
+      type: 'fixed';
+      template: (multiplier: number) => string;
+    };
+
+export const SWORD_EXTRAORDINARY_POWER_DETAILS: Record<
+  TreasureSwordExtraordinaryPower,
+  SwordExtraordinaryPowerDetail
+> = {
+  [TreasureSwordExtraordinaryPower.CharmPersonOnContact]: {
+    type: 'timesPerDay',
+    template: 'charm person on contact — {USES}',
+    baseUses: 3,
+  },
+  [TreasureSwordExtraordinaryPower.Clairaudience]: {
+    type: 'timesPerDay',
+    template: 'clairaudience, 3" range — {USES}, 1 round per use',
+    baseUses: 3,
+  },
+  [TreasureSwordExtraordinaryPower.Clairvoyance]: {
+    type: 'timesPerDay',
+    template: 'clairvoyance, 3" range — {USES}, 1 round per use',
+    baseUses: 3,
+  },
+  [TreasureSwordExtraordinaryPower.DetermineDirectionsAndDepth]: {
+    type: 'timesPerDay',
+    template: 'determine directions and depth — {USES}',
+    baseUses: 2,
+  },
+  [TreasureSwordExtraordinaryPower.Esp]: {
+    type: 'timesPerDay',
+    template: 'ESP, 3" range — {USES}, 1 round per use',
+    baseUses: 3,
+  },
+  [TreasureSwordExtraordinaryPower.Flying]: {
+    type: 'hoursPerDay',
+    template: 'flying, 12" movement — {HOURS}',
+    baseHours: 1,
+  },
+  [TreasureSwordExtraordinaryPower.Heal]: {
+    type: 'timesPerDay',
+    template: 'heal — {USES}',
+    baseUses: 1,
+  },
+  [TreasureSwordExtraordinaryPower.Illusion]: {
+    type: 'timesPerDay',
+    template: 'illusion, 12" range — {USES}, as the wand',
+    baseUses: 2,
+  },
+  [TreasureSwordExtraordinaryPower.Levitation]: {
+    type: 'timesPerDay',
+    template:
+      'levitation, 1 turn duration — {USES}, at 6th level of magic use ability',
+    baseUses: 3,
+  },
+  [TreasureSwordExtraordinaryPower.Strength]: {
+    type: 'timesPerDay',
+    template: 'strength — {USES} (upon wielder only)',
+    baseUses: 1,
+  },
+  [TreasureSwordExtraordinaryPower.Telekinesis]: {
+    type: 'timesPerDay',
+    template:
+      'telekinesis, 2,500 g.p. wt. maximum — {USES}, 1 round each use',
+    baseUses: 2,
+  },
+  [TreasureSwordExtraordinaryPower.Telepathy]: {
+    type: 'timesPerDay',
+    template: 'telepathy, 6" range — {USES}',
+    baseUses: 2,
+  },
+  [TreasureSwordExtraordinaryPower.Teleportation]: {
+    type: 'timesPerDay',
+    template:
+      'teleportation — {USES}, 6,000 g.p. wt. maximum, 2 segments to activate',
+    baseUses: 1,
+  },
+  [TreasureSwordExtraordinaryPower.XRayVision]: {
+    type: 'timesPerDay',
+    template: 'X-ray vision, 4" range — {USES}, 1 turn per use',
+    baseUses: 2,
+  },
+  [TreasureSwordExtraordinaryPower.ChooseAny]: {
+    type: 'fixed',
+    template: (multiplier) =>
+      multiplier === 1
+        ? 'choose 1 extraordinary power from this table'
+        : `choose ${multiplier} extraordinary powers from this table`,
+  },
+  [TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose]: {
+    type: 'fixed',
+    template: (multiplier) =>
+      multiplier === 1
+        ? 'choose 1 extraordinary power from this table, then roll for a special purpose (tables not yet implemented)'
+        : `choose ${multiplier} extraordinary powers from this table, then roll for a special purpose for each (tables not yet implemented)`,
+  },
+};
+
+function formatTimesPerDayDetail(
+  uses: number,
+  template: string
+): string {
+  const replacement = uses === 1 ? '1 time/day' : `${uses} times/day`;
+  return template.replace('{USES}', replacement);
+}
+
+function formatHoursPerDayDetail(
+  hours: number,
+  template: string
+): string {
+  const replacement = hours === 1 ? '1 hour/day' : `${hours} hours/day`;
+  return template.replace('{HOURS}', replacement);
+}
+
+export function describeSwordExtraordinaryPower(
+  power: TreasureSwordExtraordinaryPower,
+  multiplier = 1
+): string {
+  const detail = SWORD_EXTRAORDINARY_POWER_DETAILS[power];
+  switch (detail.type) {
+    case 'timesPerDay': {
+      const uses = detail.baseUses * Math.max(1, multiplier);
+      return formatTimesPerDayDetail(uses, detail.template);
+    }
+    case 'hoursPerDay': {
+      const hours = detail.baseHours * Math.max(1, multiplier);
+      return formatHoursPerDayDetail(hours, detail.template);
+    }
+    case 'fixed':
+      return detail.template(Math.max(1, multiplier));
+    default:
+      return '';
+  }
 }

@@ -1199,6 +1199,7 @@ function readTreasureSwordContext(
   alignmentRoll?: number;
   languageRolls?: number[];
   primaryAbilityRolls?: number[];
+  extraordinaryPowerRolls?: number[];
 } {
   if (
     context &&
@@ -1214,6 +1215,9 @@ function readTreasureSwordContext(
     const primaryAbilityRollsValue = (
       context as { primaryAbilityRolls?: unknown }
     ).primaryAbilityRolls;
+    const extraordinaryPowerRollsValue = (
+      context as { extraordinaryPowerRolls?: unknown }
+    ).extraordinaryPowerRolls;
     return {
       sword:
         typeof swordValue === 'number'
@@ -1228,6 +1232,9 @@ function readTreasureSwordContext(
         : undefined,
       primaryAbilityRolls: Array.isArray(primaryAbilityRollsValue)
         ? [...(primaryAbilityRollsValue as number[])]
+        : undefined,
+      extraordinaryPowerRolls: Array.isArray(extraordinaryPowerRollsValue)
+        ? [...(extraordinaryPowerRollsValue as number[])]
         : undefined,
     };
   }
