@@ -146,6 +146,8 @@ import type {
   TreasureSwordUnusualResult,
   TreasureSwordPrimaryAbilityResult,
   TreasureSwordExtraordinaryPowerResult,
+  TreasureSwordSpecialPurposeResult,
+  TreasureSwordSpecialPurposePowerResult,
 } from '../../tables/dungeon/treasureSwords';
 import type { TreasureSwordAlignmentResult } from '../../tables/dungeon/treasureSwordAlignment';
 import type { TreasureMiscWeapon } from '../../tables/dungeon/treasureMiscWeapons';
@@ -604,6 +606,14 @@ export type OutcomeEvent =
   | {
       kind: 'treasureSwordExtraordinaryPower';
       result: TreasureSwordExtraordinaryPowerResult;
+    }
+  | {
+      kind: 'treasureSwordSpecialPurpose';
+      result: TreasureSwordSpecialPurposeResult;
+    }
+  | {
+      kind: 'treasureSwordSpecialPurposePower';
+      result: TreasureSwordSpecialPurposePowerResult;
     }
   | { kind: 'treasureSwordAlignment'; result: TreasureSwordAlignmentResult }
   | {

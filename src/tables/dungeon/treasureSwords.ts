@@ -1,4 +1,8 @@
 import type { Table } from './dungeonTypes';
+import {
+  TreasureSwordAlignment,
+  SWORD_ALIGNMENT_DETAILS,
+} from './treasureSwordAlignment';
 
 export enum TreasureSword {
   SwordPlus1,
@@ -113,6 +117,50 @@ export enum TreasureSwordExtraordinaryPowerCommand {
   RollTwice,
   ChooseAny,
   ChooseAnyAndSpecialPurpose,
+}
+
+export enum TreasureSwordSpecialPurpose {
+  DefeatOpposedAlignment,
+  KillClerics,
+  KillFighters,
+  KillMagicUsers,
+  KillThieves,
+  KillBardsOrMonks,
+  OverthrowLawOrChaos,
+  SlayGoodOrEvil,
+  SlayNonHumanMonsters,
+}
+
+export enum TreasureSwordSpecialPurposeCommand {
+  DefeatOpposedAlignment,
+  KillClerics,
+  KillFighters,
+  KillMagicUsers,
+  KillThieves,
+  KillBardsOrMonks,
+  OverthrowLawOrChaos,
+  SlayGoodOrEvil,
+  SlayNonHumanMonsters,
+}
+
+export enum TreasureSwordSpecialPurposePower {
+  Blindness,
+  Confusion,
+  Disintegrate,
+  Fear,
+  Insanity,
+  Paralysis,
+  SavingThrowBonus,
+}
+
+export enum TreasureSwordSpecialPurposePowerCommand {
+  Blindness,
+  Confusion,
+  Disintegrate,
+  Fear,
+  Insanity,
+  Paralysis,
+  SavingThrowBonus,
 }
 
 export const treasureSwords: Table<TreasureSword> = {
@@ -447,6 +495,84 @@ export const treasureSwordExtraordinaryPowerRestricted: Table<TreasureSwordExtra
     entries: EXTRAORDINARY_RESTRICTED_ENTRIES,
   };
 
+export const treasureSwordSpecialPurpose: Table<TreasureSwordSpecialPurposeCommand> =
+  {
+    sides: 100,
+    entries: [
+      {
+        range: [1, 10],
+        command: TreasureSwordSpecialPurposeCommand.DefeatOpposedAlignment,
+      },
+      {
+        range: [11, 20],
+        command: TreasureSwordSpecialPurposeCommand.KillClerics,
+      },
+      {
+        range: [21, 30],
+        command: TreasureSwordSpecialPurposeCommand.KillFighters,
+      },
+      {
+        range: [31, 40],
+        command: TreasureSwordSpecialPurposeCommand.KillMagicUsers,
+      },
+      {
+        range: [41, 50],
+        command: TreasureSwordSpecialPurposeCommand.KillThieves,
+      },
+      {
+        range: [51, 55],
+        command: TreasureSwordSpecialPurposeCommand.KillBardsOrMonks,
+      },
+      {
+        range: [56, 65],
+        command: TreasureSwordSpecialPurposeCommand.OverthrowLawOrChaos,
+      },
+      {
+        range: [66, 75],
+        command: TreasureSwordSpecialPurposeCommand.SlayGoodOrEvil,
+      },
+      {
+        range: [76, 100],
+        command: TreasureSwordSpecialPurposeCommand.SlayNonHumanMonsters,
+      },
+    ],
+  };
+
+export const treasureSwordSpecialPurposePower: Table<TreasureSwordSpecialPurposePowerCommand> =
+  {
+    sides: 100,
+    entries: [
+      {
+        range: [1, 10],
+        command: TreasureSwordSpecialPurposePowerCommand.Blindness,
+      },
+      {
+        range: [11, 20],
+        command: TreasureSwordSpecialPurposePowerCommand.Confusion,
+      },
+      {
+        range: [21, 25],
+        command: TreasureSwordSpecialPurposePowerCommand.Disintegrate,
+      },
+      {
+        range: [26, 55],
+        command: TreasureSwordSpecialPurposePowerCommand.Fear,
+      },
+      {
+        range: [56, 65],
+        command: TreasureSwordSpecialPurposePowerCommand.Insanity,
+      },
+      {
+        range: [66, 80],
+        command: TreasureSwordSpecialPurposePowerCommand.Paralysis,
+      },
+      {
+        range: [81, 100],
+        command: TreasureSwordSpecialPurposePowerCommand.SavingThrowBonus,
+      },
+    ],
+  };
+
 type SwordPrimaryAbilityDetail =
   | {
       type: 'radius';
@@ -483,6 +609,7 @@ export type TreasureSwordExtraordinaryPowerResult =
       multiplier: number;
       description: string;
       tableVariant: 'standard' | 'restricted';
+      alignmentRequired?: boolean;
     }
   | {
       kind: 'instruction';
@@ -491,6 +618,25 @@ export type TreasureSwordExtraordinaryPowerResult =
       note: string;
       tableVariant: 'standard';
     };
+
+export type TreasureSwordSpecialPurposeResult = {
+  kind: 'purpose';
+  purpose: TreasureSwordSpecialPurpose;
+  rolls: number[];
+  description: string;
+  alignment?: TreasureSwordAlignment;
+  slotKey?: string;
+  parentSlotKey?: string;
+};
+
+export type TreasureSwordSpecialPurposePowerResult = {
+  kind: 'specialPurposePower';
+  power: TreasureSwordSpecialPurposePower;
+  rolls: number[];
+  description: string;
+  slotKey?: string;
+  parentSlotKey?: string;
+};
 
 export const SWORD_PRIMARY_ABILITY_DETAILS: Record<
   TreasureSwordPrimaryAbility,
@@ -690,8 +836,8 @@ export const SWORD_EXTRAORDINARY_POWER_DETAILS: Record<
     type: 'fixed',
     template: (multiplier) =>
       multiplier === 1
-        ? 'choose 1 extraordinary power from this table, then roll for a special purpose (tables not yet implemented)'
-        : `choose ${multiplier} extraordinary powers from this table, then roll for a special purpose for each (tables not yet implemented)`,
+        ? 'choose 1 extraordinary power from this table, then roll for a special purpose and its power'
+        : `choose ${multiplier} extraordinary powers from this table, then roll for a special purpose and power for each`,
   },
 };
 
@@ -727,6 +873,120 @@ export function describeSwordExtraordinaryPower(
     }
     case 'fixed':
       return detail.template(Math.max(1, multiplier));
+    default:
+      return '';
+  }
+}
+
+const DIAMETRICAL_OPPOSITION: Partial<
+  Record<TreasureSwordAlignment, TreasureSwordAlignment>
+> = {
+  [TreasureSwordAlignment.LawfulGood]:
+    TreasureSwordAlignment.ChaoticEvil,
+  [TreasureSwordAlignment.LawfulNeutral]:
+    TreasureSwordAlignment.ChaoticNeutral,
+  [TreasureSwordAlignment.LawfulEvil]:
+    TreasureSwordAlignment.ChaoticGood,
+  [TreasureSwordAlignment.NeutralGood]:
+    TreasureSwordAlignment.NeutralEvil,
+  [TreasureSwordAlignment.NeutralEvil]:
+    TreasureSwordAlignment.NeutralGood,
+  [TreasureSwordAlignment.ChaoticGood]:
+    TreasureSwordAlignment.LawfulEvil,
+  [TreasureSwordAlignment.ChaoticNeutral]:
+    TreasureSwordAlignment.LawfulNeutral,
+  [TreasureSwordAlignment.ChaoticEvil]:
+    TreasureSwordAlignment.LawfulGood,
+};
+
+function isGoodAlignment(alignment: TreasureSwordAlignment): boolean {
+  return (
+    alignment === TreasureSwordAlignment.LawfulGood ||
+    alignment === TreasureSwordAlignment.NeutralGood ||
+    alignment === TreasureSwordAlignment.ChaoticGood
+  );
+}
+
+function isEvilAlignment(alignment: TreasureSwordAlignment): boolean {
+  return (
+    alignment === TreasureSwordAlignment.LawfulEvil ||
+    alignment === TreasureSwordAlignment.NeutralEvil ||
+    alignment === TreasureSwordAlignment.ChaoticEvil
+  );
+}
+
+function alignmentLabel(alignment: TreasureSwordAlignment): string {
+  return SWORD_ALIGNMENT_DETAILS[alignment].label;
+}
+
+export function describeSwordSpecialPurpose(
+  purpose: TreasureSwordSpecialPurpose,
+  options?: { alignment?: TreasureSwordAlignment }
+): string {
+  const alignment = options?.alignment;
+  switch (purpose) {
+    case TreasureSwordSpecialPurpose.DefeatOpposedAlignment: {
+      if (alignment === undefined) {
+        return 'defeat/slay diametrically opposed alignment';
+      }
+      if (alignment === TreasureSwordAlignment.NeutralAbsolute) {
+        return 'defeat/slay extreme alignments';
+      }
+      const opposed = DIAMETRICAL_OPPOSITION[alignment];
+      if (!opposed) {
+        return 'defeat/slay diametrically opposed alignment';
+      }
+      return `defeat/slay ${alignmentLabel(opposed)}`;
+    }
+    case TreasureSwordSpecialPurpose.KillClerics:
+      return 'kill clerics';
+    case TreasureSwordSpecialPurpose.KillFighters:
+      return 'kill fighters';
+    case TreasureSwordSpecialPurpose.KillMagicUsers:
+      return 'kill magic-users';
+    case TreasureSwordSpecialPurpose.KillThieves:
+      return 'kill thieves';
+    case TreasureSwordSpecialPurpose.KillBardsOrMonks:
+      return 'kill bards/monks';
+    case TreasureSwordSpecialPurpose.OverthrowLawOrChaos:
+      return 'overthrow law and/or chaos';
+    case TreasureSwordSpecialPurpose.SlayGoodOrEvil: {
+      if (alignment === undefined) {
+        return 'slay good and/or evil';
+      }
+      if (isGoodAlignment(alignment)) {
+        return 'slay neutral or evil';
+      }
+      if (isEvilAlignment(alignment)) {
+        return 'slay good or neutral';
+      }
+      return 'slay good or evil';
+    }
+    case TreasureSwordSpecialPurpose.SlayNonHumanMonsters:
+      return 'slay non-human monsters';
+    default:
+      return '';
+  }
+}
+
+export function describeSwordSpecialPurposePower(
+  power: TreasureSwordSpecialPurposePower
+): string {
+  switch (power) {
+    case TreasureSwordSpecialPurposePower.Blindness:
+      return 'cause blindness for 2-12 rounds';
+    case TreasureSwordSpecialPurposePower.Confusion:
+      return 'cause confusion for 2-12 rounds';
+    case TreasureSwordSpecialPurposePower.Disintegrate:
+      return 'disintegrate the target';
+    case TreasureSwordSpecialPurposePower.Fear:
+      return 'cause fear for 1-4 rounds';
+    case TreasureSwordSpecialPurposePower.Insanity:
+      return 'induce insanity for 1-4 rounds';
+    case TreasureSwordSpecialPurposePower.Paralysis:
+      return 'inflict paralysis for 1-4 rounds';
+    case TreasureSwordSpecialPurposePower.SavingThrowBonus:
+      return 'grant +2 on all saving throws and reduce damage by 1 per die';
     default:
       return '';
   }

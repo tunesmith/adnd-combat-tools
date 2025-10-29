@@ -10,6 +10,7 @@ import type {
 } from '../domain/outcome';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 import type { TreasureSword } from '../../tables/dungeon/treasureSwords';
+import type { TreasureSwordAlignment } from '../../tables/dungeon/treasureSwordAlignment';
 import {
   resolveChamberDimensions,
   resolveChamberRoomContents,
@@ -135,14 +136,19 @@ import {
   resolveTreasureSwordUnusual,
   resolveTreasureSwordPrimaryAbility,
   resolveTreasureSwordExtraordinaryPower,
+  resolveTreasureSwordSpecialPurpose,
+  resolveTreasureSwordSpecialPurposePower,
   resolveTreasureMiscWeapons,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
   applyResolvedOutcome,
   deriveDoorChainContext,
+  findPendingWithAncestors,
+  isTableContext,
   normalizeOutcomeTree,
   parseDoorChainSequence,
+  propagateSwordAlignmentInfo,
   readExitsContext,
 } from '../helpers/outcomeTree';
 import {
@@ -254,6 +260,8 @@ const TABLE_ID_LIST = [
   'treasureSwordPrimaryAbilityRestricted',
   'treasureSwordExtraordinaryPower',
   'treasureSwordExtraordinaryPowerRestricted',
+  'treasureSwordSpecialPurpose',
+  'treasureSwordSpecialPurposePower',
   'treasureSwordAlignment',
   'treasureSwordAlignmentChaotic',
   'treasureSwordAlignmentLawful',
@@ -392,6 +400,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureSwordPrimaryAbilityRestricted: 'Primary Ability (01-92)',
   treasureSwordExtraordinaryPower: 'Extraordinary Power',
   treasureSwordExtraordinaryPowerRestricted: 'Extraordinary Power (01-97)',
+  treasureSwordSpecialPurpose: 'Sword Special Purpose',
+  treasureSwordSpecialPurposePower: 'Sword Special Purpose Power',
   treasureSwordAlignment: 'Sword Alignment',
   treasureSwordAlignmentChaotic: 'Sword Alignment (Chaotic)',
   treasureSwordAlignmentLawful: 'Sword Alignment (Lawful)',
@@ -439,7 +449,8 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
 
 function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
   const normalized = normalizeOutcomeTree(outcome);
-  return { outcome: normalized, messages: renderDetailTree(normalized) };
+  const propagated = propagateSwordAlignmentInfo(normalized);
+  return { outcome: propagated, messages: renderDetailTree(propagated) };
 }
 
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
@@ -1048,6 +1059,7 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
             tableVariant?: unknown;
             ignoreHigh?: unknown;
             rollIndex?: unknown;
+            alignment?: unknown;
           })
         : {};
     const slotKey =
@@ -1060,12 +1072,17 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     } else if (parsed.ignoreHigh === true) {
       tableVariant = 'restricted';
     }
+    const alignment =
+      typeof parsed.alignment === 'number'
+        ? (parsed.alignment as TreasureSwordAlignment)
+        : undefined;
     return fromOutcome(
       resolveTreasureSwordExtraordinaryPower({
         roll,
         slotKey,
         rollIndex,
         tableVariant,
+        alignment,
       })
     );
   },
@@ -1075,18 +1092,88 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
         ? (context as {
             slotKey?: unknown;
             rollIndex?: unknown;
+            alignment?: unknown;
           })
         : {};
     const slotKey =
       typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
     const rollIndex =
       typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    const alignment =
+      typeof parsed.alignment === 'number'
+        ? (parsed.alignment as TreasureSwordAlignment)
+        : undefined;
     return fromOutcome(
       resolveTreasureSwordExtraordinaryPower({
         roll,
         slotKey,
         rollIndex,
         tableVariant: 'restricted',
+        alignment,
+      })
+    );
+  },
+  treasureSwordSpecialPurpose: ({ roll, context }) => {
+    const parsed =
+      context && typeof context === 'object'
+        ? (context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+            parentSlotKey?: unknown;
+            alignment?: unknown;
+          })
+        : {};
+    const slotKey =
+      typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
+    const rollIndex =
+      typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    const parentSlotKey =
+      typeof parsed.parentSlotKey === 'string'
+        ? (parsed.parentSlotKey as string)
+        : undefined;
+    const alignment =
+      typeof parsed.alignment === 'number'
+        ? (parsed.alignment as TreasureSwordAlignment)
+        : undefined;
+    return fromOutcome(
+      resolveTreasureSwordSpecialPurpose({
+        roll,
+        slotKey,
+        rollIndex,
+        parentSlotKey,
+        alignment,
+      })
+    );
+  },
+  treasureSwordSpecialPurposePower: ({ roll, context }) => {
+    const parsed =
+      context && typeof context === 'object'
+        ? (context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+            parentSlotKey?: unknown;
+            alignment?: unknown;
+          })
+        : {};
+    const slotKey =
+      typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
+    const rollIndex =
+      typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    const parentSlotKey =
+      typeof parsed.parentSlotKey === 'string'
+        ? (parsed.parentSlotKey as string)
+        : undefined;
+    const alignment =
+      typeof parsed.alignment === 'number'
+        ? (parsed.alignment as TreasureSwordAlignment)
+        : undefined;
+    return fromOutcome(
+      resolveTreasureSwordSpecialPurposePower({
+        roll,
+        slotKey,
+        rollIndex,
+        parentSlotKey,
+        alignment,
       })
     );
   },
@@ -1254,7 +1341,12 @@ export function applyOutcomeRoll(opts: {
   context?: TableContext;
 }): OutcomeRollApplication | undefined {
   const normalizedExisting = normalizeOutcomeTree(opts.outcome);
-  const targetId = opts.targetId ?? opts.tableId;
+  const targetId = resolvePendingTargetId(
+    normalizedExisting,
+    opts.tableId,
+    opts.targetId ?? opts.tableId,
+    opts.context
+  );
   const resolution = resolveRegistryTable({
     tableId: opts.tableId,
     roll: opts.roll,
@@ -1290,6 +1382,75 @@ export function applyOutcomeRoll(opts: {
     resolvedPendingCount: compactSnapshot.resolvedPendingCount,
   };
   return { outcome: normalizedApplied, snapshot };
+}
+
+function resolvePendingTargetId(
+  existing: DungeonOutcomeNode,
+  tableId: string,
+  requestedId: string,
+  context?: TableContext
+): string {
+  const base = String(tableId.split(':')[0] ?? '');
+  const exactMatch = findPendingWithAncestors(
+    existing,
+    (pending) =>
+      (pending.id !== undefined && pending.id === requestedId) ||
+      (pending.id === undefined && pending.table === requestedId)
+  );
+  if (exactMatch) return requestedId;
+  if (
+    base !== 'treasureSwordSpecialPurpose' &&
+    base !== 'treasureSwordSpecialPurposePower'
+  ) {
+    return requestedId;
+  }
+  const slotKey = extractSlotKey(base, context, requestedId);
+  if (!slotKey) return requestedId;
+  const slotMatch = findPendingWithAncestors(existing, (pending) => {
+    const pendingBase = String(pending.table.split(':')[0] ?? '');
+    if (pendingBase !== base) return false;
+    const candidateSlot = readSlotKeyFromContext(base, pending.context);
+    return candidateSlot === slotKey;
+  });
+  if (!slotMatch) return requestedId;
+  return slotMatch.pending.id ?? slotMatch.pending.table;
+}
+
+function extractSlotKey(
+  base: string,
+  context: TableContext | undefined,
+  requestedId: string
+): string | undefined {
+  const fromContext = readSlotKeyFromContext(base, context);
+  if (fromContext) return fromContext;
+  const idx = requestedId.indexOf(':');
+  if (idx === -1) return undefined;
+  const slot = requestedId.slice(idx + 1);
+  return slot.length > 0 ? slot : undefined;
+}
+
+function readSlotKeyFromContext(
+  base: string,
+  context: unknown
+): string | undefined {
+  if (!isTableContext(context)) return undefined;
+  if (
+    base === 'treasureSwordSpecialPurpose' &&
+    context.kind === 'treasureSwordSpecialPurpose'
+  ) {
+    if (typeof context.slotKey === 'string') return context.slotKey;
+    if (typeof context.parentSlotKey === 'string') return context.parentSlotKey;
+    return undefined;
+  }
+  if (
+    base === 'treasureSwordSpecialPurposePower' &&
+    context.kind === 'treasureSwordSpecialPurposePower'
+  ) {
+    if (typeof context.slotKey === 'string') return context.slotKey;
+    if (typeof context.parentSlotKey === 'string') return context.parentSlotKey;
+    return undefined;
+  }
+  return undefined;
 }
 
 function readDungeonLevel(

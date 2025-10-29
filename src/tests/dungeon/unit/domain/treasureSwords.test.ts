@@ -6,20 +6,30 @@ import {
   resolveTreasureSwords,
   resolveTreasureSwordPrimaryAbility,
   resolveTreasureSwordExtraordinaryPower,
+  resolveTreasureSwordSpecialPurpose,
+  resolveTreasureSwordSpecialPurposePower,
 } from '../../../../dungeon/domain/resolvers';
 import {
   renderDetailTree,
   toCompactRender,
 } from '../../../../dungeon/adapters/render';
+import { findChildEvent } from '../../../../dungeon/adapters/render/shared';
 import {
   TreasureSword,
   TreasureSwordKind,
   TreasureSwordUnusual,
   TreasureSwordPrimaryAbility,
   TreasureSwordExtraordinaryPower,
+  TreasureSwordSpecialPurpose,
+  describeSwordSpecialPurpose,
 } from '../../../../tables/dungeon/treasureSwords';
-import type { TreasureSwordPrimaryAbilityResult } from '../../../../tables/dungeon/treasureSwords';
+import type {
+  TreasureSwordPrimaryAbilityResult,
+  TreasureSwordSpecialPurposeResult,
+  TreasureSwordSpecialPurposePowerResult,
+} from '../../../../tables/dungeon/treasureSwords';
 import { summarizePrimaryAbilities } from '../../../../dungeon/adapters/render/treasureSwords';
+import { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSwordAlignment';
 
   describe('resolveTreasureSwords', () => {
   it('creates pending rolls for kind and unusual tables by default', () => {
@@ -656,8 +666,339 @@ import { summarizePrimaryAbilities } from '../../../../dungeon/adapters/render/t
     ).toBe(true);
   });
 
+  it('spawns special purpose and power rolls when 100 is rolled', () => {
+    const extraNode = resolveTreasureSwordExtraordinaryPower({
+      roll: 100,
+      slotKey: 'extra-slot',
+      alignment: TreasureSwordAlignment.LawfulGood,
+    });
+
+    if (extraNode.type !== 'event') {
+      throw new Error('Expected event node for extraordinary power');
+    }
+
+    if (extraNode.event.kind !== 'treasureSwordExtraordinaryPower') {
+      throw new Error('Expected extraordinary power event');
+    }
+
+    const result = extraNode.event.result;
+    if (result.kind !== 'power') {
+      throw new Error('Expected power result');
+    }
+    expect(result.power).toBe(
+      TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose
+    );
+
+    const pendingPurpose = (extraNode.children || []).find(
+      (child): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordSpecialPurpose'
+    );
+    expect(pendingPurpose).toBeDefined();
+
+    const context =
+      pendingPurpose && typeof pendingPurpose.context === 'object'
+        ? (pendingPurpose.context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+            alignment?: unknown;
+          })
+        : {};
+
+    expect(context.alignment).toBe(TreasureSwordAlignment.LawfulGood);
+
+    const purposeNode = resolveTreasureSwordSpecialPurpose({
+      roll: 8,
+      slotKey:
+        typeof context.slotKey === 'string' ? (context.slotKey as string) : undefined,
+      rollIndex:
+        typeof context.rollIndex === 'number'
+          ? (context.rollIndex as number)
+          : undefined,
+      alignment: TreasureSwordAlignment.LawfulGood,
+    });
+
+    if (purposeNode.type !== 'event') {
+      throw new Error('Expected special purpose event');
+    }
+
+    if (purposeNode.event.kind !== 'treasureSwordSpecialPurpose') {
+      throw new Error('Expected special purpose kind');
+    }
+
+    const purposeResult = purposeNode.event.result;
+    expect(purposeResult.description).toBe('defeat/slay Chaotic Evil');
+    expect(purposeResult.alignment).toBe(
+      TreasureSwordAlignment.LawfulGood
+    );
+
+    const powerPending = (purposeNode.children || []).find(
+      (child): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordSpecialPurposePower'
+    );
+    expect(powerPending).toBeDefined();
+
+    const powerContext =
+      powerPending && typeof powerPending.context === 'object'
+        ? (powerPending.context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+          })
+        : {};
+
+    const powerNode = resolveTreasureSwordSpecialPurposePower({
+      roll: 22,
+      slotKey:
+        typeof powerContext.slotKey === 'string'
+          ? (powerContext.slotKey as string)
+          : undefined,
+      rollIndex:
+        typeof powerContext.rollIndex === 'number'
+          ? (powerContext.rollIndex as number)
+          : undefined,
+    });
+
+    if (powerNode.type !== 'event') {
+      throw new Error('Expected special purpose power event');
+    }
+
+    if (powerNode.event.kind !== 'treasureSwordSpecialPurposePower') {
+      throw new Error('Expected special purpose power kind');
+    }
+
+    const powerResult = powerNode.event.result;
+    expect(powerResult.description).toBe('disintegrate the target');
+  });
+
+  it('describes resolved special purposes in compact render', () => {
+    const swordNode = resolveTreasureSwords({
+      roll: 26,
+      kindRoll: 80,
+      unusualRoll: 100,
+      alignmentRoll: 31,
+      extraordinaryPowerRolls: [100],
+    });
+
+    if (swordNode.type !== 'event' || swordNode.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasureSwords event');
+    }
+
+    const unusualEvent = findChildEvent(swordNode, 'treasureSwordUnusual');
+    if (
+      !unusualEvent ||
+      unusualEvent.type !== 'event' ||
+      unusualEvent.event.kind !== 'treasureSwordUnusual'
+    ) {
+      throw new Error('Expected unusual sword event');
+    }
+
+    const extraordinaryEvent = findChildEvent(
+      unusualEvent,
+      'treasureSwordExtraordinaryPower'
+    );
+    if (
+      !extraordinaryEvent ||
+      extraordinaryEvent.type !== 'event' ||
+      extraordinaryEvent.event.kind !== 'treasureSwordExtraordinaryPower'
+    ) {
+      throw new Error('Expected extraordinary power event');
+    }
+
+    const originalChildren = extraordinaryEvent.children || [];
+    const pendingPurpose = originalChildren.find(
+      (child): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordSpecialPurpose'
+    );
+    const pendingPower = originalChildren.find(
+      (child): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordSpecialPurposePower'
+    );
+    if (!pendingPurpose || !pendingPower) {
+      throw new Error('Expected both special purpose pending rolls');
+    }
+
+    const purposeContext =
+      pendingPurpose.context && typeof pendingPurpose.context === 'object'
+        ? (pendingPurpose.context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+            parentSlotKey?: unknown;
+            alignment?: unknown;
+          })
+        : {};
+    const powerContext =
+      pendingPower.context && typeof pendingPower.context === 'object'
+        ? (pendingPower.context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+            parentSlotKey?: unknown;
+            alignment?: unknown;
+          })
+        : {};
+
+    const resolvedPurpose = resolveTreasureSwordSpecialPurpose({
+      roll: 42,
+      slotKey:
+        typeof purposeContext.slotKey === 'string'
+          ? (purposeContext.slotKey as string)
+          : undefined,
+      rollIndex:
+        typeof purposeContext.rollIndex === 'number'
+          ? (purposeContext.rollIndex as number)
+          : undefined,
+      parentSlotKey:
+        typeof purposeContext.parentSlotKey === 'string'
+          ? (purposeContext.parentSlotKey as string)
+          : undefined,
+      alignment:
+        typeof purposeContext.alignment === 'number'
+          ? (purposeContext.alignment as TreasureSwordAlignment)
+          : undefined,
+    });
+
+    if (
+      resolvedPurpose.type !== 'event' ||
+      resolvedPurpose.event.kind !== 'treasureSwordSpecialPurpose'
+    ) {
+      throw new Error('Expected resolved special purpose event');
+    }
+
+    const purposeResult = resolvedPurpose.event
+      .result as TreasureSwordSpecialPurposeResult;
+
+    const resolvedPower = resolveTreasureSwordSpecialPurposePower({
+      roll: 11,
+      slotKey:
+        typeof powerContext.slotKey === 'string'
+          ? (powerContext.slotKey as string)
+          : undefined,
+      rollIndex:
+        typeof powerContext.rollIndex === 'number'
+          ? (powerContext.rollIndex as number)
+          : undefined,
+      parentSlotKey:
+        typeof powerContext.parentSlotKey === 'string'
+          ? (powerContext.parentSlotKey as string)
+          : purposeResult.parentSlotKey,
+      alignment:
+        typeof powerContext.alignment === 'number'
+          ? (powerContext.alignment as TreasureSwordAlignment)
+          : purposeResult.alignment,
+    });
+
+    if (
+      resolvedPower.type !== 'event' ||
+      resolvedPower.event.kind !== 'treasureSwordSpecialPurposePower'
+    ) {
+      throw new Error('Expected resolved special purpose power event');
+    }
+
+    const powerResult = resolvedPower.event
+      .result as TreasureSwordSpecialPurposePowerResult;
+
+    extraordinaryEvent.children = originalChildren.map((child) => {
+      if (child === pendingPurpose) return resolvedPurpose;
+      if (child === pendingPower) return resolvedPower;
+      return child;
+    });
+
+    const compactSummary = toCompactRender(swordNode)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text)
+      .join(' ');
+
+    expect(compactSummary).toContain(
+      'The character can choose 1 extraordinary power.'
+    );
+    expect(compactSummary).not.toContain('then roll for a special purpose');
+    expect(compactSummary).toContain(
+      `Its special purpose is to ${purposeResult.description}.`
+    );
+    expect(compactSummary).toContain(
+      `When that purpose activates, the sword can ${powerResult.description}.`
+    );
+  });
+
+  it('adapts slay good or evil purposes to the sword alignment', () => {
+    expect(
+      describeSwordSpecialPurpose(
+        TreasureSwordSpecialPurpose.SlayGoodOrEvil,
+        { alignment: TreasureSwordAlignment.ChaoticGood }
+      )
+    ).toBe('slay neutral or evil');
+
+    const goodAligned = resolveTreasureSwordSpecialPurpose({
+      roll: 70,
+      alignment: TreasureSwordAlignment.ChaoticGood,
+    });
+
+    if (goodAligned.type !== 'event') {
+      throw new Error('Expected event node for good alignment');
+    }
+    if (goodAligned.event.kind !== 'treasureSwordSpecialPurpose') {
+      throw new Error('Expected special purpose event');
+    }
+    expect(goodAligned.event.result.alignment).toBe(
+      TreasureSwordAlignment.ChaoticGood
+    );
+    expect(goodAligned.event.result.description).toBe(
+      'slay neutral or evil'
+    );
+
+    const evilAligned = resolveTreasureSwordSpecialPurpose({
+      roll: 70,
+      alignment: TreasureSwordAlignment.LawfulEvil,
+    });
+    if (evilAligned.type !== 'event') {
+      throw new Error('Expected event node for evil alignment');
+    }
+    if (evilAligned.event.kind !== 'treasureSwordSpecialPurpose') {
+      throw new Error('Expected special purpose event');
+    }
+    expect(evilAligned.event.result.description).toBe(
+      'slay good or neutral'
+    );
+
+    const neutralAligned = resolveTreasureSwordSpecialPurpose({
+      roll: 70,
+      alignment: TreasureSwordAlignment.NeutralAbsolute,
+    });
+    if (neutralAligned.type !== 'event') {
+      throw new Error('Expected event node for neutral alignment');
+    }
+    if (neutralAligned.event.kind !== 'treasureSwordSpecialPurpose') {
+      throw new Error('Expected special purpose event');
+    }
+    expect(neutralAligned.event.result.description).toBe(
+      'slay good or evil'
+    );
+  });
+
+  it('renders special purpose details with alignment-aware text', () => {
+    const purposeNode = resolveTreasureSwordSpecialPurpose({
+      roll: 4,
+      alignment: TreasureSwordAlignment.LawfulGood,
+    });
+
+    if (purposeNode.type !== 'event') {
+      throw new Error('Expected event node');
+    }
+
+    const nodes = renderDetailTree(purposeNode);
+    const paragraph = nodes.find(
+      (entry) => entry.kind === 'paragraph'
+    ) as { text?: string } | undefined;
+    expect(paragraph?.text).toContain('defeat/slay Chaotic Evil');
+  });
+
   it('adds extra abilities when 93-98 is rolled', () => {
-    let node = resolveTreasureSwords({
+    const node = resolveTreasureSwords({
       roll: 15,
       kindRoll: 5,
       unusualRoll: 78,

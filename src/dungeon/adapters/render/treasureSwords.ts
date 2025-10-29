@@ -19,12 +19,22 @@ import {
   describeSwordPrimaryAbility,
   treasureSwordExtraordinaryPower,
   treasureSwordExtraordinaryPowerRestricted,
+  treasureSwordSpecialPurpose,
+  treasureSwordSpecialPurposePower,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
+  TreasureSwordSpecialPurpose,
+  TreasureSwordSpecialPurposeCommand,
+  TreasureSwordSpecialPurposePower,
+  TreasureSwordSpecialPurposePowerCommand,
   describeSwordExtraordinaryPower,
+  describeSwordSpecialPurpose,
+  describeSwordSpecialPurposePower,
   type TreasureSwordUnusualResult,
   type TreasureSwordPrimaryAbilityResult,
   type TreasureSwordExtraordinaryPowerResult,
+  type TreasureSwordSpecialPurposeResult,
+  type TreasureSwordSpecialPurposePowerResult,
 } from '../../../tables/dungeon/treasureSwords';
 import {
   treasureSwordAlignment,
@@ -134,6 +144,9 @@ export function swordSentence(
           sentences.push(`The character can ${compact}.`);
         } else {
           sentences.push(`The sword has ${compact}.`);
+        }
+        if (summary.compactExtras && summary.compactExtras.length > 0) {
+          sentences.push(...summary.compactExtras);
         }
       } else {
         sentences.push(`The sword can ${summary.description}.`);
@@ -317,6 +330,7 @@ export function renderTreasureSwordUnusualDetail(
       ? alignmentEvent.event.result
       : undefined;
   const abilitySummaries = summarizePrimaryAbilities(outcome);
+  const specialPurposeOutcomes = gatherSpecialPurposeOutcomes(outcome);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -336,13 +350,38 @@ export function renderTreasureSwordUnusualDetail(
         : `abilities: ${abilityLabel}`
     );
   }
+  if (specialPurposeOutcomes.length > 0) {
+    const purposeLabel = specialPurposeOutcomes
+      .map(({ purpose, power }) => {
+        const alignmentValue =
+          purpose.alignment ?? alignmentResult?.alignment;
+        const purposeText = describeSwordSpecialPurpose(purpose.purpose, {
+          alignment: alignmentValue,
+        });
+        const powerText = power
+          ? describeSwordSpecialPurposePower(power.power)
+          : undefined;
+        return powerText ? `${purposeText} (${powerText})` : purposeText;
+      })
+      .join('; ');
+    bulletItems.push(
+      specialPurposeOutcomes.length === 1
+        ? `special purpose: ${purposeLabel}`
+        : `special purposes: ${purposeLabel}`
+    );
+  }
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: bulletItems,
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: swordUnusualDescription(result, alignmentResult, abilitySummaries),
+    text: swordUnusualDescription(
+      result,
+      alignmentResult,
+      abilitySummaries,
+      specialPurposeOutcomes
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -361,6 +400,7 @@ export function renderTreasureSwordUnusualCompact(
       ? alignmentEvent.event.result
       : undefined;
   const abilitySummaries = summarizePrimaryAbilities(outcome);
+  const specialPurposeOutcomes = gatherSpecialPurposeOutcomes(outcome);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -368,7 +408,12 @@ export function renderTreasureSwordUnusualCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: swordUnusualDescription(result, alignmentResult, abilitySummaries),
+    text: swordUnusualDescription(
+      result,
+      alignmentResult,
+      abilitySummaries,
+      specialPurposeOutcomes
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -395,6 +440,7 @@ export type PrimaryAbilitySummary = {
   description: string;
   extraordinaryPower?: TreasureSwordExtraordinaryPower;
   compactDescription: string;
+  compactExtras?: string[];
 };
 
 type AbilityResult = Extract<
@@ -406,6 +452,11 @@ type ExtraordinaryResult = Extract<
   TreasureSwordExtraordinaryPowerResult,
   { kind: 'power' }
 >;
+
+type SpecialPurposeOutcome = {
+  purpose: TreasureSwordSpecialPurposeResult;
+  power?: TreasureSwordSpecialPurposePowerResult;
+};
 
 function gatherPrimaryAbilityResults(node: OutcomeEventNode): AbilityResult[] {
   const collected: AbilityResult[] = [];
@@ -453,6 +504,87 @@ function gatherExtraordinaryPowerResults(
   return collected;
 }
 
+function gatherSpecialPurposeOutcomes(
+  node: OutcomeEventNode
+): SpecialPurposeOutcome[] {
+  const purposes: TreasureSwordSpecialPurposeResult[] = [];
+  const powerByParent = new Map<
+    string,
+    TreasureSwordSpecialPurposePowerResult[]
+  >();
+  const powerBySlot = new Map<
+    string,
+    TreasureSwordSpecialPurposePowerResult[]
+  >();
+  const stack: OutcomeEventNode[] = [node];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) continue;
+    if (current.event.kind === 'treasureSwordSpecialPurpose') {
+      purposes.push(
+        current.event.result as TreasureSwordSpecialPurposeResult
+      );
+    } else if (current.event.kind === 'treasureSwordSpecialPurposePower') {
+      const powerResult =
+        current.event.result as TreasureSwordSpecialPurposePowerResult;
+      const parentKey = powerResult.parentSlotKey;
+      if (parentKey) {
+        const bucket = powerByParent.get(parentKey) ?? [];
+        bucket.push(powerResult);
+        powerByParent.set(parentKey, bucket);
+      }
+      if (powerResult.slotKey) {
+        const bucket = powerBySlot.get(powerResult.slotKey) ?? [];
+        bucket.push(powerResult);
+        powerBySlot.set(powerResult.slotKey, bucket);
+      }
+    }
+    const children = current.children || [];
+    for (const child of children) {
+      if (child.type === 'event') {
+        stack.push(child);
+      }
+    }
+  }
+  const outcomes: SpecialPurposeOutcome[] = [];
+  for (const purpose of purposes) {
+    const parentKey =
+      purpose.parentSlotKey ?? deriveParentKeyFromSlot(purpose.slotKey);
+    const slotKey = purpose.slotKey;
+    let power: TreasureSwordSpecialPurposePowerResult | undefined;
+    if (parentKey) {
+      const bucket = powerByParent.get(parentKey);
+      if (bucket && bucket.length > 0) {
+        power = bucket.shift();
+        if (bucket.length === 0) {
+          powerByParent.delete(parentKey);
+        } else {
+          powerByParent.set(parentKey, bucket);
+        }
+      }
+    }
+    if (!power && slotKey) {
+      const bucket = powerBySlot.get(slotKey);
+      if (bucket && bucket.length > 0) {
+        power = bucket.shift();
+        if (bucket.length === 0) {
+          powerBySlot.delete(slotKey);
+        } else {
+          powerBySlot.set(slotKey, bucket);
+        }
+      }
+    }
+    outcomes.push({ purpose, power });
+  }
+  return outcomes;
+}
+
+function deriveParentKeyFromSlot(slotKey?: string): string | undefined {
+  if (!slotKey) return undefined;
+  const idx = slotKey.lastIndexOf(':');
+  return idx === -1 ? slotKey : slotKey.slice(0, idx);
+}
+
 function compactExtraordinaryDescription(
   power: TreasureSwordExtraordinaryPower,
   multiplier: number
@@ -466,9 +598,9 @@ function compactExtraordinaryDescription(
     case TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose: {
       const base =
         count === 1
-          ? 'choose 1 extraordinary power and then roll for a special purpose'
-          : `choose ${count} extraordinary powers and then roll for a special purpose`;
-      return `${base} (special purpose tables pending)`;
+          ? 'choose 1 extraordinary power, then roll for a special purpose and power'
+          : `choose ${count} extraordinary powers, then roll for a special purpose and power for each`;
+      return base;
     }
     default:
       return describeSwordExtraordinaryPower(power, count);
@@ -480,6 +612,7 @@ export function summarizePrimaryAbilities(
 ): PrimaryAbilitySummary[] {
   const abilityResults = gatherPrimaryAbilityResults(node);
   const extraordinaryResults = gatherExtraordinaryPowerResults(node);
+  const specialPurposeOutcomes = gatherSpecialPurposeOutcomes(node);
   if (abilityResults.length === 0 && extraordinaryResults.length === 0) {
     return [];
   }
@@ -527,12 +660,43 @@ export function summarizePrimaryAbilities(
         : counts.get(`extra:${key.power}`);
     const count = stored?.count ?? 1;
     if (key.kind === 'extra') {
+      let compactDescription = compactExtraordinaryDescription(key.power, count);
+      let compactExtras: string[] | undefined;
+      if (
+        key.power ===
+          TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose &&
+        specialPurposeOutcomes.length > 0
+      ) {
+        compactDescription =
+          count === 1
+            ? 'choose 1 extraordinary power'
+            : `choose ${count} extraordinary powers`;
+        const extras: string[] = [];
+        specialPurposeOutcomes.forEach(({ purpose, power }, index) => {
+          const purposeText = describeSwordSpecialPurpose(purpose.purpose, {
+            alignment: purpose.alignment,
+          });
+          const prefix =
+            index === 0
+              ? 'Its special purpose is to'
+              : 'Another special purpose is to';
+          extras.push(`${prefix} ${purposeText}.`);
+          if (power) {
+            const powerText = describeSwordSpecialPurposePower(power.power);
+            extras.push(`When that purpose activates, the sword can ${powerText}.`);
+          }
+        });
+        if (extras.length > 0) {
+          compactExtras = extras;
+        }
+      }
       return {
         ability: TreasureSwordPrimaryAbility.ExtraordinaryPower,
         count,
         description: describeSwordExtraordinaryPower(key.power, count),
         extraordinaryPower: key.power,
-        compactDescription: compactExtraordinaryDescription(key.power, count),
+        compactDescription,
+        compactExtras,
       };
     }
     return {
@@ -573,7 +737,7 @@ function extraordinaryPowerPreviewLabel(
     case TreasureSwordExtraordinaryPowerCommand.ChooseAny:
       return 'Choose one power from this table';
     case TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose:
-      return 'Choose one power, then roll for a special purpose';
+      return 'Choose one power, then roll for a special purpose and power';
     default: {
       const power = command as unknown as TreasureSwordExtraordinaryPower;
       return describeSwordExtraordinaryPower(power, 1);
@@ -706,6 +870,14 @@ export function renderTreasureSwordExtraordinaryPowerDetail(
     kind: 'bullet-list',
     items: [rollItem, `effect: ${result.description}`],
   };
+  if (
+    result.power === TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose &&
+    result.alignmentRequired
+  ) {
+    bullet.items.push(
+      'Roll the sword\'s alignment before determining the special purpose.'
+    );
+  }
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
     text: `The sword can ${result.description}.`,
@@ -744,7 +916,13 @@ export function renderTreasureSwordExtraordinaryPowerCompact(
         ? `The character can ${compactExtraordinaryDescription(
             result.power,
             result.multiplier ?? 1
-          )}.`
+          )}${
+            result.power ===
+              TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose &&
+            result.alignmentRequired
+              ? ' (roll the sword alignment before determining the special purpose)'
+              : ''
+          }.`
         : `The sword has ${compactExtraordinaryDescription(
             result.power,
             result.multiplier ?? 1
@@ -776,6 +954,163 @@ export const buildTreasureSwordExtraordinaryPowerPreview: TablePreviewFactory = 
     context,
   });
 
+function specialPurposePreviewLabel(
+  command: TreasureSwordSpecialPurposeCommand,
+  alignment?: TreasureSwordAlignment
+): string {
+  const purpose = command as unknown as TreasureSwordSpecialPurpose;
+  return describeSwordSpecialPurpose(purpose, { alignment });
+}
+
+function specialPurposePowerPreviewLabel(
+  command: TreasureSwordSpecialPurposePowerCommand
+): string {
+  const power = command as unknown as TreasureSwordSpecialPurposePower;
+  return describeSwordSpecialPurposePower(power);
+}
+
+export function renderTreasureSwordSpecialPurposeDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureSwordSpecialPurpose') return [];
+  const result = outcome.event.result as TreasureSwordSpecialPurposeResult;
+  const description = describeSwordSpecialPurpose(result.purpose, {
+    alignment: result.alignment,
+  });
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Special Purpose',
+  };
+  const rollItem =
+    result.rolls.length === 1
+      ? `roll: ${result.rolls[0]}`
+      : `rolls: ${result.rolls.join(', ')}`;
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [rollItem, `purpose: ${description}`],
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: `The sword's special purpose is to ${description}.`,
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureSwordSpecialPurposeCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureSwordSpecialPurpose') return [];
+  const result = outcome.event.result as TreasureSwordSpecialPurposeResult;
+  const description = describeSwordSpecialPurpose(result.purpose, {
+    alignment: result.alignment,
+  });
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Special Purpose',
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: `The sword's special purpose is to ${description}.`,
+  };
+  const nodes: DungeonRenderNode[] = [heading, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureSwordSpecialPurposePowerDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureSwordSpecialPurposePower') return [];
+  const result =
+    outcome.event.result as TreasureSwordSpecialPurposePowerResult;
+  const description = describeSwordSpecialPurposePower(result.power);
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Special Purpose Power',
+  };
+  const rollItem =
+    result.rolls.length === 1
+      ? `roll: ${result.rolls[0]}`
+      : `rolls: ${result.rolls.join(', ')}`;
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [rollItem, `effect: ${description}`],
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: `When the special purpose triggers, the sword can ${description}.`,
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureSwordSpecialPurposePowerCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureSwordSpecialPurposePower') return [];
+  const result =
+    outcome.event.result as TreasureSwordSpecialPurposePowerResult;
+  const description = describeSwordSpecialPurposePower(result.power);
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Special Purpose Power',
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: `When triggered, the sword can ${description}.`,
+  };
+  const nodes: DungeonRenderNode[] = [heading, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTreasureSwordSpecialPurposePreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
+  buildPreview(tableId, {
+    title: 'Sword Special Purpose',
+    sides: treasureSwordSpecialPurpose.sides,
+    entries: treasureSwordSpecialPurpose.entries.map(({ range, command }) => {
+      const alignment =
+        context && context.kind === 'treasureSwordSpecialPurpose'
+          ? context.alignment
+          : context && context.kind === 'treasureSwordExtraordinaryPower'
+          ? context.alignment
+          : undefined;
+      return {
+        range,
+        label: specialPurposePreviewLabel(command, alignment),
+      };
+    }),
+    context,
+  });
+
+export const buildTreasureSwordSpecialPurposePowerPreview: TablePreviewFactory =
+  (tableId, context) =>
+    buildPreview(tableId, {
+      title: 'Special Purpose Power',
+      sides: treasureSwordSpecialPurposePower.sides,
+      entries: treasureSwordSpecialPurposePower.entries.map(
+        ({ range, command }) => ({
+          range,
+          label: specialPurposePowerPreviewLabel(command),
+        })
+      ),
+      context,
+    });
+
 function findSwordAlignmentEvent(
   node: OutcomeEventNode
 ): OutcomeEventNode | undefined {
@@ -794,7 +1129,8 @@ function findSwordAlignmentEvent(
 function swordUnusualDescription(
   result: TreasureSwordUnusualResult,
   alignment: TreasureSwordAlignmentResult | undefined,
-  abilitySummaries: PrimaryAbilitySummary[] = []
+  abilitySummaries: PrimaryAbilitySummary[] = [],
+  specialPurposes: SpecialPurposeOutcome[] = []
 ): string {
   if (result.category === 'normal') {
     return 'The sword has no unusual intelligence or additional capabilities.';
@@ -814,6 +1150,20 @@ function swordUnusualDescription(
   for (const ability of abilitySummaries) {
     segments.push(`The sword can ${ability.description}.`);
   }
+
+  specialPurposes.forEach(({ purpose, power }, index) => {
+    const alignmentValue = purpose.alignment ?? alignment?.alignment;
+    const purposeText = describeSwordSpecialPurpose(purpose.purpose, {
+      alignment: alignmentValue,
+    });
+    const prefix =
+      index === 0 ? 'Its special purpose is to' : 'Another special purpose is to';
+    segments.push(`${prefix} ${purposeText}.`);
+    if (power) {
+      const powerText = describeSwordSpecialPurposePower(power.power);
+      segments.push(`In pursuit of that goal, it can ${powerText}.`);
+    }
+  });
 
   let mentionedLanguages = false;
 

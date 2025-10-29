@@ -4,6 +4,7 @@ import type {
 } from '../dungeon/domain/outcome';
 import type { ChamberRoomContents } from '../tables/dungeon/chamberRoomContents';
 import type { TreasureSword } from '../tables/dungeon/treasureSwords';
+import type { TreasureSwordAlignment } from '../tables/dungeon/treasureSwordAlignment';
 import type { PartySummary } from '../dungeon/helpers/party/formatPartyResult';
 
 export type DungeonAction = 'passage' | 'door';
@@ -204,6 +205,22 @@ export type TableContext =
       rollIndex?: number;
       tableVariant?: 'standard' | 'restricted';
       ignoreHigh?: boolean;
+      alignment?: TreasureSwordAlignment;
+    }
+  | {
+      kind: 'treasureSwordSpecialPurpose';
+      slotKey?: string;
+      rollIndex?: number;
+      parentSlotKey?: string;
+      alignment?: TreasureSwordAlignment;
+      alignmentReady?: boolean;
+    }
+  | {
+      kind: 'treasureSwordSpecialPurposePower';
+      slotKey?: string;
+      rollIndex?: number;
+      parentSlotKey?: string;
+      alignment?: TreasureSwordAlignment;
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

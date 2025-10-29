@@ -180,9 +180,15 @@ import {
   describeSwordPrimaryAbility,
   treasureSwordExtraordinaryPower,
   treasureSwordExtraordinaryPowerRestricted,
+  treasureSwordSpecialPurpose,
+  treasureSwordSpecialPurposePower,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
+  TreasureSwordSpecialPurpose,
+  TreasureSwordSpecialPurposePower,
   describeSwordExtraordinaryPower,
+  describeSwordSpecialPurpose,
+  describeSwordSpecialPurposePower,
 } from '../../tables/dungeon/treasureSwords';
 import type {
   TreasureSwordKind,
@@ -190,6 +196,8 @@ import type {
   TreasureSwordUnusualResult,
   TreasureSwordPrimaryAbilityResult,
   TreasureSwordExtraordinaryPowerResult,
+  TreasureSwordSpecialPurposeResult,
+  TreasureSwordSpecialPurposePowerResult,
 } from '../../tables/dungeon/treasureSwords';
 import {
   treasureMiscWeapons,
@@ -2982,6 +2990,7 @@ export function resolveTreasureSwordExtraordinaryPower(options?: {
   rollIndex?: number;
   slotKey?: string;
   tableVariant?: 'standard' | 'restricted';
+  alignment?: TreasureSwordAlignment;
 }): DungeonOutcomeNode {
   const rollIndex = options?.rollIndex;
   const slotKey =
@@ -3032,11 +3041,13 @@ export function resolveTreasureSwordExtraordinaryPower(options?: {
           slotKey: `${slotKey}:a`,
           rollIndex,
           tableVariant: 'restricted',
+          alignment: options?.alignment,
         }),
         buildSwordExtraordinaryPowerPending({
           slotKey: `${slotKey}:b`,
           rollIndex,
           tableVariant: 'restricted',
+          alignment: options?.alignment,
         }),
       ],
     };
@@ -3057,7 +3068,34 @@ export function resolveTreasureSwordExtraordinaryPower(options?: {
     multiplier: 1,
     description: describeSwordExtraordinaryPower(power, 1),
     tableVariant: variant,
+    alignmentRequired:
+      power === TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose &&
+      options?.alignment === undefined
+        ? true
+        : undefined,
   };
+  const children: DungeonOutcomeNode[] = [];
+  if (power === TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose) {
+    const parentSlotKey = slotKey;
+    const purposeSlotKey = `${slotKey}:purpose`;
+    const powerSlotKey = `${slotKey}:power`;
+    children.push(
+      buildSwordSpecialPurposePending({
+        slotKey: purposeSlotKey,
+        parentSlotKey,
+        rollIndex,
+        alignment: options?.alignment,
+      })
+    );
+    children.push(
+      buildSwordSpecialPurposePowerPending({
+        slotKey: powerSlotKey,
+        rollIndex,
+        parentSlotKey,
+        alignment: options?.alignment,
+      })
+    );
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -3066,6 +3104,7 @@ export function resolveTreasureSwordExtraordinaryPower(options?: {
       kind: 'treasureSwordExtraordinaryPower',
       result,
     } as OutcomeEvent,
+    children: children.length > 0 ? children : undefined,
   };
 }
 
@@ -3073,8 +3112,9 @@ function buildSwordExtraordinaryPowerPending(options: {
   slotKey: string;
   rollIndex?: number;
   tableVariant?: 'standard' | 'restricted';
+  alignment?: TreasureSwordAlignment;
 }): PendingRoll {
-  const { slotKey, rollIndex, tableVariant } = options;
+  const { slotKey, rollIndex, tableVariant, alignment } = options;
   const variant = tableVariant ?? 'standard';
   const tableName =
     variant === 'restricted'
@@ -3089,6 +3129,7 @@ function buildSwordExtraordinaryPowerPending(options: {
       slotKey,
       rollIndex,
       tableVariant: variant,
+      alignment,
     },
   };
 }
@@ -3100,6 +3141,178 @@ function extraordinaryPowerNodeId(
   return rollIndex !== undefined
     ? `treasureSwordExtraordinaryPower:${rollIndex}:${slotKey}`
     : `treasureSwordExtraordinaryPower:${slotKey}`;
+}
+
+export function resolveTreasureSwordSpecialPurpose(options?: {
+  roll?: number;
+  slotKey?: string;
+  rollIndex?: number;
+  parentSlotKey?: string;
+  alignment?: TreasureSwordAlignment;
+}): DungeonOutcomeNode {
+  const slotKey =
+    options?.slotKey ?? `purpose-${Math.random().toString(36).slice(2)}`;
+  const parentSlotKey = options?.parentSlotKey;
+  const alignment = options?.alignment;
+  const resolveRoll = (): number => {
+    if (options?.roll !== undefined) {
+      const provided = Math.trunc(options.roll);
+      if (!Number.isFinite(provided) || provided < 1) {
+        return 1;
+      }
+      if (provided > treasureSwordSpecialPurpose.sides) {
+        return treasureSwordSpecialPurpose.sides;
+      }
+      return provided;
+    }
+    return rollDice(treasureSwordSpecialPurpose.sides);
+  };
+  const usedRoll = resolveRoll();
+  const command = getTableEntry(usedRoll, treasureSwordSpecialPurpose);
+  const purpose =
+    command as unknown as TreasureSwordSpecialPurpose;
+  const result: TreasureSwordSpecialPurposeResult = {
+    kind: 'purpose',
+    purpose,
+    rolls: [usedRoll],
+    description: describeSwordSpecialPurpose(purpose, {
+      alignment,
+    }),
+    alignment,
+    slotKey,
+    parentSlotKey,
+  };
+  const node: OutcomeEventNode = {
+    type: 'event',
+    roll: usedRoll,
+    id: specialPurposeNodeId(slotKey, options?.rollIndex),
+    event: {
+      kind: 'treasureSwordSpecialPurpose',
+      result,
+    } as OutcomeEvent,
+  };
+  if (!parentSlotKey) {
+    node.children = [
+      buildSwordSpecialPurposePowerPending({
+        slotKey: `${slotKey}:power`,
+        rollIndex: options?.rollIndex,
+        parentSlotKey: slotKey,
+        alignment,
+      }),
+    ];
+  }
+  return node;
+}
+
+export function resolveTreasureSwordSpecialPurposePower(options?: {
+  roll?: number;
+  slotKey?: string;
+  rollIndex?: number;
+  parentSlotKey?: string;
+  alignment?: TreasureSwordAlignment;
+}): DungeonOutcomeNode {
+  const slotKey =
+    options?.slotKey ??
+    `purpose-power-${Math.random().toString(36).slice(2)}`;
+  const resolveRoll = (): number => {
+    if (options?.roll !== undefined) {
+      const provided = Math.trunc(options.roll);
+      if (!Number.isFinite(provided) || provided < 1) {
+        return 1;
+      }
+      if (provided > treasureSwordSpecialPurposePower.sides) {
+        return treasureSwordSpecialPurposePower.sides;
+      }
+      return provided;
+    }
+    return rollDice(treasureSwordSpecialPurposePower.sides);
+  };
+  const usedRoll = resolveRoll();
+  const command = getTableEntry(
+    usedRoll,
+    treasureSwordSpecialPurposePower
+  );
+  const power =
+    command as unknown as TreasureSwordSpecialPurposePower;
+  const result: TreasureSwordSpecialPurposePowerResult = {
+    kind: 'specialPurposePower',
+    power,
+    rolls: [usedRoll],
+    description: describeSwordSpecialPurposePower(power),
+    slotKey,
+    parentSlotKey: options?.parentSlotKey,
+  };
+  return {
+    type: 'event',
+    roll: usedRoll,
+    id: specialPurposePowerNodeId(slotKey, options?.rollIndex),
+    event: {
+      kind: 'treasureSwordSpecialPurposePower',
+      result,
+    } as OutcomeEvent,
+  };
+}
+
+function buildSwordSpecialPurposePending(options: {
+  slotKey: string;
+  rollIndex?: number;
+  parentSlotKey?: string;
+  alignment?: TreasureSwordAlignment;
+}): PendingRoll {
+  const { slotKey, rollIndex, parentSlotKey, alignment } = options;
+  const alignmentReady = alignment !== undefined;
+  return {
+    type: 'pending-roll',
+    table: 'treasureSwordSpecialPurpose',
+    id: specialPurposeNodeId(slotKey, rollIndex),
+    context: {
+      kind: 'treasureSwordSpecialPurpose',
+      slotKey,
+      rollIndex,
+      parentSlotKey,
+      alignment,
+      alignmentReady,
+    },
+  };
+}
+
+function buildSwordSpecialPurposePowerPending(options: {
+  slotKey: string;
+  rollIndex?: number;
+  parentSlotKey?: string;
+  alignment?: TreasureSwordAlignment;
+}): PendingRoll {
+  const { slotKey, rollIndex, parentSlotKey, alignment } = options;
+  return {
+    type: 'pending-roll',
+    table: 'treasureSwordSpecialPurposePower',
+    id: specialPurposePowerNodeId(slotKey, rollIndex),
+    context: {
+      kind: 'treasureSwordSpecialPurposePower',
+      slotKey,
+      rollIndex,
+      parentSlotKey,
+      alignment,
+    },
+  };
+}
+
+function specialPurposeNodeId(
+  slotKey: string,
+  rollIndex?: number
+): string {
+  return rollIndex !== undefined
+    ? `treasureSwordSpecialPurpose:${rollIndex}:${slotKey}`
+    : `treasureSwordSpecialPurpose:${slotKey}`;
+}
+
+function specialPurposePowerNodeId(
+  slotKey: string,
+  rollIndex?: number
+): string {
+  return rollIndex !== undefined
+    ? `treasureSwordSpecialPurposePower:${rollIndex}:${slotKey}`
+    : `treasureSwordSpecialPurposePower:${slotKey}`;
 }
 
 type SwordAlignmentVariant = 'standard' | 'chaotic' | 'lawful';

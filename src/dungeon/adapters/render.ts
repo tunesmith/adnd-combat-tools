@@ -9,6 +9,7 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
+import type { TreasureSwordAlignment } from '../../tables/dungeon/treasureSwordAlignment';
 import {
   renderPeriodicCheckDetail,
   renderPeriodicCheckCompact,
@@ -390,6 +391,12 @@ import {
   renderTreasureSwordExtraordinaryPowerDetail,
   renderTreasureSwordExtraordinaryPowerCompact,
   buildTreasureSwordExtraordinaryPowerPreview,
+  renderTreasureSwordSpecialPurposeDetail,
+  renderTreasureSwordSpecialPurposeCompact,
+  renderTreasureSwordSpecialPurposePowerDetail,
+  renderTreasureSwordSpecialPurposePowerCompact,
+  buildTreasureSwordSpecialPurposePreview,
+  buildTreasureSwordSpecialPurposePowerPreview,
   renderTreasureSwordAlignmentDetail,
   renderTreasureSwordAlignmentCompact,
   buildTreasureSwordAlignmentPreview,
@@ -815,6 +822,14 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureSwordExtraordinaryPowerDetail,
     renderCompact: renderTreasureSwordExtraordinaryPowerCompact,
   },
+  treasureSwordSpecialPurpose: {
+    renderDetail: renderTreasureSwordSpecialPurposeDetail,
+    renderCompact: renderTreasureSwordSpecialPurposeCompact,
+  },
+  treasureSwordSpecialPurposePower: {
+    renderDetail: renderTreasureSwordSpecialPurposePowerDetail,
+    renderCompact: renderTreasureSwordSpecialPurposePowerCompact,
+  },
   treasureSwordAlignment: {
     renderDetail: renderTreasureSwordAlignmentDetail,
     renderCompact: renderTreasureSwordAlignmentCompact,
@@ -1072,6 +1087,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureSwordPrimaryAbilityRestricted: buildTreasureSwordPrimaryAbilityPreview,
   treasureSwordExtraordinaryPower: buildTreasureSwordExtraordinaryPowerPreview,
   treasureSwordExtraordinaryPowerRestricted: buildTreasureSwordExtraordinaryPowerPreview,
+  treasureSwordSpecialPurpose: buildTreasureSwordSpecialPurposePreview,
+  treasureSwordSpecialPurposePower: buildTreasureSwordSpecialPurposePowerPreview,
   treasureSwordAlignment: buildTreasureSwordAlignmentPreview,
   treasureSwordAlignmentChaotic: buildTreasureSwordAlignmentChaoticPreview,
   treasureSwordAlignmentLawful: buildTreasureSwordAlignmentLawfulPreview,
@@ -1515,6 +1532,40 @@ function previewForEventNode(
       }
       break;
     }
+    case 'treasureSwordSpecialPurpose': {
+      tableId = 'treasureSwordSpecialPurpose';
+      const info = parseNodeContextFromId(
+        node.id,
+        'treasureSwordSpecialPurpose:'
+      );
+      const alignment =
+        event.result && typeof event.result === 'object'
+          ? ((event.result as { alignment?: TreasureSwordAlignment })
+              .alignment as TreasureSwordAlignment | undefined)
+          : undefined;
+      context = {
+        kind: 'treasureSwordSpecialPurpose',
+        slotKey: info.slotKey,
+        rollIndex: info.rollIndex,
+        alignment,
+      };
+      autoCollapse = true;
+      break;
+    }
+    case 'treasureSwordSpecialPurposePower': {
+      tableId = 'treasureSwordSpecialPurposePower';
+      const info = parseNodeContextFromId(
+        node.id,
+        'treasureSwordSpecialPurposePower:'
+      );
+      context = {
+        kind: 'treasureSwordSpecialPurposePower',
+        slotKey: info.slotKey,
+        rollIndex: info.rollIndex,
+      };
+      autoCollapse = true;
+      break;
+    }
     case 'treasureSwordAlignment': {
       const alignmentSource = event.result.source;
       if (alignmentSource === 'fixed') {
@@ -1934,6 +1985,18 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   const factory = PENDING_PREVIEW_FACTORIES[base];
   if (!factory) return undefined;
   const context = isTableContext(p.context) ? p.context : undefined;
+  if (context) {
+    const alignmentMissing =
+      (base === 'treasureSwordSpecialPurpose' &&
+        context.kind === 'treasureSwordSpecialPurpose' &&
+        (context.alignment === undefined || context.alignmentReady === false)) ||
+      (base === 'treasureSwordSpecialPurposePower' &&
+        context.kind === 'treasureSwordSpecialPurposePower' &&
+        context.alignment === undefined);
+    if (alignmentMissing) {
+      return undefined;
+    }
+  }
   return factory(p.table, context);
 }
 

@@ -4,6 +4,7 @@ import {
   countPendingNodes,
   normalizeOutcomeTree,
   resolveOutcomeNode,
+  propagateSwordAlignmentInfo,
 } from './outcomeTree';
 import { renderDetailTree, toCompactRender } from '../adapters/render';
 
@@ -23,16 +24,18 @@ export function createOutcomeRenderSnapshot(
 ): OutcomeRenderSnapshot | undefined {
   if (!outcome) return undefined;
   const normalized = normalizeOutcomeTree(outcome);
-  if (normalized.type !== 'event') return undefined;
-  const normalizedEvent: OutcomeEventNode = normalized;
+  const propagated = propagateSwordAlignmentInfo(normalized);
+  if (propagated.type !== 'event') return undefined;
+  const normalizedEvent: OutcomeEventNode = propagated;
   const detail = renderDetailTree(normalizedEvent);
   const resolved =
     options?.autoResolve ?? false
       ? resolveOutcomeNode(normalizedEvent) ?? normalizedEvent
       : normalizedEvent;
   const compactOutcome = normalizeOutcomeTree(resolved, normalizedEvent.id);
-  if (compactOutcome.type !== 'event') return undefined;
-  const compactEvent: OutcomeEventNode = compactOutcome;
+  const compactPropagated = propagateSwordAlignmentInfo(compactOutcome);
+  if (compactPropagated.type !== 'event') return undefined;
+  const compactEvent: OutcomeEventNode = compactPropagated;
   const detailResolved = renderDetailTree(compactEvent);
   const compact = toCompactRender(compactEvent);
   return {
