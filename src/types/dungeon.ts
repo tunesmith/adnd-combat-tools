@@ -186,6 +186,7 @@ export type TableContext =
       sword: TreasureSword;
       rollIndex?: number;
       languageRolls?: number[];
+      dragonSlayerColorRoll?: number;
       luckBladeWishes?: number;
     }
   | {
@@ -222,6 +223,11 @@ export type TableContext =
       rollIndex?: number;
       parentSlotKey?: string;
       alignment?: TreasureSwordAlignment;
+    }
+  | {
+      kind: 'treasureSwordDragonSlayerColor';
+      slotKey?: string;
+      rollIndex?: number;
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

@@ -33,6 +33,19 @@ export enum TreasureSword {
   SwordCursedBerserking,
 }
 
+export enum TreasureSwordDragonSlayerColor {
+  Black,
+  Blue,
+  Brass,
+  Bronze,
+  Copper,
+  Gold,
+  Green,
+  Red,
+  Silver,
+  White,
+}
+
 export enum TreasureSwordKind {
   Longsword,
   Broadsword,
@@ -246,6 +259,11 @@ export type TreasureSwordUnusualResult = SwordUnusualDetails & {
   languagesKnown?: number;
 };
 
+export type DragonSlayerColorDetail = {
+  label: string;
+  alignment: TreasureSwordAlignment;
+};
+
 export const SWORD_UNUSUAL_DETAILS: Record<
   TreasureSwordUnusual,
   SwordUnusualDetails
@@ -327,6 +345,52 @@ export const SWORD_UNUSUAL_DETAILS: Record<
   },
 };
 
+export const DRAGON_SLAYER_COLOR_DETAILS: Record<
+  TreasureSwordDragonSlayerColor,
+  DragonSlayerColorDetail
+> = {
+  [TreasureSwordDragonSlayerColor.Black]: {
+    label: 'Black',
+    alignment: TreasureSwordAlignment.ChaoticEvil,
+  },
+  [TreasureSwordDragonSlayerColor.Blue]: {
+    label: 'Blue',
+    alignment: TreasureSwordAlignment.LawfulEvil,
+  },
+  [TreasureSwordDragonSlayerColor.Brass]: {
+    label: 'Brass',
+    alignment: TreasureSwordAlignment.ChaoticGood,
+  },
+  [TreasureSwordDragonSlayerColor.Bronze]: {
+    label: 'Bronze',
+    alignment: TreasureSwordAlignment.LawfulGood,
+  },
+  [TreasureSwordDragonSlayerColor.Copper]: {
+    label: 'Copper',
+    alignment: TreasureSwordAlignment.ChaoticGood,
+  },
+  [TreasureSwordDragonSlayerColor.Gold]: {
+    label: 'Gold',
+    alignment: TreasureSwordAlignment.LawfulGood,
+  },
+  [TreasureSwordDragonSlayerColor.Green]: {
+    label: 'Green',
+    alignment: TreasureSwordAlignment.LawfulEvil,
+  },
+  [TreasureSwordDragonSlayerColor.Red]: {
+    label: 'Red',
+    alignment: TreasureSwordAlignment.ChaoticEvil,
+  },
+  [TreasureSwordDragonSlayerColor.Silver]: {
+    label: 'Silver',
+    alignment: TreasureSwordAlignment.LawfulGood,
+  },
+  [TreasureSwordDragonSlayerColor.White]: {
+    label: 'White',
+    alignment: TreasureSwordAlignment.ChaoticEvil,
+  },
+};
+
 export const treasureSwordPrimaryAbility: Table<TreasureSwordPrimaryAbilityCommand> =
   {
     sides: 100,
@@ -379,6 +443,23 @@ export const treasureSwordPrimaryAbility: Table<TreasureSwordPrimaryAbilityComma
         range: [99, 100],
         command: TreasureSwordPrimaryAbilityCommand.ExtraordinaryPower,
       },
+    ],
+  };
+
+export const treasureSwordDragonSlayerColor: Table<TreasureSwordDragonSlayerColor> =
+  {
+    sides: 10,
+    entries: [
+      { range: [1], command: TreasureSwordDragonSlayerColor.Black },
+      { range: [2], command: TreasureSwordDragonSlayerColor.Blue },
+      { range: [3], command: TreasureSwordDragonSlayerColor.Brass },
+      { range: [4], command: TreasureSwordDragonSlayerColor.Bronze },
+      { range: [5], command: TreasureSwordDragonSlayerColor.Copper },
+      { range: [6], command: TreasureSwordDragonSlayerColor.Gold },
+      { range: [7], command: TreasureSwordDragonSlayerColor.Green },
+      { range: [8], command: TreasureSwordDragonSlayerColor.Red },
+      { range: [9], command: TreasureSwordDragonSlayerColor.Silver },
+      { range: [10], command: TreasureSwordDragonSlayerColor.White },
     ],
   };
 
@@ -636,6 +717,14 @@ export type TreasureSwordSpecialPurposePowerResult = {
   description: string;
   slotKey?: string;
   parentSlotKey?: string;
+};
+
+export type TreasureSwordDragonSlayerColorResult = {
+  kind: 'dragonSlayerColor';
+  color: TreasureSwordDragonSlayerColor;
+  rolls: number[];
+  label: string;
+  alignment: TreasureSwordAlignment;
 };
 
 export const SWORD_PRIMARY_ABILITY_DETAILS: Record<
@@ -990,4 +1079,10 @@ export function describeSwordSpecialPurposePower(
     default:
       return '';
   }
+}
+
+export function describeDragonSlayerColor(
+  color: TreasureSwordDragonSlayerColor
+): string {
+  return DRAGON_SLAYER_COLOR_DETAILS[color].label;
 }

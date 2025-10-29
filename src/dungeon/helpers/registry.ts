@@ -138,6 +138,7 @@ import {
   resolveTreasureSwordExtraordinaryPower,
   resolveTreasureSwordSpecialPurpose,
   resolveTreasureSwordSpecialPurposePower,
+  resolveTreasureSwordDragonSlayerColor,
   resolveTreasureMiscWeapons,
 } from '../domain/resolvers';
 import { renderDetailTree } from '../adapters/render';
@@ -260,6 +261,7 @@ const TABLE_ID_LIST = [
   'treasureSwordPrimaryAbilityRestricted',
   'treasureSwordExtraordinaryPower',
   'treasureSwordExtraordinaryPowerRestricted',
+  'treasureSwordDragonSlayerColor',
   'treasureSwordSpecialPurpose',
   'treasureSwordSpecialPurposePower',
   'treasureSwordAlignment',
@@ -400,6 +402,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   treasureSwordPrimaryAbilityRestricted: 'Primary Ability (01-92)',
   treasureSwordExtraordinaryPower: 'Extraordinary Power',
   treasureSwordExtraordinaryPowerRestricted: 'Extraordinary Power (01-97)',
+  treasureSwordDragonSlayerColor: 'Dragon Slayer Target',
   treasureSwordSpecialPurpose: 'Sword Special Purpose',
   treasureSwordSpecialPurposePower: 'Sword Special Purpose Power',
   treasureSwordAlignment: 'Sword Alignment',
@@ -971,12 +974,16 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     let rollIndex: number | undefined;
     let languageRolls: number[] | undefined;
     let primaryAbilityRolls: number[] | undefined;
+    let extraordinaryPowerRolls: number[] | undefined;
+    let dragonSlayerColorRoll: number | undefined;
     if (context && typeof context === 'object') {
       const candidate = context as {
         sword?: unknown;
         rollIndex?: unknown;
         languageRolls?: unknown;
         primaryAbilityRolls?: unknown;
+        extraordinaryPowerRolls?: unknown;
+        dragonSlayerColorRoll?: unknown;
       };
       if (typeof candidate.sword === 'number') {
         sword = candidate.sword as TreasureSword;
@@ -990,6 +997,12 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       if (Array.isArray(candidate.primaryAbilityRolls)) {
         primaryAbilityRolls = [...candidate.primaryAbilityRolls];
       }
+      if (Array.isArray(candidate.extraordinaryPowerRolls)) {
+        extraordinaryPowerRolls = [...candidate.extraordinaryPowerRolls];
+      }
+      if (typeof candidate.dragonSlayerColorRoll === 'number') {
+        dragonSlayerColorRoll = candidate.dragonSlayerColorRoll;
+      }
     }
     return fromOutcome(
       resolveTreasureSwordUnusual({
@@ -998,6 +1011,8 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
         rollIndex,
         languageRolls,
         primaryAbilityRolls,
+        extraordinaryPowerRolls,
+        dragonSlayerColorRoll,
       })
     );
   },
@@ -1110,6 +1125,23 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
         rollIndex,
         tableVariant: 'restricted',
         alignment,
+      })
+    );
+  },
+  treasureSwordDragonSlayerColor: ({ roll, context }) => {
+    const parsed =
+      context && typeof context === 'object'
+        ? (context as { slotKey?: unknown; rollIndex?: unknown })
+        : {};
+    const slotKey =
+      typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
+    const rollIndex =
+      typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    return fromOutcome(
+      resolveTreasureSwordDragonSlayerColor({
+        roll,
+        slotKey,
+        rollIndex,
       })
     );
   },
@@ -1400,7 +1432,8 @@ function resolvePendingTargetId(
   if (exactMatch) return requestedId;
   if (
     base !== 'treasureSwordSpecialPurpose' &&
-    base !== 'treasureSwordSpecialPurposePower'
+    base !== 'treasureSwordSpecialPurposePower' &&
+    base !== 'treasureSwordDragonSlayerColor'
   ) {
     return requestedId;
   }
@@ -1448,6 +1481,13 @@ function readSlotKeyFromContext(
   ) {
     if (typeof context.slotKey === 'string') return context.slotKey;
     if (typeof context.parentSlotKey === 'string') return context.parentSlotKey;
+    return undefined;
+  }
+  if (
+    base === 'treasureSwordDragonSlayerColor' &&
+    context.kind === 'treasureSwordDragonSlayerColor'
+  ) {
+    if (typeof context.slotKey === 'string') return context.slotKey;
     return undefined;
   }
   return undefined;

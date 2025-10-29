@@ -397,6 +397,9 @@ import {
   renderTreasureSwordSpecialPurposePowerCompact,
   buildTreasureSwordSpecialPurposePreview,
   buildTreasureSwordSpecialPurposePowerPreview,
+  renderTreasureSwordDragonSlayerColorDetail,
+  renderTreasureSwordDragonSlayerColorCompact,
+  buildTreasureSwordDragonSlayerColorPreview,
   renderTreasureSwordAlignmentDetail,
   renderTreasureSwordAlignmentCompact,
   buildTreasureSwordAlignmentPreview,
@@ -830,6 +833,10 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureSwordSpecialPurposePowerDetail,
     renderCompact: renderTreasureSwordSpecialPurposePowerCompact,
   },
+  treasureSwordDragonSlayerColor: {
+    renderDetail: renderTreasureSwordDragonSlayerColorDetail,
+    renderCompact: renderTreasureSwordDragonSlayerColorCompact,
+  },
   treasureSwordAlignment: {
     renderDetail: renderTreasureSwordAlignmentDetail,
     renderCompact: renderTreasureSwordAlignmentCompact,
@@ -1089,6 +1096,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureSwordExtraordinaryPowerRestricted: buildTreasureSwordExtraordinaryPowerPreview,
   treasureSwordSpecialPurpose: buildTreasureSwordSpecialPurposePreview,
   treasureSwordSpecialPurposePower: buildTreasureSwordSpecialPurposePowerPreview,
+  treasureSwordDragonSlayerColor: buildTreasureSwordDragonSlayerColorPreview,
   treasureSwordAlignment: buildTreasureSwordAlignmentPreview,
   treasureSwordAlignmentChaotic: buildTreasureSwordAlignmentChaoticPreview,
   treasureSwordAlignmentLawful: buildTreasureSwordAlignmentLawfulPreview,

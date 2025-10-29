@@ -21,6 +21,7 @@ import {
   treasureSwordExtraordinaryPowerRestricted,
   treasureSwordSpecialPurpose,
   treasureSwordSpecialPurposePower,
+  treasureSwordDragonSlayerColor,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
   TreasureSwordSpecialPurpose,
@@ -30,11 +31,13 @@ import {
   describeSwordExtraordinaryPower,
   describeSwordSpecialPurpose,
   describeSwordSpecialPurposePower,
+  describeDragonSlayerColor,
   type TreasureSwordUnusualResult,
   type TreasureSwordPrimaryAbilityResult,
   type TreasureSwordExtraordinaryPowerResult,
   type TreasureSwordSpecialPurposeResult,
   type TreasureSwordSpecialPurposePowerResult,
+  type TreasureSwordDragonSlayerColorResult,
 } from '../../../tables/dungeon/treasureSwords';
 import {
   treasureSwordAlignment,
@@ -122,6 +125,17 @@ function buildSwordParenthetical(
   return parts.length > 0 ? parts.join(', ') : undefined;
 }
 
+function decorateSwordLabel(
+  base: string,
+  colorLabel?: string,
+  parenthetical?: string
+): string {
+  const withColor = colorLabel ? `${base} [${colorLabel}]` : base;
+  return parenthetical && parenthetical.length > 0
+    ? `${withColor} (${parenthetical})`
+    : withColor;
+}
+
 export function swordLabel(
   sword: TreasureSword,
   kind?: TreasureSwordKind
@@ -136,16 +150,19 @@ export function swordSentence(
   alignment?: TreasureSwordAlignmentResult,
   intelligenceLabel?: string,
   abilitySummaries: PrimaryAbilitySummary[] = [],
-  luckBladeWishes?: number
+  luckBladeWishes?: number,
+  dragonSlayerColorLabel?: string
 ): string {
   const baseLabel = swordLabel(sword, kind);
   const parenthetical = buildSwordParenthetical(
     intelligenceLabel,
     luckBladeWishes
   );
-  const decoratedLabel = parenthetical
-    ? `${baseLabel} (${parenthetical})`
-    : baseLabel;
+  const decoratedLabel = decorateSwordLabel(
+    baseLabel,
+    dragonSlayerColorLabel,
+    parenthetical
+  );
   const article = articleFor(decoratedLabel);
   const sentences: string[] = [`There is ${article} ${decoratedLabel}.`];
   if (alignment) {
@@ -192,14 +209,22 @@ export function renderTreasureSwordsDetail(
       ? formatSwordIntelligence(unusualEvent.event.result)
       : undefined;
   const luckBladeWishes = outcome.event.luckBladeWishes;
+  const dragonColorEvent = findDragonSlayerColorEvent(outcome);
+  const dragonSlayerColorLabel =
+    dragonColorEvent &&
+    dragonColorEvent.event.kind === 'treasureSwordDragonSlayerColor'
+      ? (dragonColorEvent.event.result as TreasureSwordDragonSlayerColorResult)
+          .label
+      : undefined;
   const parenthetical = buildSwordParenthetical(
     intelligenceLabel,
     luckBladeWishes
   );
-  const baseSwordLabel = swordLabel(outcome.event.result, kind);
-  const decoratedSwordLabel = parenthetical
-    ? `${baseSwordLabel} (${parenthetical})`
-    : baseSwordLabel;
+  const decoratedSwordLabel = decorateSwordLabel(
+    swordLabel(outcome.event.result, kind),
+    dragonSlayerColorLabel,
+    parenthetical
+  );
   const abilitySummaries =
     unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
       ? summarizePrimaryAbilities(unusualEvent)
@@ -232,7 +257,8 @@ export function renderTreasureSwordsDetail(
       alignmentResult,
       intelligenceLabel,
       abilitySummaries,
-      luckBladeWishes
+      luckBladeWishes,
+      dragonSlayerColorLabel
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -261,6 +287,13 @@ export function renderTreasureSwordsCompact(
       ? formatSwordIntelligence(unusualEvent.event.result)
       : undefined;
   const luckBladeWishes = outcome.event.luckBladeWishes;
+  const dragonColorEvent = findDragonSlayerColorEvent(outcome);
+  const dragonSlayerColorLabel =
+    dragonColorEvent &&
+    dragonColorEvent.event.kind === 'treasureSwordDragonSlayerColor'
+      ? (dragonColorEvent.event.result as TreasureSwordDragonSlayerColorResult)
+          .label
+      : undefined;
   const abilitySummaries =
     unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
       ? summarizePrimaryAbilities(unusualEvent)
@@ -278,7 +311,8 @@ export function renderTreasureSwordsCompact(
       alignmentResult,
       intelligenceLabel,
       abilitySummaries,
-      luckBladeWishes
+      luckBladeWishes,
+      dragonSlayerColorLabel
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
@@ -1105,6 +1139,57 @@ export function renderTreasureSwordSpecialPurposePowerCompact(
   return nodes;
 }
 
+export function renderTreasureSwordDragonSlayerColorDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureSwordDragonSlayerColor') return [];
+  const result =
+    outcome.event.result as TreasureSwordDragonSlayerColorResult;
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Dragon Slayer Target',
+  };
+  const alignmentLabel = SWORD_ALIGNMENT_DETAILS[result.alignment].label;
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [
+      `roll: ${outcome.roll}`,
+      `target: ${result.label} (${alignmentLabel})`,
+    ],
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: `The sword is keyed against ${result.label.toLowerCase()} dragons (${alignmentLabel}).`,
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderTreasureSwordDragonSlayerColorCompact(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'treasureSwordDragonSlayerColor') return [];
+  const result =
+    outcome.event.result as TreasureSwordDragonSlayerColorResult;
+  const alignmentLabel = SWORD_ALIGNMENT_DETAILS[result.alignment].label;
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Dragon Slayer Target',
+  };
+  const paragraph: DungeonMessage = {
+    kind: 'paragraph',
+    text: `The sword is keyed against ${result.label.toLowerCase()} dragons (${alignmentLabel}).`,
+  };
+  const nodes: DungeonRenderNode[] = [heading, paragraph];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
 export const buildTreasureSwordSpecialPurposePreview: TablePreviewFactory = (
   tableId,
   context
@@ -1141,6 +1226,20 @@ export const buildTreasureSwordSpecialPurposePowerPreview: TablePreviewFactory =
       context,
     });
 
+export const buildTreasureSwordDragonSlayerColorPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
+  buildPreview(tableId, {
+    title: 'Dragon Slayer Target',
+    sides: treasureSwordDragonSlayerColor.sides,
+    entries: treasureSwordDragonSlayerColor.entries.map(({ range, command }) => ({
+      range,
+      label: describeDragonSlayerColor(command),
+    })),
+    context,
+  });
+
 function findSwordAlignmentEvent(
   node: OutcomeEventNode
 ): OutcomeEventNode | undefined {
@@ -1151,6 +1250,21 @@ function findSwordAlignmentEvent(
   for (const child of children) {
     if (child.type !== 'event') continue;
     const match = findSwordAlignmentEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function findDragonSlayerColorEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureSwordDragonSlayerColor') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findDragonSlayerColorEvent(child);
     if (match) return match;
   }
   return undefined;

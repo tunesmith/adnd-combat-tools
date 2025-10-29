@@ -62,6 +62,7 @@ import {
   formatSwordIntelligence,
   summarizePrimaryAbilities,
 } from './treasureSwords';
+import type { TreasureSwordDragonSlayerColorResult } from '../../../tables/dungeon/treasureSwords';
 import { miscWeaponSentence } from './treasureMiscWeapons';
 
 export function renderTreasureDetail(
@@ -253,6 +254,15 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
         ? alignmentEvent.event.result
         : undefined;
+    const dragonColorEvent = findDragonSlayerColorEvent(swordsEvent);
+    const dragonSlayerColorLabel =
+      dragonColorEvent &&
+      dragonColorEvent.event.kind === 'treasureSwordDragonSlayerColor'
+        ? (
+            dragonColorEvent.event
+              .result as TreasureSwordDragonSlayerColorResult
+          ).label
+        : undefined;
     const luckBladeWishes = swordsEvent.event.luckBladeWishes;
     return swordSentence(
       swordsEvent.event.result,
@@ -260,7 +270,8 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       alignmentResult,
       intelligenceLabel,
       abilitySummaries,
-      luckBladeWishes
+      luckBladeWishes,
+      dragonSlayerColorLabel
     );
   }
   const miscWeaponsEvent = findMiscWeaponsEvent(magic);
@@ -693,6 +704,21 @@ function findSwordAlignmentEvent(
   for (const child of children) {
     if (child.type !== 'event') continue;
     const match = findSwordAlignmentEvent(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function findDragonSlayerColorEvent(
+  node: OutcomeEventNode
+): OutcomeEventNode | undefined {
+  if (node.event.kind === 'treasureSwordDragonSlayerColor') {
+    return node;
+  }
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const match = findDragonSlayerColorEvent(child);
     if (match) return match;
   }
   return undefined;

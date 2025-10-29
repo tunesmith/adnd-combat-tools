@@ -182,6 +182,8 @@ import {
   treasureSwordExtraordinaryPowerRestricted,
   treasureSwordSpecialPurpose,
   treasureSwordSpecialPurposePower,
+  treasureSwordDragonSlayerColor,
+  TreasureSwordUnusual,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
   TreasureSwordSpecialPurpose,
@@ -189,15 +191,16 @@ import {
   describeSwordExtraordinaryPower,
   describeSwordSpecialPurpose,
   describeSwordSpecialPurposePower,
+  DRAGON_SLAYER_COLOR_DETAILS,
 } from '../../tables/dungeon/treasureSwords';
 import type {
   TreasureSwordKind,
-  TreasureSwordUnusual,
   TreasureSwordUnusualResult,
   TreasureSwordPrimaryAbilityResult,
   TreasureSwordExtraordinaryPowerResult,
   TreasureSwordSpecialPurposeResult,
   TreasureSwordSpecialPurposePowerResult,
+  TreasureSwordDragonSlayerColorResult,
 } from '../../tables/dungeon/treasureSwords';
 import {
   treasureMiscWeapons,
@@ -2609,6 +2612,7 @@ export function resolveTreasureSwords(options?: {
   primaryAbilityRolls?: number[];
   extraordinaryPowerRolls?: number[];
   luckBladeWishes?: number;
+  dragonSlayerColorRoll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwords.sides);
   const command: TreasureSword = getTableEntry(usedRoll, treasureSwords);
@@ -2646,6 +2650,7 @@ export function resolveTreasureSwords(options?: {
         languageRolls: options?.languageRolls,
         primaryAbilityRolls: options?.primaryAbilityRolls,
         extraordinaryPowerRolls: options?.extraordinaryPowerRolls,
+        dragonSlayerColorRoll: options?.dragonSlayerColorRoll,
       })
     );
   } else {
@@ -2669,6 +2674,7 @@ export function resolveTreasureSwords(options?: {
           ? [...options.extraordinaryPowerRolls]
           : undefined,
         luckBladeWishes,
+        dragonSlayerColorRoll: options?.dragonSlayerColorRoll,
       },
     });
   }
@@ -2749,6 +2755,7 @@ export function resolveTreasureSwordUnusual(options?: {
   languageRolls?: number[];
   primaryAbilityRolls?: number[];
   extraordinaryPowerRolls?: number[];
+  dragonSlayerColorRoll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwordUnusual.sides);
   const command: TreasureSwordUnusual = getTableEntry(
@@ -2831,6 +2838,27 @@ export function resolveTreasureSwordUnusual(options?: {
           slotKey,
           rollIndex: options?.rollIndex,
           tableVariant: 'standard',
+        })
+      );
+    }
+  }
+  if (
+    sword === TreasureSword.SwordPlus2DragonSlayer &&
+    command === TreasureSwordUnusual.Normal
+  ) {
+    if (options?.dragonSlayerColorRoll !== undefined) {
+      children.push(
+        resolveTreasureSwordDragonSlayerColor({
+          roll: options.dragonSlayerColorRoll,
+          slotKey: `dragon-${options?.rollIndex ?? 'auto'}`,
+          rollIndex: options?.rollIndex,
+        })
+      );
+    } else {
+      children.push(
+        buildSwordDragonSlayerColorPending({
+          slotKey: `dragon-${options?.rollIndex ?? 'auto'}`,
+          rollIndex: options?.rollIndex,
         })
       );
     }
@@ -3260,6 +3288,47 @@ export function resolveTreasureSwordSpecialPurposePower(options?: {
   };
 }
 
+export function resolveTreasureSwordDragonSlayerColor(options?: {
+  roll?: number;
+  slotKey?: string;
+  rollIndex?: number;
+}): DungeonOutcomeNode {
+  const slotKey =
+    options?.slotKey ?? `dragon-slayer-${Math.random().toString(36).slice(2)}`;
+  const resolveRoll = (): number => {
+    if (options?.roll !== undefined) {
+      const provided = Math.trunc(options.roll);
+      if (!Number.isFinite(provided) || provided < 1) {
+        return 1;
+      }
+      if (provided > treasureSwordDragonSlayerColor.sides) {
+        return treasureSwordDragonSlayerColor.sides;
+      }
+      return provided;
+    }
+    return rollDice(treasureSwordDragonSlayerColor.sides);
+  };
+  const usedRoll = resolveRoll();
+  const command = getTableEntry(usedRoll, treasureSwordDragonSlayerColor);
+  const detail = DRAGON_SLAYER_COLOR_DETAILS[command];
+  const result: TreasureSwordDragonSlayerColorResult = {
+    kind: 'dragonSlayerColor',
+    color: command,
+    rolls: [usedRoll],
+    label: detail.label,
+    alignment: detail.alignment,
+  };
+  return {
+    type: 'event',
+    roll: usedRoll,
+    id: dragonSlayerColorNodeId(slotKey, options?.rollIndex),
+    event: {
+      kind: 'treasureSwordDragonSlayerColor',
+      result,
+    } as OutcomeEvent,
+  };
+}
+
 function buildSwordSpecialPurposePending(options: {
   slotKey: string;
   rollIndex?: number;
@@ -3320,6 +3389,29 @@ function specialPurposePowerNodeId(
   return rollIndex !== undefined
     ? `treasureSwordSpecialPurposePower:${rollIndex}:${slotKey}`
     : `treasureSwordSpecialPurposePower:${slotKey}`;
+}
+
+function buildSwordDragonSlayerColorPending(options: {
+  slotKey: string;
+  rollIndex?: number;
+}): PendingRoll {
+  const { slotKey, rollIndex } = options;
+  return {
+    type: 'pending-roll',
+    table: 'treasureSwordDragonSlayerColor',
+    id: dragonSlayerColorNodeId(slotKey, rollIndex),
+    context: {
+      kind: 'treasureSwordDragonSlayerColor',
+      slotKey,
+      rollIndex,
+    },
+  };
+}
+
+function dragonSlayerColorNodeId(slotKey: string, rollIndex?: number): string {
+  return rollIndex !== undefined
+    ? `treasureSwordDragonSlayerColor:${rollIndex}:${slotKey}`
+    : `treasureSwordDragonSlayerColor:${slotKey}`;
 }
 
 type SwordAlignmentVariant = 'standard' | 'chaotic' | 'lawful';

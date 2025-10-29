@@ -6,6 +6,7 @@ import {
   resolveTreasureSwords,
   resolveTreasureSwordPrimaryAbility,
   resolveTreasureSwordExtraordinaryPower,
+  resolveTreasureSwordUnusual,
   resolveTreasureSwordSpecialPurpose,
   resolveTreasureSwordSpecialPurposePower,
 } from '../../../../dungeon/domain/resolvers';
@@ -22,6 +23,8 @@ import {
   TreasureSwordExtraordinaryPower,
   TreasureSwordSpecialPurpose,
   describeSwordSpecialPurpose,
+  TreasureSwordDragonSlayerColor,
+  type TreasureSwordDragonSlayerColorResult,
 } from '../../../../tables/dungeon/treasureSwords';
 import type {
   TreasureSwordPrimaryAbilityResult,
@@ -608,6 +611,40 @@ import { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSword
     expect(extraPending).toHaveLength(1);
   });
 
+  it('queues dragon slayer target selection when sword is mundane', () => {
+    const unusualNode = resolveTreasureSwordUnusual({
+      roll: 20,
+      sword: TreasureSword.SwordPlus2DragonSlayer,
+      rollIndex: 1,
+    });
+
+    if (unusualNode.type !== 'event') {
+      throw new Error('Expected unusual sword event');
+    }
+    if (unusualNode.event.kind !== 'treasureSwordUnusual') {
+      throw new Error('Unexpected unusual event kind');
+    }
+
+    const result = unusualNode.event.result;
+    if (!result || result.variant !== TreasureSwordUnusual.Normal) {
+      throw new Error('Expected normal sword result');
+    }
+
+    const pendingColor = (unusualNode.children || []).find(
+      (child: PendingRoll | OutcomeEventNode): child is PendingRoll =>
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordDragonSlayerColor'
+    );
+    expect(pendingColor).toBeDefined();
+    const context = pendingColor?.context;
+    if (!context || typeof context !== 'object') {
+      throw new Error('Expected dragon slayer context');
+    }
+    expect((context as { kind?: string }).kind).toBe(
+      'treasureSwordDragonSlayerColor'
+    );
+  });
+
   it('keeps the extraordinary power table collapsed when resolving restricted rolls', () => {
     const instructionNode = resolveTreasureSwordExtraordinaryPower({
       roll: 96,
@@ -952,6 +989,54 @@ import { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSword
     expect(compactSummary).toContain(
       `When that purpose activates, the sword can ${powerResult.description}.`
     );
+  });
+
+  it('includes dragon slayer color in detail and compact output when mundane', () => {
+    const node = resolveTreasureSwords({
+      roll: 63,
+      kindRoll: 42,
+      unusualRoll: 20,
+      dragonSlayerColorRoll: 8,
+    });
+
+    if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasure swords event');
+    }
+
+    const detailNodes = renderDetailTree(node);
+    const detailBullet = detailNodes.find(
+      (child): child is { kind: 'bullet-list'; items: string[] } =>
+        child.kind === 'bullet-list'
+    );
+    expect(detailBullet).toBeDefined();
+    expect(detailBullet?.items[0]).toContain('Dragon Slayer [Red]');
+
+    const compactText = toCompactRender(node)
+      .filter(
+        (child): child is { kind: 'paragraph'; text: string } =>
+          child.kind === 'paragraph'
+      )
+      .map((child) => child.text)
+      .join(' ');
+    expect(compactText).toContain('Dragon Slayer [Red]');
+
+    const dragonColorEvent = findChildEvent(node, 'treasureSwordUnusual');
+    if (!dragonColorEvent || dragonColorEvent.type !== 'event') {
+      throw new Error('Expected unusual child');
+    }
+    const colorChild = findChildEvent(
+      dragonColorEvent,
+      'treasureSwordDragonSlayerColor'
+    );
+    if (!colorChild || colorChild.type !== 'event') {
+      throw new Error('Expected dragon slayer color event');
+    }
+    if (colorChild.event.kind !== 'treasureSwordDragonSlayerColor') {
+      throw new Error('Unexpected dragon slayer color kind');
+    }
+    const colorResult =
+      colorChild.event.result as TreasureSwordDragonSlayerColorResult;
+    expect(colorResult.color).toBe(TreasureSwordDragonSlayerColor.Red);
   });
 
   it('adapts slay good or evil purposes to the sword alignment', () => {
