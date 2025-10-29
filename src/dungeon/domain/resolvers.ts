@@ -182,7 +182,6 @@ import {
   treasureSwordExtraordinaryPowerRestricted,
   treasureSwordSpecialPurpose,
   treasureSwordSpecialPurposePower,
-  treasureSwordDragonSlayerColor,
   TreasureSwordUnusual,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
@@ -192,6 +191,7 @@ import {
   describeSwordSpecialPurpose,
   describeSwordSpecialPurposePower,
   DRAGON_SLAYER_COLOR_DETAILS,
+  dragonSlayerColorTableForAlignment,
 } from '../../tables/dungeon/treasureSwords';
 import type {
   TreasureSwordKind,
@@ -2842,25 +2842,63 @@ export function resolveTreasureSwordUnusual(options?: {
       );
     }
   }
-  if (
-    sword === TreasureSword.SwordPlus2DragonSlayer &&
-    command === TreasureSwordUnusual.Normal
-  ) {
-    if (options?.dragonSlayerColorRoll !== undefined) {
-      children.push(
-        resolveTreasureSwordDragonSlayerColor({
-          roll: options.dragonSlayerColorRoll,
-          slotKey: `dragon-${options?.rollIndex ?? 'auto'}`,
-          rollIndex: options?.rollIndex,
-        })
-      );
-    } else {
-      children.push(
-        buildSwordDragonSlayerColorPending({
-          slotKey: `dragon-${options?.rollIndex ?? 'auto'}`,
-          rollIndex: options?.rollIndex,
-        })
-      );
+  if (sword === TreasureSword.SwordPlus2DragonSlayer) {
+    let alignmentForColor: TreasureSwordAlignment | undefined;
+    let colorAlignmentReady = false;
+    const alignmentChild = (children as DungeonOutcomeNode[]).find(
+      (child): child is OutcomeEventNode =>
+        child.type === 'event' && child.event.kind === 'treasureSwordAlignment'
+    );
+    if (alignmentChild && alignmentChild.event.kind === 'treasureSwordAlignment') {
+      const alignmentResult =
+        alignmentChild.event.result as TreasureSwordAlignmentResult;
+      alignmentForColor = alignmentResult.alignment;
+      colorAlignmentReady = true;
+    }
+    const slotKey = `dragon-${options?.rollIndex ?? 'auto'}`;
+    if (command === TreasureSwordUnusual.Normal) {
+      if (options?.dragonSlayerColorRoll !== undefined) {
+        children.push(
+          resolveTreasureSwordDragonSlayerColor({
+            roll: options.dragonSlayerColorRoll,
+            slotKey,
+            rollIndex: options?.rollIndex,
+            alignment: alignmentForColor,
+          })
+        );
+      } else {
+        children.push(
+          buildSwordDragonSlayerColorPending({
+            slotKey,
+            rollIndex: options?.rollIndex,
+            alignment: alignmentForColor,
+            alignmentReady: true,
+          })
+        );
+      }
+    } else if (result.requiresAlignment) {
+      if (
+        options?.dragonSlayerColorRoll !== undefined &&
+        alignmentForColor !== undefined
+      ) {
+        children.push(
+          resolveTreasureSwordDragonSlayerColor({
+            roll: options.dragonSlayerColorRoll,
+            slotKey,
+            rollIndex: options?.rollIndex,
+            alignment: alignmentForColor,
+          })
+        );
+      } else {
+        children.push(
+          buildSwordDragonSlayerColorPending({
+            slotKey,
+            rollIndex: options?.rollIndex,
+            alignment: alignmentForColor,
+            alignmentReady: colorAlignmentReady,
+          })
+        );
+      }
     }
   }
   return {
@@ -3292,24 +3330,26 @@ export function resolveTreasureSwordDragonSlayerColor(options?: {
   roll?: number;
   slotKey?: string;
   rollIndex?: number;
+  alignment?: TreasureSwordAlignment;
 }): DungeonOutcomeNode {
   const slotKey =
     options?.slotKey ?? `dragon-slayer-${Math.random().toString(36).slice(2)}`;
+  const table = dragonSlayerColorTableForAlignment(options?.alignment);
   const resolveRoll = (): number => {
     if (options?.roll !== undefined) {
       const provided = Math.trunc(options.roll);
       if (!Number.isFinite(provided) || provided < 1) {
         return 1;
       }
-      if (provided > treasureSwordDragonSlayerColor.sides) {
-        return treasureSwordDragonSlayerColor.sides;
+      if (provided > table.sides) {
+        return table.sides;
       }
       return provided;
     }
-    return rollDice(treasureSwordDragonSlayerColor.sides);
+    return rollDice(table.sides);
   };
   const usedRoll = resolveRoll();
-  const command = getTableEntry(usedRoll, treasureSwordDragonSlayerColor);
+  const command = getTableEntry(usedRoll, table);
   const detail = DRAGON_SLAYER_COLOR_DETAILS[command];
   const result: TreasureSwordDragonSlayerColorResult = {
     kind: 'dragonSlayerColor',
@@ -3394,8 +3434,10 @@ function specialPurposePowerNodeId(
 function buildSwordDragonSlayerColorPending(options: {
   slotKey: string;
   rollIndex?: number;
+  alignment?: TreasureSwordAlignment;
+  alignmentReady?: boolean;
 }): PendingRoll {
-  const { slotKey, rollIndex } = options;
+  const { slotKey, rollIndex, alignment, alignmentReady } = options;
   return {
     type: 'pending-roll',
     table: 'treasureSwordDragonSlayerColor',
@@ -3404,6 +3446,8 @@ function buildSwordDragonSlayerColorPending(options: {
       kind: 'treasureSwordDragonSlayerColor',
       slotKey,
       rollIndex,
+      alignment,
+      alignmentReady: alignmentReady ?? alignment !== undefined,
     },
   };
 }

@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table, Entry } from './dungeonTypes';
 import {
   TreasureSwordAlignment,
   SWORD_ALIGNMENT_DETAILS,
@@ -345,6 +345,19 @@ export const SWORD_UNUSUAL_DETAILS: Record<
   },
 };
 
+const DRAGON_SLAYER_COLOR_ORDER: TreasureSwordDragonSlayerColor[] = [
+  TreasureSwordDragonSlayerColor.Black,
+  TreasureSwordDragonSlayerColor.Blue,
+  TreasureSwordDragonSlayerColor.Brass,
+  TreasureSwordDragonSlayerColor.Bronze,
+  TreasureSwordDragonSlayerColor.Copper,
+  TreasureSwordDragonSlayerColor.Gold,
+  TreasureSwordDragonSlayerColor.Green,
+  TreasureSwordDragonSlayerColor.Red,
+  TreasureSwordDragonSlayerColor.Silver,
+  TreasureSwordDragonSlayerColor.White,
+];
+
 export const DRAGON_SLAYER_COLOR_DETAILS: Record<
   TreasureSwordDragonSlayerColor,
   DragonSlayerColorDetail
@@ -390,6 +403,69 @@ export const DRAGON_SLAYER_COLOR_DETAILS: Record<
     alignment: TreasureSwordAlignment.ChaoticEvil,
   },
 };
+
+function buildDragonSlayerColorTable(
+  colors: TreasureSwordDragonSlayerColor[]
+): Table<TreasureSwordDragonSlayerColor> {
+  const entries = colors.map((color, index) => ({
+    range: [index + 1],
+    command: color,
+  })) as Entry<TreasureSwordDragonSlayerColor>[];
+  if (entries.length === 0) {
+    throw new Error('Dragon slayer color table must contain at least one entry');
+  }
+  return {
+    sides: colors.length,
+    entries: entries as [
+      Entry<TreasureSwordDragonSlayerColor>,
+      ...Entry<TreasureSwordDragonSlayerColor>[]
+    ],
+  };
+}
+
+export const treasureSwordDragonSlayerColor: Table<TreasureSwordDragonSlayerColor> =
+  buildDragonSlayerColorTable(DRAGON_SLAYER_COLOR_ORDER);
+
+const treasureSwordDragonSlayerColorLawfulGood = buildDragonSlayerColorTable(
+  DRAGON_SLAYER_COLOR_ORDER.filter(
+    (color) => DRAGON_SLAYER_COLOR_DETAILS[color].alignment !== TreasureSwordAlignment.LawfulGood
+  )
+);
+
+const treasureSwordDragonSlayerColorChaoticGood = buildDragonSlayerColorTable(
+  DRAGON_SLAYER_COLOR_ORDER.filter(
+    (color) => DRAGON_SLAYER_COLOR_DETAILS[color].alignment !== TreasureSwordAlignment.ChaoticGood
+  )
+);
+
+const treasureSwordDragonSlayerColorLawfulEvil = buildDragonSlayerColorTable(
+  DRAGON_SLAYER_COLOR_ORDER.filter(
+    (color) => DRAGON_SLAYER_COLOR_DETAILS[color].alignment !== TreasureSwordAlignment.LawfulEvil
+  )
+);
+
+const treasureSwordDragonSlayerColorChaoticEvil = buildDragonSlayerColorTable(
+  DRAGON_SLAYER_COLOR_ORDER.filter(
+    (color) => DRAGON_SLAYER_COLOR_DETAILS[color].alignment !== TreasureSwordAlignment.ChaoticEvil
+  )
+);
+
+export function dragonSlayerColorTableForAlignment(
+  alignment?: TreasureSwordAlignment
+): Table<TreasureSwordDragonSlayerColor> {
+  switch (alignment) {
+    case TreasureSwordAlignment.LawfulGood:
+      return treasureSwordDragonSlayerColorLawfulGood;
+    case TreasureSwordAlignment.ChaoticGood:
+      return treasureSwordDragonSlayerColorChaoticGood;
+    case TreasureSwordAlignment.LawfulEvil:
+      return treasureSwordDragonSlayerColorLawfulEvil;
+    case TreasureSwordAlignment.ChaoticEvil:
+      return treasureSwordDragonSlayerColorChaoticEvil;
+    default:
+      return treasureSwordDragonSlayerColor;
+  }
+}
 
 export const treasureSwordPrimaryAbility: Table<TreasureSwordPrimaryAbilityCommand> =
   {
@@ -443,23 +519,6 @@ export const treasureSwordPrimaryAbility: Table<TreasureSwordPrimaryAbilityComma
         range: [99, 100],
         command: TreasureSwordPrimaryAbilityCommand.ExtraordinaryPower,
       },
-    ],
-  };
-
-export const treasureSwordDragonSlayerColor: Table<TreasureSwordDragonSlayerColor> =
-  {
-    sides: 10,
-    entries: [
-      { range: [1], command: TreasureSwordDragonSlayerColor.Black },
-      { range: [2], command: TreasureSwordDragonSlayerColor.Blue },
-      { range: [3], command: TreasureSwordDragonSlayerColor.Brass },
-      { range: [4], command: TreasureSwordDragonSlayerColor.Bronze },
-      { range: [5], command: TreasureSwordDragonSlayerColor.Copper },
-      { range: [6], command: TreasureSwordDragonSlayerColor.Gold },
-      { range: [7], command: TreasureSwordDragonSlayerColor.Green },
-      { range: [8], command: TreasureSwordDragonSlayerColor.Red },
-      { range: [9], command: TreasureSwordDragonSlayerColor.Silver },
-      { range: [10], command: TreasureSwordDragonSlayerColor.White },
     ],
   };
 

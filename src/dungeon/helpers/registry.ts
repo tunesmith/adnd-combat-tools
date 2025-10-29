@@ -1131,17 +1131,26 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   treasureSwordDragonSlayerColor: ({ roll, context }) => {
     const parsed =
       context && typeof context === 'object'
-        ? (context as { slotKey?: unknown; rollIndex?: unknown })
+        ? (context as {
+            slotKey?: unknown;
+            rollIndex?: unknown;
+            alignment?: unknown;
+          })
         : {};
     const slotKey =
       typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
     const rollIndex =
       typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
+    const alignment =
+      typeof parsed.alignment === 'number'
+        ? (parsed.alignment as TreasureSwordAlignment)
+        : undefined;
     return fromOutcome(
       resolveTreasureSwordDragonSlayerColor({
         roll,
         slotKey,
         rollIndex,
+        alignment,
       })
     );
   },

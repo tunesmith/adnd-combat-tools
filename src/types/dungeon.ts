@@ -228,6 +228,8 @@ export type TableContext =
       kind: 'treasureSwordDragonSlayerColor';
       slotKey?: string;
       rollIndex?: number;
+      alignment?: TreasureSwordAlignment;
+      alignmentReady?: boolean;
     };
 
 export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;

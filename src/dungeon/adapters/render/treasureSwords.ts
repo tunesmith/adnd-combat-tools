@@ -21,7 +21,6 @@ import {
   treasureSwordExtraordinaryPowerRestricted,
   treasureSwordSpecialPurpose,
   treasureSwordSpecialPurposePower,
-  treasureSwordDragonSlayerColor,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
   TreasureSwordSpecialPurpose,
@@ -32,6 +31,8 @@ import {
   describeSwordSpecialPurpose,
   describeSwordSpecialPurposePower,
   describeDragonSlayerColor,
+  DRAGON_SLAYER_COLOR_DETAILS,
+  dragonSlayerColorTableForAlignment,
   type TreasureSwordUnusualResult,
   type TreasureSwordPrimaryAbilityResult,
   type TreasureSwordExtraordinaryPowerResult,
@@ -1232,11 +1233,22 @@ export const buildTreasureSwordDragonSlayerColorPreview: TablePreviewFactory = (
 ) =>
   buildPreview(tableId, {
     title: 'Dragon Slayer Target',
-    sides: treasureSwordDragonSlayerColor.sides,
-    entries: treasureSwordDragonSlayerColor.entries.map(({ range, command }) => ({
-      range,
-      label: describeDragonSlayerColor(command),
-    })),
+    ...(() => {
+      const alignment =
+        context && context.kind === 'treasureSwordDragonSlayerColor'
+          ? context.alignment
+          : undefined;
+      const table = dragonSlayerColorTableForAlignment(alignment);
+      return {
+        sides: table.sides,
+        entries: table.entries.map(({ range, command }) => ({
+          range,
+          label: `${describeDragonSlayerColor(command)} (${alignmentAbbreviation(
+            DRAGON_SLAYER_COLOR_DETAILS[command].alignment
+          )})`,
+        })),
+      };
+    })(),
     context,
   });
 
@@ -1268,6 +1280,32 @@ function findDragonSlayerColorEvent(
     if (match) return match;
   }
   return undefined;
+}
+
+function alignmentAbbreviation(alignment: TreasureSwordAlignment): string {
+  const label = SWORD_ALIGNMENT_DETAILS[alignment].label;
+  switch (label) {
+    case 'Lawful Good':
+      return 'LG';
+    case 'Lawful Neutral':
+      return 'LN';
+    case 'Lawful Evil':
+      return 'LE';
+    case 'Neutral Good':
+      return 'NG';
+    case 'True Neutral':
+      return 'N';
+    case 'Neutral Evil':
+      return 'NE';
+    case 'Chaotic Good':
+      return 'CG';
+    case 'Chaotic Neutral':
+      return 'CN';
+    case 'Chaotic Evil':
+      return 'CE';
+    default:
+      return label;
+  }
 }
 
 function swordUnusualDescription(

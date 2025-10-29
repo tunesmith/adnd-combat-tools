@@ -32,7 +32,10 @@ import type {
   TreasureSwordSpecialPurposePowerResult,
 } from '../../../../tables/dungeon/treasureSwords';
 import { summarizePrimaryAbilities } from '../../../../dungeon/adapters/render/treasureSwords';
-import { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSwordAlignment';
+import {
+  TreasureSwordAlignment,
+  type TreasureSwordAlignmentResult,
+} from '../../../../tables/dungeon/treasureSwordAlignment';
 
   describe('resolveTreasureSwords', () => {
   it('creates pending rolls for kind and unusual tables by default', () => {
@@ -643,6 +646,47 @@ import { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSword
     expect((context as { kind?: string }).kind).toBe(
       'treasureSwordDragonSlayerColor'
     );
+  });
+
+  it('excludes dragons matching the sword alignment when intelligent', () => {
+    const swordNode = resolveTreasureSwords({
+      roll: 63,
+      kindRoll: 42,
+      unusualRoll: 95,
+      alignmentRoll: 10,
+      dragonSlayerColorRoll: 1,
+    });
+
+    if (swordNode.type !== 'event' || swordNode.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasure swords event');
+    }
+
+    const unusualEvent = findChildEvent(swordNode, 'treasureSwordUnusual');
+    if (!unusualEvent || unusualEvent.type !== 'event') {
+      throw new Error('Expected unusual event');
+    }
+    const alignmentEvent = findChildEvent(unusualEvent, 'treasureSwordAlignment');
+    if (!alignmentEvent || alignmentEvent.type !== 'event') {
+      throw new Error('Expected alignment event');
+    }
+    if (alignmentEvent.event.kind !== 'treasureSwordAlignment') {
+      throw new Error('Unexpected alignment event kind');
+    }
+    const alignmentResult =
+      alignmentEvent.event.result as TreasureSwordAlignmentResult;
+    const colorEvent = findChildEvent(
+      unusualEvent,
+      'treasureSwordDragonSlayerColor'
+    );
+    if (!colorEvent || colorEvent.type !== 'event') {
+      throw new Error('Expected dragon slayer color event');
+    }
+    if (colorEvent.event.kind !== 'treasureSwordDragonSlayerColor') {
+      throw new Error('Unexpected dragon slayer color kind');
+    }
+    const colorResult =
+      colorEvent.event.result as TreasureSwordDragonSlayerColorResult;
+    expect(colorResult.alignment).not.toBe(alignmentResult.alignment);
   });
 
   it('keeps the extraordinary power table collapsed when resolving restricted rolls', () => {

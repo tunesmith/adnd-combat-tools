@@ -2000,7 +2000,10 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
         (context.alignment === undefined || context.alignmentReady === false)) ||
       (base === 'treasureSwordSpecialPurposePower' &&
         context.kind === 'treasureSwordSpecialPurposePower' &&
-        context.alignment === undefined);
+        context.alignment === undefined) ||
+      (base === 'treasureSwordDragonSlayerColor' &&
+        context.kind === 'treasureSwordDragonSlayerColor' &&
+        context.alignmentReady === false);
     if (alignmentMissing) {
       return undefined;
     }
