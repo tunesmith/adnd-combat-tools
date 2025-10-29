@@ -344,6 +344,35 @@ import { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSword
     );
   });
 
+  it('annotates luck blade wishes in detail and compact output', () => {
+    const node = resolveTreasureSwords({
+      roll: 50,
+      kindRoll: 10,
+      luckBladeWishes: 4,
+    });
+
+    if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasureSwords event');
+    }
+
+    const detailNodes = renderDetailTree(node);
+    const detailBullet = detailNodes.find(
+      (child): child is { kind: 'bullet-list'; items: string[] } =>
+        child.kind === 'bullet-list'
+    );
+    expect(detailBullet).toBeDefined();
+    expect(detailBullet?.items[0]).toContain('Luck Blade (4 wishes)');
+
+    const compactText = toCompactRender(node)
+      .filter(
+        (child): child is { kind: 'paragraph'; text: string } =>
+          child.kind === 'paragraph'
+      )
+      .map((child) => child.text)
+      .join(' ');
+    expect(compactText).toContain('Luck Blade (4 wishes)');
+  });
+
   it('includes abilities in compact render after resolving pending rolls', () => {
     const node = resolveTreasureSwords({
       roll: 26,

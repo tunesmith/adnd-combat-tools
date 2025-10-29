@@ -107,6 +107,21 @@ function articleFor(label: string): 'a' | 'an' {
   return 'aeiou'.includes(first) ? 'an' : 'a';
 }
 
+function buildSwordParenthetical(
+  intelligenceLabel?: string,
+  luckBladeWishes?: number
+): string | undefined {
+  const parts: string[] = [];
+  if (intelligenceLabel && intelligenceLabel.trim().length > 0) {
+    parts.push(intelligenceLabel.trim());
+  }
+  if (luckBladeWishes !== undefined) {
+    const wishLabel = luckBladeWishes === 1 ? 'wish' : 'wishes';
+    parts.push(`${luckBladeWishes} ${wishLabel}`);
+  }
+  return parts.length > 0 ? parts.join(', ') : undefined;
+}
+
 export function swordLabel(
   sword: TreasureSword,
   kind?: TreasureSwordKind
@@ -120,11 +135,16 @@ export function swordSentence(
   kind?: TreasureSwordKind,
   alignment?: TreasureSwordAlignmentResult,
   intelligenceLabel?: string,
-  abilitySummaries: PrimaryAbilitySummary[] = []
+  abilitySummaries: PrimaryAbilitySummary[] = [],
+  luckBladeWishes?: number
 ): string {
   const baseLabel = swordLabel(sword, kind);
-  const decoratedLabel = intelligenceLabel
-    ? `${baseLabel} (${intelligenceLabel})`
+  const parenthetical = buildSwordParenthetical(
+    intelligenceLabel,
+    luckBladeWishes
+  );
+  const decoratedLabel = parenthetical
+    ? `${baseLabel} (${parenthetical})`
     : baseLabel;
   const article = articleFor(decoratedLabel);
   const sentences: string[] = [`There is ${article} ${decoratedLabel}.`];
@@ -171,6 +191,15 @@ export function renderTreasureSwordsDetail(
     unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
       ? formatSwordIntelligence(unusualEvent.event.result)
       : undefined;
+  const luckBladeWishes = outcome.event.luckBladeWishes;
+  const parenthetical = buildSwordParenthetical(
+    intelligenceLabel,
+    luckBladeWishes
+  );
+  const baseSwordLabel = swordLabel(outcome.event.result, kind);
+  const decoratedSwordLabel = parenthetical
+    ? `${baseSwordLabel} (${parenthetical})`
+    : baseSwordLabel;
   const abilitySummaries =
     unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
       ? summarizePrimaryAbilities(unusualEvent)
@@ -186,9 +215,7 @@ export function renderTreasureSwordsDetail(
     text: 'Swords (Table G)',
   };
   const bulletItems = [
-    intelligenceLabel
-      ? `roll: ${outcome.roll} — ${swordLabel(outcome.event.result, kind)} (${intelligenceLabel})`
-      : `roll: ${outcome.roll} — ${swordLabel(outcome.event.result, kind)}`,
+    `roll: ${outcome.roll} — ${decoratedSwordLabel}`,
   ];
   if (alignmentResult) {
     bulletItems.push(`alignment: ${alignmentResult.label}`);
@@ -204,7 +231,8 @@ export function renderTreasureSwordsDetail(
       kind,
       alignmentResult,
       intelligenceLabel,
-      abilitySummaries
+      abilitySummaries,
+      luckBladeWishes
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
@@ -232,6 +260,7 @@ export function renderTreasureSwordsCompact(
     unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
       ? formatSwordIntelligence(unusualEvent.event.result)
       : undefined;
+  const luckBladeWishes = outcome.event.luckBladeWishes;
   const abilitySummaries =
     unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
       ? summarizePrimaryAbilities(unusualEvent)
@@ -248,7 +277,8 @@ export function renderTreasureSwordsCompact(
       kind,
       alignmentResult,
       intelligenceLabel,
-      abilitySummaries
+      abilitySummaries,
+      luckBladeWishes
     ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];

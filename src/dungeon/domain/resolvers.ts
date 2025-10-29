@@ -2608,15 +2608,21 @@ export function resolveTreasureSwords(options?: {
   languageRolls?: number[];
   primaryAbilityRolls?: number[];
   extraordinaryPowerRolls?: number[];
+  luckBladeWishes?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwords.sides);
   const command: TreasureSword = getTableEntry(usedRoll, treasureSwords);
+  const luckBladeWishes =
+    command === TreasureSword.SwordPlus1LuckBlade
+      ? resolveLuckBladeWishes(options?.luckBladeWishes)
+      : undefined;
   const event: OutcomeEvent = {
     kind: 'treasureSwords',
     result: command,
     level: options?.level ?? 1,
     treasureRoll: options?.treasureRoll ?? usedRoll,
     rollIndex: options?.rollIndex,
+    luckBladeWishes,
   };
   const children: DungeonOutcomeNode[] = [];
   if (options?.kindRoll !== undefined) {
@@ -2662,6 +2668,7 @@ export function resolveTreasureSwords(options?: {
         extraordinaryPowerRolls: options?.extraordinaryPowerRolls
           ? [...options.extraordinaryPowerRolls]
           : undefined,
+        luckBladeWishes,
       },
     });
   }
@@ -3461,6 +3468,17 @@ function buildPendingSwordAlignmentNode(
       sword,
     },
   };
+}
+
+function resolveLuckBladeWishes(provided?: number): number {
+  if (provided === undefined) {
+    return rollDice(4) + 1;
+  }
+  const truncated = Math.trunc(provided);
+  if (!Number.isFinite(truncated)) return 2;
+  if (truncated < 2) return 2;
+  if (truncated > 5) return 5;
+  return truncated;
 }
 
 function buildSwordAlignmentResult(

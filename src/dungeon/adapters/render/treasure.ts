@@ -253,12 +253,14 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
         ? alignmentEvent.event.result
         : undefined;
+    const luckBladeWishes = swordsEvent.event.luckBladeWishes;
     return swordSentence(
       swordsEvent.event.result,
       kind,
       alignmentResult,
       intelligenceLabel,
-      abilitySummaries
+      abilitySummaries,
+      luckBladeWishes
     );
   }
   const miscWeaponsEvent = findMiscWeaponsEvent(magic);

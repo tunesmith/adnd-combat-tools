@@ -596,6 +596,7 @@ export type OutcomeEvent =
       level: number;
       treasureRoll: number;
       rollIndex?: number;
+      luckBladeWishes?: number;
     }
   | { kind: 'treasureSwordKind'; result: TreasureSwordKind }
   | { kind: 'treasureSwordUnusual'; result: TreasureSwordUnusualResult }
