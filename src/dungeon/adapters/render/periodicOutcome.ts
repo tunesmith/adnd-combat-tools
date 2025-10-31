@@ -286,12 +286,23 @@ function summarizePeriodicResult(
     }
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
+      if (!stairs) return { text: base.compact };
+      const text = renderStairsCompact(stairs, {
+        renderChamberSummary: describeChamberDimensions,
+      });
+      // If stairs descend into a chamber, include any party/treasure compact messages
+      // associated with that chamber so monster/treasure details are not lost.
+      const chamber = findChildEvent(stairs, 'chamberDimensions');
+      const partyMessages = chamber
+        ? collectCharacterPartyMessages(chamber, 'compact')
+        : [];
+      const treasureMessages = chamber
+        ? collectTreasureCompactMessages(chamber)
+        : [];
+      const extraNodes = [...partyMessages, ...treasureMessages];
       return {
-        text: stairs
-          ? renderStairsCompact(stairs, {
-              renderChamberSummary: describeChamberDimensions,
-            })
-          : base.compact,
+        text,
+        nodes: extraNodes.length > 0 ? extraNodes : undefined,
       };
     }
     case PeriodicCheck.TrickTrap: {
