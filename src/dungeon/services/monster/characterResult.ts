@@ -25,6 +25,7 @@ import {
 } from '../../helpers/party/isAlignmentCompatible';
 import { createMenAtArms } from '../../helpers/character/createMenAtArms';
 import { assignMagicItemsToParty } from '../../helpers/party/assignMagicItems';
+import { isOthersAlignmentCompatible } from '../../helpers/party/isOthersAlignmentCompatible';
 
 /**
  * There are some tricky intricacies here having to do with whether a generated
@@ -143,6 +144,16 @@ export const createCharacters = (
       continue;
     }
 
+    // Enforce class-specific party alignment constraints ("others" sets)
+    if (
+      !isOthersAlignmentCompatible(
+        characterSheet,
+        [...newMembers, ...existingParty]
+      )
+    ) {
+      continue;
+    }
+
     // Update counts and add to the party
     characterSheet.professions.forEach((profession) => {
       counts[profession.characterClass]++;
@@ -210,6 +221,10 @@ export const generateFollowers = (
         const candidate = henchmen[0];
         if (!candidate) continue;
         if (!areAlignmentsCompatible(member.alignment, candidate.alignment)) {
+          continue;
+        }
+        // Also require class-specific party alignment compatibility against the full party
+        if (!isOthersAlignmentCompatible(candidate, mainParty)) {
           continue;
         }
         follower = candidate;
