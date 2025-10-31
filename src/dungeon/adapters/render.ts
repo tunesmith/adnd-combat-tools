@@ -16,6 +16,7 @@ import {
   renderWanderingWhereFromDetail,
   renderWanderingWhereFromCompactNodes,
   buildWanderingWhereFromPreview,
+  PASSAGE_CONTINUES_SUFFIX,
 } from './render/periodicOutcome';
 import {
   renderDoorLocationDetail,
@@ -1983,7 +1984,16 @@ export function renderDetailTree(
   if (!outcome.children) return nodes;
   for (const child of outcome.children) {
     if (child.type !== 'event') continue;
-    nodes.push(...renderDetailTree(child, false, seenPreviews));
+    const childRendered = renderDetailTree(child, false, seenPreviews);
+    nodes.push(...childRendered);
+    // After resolving a Trick/Trap that originates from a periodic check,
+    // add the standard continuation note.
+    if (outcome.event.kind === 'periodicCheck' && child.event.kind === 'trickTrap') {
+      nodes.push({
+        kind: 'paragraph',
+        text: PASSAGE_CONTINUES_SUFFIX.trimStart(),
+      });
+    }
   }
   return nodes;
 }

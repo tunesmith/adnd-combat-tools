@@ -45,7 +45,7 @@ describe('Passage compact text (adapter)', () => {
     const { messages } = passageMessages({ roll, detailMode: false, level: 1 });
     const para = (messages as DungeonMessage[]).find(isParagraph);
     expect(para && para.text).toBe(
-      'There is an illusionary wall. It conceals a chamber. '
+      "There is an illusionary wall. It conceals a chamber. The current passage continues, check again in 30'. "
     );
     spy.mockRestore();
   });
