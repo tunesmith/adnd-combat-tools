@@ -1,9 +1,7 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
-import {
-  treasurePeriaptPoisonBonus,
-  TreasurePeriaptPoisonBonus,
-} from '../../../tables/dungeon/treasurePeriaptProofAgainstPoison';
+import { treasurePeriaptPoisonBonus } from '../../../tables/dungeon/treasurePeriaptProofAgainstPoison';
+import type { TreasurePeriaptPoisonBonus } from '../../../tables/dungeon/treasurePeriaptProofAgainstPoison';
 import { buildPreview } from './shared';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 

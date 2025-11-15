@@ -10,10 +10,7 @@ import type {
   TreasureSwordExtraordinaryPowerResult,
   TreasureSwordSpecialPurposeResult,
 } from '../../tables/dungeon/treasureSwords';
-import type {
-  TreasureSwordAlignment,
-  TreasureSwordAlignmentResult,
-} from '../../tables/dungeon/treasureSwordAlignment';
+import type { TreasureSwordAlignment } from '../../tables/dungeon/treasureSwordAlignment';
 import {
   resolveDoorLocation,
   resolvePeriodicDoorOnly,
@@ -1141,8 +1138,7 @@ function propagateAlignment(
   if (node.type === 'event') {
     let nextAlignment = currentAlignment;
     if (node.event.kind === 'treasureSwordAlignment') {
-      nextAlignment = (node.event.result as TreasureSwordAlignmentResult)
-        .alignment;
+      nextAlignment = node.event.result.alignment;
     } else if (node.event.kind === 'treasureSwordUnusual') {
       const alignmentChild = (node.children || []).find(
         (child): child is OutcomeEventNode =>
@@ -1153,8 +1149,7 @@ function propagateAlignment(
         alignmentChild &&
         alignmentChild.event.kind === 'treasureSwordAlignment'
       ) {
-        const alignmentResult = alignmentChild.event
-          .result as TreasureSwordAlignmentResult;
+        const alignmentResult = alignmentChild.event.result;
         nextAlignment = alignmentResult.alignment;
       }
     }
@@ -1286,7 +1281,7 @@ function applyAlignmentToExtraordinaryEvent(
   children: DungeonOutcomeNode[]
 ): OutcomeEventNode {
   if (node.event.kind !== 'treasureSwordExtraordinaryPower') return node;
-  const result = node.event.result as TreasureSwordExtraordinaryPowerResult;
+  const result = node.event.result;
   let updated = node;
   if (result.kind === 'power' && result.alignmentRequired) {
     const nextResult: Extract<
@@ -1318,7 +1313,7 @@ function applyAlignmentToSpecialPurposeEvent(
   alignment: TreasureSwordAlignment
 ): OutcomeEventNode {
   if (node.event.kind !== 'treasureSwordSpecialPurpose') return node;
-  const result = node.event.result as TreasureSwordSpecialPurposeResult;
+  const result = node.event.result;
   if (result.alignment === alignment) return node;
   const updatedResult: TreasureSwordSpecialPurposeResult = {
     ...result,
@@ -1609,7 +1604,7 @@ function findSwordFromAncestors(
     const ancestor = ancestors[index];
     if (!ancestor || ancestor.type !== 'event') continue;
     if (ancestor.event.kind === 'treasureSwords') {
-      return ancestor.event.result as TreasureSword;
+      return ancestor.event.result;
     }
   }
   return undefined;

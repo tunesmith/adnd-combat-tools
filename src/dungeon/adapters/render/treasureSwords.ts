@@ -23,10 +23,6 @@ import {
   treasureSwordSpecialPurposePower,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
-  TreasureSwordSpecialPurpose,
-  TreasureSwordSpecialPurposeCommand,
-  TreasureSwordSpecialPurposePower,
-  TreasureSwordSpecialPurposePowerCommand,
   describeSwordExtraordinaryPower,
   describeSwordSpecialPurpose,
   describeSwordSpecialPurposePower,
@@ -38,7 +34,12 @@ import {
   type TreasureSwordExtraordinaryPowerResult,
   type TreasureSwordSpecialPurposeResult,
   type TreasureSwordSpecialPurposePowerResult,
-  type TreasureSwordDragonSlayerColorResult,
+} from '../../../tables/dungeon/treasureSwords';
+import type {
+  TreasureSwordSpecialPurpose,
+  TreasureSwordSpecialPurposeCommand,
+  TreasureSwordSpecialPurposePower,
+  TreasureSwordSpecialPurposePowerCommand,
 } from '../../../tables/dungeon/treasureSwords';
 import {
   treasureSwordAlignment,
@@ -211,8 +212,7 @@ export function renderTreasureSwordsDetail(
   const dragonSlayerColorLabel =
     dragonColorEvent &&
     dragonColorEvent.event.kind === 'treasureSwordDragonSlayerColor'
-      ? (dragonColorEvent.event.result as TreasureSwordDragonSlayerColorResult)
-          .label
+      ? dragonColorEvent.event.result.label
       : undefined;
   const parenthetical = buildSwordParenthetical(
     intelligenceLabel,
@@ -287,8 +287,7 @@ export function renderTreasureSwordsCompact(
   const dragonSlayerColorLabel =
     dragonColorEvent &&
     dragonColorEvent.event.kind === 'treasureSwordDragonSlayerColor'
-      ? (dragonColorEvent.event.result as TreasureSwordDragonSlayerColorResult)
-          .label
+      ? dragonColorEvent.event.result.label
       : undefined;
   const abilitySummaries =
     unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
@@ -582,10 +581,9 @@ function gatherSpecialPurposeOutcomes(
     const current = stack.pop();
     if (!current) continue;
     if (current.event.kind === 'treasureSwordSpecialPurpose') {
-      purposes.push(current.event.result as TreasureSwordSpecialPurposeResult);
+      purposes.push(current.event.result);
     } else if (current.event.kind === 'treasureSwordSpecialPurposePower') {
-      const powerResult = current.event
-        .result as TreasureSwordSpecialPurposePowerResult;
+      const powerResult = current.event.result;
       const parentKey = powerResult.parentSlotKey;
       if (parentKey) {
         const bucket = powerByParent.get(parentKey) ?? [];
@@ -1032,7 +1030,7 @@ export function renderTreasureSwordSpecialPurposeDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordSpecialPurpose') return [];
-  const result = outcome.event.result as TreasureSwordSpecialPurposeResult;
+  const result = outcome.event.result;
   const description = describeSwordSpecialPurpose(result.purpose, {
     alignment: result.alignment,
   });
@@ -1063,7 +1061,7 @@ export function renderTreasureSwordSpecialPurposeCompact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordSpecialPurpose') return [];
-  const result = outcome.event.result as TreasureSwordSpecialPurposeResult;
+  const result = outcome.event.result;
   const description = describeSwordSpecialPurpose(result.purpose, {
     alignment: result.alignment,
   });
@@ -1086,7 +1084,7 @@ export function renderTreasureSwordSpecialPurposePowerDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordSpecialPurposePower') return [];
-  const result = outcome.event.result as TreasureSwordSpecialPurposePowerResult;
+  const result = outcome.event.result;
   const description = describeSwordSpecialPurposePower(result.power);
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -1115,7 +1113,7 @@ export function renderTreasureSwordSpecialPurposePowerCompact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordSpecialPurposePower') return [];
-  const result = outcome.event.result as TreasureSwordSpecialPurposePowerResult;
+  const result = outcome.event.result;
   const description = describeSwordSpecialPurposePower(result.power);
   const heading: DungeonMessage = {
     kind: 'heading',
@@ -1136,7 +1134,7 @@ export function renderTreasureSwordDragonSlayerColorDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordDragonSlayerColor') return [];
-  const result = outcome.event.result as TreasureSwordDragonSlayerColorResult;
+  const result = outcome.event.result;
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,
@@ -1164,7 +1162,7 @@ export function renderTreasureSwordDragonSlayerColorCompact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureSwordDragonSlayerColor') return [];
-  const result = outcome.event.result as TreasureSwordDragonSlayerColorResult;
+  const result = outcome.event.result;
   const alignmentLabel = SWORD_ALIGNMENT_DETAILS[result.alignment].label;
   const heading: DungeonMessage = {
     kind: 'heading',

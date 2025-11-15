@@ -9,7 +9,6 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
-import type { TreasureSwordAlignment } from '../../tables/dungeon/treasureSwordAlignment';
 import {
   renderPeriodicCheckDetail,
   renderPeriodicCheckCompact,
@@ -1547,11 +1546,7 @@ function previewForEventNode(
         node.id,
         'treasureSwordSpecialPurpose:'
       );
-      const alignment =
-        event.result && typeof event.result === 'object'
-          ? ((event.result as { alignment?: TreasureSwordAlignment })
-              .alignment as TreasureSwordAlignment | undefined)
-          : undefined;
+      const alignment = event.result?.alignment;
       context = {
         kind: 'treasureSwordSpecialPurpose',
         slotKey: info.slotKey,

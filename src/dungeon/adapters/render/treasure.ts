@@ -62,7 +62,6 @@ import {
   formatSwordIntelligence,
   summarizePrimaryAbilities,
 } from './treasureSwords';
-import type { TreasureSwordDragonSlayerColorResult } from '../../../tables/dungeon/treasureSwords';
 import { miscWeaponSentence } from './treasureMiscWeapons';
 
 export function renderTreasureDetail(
@@ -258,10 +257,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     const dragonSlayerColorLabel =
       dragonColorEvent &&
       dragonColorEvent.event.kind === 'treasureSwordDragonSlayerColor'
-        ? (
-            dragonColorEvent.event
-              .result as TreasureSwordDragonSlayerColorResult
-          ).label
+        ? dragonColorEvent.event.result.label
         : undefined;
     const luckBladeWishes = swordsEvent.event.luckBladeWishes;
     return swordSentence(

@@ -149,10 +149,8 @@ import {
   treasureMiscMagicE5,
   TreasureMiscMagicE5,
 } from '../../tables/dungeon/treasureMiscMagicE5';
-import {
-  treasureRobeOfTheArchmagi,
-  TreasureRobeOfTheArchmagi,
-} from '../../tables/dungeon/treasureRobeOfTheArchmagi';
+import { treasureRobeOfTheArchmagi } from '../../tables/dungeon/treasureRobeOfTheArchmagi';
+import type { TreasureRobeOfTheArchmagi } from '../../tables/dungeon/treasureRobeOfTheArchmagi';
 import {
   treasureRobeOfUsefulItems,
   RobeOfUsefulItemsExtraPatch,
@@ -161,18 +159,15 @@ import {
   treasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurse,
   treasureScarabOfProtectionCursedResolution,
-  TreasureScarabOfProtectionCurseResolution,
 } from '../../tables/dungeon/treasureScarabOfProtection';
-import {
-  treasureArmorShields,
-  TreasureArmorShield,
-} from '../../tables/dungeon/treasureArmorShields';
+import type { TreasureScarabOfProtectionCurseResolution } from '../../tables/dungeon/treasureScarabOfProtection';
+import { treasureArmorShields } from '../../tables/dungeon/treasureArmorShields';
+import type { TreasureArmorShield } from '../../tables/dungeon/treasureArmorShields';
 import {
   treasureSwords,
   TreasureSword,
   treasureSwordKind,
   treasureSwordUnusual,
-  TreasureSwordPrimaryAbility,
   SWORD_UNUSUAL_DETAILS,
   treasureSwordPrimaryAbility,
   treasureSwordPrimaryAbilityRestricted,
@@ -185,8 +180,6 @@ import {
   TreasureSwordUnusual,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
-  TreasureSwordSpecialPurpose,
-  TreasureSwordSpecialPurposePower,
   describeSwordExtraordinaryPower,
   describeSwordSpecialPurpose,
   describeSwordSpecialPurposePower,
@@ -194,6 +187,9 @@ import {
   dragonSlayerColorTableForAlignment,
 } from '../../tables/dungeon/treasureSwords';
 import type {
+  TreasureSwordPrimaryAbility,
+  TreasureSwordSpecialPurpose,
+  TreasureSwordSpecialPurposePower,
   TreasureSwordKind,
   TreasureSwordUnusualResult,
   TreasureSwordPrimaryAbilityResult,
@@ -231,14 +227,10 @@ import {
   TreasureIounStoneType,
   IOUN_STONE_DEFINITIONS,
 } from '../../tables/dungeon/treasureIounStones';
-import {
-  treasureManualOfGolems,
-  TreasureManualOfGolems,
-} from '../../tables/dungeon/treasureManualOfGolems';
-import {
-  treasureMedallionRange,
-  TreasureMedallionRange,
-} from '../../tables/dungeon/treasureMedallionEspRange';
+import { treasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
+import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
+import { treasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
+import type { TreasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
 import {
   treasureNecklaceOfMissiles,
   type TreasureNecklaceOfMissiles,
@@ -249,26 +241,12 @@ import {
   TreasurePearlOfPowerEffect,
   resolvePearlRecallResult,
 } from '../../tables/dungeon/treasurePearlOfPower';
-import {
-  treasurePearlOfWisdom,
-  TreasurePearlOfWisdomOutcome,
-} from '../../tables/dungeon/treasurePearlOfWisdom';
-import {
-  treasurePeriaptPoisonBonus,
-  TreasurePeriaptPoisonBonus,
-} from '../../tables/dungeon/treasurePeriaptProofAgainstPoison';
-import {
-  treasurePhylacteryLongYears,
-  TreasurePhylacteryLongYearsOutcome,
-} from '../../tables/dungeon/treasurePhylacteryLongYears';
-import {
-  treasureQuaalFeatherToken,
-  TreasureQuaalFeatherToken,
-} from '../../tables/dungeon/treasureQuaalFeatherToken';
-import {
-  treasureNecklacePrayerBeads,
-  TreasureNecklacePrayerBead,
-} from '../../tables/dungeon/treasureNecklacePrayerBeads';
+import { treasurePearlOfWisdom } from '../../tables/dungeon/treasurePearlOfWisdom';
+import { treasurePeriaptPoisonBonus } from '../../tables/dungeon/treasurePeriaptProofAgainstPoison';
+import { treasurePhylacteryLongYears } from '../../tables/dungeon/treasurePhylacteryLongYears';
+import { treasureQuaalFeatherToken } from '../../tables/dungeon/treasureQuaalFeatherToken';
+import { treasureNecklacePrayerBeads } from '../../tables/dungeon/treasureNecklacePrayerBeads';
+import type { TreasureNecklacePrayerBead } from '../../tables/dungeon/treasureNecklacePrayerBeads';
 import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
 import {
@@ -2502,10 +2480,7 @@ export function resolveTreasureRobeOfUsefulItems(options?: {
     } else {
       extraPatches.push({
         roll: usedRoll,
-        item: patch as Exclude<
-          RobeOfUsefulItemsExtraPatch,
-          RobeOfUsefulItemsExtraPatch.RollTwiceMore
-        >,
+        item: patch,
       });
     }
     index += 1;
@@ -2846,7 +2821,7 @@ export function resolveTreasureSwordUnusual(options?: {
   if (sword === TreasureSword.SwordPlus2DragonSlayer) {
     let alignmentForColor: TreasureSwordAlignment | undefined;
     let colorAlignmentReady = false;
-    const alignmentChild = (children as DungeonOutcomeNode[]).find(
+    const alignmentChild = children.find(
       (child): child is OutcomeEventNode =>
         child.type === 'event' && child.event.kind === 'treasureSwordAlignment'
     );
@@ -2854,8 +2829,7 @@ export function resolveTreasureSwordUnusual(options?: {
       alignmentChild &&
       alignmentChild.event.kind === 'treasureSwordAlignment'
     ) {
-      const alignmentResult = alignmentChild.event
-        .result as TreasureSwordAlignmentResult;
+      const alignmentResult = alignmentChild.event.result;
       alignmentForColor = alignmentResult.alignment;
       colorAlignmentReady = true;
     }
@@ -3796,10 +3770,7 @@ export function resolveTreasurePearlOfWisdom(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasurePearlOfWisdom.sides);
-  const command = getTableEntry(
-    usedRoll,
-    treasurePearlOfWisdom
-  ) as TreasurePearlOfWisdomOutcome;
+  const command = getTableEntry(usedRoll, treasurePearlOfWisdom);
   return {
     type: 'event',
     roll: usedRoll,
@@ -3814,10 +3785,7 @@ export function resolveTreasurePeriaptProofAgainstPoison(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasurePeriaptPoisonBonus.sides);
-  const command = getTableEntry(
-    usedRoll,
-    treasurePeriaptPoisonBonus
-  ) as TreasurePeriaptPoisonBonus;
+  const command = getTableEntry(usedRoll, treasurePeriaptPoisonBonus);
   return {
     type: 'event',
     roll: usedRoll,
@@ -3832,10 +3800,7 @@ export function resolveTreasurePhylacteryLongYears(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasurePhylacteryLongYears.sides);
-  const command = getTableEntry(
-    usedRoll,
-    treasurePhylacteryLongYears
-  ) as TreasurePhylacteryLongYearsOutcome;
+  const command = getTableEntry(usedRoll, treasurePhylacteryLongYears);
   return {
     type: 'event',
     roll: usedRoll,
@@ -3886,10 +3851,7 @@ export function resolveTreasureQuaalFeatherToken(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureQuaalFeatherToken.sides);
-  const command = getTableEntry(
-    usedRoll,
-    treasureQuaalFeatherToken
-  ) as TreasureQuaalFeatherToken;
+  const command = getTableEntry(usedRoll, treasureQuaalFeatherToken);
   return {
     type: 'event',
     roll: usedRoll,

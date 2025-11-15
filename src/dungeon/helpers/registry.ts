@@ -1175,14 +1175,12 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
     const rollIndex =
       typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
-    const parentSlotKey =
+    const parentSlotKey: string | undefined =
       typeof parsed.parentSlotKey === 'string'
-        ? (parsed.parentSlotKey as string)
+        ? parsed.parentSlotKey
         : undefined;
-    const alignment =
-      typeof parsed.alignment === 'number'
-        ? (parsed.alignment as TreasureSwordAlignment)
-        : undefined;
+    const alignment: TreasureSwordAlignment | undefined =
+      typeof parsed.alignment === 'number' ? parsed.alignment : undefined;
     return fromOutcome(
       resolveTreasureSwordSpecialPurpose({
         roll,
@@ -1207,14 +1205,12 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
       typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
     const rollIndex =
       typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
-    const parentSlotKey =
+    const parentSlotKey: string | undefined =
       typeof parsed.parentSlotKey === 'string'
-        ? (parsed.parentSlotKey as string)
+        ? parsed.parentSlotKey
         : undefined;
-    const alignment =
-      typeof parsed.alignment === 'number'
-        ? (parsed.alignment as TreasureSwordAlignment)
-        : undefined;
+    const alignment: TreasureSwordAlignment | undefined =
+      typeof parsed.alignment === 'number' ? parsed.alignment : undefined;
     return fromOutcome(
       resolveTreasureSwordSpecialPurposePower({
         roll,
