@@ -59,7 +59,9 @@ describe('party alignment integration', () => {
     // Force candidate to be a Paladin (LG)
     jest
       .spyOn(getSingleModule, 'getSingleClassCharacterForRace')
-      .mockImplementation(() => buildCharacter([CharacterClass.Paladin], Alignment.LawfulGood));
+      .mockImplementation(() =>
+        buildCharacter([CharacterClass.Paladin], Alignment.LawfulGood)
+      );
 
     const generated = createCharacters(1, 4, existingParty);
     expect(generated).toHaveLength(0); // rejected by party "others" alignment rule
@@ -85,4 +87,3 @@ describe('party alignment integration', () => {
     expect(mainParty[0]?.followers.length).toBe(0); // rejected
   });
 });
-

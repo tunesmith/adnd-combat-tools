@@ -37,7 +37,7 @@ import {
   type TreasureSwordAlignmentResult,
 } from '../../../../tables/dungeon/treasureSwordAlignment';
 
-  describe('resolveTreasureSwords', () => {
+describe('resolveTreasureSwords', () => {
   it('creates pending rolls for kind and unusual tables by default', () => {
     const node = resolveTreasureSwords({ roll: 10 });
 
@@ -78,9 +78,7 @@ import {
       throw new Error('Expected treasureSwords event');
     }
 
-    expect(node.event.result).toBe(
-      TreasureSword.SwordPlus1Plus2VsMagicUsers
-    );
+    expect(node.event.result).toBe(TreasureSword.SwordPlus1Plus2VsMagicUsers);
 
     const childEvents = (node.children || []).filter(
       (child): child is OutcomeEventNode => child.type === 'event'
@@ -114,7 +112,8 @@ import {
     const unusualChildren = unusualEvent.children || [];
     const alignmentPending = unusualChildren.find(
       (child) =>
-        child.type === 'pending-roll' && child.table === 'treasureSwordAlignment'
+        child.type === 'pending-roll' &&
+        child.table === 'treasureSwordAlignment'
     );
     expect(alignmentPending).toBeDefined();
 
@@ -131,7 +130,9 @@ import {
       .join(' ');
     expect(detailText).toContain('(I14, 2 languages)');
     expect(detailText).toContain('plus 2 additional tongues.');
-    expect(detailText).toContain('The sword can detect evil/good in a 1" radius.');
+    expect(detailText).toContain(
+      'The sword can detect evil/good in a 1" radius.'
+    );
     expect(detailText).toContain('The sword can detect magic in a 1" radius.');
   });
 
@@ -151,10 +152,7 @@ import {
       (child): child is OutcomeEventNode =>
         child.type === 'event' && child.event.kind === 'treasureSwordUnusual'
     );
-    if (
-      !unusualEvent ||
-      unusualEvent.event.kind !== 'treasureSwordUnusual'
-    ) {
+    if (!unusualEvent || unusualEvent.event.kind !== 'treasureSwordUnusual') {
       throw new Error('Expected treasureSwordUnusual child event');
     }
 
@@ -309,10 +307,7 @@ import {
       (child): child is OutcomeEventNode =>
         child.type === 'event' && child.event.kind === 'treasureSwordUnusual'
     );
-    if (
-      !unusualEvent ||
-      unusualEvent.event.kind !== 'treasureSwordUnusual'
-    ) {
+    if (!unusualEvent || unusualEvent.event.kind !== 'treasureSwordUnusual') {
       throw new Error('Expected unusual event');
     }
     const abilityEvents = collectAbilityEvents(unusualEvent);
@@ -395,10 +390,7 @@ import {
       (child): child is OutcomeEventNode =>
         child.type === 'event' && child.event.kind === 'treasureSwordUnusual'
     );
-    if (
-      !unusualEvent ||
-      unusualEvent.event.kind !== 'treasureSwordUnusual'
-    ) {
+    if (!unusualEvent || unusualEvent.event.kind !== 'treasureSwordUnusual') {
       throw new Error('Expected treasureSwordUnusual event');
     }
 
@@ -471,10 +463,7 @@ import {
       (child): child is OutcomeEventNode =>
         child.type === 'event' && child.event.kind === 'treasureSwordUnusual'
     );
-    if (
-      !unusualEvent ||
-      unusualEvent.event.kind !== 'treasureSwordUnusual'
-    ) {
+    if (!unusualEvent || unusualEvent.event.kind !== 'treasureSwordUnusual') {
       throw new Error('Expected treasureSwordUnusual event');
     }
 
@@ -657,7 +646,10 @@ import {
       dragonSlayerColorRoll: 1,
     });
 
-    if (swordNode.type !== 'event' || swordNode.event.kind !== 'treasureSwords') {
+    if (
+      swordNode.type !== 'event' ||
+      swordNode.event.kind !== 'treasureSwords'
+    ) {
       throw new Error('Expected treasure swords event');
     }
 
@@ -665,15 +657,18 @@ import {
     if (!unusualEvent || unusualEvent.type !== 'event') {
       throw new Error('Expected unusual event');
     }
-    const alignmentEvent = findChildEvent(unusualEvent, 'treasureSwordAlignment');
+    const alignmentEvent = findChildEvent(
+      unusualEvent,
+      'treasureSwordAlignment'
+    );
     if (!alignmentEvent || alignmentEvent.type !== 'event') {
       throw new Error('Expected alignment event');
     }
     if (alignmentEvent.event.kind !== 'treasureSwordAlignment') {
       throw new Error('Unexpected alignment event kind');
     }
-    const alignmentResult =
-      alignmentEvent.event.result as TreasureSwordAlignmentResult;
+    const alignmentResult = alignmentEvent.event
+      .result as TreasureSwordAlignmentResult;
     const colorEvent = findChildEvent(
       unusualEvent,
       'treasureSwordDragonSlayerColor'
@@ -684,8 +679,8 @@ import {
     if (colorEvent.event.kind !== 'treasureSwordDragonSlayerColor') {
       throw new Error('Unexpected dragon slayer color kind');
     }
-    const colorResult =
-      colorEvent.event.result as TreasureSwordDragonSlayerColorResult;
+    const colorResult = colorEvent.event
+      .result as TreasureSwordDragonSlayerColorResult;
     expect(colorResult.alignment).not.toBe(alignmentResult.alignment);
   });
 
@@ -820,7 +815,9 @@ import {
     const purposeNode = resolveTreasureSwordSpecialPurpose({
       roll: 8,
       slotKey:
-        typeof context.slotKey === 'string' ? (context.slotKey as string) : undefined,
+        typeof context.slotKey === 'string'
+          ? (context.slotKey as string)
+          : undefined,
       rollIndex:
         typeof context.rollIndex === 'number'
           ? (context.rollIndex as number)
@@ -838,9 +835,7 @@ import {
 
     const purposeResult = purposeNode.event.result;
     expect(purposeResult.description).toBe('defeat/slay Chaotic Evil');
-    expect(purposeResult.alignment).toBe(
-      TreasureSwordAlignment.LawfulGood
-    );
+    expect(purposeResult.alignment).toBe(TreasureSwordAlignment.LawfulGood);
 
     const powerPending = (purposeNode.children || []).find(
       (child): child is PendingRoll =>
@@ -890,7 +885,10 @@ import {
       extraordinaryPowerRolls: [100],
     });
 
-    if (swordNode.type !== 'event' || swordNode.event.kind !== 'treasureSwords') {
+    if (
+      swordNode.type !== 'event' ||
+      swordNode.event.kind !== 'treasureSwords'
+    ) {
       throw new Error('Expected treasureSwords event');
     }
 
@@ -1078,17 +1076,16 @@ import {
     if (colorChild.event.kind !== 'treasureSwordDragonSlayerColor') {
       throw new Error('Unexpected dragon slayer color kind');
     }
-    const colorResult =
-      colorChild.event.result as TreasureSwordDragonSlayerColorResult;
+    const colorResult = colorChild.event
+      .result as TreasureSwordDragonSlayerColorResult;
     expect(colorResult.color).toBe(TreasureSwordDragonSlayerColor.Red);
   });
 
   it('adapts slay good or evil purposes to the sword alignment', () => {
     expect(
-      describeSwordSpecialPurpose(
-        TreasureSwordSpecialPurpose.SlayGoodOrEvil,
-        { alignment: TreasureSwordAlignment.ChaoticGood }
-      )
+      describeSwordSpecialPurpose(TreasureSwordSpecialPurpose.SlayGoodOrEvil, {
+        alignment: TreasureSwordAlignment.ChaoticGood,
+      })
     ).toBe('slay neutral or evil');
 
     const goodAligned = resolveTreasureSwordSpecialPurpose({
@@ -1105,9 +1102,7 @@ import {
     expect(goodAligned.event.result.alignment).toBe(
       TreasureSwordAlignment.ChaoticGood
     );
-    expect(goodAligned.event.result.description).toBe(
-      'slay neutral or evil'
-    );
+    expect(goodAligned.event.result.description).toBe('slay neutral or evil');
 
     const evilAligned = resolveTreasureSwordSpecialPurpose({
       roll: 70,
@@ -1119,9 +1114,7 @@ import {
     if (evilAligned.event.kind !== 'treasureSwordSpecialPurpose') {
       throw new Error('Expected special purpose event');
     }
-    expect(evilAligned.event.result.description).toBe(
-      'slay good or neutral'
-    );
+    expect(evilAligned.event.result.description).toBe('slay good or neutral');
 
     const neutralAligned = resolveTreasureSwordSpecialPurpose({
       roll: 70,
@@ -1133,9 +1126,7 @@ import {
     if (neutralAligned.event.kind !== 'treasureSwordSpecialPurpose') {
       throw new Error('Expected special purpose event');
     }
-    expect(neutralAligned.event.result.description).toBe(
-      'slay good or evil'
-    );
+    expect(neutralAligned.event.result.description).toBe('slay good or evil');
   });
 
   it('renders special purpose details with alignment-aware text', () => {
@@ -1149,9 +1140,9 @@ import {
     }
 
     const nodes = renderDetailTree(purposeNode);
-    const paragraph = nodes.find(
-      (entry) => entry.kind === 'paragraph'
-    ) as { text?: string } | undefined;
+    const paragraph = nodes.find((entry) => entry.kind === 'paragraph') as
+      | { text?: string }
+      | undefined;
     expect(paragraph?.text).toContain('defeat/slay Chaotic Evil');
   });
 
@@ -1171,10 +1162,7 @@ import {
       (child): child is OutcomeEventNode =>
         child.type === 'event' && child.event.kind === 'treasureSwordUnusual'
     );
-    if (
-      !unusualEvent ||
-      unusualEvent.event.kind !== 'treasureSwordUnusual'
-    ) {
+    if (!unusualEvent || unusualEvent.event.kind !== 'treasureSwordUnusual') {
       throw new Error('Expected unusual event');
     }
     const instructionNodes = (unusualEvent.children || []).filter(
@@ -1196,7 +1184,10 @@ import {
     expect(instructionPending).toBeDefined();
     const pendingList = instructionPending ?? [];
     const forcedRolls: Array<{ roll: number; expected: string }> = [
-      { roll: 5, expected: 'detect "elevator"/shifting rooms/walls in a 1" radius' },
+      {
+        roll: 5,
+        expected: 'detect "elevator"/shifting rooms/walls in a 1" radius',
+      },
       { roll: 20, expected: 'detect sloping passages in a 1" radius' },
     ];
     const instructionChildren = [...(instructionNode.children || [])];
@@ -1218,7 +1209,10 @@ import {
         roll: forced.roll,
         rollIndex:
           typeof context.rollIndex === 'number' ? context.rollIndex : undefined,
-        slotKey: typeof context.slotKey === 'string' ? (context.slotKey as string) : undefined,
+        slotKey:
+          typeof context.slotKey === 'string'
+            ? (context.slotKey as string)
+            : undefined,
         tableVariant:
           context.tableVariant === 'restricted' ? 'restricted' : 'standard',
       });
@@ -1270,17 +1264,13 @@ import {
       (child): child is OutcomeEventNode =>
         child.type === 'event' && child.event.kind === 'treasureSwordUnusual'
     );
-    if (
-      !unusualEvent ||
-      unusualEvent.event.kind !== 'treasureSwordUnusual'
-    ) {
+    if (!unusualEvent || unusualEvent.event.kind !== 'treasureSwordUnusual') {
       throw new Error('Expected unusual event');
     }
     const summaries = summarizePrimaryAbilities(unusualEvent);
     const extraordinary = summaries.find(
       (summary) =>
-        summary.extraordinaryPower ===
-        TreasureSwordExtraordinaryPower.Heal
+        summary.extraordinaryPower === TreasureSwordExtraordinaryPower.Heal
     );
     expect(extraordinary).toBeDefined();
     expect(extraordinary?.description).toBe('heal — 1 time/day');

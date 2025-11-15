@@ -1009,9 +1009,7 @@ describe('passage contents', () => {
     if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE4') {
       throw new Error('treasureMiscMagicE4 event not found');
     }
-    expect(miscEvent.event.result).toBe(
-      TreasureMiscMagicE4.MirrorOfOpposition
-    );
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE4.MirrorOfOpposition);
 
     const detailText = renderDetail(feed)
       .filter(
@@ -1070,9 +1068,7 @@ describe('passage contents', () => {
     if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE5') {
       throw new Error('treasureMiscMagicE5 event not found');
     }
-    expect(miscEvent.event.result).toBe(
-      TreasureMiscMagicE5.RobeOfTheArchmagi
-    );
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE5.RobeOfTheArchmagi);
 
     const robeEvent = findOutcomeEvent(
       feed.outcome,
@@ -1101,7 +1097,6 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a robe of the archmagi (neutral).');
-
   });
 
   it('summarizes robe of useful items patches from miscellaneous magic E.5', () => {
@@ -1144,7 +1139,9 @@ describe('passage contents', () => {
 
     const detailNodes = renderDetail(feed);
     const robeDetailNode = detailNodes.find(
-      (node): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
         node.kind === 'robe-of-useful-items'
     );
     expect(robeDetailNode).toBeDefined();
@@ -1152,7 +1149,9 @@ describe('passage contents', () => {
       throw new Error('robe-of-useful-items detail node not found');
     }
     const detailOccurrences = detailNodes.filter(
-      (node): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
         node.kind === 'robe-of-useful-items'
     );
     expect(detailOccurrences).toHaveLength(1);
@@ -1161,7 +1160,9 @@ describe('passage contents', () => {
 
     const compactNodes = renderCompact(feed);
     const robeCompactNode = compactNodes.find(
-      (node): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
         node.kind === 'robe-of-useful-items'
     );
     expect(robeCompactNode).toBeDefined();
@@ -1169,14 +1170,20 @@ describe('passage contents', () => {
       throw new Error('robe-of-useful-items compact node not found');
     }
     const compactOccurrences = compactNodes.filter(
-      (node): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
         node.kind === 'robe-of-useful-items'
     );
     expect(compactOccurrences).toHaveLength(1);
     const compactParagraph = compactNodes
       .filter(
-        (node): node is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> =>
-          node.kind === 'paragraph'
+        (
+          node
+        ): node is Extract<
+          DungeonRenderNode,
+          { kind: 'paragraph'; text: string }
+        > => node.kind === 'paragraph'
       )
       .map((node) => node.text)
       .join(' ');
@@ -1186,8 +1193,12 @@ describe('passage contents', () => {
     expect(robeCompactNode.summary.basePatchCount).toBe(12);
     const treasureMessages = collectTreasureCompactMessages(feed.outcome);
     const aggregatedRobeMessage = treasureMessages.find(
-      (message): message is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
-        message.kind === 'robe-of-useful-items'
+      (
+        message
+      ): message is Extract<
+        DungeonRenderNode,
+        { kind: 'robe-of-useful-items' }
+      > => message.kind === 'robe-of-useful-items'
     );
     expect(aggregatedRobeMessage).toBeDefined();
     if (!aggregatedRobeMessage) {
@@ -1231,11 +1242,10 @@ describe('passage contents', () => {
     if (!curseTarget) throw new Error('missing scarab curse target');
     feed = resolvePreview(feed, curseTarget, 1);
 
-    const resolutionTargets = listPendingPreviewTargets(feed).filter(
-      (target) =>
-        (target.split('.').pop() ?? '').startsWith(
-          'treasureScarabOfProtectionCurseResolution'
-        )
+    const resolutionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScarabOfProtectionCurseResolution'
+      )
     );
     const resolutionTarget = resolutionTargets[0];
     if (!resolutionTarget)
@@ -1357,9 +1367,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim())
       .join(' ');
-    expect(detailText).toContain(
-      'There is a Scarab of Protection (+1).'
-    );
+    expect(detailText).toContain('There is a Scarab of Protection (+1).');
 
     const compactText = renderCompact(feed)
       .filter(
@@ -1368,9 +1376,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim())
       .join(' ');
-    expect(compactText).toContain(
-      'There is a Scarab of Protection (+1).'
-    );
+    expect(compactText).toContain('There is a Scarab of Protection (+1).');
   });
 
   it('resolves swords from magical treasure', () => {
@@ -1457,8 +1463,7 @@ describe('passage contents', () => {
     const detailNodes = renderDetail(feed);
     const swordPreview = detailNodes.find(
       (node): node is Extract<DungeonRenderNode, { kind: 'table-preview' }> =>
-        node.kind === 'table-preview' &&
-        node.id.startsWith('treasureSwords')
+        node.kind === 'table-preview' && node.id.startsWith('treasureSwords')
     );
     expect(swordPreview).toBeDefined();
 
@@ -1504,9 +1509,8 @@ describe('passage contents', () => {
     if (!categoryTarget) throw new Error('missing magic category target');
     feed = resolvePreview(feed, categoryTarget, 90);
 
-    const miscWeaponTargets = listPendingPreviewTargets(feed).filter(
-      (target) =>
-        (target.split('.').pop() ?? '').startsWith('treasureMiscWeapons')
+    const miscWeaponTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscWeapons')
     );
     const miscWeaponTarget = miscWeaponTargets[0];
     if (!miscWeaponTarget) throw new Error('missing misc weapons target');
@@ -1593,7 +1597,10 @@ describe('passage contents', () => {
     if (!manualTarget) throw new Error('missing manual of golems target');
     feed = resolvePreview(feed, manualTarget, 18);
 
-    const manualEvent = findOutcomeEvent(feed.outcome, 'treasureManualOfGolems');
+    const manualEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureManualOfGolems'
+    );
     expect(manualEvent).toBeDefined();
     if (!manualEvent || manualEvent.event.kind !== 'treasureManualOfGolems') {
       throw new Error('treasureManualOfGolems event not found');
@@ -1652,9 +1659,15 @@ describe('passage contents', () => {
     if (!medallionTarget) throw new Error('missing medallion target');
     feed = resolvePreview(feed, medallionTarget, 17);
 
-    const medallionEvent = findOutcomeEvent(feed.outcome, 'treasureMedallionRange');
+    const medallionEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureMedallionRange'
+    );
     expect(medallionEvent).toBeDefined();
-    if (!medallionEvent || medallionEvent.event.kind !== 'treasureMedallionRange') {
+    if (
+      !medallionEvent ||
+      medallionEvent.event.kind !== 'treasureMedallionRange'
+    ) {
       throw new Error('treasureMedallionRange event not found');
     }
     expect(medallionEvent.event.result).toBe(
@@ -1677,7 +1690,9 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain("there is a medallion of esp (30', empathy).");
+    expect(compactText).toContain(
+      "there is a medallion of esp (30', empathy)."
+    );
   });
 
   it('resolves medallion of thought projection variants from miscellaneous magic', () => {
@@ -1713,9 +1728,15 @@ describe('passage contents', () => {
     if (!medallionTarget) throw new Error('missing medallion target');
     feed = resolvePreview(feed, medallionTarget, 19);
 
-    const medallionEvent = findOutcomeEvent(feed.outcome, 'treasureMedallionRange');
+    const medallionEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureMedallionRange'
+    );
     expect(medallionEvent).toBeDefined();
-    if (!medallionEvent || medallionEvent.event.kind !== 'treasureMedallionRange') {
+    if (
+      !medallionEvent ||
+      medallionEvent.event.kind !== 'treasureMedallionRange'
+    ) {
       throw new Error('treasureMedallionRange event not found');
     }
     expect(medallionEvent.event.result).toBe(TreasureMedallionRange.SixtyFeet);
@@ -1727,7 +1748,9 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(detailText).toContain("there is a medallion of thought projection (60').");
+    expect(detailText).toContain(
+      "there is a medallion of thought projection (60')."
+    );
 
     const compactText = renderCompact(feed)
       .filter(
@@ -1736,7 +1759,9 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain("there is a medallion of thought projection (60').");
+    expect(compactText).toContain(
+      "there is a medallion of thought projection (60')."
+    );
   });
 
   it('resolves necklace of missiles variants from miscellaneous magic', () => {
@@ -1958,16 +1983,18 @@ describe('passage contents', () => {
     feed = resolvePreview(feed, wisdomTarget, 1);
 
     const detailText = renderDetail(feed)
-      .filter((node): node is { kind: 'paragraph'; text: string } =>
-        node.kind === 'paragraph'
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(detailText).toContain('pearl of wisdom (-1)');
 
     const compactText = renderCompact(feed)
-      .filter((node): node is { kind: 'paragraph'; text: string } =>
-        node.kind === 'paragraph'
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
@@ -2008,16 +2035,18 @@ describe('passage contents', () => {
     feed = resolvePreview(feed, wisdomTarget, 10);
 
     const detailText = renderDetail(feed)
-      .filter((node): node is { kind: 'paragraph'; text: string } =>
-        node.kind === 'paragraph'
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(detailText).toContain('pearl of wisdom (+1)');
 
     const compactText = renderCompact(feed)
-      .filter((node): node is { kind: 'paragraph'; text: string } =>
-        node.kind === 'paragraph'
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
@@ -2164,20 +2193,22 @@ describe('passage contents', () => {
     feed = resolvePreview(feed, tokenTarget, 19);
 
     const detailText = renderDetail(feed)
-      .filter((node): node is { kind: 'paragraph'; text: string } =>
-        node.kind === 'paragraph'
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(detailText).toContain("feather token (whip)");
+    expect(detailText).toContain('feather token (whip)');
 
     const compactText = renderCompact(feed)
-      .filter((node): node is { kind: 'paragraph'; text: string } =>
-        node.kind === 'paragraph'
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain("feather token (whip)");
+    expect(compactText).toContain('feather token (whip)');
   });
 
   it('resolves necklace of prayer beads from miscellaneous magic', () => {
@@ -2207,16 +2238,18 @@ describe('passage contents', () => {
     feed = resolvePreview(feed, miscTarget, 30);
 
     const detailText = renderDetail(feed)
-      .filter((node): node is { kind: 'paragraph'; text: string } =>
-        node.kind === 'paragraph'
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(detailText).toContain('necklace of prayer beads');
 
     const compactText = renderCompact(feed)
-      .filter((node): node is { kind: 'paragraph'; text: string } =>
-        node.kind === 'paragraph'
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');

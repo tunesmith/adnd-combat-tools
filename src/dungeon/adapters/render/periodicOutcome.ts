@@ -347,7 +347,9 @@ function summarizePeriodicResult(
         node.event.kind === 'wanderingWhereFrom'
           ? PASSAGE_CONTINUES_SUFFIX
           : '';
-      const combinedText = suffix ? `${trickText.trimEnd()}${suffix}` : trickText;
+      const combinedText = suffix
+        ? `${trickText.trimEnd()}${suffix}`
+        : trickText;
       return {
         text: combinedText,
         nodes: combinedNodes.length > 0 ? combinedNodes : undefined,

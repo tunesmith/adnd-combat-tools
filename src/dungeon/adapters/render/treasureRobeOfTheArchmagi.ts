@@ -32,16 +32,16 @@ export function robeOfTheArchmagiAlignmentDisplay(
   outcome: TreasureRobeOfTheArchmagi
 ): 'Good' | 'Neutral' | 'Evil' {
   const alignment = robeOfTheArchmagiAlignment(outcome);
-  return (alignment.charAt(0).toUpperCase() +
-    alignment.slice(1)) as 'Good' | 'Neutral' | 'Evil';
+  return (alignment.charAt(0).toUpperCase() + alignment.slice(1)) as
+    | 'Good'
+    | 'Neutral'
+    | 'Evil';
 }
 
 export function robeOfTheArchmagiSentence(
   outcome: TreasureRobeOfTheArchmagi
 ): string {
-  return `The robe is aligned with ${robeOfTheArchmagiAlignment(
-    outcome
-  )}.`;
+  return `The robe is aligned with ${robeOfTheArchmagiAlignment(outcome)}.`;
 }
 
 export function robeOfTheArchmagiParenthetical(

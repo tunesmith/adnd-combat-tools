@@ -310,7 +310,8 @@ export const SWORD_UNUSUAL_DETAILS: Record<
     requiresAlignment: true,
   },
   [TreasureSwordUnusual.Intelligence15]: {
-    label: 'Intelligence 15 (3 primary abilities, speech, reads languages/maps)',
+    label:
+      'Intelligence 15 (3 primary abilities, speech, reads languages/maps)',
     category: 'intelligent',
     intelligence: 15,
     primaryAbilityCount: 3,
@@ -337,8 +338,7 @@ export const SWORD_UNUSUAL_DETAILS: Record<
     intelligence: 17,
     primaryAbilityCount: 3,
     communication: 'speech and telepathy',
-    communicationNotes:
-      'Speaks and can communicate telepathically at will.',
+    communicationNotes: 'Speaks and can communicate telepathically at will.',
     languageCapability: 'magical',
     extraordinaryPower: true,
     requiresAlignment: true,
@@ -412,7 +412,9 @@ function buildDragonSlayerColorTable(
     command: color,
   })) as Entry<TreasureSwordDragonSlayerColor>[];
   if (entries.length === 0) {
-    throw new Error('Dragon slayer color table must contain at least one entry');
+    throw new Error(
+      'Dragon slayer color table must contain at least one entry'
+    );
   }
   return {
     sides: colors.length,
@@ -428,25 +430,33 @@ export const treasureSwordDragonSlayerColor: Table<TreasureSwordDragonSlayerColo
 
 const treasureSwordDragonSlayerColorLawfulGood = buildDragonSlayerColorTable(
   DRAGON_SLAYER_COLOR_ORDER.filter(
-    (color) => DRAGON_SLAYER_COLOR_DETAILS[color].alignment !== TreasureSwordAlignment.LawfulGood
+    (color) =>
+      DRAGON_SLAYER_COLOR_DETAILS[color].alignment !==
+      TreasureSwordAlignment.LawfulGood
   )
 );
 
 const treasureSwordDragonSlayerColorChaoticGood = buildDragonSlayerColorTable(
   DRAGON_SLAYER_COLOR_ORDER.filter(
-    (color) => DRAGON_SLAYER_COLOR_DETAILS[color].alignment !== TreasureSwordAlignment.ChaoticGood
+    (color) =>
+      DRAGON_SLAYER_COLOR_DETAILS[color].alignment !==
+      TreasureSwordAlignment.ChaoticGood
   )
 );
 
 const treasureSwordDragonSlayerColorLawfulEvil = buildDragonSlayerColorTable(
   DRAGON_SLAYER_COLOR_ORDER.filter(
-    (color) => DRAGON_SLAYER_COLOR_DETAILS[color].alignment !== TreasureSwordAlignment.LawfulEvil
+    (color) =>
+      DRAGON_SLAYER_COLOR_DETAILS[color].alignment !==
+      TreasureSwordAlignment.LawfulEvil
   )
 );
 
 const treasureSwordDragonSlayerColorChaoticEvil = buildDragonSlayerColorTable(
   DRAGON_SLAYER_COLOR_ORDER.filter(
-    (color) => DRAGON_SLAYER_COLOR_DETAILS[color].alignment !== TreasureSwordAlignment.ChaoticEvil
+    (color) =>
+      DRAGON_SLAYER_COLOR_DETAILS[color].alignment !==
+      TreasureSwordAlignment.ChaoticEvil
   )
 );
 
@@ -522,13 +532,13 @@ export const treasureSwordPrimaryAbility: Table<TreasureSwordPrimaryAbilityComma
     ],
   };
 
-type PrimaryAbilityEntry =
-  (typeof treasureSwordPrimaryAbility.entries)[number];
+type PrimaryAbilityEntry = typeof treasureSwordPrimaryAbility.entries[number];
 
 const PRIMARY_ABILITY_RESTRICTED_ENTRIES =
-  treasureSwordPrimaryAbility.entries.filter(
-    ({ range }) => range[0] <= 92
-  ) as [PrimaryAbilityEntry, ...PrimaryAbilityEntry[]];
+  treasureSwordPrimaryAbility.entries.filter(({ range }) => range[0] <= 92) as [
+    PrimaryAbilityEntry,
+    ...PrimaryAbilityEntry[]
+  ];
 
 export const treasureSwordPrimaryAbilityRestricted: Table<TreasureSwordPrimaryAbilityCommand> =
   {
@@ -607,27 +617,28 @@ export const treasureSwordExtraordinaryPower: Table<TreasureSwordExtraordinaryPo
       },
       {
         range: [100],
-        command: TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose,
+        command:
+          TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose,
       },
     ],
   };
 
 type ExtraordinaryEntry =
-  (typeof treasureSwordExtraordinaryPower.entries)[number];
+  typeof treasureSwordExtraordinaryPower.entries[number];
 
-const EXTRAORDINARY_RESTRICTED_ENTRIES =
-  treasureSwordExtraordinaryPower.entries
-    .filter(({ range }) => range[0] <= 94)
-    .concat([
-      {
-        range: [95, 96],
-        command: TreasureSwordExtraordinaryPowerCommand.ChooseAny,
-      },
-      {
-        range: [97],
-        command: TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose,
-      },
-    ]) as [ExtraordinaryEntry, ...ExtraordinaryEntry[]];
+const EXTRAORDINARY_RESTRICTED_ENTRIES = treasureSwordExtraordinaryPower.entries
+  .filter(({ range }) => range[0] <= 94)
+  .concat([
+    {
+      range: [95, 96],
+      command: TreasureSwordExtraordinaryPowerCommand.ChooseAny,
+    },
+    {
+      range: [97],
+      command:
+        TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose,
+    },
+  ]) as [ExtraordinaryEntry, ...ExtraordinaryEntry[]];
 
 export const treasureSwordExtraordinaryPowerRestricted: Table<TreasureSwordExtraordinaryPowerCommand> =
   {
@@ -812,8 +823,7 @@ export const SWORD_PRIMARY_ABILITY_DETAILS: Record<
   },
   [TreasureSwordPrimaryAbility.DetectPreciousMetals]: {
     type: 'radius',
-    template:
-      'detect precious metals, kind, and amount in a {RADIUS} radius',
+    template: 'detect precious metals, kind, and amount in a {RADIUS} radius',
     baseRadius: 2,
   },
   [TreasureSwordPrimaryAbility.DetectGems]: {
@@ -953,8 +963,7 @@ export const SWORD_EXTRAORDINARY_POWER_DETAILS: Record<
   },
   [TreasureSwordExtraordinaryPower.Telekinesis]: {
     type: 'timesPerDay',
-    template:
-      'telekinesis, 2,500 g.p. wt. maximum — {USES}, 1 round each use',
+    template: 'telekinesis, 2,500 g.p. wt. maximum — {USES}, 1 round each use',
     baseUses: 2,
   },
   [TreasureSwordExtraordinaryPower.Telepathy]: {
@@ -989,18 +998,12 @@ export const SWORD_EXTRAORDINARY_POWER_DETAILS: Record<
   },
 };
 
-function formatTimesPerDayDetail(
-  uses: number,
-  template: string
-): string {
+function formatTimesPerDayDetail(uses: number, template: string): string {
   const replacement = uses === 1 ? '1 time/day' : `${uses} times/day`;
   return template.replace('{USES}', replacement);
 }
 
-function formatHoursPerDayDetail(
-  hours: number,
-  template: string
-): string {
+function formatHoursPerDayDetail(hours: number, template: string): string {
   const replacement = hours === 1 ? '1 hour/day' : `${hours} hours/day`;
   return template.replace('{HOURS}', replacement);
 }
@@ -1029,22 +1032,14 @@ export function describeSwordExtraordinaryPower(
 const DIAMETRICAL_OPPOSITION: Partial<
   Record<TreasureSwordAlignment, TreasureSwordAlignment>
 > = {
-  [TreasureSwordAlignment.LawfulGood]:
-    TreasureSwordAlignment.ChaoticEvil,
-  [TreasureSwordAlignment.LawfulNeutral]:
-    TreasureSwordAlignment.ChaoticNeutral,
-  [TreasureSwordAlignment.LawfulEvil]:
-    TreasureSwordAlignment.ChaoticGood,
-  [TreasureSwordAlignment.NeutralGood]:
-    TreasureSwordAlignment.NeutralEvil,
-  [TreasureSwordAlignment.NeutralEvil]:
-    TreasureSwordAlignment.NeutralGood,
-  [TreasureSwordAlignment.ChaoticGood]:
-    TreasureSwordAlignment.LawfulEvil,
-  [TreasureSwordAlignment.ChaoticNeutral]:
-    TreasureSwordAlignment.LawfulNeutral,
-  [TreasureSwordAlignment.ChaoticEvil]:
-    TreasureSwordAlignment.LawfulGood,
+  [TreasureSwordAlignment.LawfulGood]: TreasureSwordAlignment.ChaoticEvil,
+  [TreasureSwordAlignment.LawfulNeutral]: TreasureSwordAlignment.ChaoticNeutral,
+  [TreasureSwordAlignment.LawfulEvil]: TreasureSwordAlignment.ChaoticGood,
+  [TreasureSwordAlignment.NeutralGood]: TreasureSwordAlignment.NeutralEvil,
+  [TreasureSwordAlignment.NeutralEvil]: TreasureSwordAlignment.NeutralGood,
+  [TreasureSwordAlignment.ChaoticGood]: TreasureSwordAlignment.LawfulEvil,
+  [TreasureSwordAlignment.ChaoticNeutral]: TreasureSwordAlignment.LawfulNeutral,
+  [TreasureSwordAlignment.ChaoticEvil]: TreasureSwordAlignment.LawfulGood,
 };
 
 function isGoodAlignment(alignment: TreasureSwordAlignment): boolean {

@@ -25,7 +25,10 @@ export const ROBE_OF_USEFUL_ITEMS_BASE_PATCHES: readonly RobeOfUsefulItemsBasePa
   ] as const;
 
 const EXTRA_PATCH_DEFINITIONS: Record<
-  Exclude<RobeOfUsefulItemsExtraPatch, RobeOfUsefulItemsExtraPatch.RollTwiceMore>,
+  Exclude<
+    RobeOfUsefulItemsExtraPatch,
+    RobeOfUsefulItemsExtraPatch.RollTwiceMore
+  >,
   { label: string }
 > = {
   [RobeOfUsefulItemsExtraPatch.BagOfGoldPieces]: {

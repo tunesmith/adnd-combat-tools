@@ -6,7 +6,10 @@ describe('resolveTreasureRobeOfUsefulItems', () => {
   it('aggregates duplicate patches and handles roll twice results', () => {
     const { result, unused } = withMockedDice(
       [
-        1, 1, 1, 1, // 4d4 -> 4 requested patches
+        1,
+        1,
+        1,
+        1, // 4d4 -> 4 requested patches
         5, // Bag of 100 gold pieces
         98, // Roll twice more
         84, // War dogs

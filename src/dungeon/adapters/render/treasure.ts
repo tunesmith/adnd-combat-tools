@@ -406,10 +406,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       const suffix = medallionRangeParenthetical(medallion.event.result);
       return `${base.slice(0, -1)} (${suffix}).`;
     }
-    const necklace = findChildEvent(
-      miscMagicE4,
-      'treasureNecklaceOfMissiles'
-    );
+    const necklace = findChildEvent(miscMagicE4, 'treasureNecklaceOfMissiles');
     if (
       necklace &&
       necklace.event.kind === 'treasureNecklaceOfMissiles' &&
@@ -437,10 +434,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
           ? recallChild.event.result
           : undefined;
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
-      const suffix = pearlParenthetical(
-        pearlEffect.event.result,
-        recallResult
-      );
+      const suffix = pearlParenthetical(pearlEffect.event.result, recallResult);
       return `${base.slice(0, -1)} (${suffix}).`;
     }
     const pearlWisdom = findChildEvent(miscMagicE4, 'treasurePearlOfWisdom');
@@ -464,9 +458,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
         TreasureMiscMagicE4.PeriaptOfProofAgainstPoison
     ) {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
-      const suffix = periaptPoisonParenthetical(
-        periaptPoison.event.result
-      );
+      const suffix = periaptPoisonParenthetical(periaptPoison.event.result);
       return `${base.slice(0, -1)} (${suffix}).`;
     }
     const phylacteryLongYears = findChildEvent(
@@ -484,10 +476,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       );
       return `${base.slice(0, -1)} (${suffix}).`;
     }
-    const quaalToken = findChildEvent(
-      miscMagicE4,
-      'treasureQuaalFeatherToken'
-    );
+    const quaalToken = findChildEvent(miscMagicE4, 'treasureQuaalFeatherToken');
     if (
       quaalToken &&
       quaalToken.event.kind === 'treasureQuaalFeatherToken' &&
@@ -516,10 +505,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       const robeItems = findRobeOfUsefulItemsEvent(outcome);
       if (robeItems) return '';
     }
-    const robeChild = findChildEvent(
-      miscMagicE5,
-      'treasureRobeOfTheArchmagi'
-    );
+    const robeChild = findChildEvent(miscMagicE5, 'treasureRobeOfTheArchmagi');
     const robeAlignment =
       robeChild && robeChild.event.kind === 'treasureRobeOfTheArchmagi'
         ? robeChild.event.result
@@ -529,14 +515,12 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       'treasureScarabOfProtectionCurse'
     );
     const scarabCurseResult =
-      scarabCurse && scarabCurse.event.kind === 'treasureScarabOfProtectionCurse'
+      scarabCurse &&
+      scarabCurse.event.kind === 'treasureScarabOfProtectionCurse'
         ? scarabCurse.event.result
         : undefined;
     const scarabResolution = scarabCurse
-      ? findChildEvent(
-          scarabCurse,
-          'treasureScarabOfProtectionCurseResolution'
-        )
+      ? findChildEvent(scarabCurse, 'treasureScarabOfProtectionCurseResolution')
       : undefined;
     const scarabResolutionResult =
       scarabResolution &&
@@ -679,9 +663,7 @@ function findArmorShieldsEvent(
   return undefined;
 }
 
-function findSwordsEvent(
-  node: OutcomeEventNode
-): OutcomeEventNode | undefined {
+function findSwordsEvent(node: OutcomeEventNode): OutcomeEventNode | undefined {
   if (node.event.kind === 'treasureSwords') {
     return node;
   }

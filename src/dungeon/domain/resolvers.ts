@@ -2449,8 +2449,7 @@ export function resolveTreasureMiscMagicE5(options?: {
 export function resolveTreasureRobeOfTheArchmagi(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureRobeOfTheArchmagi.sides);
+  const usedRoll = options?.roll ?? rollDice(treasureRobeOfTheArchmagi.sides);
   const command: TreasureRobeOfTheArchmagi = getTableEntry(
     usedRoll,
     treasureRobeOfTheArchmagi
@@ -2559,8 +2558,7 @@ export function resolveTreasureScarabOfProtectionCurseResolution(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
   const usedRoll =
-    options?.roll ??
-    rollDice(treasureScarabOfProtectionCursedResolution.sides);
+    options?.roll ?? rollDice(treasureScarabOfProtectionCursedResolution.sides);
   const command: TreasureScarabOfProtectionCurseResolution = getTableEntry(
     usedRoll,
     treasureScarabOfProtectionCursedResolution
@@ -2733,10 +2731,7 @@ export function resolveTreasureSwordKind(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureSwordKind.sides);
-  const command: TreasureSwordKind = getTableEntry(
-    usedRoll,
-    treasureSwordKind
-  );
+  const command: TreasureSwordKind = getTableEntry(usedRoll, treasureSwordKind);
   return {
     type: 'event',
     roll: usedRoll,
@@ -2849,9 +2844,12 @@ export function resolveTreasureSwordUnusual(options?: {
       (child): child is OutcomeEventNode =>
         child.type === 'event' && child.event.kind === 'treasureSwordAlignment'
     );
-    if (alignmentChild && alignmentChild.event.kind === 'treasureSwordAlignment') {
-      const alignmentResult =
-        alignmentChild.event.result as TreasureSwordAlignmentResult;
+    if (
+      alignmentChild &&
+      alignmentChild.event.kind === 'treasureSwordAlignment'
+    ) {
+      const alignmentResult = alignmentChild.event
+        .result as TreasureSwordAlignmentResult;
       alignmentForColor = alignmentResult.alignment;
       colorAlignmentReady = true;
     }
@@ -3006,8 +3004,7 @@ export function resolveTreasureSwordPrimaryAbility(options?: {
     return node;
   }
 
-  const ability =
-    command as unknown as TreasureSwordPrimaryAbility;
+  const ability = command as unknown as TreasureSwordPrimaryAbility;
   const result: TreasureSwordPrimaryAbilityResult = {
     kind: 'ability',
     ability,
@@ -3207,10 +3204,7 @@ function buildSwordExtraordinaryPowerPending(options: {
   };
 }
 
-function extraordinaryPowerNodeId(
-  slotKey: string,
-  rollIndex?: number
-): string {
+function extraordinaryPowerNodeId(slotKey: string, rollIndex?: number): string {
   return rollIndex !== undefined
     ? `treasureSwordExtraordinaryPower:${rollIndex}:${slotKey}`
     : `treasureSwordExtraordinaryPower:${slotKey}`;
@@ -3242,8 +3236,7 @@ export function resolveTreasureSwordSpecialPurpose(options?: {
   };
   const usedRoll = resolveRoll();
   const command = getTableEntry(usedRoll, treasureSwordSpecialPurpose);
-  const purpose =
-    command as unknown as TreasureSwordSpecialPurpose;
+  const purpose = command as unknown as TreasureSwordSpecialPurpose;
   const result: TreasureSwordSpecialPurposeResult = {
     kind: 'purpose',
     purpose,
@@ -3285,8 +3278,7 @@ export function resolveTreasureSwordSpecialPurposePower(options?: {
   alignment?: TreasureSwordAlignment;
 }): DungeonOutcomeNode {
   const slotKey =
-    options?.slotKey ??
-    `purpose-power-${Math.random().toString(36).slice(2)}`;
+    options?.slotKey ?? `purpose-power-${Math.random().toString(36).slice(2)}`;
   const resolveRoll = (): number => {
     if (options?.roll !== undefined) {
       const provided = Math.trunc(options.roll);
@@ -3301,12 +3293,8 @@ export function resolveTreasureSwordSpecialPurposePower(options?: {
     return rollDice(treasureSwordSpecialPurposePower.sides);
   };
   const usedRoll = resolveRoll();
-  const command = getTableEntry(
-    usedRoll,
-    treasureSwordSpecialPurposePower
-  );
-  const power =
-    command as unknown as TreasureSwordSpecialPurposePower;
+  const command = getTableEntry(usedRoll, treasureSwordSpecialPurposePower);
+  const power = command as unknown as TreasureSwordSpecialPurposePower;
   const result: TreasureSwordSpecialPurposePowerResult = {
     kind: 'specialPurposePower',
     power,
@@ -3413,10 +3401,7 @@ function buildSwordSpecialPurposePowerPending(options: {
   };
 }
 
-function specialPurposeNodeId(
-  slotKey: string,
-  rollIndex?: number
-): string {
+function specialPurposeNodeId(slotKey: string, rollIndex?: number): string {
   return rollIndex !== undefined
     ? `treasureSwordSpecialPurpose:${rollIndex}:${slotKey}`
     : `treasureSwordSpecialPurpose:${slotKey}`;
@@ -3544,7 +3529,10 @@ function applySwordAlignmentInstruction(
       break;
     }
     case 'pending': {
-      if (instruction.variant === 'standard' && options.alignmentRoll !== undefined) {
+      if (
+        instruction.variant === 'standard' &&
+        options.alignmentRoll !== undefined
+      ) {
         collector.push(
           resolveTreasureSwordAlignment({
             roll: options.alignmentRoll,
@@ -3640,7 +3628,9 @@ function rollSwordLanguages(languageRolls: number[]): number {
       let extraRoll: number;
       do {
         extraRoll =
-          languageRolls.length > 0 ? languageRolls.shift() ?? rollDice(100) : rollDice(100);
+          languageRolls.length > 0
+            ? languageRolls.shift() ?? rollDice(100)
+            : rollDice(100);
       } while (extraRoll === 100);
       total += mapSwordLanguageRoll(extraRoll);
     }
@@ -3665,10 +3655,7 @@ export function resolveTreasureMiscWeapons(options?: {
   rollIndex?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureMiscWeapons.sides);
-  const item: TreasureMiscWeapon = getTableEntry(
-    usedRoll,
-    treasureMiscWeapons
-  );
+  const item: TreasureMiscWeapon = getTableEntry(usedRoll, treasureMiscWeapons);
   let quantity: number | undefined;
   switch (item) {
     case TreasureMiscWeapon.ArrowPlus1:
@@ -3820,8 +3807,7 @@ export function resolveTreasurePearlOfWisdom(options?: {
 export function resolveTreasurePeriaptProofAgainstPoison(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasurePeriaptPoisonBonus.sides);
+  const usedRoll = options?.roll ?? rollDice(treasurePeriaptPoisonBonus.sides);
   const command = getTableEntry(
     usedRoll,
     treasurePeriaptPoisonBonus
@@ -3839,8 +3825,7 @@ export function resolveTreasurePeriaptProofAgainstPoison(options?: {
 export function resolveTreasurePhylacteryLongYears(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasurePhylacteryLongYears.sides);
+  const usedRoll = options?.roll ?? rollDice(treasurePhylacteryLongYears.sides);
   const command = getTableEntry(
     usedRoll,
     treasurePhylacteryLongYears
@@ -3894,8 +3879,7 @@ export function resolveTreasureNecklaceOfPrayerBeads(options?: {
 export function resolveTreasureQuaalFeatherToken(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureQuaalFeatherToken.sides);
+  const usedRoll = options?.roll ?? rollDice(treasureQuaalFeatherToken.sides);
   const command = getTableEntry(
     usedRoll,
     treasureQuaalFeatherToken

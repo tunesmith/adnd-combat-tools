@@ -11,7 +11,10 @@ import type { PendingRoll } from '../../../../dungeon/domain/outcome';
 describe('Scarab of Protection subtables', () => {
   it('returns a normal scarab with no follow-up tables when the result is protective', () => {
     const node = resolveTreasureScarabOfProtectionCurse({ roll: 7 });
-    if (node.type !== 'event' || node.event.kind !== 'treasureScarabOfProtectionCurse') {
+    if (
+      node.type !== 'event' ||
+      node.event.kind !== 'treasureScarabOfProtectionCurse'
+    ) {
       throw new Error('Expected curse event');
     }
     expect(node.event.result).toBe(TreasureScarabOfProtectionCurse.Normal);
@@ -20,7 +23,10 @@ describe('Scarab of Protection subtables', () => {
 
   it('queues the curse resolution table when the scarab is cursed', () => {
     const node = resolveTreasureScarabOfProtectionCurse({ roll: 1 });
-    if (node.type !== 'event' || node.event.kind !== 'treasureScarabOfProtectionCurse') {
+    if (
+      node.type !== 'event' ||
+      node.event.kind !== 'treasureScarabOfProtectionCurse'
+    ) {
       throw new Error('Expected curse event');
     }
     expect(node.event.result).toBe(TreasureScarabOfProtectionCurse.Cursed);
@@ -29,9 +35,7 @@ describe('Scarab of Protection subtables', () => {
       (child): child is PendingRoll => child.type === 'pending-roll'
     );
     expect(pending).toBeDefined();
-    expect(pending?.table).toBe(
-      'treasureScarabOfProtectionCurseResolution'
-    );
+    expect(pending?.table).toBe('treasureScarabOfProtectionCurseResolution');
   });
 
   it('resolves the curse resolution table outcome', () => {

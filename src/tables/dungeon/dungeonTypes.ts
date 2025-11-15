@@ -122,12 +122,8 @@ import type {
   TreasurePearlOfPowerRecallResult,
 } from './treasurePearlOfPower';
 import type { TreasurePearlOfWisdomOutcome } from './treasurePearlOfWisdom';
-import type {
-  TreasurePeriaptPoisonBonus,
-} from './treasurePeriaptProofAgainstPoison';
-import type {
-  TreasurePhylacteryLongYearsOutcome,
-} from './treasurePhylacteryLongYears';
+import type { TreasurePeriaptPoisonBonus } from './treasurePeriaptProofAgainstPoison';
+import type { TreasurePhylacteryLongYearsOutcome } from './treasurePhylacteryLongYears';
 import type { TreasureQuaalFeatherToken } from './treasureQuaalFeatherToken';
 import type { TreasureNecklacePrayerBead } from './treasureNecklacePrayerBeads';
 import type {

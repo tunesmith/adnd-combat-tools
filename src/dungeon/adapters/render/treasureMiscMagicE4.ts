@@ -24,12 +24,10 @@ const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
     'Libram of Gainful Conjuration (M)',
   [TreasureMiscMagicE4.LibramOfIneffableDamnation]:
     'Libram of Ineffable Damnation (M)',
-  [TreasureMiscMagicE4.LibramOfSilverMagic]:
-    'Libram of Silver Magic (M)',
+  [TreasureMiscMagicE4.LibramOfSilverMagic]: 'Libram of Silver Magic (M)',
   [TreasureMiscMagicE4.LyreOfBuilding]: 'Lyre of Building',
   [TreasureMiscMagicE4.ManualOfBodilyHealth]: 'Manual of Bodily Health',
-  [TreasureMiscMagicE4.ManualOfGainfulExercise]:
-    'Manual of Gainful Exercise',
+  [TreasureMiscMagicE4.ManualOfGainfulExercise]: 'Manual of Gainful Exercise',
   [TreasureMiscMagicE4.ManualOfGolems]: 'Manual of Golems (C, M)',
   [TreasureMiscMagicE4.ManualOfPuissantSkillAtArms]:
     'Manual of Puissant Skill at Arms (F)',
@@ -47,14 +45,11 @@ const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.MirrorOfOpposition]: 'Mirror of Opposition',
   [TreasureMiscMagicE4.NecklaceOfAdaptation]: 'Necklace of Adaptation',
   [TreasureMiscMagicE4.NecklaceOfMissiles]: 'Necklace of Missiles',
-  [TreasureMiscMagicE4.NecklaceOfPrayerBeads]:
-    'Necklace of Prayer Beads (C)',
-  [TreasureMiscMagicE4.NecklaceOfStrangulation]:
-    'Necklace of Strangulation',
+  [TreasureMiscMagicE4.NecklaceOfPrayerBeads]: 'Necklace of Prayer Beads (C)',
+  [TreasureMiscMagicE4.NecklaceOfStrangulation]: 'Necklace of Strangulation',
   [TreasureMiscMagicE4.NetOfEntrapment]: 'Net of Entrapment (C, F, T)',
   [TreasureMiscMagicE4.NetOfSnaring]: 'Net of Snaring (C, F, T)',
-  [TreasureMiscMagicE4.NolzursMarvelousPigments]:
-    "Nolzur's Marvelous Pigments",
+  [TreasureMiscMagicE4.NolzursMarvelousPigments]: "Nolzur's Marvelous Pigments",
   [TreasureMiscMagicE4.PearlOfPower]: 'Pearl of Power (M)',
   [TreasureMiscMagicE4.PearlOfWisdom]: 'Pearl of Wisdom (C)',
   [TreasureMiscMagicE4.PeriaptOfFoulRotting]: 'Periapt of Foul Rotting',
@@ -64,8 +59,7 @@ const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.PeriaptOfWoundClosure]: 'Periapt of Wound Closure',
   [TreasureMiscMagicE4.PhylacteryOfFaithfulness]:
     'Phylactery of Faithfulness (C)',
-  [TreasureMiscMagicE4.PhylacteryOfLongYears]:
-    'Phylactery of Long Years (C)',
+  [TreasureMiscMagicE4.PhylacteryOfLongYears]: 'Phylactery of Long Years (C)',
   [TreasureMiscMagicE4.PhylacteryOfMonstrousAttention]:
     'Phylactery of Monstrous Attention (C)',
   [TreasureMiscMagicE4.PipesOfTheSewers]: 'Pipes of the Sewers',
@@ -81,7 +75,10 @@ export function renderTreasureMiscMagicE4Detail(
   const manualChild = findChildEvent(outcome, 'treasureManualOfGolems');
   const medallionChild = findChildEvent(outcome, 'treasureMedallionRange');
   const necklaceChild = findChildEvent(outcome, 'treasureNecklaceOfMissiles');
-  const pearlEffectChild = findChildEvent(outcome, 'treasurePearlOfPowerEffect');
+  const pearlEffectChild = findChildEvent(
+    outcome,
+    'treasurePearlOfPowerEffect'
+  );
   const pearlWisdomChild = findChildEvent(outcome, 'treasurePearlOfWisdom');
   const periaptPoisonChild = findChildEvent(
     outcome,
@@ -91,10 +88,7 @@ export function renderTreasureMiscMagicE4Detail(
     outcome,
     'treasurePhylacteryLongYears'
   );
-  const quaalTokenChild = findChildEvent(
-    outcome,
-    'treasureQuaalFeatherToken'
-  );
+  const quaalTokenChild = findChildEvent(outcome, 'treasureQuaalFeatherToken');
   const prayerBeadsChild = findChildEvent(
     outcome,
     'treasureNecklaceOfPrayerBeads'
@@ -137,7 +131,10 @@ export function renderTreasureMiscMagicE4Compact(
   const manualChild = findChildEvent(outcome, 'treasureManualOfGolems');
   const medallionChild = findChildEvent(outcome, 'treasureMedallionRange');
   const necklaceChild = findChildEvent(outcome, 'treasureNecklaceOfMissiles');
-  const pearlEffectChild = findChildEvent(outcome, 'treasurePearlOfPowerEffect');
+  const pearlEffectChild = findChildEvent(
+    outcome,
+    'treasurePearlOfPowerEffect'
+  );
   const pearlWisdomChild = findChildEvent(outcome, 'treasurePearlOfWisdom');
   const periaptPoisonChild = findChildEvent(
     outcome,
@@ -147,10 +144,7 @@ export function renderTreasureMiscMagicE4Compact(
     outcome,
     'treasurePhylacteryLongYears'
   );
-  const quaalTokenChild = findChildEvent(
-    outcome,
-    'treasureQuaalFeatherToken'
-  );
+  const quaalTokenChild = findChildEvent(outcome, 'treasureQuaalFeatherToken');
   const prayerBeadsChild = findChildEvent(
     outcome,
     'treasureNecklaceOfPrayerBeads'

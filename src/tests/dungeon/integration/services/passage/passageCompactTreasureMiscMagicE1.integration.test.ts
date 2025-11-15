@@ -366,9 +366,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
     if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE4') {
       throw new Error('treasureMiscMagicE4 event not found');
     }
-    expect(miscEvent.event.result).toBe(
-      TreasureMiscMagicE4.MirrorOfOpposition
-    );
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE4.MirrorOfOpposition);
 
     const compactParagraphs = result.compact
       .paragraphs()
@@ -399,9 +397,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
     if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE5') {
       throw new Error('treasureMiscMagicE5 event not found');
     }
-    expect(miscEvent.event.result).toBe(
-      TreasureMiscMagicE5.RobeOfTheArchmagi
-    );
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE5.RobeOfTheArchmagi);
 
     const robeEvent = findEvent(result.outcome, 'treasureRobeOfTheArchmagi');
     expect(robeEvent).toBeDefined();
@@ -454,9 +450,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');
-    expect(compactParagraphs).toContain(
-      'there is a manual of iron golems.'
-    );
+    expect(compactParagraphs).toContain('there is a manual of iron golems.');
   });
 
   it('resolves medallion of ESP variants in compact mode', () => {
@@ -485,7 +479,10 @@ describe('passage compact treasure misc magic E1 handling', () => {
 
     const medallionEvent = findEvent(result.outcome, 'treasureMedallionRange');
     expect(medallionEvent).toBeDefined();
-    if (!medallionEvent || medallionEvent.event.kind !== 'treasureMedallionRange') {
+    if (
+      !medallionEvent ||
+      medallionEvent.event.kind !== 'treasureMedallionRange'
+    ) {
       throw new Error('treasureMedallionRange event not found');
     }
     expect(medallionEvent.event.result).toBe(
@@ -529,12 +526,13 @@ describe('passage compact treasure misc magic E1 handling', () => {
 
     const medallionEvent = findEvent(result.outcome, 'treasureMedallionRange');
     expect(medallionEvent).toBeDefined();
-    if (!medallionEvent || medallionEvent.event.kind !== 'treasureMedallionRange') {
+    if (
+      !medallionEvent ||
+      medallionEvent.event.kind !== 'treasureMedallionRange'
+    ) {
       throw new Error('treasureMedallionRange event not found');
     }
-    expect(medallionEvent.event.result).toBe(
-      TreasureMedallionRange.NinetyFeet
-    );
+    expect(medallionEvent.event.result).toBe(TreasureMedallionRange.NinetyFeet);
 
     const compactParagraphs = result.compact
       .paragraphs()
@@ -567,9 +565,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
     if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE4') {
       throw new Error('treasureMiscMagicE4 event not found');
     }
-    expect(miscEvent.event.result).toBe(
-      TreasureMiscMagicE4.NecklaceOfMissiles
-    );
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE4.NecklaceOfMissiles);
 
     const necklaceEvent = findEvent(
       result.outcome,
@@ -617,10 +613,15 @@ describe('passage compact treasure misc magic E1 handling', () => {
 
     const effectEvent = findEvent(result.outcome, 'treasurePearlOfPowerEffect');
     expect(effectEvent).toBeDefined();
-    if (!effectEvent || effectEvent.event.kind !== 'treasurePearlOfPowerEffect') {
+    if (
+      !effectEvent ||
+      effectEvent.event.kind !== 'treasurePearlOfPowerEffect'
+    ) {
       throw new Error('treasurePearlOfPowerEffect event not found');
     }
-    expect(effectEvent.event.result).toBe(TreasurePearlOfPowerEffect.Forgetting);
+    expect(effectEvent.event.result).toBe(
+      TreasurePearlOfPowerEffect.Forgetting
+    );
 
     const compactParagraphs = result.compact
       .paragraphs()
@@ -649,7 +650,10 @@ describe('passage compact treasure misc magic E1 handling', () => {
 
     const recallEvent = findEvent(result.outcome, 'treasurePearlOfPowerRecall');
     expect(recallEvent).toBeDefined();
-    if (!recallEvent || recallEvent.event.kind !== 'treasurePearlOfPowerRecall') {
+    if (
+      !recallEvent ||
+      recallEvent.event.kind !== 'treasurePearlOfPowerRecall'
+    ) {
       throw new Error('treasurePearlOfPowerRecall event not found');
     }
     expect(recallEvent.event.result).toEqual({ type: 'single', level: 4 });
@@ -658,9 +662,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');
-    expect(compactParagraphs).toContain(
-      'pearl of power (recalls 4th level)'
-    );
+    expect(compactParagraphs).toContain('pearl of power (recalls 4th level)');
   });
 
   it('handles pearl of wisdom loss in compact mode', () => {
@@ -742,7 +744,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
       mode: DirectiveMode.ManualThenAuto,
     });
 
-  const periaptEvent = findEvent(
+    const periaptEvent = findEvent(
       result.outcome,
       'treasurePeriaptProofAgainstPoison'
     );
@@ -798,7 +800,9 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');
-    expect(compactParagraphs).toContain('phylactery of long years (fast aging)');
+    expect(compactParagraphs).toContain(
+      'phylactery of long years (fast aging)'
+    );
   });
 
   it("handles Quaal's feather token in compact mode", () => {
@@ -820,11 +824,8 @@ describe('passage compact treasure misc magic E1 handling', () => {
 
     const tokenEvent = findEvent(result.outcome, 'treasureQuaalFeatherToken');
     expect(tokenEvent).toBeDefined();
-    if (
-      !tokenEvent ||
-      tokenEvent.event.kind !== 'treasureQuaalFeatherToken'
-    ) {
-      throw new Error("treasureQuaalFeatherToken event not found");
+    if (!tokenEvent || tokenEvent.event.kind !== 'treasureQuaalFeatherToken') {
+      throw new Error('treasureQuaalFeatherToken event not found');
     }
     expect(tokenEvent.event.result).toBe(TreasureQuaalFeatherToken.Tree);
 
@@ -832,7 +833,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .paragraphs()
       .map((text) => text.toLowerCase())
       .join(' ');
-    expect(compactParagraphs).toContain("feather token (tree)");
+    expect(compactParagraphs).toContain('feather token (tree)');
   });
 
   it('handles necklace of prayer beads in compact mode', () => {
@@ -862,8 +863,12 @@ describe('passage compact treasure misc magic E1 handling', () => {
     ) {
       throw new Error('treasureNecklaceOfPrayerBeads event not found');
     }
-    expect(necklaceEvent.event.result.specialBeads.length).toBeGreaterThanOrEqual(3);
-    expect(necklaceEvent.event.result.specialBeads.length).toBeLessThanOrEqual(6);
+    expect(
+      necklaceEvent.event.result.specialBeads.length
+    ).toBeGreaterThanOrEqual(3);
+    expect(necklaceEvent.event.result.specialBeads.length).toBeLessThanOrEqual(
+      6
+    );
 
     const compactParagraphs = result.compact
       .paragraphs()
@@ -872,9 +877,7 @@ describe('passage compact treasure misc magic E1 handling', () => {
     expect(compactParagraphs).toContain('necklace of prayer beads');
 
     const prayerBeadsNode = result.compact.nodes.find(
-      (
-        node
-      ): node is Extract<DungeonRenderNode, { kind: 'prayer-beads' }> =>
+      (node): node is Extract<DungeonRenderNode, { kind: 'prayer-beads' }> =>
         node.kind === 'prayer-beads'
     );
     expect(prayerBeadsNode).toBeDefined();

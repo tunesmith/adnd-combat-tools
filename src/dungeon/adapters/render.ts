@@ -1092,18 +1092,20 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureSwordKind: buildTreasureSwordKindPreview,
   treasureSwordUnusual: buildTreasureSwordUnusualPreview,
   treasureSwordPrimaryAbility: buildTreasureSwordPrimaryAbilityPreview,
-  treasureSwordPrimaryAbilityRestricted: buildTreasureSwordPrimaryAbilityPreview,
+  treasureSwordPrimaryAbilityRestricted:
+    buildTreasureSwordPrimaryAbilityPreview,
   treasureSwordExtraordinaryPower: buildTreasureSwordExtraordinaryPowerPreview,
-  treasureSwordExtraordinaryPowerRestricted: buildTreasureSwordExtraordinaryPowerPreview,
+  treasureSwordExtraordinaryPowerRestricted:
+    buildTreasureSwordExtraordinaryPowerPreview,
   treasureSwordSpecialPurpose: buildTreasureSwordSpecialPurposePreview,
-  treasureSwordSpecialPurposePower: buildTreasureSwordSpecialPurposePowerPreview,
+  treasureSwordSpecialPurposePower:
+    buildTreasureSwordSpecialPurposePowerPreview,
   treasureSwordDragonSlayerColor: buildTreasureSwordDragonSlayerColorPreview,
   treasureSwordAlignment: buildTreasureSwordAlignmentPreview,
   treasureSwordAlignmentChaotic: buildTreasureSwordAlignmentChaoticPreview,
   treasureSwordAlignmentLawful: buildTreasureSwordAlignmentLawfulPreview,
   treasureRobeOfTheArchmagi: buildTreasureRobeOfTheArchmagiPreview,
-  treasureScarabOfProtectionCurse:
-    buildTreasureScarabOfProtectionCursePreview,
+  treasureScarabOfProtectionCurse: buildTreasureScarabOfProtectionCursePreview,
   treasureScarabOfProtectionCurseResolution:
     buildTreasureScarabOfProtectionCurseResolutionPreview,
   treasureMiscWeapons: buildTreasureMiscWeaponsPreview,
@@ -1113,7 +1115,8 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasurePearlOfPowerEffect: buildTreasurePearlOfPowerEffectPreview,
   treasurePearlOfPowerRecall: buildTreasurePearlOfPowerRecallPreview,
   treasurePearlOfWisdom: buildTreasurePearlOfWisdomPreview,
-  treasurePeriaptProofAgainstPoison: buildTreasurePeriaptProofAgainstPoisonPreview,
+  treasurePeriaptProofAgainstPoison:
+    buildTreasurePeriaptProofAgainstPoisonPreview,
   treasurePhylacteryLongYears: buildTreasurePhylacteryLongYearsPreview,
   treasureQuaalFeatherToken: buildTreasureQuaalFeatherTokenPreview,
   treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
@@ -1241,10 +1244,7 @@ function abilityPreviewContextFromNode(
   node: OutcomeEventNode,
   variant: 'standard' | 'restricted'
 ): TableContext | undefined {
-  const info = parseNodeContextFromId(
-    node.id,
-    'treasureSwordPrimaryAbility:'
-  );
+  const info = parseNodeContextFromId(node.id, 'treasureSwordPrimaryAbility:');
   if (!info.slotKey && info.rollIndex === undefined) {
     return undefined;
   }
@@ -1988,7 +1988,10 @@ export function renderDetailTree(
     nodes.push(...childRendered);
     // After resolving a Trick/Trap that originates from a periodic check,
     // add the standard continuation note.
-    if (outcome.event.kind === 'periodicCheck' && child.event.kind === 'trickTrap') {
+    if (
+      outcome.event.kind === 'periodicCheck' &&
+      child.event.kind === 'trickTrap'
+    ) {
       nodes.push({
         kind: 'paragraph',
         text: PASSAGE_CONTINUES_SUFFIX.trimStart(),
@@ -2007,7 +2010,8 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
     const alignmentMissing =
       (base === 'treasureSwordSpecialPurpose' &&
         context.kind === 'treasureSwordSpecialPurpose' &&
-        (context.alignment === undefined || context.alignmentReady === false)) ||
+        (context.alignment === undefined ||
+          context.alignmentReady === false)) ||
       (base === 'treasureSwordSpecialPurposePower' &&
         context.kind === 'treasureSwordSpecialPurposePower' &&
         context.alignment === undefined) ||

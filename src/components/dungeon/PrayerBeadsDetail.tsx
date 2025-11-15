@@ -16,9 +16,7 @@ export function PrayerBeadsDetail({ summary }: PrayerBeadsDetailProps) {
         <p>It has no special beads.</p>
       ) : (
         <>
-          <p>
-            Special beads ({specialCount}):
-          </p>
+          <p>Special beads ({specialCount}):</p>
           <ul
             style={{
               listStyle: 'none',

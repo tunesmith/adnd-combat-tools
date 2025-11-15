@@ -5,10 +5,11 @@ export enum TreasurePhylacteryLongYearsOutcome {
   SlowAging,
 }
 
-export const treasurePhylacteryLongYears: Table<TreasurePhylacteryLongYearsOutcome> = {
-  sides: 20,
-  entries: [
-    { range: [1], command: TreasurePhylacteryLongYearsOutcome.FastAging },
-    { range: [2, 20], command: TreasurePhylacteryLongYearsOutcome.SlowAging },
-  ],
-};
+export const treasurePhylacteryLongYears: Table<TreasurePhylacteryLongYearsOutcome> =
+  {
+    sides: 20,
+    entries: [
+      { range: [1], command: TreasurePhylacteryLongYearsOutcome.FastAging },
+      { range: [2, 20], command: TreasurePhylacteryLongYearsOutcome.SlowAging },
+    ],
+  };

@@ -6,7 +6,10 @@ function classesOf(character: CharacterSheet): CharacterClass[] {
   return character.professions.map((p) => p.characterClass);
 }
 
-function isCandidateAllowedByMember(candidate: CharacterSheet, member: CharacterSheet): boolean {
+function isCandidateAllowedByMember(
+  candidate: CharacterSheet,
+  member: CharacterSheet
+): boolean {
   // Every class of the member must allow the candidate's alignment in its "others" set
   for (const cls of classesOf(member)) {
     const others = allowedAlignmentsByClass[cls]?.others ?? [];
@@ -19,7 +22,10 @@ function isCandidateAllowedByMember(candidate: CharacterSheet, member: Character
   return true;
 }
 
-function isMemberAllowedByCandidate(member: CharacterSheet, candidate: CharacterSheet): boolean {
+function isMemberAllowedByCandidate(
+  member: CharacterSheet,
+  candidate: CharacterSheet
+): boolean {
   // Every class of the candidate must allow the member's alignment in its "others" set
   for (const cls of classesOf(candidate)) {
     const others = allowedAlignmentsByClass[cls]?.others ?? [];

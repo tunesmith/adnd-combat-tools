@@ -301,15 +301,26 @@ export function isTableContext(x: unknown): x is TableContext {
     const languageOk =
       obj.languageRolls === undefined || Array.isArray(obj.languageRolls);
     const primaryOk =
-      obj.primaryAbilityRolls === undefined || Array.isArray(obj.primaryAbilityRolls);
+      obj.primaryAbilityRolls === undefined ||
+      Array.isArray(obj.primaryAbilityRolls);
     const extraOk =
-      obj.extraordinaryPowerRolls === undefined || Array.isArray(obj.extraordinaryPowerRolls);
+      obj.extraordinaryPowerRolls === undefined ||
+      Array.isArray(obj.extraordinaryPowerRolls);
     const colorOk =
       obj.dragonSlayerColorRoll === undefined ||
       typeof obj.dragonSlayerColorRoll === 'number';
     const wishesOk =
-      obj.luckBladeWishes === undefined || typeof obj.luckBladeWishes === 'number';
-    return swordOk && indexOk && languageOk && primaryOk && extraOk && colorOk && wishesOk;
+      obj.luckBladeWishes === undefined ||
+      typeof obj.luckBladeWishes === 'number';
+    return (
+      swordOk &&
+      indexOk &&
+      languageOk &&
+      primaryOk &&
+      extraOk &&
+      colorOk &&
+      wishesOk
+    );
   }
   if (kind === 'treasureSwordAlignment') {
     const obj = x as { variant?: unknown };
@@ -326,8 +337,7 @@ export function isTableContext(x: unknown): x is TableContext {
       tableVariant?: unknown;
       alignment?: unknown;
     };
-    const slotOk =
-      obj.slotKey === undefined || typeof obj.slotKey === 'string';
+    const slotOk = obj.slotKey === undefined || typeof obj.slotKey === 'string';
     const indexOk =
       obj.rollIndex === undefined || typeof obj.rollIndex === 'number';
     const variantOk =
@@ -346,11 +356,9 @@ export function isTableContext(x: unknown): x is TableContext {
       alignment?: unknown;
       alignmentReady?: unknown;
     };
-    const slotOk =
-      obj.slotKey === undefined || typeof obj.slotKey === 'string';
+    const slotOk = obj.slotKey === undefined || typeof obj.slotKey === 'string';
     const parentOk =
-      obj.parentSlotKey === undefined ||
-      typeof obj.parentSlotKey === 'string';
+      obj.parentSlotKey === undefined || typeof obj.parentSlotKey === 'string';
     const indexOk =
       obj.rollIndex === undefined || typeof obj.rollIndex === 'number';
     const alignmentOk =
@@ -367,11 +375,9 @@ export function isTableContext(x: unknown): x is TableContext {
       parentSlotKey?: unknown;
       alignment?: unknown;
     };
-    const slotOk =
-      obj.slotKey === undefined || typeof obj.slotKey === 'string';
+    const slotOk = obj.slotKey === undefined || typeof obj.slotKey === 'string';
     const parentOk =
-      obj.parentSlotKey === undefined ||
-      typeof obj.parentSlotKey === 'string';
+      obj.parentSlotKey === undefined || typeof obj.parentSlotKey === 'string';
     const indexOk =
       obj.rollIndex === undefined || typeof obj.rollIndex === 'number';
     const alignmentOk =
@@ -385,20 +391,19 @@ export function isTableContext(x: unknown): x is TableContext {
       alignment?: unknown;
       alignmentReady?: unknown;
     };
-    const slotOk =
-      obj.slotKey === undefined || typeof obj.slotKey === 'string';
+    const slotOk = obj.slotKey === undefined || typeof obj.slotKey === 'string';
     const indexOk =
       obj.rollIndex === undefined || typeof obj.rollIndex === 'number';
     const alignmentOk =
       obj.alignment === undefined || typeof obj.alignment === 'number';
     const readyOk =
-      obj.alignmentReady === undefined || typeof obj.alignmentReady === 'boolean';
+      obj.alignmentReady === undefined ||
+      typeof obj.alignmentReady === 'boolean';
     return slotOk && indexOk && alignmentOk && readyOk;
   }
   if (kind === 'treasureSwordDragonSlayerColor') {
     const obj = x as { slotKey?: unknown; rollIndex?: unknown };
-    const slotOk =
-      obj.slotKey === undefined || typeof obj.slotKey === 'string';
+    const slotOk = obj.slotKey === undefined || typeof obj.slotKey === 'string';
     const indexOk =
       obj.rollIndex === undefined || typeof obj.rollIndex === 'number';
     return slotOk && indexOk;
@@ -1136,15 +1141,20 @@ function propagateAlignment(
   if (node.type === 'event') {
     let nextAlignment = currentAlignment;
     if (node.event.kind === 'treasureSwordAlignment') {
-      nextAlignment = (node.event.result as TreasureSwordAlignmentResult).alignment;
+      nextAlignment = (node.event.result as TreasureSwordAlignmentResult)
+        .alignment;
     } else if (node.event.kind === 'treasureSwordUnusual') {
       const alignmentChild = (node.children || []).find(
         (child): child is OutcomeEventNode =>
-          child.type === 'event' && child.event.kind === 'treasureSwordAlignment'
+          child.type === 'event' &&
+          child.event.kind === 'treasureSwordAlignment'
       );
-      if (alignmentChild && alignmentChild.event.kind === 'treasureSwordAlignment') {
-        const alignmentResult =
-          alignmentChild.event.result as TreasureSwordAlignmentResult;
+      if (
+        alignmentChild &&
+        alignmentChild.event.kind === 'treasureSwordAlignment'
+      ) {
+        const alignmentResult = alignmentChild.event
+          .result as TreasureSwordAlignmentResult;
         nextAlignment = alignmentResult.alignment;
       }
     }
@@ -1581,7 +1591,10 @@ function readSwordPrimaryAbilityContext(context: unknown): {
   const rollIndex =
     typeof candidate.rollIndex === 'number' ? candidate.rollIndex : undefined;
   let tableVariant: 'standard' | 'restricted' | undefined;
-  if (candidate.tableVariant === 'restricted' || candidate.ignoreHigh === true) {
+  if (
+    candidate.tableVariant === 'restricted' ||
+    candidate.ignoreHigh === true
+  ) {
     tableVariant = 'restricted';
   } else if (candidate.tableVariant === 'standard') {
     tableVariant = 'standard';

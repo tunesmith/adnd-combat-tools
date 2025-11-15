@@ -81,7 +81,10 @@ export const treasureNecklaceOfMissiles: Table<TreasureNecklaceOfMissiles> = {
     { range: [5, 8], command: NECKLACE_CONFIGS.oneSixTwoFourTwoTwo },
     { range: [9, 12], command: NECKLACE_CONFIGS.oneSevenTwoFiveFourThree },
     { range: [13, 16], command: NECKLACE_CONFIGS.oneEightTwoSixTwoFourFourTwo },
-    { range: [17, 18], command: NECKLACE_CONFIGS.oneNineTwoSevenTwoFiveTwoThree },
+    {
+      range: [17, 18],
+      command: NECKLACE_CONFIGS.oneNineTwoSevenTwoFiveTwoThree,
+    },
     { range: [19], command: NECKLACE_CONFIGS.oneTenTwoEightTwoSixFourFour },
     {
       range: [20],

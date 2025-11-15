@@ -94,17 +94,18 @@ export function renderTreasureScarabOfProtectionCurseCompact(
   return nodes;
 }
 
-export const buildTreasureScarabOfProtectionCursePreview: TablePreviewFactory = (
-  tableId
-) =>
-  buildPreview(tableId, {
-    title: 'Scarab of Protection — Curse Check',
-    sides: treasureScarabOfProtectionCurse.sides,
-    entries: treasureScarabOfProtectionCurse.entries.map(({ range, command }) => ({
-      range,
-      label: CURSE_LABELS[command],
-    })),
-  });
+export const buildTreasureScarabOfProtectionCursePreview: TablePreviewFactory =
+  (tableId) =>
+    buildPreview(tableId, {
+      title: 'Scarab of Protection — Curse Check',
+      sides: treasureScarabOfProtectionCurse.sides,
+      entries: treasureScarabOfProtectionCurse.entries.map(
+        ({ range, command }) => ({
+          range,
+          label: CURSE_LABELS[command],
+        })
+      ),
+    });
 
 export function renderTreasureScarabOfProtectionCurseResolutionDetail(
   outcome: OutcomeEventNode,
@@ -119,7 +120,9 @@ export function renderTreasureScarabOfProtectionCurseResolutionDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${RESOLUTION_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${RESOLUTION_LABELS[outcome.event.result]}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -150,16 +153,15 @@ export function renderTreasureScarabOfProtectionCurseResolutionCompact(
   return nodes;
 }
 
-export const buildTreasureScarabOfProtectionCurseResolutionPreview: TablePreviewFactory = (
-  tableId
-) =>
-  buildPreview(tableId, {
-    title: 'Scarab of Protection — Curse Resolution',
-    sides: treasureScarabOfProtectionCursedResolution.sides,
-    entries: treasureScarabOfProtectionCursedResolution.entries.map(
-      ({ range, command }) => ({
-        range,
-        label: RESOLUTION_LABELS[command],
-      })
-    ),
-  });
+export const buildTreasureScarabOfProtectionCurseResolutionPreview: TablePreviewFactory =
+  (tableId) =>
+    buildPreview(tableId, {
+      title: 'Scarab of Protection — Curse Resolution',
+      sides: treasureScarabOfProtectionCursedResolution.sides,
+      entries: treasureScarabOfProtectionCursedResolution.entries.map(
+        ({ range, command }) => ({
+          range,
+          label: RESOLUTION_LABELS[command],
+        })
+      ),
+    });

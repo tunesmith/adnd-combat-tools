@@ -353,8 +353,7 @@ function renderNode(
       const collapsedState = collapsed ? collapsed[keyId] : undefined;
       const isCollapsed =
         collapsedState !== undefined ? collapsedState : defaultCollapsed;
-      const hasResolved =
-        !!(resolved && resolved[keyId]) || defaultCollapsed;
+      const hasResolved = !!(resolved && resolved[keyId]) || defaultCollapsed;
       return (
         <div
           key={key}

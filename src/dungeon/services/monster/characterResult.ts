@@ -146,10 +146,10 @@ export const createCharacters = (
 
     // Enforce class-specific party alignment constraints ("others" sets)
     if (
-      !isOthersAlignmentCompatible(
-        characterSheet,
-        [...newMembers, ...existingParty]
-      )
+      !isOthersAlignmentCompatible(characterSheet, [
+        ...newMembers,
+        ...existingParty,
+      ])
     ) {
       continue;
     }

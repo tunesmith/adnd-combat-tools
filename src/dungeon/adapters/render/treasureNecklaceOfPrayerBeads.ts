@@ -136,9 +136,7 @@ function aggregateSpecialBeads(
   return Array.from(map.entries()).map(([label, count]) => ({ label, count }));
 }
 
-function formatBreakdown(
-  breakdown: PrayerBeadsBreakdownEntry[]
-): string[] {
+function formatBreakdown(breakdown: PrayerBeadsBreakdownEntry[]): string[] {
   return breakdown.map(({ label, count }) =>
     count === 1 ? label : `${count}×${label}`
   );

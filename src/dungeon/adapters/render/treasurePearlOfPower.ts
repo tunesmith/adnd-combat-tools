@@ -53,7 +53,10 @@ export function renderTreasurePearlOfPowerEffectDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: `The pearl ${describePearlEffect(outcome.event.result, recallResult)}.`,
+    text: `The pearl ${describePearlEffect(
+      outcome.event.result,
+      recallResult
+    )}.`,
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

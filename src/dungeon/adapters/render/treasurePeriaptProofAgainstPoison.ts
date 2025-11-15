@@ -55,14 +55,13 @@ export function renderTreasurePeriaptProofAgainstPoisonCompact(
   return nodes;
 }
 
-export const buildTreasurePeriaptProofAgainstPoisonPreview: TablePreviewFactory = (
-  tableId
-) =>
-  buildPreview(tableId, {
-    title: 'Periapt of Proof Against Poison',
-    sides: treasurePeriaptPoisonBonus.sides,
-    entries: treasurePeriaptPoisonBonus.entries.map(({ range, command }) => ({
-      range,
-      label: `+${command}`,
-    })),
-  });
+export const buildTreasurePeriaptProofAgainstPoisonPreview: TablePreviewFactory =
+  (tableId) =>
+    buildPreview(tableId, {
+      title: 'Periapt of Proof Against Poison',
+      sides: treasurePeriaptPoisonBonus.sides,
+      entries: treasurePeriaptPoisonBonus.entries.map(({ range, command }) => ({
+        range,
+        label: `+${command}`,
+      })),
+    });

@@ -18,9 +18,7 @@ import {
 } from '../../../../tables/dungeon/treasureSwords';
 import { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSwordAlignment';
 
-function collectPreviewIds(
-  detailNodes: DungeonRenderNode[]
-): string[] {
+function collectPreviewIds(detailNodes: DungeonRenderNode[]): string[] {
   return detailNodes
     .filter(
       (
@@ -87,9 +85,7 @@ describe('createOutcomeRenderSnapshot', () => {
       if (extraordinary.type !== 'event') {
         throw new Error('Expected extraordinary power event');
       }
-      if (
-        extraordinary.event.kind !== 'treasureSwordExtraordinaryPower'
-      ) {
+      if (extraordinary.event.kind !== 'treasureSwordExtraordinaryPower') {
         throw new Error('Expected extraordinary power event kind');
       }
       const result = extraordinary.event
@@ -97,7 +93,10 @@ describe('createOutcomeRenderSnapshot', () => {
       if (!result || result.kind !== 'power') {
         throw new Error('Expected power result');
       }
-      if (result.power !== TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose) {
+      if (
+        result.power !==
+        TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose
+      ) {
         throw new Error('Expected special purpose instruction');
       }
       const pendingPurpose = (extraordinary.children || []).find(
@@ -110,12 +109,12 @@ describe('createOutcomeRenderSnapshot', () => {
       }
       const normalizedBase = normalizeOutcomeTree(extraordinary);
       if (normalizedBase.type !== 'event' || !normalizedBase.children) {
-        throw new Error('Expected normalized extraordinary event with children');
+        throw new Error(
+          'Expected normalized extraordinary event with children'
+        );
       }
       const normalizedPending = normalizedBase.children.find(
-        (
-          child
-        ): child is PendingRoll =>
+        (child): child is PendingRoll =>
           child.type === 'pending-roll' &&
           child.table.startsWith('treasureSwordSpecialPurpose')
       );
@@ -211,8 +210,10 @@ describe('createOutcomeRenderSnapshot', () => {
       const previews = snapshot.detail.filter(
         (
           node
-        ): node is Extract<typeof node, { kind: 'table-preview'; id: string }> =>
-          node.kind === 'table-preview'
+        ): node is Extract<
+          typeof node,
+          { kind: 'table-preview'; id: string }
+        > => node.kind === 'table-preview'
       );
       const specialPreview = previews.find(
         (preview) => preview.id === 'treasureSwordSpecialPurpose'
@@ -236,8 +237,10 @@ describe('createOutcomeRenderSnapshot', () => {
       const afterPreviews = afterSnapshot.detail.filter(
         (
           node
-        ): node is Extract<typeof node, { kind: 'table-preview'; id: string }> =>
-          node.kind === 'table-preview'
+        ): node is Extract<
+          typeof node,
+          { kind: 'table-preview'; id: string }
+        > => node.kind === 'table-preview'
       );
       expect(
         afterPreviews.some(
@@ -271,8 +274,10 @@ describe('createOutcomeRenderSnapshot', () => {
       const powerPreviews = powerSnapshot.detail.filter(
         (
           node
-        ): node is Extract<typeof node, { kind: 'table-preview'; id: string }> =>
-          node.kind === 'table-preview'
+        ): node is Extract<
+          typeof node,
+          { kind: 'table-preview'; id: string }
+        > => node.kind === 'table-preview'
       );
       expect(
         powerPreviews.some(
@@ -303,8 +308,10 @@ describe('createOutcomeRenderSnapshot', () => {
       const basePreviews = baseSnapshot.detail.filter(
         (
           node
-        ): node is Extract<typeof node, { kind: 'table-preview'; id: string }> =>
-          node.kind === 'table-preview'
+        ): node is Extract<
+          typeof node,
+          { kind: 'table-preview'; id: string }
+        > => node.kind === 'table-preview'
       );
       const powerPreview = basePreviews.find(
         (preview) => preview.id === 'treasureSwordSpecialPurposePower'
@@ -327,8 +334,10 @@ describe('createOutcomeRenderSnapshot', () => {
       const afterPowerPreviews = powerResolved.snapshot.detail.filter(
         (
           node
-        ): node is Extract<typeof node, { kind: 'table-preview'; id: string }> =>
-          node.kind === 'table-preview'
+        ): node is Extract<
+          typeof node,
+          { kind: 'table-preview'; id: string }
+        > => node.kind === 'table-preview'
       );
       expect(
         afterPowerPreviews.some(
@@ -353,8 +362,10 @@ describe('createOutcomeRenderSnapshot', () => {
       const finalPreviews = purposeResolved.snapshot.detail.filter(
         (
           node
-        ): node is Extract<typeof node, { kind: 'table-preview'; id: string }> =>
-          node.kind === 'table-preview'
+        ): node is Extract<
+          typeof node,
+          { kind: 'table-preview'; id: string }
+        > => node.kind === 'table-preview'
       );
       expect(
         finalPreviews.some(

@@ -68,8 +68,6 @@ export const buildTreasureManualOfGolemsPreview: TablePreviewFactory = (
     })),
   });
 
-export function manualOfGolemsSentence(
-  result: TreasureManualOfGolems
-): string {
+export function manualOfGolemsSentence(result: TreasureManualOfGolems): string {
   return `There is a Manual of ${MANUAL_LABELS[result]} Golems.`;
 }

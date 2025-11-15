@@ -14,7 +14,8 @@ const ITEM_LABELS: Record<TreasureMiscWeapon, string> = {
   [TreasureMiscWeapon.ArrowPlus1]: 'Arrows +1',
   [TreasureMiscWeapon.ArrowPlus2]: 'Arrows +2',
   [TreasureMiscWeapon.ArrowPlus3]: 'Arrows +3',
-  [TreasureMiscWeapon.ArrowOfSlaying]: 'Arrow of Slaying (choose creature type)',
+  [TreasureMiscWeapon.ArrowOfSlaying]:
+    'Arrow of Slaying (choose creature type)',
   [TreasureMiscWeapon.AxePlus1]: 'Axe +1',
   [TreasureMiscWeapon.AxePlus2]: 'Axe +2',
   [TreasureMiscWeapon.AxePlus2Throwing]: 'Axe +2 (throwing)',
@@ -33,8 +34,7 @@ const ITEM_LABELS: Record<TreasureMiscWeapon, string> = {
   [TreasureMiscWeapon.FlailPlus1]: 'Flail +1',
   [TreasureMiscWeapon.HammerPlus1]: 'Hammer +1',
   [TreasureMiscWeapon.HammerPlus2]: 'Hammer +2',
-  [TreasureMiscWeapon.HammerPlus3DwarvenThrower]:
-    'Hammer +3 (Dwarven Thrower)',
+  [TreasureMiscWeapon.HammerPlus3DwarvenThrower]: 'Hammer +3 (Dwarven Thrower)',
   [TreasureMiscWeapon.HammerOfThunderbolts]: 'Hammer of Thunderbolts',
   [TreasureMiscWeapon.JavelinPlus2]: 'Javelin +2',
   [TreasureMiscWeapon.MacePlus1]: 'Mace +1',
@@ -61,9 +61,7 @@ function articleFor(label: string): 'a' | 'an' {
   return 'aeiou'.includes(first) ? 'an' : 'a';
 }
 
-export function miscWeaponSentence(
-  result: TreasureMiscWeaponResult
-): string {
+export function miscWeaponSentence(result: TreasureMiscWeaponResult): string {
   switch (result.item) {
     case TreasureMiscWeapon.ArrowPlus1:
     case TreasureMiscWeapon.ArrowPlus2:
@@ -133,9 +131,7 @@ export function renderTreasureMiscWeaponsCompact(
   return nodes;
 }
 
-export const buildTreasureMiscWeaponsPreview: TablePreviewFactory = (
-  tableId
-) =>
+export const buildTreasureMiscWeaponsPreview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Miscellaneous Weapons (Table H)',
     sides: treasureMiscWeapons.sides,

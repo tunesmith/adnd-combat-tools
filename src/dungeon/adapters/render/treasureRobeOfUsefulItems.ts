@@ -17,7 +17,10 @@ type ExtendedEntry = RobeOfUsefulItemsSummaryEntry & { order: number };
 
 export function renderTreasureRobeOfUsefulItemsDetail(
   outcome: OutcomeEventNode,
-  appendPendingPreviews: (node: OutcomeEventNode, messages: DungeonRenderNode[]) => void
+  appendPendingPreviews: (
+    node: OutcomeEventNode,
+    messages: DungeonRenderNode[]
+  ) => void
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureRobeOfUsefulItems') return [];
   const summary = toRobeOfUsefulItemsSummary(outcome.event.result);
@@ -49,7 +52,10 @@ export function renderTreasureRobeOfUsefulItemsDetail(
 
 export function renderTreasureRobeOfUsefulItemsCompact(
   outcome: OutcomeEventNode,
-  appendPendingPreviews: (node: OutcomeEventNode, messages: DungeonRenderNode[]) => void
+  appendPendingPreviews: (
+    node: OutcomeEventNode,
+    messages: DungeonRenderNode[]
+  ) => void
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureRobeOfUsefulItems') return [];
   const summary = toRobeOfUsefulItemsSummary(outcome.event.result);

@@ -42,12 +42,10 @@ const ITEM_LABELS: Record<TreasureMiscMagicE5, string> = {
     'Stone of Controlling Earth Elementals',
   [TreasureMiscMagicE5.StoneOfGoodLuckLuckstone]:
     'Stone of Good Luck (Luckstone)',
-  [TreasureMiscMagicE5.StoneOfWeightLoadstone]:
-    'Stone of Weight (Loadstone)',
+  [TreasureMiscMagicE5.StoneOfWeightLoadstone]: 'Stone of Weight (Loadstone)',
   [TreasureMiscMagicE5.TalismanOfPureGood]: 'Talisman of Pure Good (C)',
   [TreasureMiscMagicE5.TalismanOfTheSphere]: 'Talisman of the Sphere (M)',
-  [TreasureMiscMagicE5.TalismanOfUltimateEvil]:
-    'Talisman of Ultimate Evil (C)',
+  [TreasureMiscMagicE5.TalismanOfUltimateEvil]: 'Talisman of Ultimate Evil (C)',
   [TreasureMiscMagicE5.TalismanOfZagy]: 'Talisman of Zagy',
   [TreasureMiscMagicE5.TomeOfClearThought]: 'Tome of Clear Thought',
   [TreasureMiscMagicE5.TomeOfLeadershipAndInfluence]:
@@ -82,15 +80,11 @@ export function renderTreasureMiscMagicE5Detail(
       ? scarabCurse.event.result
       : undefined;
   const scarabResolution = scarabCurse
-    ? findChildEvent(
-        scarabCurse,
-        'treasureScarabOfProtectionCurseResolution'
-      )
+    ? findChildEvent(scarabCurse, 'treasureScarabOfProtectionCurseResolution')
     : undefined;
   const scarabResolutionResult =
     scarabResolution &&
-    scarabResolution.event.kind ===
-      'treasureScarabOfProtectionCurseResolution'
+    scarabResolution.event.kind === 'treasureScarabOfProtectionCurseResolution'
       ? scarabResolution.event.result
       : undefined;
   const heading: DungeonMessage = {
@@ -142,15 +136,11 @@ export function renderTreasureMiscMagicE5Compact(
       ? scarabCurse.event.result
       : undefined;
   const scarabResolution = scarabCurse
-    ? findChildEvent(
-        scarabCurse,
-        'treasureScarabOfProtectionCurseResolution'
-      )
+    ? findChildEvent(scarabCurse, 'treasureScarabOfProtectionCurseResolution')
     : undefined;
   const scarabResolutionResult =
     scarabResolution &&
-    scarabResolution.event.kind ===
-      'treasureScarabOfProtectionCurseResolution'
+    scarabResolution.event.kind === 'treasureScarabOfProtectionCurseResolution'
       ? scarabResolution.event.result
       : undefined;
   const heading: DungeonMessage = {
@@ -172,9 +162,7 @@ export function renderTreasureMiscMagicE5Compact(
   return nodes;
 }
 
-export const buildTreasureMiscMagicE5Preview: TablePreviewFactory = (
-  tableId
-) =>
+export const buildTreasureMiscMagicE5Preview: TablePreviewFactory = (tableId) =>
   buildPreview(tableId, {
     title: 'Miscellaneous Magic (Table E.5)',
     sides: treasureMiscMagicE5.sides,
