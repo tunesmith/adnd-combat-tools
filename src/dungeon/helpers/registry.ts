@@ -543,7 +543,14 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     fromOutcome(resolveGalleryStairOccurrence({ roll })),
   passageWidth: ({ roll }) => fromOutcome(resolvePassageWidth({ roll })),
   specialPassage: ({ roll }) => fromOutcome(resolveSpecialPassage({ roll })),
-  roomDimensions: ({ roll }) => fromOutcome(resolveRoomDimensions({ roll })),
+  roomDimensions: ({ roll, context }) => {
+    // Prefer explicit level from context (carried from doorBeyond -> room)
+    let level = 1;
+    if (context && context.kind === 'chamberDimensions') {
+      if (typeof context.level === 'number') level = context.level;
+    }
+    return fromOutcome(resolveRoomDimensions({ roll, level }));
+  },
   chamberDimensions: ({ roll, context }) => {
     let forcedContents: ChamberRoomContents | undefined;
     let forcedLevel: number | undefined;

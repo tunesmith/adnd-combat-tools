@@ -113,7 +113,10 @@ export function renderRoomDimensionsCompactNodes(
   return nodes;
 }
 
-export const buildRoomDimensionsPreview: TablePreviewFactory = (tableId) =>
+export const buildRoomDimensionsPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Room Dimensions',
     sides: roomDimensions.sides,
@@ -121,6 +124,7 @@ export const buildRoomDimensionsPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: RoomDimensions[entry.command] ?? String(entry.command),
     })),
+    context,
   });
 
 function formatRoomDimensions(result: RoomDimensions): string {

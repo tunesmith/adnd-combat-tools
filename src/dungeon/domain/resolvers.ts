@@ -576,7 +576,13 @@ export function resolveDoorBeyond(options?: {
   const command = getTableEntry(usedRoll, doorBeyond);
   const children: DungeonOutcomeNode[] = [];
   if (command === DoorBeyond.Room) {
-    children.push({ type: 'pending-roll', table: 'roomDimensions' });
+    children.push({
+      type: 'pending-roll',
+      table: 'roomDimensions',
+      // Carry dungeon level forward so manual/detail resolutions roll monsters at the
+      // correct level for rooms discovered beyond doors.
+      context: { kind: 'chamberDimensions', level },
+    });
   } else if (command === DoorBeyond.Chamber) {
     children.push({
       type: 'pending-roll',
