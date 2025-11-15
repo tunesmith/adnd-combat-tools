@@ -17,4 +17,4 @@ In other words, no output about the monster.
 
 ### Room Level
 
-Rolling for a monster in a room appears not to pay attention to level, always defaulting to level 1.
+Rolling for a monster in a room appears not to pay attention to level, always defaulting to level 1. For instance, if I am Dungeon Level 4, when I'm in a room that indicates a monster is present, when it comes time to roll the monster level, I get a monster level of 1 on a roll of 1-16 (indicating it is assuming I'm on Dungeon Level 1), when I should only get a monster level of 1 on a roll of 1-5 (since I'm on Dungeon level 4).

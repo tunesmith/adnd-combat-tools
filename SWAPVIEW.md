@@ -1,4 +1,4 @@
-# Swapview Plan
+# Swapview Plan (Status: Complete)
 
 ## Context
 
@@ -131,7 +131,11 @@ To make future tables predictable, every render module should answer these quest
 
 Following that checklist keeps renderers pure, makes pending-preview behaviour consistent, and gives new tables a copy/paste template while the registry stays the single place that wires detail/compact functions together.
 
-## Open Questions / Future Enhancements
+## Notes
 
-- Should compact mode display an explicit marker when some children are still pending? (Answer: YES)
-- Do we want to memoize render output per mode to avoid recomputation on every toggle? Evaluate after baseline implementation.
+- Compact view now shows a pending count badge when unresolved children exist, while detail view shows the corresponding previews. The mode toggle is deterministic and reuses the stored outcome tree.
+- This document describes the design and milestones of the swapview work and can be archived as a completed reference.
+
+## Future Enhancements (optional)
+
+- Memoize render output per mode if performance becomes a concern; current implementation recomputes on demand and is acceptable for present scope.

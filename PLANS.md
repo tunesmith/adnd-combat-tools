@@ -71,9 +71,16 @@ This plan outlines a commit-by-commit approach to add a third user-facing tool: 
 - Completed: Step 6 — Types and return-shape convergence (types added, adapters/page updated, tests adjusted)
 - Completed: Step 7a — Door path typed wrapper; adapter uses typed messages
 - Completed: Step 7b — Passage path typed wrapper and adapter integration
-- Completed: Step 8 (part 1) — `passageWidth` typed wrapper + roll-trace rendering; door path traces width sub-roll
-- Next: Step 8 (part 2) — Explore table preview structure and optional detail/compact modes
+- Completed: Step 8 (part 1) — `passageWidth` typed wrapper; door path traces width sub-roll
+- Completed: Step 8 (part 2) — Table preview structure + detail/compact toggle (registry + adapters wired)
+
+Next:
+
+- Monster levels 7–10: add resolvers, adapters, previews, and tests
+- Compact mode: add an explicit pending indicator when unresolved children exist
+- Address open items in BUGS.md (room monster summary in compact; room monster level context)
+- Light docs pass (README landing note for Dungeon; keep plan docs in sync)
 
 ## Future Enhancement
 
-- Add a structured Roll Trace (per-step and nested sub-rolls) so each parent action displays its own roll and any recursive rolls from subtables. Represent as a dedicated node (e.g., `kind: 'roll-trace'`) and render as an expandable list.
+- Add a structured Roll Trace (per-step and nested sub-rolls) so each parent action displays its own roll and any recursive rolls from subtables. Represent as a dedicated node (e.g., `kind: 'roll-trace'`) and render as an expandable list. (Scaffolding exists in types/UI; generation still to implement.)
