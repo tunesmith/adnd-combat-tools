@@ -5,6 +5,8 @@ import { findChildEvent, type AppendPreviewFn } from './shared';
 import { renderPassageWidthCompact } from './passageWidth';
 import { renderRoomDimensionsCompact } from './roomDimensions';
 import { describeChamberDimensions } from './chamberDimensions';
+import { collectCharacterPartyMessages } from './monsters';
+import { collectTreasureCompactMessages } from './treasure';
 
 export function renderDoorBeyondDetail(
   outcome: OutcomeEventNode,
@@ -63,12 +65,30 @@ function buildDoorBeyondNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
     if (detail.length > 0) {
       paragraphs.push({ kind: 'paragraph', text: detail });
     }
+    if (room) {
+      const extra = [
+        ...collectCharacterPartyMessages(room, 'compact'),
+        ...collectTreasureCompactMessages(room),
+      ];
+      if (extra.length > 0) {
+        paragraphs.push(...extra);
+      }
+    }
   }
   if (outcome.event.result === DoorBeyond.Chamber) {
     const chamber = findChildEvent(outcome, 'chamberDimensions');
     const detail = chamber ? describeChamberDimensions(chamber) : '';
     if (detail.length > 0) {
       paragraphs.push({ kind: 'paragraph', text: detail });
+    }
+    if (chamber) {
+      const extra = [
+        ...collectCharacterPartyMessages(chamber, 'compact'),
+        ...collectTreasureCompactMessages(chamber),
+      ];
+      if (extra.length > 0) {
+        paragraphs.push(...extra);
+      }
     }
   }
   return [heading, bullet, ...paragraphs];
