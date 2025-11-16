@@ -70,9 +70,9 @@ export const monsterSixTextForCommand = (
     case MonsterSix.Hydra_8to9Heads: {
       const heads = getNumberOfMonsters(6, dungeonLevel, 1, 2, 7);
       text = formatMonsterCount(
-        heads,
+        1,
         `${heads}-headed hydra`,
-        `${heads}-headed hydra`
+        `${heads}-headed hydrae`
       );
       break;
     }

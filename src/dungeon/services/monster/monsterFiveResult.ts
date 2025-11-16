@@ -57,18 +57,18 @@ export const monsterFiveTextForCommand = (
     case MonsterFive.Hydra_7Heads: {
       const heads = getNumberOfMonsters(5, dungeonLevel, 1, 1, 6);
       text = formatMonsterCount(
-        heads,
+        1,
         `${heads}-headed hydra`,
-        `${heads}-headed hydra`
+        `${heads}-headed hydrae`
       );
       break;
     }
     case MonsterFive.HydraPyro_6Heads: {
       const heads = getNumberOfMonsters(5, dungeonLevel, 1, 1, 5);
       text = formatMonsterCount(
-        heads,
+        1,
         `${heads}-headed pyrohydra`,
-        `${heads}-headed pyrohydra`
+        `${heads}-headed pyrohydrae`
       );
       break;
     }
