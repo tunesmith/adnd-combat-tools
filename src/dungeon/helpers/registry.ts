@@ -25,6 +25,7 @@ import {
   resolveDragonFourOlder,
   resolveDragonFourYounger,
   resolveDragonSix,
+  resolveDragonSeven,
   resolveDragonThree,
   resolveEgress,
   resolveGalleryStairLocation,
@@ -36,6 +37,7 @@ import {
   resolveMonsterLevel,
   resolveMonsterOne,
   resolveMonsterSix,
+  resolveMonsterSeven,
   resolveMonsterThree,
   resolveMonsterTwo,
   resolveNumberOfExits,
@@ -189,12 +191,14 @@ const TABLE_ID_LIST = [
   'monsterFour',
   'monsterFive',
   'monsterSix',
+  'monsterSeven',
   'dragonThree',
   'dragonFourYounger',
   'dragonFourOlder',
   'dragonFiveYounger',
   'dragonFiveOlder',
   'dragonSix',
+  'dragonSeven',
   'human',
   'galleryStairLocation',
   'galleryStairOccurrence',
@@ -330,12 +334,14 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   monsterFour: 'Monster (Level 4)',
   monsterFive: 'Monster (Level 5)',
   monsterSix: 'Monster (Level 6)',
+  monsterSeven: 'Monster (Level 7)',
   dragonThree: 'Dragon (Level 3)',
   dragonFourYounger: 'Dragon (Younger)',
   dragonFourOlder: 'Dragon (Older)',
   dragonFiveYounger: 'Dragon (Younger)',
   dragonFiveOlder: 'Dragon (Older)',
-  dragonSix: 'Dragon',
+  dragonSix: 'Dragon (Level 6)',
+  dragonSeven: 'Dragon (Level 7)',
   human: 'Human Subtable',
   galleryStairLocation: 'Gallery Stair Location',
   galleryStairOccurrence: 'Gallery Stair Occurrence',
@@ -509,6 +515,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     const dungeonLevel = readDungeonLevel(context, 'monsterSix', 1);
     return fromOutcome(resolveMonsterSix({ roll, dungeonLevel }));
   },
+  monsterSeven: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'monsterSeven', 1);
+    return fromOutcome(resolveMonsterSeven({ roll, dungeonLevel }));
+  },
   dragonThree: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonThree', 3);
     return fromOutcome(resolveDragonThree({ roll, dungeonLevel }));
@@ -532,6 +542,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   dragonSix: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonSix', 6);
     return fromOutcome(resolveDragonSix({ roll, dungeonLevel }));
+  },
+  dragonSeven: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'dragonSeven', 7);
+    return fromOutcome(resolveDragonSeven({ roll, dungeonLevel }));
   },
   human: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'human', 1);

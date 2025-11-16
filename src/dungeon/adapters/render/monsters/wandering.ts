@@ -12,6 +12,7 @@ const MONSTER_LEVEL_KIND: Partial<Record<MonsterLevel, OutcomeEvent['kind']>> =
     [MonsterLevel.Four]: 'monsterFour',
     [MonsterLevel.Five]: 'monsterFive',
     [MonsterLevel.Six]: 'monsterSix',
+    [MonsterLevel.Seven]: 'monsterSeven',
   };
 
 type MonsterCompactSummary = {
@@ -115,12 +116,18 @@ function readMonsterEvent(
       if (dragon) return readMonsterEvent(dragon);
       break;
     }
+    case 'monsterSeven': {
+      const dragon = findChildEvent(node, 'dragonSeven');
+      if (dragon) return readMonsterEvent(dragon);
+      break;
+    }
     case 'dragonThree':
     case 'dragonFourYounger':
     case 'dragonFourOlder':
     case 'dragonFiveYounger':
     case 'dragonFiveOlder':
     case 'dragonSix':
+    case 'dragonSeven':
     case 'human':
       if (node.event.text) return { text: node.event.text };
       break;
@@ -132,8 +139,6 @@ function readMonsterEvent(
 
 function fallbackMonsterLevelText(level: MonsterLevel): string {
   switch (level) {
-    case MonsterLevel.Seven:
-      return '(TODO: Roll Monster for Level Seven)';
     case MonsterLevel.Eight:
       return '(TODO: Roll Monster for Level Eight)';
     case MonsterLevel.Nine:

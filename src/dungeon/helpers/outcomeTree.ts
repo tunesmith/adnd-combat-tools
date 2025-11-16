@@ -56,12 +56,14 @@ import {
   resolveMonsterFour,
   resolveMonsterFive,
   resolveMonsterSix,
+  resolveMonsterSeven,
   resolveDragonThree,
   resolveDragonFourYounger,
   resolveDragonFourOlder,
   resolveDragonFiveYounger,
   resolveDragonFiveOlder,
   resolveDragonSix,
+  resolveDragonSeven,
   resolveHuman,
   resolveTreasure,
   resolveTreasureContainer,
@@ -1092,6 +1094,10 @@ function resolvePendingNode(
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterSix({ dungeonLevel });
     }
+    case 'monsterSeven': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterSeven({ dungeonLevel });
+    }
     case 'dragonThree': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 3);
       return resolveDragonThree({ dungeonLevel });
@@ -1115,6 +1121,10 @@ function resolvePendingNode(
     case 'dragonSix': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 6);
       return resolveDragonSix({ dungeonLevel });
+    }
+    case 'dragonSeven': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 7);
+      return resolveDragonSeven({ dungeonLevel });
     }
     case 'human': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);

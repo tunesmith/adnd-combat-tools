@@ -39,6 +39,12 @@ import {
   dragonSix,
   DragonSix,
 } from '../../../../tables/dungeon/monster/monsterSix';
+import {
+  monsterSeven,
+  MonsterSeven,
+  dragonSeven,
+  DragonSeven,
+} from '../../../../tables/dungeon/monster/monsterSeven';
 import { buildPreview } from '../shared';
 import {
   monsterTextDescription,
@@ -54,7 +60,8 @@ type StandardTableId =
   | 'monsterThree'
   | 'monsterFour'
   | 'monsterFive'
-  | 'monsterSix';
+  | 'monsterSix'
+  | 'monsterSeven';
 
 type DragonTableId =
   | 'dragonThree'
@@ -62,7 +69,8 @@ type DragonTableId =
   | 'dragonFourOlder'
   | 'dragonFiveYounger'
   | 'dragonFiveOlder'
-  | 'dragonSix';
+  | 'dragonSix'
+  | 'dragonSeven';
 
 const STANDARD_CONFIG: Record<
   StandardTableId,
@@ -74,14 +82,16 @@ const STANDARD_CONFIG: Record<
       | typeof monsterThree
       | typeof monsterFour
       | typeof monsterFive
-      | typeof monsterSix;
+      | typeof monsterSix
+      | typeof monsterSeven;
     labels:
       | typeof MonsterOne
       | typeof MonsterTwo
       | typeof MonsterThree
       | typeof MonsterFour
       | typeof MonsterFive
-      | typeof MonsterSix;
+      | typeof MonsterSix
+      | typeof MonsterSeven;
   }
 > = {
   monsterOne: {
@@ -114,6 +124,11 @@ const STANDARD_CONFIG: Record<
     table: monsterSix,
     labels: MonsterSix,
   },
+  monsterSeven: {
+    title: 'Monster (Level 7)',
+    table: monsterSeven,
+    labels: MonsterSeven,
+  },
 };
 
 const DRAGON_CONFIG: Record<
@@ -126,14 +141,16 @@ const DRAGON_CONFIG: Record<
       | typeof dragonFourOlder
       | typeof dragonFiveYounger
       | typeof dragonFiveOlder
-      | typeof dragonSix;
+      | typeof dragonSix
+      | typeof dragonSeven;
     labels:
       | typeof DragonThree
       | typeof DragonFourYounger
       | typeof DragonFourOlder
       | typeof DragonFiveYounger
       | typeof DragonFiveOlder
-      | typeof DragonSix;
+      | typeof DragonSix
+      | typeof DragonSeven;
   }
 > = {
   dragonThree: {
@@ -142,26 +159,31 @@ const DRAGON_CONFIG: Record<
     labels: DragonThree,
   },
   dragonFourYounger: {
-    title: 'Dragon (Younger)',
+    title: 'Dragon (Level 4 Younger)',
     table: dragonFourYounger,
     labels: DragonFourYounger,
   },
   dragonFourOlder: {
-    title: 'Dragon (Older)',
+    title: 'Dragon (Level 4 Older)',
     table: dragonFourOlder,
     labels: DragonFourOlder,
   },
   dragonFiveYounger: {
-    title: 'Dragon (Younger)',
+    title: 'Dragon (Level 5 Younger)',
     table: dragonFiveYounger,
     labels: DragonFiveYounger,
   },
   dragonFiveOlder: {
-    title: 'Dragon (Older)',
+    title: 'Dragon (Level 5 Older)',
     table: dragonFiveOlder,
     labels: DragonFiveOlder,
   },
-  dragonSix: { title: 'Dragon', table: dragonSix, labels: DragonSix },
+  dragonSix: { title: 'Dragon (Level 6)', table: dragonSix, labels: DragonSix },
+  dragonSeven: {
+    title: 'Dragon (Level 7)',
+    table: dragonSeven,
+    labels: DragonSeven,
+  },
 };
 
 export function describeStandardMonster(

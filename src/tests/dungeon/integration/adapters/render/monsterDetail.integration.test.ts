@@ -10,6 +10,7 @@ import {
 } from '../../../../../tables/dungeon/monster/monsterOne';
 import { MonsterTwo } from '../../../../../tables/dungeon/monster/monsterTwo';
 import { MonsterLevel } from '../../../../../tables/dungeon/monster/monsterLevel';
+import { MonsterSeven } from '../../../../../tables/dungeon/monster/monsterSeven';
 import type {
   PartyResult,
   CharacterSheet,
@@ -136,26 +137,49 @@ describe('Monster describe helpers', () => {
     expect(compactPreviews.map((p) => p.id)).toContain('human');
   });
 
-  test('monsterLevel produces placeholder when above level six', () => {
+  test('monsterLevel produces placeholder when above level seven', () => {
     const outcome: OutcomeEventNode = {
       type: 'event',
       roll: 20,
       event: {
         kind: 'monsterLevel',
-        result: MonsterLevel.Seven,
+        result: MonsterLevel.Eight,
         dungeonLevel: 8,
       },
     };
 
     const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
     expect(detailParagraphs.map((p) => p.text)).toEqual([
-      '(TODO: Monster Level Seven preview)',
+      '(TODO: Monster Level Eight preview)',
     ]);
 
     const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
     expect(compactParagraphs.map((p) => p.text.trim())).toEqual([
-      '(TODO: Monster Level Seven preview)',
+      '(TODO: Monster Level Eight preview)',
     ]);
+  });
+
+  test('monsterSeven detail renders text like lower levels', () => {
+    const outcome: OutcomeEventNode = {
+      type: 'event',
+      roll: 42,
+      event: {
+        kind: 'monsterSeven',
+        result: MonsterSeven.BlackPudding,
+        dungeonLevel: 7,
+        text: 'There is 1 black pudding. ',
+      },
+    };
+
+    const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(detailParagraphs.map((p) => p.text.trim())).toContain(
+      'There is 1 black pudding.'
+    );
+
+    const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
+    expect(compactParagraphs.map((p) => p.text.trim())).toContain(
+      'There is 1 black pudding.'
+    );
   });
 
   test('human parties render structured detail and compact output', () => {
