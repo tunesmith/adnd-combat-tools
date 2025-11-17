@@ -314,6 +314,11 @@ import {
   dragonSeven,
 } from '../../tables/dungeon/monster/monsterSeven';
 import {
+  monsterEight,
+  MonsterEight,
+  dragonEight,
+} from '../../tables/dungeon/monster/monsterEight';
+import {
   monsterOneTextForCommand,
   humanTextForCommand,
 } from '../services/monster/monsterOneResult';
@@ -340,6 +345,10 @@ import {
   monsterSevenTextForCommand,
   dragonSevenTextForCommand,
 } from '../services/monster/monsterSevenResult';
+import {
+  monsterEightTextForCommand,
+  dragonEightTextForCommand,
+} from '../services/monster/monsterEightResult';
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
 import { oneToFour, OneToFour } from '../../tables/dungeon/numberOfExits';
 import type { DoorChainLaterality } from './outcome';
@@ -4753,6 +4762,9 @@ export function resolveMonsterLevel(options?: {
     case MonsterLevel.Seven:
       children.push({ type: 'pending-roll', table: 'monsterSeven', context });
       break;
+    case MonsterLevel.Eight:
+      children.push({ type: 'pending-roll', table: 'monsterEight', context });
+      break;
     default:
       break;
   }
@@ -5105,6 +5117,38 @@ export function resolveMonsterSeven(options?: {
   };
 }
 
+export function resolveMonsterEight(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 1;
+  const usedRoll = options?.roll ?? rollDice(monsterEight.sides);
+  const result = getTableEntry(usedRoll, monsterEight);
+  const children: DungeonOutcomeNode[] = [];
+  const resolved = monsterEightTextForCommand(dungeonLevel, result);
+  const party: PartyResult | undefined = resolved.party;
+  const text: string | undefined = party ? undefined : resolved.text;
+  if (result === MonsterEight.Dragon) {
+    children.push({
+      type: 'pending-roll',
+      table: 'dragonEight',
+      context: { kind: 'wandering', level: dungeonLevel },
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'monsterEight',
+      result,
+      dungeonLevel,
+      text,
+      party,
+    },
+    children: children.length ? children : undefined,
+  };
+}
+
 export function resolveDragonSix(options?: {
   roll?: number;
   dungeonLevel?: number;
@@ -5138,6 +5182,26 @@ export function resolveDragonSeven(options?: {
     roll: usedRoll,
     event: {
       kind: 'dragonSeven',
+      result,
+      dungeonLevel,
+      text,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveDragonEight(options?: {
+  roll?: number;
+  dungeonLevel?: number;
+}): DungeonOutcomeNode {
+  const dungeonLevel = options?.dungeonLevel ?? 8;
+  const usedRoll = options?.roll ?? rollDice(dragonEight.sides);
+  const result = getTableEntry(usedRoll, dragonEight);
+  const text = dragonEightTextForCommand(dungeonLevel, result);
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'dragonEight',
       result,
       dungeonLevel,
       text,

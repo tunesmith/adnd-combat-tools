@@ -45,6 +45,12 @@ import {
   dragonSeven,
   DragonSeven,
 } from '../../../../tables/dungeon/monster/monsterSeven';
+import {
+  monsterEight,
+  MonsterEight,
+  dragonEight,
+  DragonEight,
+} from '../../../../tables/dungeon/monster/monsterEight';
 import { buildPreview } from '../shared';
 import {
   monsterTextDescription,
@@ -61,7 +67,8 @@ type StandardTableId =
   | 'monsterFour'
   | 'monsterFive'
   | 'monsterSix'
-  | 'monsterSeven';
+  | 'monsterSeven'
+  | 'monsterEight';
 
 type DragonTableId =
   | 'dragonThree'
@@ -70,7 +77,8 @@ type DragonTableId =
   | 'dragonFiveYounger'
   | 'dragonFiveOlder'
   | 'dragonSix'
-  | 'dragonSeven';
+  | 'dragonSeven'
+  | 'dragonEight';
 
 const STANDARD_CONFIG: Record<
   StandardTableId,
@@ -83,7 +91,8 @@ const STANDARD_CONFIG: Record<
       | typeof monsterFour
       | typeof monsterFive
       | typeof monsterSix
-      | typeof monsterSeven;
+      | typeof monsterSeven
+      | typeof monsterEight;
     labels:
       | typeof MonsterOne
       | typeof MonsterTwo
@@ -91,7 +100,8 @@ const STANDARD_CONFIG: Record<
       | typeof MonsterFour
       | typeof MonsterFive
       | typeof MonsterSix
-      | typeof MonsterSeven;
+      | typeof MonsterSeven
+      | typeof MonsterEight;
   }
 > = {
   monsterOne: {
@@ -129,6 +139,11 @@ const STANDARD_CONFIG: Record<
     table: monsterSeven,
     labels: MonsterSeven,
   },
+  monsterEight: {
+    title: 'Monster (Level 8)',
+    table: monsterEight,
+    labels: MonsterEight,
+  },
 };
 
 const DRAGON_CONFIG: Record<
@@ -142,7 +157,8 @@ const DRAGON_CONFIG: Record<
       | typeof dragonFiveYounger
       | typeof dragonFiveOlder
       | typeof dragonSix
-      | typeof dragonSeven;
+      | typeof dragonSeven
+      | typeof dragonEight;
     labels:
       | typeof DragonThree
       | typeof DragonFourYounger
@@ -150,7 +166,8 @@ const DRAGON_CONFIG: Record<
       | typeof DragonFiveYounger
       | typeof DragonFiveOlder
       | typeof DragonSix
-      | typeof DragonSeven;
+      | typeof DragonSeven
+      | typeof DragonEight;
   }
 > = {
   dragonThree: {
@@ -183,6 +200,11 @@ const DRAGON_CONFIG: Record<
     title: 'Dragon (Level 7)',
     table: dragonSeven,
     labels: DragonSeven,
+  },
+  dragonEight: {
+    title: 'Dragon (Level 8)',
+    table: dragonEight,
+    labels: DragonEight,
   },
 };
 

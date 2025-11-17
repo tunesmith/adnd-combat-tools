@@ -11,6 +11,7 @@ import {
 import { MonsterTwo } from '../../../../../tables/dungeon/monster/monsterTwo';
 import { MonsterLevel } from '../../../../../tables/dungeon/monster/monsterLevel';
 import { MonsterSeven } from '../../../../../tables/dungeon/monster/monsterSeven';
+import { MonsterEight } from '../../../../../tables/dungeon/monster/monsterEight';
 import type {
   PartyResult,
   CharacterSheet,
@@ -137,25 +138,25 @@ describe('Monster describe helpers', () => {
     expect(compactPreviews.map((p) => p.id)).toContain('human');
   });
 
-  test('monsterLevel produces placeholder when above level seven', () => {
+  test('monsterLevel produces placeholder when above level eight', () => {
     const outcome: OutcomeEventNode = {
       type: 'event',
       roll: 20,
       event: {
         kind: 'monsterLevel',
-        result: MonsterLevel.Eight,
-        dungeonLevel: 8,
+        result: MonsterLevel.Nine,
+        dungeonLevel: 9,
       },
     };
 
     const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
     expect(detailParagraphs.map((p) => p.text)).toEqual([
-      '(TODO: Monster Level Eight preview)',
+      '(TODO: Monster Level Nine preview)',
     ]);
 
     const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
     expect(compactParagraphs.map((p) => p.text.trim())).toEqual([
-      '(TODO: Monster Level Eight preview)',
+      '(TODO: Monster Level Nine preview)',
     ]);
   });
 
@@ -179,6 +180,29 @@ describe('Monster describe helpers', () => {
     const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
     expect(compactParagraphs.map((p) => p.text.trim())).toContain(
       'There is 1 black pudding.'
+    );
+  });
+
+  test('monsterEight detail renders text like lower levels', () => {
+    const outcome: OutcomeEventNode = {
+      type: 'event',
+      roll: 73,
+      event: {
+        kind: 'monsterEight',
+        result: MonsterEight.GiantCloud_1to2,
+        dungeonLevel: 8,
+        text: 'There are 2 cloud giants. ',
+      },
+    };
+
+    const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(detailParagraphs.map((p) => p.text.trim())).toContain(
+      'There are 2 cloud giants.'
+    );
+
+    const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
+    expect(compactParagraphs.map((p) => p.text.trim())).toContain(
+      'There are 2 cloud giants.'
     );
   });
 

@@ -52,6 +52,10 @@ import {
   monsterSeven,
 } from '../../tables/dungeon/monster/monsterSeven';
 import {
+  MonsterEight,
+  monsterEight,
+} from '../../tables/dungeon/monster/monsterEight';
+import {
   humanResult,
   monsterOneTextForCommand,
 } from './monster/monsterOneResult';
@@ -200,6 +204,18 @@ export const monsterLevelMessages = (options: {
         entries: monsterSeven.entries.map((e) => ({
           range: rangeText(e.range),
           label: MonsterSeven[e.command] ?? String(e.command),
+        })),
+        context: { kind: 'wandering', level: dungeonLevel },
+      });
+    } else if (lvl === MonsterLevel.Eight) {
+      messages.push({
+        kind: 'table-preview',
+        id: 'monsterEight',
+        title: 'Monster (Level 8)',
+        sides: monsterEight.sides,
+        entries: monsterEight.entries.map((e) => ({
+          range: rangeText(e.range),
+          label: MonsterEight[e.command] ?? String(e.command),
         })),
         context: { kind: 'wandering', level: dungeonLevel },
       });

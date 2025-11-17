@@ -1001,6 +1001,7 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   monsterFive: monsterAdapter,
   monsterSix: monsterAdapter,
   monsterSeven: monsterAdapter,
+  monsterEight: monsterAdapter,
   dragonThree: monsterAdapter,
   dragonFourYounger: monsterAdapter,
   dragonFourOlder: monsterAdapter,
@@ -1008,6 +1009,7 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   dragonFiveOlder: monsterAdapter,
   dragonSix: monsterAdapter,
   dragonSeven: monsterAdapter,
+  dragonEight: monsterAdapter,
   human: monsterAdapter,
 } as const;
 
@@ -1151,6 +1153,7 @@ const MONSTER_PREVIEW_BASES = [
   'monsterFive',
   'monsterSix',
   'monsterSeven',
+  'monsterEight',
   'dragonThree',
   'dragonFourYounger',
   'dragonFourOlder',
@@ -1158,6 +1161,7 @@ const MONSTER_PREVIEW_BASES = [
   'dragonFiveOlder',
   'dragonSix',
   'dragonSeven',
+  'dragonEight',
   'human',
 ];
 
@@ -1872,6 +1876,10 @@ function previewForEventNode(
       tableId = 'monsterSeven';
       context = { kind: 'wandering', level: event.dungeonLevel };
       break;
+    case 'monsterEight':
+      tableId = 'monsterEight';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
     case 'dragonThree':
       tableId = 'dragonThree';
       context = { kind: 'wandering', level: event.dungeonLevel };
@@ -1898,6 +1906,10 @@ function previewForEventNode(
       break;
     case 'dragonSeven':
       tableId = 'dragonSeven';
+      context = { kind: 'wandering', level: event.dungeonLevel };
+      break;
+    case 'dragonEight':
+      tableId = 'dragonEight';
       context = { kind: 'wandering', level: event.dungeonLevel };
       break;
     case 'human':
