@@ -5,11 +5,11 @@ import {
 import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
 import {
   DragonThree,
-  dragonThree,
   MonsterThree,
   monsterThree,
 } from '../../../tables/dungeon/monster/monsterThree';
 import { characterResult } from './characterResult';
+import { dragonSubtableReminder } from './dragonSubtableReminder';
 import type { PartyResult } from '../../models/character/characterSheet';
 
 type MonsterTextResult = {
@@ -41,7 +41,7 @@ export const monsterThreeTextForCommand = (
       break;
     }
     case MonsterThree.Dragon:
-      text = dragonThreeResult(dungeonLevel);
+      text = dragonSubtableReminder('A dragon is indicated');
       break;
     case MonsterThree.FungiViolet_1to3: {
       const fungi = getNumberOfMonsters(3, dungeonLevel, 1, 3);
@@ -162,10 +162,4 @@ export const dragonThreeTextForCommand = (
       break;
   }
   return text;
-};
-
-const dragonThreeResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonThree.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonThree);
-  return dragonThreeTextForCommand(dungeonLevel, dragonCommand);
 };

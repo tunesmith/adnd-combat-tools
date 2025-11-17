@@ -2,15 +2,11 @@ import {
   formatMonsterCount,
   getNumberOfMonsters,
 } from '../wanderingMonsterResult';
-import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
 import { characterResult } from './characterResult';
-import {
-  MonsterSeven,
-  DragonSeven,
-  dragonSeven,
-} from '../../../tables/dungeon/monster/monsterSeven';
+import { MonsterSeven, DragonSeven } from '../../../tables/dungeon/monster/monsterSeven';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 import type { PartyResult } from '../../models/character/characterSheet';
+import { dragonSubtableReminder } from './dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;
@@ -90,7 +86,7 @@ export const monsterSevenTextForCommand = (
       );
       break;
     case MonsterSeven.Dragon:
-      text = dragonSevenResult(dungeonLevel);
+      text = dragonSubtableReminder('A dragon is indicated');
       break;
     case MonsterSeven.Efreeti:
       text = formatMonsterCount(
@@ -326,12 +322,6 @@ export const dragonSevenTextForCommand = (
   const label = dragonSevenLabel(command);
   const count = getNumberOfMonsters(7, dungeonLevel, 1, 1);
   return formatMonsterCount(count, label, label);
-};
-
-const dragonSevenResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonSeven.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonSeven);
-  return dragonSevenTextForCommand(dungeonLevel, dragonCommand);
 };
 
 function dragonSevenLabel(command: DragonSeven): string {

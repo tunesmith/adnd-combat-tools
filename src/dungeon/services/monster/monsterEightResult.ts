@@ -8,10 +8,10 @@ import {
   monsterEight,
   MonsterEight,
   DragonEight,
-  dragonEight,
 } from '../../../tables/dungeon/monster/monsterEight';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 import type { PartyResult } from '../../models/character/characterSheet';
+import { dragonSubtableReminder } from './dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;
@@ -67,7 +67,7 @@ export const monsterEightTextForCommand = (
       );
       break;
     case MonsterEight.Dragon:
-      text = dragonEightResult(dungeonLevel);
+      text = dragonSubtableReminder('A dragon is indicated');
       break;
     case MonsterEight.Ghost:
       text = formatMonsterCount(
@@ -223,12 +223,6 @@ export const dragonEightTextForCommand = (
   const label = dragonEightLabel(command);
   const count = getNumberOfMonsters(8, dungeonLevel, 1, 1);
   return formatMonsterCount(count, label, label);
-};
-
-const dragonEightResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonEight.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonEight);
-  return dragonEightTextForCommand(dungeonLevel, dragonCommand);
 };
 
 function dragonEightLabel(command: DragonEight): string {

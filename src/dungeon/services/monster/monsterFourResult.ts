@@ -6,13 +6,12 @@ import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
 import { characterResult } from './characterResult';
 import {
   DragonFourOlder,
-  dragonFourOlder,
   DragonFourYounger,
-  dragonFourYounger,
   MonsterFour,
   monsterFour,
 } from '../../../tables/dungeon/monster/monsterFour';
 import type { PartyResult } from '../../models/character/characterSheet';
+import { dragonSubtableReminder } from './dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;
@@ -43,10 +42,14 @@ export const monsterFourTextForCommand = (
       break;
     }
     case MonsterFour.DragonYounger:
-      text = dragonFourYoungerResult(dungeonLevel);
+      text = dragonSubtableReminder('A younger dragon is indicated', {
+        tableLabel: 'younger dragon subtable',
+      });
       break;
     case MonsterFour.DragonOlder:
-      text = dragonFourOlderResult(dungeonLevel);
+      text = dragonSubtableReminder('An older dragon is indicated', {
+        tableLabel: 'older dragon subtable',
+      });
       break;
     case MonsterFour.Gargoyle_1to2: {
       const gargoyles = getNumberOfMonsters(4, dungeonLevel, 1, 2);
@@ -291,16 +294,4 @@ export const dragonFourOlderTextForCommand = (
       break;
   }
   return text;
-};
-
-const dragonFourYoungerResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonFourYounger.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonFourYounger);
-  return dragonFourYoungerTextForCommand(dungeonLevel, dragonCommand);
-};
-
-const dragonFourOlderResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonFourOlder.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonFourOlder);
-  return dragonFourOlderTextForCommand(dungeonLevel, dragonCommand);
 };

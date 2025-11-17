@@ -6,12 +6,12 @@ import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
 import { characterResult } from './characterResult';
 import {
   DragonSix,
-  dragonSix,
   MonsterSix,
   monsterSix,
 } from '../../../tables/dungeon/monster/monsterSix';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 import type { PartyResult } from '../../models/character/characterSheet';
+import { dragonSubtableReminder } from './dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;
@@ -56,7 +56,7 @@ export const monsterSixTextForCommand = (
       break;
     }
     case MonsterSix.Dragon:
-      text = dragonSixResult(dungeonLevel);
+      text = dragonSubtableReminder('A dragon is indicated');
       break;
     case MonsterSix.GreenSlime: {
       const slime = getNumberOfMonsters(6, dungeonLevel, 1, 1);
@@ -237,10 +237,4 @@ export const dragonSixTextForCommand = (
       break;
   }
   return text;
-};
-
-const dragonSixResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonSix.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonSix);
-  return dragonSixTextForCommand(dungeonLevel, dragonCommand);
 };

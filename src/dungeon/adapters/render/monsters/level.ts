@@ -14,7 +14,7 @@ export function describeMonsterLevel(
   if (node.event.kind !== 'monsterLevel') return undefined;
   const detailParagraphs: MonsterDescription['detailParagraphs'] = [];
   let compactText = '';
-  if (node.event.result > MonsterLevel.Eight) {
+  if (node.event.result > MonsterLevel.Nine) {
     const placeholder = `(TODO: Monster Level ${
       MonsterLevel[node.event.result]
     } preview)`;

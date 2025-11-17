@@ -6,14 +6,13 @@ import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
 import { characterResult } from './characterResult';
 import {
   DragonFiveOlder,
-  dragonFiveOlder,
   DragonFiveYounger,
-  dragonFiveYounger,
   MonsterFive,
   monsterFive,
 } from '../../../tables/dungeon/monster/monsterFive';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 import type { PartyResult } from '../../models/character/characterSheet';
+import { dragonSubtableReminder } from './dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;
@@ -49,10 +48,14 @@ export const monsterFiveTextForCommand = (
       break;
     }
     case MonsterFive.DragonYounger:
-      text = dragonFiveYoungerResult(dungeonLevel);
+      text = dragonSubtableReminder('A younger dragon is indicated', {
+        tableLabel: 'younger dragon subtable',
+      });
       break;
     case MonsterFive.DragonOlder:
-      text = dragonFiveOlderResult(dungeonLevel);
+      text = dragonSubtableReminder('An older dragon is indicated', {
+        tableLabel: 'older dragon subtable',
+      });
       break;
     case MonsterFive.Hydra_7Heads: {
       const heads = getNumberOfMonsters(5, dungeonLevel, 1, 1, 6);
@@ -319,16 +322,4 @@ export const dragonFiveOlderTextForCommand = (
       break;
   }
   return text;
-};
-
-const dragonFiveYoungerResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonFiveYounger.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonFiveYounger);
-  return dragonFiveYoungerTextForCommand(dungeonLevel, dragonCommand);
-};
-
-const dragonFiveOlderResult = (dungeonLevel: number): string => {
-  const dragonRoll = rollDice(dragonFiveOlder.sides);
-  const dragonCommand = getTableEntry(dragonRoll, dragonFiveOlder);
-  return dragonFiveOlderTextForCommand(dungeonLevel, dragonCommand);
 };

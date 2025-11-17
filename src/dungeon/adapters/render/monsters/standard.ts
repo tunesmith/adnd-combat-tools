@@ -2,7 +2,7 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../../../types/dungeon';
-import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import {
   monsterOne,
   MonsterOne,
@@ -51,7 +51,13 @@ import {
   dragonEight,
   DragonEight,
 } from '../../../../tables/dungeon/monster/monsterEight';
-import { buildPreview } from '../shared';
+import {
+  monsterNine,
+  MonsterNine,
+  dragonNine,
+  DragonNine,
+} from '../../../../tables/dungeon/monster/monsterNine';
+import { buildPreview, findChildEvent } from '../shared';
 import {
   monsterTextDescription,
   hasPendingChildren,
@@ -68,7 +74,8 @@ type StandardTableId =
   | 'monsterFive'
   | 'monsterSix'
   | 'monsterSeven'
-  | 'monsterEight';
+  | 'monsterEight'
+  | 'monsterNine';
 
 type DragonTableId =
   | 'dragonThree'
@@ -78,7 +85,8 @@ type DragonTableId =
   | 'dragonFiveOlder'
   | 'dragonSix'
   | 'dragonSeven'
-  | 'dragonEight';
+  | 'dragonEight'
+  | 'dragonNine';
 
 const STANDARD_CONFIG: Record<
   StandardTableId,
@@ -92,7 +100,8 @@ const STANDARD_CONFIG: Record<
       | typeof monsterFive
       | typeof monsterSix
       | typeof monsterSeven
-      | typeof monsterEight;
+      | typeof monsterEight
+      | typeof monsterNine;
     labels:
       | typeof MonsterOne
       | typeof MonsterTwo
@@ -101,7 +110,8 @@ const STANDARD_CONFIG: Record<
       | typeof MonsterFive
       | typeof MonsterSix
       | typeof MonsterSeven
-      | typeof MonsterEight;
+      | typeof MonsterEight
+      | typeof MonsterNine;
   }
 > = {
   monsterOne: {
@@ -144,6 +154,11 @@ const STANDARD_CONFIG: Record<
     table: monsterEight,
     labels: MonsterEight,
   },
+  monsterNine: {
+    title: 'Monster (Level 9)',
+    table: monsterNine,
+    labels: MonsterNine,
+  },
 };
 
 const DRAGON_CONFIG: Record<
@@ -158,7 +173,8 @@ const DRAGON_CONFIG: Record<
       | typeof dragonFiveOlder
       | typeof dragonSix
       | typeof dragonSeven
-      | typeof dragonEight;
+      | typeof dragonEight
+      | typeof dragonNine;
     labels:
       | typeof DragonThree
       | typeof DragonFourYounger
@@ -167,7 +183,8 @@ const DRAGON_CONFIG: Record<
       | typeof DragonFiveOlder
       | typeof DragonSix
       | typeof DragonSeven
-      | typeof DragonEight;
+      | typeof DragonEight
+      | typeof DragonNine;
   }
 > = {
   dragonThree: {
@@ -205,6 +222,11 @@ const DRAGON_CONFIG: Record<
     title: 'Dragon (Level 8)',
     table: dragonEight,
     labels: DragonEight,
+  },
+  dragonNine: {
+    title: 'Dragon (Level 9)',
+    table: dragonNine,
+    labels: DragonNine,
   },
 };
 
@@ -249,9 +271,10 @@ export function describeDragonMonster(
   if (!config) return undefined;
   const event = node.event;
   if (!('result' in event)) return undefined;
-  const textInfo = monsterTextDescription(
-    'text' in event ? event.text : undefined
-  );
+  const resolvedChildText = readResolvedChildText(node);
+  const eventText =
+    resolvedChildText ?? ('text' in event ? event.text : undefined);
+  const textInfo = monsterTextDescription(eventText);
   return {
     heading: config.title,
     label:
@@ -301,4 +324,48 @@ export function isStandardTableId(value: string): value is StandardTableId {
 
 export function isDragonTableId(value: string): value is DragonTableId {
   return value in DRAGON_CONFIG;
+}
+
+function readResolvedChildText(node: OutcomeEventNode): string | undefined {
+  const childKind = findDragonChildKind(node);
+  if (!childKind) return undefined;
+  const child = findChildEvent(node, childKind);
+  if (!child) return undefined;
+  const childEvent = child.event;
+  if ('text' in childEvent && typeof childEvent.text === 'string') {
+    const text = childEvent.text.trim();
+    if (text.length > 0) return childEvent.text;
+  }
+  return undefined;
+}
+
+function findDragonChildKind(
+  node: OutcomeEventNode
+): OutcomeEvent['kind'] | undefined {
+  switch (node.event.kind) {
+    case 'monsterThree':
+      return node.event.result === MonsterThree.Dragon ? 'dragonThree' : undefined;
+    case 'monsterFour':
+      if (node.event.result === MonsterFour.DragonYounger)
+        return 'dragonFourYounger';
+      if (node.event.result === MonsterFour.DragonOlder)
+        return 'dragonFourOlder';
+      return undefined;
+    case 'monsterFive':
+      if (node.event.result === MonsterFive.DragonYounger)
+        return 'dragonFiveYounger';
+      if (node.event.result === MonsterFive.DragonOlder)
+        return 'dragonFiveOlder';
+      return undefined;
+    case 'monsterSix':
+      return node.event.result === MonsterSix.Dragon ? 'dragonSix' : undefined;
+    case 'monsterSeven':
+      return node.event.result === MonsterSeven.Dragon ? 'dragonSeven' : undefined;
+    case 'monsterEight':
+      return node.event.result === MonsterEight.Dragon ? 'dragonEight' : undefined;
+    case 'monsterNine':
+      return node.event.result === MonsterNine.Dragon ? 'dragonNine' : undefined;
+    default:
+      return undefined;
+  }
 }

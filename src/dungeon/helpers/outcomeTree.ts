@@ -1,6 +1,7 @@
 import type {
   DoorChainLaterality,
   DungeonOutcomeNode,
+  OutcomeEvent,
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
@@ -58,6 +59,7 @@ import {
   resolveMonsterSix,
   resolveMonsterSeven,
   resolveMonsterEight,
+  resolveMonsterNine,
   resolveDragonThree,
   resolveDragonFourYounger,
   resolveDragonFourOlder,
@@ -66,6 +68,7 @@ import {
   resolveDragonSix,
   resolveDragonSeven,
   resolveDragonEight,
+  resolveDragonNine,
   resolveHuman,
   resolveTreasure,
   resolveTreasureContainer,
@@ -528,10 +531,47 @@ export function applyResolvedOutcome(
     return updated;
   });
   if (!changed) return node;
-  return {
+  const updatedNode: OutcomeEventNode = {
     ...node,
     children: nextChildren,
   };
+  const dragonText = inheritDragonChildText(updatedNode);
+  if (dragonText && 'text' in updatedNode.event) {
+    updatedNode.event = {
+      ...updatedNode.event,
+      text: dragonText,
+    } as OutcomeEvent;
+  }
+  return updatedNode;
+}
+
+const DRAGON_PARENT_BY_CHILD: Partial<
+  Record<OutcomeEvent['kind'], OutcomeEvent['kind']>
+> = {
+  dragonThree: 'monsterThree',
+  dragonFourYounger: 'monsterFour',
+  dragonFourOlder: 'monsterFour',
+  dragonFiveYounger: 'monsterFive',
+  dragonFiveOlder: 'monsterFive',
+  dragonSix: 'monsterSix',
+  dragonSeven: 'monsterSeven',
+  dragonEight: 'monsterEight',
+  dragonNine: 'monsterNine',
+};
+
+function inheritDragonChildText(node: OutcomeEventNode): string | undefined {
+  const children = node.children;
+  if (!children) return undefined;
+  for (const child of children) {
+    if (child.type !== 'event') continue;
+    const expectedParent = DRAGON_PARENT_BY_CHILD[child.event.kind];
+    if (!expectedParent || expectedParent !== node.event.kind) continue;
+    if ('text' in child.event && typeof child.event.text === 'string') {
+      const text = child.event.text.trim();
+      if (text.length > 0) return child.event.text;
+    }
+  }
+  return undefined;
 }
 
 export function findPendingWithAncestors(
@@ -1104,6 +1144,10 @@ function resolvePendingNode(
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterEight({ dungeonLevel });
     }
+    case 'monsterNine': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterNine({ dungeonLevel });
+    }
     case 'dragonThree': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 3);
       return resolveDragonThree({ dungeonLevel });
@@ -1135,6 +1179,10 @@ function resolvePendingNode(
     case 'dragonEight': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 8);
       return resolveDragonEight({ dungeonLevel });
+    }
+    case 'dragonNine': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 9);
+      return resolveDragonNine({ dungeonLevel });
     }
     case 'human': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);

@@ -12,6 +12,11 @@ import { MonsterTwo } from '../../../../../tables/dungeon/monster/monsterTwo';
 import { MonsterLevel } from '../../../../../tables/dungeon/monster/monsterLevel';
 import { MonsterSeven } from '../../../../../tables/dungeon/monster/monsterSeven';
 import { MonsterEight } from '../../../../../tables/dungeon/monster/monsterEight';
+import {
+  MonsterNine,
+  DragonNine,
+} from '../../../../../tables/dungeon/monster/monsterNine';
+import { applyResolvedOutcome } from '../../../../../dungeon/helpers/outcomeTree';
 import type {
   PartyResult,
   CharacterSheet,
@@ -138,25 +143,25 @@ describe('Monster describe helpers', () => {
     expect(compactPreviews.map((p) => p.id)).toContain('human');
   });
 
-  test('monsterLevel produces placeholder when above level eight', () => {
+  test('monsterLevel produces placeholder when above level nine', () => {
     const outcome: OutcomeEventNode = {
       type: 'event',
       roll: 20,
       event: {
         kind: 'monsterLevel',
-        result: MonsterLevel.Nine,
-        dungeonLevel: 9,
+        result: MonsterLevel.Ten,
+        dungeonLevel: 10,
       },
     };
 
     const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
     expect(detailParagraphs.map((p) => p.text)).toEqual([
-      '(TODO: Monster Level Nine preview)',
+      '(TODO: Monster Level Ten preview)',
     ]);
 
     const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
     expect(compactParagraphs.map((p) => p.text.trim())).toEqual([
-      '(TODO: Monster Level Nine preview)',
+      '(TODO: Monster Level Ten preview)',
     ]);
   });
 
@@ -203,6 +208,76 @@ describe('Monster describe helpers', () => {
     const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
     expect(compactParagraphs.map((p) => p.text.trim())).toContain(
       'There are 2 cloud giants.'
+    );
+  });
+
+  test('monsterNine detail renders text like lower levels', () => {
+    const outcome: OutcomeEventNode = {
+      type: 'event',
+      roll: 12,
+      event: {
+        kind: 'monsterNine',
+        result: MonsterNine.GolemStone,
+        dungeonLevel: 9,
+        text: 'There is 1 stone golem. ',
+      },
+    };
+
+    const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(detailParagraphs.map((p) => p.text.trim())).toContain(
+      'There is 1 stone golem.'
+    );
+
+    const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
+    expect(compactParagraphs.map((p) => p.text.trim())).toContain(
+      'There is 1 stone golem.'
+    );
+  });
+
+  test('dragon subtable results display resolved child text', () => {
+    const parent: OutcomeEventNode = {
+      type: 'event',
+      roll: 81,
+      event: {
+        kind: 'monsterNine',
+        result: MonsterNine.Dragon,
+        dungeonLevel: 9,
+        text: 'A dragon is indicated. Roll on the dragon subtable for details. ',
+      },
+      children: [
+        {
+          type: 'pending-roll',
+          id: 'dragonNine',
+          table: 'dragonNine',
+          context: { kind: 'wandering', level: 9 },
+        },
+      ],
+    };
+    const dragonOutcome: OutcomeEventNode = {
+      type: 'event',
+      roll: 23,
+      event: {
+        kind: 'dragonNine',
+        result: DragonNine.Brass_Ancient_8_Old_6,
+        dungeonLevel: 9,
+        text:
+          'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die). ',
+      },
+    };
+    const outcome = applyResolvedOutcome(
+      parent,
+      'dragonNine',
+      dragonOutcome
+    ) as OutcomeEventNode;
+
+    const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(detailParagraphs.map((p) => p.text.trim())).toContain(
+      'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die).'
+    );
+
+    const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
+    expect(compactParagraphs.map((p) => p.text.trim())).toContain(
+      'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die).'
     );
   });
 

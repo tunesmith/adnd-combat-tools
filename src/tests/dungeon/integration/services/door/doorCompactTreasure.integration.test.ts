@@ -1,5 +1,8 @@
 import { simulateDetailRun } from '../../../../support/dungeon/dungeonRollHarness';
-import { DoorBeyond, doorBeyond } from '../../../../../tables/dungeon/doorBeyond';
+import {
+  DoorBeyond,
+  doorBeyond,
+} from '../../../../../tables/dungeon/doorBeyond';
 
 function rollForDoor(cmd: DoorBeyond): number {
   const entry = doorBeyond.entries.find((e) => e.command === cmd);
