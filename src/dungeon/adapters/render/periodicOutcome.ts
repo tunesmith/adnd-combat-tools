@@ -368,7 +368,6 @@ function summarizePeriodicResult(
           : { text: '' };
       const monsterLevelNode = findChildEvent(node, 'monsterLevel');
       const monsterSummary = renderWanderingMonsterCompact(
-        node.event.level,
         monsterLevelNode && monsterLevelNode.event.kind === 'monsterLevel'
           ? monsterLevelNode
           : undefined

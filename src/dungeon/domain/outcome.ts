@@ -70,6 +70,10 @@ import type {
   MonsterNine,
   DragonNine,
 } from '../../tables/dungeon/monster/monsterNine';
+import type {
+  MonsterTen,
+  DragonTen,
+} from '../../tables/dungeon/monster/monsterTen';
 import type { IllusionaryWallNature } from '../../tables/dungeon/illusionaryWallNature';
 import type {
   ExitAlternative,
@@ -335,6 +339,13 @@ export type OutcomeEvent =
       party?: PartyResult;
     }
   | {
+      kind: 'monsterTen';
+      result: MonsterTen;
+      dungeonLevel: number;
+      text?: string;
+      party?: PartyResult;
+    }
+  | {
       kind: 'dragonThree';
       result: DragonThree;
       dungeonLevel: number;
@@ -385,6 +396,12 @@ export type OutcomeEvent =
   | {
       kind: 'dragonNine';
       result: DragonNine;
+      dungeonLevel: number;
+      text: string;
+    }
+  | {
+      kind: 'dragonTen';
+      result: DragonTen;
       dungeonLevel: number;
       text: string;
     }

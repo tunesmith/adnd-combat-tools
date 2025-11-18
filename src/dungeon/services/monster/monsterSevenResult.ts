@@ -3,7 +3,10 @@ import {
   getNumberOfMonsters,
 } from '../wanderingMonsterResult';
 import { characterResult } from './characterResult';
-import { MonsterSeven, DragonSeven } from '../../../tables/dungeon/monster/monsterSeven';
+import {
+  MonsterSeven,
+  DragonSeven,
+} from '../../../tables/dungeon/monster/monsterSeven';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 import type { PartyResult } from '../../models/character/characterSheet';
 import { dragonSubtableReminder } from './dragonSubtableReminder';

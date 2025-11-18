@@ -51,7 +51,7 @@ export const dragonTen: Table<DragonTen> = {
     { range: [36, 40], command: DragonTen.Gold_Ancient_8_Old_6 },
     { range: [41, 60], command: DragonTen.Green_Ancient_8_VeryOld_7 },
     { range: [61, 63], command: DragonTen.Platinum_Bahamut },
-    { range: [63, 94], command: DragonTen.Red_Ancient_8_Old_6 },
+    { range: [64, 94], command: DragonTen.Red_Ancient_8_Old_6 },
     { range: [95, 100], command: DragonTen.Silver_Ancient_8_Old_6 },
   ],
 };

@@ -28,6 +28,7 @@ import {
   resolveDragonSeven,
   resolveDragonEight,
   resolveDragonNine,
+  resolveDragonTen,
   resolveDragonThree,
   resolveEgress,
   resolveGalleryStairLocation,
@@ -42,6 +43,7 @@ import {
   resolveMonsterSeven,
   resolveMonsterEight,
   resolveMonsterNine,
+  resolveMonsterTen,
   resolveMonsterThree,
   resolveMonsterTwo,
   resolveNumberOfExits,
@@ -198,6 +200,7 @@ const TABLE_ID_LIST = [
   'monsterSeven',
   'monsterEight',
   'monsterNine',
+  'monsterTen',
   'dragonThree',
   'dragonFourYounger',
   'dragonFourOlder',
@@ -207,6 +210,7 @@ const TABLE_ID_LIST = [
   'dragonSeven',
   'dragonEight',
   'dragonNine',
+  'dragonTen',
   'human',
   'galleryStairLocation',
   'galleryStairOccurrence',
@@ -345,6 +349,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   monsterSeven: 'Monster (Level 7)',
   monsterEight: 'Monster (Level 8)',
   monsterNine: 'Monster (Level 9)',
+  monsterTen: 'Monster (Level 10)',
   dragonThree: 'Dragon (Level 3)',
   dragonFourYounger: 'Dragon (Younger)',
   dragonFourOlder: 'Dragon (Older)',
@@ -354,6 +359,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   dragonSeven: 'Dragon (Level 7)',
   dragonEight: 'Dragon (Level 8)',
   dragonNine: 'Dragon (Level 9)',
+  dragonTen: 'Dragon (Level 10)',
   human: 'Human Subtable',
   galleryStairLocation: 'Gallery Stair Location',
   galleryStairOccurrence: 'Gallery Stair Occurrence',
@@ -539,6 +545,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     const dungeonLevel = readDungeonLevel(context, 'monsterNine', 1);
     return fromOutcome(resolveMonsterNine({ roll, dungeonLevel }));
   },
+  monsterTen: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'monsterTen', 1);
+    return fromOutcome(resolveMonsterTen({ roll, dungeonLevel }));
+  },
   dragonThree: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonThree', 3);
     return fromOutcome(resolveDragonThree({ roll, dungeonLevel }));
@@ -574,6 +584,10 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   dragonNine: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonNine', 9);
     return fromOutcome(resolveDragonNine({ roll, dungeonLevel }));
+  },
+  dragonTen: ({ roll, context }) => {
+    const dungeonLevel = readDungeonLevel(context, 'dragonTen', 10);
+    return fromOutcome(resolveDragonTen({ roll, dungeonLevel }));
   },
   human: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'human', 1);

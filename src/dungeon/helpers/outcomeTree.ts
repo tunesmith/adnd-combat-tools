@@ -60,6 +60,7 @@ import {
   resolveMonsterSeven,
   resolveMonsterEight,
   resolveMonsterNine,
+  resolveMonsterTen,
   resolveDragonThree,
   resolveDragonFourYounger,
   resolveDragonFourOlder,
@@ -69,6 +70,7 @@ import {
   resolveDragonSeven,
   resolveDragonEight,
   resolveDragonNine,
+  resolveDragonTen,
   resolveHuman,
   resolveTreasure,
   resolveTreasureContainer,
@@ -557,6 +559,7 @@ const DRAGON_PARENT_BY_CHILD: Partial<
   dragonSeven: 'monsterSeven',
   dragonEight: 'monsterEight',
   dragonNine: 'monsterNine',
+  dragonTen: 'monsterTen',
 };
 
 function inheritDragonChildText(node: OutcomeEventNode): string | undefined {
@@ -1148,6 +1151,10 @@ function resolvePendingNode(
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterNine({ dungeonLevel });
     }
+    case 'monsterTen': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
+      return resolveMonsterTen({ dungeonLevel });
+    }
     case 'dragonThree': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 3);
       return resolveDragonThree({ dungeonLevel });
@@ -1183,6 +1190,10 @@ function resolvePendingNode(
     case 'dragonNine': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 9);
       return resolveDragonNine({ dungeonLevel });
+    }
+    case 'dragonTen': {
+      const dungeonLevel = readDungeonLevelFromPending(pending, 10);
+      return resolveDragonTen({ dungeonLevel });
     }
     case 'human': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);

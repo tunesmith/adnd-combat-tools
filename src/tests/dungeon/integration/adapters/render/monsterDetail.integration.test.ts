@@ -16,6 +16,7 @@ import {
   MonsterNine,
   DragonNine,
 } from '../../../../../tables/dungeon/monster/monsterNine';
+import { MonsterTen } from '../../../../../tables/dungeon/monster/monsterTen';
 import { applyResolvedOutcome } from '../../../../../dungeon/helpers/outcomeTree';
 import type {
   PartyResult,
@@ -143,26 +144,23 @@ describe('Monster describe helpers', () => {
     expect(compactPreviews.map((p) => p.id)).toContain('human');
   });
 
-  test('monsterLevel produces placeholder when above level nine', () => {
+  test('monsterLevel produces no detail when above level ten', () => {
+    const aboveTen = (MonsterLevel.Ten + 2) as MonsterLevel;
     const outcome: OutcomeEventNode = {
       type: 'event',
       roll: 20,
       event: {
         kind: 'monsterLevel',
-        result: MonsterLevel.Ten,
-        dungeonLevel: 10,
+        result: aboveTen,
+        dungeonLevel: 11,
       },
     };
 
     const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
-    expect(detailParagraphs.map((p) => p.text)).toEqual([
-      '(TODO: Monster Level Ten preview)',
-    ]);
+    expect(detailParagraphs.map((p) => p.text)).toEqual([]);
 
     const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
-    expect(compactParagraphs.map((p) => p.text.trim())).toEqual([
-      '(TODO: Monster Level Ten preview)',
-    ]);
+    expect(compactParagraphs.map((p) => p.text.trim())).toEqual([]);
   });
 
   test('monsterSeven detail renders text like lower levels', () => {
@@ -234,6 +232,29 @@ describe('Monster describe helpers', () => {
     );
   });
 
+  test('monsterTen detail renders text like lower levels', () => {
+    const outcome: OutcomeEventNode = {
+      type: 'event',
+      roll: 55,
+      event: {
+        kind: 'monsterTen',
+        result: MonsterTen.Lich,
+        dungeonLevel: 10,
+        text: 'There is 1 lich. ',
+      },
+    };
+
+    const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(detailParagraphs.map((p) => p.text.trim())).toContain(
+      'There is 1 lich.'
+    );
+
+    const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
+    expect(compactParagraphs.map((p) => p.text.trim())).toContain(
+      'There is 1 lich.'
+    );
+  });
+
   test('dragon subtable results display resolved child text', () => {
     const parent: OutcomeEventNode = {
       type: 'event',
@@ -260,8 +281,7 @@ describe('Monster describe helpers', () => {
         kind: 'dragonNine',
         result: DragonNine.Brass_Ancient_8_Old_6,
         dungeonLevel: 9,
-        text:
-          'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die). ',
+        text: 'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die). ',
       },
     };
     const outcome = applyResolvedOutcome(

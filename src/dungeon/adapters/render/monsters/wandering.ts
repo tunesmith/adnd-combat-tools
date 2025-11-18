@@ -15,6 +15,7 @@ const MONSTER_LEVEL_KIND: Partial<Record<MonsterLevel, OutcomeEvent['kind']>> =
     [MonsterLevel.Seven]: 'monsterSeven',
     [MonsterLevel.Eight]: 'monsterEight',
     [MonsterLevel.Nine]: 'monsterNine',
+    [MonsterLevel.Ten]: 'monsterTen',
   };
 
 type MonsterCompactSummary = {
@@ -23,10 +24,9 @@ type MonsterCompactSummary = {
 };
 
 export function renderWanderingMonsterCompact(
-  level: number,
   levelNode?: OutcomeEventNode
 ): MonsterCompactSummary {
-  const encounter = readMonsterEncounter(level, levelNode);
+  const encounter = readMonsterEncounter(levelNode);
   const suffix = encounter.text.trim();
   const rawText =
     suffix.length > 0 ? `Wandering Monster: ${suffix}` : 'Wandering Monster.';
@@ -39,12 +39,10 @@ export function renderWanderingMonsterCompact(
 }
 
 function readMonsterEncounter(
-  level: number,
   levelNode?: OutcomeEventNode
 ): MonsterCompactSummary {
   if (!levelNode || levelNode.event.kind !== 'monsterLevel') {
-    const fallback = levelToMonsterLevel(level) ?? MonsterLevel.One;
-    return { text: fallbackMonsterLevelText(fallback) };
+    return { text: '' };
   }
   return readMonsterEncounterFromLevelNode(levelNode);
 }
@@ -53,19 +51,19 @@ function readMonsterEncounterFromLevelNode(
   node: OutcomeEventNode
 ): MonsterCompactSummary {
   if (node.event.kind !== 'monsterLevel') {
-    return { text: fallbackMonsterLevelText(MonsterLevel.One) };
+    return { text: '' };
   }
   const mapping = MONSTER_LEVEL_KIND[node.event.result];
   if (!mapping) {
-    return { text: fallbackMonsterLevelText(node.event.result) };
+    return { text: '' };
   }
   const monsterNode = findChildEvent(node, mapping);
   if (!monsterNode) {
-    return { text: fallbackMonsterLevelText(node.event.result) };
+    return { text: '' };
   }
   const summary = readMonsterEvent(monsterNode);
   if (!summary) {
-    return { text: fallbackMonsterLevelText(node.event.result) };
+    return { text: '' };
   }
   return summary;
 }
@@ -133,6 +131,11 @@ function readMonsterEvent(
       if (dragon) return readMonsterEvent(dragon);
       break;
     }
+    case 'monsterTen': {
+      const dragon = findChildEvent(node, 'dragonTen');
+      if (dragon) return readMonsterEvent(dragon);
+      break;
+    }
     case 'dragonThree':
     case 'dragonFourYounger':
     case 'dragonFourOlder':
@@ -142,6 +145,7 @@ function readMonsterEvent(
     case 'dragonSeven':
     case 'dragonEight':
     case 'dragonNine':
+    case 'dragonTen':
     case 'human':
       if (node.event.text) return { text: node.event.text };
       break;
@@ -149,20 +153,4 @@ function readMonsterEvent(
       break;
   }
   return undefined;
-}
-
-function fallbackMonsterLevelText(level: MonsterLevel): string {
-  switch (level) {
-    case MonsterLevel.Ten:
-      return '(TODO: Roll Monster for Level Ten)';
-    default:
-      return '';
-  }
-}
-
-function levelToMonsterLevel(level: number): MonsterLevel | undefined {
-  if (!Number.isInteger(level)) return undefined;
-  if (level <= 1) return MonsterLevel.One;
-  if (level >= 10) return MonsterLevel.Ten;
-  return (level - 1) as MonsterLevel;
 }

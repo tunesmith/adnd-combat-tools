@@ -22,6 +22,16 @@ export const monsterNineTextForCommand = (
   dungeonLevel: number,
   command: MonsterNine
 ): MonsterTextResult => {
+  const attendantCount = Math.max(0, dungeonLevel - 9);
+  const level = Math.min(dungeonLevel, 9);
+  const attendantSuffix =
+    attendantCount > 0
+      ? ` (${attendantCount} attendant${
+          attendantCount === 1 ? '' : 's'
+        } may be indicated.)`
+      : '';
+  const withAttendants = (value: string): string =>
+    attendantSuffix.length > 0 ? `${value.trim()}${attendantSuffix} ` : value;
   let text = '';
   let party: PartyResult | undefined;
   switch (command) {
@@ -32,126 +42,154 @@ export const monsterNineTextForCommand = (
       break;
     }
     case MonsterNine.DevilPitFiend:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'pit fiend',
-        'pit fiends'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'pit fiend',
+          'pit fiends'
+        )
       );
       break;
     case MonsterNine.Dragon:
-      text = dragonSubtableReminder('A dragon is indicated');
+      text = withAttendants(dragonSubtableReminder('A dragon is indicated'));
       break;
     case MonsterNine.GiantStorm_1to2:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 2),
-        'storm giant',
-        'storm giants'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 2),
+          'storm giant',
+          'storm giants'
+        )
       );
       break;
     case MonsterNine.GolemStone:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'stone golem',
-        'stone golems'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'stone golem',
+          'stone golems'
+        )
       );
       break;
     case MonsterNine.Hydra_17to20Heads: {
-      const heads = getNumberOfMonsters(9, dungeonLevel, 1, 4, 16);
-      text = formatMonsterCount(
-        1,
-        `${heads}-headed hydra`,
-        `${heads}-headed hydrae`
+      const heads = getNumberOfMonsters(9, level, 1, 4, 16);
+      text = withAttendants(
+        formatMonsterCount(1, `${heads}-headed hydra`, `${heads}-headed hydrae`)
       );
       break;
     }
     case MonsterNine.HydraPyro_12Heads: {
-      const heads = getNumberOfMonsters(9, dungeonLevel, 1, 1, 11);
-      text = formatMonsterCount(
-        1,
-        `${heads}-headed pyrohydra`,
-        `${heads}-headed pyrohydrae`
+      const heads = getNumberOfMonsters(9, level, 1, 1, 11);
+      text = withAttendants(
+        formatMonsterCount(
+          1,
+          `${heads}-headed pyrohydra`,
+          `${heads}-headed pyrohydrae`
+        )
       );
       break;
     }
     case MonsterNine.MoldBrown:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'patch of brown mold',
-        'patches of brown mold'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'patch of brown mold',
+          'patches of brown mold'
+        )
       );
       break;
     case MonsterNine.MoldYellow:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'patch of yellow mold',
-        'patches of yellow mold'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'patch of yellow mold',
+          'patches of yellow mold'
+        )
       );
       break;
     case MonsterNine.Nycadaemon:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'nycadaemon',
-        'nycadaemons'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'nycadaemon',
+          'nycadaemons'
+        )
       );
       break;
     case MonsterNine.PurpleWorm:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'purple worm',
-        'purple worms'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'purple worm',
+          'purple worms'
+        )
       );
       break;
     case MonsterNine.RustMonster:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'rust monster',
-        'rust monsters'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'rust monster',
+          'rust monsters'
+        )
       );
       break;
     case MonsterNine.TitanLesser:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'lesser titan',
-        'lesser titans'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'lesser titan',
+          'lesser titans'
+        )
       );
       break;
     case MonsterNine.TitanMinor:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
-        'minor titan',
-        'minor titans'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 1),
+          'minor titan',
+          'minor titans'
+        )
       );
       break;
     case MonsterNine.UmberHulk_1to4:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 4),
-        'umber hulk',
-        'umber hulks'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 4),
+          'umber hulk',
+          'umber hulks'
+        )
       );
       break;
     case MonsterNine.Vampire: {
       const base = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 1),
+        getNumberOfMonsters(9, level, 1, 1),
         'vampire',
         'vampires'
       );
       const clericLevel = 6 + rollDice(4);
       const ordinal = `${clericLevel}th`;
-      text = `${base}This vampire is a former cleric of full powers (${ordinal} level). `;
+      text = withAttendants(
+        `${base}This vampire is a former cleric of full powers (${ordinal} level).`
+      );
       break;
     }
     case MonsterNine.WillOWisp_2to5:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 4, 1),
-        "will-o'-wisp",
-        "will-o'-wisps"
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 4, 1),
+          "will-o'-wisp",
+          "will-o'-wisps"
+        )
       );
       break;
     case MonsterNine.Xorn_2to9:
-      text = formatMonsterCount(
-        getNumberOfMonsters(9, dungeonLevel, 1, 8, 1),
-        'xorn',
-        'xorn'
+      text = withAttendants(
+        formatMonsterCount(
+          getNumberOfMonsters(9, level, 1, 8, 1),
+          'xorn',
+          'xorn'
+        )
       );
       break;
   }
@@ -168,17 +206,33 @@ export const dragonNineTextForCommand = (
   dungeonLevel: number,
   command: DragonNine
 ): string => {
+  const level = Math.min(dungeonLevel, 9);
+  const attendantCount = Math.max(0, dungeonLevel - 9);
+  const attendantSuffix =
+    attendantCount > 0
+      ? ` (${attendantCount} attendant${
+          attendantCount === 1 ? '' : 's'
+        } may be indicated.)`
+      : '';
+  const withAttendants = (value: string): string =>
+    attendantSuffix.length > 0 ? `${value.trim()}${attendantSuffix} ` : value;
   switch (command) {
     case DragonNine.Black_Ancient_8_Old_6:
-      return 'There are two black dragons: one ancient (8 hp/die) and one old (6 hp/die). ';
+      return withAttendants(
+        'There are two black dragons: one ancient (8 hp/die) and one old (6 hp/die).'
+      );
     case DragonNine.Brass_Ancient_8_Old_6:
-      return 'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die). ';
+      return withAttendants(
+        'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die).'
+      );
     case DragonNine.White_Ancient_8_VeryOld_7:
-      return 'There are two white dragons: one ancient (8 hp/die) and one very old (7 hp/die). ';
+      return withAttendants(
+        'There are two white dragons: one ancient (8 hp/die) and one very old (7 hp/die).'
+      );
     default: {
       const label = dragonNineSingleLabel(command);
-      const count = getNumberOfMonsters(9, dungeonLevel, 1, 1);
-      return formatMonsterCount(count, label, label);
+      const count = getNumberOfMonsters(9, level, 1, 1);
+      return withAttendants(formatMonsterCount(count, label, label));
     }
   }
 };

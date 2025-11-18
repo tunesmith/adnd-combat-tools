@@ -6,8 +6,6 @@ export function dragonSubtableReminder(
 ): string {
   const tableLabel = options?.tableLabel ?? DEFAULT_TABLE_LABEL;
   const normalized = description.trim().replace(/\s+/g, ' ');
-  const sentence = normalized.endsWith('.')
-    ? normalized
-    : `${normalized}.`;
+  const sentence = normalized.endsWith('.') ? normalized : `${normalized}.`;
   return `${sentence} Roll on the ${tableLabel} for details. `;
 }

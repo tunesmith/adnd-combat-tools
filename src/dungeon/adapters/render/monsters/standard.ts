@@ -57,6 +57,12 @@ import {
   dragonNine,
   DragonNine,
 } from '../../../../tables/dungeon/monster/monsterNine';
+import {
+  monsterTen,
+  MonsterTen,
+  dragonTen,
+  DragonTen,
+} from '../../../../tables/dungeon/monster/monsterTen';
 import { buildPreview, findChildEvent } from '../shared';
 import {
   monsterTextDescription,
@@ -75,7 +81,8 @@ type StandardTableId =
   | 'monsterSix'
   | 'monsterSeven'
   | 'monsterEight'
-  | 'monsterNine';
+  | 'monsterNine'
+  | 'monsterTen';
 
 type DragonTableId =
   | 'dragonThree'
@@ -86,7 +93,8 @@ type DragonTableId =
   | 'dragonSix'
   | 'dragonSeven'
   | 'dragonEight'
-  | 'dragonNine';
+  | 'dragonNine'
+  | 'dragonTen';
 
 const STANDARD_CONFIG: Record<
   StandardTableId,
@@ -101,7 +109,8 @@ const STANDARD_CONFIG: Record<
       | typeof monsterSix
       | typeof monsterSeven
       | typeof monsterEight
-      | typeof monsterNine;
+      | typeof monsterNine
+      | typeof monsterTen;
     labels:
       | typeof MonsterOne
       | typeof MonsterTwo
@@ -111,7 +120,8 @@ const STANDARD_CONFIG: Record<
       | typeof MonsterSix
       | typeof MonsterSeven
       | typeof MonsterEight
-      | typeof MonsterNine;
+      | typeof MonsterNine
+      | typeof MonsterTen;
   }
 > = {
   monsterOne: {
@@ -159,6 +169,11 @@ const STANDARD_CONFIG: Record<
     table: monsterNine,
     labels: MonsterNine,
   },
+  monsterTen: {
+    title: 'Monster (Level 10)',
+    table: monsterTen,
+    labels: MonsterTen,
+  },
 };
 
 const DRAGON_CONFIG: Record<
@@ -174,7 +189,8 @@ const DRAGON_CONFIG: Record<
       | typeof dragonSix
       | typeof dragonSeven
       | typeof dragonEight
-      | typeof dragonNine;
+      | typeof dragonNine
+      | typeof dragonTen;
     labels:
       | typeof DragonThree
       | typeof DragonFourYounger
@@ -184,7 +200,8 @@ const DRAGON_CONFIG: Record<
       | typeof DragonSix
       | typeof DragonSeven
       | typeof DragonEight
-      | typeof DragonNine;
+      | typeof DragonNine
+      | typeof DragonTen;
   }
 > = {
   dragonThree: {
@@ -227,6 +244,11 @@ const DRAGON_CONFIG: Record<
     title: 'Dragon (Level 9)',
     table: dragonNine,
     labels: DragonNine,
+  },
+  dragonTen: {
+    title: 'Dragon (Level 10)',
+    table: dragonTen,
+    labels: DragonTen,
   },
 };
 
@@ -344,7 +366,9 @@ function findDragonChildKind(
 ): OutcomeEvent['kind'] | undefined {
   switch (node.event.kind) {
     case 'monsterThree':
-      return node.event.result === MonsterThree.Dragon ? 'dragonThree' : undefined;
+      return node.event.result === MonsterThree.Dragon
+        ? 'dragonThree'
+        : undefined;
     case 'monsterFour':
       if (node.event.result === MonsterFour.DragonYounger)
         return 'dragonFourYounger';
@@ -360,11 +384,19 @@ function findDragonChildKind(
     case 'monsterSix':
       return node.event.result === MonsterSix.Dragon ? 'dragonSix' : undefined;
     case 'monsterSeven':
-      return node.event.result === MonsterSeven.Dragon ? 'dragonSeven' : undefined;
+      return node.event.result === MonsterSeven.Dragon
+        ? 'dragonSeven'
+        : undefined;
     case 'monsterEight':
-      return node.event.result === MonsterEight.Dragon ? 'dragonEight' : undefined;
+      return node.event.result === MonsterEight.Dragon
+        ? 'dragonEight'
+        : undefined;
     case 'monsterNine':
-      return node.event.result === MonsterNine.Dragon ? 'dragonNine' : undefined;
+      return node.event.result === MonsterNine.Dragon
+        ? 'dragonNine'
+        : undefined;
+    case 'monsterTen':
+      return node.event.result === MonsterTen.Dragon ? 'dragonTen' : undefined;
     default:
       return undefined;
   }

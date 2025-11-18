@@ -13,19 +13,11 @@ export function describeMonsterLevel(
 ): MonsterDescription | undefined {
   if (node.event.kind !== 'monsterLevel') return undefined;
   const detailParagraphs: MonsterDescription['detailParagraphs'] = [];
-  let compactText = '';
-  if (node.event.result > MonsterLevel.Nine) {
-    const placeholder = `(TODO: Monster Level ${
-      MonsterLevel[node.event.result]
-    } preview)`;
-    detailParagraphs.push({ kind: 'paragraph', text: placeholder });
-    compactText = placeholder;
-  }
   return {
     heading: 'Monster Level',
     label: MonsterLevel[node.event.result] ?? String(node.event.result),
     detailParagraphs,
-    compactText,
+    compactText: '',
     appendPending: hasPendingChildren(node),
   };
 }
