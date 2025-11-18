@@ -274,6 +274,7 @@ import type {
   TreasureIounStonesResult,
   TreasureIounStoneStatus,
   RobeOfUsefulItemsResult,
+  TreasureJewelryPiece,
 } from './outcome';
 import {
   periodicCheckDoorOnly,
@@ -1429,6 +1430,7 @@ function enrichTreasureEntry(entry: TreasureEntry, level: number): void {
       break;
     }
     case TreasureWithoutMonster.JewelryPerLevel: {
+      entry.jewelry = generateJewelryPieces(level);
       setCountEntry(entry, level, 'piece of jewelry', 'pieces of jewelry');
       break;
     }
@@ -1467,6 +1469,213 @@ function formatQuantity(
 ): string {
   const unit = quantity === 1 ? singular : plural;
   return `${quantity.toLocaleString()} ${unit}`;
+}
+
+type JewelryValueClass = {
+  range: [number, number];
+  material: string;
+  hasGems: boolean;
+  dice: { count: number; sides: number; multiplier: number };
+  maxValue: number;
+};
+
+type JewelryTypeEntry = {
+  range: [number, number];
+  type: string;
+};
+
+const JEWELRY_VALUE_CLASSES: JewelryValueClass[] = [
+  {
+    range: [1, 10],
+    material: 'ivory or wrought silver',
+    hasGems: false,
+    dice: { count: 1, sides: 10, multiplier: 100 },
+    maxValue: 1000,
+  },
+  {
+    range: [11, 20],
+    material: 'wrought silver and gold',
+    hasGems: false,
+    dice: { count: 2, sides: 6, multiplier: 100 },
+    maxValue: 1200,
+  },
+  {
+    range: [21, 40],
+    material: 'wrought gold',
+    hasGems: false,
+    dice: { count: 3, sides: 6, multiplier: 100 },
+    maxValue: 1800,
+  },
+  {
+    range: [41, 50],
+    material: 'jade, coral, or wrought platinum',
+    hasGems: false,
+    dice: { count: 5, sides: 6, multiplier: 100 },
+    maxValue: 3000,
+  },
+  {
+    range: [51, 70],
+    material: 'silver with gems',
+    hasGems: true,
+    dice: { count: 1, sides: 6, multiplier: 1000 },
+    maxValue: 6000,
+  },
+  {
+    range: [71, 90],
+    material: 'gold with gems',
+    hasGems: true,
+    dice: { count: 2, sides: 4, multiplier: 1000 },
+    maxValue: 8000,
+  },
+  {
+    range: [91, 100],
+    material: 'platinum with gems',
+    hasGems: true,
+    dice: { count: 2, sides: 6, multiplier: 1000 },
+    maxValue: 12000,
+  },
+];
+
+const JEWELRY_TYPE_TABLE: JewelryTypeEntry[] = [
+  { range: [1, 2], type: 'anklet' },
+  { range: [3, 6], type: 'arm band' },
+  { range: [7, 9], type: 'belt' },
+  { range: [10, 12], type: 'box (small)' },
+  { range: [13, 16], type: 'bracelet' },
+  { range: [17, 19], type: 'brooch' },
+  { range: [20, 21], type: 'buckle' },
+  { range: [22, 25], type: 'chain' },
+  { range: [26, 26], type: 'chalice' },
+  { range: [27, 27], type: 'choker' },
+  { range: [28, 30], type: 'clasp' },
+  { range: [31, 32], type: 'coffer' },
+  { range: [33, 33], type: 'collar' },
+  { range: [34, 35], type: 'comb' },
+  { range: [36, 36], type: 'coronet' },
+  { range: [37, 37], type: 'crown' },
+  { range: [38, 39], type: 'decanter' },
+  { range: [40, 40], type: 'diadem' },
+  { range: [41, 45], type: 'earring' },
+  { range: [46, 47], type: 'fob' },
+  { range: [48, 52], type: 'goblet' },
+  { range: [53, 54], type: 'headband (fillet)' },
+  { range: [55, 57], type: 'idol' },
+  { range: [58, 59], type: 'locket' },
+  { range: [60, 62], type: 'medal' },
+  { range: [63, 68], type: 'medallion' },
+  { range: [69, 75], type: 'necklace' },
+  { range: [76, 78], type: 'pendant' },
+  { range: [79, 83], type: 'pin' },
+  { range: [84, 84], type: 'orb' },
+  { range: [85, 93], type: 'ring' },
+  { range: [94, 94], type: 'sceptre' },
+  { range: [95, 96], type: 'seal' },
+  { range: [97, 99], type: 'statuette' },
+  { range: [100, 100], type: 'tiara' },
+];
+
+function generateJewelryPieces(count: number): TreasureJewelryPiece[] {
+  const pieces: TreasureJewelryPiece[] = [];
+  for (let i = 0; i < count; i++) {
+    let classIndex = findJewelryValueClass(rollDice(100));
+    let classInfo = getJewelryValueClass(classIndex);
+    let value = rollJewelryValue(classInfo);
+    let exceptionalQuality = false;
+
+    while (rollDice(10) === 1) {
+      exceptionalQuality = true;
+      if (classIndex >= JEWELRY_VALUE_CLASSES.length - 1) {
+        value = classInfo.maxValue;
+        break;
+      }
+      classIndex += 1;
+      classInfo = getJewelryValueClass(classIndex);
+      value = rollJewelryValue(classInfo);
+    }
+
+    let exceptionalStone = false;
+    if (classInfo.hasGems && rollDice(8) === 1) {
+      exceptionalStone = true;
+      let bonus = 5000;
+      while (bonus < 640000 && rollDice(6) === 1) {
+        bonus = Math.min(bonus * 2, 640000);
+      }
+      value += bonus;
+    }
+
+    pieces.push({
+      type: rollJewelryType(),
+      material: resolveMaterialVariant(classInfo.material),
+      value,
+      exceptionalQuality,
+      exceptionalStone,
+    });
+  }
+  return pieces;
+}
+
+function resolveMaterialVariant(material: string): string {
+  if (material === 'ivory or wrought silver') {
+    return rollDice(2) === 1 ? 'ivory' : 'wrought silver';
+  }
+  if (material === 'jade, coral, or wrought platinum') {
+    const roll = rollDice(3);
+    if (roll === 1) return 'jade';
+    if (roll === 2) return 'coral';
+    return 'wrought platinum';
+  }
+  return material;
+}
+
+function rollJewelryValue(info: JewelryValueClass): number {
+  const base = rollDice(info.dice.sides, info.dice.count);
+  return base * info.dice.multiplier;
+}
+
+function rollJewelryType(): string {
+  const roll = rollDice(100);
+  const entry = findByRange(JEWELRY_TYPE_TABLE, roll);
+  return entry.type;
+}
+
+function findJewelryValueClass(roll: number): number {
+  const index = JEWELRY_VALUE_CLASSES.findIndex((entry) =>
+    isWithinRange(entry.range, roll)
+  );
+  if (index === -1) return JEWELRY_VALUE_CLASSES.length - 1;
+  return index;
+}
+
+function getJewelryValueClass(index: number): JewelryValueClass {
+  const length = JEWELRY_VALUE_CLASSES.length;
+  if (length === 0) {
+    throw new Error('No jewelry value classes configured');
+  }
+  const clamped = Math.min(Math.max(index, 0), length - 1);
+  const result = JEWELRY_VALUE_CLASSES[clamped];
+  if (!result) {
+    throw new Error('Unable to resolve jewelry value class');
+  }
+  return result;
+}
+
+function findByRange<T extends { range: [number, number] }>(
+  entries: T[],
+  roll: number
+): T {
+  if (entries.length === 0) {
+    throw new Error('No entries defined for jewelry lookup');
+  }
+  const found = entries.find((entry) => isWithinRange(entry.range, roll));
+  const fallback = entries[entries.length - 1];
+  if (!fallback) {
+    throw new Error('Unable to resolve fallback jewelry entry');
+  }
+  return found ?? fallback;
+}
+
+function isWithinRange(range: [number, number], roll: number): boolean {
+  return roll >= range[0] && roll <= range[1];
 }
 
 export function resolveTreasureProtectionType(options?: {

@@ -770,11 +770,20 @@ export type OutcomeEvent =
       result: TreasureStaffSerpent;
     };
 
+export type TreasureJewelryPiece = {
+  type: string;
+  material: string;
+  value: number;
+  exceptionalQuality: boolean;
+  exceptionalStone: boolean;
+};
+
 export type TreasureEntry = {
   roll: number;
   command: TreasureWithoutMonster;
   quantity?: number;
   display?: string;
+  jewelry?: TreasureJewelryPiece[];
   magicCategory?: TreasureMagicCategory;
   protection?: {
     type?: TreasureProtectionType;

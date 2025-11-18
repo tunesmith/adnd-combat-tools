@@ -1,5 +1,9 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode, TreasureEntry } from '../../domain/outcome';
+import type {
+  OutcomeEventNode,
+  TreasureEntry,
+  TreasureJewelryPiece,
+} from '../../domain/outcome';
 import {
   treasureWithMonster,
   treasureWithoutMonster,
@@ -731,8 +735,9 @@ function describeTreasureEntry(entry: TreasureEntry): TreasureDescription {
     case TreasureWithoutMonster.GoldPerLevel:
     case TreasureWithoutMonster.PlatinumPerLevel:
     case TreasureWithoutMonster.GemsPerLevel:
-    case TreasureWithoutMonster.JewelryPerLevel:
       return quantifiedDescription(entry);
+    case TreasureWithoutMonster.JewelryPerLevel:
+      return jewelryDescription(entry);
     case TreasureWithoutMonster.Magic:
       return rewardDescription('There is magical treasure.');
     default:
@@ -752,6 +757,40 @@ function quantifiedDescription(entry: TreasureEntry): TreasureDescription {
     detail: detail.endsWith('.') ? detail : `${detail}.`,
     compact: detail.endsWith('.') ? detail : `${detail}.`,
   };
+}
+
+function jewelryDescription(entry: TreasureEntry): TreasureDescription {
+  const pieces = entry.jewelry;
+  if (!pieces || pieces.length === 0) {
+    return quantifiedDescription(entry);
+  }
+  const heading = entry.display?.trim() ?? 'Jewelry';
+  const detail = pieces
+    .map((piece) => jewelrySentence(piece))
+    .join(' ');
+  return {
+    label: heading,
+    detail,
+    compact: detail,
+  };
+}
+
+function jewelrySentence(piece: TreasureJewelryPiece): string {
+  const article = isVowelSound(piece.type) ? 'an' : 'a';
+  let phrase = `${article} ${piece.type}`;
+  if (piece.exceptionalQuality) {
+    phrase += ' of exceptional workmanship';
+  }
+  phrase += ` made of ${piece.material}`;
+  if (piece.exceptionalStone) {
+    phrase += ' set with an exceptional stone';
+  }
+  const valueText = `${piece.value.toLocaleString()} gp`;
+  return `There is ${phrase} (${valueText}).`;
+}
+
+function isVowelSound(word: string): boolean {
+  return /^[aeiou]/i.test(word);
 }
 
 function rewardDescription(base: string): TreasureDescription {
