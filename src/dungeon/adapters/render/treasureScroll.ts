@@ -231,16 +231,16 @@ export function resolvedScrollSentence(node: OutcomeEventNode): string {
     const countWord = NUMBER_WORDS[count] ?? String(count);
     const spellNoun = count === 1 ? 'spell' : 'spells';
     const casterLabel = scroll.caster;
-    const article = needsAn(casterLabel) ? 'An' : 'A';
+    const article = needsAn(casterLabel) ? 'an' : 'a';
     const levels = scroll.spellLevels.map(formatOrdinal);
     const levelText = levels.length > 0 ? ` (${levels.join(', ')})` : '';
-    return `${article} ${casterLabel} scroll of ${countWord} ${spellNoun}${levelText}.`;
+    return `There is ${article} ${casterLabel} scroll of ${countWord} ${spellNoun}${levelText}.`;
   }
   if (scroll.type === 'protection') {
     const protection = protectionText(node);
-    return `A protection scroll against ${protection}.`;
+    return `There is a protection scroll against ${protection}.`;
   }
-  return 'A cursed scroll.';
+  return 'There is a cursed scroll.';
 }
 
 export function formatOrdinal(level: number): string {

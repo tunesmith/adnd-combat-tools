@@ -3300,7 +3300,7 @@ describe('passage contents', () => {
         .map((node) => node.text.trim().toLowerCase())
         .join(' ');
       expect(detailText).toContain(
-        'a druid scroll of seven spells (4th, 5th, 6th, 4th, 7th, 5th, 6th).'
+        'there is a druid scroll of seven spells (4th, 5th, 6th, 4th, 7th, 5th, 6th).'
       );
 
       const compactText = renderCompact(feed)
@@ -3311,7 +3311,7 @@ describe('passage contents', () => {
         .map((node) => node.text.trim().toLowerCase())
         .join(' ');
       expect(compactText).toContain(
-        'a druid scroll of seven spells (4th, 5th, 6th, 4th, 7th, 5th, 6th).'
+        'there is a druid scroll of seven spells (4th, 5th, 6th, 4th, 7th, 5th, 6th).'
       );
     } finally {
       randomSpy.mockRestore();
@@ -3372,7 +3372,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(detailText).toContain('a protection scroll against demons.');
+    expect(detailText).toContain('there is a protection scroll against demons.');
 
     const compactText = renderCompact(feed)
       .filter(
@@ -3381,7 +3381,7 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain('a protection scroll against demons.');
+    expect(compactText).toContain('there is a protection scroll against demons.');
   });
 
   it('resolves elemental protection scrolls with subtype detail', () => {
@@ -3437,7 +3437,7 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(detailText).toContain(
-      'a protection scroll against earth elementals.'
+      'there is a protection scroll against earth elementals.'
     );
 
     const compactText = renderCompact(feed)
@@ -3448,7 +3448,7 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain(
-      'a protection scroll against earth elementals.'
+      'there is a protection scroll against earth elementals.'
     );
   });
 
@@ -3498,7 +3498,7 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(detailText).toContain(
-      'a protection scroll against all lycanthropes.'
+      'there is a protection scroll against all lycanthropes.'
     );
 
     const compactText = renderCompact(feed)
@@ -3509,7 +3509,7 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain(
-      'a protection scroll against all lycanthropes.'
+      'there is a protection scroll against all lycanthropes.'
     );
   });
 
