@@ -800,10 +800,7 @@ export type TreasureGemValueAdjustment =
   | { type: 'increasePercent'; percent: number }
   | { type: 'decreasePercent'; percent: number };
 
-export type TreasureGemKindProperty =
-  | 'transparent'
-  | 'translucent'
-  | 'opaque';
+export type TreasureGemKindProperty = 'transparent' | 'translucent' | 'opaque';
 
 export type TreasureGemKind = {
   name: string;

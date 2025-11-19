@@ -24,8 +24,7 @@ describe('gem rendering', () => {
         adjustment: { type: 'unchanged' },
         kind: {
           name: 'Banded Agate',
-          description:
-            'striped brown and blue and white and reddish',
+          description: 'striped brown and blue and white and reddish',
           property: 'translucent',
         },
       },

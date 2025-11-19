@@ -1647,7 +1647,8 @@ const ORNAMENTAL_STONE_KINDS: GemKindTableEntry[] = [
     range: [8, 8],
     kind: {
       name: 'Moss Agate',
-      description: 'pink or yellow-white with grayish or greenish "moss" markings',
+      description:
+        'pink or yellow-white with grayish or greenish "moss" markings',
       property: 'translucent',
     },
   },
@@ -2182,7 +2183,8 @@ function rollGemKind(
       thresholdStep !== undefined &&
       rawTable.highValue &&
       valueStep >= thresholdStep;
-    table = isHighValue && rawTable.highValue ? rawTable.highValue : rawTable.default;
+    table =
+      isHighValue && rawTable.highValue ? rawTable.highValue : rawTable.default;
   }
   if (!table || table.length === 0) {
     return undefined;

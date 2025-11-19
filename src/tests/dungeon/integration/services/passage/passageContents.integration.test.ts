@@ -3372,7 +3372,9 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(detailText).toContain('there is a protection scroll against demons.');
+    expect(detailText).toContain(
+      'there is a protection scroll against demons.'
+    );
 
     const compactText = renderCompact(feed)
       .filter(
@@ -3381,7 +3383,9 @@ describe('passage contents', () => {
       )
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
-    expect(compactText).toContain('there is a protection scroll against demons.');
+    expect(compactText).toContain(
+      'there is a protection scroll against demons.'
+    );
   });
 
   it('resolves elemental protection scrolls with subtype detail', () => {

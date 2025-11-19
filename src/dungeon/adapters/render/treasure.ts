@@ -878,9 +878,7 @@ function jewelryDescription(entry: TreasureEntry): TreasureDescription {
     return quantifiedDescription(entry);
   }
   const heading = entry.display?.trim() ?? 'Jewelry';
-  const detail = pieces
-    .map((piece) => jewelrySentence(piece))
-    .join(' ');
+  const detail = pieces.map((piece) => jewelrySentence(piece)).join(' ');
   return {
     label: heading,
     detail,

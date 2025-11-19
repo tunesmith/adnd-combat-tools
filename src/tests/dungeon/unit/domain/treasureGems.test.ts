@@ -4,23 +4,26 @@ import { TreasureWithoutMonster } from '../../../../tables/dungeon/treasure';
 
 describe('treasure gem generation', () => {
   it('creates gem lots with value adjustments', () => {
-    const rollSequence: Array<{ sides: number; rolls?: number; result: number }> =
-      [
-        { sides: 4, rolls: 4, result: 16 }, // quantity
-        { sides: 100, result: 20 }, // lot 1 base
-        { sides: 100, result: 60 }, // lot 1 diff (no change)
-        { sides: 12, result: 1 }, // lot 1 ornamental kind
-        { sides: 10, result: 4 }, // lot 1 variation (unchanged)
-        { sides: 100, result: 95 }, // lot 2 base
-        { sides: 100, result: 5 }, // lot 2 diff (-2)
-        { sides: 8, result: 2 }, // lot 2 gem kind (emerald)
-        { sides: 10, result: 2 }, // lot 2 variation (double)
-        { sides: 100, result: 100 }, // lot 3 base
-        { sides: 100, result: 100 }, // lot 3 diff (+3)
-        { sides: 7, result: 6 }, // lot 3 gem kind (star ruby)
-        { sides: 10, result: 9 }, // lot 3 variation (percent decrease)
-        { sides: 4, result: 3 }, // lot 3 percent (30% decrease)
-      ];
+    const rollSequence: Array<{
+      sides: number;
+      rolls?: number;
+      result: number;
+    }> = [
+      { sides: 4, rolls: 4, result: 16 }, // quantity
+      { sides: 100, result: 20 }, // lot 1 base
+      { sides: 100, result: 60 }, // lot 1 diff (no change)
+      { sides: 12, result: 1 }, // lot 1 ornamental kind
+      { sides: 10, result: 4 }, // lot 1 variation (unchanged)
+      { sides: 100, result: 95 }, // lot 2 base
+      { sides: 100, result: 5 }, // lot 2 diff (-2)
+      { sides: 8, result: 2 }, // lot 2 gem kind (emerald)
+      { sides: 10, result: 2 }, // lot 2 variation (double)
+      { sides: 100, result: 100 }, // lot 3 base
+      { sides: 100, result: 100 }, // lot 3 diff (+3)
+      { sides: 7, result: 6 }, // lot 3 gem kind (star ruby)
+      { sides: 10, result: 9 }, // lot 3 variation (percent decrease)
+      { sides: 4, result: 3 }, // lot 3 percent (30% decrease)
+    ];
 
     const rollSpy = jest
       .spyOn(dungeonLookup, 'rollDice')
