@@ -778,11 +778,57 @@ export type TreasureJewelryPiece = {
   exceptionalStone: boolean;
 };
 
+export type TreasureGemCategoryId =
+  | 'ornamental'
+  | 'semiPrecious'
+  | 'fancy'
+  | 'fancyPrecious'
+  | 'gem'
+  | 'jewel';
+
+export type TreasureGemCategory = {
+  id: TreasureGemCategoryId;
+  description: string;
+  typicalSize: string;
+};
+
+export type TreasureGemValueAdjustment =
+  | { type: 'unchanged' }
+  | { type: 'stepIncrease'; steps: number }
+  | { type: 'stepDecrease'; steps: number }
+  | { type: 'double' }
+  | { type: 'increasePercent'; percent: number }
+  | { type: 'decreasePercent'; percent: number };
+
+export type TreasureGemKindProperty =
+  | 'transparent'
+  | 'translucent'
+  | 'opaque';
+
+export type TreasureGemKind = {
+  name: string;
+  description: string;
+  property: TreasureGemKindProperty;
+};
+
+export type TreasureGemLot = {
+  count: number;
+  category: TreasureGemCategory;
+  baseValue: number;
+  baseValueStep: number;
+  finalBaseStep: number;
+  size: string;
+  value: number;
+  adjustment: TreasureGemValueAdjustment;
+  kind?: TreasureGemKind;
+};
+
 export type TreasureEntry = {
   roll: number;
   command: TreasureWithoutMonster;
   quantity?: number;
   display?: string;
+  gems?: TreasureGemLot[];
   jewelry?: TreasureJewelryPiece[];
   magicCategory?: TreasureMagicCategory;
   protection?: {

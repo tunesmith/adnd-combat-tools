@@ -3,6 +3,9 @@ import type {
   OutcomeEventNode,
   TreasureEntry,
   TreasureJewelryPiece,
+  TreasureGemLot,
+  TreasureGemValueAdjustment,
+  TreasureGemKind,
 } from '../../domain/outcome';
 import {
   treasureWithMonster,
@@ -734,8 +737,9 @@ function describeTreasureEntry(entry: TreasureEntry): TreasureDescription {
     case TreasureWithoutMonster.ElectrumPerLevel:
     case TreasureWithoutMonster.GoldPerLevel:
     case TreasureWithoutMonster.PlatinumPerLevel:
-    case TreasureWithoutMonster.GemsPerLevel:
       return quantifiedDescription(entry);
+    case TreasureWithoutMonster.GemsPerLevel:
+      return gemDescription(entry);
     case TreasureWithoutMonster.JewelryPerLevel:
       return jewelryDescription(entry);
     case TreasureWithoutMonster.Magic:
@@ -757,6 +761,115 @@ function quantifiedDescription(entry: TreasureEntry): TreasureDescription {
     detail: detail.endsWith('.') ? detail : `${detail}.`,
     compact: detail.endsWith('.') ? detail : `${detail}.`,
   };
+}
+
+function gemDescription(entry: TreasureEntry): TreasureDescription {
+  const lots = entry.gems;
+  if (!lots || lots.length === 0) {
+    return quantifiedDescription(entry);
+  }
+  const heading = entry.display?.trim() ?? 'Gems';
+  const detail = lots.map((lot) => gemLotSentence(lot)).join(' ');
+  return {
+    label: heading,
+    detail,
+    compact: detail,
+  };
+}
+
+function gemLotSentence(lot: TreasureGemLot): string {
+  const typeLabel = formatGemLotType(lot);
+  const countText = `${lot.count.toLocaleString()} ${typeLabel}`;
+  const extraDetails = gemLotDetail(lot);
+  const valueText = formatGemValue(lot.value);
+  const adjustmentText = describeGemAdjustment(lot.adjustment);
+  const verb = lot.count === 1 ? 'is' : 'are';
+  const eachSuffix = lot.count === 1 ? '' : ' each';
+  const parts = [
+    `There ${verb} ${countText}${extraDetails} worth ${valueText}${eachSuffix}`,
+  ];
+  if (adjustmentText) {
+    parts.push(`(${adjustmentText})`);
+  }
+  return `${parts.join(' ')}.`;
+}
+
+function gemLotDetail(lot: TreasureGemLot): string {
+  const details: string[] = [];
+  if (lot.size) {
+    details.push(lot.size);
+  }
+  if (lot.kind) {
+    details.push(describeGemKind(lot.kind));
+  }
+  if (details.length === 0) {
+    return '';
+  }
+  return ` (${details.join('; ')})`;
+}
+
+function describeGemKind(kind: TreasureGemKind): string {
+  const name = kind.name.toLowerCase();
+  const property = kind.property;
+  const base = `${property} ${name}`;
+  if (!kind.description) {
+    return base;
+  }
+  return `${base} — ${kind.description}`;
+}
+
+function formatGemLotType(lot: TreasureGemLot): string {
+  const base = lot.category.description.toLowerCase();
+  if (lot.count === 1) {
+    return base
+      .replace(/\bstones\b/gi, 'stone')
+      .replace(/\bgems\b/gi, 'gem')
+      .replace(/\bjewels\b/gi, 'jewel');
+  }
+  return base;
+}
+
+function describeGemAdjustment(
+  adjustment: TreasureGemValueAdjustment
+): string | undefined {
+  switch (adjustment.type) {
+    case 'stepIncrease':
+      return adjustment.steps === 1
+        ? '1 step larger than typical'
+        : `${adjustment.steps} steps larger than typical`;
+    case 'stepDecrease':
+      return adjustment.steps === 1
+        ? '1 step smaller than typical'
+        : `${adjustment.steps} steps smaller than typical`;
+    case 'double':
+      return 'double base value';
+    case 'increasePercent':
+      return `+${adjustment.percent}%`;
+    case 'decreasePercent':
+      return `-${adjustment.percent}%`;
+    default:
+      return undefined;
+  }
+}
+
+function formatGemValue(value: number): string {
+  if (value < 1) {
+    const spValue = value * 10;
+    if (Math.abs(spValue - Math.round(spValue)) < 0.0001) {
+      return `${Math.round(spValue).toLocaleString()} sp`;
+    }
+  }
+  return `${formatNumber(value)} gp`;
+}
+
+function formatNumber(value: number): string {
+  if (Number.isInteger(value)) {
+    return value.toLocaleString();
+  }
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function jewelryDescription(entry: TreasureEntry): TreasureDescription {
