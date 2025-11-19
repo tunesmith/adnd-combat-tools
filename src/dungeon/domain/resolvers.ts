@@ -124,9 +124,7 @@ import {
 import { treasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
 import { treasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
 import { treasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
-import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
 import { treasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
-import type { TreasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
 import { treasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
 import type { TreasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
 import {
@@ -162,7 +160,6 @@ import {
 } from '../../tables/dungeon/treasureScarabOfProtection';
 import type { TreasureScarabOfProtectionCurseResolution } from '../../tables/dungeon/treasureScarabOfProtection';
 import { treasureArmorShields } from '../../tables/dungeon/treasureArmorShields';
-import type { TreasureArmorShield } from '../../tables/dungeon/treasureArmorShields';
 import {
   treasureSwords,
   TreasureSword,
@@ -215,25 +212,18 @@ import {
   TreasureFigurineOfWondrousPower,
 } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
 import { treasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
-import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
 import { treasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
-import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
 import { treasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
-import type { TreasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
 import { treasureIronFlask } from '../../tables/dungeon/treasureIronFlask';
-import type { TreasureIronFlaskContent } from '../../tables/dungeon/treasureIronFlask';
 import {
   treasureIounStones,
   TreasureIounStoneType,
   IOUN_STONE_DEFINITIONS,
 } from '../../tables/dungeon/treasureIounStones';
 import { treasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
-import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
 import { treasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
-import type { TreasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
 import {
   treasureNecklaceOfMissiles,
-  type TreasureNecklaceOfMissiles,
 } from '../../tables/dungeon/treasureNecklaceOfMissiles';
 import {
   treasurePearlOfPowerEffect,
@@ -256,9 +246,7 @@ import {
 import { treasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
 import type { TreasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
 import { treasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
-import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import { treasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
-import type { TreasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
 import { treasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import { treasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
 import { treasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
@@ -376,6 +364,8 @@ import {
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
 import { oneToFour, OneToFour } from '../../tables/dungeon/numberOfExits';
 import type { DoorChainLaterality } from './outcome';
+import { resolveSubtable } from './resolveSubtable';
+import { buildTreasureEvent } from './buildTreasureEvent';
 
 type ScrollCaster = 'magic-user' | 'illusionist' | 'cleric' | 'druid';
 
@@ -2847,19 +2837,17 @@ export function resolveTreasurePotionAnimalControl(options?: {
   treasureRoll?: number;
   rollIndex?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePotionAnimalControl.sides);
-  const command = getTableEntry(usedRoll, treasurePotionAnimalControl);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePotionAnimalControl',
-      result: command,
-      level: options?.level ?? 1,
-      treasureRoll: options?.treasureRoll ?? usedRoll,
-      rollIndex: options?.rollIndex,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePotionAnimalControl,
+    roll: options?.roll,
+    buildEvent: (command, usedRoll) =>
+      buildTreasureEvent(
+        'treasurePotionAnimalControl',
+        command,
+        usedRoll,
+        options
+      ),
+  });
 }
 
 export function resolveTreasurePotionDragonControl(options?: {
@@ -2868,19 +2856,17 @@ export function resolveTreasurePotionDragonControl(options?: {
   treasureRoll?: number;
   rollIndex?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePotionDragonControl.sides);
-  const command = getTableEntry(usedRoll, treasurePotionDragonControl);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePotionDragonControl',
-      result: command,
-      level: options?.level ?? 1,
-      treasureRoll: options?.treasureRoll ?? usedRoll,
-      rollIndex: options?.rollIndex,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePotionDragonControl,
+    roll: options?.roll,
+    buildEvent: (command, usedRoll) =>
+      buildTreasureEvent(
+        'treasurePotionDragonControl',
+        command,
+        usedRoll,
+        options
+      ),
+  });
 }
 
 export function resolveTreasurePotionGiantControl(options?: {
@@ -2889,19 +2875,17 @@ export function resolveTreasurePotionGiantControl(options?: {
   treasureRoll?: number;
   rollIndex?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePotionGiantControl.sides);
-  const command = getTableEntry(usedRoll, treasurePotionGiantControl);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePotionGiantControl',
-      result: command,
-      level: options?.level ?? 1,
-      treasureRoll: options?.treasureRoll ?? usedRoll,
-      rollIndex: options?.rollIndex,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePotionGiantControl,
+    roll: options?.roll,
+    buildEvent: (command, usedRoll) =>
+      buildTreasureEvent(
+        'treasurePotionGiantControl',
+        command,
+        usedRoll,
+        options
+      ),
+  });
 }
 
 export function resolveTreasurePotionGiantStrength(options?: {
@@ -2910,19 +2894,17 @@ export function resolveTreasurePotionGiantStrength(options?: {
   treasureRoll?: number;
   rollIndex?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePotionGiantStrength.sides);
-  const command = getTableEntry(usedRoll, treasurePotionGiantStrength);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePotionGiantStrength',
-      result: command,
-      level: options?.level ?? 1,
-      treasureRoll: options?.treasureRoll ?? usedRoll,
-      rollIndex: options?.rollIndex,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePotionGiantStrength,
+    roll: options?.roll,
+    buildEvent: (command, usedRoll) =>
+      buildTreasureEvent(
+        'treasurePotionGiantStrength',
+        command,
+        usedRoll,
+        options
+      ),
+  });
 }
 
 export function resolveTreasurePotionHumanControl(options?: {
@@ -2931,19 +2913,17 @@ export function resolveTreasurePotionHumanControl(options?: {
   treasureRoll?: number;
   rollIndex?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePotionHumanControl.sides);
-  const command = getTableEntry(usedRoll, treasurePotionHumanControl);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePotionHumanControl',
-      result: command,
-      level: options?.level ?? 1,
-      treasureRoll: options?.treasureRoll ?? usedRoll,
-      rollIndex: options?.rollIndex,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePotionHumanControl,
+    roll: options?.roll,
+    buildEvent: (command, usedRoll) =>
+      buildTreasureEvent(
+        'treasurePotionHumanControl',
+        command,
+        usedRoll,
+        options
+      ),
+  });
 }
 
 export function resolveTreasurePotionUndeadControl(options?: {
@@ -2952,19 +2932,17 @@ export function resolveTreasurePotionUndeadControl(options?: {
   treasureRoll?: number;
   rollIndex?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePotionUndeadControl.sides);
-  const command = getTableEntry(usedRoll, treasurePotionUndeadControl);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePotionUndeadControl',
-      result: command,
-      level: options?.level ?? 1,
-      treasureRoll: options?.treasureRoll ?? usedRoll,
-      rollIndex: options?.rollIndex,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePotionUndeadControl,
+    roll: options?.roll,
+    buildEvent: (command, usedRoll) =>
+      buildTreasureEvent(
+        'treasurePotionUndeadControl',
+        command,
+        usedRoll,
+        options
+      ),
+  });
 }
 
 export function resolveTreasureScroll(options?: {
@@ -3640,23 +3618,12 @@ export function resolveTreasureArmorShields(options?: {
   treasureRoll?: number;
   rollIndex?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureArmorShields.sides);
-  const command: TreasureArmorShield = getTableEntry(
-    usedRoll,
-    treasureArmorShields
-  );
-  const event: OutcomeEvent = {
-    kind: 'treasureArmorShields',
-    result: command,
-    level: options?.level ?? 1,
-    treasureRoll: options?.treasureRoll ?? usedRoll,
-    rollIndex: options?.rollIndex,
-  };
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event,
-  };
+  return resolveSubtable({
+    table: treasureArmorShields,
+    roll: options?.roll,
+    buildEvent: (command, usedRoll) =>
+      buildTreasureEvent('treasureArmorShields', command, usedRoll, options),
+  });
 }
 
 export function resolveTreasureSwords(options?: {
@@ -4754,78 +4721,61 @@ export function resolveTreasureMiscWeapons(options?: {
 export function resolveTreasureManualOfGolems(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureManualOfGolems.sides);
-  const command: TreasureManualOfGolems = getTableEntry(
-    usedRoll,
-    treasureManualOfGolems
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureManualOfGolems',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureManualOfGolems,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureManualOfGolems',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureMedallionRange(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureMedallionRange.sides);
-  const command: TreasureMedallionRange = getTableEntry(
-    usedRoll,
-    treasureMedallionRange
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureMedallionRange',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureMedallionRange,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureMedallionRange',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureNecklaceOfMissiles(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureNecklaceOfMissiles.sides);
-  const command: TreasureNecklaceOfMissiles = getTableEntry(
-    usedRoll,
-    treasureNecklaceOfMissiles
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureNecklaceOfMissiles',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureNecklaceOfMissiles,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureNecklaceOfMissiles',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasurePearlOfPowerEffect(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePearlOfPowerEffect.sides);
-  const command = getTableEntry(usedRoll, treasurePearlOfPowerEffect);
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasurePearlOfPowerEffect.Recall) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePearlOfPowerRecall',
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePearlOfPowerEffect',
-      result: command,
-    } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
+  return resolveSubtable({
+    table: treasurePearlOfPowerEffect,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasurePearlOfPowerEffect',
+        result: command,
+      } as OutcomeEvent),
+    buildChildren: (command) =>
+      command === TreasurePearlOfPowerEffect.Recall
+        ? [{ type: 'pending-roll', table: 'treasurePearlOfPowerRecall' }]
+        : undefined,
+  });
 }
 
 export function resolveTreasurePearlOfPowerRecall(options?: {
@@ -4849,46 +4799,43 @@ export function resolveTreasurePearlOfPowerRecall(options?: {
 export function resolveTreasurePearlOfWisdom(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePearlOfWisdom.sides);
-  const command = getTableEntry(usedRoll, treasurePearlOfWisdom);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePearlOfWisdom',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePearlOfWisdom,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasurePearlOfWisdom',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasurePeriaptProofAgainstPoison(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePeriaptPoisonBonus.sides);
-  const command = getTableEntry(usedRoll, treasurePeriaptPoisonBonus);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePeriaptProofAgainstPoison',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePeriaptPoisonBonus,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasurePeriaptProofAgainstPoison',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasurePhylacteryLongYears(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePhylacteryLongYears.sides);
-  const command = getTableEntry(usedRoll, treasurePhylacteryLongYears);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasurePhylacteryLongYears',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasurePhylacteryLongYears,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasurePhylacteryLongYears',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureNecklaceOfPrayerBeads(options?: {
@@ -4930,16 +4877,15 @@ export function resolveTreasureNecklaceOfPrayerBeads(options?: {
 export function resolveTreasureQuaalFeatherToken(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureQuaalFeatherToken.sides);
-  const command = getTableEntry(usedRoll, treasureQuaalFeatherToken);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureQuaalFeatherToken',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureQuaalFeatherToken,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureQuaalFeatherToken',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureFigurineOfWondrousPower(options?: {
@@ -4972,39 +4918,29 @@ export function resolveTreasureFigurineOfWondrousPower(options?: {
 export function resolveTreasureFigurineMarbleElephant(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureFigurineMarbleElephant.sides);
-  const command: TreasureFigurineMarbleElephant = getTableEntry(
-    usedRoll,
-    treasureFigurineMarbleElephant
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureFigurineMarbleElephant',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureFigurineMarbleElephant,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureFigurineMarbleElephant',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureGirdleOfGiantStrength(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureGirdleOfGiantStrength.sides);
-  const command: TreasureGirdleOfGiantStrength = getTableEntry(
-    usedRoll,
-    treasureGirdleOfGiantStrength
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureGirdleOfGiantStrength',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureGirdleOfGiantStrength,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureGirdleOfGiantStrength',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureIounStones(options?: {
@@ -5134,186 +5070,155 @@ export function resolveTreasureHornOfValhallaAlignment(options?: {
 export function resolveTreasureBagOfHolding(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureBagOfHolding.sides);
-  const command = getTableEntry(usedRoll, treasureBagOfHolding);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureBagOfHolding',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureBagOfHolding,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureBagOfHolding',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureBagOfTricks(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureBagOfTricks.sides);
-  const command = getTableEntry(usedRoll, treasureBagOfTricks);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureBagOfTricks',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureBagOfTricks,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureBagOfTricks',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureBracersOfDefense(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureBracersOfDefense.sides);
-  const command: TreasureBracersOfDefense = getTableEntry(
-    usedRoll,
-    treasureBracersOfDefense
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureBracersOfDefense',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureBracersOfDefense,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureBracersOfDefense',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureBucknardsEverfullPurse(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureBucknardsEverfullPurse.sides);
-  const command: TreasureBucknardsEverfullPurse = getTableEntry(
-    usedRoll,
-    treasureBucknardsEverfullPurse
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureBucknardsEverfullPurse',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureBucknardsEverfullPurse,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureBucknardsEverfullPurse',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureCarpetOfFlying(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureCarpetOfFlying.sides);
-  const command = getTableEntry(usedRoll, treasureCarpetOfFlying);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureCarpetOfFlying',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureCarpetOfFlying,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureCarpetOfFlying',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureCloakOfProtection(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureCloakOfProtection.sides);
-  const command = getTableEntry(usedRoll, treasureCloakOfProtection);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureCloakOfProtection',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureCloakOfProtection,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureCloakOfProtection',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureInstrumentOfTheBards(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureInstrumentOfTheBards.sides);
-  const command: TreasureInstrumentOfTheBards = getTableEntry(
-    usedRoll,
-    treasureInstrumentOfTheBards
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureInstrumentOfTheBards',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureInstrumentOfTheBards,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureInstrumentOfTheBards',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureIronFlask(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureIronFlask.sides);
-  const command: TreasureIronFlaskContent = getTableEntry(
-    usedRoll,
-    treasureIronFlask
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureIronFlask',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureIronFlask,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureIronFlask',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureCrystalBall(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureCrystalBall.sides);
-  const command = getTableEntry(usedRoll, treasureCrystalBall);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureCrystalBall',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureCrystalBall,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureCrystalBall',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureDeckOfManyThings(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureDeckOfManyThings.sides);
-  const command: TreasureDeckOfManyThings = getTableEntry(
-    usedRoll,
-    treasureDeckOfManyThings
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureDeckOfManyThings',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureDeckOfManyThings,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureDeckOfManyThings',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureEyesOfPetrification(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureEyesOfPetrification.sides);
-  const command: TreasureEyesOfPetrification = getTableEntry(
-    usedRoll,
-    treasureEyesOfPetrification
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureEyesOfPetrification',
-      result: command,
-    } as OutcomeEvent,
-  };
+  return resolveSubtable({
+    table: treasureEyesOfPetrification,
+    roll: options?.roll,
+    buildEvent: (command) =>
+      ({
+        kind: 'treasureEyesOfPetrification',
+        result: command,
+      } as OutcomeEvent),
+  });
 }
 
 export function resolveTreasureArtifactOrRelic(options?: {
