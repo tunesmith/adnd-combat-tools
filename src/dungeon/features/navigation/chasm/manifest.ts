@@ -6,13 +6,13 @@ import {
   buildChasmDepthPreview,
   buildChasmConstructionPreview,
   buildJumpingPlaceWidthPreview,
-} from './render';
+} from './chasmRender';
 import {
   resolveChasmConstruction,
   resolveChasmDepth,
   resolveJumpingPlaceWidth,
-} from './resolvers';
-import { ChasmConstruction } from '../../../../tables/dungeon/chasm';
+} from './chasmResolvers';
+import { ChasmConstruction } from './chasmTable';
 import { NO_COMPACT_RENDER, wrapResolver } from '../shared';
 
 export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [

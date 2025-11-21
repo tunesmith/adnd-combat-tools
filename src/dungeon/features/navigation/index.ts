@@ -8,7 +8,7 @@ import {
 } from '../types';
 import { entryTables } from './tables/entry';
 import { passageTables } from './tables/passages';
-import { chasmTables } from './chasm';
+import { chasmTables } from './chasm/manifest';
 import { exitTables } from './tables/exits';
 import { hazardTables } from './tables/hazards';
 

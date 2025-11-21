@@ -5,7 +5,7 @@ import {
   ChasmConstruction,
   chasmDepth,
   jumpingPlaceWidth,
-} from '../../../../tables/dungeon/chasm';
+} from './chasmTable';
 
 export function resolveChasmDepth(options?: {
   roll?: number;

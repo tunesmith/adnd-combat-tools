@@ -6,7 +6,11 @@ import type {
   SpecialPassage,
   StreamConstruction,
 } from './specialPassage';
-import type { ChasmConstruction, ChasmDepth, JumpingPlaceWidth } from './chasm';
+import type {
+  ChasmConstruction,
+  ChasmDepth,
+  JumpingPlaceWidth,
+} from '../../dungeon/features/navigation/chasm/chasmTable';
 import type { PassageWidth } from './passageWidth';
 import type { SidePassages } from './sidePassages';
 import type { DoorBeyond } from './doorBeyond';

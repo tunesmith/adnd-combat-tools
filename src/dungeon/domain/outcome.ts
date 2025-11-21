@@ -28,7 +28,7 @@ import type {
   ChasmDepth,
   ChasmConstruction,
   JumpingPlaceWidth,
-} from '../../tables/dungeon/chasm';
+} from '../features/navigation/chasm/chasmTable';
 import type { Pool } from '../../tables/dungeon/pool';
 import type {
   MagicPool,

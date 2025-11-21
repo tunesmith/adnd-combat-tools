@@ -10,7 +10,7 @@ import {
   chasmDepth as chasmDepthTable,
   JumpingPlaceWidth,
   jumpingPlaceWidth as jumpingPlaceWidthTable,
-} from '../../../../tables/dungeon/chasm';
+} from './chasmTable';
 import {
   type AppendPreviewFn,
   buildPreview,
