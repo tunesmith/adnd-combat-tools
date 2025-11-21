@@ -9,39 +9,7 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
-import {
-  renderPeriodicCheckDetail,
-  renderPeriodicCheckCompact,
-  renderWanderingWhereFromDetail,
-  renderWanderingWhereFromCompactNodes,
-  buildWanderingWhereFromPreview,
-  PASSAGE_CONTINUES_SUFFIX,
-} from './render/periodicOutcome';
-import {
-  renderDoorLocationDetail,
-  renderPeriodicDoorOnlyDetail,
-  buildDoorLocationPreview,
-  buildPeriodicDoorOnlyPreview,
-} from './render/doorLocation';
-import {
-  renderDoorBeyondDetail,
-  renderDoorBeyondCompact,
-} from './render/doorBeyond';
-import {
-  renderSidePassagesDetail,
-  renderSidePassagesCompactNodes,
-  buildSidePassagePreview,
-} from './render/sidePassage';
-import {
-  renderPassageTurnsDetail,
-  renderPassageTurnsCompactNodes,
-  buildPassageTurnPreview,
-} from './render/passageTurns';
-import {
-  renderPassageWidthDetail,
-  renderPassageWidthCompactNodes,
-  buildPassageWidthPreview,
-} from './render/passageWidth';
+import { PASSAGE_CONTINUES_SUFFIX } from './render/periodicOutcome';
 import {
   renderRoomDimensionsDetail,
   renderRoomDimensionsCompactNodes,
@@ -49,7 +17,6 @@ import {
 } from './render/roomDimensions';
 import {
   renderChamberDimensionsDetail,
-  describeChamberDimensions,
   renderChamberDimensionsCompact,
   buildChamberDimensionsPreview,
 } from './render/chamberDimensions';
@@ -78,50 +45,6 @@ import {
   renderTransporterLocationCompact,
   buildTransporterLocationPreview,
 } from './render/transporterLocation';
-import {
-  renderSpecialPassageDetail,
-  renderSpecialPassageCompactNodes,
-  renderGalleryStairLocationDetail,
-  renderGalleryStairLocationCompact,
-  renderGalleryStairOccurrenceDetail,
-  renderGalleryStairOccurrenceCompact,
-  renderRiverConstructionDetail,
-  renderRiverConstructionCompact,
-  buildSpecialPassagePreview,
-  buildGalleryStairLocationPreview,
-  buildGalleryStairOccurrencePreview,
-  buildStreamConstructionPreview,
-  buildRiverConstructionPreview,
-  buildRiverBoatBankPreview,
-} from './render/specialPassage';
-import {
-  renderChasmDepthDetail,
-  renderChasmConstructionDetail,
-  renderJumpingPlaceWidthDetail,
-  buildChasmDepthPreview,
-  buildChasmConstructionPreview,
-  buildJumpingPlaceWidthPreview,
-} from './render/chasm';
-import {
-  renderStairsDetail,
-  renderStairsCompactNodes,
-  buildStairsPreview,
-} from './render/stairs';
-import {
-  renderEgressDetail,
-  renderEgressCompact,
-  buildEgressPreview,
-} from './render/egress';
-import {
-  renderChuteDetail,
-  renderChuteCompact,
-  buildChutePreview,
-} from './render/chute';
-import {
-  renderNumberOfExitsDetail,
-  renderNumberOfExitsCompact,
-  buildNumberOfExitsPreview,
-} from './render/numberOfExits';
 import {
   renderUnusualSizeDetail,
   renderUnusualSizeCompact,
@@ -478,24 +401,9 @@ import {
   buildIllusionaryWallNaturePreview,
 } from './render/illusionaryWallNature';
 import {
-  renderGasTrapEffectDetail,
-  renderGasTrapEffectCompact,
-  buildGasTrapEffectPreview,
-} from './render/gasTrapEffect';
-import {
-  renderPassageExitLocationDetail,
-  renderPassageExitLocationCompact,
-  renderDoorExitLocationDetail,
-  renderDoorExitLocationCompact,
-  renderExitDirectionDetail,
-  renderExitDirectionCompact,
-  renderExitAlternativeDetail,
-  renderExitAlternativeCompact,
-  buildPassageExitLocationPreview,
-  buildDoorExitLocationPreview,
-  buildExitDirectionPreview,
-  buildExitAlternativePreview,
-} from './render/exitLocation';
+  NAVIGATION_PREVIEW_FACTORIES,
+  NAVIGATION_RENDER_ADAPTERS,
+} from '../features/navigation/bundle';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
@@ -523,52 +431,12 @@ const withoutAppend =
   (node, _append) =>
     renderer(node);
 
-const renderStairsDetailWithChamberSummary: RenderDetailFn = (node, append) =>
-  renderStairsDetail(node, append, {
-    renderChamberSummary: describeChamberDimensions,
-  });
-
-const renderStairsCompactWithChamberSummary: RenderCompactFn = withoutAppend(
-  (node) =>
-    renderStairsCompactNodes(node, {
-      renderChamberSummary: describeChamberDimensions,
-    })
-);
-
 const monsterAdapter: RenderAdapter = {
   renderDetail: renderMonsterDetailNodes,
   renderCompact: renderMonsterCompactNodes,
 };
 
 const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
-  periodicCheck: {
-    renderDetail: renderPeriodicCheckDetail,
-    renderCompact: withoutAppend(renderPeriodicCheckCompact),
-  },
-  doorBeyond: {
-    renderDetail: renderDoorBeyondDetail,
-    renderCompact: withoutAppend(renderDoorBeyondCompact),
-  },
-  doorLocation: {
-    renderDetail: renderDoorLocationDetail,
-    renderCompact: NO_COMPACT_RENDER,
-  },
-  periodicCheckDoorOnly: {
-    renderDetail: renderPeriodicDoorOnlyDetail,
-    renderCompact: NO_COMPACT_RENDER,
-  },
-  sidePassages: {
-    renderDetail: renderSidePassagesDetail,
-    renderCompact: withoutAppend(renderSidePassagesCompactNodes),
-  },
-  passageTurns: {
-    renderDetail: renderPassageTurnsDetail,
-    renderCompact: withoutAppend(renderPassageTurnsCompactNodes),
-  },
-  passageWidth: {
-    renderDetail: renderPassageWidthDetail,
-    renderCompact: withoutAppend(renderPassageWidthCompactNodes),
-  },
   roomDimensions: {
     renderDetail: renderRoomDimensionsDetail,
     renderCompact: withoutAppend(renderRoomDimensionsCompactNodes),
@@ -600,50 +468,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   transporterLocation: {
     renderDetail: renderTransporterLocationDetail,
     renderCompact: withoutAppend(renderTransporterLocationCompact),
-  },
-  specialPassage: {
-    renderDetail: renderSpecialPassageDetail,
-    renderCompact: withoutAppend(renderSpecialPassageCompactNodes),
-  },
-  galleryStairLocation: {
-    renderDetail: renderGalleryStairLocationDetail,
-    renderCompact: renderGalleryStairLocationCompact,
-  },
-  galleryStairOccurrence: {
-    renderDetail: renderGalleryStairOccurrenceDetail,
-    renderCompact: withoutAppend(renderGalleryStairOccurrenceCompact),
-  },
-  riverConstruction: {
-    renderDetail: renderRiverConstructionDetail,
-    renderCompact: renderRiverConstructionCompact,
-  },
-  chasmDepth: {
-    renderDetail: renderChasmDepthDetail,
-    renderCompact: NO_COMPACT_RENDER,
-  },
-  chasmConstruction: {
-    renderDetail: renderChasmConstructionDetail,
-    renderCompact: NO_COMPACT_RENDER,
-  },
-  jumpingPlaceWidth: {
-    renderDetail: renderJumpingPlaceWidthDetail,
-    renderCompact: NO_COMPACT_RENDER,
-  },
-  stairs: {
-    renderDetail: renderStairsDetailWithChamberSummary,
-    renderCompact: renderStairsCompactWithChamberSummary,
-  },
-  egress: {
-    renderDetail: renderEgressDetail,
-    renderCompact: withoutAppend(renderEgressCompact),
-  },
-  chute: {
-    renderDetail: renderChuteDetail,
-    renderCompact: withoutAppend(renderChuteCompact),
-  },
-  numberOfExits: {
-    renderDetail: renderNumberOfExitsDetail,
-    renderCompact: withoutAppend(renderNumberOfExitsCompact),
   },
   unusualShape: {
     renderDetail: renderUnusualShapeDetail,
@@ -965,33 +789,9 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureStaffSerpentDetail,
     renderCompact: renderTreasureStaffSerpentCompact,
   },
-  wanderingWhereFrom: {
-    renderDetail: renderWanderingWhereFromDetail,
-    renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
-  },
   illusionaryWallNature: {
     renderDetail: renderIllusionaryWallNatureDetail,
     renderCompact: renderIllusionaryWallNatureCompact,
-  },
-  gasTrapEffect: {
-    renderDetail: renderGasTrapEffectDetail,
-    renderCompact: renderGasTrapEffectCompact,
-  },
-  passageExitLocation: {
-    renderDetail: renderPassageExitLocationDetail,
-    renderCompact: renderPassageExitLocationCompact,
-  },
-  doorExitLocation: {
-    renderDetail: renderDoorExitLocationDetail,
-    renderCompact: renderDoorExitLocationCompact,
-  },
-  exitDirection: {
-    renderDetail: renderExitDirectionDetail,
-    renderCompact: renderExitDirectionCompact,
-  },
-  exitAlternative: {
-    renderDetail: renderExitAlternativeDetail,
-    renderCompact: renderExitAlternativeCompact,
   },
   monsterLevel: monsterAdapter,
   monsterOne: monsterAdapter,
@@ -1017,47 +817,28 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   human: monsterAdapter,
 } as const;
 
+Object.assign(RENDER_ADAPTERS, NAVIGATION_RENDER_ADAPTERS);
+
 type PendingPreviewBuilder = (
   tableId: string,
   context?: TableContext
 ) => DungeonTablePreview | undefined;
 
 const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
-  doorLocation: buildDoorLocationPreview,
-  periodicCheckDoorOnly: buildPeriodicDoorOnlyPreview,
-  sidePassages: buildSidePassagePreview,
-  passageTurns: buildPassageTurnPreview,
-  passageWidth: buildPassageWidthPreview,
   roomDimensions: buildRoomDimensionsPreview,
   chamberDimensions: buildChamberDimensionsPreview,
-  numberOfExits: (tableId, context) =>
-    buildNumberOfExitsPreview(tableId, context),
   unusualShape: buildUnusualShapePreview,
   unusualSize: (tableId, context) => buildUnusualSizePreview(tableId, context),
   chamberRoomContents: buildChamberRoomContentsPreview,
   chamberRoomStairs: buildChamberRoomStairsPreview,
-  stairs: buildStairsPreview,
-  specialPassage: buildSpecialPassagePreview,
-  egress: buildEgressPreview,
-  chute: buildChutePreview,
-  wanderingWhereFrom: buildWanderingWhereFromPreview,
-  galleryStairLocation: buildGalleryStairLocationPreview,
-  galleryStairOccurrence: buildGalleryStairOccurrencePreview,
   circularContents: buildCircularContentsPreview,
   circularPool: buildCircularPoolPreview,
   circularMagicPool: buildCircularMagicPoolPreview,
   transmuteType: buildTransmuteTypePreview,
   poolAlignment: buildPoolAlignmentPreview,
   transporterLocation: buildTransporterLocationPreview,
-  streamConstruction: buildStreamConstructionPreview,
-  riverConstruction: buildRiverConstructionPreview,
-  riverBoatBank: buildRiverBoatBankPreview,
-  chasmDepth: buildChasmDepthPreview,
-  chasmConstruction: buildChasmConstructionPreview,
-  jumpingPlaceWidth: buildJumpingPlaceWidthPreview,
   trickTrap: buildTrickTrapPreview,
   illusionaryWallNature: buildIllusionaryWallNaturePreview,
-  gasTrapEffect: buildGasTrapEffectPreview,
   treasure: buildTreasurePreview,
   treasureContainer: buildTreasureContainerPreview,
   treasureProtectionType: buildTreasureProtectionTypePreview,
@@ -1142,11 +923,9 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureEyesOfPetrification: buildTreasureEyesOfPetrificationPreview,
   treasureMiscMagicE1: buildTreasureMiscMagicE1Preview,
   treasureStaffSerpent: buildTreasureStaffSerpentPreview,
-  passageExitLocation: buildPassageExitLocationPreview,
-  doorExitLocation: buildDoorExitLocationPreview,
-  exitDirection: buildExitDirectionPreview,
-  exitAlternative: buildExitAlternativePreview,
 };
+
+Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);
 
 const MONSTER_PREVIEW_BASES = [
   'monsterLevel',

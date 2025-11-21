@@ -15,11 +15,6 @@ import {
   resolveChamberDimensions,
   resolveChamberRoomContents,
   resolveChamberRoomStairs,
-  resolveChasmConstruction,
-  resolveChasmDepth,
-  resolveChute,
-  resolveDoorBeyond,
-  resolveDoorLocation,
   resolveDragonFiveOlder,
   resolveDragonFiveYounger,
   resolveDragonFourOlder,
@@ -30,11 +25,7 @@ import {
   resolveDragonNine,
   resolveDragonTen,
   resolveDragonThree,
-  resolveEgress,
-  resolveGalleryStairLocation,
-  resolveGalleryStairOccurrence,
   resolveHuman,
-  resolveJumpingPlaceWidth,
   resolveMonsterFive,
   resolveMonsterFour,
   resolveMonsterLevel,
@@ -46,18 +37,7 @@ import {
   resolveMonsterTen,
   resolveMonsterThree,
   resolveMonsterTwo,
-  resolveNumberOfExits,
-  resolvePassageTurns,
-  resolvePassageWidth,
-  resolvePeriodicCheck,
-  resolvePeriodicDoorOnly,
-  resolveRiverBoatBank,
-  resolveRiverConstruction,
   resolveRoomDimensions,
-  resolveSidePassages,
-  resolveSpecialPassage,
-  resolveStairs,
-  resolveStreamConstruction,
   resolveCircularContents,
   resolveCircularPool,
   resolveCircularMagicPool,
@@ -66,14 +46,8 @@ import {
   resolveTransporterLocation,
   resolveTrickTrap,
   resolveIllusionaryWallNature,
-  resolvePassageExitLocation,
-  resolveDoorExitLocation,
-  resolveExitDirection,
-  resolveExitAlternative,
-  resolveGasTrapEffect,
   resolveUnusualShape,
   resolveUnusualSize,
-  resolveWanderingWhereFrom,
   resolveTreasure,
   resolveTreasureContainer,
   resolveTreasureProtectionType,
@@ -156,14 +130,23 @@ import {
   findPendingWithAncestors,
   isTableContext,
   normalizeOutcomeTree,
-  parseDoorChainSequence,
   propagateSwordAlignmentInfo,
-  readExitsContext,
 } from '../helpers/outcomeTree';
 import {
   createOutcomeRenderSnapshot,
   type OutcomeRenderSnapshot,
 } from './outcomePipeline';
+import {
+  NAVIGATION_REGISTRY_OUTCOMES,
+  NAVIGATION_TABLE_HEADINGS,
+  NAVIGATION_TABLE_ID_LIST,
+} from '../features/navigation/bundle';
+import type { NavigationTableId } from '../features/navigation/bundle';
+import {
+  BASE_TABLE_HEADINGS,
+  BASE_TABLE_ID_LIST,
+  type BaseTableId,
+} from '../features/baseTables/bundle';
 
 // Registry resolver type
 type RegistryResolution = {
@@ -181,298 +164,31 @@ export type RegistryResolver = (opts: {
   };
 }) => RegistryResolution;
 
-const TABLE_ID_LIST = [
-  'sidePassages',
-  'passageTurns',
-  'stairs',
-  'doorLocation',
-  'doorBeyond',
-  'periodicCheck',
-  'periodicCheckDoorOnly',
-  'wanderingWhereFrom',
-  'monsterLevel',
-  'monsterOne',
-  'monsterTwo',
-  'monsterThree',
-  'monsterFour',
-  'monsterFive',
-  'monsterSix',
-  'monsterSeven',
-  'monsterEight',
-  'monsterNine',
-  'monsterTen',
-  'dragonThree',
-  'dragonFourYounger',
-  'dragonFourOlder',
-  'dragonFiveYounger',
-  'dragonFiveOlder',
-  'dragonSix',
-  'dragonSeven',
-  'dragonEight',
-  'dragonNine',
-  'dragonTen',
-  'human',
-  'galleryStairLocation',
-  'galleryStairOccurrence',
-  'passageWidth',
-  'specialPassage',
-  'roomDimensions',
-  'chamberDimensions',
-  'chamberRoomContents',
-  'chamberRoomStairs',
-  'streamConstruction',
-  'riverConstruction',
-  'riverBoatBank',
-  'chasmDepth',
-  'chasmConstruction',
-  'jumpingPlaceWidth',
-  'unusualShape',
-  'unusualSize',
-  'trickTrap',
-  'illusionaryWallNature',
-  'passageExitLocation',
-  'doorExitLocation',
-  'exitDirection',
-  'exitAlternative',
-  'gasTrapEffect',
-  'treasure',
-  'treasureContainer',
-  'treasureProtectionType',
-  'treasureProtectionGuardedBy',
-  'treasureProtectionHiddenBy',
-  'treasureMagicCategory',
-  'treasurePotion',
-  'treasurePotionAnimalControl',
-  'treasurePotionDragonControl',
-  'treasurePotionGiantControl',
-  'treasurePotionGiantStrength',
-  'treasurePotionHumanControl',
-  'treasurePotionUndeadControl',
-  'treasureScroll',
-  'treasureScrollProtectionElementals',
-  'treasureScrollProtectionLycanthropes',
-  'treasureRing',
-  'treasureRingContrariness',
-  'treasureRingElementalCommand',
-  'treasureRingProtection',
-  'treasureRingRegeneration',
-  'treasureRingTelekinesis',
-  'treasureRingThreeWishes',
-  'treasureRingWizardry',
-  'treasureRodStaffWand',
-  'treasureBagOfHolding',
-  'treasureBagOfTricks',
-  'treasureBracersOfDefense',
-  'treasureBucknardsEverfullPurse',
-  'treasureArtifactOrRelic',
-  'treasureMiscMagicE2',
-  'treasureMiscMagicE3',
-  'treasureMiscMagicE4',
-  'treasureMiscMagicE5',
-  'treasureArmorShields',
-  'treasureSwords',
-  'treasureSwordKind',
-  'treasureSwordUnusual',
-  'treasureSwordPrimaryAbility',
-  'treasureSwordPrimaryAbilityRestricted',
-  'treasureSwordExtraordinaryPower',
-  'treasureSwordExtraordinaryPowerRestricted',
-  'treasureSwordDragonSlayerColor',
-  'treasureSwordSpecialPurpose',
-  'treasureSwordSpecialPurposePower',
-  'treasureSwordAlignment',
-  'treasureSwordAlignmentChaotic',
-  'treasureSwordAlignmentLawful',
-  'treasureMiscWeapons',
-  'treasureRobeOfUsefulItems',
-  'treasureRobeOfTheArchmagi',
-  'treasureScarabOfProtectionCurse',
-  'treasureScarabOfProtectionCurseResolution',
-  'treasureManualOfGolems',
-  'treasureMedallionRange',
-  'treasureNecklaceOfMissiles',
-  'treasurePearlOfPowerEffect',
-  'treasurePearlOfPowerRecall',
-  'treasurePearlOfWisdom',
-  'treasurePeriaptProofAgainstPoison',
-  'treasurePhylacteryLongYears',
-  'treasureQuaalFeatherToken',
-  'treasureFigurineOfWondrousPower',
-  'treasureFigurineMarbleElephant',
-  'treasureGirdleOfGiantStrength',
-  'treasureInstrumentOfTheBards',
-  'treasureIronFlask',
-  'treasureHornOfValhallaType',
-  'treasureHornOfValhallaAttunement',
-  'treasureHornOfValhallaAlignment',
-  'treasureIounStones',
-  'treasureCarpetOfFlying',
-  'treasureCloakOfProtection',
-  'treasureCrystalBall',
-  'treasureDeckOfManyThings',
-  'treasureEyesOfPetrification',
-  'treasureMiscMagicE1',
-  'treasureStaffSerpent',
-  'circularContents',
-  'circularPool',
-  'circularMagicPool',
-  'transmuteType',
-  'poolAlignment',
-  'transporterLocation',
-  'chute',
-  'egress',
-  'numberOfExits',
-] as const;
+const NAVIGATION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
+  Object.fromEntries(
+    Object.entries(NAVIGATION_REGISTRY_OUTCOMES).map(
+      ([id, buildOutcome]) => [
+        id,
+        (opts) => fromOutcome(buildOutcome(opts)),
+      ]
+    )
+  );
+
+export type TableId = NavigationTableId | BaseTableId;
+
+const TABLE_ID_LIST: ReadonlyArray<TableId> = [
+  ...NAVIGATION_TABLE_ID_LIST,
+  ...BASE_TABLE_ID_LIST,
+];
 
 function isTableId(x: string): x is TableId {
-  return (TABLE_ID_LIST as readonly string[]).includes(x);
+  return TABLE_ID_LIST.some((tableId) => tableId === x);
 }
 
-export type TableId = typeof TABLE_ID_LIST[number];
-
 export const TABLE_HEADINGS: Record<TableId, string> = {
-  sidePassages: 'Side Passages',
-  passageTurns: 'Passage Turns',
-  stairs: 'Stairs',
-  doorLocation: 'Door Location',
-  doorBeyond: 'Door',
-  periodicCheck: 'Passage',
-  periodicCheckDoorOnly: 'Periodic Check (doors only)',
-  wanderingWhereFrom: 'Where From',
-  monsterLevel: 'Monster Level',
-  monsterOne: 'Monster (Level 1)',
-  monsterTwo: 'Monster (Level 2)',
-  monsterThree: 'Monster (Level 3)',
-  monsterFour: 'Monster (Level 4)',
-  monsterFive: 'Monster (Level 5)',
-  monsterSix: 'Monster (Level 6)',
-  monsterSeven: 'Monster (Level 7)',
-  monsterEight: 'Monster (Level 8)',
-  monsterNine: 'Monster (Level 9)',
-  monsterTen: 'Monster (Level 10)',
-  dragonThree: 'Dragon (Level 3)',
-  dragonFourYounger: 'Dragon (Younger)',
-  dragonFourOlder: 'Dragon (Older)',
-  dragonFiveYounger: 'Dragon (Younger)',
-  dragonFiveOlder: 'Dragon (Older)',
-  dragonSix: 'Dragon (Level 6)',
-  dragonSeven: 'Dragon (Level 7)',
-  dragonEight: 'Dragon (Level 8)',
-  dragonNine: 'Dragon (Level 9)',
-  dragonTen: 'Dragon (Level 10)',
-  human: 'Human Subtable',
-  galleryStairLocation: 'Gallery Stair Location',
-  galleryStairOccurrence: 'Gallery Stair Occurrence',
-  passageWidth: 'Passage Width',
-  specialPassage: 'Special Passage',
-  roomDimensions: 'Room Dimensions',
-  chamberDimensions: 'Chamber Dimensions',
-  chamberRoomContents: 'Contents',
-  chamberRoomStairs: 'Stairway',
-  streamConstruction: 'Stream Construction',
-  riverConstruction: 'River Construction',
-  riverBoatBank: 'Boat Bank',
-  chasmDepth: 'Chasm Depth',
-  chasmConstruction: 'Chasm Construction',
-  jumpingPlaceWidth: 'Jumping Place Width',
-  unusualShape: 'Unusual Shape',
-  unusualSize: 'Unusual Size',
-  trickTrap: 'Trick / Trap',
-  illusionaryWallNature: 'What Lies Beyond',
-  passageExitLocation: 'Passage Exit Location',
-  doorExitLocation: 'Door Exit Location',
-  exitDirection: 'Exit Direction',
-  exitAlternative: 'Exit Alternative',
-  gasTrapEffect: 'Gas Effect',
-  treasure: 'Treasure',
-  treasureContainer: 'Treasure Container',
-  treasureProtectionType: 'Treasure Protection',
-  treasureProtectionGuardedBy: 'Treasure Guarded By',
-  treasureProtectionHiddenBy: 'Treasure Hidden By',
-  treasureMagicCategory: 'Magical Treasure',
-  treasurePotion: 'Potion',
-  treasurePotionAnimalControl: 'Animal Control Target',
-  treasurePotionDragonControl: 'Dragon Control Target',
-  treasurePotionGiantControl: 'Giant Control Target',
-  treasurePotionGiantStrength: 'Giant Strength Target',
-  treasurePotionHumanControl: 'Human Control Target',
-  treasurePotionUndeadControl: 'Undead Control Target',
-  treasureScroll: 'Scroll',
-  treasureScrollProtectionElementals: 'Protection from Elementals',
-  treasureScrollProtectionLycanthropes: 'Protection from Lycanthropes',
-  treasureRing: 'Ring',
-  treasureRingContrariness: 'Contrariness Effect',
-  treasureRingElementalCommand: 'Elemental Focus',
-  treasureRingProtection: 'Protection Bonus',
-  treasureRingRegeneration: 'Regeneration Type',
-  treasureRingTelekinesis: 'Telekinetic Capacity',
-  treasureRingThreeWishes: 'Wish Capacity',
-  treasureRingWizardry: 'Spell Doubling',
-  treasureRodStaffWand: 'Rod/Staff/Wand',
-  treasureBagOfHolding: 'Bag of Holding Capacity',
-  treasureBagOfTricks: 'Bag of Tricks Type',
-  treasureBracersOfDefense: 'Bracers of Defense Armor Class',
-  treasureBucknardsEverfullPurse: "Bucknard's Everfull Purse Contents",
-  treasureArtifactOrRelic: 'Artifact or Relic',
-  treasureMiscMagicE2: 'Miscellaneous Magic (Table E.2)',
-  treasureMiscMagicE3: 'Miscellaneous Magic (Table E.3)',
-  treasureMiscMagicE4: 'Miscellaneous Magic (Table E.4)',
-  treasureMiscMagicE5: 'Miscellaneous Magic (Table E.5)',
-  treasureArmorShields: 'Armor & Shields (Table F)',
-  treasureSwords: 'Swords (Table G)',
-  treasureSwordKind: 'Sword Type',
-  treasureSwordUnusual: 'Sword Unusual Traits',
-  treasureSwordPrimaryAbility: 'Primary Ability',
-  treasureSwordPrimaryAbilityRestricted: 'Primary Ability (01-92)',
-  treasureSwordExtraordinaryPower: 'Extraordinary Power',
-  treasureSwordExtraordinaryPowerRestricted: 'Extraordinary Power (01-97)',
-  treasureSwordDragonSlayerColor: 'Dragon Slayer Target',
-  treasureSwordSpecialPurpose: 'Sword Special Purpose',
-  treasureSwordSpecialPurposePower: 'Sword Special Purpose Power',
-  treasureSwordAlignment: 'Sword Alignment',
-  treasureSwordAlignmentChaotic: 'Sword Alignment (Chaotic)',
-  treasureSwordAlignmentLawful: 'Sword Alignment (Lawful)',
-  treasureMiscWeapons: 'Miscellaneous Weapons (Table H)',
-  treasureRobeOfUsefulItems: 'Robe of Useful Items',
-  treasureRobeOfTheArchmagi: 'Robe of the Archmagi Alignment',
-  treasureScarabOfProtectionCurse: 'Scarab of Protection (curse check)',
-  treasureScarabOfProtectionCurseResolution:
-    'Scarab of Protection (curse resolution)',
-  treasureManualOfGolems: 'Manual of Golems',
-  treasureMedallionRange: 'Medallion Details',
-  treasureNecklaceOfMissiles: 'Necklace of Missiles',
-  treasurePearlOfPowerEffect: 'Pearl of Power Effect',
-  treasurePearlOfPowerRecall: 'Pearl of Power Recall',
-  treasurePearlOfWisdom: 'Pearl of Wisdom Outcome',
-  treasurePeriaptProofAgainstPoison: 'Periapt of Proof Against Poison',
-  treasurePhylacteryLongYears: 'Phylactery of Long Years',
-  treasureQuaalFeatherToken: "Quaal's Feather Token",
-  treasureFigurineOfWondrousPower: 'Figurine of Wondrous Power',
-  treasureFigurineMarbleElephant: 'Marble Elephant Form',
-  treasureGirdleOfGiantStrength: 'Giant Strength Type',
-  treasureInstrumentOfTheBards: 'Instrument of the Bards',
-  treasureIronFlask: 'Iron Flask Contents',
-  treasureHornOfValhallaType: 'Horn Type',
-  treasureHornOfValhallaAttunement: 'Attunement',
-  treasureHornOfValhallaAlignment: 'Alignment',
-  treasureIounStones: 'Ioun Stones',
-  treasureCarpetOfFlying: 'Carpet of Flying Size',
-  treasureCloakOfProtection: 'Cloak of Protection Bonus',
-  treasureCrystalBall: 'Crystal Ball Variant',
-  treasureDeckOfManyThings: 'Deck Composition',
-  treasureEyesOfPetrification: 'Eyes of Petrification Type',
-  treasureMiscMagicE1: 'Miscellaneous Magic (Table E.1)',
-  treasureStaffSerpent: 'Serpent Form',
-  circularContents: 'Circular Contents',
-  circularPool: 'Pool',
-  circularMagicPool: 'Magic Pool Effect',
-  transmuteType: 'Transmutation Type',
-  poolAlignment: 'Pool Alignment',
-  transporterLocation: 'Transporter Location',
-  chute: 'Chute',
-  egress: 'Egress',
-  numberOfExits: 'Exits',
-};
+  ...NAVIGATION_TABLE_HEADINGS,
+  ...BASE_TABLE_HEADINGS,
+} as Record<TableId, string>;
 
 function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
   const normalized = normalizeOutcomeTree(outcome);
@@ -480,31 +196,7 @@ function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
   return { outcome: propagated, messages: renderDetailTree(propagated) };
 }
 
-export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
-  sidePassages: ({ roll }) => fromOutcome(resolveSidePassages({ roll })),
-  passageTurns: ({ roll }) => fromOutcome(resolvePassageTurns({ roll })),
-  stairs: ({ roll }) => fromOutcome(resolveStairs({ roll })),
-  doorLocation: ({ roll, doorChain, id }) => {
-    const existing = doorChain?.existing ?? [];
-    const sequence =
-      doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
-    return fromOutcome(resolveDoorLocation({ roll, existing, sequence }));
-  },
-  doorBeyond: ({ roll }) => fromOutcome(resolveDoorBeyond({ roll })),
-  periodicCheck: ({ roll, context }) => {
-    const c = (context || {}) as { kind?: string; level?: number };
-    const level =
-      c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
-    return fromOutcome(resolvePeriodicCheck({ roll, level }));
-  },
-  periodicCheckDoorOnly: ({ roll, doorChain, id }) => {
-    const existing = doorChain?.existing ?? [];
-    const sequence =
-      doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
-    return fromOutcome(resolvePeriodicDoorOnly({ roll, existing, sequence }));
-  },
-  wanderingWhereFrom: ({ roll }) =>
-    fromOutcome(resolveWanderingWhereFrom({ roll })),
+const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
   monsterLevel: ({ roll, id, context }) => {
     const dungeonLevel = readDungeonLevel(context, id, 1);
     return fromOutcome(resolveMonsterLevel({ roll, dungeonLevel }));
@@ -593,12 +285,6 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
     const dungeonLevel = readDungeonLevel(context, 'human', 1);
     return fromOutcome(resolveHuman({ roll, dungeonLevel }));
   },
-  galleryStairLocation: ({ roll }) =>
-    fromOutcome(resolveGalleryStairLocation({ roll })),
-  galleryStairOccurrence: ({ roll }) =>
-    fromOutcome(resolveGalleryStairOccurrence({ roll })),
-  passageWidth: ({ roll }) => fromOutcome(resolvePassageWidth({ roll })),
-  specialPassage: ({ roll }) => fromOutcome(resolveSpecialPassage({ roll })),
   roomDimensions: ({ roll, context }) => {
     // Prefer explicit level from context (carried from doorBeyond -> room)
     let level = 1;
@@ -639,16 +325,6 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   },
   chamberRoomStairs: ({ roll }) =>
     fromOutcome(resolveChamberRoomStairs({ roll })),
-  streamConstruction: ({ roll }) =>
-    fromOutcome(resolveStreamConstruction({ roll })),
-  riverConstruction: ({ roll }) =>
-    fromOutcome(resolveRiverConstruction({ roll })),
-  riverBoatBank: ({ roll }) => fromOutcome(resolveRiverBoatBank({ roll })),
-  chasmDepth: ({ roll }) => fromOutcome(resolveChasmDepth({ roll })),
-  chasmConstruction: ({ roll }) =>
-    fromOutcome(resolveChasmConstruction({ roll })),
-  jumpingPlaceWidth: ({ roll }) =>
-    fromOutcome(resolveJumpingPlaceWidth({ roll })),
   unusualShape: ({ roll }) => fromOutcome(resolveUnusualShape({ roll })),
   unusualSize: ({ roll, context }) => {
     const extra = context && context.kind === 'unusualSize' ? context.extra : 0;
@@ -668,59 +344,6 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   trickTrap: ({ roll }) => fromOutcome(resolveTrickTrap({ roll })),
   illusionaryWallNature: ({ roll }) =>
     fromOutcome(resolveIllusionaryWallNature({ roll })),
-  passageExitLocation: ({ roll, context }) =>
-    fromOutcome(
-      resolvePassageExitLocation({
-        roll,
-        context:
-          context && context.kind === 'exit'
-            ? {
-                index: context.index,
-                total: context.total,
-                origin: context.origin,
-              }
-            : undefined,
-      })
-    ),
-  doorExitLocation: ({ roll, context }) =>
-    fromOutcome(
-      resolveDoorExitLocation({
-        roll,
-        context:
-          context && context.kind === 'exit'
-            ? {
-                index: context.index,
-                total: context.total,
-                origin: context.origin,
-              }
-            : undefined,
-      })
-    ),
-  exitDirection: ({ roll, context }) =>
-    fromOutcome(
-      resolveExitDirection({
-        roll,
-        context:
-          context && context.kind === 'exitDirection'
-            ? {
-                index: context.index,
-                total: context.total,
-                origin: context.origin,
-              }
-            : undefined,
-      })
-    ),
-  exitAlternative: ({ roll, context }) =>
-    fromOutcome(
-      resolveExitAlternative({
-        roll,
-        context:
-          context && context.kind === 'exitAlternative'
-            ? { exitType: context.exitType }
-            : undefined,
-      })
-    ),
-  gasTrapEffect: ({ roll }) => fromOutcome(resolveGasTrapEffect({ roll })),
   treasure: ({ roll, context }) => {
     const treasureContext =
       context && context.kind === 'treasure'
@@ -1381,28 +1004,12 @@ export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   },
   treasureStaffSerpent: ({ roll }) =>
     fromOutcome(resolveTreasureStaffSerpent({ roll })),
-  chute: ({ roll }) => fromOutcome(resolveChute({ roll })),
-  egress: ({ roll, id }) => {
-    const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';
-    return fromOutcome(resolveEgress({ which: key, roll }));
-  },
-  numberOfExits: ({ roll, context }) => {
-    const ctx = readExitsContext(context);
-    if (!ctx) {
-      return fromOutcome(
-        resolveNumberOfExits({ roll, length: 10, width: 10, isRoom: false })
-      );
-    }
-    return fromOutcome(
-      resolveNumberOfExits({
-        roll,
-        length: ctx.length,
-        width: ctx.width,
-        isRoom: ctx.isRoom,
-      })
-    );
-  },
 };
+
+export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
+  ...NAVIGATION_TABLE_RESOLVERS,
+  ...BASE_TABLE_RESOLVERS,
+} as Record<TableId, RegistryResolver>;
 
 export function resolveRegistryTable(opts: {
   tableId: string;
@@ -1420,6 +1027,7 @@ export function resolveRegistryTable(opts: {
       ? deriveDoorChainContext(opts.outcome, opts.targetId)
       : undefined;
   const resolver = TABLE_RESOLVERS[base];
+  if (!resolver) return undefined;
   return resolver({
     roll: opts.roll,
     id: opts.tableId,
@@ -1643,7 +1251,7 @@ export function resolveViaRegistry<T extends FeedLike>(
   const base = String(tp.id.split(':')[0] ?? '');
   if (!isTableId(base)) return false;
 
-  const heading = TABLE_HEADINGS[base];
+  const heading = TABLE_HEADINGS[base] ?? base;
   const targetKey = tp.targetId ?? tp.id;
   const keyVariants = collectKeyVariants(targetKey, tp.id);
   let resolved = false;

@@ -13,17 +13,7 @@ import type {
 } from '../../tables/dungeon/treasureSwords';
 import type { TreasureSwordAlignment } from '../../tables/dungeon/treasureSwordAlignment';
 import {
-  resolveDoorLocation,
-  resolvePeriodicDoorOnly,
-  resolveSidePassages,
-  resolvePassageTurns,
-  resolvePassageWidth,
-  resolveStairs,
-  resolveEgress,
-  resolveChute,
-  resolveSpecialPassage,
   resolveIllusionaryWallNature,
-  resolveRoomDimensions,
   resolveChamberDimensions,
   resolveUnusualShape,
   resolveUnusualSize,
@@ -36,20 +26,6 @@ import {
   resolvePoolAlignment,
   resolveTransporterLocation,
   resolveTrickTrap,
-  resolveWanderingWhereFrom,
-  resolveGalleryStairLocation,
-  resolveGalleryStairOccurrence,
-  resolveStreamConstruction,
-  resolveRiverConstruction,
-  resolveRiverBoatBank,
-  resolveChasmDepth,
-  resolveChasmConstruction,
-  resolveJumpingPlaceWidth,
-  resolveNumberOfExits,
-  resolvePassageExitLocation,
-  resolveDoorExitLocation,
-  resolveExitDirection,
-  resolveExitAlternative,
   resolveMonsterLevel,
   resolveMonsterOne,
   resolveMonsterTwo,
@@ -143,13 +119,13 @@ import {
   resolveTreasureMiscMagicE1,
   resolveTreasureStaffSerpent,
   resolveGasTrapEffect,
+  resolveRoomDimensions,
 } from '../domain/resolvers';
-import type { TableContext } from '../../types/dungeon';
 import {
-  GalleryStairLocation,
-  RiverConstruction,
-  ChasmConstruction,
-} from '../../tables/dungeon/specialPassage';
+  NAVIGATION_CHILD_POST_PROCESSORS,
+  NAVIGATION_PENDING_RESOLVERS,
+} from '../features/navigation/bundle';
+import type { TableContext } from '../../types/dungeon';
 import { DoorLocation } from '../../tables/dungeon/doorLocation';
 import { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 
@@ -619,6 +595,8 @@ function enrichEventNode(
   depth: number
 ): OutcomeEventNode {
   let children = [...resolvedChildren];
+  const resolveNested = (outcome: DungeonOutcomeNode) =>
+    resolveOutcomeNode(outcome, depth + 1, []);
   switch (node.event.kind) {
     case 'roomDimensions':
     case 'chamberDimensions': {
@@ -681,50 +659,12 @@ function enrichEventNode(
     }
     case 'treasureSwordUnusual':
       break;
-    case 'galleryStairLocation': {
-      if (
-        node.event.result === GalleryStairLocation.PassageEnd &&
-        !children.some((c) => c.event.kind === 'galleryStairOccurrence')
-      ) {
-        const occurrence = resolveOutcomeNode(
-          resolveGalleryStairOccurrence({}),
-          depth + 1,
-          []
-        );
-        if (occurrence) children.push(occurrence);
-      }
-      break;
-    }
-    case 'riverConstruction': {
-      if (
-        node.event.result === RiverConstruction.Boat &&
-        !children.some((c) => c.event.kind === 'riverBoatBank')
-      ) {
-        const bank = resolveOutcomeNode(
-          resolveRiverBoatBank({}),
-          depth + 1,
-          []
-        );
-        if (bank) children.push(bank);
-      }
-      break;
-    }
-    case 'chasmConstruction': {
-      if (
-        node.event.result === ChasmConstruction.JumpingPlace &&
-        !children.some((c) => c.event.kind === 'jumpingPlaceWidth')
-      ) {
-        const width = resolveOutcomeNode(
-          resolveJumpingPlaceWidth({}),
-          depth + 1,
-          []
-        );
-        if (width) children.push(width);
-      }
-      break;
-    }
     default:
       break;
+  }
+  const navPostProcess = NAVIGATION_CHILD_POST_PROCESSORS[node.event.kind];
+  if (navPostProcess) {
+    children = navPostProcess(node, children, resolveNested);
   }
   return {
     type: 'event',
@@ -767,38 +707,21 @@ function resolvePendingNode(
   pending: PendingRoll,
   ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined {
+  const navResolve = NAVIGATION_PENDING_RESOLVERS[pending.table.split(':')[0] ?? ''];
+  if (navResolve) {
+    const resolved = navResolve(pending, ancestors);
+    if (resolved) return resolved;
+  }
   const base = pending.table.split(':')[0] ?? '';
   switch (base) {
-    case 'doorLocation': {
-      const existing = collectDoorChainExisting(ancestors);
-      const sequence = parseDoorChainSequence(pending.table, existing.length);
-      return resolveDoorLocation({ existing, sequence });
+    case 'roomDimensions': {
+      const ctx = pending.context as { kind?: unknown; level?: unknown } | undefined;
+      const level =
+        ctx && ctx.kind === 'chamberDimensions' && typeof ctx.level === 'number'
+          ? ctx.level
+          : 1;
+      return resolveRoomDimensions({ level });
     }
-    case 'periodicCheckDoorOnly': {
-      const existing = collectDoorChainExisting(ancestors);
-      const sequence = parseDoorChainSequence(pending.table, existing.length);
-      return resolvePeriodicDoorOnly({ existing, sequence });
-    }
-    case 'sidePassages':
-      return resolveSidePassages({});
-    case 'passageTurns':
-      return resolvePassageTurns({});
-    case 'passageWidth':
-      return resolvePassageWidth({});
-    case 'stairs':
-      return resolveStairs({});
-    case 'egress': {
-      const which = parseEgressWhich(pending.table);
-      return resolveEgress({ which, roll: undefined });
-    }
-    case 'chute':
-      return resolveChute({});
-    case 'specialPassage':
-      return resolveSpecialPassage({});
-    case 'roomDimensions':
-      return resolveRoomDimensions({
-        level: deriveDungeonLevelFromAncestors(ancestors) ?? 1,
-      });
     case 'chamberDimensions': {
       const chamberContext = readChamberDimensionsContext(pending.context);
       const derivedLevel = deriveDungeonLevelFromAncestors(ancestors);
@@ -1059,58 +982,10 @@ function resolvePendingNode(
       return resolvePoolAlignment({});
     case 'transporterLocation':
       return resolveTransporterLocation({});
-    case 'wanderingWhereFrom':
-      return resolveWanderingWhereFrom({});
-    case 'galleryStairLocation':
-      return resolveGalleryStairLocation({});
-    case 'galleryStairOccurrence':
-      return resolveGalleryStairOccurrence({});
-    case 'streamConstruction':
-      return resolveStreamConstruction({});
-    case 'riverConstruction':
-      return resolveRiverConstruction({});
-    case 'riverBoatBank':
-      return resolveRiverBoatBank({});
-    case 'chasmDepth':
-      return resolveChasmDepth({});
-    case 'chasmConstruction':
-      return resolveChasmConstruction({});
-    case 'jumpingPlaceWidth':
-      return resolveJumpingPlaceWidth({});
     case 'trickTrap':
       return resolveTrickTrap({});
     case 'illusionaryWallNature':
       return resolveIllusionaryWallNature({});
-    case 'numberOfExits': {
-      const context = readExitsContext(pending.context);
-      if (!context) return undefined;
-      return resolveNumberOfExits({
-        length: context.length,
-        width: context.width,
-        isRoom: context.isRoom,
-      });
-    }
-    case 'passageExitLocation': {
-      const context = readExitContext(pending.context);
-      if (!context) return undefined;
-      return resolvePassageExitLocation({ context });
-    }
-    case 'doorExitLocation': {
-      const context = readExitContext(pending.context);
-      if (!context) return undefined;
-      return resolveDoorExitLocation({ context });
-    }
-    case 'exitDirection': {
-      const context = readExitDirectionContext(pending.context);
-      if (!context) return undefined;
-      return resolveExitDirection({ context });
-    }
-    case 'exitAlternative': {
-      const exitType = readExitAlternativeContext(pending.context);
-      return resolveExitAlternative({
-        context: { exitType: exitType ?? undefined },
-      });
-    }
     case 'monsterLevel': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterLevel({ dungeonLevel });
@@ -1438,27 +1313,6 @@ function matchesTarget(nodeId: string | undefined, targetId: string): boolean {
   return !!nodeId && nodeId === targetId;
 }
 
-export function parseDoorChainSequence(
-  table: string,
-  fallback: number
-): number {
-  const parts = table.split(':');
-  if (parts.length >= 2) {
-    const seq = Number(parts[1]);
-    if (Number.isInteger(seq)) return seq;
-  }
-  return fallback;
-}
-
-function parseEgressWhich(table: string): 'one' | 'two' | 'three' {
-  const parts = table.split(':');
-  if (parts.length >= 2) {
-    const key = parts[1] as 'one' | 'two' | 'three';
-    if (key === 'one' || key === 'two' || key === 'three') return key;
-  }
-  return 'one';
-}
-
 export function readExitsContext(
   context: unknown
 ): { length: number; width: number; isRoom: boolean } | undefined {
@@ -1474,23 +1328,16 @@ export function readExitsContext(
   return { length, width, isRoom };
 }
 
-function readExitContext(
-  context: unknown
-): { index: number; total: number; origin: 'room' | 'chamber' } | undefined {
-  if (!isTableContext(context)) return undefined;
-  if (context.kind !== 'exit') return undefined;
-  const index =
-    typeof context.index === 'number' && Number.isInteger(context.index)
-      ? context.index
-      : undefined;
-  const total =
-    typeof context.total === 'number' && Number.isInteger(context.total)
-      ? context.total
-      : undefined;
-  const origin = context.origin;
-  if (index === undefined || total === undefined) return undefined;
-  if (origin !== 'room' && origin !== 'chamber') return undefined;
-  return { index, total, origin };
+export function parseDoorChainSequence(
+  table: string,
+  fallback: number
+): number {
+  const parts = table.split(':');
+  if (parts.length >= 2) {
+    const seq = Number(parts[1]);
+    if (Number.isInteger(seq)) return seq;
+  }
+  return fallback;
 }
 
 function readUnusualSizeContext(
@@ -1505,35 +1352,6 @@ function readUnusualSizeContext(
       ? context.isRoom
       : undefined;
   return { extra, isRoom };
-}
-
-function readExitDirectionContext(
-  context: unknown
-): { index: number; total: number; origin: 'room' | 'chamber' } | undefined {
-  if (!isTableContext(context)) return undefined;
-  if (context.kind !== 'exitDirection') return undefined;
-  const index =
-    typeof context.index === 'number' && Number.isInteger(context.index)
-      ? context.index
-      : undefined;
-  const total =
-    typeof context.total === 'number' && Number.isInteger(context.total)
-      ? context.total
-      : undefined;
-  const origin = context.origin;
-  if (index === undefined || total === undefined) return undefined;
-  if (origin !== 'room' && origin !== 'chamber') return undefined;
-  return { index, total, origin };
-}
-
-function readExitAlternativeContext(
-  context: unknown
-): 'door' | 'passage' | null {
-  if (!isTableContext(context)) return null;
-  if (context.kind !== 'exitAlternative') return null;
-  return context.exitType === 'door' || context.exitType === 'passage'
-    ? context.exitType
-    : null;
 }
 
 function readTreasureMagicContext(
