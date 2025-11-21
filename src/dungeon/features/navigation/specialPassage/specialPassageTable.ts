@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum SpecialPassage {
   FortyFeetColumns,
@@ -11,6 +11,7 @@ export enum SpecialPassage {
   SixtyFootRiver,
   TwentyFootChasm,
 }
+
 export const specialPassage: Table<SpecialPassage> = {
   sides: 20,
   entries: [

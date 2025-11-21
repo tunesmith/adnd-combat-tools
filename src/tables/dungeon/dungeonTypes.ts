@@ -5,7 +5,7 @@ import type {
   RiverConstruction,
   SpecialPassage,
   StreamConstruction,
-} from './specialPassage';
+} from '../../dungeon/features/navigation/specialPassage/specialPassageTable';
 import type {
   ChasmConstruction,
   ChasmDepth,

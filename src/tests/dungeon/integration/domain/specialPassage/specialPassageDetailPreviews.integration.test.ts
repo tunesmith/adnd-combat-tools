@@ -1,8 +1,8 @@
 import {
   SpecialPassage,
   specialPassage,
-} from '../../../../../tables/dungeon/specialPassage';
-import { resolveSpecialPassage } from '../../../../../dungeon/domain/resolvers';
+} from '../../../../../dungeon/features/navigation/specialPassage/specialPassageTable';
+import { resolveSpecialPassage } from '../../../../../dungeon/features/navigation/specialPassage/specialPassageResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
 import type { DungeonTablePreview } from '../../../../../types/dungeon';

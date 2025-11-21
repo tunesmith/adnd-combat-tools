@@ -2,8 +2,8 @@ import { renderDetailTree } from '../../../../dungeon/adapters/render';
 import {
   resolveDoorLocation,
   resolvePassageWidth,
-  resolveSpecialPassage,
 } from '../../../../dungeon/domain/resolvers';
+import { resolveSpecialPassage } from '../../../../dungeon/features/navigation/specialPassage/specialPassageResolvers';
 import {
   applyResolvedOutcome,
   countPendingNodes,

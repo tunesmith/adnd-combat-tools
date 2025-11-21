@@ -1,5 +1,5 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   specialPassage as specialPassageTable,
   galleryStairLocation as galleryStairLocationTable,
@@ -13,18 +13,18 @@ import {
   RiverConstruction,
   RiverBoatBank,
   GalleryStairOccurrence,
-} from '../../../tables/dungeon/specialPassage';
+} from './specialPassageTable';
 import {
   findChildEvent,
   buildPreview,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 import {
   formatChasmDepth,
   formatChasmConstruction,
   formatJumpingPlaceWidth,
-} from '../../features/navigation/chasm/chasmRender';
+} from '../chasm/chasmRender';
 
 export function renderSpecialPassageDetail(
   outcome: OutcomeEventNode,

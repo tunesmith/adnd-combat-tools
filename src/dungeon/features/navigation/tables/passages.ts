@@ -4,36 +4,8 @@ import {
   renderPassageWidthCompactNodes,
   buildPassageWidthPreview,
 } from '../../../adapters/render/passageWidth';
-import {
-  renderSpecialPassageDetail,
-  renderSpecialPassageCompactNodes,
-  renderGalleryStairLocationDetail,
-  renderGalleryStairLocationCompact,
-  renderGalleryStairOccurrenceDetail,
-  renderGalleryStairOccurrenceCompact,
-  renderRiverConstructionDetail,
-  renderRiverConstructionCompact,
-  buildSpecialPassagePreview,
-  buildGalleryStairLocationPreview,
-  buildGalleryStairOccurrencePreview,
-  buildStreamConstructionPreview,
-  buildRiverConstructionPreview,
-  buildRiverBoatBankPreview,
-} from '../../../adapters/render/specialPassage';
-import {
-  resolveGalleryStairLocation,
-  resolveGalleryStairOccurrence,
-  resolveSpecialPassage,
-  resolveStreamConstruction,
-  resolveRiverConstruction,
-  resolveRiverBoatBank,
-  resolvePassageWidth,
-} from '../../../domain/resolvers';
-import { NO_COMPACT_RENDER, wrapResolver, withoutAppend } from '../shared';
-import {
-  GalleryStairLocation,
-  RiverConstruction,
-} from '../../../../tables/dungeon/specialPassage';
+import { resolvePassageWidth } from '../../../domain/resolvers';
+import { wrapResolver, withoutAppend } from '../shared';
 
 export const passageTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -46,93 +18,5 @@ export const passageTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     buildPreview: buildPassageWidthPreview,
     resolvePending: () => resolvePassageWidth({}),
-  },
-  {
-    id: 'specialPassage',
-    heading: 'Special Passage',
-    resolver: wrapResolver(resolveSpecialPassage),
-    renderers: {
-      renderDetail: renderSpecialPassageDetail,
-      renderCompact: withoutAppend(renderSpecialPassageCompactNodes),
-    },
-    buildPreview: buildSpecialPassagePreview,
-    resolvePending: () => resolveSpecialPassage({}),
-  },
-  {
-    id: 'galleryStairLocation',
-    heading: 'Gallery Stair Location',
-    resolver: wrapResolver(resolveGalleryStairLocation),
-    renderers: {
-      renderDetail: renderGalleryStairLocationDetail,
-      renderCompact: renderGalleryStairLocationCompact,
-    },
-    buildPreview: buildGalleryStairLocationPreview,
-    resolvePending: () => resolveGalleryStairLocation({}),
-    postProcessChildren: (node, children, resolveNode) => {
-      const result = (node.event as { result?: unknown }).result;
-      if (
-        result === GalleryStairLocation.PassageEnd &&
-        !children.some((c) => c.event.kind === 'galleryStairOccurrence')
-      ) {
-        const occurrence = resolveNode(resolveGalleryStairOccurrence({}));
-        if (occurrence) return [...children, occurrence];
-      }
-      return children;
-    },
-  },
-  {
-    id: 'galleryStairOccurrence',
-    heading: 'Gallery Stair Occurrence',
-    resolver: wrapResolver(resolveGalleryStairOccurrence),
-    renderers: {
-      renderDetail: renderGalleryStairOccurrenceDetail,
-      renderCompact: withoutAppend(renderGalleryStairOccurrenceCompact),
-    },
-    buildPreview: buildGalleryStairOccurrencePreview,
-    resolvePending: () => resolveGalleryStairOccurrence({}),
-  },
-  {
-    id: 'streamConstruction',
-    heading: 'Stream Construction',
-    resolver: wrapResolver(resolveStreamConstruction),
-    renderers: {
-      renderDetail: (_node, _append) => [],
-      renderCompact: NO_COMPACT_RENDER,
-    },
-    buildPreview: buildStreamConstructionPreview,
-    resolvePending: () => resolveStreamConstruction({}),
-  },
-  {
-    id: 'riverConstruction',
-    heading: 'River Construction',
-    resolver: wrapResolver(resolveRiverConstruction),
-    renderers: {
-      renderDetail: renderRiverConstructionDetail,
-      renderCompact: renderRiverConstructionCompact,
-    },
-    buildPreview: buildRiverConstructionPreview,
-    resolvePending: () => resolveRiverConstruction({}),
-    postProcessChildren: (node, children, resolveNode) => {
-      const result = (node.event as { result?: unknown }).result;
-      if (
-        result === RiverConstruction.Boat &&
-        !children.some((c) => c.event.kind === 'riverBoatBank')
-      ) {
-        const bank = resolveNode(resolveRiverBoatBank({}));
-        if (bank) return [...children, bank];
-      }
-      return children;
-    },
-  },
-  {
-    id: 'riverBoatBank',
-    heading: 'Boat Bank',
-    resolver: wrapResolver(resolveRiverBoatBank),
-    renderers: {
-      renderDetail: (_node, _append) => [],
-      renderCompact: NO_COMPACT_RENDER,
-    },
-    buildPreview: buildRiverBoatBankPreview,
-    resolvePending: () => resolveRiverBoatBank({}),
   },
 ];

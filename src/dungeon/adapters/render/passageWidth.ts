@@ -6,7 +6,7 @@ import {
 } from '../../../tables/dungeon/passageWidth';
 import { findChildEvent, type AppendPreviewFn } from './shared';
 import { buildPreview, type TablePreviewFactory } from './shared';
-import { renderSpecialPassageCompact } from './specialPassage';
+import { renderSpecialPassageCompact } from '../../features/navigation/specialPassage/specialPassageRender';
 
 export function renderPassageWidthDetail(
   outcome: OutcomeEventNode,

@@ -3,7 +3,7 @@ import type { DoorBeyond } from '../../tables/dungeon/doorBeyond';
 import type { SidePassages } from '../features/navigation/sidePassage/sidePassageTable';
 import type { PassageTurns } from '../features/navigation/passageTurn/passageTurnTable';
 import type { Stairs, Egress } from '../../tables/dungeon/stairs';
-import type { SpecialPassage } from '../../tables/dungeon/specialPassage';
+import type { SpecialPassage } from '../features/navigation/specialPassage/specialPassageTable';
 import type { PassageWidth } from '../../tables/dungeon/passageWidth';
 import type {
   RoomDimensions,
@@ -23,7 +23,7 @@ import type {
   StreamConstruction,
   RiverConstruction,
   RiverBoatBank,
-} from '../../tables/dungeon/specialPassage';
+} from '../features/navigation/specialPassage/specialPassageTable';
 import type {
   ChasmDepth,
   ChasmConstruction,
