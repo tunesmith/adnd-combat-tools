@@ -56,6 +56,21 @@ jest.mock('../../../../dungeon/services/adapters', () => {
 
 import DungeonIndexPage from '../../../../pages/dungeon';
 
+let container: HTMLDivElement | null = null;
+
+afterEach(() => {
+  if (!container) return;
+  const target = container;
+  act(() => {
+    ReactDOM.unmountComponentAtNode(target);
+  });
+  if (target.parentNode) {
+    target.parentNode.removeChild(target);
+  }
+  container = null;
+  document.body.innerHTML = '';
+});
+
 function findLabel(
   text: string,
   root: ParentNode = document
@@ -108,11 +123,11 @@ function requireElement<T>(value: T | null | undefined, message: string): T {
 
 describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
   it('collapses Door Location preview after submitting override 13', async () => {
-    const container = document.createElement('div');
+    container = document.createElement('div');
     document.body.appendChild(container);
 
     await act(async () => {
-      ReactDOM.render(<DungeonIndexPage />, container);
+      ReactDOM.render(<DungeonIndexPage />, container as HTMLDivElement);
     });
 
     // Enable Detail mode
@@ -211,19 +226,14 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     // Entries should be hidden (not present)
     const entryLeft = (previewBlockAfter.textContent ?? '').includes('1–6');
     expect(entryLeft).toBe(false);
-
-    await act(async () => {
-      ReactDOM.unmountComponentAtNode(container);
-    });
-    container.remove();
   });
 
   it('keeps Door Continuation preview expanded after submitting override 3 (current bug reproduction)', async () => {
-    const container = document.createElement('div');
+    container = document.createElement('div');
     document.body.appendChild(container);
 
     await act(async () => {
-      ReactDOM.render(<DungeonIndexPage />, container);
+      ReactDOM.render(<DungeonIndexPage />, container as HTMLDivElement);
     });
 
     const detailLabel = requireElement(
@@ -353,10 +363,5 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       '3–5'
     );
     expect(entryDoor).toBe(false);
-
-    await act(async () => {
-      ReactDOM.unmountComponentAtNode(container);
-    });
-    container.remove();
   });
 });

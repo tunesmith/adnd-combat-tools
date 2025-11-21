@@ -51,6 +51,9 @@ export const createCharacters = (
   const counts: Record<CharacterClass, number> = Object.fromEntries(
     Object.values(CharacterClass).map((c) => [c, 0])
   ) as Record<CharacterClass, number>;
+  // Avoid runaway attempts when stubs or extreme filters make generation impossible.
+  const maxAttempts = Math.max(charactersCount * 200, 1000);
+  let attempts = 0;
 
   // Initialize counts with counts from existing party
   existingParty.forEach((characterSheet) => {
@@ -68,6 +71,11 @@ export const createCharacters = (
   const newMembers: CharacterSheet[] = [];
 
   while (newMembers.length < charactersCount) {
+    attempts++;
+    if (attempts > maxAttempts) {
+      break;
+    }
+
     const characterRace = getCharacterRace();
     if (!isCompatibleRace(characterRace, [...newMembers, ...existingParty])) {
       continue; // skip if race is incompatible with who is already in the party

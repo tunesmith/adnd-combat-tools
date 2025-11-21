@@ -11,6 +11,7 @@ import { CharacterRace } from '../../../../../tables/dungeon/monster/character/c
 import { Gender } from '../../../../../dungeon/models/character/gender';
 import { Attribute } from '../../../../../dungeon/models/attributes';
 import { Alignment } from '../../../../../dungeon/models/allowedAlignmentsByClass';
+import * as getCharacterRaceModule from '../../../../../dungeon/helpers/character/getCharacterRace';
 
 const baseBardLevels = {
   [CharacterClass.Fighter]: 0,
@@ -47,6 +48,7 @@ function buildCharacter(
 describe('party alignment integration', () => {
   afterEach(() => {
     jest.restoreAllMocks();
+    jest.resetAllMocks();
   });
 
   test("doesn't admit Paladin into non-Good party via createCharacters", () => {
@@ -56,18 +58,29 @@ describe('party alignment integration', () => {
 
     // Force single-class generation path
     jest.spyOn(getNumClassesModule, 'getNumberOfClasses').mockReturnValue(1);
-    // Force candidate to be a Paladin (LG)
+    // Consistent race to avoid race compatibility flakiness
+    jest
+      .spyOn(getCharacterRaceModule, 'getCharacterRace')
+      .mockReturnValue(CharacterRace.Human);
+    // First candidate is a Paladin (should be rejected), second is a compatible Fighter (accepted)
     jest
       .spyOn(getSingleModule, 'getSingleClassCharacterForRace')
-      .mockImplementation(() =>
+      .mockImplementationOnce(() =>
         buildCharacter([CharacterClass.Paladin], Alignment.LawfulGood)
+      )
+      .mockImplementationOnce(() =>
+        buildCharacter([CharacterClass.Fighter], Alignment.ChaoticNeutral)
       );
 
     const generated = createCharacters(1, 4, existingParty);
-    expect(generated).toHaveLength(0); // rejected by party "others" alignment rule
+    expect(generated).toHaveLength(1);
+    expect(generated[0]?.professions[0]?.characterClass).toBe(
+      CharacterClass.Fighter
+    );
   });
 
   test("followers respect Paladin's party alignment constraints", () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const paladinLeader = buildCharacter(
       [CharacterClass.Paladin],
       Alignment.LawfulGood
