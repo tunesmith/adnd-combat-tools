@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum SidePassages {
   Left90,
@@ -14,6 +14,7 @@ export enum SidePassages {
   FourWay,
   PassageX,
 }
+
 export const sidePassages: Table<SidePassages> = {
   sides: 20,
   entries: [

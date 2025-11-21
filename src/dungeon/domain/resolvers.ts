@@ -13,7 +13,6 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from './outcome';
-import { sidePassages } from '../../tables/dungeon/sidePassages';
 import { passageTurns } from '../../tables/dungeon/passageTurns';
 import {
   stairs,
@@ -737,23 +736,6 @@ export function resolvePeriodicDoorOnly(options?: {
     },
     children: children.length ? children : undefined,
   };
-}
-
-export function resolveSidePassages(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  /**
-   * We do *not* check passage width for side passages, as the "periodic check"
-   * table specifically calls out passage width for "passage turns" but not for
-   * side passages.
-   */
-  const usedRoll = options?.roll ?? rollDice(sidePassages.sides);
-  const command = getTableEntry(usedRoll, sidePassages);
-  const event: OutcomeEvent = {
-    kind: 'sidePassages',
-    result: command,
-  } as OutcomeEvent;
-  return { type: 'event', roll: usedRoll, event };
 }
 
 export function resolvePassageTurns(options?: {

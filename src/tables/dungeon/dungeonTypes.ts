@@ -12,7 +12,7 @@ import type {
   JumpingPlaceWidth,
 } from '../../dungeon/features/navigation/chasm/chasmTable';
 import type { PassageWidth } from './passageWidth';
-import type { SidePassages } from './sidePassages';
+import type { SidePassages } from '../../dungeon/features/navigation/sidePassage/sidePassageTable';
 import type { DoorBeyond } from './doorBeyond';
 import type { DoorLocation } from './doorLocation';
 import type { PeriodicCheck } from './periodicCheck';

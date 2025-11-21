@@ -10,7 +10,7 @@ import { TrickTrap } from '../../../tables/dungeon/trickTrap';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { buildPreview, findChildEvent } from './shared';
 import { renderDoorChainCompact } from './doorLocation';
-import { describeSidePassage } from './sidePassage';
+import { describeSidePassage } from '../../features/navigation/sidePassage/sidePassageRender';
 import { renderPassageTurnCompact } from './passageTurns';
 import { describeChamberDimensions } from './chamberDimensions';
 import { renderStairsCompact } from './stairs';

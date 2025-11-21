@@ -7,6 +7,7 @@ import {
   createRenderAdapterMap,
 } from '../types';
 import { entryTables } from './tables/entry';
+import { sidePassageTables } from './sidePassage/manifest';
 import { passageTables } from './tables/passages';
 import { chasmTables } from './chasm/manifest';
 import { gasTrapTables } from './gasTrap/manifest';
@@ -20,6 +21,7 @@ const defineNavigationTables = <
 
 const navigationDefinitions = defineNavigationTables([
   ...entryTables,
+  ...sidePassageTables,
   ...passageTables,
   ...chasmTables,
   ...gasTrapTables,

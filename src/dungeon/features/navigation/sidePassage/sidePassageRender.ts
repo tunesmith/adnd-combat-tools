@@ -1,14 +1,11 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import {
-  sidePassages,
-  SidePassages,
-} from '../../../tables/dungeon/sidePassages';
+import type { DungeonRenderNode, DungeonMessage } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { sidePassages, SidePassages } from './sidePassageTable';
 import {
   buildPreview,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 export function renderSidePassagesDetail(
   outcome: OutcomeEventNode,

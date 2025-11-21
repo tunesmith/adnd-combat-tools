@@ -1,5 +1,5 @@
 import { toDetailRender } from '../../../../../dungeon/adapters/render';
-import { resolveSidePassages } from '../../../../../dungeon/domain/resolvers';
+import { resolveSidePassages } from '../../../../../dungeon/features/navigation/sidePassage/sidePassageResolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import { passageMessages } from '../../../../../dungeon/services/passageMessages';
 import {
