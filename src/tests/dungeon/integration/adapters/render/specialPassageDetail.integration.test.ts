@@ -4,9 +4,9 @@ import {
 } from '../../../../../dungeon/adapters/render';
 import {
   resolvePeriodicCheck,
-  resolvePassageTurns,
   resolvePassageWidth,
 } from '../../../../../dungeon/domain/resolvers';
+import { resolvePassageTurns } from '../../../../../dungeon/features/navigation/passageTurn/passageTurnResolvers';
 import {
   applyToPending,
   isParagraphNode,

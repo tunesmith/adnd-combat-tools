@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum PassageTurns {
   Left90,
@@ -8,6 +8,7 @@ export enum PassageTurns {
   Right45,
   Right135,
 }
+
 export const passageTurns: Table<PassageTurns> = {
   sides: 20,
   entries: [

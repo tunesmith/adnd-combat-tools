@@ -16,7 +16,7 @@ import type { SidePassages } from '../../dungeon/features/navigation/sidePassage
 import type { DoorBeyond } from './doorBeyond';
 import type { DoorLocation } from './doorLocation';
 import type { PeriodicCheck } from './periodicCheck';
-import type { PassageTurns } from './passageTurns';
+import type { PassageTurns } from '../../dungeon/features/navigation/passageTurn/passageTurnTable';
 import type { ChamberDimensions, RoomDimensions } from './chambersRooms';
 import type { CircularContents, UnusualShape } from './unusualShape';
 import type { UnusualSize } from './unusualSize';

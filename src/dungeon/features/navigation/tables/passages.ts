@@ -1,10 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
 import {
-  renderPassageTurnsDetail,
-  renderPassageTurnsCompactNodes,
-  buildPassageTurnPreview,
-} from '../../../adapters/render/passageTurns';
-import {
   renderPassageWidthDetail,
   renderPassageWidthCompactNodes,
   buildPassageWidthPreview,
@@ -32,7 +27,6 @@ import {
   resolveStreamConstruction,
   resolveRiverConstruction,
   resolveRiverBoatBank,
-  resolvePassageTurns,
   resolvePassageWidth,
 } from '../../../domain/resolvers';
 import { NO_COMPACT_RENDER, wrapResolver, withoutAppend } from '../shared';
@@ -42,17 +36,6 @@ import {
 } from '../../../../tables/dungeon/specialPassage';
 
 export const passageTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
-    id: 'passageTurns',
-    heading: 'Passage Turns',
-    resolver: wrapResolver(resolvePassageTurns),
-    renderers: {
-      renderDetail: renderPassageTurnsDetail,
-      renderCompact: withoutAppend(renderPassageTurnsCompactNodes),
-    },
-    buildPreview: buildPassageTurnPreview,
-    resolvePending: () => resolvePassageTurns({}),
-  },
   {
     id: 'passageWidth',
     heading: 'Passage Width',

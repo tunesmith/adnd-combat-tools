@@ -1,12 +1,16 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { passageTurns, PassageTurns } from './passageTurnTable';
 import {
-  passageTurns,
-  PassageTurns,
-} from '../../../tables/dungeon/passageTurns';
-import { findChildEvent, type AppendPreviewFn } from './shared';
-import { buildPreview, type TablePreviewFactory } from './shared';
-import { renderPassageWidthCompact } from './passageWidth';
+  findChildEvent,
+  buildPreview,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
+import { renderPassageWidthCompact } from '../../../adapters/render/passageWidth';
 
 export function renderPassageTurnsDetail(
   outcome: OutcomeEventNode,

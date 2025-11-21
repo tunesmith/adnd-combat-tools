@@ -13,7 +13,6 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from './outcome';
-import { passageTurns } from '../../tables/dungeon/passageTurns';
 import {
   stairs,
   Stairs,
@@ -736,23 +735,6 @@ export function resolvePeriodicDoorOnly(options?: {
     },
     children: children.length ? children : undefined,
   };
-}
-
-export function resolvePassageTurns(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(passageTurns.sides);
-  const command = getTableEntry(usedRoll, passageTurns);
-  const event: OutcomeEvent = {
-    kind: 'passageTurns',
-    result: command,
-  } as OutcomeEvent;
-  // After a turn the generator always stages passage width so both modes can
-  // reuse the same outcome tree and render consistent previews.
-  const children: DungeonOutcomeNode[] = [
-    { type: 'pending-roll', table: 'passageWidth' },
-  ];
-  return { type: 'event', roll: usedRoll, event, children };
 }
 
 export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {

@@ -1,8 +1,6 @@
 import { toDetailRender } from '../../../../../dungeon/adapters/render';
-import {
-  resolvePassageTurns,
-  resolvePassageWidth,
-} from '../../../../../dungeon/domain/resolvers';
+import { resolvePassageWidth } from '../../../../../dungeon/domain/resolvers';
+import { resolvePassageTurns } from '../../../../../dungeon/features/navigation/passageTurn/passageTurnResolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import { passageMessages } from '../../../../../dungeon/services/passageMessages';
 import {
