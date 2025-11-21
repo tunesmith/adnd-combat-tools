@@ -1,13 +1,13 @@
 import type { DungeonTableDefinition } from '../../types';
 import {
-  renderGasTrapEffectDetail,
   renderGasTrapEffectCompact,
+  renderGasTrapEffectDetail,
   buildGasTrapEffectPreview,
-} from '../../../adapters/render/gasTrapEffect';
-import { resolveGasTrapEffect } from '../../../domain/resolvers';
+} from './gasTrapRender';
+import { resolveGasTrapEffect } from './gasTrapResolvers';
 import { wrapResolver } from '../shared';
 
-export const hazardTables: ReadonlyArray<DungeonTableDefinition> = [
+export const gasTrapTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'gasTrapEffect',
     heading: 'Gas Effect',

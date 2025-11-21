@@ -1,14 +1,11 @@
-import type { OutcomeEventNode } from '../../domain/outcome';
-import type { DungeonRenderNode } from '../../../types/dungeon';
-import {
-  gasTrapEffect,
-  GasTrapEffect,
-} from '../../../tables/dungeon/gasTrapEffect';
+import type { DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { gasTrapEffect, GasTrapEffect } from './gasTrapTable';
 import {
   buildPreview,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 export function renderGasTrapEffectDetail(
   outcome: OutcomeEventNode,

@@ -6,8 +6,8 @@ import {
   resolvePeriodicDoorOnly,
   resolveTrickTrap,
   resolveIllusionaryWallNature,
-  resolveGasTrapEffect,
 } from '../../../../../dungeon/domain/resolvers';
+import { resolveGasTrapEffect } from '../../../../../dungeon/features/navigation/gasTrap/gasTrapResolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import { ChamberRoomContents } from '../../../../../tables/dungeon/chamberRoomContents';

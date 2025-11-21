@@ -118,13 +118,13 @@ import {
   resolveTreasureCrystalBall,
   resolveTreasureMiscMagicE1,
   resolveTreasureStaffSerpent,
-  resolveGasTrapEffect,
   resolveRoomDimensions,
 } from '../domain/resolvers';
 import {
   NAVIGATION_CHILD_POST_PROCESSORS,
   NAVIGATION_PENDING_RESOLVERS,
 } from '../features/navigation/bundle';
+import { resolveGasTrapEffect } from '../features/navigation/gasTrap/gasTrapResolvers';
 import type { TableContext } from '../../types/dungeon';
 import { DoorLocation } from '../../tables/dungeon/doorLocation';
 import { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';

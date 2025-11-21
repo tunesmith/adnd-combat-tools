@@ -56,7 +56,6 @@ import {
   exitLocation,
 } from '../../tables/dungeon/exitLocation';
 import { exitDirection } from '../../tables/dungeon/exitDirection';
-import { gasTrapEffect } from '../../tables/dungeon/gasTrapEffect';
 import { passageWidth, PassageWidth } from '../../tables/dungeon/passageWidth';
 import {
   roomDimensions,
@@ -5563,20 +5562,6 @@ export function resolveExitAlternative(options?: {
       result: command,
       exitType: options?.context?.exitType,
     } as OutcomeEvent,
-  };
-}
-
-export function resolveGasTrapEffect(options?: {
-  roll?: number;
-  takeOverride?: (tableId: string) => number | undefined;
-}): DungeonOutcomeNode {
-  const overridden = options?.takeOverride?.('gasTrapEffect');
-  const usedRoll = overridden ?? options?.roll ?? rollDice(gasTrapEffect.sides);
-  const command = getTableEntry(usedRoll, gasTrapEffect);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: { kind: 'gasTrapEffect', result: command } as OutcomeEvent,
   };
 }
 
