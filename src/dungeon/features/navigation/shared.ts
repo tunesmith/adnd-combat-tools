@@ -11,9 +11,14 @@ export const NO_COMPACT_RENDER: CompactRenderer = (_node, _append) => [];
 
 export const withoutAppend =
   (
-    renderer: (node: Parameters<DetailRenderer>[0]) => ReturnType<DetailRenderer>
+    renderer: (
+      node: Parameters<DetailRenderer>[0]
+    ) => ReturnType<DetailRenderer>
   ) =>
-  (node: Parameters<DetailRenderer>[0], _append: Parameters<DetailRenderer>[1]) =>
+  (
+    node: Parameters<DetailRenderer>[0],
+    _append: Parameters<DetailRenderer>[1]
+  ) =>
     renderer(node);
 
 export const wrapResolver =
@@ -42,7 +47,10 @@ export const collectDoorChainExisting = (
   return existing;
 };
 
-export const parseDoorChainSequence = (table: string, fallback: number): number => {
+export const parseDoorChainSequence = (
+  table: string,
+  fallback: number
+): number => {
   const parts = table.split(':');
   const seq = Number(parts[1]);
   return Number.isFinite(seq) ? seq : fallback;

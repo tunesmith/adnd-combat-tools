@@ -1,5 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import type { DoorChainLaterality, DungeonOutcomeNode, OutcomeEventNode } from '../../../domain/outcome';
+import type {
+  DoorChainLaterality,
+  DungeonOutcomeNode,
+  OutcomeEventNode,
+} from '../../../domain/outcome';
 import type { TableContext } from '../../../../types/dungeon';
 import {
   renderPeriodicCheckDetail,
@@ -43,7 +47,9 @@ const resolvePendingNavigationEntry = (
   switch (base) {
     case 'roomDimensions': {
       const level =
-        context && (context as { kind?: string; level?: number }).kind === 'chamberDimensions' &&
+        context &&
+        (context as { kind?: string; level?: number }).kind ===
+          'chamberDimensions' &&
         typeof (context as { level?: number }).level === 'number'
           ? (context as { level?: number }).level
           : 1;
@@ -77,7 +83,8 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     registry: ({ roll, context }) => {
       const c = (context || {}) as { kind?: string; level?: number };
-      const level = c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
+      const level =
+        c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
       return resolvePeriodicCheck({ roll, level });
     },
   },
@@ -92,11 +99,16 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildPeriodicDoorOnlyPreview,
     registry: ({ roll, doorChain, id }) => {
       const existing = (doorChain?.existing as DoorChainLaterality[]) ?? [];
-      const sequence = doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
+      const sequence =
+        doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
       return resolvePeriodicDoorOnly({ roll, existing, sequence });
     },
     resolvePending: (pending, ancestors) =>
-      resolvePendingNavigationEntry(pending.table, pending.context as TableContext | undefined, ancestors),
+      resolvePendingNavigationEntry(
+        pending.table,
+        pending.context as TableContext | undefined,
+        ancestors
+      ),
   },
   {
     id: 'doorLocation',
@@ -109,11 +121,16 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildDoorLocationPreview,
     registry: ({ roll, doorChain, id }) => {
       const existing = (doorChain?.existing as DoorChainLaterality[]) ?? [];
-      const sequence = doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
+      const sequence =
+        doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
       return resolveDoorLocation({ roll, existing, sequence });
     },
     resolvePending: (pending, ancestors) =>
-      resolvePendingNavigationEntry(pending.table, pending.context as TableContext | undefined, ancestors),
+      resolvePendingNavigationEntry(
+        pending.table,
+        pending.context as TableContext | undefined,
+        ancestors
+      ),
   },
   {
     id: 'doorBeyond',
@@ -134,6 +151,10 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     buildPreview: buildWanderingWhereFromPreview,
     resolvePending: (pending, ancestors) =>
-      resolvePendingNavigationEntry(pending.table, pending.context as TableContext | undefined, ancestors),
+      resolvePendingNavigationEntry(
+        pending.table,
+        pending.context as TableContext | undefined,
+        ancestors
+      ),
   },
 ];

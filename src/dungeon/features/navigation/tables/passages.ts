@@ -41,12 +41,11 @@ import {
   resolvePassageWidth,
   resolveSidePassages,
 } from '../../../domain/resolvers';
+import { NO_COMPACT_RENDER, wrapResolver, withoutAppend } from '../shared';
 import {
-  NO_COMPACT_RENDER,
-  wrapResolver,
-  withoutAppend,
-} from '../shared';
-import { GalleryStairLocation, RiverConstruction } from '../../../../tables/dungeon/specialPassage';
+  GalleryStairLocation,
+  RiverConstruction,
+} from '../../../../tables/dungeon/specialPassage';
 
 export const passageTables: ReadonlyArray<DungeonTableDefinition> = [
   {

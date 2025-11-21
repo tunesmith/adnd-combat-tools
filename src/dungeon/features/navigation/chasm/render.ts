@@ -1,5 +1,8 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   chasmConstruction as chasmConstructionTable,
   ChasmConstruction,
@@ -7,12 +10,12 @@ import {
   chasmDepth as chasmDepthTable,
   JumpingPlaceWidth,
   jumpingPlaceWidth as jumpingPlaceWidthTable,
-} from '../../../tables/dungeon/specialPassage';
+} from '../../../../tables/dungeon/chasm';
 import {
   type AppendPreviewFn,
   buildPreview,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 export function renderChasmDepthDetail(
   outcome: OutcomeEventNode,
@@ -39,14 +42,17 @@ export function renderChasmDepthDetail(
   return nodes;
 }
 
-export const buildChasmDepthPreview: TablePreviewFactory = (tableId) =>
+export const buildChasmDepthPreview: TablePreviewFactory = (tableId, context) =>
   buildPreview(tableId, {
     title: 'Chasm Depth',
     sides: chasmDepthTable.sides,
-    entries: chasmDepthTable.entries.map((entry) => ({
-      range: entry.range,
-      label: ChasmDepth[entry.command] ?? String(entry.command),
-    })),
+    entries: chasmDepthTable.entries.map(
+      (entry): { range: number[]; label: string } => ({
+        range: entry.range,
+        label: ChasmDepth[entry.command] ?? String(entry.command),
+      })
+    ),
+    context,
   });
 
 export function formatChasmDepth(result: ChasmDepth): string {
@@ -93,14 +99,20 @@ export function renderChasmConstructionDetail(
   return nodes;
 }
 
-export const buildChasmConstructionPreview: TablePreviewFactory = (tableId) =>
+export const buildChasmConstructionPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Chasm Construction',
     sides: chasmConstructionTable.sides,
-    entries: chasmConstructionTable.entries.map((entry) => ({
-      range: entry.range,
-      label: ChasmConstruction[entry.command] ?? String(entry.command),
-    })),
+    entries: chasmConstructionTable.entries.map(
+      (entry): { range: number[]; label: string } => ({
+        range: entry.range,
+        label: ChasmConstruction[entry.command] ?? String(entry.command),
+      })
+    ),
+    context,
   });
 
 export function formatChasmConstruction(result: ChasmConstruction): string {
@@ -137,14 +149,20 @@ export function renderJumpingPlaceWidthDetail(
   return nodes;
 }
 
-export const buildJumpingPlaceWidthPreview: TablePreviewFactory = (tableId) =>
+export const buildJumpingPlaceWidthPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Jumping Place Width',
     sides: jumpingPlaceWidthTable.sides,
-    entries: jumpingPlaceWidthTable.entries.map((entry) => ({
-      range: entry.range,
-      label: JumpingPlaceWidth[entry.command] ?? String(entry.command),
-    })),
+    entries: jumpingPlaceWidthTable.entries.map(
+      (entry): { range: number[]; label: string } => ({
+        range: entry.range,
+        label: JumpingPlaceWidth[entry.command] ?? String(entry.command),
+      })
+    ),
+    context,
   });
 
 export function formatJumpingPlaceWidth(result: JumpingPlaceWidth): string {

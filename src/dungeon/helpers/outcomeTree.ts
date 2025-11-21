@@ -707,7 +707,8 @@ function resolvePendingNode(
   pending: PendingRoll,
   ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined {
-  const navResolve = NAVIGATION_PENDING_RESOLVERS[pending.table.split(':')[0] ?? ''];
+  const navResolve =
+    NAVIGATION_PENDING_RESOLVERS[pending.table.split(':')[0] ?? ''];
   if (navResolve) {
     const resolved = navResolve(pending, ancestors);
     if (resolved) return resolved;
@@ -715,7 +716,9 @@ function resolvePendingNode(
   const base = pending.table.split(':')[0] ?? '';
   switch (base) {
     case 'roomDimensions': {
-      const ctx = pending.context as { kind?: unknown; level?: unknown } | undefined;
+      const ctx = pending.context as
+        | { kind?: unknown; level?: unknown }
+        | undefined;
       const level =
         ctx && ctx.kind === 'chamberDimensions' && typeof ctx.level === 'number'
           ? ctx.level

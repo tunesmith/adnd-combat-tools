@@ -166,12 +166,10 @@ export type RegistryResolver = (opts: {
 
 const NAVIGATION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
   Object.fromEntries(
-    Object.entries(NAVIGATION_REGISTRY_OUTCOMES).map(
-      ([id, buildOutcome]) => [
-        id,
-        (opts) => fromOutcome(buildOutcome(opts)),
-      ]
-    )
+    Object.entries(NAVIGATION_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
+      id,
+      (opts) => fromOutcome(buildOutcome(opts)),
+    ])
   );
 
 export type TableId = NavigationTableId | BaseTableId;

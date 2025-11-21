@@ -23,10 +23,12 @@ import type {
   StreamConstruction,
   RiverConstruction,
   RiverBoatBank,
+} from '../../tables/dungeon/specialPassage';
+import type {
   ChasmDepth,
   ChasmConstruction,
   JumpingPlaceWidth,
-} from '../../tables/dungeon/specialPassage';
+} from '../../tables/dungeon/chasm';
 import type { Pool } from '../../tables/dungeon/pool';
 import type {
   MagicPool,

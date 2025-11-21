@@ -24,7 +24,7 @@ import {
   formatChasmDepth,
   formatChasmConstruction,
   formatJumpingPlaceWidth,
-} from './chasm';
+} from '../../features/navigation/chasm/render';
 
 export function renderSpecialPassageDetail(
   outcome: OutcomeEventNode,

@@ -1,14 +1,12 @@
 import type {
-  ChasmConstruction,
-  ChasmDepth,
   GalleryStairLocation,
   GalleryStairOccurrence,
-  JumpingPlaceWidth,
   RiverBoatBank,
   RiverConstruction,
   SpecialPassage,
   StreamConstruction,
 } from './specialPassage';
+import type { ChasmConstruction, ChasmDepth, JumpingPlaceWidth } from './chasm';
 import type { PassageWidth } from './passageWidth';
 import type { SidePassages } from './sidePassages';
 import type { DoorBeyond } from './doorBeyond';

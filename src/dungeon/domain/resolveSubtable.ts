@@ -2,7 +2,10 @@ import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import type { Command, Table } from '../../tables/dungeon/dungeonTypes';
 import type { DungeonOutcomeNode, OutcomeEvent } from './outcome';
 
-type ResolveSubtableArgs<TCommand extends Command, TEvent extends OutcomeEvent> = {
+type ResolveSubtableArgs<
+  TCommand extends Command,
+  TEvent extends OutcomeEvent
+> = {
   table: Table<TCommand>;
   roll?: number;
   buildEvent: (command: TCommand, roll: number) => TEvent;
@@ -28,4 +31,3 @@ export function resolveSubtable<
     children: children && children.length ? children : undefined,
   };
 }
-

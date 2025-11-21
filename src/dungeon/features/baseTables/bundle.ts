@@ -57,7 +57,7 @@ export const BASE_TABLE_ID_LIST = [
   'treasureBagOfHolding',
   'treasureBagOfTricks',
   'treasureBracersOfDefense',
-  "treasureBucknardsEverfullPurse",
+  'treasureBucknardsEverfullPurse',
   'treasureArtifactOrRelic',
   'treasureMiscMagicE2',
   'treasureMiscMagicE3',
@@ -115,7 +115,7 @@ export const BASE_TABLE_ID_LIST = [
   'transporterLocation',
 ] as const;
 
-export type BaseTableId = (typeof BASE_TABLE_ID_LIST)[number];
+export type BaseTableId = typeof BASE_TABLE_ID_LIST[number];
 
 export const BASE_TABLE_HEADINGS: Record<BaseTableId, string> = {
   monsterLevel: 'Monster Level',

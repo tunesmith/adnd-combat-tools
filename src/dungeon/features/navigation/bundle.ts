@@ -8,7 +8,7 @@ import {
 } from '.';
 
 export type NavigationTableId =
-  (typeof NAVIGATION_TABLE_DEFINITIONS)[number]['id'];
+  typeof NAVIGATION_TABLE_DEFINITIONS[number]['id'];
 
 export const NAVIGATION_TABLE_ID_LIST: ReadonlyArray<NavigationTableId> =
   NAVIGATION_TABLE_DEFINITIONS.map((def) => def.id);

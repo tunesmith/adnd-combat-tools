@@ -1,10 +1,17 @@
-import type { DungeonRenderNode, DungeonTablePreview, TableContext } from '../../types/dungeon';
+import type {
+  DungeonRenderNode,
+  DungeonTablePreview,
+  TableContext,
+} from '../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
-import type { AppendPreviewFn, TablePreviewFactory } from '../adapters/render/shared';
+import type {
+  AppendPreviewFn,
+  TablePreviewFactory,
+} from '../adapters/render/shared';
 import type { Table } from '../../tables/dungeon/dungeonTypes';
 
 export type ResolveNestedNode = (
@@ -92,7 +99,10 @@ export function createRegistryOutcomeMap(
   for (const def of defs) {
     map[def.id] =
       def.registry ??
-      ((opts) => def.resolver(opts.roll === undefined ? undefined : { roll: opts.roll }));
+      ((opts) =>
+        def.resolver(
+          opts.roll === undefined ? undefined : { roll: opts.roll }
+        ));
   }
   return map;
 }

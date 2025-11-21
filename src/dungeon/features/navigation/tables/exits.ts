@@ -58,10 +58,17 @@ import {
 } from '../shared';
 
 const renderStairsDetailWithChamberSummary: DetailRenderer = (node, append) =>
-  renderStairsDetail(node, append, { renderChamberSummary: describeChamberDimensions });
+  renderStairsDetail(node, append, {
+    renderChamberSummary: describeChamberDimensions,
+  });
 
-const renderStairsCompactWithChamberSummary: CompactRenderer = (node, _append) =>
-  renderStairsCompactNodes(node, { renderChamberSummary: describeChamberDimensions });
+const renderStairsCompactWithChamberSummary: CompactRenderer = (
+  node,
+  _append
+) =>
+  renderStairsCompactNodes(node, {
+    renderChamberSummary: describeChamberDimensions,
+  });
 
 export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -94,7 +101,10 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       return resolveEgress({ roll, which: key });
     },
     resolvePending: (pending) =>
-      resolveEgress({ roll: undefined, which: parseEgressWhich(pending.table) }),
+      resolveEgress({
+        roll: undefined,
+        which: parseEgressWhich(pending.table),
+      }),
   },
   {
     id: 'chute',
@@ -123,11 +133,17 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderNumberOfExitsDetail,
       renderCompact: withoutAppend(renderNumberOfExitsCompact),
     },
-    buildPreview: (tableId, context) => buildNumberOfExitsPreview(tableId, context),
+    buildPreview: (tableId, context) =>
+      buildNumberOfExitsPreview(tableId, context),
     registry: ({ roll, context }) => {
       const ctx = readExitsContext(context);
       if (!ctx) {
-        return resolveNumberOfExits({ roll, length: 10, width: 10, isRoom: false });
+        return resolveNumberOfExits({
+          roll,
+          length: 10,
+          width: 10,
+          isRoom: false,
+        });
       }
       return resolveNumberOfExits({
         roll,
@@ -137,8 +153,12 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       });
     },
     resolvePending: (pending) => {
-      const exits = readExitsContextLocal(pending.context as TableContext | undefined);
-      return resolveNumberOfExits(exits ?? { length: 10, width: 10, isRoom: false });
+      const exits = readExitsContextLocal(
+        pending.context as TableContext | undefined
+      );
+      return resolveNumberOfExits(
+        exits ?? { length: 10, width: 10, isRoom: false }
+      );
     },
   },
   {
