@@ -79,9 +79,9 @@ import type {
 import type { IllusionaryWallNature } from '../../tables/dungeon/illusionaryWallNature';
 import type {
   ExitAlternative,
+  ExitDirection,
   ExitLocation,
-} from '../../tables/dungeon/exitLocation';
-import type { ExitDirection } from '../../tables/dungeon/exitDirection';
+} from '../features/navigation/exit/exitTable';
 import type { GasTrapEffect } from '../features/navigation/gasTrap/gasTrapTable';
 import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';

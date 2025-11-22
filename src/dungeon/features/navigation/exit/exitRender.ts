@@ -1,21 +1,19 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import {
   exitLocation,
   ExitLocation,
   exitAlternative,
   ExitAlternative,
-} from '../../../tables/dungeon/exitLocation';
-import {
   exitDirection,
   ExitDirection,
-} from '../../../tables/dungeon/exitDirection';
+} from './exitTable';
 import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 type ExitLocationEvent = Extract<
   OutcomeEvent,
@@ -202,7 +200,7 @@ export function renderExitDirectionDetail(
     bullet,
     {
       kind: 'paragraph',
-      text: `${formatExitDirection(outcome.event.result)} `,
+      text: formatExitDirection(outcome.event.result),
     },
   ];
   appendPendingPreviews(outcome, nodes);
@@ -218,13 +216,14 @@ export function renderExitDirectionCompact(
     level: 4,
     text: `Exit Direction ${outcome.event.index}`,
   };
-  return [
+  const nodes: DungeonRenderNode[] = [
     heading,
     {
       kind: 'paragraph',
-      text: `${formatExitDirection(outcome.event.result)} `,
+      text: formatExitDirection(outcome.event.result),
     },
   ];
+  return nodes;
 }
 
 export function renderExitAlternativeDetail(
@@ -239,17 +238,17 @@ export function renderExitAlternativeDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${ExitAlternative[outcome.event.result]}`],
+    items: [
+      `exit type: ${outcome.event.exitType ?? 'door/passage'}`,
+      `roll: ${outcome.roll} — ${ExitAlternative[outcome.event.result]}`,
+    ],
   };
   const nodes: DungeonRenderNode[] = [
     heading,
     bullet,
     {
       kind: 'paragraph',
-      text: `${formatExitAlternativeSentence(
-        outcome.event.exitType,
-        outcome.event.result
-      )} `,
+      text: formatExitAlternative(outcome.event.result),
     },
   ];
   appendPendingPreviews(outcome, nodes);
@@ -260,15 +259,19 @@ export function renderExitAlternativeCompact(
   outcome: OutcomeEventNode
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'exitAlternative') return [];
-  return [
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Exit Alternative',
+  };
+  const nodes: DungeonRenderNode[] = [
+    heading,
     {
       kind: 'paragraph',
-      text: `${formatExitAlternativeSentence(
-        outcome.event.exitType,
-        outcome.event.result
-      )} `,
+      text: formatExitAlternative(outcome.event.result),
     },
   ];
+  return nodes;
 }
 
 export const buildPassageExitLocationPreview: TablePreviewFactory = (
@@ -280,7 +283,7 @@ export const buildPassageExitLocationPreview: TablePreviewFactory = (
     sides: exitLocation.sides,
     entries: exitLocation.entries.map((entry) => ({
       range: entry.range,
-      label: formatExitLocationTitle(entry.command),
+      label: ExitLocation[entry.command] ?? String(entry.command),
     })),
     context,
   });
@@ -294,7 +297,7 @@ export const buildDoorExitLocationPreview: TablePreviewFactory = (
     sides: exitLocation.sides,
     entries: exitLocation.entries.map((entry) => ({
       range: entry.range,
-      label: formatExitLocationTitle(entry.command),
+      label: ExitLocation[entry.command] ?? String(entry.command),
     })),
     context,
   });
@@ -308,7 +311,7 @@ export const buildExitDirectionPreview: TablePreviewFactory = (
     sides: exitDirection.sides,
     entries: exitDirection.entries.map((entry) => ({
       range: entry.range,
-      label: formatExitDirectionLabel(entry.command),
+      label: ExitDirection[entry.command] ?? String(entry.command),
     })),
     context,
   });
@@ -322,7 +325,7 @@ export const buildExitAlternativePreview: TablePreviewFactory = (
     sides: exitAlternative.sides,
     entries: exitAlternative.entries.map((entry) => ({
       range: entry.range,
-      label: formatExitAlternativeLabel(entry.command),
+      label: ExitAlternative[entry.command] ?? String(entry.command),
     })),
     context,
   });
@@ -330,91 +333,56 @@ export const buildExitAlternativePreview: TablePreviewFactory = (
 function formatExitLocation(result: ExitLocation): string {
   switch (result) {
     case ExitLocation.OppositeWall:
-      return 'opposite wall';
+      return 'Opposite wall.';
     case ExitLocation.LeftWall:
-      return 'left wall';
+      return 'Left wall.';
     case ExitLocation.RightWall:
-      return 'right wall';
+      return 'Right wall.';
     case ExitLocation.SameWall:
-      return 'entry wall';
+      return 'Same wall.';
     default:
-      return 'unknown wall';
+      return '';
   }
-}
-
-function formatExitLocationTitle(result: ExitLocation): string {
-  const text = formatExitLocation(result);
-  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function formatExitDirection(result: ExitDirection): string {
   switch (result) {
-    case ExitDirection.StraightAhead:
-      return 'The passage continues straight ahead.';
     case ExitDirection.LeftRight45:
-      return 'The passage angles 45° to the left.';
+      return 'Exit goes 45 degrees left and right.';
     case ExitDirection.RightLeft45:
-      return 'The passage angles 45° to the right.';
+      return 'Exit goes 45 degrees right and left.';
     default:
-      return 'The passage takes an unusual course.';
+      return 'Exit continues straight ahead.';
   }
 }
 
-function formatExitDirectionLabel(result: ExitDirection): string {
+function formatExitAlternative(result: ExitAlternative): string {
   switch (result) {
-    case ExitDirection.StraightAhead:
-      return 'Straight ahead';
-    case ExitDirection.LeftRight45:
-      return 'Angles 45° to the left';
-    case ExitDirection.RightLeft45:
-      return 'Angles 45° to the right';
+    case ExitAlternative.SecretDoor:
+      return 'Alternate exit is a secret door.';
+    case ExitAlternative.OneWayDoor:
+      return 'Alternate exit is a one-way door.';
+    case ExitAlternative.OppositeDirection:
+      return 'Alternate exit proceeds in the opposite direction.';
     default:
-      return 'Unusual course';
+      return '';
   }
 }
 
 export function formatInlineAlternative(
-  _exitType: 'door' | 'passage',
-  result: ExitAlternative
+  exitType: 'door' | 'passage',
+  alternative: ExitAlternative
 ): string {
-  switch (result) {
+  switch (alternative) {
     case ExitAlternative.SecretDoor:
-      return '(or secret door)';
+      return exitType === 'door'
+        ? 'A secret passage is here.'
+        : 'A secret door is here.';
     case ExitAlternative.OneWayDoor:
-      return '(or one-way door)';
+      return 'A one-way door is here.';
     case ExitAlternative.OppositeDirection:
-      return '(or opposite direction)';
+      return 'It proceeds in the opposite direction.';
     default:
-      return '(or alternative placement)';
-  }
-}
-
-function formatExitAlternativeSentence(
-  exitType: 'door' | 'passage' | undefined,
-  result: ExitAlternative
-): string {
-  const subject = exitType === 'door' ? 'door' : 'passage';
-  switch (result) {
-    case ExitAlternative.SecretDoor:
-      return `If this ${subject} abuts mapped space, treat it as a secret door.`;
-    case ExitAlternative.OneWayDoor:
-      return `If this ${subject} abuts mapped space, treat it as a one-way door.`;
-    case ExitAlternative.OppositeDirection:
-      return `If this ${subject} abuts mapped space, place it on the opposite wall.`;
-    default:
-      return `If this ${subject} abuts mapped space, choose a suitable alternative.`;
-  }
-}
-
-function formatExitAlternativeLabel(result: ExitAlternative): string {
-  switch (result) {
-    case ExitAlternative.SecretDoor:
-      return 'Secret door';
-    case ExitAlternative.OneWayDoor:
-      return 'One-way door';
-    case ExitAlternative.OppositeDirection:
-      return 'Opposite direction';
-    default:
-      return 'Alternative';
+      return '';
   }
 }

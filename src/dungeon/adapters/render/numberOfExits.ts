@@ -9,10 +9,12 @@ import {
   numberOfExits,
   NumberOfExits,
 } from '../../../tables/dungeon/numberOfExits';
-import { ExitLocation } from '../../../tables/dungeon/exitLocation';
-import { ExitDirection } from '../../../tables/dungeon/exitDirection';
+import {
+  ExitDirection,
+  ExitLocation,
+} from '../../features/navigation/exit/exitTable';
 import { findChildEvent, type AppendPreviewFn } from './shared';
-import { formatInlineAlternative } from './exitLocation';
+import { formatInlineAlternative } from '../../features/navigation/exit/exitRender';
 
 const EXIT_ALTERNATIVE_NOTE =
   'If an exit abuts mapped space, use the option shown in parentheses.';

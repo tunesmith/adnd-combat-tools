@@ -21,8 +21,11 @@ import type { ChamberDimensions, RoomDimensions } from './chambersRooms';
 import type { CircularContents, UnusualShape } from './unusualShape';
 import type { UnusualSize } from './unusualSize';
 import type { NumberOfExits, OneToFour } from './numberOfExits';
-import type { ExitLocation, ExitAlternative } from './exitLocation';
-import type { ExitDirection } from './exitDirection';
+import type {
+  ExitAlternative,
+  ExitDirection,
+  ExitLocation,
+} from '../../dungeon/features/navigation/exit/exitTable';
 import type { Chute, Egress, Stairs } from './stairs';
 import type { Pool } from './pool';
 import type {

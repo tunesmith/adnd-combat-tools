@@ -1,11 +1,13 @@
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
 import {
   resolveNumberOfExits,
+} from '../../../../../dungeon/domain/resolvers';
+import {
   resolveDoorExitLocation,
   resolvePassageExitLocation,
   resolveExitDirection,
   resolveExitAlternative,
-} from '../../../../../dungeon/domain/resolvers';
+} from '../../../../../dungeon/features/navigation/exit/exitResolvers';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,

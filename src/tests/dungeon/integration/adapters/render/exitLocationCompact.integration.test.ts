@@ -4,8 +4,8 @@ import { NumberOfExits } from '../../../../../tables/dungeon/numberOfExits';
 import {
   ExitLocation,
   ExitAlternative,
-} from '../../../../../tables/dungeon/exitLocation';
-import { ExitDirection } from '../../../../../tables/dungeon/exitDirection';
+  ExitDirection,
+} from '../../../../../dungeon/features/navigation/exit/exitTable';
 
 function buildPassageExitTree(): OutcomeEventNode {
   const direction: OutcomeEventNode = {
