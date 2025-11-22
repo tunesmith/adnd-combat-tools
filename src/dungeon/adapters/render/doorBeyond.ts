@@ -2,7 +2,7 @@ import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { DoorBeyond } from '../../../tables/dungeon/doorBeyond';
 import { findChildEvent, type AppendPreviewFn } from './shared';
-import { renderPassageWidthCompact } from './passageWidth';
+import { renderPassageWidthCompact } from '../../features/navigation/passageWidth/passageWidthRender';
 import { renderRoomDimensionsCompact } from './roomDimensions';
 import { describeChamberDimensions } from './chamberDimensions';
 import { collectCharacterPartyMessages } from './monsters';

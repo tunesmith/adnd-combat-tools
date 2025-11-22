@@ -1,13 +1,13 @@
 import type { DungeonTableDefinition } from '../../types';
 import {
-  renderPassageWidthDetail,
-  renderPassageWidthCompactNodes,
   buildPassageWidthPreview,
-} from '../../../adapters/render/passageWidth';
-import { resolvePassageWidth } from '../../../domain/resolvers';
+  renderPassageWidthCompactNodes,
+  renderPassageWidthDetail,
+} from './passageWidthRender';
+import { resolvePassageWidth } from './passageWidthResolvers';
 import { wrapResolver, withoutAppend } from '../shared';
 
-export const passageTables: ReadonlyArray<DungeonTableDefinition> = [
+export const passageWidthTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'passageWidth',
     heading: 'Passage Width',

@@ -10,7 +10,7 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
-import { renderPassageWidthCompact } from '../../../adapters/render/passageWidth';
+import { renderPassageWidthCompact } from '../passageWidth/passageWidthRender';
 
 export function renderPassageTurnsDetail(
   outcome: OutcomeEventNode,

@@ -1,8 +1,6 @@
 import { renderDetailTree } from '../../../../dungeon/adapters/render';
-import {
-  resolveDoorLocation,
-  resolvePassageWidth,
-} from '../../../../dungeon/domain/resolvers';
+import { resolveDoorLocation } from '../../../../dungeon/domain/resolvers';
+import { resolvePassageWidth } from '../../../../dungeon/features/navigation/passageWidth/passageWidthResolvers';
 import { resolveSpecialPassage } from '../../../../dungeon/features/navigation/specialPassage/specialPassageResolvers';
 import {
   applyResolvedOutcome,

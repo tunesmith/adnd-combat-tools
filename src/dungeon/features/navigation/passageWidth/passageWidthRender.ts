@@ -1,12 +1,9 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import {
-  passageWidth,
-  PassageWidth,
-} from '../../../tables/dungeon/passageWidth';
-import { findChildEvent, type AppendPreviewFn } from './shared';
-import { buildPreview, type TablePreviewFactory } from './shared';
-import { renderSpecialPassageCompact } from '../../features/navigation/specialPassage/specialPassageRender';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { passageWidth, PassageWidth } from './passageWidthTable';
+import { findChildEvent, type AppendPreviewFn } from '../../../adapters/render/shared';
+import { buildPreview, type TablePreviewFactory } from '../../../adapters/render/shared';
+import { renderSpecialPassageCompact } from '../specialPassage/specialPassageRender';
 
 export function renderPassageWidthDetail(
   outcome: OutcomeEventNode,

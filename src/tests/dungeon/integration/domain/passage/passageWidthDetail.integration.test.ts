@@ -1,4 +1,4 @@
-import { resolvePassageWidth } from '../../../../../dungeon/domain/resolvers';
+import { resolvePassageWidth } from '../../../../../dungeon/features/navigation/passageWidth/passageWidthResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';

@@ -10,7 +10,7 @@ import { entryTables } from './tables/entry';
 import { sidePassageTables } from './sidePassage/manifest';
 import { passageTurnTables } from './passageTurn/manifest';
 import { specialPassageTables } from './specialPassage/manifest';
-import { passageTables } from './tables/passages';
+import { passageWidthTables } from './passageWidth/manifest';
 import { chasmTables } from './chasm/manifest';
 import { gasTrapTables } from './gasTrap/manifest';
 import { exitTables } from './tables/exits';
@@ -25,8 +25,8 @@ const navigationDefinitions = defineNavigationTables([
   ...entryTables,
   ...sidePassageTables,
   ...passageTurnTables,
+  ...passageWidthTables,
   ...specialPassageTables,
-  ...passageTables,
   ...chasmTables,
   ...gasTrapTables,
   ...exitTables,

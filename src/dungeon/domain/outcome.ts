@@ -4,7 +4,7 @@ import type { SidePassages } from '../features/navigation/sidePassage/sidePassag
 import type { PassageTurns } from '../features/navigation/passageTurn/passageTurnTable';
 import type { Stairs, Egress } from '../../tables/dungeon/stairs';
 import type { SpecialPassage } from '../features/navigation/specialPassage/specialPassageTable';
-import type { PassageWidth } from '../../tables/dungeon/passageWidth';
+import type { PassageWidth } from '../features/navigation/passageWidth/passageWidthTable';
 import type {
   RoomDimensions,
   ChamberDimensions,
