@@ -1,11 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import { chute, Chute } from '../../../../tables/dungeon/stairs';
-import {
-  exitLocation,
-  exitAlternative,
-  exitDirection,
-} from './exitTable';
+import { exitLocation, exitAlternative, exitDirection } from './exitTable';
 
 export function resolvePassageExitLocation(options?: {
   roll?: number;

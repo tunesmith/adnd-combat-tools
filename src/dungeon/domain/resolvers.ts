@@ -24,7 +24,10 @@ import {
   numberOfExits,
   NumberOfExits,
 } from '../../tables/dungeon/numberOfExits';
-import { passageWidth, PassageWidth } from '../features/navigation/passageWidth/passageWidthTable';
+import {
+  passageWidth,
+  PassageWidth,
+} from '../features/navigation/passageWidth/passageWidthTable';
 import { pool, Pool } from '../../tables/dungeon/pool';
 import {
   magicPool,

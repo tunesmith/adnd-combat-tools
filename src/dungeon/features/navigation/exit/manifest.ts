@@ -40,11 +40,13 @@ export const exitLeafTables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: (pending) =>
       resolvePassageExitLocation({
         context:
-          pending.context && (pending.context as { kind?: unknown }).kind === 'exit'
+          pending.context &&
+          (pending.context as { kind?: unknown }).kind === 'exit'
             ? {
                 index: (pending.context as { index?: number }).index,
                 total: (pending.context as { total?: number }).total,
-                origin: (pending.context as { origin?: 'room' | 'chamber' }).origin,
+                origin: (pending.context as { origin?: 'room' | 'chamber' })
+                  .origin,
               }
             : undefined,
       }),
@@ -61,11 +63,13 @@ export const exitLeafTables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: (pending) =>
       resolveDoorExitLocation({
         context:
-          pending.context && (pending.context as { kind?: unknown }).kind === 'exit'
+          pending.context &&
+          (pending.context as { kind?: unknown }).kind === 'exit'
             ? {
                 index: (pending.context as { index?: number }).index,
                 total: (pending.context as { total?: number }).total,
-                origin: (pending.context as { origin?: 'room' | 'chamber' }).origin,
+                origin: (pending.context as { origin?: 'room' | 'chamber' })
+                  .origin,
               }
             : undefined,
       }),
@@ -82,11 +86,13 @@ export const exitLeafTables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: (pending) =>
       resolveExitDirection({
         context:
-          pending.context && (pending.context as { kind?: unknown }).kind === 'exitDirection'
+          pending.context &&
+          (pending.context as { kind?: unknown }).kind === 'exitDirection'
             ? {
                 index: (pending.context as { index?: number }).index,
                 total: (pending.context as { total?: number }).total,
-                origin: (pending.context as { origin?: 'room' | 'chamber' }).origin,
+                origin: (pending.context as { origin?: 'room' | 'chamber' })
+                  .origin,
               }
             : undefined,
       }),
@@ -103,9 +109,11 @@ export const exitLeafTables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: (pending) =>
       resolveExitAlternative({
         context:
-          pending.context && (pending.context as { kind?: unknown }).kind === 'exitAlternative'
+          pending.context &&
+          (pending.context as { kind?: unknown }).kind === 'exitAlternative'
             ? {
-                exitType: (pending.context as { exitType?: 'door' | 'passage' }).exitType,
+                exitType: (pending.context as { exitType?: 'door' | 'passage' })
+                  .exitType,
               }
             : undefined,
       }),

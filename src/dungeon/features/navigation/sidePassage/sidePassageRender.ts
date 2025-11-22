@@ -1,4 +1,7 @@
-import type { DungeonRenderNode, DungeonMessage } from '../../../../types/dungeon';
+import type {
+  DungeonRenderNode,
+  DungeonMessage,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { sidePassages, SidePassages } from './sidePassageTable';
 import {

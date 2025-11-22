@@ -1,7 +1,5 @@
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
-import {
-  resolveNumberOfExits,
-} from '../../../../../dungeon/domain/resolvers';
+import { resolveNumberOfExits } from '../../../../../dungeon/domain/resolvers';
 import {
   resolveDoorExitLocation,
   resolvePassageExitLocation,
