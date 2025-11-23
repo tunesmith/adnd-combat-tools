@@ -40,7 +40,8 @@ function exitSummary(
   const position = formatExitLocation(result);
   let summary = `${noun} ${index}${suffix}: ${position}`;
   if (alternative !== undefined) {
-    summary += ` ${formatInlineAlternative(exitType, alternative)}`;
+    const inline = formatInlineAlternative(exitType, alternative);
+    summary += inline.startsWith('or ') ? ` (${inline})` : ` ${inline}`;
   }
   return `${summary}.`;
 }
@@ -251,7 +252,7 @@ export function renderExitAlternativeDetail(
     bullet,
     {
       kind: 'paragraph',
-      text: formatExitAlternative(outcome.event.result),
+      text: formatExitAlternative(outcome.event.result, outcome.event.exitType),
     },
   ];
   appendPendingPreviews(outcome, nodes);
@@ -271,7 +272,7 @@ export function renderExitAlternativeCompact(
     heading,
     {
       kind: 'paragraph',
-      text: formatExitAlternative(outcome.event.result),
+      text: formatExitAlternative(outcome.event.result, outcome.event.exitType),
     },
   ];
   return nodes;
@@ -336,13 +337,13 @@ export const buildExitAlternativePreview: TablePreviewFactory = (
 function formatExitLocation(result: ExitLocation): string {
   switch (result) {
     case ExitLocation.OppositeWall:
-      return 'Opposite wall.';
+      return 'opposite wall';
     case ExitLocation.LeftWall:
-      return 'Left wall.';
+      return 'left wall';
     case ExitLocation.RightWall:
-      return 'Right wall.';
+      return 'right wall';
     case ExitLocation.SameWall:
-      return 'Same wall.';
+      return 'same wall';
     default:
       return '';
   }
@@ -351,22 +352,27 @@ function formatExitLocation(result: ExitLocation): string {
 function formatExitDirection(result: ExitDirection): string {
   switch (result) {
     case ExitDirection.LeftRight45:
-      return 'Exit goes 45 degrees left and right.';
+      return 'The passage angles 45° to the left.';
     case ExitDirection.RightLeft45:
-      return 'Exit goes 45 degrees right and left.';
+      return 'The passage angles 45° to the right.';
     default:
-      return 'Exit continues straight ahead.';
+      return 'The passage continues straight ahead.';
   }
 }
 
-function formatExitAlternative(result: ExitAlternative): string {
+function formatExitAlternative(
+  result: ExitAlternative,
+  exitType?: 'door' | 'passage'
+): string {
+  const label =
+    exitType === 'door' ? 'door' : exitType === 'passage' ? 'passage' : 'exit';
   switch (result) {
     case ExitAlternative.SecretDoor:
-      return 'Alternate exit is a secret door.';
+      return `If this ${label} abuts mapped space, treat it as a secret door.`;
     case ExitAlternative.OneWayDoor:
-      return 'Alternate exit is a one-way door.';
+      return `If this ${label} abuts mapped space, treat it as a one-way door.`;
     case ExitAlternative.OppositeDirection:
-      return 'Alternate exit proceeds in the opposite direction.';
+      return `If this ${label} abuts mapped space, route it in the opposite direction.`;
     default:
       return '';
   }
@@ -378,13 +384,11 @@ export function formatInlineAlternative(
 ): string {
   switch (alternative) {
     case ExitAlternative.SecretDoor:
-      return exitType === 'door'
-        ? 'A secret passage is here.'
-        : 'A secret door is here.';
+      return exitType === 'door' ? 'or secret passage' : 'or secret door';
     case ExitAlternative.OneWayDoor:
-      return 'A one-way door is here.';
+      return 'or one-way door';
     case ExitAlternative.OppositeDirection:
-      return 'It proceeds in the opposite direction.';
+      return 'or opposite direction';
     default:
       return '';
   }

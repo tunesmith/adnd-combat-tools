@@ -140,6 +140,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
                 total: (pending.context as { total?: number }).total,
                 origin: (pending.context as { origin?: 'room' | 'chamber' })
                   .origin,
+                id: (pending.context as { id?: string }).id,
               }
             : undefined,
       }),
@@ -163,6 +164,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
                 total: (pending.context as { total?: number }).total,
                 origin: (pending.context as { origin?: 'room' | 'chamber' })
                   .origin,
+                id: (pending.context as { id?: string }).id,
               }
             : undefined,
       }),

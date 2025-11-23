@@ -62,16 +62,18 @@ export function resolveNumberOfExits(options: {
   const children: DungeonOutcomeNode[] = [];
   if (count > 0) {
     for (let index = 1; index <= count; index += 1) {
+      const baseId = `numberOfExits.${index - 1}.${exitType}ExitLocation`;
       children.push({
         type: 'pending-roll',
         table: exitType === 'door' ? 'doorExitLocation' : 'passageExitLocation',
-        id: `exit:${exitType}:${index}`,
+        id: baseId,
         context: {
           kind: 'exit',
           exitType,
           index,
           total: count,
           origin,
+          id: baseId,
         },
       });
     }

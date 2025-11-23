@@ -6,7 +6,11 @@ import type {
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { numberOfExits, NumberOfExits } from './numberOfExitsTable';
-import { ExitLocation, type ExitAlternative } from './exitLocationsTable';
+import {
+  ExitDirection,
+  ExitLocation,
+  type ExitAlternative,
+} from './exitLocationsTable';
 import {
   findChildEvent,
   type AppendPreviewFn,
@@ -107,27 +111,31 @@ export function describeNumberOfExits(
       includeAlternativeNote: false,
     };
   }
-  const detailText = formatNumberOfExits(node, {
+  const summary = formatNumberOfExits(node, {
     includeInstructions: options.includeInstructions,
   }).trim();
-  const compactText = formatNumberOfExits(node, {
+  const compactSummary = formatNumberOfExits(node, {
     includeInstructions: false,
   }).trim();
-  if (detailText.length === 0 && compactText.length === 0) {
-    return {
-      detailParagraphs: [],
-      compactText: '',
-      includeAlternativeNote: false,
-    };
-  }
   return {
-    detailParagraphs: detailText.length
-      ? [{ kind: 'paragraph', text: `${detailText} ` }]
+    detailParagraphs: summary.length
+      ? [{ kind: 'paragraph', text: `${summary} ` }]
       : [],
-    compactText: compactText.length ? `${compactText} ` : '',
+    compactText: compactSummary.length ? `${compactSummary} ` : '',
     includeAlternativeNote:
-      node.event.result === NumberOfExits.DoorChamberOrPassageRoom,
+      node.event.result === NumberOfExits.DoorChamberOrPassageRoom ||
+      hasExitAlternative(node),
   };
+}
+
+function hasExitAlternative(node: OutcomeEventNode | undefined): boolean {
+  if (!node || node.type !== 'event') return false;
+  for (const child of node.children ?? []) {
+    if (child.type !== 'event') continue;
+    if (child.event.kind === 'exitAlternative') return true;
+    if (hasExitAlternative(child)) return true;
+  }
+  return false;
 }
 
 export function collectExitSummariesWithMeta(node: OutcomeEventNode): {
@@ -142,6 +150,13 @@ export function collectExitSummariesWithMeta(node: OutcomeEventNode): {
     if (child.type !== 'event') continue;
     const event = child.event;
     if (event.kind === 'passageExitLocation') {
+      const alternative = findChildEvent(child, 'exitAlternative');
+      const altResult =
+        alternative && alternative.type === 'event'
+          ? ((alternative.event as { result?: unknown })
+              .result as ExitAlternative)
+          : undefined;
+      hasAlternative = hasAlternative || altResult !== undefined;
       const summary = formatExit(
         event.result,
         'passage',
@@ -149,35 +164,51 @@ export function collectExitSummariesWithMeta(node: OutcomeEventNode): {
         event.total
       );
       if (summary.length > 0) sentences.push(summary);
-      const alt = findChildEvent(child, 'exitAlternative');
-      if (alt && alt.type === 'event') {
-        hasAlternative = true;
-        const text = formatInlineAlternative(
-          'passage',
-          (alt.event as { result?: unknown }).result as ExitAlternative
+      const direction = findChildEvent(child, 'exitDirection');
+      if (direction && direction.type === 'event') {
+        const dirText = formatDirectionSentence(
+          (direction.event as { result?: unknown }).result as ExitDirection,
+          altResult
         );
-        if (text.length > 0) {
-          sentences.push(`(${text.trim()})`);
-        }
+        if (dirText.length > 0) sentences.push(dirText);
       }
     } else if (event.kind === 'doorExitLocation') {
+      const alternative = findChildEvent(child, 'exitAlternative');
+      const altResult =
+        alternative && alternative.type === 'event'
+          ? ((alternative.event as { result?: unknown })
+              .result as ExitAlternative)
+          : undefined;
+      hasAlternative = hasAlternative || altResult !== undefined;
       const summary = formatExit(
         event.result,
         'door',
         event.index,
         event.total
       );
-      if (summary.length > 0) sentences.push(summary);
-      const alt = findChildEvent(child, 'exitAlternative');
-      if (alt && alt.type === 'event') {
-        hasAlternative = true;
-        const text = formatInlineAlternative(
-          'door',
-          (alt.event as { result?: unknown }).result as ExitAlternative
-        );
-        if (text.length > 0) {
-          sentences.push(`(${text.trim()})`);
+      if (altResult !== undefined) {
+        const inline = formatInlineAlternative('door', altResult);
+        if (inline.length > 0) {
+          const trimmedSummary = summary.endsWith('.')
+            ? summary.slice(0, -1)
+            : summary;
+          const suffix = inline.startsWith('or ')
+            ? ` (${inline})`
+            : ` ${inline}`;
+          sentences.push(
+            `${trimmedSummary}${suffix}.`
+          );
+          continue;
         }
+      }
+      if (summary.length > 0) sentences.push(summary);
+      const direction = findChildEvent(child, 'exitDirection');
+      if (direction && direction.type === 'event') {
+        const dirText = formatDirectionSentence(
+          (direction.event as { result?: unknown }).result as ExitDirection,
+          altResult
+        );
+        if (dirText.length > 0) sentences.push(dirText);
       }
     }
   }
@@ -190,40 +221,37 @@ function formatNumberOfExits(
 ): string {
   if (node.event.kind !== 'numberOfExits') return '';
   const result = node.event.result;
-  let base = '';
-  switch (result) {
-    case NumberOfExits.OneTwo600:
-      base = '1 exit if ≤ 600 square feet, otherwise 2 exits.';
-      break;
-    case NumberOfExits.TwoThree600:
-      base = '2 exits if ≤ 600 square feet, otherwise 3 exits.';
-      break;
-    case NumberOfExits.ThreeFour600:
-      base = '3 exits if ≤ 600 square feet, otherwise 4 exits.';
-      break;
-    case NumberOfExits.ZeroOne1200:
-      base = '0 exits if ≤ 1200 square feet, otherwise 1 exit.';
-      break;
-    case NumberOfExits.ZeroOne1600:
-      base = '0 exits if ≤ 1600 square feet, otherwise 1 exit.';
-      break;
-    case NumberOfExits.OneToFour:
-      base = 'Roll 1d4 exits.';
-      break;
-    case NumberOfExits.DoorChamberOrPassageRoom:
-      base = 'Exit type flips (door↔passage) for this location.';
-      break;
-    default:
-      base = '';
+  const count = node.event.count ?? 0;
+  const isRoom = node.event.context?.isRoom ?? false;
+  const baseExitType: 'door' | 'passage' = isRoom ? 'door' : 'passage';
+  const flippedExitType = baseExitType === 'door' ? 'passage' : 'door';
+  const noun =
+    result === NumberOfExits.DoorChamberOrPassageRoom
+      ? flippedExitType
+      : baseExitType;
+  const nounPlural = noun === 'door' ? 'doors' : 'passages';
+  const nounSingular = noun === 'door' ? 'door' : 'passage';
+
+  if (result === NumberOfExits.DoorChamberOrPassageRoom) {
+    return `There is a ${nounSingular} leaving this ${
+      isRoom ? 'room' : 'chamber'
+    }.`;
   }
-  if (!options.includeInstructions) return base;
-  if (
-    result === NumberOfExits.DoorChamberOrPassageRoom ||
-    result === NumberOfExits.OneToFour
-  ) {
-    return `${base} Resolve each exit below.`;
+
+  if (result === NumberOfExits.OneToFour) {
+    const rollNote = `(1d4 result: ${count || 1})`;
+    const prefix = count === 1 ? 'There is' : 'There are';
+    const nounChoice = count === 1 ? nounSingular : nounPlural;
+    return `${prefix} ${count || 1} additional ${nounChoice} ${rollNote}`;
   }
-  return `${base} Resolve each exit below.`;
+
+  const prefix = count === 1 ? 'There is' : 'There are';
+  const nounChoice = count === 1 ? nounSingular : nounPlural;
+  let sentence = `${prefix} ${count} additional ${nounChoice}`;
+  if (options.includeInstructions) {
+    sentence = `${sentence} See the exit location rolls below.`;
+  }
+  return sentence;
 }
 
 function formatExit(
@@ -235,19 +263,38 @@ function formatExit(
   const noun = kind === 'door' ? 'Door' : 'Passage';
   const suffix = total > 1 ? ` of ${total}` : '';
   const position = formatExitLocation(result);
-  return `${noun} ${index}${suffix}: ${position}`;
+  return `${noun} ${index}${suffix}: ${position}.`;
+}
+
+function formatDirectionSentence(
+  result: ExitDirection,
+  alternative?: ExitAlternative
+): string {
+  const altText =
+    alternative !== undefined
+      ? formatInlineAlternative('passage', alternative)
+      : '';
+  const suffix = altText.length > 0 ? ` (${altText})` : '';
+  switch (result) {
+    case ExitDirection.LeftRight45:
+      return `The passage angles 45° to the left${suffix}.`;
+    case ExitDirection.RightLeft45:
+      return `The passage angles 45° to the right${suffix}.`;
+    default:
+      return `The passage continues straight ahead${suffix}.`;
+  }
 }
 
 function formatExitLocation(result: ExitLocation): string {
   switch (result) {
     case ExitLocation.OppositeWall:
-      return 'Opposite wall.';
+      return 'opposite wall';
     case ExitLocation.LeftWall:
-      return 'Left wall.';
+      return 'left wall';
     case ExitLocation.RightWall:
-      return 'Right wall.';
+      return 'right wall';
     case ExitLocation.SameWall:
-      return 'Same wall.';
+      return 'same wall';
     default:
       return '';
   }

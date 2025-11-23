@@ -12,6 +12,7 @@ export function resolvePassageExitLocation(options?: {
     index?: number;
     total?: number;
     origin?: 'room' | 'chamber';
+    id?: string;
   };
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(exitLocation.sides);
@@ -19,22 +20,27 @@ export function resolvePassageExitLocation(options?: {
   const index = options?.context?.index ?? 1;
   const total = options?.context?.total ?? 1;
   const origin = options?.context?.origin ?? 'room';
+  const baseId =
+    options?.context?.id ?? `exit:${options?.context?.index ?? index}`;
   const children: DungeonOutcomeNode[] = [
     {
       type: 'pending-roll',
       table: 'exitDirection',
-      id: `exit:direction:${index}`,
+      id: baseId ? `${baseId}.0.exitDirection` : `exit:direction:${index}`,
       context: { kind: 'exitDirection', index, total, origin },
     },
     {
       type: 'pending-roll',
       table: 'exitAlternative',
-      id: `exitAlternative:passage:${index}`,
+      id: baseId
+        ? `${baseId}.1.exitAlternative`
+        : `exitAlternative:passage:${index}`,
       context: { kind: 'exitAlternative', exitType: 'passage' },
     },
   ];
   return {
     type: 'event',
+    id: baseId,
     roll: usedRoll,
     event: {
       kind: 'passageExitLocation',
@@ -53,6 +59,7 @@ export function resolveDoorExitLocation(options?: {
     index?: number;
     total?: number;
     origin?: 'room' | 'chamber';
+    id?: string;
   };
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(exitLocation.sides);
@@ -60,8 +67,11 @@ export function resolveDoorExitLocation(options?: {
   const index = options?.context?.index ?? 1;
   const total = options?.context?.total ?? 1;
   const origin = options?.context?.origin ?? 'room';
+  const baseId =
+    options?.context?.id ?? `exit:${options?.context?.index ?? index}`;
   return {
     type: 'event',
+    id: baseId,
     roll: usedRoll,
     event: {
       kind: 'doorExitLocation',
@@ -74,7 +84,9 @@ export function resolveDoorExitLocation(options?: {
       {
         type: 'pending-roll',
         table: 'exitAlternative',
-        id: `exitAlternative:door:${index}`,
+        id: baseId
+          ? `${baseId}.1.exitAlternative`
+          : `exitAlternative:door:${index}`,
         context: { kind: 'exitAlternative', exitType: 'door' },
       },
     ],
