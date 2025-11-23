@@ -1,7 +1,4 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../../types/dungeon';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
 import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import {
   exitLocation,

@@ -1,6 +1,15 @@
 import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import { stairs, Egress, Stairs, Chute } from './stairsTable';
+import {
+  stairs,
+  Egress,
+  Stairs,
+  Chute,
+  chute as chuteTable,
+  egressOne,
+  egressTwo,
+  egressThree,
+} from './stairsTable';
 import { findChildEvent, type AppendPreviewFn } from '../../../adapters/render/shared';
 import { buildPreview, type TablePreviewFactory } from '../../../adapters/render/shared';
 
@@ -164,6 +173,54 @@ export const buildStairsPreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
+export function renderChuteDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildChuteNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildChutePreview: TablePreviewFactory = (tableId) =>
+  buildPreview(tableId, {
+    title: 'Chute',
+    sides: chuteTable.sides,
+    entries: chuteTable.entries.map((entry) => ({
+      range: entry.range,
+      label: Chute[entry.command] ?? String(entry.command),
+    })),
+  });
+
+export function renderChuteCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  return buildChuteNodes(outcome);
+}
+
+function buildChuteNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'chute') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Chute',
+  };
+  const label =
+    Chute[outcome.event.result as 0 | 1] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const text = formatChute(outcome.event.result);
+  return [heading, bullet, { kind: 'paragraph', text }];
+}
+
+function formatChute(result: Chute): string {
+  return result === Chute.Exists
+    ? 'The stairs will turn into a chute, descending two levels from the top. '
+    : '';
+}
+
 function formatStairs(result: Stairs): string {
   switch (result) {
     case Stairs.DownOne:
@@ -193,4 +250,61 @@ function formatStairs(result: Stairs): string {
     default:
       return '';
   }
+}
+
+export function renderEgressDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildEgressNodes(outcome);
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderEgressCompact(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  return buildEgressNodes(outcome);
+}
+
+function buildEgressNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'egress') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Egress',
+  };
+  const label = Egress[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const suffix = formatEgress(outcome.event.result);
+  return [heading, bullet, { kind: 'paragraph', text: suffix }];
+}
+
+export const buildEgressPreview: TablePreviewFactory = (tableId) => {
+  const which = tableId.split(':')[1] as 'one' | 'two' | 'three' | undefined;
+  const table =
+    which === 'one' ? egressOne : which === 'two' ? egressTwo : egressThree;
+  const title =
+    which === 'one'
+      ? 'Egress (1 level)'
+      : which === 'two'
+      ? 'Egress (2 levels)'
+      : 'Egress (3 levels)';
+  return buildPreview(tableId, {
+    title,
+    sides: table.sides,
+    entries: table.entries.map((entry) => ({
+      range: entry.range,
+      label: Egress[entry.command] ?? String(entry.command),
+    })),
+  });
+};
+
+function formatEgress(result: Egress): string {
+  return result === Egress.Closed
+    ? 'After descending, an unnoticed door will close egress for the day. '
+    : '';
 }

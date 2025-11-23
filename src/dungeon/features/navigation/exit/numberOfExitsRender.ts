@@ -9,9 +9,9 @@ import {
   numberOfExits,
   NumberOfExits,
 } from './numberOfExitsTable';
-import { ExitLocation, ExitAlternative } from './exitLocationsTable';
+import { ExitLocation, type ExitAlternative } from './exitLocationsTable';
 import { findChildEvent, type AppendPreviewFn } from '../../../adapters/render/shared';
-import { formatInlineAlternative } from './exitRender';
+import { formatInlineAlternative } from './exitLocationRender';
 
 const EXIT_ALTERNATIVE_NOTE =
   'If an exit abuts mapped space, use the option shown in parentheses.';

@@ -56,15 +56,6 @@ export const parseDoorChainSequence = (
   return Number.isFinite(seq) ? seq : fallback;
 };
 
-export const parseEgressWhich = (table: string): 'one' | 'two' | 'three' => {
-  const parts = table.split(':');
-  if (parts.length >= 2) {
-    const key = parts[1] as 'one' | 'two' | 'three';
-    if (key === 'one' || key === 'two' || key === 'three') return key;
-  }
-  return 'one';
-};
-
 export const readExitsContextLocal = (
   context: TableContext | undefined
 ): { length: number; width: number; isRoom: boolean } | undefined => {

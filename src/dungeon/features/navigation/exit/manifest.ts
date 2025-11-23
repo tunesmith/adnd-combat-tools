@@ -13,34 +13,26 @@ import {
   renderExitDirectionDetail,
   renderPassageExitLocationCompact,
   renderPassageExitLocationDetail,
-} from './exitRender';
+} from './exitLocationRender';
 import {
   buildStairsPreview,
   renderStairsCompactNodes,
   renderStairsDetail,
-} from './stairsRender';
-import {
   buildEgressPreview,
   renderEgressCompact,
   renderEgressDetail,
-} from './egressRender';
+  renderChuteCompact,
+  renderChuteDetail,
+  buildChutePreview,
+} from './stairsRender';
 import {
   resolveDoorExitLocation,
   resolveExitAlternative,
   resolveExitDirection,
   resolvePassageExitLocation,
 } from './exitLocationResolvers';
-import {
-  resolveEgress,
-  resolveChute,
-  resolveStairs,
-} from './stairsResolvers';
+import { resolveEgress, resolveChute, resolveStairs } from './stairsResolvers';
 import { resolveNumberOfExits } from './numberOfExitsResolver';
-import {
-  renderChuteCompact,
-  renderChuteDetail,
-  buildChutePreview,
-} from './chuteRender';
 import {
   renderNumberOfExitsCompact,
   renderNumberOfExitsDetail,
@@ -53,7 +45,7 @@ import {
   withoutAppend,
 } from '../shared';
 
-export const exitLeafTables: ReadonlyArray<DungeonTableDefinition> = [
+export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'stairs',
     heading: 'Stairs',
@@ -85,7 +77,8 @@ export const exitLeafTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     resolvePending: (pending) => {
       const suffix = pending.table.split(':')[1];
-      const which = suffix === 'two' ? 'two' : suffix === 'three' ? 'three' : 'one';
+      const which =
+        suffix === 'two' ? 'two' : suffix === 'three' ? 'three' : 'one';
       return resolveEgress({ which });
     },
   },
@@ -117,7 +110,9 @@ export const exitLeafTables: ReadonlyArray<DungeonTableDefinition> = [
       });
     },
     resolvePending: (pending) => {
-      const ctx = readExitsContextLocal(pending.context as TableContext | undefined);
+      const ctx = readExitsContextLocal(
+        pending.context as TableContext | undefined
+      );
       return resolveNumberOfExits({
         roll: undefined,
         length: ctx?.length ?? 10,
