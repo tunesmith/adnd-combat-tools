@@ -228,6 +228,14 @@ function formatNumberOfExits(
   const nounPlural = noun === 'door' ? 'doors' : 'passages';
   const nounSingular = noun === 'door' ? 'door' : 'passage';
 
+  if (count === 0) {
+    const checkText =
+      noun === 'passage'
+        ? " Check once per 10' for 25% chance of secret door (characters would still need to detect)."
+        : '';
+    return `There are no other ${nounPlural}.${checkText}`;
+  }
+
   if (result === NumberOfExits.DoorChamberOrPassageRoom) {
     return `There is a ${nounSingular} leaving this ${
       isRoom ? 'room' : 'chamber'
