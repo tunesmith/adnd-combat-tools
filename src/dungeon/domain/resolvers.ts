@@ -339,7 +339,10 @@ import {
   dragonTenTextForCommand,
 } from '../services/monster/monsterTenResult';
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
-import { oneToFour, OneToFour } from '../features/navigation/exit/numberOfExitsTable';
+import {
+  oneToFour,
+  OneToFour,
+} from '../features/navigation/exit/numberOfExitsTable';
 import type { DoorChainLaterality } from './outcome';
 import { resolveSubtable } from './resolveSubtable';
 import { buildTreasureEvent } from './buildTreasureEvent';

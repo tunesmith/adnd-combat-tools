@@ -1,6 +1,11 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
-import { numberOfExits, NumberOfExits, oneToFour, OneToFour } from './numberOfExitsTable';
+import {
+  numberOfExits,
+  NumberOfExits,
+  oneToFour,
+  OneToFour,
+} from './numberOfExitsTable';
 
 export function resolveNumberOfExits(options: {
   roll?: number;

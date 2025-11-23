@@ -1,5 +1,8 @@
 import { toDetailRender } from '../../../../../dungeon/adapters/render';
-import { resolveEgress, resolveStairs } from '../../../../../dungeon/features/navigation/exit/stairsResolvers';
+import {
+  resolveEgress,
+  resolveStairs,
+} from '../../../../../dungeon/features/navigation/exit/stairsResolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import { passageMessages } from '../../../../../dungeon/services/passageMessages';
 import {

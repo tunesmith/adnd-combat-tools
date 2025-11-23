@@ -1,6 +1,13 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
-import { chute, egressOne, egressThree, egressTwo, Stairs, stairs } from './stairsTable';
+import {
+  chute,
+  egressOne,
+  egressThree,
+  egressTwo,
+  Stairs,
+  stairs,
+} from './stairsTable';
 
 export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(stairs.sides);

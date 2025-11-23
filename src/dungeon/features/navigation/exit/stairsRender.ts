@@ -1,4 +1,7 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   stairs,
@@ -10,8 +13,14 @@ import {
   egressTwo,
   egressThree,
 } from './stairsTable';
-import { findChildEvent, type AppendPreviewFn } from '../../../adapters/render/shared';
-import { buildPreview, type TablePreviewFactory } from '../../../adapters/render/shared';
+import {
+  findChildEvent,
+  type AppendPreviewFn,
+} from '../../../adapters/render/shared';
+import {
+  buildPreview,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
 
 export type StairsDeps = {
   renderChamberSummary?: (node: OutcomeEventNode) => string;

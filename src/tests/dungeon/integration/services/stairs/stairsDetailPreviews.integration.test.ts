@@ -1,4 +1,7 @@
-import { Stairs, stairs } from '../../../../../dungeon/features/navigation/exit/stairsTable';
+import {
+  Stairs,
+  stairs,
+} from '../../../../../dungeon/features/navigation/exit/stairsTable';
 import { resolveStairs } from '../../../../../dungeon/features/navigation/exit/stairsResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';

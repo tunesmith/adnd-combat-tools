@@ -5,12 +5,12 @@ import type {
   TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import {
-  numberOfExits,
-  NumberOfExits,
-} from './numberOfExitsTable';
+import { numberOfExits, NumberOfExits } from './numberOfExitsTable';
 import { ExitLocation, type ExitAlternative } from './exitLocationsTable';
-import { findChildEvent, type AppendPreviewFn } from '../../../adapters/render/shared';
+import {
+  findChildEvent,
+  type AppendPreviewFn,
+} from '../../../adapters/render/shared';
 import { formatInlineAlternative } from './exitLocationRender';
 
 const EXIT_ALTERNATIVE_NOTE =
@@ -142,23 +142,39 @@ export function collectExitSummariesWithMeta(node: OutcomeEventNode): {
     if (child.type !== 'event') continue;
     const event = child.event;
     if (event.kind === 'passageExitLocation') {
-      const summary = formatExit(event.result, 'passage', event.index, event.total);
+      const summary = formatExit(
+        event.result,
+        'passage',
+        event.index,
+        event.total
+      );
       if (summary.length > 0) sentences.push(summary);
       const alt = findChildEvent(child, 'exitAlternative');
       if (alt && alt.type === 'event') {
         hasAlternative = true;
-        const text = formatInlineAlternative('passage', (alt.event as { result?: unknown }).result as ExitAlternative);
+        const text = formatInlineAlternative(
+          'passage',
+          (alt.event as { result?: unknown }).result as ExitAlternative
+        );
         if (text.length > 0) {
           sentences.push(`(${text.trim()})`);
         }
       }
     } else if (event.kind === 'doorExitLocation') {
-      const summary = formatExit(event.result, 'door', event.index, event.total);
+      const summary = formatExit(
+        event.result,
+        'door',
+        event.index,
+        event.total
+      );
       if (summary.length > 0) sentences.push(summary);
       const alt = findChildEvent(child, 'exitAlternative');
       if (alt && alt.type === 'event') {
         hasAlternative = true;
-        const text = formatInlineAlternative('door', (alt.event as { result?: unknown }).result as ExitAlternative);
+        const text = formatInlineAlternative(
+          'door',
+          (alt.event as { result?: unknown }).result as ExitAlternative
+        );
         if (text.length > 0) {
           sentences.push(`(${text.trim()})`);
         }
