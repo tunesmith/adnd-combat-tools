@@ -3,10 +3,10 @@ import {
   toDetailRender,
 } from '../../../../../dungeon/adapters/render';
 import {
-  resolvePeriodicDoorOnly,
   resolveTrickTrap,
   resolveIllusionaryWallNature,
 } from '../../../../../dungeon/domain/resolvers';
+import { resolvePeriodicDoorOnly } from '../../../../../dungeon/features/navigation/doorChain/doorChainResolvers';
 import { resolveGasTrapEffect } from '../../../../../dungeon/features/navigation/gasTrap/gasTrapResolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';

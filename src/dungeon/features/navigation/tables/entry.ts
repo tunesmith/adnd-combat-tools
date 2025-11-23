@@ -1,9 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import type {
-  DoorChainLaterality,
-  DungeonOutcomeNode,
-  OutcomeEventNode,
-} from '../../../domain/outcome';
+import type { DungeonOutcomeNode } from '../../../domain/outcome';
 import type { TableContext } from '../../../../types/dungeon';
 import {
   renderPeriodicCheckDetail,
@@ -13,35 +9,20 @@ import {
   buildWanderingWhereFromPreview,
 } from '../../../adapters/render/periodicOutcome';
 import {
-  renderDoorLocationDetail,
-  renderPeriodicDoorOnlyDetail,
-  buildDoorLocationPreview,
-  buildPeriodicDoorOnlyPreview,
-} from '../../../adapters/render/doorLocation';
-import {
   renderDoorBeyondDetail,
   renderDoorBeyondCompact,
 } from '../../../adapters/render/doorBeyond';
 import {
   resolveDoorBeyond,
-  resolveDoorLocation,
   resolvePeriodicCheck,
-  resolvePeriodicDoorOnly,
   resolveRoomDimensions,
   resolveWanderingWhereFrom,
 } from '../../../domain/resolvers';
-import {
-  collectDoorChainExisting,
-  NO_COMPACT_RENDER,
-  parseDoorChainSequence,
-  wrapResolver,
-  withoutAppend,
-} from '../shared';
+import { wrapResolver, withoutAppend } from '../shared';
 
 const resolvePendingNavigationEntry = (
   pending: string,
-  context: TableContext | undefined,
-  ancestors: OutcomeEventNode[]
+  context: TableContext | undefined
 ): DungeonOutcomeNode | undefined => {
   const base = pending.split(':')[0] ?? pending;
   switch (base) {
@@ -54,16 +35,6 @@ const resolvePendingNavigationEntry = (
           ? (context as { level?: number }).level
           : 1;
       return resolveRoomDimensions({ level });
-    }
-    case 'doorLocation': {
-      const existing = collectDoorChainExisting(ancestors);
-      const sequence = parseDoorChainSequence(pending, existing.length);
-      return resolveDoorLocation({ existing, sequence });
-    }
-    case 'periodicCheckDoorOnly': {
-      const existing = collectDoorChainExisting(ancestors);
-      const sequence = parseDoorChainSequence(pending, existing.length);
-      return resolvePeriodicDoorOnly({ existing, sequence });
     }
     case 'wanderingWhereFrom':
       return resolveWanderingWhereFrom({});
@@ -89,50 +60,6 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
     },
   },
   {
-    id: 'periodicCheckDoorOnly',
-    heading: 'Periodic Check (doors only)',
-    resolver: wrapResolver(resolvePeriodicDoorOnly),
-    renderers: {
-      renderDetail: renderPeriodicDoorOnlyDetail,
-      renderCompact: NO_COMPACT_RENDER,
-    },
-    buildPreview: buildPeriodicDoorOnlyPreview,
-    registry: ({ roll, doorChain, id }) => {
-      const existing = (doorChain?.existing as DoorChainLaterality[]) ?? [];
-      const sequence =
-        doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
-      return resolvePeriodicDoorOnly({ roll, existing, sequence });
-    },
-    resolvePending: (pending, ancestors) =>
-      resolvePendingNavigationEntry(
-        pending.table,
-        pending.context as TableContext | undefined,
-        ancestors
-      ),
-  },
-  {
-    id: 'doorLocation',
-    heading: 'Door Location',
-    resolver: wrapResolver(resolveDoorLocation),
-    renderers: {
-      renderDetail: renderDoorLocationDetail,
-      renderCompact: NO_COMPACT_RENDER,
-    },
-    buildPreview: buildDoorLocationPreview,
-    registry: ({ roll, doorChain, id }) => {
-      const existing = (doorChain?.existing as DoorChainLaterality[]) ?? [];
-      const sequence =
-        doorChain?.sequence ?? parseDoorChainSequence(id, existing.length);
-      return resolveDoorLocation({ roll, existing, sequence });
-    },
-    resolvePending: (pending, ancestors) =>
-      resolvePendingNavigationEntry(
-        pending.table,
-        pending.context as TableContext | undefined,
-        ancestors
-      ),
-  },
-  {
     id: 'doorBeyond',
     heading: 'Door',
     resolver: wrapResolver(resolveDoorBeyond),
@@ -150,11 +77,10 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
     },
     buildPreview: buildWanderingWhereFromPreview,
-    resolvePending: (pending, ancestors) =>
+    resolvePending: (pending) =>
       resolvePendingNavigationEntry(
         pending.table,
-        pending.context as TableContext | undefined,
-        ancestors
+        pending.context as TableContext | undefined
       ),
   },
 ];

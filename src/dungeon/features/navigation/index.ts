@@ -14,6 +14,7 @@ import { passageWidthTables } from './passageWidth/manifest';
 import { exitTables } from './exit/manifest';
 import { chasmTables } from './chasm/manifest';
 import { gasTrapTables } from './gasTrap/manifest';
+import { doorChainTables } from './doorChain/manifest';
 
 const defineNavigationTables = <
   T extends ReadonlyArray<DungeonTableDefinition<unknown>>
@@ -23,6 +24,7 @@ const defineNavigationTables = <
 
 const navigationDefinitions = defineNavigationTables([
   ...entryTables,
+  ...doorChainTables,
   ...sidePassageTables,
   ...passageTurnTables,
   ...passageWidthTables,

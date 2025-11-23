@@ -14,6 +14,7 @@ import {
 import {
   findChildEvent,
   type AppendPreviewFn,
+  joinSegments,
 } from '../../../adapters/render/shared';
 import { formatInlineAlternative } from './exitLocationRender';
 
@@ -68,13 +69,10 @@ export function renderNumberOfExitsCompact(
   if (exitMeta.hasAlternative) {
     combinedParts.push(EXIT_ALTERNATIVE_NOTE);
   }
-  const combined = combinedParts
-    .map((text) => text.trim())
-    .filter((text) => text.length > 0)
-    .join(' ');
+  const combined = joinSegments(combinedParts);
   const nodes: DungeonRenderNode[] = [heading, bullet];
   if (combined.length > 0) {
-    nodes.push({ kind: 'paragraph', text: `${combined} ` });
+    nodes.push({ kind: 'paragraph', text: combined });
   }
   return nodes;
 }
@@ -195,9 +193,7 @@ export function collectExitSummariesWithMeta(node: OutcomeEventNode): {
           const suffix = inline.startsWith('or ')
             ? ` (${inline})`
             : ` ${inline}`;
-          sentences.push(
-            `${trimmedSummary}${suffix}.`
-          );
+          sentences.push(`${trimmedSummary}${suffix}.`);
           continue;
         }
       }

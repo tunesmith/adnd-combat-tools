@@ -9,7 +9,7 @@ import { periodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { TrickTrap } from '../../../tables/dungeon/trickTrap';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { buildPreview, findChildEvent } from './shared';
-import { renderDoorChainCompact } from './doorLocation';
+import { renderDoorChainCompact } from '../../features/navigation/doorChain/doorChainRender';
 import { describeSidePassage } from '../../features/navigation/sidePassage/sidePassageRender';
 import { renderPassageTurnCompact } from '../../features/navigation/passageTurn/passageTurnRender';
 import { describeChamberDimensions } from './chamberDimensions';

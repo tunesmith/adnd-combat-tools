@@ -1,5 +1,5 @@
 import { renderDetailTree } from '../../../../dungeon/adapters/render';
-import { resolveDoorLocation } from '../../../../dungeon/domain/resolvers';
+import { resolveDoorLocation } from '../../../../dungeon/features/navigation/doorChain/doorChainResolvers';
 import { resolvePassageWidth } from '../../../../dungeon/features/navigation/passageWidth/passageWidthResolvers';
 import { resolveSpecialPassage } from '../../../../dungeon/features/navigation/specialPassage/specialPassageResolvers';
 import {

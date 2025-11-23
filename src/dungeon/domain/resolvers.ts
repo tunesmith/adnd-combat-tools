@@ -6,7 +6,6 @@ import {
   PeriodicCheck,
 } from '../../tables/dungeon/periodicCheck';
 import { doorBeyond, DoorBeyond } from '../../tables/dungeon/doorBeyond';
-import { doorLocation, DoorLocation } from '../../tables/dungeon/doorLocation';
 import type {
   DungeonOutcomeNode,
   OutcomeEvent,
@@ -246,10 +245,6 @@ import type {
   TreasureGemKind,
   TreasureGemCategoryId,
 } from './outcome';
-import {
-  periodicCheckDoorOnly,
-  PeriodicCheckDoorOnly,
-} from '../../tables/dungeon/periodicCheckDoorOnly';
 import { getMonsterTable } from '../services/wanderingMonsterResult';
 import {
   monsterOne,
@@ -343,7 +338,6 @@ import {
   oneToFour,
   OneToFour,
 } from '../features/navigation/exit/numberOfExitsTable';
-import type { DoorChainLaterality } from './outcome';
 import { resolveSubtable } from './resolveSubtable';
 import { buildTreasureEvent } from './buildTreasureEvent';
 
@@ -491,12 +485,6 @@ function rollSpellStoringLevels(count: number, caster: ScrollCaster): number[] {
     }
   }
   return levels;
-}
-
-function toLaterality(loc: DoorLocation): DoorChainLaterality | undefined {
-  if (loc === DoorLocation.Left) return 'Left';
-  if (loc === DoorLocation.Right) return 'Right';
-  return undefined;
 }
 
 export function resolvePeriodicCheck(options?: {
@@ -656,76 +644,6 @@ export function resolveWanderingWhereFrom(options?: {
  * door is straight ahead; if another door is not indicated,
  * then ignore the result and check again 30' past the door.
  */
-export function resolveDoorLocation(options?: {
-  roll?: number;
-  existing?: DoorChainLaterality[];
-  sequence?: number;
-}): DungeonOutcomeNode {
-  const existing = options?.existing ? [...options.existing] : [];
-  const usedRoll = options?.roll ?? rollDice(doorLocation.sides);
-  const command = getTableEntry(usedRoll, doorLocation);
-  const lateral = toLaterality(command);
-  const repeated = lateral ? existing.includes(lateral) : false;
-  const sequence =
-    options?.sequence !== undefined ? options.sequence : existing.length;
-  const children: DungeonOutcomeNode[] = [];
-  if (lateral && !repeated) {
-    children.push({
-      type: 'pending-roll',
-      table: `periodicCheckDoorOnly:${sequence}`,
-    });
-  }
-  const updatedExisting =
-    lateral && !repeated ? [...existing, lateral] : existing;
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'doorLocation',
-      result: command,
-      sequence,
-      doorChain: {
-        existing: updatedExisting,
-        repeated,
-        added: !repeated ? lateral : undefined,
-      },
-    },
-    children: children.length ? children : undefined,
-  };
-}
-
-export function resolvePeriodicDoorOnly(options?: {
-  roll?: number;
-  existing?: DoorChainLaterality[];
-  sequence?: number;
-}): DungeonOutcomeNode {
-  const existing = options?.existing ? [...options.existing] : [];
-  const usedRoll = options?.roll ?? rollDice(periodicCheckDoorOnly.sides);
-  const command = getTableEntry(usedRoll, periodicCheckDoorOnly);
-  const sequence =
-    options?.sequence !== undefined ? options.sequence : existing.length;
-  const children: DungeonOutcomeNode[] = [];
-  if (command === PeriodicCheckDoorOnly.Door) {
-    children.push({
-      type: 'pending-roll',
-      table: `doorLocation:${sequence + 1}`,
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'periodicCheckDoorOnly',
-      result: command,
-      sequence,
-      doorChain: {
-        existing,
-      },
-    },
-    children: children.length ? children : undefined,
-  };
-}
-
 export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(stairs.sides);
   const command = getTableEntry(usedRoll, stairs);

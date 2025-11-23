@@ -126,7 +126,7 @@ import {
 } from '../features/navigation/bundle';
 import { resolveGasTrapEffect } from '../features/navigation/gasTrap/gasTrapResolvers';
 import type { TableContext } from '../../types/dungeon';
-import { DoorLocation } from '../../tables/dungeon/doorLocation';
+import { DoorLocation } from '../features/navigation/doorChain/doorChainTable';
 import { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 
 const MAX_DEPTH = 32;

@@ -15,8 +15,10 @@ import type {
   CircularContents,
 } from '../../tables/dungeon/unusualShape';
 import type { UnusualSize } from '../../tables/dungeon/unusualSize';
-import type { DoorLocation } from '../../tables/dungeon/doorLocation';
-import type { PeriodicCheckDoorOnly } from '../../tables/dungeon/periodicCheckDoorOnly';
+import type {
+  DoorLocation,
+  PeriodicCheckDoorOnly,
+} from '../features/navigation/doorChain/doorChainTable';
 import type {
   GalleryStairLocation,
   GalleryStairOccurrence,

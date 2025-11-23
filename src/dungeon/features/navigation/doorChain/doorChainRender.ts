@@ -1,15 +1,19 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import {
   DoorLocation,
   doorLocation,
-} from '../../../tables/dungeon/doorLocation';
-import {
   PeriodicCheckDoorOnly,
   periodicCheckDoorOnly,
-} from '../../../tables/dungeon/periodicCheckDoorOnly';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
-import { buildPreview } from './shared';
+} from './doorChainTable';
+import {
+  buildPreview,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
 
 export const DOOR_CHAIN_FALLBACK_TEXT =
   "There are no other doors. The main passage extends -- check again in 30'. ";

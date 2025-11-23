@@ -1,5 +1,4 @@
 import type { DungeonTableDefinition } from '../../types';
-import type { TableContext } from '../../../../types/dungeon';
 import {
   buildDoorExitLocationPreview,
   buildExitAlternativePreview,
@@ -14,6 +13,7 @@ import {
   renderPassageExitLocationCompact,
   renderPassageExitLocationDetail,
 } from './exitLocationRender';
+import type { TableContext } from '../../../../types/dungeon';
 import {
   buildStairsPreview,
   renderStairsCompactNodes,
@@ -38,12 +38,7 @@ import {
   renderNumberOfExitsDetail,
   buildNumberOfExitsPreview,
 } from './numberOfExitsRender';
-import {
-  readExitsContext,
-  readExitsContextLocal,
-  wrapResolver,
-  withoutAppend,
-} from '../shared';
+import { wrapResolver, withoutAppend } from '../shared';
 
 export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -225,3 +220,34 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: () => resolveChute({}),
   },
 ];
+
+function readExitsContextLocal(
+  context: TableContext | undefined
+): { length: number; width: number; isRoom: boolean } | undefined {
+  if (!context || typeof context !== 'object') return undefined;
+  if ((context as { kind?: unknown }).kind !== 'exits') return undefined;
+  const { length, width, isRoom } = context as {
+    length?: number;
+    width?: number;
+    isRoom?: boolean;
+  };
+  if (
+    typeof length !== 'number' ||
+    typeof width !== 'number' ||
+    typeof isRoom !== 'boolean'
+  ) {
+    return undefined;
+  }
+  return { length, width, isRoom };
+}
+
+function readExitsContext(
+  context: TableContext | undefined
+): { length: number; width: number; isRoom: boolean } | undefined {
+  if (!context || context.kind !== 'exits') return undefined;
+  return {
+    length: context.length,
+    width: context.width,
+    isRoom: context.isRoom,
+  };
+}

@@ -1,9 +1,9 @@
 import { toDetailRender } from '../../../../../dungeon/adapters/render';
+import { resolveDoorBeyond } from '../../../../../dungeon/domain/resolvers';
 import {
-  resolveDoorBeyond,
   resolveDoorLocation,
   resolvePeriodicDoorOnly,
-} from '../../../../../dungeon/domain/resolvers';
+} from '../../../../../dungeon/features/navigation/doorChain/doorChainResolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 

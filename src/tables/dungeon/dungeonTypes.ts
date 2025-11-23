@@ -14,7 +14,7 @@ import type {
 import type { PassageWidth } from '../../dungeon/features/navigation/passageWidth/passageWidthTable';
 import type { SidePassages } from '../../dungeon/features/navigation/sidePassage/sidePassageTable';
 import type { DoorBeyond } from './doorBeyond';
-import type { DoorLocation } from './doorLocation';
+import type { DoorLocation } from '../../dungeon/features/navigation/doorChain/doorChainTable';
 import type { PeriodicCheck } from './periodicCheck';
 import type { PassageTurns } from '../../dungeon/features/navigation/passageTurn/passageTurnTable';
 import type { ChamberDimensions, RoomDimensions } from './chambersRooms';
@@ -65,7 +65,7 @@ import type { DragonNine, MonsterNine } from './monster/monsterNine';
 import type { DragonTen, MonsterTen } from './monster/monsterTen';
 import type { CharacterRace } from './monster/character/characterRace';
 import type { CharacterClassTable } from './monster/character/characterClass';
-import type { PeriodicCheckDoorOnly } from './periodicCheckDoorOnly';
+import type { PeriodicCheckDoorOnly } from '../../dungeon/features/navigation/doorChain/doorChainTable';
 import type { TrickTrap } from './trickTrap';
 import type { IllusionaryWallNature } from './illusionaryWallNature';
 import type { GasTrapEffect } from '../../dungeon/features/navigation/gasTrap/gasTrapTable';
