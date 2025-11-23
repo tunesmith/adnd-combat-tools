@@ -1,5 +1,5 @@
-import { Stairs, stairs } from '../../../../../tables/dungeon/stairs';
-import { resolveStairs } from '../../../../../dungeon/domain/resolvers';
+import { Stairs, stairs } from '../../../../../dungeon/features/navigation/exit/stairsTable';
+import { resolveStairs } from '../../../../../dungeon/features/navigation/exit/stairsResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
 import type { DungeonTablePreview } from '../../../../../types/dungeon';

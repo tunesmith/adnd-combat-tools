@@ -1,11 +1,11 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import { chute as chuteTable, Chute } from '../../../tables/dungeon/stairs';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { chute as chuteTable, Chute } from './stairsTable';
 import {
   buildPreview,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 export function renderChuteDetail(
   outcome: OutcomeEventNode,

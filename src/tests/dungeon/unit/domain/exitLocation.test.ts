@@ -1,5 +1,5 @@
-import { resolveNumberOfExits } from '../../../../dungeon/domain/resolvers';
-import { resolvePassageExitLocation } from '../../../../dungeon/features/navigation/exit/exitResolvers';
+import { resolveNumberOfExits } from '../../../../dungeon/features/navigation/exit/numberOfExitsResolver';
+import { resolvePassageExitLocation } from '../../../../dungeon/features/navigation/exit/exitLocationResolvers';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,

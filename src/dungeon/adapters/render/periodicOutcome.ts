@@ -13,7 +13,7 @@ import { renderDoorChainCompact } from './doorLocation';
 import { describeSidePassage } from '../../features/navigation/sidePassage/sidePassageRender';
 import { renderPassageTurnCompact } from '../../features/navigation/passageTurn/passageTurnRender';
 import { describeChamberDimensions } from './chamberDimensions';
-import { renderStairsCompact } from './stairs';
+import { renderStairsCompact } from '../../features/navigation/exit/stairsRender';
 import {
   renderWanderingMonsterCompact,
   collectCharacterPartyMessages,

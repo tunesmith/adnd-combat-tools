@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum Stairs {
   DownOne,
@@ -14,6 +14,7 @@ export enum Stairs {
   TrapDownDownTwo,
   UpOneDownTwo,
 }
+
 export const stairs: Table<Stairs> = {
   sides: 20,
   entries: [

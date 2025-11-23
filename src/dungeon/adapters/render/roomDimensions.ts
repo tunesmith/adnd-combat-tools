@@ -11,7 +11,7 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { renderNumberOfExitsCompact } from './numberOfExits';
+import { renderNumberOfExitsCompact } from '../../features/navigation/exit/numberOfExitsRender';
 import { renderCompactUnusualDetails } from './unusualShape';
 import { describeChamberRoomContents } from './chamberRoomContents';
 import { collectCharacterPartyMessages } from './monsters';

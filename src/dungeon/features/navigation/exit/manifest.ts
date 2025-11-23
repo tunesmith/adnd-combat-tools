@@ -1,4 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
+import type { TableContext } from '../../../../types/dungeon';
 import {
   buildDoorExitLocationPreview,
   buildExitAlternativePreview,
@@ -14,20 +15,117 @@ import {
   renderPassageExitLocationDetail,
 } from './exitRender';
 import {
+  buildStairsPreview,
+  renderStairsCompactNodes,
+  renderStairsDetail,
+} from './stairsRender';
+import {
+  buildEgressPreview,
+  renderEgressCompact,
+  renderEgressDetail,
+} from './egressRender';
+import {
   resolveDoorExitLocation,
   resolveExitAlternative,
   resolveExitDirection,
   resolvePassageExitLocation,
+} from './exitLocationResolvers';
+import {
+  resolveEgress,
   resolveChute,
-} from './exitResolvers';
+  resolveStairs,
+} from './stairsResolvers';
+import { resolveNumberOfExits } from './numberOfExitsResolver';
 import {
   renderChuteCompact,
   renderChuteDetail,
   buildChutePreview,
-} from '../../../adapters/render/chute';
-import { wrapResolver, withoutAppend } from '../shared';
+} from './chuteRender';
+import {
+  renderNumberOfExitsCompact,
+  renderNumberOfExitsDetail,
+  buildNumberOfExitsPreview,
+} from './numberOfExitsRender';
+import {
+  readExitsContext,
+  readExitsContextLocal,
+  wrapResolver,
+  withoutAppend,
+} from '../shared';
 
 export const exitLeafTables: ReadonlyArray<DungeonTableDefinition> = [
+  {
+    id: 'stairs',
+    heading: 'Stairs',
+    resolver: wrapResolver(resolveStairs),
+    renderers: {
+      renderDetail: renderStairsDetail,
+      renderCompact: withoutAppend((node) => renderStairsCompactNodes(node)),
+    },
+    buildPreview: buildStairsPreview,
+    resolvePending: () => resolveStairs({}),
+  },
+  {
+    id: 'egress',
+    heading: 'Egress',
+    resolver: (options) =>
+      resolveEgress(
+        (options as { roll?: number; which: 'one' | 'two' | 'three' }) ?? {
+          which: 'one',
+        }
+      ),
+    renderers: {
+      renderDetail: renderEgressDetail,
+      renderCompact: withoutAppend(renderEgressCompact),
+    },
+    buildPreview: buildEgressPreview,
+    registry: ({ roll, id }) => {
+      const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';
+      return resolveEgress({ roll, which: key });
+    },
+    resolvePending: (pending) => {
+      const suffix = pending.table.split(':')[1];
+      const which = suffix === 'two' ? 'two' : suffix === 'three' ? 'three' : 'one';
+      return resolveEgress({ which });
+    },
+  },
+  {
+    id: 'numberOfExits',
+    heading: 'Exits',
+    resolver: (options) =>
+      resolveNumberOfExits(
+        (options as {
+          roll?: number;
+          length: number;
+          width: number;
+          isRoom: boolean;
+        }) ?? { length: 10, width: 10, isRoom: false }
+      ),
+    renderers: {
+      renderDetail: renderNumberOfExitsDetail,
+      renderCompact: withoutAppend(renderNumberOfExitsCompact),
+    },
+    buildPreview: (tableId, context) =>
+      buildNumberOfExitsPreview(tableId, context),
+    registry: ({ roll, context }) => {
+      const ctx = readExitsContext(context);
+      return resolveNumberOfExits({
+        roll,
+        length: ctx?.length ?? 10,
+        width: ctx?.width ?? 10,
+        isRoom: ctx?.isRoom ?? false,
+      });
+    },
+    resolvePending: (pending) => {
+      const ctx = readExitsContextLocal(pending.context as TableContext | undefined);
+      return resolveNumberOfExits({
+        roll: undefined,
+        length: ctx?.length ?? 10,
+        width: ctx?.width ?? 10,
+        isRoom: ctx?.isRoom ?? false,
+      });
+    },
+  },
   {
     id: 'passageExitLocation',
     heading: 'Passage Exit Location',

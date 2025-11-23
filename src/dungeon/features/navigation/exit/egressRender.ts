@@ -1,16 +1,11 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import {
-  egressOne,
-  egressTwo,
-  egressThree,
-  Egress,
-} from '../../../tables/dungeon/stairs';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { egressOne, egressTwo, egressThree, Egress } from './stairsTable';
 import {
   buildPreview,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 export function renderEgressDetail(
   outcome: OutcomeEventNode,

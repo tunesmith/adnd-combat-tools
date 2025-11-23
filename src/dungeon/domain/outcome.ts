@@ -2,14 +2,14 @@ import type { PeriodicCheck } from '../../tables/dungeon/periodicCheck';
 import type { DoorBeyond } from '../../tables/dungeon/doorBeyond';
 import type { SidePassages } from '../features/navigation/sidePassage/sidePassageTable';
 import type { PassageTurns } from '../features/navigation/passageTurn/passageTurnTable';
-import type { Stairs, Egress } from '../../tables/dungeon/stairs';
+import type { Stairs, Egress } from '../features/navigation/exit/stairsTable';
 import type { SpecialPassage } from '../features/navigation/specialPassage/specialPassageTable';
 import type { PassageWidth } from '../features/navigation/passageWidth/passageWidthTable';
 import type {
   RoomDimensions,
   ChamberDimensions,
 } from '../../tables/dungeon/chambersRooms';
-import type { NumberOfExits } from '../../tables/dungeon/numberOfExits';
+import type { NumberOfExits } from '../features/navigation/exit/numberOfExitsTable';
 import type {
   UnusualShape,
   CircularContents,
@@ -81,7 +81,7 @@ import type {
   ExitAlternative,
   ExitDirection,
   ExitLocation,
-} from '../features/navigation/exit/exitTable';
+} from '../features/navigation/exit/exitLocationsTable';
 import type { GasTrapEffect } from '../features/navigation/gasTrap/gasTrapTable';
 import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';

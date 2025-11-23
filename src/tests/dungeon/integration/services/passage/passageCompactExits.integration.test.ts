@@ -5,8 +5,8 @@ import {
 import {
   resolveRoomDimensions,
   resolveChamberDimensions,
-  resolveNumberOfExits,
 } from '../../../../../dungeon/domain/resolvers';
+import { resolveNumberOfExits } from '../../../../../dungeon/features/navigation/exit/numberOfExitsResolver';
 import {
   normalizeOutcomeTree,
   resolveOutcomeNode,

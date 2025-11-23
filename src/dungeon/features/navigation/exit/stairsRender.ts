@@ -1,8 +1,8 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import { stairs, Egress, Stairs, Chute } from '../../../tables/dungeon/stairs';
-import { findChildEvent, type AppendPreviewFn } from './shared';
-import { buildPreview, type TablePreviewFactory } from './shared';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { stairs, Egress, Stairs, Chute } from './stairsTable';
+import { findChildEvent, type AppendPreviewFn } from '../../../adapters/render/shared';
+import { buildPreview, type TablePreviewFactory } from '../../../adapters/render/shared';
 
 export type StairsDeps = {
   renderChamberSummary?: (node: OutcomeEventNode) => string;

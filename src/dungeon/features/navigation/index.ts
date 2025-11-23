@@ -14,7 +14,6 @@ import { passageWidthTables } from './passageWidth/manifest';
 import { exitLeafTables } from './exit/manifest';
 import { chasmTables } from './chasm/manifest';
 import { gasTrapTables } from './gasTrap/manifest';
-import { exitTables } from './tables/exits';
 
 const defineNavigationTables = <
   T extends ReadonlyArray<DungeonTableDefinition<unknown>>
@@ -31,7 +30,6 @@ const navigationDefinitions = defineNavigationTables([
   ...exitLeafTables,
   ...chasmTables,
   ...gasTrapTables,
-  ...exitTables,
 ]);
 
 export const NAVIGATION_TABLE_DEFINITIONS = navigationDefinitions;

@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum NumberOfExits {
   OneTwo600,
@@ -9,15 +9,16 @@ export enum NumberOfExits {
   OneToFour,
   DoorChamberOrPassageRoom,
 }
+
 export const numberOfExits: Table<NumberOfExits> = {
   sides: 20,
   entries: [
-    { range: [1, 3], command: NumberOfExits.OneTwo600 },
-    { range: [4, 6], command: NumberOfExits.TwoThree600 },
-    { range: [7, 9], command: NumberOfExits.ThreeFour600 },
-    { range: [10, 12], command: NumberOfExits.ZeroOne1200 },
-    { range: [13, 15], command: NumberOfExits.ZeroOne1600 },
-    { range: [16, 18], command: NumberOfExits.OneToFour },
+    { range: [1, 2], command: NumberOfExits.OneTwo600 },
+    { range: [3, 4], command: NumberOfExits.TwoThree600 },
+    { range: [5, 7], command: NumberOfExits.ThreeFour600 },
+    { range: [8, 10], command: NumberOfExits.ZeroOne1200 },
+    { range: [11, 13], command: NumberOfExits.ZeroOne1600 },
+    { range: [14, 18], command: NumberOfExits.OneToFour },
     { range: [19, 20], command: NumberOfExits.DoorChamberOrPassageRoom },
   ],
 };
@@ -28,6 +29,7 @@ export enum OneToFour {
   Three,
   Four,
 }
+
 export const oneToFour: Table<OneToFour> = {
   sides: 4,
   entries: [

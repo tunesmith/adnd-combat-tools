@@ -19,11 +19,11 @@ import {
   egressOne,
   egressTwo,
   egressThree,
-} from '../../tables/dungeon/stairs';
+} from '../features/navigation/exit/stairsTable';
 import {
   numberOfExits,
   NumberOfExits,
-} from '../../tables/dungeon/numberOfExits';
+} from '../features/navigation/exit/numberOfExitsTable';
 import {
   passageWidth,
   PassageWidth,
@@ -339,7 +339,7 @@ import {
   dragonTenTextForCommand,
 } from '../services/monster/monsterTenResult';
 import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
-import { oneToFour, OneToFour } from '../../tables/dungeon/numberOfExits';
+import { oneToFour, OneToFour } from '../features/navigation/exit/numberOfExitsTable';
 import type { DoorChainLaterality } from './outcome';
 import { resolveSubtable } from './resolveSubtable';
 import { buildTreasureEvent } from './buildTreasureEvent';

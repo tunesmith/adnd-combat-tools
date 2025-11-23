@@ -10,7 +10,7 @@ import {
   ExitAlternative,
   exitDirection,
   ExitDirection,
-} from './exitTable';
+} from './exitLocationsTable';
 import {
   buildPreview,
   findChildEvent,

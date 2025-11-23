@@ -1,11 +1,11 @@
 import { toCompactRender } from '../../../../../dungeon/adapters/render';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
-import { NumberOfExits } from '../../../../../tables/dungeon/numberOfExits';
 import {
   ExitLocation,
   ExitAlternative,
   ExitDirection,
-} from '../../../../../dungeon/features/navigation/exit/exitTable';
+} from '../../../../../dungeon/features/navigation/exit/exitLocationsTable';
+import { NumberOfExits } from '../../../../../dungeon/features/navigation/exit/numberOfExitsTable';
 
 function buildPassageExitTree(): OutcomeEventNode {
   const direction: OutcomeEventNode = {

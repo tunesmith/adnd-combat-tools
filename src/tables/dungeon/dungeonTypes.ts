@@ -20,13 +20,20 @@ import type { PassageTurns } from '../../dungeon/features/navigation/passageTurn
 import type { ChamberDimensions, RoomDimensions } from './chambersRooms';
 import type { CircularContents, UnusualShape } from './unusualShape';
 import type { UnusualSize } from './unusualSize';
-import type { NumberOfExits, OneToFour } from './numberOfExits';
+import type {
+  NumberOfExits,
+  OneToFour,
+} from '../../dungeon/features/navigation/exit/numberOfExitsTable';
 import type {
   ExitAlternative,
   ExitDirection,
   ExitLocation,
-} from '../../dungeon/features/navigation/exit/exitTable';
-import type { Chute, Egress, Stairs } from './stairs';
+} from '../../dungeon/features/navigation/exit/exitLocationsTable';
+import type {
+  Chute,
+  Egress,
+  Stairs,
+} from '../../dungeon/features/navigation/exit/stairsTable';
 import type { Pool } from './pool';
 import type {
   MagicPool,
