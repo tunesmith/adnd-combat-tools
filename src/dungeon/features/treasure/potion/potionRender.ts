@@ -1,39 +1,30 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasurePotion,
   TreasurePotion,
-} from '../../../tables/dungeon/treasurePotions';
-import {
   treasurePotionAnimalControl,
   TreasurePotionAnimalControl,
-} from '../../../tables/dungeon/treasurePotionAnimalControl';
-import {
   treasurePotionDragonControl,
   TreasurePotionDragonControl,
-} from '../../../tables/dungeon/treasurePotionDragonControl';
-import {
   treasurePotionGiantControl,
   TreasurePotionGiantControl,
-} from '../../../tables/dungeon/treasurePotionGiantControl';
-import {
   treasurePotionGiantStrength,
   TreasurePotionGiantStrength,
-} from '../../../tables/dungeon/treasurePotionGiantStrength';
-import {
   treasurePotionHumanControl,
   TreasurePotionHumanControl,
-} from '../../../tables/dungeon/treasurePotionHumanControl';
-import {
   treasurePotionUndeadControl,
   TreasurePotionUndeadControl,
-} from '../../../tables/dungeon/treasurePotionUndeadControl';
+} from './potionTables';
 import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 export const POTION_LABELS: Record<TreasurePotion, string> = {
   [TreasurePotion.AnimalControl]: 'animal control',

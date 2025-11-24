@@ -69,16 +69,6 @@ import {
   TreasureMagicCategory,
 } from '../../tables/dungeon/treasureMagic';
 import {
-  treasurePotion,
-  TreasurePotion,
-} from '../../tables/dungeon/treasurePotions';
-import { treasurePotionAnimalControl } from '../../tables/dungeon/treasurePotionAnimalControl';
-import { treasurePotionDragonControl } from '../../tables/dungeon/treasurePotionDragonControl';
-import { treasurePotionGiantControl } from '../../tables/dungeon/treasurePotionGiantControl';
-import { treasurePotionGiantStrength } from '../../tables/dungeon/treasurePotionGiantStrength';
-import { treasurePotionHumanControl } from '../../tables/dungeon/treasurePotionHumanControl';
-import { treasurePotionUndeadControl } from '../../tables/dungeon/treasurePotionUndeadControl';
-import {
   treasureScrolls,
   TreasureScroll,
 } from '../../tables/dungeon/treasureScrolls';
@@ -340,6 +330,15 @@ import {
 } from '../features/navigation/exit/numberOfExitsTable';
 import { resolveSubtable } from './resolveSubtable';
 import { buildTreasureEvent } from './buildTreasureEvent';
+export {
+  resolveTreasurePotion,
+  resolveTreasurePotionAnimalControl,
+  resolveTreasurePotionDragonControl,
+  resolveTreasurePotionGiantControl,
+  resolveTreasurePotionGiantStrength,
+  resolveTreasurePotionHumanControl,
+  resolveTreasurePotionUndeadControl,
+} from '../features/treasure/potion/potionResolvers';
 
 type ScrollCaster = 'magic-user' | 'illusionist' | 'cleric' | 'druid';
 
@@ -2560,211 +2559,6 @@ export function resolveTreasureMagicCategory(options?: {
     event,
     children: children.length ? children : undefined,
   };
-}
-
-export function resolveTreasurePotion(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasurePotion.sides);
-  const command = getTableEntry(usedRoll, treasurePotion);
-  const event: OutcomeEvent = {
-    kind: 'treasurePotion',
-    result: command,
-    level: options?.level ?? 1,
-    treasureRoll: options?.treasureRoll ?? usedRoll,
-    rollIndex: options?.rollIndex,
-  };
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasurePotion.AnimalControl) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePotionAnimalControl',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasurePotion.DragonControl) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePotionDragonControl',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasurePotion.GiantControl) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePotionGiantControl',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasurePotion.GiantStrength) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePotionGiantStrength',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasurePotion.HumanControl) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePotionHumanControl',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasurePotion.UndeadControl) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePotionUndeadControl',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event,
-    children: children.length ? children : undefined,
-  };
-}
-
-export function resolveTreasurePotionAnimalControl(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasurePotionAnimalControl,
-    roll: options?.roll,
-    buildEvent: (command, usedRoll) =>
-      buildTreasureEvent(
-        'treasurePotionAnimalControl',
-        command,
-        usedRoll,
-        options
-      ),
-  });
-}
-
-export function resolveTreasurePotionDragonControl(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasurePotionDragonControl,
-    roll: options?.roll,
-    buildEvent: (command, usedRoll) =>
-      buildTreasureEvent(
-        'treasurePotionDragonControl',
-        command,
-        usedRoll,
-        options
-      ),
-  });
-}
-
-export function resolveTreasurePotionGiantControl(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasurePotionGiantControl,
-    roll: options?.roll,
-    buildEvent: (command, usedRoll) =>
-      buildTreasureEvent(
-        'treasurePotionGiantControl',
-        command,
-        usedRoll,
-        options
-      ),
-  });
-}
-
-export function resolveTreasurePotionGiantStrength(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasurePotionGiantStrength,
-    roll: options?.roll,
-    buildEvent: (command, usedRoll) =>
-      buildTreasureEvent(
-        'treasurePotionGiantStrength',
-        command,
-        usedRoll,
-        options
-      ),
-  });
-}
-
-export function resolveTreasurePotionHumanControl(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasurePotionHumanControl,
-    roll: options?.roll,
-    buildEvent: (command, usedRoll) =>
-      buildTreasureEvent(
-        'treasurePotionHumanControl',
-        command,
-        usedRoll,
-        options
-      ),
-  });
-}
-
-export function resolveTreasurePotionUndeadControl(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasurePotionUndeadControl,
-    roll: options?.roll,
-    buildEvent: (command, usedRoll) =>
-      buildTreasureEvent(
-        'treasurePotionUndeadControl',
-        command,
-        usedRoll,
-        options
-      ),
-  });
 }
 
 export function resolveTreasureScroll(options?: {

@@ -66,8 +66,8 @@ export type DungeonTableDefinition<TOptions = unknown> = {
   postProcessChildren?: PostProcessChildren;
 };
 
-export function createRenderAdapterMap(
-  defs: ReadonlyArray<DungeonTableDefinition<unknown>>
+export function createRenderAdapterMap<TOptions>(
+  defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
 ): Partial<Record<string, RenderAdapter>> {
   const map: Partial<Record<string, RenderAdapter>> = {};
   for (const def of defs) {
@@ -76,8 +76,8 @@ export function createRenderAdapterMap(
   return map;
 }
 
-export function createPreviewFactoryMap(
-  defs: ReadonlyArray<DungeonTableDefinition<unknown>>
+export function createPreviewFactoryMap<TOptions>(
+  defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
 ): Record<string, TablePreviewFactory> {
   const map: Record<string, TablePreviewFactory> = {};
   for (const def of defs) {
@@ -92,8 +92,8 @@ export function createPreviewFactoryMap(
   return map;
 }
 
-export function createRegistryOutcomeMap(
-  defs: ReadonlyArray<DungeonTableDefinition<unknown>>
+export function createRegistryOutcomeMap<TOptions>(
+  defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
 ): Record<string, RegistryOutcomeBuilder> {
   const map: Record<string, RegistryOutcomeBuilder> = {};
   for (const def of defs) {
@@ -101,7 +101,9 @@ export function createRegistryOutcomeMap(
       def.registry ??
       ((opts) =>
         def.resolver(
-          opts.roll === undefined ? undefined : { roll: opts.roll }
+          opts.roll === undefined
+            ? undefined
+            : ({ roll: opts.roll } as unknown as TOptions)
         ));
   }
   return map;

@@ -99,29 +99,6 @@ import {
   buildTreasureMagicCategoryPreview,
 } from './render/treasureMagic';
 import {
-  renderTreasurePotionDetail,
-  renderTreasurePotionCompact,
-  buildTreasurePotionPreview,
-  renderTreasurePotionAnimalControlDetail,
-  renderTreasurePotionAnimalControlCompact,
-  buildTreasurePotionAnimalControlPreview,
-  renderTreasurePotionDragonControlDetail,
-  renderTreasurePotionDragonControlCompact,
-  buildTreasurePotionDragonControlPreview,
-  renderTreasurePotionGiantControlDetail,
-  renderTreasurePotionGiantControlCompact,
-  buildTreasurePotionGiantControlPreview,
-  renderTreasurePotionGiantStrengthDetail,
-  renderTreasurePotionGiantStrengthCompact,
-  buildTreasurePotionGiantStrengthPreview,
-  renderTreasurePotionHumanControlDetail,
-  renderTreasurePotionHumanControlCompact,
-  buildTreasurePotionHumanControlPreview,
-  renderTreasurePotionUndeadControlDetail,
-  renderTreasurePotionUndeadControlCompact,
-  buildTreasurePotionUndeadControlPreview,
-} from './render/treasurePotion';
-import {
   renderTreasureScrollDetail,
   renderTreasureScrollCompact,
   buildTreasureScrollPreview,
@@ -404,6 +381,12 @@ import {
   NAVIGATION_PREVIEW_FACTORIES,
   NAVIGATION_RENDER_ADAPTERS,
 } from '../features/navigation/bundle';
+import {
+  createPreviewFactoryMap,
+  createRenderAdapterMap,
+} from '../features/types';
+import type { DungeonTableDefinition } from '../features/types';
+import { TREASURE_TABLE_DEFINITIONS } from '../features/treasure/bundle';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
@@ -512,34 +495,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasureMagicCategory: {
     renderDetail: renderTreasureMagicCategoryDetail,
     renderCompact: renderTreasureMagicCategoryCompact,
-  },
-  treasurePotion: {
-    renderDetail: renderTreasurePotionDetail,
-    renderCompact: renderTreasurePotionCompact,
-  },
-  treasurePotionAnimalControl: {
-    renderDetail: renderTreasurePotionAnimalControlDetail,
-    renderCompact: renderTreasurePotionAnimalControlCompact,
-  },
-  treasurePotionDragonControl: {
-    renderDetail: renderTreasurePotionDragonControlDetail,
-    renderCompact: renderTreasurePotionDragonControlCompact,
-  },
-  treasurePotionGiantControl: {
-    renderDetail: renderTreasurePotionGiantControlDetail,
-    renderCompact: renderTreasurePotionGiantControlCompact,
-  },
-  treasurePotionGiantStrength: {
-    renderDetail: renderTreasurePotionGiantStrengthDetail,
-    renderCompact: renderTreasurePotionGiantStrengthCompact,
-  },
-  treasurePotionHumanControl: {
-    renderDetail: renderTreasurePotionHumanControlDetail,
-    renderCompact: renderTreasurePotionHumanControlCompact,
-  },
-  treasurePotionUndeadControl: {
-    renderDetail: renderTreasurePotionUndeadControlDetail,
-    renderCompact: renderTreasurePotionUndeadControlCompact,
   },
   treasureScroll: {
     renderDetail: renderTreasureScrollDetail,
@@ -818,6 +773,12 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
 } as const;
 
 Object.assign(RENDER_ADAPTERS, NAVIGATION_RENDER_ADAPTERS);
+Object.assign(
+  RENDER_ADAPTERS,
+  createRenderAdapterMap(
+    TREASURE_TABLE_DEFINITIONS as ReadonlyArray<DungeonTableDefinition<unknown>>
+  )
+);
 
 type PendingPreviewBuilder = (
   tableId: string,
@@ -845,13 +806,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureProtectionGuardedBy: buildTreasureProtectionGuardedByPreview,
   treasureProtectionHiddenBy: buildTreasureProtectionHiddenByPreview,
   treasureMagicCategory: buildTreasureMagicCategoryPreview,
-  treasurePotion: buildTreasurePotionPreview,
-  treasurePotionAnimalControl: buildTreasurePotionAnimalControlPreview,
-  treasurePotionDragonControl: buildTreasurePotionDragonControlPreview,
-  treasurePotionGiantControl: buildTreasurePotionGiantControlPreview,
-  treasurePotionGiantStrength: buildTreasurePotionGiantStrengthPreview,
-  treasurePotionHumanControl: buildTreasurePotionHumanControlPreview,
-  treasurePotionUndeadControl: buildTreasurePotionUndeadControlPreview,
   treasureScroll: buildTreasureScrollPreview,
   treasureScrollProtectionElementals:
     buildTreasureScrollProtectionElementalsPreview,
@@ -926,6 +880,12 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);
+Object.assign(
+  PENDING_PREVIEW_FACTORIES,
+  createPreviewFactoryMap(
+    TREASURE_TABLE_DEFINITIONS as ReadonlyArray<DungeonTableDefinition<unknown>>
+  )
+);
 
 const MONSTER_PREVIEW_BASES = [
   'monsterLevel',

@@ -91,13 +91,15 @@ import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
 import type { TreasureContainer } from '../../tables/dungeon/treasureContainer';
 import type { TreasureMagicCategory } from '../../tables/dungeon/treasureMagic';
-import type { TreasurePotion } from '../../tables/dungeon/treasurePotions';
-import type { TreasurePotionAnimalControl } from '../../tables/dungeon/treasurePotionAnimalControl';
-import type { TreasurePotionDragonControl } from '../../tables/dungeon/treasurePotionDragonControl';
-import type { TreasurePotionGiantControl } from '../../tables/dungeon/treasurePotionGiantControl';
-import type { TreasurePotionGiantStrength } from '../../tables/dungeon/treasurePotionGiantStrength';
-import type { TreasurePotionHumanControl } from '../../tables/dungeon/treasurePotionHumanControl';
-import type { TreasurePotionUndeadControl } from '../../tables/dungeon/treasurePotionUndeadControl';
+import type {
+  TreasurePotion,
+  TreasurePotionAnimalControl,
+  TreasurePotionDragonControl,
+  TreasurePotionGiantControl,
+  TreasurePotionGiantStrength,
+  TreasurePotionHumanControl,
+  TreasurePotionUndeadControl,
+} from '../features/treasure/potion/potionTables';
 import type { TreasureScroll } from '../../tables/dungeon/treasureScrolls';
 import type { TreasureRing } from '../../tables/dungeon/treasureRings';
 import type { TreasureRingContrariness } from '../../tables/dungeon/treasureRingContrariness';

@@ -54,13 +54,6 @@ import {
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
   resolveTreasureMagicCategory,
-  resolveTreasurePotion,
-  resolveTreasurePotionAnimalControl,
-  resolveTreasurePotionDragonControl,
-  resolveTreasurePotionGiantControl,
-  resolveTreasurePotionGiantStrength,
-  resolveTreasurePotionHumanControl,
-  resolveTreasurePotionUndeadControl,
   resolveTreasureScroll,
   resolveTreasureScrollProtectionElementals,
   resolveTreasureScrollProtectionLycanthropes,
@@ -143,6 +136,12 @@ import {
 } from '../features/navigation/bundle';
 import type { NavigationTableId } from '../features/navigation/bundle';
 import {
+  TREASURE_REGISTRY_OUTCOMES,
+  TREASURE_TABLE_DEFINITIONS,
+  TREASURE_TABLE_HEADINGS,
+  TREASURE_TABLE_ID_LIST,
+} from '../features/treasure/bundle';
+import {
   BASE_TABLE_HEADINGS,
   BASE_TABLE_ID_LIST,
   type BaseTableId,
@@ -172,10 +171,12 @@ const NAVIGATION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
     ])
   );
 
-export type TableId = NavigationTableId | BaseTableId;
+export type TreasureTableId = typeof TREASURE_TABLE_DEFINITIONS[number]['id'];
+export type TableId = NavigationTableId | TreasureTableId | BaseTableId;
 
 const TABLE_ID_LIST: ReadonlyArray<TableId> = [
   ...NAVIGATION_TABLE_ID_LIST,
+  ...TREASURE_TABLE_ID_LIST,
   ...BASE_TABLE_ID_LIST,
 ];
 
@@ -185,6 +186,7 @@ function isTableId(x: string): x is TableId {
 
 export const TABLE_HEADINGS: Record<TableId, string> = {
   ...NAVIGATION_TABLE_HEADINGS,
+  ...TREASURE_TABLE_HEADINGS,
   ...BASE_TABLE_HEADINGS,
 } as Record<TableId, string>;
 
@@ -388,146 +390,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
         : undefined;
     return fromOutcome(
       resolveTreasureMagicCategory({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasurePotion: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasurePotion({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasurePotionAnimalControl: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasurePotionAnimalControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasurePotionDragonControl: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasurePotionDragonControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasurePotionGiantControl: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasurePotionGiantControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasurePotionGiantStrength: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasurePotionGiantStrength({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasurePotionHumanControl: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasurePotionHumanControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasurePotionUndeadControl: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasurePotionUndeadControl({
         roll,
         level,
         treasureRoll,
@@ -1003,6 +865,16 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
   treasureStaffSerpent: ({ roll }) =>
     fromOutcome(resolveTreasureStaffSerpent({ roll })),
 };
+
+const POTION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
+  Object.fromEntries(
+    Object.entries(TREASURE_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
+      id,
+      (opts) => fromOutcome(buildOutcome(opts)),
+    ])
+  );
+
+Object.assign(BASE_TABLE_RESOLVERS, POTION_TABLE_RESOLVERS);
 
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   ...NAVIGATION_TABLE_RESOLVERS,

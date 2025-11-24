@@ -79,13 +79,15 @@ import type {
 } from './treasureProtection';
 import type { TreasureContainer } from './treasureContainer';
 import type { TreasureMagicCategory } from './treasureMagic';
-import type { TreasurePotion } from './treasurePotions';
-import type { TreasurePotionAnimalControl } from './treasurePotionAnimalControl';
-import type { TreasurePotionDragonControl } from './treasurePotionDragonControl';
-import type { TreasurePotionGiantControl } from './treasurePotionGiantControl';
-import type { TreasurePotionGiantStrength } from './treasurePotionGiantStrength';
-import type { TreasurePotionHumanControl } from './treasurePotionHumanControl';
-import type { TreasurePotionUndeadControl } from './treasurePotionUndeadControl';
+import type {
+  TreasurePotion,
+  TreasurePotionAnimalControl,
+  TreasurePotionDragonControl,
+  TreasurePotionGiantControl,
+  TreasurePotionGiantStrength,
+  TreasurePotionHumanControl,
+  TreasurePotionUndeadControl,
+} from '../../dungeon/features/treasure/potion/potionTables';
 import type { TreasureScroll } from './treasureScrolls';
 import type { TreasureScrollProtectionElementals } from './treasureScrollProtectionElementals';
 import type { TreasureScrollProtectionLycanthropes } from './treasureScrollProtectionLycanthropes';
