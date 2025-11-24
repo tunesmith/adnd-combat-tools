@@ -124,7 +124,11 @@ import {
   NAVIGATION_CHILD_POST_PROCESSORS,
   NAVIGATION_PENDING_RESOLVERS,
 } from '../features/navigation/bundle';
-import { resolveGasTrapEffect } from '../features/navigation/gasTrap/gasTrapResolvers';
+import {
+  HAZARD_CHILD_POST_PROCESSORS,
+  HAZARD_PENDING_RESOLVERS,
+} from '../features/hazards/bundle';
+import { resolveGasTrapEffect } from '../features/hazards/gasTrap/gasTrapResolvers';
 import type { TableContext } from '../../types/dungeon';
 import { DoorLocation } from '../features/navigation/doorChain/doorChainTable';
 import { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
@@ -666,6 +670,10 @@ function enrichEventNode(
   if (navPostProcess) {
     children = navPostProcess(node, children, resolveNested);
   }
+  const hazardPostProcess = HAZARD_CHILD_POST_PROCESSORS[node.event.kind];
+  if (hazardPostProcess) {
+    children = hazardPostProcess(node, children, resolveNested);
+  }
   return {
     type: 'event',
     event: node.event,
@@ -711,6 +719,12 @@ function resolvePendingNode(
     NAVIGATION_PENDING_RESOLVERS[pending.table.split(':')[0] ?? ''];
   if (navResolve) {
     const resolved = navResolve(pending, ancestors);
+    if (resolved) return resolved;
+  }
+  const hazardResolve =
+    HAZARD_PENDING_RESOLVERS[pending.table.split(':')[0] ?? ''];
+  if (hazardResolve) {
+    const resolved = hazardResolve(pending, ancestors);
     if (resolved) return resolved;
   }
   const base = pending.table.split(':')[0] ?? '';

@@ -7,7 +7,7 @@ import {
   resolveIllusionaryWallNature,
 } from '../../../../../dungeon/domain/resolvers';
 import { resolvePeriodicDoorOnly } from '../../../../../dungeon/features/navigation/doorChain/doorChainResolvers';
-import { resolveGasTrapEffect } from '../../../../../dungeon/features/navigation/gasTrap/gasTrapResolvers';
+import { resolveGasTrapEffect } from '../../../../../dungeon/features/hazards/gasTrap/gasTrapResolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import { ChamberRoomContents } from '../../../../../tables/dungeon/chamberRoomContents';

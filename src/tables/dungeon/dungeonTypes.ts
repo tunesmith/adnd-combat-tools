@@ -68,7 +68,7 @@ import type { CharacterClassTable } from './monster/character/characterClass';
 import type { PeriodicCheckDoorOnly } from '../../dungeon/features/navigation/doorChain/doorChainTable';
 import type { TrickTrap } from './trickTrap';
 import type { IllusionaryWallNature } from './illusionaryWallNature';
-import type { GasTrapEffect } from '../../dungeon/features/navigation/gasTrap/gasTrapTable';
+import type { GasTrapEffect } from '../../dungeon/features/hazards/gasTrap/gasTrapTable';
 import type { ChamberRoomContents } from './chamberRoomContents';
 import type { ChamberRoomStairs } from './chamberRoomStairs';
 import type { TreasureWithoutMonster } from './treasure';

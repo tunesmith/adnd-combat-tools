@@ -136,6 +136,12 @@ import {
 } from '../features/navigation/bundle';
 import type { NavigationTableId } from '../features/navigation/bundle';
 import {
+  HAZARD_REGISTRY_OUTCOMES,
+  HAZARD_TABLE_HEADINGS,
+  HAZARD_TABLE_ID_LIST,
+} from '../features/hazards/bundle';
+import type { HazardTableId } from '../features/hazards/bundle';
+import {
   TREASURE_REGISTRY_OUTCOMES,
   TREASURE_TABLE_DEFINITIONS,
   TREASURE_TABLE_HEADINGS,
@@ -172,10 +178,15 @@ const NAVIGATION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
   );
 
 export type TreasureTableId = typeof TREASURE_TABLE_DEFINITIONS[number]['id'];
-export type TableId = NavigationTableId | TreasureTableId | BaseTableId;
+export type TableId =
+  | NavigationTableId
+  | HazardTableId
+  | TreasureTableId
+  | BaseTableId;
 
 const TABLE_ID_LIST: ReadonlyArray<TableId> = [
   ...NAVIGATION_TABLE_ID_LIST,
+  ...HAZARD_TABLE_ID_LIST,
   ...TREASURE_TABLE_ID_LIST,
   ...BASE_TABLE_ID_LIST,
 ];
@@ -186,6 +197,7 @@ function isTableId(x: string): x is TableId {
 
 export const TABLE_HEADINGS: Record<TableId, string> = {
   ...NAVIGATION_TABLE_HEADINGS,
+  ...HAZARD_TABLE_HEADINGS,
   ...TREASURE_TABLE_HEADINGS,
   ...BASE_TABLE_HEADINGS,
 } as Record<TableId, string>;
@@ -866,7 +878,15 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
     fromOutcome(resolveTreasureStaffSerpent({ roll })),
 };
 
-const POTION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
+const HAZARD_TABLE_RESOLVERS: Record<string, RegistryResolver> =
+  Object.fromEntries(
+    Object.entries(HAZARD_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
+      id,
+      (opts) => fromOutcome(buildOutcome(opts)),
+    ])
+  );
+
+const TREASURE_TABLE_RESOLVERS: Record<string, RegistryResolver> =
   Object.fromEntries(
     Object.entries(TREASURE_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
       id,
@@ -874,10 +894,10 @@ const POTION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
     ])
   );
 
-Object.assign(BASE_TABLE_RESOLVERS, POTION_TABLE_RESOLVERS);
-
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   ...NAVIGATION_TABLE_RESOLVERS,
+  ...HAZARD_TABLE_RESOLVERS,
+  ...TREASURE_TABLE_RESOLVERS,
   ...BASE_TABLE_RESOLVERS,
 } as Record<TableId, RegistryResolver>;
 

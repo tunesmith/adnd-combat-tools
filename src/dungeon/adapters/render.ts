@@ -382,6 +382,10 @@ import {
   NAVIGATION_RENDER_ADAPTERS,
 } from '../features/navigation/bundle';
 import {
+  HAZARD_PREVIEW_FACTORIES,
+  HAZARD_RENDER_ADAPTERS,
+} from '../features/hazards/bundle';
+import {
   createPreviewFactoryMap,
   createRenderAdapterMap,
 } from '../features/types';
@@ -773,6 +777,7 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
 } as const;
 
 Object.assign(RENDER_ADAPTERS, NAVIGATION_RENDER_ADAPTERS);
+Object.assign(RENDER_ADAPTERS, HAZARD_RENDER_ADAPTERS);
 Object.assign(
   RENDER_ADAPTERS,
   createRenderAdapterMap(
@@ -880,6 +885,7 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);
+Object.assign(PENDING_PREVIEW_FACTORIES, HAZARD_PREVIEW_FACTORIES);
 Object.assign(
   PENDING_PREVIEW_FACTORIES,
   createPreviewFactoryMap(

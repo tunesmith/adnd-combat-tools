@@ -7,7 +7,7 @@ import {
   type TablePreviewFactory,
 } from './shared';
 import { describeIllusionaryWallNature } from './illusionaryWallNature';
-import { describeGasTrapEffect } from '../../features/navigation/gasTrap/gasTrapRender';
+import { describeGasTrapEffect } from '../../features/hazards/gasTrap/gasTrapRender';
 
 export function renderTrickTrapDetail(
   outcome: OutcomeEventNode,

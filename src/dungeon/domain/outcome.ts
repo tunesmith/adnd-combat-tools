@@ -84,7 +84,7 @@ import type {
   ExitDirection,
   ExitLocation,
 } from '../features/navigation/exit/exitLocationsTable';
-import type { GasTrapEffect } from '../features/navigation/gasTrap/gasTrapTable';
+import type { GasTrapEffect } from '../features/hazards/gasTrap/gasTrapTable';
 import type { TrickTrap } from '../../tables/dungeon/trickTrap';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
