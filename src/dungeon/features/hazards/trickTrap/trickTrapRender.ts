@@ -1,13 +1,16 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import { trickTrap, TrickTrap } from '../../../tables/dungeon/trickTrap';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { trickTrap, TrickTrap } from './trickTrapTable';
 import {
   buildPreview,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
-import { describeIllusionaryWallNature } from './illusionaryWallNature';
-import { describeGasTrapEffect } from '../../features/hazards/gasTrap/gasTrapRender';
+} from '../../../adapters/render/shared';
+import { describeIllusionaryWallNature } from '../../../adapters/render/illusionaryWallNature';
+import { describeGasTrapEffect } from '../gasTrap/gasTrapRender';
 
 export function renderTrickTrapDetail(
   outcome: OutcomeEventNode,
@@ -61,7 +64,18 @@ export function renderTrickTrapCompact(node: OutcomeEventNode): string {
   return extras.length > 0 ? `${base}${extras.join(' ')}` : base;
 }
 
-export const buildTrickTrapPreview: TablePreviewFactory = (tableId) =>
+export function renderTrickTrapCompactNodes(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'trickTrap') return [];
+  const text = renderTrickTrapCompact(outcome);
+  const nodes: DungeonRenderNode[] = text ? [{ kind: 'paragraph', text }] : [];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export const buildTrickTrapPreview: TablePreviewFactory = (tableId, context) =>
   buildPreview(tableId, {
     title: 'Trick / Trap',
     sides: trickTrap.sides,
@@ -69,6 +83,7 @@ export const buildTrickTrapPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: TRICK_TRAP_DETAILS[entry.command].trim(),
     })),
+    context,
   });
 
 function formatTrickTrap(result: TrickTrap): string {

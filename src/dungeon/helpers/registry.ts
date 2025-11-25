@@ -143,10 +143,10 @@ import {
 import type { HazardTableId } from '../features/hazards/bundle';
 import {
   TREASURE_REGISTRY_OUTCOMES,
-  TREASURE_TABLE_DEFINITIONS,
   TREASURE_TABLE_HEADINGS,
   TREASURE_TABLE_ID_LIST,
 } from '../features/treasure/bundle';
+import type { TreasureTableId } from '../features/treasure/bundle';
 import {
   BASE_TABLE_HEADINGS,
   BASE_TABLE_ID_LIST,
@@ -176,8 +176,6 @@ const NAVIGATION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
       (opts) => fromOutcome(buildOutcome(opts)),
     ])
   );
-
-export type TreasureTableId = typeof TREASURE_TABLE_DEFINITIONS[number]['id'];
 export type TableId =
   | NavigationTableId
   | HazardTableId

@@ -7,8 +7,7 @@ import {
   HAZARD_TABLE_DEFINITIONS,
 } from '.';
 
-export type HazardTableId =
-  typeof HAZARD_TABLE_DEFINITIONS[number]['id'];
+export type HazardTableId = typeof HAZARD_TABLE_DEFINITIONS[number]['id'];
 
 export const HAZARD_TABLE_ID_LIST: ReadonlyArray<HazardTableId> =
   HAZARD_TABLE_DEFINITIONS.map((def) => def.id);

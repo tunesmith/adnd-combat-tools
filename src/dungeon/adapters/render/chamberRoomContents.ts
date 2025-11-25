@@ -16,7 +16,7 @@ import {
   describeMonsterOutcome,
   collectCharacterPartyMessages,
 } from './monsters';
-import { renderTrickTrapCompact } from './trickTrap';
+import { renderTrickTrapCompact } from '../../features/hazards/trickTrap/trickTrapRender';
 import { compactMessagesToText } from './monsters/partySummary';
 import { collectTreasureCompactSummaries } from './treasure';
 

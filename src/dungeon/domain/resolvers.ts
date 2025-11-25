@@ -35,7 +35,7 @@ import {
   poolAlignment,
   transporterLocation,
 } from '../../tables/dungeon/magicPool';
-import { trickTrap, TrickTrap } from '../../tables/dungeon/trickTrap';
+export { resolveTrickTrap } from '../features/hazards/trickTrap/trickTrapResolvers';
 import {
   illusionaryWallNature,
   IllusionaryWallNature,
@@ -5019,25 +5019,6 @@ export function resolveTransporterLocation(options?: {
     type: 'event',
     roll: usedRoll,
     event: { kind: 'transporterLocation', result: command } as OutcomeEvent,
-  };
-}
-
-export function resolveTrickTrap(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(trickTrap.sides);
-  const command = getTableEntry(usedRoll, trickTrap);
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TrickTrap.IllusionaryWall) {
-    children.push({ type: 'pending-roll', table: 'illusionaryWallNature' });
-  } else if (command === TrickTrap.GasCorridor) {
-    children.push({ type: 'pending-roll', table: 'gasTrapEffect' });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: { kind: 'trickTrap', result: command } as OutcomeEvent,
-    children: children.length ? children : undefined,
   };
 }
 

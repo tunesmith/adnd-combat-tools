@@ -6,7 +6,7 @@ import type {
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { periodicCheck } from '../../../tables/dungeon/periodicCheck';
-import { TrickTrap } from '../../../tables/dungeon/trickTrap';
+import { TrickTrap } from '../../features/hazards/trickTrap/trickTrapTable';
 import type { AppendPreviewFn, TablePreviewFactory } from './shared';
 import { buildPreview, findChildEvent } from './shared';
 import { renderDoorChainCompact } from '../../features/navigation/doorChain/doorChainRender';
@@ -18,7 +18,7 @@ import {
   renderWanderingMonsterCompact,
   collectCharacterPartyMessages,
 } from './monsters';
-import { renderTrickTrapCompact } from './trickTrap';
+import { renderTrickTrapCompact } from '../../features/hazards/trickTrap/trickTrapRender';
 import { renderChamberDimensionsCompact } from './chamberDimensions';
 import { collectTreasureCompactMessages } from './treasure';
 

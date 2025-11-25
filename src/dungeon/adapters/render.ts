@@ -66,10 +66,6 @@ import {
   buildChamberRoomStairsPreview,
 } from './render/chamberRoomStairs';
 import {
-  renderTrickTrapDetail,
-  buildTrickTrapPreview,
-} from './render/trickTrap';
-import {
   buildMonsterPreview,
   renderMonsterDetailNodes,
   renderMonsterCompactNodes,
@@ -389,7 +385,6 @@ import {
   createPreviewFactoryMap,
   createRenderAdapterMap,
 } from '../features/types';
-import type { DungeonTableDefinition } from '../features/types';
 import { TREASURE_TABLE_DEFINITIONS } from '../features/treasure/bundle';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
@@ -471,10 +466,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   chamberRoomStairs: {
     renderDetail: renderChamberRoomStairsDetail,
     renderCompact: renderChamberRoomStairsCompact,
-  },
-  trickTrap: {
-    renderDetail: renderTrickTrapDetail,
-    renderCompact: NO_COMPACT_RENDER,
   },
   treasure: {
     renderDetail: renderTreasureDetail,
@@ -780,9 +771,7 @@ Object.assign(RENDER_ADAPTERS, NAVIGATION_RENDER_ADAPTERS);
 Object.assign(RENDER_ADAPTERS, HAZARD_RENDER_ADAPTERS);
 Object.assign(
   RENDER_ADAPTERS,
-  createRenderAdapterMap(
-    TREASURE_TABLE_DEFINITIONS as ReadonlyArray<DungeonTableDefinition<unknown>>
-  )
+  createRenderAdapterMap(TREASURE_TABLE_DEFINITIONS)
 );
 
 type PendingPreviewBuilder = (
@@ -803,7 +792,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   transmuteType: buildTransmuteTypePreview,
   poolAlignment: buildPoolAlignmentPreview,
   transporterLocation: buildTransporterLocationPreview,
-  trickTrap: buildTrickTrapPreview,
   illusionaryWallNature: buildIllusionaryWallNaturePreview,
   treasure: buildTreasurePreview,
   treasureContainer: buildTreasureContainerPreview,
@@ -888,9 +876,7 @@ Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);
 Object.assign(PENDING_PREVIEW_FACTORIES, HAZARD_PREVIEW_FACTORIES);
 Object.assign(
   PENDING_PREVIEW_FACTORIES,
-  createPreviewFactoryMap(
-    TREASURE_TABLE_DEFINITIONS as ReadonlyArray<DungeonTableDefinition<unknown>>
-  )
+  createPreviewFactoryMap(TREASURE_TABLE_DEFINITIONS)
 );
 
 const MONSTER_PREVIEW_BASES = [
