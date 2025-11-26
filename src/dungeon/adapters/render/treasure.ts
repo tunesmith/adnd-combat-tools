@@ -14,7 +14,7 @@ import {
 } from '../../../tables/dungeon/treasure';
 import { resolvedPotionSentence } from '../../features/treasure/potion/potionRender';
 import { resolvedScrollSentence } from '../../features/treasure/scroll/scrollRender';
-import { ringSentence } from './treasureRing';
+import { ringSentence } from '../../features/treasure/ring/ringRender';
 import { resolveRodStaffWandLabel } from './treasureRodStaffWand';
 import {
   buildPreview,

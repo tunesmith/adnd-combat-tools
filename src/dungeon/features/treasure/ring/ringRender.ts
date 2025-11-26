@@ -1,44 +1,33 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureRings,
   TreasureRing,
-} from '../../../tables/dungeon/treasureRings';
+  treasureRingContrariness,
+  TreasureRingContrariness,
+  treasureRingElementalCommand,
+  TreasureRingElementalCommand,
+  treasureRingProtection,
+  TreasureRingProtection,
+  treasureRingRegeneration,
+  TreasureRingRegeneration,
+  treasureRingTelekinesis,
+  TreasureRingTelekinesis,
+  treasureRingThreeWishes,
+  TreasureRingThreeWishes,
+  treasureRingWizardry,
+  TreasureRingWizardry,
+} from './ringTables';
 import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
-import {
-  treasureRingContrariness,
-  TreasureRingContrariness,
-} from '../../../tables/dungeon/treasureRingContrariness';
-import {
-  treasureRingElementalCommand,
-  TreasureRingElementalCommand,
-} from '../../../tables/dungeon/treasureRingElementalCommand';
-import {
-  treasureRingProtection,
-  TreasureRingProtection,
-} from '../../../tables/dungeon/treasureRingProtection';
-import {
-  treasureRingRegeneration,
-  TreasureRingRegeneration,
-} from '../../../tables/dungeon/treasureRingRegeneration';
-import {
-  treasureRingTelekinesis,
-  TreasureRingTelekinesis,
-} from '../../../tables/dungeon/treasureRingTelekinesis';
-import {
-  treasureRingThreeWishes,
-  TreasureRingThreeWishes,
-} from '../../../tables/dungeon/treasureRingThreeWishes';
-import {
-  treasureRingWizardry,
-  TreasureRingWizardry,
-} from '../../../tables/dungeon/treasureRingWizardry';
-import { formatOrdinal } from '../../features/treasure/shared';
+} from '../../../adapters/render/shared';
+import { formatOrdinal } from '../shared';
 
 const RING_LABELS: Record<TreasureRing, string> = {
   [TreasureRing.Contrariness]: 'contrariness',

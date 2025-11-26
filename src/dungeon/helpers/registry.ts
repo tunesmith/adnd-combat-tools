@@ -54,14 +54,6 @@ import {
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
   resolveTreasureMagicCategory,
-  resolveTreasureRing,
-  resolveTreasureRingContrariness,
-  resolveTreasureRingElementalCommand,
-  resolveTreasureRingProtection,
-  resolveTreasureRingRegeneration,
-  resolveTreasureRingTelekinesis,
-  resolveTreasureRingThreeWishes,
-  resolveTreasureRingWizardry,
   resolveTreasureRodStaffWand,
   resolveTreasureBagOfHolding,
   resolveTreasureBagOfTricks,
@@ -404,40 +396,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureRing: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasureRing({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasureRingContrariness: ({ roll }) =>
-    fromOutcome(resolveTreasureRingContrariness({ roll })),
-  treasureRingElementalCommand: ({ roll }) =>
-    fromOutcome(resolveTreasureRingElementalCommand({ roll })),
-  treasureRingProtection: ({ roll }) =>
-    fromOutcome(resolveTreasureRingProtection({ roll })),
-  treasureRingRegeneration: ({ roll }) =>
-    fromOutcome(resolveTreasureRingRegeneration({ roll })),
-  treasureRingTelekinesis: ({ roll }) =>
-    fromOutcome(resolveTreasureRingTelekinesis({ roll })),
-  treasureRingThreeWishes: ({ roll }) =>
-    fromOutcome(resolveTreasureRingThreeWishes({ roll })),
-  treasureRingWizardry: ({ roll }) =>
-    fromOutcome(resolveTreasureRingWizardry({ roll })),
   treasureRodStaffWand: ({ roll }) =>
     fromOutcome(resolveTreasureRodStaffWand({ roll })),
   treasureBagOfHolding: ({ roll }) =>

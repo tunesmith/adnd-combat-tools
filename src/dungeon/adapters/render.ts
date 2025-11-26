@@ -130,7 +130,7 @@ import {
   renderTreasureRingWizardryDetail,
   renderTreasureRingWizardryCompact,
   buildTreasureRingWizardryPreview,
-} from './render/treasureRing';
+} from '../features/treasure/ring/ringRender';
 import {
   renderTreasureRodStaffWandDetail,
   renderTreasureRodStaffWandCompact,
