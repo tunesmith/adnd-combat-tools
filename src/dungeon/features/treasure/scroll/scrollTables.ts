@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum TreasureScroll {
   SpellOneLevel1to4,
@@ -58,3 +58,68 @@ export const treasureScrolls: Table<TreasureScroll> = {
     { range: [98, 100], command: TreasureScroll.Curse },
   ],
 };
+
+export enum TreasureScrollProtectionElementals {
+  Air,
+  Earth,
+  Fire,
+  Water,
+  All,
+}
+
+export const treasureScrollProtectionElementals: Table<TreasureScrollProtectionElementals> =
+  {
+    sides: 100,
+    entries: [
+      { range: [1, 15], command: TreasureScrollProtectionElementals.Air },
+      { range: [16, 30], command: TreasureScrollProtectionElementals.Earth },
+      { range: [31, 45], command: TreasureScrollProtectionElementals.Fire },
+      { range: [46, 60], command: TreasureScrollProtectionElementals.Water },
+      { range: [61, 100], command: TreasureScrollProtectionElementals.All },
+    ],
+  };
+
+export enum TreasureScrollProtectionLycanthropes {
+  Werebears,
+  Wereboars,
+  Wererats,
+  Weretigers,
+  Werewolves,
+  AllLycanthropes,
+  ShapeChangers,
+}
+
+export const treasureScrollProtectionLycanthropes: Table<TreasureScrollProtectionLycanthropes> =
+  {
+    sides: 100,
+    entries: [
+      {
+        range: [1, 5],
+        command: TreasureScrollProtectionLycanthropes.Werebears,
+      },
+      {
+        range: [6, 10],
+        command: TreasureScrollProtectionLycanthropes.Wereboars,
+      },
+      {
+        range: [11, 20],
+        command: TreasureScrollProtectionLycanthropes.Wererats,
+      },
+      {
+        range: [21, 25],
+        command: TreasureScrollProtectionLycanthropes.Weretigers,
+      },
+      {
+        range: [26, 40],
+        command: TreasureScrollProtectionLycanthropes.Werewolves,
+      },
+      {
+        range: [41, 98],
+        command: TreasureScrollProtectionLycanthropes.AllLycanthropes,
+      },
+      {
+        range: [99, 100],
+        command: TreasureScrollProtectionLycanthropes.ShapeChangers,
+      },
+    ],
+  };

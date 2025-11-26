@@ -38,7 +38,7 @@ import {
   treasureRingWizardry,
   TreasureRingWizardry,
 } from '../../../tables/dungeon/treasureRingWizardry';
-import { formatOrdinal } from './treasureScroll';
+import { formatOrdinal } from '../../features/treasure/shared';
 
 const RING_LABELS: Record<TreasureRing, string> = {
   [TreasureRing.Contrariness]: 'contrariness',

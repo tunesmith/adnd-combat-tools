@@ -1,6 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
 import type { DoorChainLaterality } from '../../../domain/outcome';
-import { NO_COMPACT_RENDER, wrapResolver } from '../shared';
+import { NO_COMPACT_RENDER } from '../shared';
+import { wrapResolver } from '../../shared';
 import {
   buildDoorLocationPreview,
   buildPeriodicDoorOnlyPreview,

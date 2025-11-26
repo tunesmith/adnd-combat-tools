@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../shared';
+import { wrapResolver } from '../../shared';
 import {
   renderIllusionaryWallNatureDetail,
   renderIllusionaryWallNatureCompact,

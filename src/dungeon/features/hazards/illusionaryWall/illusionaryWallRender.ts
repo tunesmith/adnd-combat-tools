@@ -1,5 +1,8 @@
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import {
   illusionaryWallNature,
   IllusionaryWallNature,

@@ -5,7 +5,8 @@ import {
   buildPassageTurnPreview,
 } from './passageTurnRender';
 import { resolvePassageTurns } from './passageTurnResolvers';
-import { wrapResolver, withoutAppend } from '../shared';
+import { withoutAppend } from '../shared';
+import { wrapResolver } from '../../shared';
 
 export const passageTurnTables: ReadonlyArray<DungeonTableDefinition> = [
   {

@@ -1,7 +1,10 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
 import { ChamberRoomContents } from '../../../../tables/dungeon/chamberRoomContents';
-import { illusionaryWallNature, IllusionaryWallNature } from './illusionaryWallTable';
+import {
+  illusionaryWallNature,
+  IllusionaryWallNature,
+} from './illusionaryWallTable';
 
 export function resolveIllusionaryWallNature(options?: {
   roll?: number;

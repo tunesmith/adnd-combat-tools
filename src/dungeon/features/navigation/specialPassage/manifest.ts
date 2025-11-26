@@ -24,7 +24,8 @@ import {
   resolveStreamConstruction,
 } from './specialPassageResolvers';
 import { GalleryStairLocation, RiverConstruction } from './specialPassageTable';
-import { NO_COMPACT_RENDER, wrapResolver, withoutAppend } from '../shared';
+import { NO_COMPACT_RENDER, withoutAppend } from '../shared';
+import { wrapResolver } from '../../shared';
 
 export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
   {

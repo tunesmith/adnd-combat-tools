@@ -18,7 +18,8 @@ import {
   resolveRoomDimensions,
   resolveWanderingWhereFrom,
 } from '../../../domain/resolvers';
-import { wrapResolver, withoutAppend } from '../shared';
+import { withoutAppend } from '../shared';
+import { wrapResolver } from '../../shared';
 
 const resolvePendingNavigationEntry = (
   pending: string,

@@ -104,7 +104,7 @@ import {
   renderTreasureScrollProtectionLycanthropesDetail,
   renderTreasureScrollProtectionLycanthropesCompact,
   buildTreasureScrollProtectionLycanthropesPreview,
-} from './render/treasureScroll';
+} from '../features/treasure/scroll/scrollRender';
 import {
   renderTreasureRingDetail,
   renderTreasureRingCompact,

@@ -5,6 +5,7 @@ import {
   createRenderAdapterMap,
 } from '../types';
 import { potionTables } from './potion/manifest';
+import { scrollTables } from './scroll/manifest';
 
 const defineTreasureTables = <
   T extends ReadonlyArray<DungeonTableDefinition<unknown>>
@@ -14,6 +15,7 @@ const defineTreasureTables = <
 
 const treasureDefinitions = defineTreasureTables([
   ...potionTables,
+  ...scrollTables,
 ] as ReadonlyArray<DungeonTableDefinition<unknown>>);
 
 export const TREASURE_TABLE_DEFINITIONS = treasureDefinitions;

@@ -5,7 +5,7 @@ import {
   buildGasTrapEffectPreview,
 } from './gasTrapRender';
 import { resolveGasTrapEffect } from './gasTrapResolvers';
-import { wrapResolver } from '../shared';
+import { wrapResolver } from '../../shared';
 
 export const gasTrapTables: ReadonlyArray<DungeonTableDefinition> = [
   {

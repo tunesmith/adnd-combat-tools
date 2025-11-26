@@ -88,9 +88,9 @@ import type {
   TreasurePotionHumanControl,
   TreasurePotionUndeadControl,
 } from '../../dungeon/features/treasure/potion/potionTables';
-import type { TreasureScroll } from './treasureScrolls';
-import type { TreasureScrollProtectionElementals } from './treasureScrollProtectionElementals';
-import type { TreasureScrollProtectionLycanthropes } from './treasureScrollProtectionLycanthropes';
+import type { TreasureScroll } from '../../dungeon/features/treasure/scroll/scrollTables';
+import type { TreasureScrollProtectionElementals } from '../../dungeon/features/treasure/scroll/scrollTables';
+import type { TreasureScrollProtectionLycanthropes } from '../../dungeon/features/treasure/scroll/scrollTables';
 import type { TreasureRing } from './treasureRings';
 import type { TreasureRingContrariness } from './treasureRingContrariness';
 import type { TreasureRingElementalCommand } from './treasureRingElementalCommand';

@@ -13,7 +13,8 @@ import {
   resolveJumpingPlaceWidth,
 } from './chasmResolvers';
 import { ChasmConstruction } from './chasmTable';
-import { NO_COMPACT_RENDER, wrapResolver } from '../shared';
+import { NO_COMPACT_RENDER } from '../shared';
+import { wrapResolver } from '../../shared';
 
 export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [
   {

@@ -100,7 +100,7 @@ import type {
   TreasurePotionHumanControl,
   TreasurePotionUndeadControl,
 } from '../features/treasure/potion/potionTables';
-import type { TreasureScroll } from '../../tables/dungeon/treasureScrolls';
+import type { TreasureScroll } from '../features/treasure/scroll/scrollTables';
 import type { TreasureRing } from '../../tables/dungeon/treasureRings';
 import type { TreasureRingContrariness } from '../../tables/dungeon/treasureRingContrariness';
 import type { TreasureRingElementalCommand } from '../../tables/dungeon/treasureRingElementalCommand';
@@ -109,8 +109,8 @@ import type { TreasureRingRegeneration } from '../../tables/dungeon/treasureRing
 import type { TreasureRingTelekinesis } from '../../tables/dungeon/treasureRingTelekinesis';
 import type { TreasureRingThreeWishes } from '../../tables/dungeon/treasureRingThreeWishes';
 import type { TreasureRingWizardry } from '../../tables/dungeon/treasureRingWizardry';
-import type { TreasureScrollProtectionElementals } from '../../tables/dungeon/treasureScrollProtectionElementals';
-import type { TreasureScrollProtectionLycanthropes } from '../../tables/dungeon/treasureScrollProtectionLycanthropes';
+import type { TreasureScrollProtectionElementals } from '../features/treasure/scroll/scrollTables';
+import type { TreasureScrollProtectionLycanthropes } from '../features/treasure/scroll/scrollTables';
 import type { TreasureRodStaffWand } from '../../tables/dungeon/treasureRodsStavesWands';
 import type { TreasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
 import type { TreasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';

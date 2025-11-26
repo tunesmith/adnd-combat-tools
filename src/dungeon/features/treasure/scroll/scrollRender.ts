@@ -1,23 +1,23 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureScrolls,
   TreasureScroll,
-} from '../../../tables/dungeon/treasureScrolls';
+  treasureScrollProtectionElementals,
+  TreasureScrollProtectionElementals,
+  treasureScrollProtectionLycanthropes,
+  TreasureScrollProtectionLycanthropes,
+} from './scrollTables';
 import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
-import {
-  treasureScrollProtectionElementals,
-  TreasureScrollProtectionElementals,
-} from '../../../tables/dungeon/treasureScrollProtectionElementals';
-import {
-  treasureScrollProtectionLycanthropes,
-  TreasureScrollProtectionLycanthropes,
-} from '../../../tables/dungeon/treasureScrollProtectionLycanthropes';
+} from '../../../adapters/render/shared';
+import { formatOrdinal } from '../shared';
 
 const SCROLL_LABELS: Record<TreasureScroll, string> = {
   [TreasureScroll.SpellOneLevel1to4]: '1 spell (levels 1-4)',
@@ -241,21 +241,6 @@ export function resolvedScrollSentence(node: OutcomeEventNode): string {
     return `There is a protection scroll against ${protection}.`;
   }
   return 'There is a cursed scroll.';
-}
-
-export function formatOrdinal(level: number): string {
-  const remainder = level % 10;
-  const teen = Math.floor(level / 10) % 10 === 1;
-  const suffix = teen
-    ? 'th'
-    : remainder === 1
-    ? 'st'
-    : remainder === 2
-    ? 'nd'
-    : remainder === 3
-    ? 'rd'
-    : 'th';
-  return `${level}${suffix}`;
 }
 
 function needsAn(word: string): boolean {

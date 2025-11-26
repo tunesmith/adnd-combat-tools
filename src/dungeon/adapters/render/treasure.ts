@@ -13,7 +13,7 @@ import {
   TreasureWithoutMonster,
 } from '../../../tables/dungeon/treasure';
 import { resolvedPotionSentence } from '../../features/treasure/potion/potionRender';
-import { resolvedScrollSentence } from './treasureScroll';
+import { resolvedScrollSentence } from '../../features/treasure/scroll/scrollRender';
 import { ringSentence } from './treasureRing';
 import { resolveRodStaffWandLabel } from './treasureRodStaffWand';
 import {

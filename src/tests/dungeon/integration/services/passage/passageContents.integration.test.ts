@@ -19,7 +19,7 @@ import { resolveTreasureContainer } from '../../../../../dungeon/domain/resolver
 import { TreasureMagicCategory } from '../../../../../tables/dungeon/treasureMagic';
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 import { TreasurePotion } from '../../../../../dungeon/features/treasure/potion/potionTables';
-import { TreasureScroll } from '../../../../../tables/dungeon/treasureScrolls';
+import { TreasureScroll } from '../../../../../dungeon/features/treasure/scroll/scrollTables';
 import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
 import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
 import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';

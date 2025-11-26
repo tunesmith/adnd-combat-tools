@@ -54,9 +54,6 @@ import {
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
   resolveTreasureMagicCategory,
-  resolveTreasureScroll,
-  resolveTreasureScrollProtectionElementals,
-  resolveTreasureScrollProtectionLycanthropes,
   resolveTreasureRing,
   resolveTreasureRingContrariness,
   resolveTreasureRingElementalCommand,
@@ -407,30 +404,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureScroll: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasureScroll({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
-  treasureScrollProtectionElementals: ({ roll }) =>
-    fromOutcome(resolveTreasureScrollProtectionElementals({ roll })),
-  treasureScrollProtectionLycanthropes: ({ roll }) =>
-    fromOutcome(resolveTreasureScrollProtectionLycanthropes({ roll })),
   treasureRing: ({ roll, context }) => {
     const level =
       context && context.kind === 'treasureMagic' ? context.level : 1;

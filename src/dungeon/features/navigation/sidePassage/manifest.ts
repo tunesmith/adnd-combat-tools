@@ -5,7 +5,8 @@ import {
   buildSidePassagePreview,
 } from './sidePassageRender';
 import { resolveSidePassages } from './sidePassageResolvers';
-import { wrapResolver, withoutAppend } from '../shared';
+import { withoutAppend } from '../shared';
+import { wrapResolver } from '../../shared';
 
 export const sidePassageTables: ReadonlyArray<DungeonTableDefinition> = [
   {

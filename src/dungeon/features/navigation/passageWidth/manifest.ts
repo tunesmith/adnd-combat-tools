@@ -5,7 +5,8 @@ import {
   renderPassageWidthDetail,
 } from './passageWidthRender';
 import { resolvePassageWidth } from './passageWidthResolvers';
-import { wrapResolver, withoutAppend } from '../shared';
+import { withoutAppend } from '../shared';
+import { wrapResolver } from '../../shared';
 
 export const passageWidthTables: ReadonlyArray<DungeonTableDefinition> = [
   {

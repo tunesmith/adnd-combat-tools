@@ -38,7 +38,8 @@ import {
   renderNumberOfExitsDetail,
   buildNumberOfExitsPreview,
 } from './numberOfExitsRender';
-import { wrapResolver, withoutAppend } from '../shared';
+import { withoutAppend } from '../shared';
+import { wrapResolver } from '../../shared';
 
 export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   {
