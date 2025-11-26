@@ -72,7 +72,6 @@ import {
   resolveTreasureRingTelekinesis,
   resolveTreasureRingThreeWishes,
   resolveTreasureRingWizardry,
-  resolveTreasureRodStaffWand,
   resolveTreasureBagOfHolding,
   resolveTreasureBagOfTricks,
   resolveTreasureBracersOfDefense,
@@ -117,9 +116,12 @@ import {
   resolveTreasureCloakOfProtection,
   resolveTreasureCrystalBall,
   resolveTreasureMiscMagicE1,
-  resolveTreasureStaffSerpent,
   resolveRoomDimensions,
 } from '../domain/resolvers';
+import {
+  resolveTreasureRodStaffWand,
+  resolveTreasureStaffSerpent,
+} from '../features/treasure/rodStaffWand/rodStaffWandResolvers';
 import {
   NAVIGATION_CHILD_POST_PROCESSORS,
   NAVIGATION_PENDING_RESOLVERS,

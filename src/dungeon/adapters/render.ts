@@ -135,7 +135,7 @@ import {
   renderTreasureRodStaffWandDetail,
   renderTreasureRodStaffWandCompact,
   buildTreasureRodStaffWandPreview,
-} from './render/treasureRodStaffWand';
+} from '../features/treasure/rodStaffWand/rodStaffWandRender';
 import {
   renderTreasureBagOfHoldingDetail,
   renderTreasureBagOfHoldingCompact,
@@ -360,7 +360,7 @@ import {
   renderTreasureStaffSerpentDetail,
   renderTreasureStaffSerpentCompact,
   buildTreasureStaffSerpentPreview,
-} from './render/treasureStaffSerpent';
+} from '../features/treasure/rodStaffWand/rodStaffWandRender';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,

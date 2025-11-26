@@ -65,10 +65,8 @@ import {
   TreasureMagicCategory,
 } from '../../tables/dungeon/treasureMagic';
 import {
-  treasureRodsStavesWands,
-  TreasureRodStaffWand,
-} from '../../tables/dungeon/treasureRodsStavesWands';
-import { treasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
+  treasureBagOfHolding,
+} from '../../tables/dungeon/treasureBagOfHolding';
 import { treasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
 import { treasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
 import { treasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
@@ -195,7 +193,6 @@ import { treasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOf
 import { treasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import { treasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
 import { treasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
-import { treasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -2408,29 +2405,6 @@ export function resolveTreasureMagicCategory(options?: {
     children: children.length ? children : undefined,
   };
 }
-export function resolveTreasureRodStaffWand(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureRodsStavesWands.sides);
-  const command = getTableEntry(usedRoll, treasureRodsStavesWands);
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureRodStaffWand.StaffSerpent) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureStaffSerpent',
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureRodStaffWand',
-      result: command,
-    } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
-}
-
 export function resolveTreasureMiscMagicE1(options?: {
   roll?: number;
   level?: number;
@@ -4415,21 +4389,6 @@ export function resolveTreasureArtifactOrRelic(options?: {
     roll: usedRoll,
     event: {
       kind: 'treasureArtifactOrRelic',
-      result: command,
-    } as OutcomeEvent,
-  };
-}
-
-export function resolveTreasureStaffSerpent(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureStaffSerpent.sides);
-  const command = getTableEntry(usedRoll, treasureStaffSerpent);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureStaffSerpent',
       result: command,
     } as OutcomeEvent,
   };

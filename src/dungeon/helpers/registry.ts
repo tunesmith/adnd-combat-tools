@@ -54,7 +54,6 @@ import {
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
   resolveTreasureMagicCategory,
-  resolveTreasureRodStaffWand,
   resolveTreasureBagOfHolding,
   resolveTreasureBagOfTricks,
   resolveTreasureBracersOfDefense,
@@ -90,7 +89,6 @@ import {
   resolveTreasurePeriaptProofAgainstPoison,
   resolveTreasurePhylacteryLongYears,
   resolveTreasureQuaalFeatherToken,
-  resolveTreasureStaffSerpent,
   resolveTreasureScarabOfProtectionCurse,
   resolveTreasureScarabOfProtectionCurseResolution,
   resolveTreasureArmorShields,
@@ -105,6 +103,10 @@ import {
   resolveTreasureSwordDragonSlayerColor,
   resolveTreasureMiscWeapons,
 } from '../domain/resolvers';
+import {
+  resolveTreasureRodStaffWand,
+  resolveTreasureStaffSerpent,
+} from '../features/treasure/rodStaffWand/rodStaffWandResolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
   applyResolvedOutcome,

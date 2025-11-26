@@ -113,7 +113,6 @@ import type {
 } from '../features/treasure/ring/ringTables';
 import type { TreasureScrollProtectionElementals } from '../features/treasure/scroll/scrollTables';
 import type { TreasureScrollProtectionLycanthropes } from '../features/treasure/scroll/scrollTables';
-import type { TreasureRodStaffWand } from '../../tables/dungeon/treasureRodsStavesWands';
 import type { TreasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
 import type { TreasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
 import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
@@ -141,7 +140,8 @@ import type { TreasureCloakOfProtection } from '../../tables/dungeon/treasureClo
 import type { TreasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
 import type { TreasureIronFlaskContent } from '../../tables/dungeon/treasureIronFlask';
 import type { TreasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
-import type { TreasureStaffSerpent } from '../../tables/dungeon/treasureStaffSerpent';
+import type { TreasureStaffSerpent } from '../features/treasure/rodStaffWand/rodStaffWandTables';
+import type { TreasureRodStaffWand } from '../features/treasure/rodStaffWand/rodStaffWandTables';
 import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
 import type { TreasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
 import type { TreasureNecklaceOfMissiles } from '../../tables/dungeon/treasureNecklaceOfMissiles';

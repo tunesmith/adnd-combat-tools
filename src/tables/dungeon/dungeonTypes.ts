@@ -101,7 +101,10 @@ import type {
   TreasureRingThreeWishes,
   TreasureRingWizardry,
 } from '../../dungeon/features/treasure/ring/ringTables';
-import type { TreasureRodStaffWand } from './treasureRodsStavesWands';
+import type {
+  TreasureRodStaffWand,
+  TreasureStaffSerpent,
+} from '../../dungeon/features/treasure/rodStaffWand/rodStaffWandTables';
 import type { TreasureBagOfHolding } from './treasureBagOfHolding';
 import type { TreasureBagOfTricks } from './treasureBagOfTricks';
 import type { TreasureBracersOfDefense } from './treasureBracersOfDefense';
@@ -128,7 +131,6 @@ import type { TreasureEyesOfPetrification } from './treasureEyesOfPetrification'
 import type { TreasureCarpetOfFlying } from './treasureCarpetOfFlying';
 import type { TreasureCloakOfProtection } from './treasureCloakOfProtection';
 import type { TreasureCrystalBall } from './treasureCrystalBall';
-import type { TreasureStaffSerpent } from './treasureStaffSerpent';
 import type { TreasureManualOfGolems } from './treasureManualOfGolems';
 import type { TreasureMedallionRange } from './treasureMedallionEspRange';
 import type { TreasureNecklaceOfMissiles } from './treasureNecklaceOfMissiles';

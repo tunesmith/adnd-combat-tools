@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum TreasureRodStaffWand {
   RodAbsorption,
@@ -69,5 +69,18 @@ export const treasureRodsStavesWands: Table<TreasureRodStaffWand> = {
     { range: [90, 92], command: TreasureRodStaffWand.WandPolymorphing },
     { range: [93, 94], command: TreasureRodStaffWand.WandSecretDoorTrap },
     { range: [95, 100], command: TreasureRodStaffWand.WandWonder },
+  ],
+};
+
+export enum TreasureStaffSerpent {
+  Python,
+  Adder,
+}
+
+export const treasureStaffSerpent: Table<TreasureStaffSerpent> = {
+  sides: 100,
+  entries: [
+    { range: [1, 60], command: TreasureStaffSerpent.Python },
+    { range: [61, 100], command: TreasureStaffSerpent.Adder },
   ],
 };

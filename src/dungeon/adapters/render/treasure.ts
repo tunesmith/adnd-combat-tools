@@ -15,7 +15,7 @@ import {
 import { resolvedPotionSentence } from '../../features/treasure/potion/potionRender';
 import { resolvedScrollSentence } from '../../features/treasure/scroll/scrollRender';
 import { ringSentence } from '../../features/treasure/ring/ringRender';
-import { resolveRodStaffWandLabel } from './treasureRodStaffWand';
+import { resolveRodStaffWandLabel } from '../../features/treasure/rodStaffWand/rodStaffWandRender';
 import {
   buildPreview,
   joinSegments,
