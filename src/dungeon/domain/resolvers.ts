@@ -37,10 +37,6 @@ import {
 } from '../../tables/dungeon/magicPool';
 export { resolveTrickTrap } from '../features/hazards/trickTrap/trickTrapResolvers';
 import {
-  illusionaryWallNature,
-  IllusionaryWallNature,
-} from '../../tables/dungeon/illusionaryWallNature';
-import {
   roomDimensions,
   RoomDimensions,
   chamberDimensions,
@@ -5022,32 +5018,7 @@ export function resolveTransporterLocation(options?: {
   };
 }
 
-export function resolveIllusionaryWallNature(options?: {
-  roll?: number;
-  takeOverride?: (tableId: string) => number | undefined;
-}): DungeonOutcomeNode {
-  const overridden = options?.takeOverride?.('illusionaryWallNature');
-  const usedRoll =
-    overridden ?? options?.roll ?? rollDice(illusionaryWallNature.sides);
-  const command = getTableEntry(usedRoll, illusionaryWallNature);
-  const children: DungeonOutcomeNode[] = [];
-  if (command === IllusionaryWallNature.Chamber) {
-    children.push({
-      type: 'pending-roll',
-      table: 'chamberDimensions',
-      context: {
-        kind: 'chamberDimensions',
-        forcedContents: ChamberRoomContents.MonsterAndTreasure,
-      },
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: { kind: 'illusionaryWallNature', result: command } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
-}
+export { resolveIllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallResolvers';
 
 export function resolveMonsterLevel(options?: {
   roll?: number;

@@ -372,7 +372,7 @@ import {
   renderIllusionaryWallNatureDetail,
   renderIllusionaryWallNatureCompact,
   buildIllusionaryWallNaturePreview,
-} from './render/illusionaryWallNature';
+} from '../features/hazards/illusionaryWall/illusionaryWallRender';
 import {
   NAVIGATION_PREVIEW_FACTORIES,
   NAVIGATION_RENDER_ADAPTERS,

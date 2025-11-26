@@ -78,7 +78,7 @@ import type {
   MonsterTen,
   DragonTen,
 } from '../../tables/dungeon/monster/monsterTen';
-import type { IllusionaryWallNature } from '../../tables/dungeon/illusionaryWallNature';
+import type { IllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallTable';
 import type {
   ExitAlternative,
   ExitDirection,

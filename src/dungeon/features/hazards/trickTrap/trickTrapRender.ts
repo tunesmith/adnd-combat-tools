@@ -9,7 +9,7 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
-import { describeIllusionaryWallNature } from '../../../adapters/render/illusionaryWallNature';
+import { describeIllusionaryWallNature } from '../illusionaryWall/illusionaryWallRender';
 import { describeGasTrapEffect } from '../gasTrap/gasTrapRender';
 
 export function renderTrickTrapDetail(

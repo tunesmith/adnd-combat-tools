@@ -1,14 +1,14 @@
-import type { OutcomeEventNode } from '../../domain/outcome';
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
 import {
   illusionaryWallNature,
   IllusionaryWallNature,
-} from '../../../tables/dungeon/illusionaryWallNature';
+} from './illusionaryWallTable';
 import {
   buildPreview,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 export function renderIllusionaryWallNatureDetail(
   outcome: OutcomeEventNode,
