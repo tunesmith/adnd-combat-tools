@@ -95,48 +95,6 @@ import {
   buildTreasureMagicCategoryPreview,
 } from './render/treasureMagic';
 import {
-  renderTreasureScrollDetail,
-  renderTreasureScrollCompact,
-  buildTreasureScrollPreview,
-  renderTreasureScrollProtectionElementalsDetail,
-  renderTreasureScrollProtectionElementalsCompact,
-  buildTreasureScrollProtectionElementalsPreview,
-  renderTreasureScrollProtectionLycanthropesDetail,
-  renderTreasureScrollProtectionLycanthropesCompact,
-  buildTreasureScrollProtectionLycanthropesPreview,
-} from '../features/treasure/scroll/scrollRender';
-import {
-  renderTreasureRingDetail,
-  renderTreasureRingCompact,
-  buildTreasureRingPreview,
-  renderTreasureRingContrarinessDetail,
-  renderTreasureRingContrarinessCompact,
-  buildTreasureRingContrarinessPreview,
-  renderTreasureRingElementalCommandDetail,
-  renderTreasureRingElementalCommandCompact,
-  buildTreasureRingElementalCommandPreview,
-  renderTreasureRingProtectionDetail,
-  renderTreasureRingProtectionCompact,
-  buildTreasureRingProtectionPreview,
-  renderTreasureRingRegenerationDetail,
-  renderTreasureRingRegenerationCompact,
-  buildTreasureRingRegenerationPreview,
-  renderTreasureRingTelekinesisDetail,
-  renderTreasureRingTelekinesisCompact,
-  buildTreasureRingTelekinesisPreview,
-  renderTreasureRingThreeWishesDetail,
-  renderTreasureRingThreeWishesCompact,
-  buildTreasureRingThreeWishesPreview,
-  renderTreasureRingWizardryDetail,
-  renderTreasureRingWizardryCompact,
-  buildTreasureRingWizardryPreview,
-} from '../features/treasure/ring/ringRender';
-import {
-  renderTreasureRodStaffWandDetail,
-  renderTreasureRodStaffWandCompact,
-  buildTreasureRodStaffWandPreview,
-} from '../features/treasure/rodStaffWand/rodStaffWandRender';
-import {
   renderTreasureBagOfHoldingDetail,
   renderTreasureBagOfHoldingCompact,
   buildTreasureBagOfHoldingPreview,
@@ -356,11 +314,6 @@ import {
   renderTreasureMiscMagicE1Compact,
   buildTreasureMiscMagicE1Preview,
 } from './render/treasureMiscMagicE1';
-import {
-  renderTreasureStaffSerpentDetail,
-  renderTreasureStaffSerpentCompact,
-  buildTreasureStaffSerpentPreview,
-} from '../features/treasure/rodStaffWand/rodStaffWandRender';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -368,11 +321,6 @@ import {
   renderCircularContentsDetail,
 } from './render/circularContents';
 import type { AppendPreviewFn } from './render/shared';
-import {
-  renderIllusionaryWallNatureDetail,
-  renderIllusionaryWallNatureCompact,
-  buildIllusionaryWallNaturePreview,
-} from '../features/hazards/illusionaryWall/illusionaryWallRender';
 import {
   NAVIGATION_PREVIEW_FACTORIES,
   NAVIGATION_RENDER_ADAPTERS,
@@ -382,10 +330,9 @@ import {
   HAZARD_RENDER_ADAPTERS,
 } from '../features/hazards/bundle';
 import {
-  createPreviewFactoryMap,
-  createRenderAdapterMap,
-} from '../features/types';
-import { TREASURE_TABLE_DEFINITIONS } from '../features/treasure/bundle';
+  TREASURE_PREVIEW_FACTORIES,
+  TREASURE_RENDER_ADAPTERS,
+} from '../features/treasure/bundle';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
@@ -490,54 +437,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasureMagicCategory: {
     renderDetail: renderTreasureMagicCategoryDetail,
     renderCompact: renderTreasureMagicCategoryCompact,
-  },
-  treasureScroll: {
-    renderDetail: renderTreasureScrollDetail,
-    renderCompact: renderTreasureScrollCompact,
-  },
-  treasureScrollProtectionElementals: {
-    renderDetail: renderTreasureScrollProtectionElementalsDetail,
-    renderCompact: renderTreasureScrollProtectionElementalsCompact,
-  },
-  treasureScrollProtectionLycanthropes: {
-    renderDetail: renderTreasureScrollProtectionLycanthropesDetail,
-    renderCompact: renderTreasureScrollProtectionLycanthropesCompact,
-  },
-  treasureRing: {
-    renderDetail: renderTreasureRingDetail,
-    renderCompact: renderTreasureRingCompact,
-  },
-  treasureRingContrariness: {
-    renderDetail: renderTreasureRingContrarinessDetail,
-    renderCompact: renderTreasureRingContrarinessCompact,
-  },
-  treasureRingElementalCommand: {
-    renderDetail: renderTreasureRingElementalCommandDetail,
-    renderCompact: renderTreasureRingElementalCommandCompact,
-  },
-  treasureRingProtection: {
-    renderDetail: renderTreasureRingProtectionDetail,
-    renderCompact: renderTreasureRingProtectionCompact,
-  },
-  treasureRingRegeneration: {
-    renderDetail: renderTreasureRingRegenerationDetail,
-    renderCompact: renderTreasureRingRegenerationCompact,
-  },
-  treasureRingTelekinesis: {
-    renderDetail: renderTreasureRingTelekinesisDetail,
-    renderCompact: renderTreasureRingTelekinesisCompact,
-  },
-  treasureRingThreeWishes: {
-    renderDetail: renderTreasureRingThreeWishesDetail,
-    renderCompact: renderTreasureRingThreeWishesCompact,
-  },
-  treasureRingWizardry: {
-    renderDetail: renderTreasureRingWizardryDetail,
-    renderCompact: renderTreasureRingWizardryCompact,
-  },
-  treasureRodStaffWand: {
-    renderDetail: renderTreasureRodStaffWandDetail,
-    renderCompact: renderTreasureRodStaffWandCompact,
   },
   treasureBagOfHolding: {
     renderDetail: renderTreasureBagOfHoldingDetail,
@@ -735,14 +634,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureMiscMagicE1Detail,
     renderCompact: renderTreasureMiscMagicE1Compact,
   },
-  treasureStaffSerpent: {
-    renderDetail: renderTreasureStaffSerpentDetail,
-    renderCompact: renderTreasureStaffSerpentCompact,
-  },
-  illusionaryWallNature: {
-    renderDetail: renderIllusionaryWallNatureDetail,
-    renderCompact: renderIllusionaryWallNatureCompact,
-  },
   monsterLevel: monsterAdapter,
   monsterOne: monsterAdapter,
   monsterTwo: monsterAdapter,
@@ -769,10 +660,7 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
 
 Object.assign(RENDER_ADAPTERS, NAVIGATION_RENDER_ADAPTERS);
 Object.assign(RENDER_ADAPTERS, HAZARD_RENDER_ADAPTERS);
-Object.assign(
-  RENDER_ADAPTERS,
-  createRenderAdapterMap(TREASURE_TABLE_DEFINITIONS)
-);
+Object.assign(RENDER_ADAPTERS, TREASURE_RENDER_ADAPTERS);
 
 type PendingPreviewBuilder = (
   tableId: string,
@@ -792,27 +680,12 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   transmuteType: buildTransmuteTypePreview,
   poolAlignment: buildPoolAlignmentPreview,
   transporterLocation: buildTransporterLocationPreview,
-  illusionaryWallNature: buildIllusionaryWallNaturePreview,
   treasure: buildTreasurePreview,
   treasureContainer: buildTreasureContainerPreview,
   treasureProtectionType: buildTreasureProtectionTypePreview,
   treasureProtectionGuardedBy: buildTreasureProtectionGuardedByPreview,
   treasureProtectionHiddenBy: buildTreasureProtectionHiddenByPreview,
   treasureMagicCategory: buildTreasureMagicCategoryPreview,
-  treasureScroll: buildTreasureScrollPreview,
-  treasureScrollProtectionElementals:
-    buildTreasureScrollProtectionElementalsPreview,
-  treasureScrollProtectionLycanthropes:
-    buildTreasureScrollProtectionLycanthropesPreview,
-  treasureRing: buildTreasureRingPreview,
-  treasureRingContrariness: buildTreasureRingContrarinessPreview,
-  treasureRingElementalCommand: buildTreasureRingElementalCommandPreview,
-  treasureRingProtection: buildTreasureRingProtectionPreview,
-  treasureRingRegeneration: buildTreasureRingRegenerationPreview,
-  treasureRingTelekinesis: buildTreasureRingTelekinesisPreview,
-  treasureRingThreeWishes: buildTreasureRingThreeWishesPreview,
-  treasureRingWizardry: buildTreasureRingWizardryPreview,
-  treasureRodStaffWand: buildTreasureRodStaffWandPreview,
   treasureBagOfHolding: buildTreasureBagOfHoldingPreview,
   treasureBagOfTricks: buildTreasureBagOfTricksPreview,
   treasureBracersOfDefense: buildTreasureBracersOfDefensePreview,
@@ -869,15 +742,11 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureDeckOfManyThings: buildTreasureDeckOfManyThingsPreview,
   treasureEyesOfPetrification: buildTreasureEyesOfPetrificationPreview,
   treasureMiscMagicE1: buildTreasureMiscMagicE1Preview,
-  treasureStaffSerpent: buildTreasureStaffSerpentPreview,
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);
 Object.assign(PENDING_PREVIEW_FACTORIES, HAZARD_PREVIEW_FACTORIES);
-Object.assign(
-  PENDING_PREVIEW_FACTORIES,
-  createPreviewFactoryMap(TREASURE_TABLE_DEFINITIONS)
-);
+Object.assign(PENDING_PREVIEW_FACTORIES, TREASURE_PREVIEW_FACTORIES);
 
 const MONSTER_PREVIEW_BASES = [
   'monsterLevel',

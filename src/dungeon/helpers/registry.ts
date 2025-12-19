@@ -44,8 +44,6 @@ import {
   resolveTransmuteType,
   resolvePoolAlignment,
   resolveTransporterLocation,
-  resolveTrickTrap,
-  resolveIllusionaryWallNature,
   resolveUnusualShape,
   resolveUnusualSize,
   resolveTreasure,
@@ -103,10 +101,6 @@ import {
   resolveTreasureSwordDragonSlayerColor,
   resolveTreasureMiscWeapons,
 } from '../domain/resolvers';
-import {
-  resolveTreasureRodStaffWand,
-  resolveTreasureStaffSerpent,
-} from '../features/treasure/rodStaffWand/rodStaffWandResolvers';
 import { renderDetailTree } from '../adapters/render';
 import {
   applyResolvedOutcome,
@@ -342,9 +336,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
   poolAlignment: ({ roll }) => fromOutcome(resolvePoolAlignment({ roll })),
   transporterLocation: ({ roll }) =>
     fromOutcome(resolveTransporterLocation({ roll })),
-  trickTrap: ({ roll }) => fromOutcome(resolveTrickTrap({ roll })),
-  illusionaryWallNature: ({ roll }) =>
-    fromOutcome(resolveIllusionaryWallNature({ roll })),
   treasure: ({ roll, context }) => {
     const treasureContext =
       context && context.kind === 'treasure'
@@ -398,8 +389,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureRodStaffWand: ({ roll }) =>
-    fromOutcome(resolveTreasureRodStaffWand({ roll })),
   treasureBagOfHolding: ({ roll }) =>
     fromOutcome(resolveTreasureBagOfHolding({ roll })),
   treasureBagOfTricks: ({ roll }) =>
@@ -805,8 +794,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureStaffSerpent: ({ roll }) =>
-    fromOutcome(resolveTreasureStaffSerpent({ roll })),
 };
 
 const HAZARD_TABLE_RESOLVERS: Record<string, RegistryResolver> =
