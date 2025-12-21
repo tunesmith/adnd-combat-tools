@@ -1,5 +1,6 @@
 import type { DungeonTableDefinition } from '../types';
 import {
+  createPendingResolverMap,
   createPreviewFactoryMap,
   createRegistryOutcomeMap,
   createRenderAdapterMap,
@@ -31,3 +32,5 @@ export const TREASURE_PREVIEW_FACTORIES =
   createPreviewFactoryMap(treasureDefinitions);
 export const TREASURE_REGISTRY_OUTCOMES =
   createRegistryOutcomeMap(treasureDefinitions);
+export const TREASURE_PENDING_RESOLVERS =
+  createPendingResolverMap(treasureDefinitions);

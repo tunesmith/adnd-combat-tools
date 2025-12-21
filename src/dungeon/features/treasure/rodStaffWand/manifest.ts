@@ -18,6 +18,7 @@ export const rodStaffWandTables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureRodStaffWand',
     heading: 'Rod, Staff, or Wand',
     resolver: wrapResolver(resolveTreasureRodStaffWand),
+    resolvePending: () => resolveTreasureRodStaffWand({}),
     renderers: {
       renderDetail: renderTreasureRodStaffWandDetail,
       renderCompact: renderTreasureRodStaffWandCompact,
@@ -28,6 +29,7 @@ export const rodStaffWandTables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureStaffSerpent',
     heading: 'Serpent Form',
     resolver: wrapResolver(resolveTreasureStaffSerpent),
+    resolvePending: () => resolveTreasureStaffSerpent({}),
     renderers: {
       renderDetail: renderTreasureStaffSerpentDetail,
       renderCompact: renderTreasureStaffSerpentCompact,

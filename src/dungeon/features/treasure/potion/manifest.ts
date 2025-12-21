@@ -1,4 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
+import { readTreasureMagicContext } from '../shared';
 import {
   buildTreasurePotionAnimalControlPreview,
   buildTreasurePotionDragonControlPreview,
@@ -75,6 +76,10 @@ export const potionTables: ReadonlyArray<
       const { level, treasureRoll, rollIndex } = readTreasureContext(context);
       return resolveTreasurePotion({ roll, level, treasureRoll, rollIndex });
     },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasurePotion(context);
+    },
   },
   {
     id: 'treasurePotionAnimalControl',
@@ -93,6 +98,10 @@ export const potionTables: ReadonlyArray<
         treasureRoll,
         rollIndex,
       });
+    },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasurePotionAnimalControl(context);
     },
   },
   {
@@ -113,6 +122,10 @@ export const potionTables: ReadonlyArray<
         rollIndex,
       });
     },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasurePotionDragonControl(context);
+    },
   },
   {
     id: 'treasurePotionGiantControl',
@@ -131,6 +144,10 @@ export const potionTables: ReadonlyArray<
         treasureRoll,
         rollIndex,
       });
+    },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasurePotionGiantControl(context);
     },
   },
   {
@@ -151,6 +168,10 @@ export const potionTables: ReadonlyArray<
         rollIndex,
       });
     },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasurePotionGiantStrength(context);
+    },
   },
   {
     id: 'treasurePotionHumanControl',
@@ -170,6 +191,10 @@ export const potionTables: ReadonlyArray<
         rollIndex,
       });
     },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasurePotionHumanControl(context);
+    },
   },
   {
     id: 'treasurePotionUndeadControl',
@@ -188,6 +213,10 @@ export const potionTables: ReadonlyArray<
         treasureRoll,
         rollIndex,
       });
+    },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasurePotionUndeadControl(context);
     },
   },
 ];

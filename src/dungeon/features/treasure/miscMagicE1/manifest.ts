@@ -1,5 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
+import { readTreasureMagicContext } from '../shared';
 import {
   buildTreasureMiscMagicE1Preview,
   renderTreasureMiscMagicE1Compact,
@@ -56,6 +57,10 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureMiscMagicE1',
     heading: 'Miscellaneous Magic (Table E.1)',
     resolver: wrapResolver(resolveTreasureMiscMagicE1),
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasureMiscMagicE1(context);
+    },
     renderers: {
       renderDetail: renderTreasureMiscMagicE1Detail,
       renderCompact: renderTreasureMiscMagicE1Compact,
@@ -75,6 +80,7 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureBagOfHolding',
     heading: 'Bag of Holding Capacity',
     resolver: wrapResolver(resolveTreasureBagOfHolding),
+    resolvePending: () => resolveTreasureBagOfHolding({}),
     renderers: {
       renderDetail: renderTreasureBagOfHoldingDetail,
       renderCompact: renderTreasureBagOfHoldingCompact,
@@ -85,6 +91,7 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureBagOfTricks',
     heading: 'Bag of Tricks Type',
     resolver: wrapResolver(resolveTreasureBagOfTricks),
+    resolvePending: () => resolveTreasureBagOfTricks({}),
     renderers: {
       renderDetail: renderTreasureBagOfTricksDetail,
       renderCompact: renderTreasureBagOfTricksCompact,
@@ -95,6 +102,7 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureBracersOfDefense',
     heading: 'Bracers of Defense Armor Class',
     resolver: wrapResolver(resolveTreasureBracersOfDefense),
+    resolvePending: () => resolveTreasureBracersOfDefense({}),
     renderers: {
       renderDetail: renderTreasureBracersOfDefenseDetail,
       renderCompact: renderTreasureBracersOfDefenseCompact,
@@ -105,6 +113,7 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureBucknardsEverfullPurse',
     heading: "Bucknard's Everfull Purse Contents",
     resolver: wrapResolver(resolveTreasureBucknardsEverfullPurse),
+    resolvePending: () => resolveTreasureBucknardsEverfullPurse({}),
     renderers: {
       renderDetail: renderTreasureBucknardsEverfullPurseDetail,
       renderCompact: renderTreasureBucknardsEverfullPurseCompact,
@@ -115,6 +124,7 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureArtifactOrRelic',
     heading: 'Artifact or Relic',
     resolver: wrapResolver(resolveTreasureArtifactOrRelic),
+    resolvePending: () => resolveTreasureArtifactOrRelic({}),
     renderers: {
       renderDetail: renderTreasureArtifactOrRelicDetail,
       renderCompact: renderTreasureArtifactOrRelicCompact,

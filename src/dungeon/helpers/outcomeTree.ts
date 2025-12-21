@@ -54,29 +54,6 @@ import {
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
   resolveTreasureMagicCategory,
-  resolveTreasurePotion,
-  resolveTreasurePotionAnimalControl,
-  resolveTreasurePotionDragonControl,
-  resolveTreasurePotionGiantControl,
-  resolveTreasurePotionGiantStrength,
-  resolveTreasurePotionHumanControl,
-  resolveTreasurePotionUndeadControl,
-  resolveTreasureScroll,
-  resolveTreasureScrollProtectionElementals,
-  resolveTreasureScrollProtectionLycanthropes,
-  resolveTreasureRing,
-  resolveTreasureRingContrariness,
-  resolveTreasureRingElementalCommand,
-  resolveTreasureRingProtection,
-  resolveTreasureRingRegeneration,
-  resolveTreasureRingTelekinesis,
-  resolveTreasureRingThreeWishes,
-  resolveTreasureRingWizardry,
-  resolveTreasureBagOfHolding,
-  resolveTreasureBagOfTricks,
-  resolveTreasureBracersOfDefense,
-  resolveTreasureBucknardsEverfullPurse,
-  resolveTreasureArtifactOrRelic,
   resolveTreasureDeckOfManyThings,
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
@@ -115,13 +92,9 @@ import {
   resolveTreasureCarpetOfFlying,
   resolveTreasureCloakOfProtection,
   resolveTreasureCrystalBall,
-  resolveTreasureMiscMagicE1,
   resolveRoomDimensions,
 } from '../domain/resolvers';
-import {
-  resolveTreasureRodStaffWand,
-  resolveTreasureStaffSerpent,
-} from '../features/treasure/rodStaffWand/rodStaffWandResolvers';
+import { readTreasureMagicContext } from '../features/treasure/shared';
 import {
   NAVIGATION_CHILD_POST_PROCESSORS,
   NAVIGATION_PENDING_RESOLVERS,
@@ -130,6 +103,7 @@ import {
   HAZARD_CHILD_POST_PROCESSORS,
   HAZARD_PENDING_RESOLVERS,
 } from '../features/hazards/bundle';
+import { TREASURE_PENDING_RESOLVERS } from '../features/treasure/bundle';
 import { resolveGasTrapEffect } from '../features/hazards/gasTrap/gasTrapResolvers';
 import type { TableContext } from '../../types/dungeon';
 import { DoorLocation } from '../features/navigation/doorChain/doorChainTable';
@@ -717,19 +691,22 @@ function resolvePendingNode(
   pending: PendingRoll,
   ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined {
-  const navResolve =
-    NAVIGATION_PENDING_RESOLVERS[pending.table.split(':')[0] ?? ''];
+  const base = pending.table.split(':')[0] ?? '';
+  const navResolve = NAVIGATION_PENDING_RESOLVERS[base];
   if (navResolve) {
     const resolved = navResolve(pending, ancestors);
     if (resolved) return resolved;
   }
-  const hazardResolve =
-    HAZARD_PENDING_RESOLVERS[pending.table.split(':')[0] ?? ''];
+  const hazardResolve = HAZARD_PENDING_RESOLVERS[base];
   if (hazardResolve) {
     const resolved = hazardResolve(pending, ancestors);
     if (resolved) return resolved;
   }
-  const base = pending.table.split(':')[0] ?? '';
+  const treasureResolve = TREASURE_PENDING_RESOLVERS[base];
+  if (treasureResolve) {
+    const resolved = treasureResolve(pending, ancestors);
+    if (resolved) return resolved;
+  }
   switch (base) {
     case 'roomDimensions': {
       const ctx = pending.context as
@@ -813,72 +790,6 @@ function resolvePendingNode(
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureMagicCategory(context);
     }
-    case 'treasurePotion': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotion(context);
-    }
-    case 'treasurePotionAnimalControl': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionAnimalControl(context);
-    }
-    case 'treasurePotionDragonControl': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionDragonControl(context);
-    }
-    case 'treasurePotionGiantControl': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionGiantControl(context);
-    }
-    case 'treasurePotionGiantStrength': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionGiantStrength(context);
-    }
-    case 'treasurePotionHumanControl': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionHumanControl(context);
-    }
-    case 'treasurePotionUndeadControl': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionUndeadControl(context);
-    }
-    case 'treasureScroll': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureScroll(context);
-    }
-    case 'treasureScrollProtectionElementals':
-      return resolveTreasureScrollProtectionElementals({});
-    case 'treasureScrollProtectionLycanthropes':
-      return resolveTreasureScrollProtectionLycanthropes({});
-    case 'treasureRing': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureRing(context);
-    }
-    case 'treasureRingContrariness':
-      return resolveTreasureRingContrariness({});
-    case 'treasureRingElementalCommand':
-      return resolveTreasureRingElementalCommand({});
-    case 'treasureRingProtection':
-      return resolveTreasureRingProtection({});
-    case 'treasureRingRegeneration':
-      return resolveTreasureRingRegeneration({});
-    case 'treasureRingTelekinesis':
-      return resolveTreasureRingTelekinesis({});
-    case 'treasureRingThreeWishes':
-      return resolveTreasureRingThreeWishes({});
-    case 'treasureRingWizardry':
-      return resolveTreasureRingWizardry({});
-    case 'treasureRodStaffWand':
-      return resolveTreasureRodStaffWand({});
-    case 'treasureBagOfHolding':
-      return resolveTreasureBagOfHolding({});
-    case 'treasureBagOfTricks':
-      return resolveTreasureBagOfTricks({});
-    case 'treasureBracersOfDefense':
-      return resolveTreasureBracersOfDefense({});
-    case 'treasureBucknardsEverfullPurse':
-      return resolveTreasureBucknardsEverfullPurse({});
-    case 'treasureArtifactOrRelic':
-      return resolveTreasureArtifactOrRelic({});
     case 'treasureMiscMagicE2':
       return resolveTreasureMiscMagicE2({});
     case 'treasureMiscMagicE3':
@@ -983,12 +894,6 @@ function resolvePendingNode(
       return resolveTreasureHornOfValhallaAlignment({});
     case 'treasureEyesOfPetrification':
       return resolveTreasureEyesOfPetrification({});
-    case 'treasureMiscMagicE1': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureMiscMagicE1(context);
-    }
-    case 'treasureStaffSerpent':
-      return resolveTreasureStaffSerpent({});
     case 'treasureProtectionType':
       return resolveTreasureProtectionType({});
     case 'treasureProtectionGuardedBy':
@@ -1371,65 +1276,6 @@ function readUnusualSizeContext(
       ? context.isRoom
       : undefined;
   return { extra, isRoom };
-}
-
-function readTreasureMagicContext(
-  context: unknown,
-  ancestors: OutcomeEventNode[]
-): { level?: number; treasureRoll?: number; rollIndex?: number } {
-  if (isTableContext(context) && context.kind === 'treasureMagic') {
-    const level = typeof context.level === 'number' ? context.level : undefined;
-    const treasureRoll =
-      typeof context.treasureRoll === 'number'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      typeof context.rollIndex === 'number' ? context.rollIndex : undefined;
-    return { level, treasureRoll, rollIndex };
-  }
-
-  let level: number | undefined;
-  let treasureRoll: number | undefined;
-  let rollIndex: number | undefined;
-
-  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
-    const ancestor = ancestors[index];
-    if (!ancestor || ancestor.event.kind === undefined) continue;
-    const event = ancestor.event as {
-      kind: string;
-      level?: unknown;
-      treasureRoll?: unknown;
-      rollIndex?: unknown;
-    };
-
-    switch (event.kind) {
-      case 'treasure':
-      case 'treasureMagicCategory':
-      case 'treasurePotion':
-      case 'treasureScroll':
-      case 'treasureRing':
-      case 'treasureArmorShields':
-      case 'treasureSwords':
-      case 'treasureMiscWeapons':
-        if (level === undefined && typeof event.level === 'number') {
-          level = event.level;
-        }
-        if (
-          treasureRoll === undefined &&
-          typeof event.treasureRoll === 'number'
-        ) {
-          treasureRoll = event.treasureRoll;
-        }
-        if (rollIndex === undefined && typeof event.rollIndex === 'number') {
-          rollIndex = event.rollIndex;
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
-  return { level, treasureRoll, rollIndex };
 }
 
 function readTreasureSwordContext(

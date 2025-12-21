@@ -1,5 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
+import { readTreasureMagicContext } from '../shared';
 import {
   buildTreasureScrollPreview,
   buildTreasureScrollProtectionElementalsPreview,
@@ -51,6 +52,10 @@ export const scrollTables: ReadonlyArray<DungeonTableDefinition> = [
       const { level, treasureRoll, rollIndex } = readTreasureContext(context);
       return resolveTreasureScroll({ roll, level, treasureRoll, rollIndex });
     },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasureScroll(context);
+    },
   },
   {
     id: 'treasureScrollProtectionElementals',
@@ -61,6 +66,7 @@ export const scrollTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureScrollProtectionElementalsCompact,
     },
     buildPreview: buildTreasureScrollProtectionElementalsPreview,
+    resolvePending: () => resolveTreasureScrollProtectionElementals({}),
   },
   {
     id: 'treasureScrollProtectionLycanthropes',
@@ -71,5 +77,6 @@ export const scrollTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureScrollProtectionLycanthropesCompact,
     },
     buildPreview: buildTreasureScrollProtectionLycanthropesPreview,
+    resolvePending: () => resolveTreasureScrollProtectionLycanthropes({}),
   },
 ];

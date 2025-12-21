@@ -1,5 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
+import { readTreasureMagicContext } from '../shared';
 import {
   buildTreasureRingContrarinessPreview,
   buildTreasureRingElementalCommandPreview,
@@ -71,6 +72,10 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       const { level, treasureRoll, rollIndex } = readTreasureContext(context);
       return resolveTreasureRing({ roll, level, treasureRoll, rollIndex });
     },
+    resolvePending: (pending, ancestors) => {
+      const context = readTreasureMagicContext(pending.context, ancestors);
+      return resolveTreasureRing(context);
+    },
   },
   {
     id: 'treasureRingContrariness',
@@ -81,6 +86,7 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingContrarinessCompact,
     },
     buildPreview: buildTreasureRingContrarinessPreview,
+    resolvePending: () => resolveTreasureRingContrariness({}),
   },
   {
     id: 'treasureRingElementalCommand',
@@ -91,6 +97,7 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingElementalCommandCompact,
     },
     buildPreview: buildTreasureRingElementalCommandPreview,
+    resolvePending: () => resolveTreasureRingElementalCommand({}),
   },
   {
     id: 'treasureRingProtection',
@@ -101,6 +108,7 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingProtectionCompact,
     },
     buildPreview: buildTreasureRingProtectionPreview,
+    resolvePending: () => resolveTreasureRingProtection({}),
   },
   {
     id: 'treasureRingRegeneration',
@@ -111,6 +119,7 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingRegenerationCompact,
     },
     buildPreview: buildTreasureRingRegenerationPreview,
+    resolvePending: () => resolveTreasureRingRegeneration({}),
   },
   {
     id: 'treasureRingTelekinesis',
@@ -121,6 +130,7 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingTelekinesisCompact,
     },
     buildPreview: buildTreasureRingTelekinesisPreview,
+    resolvePending: () => resolveTreasureRingTelekinesis({}),
   },
   {
     id: 'treasureRingThreeWishes',
@@ -131,6 +141,7 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingThreeWishesCompact,
     },
     buildPreview: buildTreasureRingThreeWishesPreview,
+    resolvePending: () => resolveTreasureRingThreeWishes({}),
   },
   {
     id: 'treasureRingWizardry',
@@ -141,5 +152,6 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingWizardryCompact,
     },
     buildPreview: buildTreasureRingWizardryPreview,
+    resolvePending: () => resolveTreasureRingWizardry({}),
   },
 ];
