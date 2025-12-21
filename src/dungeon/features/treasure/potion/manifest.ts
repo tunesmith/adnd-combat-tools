@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import { readTreasureMagicContext } from '../shared';
+import { readTreasureMagicContext, readTreasureMagicRegistryContext } from '../shared';
 import {
   buildTreasurePotionAnimalControlPreview,
   buildTreasurePotionDragonControlPreview,
@@ -33,32 +33,12 @@ import {
   resolveTreasurePotionUndeadControl,
 } from './potionResolvers';
 
-type TreasureRegistryContext = {
-  kind?: string;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-};
-
 type PotionResolverOptions = {
   roll?: number;
   level?: number;
   treasureRoll?: number;
   rollIndex?: number;
 };
-
-function readTreasureContext(context?: TreasureRegistryContext): {
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-} {
-  if (context?.kind !== 'treasureMagic') return {};
-  return {
-    level: context.level,
-    treasureRoll: context.treasureRoll,
-    rollIndex: context.rollIndex,
-  };
-}
 
 export const potionTables: ReadonlyArray<
   DungeonTableDefinition<PotionResolverOptions>
@@ -73,7 +53,8 @@ export const potionTables: ReadonlyArray<
     },
     buildPreview: buildTreasurePotionPreview,
     registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } = readTreasureContext(context);
+      const { level, treasureRoll, rollIndex } =
+        readTreasureMagicRegistryContext(context);
       return resolveTreasurePotion({ roll, level, treasureRoll, rollIndex });
     },
     resolvePending: (pending, ancestors) => {
@@ -91,7 +72,8 @@ export const potionTables: ReadonlyArray<
     },
     buildPreview: buildTreasurePotionAnimalControlPreview,
     registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } = readTreasureContext(context);
+      const { level, treasureRoll, rollIndex } =
+        readTreasureMagicRegistryContext(context);
       return resolveTreasurePotionAnimalControl({
         roll,
         level,
@@ -114,7 +96,8 @@ export const potionTables: ReadonlyArray<
     },
     buildPreview: buildTreasurePotionDragonControlPreview,
     registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } = readTreasureContext(context);
+      const { level, treasureRoll, rollIndex } =
+        readTreasureMagicRegistryContext(context);
       return resolveTreasurePotionDragonControl({
         roll,
         level,
@@ -137,7 +120,8 @@ export const potionTables: ReadonlyArray<
     },
     buildPreview: buildTreasurePotionGiantControlPreview,
     registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } = readTreasureContext(context);
+      const { level, treasureRoll, rollIndex } =
+        readTreasureMagicRegistryContext(context);
       return resolveTreasurePotionGiantControl({
         roll,
         level,
@@ -160,7 +144,8 @@ export const potionTables: ReadonlyArray<
     },
     buildPreview: buildTreasurePotionGiantStrengthPreview,
     registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } = readTreasureContext(context);
+      const { level, treasureRoll, rollIndex } =
+        readTreasureMagicRegistryContext(context);
       return resolveTreasurePotionGiantStrength({
         roll,
         level,
@@ -183,7 +168,8 @@ export const potionTables: ReadonlyArray<
     },
     buildPreview: buildTreasurePotionHumanControlPreview,
     registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } = readTreasureContext(context);
+      const { level, treasureRoll, rollIndex } =
+        readTreasureMagicRegistryContext(context);
       return resolveTreasurePotionHumanControl({
         roll,
         level,
@@ -206,7 +192,8 @@ export const potionTables: ReadonlyArray<
     },
     buildPreview: buildTreasurePotionUndeadControlPreview,
     registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } = readTreasureContext(context);
+      const { level, treasureRoll, rollIndex } =
+        readTreasureMagicRegistryContext(context);
       return resolveTreasurePotionUndeadControl({
         roll,
         level,

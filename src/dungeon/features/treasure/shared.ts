@@ -21,6 +21,12 @@ export type TreasureMagicContext = {
   rollIndex?: number;
 };
 
+export function readTreasureMagicRegistryContext(
+  context?: unknown
+): TreasureMagicContext {
+  return readTreasureMagicContextFromContext(context) ?? {};
+}
+
 export function readTreasureMagicContext(
   context: unknown,
   ancestors: OutcomeEventNode[]

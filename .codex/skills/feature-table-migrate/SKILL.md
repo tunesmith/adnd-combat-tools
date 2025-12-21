@@ -38,6 +38,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
      - If pending resolution needs context, compute it from `pending.context` and/or `ancestors`.
      - For treasure tables, prefer `readTreasureMagicContext(pending.context, ancestors)` from `src/dungeon/features/treasure/shared.ts` instead of duplicating logic in `outcomeTree.ts`.
    - Add `registry` when the resolver needs context (treasureMagic level/treasureRoll/rollIndex, doorChain, etc).
+     - For treasure tables, prefer `readTreasureMagicRegistryContext(context)` from `src/dungeon/features/treasure/shared.ts` (avoid re-declaring a local TreasureRegistryContext/readTreasureContext helper).
    - Use `wrapResolver` or a typed resolver to avoid `unknown` options.
 
 5. Wire into the feature bundle.

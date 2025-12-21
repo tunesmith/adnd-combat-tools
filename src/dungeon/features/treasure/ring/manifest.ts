@@ -1,6 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import { readTreasureMagicContext } from '../shared';
+import { readTreasureMagicContext, readTreasureMagicRegistryContext } from '../shared';
 import {
   buildTreasureRingContrarinessPreview,
   buildTreasureRingElementalCommandPreview,
@@ -38,26 +38,6 @@ import {
   resolveTreasureRingWizardry,
 } from './ringResolvers';
 
-type TreasureRegistryContext = {
-  kind?: string;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-};
-
-function readTreasureContext(context?: TreasureRegistryContext): {
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-} {
-  if (context?.kind !== 'treasureMagic') return {};
-  return {
-    level: context.level,
-    treasureRoll: context.treasureRoll,
-    rollIndex: context.rollIndex,
-  };
-}
-
 export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'treasureRing',
@@ -69,7 +49,8 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     buildPreview: buildTreasureRingPreview,
     registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } = readTreasureContext(context);
+      const { level, treasureRoll, rollIndex } =
+        readTreasureMagicRegistryContext(context);
       return resolveTreasureRing({ roll, level, treasureRoll, rollIndex });
     },
     resolvePending: (pending, ancestors) => {
