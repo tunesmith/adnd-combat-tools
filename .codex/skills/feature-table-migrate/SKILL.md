@@ -34,7 +34,9 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
 
 4. Add the manifest entry.
    - Add a `DungeonTableDefinition` entry with `id`, `heading`, `resolver`, `renderers`, `buildPreview`.
-   - Add `resolvePending` when the resolver emits pending rolls.
+   - Add `resolvePending` for any table that can appear as a pending-roll (including subtables).
+     - If pending resolution needs context, compute it from `pending.context` and/or `ancestors`.
+     - For treasure tables, prefer `readTreasureMagicContext(pending.context, ancestors)` from `src/dungeon/features/treasure/shared.ts` instead of duplicating logic in `outcomeTree.ts`.
    - Add `registry` when the resolver needs context (treasureMagic level/treasureRoll/rollIndex, doorChain, etc).
    - Use `wrapResolver` or a typed resolver to avoid `unknown` options.
 
@@ -44,12 +46,14 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
      - `src/dungeon/features/treasure/index.ts`
      - `src/dungeon/features/hazards/index.ts`
      - `src/dungeon/features/navigation/index.ts`
+   - Ensure the category exports `*_PENDING_RESOLVERS` via `createPendingResolverMap(...)` and re-export it from the category `bundle.ts`.
 
 6. Remove old wiring and duplicates.
    - Delete base resolver entries in `src/dungeon/helpers/registry.ts` for migrated ids.
    - Remove ids/headings from `src/dungeon/features/baseTables/bundle.ts` if the table is now a feature.
    - Remove manual adapters/previews in `src/dungeon/adapters/render.ts` if they still exist for that id.
    - Re-export the moved resolver from `src/dungeon/domain/resolvers.ts` if other imports rely on it, or update those imports directly.
+   - Remove redundant cases from `src/dungeon/helpers/outcomeTree.ts` once `resolvePending` is feature-owned (remember `pending.table` may include suffixes like `:<rollIndex>`, so use the base id).
 
 7. Update imports and tests.
    - Update `src/dungeon/helpers/outcomeTree.ts` and tests that import the old resolver path.
