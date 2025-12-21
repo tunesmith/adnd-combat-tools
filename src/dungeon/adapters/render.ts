@@ -95,31 +95,6 @@ import {
   buildTreasureMagicCategoryPreview,
 } from './render/treasureMagic';
 import {
-  renderTreasureBagOfHoldingDetail,
-  renderTreasureBagOfHoldingCompact,
-  buildTreasureBagOfHoldingPreview,
-} from './render/treasureBagOfHolding';
-import {
-  renderTreasureBagOfTricksDetail,
-  renderTreasureBagOfTricksCompact,
-  buildTreasureBagOfTricksPreview,
-} from './render/treasureBagOfTricks';
-import {
-  renderTreasureBracersOfDefenseDetail,
-  renderTreasureBracersOfDefenseCompact,
-  buildTreasureBracersOfDefensePreview,
-} from './render/treasureBracersOfDefense';
-import {
-  renderTreasureBucknardsEverfullPurseDetail,
-  renderTreasureBucknardsEverfullPurseCompact,
-  buildTreasureBucknardsEverfullPursePreview,
-} from './render/treasureBucknardsEverfullPurse';
-import {
-  renderTreasureArtifactOrRelicDetail,
-  renderTreasureArtifactOrRelicCompact,
-  buildTreasureArtifactOrRelicPreview,
-} from './render/treasureArtifactOrRelic';
-import {
   renderTreasureMiscMagicE2Detail,
   renderTreasureMiscMagicE2Compact,
   buildTreasureMiscMagicE2Preview,
@@ -309,11 +284,6 @@ import {
   renderTreasureEyesOfPetrificationCompact,
   buildTreasureEyesOfPetrificationPreview,
 } from './render/treasureEyesOfPetrification';
-import {
-  renderTreasureMiscMagicE1Detail,
-  renderTreasureMiscMagicE1Compact,
-  buildTreasureMiscMagicE1Preview,
-} from './render/treasureMiscMagicE1';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -437,26 +407,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasureMagicCategory: {
     renderDetail: renderTreasureMagicCategoryDetail,
     renderCompact: renderTreasureMagicCategoryCompact,
-  },
-  treasureBagOfHolding: {
-    renderDetail: renderTreasureBagOfHoldingDetail,
-    renderCompact: renderTreasureBagOfHoldingCompact,
-  },
-  treasureBagOfTricks: {
-    renderDetail: renderTreasureBagOfTricksDetail,
-    renderCompact: renderTreasureBagOfTricksCompact,
-  },
-  treasureBracersOfDefense: {
-    renderDetail: renderTreasureBracersOfDefenseDetail,
-    renderCompact: renderTreasureBracersOfDefenseCompact,
-  },
-  treasureBucknardsEverfullPurse: {
-    renderDetail: renderTreasureBucknardsEverfullPurseDetail,
-    renderCompact: renderTreasureBucknardsEverfullPurseCompact,
-  },
-  treasureArtifactOrRelic: {
-    renderDetail: renderTreasureArtifactOrRelicDetail,
-    renderCompact: renderTreasureArtifactOrRelicCompact,
   },
   treasureMiscMagicE2: {
     renderDetail: renderTreasureMiscMagicE2Detail,
@@ -630,10 +580,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureEyesOfPetrificationDetail,
     renderCompact: renderTreasureEyesOfPetrificationCompact,
   },
-  treasureMiscMagicE1: {
-    renderDetail: renderTreasureMiscMagicE1Detail,
-    renderCompact: renderTreasureMiscMagicE1Compact,
-  },
   monsterLevel: monsterAdapter,
   monsterOne: monsterAdapter,
   monsterTwo: monsterAdapter,
@@ -686,11 +632,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureProtectionGuardedBy: buildTreasureProtectionGuardedByPreview,
   treasureProtectionHiddenBy: buildTreasureProtectionHiddenByPreview,
   treasureMagicCategory: buildTreasureMagicCategoryPreview,
-  treasureBagOfHolding: buildTreasureBagOfHoldingPreview,
-  treasureBagOfTricks: buildTreasureBagOfTricksPreview,
-  treasureBracersOfDefense: buildTreasureBracersOfDefensePreview,
-  treasureBucknardsEverfullPurse: buildTreasureBucknardsEverfullPursePreview,
-  treasureArtifactOrRelic: buildTreasureArtifactOrRelicPreview,
   treasureMiscMagicE2: buildTreasureMiscMagicE2Preview,
   treasureMiscMagicE3: buildTreasureMiscMagicE3Preview,
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
@@ -741,7 +682,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureCrystalBall: buildTreasureCrystalBallPreview,
   treasureDeckOfManyThings: buildTreasureDeckOfManyThingsPreview,
   treasureEyesOfPetrification: buildTreasureEyesOfPetrificationPreview,
-  treasureMiscMagicE1: buildTreasureMiscMagicE1Preview,
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);

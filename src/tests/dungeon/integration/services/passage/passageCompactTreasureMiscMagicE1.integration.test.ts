@@ -4,10 +4,14 @@ import {
 } from '../../../../support/dungeon/dungeonRollHarness';
 import type { DungeonOutcomeNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
-import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
-import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
-import { TreasureBagOfTricks } from '../../../../../tables/dungeon/treasureBagOfTricks';
-import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
+import { TreasureMiscMagicE1 } from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Table';
+import {
+  TreasureArtifactOrRelic,
+  TreasureBagOfHolding,
+  TreasureBagOfTricks,
+  TreasureBracersOfDefense,
+  TreasureBucknardsEverfullPurse,
+} from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Subtables';
 import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
@@ -27,8 +31,6 @@ import { TreasureIronFlaskContent } from '../../../../../tables/dungeon/treasure
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
-import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
-import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
 import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
 import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';

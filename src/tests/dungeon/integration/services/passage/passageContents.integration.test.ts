@@ -20,11 +20,13 @@ import { TreasureMagicCategory } from '../../../../../tables/dungeon/treasureMag
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 import { TreasurePotion } from '../../../../../dungeon/features/treasure/potion/potionTables';
 import { TreasureScroll } from '../../../../../dungeon/features/treasure/scroll/scrollTables';
-import { TreasureMiscMagicE1 } from '../../../../../tables/dungeon/treasureMiscMagicE1';
-import { TreasureBagOfHolding } from '../../../../../tables/dungeon/treasureBagOfHolding';
-import { TreasureBracersOfDefense } from '../../../../../tables/dungeon/treasureBracersOfDefense';
-import { TreasureBucknardsEverfullPurse } from '../../../../../tables/dungeon/treasureBucknardsEverfullPurse';
-import { TreasureArtifactOrRelic } from '../../../../../tables/dungeon/treasureArtifactOrRelic';
+import { TreasureMiscMagicE1 } from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Table';
+import {
+  TreasureArtifactOrRelic,
+  TreasureBagOfHolding,
+  TreasureBracersOfDefense,
+  TreasureBucknardsEverfullPurse,
+} from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Subtables';
 import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
 import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';

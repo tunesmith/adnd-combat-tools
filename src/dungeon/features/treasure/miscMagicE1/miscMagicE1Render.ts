@@ -1,29 +1,31 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureMiscMagicE1,
   TreasureMiscMagicE1,
-} from '../../../tables/dungeon/treasureMiscMagicE1';
+} from './miscMagicE1Table';
 import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
-import type { TreasureBagOfTricks } from '../../../tables/dungeon/treasureBagOfTricks';
-import type { TreasureBracersOfDefense } from '../../../tables/dungeon/treasureBracersOfDefense';
-import type { TreasureBucknardsEverfullPurse } from '../../../tables/dungeon/treasureBucknardsEverfullPurse';
-import type { TreasureArtifactOrRelic } from '../../../tables/dungeon/treasureArtifactOrRelic';
-import { bagOfTricksSentence } from './treasureBagOfTricks';
+} from '../../../adapters/render/shared';
+import type {
+  TreasureArtifactOrRelic,
+  TreasureBagOfTricks,
+  TreasureBracersOfDefense,
+  TreasureBucknardsEverfullPurse,
+} from './miscMagicE1Subtables';
 import {
-  labelForResult as bracersLabel,
+  artifactSentence,
+  bagOfTricksSentence,
   bracersSentence,
-} from './treasureBracersOfDefense';
-import {
-  labelForResult as purseLabel,
+  labelForArtifact,
+  labelForBagOfTricks,
+  labelForBracersOfDefense as bracersLabel,
+  labelForBucknardsEverfullPurse as purseLabel,
   purseSentence,
-} from './treasureBucknardsEverfullPurse';
-import { artifactSentence, labelForArtifact } from './treasureArtifactOrRelic';
+} from './miscMagicE1SubtablesRender';
 
 const ITEM_NAMES: Record<TreasureMiscMagicE1, string> = {
   [TreasureMiscMagicE1.AlchemyJug]: 'alchemy jug',
@@ -65,12 +67,6 @@ const ITEM_NAMES: Record<TreasureMiscMagicE1, string> = {
   [TreasureMiscMagicE1.BroomOfAnimatedAttack]: 'broom of animated attack',
   [TreasureMiscMagicE1.BroomOfFlying]: 'broom of flying',
   [TreasureMiscMagicE1.BucknardsEverfullPurse]: "Bucknard's everfull purse",
-};
-
-const BAG_OF_TRICKS_LABELS: Record<TreasureBagOfTricks, string> = {
-  1: 'Weasel',
-  2: 'Rat',
-  3: 'Jackal',
 };
 
 export function renderTreasureMiscMagicE1Detail(
@@ -170,7 +166,7 @@ function formatItemName(
   artifact?: TreasureArtifactOrRelic
 ): string {
   if (command === TreasureMiscMagicE1.BagOfTricks && bagOfTricks) {
-    return `Bag of Tricks ("${BAG_OF_TRICKS_LABELS[bagOfTricks]}")`;
+    return `Bag of Tricks ("${labelForBagOfTricks(bagOfTricks)}")`;
   }
   if (command === TreasureMiscMagicE1.BracersOfDefense && bracers) {
     return bracersLabel(bracers);

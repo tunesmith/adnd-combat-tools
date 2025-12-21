@@ -65,18 +65,6 @@ import {
   TreasureMagicCategory,
 } from '../../tables/dungeon/treasureMagic';
 import {
-  treasureBagOfHolding,
-} from '../../tables/dungeon/treasureBagOfHolding';
-import { treasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
-import { treasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
-import { treasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
-import { treasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
-import type { TreasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
-import {
-  treasureMiscMagicE1,
-  TreasureMiscMagicE1,
-} from '../../tables/dungeon/treasureMiscMagicE1';
-import {
   treasureMiscMagicE2,
   TreasureMiscMagicE2,
 } from '../../tables/dungeon/treasureMiscMagicE2';
@@ -330,6 +318,14 @@ export {
   resolveTreasureRingThreeWishes,
   resolveTreasureRingWizardry,
 } from '../features/treasure/ring/ringResolvers';
+export {
+  resolveTreasureArtifactOrRelic,
+  resolveTreasureBagOfHolding,
+  resolveTreasureBagOfTricks,
+  resolveTreasureBracersOfDefense,
+  resolveTreasureBucknardsEverfullPurse,
+  resolveTreasureMiscMagicE1,
+} from '../features/treasure/miscMagicE1/miscMagicE1Resolvers';
 
 export function resolvePeriodicCheck(options?: {
   roll?: number;
@@ -2405,73 +2401,6 @@ export function resolveTreasureMagicCategory(options?: {
     children: children.length ? children : undefined,
   };
 }
-export function resolveTreasureMiscMagicE1(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureMiscMagicE1.sides);
-  const command: TreasureMiscMagicE1 = getTableEntry(
-    usedRoll,
-    treasureMiscMagicE1
-  );
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureMiscMagicE1.BagOfHolding) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureBagOfHolding',
-      id: options?.rollIndex
-        ? `treasureBagOfHolding:${options.rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE1.BagOfTricks) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureBagOfTricks',
-      id: options?.rollIndex
-        ? `treasureBagOfTricks:${options.rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE1.BracersOfDefense) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureBracersOfDefense',
-      id: options?.rollIndex
-        ? `treasureBracersOfDefense:${options.rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE1.BucknardsEverfullPurse) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureBucknardsEverfullPurse',
-      id: options?.rollIndex
-        ? `treasureBucknardsEverfullPurse:${options.rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE1.ArtifactOrRelic) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureArtifactOrRelic',
-      id: options?.rollIndex
-        ? `treasureArtifactOrRelic:${options.rollIndex}`
-        : undefined,
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureMiscMagicE1',
-      result: command,
-      level: options?.level,
-      treasureRoll: options?.treasureRoll,
-      rollIndex: options?.rollIndex,
-    } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
-}
-
 export function resolveTreasureMiscMagicE2(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
@@ -4222,62 +4151,6 @@ export function resolveTreasureHornOfValhallaAlignment(options?: {
   };
 }
 
-export function resolveTreasureBagOfHolding(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureBagOfHolding,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureBagOfHolding',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureBagOfTricks(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureBagOfTricks,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureBagOfTricks',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureBracersOfDefense(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureBracersOfDefense,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureBracersOfDefense',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureBucknardsEverfullPurse(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureBucknardsEverfullPurse,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureBucknardsEverfullPurse',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
 export function resolveTreasureCarpetOfFlying(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
@@ -4374,24 +4247,6 @@ export function resolveTreasureEyesOfPetrification(options?: {
         result: command,
       } as OutcomeEvent),
   });
-}
-
-export function resolveTreasureArtifactOrRelic(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureArtifactOrRelic.sides);
-  const command: TreasureArtifactOrRelic = getTableEntry(
-    usedRoll,
-    treasureArtifactOrRelic
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureArtifactOrRelic',
-      result: command,
-    } as OutcomeEvent,
-  };
 }
 
 export function resolveTreasureContainer(options?: {

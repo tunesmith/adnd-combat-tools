@@ -52,11 +52,6 @@ import {
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
   resolveTreasureMagicCategory,
-  resolveTreasureBagOfHolding,
-  resolveTreasureBagOfTricks,
-  resolveTreasureBracersOfDefense,
-  resolveTreasureBucknardsEverfullPurse,
-  resolveTreasureArtifactOrRelic,
   resolveTreasureCarpetOfFlying,
   resolveTreasureCloakOfProtection,
   resolveTreasureCrystalBall,
@@ -77,7 +72,6 @@ import {
   resolveTreasureMiscMagicE4,
   resolveTreasureMiscMagicE3,
   resolveTreasureMiscMagicE2,
-  resolveTreasureMiscMagicE1,
   resolveTreasureManualOfGolems,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
@@ -389,14 +383,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureBagOfHolding: ({ roll }) =>
-    fromOutcome(resolveTreasureBagOfHolding({ roll })),
-  treasureBagOfTricks: ({ roll }) =>
-    fromOutcome(resolveTreasureBagOfTricks({ roll })),
-  treasureBracersOfDefense: ({ roll }) =>
-    fromOutcome(resolveTreasureBracersOfDefense({ roll })),
-  treasureBucknardsEverfullPurse: ({ roll }) =>
-    fromOutcome(resolveTreasureBucknardsEverfullPurse({ roll })),
   treasureMiscMagicE2: ({ roll }) =>
     fromOutcome(resolveTreasureMiscMagicE2({ roll })),
   treasureMiscMagicE3: ({ roll }) =>
@@ -772,28 +758,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
     fromOutcome(resolveTreasureDeckOfManyThings({ roll })),
   treasureEyesOfPetrification: ({ roll }) =>
     fromOutcome(resolveTreasureEyesOfPetrification({ roll })),
-  treasureArtifactOrRelic: ({ roll }) =>
-    fromOutcome(resolveTreasureArtifactOrRelic({ roll })),
-  treasureMiscMagicE1: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : undefined;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasureMiscMagicE1({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
 };
 
 const HAZARD_TABLE_RESOLVERS: Record<string, RegistryResolver> =

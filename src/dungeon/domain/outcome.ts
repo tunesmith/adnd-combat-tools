@@ -113,12 +113,14 @@ import type {
 } from '../features/treasure/ring/ringTables';
 import type { TreasureScrollProtectionElementals } from '../features/treasure/scroll/scrollTables';
 import type { TreasureScrollProtectionLycanthropes } from '../features/treasure/scroll/scrollTables';
-import type { TreasureBagOfHolding } from '../../tables/dungeon/treasureBagOfHolding';
-import type { TreasureBagOfTricks } from '../../tables/dungeon/treasureBagOfTricks';
-import type { TreasureBracersOfDefense } from '../../tables/dungeon/treasureBracersOfDefense';
-import type { TreasureBucknardsEverfullPurse } from '../../tables/dungeon/treasureBucknardsEverfullPurse';
-import type { TreasureArtifactOrRelic } from '../../tables/dungeon/treasureArtifactOrRelic';
-import type { TreasureMiscMagicE1 } from '../../tables/dungeon/treasureMiscMagicE1';
+import type { TreasureMiscMagicE1 } from '../features/treasure/miscMagicE1/miscMagicE1Table';
+import type {
+  TreasureArtifactOrRelic,
+  TreasureBagOfHolding,
+  TreasureBagOfTricks,
+  TreasureBracersOfDefense,
+  TreasureBucknardsEverfullPurse,
+} from '../features/treasure/miscMagicE1/miscMagicE1Subtables';
 import type { TreasureMiscMagicE2 } from '../../tables/dungeon/treasureMiscMagicE2';
 import type { TreasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagicE3';
 import type { TreasureMiscMagicE4 } from '../../tables/dungeon/treasureMiscMagicE4';

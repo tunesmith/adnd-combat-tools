@@ -1,4 +1,105 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
+
+export enum TreasureBagOfHolding {
+  TypeI = 1,
+  TypeII,
+  TypeIII,
+  TypeIV,
+}
+
+export const treasureBagOfHolding: Table<TreasureBagOfHolding> = {
+  sides: 100,
+  entries: [
+    { range: [1, 30], command: TreasureBagOfHolding.TypeI },
+    { range: [31, 70], command: TreasureBagOfHolding.TypeII },
+    { range: [71, 90], command: TreasureBagOfHolding.TypeIII },
+    { range: [91, 100], command: TreasureBagOfHolding.TypeIV },
+  ],
+};
+
+export const BAG_OF_HOLDING_STATS: Record<
+  TreasureBagOfHolding,
+  {
+    bagWeight: number;
+    weightLimit: number;
+    volumeLimit: number;
+  }
+> = {
+  [TreasureBagOfHolding.TypeI]: {
+    bagWeight: 15,
+    weightLimit: 250,
+    volumeLimit: 30,
+  },
+  [TreasureBagOfHolding.TypeII]: {
+    bagWeight: 15,
+    weightLimit: 500,
+    volumeLimit: 70,
+  },
+  [TreasureBagOfHolding.TypeIII]: {
+    bagWeight: 35,
+    weightLimit: 1000,
+    volumeLimit: 150,
+  },
+  [TreasureBagOfHolding.TypeIV]: {
+    bagWeight: 60,
+    weightLimit: 1500,
+    volumeLimit: 250,
+  },
+};
+
+export enum TreasureBagOfTricks {
+  Weasel = 1,
+  Rat,
+  Jackal,
+}
+
+export const treasureBagOfTricks: Table<TreasureBagOfTricks> = {
+  sides: 10,
+  entries: [
+    { range: [1, 5], command: TreasureBagOfTricks.Weasel },
+    { range: [6, 8], command: TreasureBagOfTricks.Rat },
+    { range: [9, 10], command: TreasureBagOfTricks.Jackal },
+  ],
+};
+
+export enum TreasureBracersOfDefense {
+  AC8 = 8,
+  AC7 = 7,
+  AC6 = 6,
+  AC5 = 5,
+  AC4 = 4,
+  AC3 = 3,
+  AC2 = 2,
+}
+
+export const treasureBracersOfDefense: Table<TreasureBracersOfDefense> = {
+  sides: 100,
+  entries: [
+    { range: [1, 5], command: TreasureBracersOfDefense.AC8 },
+    { range: [6, 15], command: TreasureBracersOfDefense.AC7 },
+    { range: [16, 35], command: TreasureBracersOfDefense.AC6 },
+    { range: [36, 50], command: TreasureBracersOfDefense.AC5 },
+    { range: [51, 70], command: TreasureBracersOfDefense.AC4 },
+    { range: [71, 85], command: TreasureBracersOfDefense.AC3 },
+    { range: [86, 100], command: TreasureBracersOfDefense.AC2 },
+  ],
+};
+
+export enum TreasureBucknardsEverfullPurse {
+  Gold = 1,
+  Platinum,
+  Gems,
+}
+
+export const treasureBucknardsEverfullPurse: Table<TreasureBucknardsEverfullPurse> =
+  {
+    sides: 100,
+    entries: [
+      { range: [1, 50], command: TreasureBucknardsEverfullPurse.Gold },
+      { range: [51, 90], command: TreasureBucknardsEverfullPurse.Platinum },
+      { range: [91, 100], command: TreasureBucknardsEverfullPurse.Gems },
+    ],
+  };
 
 export enum TreasureArtifactOrRelic {
   AxeOfTheDwarvishLords = 1,
@@ -84,3 +185,4 @@ export const treasureArtifactOrRelic: Table<TreasureArtifactOrRelic> = {
     { range: [100], command: TreasureArtifactOrRelic.WandOfOrcus },
   ],
 };
+

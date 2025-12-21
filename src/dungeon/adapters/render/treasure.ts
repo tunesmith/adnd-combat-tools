@@ -28,12 +28,14 @@ import {
   describeTreasureProtectionGuardedBy,
   describeTreasureProtectionHiddenBy,
 } from './treasureProtection';
-import { treasureMiscMagicE1Sentence } from './treasureMiscMagicE1';
-import { bagOfHoldingSentence } from './treasureBagOfHolding';
-import { bagOfTricksSentence } from './treasureBagOfTricks';
-import { bracersSentence } from './treasureBracersOfDefense';
-import { purseSentence } from './treasureBucknardsEverfullPurse';
-import { artifactSentence } from './treasureArtifactOrRelic';
+import { treasureMiscMagicE1Sentence } from '../../features/treasure/miscMagicE1/miscMagicE1Render';
+import {
+  artifactSentence,
+  bagOfHoldingSentence,
+  bagOfTricksSentence,
+  bracersSentence,
+  purseSentence,
+} from '../../features/treasure/miscMagicE1/miscMagicE1SubtablesRender';
 import { miscMagicE2Sentence } from './treasureMiscMagicE2';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
 import { girdleSentence } from './treasureGirdleOfGiantStrength';
@@ -61,7 +63,7 @@ import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
 import { cloakSentence } from './treasureCloakOfProtection';
 import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
-import { BAG_OF_HOLDING_STATS } from '../../../tables/dungeon/treasureBagOfHolding';
+import { BAG_OF_HOLDING_STATS } from '../../features/treasure/miscMagicE1/miscMagicE1Subtables';
 import { toIounStonesSummary } from './treasureIounStones';
 import { armorShieldSentence } from './treasureArmorShields';
 import {

@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum TreasureMiscMagicE1 {
   AlchemyJug = 1,

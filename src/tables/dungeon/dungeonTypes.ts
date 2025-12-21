@@ -105,12 +105,14 @@ import type {
   TreasureRodStaffWand,
   TreasureStaffSerpent,
 } from '../../dungeon/features/treasure/rodStaffWand/rodStaffWandTables';
-import type { TreasureBagOfHolding } from './treasureBagOfHolding';
-import type { TreasureBagOfTricks } from './treasureBagOfTricks';
-import type { TreasureBracersOfDefense } from './treasureBracersOfDefense';
-import type { TreasureBucknardsEverfullPurse } from './treasureBucknardsEverfullPurse';
-import type { TreasureArtifactOrRelic } from './treasureArtifactOrRelic';
-import type { TreasureMiscMagicE1 } from './treasureMiscMagicE1';
+import type {
+  TreasureArtifactOrRelic,
+  TreasureBagOfHolding,
+  TreasureBagOfTricks,
+  TreasureBracersOfDefense,
+  TreasureBucknardsEverfullPurse,
+} from '../../dungeon/features/treasure/miscMagicE1/miscMagicE1Subtables';
+import type { TreasureMiscMagicE1 } from '../../dungeon/features/treasure/miscMagicE1/miscMagicE1Table';
 import type { TreasureMiscMagicE2 } from './treasureMiscMagicE2';
 import type { TreasureMiscMagicE3 } from './treasureMiscMagicE3';
 import type { TreasureMiscMagicE4 } from './treasureMiscMagicE4';
