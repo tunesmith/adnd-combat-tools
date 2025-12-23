@@ -16,7 +16,7 @@ import { collectCharacterPartyMessages } from '../../../../../dungeon/adapters/r
 import { collectTreasureCompactMessages } from '../../../../../dungeon/adapters/render/treasure';
 import { renderTreasureContainerCompact } from '../../../../../dungeon/adapters/render/treasureContainer';
 import { resolveTreasureContainer } from '../../../../../dungeon/domain/resolvers';
-import { TreasureMagicCategory } from '../../../../../tables/dungeon/treasureMagic';
+import { TreasureMagicCategory } from '../../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 import { TreasurePotion } from '../../../../../dungeon/features/treasure/potion/potionTables';
 import { TreasureScroll } from '../../../../../dungeon/features/treasure/scroll/scrollTables';

@@ -78,7 +78,7 @@ import type {
   TreasureProtectionHiddenBy,
 } from './treasureProtection';
 import type { TreasureContainer } from './treasureContainer';
-import type { TreasureMagicCategory } from './treasureMagic';
+import type { TreasureMagicCategory } from '../../dungeon/features/treasure/magicCategory/magicCategoryTable';
 import type {
   TreasurePotion,
   TreasurePotionAnimalControl,

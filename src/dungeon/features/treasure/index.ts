@@ -5,6 +5,7 @@ import {
   createRegistryOutcomeMap,
   createRenderAdapterMap,
 } from '../types';
+import { magicCategoryTables } from './magicCategory/manifest';
 import { potionTables } from './potion/manifest';
 import { scrollTables } from './scroll/manifest';
 import { ringTables } from './ring/manifest';
@@ -18,6 +19,7 @@ const defineTreasureTables = <
 ): T => defs;
 
 const treasureDefinitions = defineTreasureTables([
+  ...magicCategoryTables,
   ...potionTables,
   ...scrollTables,
   ...ringTables,

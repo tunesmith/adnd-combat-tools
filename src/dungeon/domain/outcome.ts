@@ -90,7 +90,7 @@ import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomConten
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
 import type { TreasureContainer } from '../../tables/dungeon/treasureContainer';
-import type { TreasureMagicCategory } from '../../tables/dungeon/treasureMagic';
+import type { TreasureMagicCategory } from '../features/treasure/magicCategory/magicCategoryTable';
 import type {
   TreasurePotion,
   TreasurePotionAnimalControl,

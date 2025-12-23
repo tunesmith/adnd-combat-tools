@@ -53,7 +53,6 @@ import {
   resolveTreasureProtectionType,
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
-  resolveTreasureMagicCategory,
   resolveTreasureDeckOfManyThings,
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
@@ -786,10 +785,6 @@ function resolvePendingNode(
       return resolveTreasureContainer({});
     case 'gasTrapEffect':
       return resolveGasTrapEffect({});
-    case 'treasureMagicCategory': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureMagicCategory(context);
-    }
     case 'treasureMiscMagicE2':
       return resolveTreasureMiscMagicE2({});
     case 'treasureMiscMagicE3':

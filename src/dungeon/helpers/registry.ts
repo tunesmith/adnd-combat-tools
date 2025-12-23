@@ -51,7 +51,6 @@ import {
   resolveTreasureProtectionType,
   resolveTreasureProtectionGuardedBy,
   resolveTreasureProtectionHiddenBy,
-  resolveTreasureMagicCategory,
   resolveTreasureCarpetOfFlying,
   resolveTreasureCloakOfProtection,
   resolveTreasureCrystalBall,
@@ -363,26 +362,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
     fromOutcome(resolveTreasureProtectionGuardedBy({ roll })),
   treasureProtectionHiddenBy: ({ roll }) =>
     fromOutcome(resolveTreasureProtectionHiddenBy({ roll })),
-  treasureMagicCategory: ({ roll, context }) => {
-    const level =
-      context && context.kind === 'treasureMagic' ? context.level : 1;
-    const treasureRoll =
-      context && context.kind === 'treasureMagic'
-        ? context.treasureRoll
-        : undefined;
-    const rollIndex =
-      context && context.kind === 'treasureMagic'
-        ? context.rollIndex
-        : undefined;
-    return fromOutcome(
-      resolveTreasureMagicCategory({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      })
-    );
-  },
   treasureMiscMagicE2: ({ roll }) =>
     fromOutcome(resolveTreasureMiscMagicE2({ roll })),
   treasureMiscMagicE3: ({ roll }) =>

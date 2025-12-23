@@ -46,7 +46,7 @@ import { miscMagicE3Sentence } from './treasureMiscMagicE3';
 import { miscMagicE4Sentence } from './treasureMiscMagicE4';
 import { miscMagicE5Sentence } from './treasureMiscMagicE5';
 import { TreasureMiscMagicE5 } from '../../../tables/dungeon/treasureMiscMagicE5';
-import { TreasureMagicCategory } from '../../../tables/dungeon/treasureMagic';
+import { TreasureMagicCategory } from '../../features/treasure/magicCategory/magicCategoryTable';
 import { toRobeOfUsefulItemsSummary } from './treasureRobeOfUsefulItems';
 import { medallionRangeParenthetical } from './treasureMedallionRange';
 import { TreasureMiscMagicE4 } from '../../../tables/dungeon/treasureMiscMagicE4';

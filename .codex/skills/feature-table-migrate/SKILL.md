@@ -24,7 +24,8 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
 
 2. Inventory files and choose placement.
    - Prefer `src/dungeon/features/<area>/<featureName>/` with a `manifest.ts`.
-   - Move table data into the feature folder when owned by the feature; keep it in `src/tables/dungeon` only if it is shared.
+   - Move table data (enum + `Table<...>` entries) into the feature folder when owned by the feature; keep it in `src/tables/dungeon` only if it is shared across multiple features/areas.
+     - After migrating a feature, `rg "tables/dungeon/<name>" src` to ensure no stale imports remain.
 
 3. Create feature files and move code.
    - Create `<featureName>Table.ts` or `<featureName>Tables.ts` for table data.
