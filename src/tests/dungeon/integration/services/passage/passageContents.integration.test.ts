@@ -27,8 +27,11 @@ import {
   TreasureBracersOfDefense,
   TreasureBucknardsEverfullPurse,
 } from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Subtables';
-import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
-import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
+import {
+  TreasureCrystalBall,
+  TreasureDeckOfManyThings,
+  TreasureEyesOfPetrification,
+} from '../../../../../dungeon/features/treasure/miscMagicE2/miscMagicE2Subtables';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
 import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
@@ -43,7 +46,6 @@ import { TreasureIronFlaskContent } from '../../../../../tables/dungeon/treasure
 import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
 import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
-import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
 import {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
@@ -3941,7 +3943,10 @@ describe('passage contents', () => {
 
   it('omits container text when treasure is loose', () => {
     const node = resolveTreasureContainer({ roll: 19 }) as OutcomeEventNode;
-    const compactNodes = renderTreasureContainerCompact(node, () => {});
+    const compactNodes = renderTreasureContainerCompact(
+      node,
+      (_outcome, _nodes) => undefined
+    );
     expect(compactNodes).toHaveLength(0);
   });
 });

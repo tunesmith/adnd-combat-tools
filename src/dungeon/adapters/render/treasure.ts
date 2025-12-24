@@ -36,7 +36,7 @@ import {
   bracersSentence,
   purseSentence,
 } from '../../features/treasure/miscMagicE1/miscMagicE1SubtablesRender';
-import { miscMagicE2Sentence } from './treasureMiscMagicE2';
+import { miscMagicE2Sentence } from '../../features/treasure/miscMagicE2/miscMagicE2Render';
 import { figurineSentence } from './treasureFigurineOfWondrousPower';
 import { girdleSentence } from './treasureGirdleOfGiantStrength';
 import { instrumentOfTheBardsSentence } from './treasureInstrumentOfTheBards';
@@ -58,10 +58,12 @@ import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison'
 import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
 import { quaalFeatherTokenParenthetical } from './treasureQuaalFeatherToken';
 import { toPrayerBeadsSummary } from './treasureNecklaceOfPrayerBeads';
-import { sentence as crystalBallSentence } from './treasureCrystalBall';
-import { sentence as deckSentence } from './treasureDeckOfManyThings';
-import { sentence as eyesSentence } from './treasureEyesOfPetrification';
-import { cloakSentence } from './treasureCloakOfProtection';
+import {
+  cloakSentence,
+  crystalBallSentence,
+  deckSentence,
+  eyesSentence,
+} from '../../features/treasure/miscMagicE2/miscMagicE2SubtablesRender';
 import { TreasureProtectionType } from '../../features/treasure/protection/protectionTables';
 import { BAG_OF_HOLDING_STATS } from '../../features/treasure/miscMagicE1/miscMagicE1Subtables';
 import { toIounStonesSummary } from './treasureIounStones';

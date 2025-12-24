@@ -47,10 +47,6 @@ import {
   resolveUnusualShape,
   resolveUnusualSize,
   resolveTreasure,
-  resolveTreasureCarpetOfFlying,
-  resolveTreasureCloakOfProtection,
-  resolveTreasureCrystalBall,
-  resolveTreasureDeckOfManyThings,
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
   resolveTreasureGirdleOfGiantStrength,
@@ -60,13 +56,11 @@ import {
   resolveTreasureHornOfValhallaType,
   resolveTreasureHornOfValhallaAttunement,
   resolveTreasureHornOfValhallaAlignment,
-  resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE5,
   resolveTreasureRobeOfUsefulItems,
   resolveTreasureRobeOfTheArchmagi,
   resolveTreasureMiscMagicE4,
   resolveTreasureMiscMagicE3,
-  resolveTreasureMiscMagicE2,
   resolveTreasureManualOfGolems,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
@@ -350,8 +344,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureMiscMagicE2: ({ roll }) =>
-    fromOutcome(resolveTreasureMiscMagicE2({ roll })),
   treasureMiscMagicE3: ({ roll }) =>
     fromOutcome(resolveTreasureMiscMagicE3({ roll })),
   treasureMiscMagicE4: ({ roll }) =>
@@ -715,16 +707,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
     fromOutcome(resolveTreasureHornOfValhallaAttunement({ roll })),
   treasureHornOfValhallaAlignment: ({ roll }) =>
     fromOutcome(resolveTreasureHornOfValhallaAlignment({ roll })),
-  treasureCarpetOfFlying: ({ roll }) =>
-    fromOutcome(resolveTreasureCarpetOfFlying({ roll })),
-  treasureCloakOfProtection: ({ roll }) =>
-    fromOutcome(resolveTreasureCloakOfProtection({ roll })),
-  treasureCrystalBall: ({ roll }) =>
-    fromOutcome(resolveTreasureCrystalBall({ roll })),
-  treasureDeckOfManyThings: ({ roll }) =>
-    fromOutcome(resolveTreasureDeckOfManyThings({ roll })),
-  treasureEyesOfPetrification: ({ roll }) =>
-    fromOutcome(resolveTreasureEyesOfPetrification({ roll })),
 };
 
 const HAZARD_TABLE_RESOLVERS: Record<string, RegistryResolver> =

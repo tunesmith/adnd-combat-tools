@@ -1,15 +1,21 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureMiscMagicE2,
   TreasureMiscMagicE2,
-} from '../../../tables/dungeon/treasureMiscMagicE2';
-import { buildPreview, findChildEvent } from './shared';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
-import { cloakSentence } from './treasureCloakOfProtection';
-import { sentence as crystalBallSentence } from './treasureCrystalBall';
-import { sentence as deckSentence } from './treasureDeckOfManyThings';
-import { sentence as eyesSentence } from './treasureEyesOfPetrification';
+} from './miscMagicE2Table';
+import {
+  buildPreview,
+  findChildEvent,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
+import {
+  cloakSentence,
+  crystalBallSentence,
+  deckSentence,
+  eyesSentence,
+} from './miscMagicE2SubtablesRender';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE2, string> = {
   [TreasureMiscMagicE2.CandleOfInvocation]: 'Candle of Invocation (C)',

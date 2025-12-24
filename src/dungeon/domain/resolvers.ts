@@ -60,10 +60,6 @@ import {
   TreasureWithoutMonster,
 } from '../../tables/dungeon/treasure';
 import {
-  treasureMiscMagicE2,
-  TreasureMiscMagicE2,
-} from '../../tables/dungeon/treasureMiscMagicE2';
-import {
   treasureMiscMagicE3,
   TreasureMiscMagicE3,
 } from '../../tables/dungeon/treasureMiscMagicE3';
@@ -171,11 +167,6 @@ import {
 } from '../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { treasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
 import type { TreasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
-import { treasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
-import { treasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
-import { treasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
-import { treasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
-import { treasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
 import type {
   TreasureEntry,
   TreasureIounStonesResult,
@@ -2153,39 +2144,6 @@ function findByRange<T extends { range: [number, number] }>(
 function isWithinRange(range: [number, number], roll: number): boolean {
   return roll >= range[0] && roll <= range[1];
 }
-export function resolveTreasureMiscMagicE2(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureMiscMagicE2.sides);
-  const command: TreasureMiscMagicE2 = getTableEntry(
-    usedRoll,
-    treasureMiscMagicE2
-  );
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureMiscMagicE2.CarpetOfFlying) {
-    children.push({ type: 'pending-roll', table: 'treasureCarpetOfFlying' });
-  } else if (command === TreasureMiscMagicE2.CrystalBall) {
-    children.push({ type: 'pending-roll', table: 'treasureCrystalBall' });
-  } else if (command === TreasureMiscMagicE2.DeckOfManyThings) {
-    children.push({ type: 'pending-roll', table: 'treasureDeckOfManyThings' });
-  } else if (command === TreasureMiscMagicE2.EyesOfPetrification) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureEyesOfPetrification',
-    });
-  } else if (command === TreasureMiscMagicE2.CloakOfProtection) {
-    children.push({ type: 'pending-roll', table: 'treasureCloakOfProtection' });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureMiscMagicE2',
-      result: command,
-    } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
-}
 
 export function resolveTreasureMiscMagicE3(options?: {
   roll?: number;
@@ -3903,34 +3861,6 @@ export function resolveTreasureHornOfValhallaAlignment(options?: {
   };
 }
 
-export function resolveTreasureCarpetOfFlying(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureCarpetOfFlying,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureCarpetOfFlying',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureCloakOfProtection(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureCloakOfProtection,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureCloakOfProtection',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
 export function resolveTreasureInstrumentOfTheBards(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
@@ -3954,48 +3884,6 @@ export function resolveTreasureIronFlask(options?: {
     buildEvent: (command) =>
       ({
         kind: 'treasureIronFlask',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureCrystalBall(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureCrystalBall,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureCrystalBall',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureDeckOfManyThings(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureDeckOfManyThings,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureDeckOfManyThings',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureEyesOfPetrification(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureEyesOfPetrification,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureEyesOfPetrification',
         result: command,
       } as OutcomeEvent),
   });

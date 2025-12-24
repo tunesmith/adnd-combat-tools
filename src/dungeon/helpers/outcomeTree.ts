@@ -49,7 +49,6 @@ import {
   resolveDragonTen,
   resolveHuman,
   resolveTreasure,
-  resolveTreasureDeckOfManyThings,
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
   resolveTreasureGirdleOfGiantStrength,
@@ -82,11 +81,6 @@ import {
   resolveTreasurePhylacteryLongYears,
   resolveTreasureQuaalFeatherToken,
   resolveTreasureManualOfGolems,
-  resolveTreasureEyesOfPetrification,
-  resolveTreasureMiscMagicE2,
-  resolveTreasureCarpetOfFlying,
-  resolveTreasureCloakOfProtection,
-  resolveTreasureCrystalBall,
   resolveRoomDimensions,
 } from '../domain/resolvers';
 import { readTreasureMagicContext } from '../features/treasure/shared';
@@ -779,8 +773,6 @@ function resolvePendingNode(
     }
     case 'gasTrapEffect':
       return resolveGasTrapEffect({});
-    case 'treasureMiscMagicE2':
-      return resolveTreasureMiscMagicE2({});
     case 'treasureMiscMagicE3':
       return resolveTreasureMiscMagicE3({});
     case 'treasureMiscMagicE4':
@@ -857,14 +849,6 @@ function resolvePendingNode(
       return resolveTreasureNecklaceOfPrayerBeads({});
     case 'treasureMedallionRange':
       return resolveTreasureMedallionRange({});
-    case 'treasureCarpetOfFlying':
-      return resolveTreasureCarpetOfFlying({});
-    case 'treasureCloakOfProtection':
-      return resolveTreasureCloakOfProtection({});
-    case 'treasureCrystalBall':
-      return resolveTreasureCrystalBall({});
-    case 'treasureDeckOfManyThings':
-      return resolveTreasureDeckOfManyThings({});
     case 'treasureFigurineOfWondrousPower':
       return resolveTreasureFigurineOfWondrousPower({});
     case 'treasureFigurineMarbleElephant':
@@ -881,8 +865,6 @@ function resolvePendingNode(
       return resolveTreasureHornOfValhallaAttunement({});
     case 'treasureHornOfValhallaAlignment':
       return resolveTreasureHornOfValhallaAlignment({});
-    case 'treasureEyesOfPetrification':
-      return resolveTreasureEyesOfPetrification({});
     case 'transmuteType':
       return resolveTransmuteType({});
     case 'poolAlignment':

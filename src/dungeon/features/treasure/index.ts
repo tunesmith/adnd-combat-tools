@@ -13,6 +13,7 @@ import { rodStaffWandTables } from './rodStaffWand/manifest';
 import { miscMagicE1Tables } from './miscMagicE1/manifest';
 import { protectionTables } from './protection/manifest';
 import { containerTables } from './container/manifest';
+import { miscMagicE2Tables } from './miscMagicE2/manifest';
 
 const defineTreasureTables = <
   T extends ReadonlyArray<DungeonTableDefinition<unknown>>
@@ -27,6 +28,7 @@ const treasureDefinitions = defineTreasureTables([
   ...ringTables,
   ...rodStaffWandTables,
   ...miscMagicE1Tables,
+  ...miscMagicE2Tables,
   ...protectionTables,
   ...containerTables,
 ] as ReadonlyArray<DungeonTableDefinition<unknown>>);

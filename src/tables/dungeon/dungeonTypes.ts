@@ -113,13 +113,19 @@ import type {
   TreasureBucknardsEverfullPurse,
 } from '../../dungeon/features/treasure/miscMagicE1/miscMagicE1Subtables';
 import type { TreasureMiscMagicE1 } from '../../dungeon/features/treasure/miscMagicE1/miscMagicE1Table';
-import type { TreasureMiscMagicE2 } from './treasureMiscMagicE2';
+import type { TreasureMiscMagicE2 } from '../../dungeon/features/treasure/miscMagicE2/miscMagicE2Table';
+import type {
+  TreasureCarpetOfFlying,
+  TreasureCloakOfProtection,
+  TreasureCrystalBall,
+  TreasureDeckOfManyThings,
+  TreasureEyesOfPetrification,
+} from '../../dungeon/features/treasure/miscMagicE2/miscMagicE2Subtables';
 import type { TreasureMiscMagicE3 } from './treasureMiscMagicE3';
 import type { TreasureMiscMagicE4 } from './treasureMiscMagicE4';
 import type { TreasureMiscMagicE5 } from './treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from './treasureRobeOfTheArchmagi';
 import type { RobeOfUsefulItemsExtraPatch } from './treasureRobeOfUsefulItems';
-import type { TreasureDeckOfManyThings } from './treasureDeckOfManyThings';
 import type { TreasureFigurineOfWondrousPower } from './treasureFigurineOfWondrousPower';
 import type { TreasureFigurineMarbleElephant } from './treasureFigurineMarbleElephant';
 import type { TreasureGirdleOfGiantStrength } from './treasureGirdleOfGiantStrength';
@@ -129,10 +135,6 @@ import type { TreasureHornOfValhallaType } from './treasureHornOfValhallaType';
 import type { TreasureHornOfValhallaAttunement } from './treasureHornOfValhallaAttunement';
 import type { TreasureHornOfValhallaAlignment } from './treasureHornOfValhallaAlignment';
 import type { TreasureIounStoneType } from './treasureIounStones';
-import type { TreasureEyesOfPetrification } from './treasureEyesOfPetrification';
-import type { TreasureCarpetOfFlying } from './treasureCarpetOfFlying';
-import type { TreasureCloakOfProtection } from './treasureCloakOfProtection';
-import type { TreasureCrystalBall } from './treasureCrystalBall';
 import type { TreasureManualOfGolems } from './treasureManualOfGolems';
 import type { TreasureMedallionRange } from './treasureMedallionEspRange';
 import type { TreasureNecklaceOfMissiles } from './treasureNecklaceOfMissiles';

@@ -76,11 +76,6 @@ import {
   buildTreasurePreview,
 } from './render/treasure';
 import {
-  renderTreasureMiscMagicE2Detail,
-  renderTreasureMiscMagicE2Compact,
-  buildTreasureMiscMagicE2Preview,
-} from './render/treasureMiscMagicE2';
-import {
   renderTreasureMiscMagicE3Detail,
   renderTreasureMiscMagicE3Compact,
   buildTreasureMiscMagicE3Preview,
@@ -240,31 +235,6 @@ import {
   buildTreasureHornOfValhallaAttunementPreview,
   buildTreasureHornOfValhallaAlignmentPreview,
 } from './render/treasureHornOfValhalla';
-import {
-  renderTreasureCarpetOfFlyingDetail,
-  renderTreasureCarpetOfFlyingCompact,
-  buildTreasureCarpetOfFlyingPreview,
-} from './render/treasureCarpetOfFlying';
-import {
-  renderTreasureCloakOfProtectionDetail,
-  renderTreasureCloakOfProtectionCompact,
-  buildTreasureCloakOfProtectionPreview,
-} from './render/treasureCloakOfProtection';
-import {
-  renderTreasureCrystalBallDetail,
-  renderTreasureCrystalBallCompact,
-  buildTreasureCrystalBallPreview,
-} from './render/treasureCrystalBall';
-import {
-  renderTreasureDeckOfManyThingsDetail,
-  renderTreasureDeckOfManyThingsCompact,
-  buildTreasureDeckOfManyThingsPreview,
-} from './render/treasureDeckOfManyThings';
-import {
-  renderTreasureEyesOfPetrificationDetail,
-  renderTreasureEyesOfPetrificationCompact,
-  buildTreasureEyesOfPetrificationPreview,
-} from './render/treasureEyesOfPetrification';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -366,10 +336,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasure: {
     renderDetail: renderTreasureDetail,
     renderCompact: withoutAppend(renderTreasureCompactNodes),
-  },
-  treasureMiscMagicE2: {
-    renderDetail: renderTreasureMiscMagicE2Detail,
-    renderCompact: renderTreasureMiscMagicE2Compact,
   },
   treasureMiscMagicE3: {
     renderDetail: renderTreasureMiscMagicE3Detail,
@@ -519,26 +485,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureHornOfValhallaAlignmentDetail,
     renderCompact: renderTreasureHornOfValhallaAlignmentCompact,
   },
-  treasureCarpetOfFlying: {
-    renderDetail: renderTreasureCarpetOfFlyingDetail,
-    renderCompact: renderTreasureCarpetOfFlyingCompact,
-  },
-  treasureCloakOfProtection: {
-    renderDetail: renderTreasureCloakOfProtectionDetail,
-    renderCompact: renderTreasureCloakOfProtectionCompact,
-  },
-  treasureCrystalBall: {
-    renderDetail: renderTreasureCrystalBallDetail,
-    renderCompact: renderTreasureCrystalBallCompact,
-  },
-  treasureDeckOfManyThings: {
-    renderDetail: renderTreasureDeckOfManyThingsDetail,
-    renderCompact: renderTreasureDeckOfManyThingsCompact,
-  },
-  treasureEyesOfPetrification: {
-    renderDetail: renderTreasureEyesOfPetrificationDetail,
-    renderCompact: renderTreasureEyesOfPetrificationCompact,
-  },
   monsterLevel: monsterAdapter,
   monsterOne: monsterAdapter,
   monsterTwo: monsterAdapter,
@@ -586,7 +532,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   poolAlignment: buildPoolAlignmentPreview,
   transporterLocation: buildTransporterLocationPreview,
   treasure: buildTreasurePreview,
-  treasureMiscMagicE2: buildTreasureMiscMagicE2Preview,
   treasureMiscMagicE3: buildTreasureMiscMagicE3Preview,
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
   treasureMiscMagicE5: buildTreasureMiscMagicE5Preview,
@@ -631,11 +576,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureHornOfValhallaAttunement:
     buildTreasureHornOfValhallaAttunementPreview,
   treasureHornOfValhallaAlignment: buildTreasureHornOfValhallaAlignmentPreview,
-  treasureCarpetOfFlying: buildTreasureCarpetOfFlyingPreview,
-  treasureCloakOfProtection: buildTreasureCloakOfProtectionPreview,
-  treasureCrystalBall: buildTreasureCrystalBallPreview,
-  treasureDeckOfManyThings: buildTreasureDeckOfManyThingsPreview,
-  treasureEyesOfPetrification: buildTreasureEyesOfPetrificationPreview,
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);

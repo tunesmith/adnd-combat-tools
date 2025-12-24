@@ -12,7 +12,12 @@ import {
   TreasureBracersOfDefense,
   TreasureBucknardsEverfullPurse,
 } from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Subtables';
-import { TreasureMiscMagicE2 } from '../../../../../tables/dungeon/treasureMiscMagicE2';
+import { TreasureMiscMagicE2 } from '../../../../../dungeon/features/treasure/miscMagicE2/miscMagicE2Table';
+import {
+  TreasureCrystalBall,
+  TreasureDeckOfManyThings,
+  TreasureEyesOfPetrification,
+} from '../../../../../dungeon/features/treasure/miscMagicE2/miscMagicE2Subtables';
 import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
 import { TreasureRobeOfTheArchmagi } from '../../../../../tables/dungeon/treasureRobeOfTheArchmagi';
@@ -28,9 +33,6 @@ import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/tr
 import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
 import { TreasureInstrumentOfTheBards } from '../../../../../tables/dungeon/treasureInstrumentOfTheBards';
 import { TreasureIronFlaskContent } from '../../../../../tables/dungeon/treasureIronFlask';
-import { TreasureCrystalBall } from '../../../../../tables/dungeon/treasureCrystalBall';
-import { TreasureDeckOfManyThings } from '../../../../../tables/dungeon/treasureDeckOfManyThings';
-import { TreasureEyesOfPetrification } from '../../../../../tables/dungeon/treasureEyesOfPetrification';
 import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
 import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
 import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';

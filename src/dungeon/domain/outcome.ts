@@ -121,14 +121,20 @@ import type {
   TreasureBracersOfDefense,
   TreasureBucknardsEverfullPurse,
 } from '../features/treasure/miscMagicE1/miscMagicE1Subtables';
-import type { TreasureMiscMagicE2 } from '../../tables/dungeon/treasureMiscMagicE2';
+import type { TreasureMiscMagicE2 } from '../features/treasure/miscMagicE2/miscMagicE2Table';
+import type {
+  TreasureCarpetOfFlying,
+  TreasureCloakOfProtection,
+  TreasureCrystalBall,
+  TreasureDeckOfManyThings,
+  TreasureEyesOfPetrification,
+} from '../features/treasure/miscMagicE2/miscMagicE2Subtables';
 import type { TreasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagicE3';
 import type { TreasureMiscMagicE4 } from '../../tables/dungeon/treasureMiscMagicE4';
 import type { TreasureMiscMagicE5 } from '../../tables/dungeon/treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from '../../tables/dungeon/treasureRobeOfTheArchmagi';
 import type { RobeOfUsefulItemsExtraPatch } from '../../tables/dungeon/treasureRobeOfUsefulItems';
 import type { RobeOfUsefulItemsBasePatchType } from '../helpers/robeOfUsefulItems';
-import type { TreasureDeckOfManyThings } from '../../tables/dungeon/treasureDeckOfManyThings';
 import type { TreasureFigurineOfWondrousPower } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
 import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
 import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
@@ -136,12 +142,8 @@ import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHo
 import type { TreasureHornOfValhallaAttunement } from '../../tables/dungeon/treasureHornOfValhallaAttunement';
 import type { TreasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
 import type { TreasureIounStoneType } from '../../tables/dungeon/treasureIounStones';
-import type { TreasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOfPetrification';
-import type { TreasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
-import type { TreasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
 import type { TreasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
 import type { TreasureIronFlaskContent } from '../../tables/dungeon/treasureIronFlask';
-import type { TreasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
 import type { TreasureStaffSerpent } from '../features/treasure/rodStaffWand/rodStaffWandTables';
 import type { TreasureRodStaffWand } from '../features/treasure/rodStaffWand/rodStaffWandTables';
 import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
@@ -641,6 +643,9 @@ export type OutcomeEvent =
   | {
       kind: 'treasureMiscMagicE2';
       result: TreasureMiscMagicE2;
+      level?: number;
+      treasureRoll?: number;
+      rollIndex?: number;
     }
   | {
       kind: 'treasureMiscMagicE3';
