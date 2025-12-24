@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum TreasureContainer {
   Bags,
@@ -28,3 +28,4 @@ export const treasureContainer: Table<TreasureContainer> = {
     { range: [19, 20], command: TreasureContainer.Loose },
   ],
 };
+

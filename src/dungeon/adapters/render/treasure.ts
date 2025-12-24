@@ -23,7 +23,7 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from './shared';
-import { describeTreasureContainerResult } from './treasureContainer';
+import { describeTreasureContainerResult } from '../../features/treasure/container/containerRender';
 import {
   describeTreasureProtectionGuardedBy,
   describeTreasureProtectionHiddenBy,

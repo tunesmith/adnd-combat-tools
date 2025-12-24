@@ -89,7 +89,7 @@ import type { TrickTrap } from '../features/hazards/trickTrap/trickTrapTable';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
-import type { TreasureContainer } from '../../tables/dungeon/treasureContainer';
+import type { TreasureContainer } from '../features/treasure/container/containerTable';
 import type { TreasureMagicCategory } from '../features/treasure/magicCategory/magicCategoryTable';
 import type {
   TreasurePotion,

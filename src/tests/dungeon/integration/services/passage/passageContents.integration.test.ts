@@ -14,8 +14,8 @@ import type {
 import { describeChamberRoomContents } from '../../../../../dungeon/adapters/render/chamberRoomContents';
 import { collectCharacterPartyMessages } from '../../../../../dungeon/adapters/render/monsters';
 import { collectTreasureCompactMessages } from '../../../../../dungeon/adapters/render/treasure';
-import { renderTreasureContainerCompact } from '../../../../../dungeon/adapters/render/treasureContainer';
-import { resolveTreasureContainer } from '../../../../../dungeon/domain/resolvers';
+import { renderTreasureContainerCompact } from '../../../../../dungeon/features/treasure/container/containerRender';
+import { resolveTreasureContainer } from '../../../../../dungeon/features/treasure/container/containerResolvers';
 import { TreasureMagicCategory } from '../../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
 import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
 import { TreasurePotion } from '../../../../../dungeon/features/treasure/potion/potionTables';
@@ -3941,7 +3941,7 @@ describe('passage contents', () => {
 
   it('omits container text when treasure is loose', () => {
     const node = resolveTreasureContainer({ roll: 19 }) as OutcomeEventNode;
-    const compactNodes = renderTreasureContainerCompact(node);
+    const compactNodes = renderTreasureContainerCompact(node, () => {});
     expect(compactNodes).toHaveLength(0);
   });
 });

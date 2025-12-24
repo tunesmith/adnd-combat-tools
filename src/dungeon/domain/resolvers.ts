@@ -59,7 +59,6 @@ import {
   treasureWithMonster,
   TreasureWithoutMonster,
 } from '../../tables/dungeon/treasure';
-import { treasureContainer } from '../../tables/dungeon/treasureContainer';
 import {
   treasureMiscMagicE2,
   TreasureMiscMagicE2,
@@ -4000,21 +3999,6 @@ export function resolveTreasureEyesOfPetrification(options?: {
         result: command,
       } as OutcomeEvent),
   });
-}
-
-export function resolveTreasureContainer(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureContainer.sides);
-  const command = getTableEntry(usedRoll, treasureContainer);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureContainer',
-      result: command,
-    } as OutcomeEvent,
-  };
 }
 
 function representativeRollForChamberContents(

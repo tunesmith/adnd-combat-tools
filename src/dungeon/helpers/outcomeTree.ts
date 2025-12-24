@@ -49,7 +49,6 @@ import {
   resolveDragonTen,
   resolveHuman,
   resolveTreasure,
-  resolveTreasureContainer,
   resolveTreasureDeckOfManyThings,
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
@@ -778,8 +777,6 @@ function resolvePendingNode(
         totalRolls: ctx?.totalRolls,
       });
     }
-    case 'treasureContainer':
-      return resolveTreasureContainer({});
     case 'gasTrapEffect':
       return resolveGasTrapEffect({});
     case 'treasureMiscMagicE2':

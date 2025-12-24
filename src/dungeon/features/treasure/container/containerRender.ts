@@ -1,14 +1,11 @@
-import type { DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import {
-  treasureContainer,
-  TreasureContainer,
-} from '../../../tables/dungeon/treasureContainer';
+import type { DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { treasureContainer, TreasureContainer } from './containerTable';
 import {
   buildPreview,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 const TREASURE_CONTAINER_TEXT: Record<TreasureContainer, string | null> = {
   [TreasureContainer.Bags]: 'The treasure is contained in bags.',
@@ -57,12 +54,13 @@ export function renderTreasureContainerDetail(
 }
 
 export function renderTreasureContainerCompact(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureContainer') return [];
   const text = describeTreasureContainerResult(outcome.event.result);
   if (!text) return [];
-  return [
+  const nodes: DungeonRenderNode[] = [
     {
       kind: 'heading',
       level: 4,
@@ -70,6 +68,8 @@ export function renderTreasureContainerCompact(
     },
     { kind: 'paragraph', text },
   ];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export const buildTreasureContainerPreview: TablePreviewFactory = (tableId) =>
@@ -81,3 +81,4 @@ export const buildTreasureContainerPreview: TablePreviewFactory = (tableId) =>
       label: TreasureContainer[entry.command] ?? String(entry.command),
     })),
   });
+

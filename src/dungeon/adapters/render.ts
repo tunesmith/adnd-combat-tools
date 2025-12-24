@@ -76,11 +76,6 @@ import {
   buildTreasurePreview,
 } from './render/treasure';
 import {
-  renderTreasureContainerDetail,
-  renderTreasureContainerCompact,
-  buildTreasureContainerPreview,
-} from './render/treasureContainer';
-import {
   renderTreasureMiscMagicE2Detail,
   renderTreasureMiscMagicE2Compact,
   buildTreasureMiscMagicE2Preview,
@@ -372,10 +367,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureDetail,
     renderCompact: withoutAppend(renderTreasureCompactNodes),
   },
-  treasureContainer: {
-    renderDetail: renderTreasureContainerDetail,
-    renderCompact: withoutAppend(renderTreasureContainerCompact),
-  },
   treasureMiscMagicE2: {
     renderDetail: renderTreasureMiscMagicE2Detail,
     renderCompact: renderTreasureMiscMagicE2Compact,
@@ -595,7 +586,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   poolAlignment: buildPoolAlignmentPreview,
   transporterLocation: buildTransporterLocationPreview,
   treasure: buildTreasurePreview,
-  treasureContainer: buildTreasureContainerPreview,
   treasureMiscMagicE2: buildTreasureMiscMagicE2Preview,
   treasureMiscMagicE3: buildTreasureMiscMagicE3Preview,
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
