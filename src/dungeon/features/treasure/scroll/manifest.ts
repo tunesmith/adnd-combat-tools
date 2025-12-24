@@ -1,6 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import { readTreasureMagicContext, readTreasureMagicRegistryContext } from '../shared';
+import { createTreasureMagicContextHandlers } from '../shared';
 import {
   buildTreasureScrollPreview,
   buildTreasureScrollProtectionElementalsPreview,
@@ -23,20 +23,12 @@ export const scrollTables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureScroll',
     heading: 'Scroll',
     resolver: wrapResolver(resolveTreasureScroll),
+    ...createTreasureMagicContextHandlers(resolveTreasureScroll),
     renderers: {
       renderDetail: renderTreasureScrollDetail,
       renderCompact: renderTreasureScrollCompact,
     },
     buildPreview: buildTreasureScrollPreview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasureScroll({ roll, level, treasureRoll, rollIndex });
-    },
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureScroll(context);
-    },
   },
   {
     id: 'treasureScrollProtectionElementals',

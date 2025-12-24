@@ -1,6 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import { readTreasureMagicContext, readTreasureMagicRegistryContext } from '../shared';
+import { createTreasureMagicContextHandlers } from '../shared';
 import {
   buildTreasureMiscMagicE2Preview,
   renderTreasureMiscMagicE2Compact,
@@ -37,25 +37,12 @@ export const miscMagicE2Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureMiscMagicE2',
     heading: 'Miscellaneous Magic (Table E.2)',
     resolver: wrapResolver(resolveTreasureMiscMagicE2),
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureMiscMagicE2(context);
-    },
+    ...createTreasureMagicContextHandlers(resolveTreasureMiscMagicE2),
     renderers: {
       renderDetail: renderTreasureMiscMagicE2Detail,
       renderCompact: renderTreasureMiscMagicE2Compact,
     },
     buildPreview: buildTreasureMiscMagicE2Preview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasureMiscMagicE2({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      });
-    },
   },
   {
     id: 'treasureCarpetOfFlying',

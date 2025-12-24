@@ -1,6 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import { readTreasureMagicContext, readTreasureMagicRegistryContext } from '../shared';
+import { createTreasureMagicContextHandlers } from '../shared';
 import {
   buildTreasureMiscMagicE1Preview,
   renderTreasureMiscMagicE1Compact,
@@ -37,25 +37,12 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureMiscMagicE1',
     heading: 'Miscellaneous Magic (Table E.1)',
     resolver: wrapResolver(resolveTreasureMiscMagicE1),
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureMiscMagicE1(context);
-    },
+    ...createTreasureMagicContextHandlers(resolveTreasureMiscMagicE1),
     renderers: {
       renderDetail: renderTreasureMiscMagicE1Detail,
       renderCompact: renderTreasureMiscMagicE1Compact,
     },
     buildPreview: buildTreasureMiscMagicE1Preview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasureMiscMagicE1({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      });
-    },
   },
   {
     id: 'treasureBagOfHolding',

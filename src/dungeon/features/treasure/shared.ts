@@ -1,4 +1,8 @@
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonOutcomeNode,
+  OutcomeEventNode,
+} from '../../domain/outcome';
+import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
 
 export function formatOrdinal(level: number): string {
   const remainder = level % 10;
@@ -20,6 +24,28 @@ export type TreasureMagicContext = {
   treasureRoll?: number;
   rollIndex?: number;
 };
+
+export type TreasureMagicResolverOptions = TreasureMagicContext & {
+  roll?: number;
+};
+
+export function createTreasureMagicContextHandlers(
+  resolver: (options?: TreasureMagicResolverOptions) => DungeonOutcomeNode
+): {
+  resolvePending: PendingResolver;
+  registry: RegistryOutcomeBuilder;
+} {
+  return {
+    resolvePending: (pending, ancestors) => {
+      const options = readTreasureMagicContext(pending.context, ancestors);
+      return resolver(options);
+    },
+    registry: ({ roll, context }) => {
+      const options = readTreasureMagicRegistryContext(context);
+      return resolver({ roll, ...options });
+    },
+  };
+}
 
 export function readTreasureMagicRegistryContext(
   context?: unknown

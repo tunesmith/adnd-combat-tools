@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import { readTreasureMagicContext, readTreasureMagicRegistryContext } from '../shared';
+import { createTreasureMagicContextHandlers } from '../shared';
 import {
   buildTreasurePotionAnimalControlPreview,
   buildTreasurePotionDragonControlPreview,
@@ -47,163 +47,77 @@ export const potionTables: ReadonlyArray<
     id: 'treasurePotion',
     heading: 'Potion',
     resolver: resolveTreasurePotion,
+    ...createTreasureMagicContextHandlers(resolveTreasurePotion),
     renderers: {
       renderDetail: renderTreasurePotionDetail,
       renderCompact: renderTreasurePotionCompact,
     },
     buildPreview: buildTreasurePotionPreview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasurePotion({ roll, level, treasureRoll, rollIndex });
-    },
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotion(context);
-    },
   },
   {
     id: 'treasurePotionAnimalControl',
     heading: 'Animal Control Target',
     resolver: resolveTreasurePotionAnimalControl,
+    ...createTreasureMagicContextHandlers(resolveTreasurePotionAnimalControl),
     renderers: {
       renderDetail: renderTreasurePotionAnimalControlDetail,
       renderCompact: renderTreasurePotionAnimalControlCompact,
     },
     buildPreview: buildTreasurePotionAnimalControlPreview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasurePotionAnimalControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      });
-    },
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionAnimalControl(context);
-    },
   },
   {
     id: 'treasurePotionDragonControl',
     heading: 'Dragon Control Target',
     resolver: resolveTreasurePotionDragonControl,
+    ...createTreasureMagicContextHandlers(resolveTreasurePotionDragonControl),
     renderers: {
       renderDetail: renderTreasurePotionDragonControlDetail,
       renderCompact: renderTreasurePotionDragonControlCompact,
     },
     buildPreview: buildTreasurePotionDragonControlPreview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasurePotionDragonControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      });
-    },
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionDragonControl(context);
-    },
   },
   {
     id: 'treasurePotionGiantControl',
     heading: 'Giant Control Target',
     resolver: resolveTreasurePotionGiantControl,
+    ...createTreasureMagicContextHandlers(resolveTreasurePotionGiantControl),
     renderers: {
       renderDetail: renderTreasurePotionGiantControlDetail,
       renderCompact: renderTreasurePotionGiantControlCompact,
     },
     buildPreview: buildTreasurePotionGiantControlPreview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasurePotionGiantControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      });
-    },
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionGiantControl(context);
-    },
   },
   {
     id: 'treasurePotionGiantStrength',
     heading: 'Giant Strength Target',
     resolver: resolveTreasurePotionGiantStrength,
+    ...createTreasureMagicContextHandlers(resolveTreasurePotionGiantStrength),
     renderers: {
       renderDetail: renderTreasurePotionGiantStrengthDetail,
       renderCompact: renderTreasurePotionGiantStrengthCompact,
     },
     buildPreview: buildTreasurePotionGiantStrengthPreview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasurePotionGiantStrength({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      });
-    },
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionGiantStrength(context);
-    },
   },
   {
     id: 'treasurePotionHumanControl',
     heading: 'Human Control Target',
     resolver: resolveTreasurePotionHumanControl,
+    ...createTreasureMagicContextHandlers(resolveTreasurePotionHumanControl),
     renderers: {
       renderDetail: renderTreasurePotionHumanControlDetail,
       renderCompact: renderTreasurePotionHumanControlCompact,
     },
     buildPreview: buildTreasurePotionHumanControlPreview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasurePotionHumanControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      });
-    },
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionHumanControl(context);
-    },
   },
   {
     id: 'treasurePotionUndeadControl',
     heading: 'Undead Control Target',
     resolver: resolveTreasurePotionUndeadControl,
+    ...createTreasureMagicContextHandlers(resolveTreasurePotionUndeadControl),
     renderers: {
       renderDetail: renderTreasurePotionUndeadControlDetail,
       renderCompact: renderTreasurePotionUndeadControlCompact,
     },
     buildPreview: buildTreasurePotionUndeadControlPreview,
-    registry: ({ roll, context }) => {
-      const { level, treasureRoll, rollIndex } =
-        readTreasureMagicRegistryContext(context);
-      return resolveTreasurePotionUndeadControl({
-        roll,
-        level,
-        treasureRoll,
-        rollIndex,
-      });
-    },
-    resolvePending: (pending, ancestors) => {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasurePotionUndeadControl(context);
-    },
   },
 ];
