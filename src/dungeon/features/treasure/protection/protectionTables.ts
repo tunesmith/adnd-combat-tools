@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum TreasureProtectionType {
   Guarded,
@@ -100,3 +100,4 @@ export const treasureProtectionHiddenBy: Table<TreasureProtectionHiddenBy> = {
     { range: [16, 20], command: TreasureProtectionHiddenBy.SecretRoomNearby },
   ],
 };
+

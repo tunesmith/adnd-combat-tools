@@ -48,9 +48,6 @@ import {
   resolveUnusualSize,
   resolveTreasure,
   resolveTreasureContainer,
-  resolveTreasureProtectionType,
-  resolveTreasureProtectionGuardedBy,
-  resolveTreasureProtectionHiddenBy,
   resolveTreasureCarpetOfFlying,
   resolveTreasureCloakOfProtection,
   resolveTreasureCrystalBall,
@@ -356,12 +353,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
   },
   treasureContainer: ({ roll }) =>
     fromOutcome(resolveTreasureContainer({ roll })),
-  treasureProtectionType: ({ roll }) =>
-    fromOutcome(resolveTreasureProtectionType({ roll })),
-  treasureProtectionGuardedBy: ({ roll }) =>
-    fromOutcome(resolveTreasureProtectionGuardedBy({ roll })),
-  treasureProtectionHiddenBy: ({ roll }) =>
-    fromOutcome(resolveTreasureProtectionHiddenBy({ roll })),
   treasureMiscMagicE2: ({ roll }) =>
     fromOutcome(resolveTreasureMiscMagicE2({ roll })),
   treasureMiscMagicE3: ({ roll }) =>

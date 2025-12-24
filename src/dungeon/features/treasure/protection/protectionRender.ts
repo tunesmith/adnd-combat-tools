@@ -1,5 +1,5 @@
-import type { DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -7,13 +7,13 @@ import {
   TreasureProtectionGuardedBy,
   treasureProtectionHiddenBy,
   TreasureProtectionHiddenBy,
-} from '../../../tables/dungeon/treasureProtection';
+} from './protectionTables';
 import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
+} from '../../../adapters/render/shared';
 
 const GUARDED_BY_LABELS: Record<TreasureProtectionGuardedBy, string> = {
   [TreasureProtectionGuardedBy.ContactPoisonContainer]:
@@ -208,12 +208,13 @@ export function describeTreasureProtectionHiddenBy(
 }
 
 export function renderTreasureProtectionGuardedByDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureProtectionGuardedBy') return [];
   const text = describeTreasureProtectionGuardedBy(outcome.event.result);
   const label = GUARDED_BY_LABELS[outcome.event.result];
-  return [
+  const nodes: DungeonRenderNode[] = [
     {
       kind: 'bullet-list',
       items: [`roll: ${outcome.roll} — ${label}`],
@@ -223,21 +224,26 @@ export function renderTreasureProtectionGuardedByDetail(
       text: text.charAt(0).toUpperCase() + text.slice(1) + '.',
     },
   ];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export function renderTreasureProtectionHiddenByDetail(
-  outcome: OutcomeEventNode
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureProtectionHiddenBy') return [];
   const text = describeTreasureProtectionHiddenBy(outcome.event.result);
   const label = HIDDEN_BY_LABELS[outcome.event.result];
-  return [
+  const nodes: DungeonRenderNode[] = [
     {
       kind: 'bullet-list',
       items: [`roll: ${outcome.roll} — ${label}`],
     },
     { kind: 'paragraph', text: `Hidden ${text}.` },
   ];
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
 }
 
 export const buildTreasureProtectionTypePreview: TablePreviewFactory = (
@@ -275,3 +281,4 @@ export const buildTreasureProtectionHiddenByPreview: TablePreviewFactory = (
       label: HIDDEN_BY_LABELS[entry.command],
     })),
   });
+

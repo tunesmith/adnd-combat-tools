@@ -177,12 +177,6 @@ import { treasureEyesOfPetrification } from '../../tables/dungeon/treasureEyesOf
 import { treasureCarpetOfFlying } from '../../tables/dungeon/treasureCarpetOfFlying';
 import { treasureCloakOfProtection } from '../../tables/dungeon/treasureCloakOfProtection';
 import { treasureCrystalBall } from '../../tables/dungeon/treasureCrystalBall';
-import {
-  treasureProtectionType,
-  TreasureProtectionType,
-  treasureProtectionGuardedBy,
-  treasureProtectionHiddenBy,
-} from '../../tables/dungeon/treasureProtection';
 import type {
   TreasureEntry,
   TreasureIounStonesResult,
@@ -2159,64 +2153,6 @@ function findByRange<T extends { range: [number, number] }>(
 
 function isWithinRange(range: [number, number], roll: number): boolean {
   return roll >= range[0] && roll <= range[1];
-}
-
-export function resolveTreasureProtectionType(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureProtectionType.sides);
-  const command = getTableEntry(usedRoll, treasureProtectionType);
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureProtectionType.Guarded) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureProtectionGuardedBy',
-    });
-  } else {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureProtectionHiddenBy',
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureProtectionType',
-      result: command,
-    } as OutcomeEvent,
-    children,
-  };
-}
-
-export function resolveTreasureProtectionGuardedBy(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureProtectionGuardedBy.sides);
-  const command = getTableEntry(usedRoll, treasureProtectionGuardedBy);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureProtectionGuardedBy',
-      result: command,
-    } as OutcomeEvent,
-  };
-}
-
-export function resolveTreasureProtectionHiddenBy(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureProtectionHiddenBy.sides);
-  const command = getTableEntry(usedRoll, treasureProtectionHiddenBy);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureProtectionHiddenBy',
-      result: command,
-    } as OutcomeEvent,
-  };
 }
 export function resolveTreasureMiscMagicE2(options?: {
   roll?: number;

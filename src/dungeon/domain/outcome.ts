@@ -160,7 +160,7 @@ import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
   TreasureProtectionHiddenBy,
-} from '../../tables/dungeon/treasureProtection';
+} from '../features/treasure/protection/protectionTables';
 import type { PartyResult } from '../models/character/characterSheet';
 import type {
   TreasureScarabOfProtectionCurse,

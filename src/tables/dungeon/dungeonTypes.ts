@@ -76,7 +76,7 @@ import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,
   TreasureProtectionHiddenBy,
-} from './treasureProtection';
+} from '../../dungeon/features/treasure/protection/protectionTables';
 import type { TreasureContainer } from './treasureContainer';
 import type { TreasureMagicCategory } from '../../dungeon/features/treasure/magicCategory/magicCategoryTable';
 import type {

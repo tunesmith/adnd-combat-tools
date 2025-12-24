@@ -27,7 +27,7 @@ import { describeTreasureContainerResult } from './treasureContainer';
 import {
   describeTreasureProtectionGuardedBy,
   describeTreasureProtectionHiddenBy,
-} from './treasureProtection';
+} from '../../features/treasure/protection/protectionRender';
 import { treasureMiscMagicE1Sentence } from '../../features/treasure/miscMagicE1/miscMagicE1Render';
 import {
   artifactSentence,
@@ -62,7 +62,7 @@ import { sentence as crystalBallSentence } from './treasureCrystalBall';
 import { sentence as deckSentence } from './treasureDeckOfManyThings';
 import { sentence as eyesSentence } from './treasureEyesOfPetrification';
 import { cloakSentence } from './treasureCloakOfProtection';
-import { TreasureProtectionType } from '../../../tables/dungeon/treasureProtection';
+import { TreasureProtectionType } from '../../features/treasure/protection/protectionTables';
 import { BAG_OF_HOLDING_STATS } from '../../features/treasure/miscMagicE1/miscMagicE1Subtables';
 import { toIounStonesSummary } from './treasureIounStones';
 import { armorShieldSentence } from './treasureArmorShields';

@@ -50,9 +50,6 @@ import {
   resolveHuman,
   resolveTreasure,
   resolveTreasureContainer,
-  resolveTreasureProtectionType,
-  resolveTreasureProtectionGuardedBy,
-  resolveTreasureProtectionHiddenBy,
   resolveTreasureDeckOfManyThings,
   resolveTreasureFigurineOfWondrousPower,
   resolveTreasureFigurineMarbleElephant,
@@ -889,12 +886,6 @@ function resolvePendingNode(
       return resolveTreasureHornOfValhallaAlignment({});
     case 'treasureEyesOfPetrification':
       return resolveTreasureEyesOfPetrification({});
-    case 'treasureProtectionType':
-      return resolveTreasureProtectionType({});
-    case 'treasureProtectionGuardedBy':
-      return resolveTreasureProtectionGuardedBy({});
-    case 'treasureProtectionHiddenBy':
-      return resolveTreasureProtectionHiddenBy({});
     case 'transmuteType':
       return resolveTransmuteType({});
     case 'poolAlignment':

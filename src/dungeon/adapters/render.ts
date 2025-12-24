@@ -81,15 +81,6 @@ import {
   buildTreasureContainerPreview,
 } from './render/treasureContainer';
 import {
-  renderTreasureProtectionTypeDetail,
-  renderTreasureProtectionTypeCompact,
-  renderTreasureProtectionGuardedByDetail,
-  renderTreasureProtectionHiddenByDetail,
-  buildTreasureProtectionTypePreview,
-  buildTreasureProtectionGuardedByPreview,
-  buildTreasureProtectionHiddenByPreview,
-} from './render/treasureProtection';
-import {
   renderTreasureMiscMagicE2Detail,
   renderTreasureMiscMagicE2Compact,
   buildTreasureMiscMagicE2Preview,
@@ -316,8 +307,6 @@ type RenderAdapter = {
   renderCompact: RenderCompactFn;
 };
 
-const NO_COMPACT_RENDER: RenderCompactFn = (_node, _append) => [];
-
 const withoutAppend =
   (
     renderer: (node: OutcomeEventNode) => DungeonRenderNode[]
@@ -386,18 +375,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasureContainer: {
     renderDetail: renderTreasureContainerDetail,
     renderCompact: withoutAppend(renderTreasureContainerCompact),
-  },
-  treasureProtectionType: {
-    renderDetail: renderTreasureProtectionTypeDetail,
-    renderCompact: renderTreasureProtectionTypeCompact,
-  },
-  treasureProtectionGuardedBy: {
-    renderDetail: renderTreasureProtectionGuardedByDetail,
-    renderCompact: NO_COMPACT_RENDER,
-  },
-  treasureProtectionHiddenBy: {
-    renderDetail: renderTreasureProtectionHiddenByDetail,
-    renderCompact: NO_COMPACT_RENDER,
   },
   treasureMiscMagicE2: {
     renderDetail: renderTreasureMiscMagicE2Detail,
@@ -619,9 +596,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   transporterLocation: buildTransporterLocationPreview,
   treasure: buildTreasurePreview,
   treasureContainer: buildTreasureContainerPreview,
-  treasureProtectionType: buildTreasureProtectionTypePreview,
-  treasureProtectionGuardedBy: buildTreasureProtectionGuardedByPreview,
-  treasureProtectionHiddenBy: buildTreasureProtectionHiddenByPreview,
   treasureMiscMagicE2: buildTreasureMiscMagicE2Preview,
   treasureMiscMagicE3: buildTreasureMiscMagicE3Preview,
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
