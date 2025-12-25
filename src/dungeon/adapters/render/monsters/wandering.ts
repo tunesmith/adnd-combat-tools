@@ -1,6 +1,6 @@
 import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import type { DungeonRenderNode } from '../../../../types/dungeon';
-import { MonsterLevel } from '../../../../tables/dungeon/monster/monsterLevel';
+import { MonsterLevel } from '../../../features/monsters/monsterLevel/monsterLevelTable';
 import { findChildEvent } from '../shared';
 import { describeMonsterOutcome } from './index';
 

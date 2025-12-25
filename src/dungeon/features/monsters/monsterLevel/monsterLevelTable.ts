@@ -1,4 +1,4 @@
-import type { Table } from '../dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum MonsterDistributionLevel {
   One,
@@ -215,3 +215,36 @@ export const dungeonSixteen: Table<MonsterLevel> = {
     { range: [17, 20], command: MonsterLevel.Ten },
   ],
 };
+
+export function getMonsterLevelTable(dungeonLevel: number): Table<MonsterLevel> {
+  switch (dungeonLevel) {
+    case 1:
+      return dungeonOne;
+    case 2:
+    case 3:
+      return dungeonTwoThree;
+    case 4:
+      return dungeonFour;
+    case 5:
+      return dungeonFive;
+    case 6:
+      return dungeonSix;
+    case 7:
+      return dungeonSeven;
+    case 8:
+      return dungeonEight;
+    case 9:
+      return dungeonNine;
+    case 10:
+    case 11:
+      return dungeonTenEleven;
+    case 12:
+    case 13:
+      return dungeonTwelveThirteen;
+    case 14:
+    case 15:
+      return dungeonFourteenFifteen;
+    default:
+      return dungeonSixteen;
+  }
+}

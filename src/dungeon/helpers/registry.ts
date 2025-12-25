@@ -28,8 +28,6 @@ import {
   resolveHuman,
   resolveMonsterFive,
   resolveMonsterFour,
-  resolveMonsterLevel,
-  resolveMonsterOne,
   resolveMonsterSix,
   resolveMonsterSeven,
   resolveMonsterEight,
@@ -106,6 +104,12 @@ import {
 } from '../features/treasure/bundle';
 import type { TreasureTableId } from '../features/treasure/bundle';
 import {
+  MONSTER_REGISTRY_OUTCOMES,
+  MONSTER_TABLE_HEADINGS,
+  MONSTER_TABLE_ID_LIST,
+} from '../features/monsters/bundle';
+import type { MonsterTableId } from '../features/monsters/bundle';
+import {
   BASE_TABLE_HEADINGS,
   BASE_TABLE_ID_LIST,
   type BaseTableId,
@@ -138,12 +142,14 @@ export type TableId =
   | NavigationTableId
   | HazardTableId
   | TreasureTableId
+  | MonsterTableId
   | BaseTableId;
 
 const TABLE_ID_LIST: ReadonlyArray<TableId> = [
   ...NAVIGATION_TABLE_ID_LIST,
   ...HAZARD_TABLE_ID_LIST,
   ...TREASURE_TABLE_ID_LIST,
+  ...MONSTER_TABLE_ID_LIST,
   ...BASE_TABLE_ID_LIST,
 ];
 
@@ -155,6 +161,7 @@ export const TABLE_HEADINGS: Record<TableId, string> = {
   ...NAVIGATION_TABLE_HEADINGS,
   ...HAZARD_TABLE_HEADINGS,
   ...TREASURE_TABLE_HEADINGS,
+  ...MONSTER_TABLE_HEADINGS,
   ...BASE_TABLE_HEADINGS,
 } as Record<TableId, string>;
 
@@ -165,14 +172,6 @@ function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
 }
 
 const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
-  monsterLevel: ({ roll, id, context }) => {
-    const dungeonLevel = readDungeonLevel(context, id, 1);
-    return fromOutcome(resolveMonsterLevel({ roll, dungeonLevel }));
-  },
-  monsterOne: ({ roll, context }) => {
-    const dungeonLevel = readDungeonLevel(context, 'monsterOne', 1);
-    return fromOutcome(resolveMonsterOne({ roll, dungeonLevel }));
-  },
   monsterTwo: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterTwo', 1);
     return fromOutcome(resolveMonsterTwo({ roll, dungeonLevel }));
@@ -695,10 +694,19 @@ const TREASURE_TABLE_RESOLVERS: Record<string, RegistryResolver> =
     ])
   );
 
+const MONSTER_TABLE_RESOLVERS: Record<string, RegistryResolver> =
+  Object.fromEntries(
+    Object.entries(MONSTER_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
+      id,
+      (opts) => fromOutcome(buildOutcome(opts)),
+    ])
+  );
+
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   ...NAVIGATION_TABLE_RESOLVERS,
   ...HAZARD_TABLE_RESOLVERS,
   ...TREASURE_TABLE_RESOLVERS,
+  ...MONSTER_TABLE_RESOLVERS,
   ...BASE_TABLE_RESOLVERS,
 } as Record<TableId, RegistryResolver>;
 

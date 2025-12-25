@@ -4,7 +4,10 @@ import type {
   TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import { human, Human } from '../../../../tables/dungeon/monster/monsterOne';
+import {
+  human,
+  Human,
+} from '../../../features/monsters/monsterOne/monsterOneTables';
 import { buildPreview } from '../shared';
 import {
   monsterTextDescription,

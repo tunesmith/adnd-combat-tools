@@ -8,7 +8,7 @@ import {
   human,
   MonsterOne,
   monsterOne,
-} from '../../../tables/dungeon/monster/monsterOne';
+} from '../../features/monsters/monsterOne/monsterOneTables';
 import { characterResult } from './characterResult';
 import type { PartyResult } from '../../models/character/characterSheet';
 

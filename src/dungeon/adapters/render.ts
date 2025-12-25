@@ -209,6 +209,10 @@ import {
   TREASURE_PREVIEW_FACTORIES,
   TREASURE_RENDER_ADAPTERS,
 } from '../features/treasure/bundle';
+import {
+  MONSTER_PREVIEW_FACTORIES,
+  MONSTER_RENDER_ADAPTERS,
+} from '../features/monsters/bundle';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
@@ -400,8 +404,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureRobeOfUsefulItemsDetail,
     renderCompact: renderTreasureRobeOfUsefulItemsCompact,
   },
-  monsterLevel: monsterAdapter,
-  monsterOne: monsterAdapter,
   monsterTwo: monsterAdapter,
   monsterThree: monsterAdapter,
   monsterFour: monsterAdapter,
@@ -427,6 +429,7 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
 Object.assign(RENDER_ADAPTERS, NAVIGATION_RENDER_ADAPTERS);
 Object.assign(RENDER_ADAPTERS, HAZARD_RENDER_ADAPTERS);
 Object.assign(RENDER_ADAPTERS, TREASURE_RENDER_ADAPTERS);
+Object.assign(RENDER_ADAPTERS, MONSTER_RENDER_ADAPTERS);
 
 type PendingPreviewBuilder = (
   tableId: string,
@@ -486,10 +489,9 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
 Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);
 Object.assign(PENDING_PREVIEW_FACTORIES, HAZARD_PREVIEW_FACTORIES);
 Object.assign(PENDING_PREVIEW_FACTORIES, TREASURE_PREVIEW_FACTORIES);
+Object.assign(PENDING_PREVIEW_FACTORIES, MONSTER_PREVIEW_FACTORIES);
 
 const MONSTER_PREVIEW_BASES = [
-  'monsterLevel',
-  'monsterOne',
   'monsterTwo',
   'monsterThree',
   'monsterFour',

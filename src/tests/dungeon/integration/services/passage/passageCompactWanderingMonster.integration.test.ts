@@ -1,7 +1,5 @@
-import {
-  resolveMonsterOne,
-  resolveMonsterThree,
-} from '../../../../../dungeon/domain/resolvers';
+import { resolveMonsterThree } from '../../../../../dungeon/domain/resolvers';
+import { resolveMonsterOne } from '../../../../../dungeon/features/monsters/monsterOne/monsterOneResolvers';
 import { toDetailRender } from '../../../../../dungeon/adapters/render';
 import { runDungeonStep } from '../../../../../dungeon/services/adapters';
 import type { DungeonMessage } from '../../../../../types/dungeon';

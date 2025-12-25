@@ -6,7 +6,7 @@ import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import {
   monsterOne,
   MonsterOne,
-} from '../../../../tables/dungeon/monster/monsterOne';
+} from '../../../features/monsters/monsterOne/monsterOneTables';
 import {
   monsterTwo,
   MonsterTwo,

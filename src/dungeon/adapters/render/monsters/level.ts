@@ -3,8 +3,10 @@ import type {
   TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import { MonsterLevel } from '../../../../tables/dungeon/monster/monsterLevel';
-import { getMonsterTable } from '../../../services/wanderingMonsterResult';
+import {
+  getMonsterLevelTable,
+  MonsterLevel,
+} from '../../../features/monsters/monsterLevel/monsterLevelTable';
 import { buildPreview } from '../shared';
 import { hasPendingChildren, type MonsterDescription } from './shared';
 
@@ -28,7 +30,7 @@ export function buildMonsterLevelPreview(
 ): DungeonTablePreview {
   const parts = tableId.split(':');
   const lvl = Number(parts[1] ?? 1) || 1;
-  const table = getMonsterTable(lvl);
+  const table = getMonsterLevelTable(lvl);
   return buildPreview(tableId, {
     title: 'Monster Level',
     sides: table.sides,

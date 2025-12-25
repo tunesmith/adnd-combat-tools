@@ -1,4 +1,4 @@
-import type { Table } from '../dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum MonsterOne {
   AntGiant_1to4,

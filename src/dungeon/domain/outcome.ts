@@ -38,11 +38,11 @@ import type {
   PoolAlignment,
   TransporterLocation,
 } from '../../tables/dungeon/magicPool';
-import type { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
+import type { MonsterLevel } from '../features/monsters/monsterLevel/monsterLevelTable';
 import type {
   MonsterOne,
   Human,
-} from '../../tables/dungeon/monster/monsterOne';
+} from '../features/monsters/monsterOne/monsterOneTables';
 import type { MonsterTwo } from '../../tables/dungeon/monster/monsterTwo';
 import type {
   MonsterThree,

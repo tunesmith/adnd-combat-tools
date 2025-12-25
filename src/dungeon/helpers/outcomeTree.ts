@@ -26,8 +26,6 @@ import {
   resolvePoolAlignment,
   resolveTransporterLocation,
   resolveTrickTrap,
-  resolveMonsterLevel,
-  resolveMonsterOne,
   resolveMonsterTwo,
   resolveMonsterThree,
   resolveMonsterFour,
@@ -84,6 +82,7 @@ import {
   HAZARD_PENDING_RESOLVERS,
 } from '../features/hazards/bundle';
 import { TREASURE_PENDING_RESOLVERS } from '../features/treasure/bundle';
+import { MONSTER_PENDING_RESOLVERS } from '../features/monsters/bundle';
 import { resolveGasTrapEffect } from '../features/hazards/gasTrap/gasTrapResolvers';
 import type { TableContext } from '../../types/dungeon';
 import { DoorLocation } from '../features/navigation/doorChain/doorChainTable';
@@ -687,6 +686,11 @@ function resolvePendingNode(
     const resolved = treasureResolve(pending, ancestors);
     if (resolved) return resolved;
   }
+  const monsterResolve = MONSTER_PENDING_RESOLVERS[base];
+  if (monsterResolve) {
+    const resolved = monsterResolve(pending, ancestors);
+    if (resolved) return resolved;
+  }
   switch (base) {
     case 'roomDimensions': {
       const ctx = pending.context as
@@ -848,14 +852,6 @@ function resolvePendingNode(
       return resolveTrickTrap({});
     case 'illusionaryWallNature':
       return resolveIllusionaryWallNature({});
-    case 'monsterLevel': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterLevel({ dungeonLevel });
-    }
-    case 'monsterOne': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterOne({ dungeonLevel });
-    }
     case 'monsterTwo': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterTwo({ dungeonLevel });

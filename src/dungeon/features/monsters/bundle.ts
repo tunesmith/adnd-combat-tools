@@ -1,0 +1,25 @@
+import {
+  MONSTER_PENDING_RESOLVERS,
+  MONSTER_PREVIEW_FACTORIES,
+  MONSTER_REGISTRY_OUTCOMES,
+  MONSTER_RENDER_ADAPTERS,
+  MONSTER_TABLE_DEFINITIONS,
+} from '.';
+
+export type MonsterTableId = typeof MONSTER_TABLE_DEFINITIONS[number]['id'];
+
+export const MONSTER_TABLE_ID_LIST: ReadonlyArray<MonsterTableId> =
+  MONSTER_TABLE_DEFINITIONS.map((def) => def.id);
+
+export const MONSTER_TABLE_HEADINGS = Object.fromEntries(
+  MONSTER_TABLE_DEFINITIONS.map((def) => [def.id, def.heading])
+) as Record<MonsterTableId, string>;
+
+export {
+  MONSTER_PENDING_RESOLVERS,
+  MONSTER_PREVIEW_FACTORIES,
+  MONSTER_REGISTRY_OUTCOMES,
+  MONSTER_RENDER_ADAPTERS,
+  MONSTER_TABLE_DEFINITIONS,
+};
+

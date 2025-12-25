@@ -1,0 +1,95 @@
+import type { TableContext } from '../../../types/dungeon';
+import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
+import type { DungeonOutcomeNode, OutcomeEventNode } from '../../domain/outcome';
+
+export type WanderingMonsterContext = {
+  dungeonLevel?: number;
+};
+
+export type WanderingMonsterResolverOptions = WanderingMonsterContext & {
+  roll?: number;
+};
+
+export function createWanderingMonsterContextHandlers(
+  resolver: (options?: WanderingMonsterResolverOptions) => DungeonOutcomeNode,
+  fallbackDungeonLevel: number
+): {
+  resolvePending: PendingResolver;
+  registry: RegistryOutcomeBuilder;
+} {
+  return {
+    resolvePending: (pending, ancestors) => {
+      const dungeonLevel = readDungeonLevelFromPending(
+        pending.table,
+        pending.context,
+        ancestors,
+        fallbackDungeonLevel
+      );
+      return resolver({ dungeonLevel });
+    },
+    registry: ({ roll, context, id }) => {
+      const dungeonLevel = readDungeonLevelFromContextOrId(
+        context,
+        id,
+        fallbackDungeonLevel
+      );
+      return resolver({ roll, dungeonLevel });
+    },
+  };
+}
+
+function readDungeonLevelFromPending(
+  pendingId: string,
+  context: unknown,
+  ancestors: OutcomeEventNode[],
+  fallback: number
+): number {
+  const fromContext = readDungeonLevelFromContextOrId(context, pendingId);
+  if (fromContext !== undefined) return fromContext;
+
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const ancestor = ancestors[index];
+    if (!ancestor) continue;
+    const event = ancestor.event as { dungeonLevel?: unknown; level?: unknown };
+    if (
+      typeof event.dungeonLevel === 'number' &&
+      Number.isFinite(event.dungeonLevel)
+    ) {
+      return event.dungeonLevel;
+    }
+    if (ancestor.event.kind === 'periodicCheck') {
+      if (typeof event.level === 'number' && Number.isFinite(event.level)) {
+        return event.level;
+      }
+    }
+  }
+
+  return fallback;
+}
+
+function readDungeonLevelFromContextOrId(
+  context: unknown,
+  id: string,
+  fallback?: number
+): number | undefined {
+  if (isWanderingContext(context)) return context.level;
+
+  const parts = id.split(':');
+  if (parts.length >= 2) {
+    const parsed = Number(parts[1]);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+
+  return fallback;
+}
+
+function isWanderingContext(
+  context: unknown
+): context is Extract<TableContext, { kind: 'wandering' }> {
+  return (
+    !!context &&
+    typeof context === 'object' &&
+    (context as { kind?: unknown }).kind === 'wandering' &&
+    typeof (context as { level?: unknown }).level === 'number'
+  );
+}

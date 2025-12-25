@@ -13,6 +13,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
 
 - "migrate treasureMiscMagicE1 into features"
 - "let's proceed with migrating swords next"
+- "migrate monsterOne into features"
 - "move gas trap into hazards features"
 - "extract ring tables into features"
 
@@ -26,6 +27,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Prefer `src/dungeon/features/<area>/<featureName>/` with a `manifest.ts`.
    - Move table data (enum + `Table<...>` entries) into the feature folder when owned by the feature; keep it in `src/tables/dungeon` only if it is shared across multiple features/areas.
      - After migrating a feature, `rg "tables/dungeon/<name>" src` to ensure no stale imports remain.
+     - If the moved table exports types used by `src/tables/dungeon/dungeonTypes.ts`, update that file too (it hard-imports many dungeon enums/types and will break `tsc` if paths change).
 
 3. Create feature files and move code.
    - Create `<featureName>Table.ts` or `<featureName>Tables.ts` for table data.
@@ -37,7 +39,8 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Add a `DungeonTableDefinition` entry with `id`, `heading`, `resolver`, `renderers`, `buildPreview`.
    - Add `resolvePending` for any table that can appear as a pending-roll (including subtables).
      - If pending resolution needs context, compute it from `pending.context` and/or `ancestors`.
-     - For treasure tables, prefer `createTreasureMagicContextHandlers(resolver)` from `src/dungeon/features/treasure/shared.ts` to supply both `resolvePending` + `registry` without duplicating context parsing.
+   - For treasure tables, prefer `createTreasureMagicContextHandlers(resolver)` from `src/dungeon/features/treasure/shared.ts` to supply both `resolvePending` + `registry` without duplicating context parsing.
+   - For wandering monster tables, prefer `createWanderingMonsterContextHandlers(resolver, fallbackDungeonLevel)` from `src/dungeon/features/monsters/shared.ts` to supply both `resolvePending` + `registry` without duplicating context parsing.
    - Add `registry` when the resolver needs special argument mapping.
      - Example: if a table resolver expects `countRoll` instead of `roll`, implement a custom `registry` that maps `roll` → `countRoll` (or refactor the resolver to accept `roll` directly).
    - If a treasure resolver creates nested `pending-roll` nodes and needs stable ids, propagate `context: { kind: 'treasureMagic', level, treasureRoll, rollIndex }` to the pending nodes so manual resolution can also compute stable `pending.id` values downstream.
@@ -49,6 +52,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
      - `src/dungeon/features/treasure/index.ts`
      - `src/dungeon/features/hazards/index.ts`
      - `src/dungeon/features/navigation/index.ts`
+     - `src/dungeon/features/monsters/index.ts`
    - Ensure the category exports `*_PENDING_RESOLVERS` via `createPendingResolverMap(...)` and re-export it from the category `bundle.ts`.
 
 6. Remove old wiring and duplicates.
@@ -67,13 +71,23 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Keep behavior identical; avoid refactors during the move.
 
 8. Validate.
+   - Run `npm run tsc` (this catches `src/tables/dungeon/dungeonTypes.ts` import breakage early).
    - Run `npm test` for affected suites.
    - Run `npm run lint` if you touched many files.
+
+## Definition of Done (DoD)
+
+- Table data lives in the feature folder for every migrated table id (including subtables that share the same file).
+- `src/tables/dungeon/dungeonTypes.ts` is updated if it referenced moved enums/types.
+- `rg "tables/dungeon/<oldPathOrName>" src` returns no results.
+- Old wiring is removed (`baseTables`, `registry`, `outcomeTree`, `adapters/render.ts`) with no duplicate registrations.
+- `npm run tsc`, `npm test`, and `npm run lint` pass (or lint warnings are pre-existing and unrelated).
 
 ## Common Files Touched
 
 - Update `src/dungeon/features/<area>/<featureName>/manifest.ts`
 - Update `src/dungeon/features/<area>/index.ts`
+- Update `src/dungeon/features/<area>/bundle.ts`
 - Update `src/dungeon/domain/resolvers.ts` (re-export or removal)
 - Update `src/dungeon/domain/outcome.ts`
 - Update `src/dungeon/helpers/registry.ts`

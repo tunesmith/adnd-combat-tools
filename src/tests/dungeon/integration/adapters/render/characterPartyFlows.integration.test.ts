@@ -7,7 +7,7 @@ import { ChamberRoomContents } from '../../../../../tables/dungeon/chamberRoomCo
 import { RoomDimensions } from '../../../../../tables/dungeon/chambersRooms';
 import { Pool } from '../../../../../tables/dungeon/pool';
 import { MonsterTwo } from '../../../../../tables/dungeon/monster/monsterTwo';
-import { MonsterLevel } from '../../../../../tables/dungeon/monster/monsterLevel';
+import { MonsterLevel } from '../../../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
 import type {
   PartyResult,
   CharacterSheet,

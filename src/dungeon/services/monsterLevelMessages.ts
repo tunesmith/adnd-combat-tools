@@ -5,8 +5,10 @@ import type {
   TableContext,
 } from '../../types/dungeon';
 import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
-import { getMonsterTable } from './wanderingMonsterResult';
-import { MonsterLevel } from '../../tables/dungeon/monster/monsterLevel';
+import {
+  getMonsterLevelTable,
+  MonsterLevel,
+} from '../features/monsters/monsterLevel/monsterLevelTable';
 import {
   formatMonsterCount,
   getNumberOfMonsters,
@@ -14,7 +16,7 @@ import {
 import {
   MonsterOne,
   monsterOne,
-} from '../../tables/dungeon/monster/monsterOne';
+} from '../features/monsters/monsterOne/monsterOneTables';
 import {
   MonsterTwo,
   monsterTwo,
@@ -101,7 +103,7 @@ export const monsterLevelMessages = (options: {
   const dungeonLevel = isWandering(ctx)
     ? ctx.level
     : parseLevelFromId(options.id);
-  const table = getMonsterTable(dungeonLevel);
+  const table = getMonsterLevelTable(dungeonLevel);
   if (options.detailMode && options.roll === undefined) {
     const preview: DungeonTablePreview = {
       kind: 'table-preview',
