@@ -43,7 +43,7 @@ import type {
   MonsterOne,
   Human,
 } from '../features/monsters/monsterOne/monsterOneTables';
-import type { MonsterTwo } from '../../tables/dungeon/monster/monsterTwo';
+import type { MonsterTwo } from '../features/monsters/monsterTwo/monsterTwoTable';
 import type {
   MonsterThree,
   DragonThree,

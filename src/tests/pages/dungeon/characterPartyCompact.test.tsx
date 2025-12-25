@@ -3,7 +3,7 @@ import { renderNode } from '../../../pages/dungeon/index';
 import { renderPeriodicCheckCompact } from '../../../dungeon/adapters/render/periodicOutcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { MonsterLevel } from '../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
-import { MonsterTwo } from '../../../tables/dungeon/monster/monsterTwo';
+import { MonsterTwo } from '../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
 import { CharacterClass } from '../../../dungeon/models/characterClass';
 import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
 import { Alignment } from '../../../dungeon/models/allowedAlignmentsByClass';

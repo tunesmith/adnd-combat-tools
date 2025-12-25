@@ -7,6 +7,7 @@ import {
 } from '../types';
 import { monsterLevelTables } from './monsterLevel/manifest';
 import { monsterOneTables } from './monsterOne/manifest';
+import { monsterTwoTables } from './monsterTwo/manifest';
 
 const defineMonsterTables = <
   T extends ReadonlyArray<DungeonTableDefinition<unknown>>
@@ -17,6 +18,7 @@ const defineMonsterTables = <
 const monsterDefinitions = defineMonsterTables([
   ...monsterLevelTables,
   ...monsterOneTables,
+  ...monsterTwoTables,
 ] as ReadonlyArray<DungeonTableDefinition<unknown>>);
 
 export const MONSTER_TABLE_DEFINITIONS = monsterDefinitions;
@@ -28,4 +30,3 @@ export const MONSTER_REGISTRY_OUTCOMES =
   createRegistryOutcomeMap(monsterDefinitions);
 export const MONSTER_PENDING_RESOLVERS =
   createPendingResolverMap(monsterDefinitions);
-

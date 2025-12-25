@@ -6,7 +6,7 @@ import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
 import {
   MonsterTwo,
   monsterTwo,
-} from '../../../tables/dungeon/monster/monsterTwo';
+} from '../../features/monsters/monsterTwo/monsterTwoTable';
 import { characterResult } from './characterResult';
 import type { PartyResult } from '../../models/character/characterSheet';
 

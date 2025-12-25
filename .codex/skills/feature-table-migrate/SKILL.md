@@ -59,6 +59,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Delete base resolver entries in `src/dungeon/helpers/registry.ts` for migrated ids.
    - Remove ids/headings from `src/dungeon/features/baseTables/bundle.ts` if the table is now a feature.
    - Remove manual adapters/previews in `src/dungeon/adapters/render.ts` if they still exist for that id.
+     - Monster tables: also remove the id from `MONSTER_PREVIEW_BASES` and any `monsterAdapter` entries so the feature `buildPreview`/renderers aren’t overwritten by the generic monster wiring.
    - Re-export the moved resolver from `src/dungeon/domain/resolvers.ts` if other imports rely on it, or update those imports directly.
    - Remove redundant cases from `src/dungeon/helpers/outcomeTree.ts` once `resolvePending` is feature-owned (remember `pending.table` may include suffixes like `:<rollIndex>`, so use the base id).
 

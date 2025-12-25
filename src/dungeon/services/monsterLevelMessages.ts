@@ -20,7 +20,7 @@ import {
 import {
   MonsterTwo,
   monsterTwo,
-} from '../../tables/dungeon/monster/monsterTwo';
+} from '../features/monsters/monsterTwo/monsterTwoTable';
 import {
   MonsterThree,
   monsterThree,

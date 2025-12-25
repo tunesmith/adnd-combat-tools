@@ -404,7 +404,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureRobeOfUsefulItemsDetail,
     renderCompact: renderTreasureRobeOfUsefulItemsCompact,
   },
-  monsterTwo: monsterAdapter,
   monsterThree: monsterAdapter,
   monsterFour: monsterAdapter,
   monsterFive: monsterAdapter,
@@ -492,7 +491,6 @@ Object.assign(PENDING_PREVIEW_FACTORIES, TREASURE_PREVIEW_FACTORIES);
 Object.assign(PENDING_PREVIEW_FACTORIES, MONSTER_PREVIEW_FACTORIES);
 
 const MONSTER_PREVIEW_BASES = [
-  'monsterTwo',
   'monsterThree',
   'monsterFour',
   'monsterFive',

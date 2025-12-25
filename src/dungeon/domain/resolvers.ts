@@ -153,7 +153,6 @@ import type {
   TreasureGemCategoryId,
 } from './outcome';
 import { human } from '../features/monsters/monsterOne/monsterOneTables';
-import { monsterTwo } from '../../tables/dungeon/monster/monsterTwo';
 import {
   monsterThree,
   MonsterThree,
@@ -199,7 +198,6 @@ import {
 import {
   humanTextForCommand,
 } from '../services/monster/monsterOneResult';
-import { monsterTwoTextForCommand } from '../services/monster/monsterTwoResult';
 import {
   monsterThreeTextForCommand,
   dragonThreeTextForCommand,
@@ -3741,28 +3739,6 @@ export function resolveTransporterLocation(options?: {
 }
 
 export { resolveIllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallResolvers';
-
-export function resolveMonsterTwo(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 1;
-  const usedRoll = options?.roll ?? rollDice(monsterTwo.sides);
-  const result = getTableEntry(usedRoll, monsterTwo);
-  const { text, party } = monsterTwoTextForCommand(dungeonLevel, result);
-  const eventText = party ? undefined : text;
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'monsterTwo',
-      result,
-      dungeonLevel,
-      text: eventText,
-      party,
-    },
-  };
-}
 
 export function resolveMonsterThree(options?: {
   roll?: number;

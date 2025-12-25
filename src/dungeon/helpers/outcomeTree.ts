@@ -26,7 +26,6 @@ import {
   resolvePoolAlignment,
   resolveTransporterLocation,
   resolveTrickTrap,
-  resolveMonsterTwo,
   resolveMonsterThree,
   resolveMonsterFour,
   resolveMonsterFive,
@@ -852,10 +851,6 @@ function resolvePendingNode(
       return resolveTrickTrap({});
     case 'illusionaryWallNature':
       return resolveIllusionaryWallNature({});
-    case 'monsterTwo': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterTwo({ dungeonLevel });
-    }
     case 'monsterThree': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterThree({ dungeonLevel });

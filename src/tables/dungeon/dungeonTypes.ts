@@ -46,7 +46,7 @@ import type {
   MonsterLevel,
 } from '../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
 import type { Human, MonsterOne } from '../../dungeon/features/monsters/monsterOne/monsterOneTables';
-import type { MonsterTwo } from './monster/monsterTwo';
+import type { MonsterTwo } from '../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
 import type { DragonThree, MonsterThree } from './monster/monsterThree';
 import type {
   DragonFourOlder,
