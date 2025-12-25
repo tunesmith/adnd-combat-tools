@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum TreasureMiscMagicE3 {
   FigurineOfWondrousPower,
@@ -83,3 +83,4 @@ export const treasureMiscMagicE3: Table<TreasureMiscMagicE3> = {
     { range: [93, 100], command: TreasureMiscMagicE3.KeoghtomsOintment },
   ],
 };
+

@@ -37,9 +37,10 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Add a `DungeonTableDefinition` entry with `id`, `heading`, `resolver`, `renderers`, `buildPreview`.
    - Add `resolvePending` for any table that can appear as a pending-roll (including subtables).
      - If pending resolution needs context, compute it from `pending.context` and/or `ancestors`.
-     - For treasure tables, prefer `readTreasureMagicContext(pending.context, ancestors)` from `src/dungeon/features/treasure/shared.ts` instead of duplicating logic in `outcomeTree.ts`.
-   - Add `registry` when the resolver needs context (treasureMagic level/treasureRoll/rollIndex, doorChain, etc).
-     - For treasure tables, prefer `readTreasureMagicRegistryContext(context)` from `src/dungeon/features/treasure/shared.ts` (avoid re-declaring a local TreasureRegistryContext/readTreasureContext helper).
+     - For treasure tables, prefer `createTreasureMagicContextHandlers(resolver)` from `src/dungeon/features/treasure/shared.ts` to supply both `resolvePending` + `registry` without duplicating context parsing.
+   - Add `registry` when the resolver needs special argument mapping.
+     - Example: if a table resolver expects `countRoll` instead of `roll`, implement a custom `registry` that maps `roll` → `countRoll` (or refactor the resolver to accept `roll` directly).
+   - If a treasure resolver creates nested `pending-roll` nodes and needs stable ids, propagate `context: { kind: 'treasureMagic', level, treasureRoll, rollIndex }` to the pending nodes so manual resolution can also compute stable `pending.id` values downstream.
    - Use `wrapResolver` or a typed resolver to avoid `unknown` options.
 
 5. Wire into the feature bundle.
@@ -59,6 +60,10 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
 
 7. Update imports and tests.
    - Update `src/dungeon/helpers/outcomeTree.ts` and tests that import the old resolver path.
+   - Update moved enum/type imports in:
+     - `src/dungeon/domain/outcome.ts`
+     - `src/tables/dungeon/dungeonTypes.ts`
+   - Search for render-helper imports outside the table renderer (e.g. `src/components/**`, `src/dungeon/adapters/render/**`) when moving sentence/summary helpers.
    - Keep behavior identical; avoid refactors during the move.
 
 8. Validate.
@@ -70,10 +75,13 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
 - Update `src/dungeon/features/<area>/<featureName>/manifest.ts`
 - Update `src/dungeon/features/<area>/index.ts`
 - Update `src/dungeon/domain/resolvers.ts` (re-export or removal)
+- Update `src/dungeon/domain/outcome.ts`
 - Update `src/dungeon/helpers/registry.ts`
 - Update `src/dungeon/features/baseTables/bundle.ts`
 - Update `src/dungeon/helpers/outcomeTree.ts`
 - Update `src/dungeon/adapters/render.ts`
+- Update `src/tables/dungeon/dungeonTypes.ts`
+- Update `src/components/**` (if render helpers moved)
 
 ## Notes
 

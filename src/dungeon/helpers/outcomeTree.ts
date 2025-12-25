@@ -49,15 +49,6 @@ import {
   resolveDragonTen,
   resolveHuman,
   resolveTreasure,
-  resolveTreasureFigurineOfWondrousPower,
-  resolveTreasureFigurineMarbleElephant,
-  resolveTreasureGirdleOfGiantStrength,
-  resolveTreasureInstrumentOfTheBards,
-  resolveTreasureIronFlask,
-  resolveTreasureHornOfValhallaType,
-  resolveTreasureHornOfValhallaAttunement,
-  resolveTreasureHornOfValhallaAlignment,
-  resolveTreasureMiscMagicE3,
   resolveTreasureMiscMagicE4,
   resolveTreasureMiscMagicE5,
   resolveTreasureRobeOfUsefulItems,
@@ -773,8 +764,6 @@ function resolvePendingNode(
     }
     case 'gasTrapEffect':
       return resolveGasTrapEffect({});
-    case 'treasureMiscMagicE3':
-      return resolveTreasureMiscMagicE3({});
     case 'treasureMiscMagicE4':
       return resolveTreasureMiscMagicE4({});
     case 'treasureMiscMagicE5':
@@ -849,22 +838,6 @@ function resolvePendingNode(
       return resolveTreasureNecklaceOfPrayerBeads({});
     case 'treasureMedallionRange':
       return resolveTreasureMedallionRange({});
-    case 'treasureFigurineOfWondrousPower':
-      return resolveTreasureFigurineOfWondrousPower({});
-    case 'treasureFigurineMarbleElephant':
-      return resolveTreasureFigurineMarbleElephant({});
-    case 'treasureGirdleOfGiantStrength':
-      return resolveTreasureGirdleOfGiantStrength({});
-    case 'treasureInstrumentOfTheBards':
-      return resolveTreasureInstrumentOfTheBards({});
-    case 'treasureIronFlask':
-      return resolveTreasureIronFlask({});
-    case 'treasureHornOfValhallaType':
-      return resolveTreasureHornOfValhallaType({});
-    case 'treasureHornOfValhallaAttunement':
-      return resolveTreasureHornOfValhallaAttunement({});
-    case 'treasureHornOfValhallaAlignment':
-      return resolveTreasureHornOfValhallaAlignment({});
     case 'transmuteType':
       return resolveTransmuteType({});
     case 'poolAlignment':

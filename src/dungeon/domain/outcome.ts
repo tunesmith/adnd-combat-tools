@@ -129,21 +129,23 @@ import type {
   TreasureDeckOfManyThings,
   TreasureEyesOfPetrification,
 } from '../features/treasure/miscMagicE2/miscMagicE2Subtables';
-import type { TreasureMiscMagicE3 } from '../../tables/dungeon/treasureMiscMagicE3';
+import type { TreasureMiscMagicE3 } from '../features/treasure/miscMagicE3/miscMagicE3Table';
+import type {
+  TreasureFigurineOfWondrousPower,
+  TreasureFigurineMarbleElephant,
+  TreasureGirdleOfGiantStrength,
+  TreasureHornOfValhallaType,
+  TreasureHornOfValhallaAttunement,
+  TreasureHornOfValhallaAlignment,
+  TreasureIounStoneType,
+  TreasureInstrumentOfTheBards,
+  TreasureIronFlaskContent,
+} from '../features/treasure/miscMagicE3/miscMagicE3Subtables';
 import type { TreasureMiscMagicE4 } from '../../tables/dungeon/treasureMiscMagicE4';
 import type { TreasureMiscMagicE5 } from '../../tables/dungeon/treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from '../../tables/dungeon/treasureRobeOfTheArchmagi';
 import type { RobeOfUsefulItemsExtraPatch } from '../../tables/dungeon/treasureRobeOfUsefulItems';
 import type { RobeOfUsefulItemsBasePatchType } from '../helpers/robeOfUsefulItems';
-import type { TreasureFigurineOfWondrousPower } from '../../tables/dungeon/treasureFigurineOfWondrousPower';
-import type { TreasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
-import type { TreasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
-import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
-import type { TreasureHornOfValhallaAttunement } from '../../tables/dungeon/treasureHornOfValhallaAttunement';
-import type { TreasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
-import type { TreasureIounStoneType } from '../../tables/dungeon/treasureIounStones';
-import type { TreasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
-import type { TreasureIronFlaskContent } from '../../tables/dungeon/treasureIronFlask';
 import type { TreasureStaffSerpent } from '../features/treasure/rodStaffWand/rodStaffWandTables';
 import type { TreasureRodStaffWand } from '../features/treasure/rodStaffWand/rodStaffWandTables';
 import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';

@@ -1,5 +1,5 @@
 import type { IounStonesSummary } from '../../types/dungeon';
-import { iounStoneCompactLine } from '../../dungeon/adapters/render/treasureIounStones';
+import { iounStoneCompactLine } from '../../dungeon/features/treasure/miscMagicE3/miscMagicE3SubtablesRender';
 
 export type IounStonesCompactProps = {
   summary: IounStonesSummary;

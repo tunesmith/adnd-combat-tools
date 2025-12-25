@@ -47,20 +47,10 @@ import {
   resolveUnusualShape,
   resolveUnusualSize,
   resolveTreasure,
-  resolveTreasureFigurineOfWondrousPower,
-  resolveTreasureFigurineMarbleElephant,
-  resolveTreasureGirdleOfGiantStrength,
-  resolveTreasureInstrumentOfTheBards,
-  resolveTreasureIronFlask,
-  resolveTreasureIounStones,
-  resolveTreasureHornOfValhallaType,
-  resolveTreasureHornOfValhallaAttunement,
-  resolveTreasureHornOfValhallaAlignment,
   resolveTreasureMiscMagicE5,
   resolveTreasureRobeOfUsefulItems,
   resolveTreasureRobeOfTheArchmagi,
   resolveTreasureMiscMagicE4,
-  resolveTreasureMiscMagicE3,
   resolveTreasureManualOfGolems,
   resolveTreasureMedallionRange,
   resolveTreasureNecklaceOfMissiles,
@@ -344,8 +334,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureMiscMagicE3: ({ roll }) =>
-    fromOutcome(resolveTreasureMiscMagicE3({ roll })),
   treasureMiscMagicE4: ({ roll }) =>
     fromOutcome(resolveTreasureMiscMagicE4({ roll })),
   treasureMiscMagicE5: ({ roll }) =>
@@ -689,24 +677,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
     fromOutcome(resolveTreasurePhylacteryLongYears({ roll })),
   treasureQuaalFeatherToken: ({ roll }) =>
     fromOutcome(resolveTreasureQuaalFeatherToken({ roll })),
-  treasureFigurineOfWondrousPower: ({ roll }) =>
-    fromOutcome(resolveTreasureFigurineOfWondrousPower({ roll })),
-  treasureFigurineMarbleElephant: ({ roll }) =>
-    fromOutcome(resolveTreasureFigurineMarbleElephant({ roll })),
-  treasureGirdleOfGiantStrength: ({ roll }) =>
-    fromOutcome(resolveTreasureGirdleOfGiantStrength({ roll })),
-  treasureInstrumentOfTheBards: ({ roll }) =>
-    fromOutcome(resolveTreasureInstrumentOfTheBards({ roll })),
-  treasureIronFlask: ({ roll }) =>
-    fromOutcome(resolveTreasureIronFlask({ roll })),
-  treasureIounStones: ({ roll }) =>
-    fromOutcome(resolveTreasureIounStones({ countRoll: roll })),
-  treasureHornOfValhallaType: ({ roll }) =>
-    fromOutcome(resolveTreasureHornOfValhallaType({ roll })),
-  treasureHornOfValhallaAttunement: ({ roll }) =>
-    fromOutcome(resolveTreasureHornOfValhallaAttunement({ roll })),
-  treasureHornOfValhallaAlignment: ({ roll }) =>
-    fromOutcome(resolveTreasureHornOfValhallaAlignment({ roll })),
 };
 
 const HAZARD_TABLE_RESOLVERS: Record<string, RegistryResolver> =

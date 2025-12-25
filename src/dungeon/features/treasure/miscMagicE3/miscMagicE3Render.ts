@@ -1,17 +1,23 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureMiscMagicE3,
   TreasureMiscMagicE3,
-} from '../../../tables/dungeon/treasureMiscMagicE3';
-import { buildPreview, findChildEvent } from './shared';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
-import { figurineSentence } from './treasureFigurineOfWondrousPower';
-import { girdleSentence } from './treasureGirdleOfGiantStrength';
-import { instrumentOfTheBardsSentence } from './treasureInstrumentOfTheBards';
-import { ironFlaskSentence } from './treasureIronFlask';
-import { toIounStonesSummary } from './treasureIounStones';
-import { hornSentence } from './treasureHornOfValhalla';
+} from './miscMagicE3Table';
+import {
+  buildPreview,
+  findChildEvent,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
+import {
+  figurineSentence,
+  girdleSentence,
+  hornSentence,
+  instrumentOfTheBardsSentence,
+  ironFlaskSentence,
+  toIounStonesSummary,
+} from './miscMagicE3SubtablesRender';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE3, string> = {
   [TreasureMiscMagicE3.FigurineOfWondrousPower]: 'Figurine of Wondrous Power',
@@ -248,10 +254,11 @@ function resolvedSentence(
 }
 
 function stripUsageTag(label: string): string {
-  return label.replace(/\s+\(([A-Z],?\s?)+\)/, '').trim();
+  return label.replace(/\\s+\\(([A-Z],?\\s?)+\\)/, '').trim();
 }
 
 function articleFor(label: string): 'a' | 'an' {
   const first = label.trim().charAt(0).toLowerCase();
   return 'aeiou'.includes(first) ? 'an' : 'a';
 }
+

@@ -2,7 +2,7 @@ import ReactDOMServer from 'react-dom/server';
 import { IounStonesDetail } from '../../../components/dungeon/IounStonesDetail';
 import { IounStonesCompact } from '../../../components/dungeon/IounStonesCompact';
 import type { IounStonesSummary } from '../../../types/dungeon';
-import { iounStonesCompactSentence } from '../../../dungeon/adapters/render/treasureIounStones';
+import { iounStonesCompactSentence } from '../../../dungeon/features/treasure/miscMagicE3/miscMagicE3SubtablesRender';
 
 describe('IounStones components', () => {
   const summary: IounStonesSummary = {

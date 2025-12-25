@@ -76,11 +76,6 @@ import {
   buildTreasurePreview,
 } from './render/treasure';
 import {
-  renderTreasureMiscMagicE3Detail,
-  renderTreasureMiscMagicE3Compact,
-  buildTreasureMiscMagicE3Preview,
-} from './render/treasureMiscMagicE3';
-import {
   renderTreasureMiscMagicE4Detail,
   renderTreasureMiscMagicE4Compact,
   buildTreasureMiscMagicE4Preview,
@@ -147,35 +142,6 @@ import {
   renderTreasureNecklaceOfPrayerBeadsCompact,
 } from './render/treasureNecklaceOfPrayerBeads';
 import {
-  renderTreasureFigurineOfWondrousPowerDetail,
-  renderTreasureFigurineOfWondrousPowerCompact,
-  buildTreasureFigurineOfWondrousPowerPreview,
-} from './render/treasureFigurineOfWondrousPower';
-import {
-  renderTreasureFigurineMarbleElephantDetail,
-  renderTreasureFigurineMarbleElephantCompact,
-  buildTreasureFigurineMarbleElephantPreview,
-} from './render/treasureFigurineMarbleElephant';
-import {
-  renderTreasureGirdleOfGiantStrengthDetail,
-  renderTreasureGirdleOfGiantStrengthCompact,
-  buildTreasureGirdleOfGiantStrengthPreview,
-} from './render/treasureGirdleOfGiantStrength';
-import {
-  renderTreasureInstrumentOfTheBardsDetail,
-  renderTreasureInstrumentOfTheBardsCompact,
-  buildTreasureInstrumentOfTheBardsPreview,
-} from './render/treasureInstrumentOfTheBards';
-import {
-  renderTreasureIronFlaskDetail,
-  renderTreasureIronFlaskCompact,
-  buildTreasureIronFlaskPreview,
-} from './render/treasureIronFlask';
-import {
-  renderTreasureIounStonesDetail,
-  renderTreasureIounStonesCompact,
-} from './render/treasureIounStones';
-import {
   renderTreasureArmorShieldsDetail,
   renderTreasureArmorShieldsCompact,
   buildTreasureArmorShieldsPreview,
@@ -224,17 +190,6 @@ import {
   renderTreasureScarabOfProtectionCurseResolutionCompact,
   buildTreasureScarabOfProtectionCurseResolutionPreview,
 } from './render/treasureScarabOfProtection';
-import {
-  renderTreasureHornOfValhallaTypeDetail,
-  renderTreasureHornOfValhallaTypeCompact,
-  renderTreasureHornOfValhallaAttunementDetail,
-  renderTreasureHornOfValhallaAttunementCompact,
-  renderTreasureHornOfValhallaAlignmentDetail,
-  renderTreasureHornOfValhallaAlignmentCompact,
-  buildTreasureHornOfValhallaTypePreview,
-  buildTreasureHornOfValhallaAttunementPreview,
-  buildTreasureHornOfValhallaAlignmentPreview,
-} from './render/treasureHornOfValhalla';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -336,10 +291,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
   treasure: {
     renderDetail: renderTreasureDetail,
     renderCompact: withoutAppend(renderTreasureCompactNodes),
-  },
-  treasureMiscMagicE3: {
-    renderDetail: renderTreasureMiscMagicE3Detail,
-    renderCompact: renderTreasureMiscMagicE3Compact,
   },
   treasureMiscMagicE4: {
     renderDetail: renderTreasureMiscMagicE4Detail,
@@ -449,42 +400,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureRobeOfUsefulItemsDetail,
     renderCompact: renderTreasureRobeOfUsefulItemsCompact,
   },
-  treasureFigurineOfWondrousPower: {
-    renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
-    renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
-  },
-  treasureFigurineMarbleElephant: {
-    renderDetail: renderTreasureFigurineMarbleElephantDetail,
-    renderCompact: renderTreasureFigurineMarbleElephantCompact,
-  },
-  treasureGirdleOfGiantStrength: {
-    renderDetail: renderTreasureGirdleOfGiantStrengthDetail,
-    renderCompact: renderTreasureGirdleOfGiantStrengthCompact,
-  },
-  treasureInstrumentOfTheBards: {
-    renderDetail: renderTreasureInstrumentOfTheBardsDetail,
-    renderCompact: renderTreasureInstrumentOfTheBardsCompact,
-  },
-  treasureIronFlask: {
-    renderDetail: renderTreasureIronFlaskDetail,
-    renderCompact: renderTreasureIronFlaskCompact,
-  },
-  treasureIounStones: {
-    renderDetail: renderTreasureIounStonesDetail,
-    renderCompact: renderTreasureIounStonesCompact,
-  },
-  treasureHornOfValhallaType: {
-    renderDetail: renderTreasureHornOfValhallaTypeDetail,
-    renderCompact: renderTreasureHornOfValhallaTypeCompact,
-  },
-  treasureHornOfValhallaAttunement: {
-    renderDetail: renderTreasureHornOfValhallaAttunementDetail,
-    renderCompact: renderTreasureHornOfValhallaAttunementCompact,
-  },
-  treasureHornOfValhallaAlignment: {
-    renderDetail: renderTreasureHornOfValhallaAlignmentDetail,
-    renderCompact: renderTreasureHornOfValhallaAlignmentCompact,
-  },
   monsterLevel: monsterAdapter,
   monsterOne: monsterAdapter,
   monsterTwo: monsterAdapter,
@@ -532,7 +447,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   poolAlignment: buildPoolAlignmentPreview,
   transporterLocation: buildTransporterLocationPreview,
   treasure: buildTreasurePreview,
-  treasureMiscMagicE3: buildTreasureMiscMagicE3Preview,
   treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
   treasureMiscMagicE5: buildTreasureMiscMagicE5Preview,
   treasureArmorShields: buildTreasureArmorShieldsPreview,
@@ -567,15 +481,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
     buildTreasurePeriaptProofAgainstPoisonPreview,
   treasurePhylacteryLongYears: buildTreasurePhylacteryLongYearsPreview,
   treasureQuaalFeatherToken: buildTreasureQuaalFeatherTokenPreview,
-  treasureFigurineOfWondrousPower: buildTreasureFigurineOfWondrousPowerPreview,
-  treasureFigurineMarbleElephant: buildTreasureFigurineMarbleElephantPreview,
-  treasureGirdleOfGiantStrength: buildTreasureGirdleOfGiantStrengthPreview,
-  treasureInstrumentOfTheBards: buildTreasureInstrumentOfTheBardsPreview,
-  treasureIronFlask: buildTreasureIronFlaskPreview,
-  treasureHornOfValhallaType: buildTreasureHornOfValhallaTypePreview,
-  treasureHornOfValhallaAttunement:
-    buildTreasureHornOfValhallaAttunementPreview,
-  treasureHornOfValhallaAlignment: buildTreasureHornOfValhallaAlignmentPreview,
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);

@@ -121,20 +121,22 @@ import type {
   TreasureDeckOfManyThings,
   TreasureEyesOfPetrification,
 } from '../../dungeon/features/treasure/miscMagicE2/miscMagicE2Subtables';
-import type { TreasureMiscMagicE3 } from './treasureMiscMagicE3';
+import type { TreasureMiscMagicE3 } from '../../dungeon/features/treasure/miscMagicE3/miscMagicE3Table';
+import type {
+  TreasureFigurineOfWondrousPower,
+  TreasureFigurineMarbleElephant,
+  TreasureGirdleOfGiantStrength,
+  TreasureInstrumentOfTheBards,
+  TreasureIronFlaskContent,
+  TreasureHornOfValhallaType,
+  TreasureHornOfValhallaAttunement,
+  TreasureHornOfValhallaAlignment,
+  TreasureIounStoneType,
+} from '../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
 import type { TreasureMiscMagicE4 } from './treasureMiscMagicE4';
 import type { TreasureMiscMagicE5 } from './treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from './treasureRobeOfTheArchmagi';
 import type { RobeOfUsefulItemsExtraPatch } from './treasureRobeOfUsefulItems';
-import type { TreasureFigurineOfWondrousPower } from './treasureFigurineOfWondrousPower';
-import type { TreasureFigurineMarbleElephant } from './treasureFigurineMarbleElephant';
-import type { TreasureGirdleOfGiantStrength } from './treasureGirdleOfGiantStrength';
-import type { TreasureInstrumentOfTheBards } from './treasureInstrumentOfTheBards';
-import type { TreasureIronFlaskContent } from './treasureIronFlask';
-import type { TreasureHornOfValhallaType } from './treasureHornOfValhallaType';
-import type { TreasureHornOfValhallaAttunement } from './treasureHornOfValhallaAttunement';
-import type { TreasureHornOfValhallaAlignment } from './treasureHornOfValhallaAlignment';
-import type { TreasureIounStoneType } from './treasureIounStones';
 import type { TreasureManualOfGolems } from './treasureManualOfGolems';
 import type { TreasureMedallionRange } from './treasureMedallionEspRange';
 import type { TreasureNecklaceOfMissiles } from './treasureNecklaceOfMissiles';

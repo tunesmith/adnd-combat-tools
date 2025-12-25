@@ -60,10 +60,6 @@ import {
   TreasureWithoutMonster,
 } from '../../tables/dungeon/treasure';
 import {
-  treasureMiscMagicE3,
-  TreasureMiscMagicE3,
-} from '../../tables/dungeon/treasureMiscMagicE3';
-import {
   treasureMiscMagicE4,
   TreasureMiscMagicE4,
 } from '../../tables/dungeon/treasureMiscMagicE4';
@@ -131,19 +127,6 @@ import {
   SWORD_ALIGNMENT_DETAILS as SWORD_ALIGNMENT,
   type TreasureSwordAlignmentResult,
 } from '../../tables/dungeon/treasureSwordAlignment';
-import {
-  treasureFigurineOfWondrousPower,
-  TreasureFigurineOfWondrousPower,
-} from '../../tables/dungeon/treasureFigurineOfWondrousPower';
-import { treasureFigurineMarbleElephant } from '../../tables/dungeon/treasureFigurineMarbleElephant';
-import { treasureGirdleOfGiantStrength } from '../../tables/dungeon/treasureGirdleOfGiantStrength';
-import { treasureInstrumentOfTheBards } from '../../tables/dungeon/treasureInstrumentOfTheBards';
-import { treasureIronFlask } from '../../tables/dungeon/treasureIronFlask';
-import {
-  treasureIounStones,
-  TreasureIounStoneType,
-  IOUN_STONE_DEFINITIONS,
-} from '../../tables/dungeon/treasureIounStones';
 import { treasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
 import { treasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
 import { treasureNecklaceOfMissiles } from '../../tables/dungeon/treasureNecklaceOfMissiles';
@@ -159,18 +142,8 @@ import { treasurePhylacteryLongYears } from '../../tables/dungeon/treasurePhylac
 import { treasureQuaalFeatherToken } from '../../tables/dungeon/treasureQuaalFeatherToken';
 import { treasureNecklacePrayerBeads } from '../../tables/dungeon/treasureNecklacePrayerBeads';
 import type { TreasureNecklacePrayerBead } from '../../tables/dungeon/treasureNecklacePrayerBeads';
-import { treasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
-import type { TreasureHornOfValhallaType } from '../../tables/dungeon/treasureHornOfValhallaType';
-import {
-  treasureHornOfValhallaAttunement,
-  TreasureHornOfValhallaAttunement,
-} from '../../tables/dungeon/treasureHornOfValhallaAttunement';
-import { treasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
-import type { TreasureHornOfValhallaAlignment } from '../../tables/dungeon/treasureHornOfValhallaAlignment';
 import type {
   TreasureEntry,
-  TreasureIounStonesResult,
-  TreasureIounStoneStatus,
   RobeOfUsefulItemsResult,
   TreasureJewelryPiece,
   TreasureGemLot,
@@ -2145,51 +2118,6 @@ function isWithinRange(range: [number, number], roll: number): boolean {
   return roll >= range[0] && roll <= range[1];
 }
 
-export function resolveTreasureMiscMagicE3(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureMiscMagicE3.sides);
-  const command: TreasureMiscMagicE3 = getTableEntry(
-    usedRoll,
-    treasureMiscMagicE3
-  );
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureMiscMagicE3.FigurineOfWondrousPower) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureFigurineOfWondrousPower',
-    });
-  } else if (command === TreasureMiscMagicE3.GirdleOfGiantStrength) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureGirdleOfGiantStrength',
-    });
-  } else if (command === TreasureMiscMagicE3.IounStones) {
-    children.push(resolveTreasureIounStones());
-  } else if (command === TreasureMiscMagicE3.InstrumentOfTheBards) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureInstrumentOfTheBards',
-    });
-  } else if (command === TreasureMiscMagicE3.IronFlask) {
-    children.push({ type: 'pending-roll', table: 'treasureIronFlask' });
-  } else if (command === TreasureMiscMagicE3.HornOfValhalla) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureHornOfValhallaType',
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureMiscMagicE3',
-      result: command,
-    } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
-}
-
 export function resolveTreasureMiscMagicE4(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
@@ -3677,213 +3605,6 @@ export function resolveTreasureQuaalFeatherToken(options?: {
     buildEvent: (command) =>
       ({
         kind: 'treasureQuaalFeatherToken',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureFigurineOfWondrousPower(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureFigurineOfWondrousPower.sides);
-  const command: TreasureFigurineOfWondrousPower = getTableEntry(
-    usedRoll,
-    treasureFigurineOfWondrousPower
-  );
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureFigurineOfWondrousPower.MarbleElephant) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureFigurineMarbleElephant',
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureFigurineOfWondrousPower',
-      result: command,
-    } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
-}
-
-export function resolveTreasureFigurineMarbleElephant(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureFigurineMarbleElephant,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureFigurineMarbleElephant',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureGirdleOfGiantStrength(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureGirdleOfGiantStrength,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureGirdleOfGiantStrength',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureIounStones(options?: {
-  countRoll?: number;
-  stoneRolls?: number[];
-}): DungeonOutcomeNode {
-  const countRoll = options?.countRoll ?? rollDice(10);
-  const count = Math.max(1, Math.min(10, countRoll));
-  const rolls = options?.stoneRolls ?? [];
-  const stones: TreasureIounStonesResult['stones'] = [];
-  const seen = new Map<TreasureIounStoneType, number>();
-
-  for (let index = 0; index < count; index += 1) {
-    const preset = rolls[index];
-    const usedRoll =
-      preset !== undefined ? preset : rollDice(treasureIounStones.sides);
-    const type: TreasureIounStoneType = getTableEntry(
-      usedRoll,
-      treasureIounStones
-    );
-    const definition = IOUN_STONE_DEFINITIONS[type];
-    const firstIndex = seen.get(type);
-    const status: TreasureIounStoneStatus =
-      type === TreasureIounStoneType.DullGray
-        ? 'dead'
-        : firstIndex !== undefined
-        ? 'duplicate'
-        : 'active';
-    if (firstIndex === undefined) {
-      seen.set(type, index);
-    }
-    stones.push({
-      index: index + 1,
-      roll: usedRoll,
-      type,
-      color: definition.color,
-      shape: definition.shape,
-      effect: definition.effect,
-      status,
-      duplicateOf: firstIndex !== undefined ? firstIndex + 1 : undefined,
-    });
-  }
-
-  const result: TreasureIounStonesResult = {
-    countRoll,
-    stones,
-  };
-
-  return {
-    type: 'event',
-    roll: countRoll,
-    event: {
-      kind: 'treasureIounStones',
-      result,
-    } as OutcomeEvent,
-  };
-}
-
-export function resolveTreasureHornOfValhallaType(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureHornOfValhallaType.sides);
-  const command: TreasureHornOfValhallaType = getTableEntry(
-    usedRoll,
-    treasureHornOfValhallaType
-  );
-  const children: DungeonOutcomeNode[] = [
-    { type: 'pending-roll', table: 'treasureHornOfValhallaAttunement' },
-  ];
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureHornOfValhallaType',
-      result: command,
-    } as OutcomeEvent,
-    children,
-  };
-}
-
-export function resolveTreasureHornOfValhallaAttunement(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureHornOfValhallaAttunement.sides);
-  const command: TreasureHornOfValhallaAttunement = getTableEntry(
-    usedRoll,
-    treasureHornOfValhallaAttunement
-  );
-  const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureHornOfValhallaAttunement.Aligned) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureHornOfValhallaAlignment',
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureHornOfValhallaAttunement',
-      result: command,
-    } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
-}
-
-export function resolveTreasureHornOfValhallaAlignment(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureHornOfValhallaAlignment.sides);
-  const command: TreasureHornOfValhallaAlignment = getTableEntry(
-    usedRoll,
-    treasureHornOfValhallaAlignment
-  );
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'treasureHornOfValhallaAlignment',
-      result: command,
-    } as OutcomeEvent,
-  };
-}
-
-export function resolveTreasureInstrumentOfTheBards(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureInstrumentOfTheBards,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureInstrumentOfTheBards',
-        result: command,
-      } as OutcomeEvent),
-  });
-}
-
-export function resolveTreasureIronFlask(options?: {
-  roll?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureIronFlask,
-    roll: options?.roll,
-    buildEvent: (command) =>
-      ({
-        kind: 'treasureIronFlask',
         result: command,
       } as OutcomeEvent),
   });

@@ -18,7 +18,18 @@ import {
   TreasureDeckOfManyThings,
   TreasureEyesOfPetrification,
 } from '../../../../../dungeon/features/treasure/miscMagicE2/miscMagicE2Subtables';
-import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
+import { TreasureMiscMagicE3 } from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Table';
+import {
+  TreasureFigurineOfWondrousPower,
+  TreasureFigurineMarbleElephant,
+  TreasureGirdleOfGiantStrength,
+  TreasureInstrumentOfTheBards,
+  TreasureIronFlaskContent,
+  TreasureHornOfValhallaType,
+  TreasureHornOfValhallaAttunement,
+  TreasureHornOfValhallaAlignment,
+  TreasureIounStoneType,
+} from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
 import { TreasureRobeOfTheArchmagi } from '../../../../../tables/dungeon/treasureRobeOfTheArchmagi';
 import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
@@ -28,15 +39,6 @@ import { TreasurePearlOfPowerEffect } from '../../../../../tables/dungeon/treasu
 import { TreasurePearlOfWisdomOutcome } from '../../../../../tables/dungeon/treasurePearlOfWisdom';
 import { TreasurePhylacteryLongYearsOutcome } from '../../../../../tables/dungeon/treasurePhylacteryLongYears';
 import { TreasureQuaalFeatherToken } from '../../../../../tables/dungeon/treasureQuaalFeatherToken';
-import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
-import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
-import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
-import { TreasureInstrumentOfTheBards } from '../../../../../tables/dungeon/treasureInstrumentOfTheBards';
-import { TreasureIronFlaskContent } from '../../../../../tables/dungeon/treasureIronFlask';
-import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
-import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
-import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
-import { TreasureIounStoneType } from '../../../../../tables/dungeon/treasureIounStones';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage compact treasure misc magic E1 handling', () => {

@@ -37,12 +37,15 @@ import {
   purseSentence,
 } from '../../features/treasure/miscMagicE1/miscMagicE1SubtablesRender';
 import { miscMagicE2Sentence } from '../../features/treasure/miscMagicE2/miscMagicE2Render';
-import { figurineSentence } from './treasureFigurineOfWondrousPower';
-import { girdleSentence } from './treasureGirdleOfGiantStrength';
-import { instrumentOfTheBardsSentence } from './treasureInstrumentOfTheBards';
-import { ironFlaskSentence } from './treasureIronFlask';
-import { hornSentence } from './treasureHornOfValhalla';
-import { miscMagicE3Sentence } from './treasureMiscMagicE3';
+import { miscMagicE3Sentence } from '../../features/treasure/miscMagicE3/miscMagicE3Render';
+import {
+  figurineSentence,
+  girdleSentence,
+  hornSentence,
+  instrumentOfTheBardsSentence,
+  ironFlaskSentence,
+  toIounStonesSummary,
+} from '../../features/treasure/miscMagicE3/miscMagicE3SubtablesRender';
 import { miscMagicE4Sentence } from './treasureMiscMagicE4';
 import { miscMagicE5Sentence } from './treasureMiscMagicE5';
 import { TreasureMiscMagicE5 } from '../../../tables/dungeon/treasureMiscMagicE5';
@@ -66,7 +69,6 @@ import {
 } from '../../features/treasure/miscMagicE2/miscMagicE2SubtablesRender';
 import { TreasureProtectionType } from '../../features/treasure/protection/protectionTables';
 import { BAG_OF_HOLDING_STATS } from '../../features/treasure/miscMagicE1/miscMagicE1Subtables';
-import { toIounStonesSummary } from './treasureIounStones';
 import { armorShieldSentence } from './treasureArmorShields';
 import {
   swordSentence,

@@ -32,20 +32,22 @@ import {
   TreasureDeckOfManyThings,
   TreasureEyesOfPetrification,
 } from '../../../../../dungeon/features/treasure/miscMagicE2/miscMagicE2Subtables';
-import { TreasureMiscMagicE3 } from '../../../../../tables/dungeon/treasureMiscMagicE3';
+import { TreasureMiscMagicE3 } from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Table';
+import {
+  TreasureFigurineOfWondrousPower,
+  TreasureFigurineMarbleElephant,
+  TreasureGirdleOfGiantStrength,
+  TreasureInstrumentOfTheBards,
+  TreasureIronFlaskContent,
+  TreasureHornOfValhallaType,
+  TreasureHornOfValhallaAttunement,
+  TreasureHornOfValhallaAlignment,
+} from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
 import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
 import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
 import { TreasureRobeOfTheArchmagi } from '../../../../../tables/dungeon/treasureRobeOfTheArchmagi';
 import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
 import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
-import { TreasureFigurineOfWondrousPower } from '../../../../../tables/dungeon/treasureFigurineOfWondrousPower';
-import { TreasureFigurineMarbleElephant } from '../../../../../tables/dungeon/treasureFigurineMarbleElephant';
-import { TreasureGirdleOfGiantStrength } from '../../../../../tables/dungeon/treasureGirdleOfGiantStrength';
-import { TreasureInstrumentOfTheBards } from '../../../../../tables/dungeon/treasureInstrumentOfTheBards';
-import { TreasureIronFlaskContent } from '../../../../../tables/dungeon/treasureIronFlask';
-import { TreasureHornOfValhallaType } from '../../../../../tables/dungeon/treasureHornOfValhallaType';
-import { TreasureHornOfValhallaAttunement } from '../../../../../tables/dungeon/treasureHornOfValhallaAttunement';
-import { TreasureHornOfValhallaAlignment } from '../../../../../tables/dungeon/treasureHornOfValhallaAlignment';
 import {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
