@@ -62,7 +62,7 @@ import {
   MonsterTen,
   dragonTen,
   DragonTen,
-} from '../../../../tables/dungeon/monster/monsterTen';
+} from '../monsterTen/monsterTenTables';
 import {
   buildPreview,
   findChildEvent,

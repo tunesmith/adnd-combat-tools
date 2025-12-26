@@ -77,7 +77,10 @@ import type {
   DragonNine,
   MonsterNine,
 } from '../../dungeon/features/monsters/monsterNine/monsterNineTables';
-import type { DragonTen, MonsterTen } from './monster/monsterTen';
+import type {
+  DragonTen,
+  MonsterTen,
+} from '../../dungeon/features/monsters/monsterTen/monsterTenTables';
 import type { CharacterRace } from './monster/character/characterRace';
 import type { CharacterClassTable } from './monster/character/characterClass';
 import type { PeriodicCheckDoorOnly } from '../../dungeon/features/navigation/doorChain/doorChainTable';

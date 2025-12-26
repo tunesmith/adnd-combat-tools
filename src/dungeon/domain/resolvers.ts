@@ -1,6 +1,5 @@
 import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
 import { ROBE_OF_USEFUL_ITEMS_BASE_PATCHES } from '../helpers/robeOfUsefulItems';
-import type { PartyResult } from '../models/character/characterSheet';
 import {
   periodicCheck,
   PeriodicCheck,
@@ -154,17 +153,8 @@ import type {
 } from './outcome';
 import { human } from '../features/monsters/monsterOne/monsterOneTables';
 import {
-  monsterTen,
-  MonsterTen,
-  dragonTen,
-} from '../../tables/dungeon/monster/monsterTen';
-import {
   humanTextForCommand,
 } from '../features/monsters/monsterOne/monsterOneResult';
-import {
-  monsterTenTextForCommand,
-  dragonTenTextForCommand,
-} from '../services/monster/monsterTenResult';
 import {
   oneToFour,
   OneToFour,
@@ -3672,58 +3662,6 @@ export function resolveTransporterLocation(options?: {
 }
 
 export { resolveIllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallResolvers';
-
-export function resolveMonsterTen(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 1;
-  const usedRoll = options?.roll ?? rollDice(monsterTen.sides);
-  const result = getTableEntry(usedRoll, monsterTen);
-  const children: DungeonOutcomeNode[] = [];
-  const resolved = monsterTenTextForCommand(dungeonLevel, result);
-  const party: PartyResult | undefined = resolved.party;
-  const text: string | undefined = party ? undefined : resolved.text;
-  if (result === MonsterTen.Dragon) {
-    children.push({
-      type: 'pending-roll',
-      table: 'dragonTen',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'monsterTen',
-      result,
-      dungeonLevel,
-      text,
-      party,
-    },
-    children: children.length ? children : undefined,
-  };
-}
-
-export function resolveDragonTen(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 10;
-  const usedRoll = options?.roll ?? rollDice(dragonTen.sides);
-  const result = getTableEntry(usedRoll, dragonTen);
-  const text = dragonTenTextForCommand(dungeonLevel, result);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'dragonTen',
-      result,
-      dungeonLevel,
-      text,
-    } as OutcomeEvent,
-  };
-}
 
 export function resolveHuman(options?: {
   roll?: number;

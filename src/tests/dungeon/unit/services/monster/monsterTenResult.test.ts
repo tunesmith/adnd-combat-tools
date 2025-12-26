@@ -1,11 +1,11 @@
 import {
   MonsterTen,
   DragonTen,
-} from '../../../../../tables/dungeon/monster/monsterTen';
+} from '../../../../../dungeon/features/monsters/monsterTen/monsterTenTables';
 import {
   monsterTenTextForCommand,
   dragonTenTextForCommand,
-} from '../../../../../dungeon/services/monster/monsterTenResult';
+} from '../../../../../dungeon/features/monsters/monsterTen/monsterTenResult';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('monsterTenTextForCommand', () => {

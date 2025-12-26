@@ -64,7 +64,7 @@ import {
 import {
   MonsterTen,
   monsterTen,
-} from '../../tables/dungeon/monster/monsterTen';
+} from '../features/monsters/monsterTen/monsterTenTables';
 import {
   humanResult,
   monsterOneTextForCommand,
