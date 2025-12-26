@@ -1,4 +1,4 @@
-import { rollDice } from '../helpers/dungeonLookup';
+import { rollDice } from '../../helpers/dungeonLookup';
 
 export const formatMonsterCount = (
   count: number,

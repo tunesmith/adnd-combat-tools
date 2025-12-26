@@ -12,7 +12,7 @@ import {
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from './wanderingMonsterResult';
+} from '../features/monsters/monsterCounts';
 import {
   MonsterOne,
   monsterOne,
@@ -68,9 +68,9 @@ import {
 import {
   humanResult,
   monsterOneTextForCommand,
-} from './monster/monsterOneResult';
-import { monsterTwoTextForCommand } from './monster/monsterTwoResult';
-import { monsterThreeTextForCommand } from './monster/monsterThreeResult';
+} from '../features/monsters/monsterOne/monsterOneResult';
+import { monsterTwoTextForCommand } from '../features/monsters/monsterTwo/monsterTwoResult';
+import { monsterThreeTextForCommand } from '../features/monsters/monsterThree/monsterThreeResult';
 import { monsterFourTextForCommand } from './monster/monsterFourResult';
 import { monsterFiveTextForCommand } from './monster/monsterFiveResult';
 import { monsterSixTextForCommand } from './monster/monsterSixResult';

@@ -192,7 +192,7 @@ import {
 } from '../../tables/dungeon/monster/monsterTen';
 import {
   humanTextForCommand,
-} from '../services/monster/monsterOneResult';
+} from '../features/monsters/monsterOne/monsterOneResult';
 import {
   monsterFourTextForCommand,
   dragonFourYoungerTextForCommand,

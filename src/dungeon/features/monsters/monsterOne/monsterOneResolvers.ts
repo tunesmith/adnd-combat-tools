@@ -1,7 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
 import { monsterOne, MonsterOne } from './monsterOneTables';
-import { monsterOneTextForCommand } from '../../../services/monster/monsterOneResult';
+import { monsterOneTextForCommand } from './monsterOneResult';
 
 export function resolveMonsterOne(options?: {
   roll?: number;

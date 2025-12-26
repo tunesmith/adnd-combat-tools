@@ -1,16 +1,16 @@
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from '../wanderingMonsterResult';
-import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
+} from '../monsterCounts';
+import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import {
   Human,
   human,
   MonsterOne,
   monsterOne,
-} from '../../features/monsters/monsterOne/monsterOneTables';
-import { characterResult } from './characterResult';
-import type { PartyResult } from '../../models/character/characterSheet';
+} from './monsterOneTables';
+import { characterResult } from '../../../services/monster/characterResult';
+import type { PartyResult } from '../../../models/character/characterSheet';
 
 export const monsterOneTextForCommand = (
   dungeonLevel: number,

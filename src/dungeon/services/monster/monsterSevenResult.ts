@@ -1,7 +1,7 @@
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from '../wanderingMonsterResult';
+} from '../../features/monsters/monsterCounts';
 import { characterResult } from './characterResult';
 import {
   MonsterSeven,
@@ -9,7 +9,7 @@ import {
 } from '../../../tables/dungeon/monster/monsterSeven';
 import { formatPartyResult } from '../../helpers/party/formatPartyResult';
 import type { PartyResult } from '../../models/character/characterSheet';
-import { dragonSubtableReminder } from './dragonSubtableReminder';
+import { dragonSubtableReminder } from '../../features/monsters/dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;

@@ -1,14 +1,14 @@
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from '../wanderingMonsterResult';
-import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
+} from '../monsterCounts';
+import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import {
   MonsterTwo,
   monsterTwo,
-} from '../../features/monsters/monsterTwo/monsterTwoTable';
-import { characterResult } from './characterResult';
-import type { PartyResult } from '../../models/character/characterSheet';
+} from './monsterTwoTable';
+import { characterResult } from '../../../services/monster/characterResult';
+import type { PartyResult } from '../../../models/character/characterSheet';
 
 type MonsterTextResult = {
   text: string;

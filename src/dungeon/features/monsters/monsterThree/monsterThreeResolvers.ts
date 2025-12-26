@@ -8,7 +8,7 @@ import {
 import {
   dragonThreeTextForCommand,
   monsterThreeTextForCommand,
-} from '../../../services/monster/monsterThreeResult';
+} from './monsterThreeResult';
 
 export function resolveMonsterThree(options?: {
   roll?: number;
