@@ -1,17 +1,17 @@
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from '../../features/monsters/monsterCounts';
-import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
-import { characterResult } from './characterResult';
+} from '../monsterCounts';
+import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
+import { characterResult } from '../../../services/monster/characterResult';
 import {
   DragonFourOlder,
   DragonFourYounger,
   MonsterFour,
   monsterFour,
-} from '../../../tables/dungeon/monster/monsterFour';
-import type { PartyResult } from '../../models/character/characterSheet';
-import { dragonSubtableReminder } from '../../features/monsters/dragonSubtableReminder';
+} from './monsterFourTables';
+import type { PartyResult } from '../../../models/character/characterSheet';
+import { dragonSubtableReminder } from '../dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;

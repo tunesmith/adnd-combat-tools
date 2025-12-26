@@ -1,4 +1,4 @@
-import type { Table } from '../dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum MonsterFour {
   ApeCarnivorous_1to3,

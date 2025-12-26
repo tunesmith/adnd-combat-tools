@@ -34,7 +34,7 @@ import {
   dragonFourYounger,
   DragonFourOlder,
   dragonFourOlder,
-} from '../../tables/dungeon/monster/monsterFour';
+} from '../features/monsters/monsterFour/monsterFourTables';
 import {
   MonsterFive,
   monsterFive,
@@ -71,7 +71,7 @@ import {
 } from '../features/monsters/monsterOne/monsterOneResult';
 import { monsterTwoTextForCommand } from '../features/monsters/monsterTwo/monsterTwoResult';
 import { monsterThreeTextForCommand } from '../features/monsters/monsterThree/monsterThreeResult';
-import { monsterFourTextForCommand } from './monster/monsterFourResult';
+import { monsterFourTextForCommand } from '../features/monsters/monsterFour/monsterFourResult';
 import { monsterFiveTextForCommand } from './monster/monsterFiveResult';
 import { monsterSixTextForCommand } from './monster/monsterSixResult';
 

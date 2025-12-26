@@ -1,13 +1,10 @@
 export const BASE_TABLE_ID_LIST = [
-  'monsterFour',
   'monsterFive',
   'monsterSix',
   'monsterSeven',
   'monsterEight',
   'monsterNine',
   'monsterTen',
-  'dragonFourYounger',
-  'dragonFourOlder',
   'dragonFiveYounger',
   'dragonFiveOlder',
   'dragonSix',
@@ -64,15 +61,12 @@ export const BASE_TABLE_ID_LIST = [
 export type BaseTableId = typeof BASE_TABLE_ID_LIST[number];
 
 export const BASE_TABLE_HEADINGS: Record<BaseTableId, string> = {
-  monsterFour: 'Monster (Level 4)',
   monsterFive: 'Monster (Level 5)',
   monsterSix: 'Monster (Level 6)',
   monsterSeven: 'Monster (Level 7)',
   monsterEight: 'Monster (Level 8)',
   monsterNine: 'Monster (Level 9)',
   monsterTen: 'Monster (Level 10)',
-  dragonFourYounger: 'Dragon (Younger)',
-  dragonFourOlder: 'Dragon (Older)',
   dragonFiveYounger: 'Dragon (Younger)',
   dragonFiveOlder: 'Dragon (Older)',
   dragonSix: 'Dragon (Level 6)',

@@ -24,7 +24,7 @@ import {
   DragonFourYounger,
   dragonFourOlder,
   DragonFourOlder,
-} from '../../../../tables/dungeon/monster/monsterFour';
+} from '../monsterFour/monsterFourTables';
 import {
   monsterFive,
   MonsterFive,
