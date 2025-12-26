@@ -26,7 +26,7 @@ import {
   monsterThree,
   DragonThree,
   dragonThree,
-} from '../../tables/dungeon/monster/monsterThree';
+} from '../features/monsters/monsterThree/monsterThreeTables';
 import {
   MonsterFour,
   monsterFour,

@@ -7,7 +7,7 @@ import {
   DragonThree,
   MonsterThree,
   monsterThree,
-} from '../../../tables/dungeon/monster/monsterThree';
+} from '../../features/monsters/monsterThree/monsterThreeTables';
 import { characterResult } from './characterResult';
 import { dragonSubtableReminder } from './dragonSubtableReminder';
 import type { PartyResult } from '../../models/character/characterSheet';

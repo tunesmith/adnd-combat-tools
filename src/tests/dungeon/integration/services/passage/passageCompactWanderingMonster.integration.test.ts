@@ -1,4 +1,4 @@
-import { resolveMonsterThree } from '../../../../../dungeon/domain/resolvers';
+import { resolveMonsterThree } from '../../../../../dungeon/features/monsters/monsterThree/monsterThreeResolvers';
 import { resolveMonsterOne } from '../../../../../dungeon/features/monsters/monsterOne/monsterOneResolvers';
 import { toDetailRender } from '../../../../../dungeon/adapters/render';
 import { runDungeonStep } from '../../../../../dungeon/services/adapters';

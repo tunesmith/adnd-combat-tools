@@ -1,4 +1,4 @@
-import type { Table } from '../dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum MonsterThree {
   BeetleBoring_1to3,
@@ -59,3 +59,4 @@ export const dragonThree: Table<DragonThree> = {
     { range: [63, 100], command: DragonThree.White_VeryYoung_1 },
   ],
 };
+

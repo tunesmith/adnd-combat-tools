@@ -47,7 +47,7 @@ import type { MonsterTwo } from '../features/monsters/monsterTwo/monsterTwoTable
 import type {
   MonsterThree,
   DragonThree,
-} from '../../tables/dungeon/monster/monsterThree';
+} from '../features/monsters/monsterThree/monsterThreeTables';
 import type {
   MonsterFour,
   DragonFourYounger,
