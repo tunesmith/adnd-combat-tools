@@ -154,11 +154,6 @@ import type {
 } from './outcome';
 import { human } from '../features/monsters/monsterOne/monsterOneTables';
 import {
-  monsterSix,
-  MonsterSix,
-  dragonSix,
-} from '../../tables/dungeon/monster/monsterSix';
-import {
   monsterSeven,
   MonsterSeven,
   dragonSeven,
@@ -181,10 +176,6 @@ import {
 import {
   humanTextForCommand,
 } from '../features/monsters/monsterOne/monsterOneResult';
-import {
-  monsterSixTextForCommand,
-  dragonSixTextForCommand,
-} from '../services/monster/monsterSixResult';
 import {
   monsterSevenTextForCommand,
   dragonSevenTextForCommand,
@@ -3709,38 +3700,6 @@ export function resolveTransporterLocation(options?: {
 
 export { resolveIllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallResolvers';
 
-export function resolveMonsterSix(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 1;
-  const usedRoll = options?.roll ?? rollDice(monsterSix.sides);
-  const result = getTableEntry(usedRoll, monsterSix);
-  const children: DungeonOutcomeNode[] = [];
-  const resolved = monsterSixTextForCommand(dungeonLevel, result);
-  const party: PartyResult | undefined = resolved.party;
-  const text: string | undefined = party ? undefined : resolved.text;
-  if (result === MonsterSix.Dragon) {
-    children.push({
-      type: 'pending-roll',
-      table: 'dragonSix',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'monsterSix',
-      result,
-      dungeonLevel,
-      text,
-      party,
-    },
-    children: children.length ? children : undefined,
-  };
-}
-
 export function resolveMonsterSeven(options?: {
   roll?: number;
   dungeonLevel?: number;
@@ -3866,26 +3825,6 @@ export function resolveMonsterTen(options?: {
       party,
     },
     children: children.length ? children : undefined,
-  };
-}
-
-export function resolveDragonSix(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 6;
-  const usedRoll = options?.roll ?? rollDice(dragonSix.sides);
-  const result = getTableEntry(usedRoll, dragonSix);
-  const text = dragonSixTextForCommand(dungeonLevel, result);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'dragonSix',
-      result,
-      dungeonLevel,
-      text,
-    },
   };
 }
 

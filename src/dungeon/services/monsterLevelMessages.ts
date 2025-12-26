@@ -48,7 +48,7 @@ import {
   monsterSix,
   DragonSix,
   dragonSix,
-} from '../../tables/dungeon/monster/monsterSix';
+} from '../features/monsters/monsterSix/monsterSixTables';
 import {
   MonsterSeven,
   monsterSeven,
@@ -73,7 +73,7 @@ import { monsterTwoTextForCommand } from '../features/monsters/monsterTwo/monste
 import { monsterThreeTextForCommand } from '../features/monsters/monsterThree/monsterThreeResult';
 import { monsterFourTextForCommand } from '../features/monsters/monsterFour/monsterFourResult';
 import { monsterFiveTextForCommand } from '../features/monsters/monsterFive/monsterFiveResult';
-import { monsterSixTextForCommand } from './monster/monsterSixResult';
+import { monsterSixTextForCommand } from '../features/monsters/monsterSix/monsterSixResult';
 
 function rangeText(range: number[]): string {
   return range.length === 1

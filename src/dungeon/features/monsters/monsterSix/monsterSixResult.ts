@@ -1,17 +1,16 @@
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from '../../features/monsters/monsterCounts';
-import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
-import { characterResult } from './characterResult';
+} from '../monsterCounts';
+import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
+import { characterResult } from '../../../services/monster/characterResult';
 import {
   DragonSix,
   MonsterSix,
   monsterSix,
-} from '../../../tables/dungeon/monster/monsterSix';
-import { formatPartyResult } from '../../helpers/party/formatPartyResult';
-import type { PartyResult } from '../../models/character/characterSheet';
-import { dragonSubtableReminder } from '../../features/monsters/dragonSubtableReminder';
+} from './monsterSixTables';
+import type { PartyResult } from '../../../models/character/characterSheet';
+import { dragonSubtableReminder } from '../dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;
@@ -41,7 +40,7 @@ export const monsterSixTextForCommand = (
     }
     case MonsterSix.Character: {
       const characters = characterResult(6, dungeonLevel);
-      text = formatPartyResult(characters);
+      text = '';
       party = characters;
       break;
     }
@@ -78,7 +77,7 @@ export const monsterSixTextForCommand = (
     }
     case MonsterSix.Jackalwere_1to2: {
       const jackalwere = getNumberOfMonsters(6, dungeonLevel, 1, 2);
-      text = formatMonsterCount(jackalwere, `jackalwere`, `jackalwere`);
+      text = formatMonsterCount(jackalwere, 'jackalwere', 'jackalwere');
       break;
     }
     case MonsterSix.Lammasu_1to3: {
