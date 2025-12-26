@@ -10,7 +10,7 @@ import {
 import {
   describeMonsterOutcome,
   collectCharacterPartyMessages,
-} from './monsters';
+} from '../../features/monsters/render';
 import { collectTreasureCompactSummaries } from './treasure';
 
 export function renderCircularPoolDetail(

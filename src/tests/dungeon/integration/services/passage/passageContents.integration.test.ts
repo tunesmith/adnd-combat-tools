@@ -12,7 +12,7 @@ import type {
   PendingRoll,
 } from '../../../../../dungeon/domain/outcome';
 import { describeChamberRoomContents } from '../../../../../dungeon/adapters/render/chamberRoomContents';
-import { collectCharacterPartyMessages } from '../../../../../dungeon/adapters/render/monsters';
+import { collectCharacterPartyMessages } from '../../../../../dungeon/features/monsters/render';
 import { collectTreasureCompactMessages } from '../../../../../dungeon/adapters/render/treasure';
 import { renderTreasureContainerCompact } from '../../../../../dungeon/features/treasure/container/containerRender';
 import { resolveTreasureContainer } from '../../../../../dungeon/features/treasure/container/containerResolvers';

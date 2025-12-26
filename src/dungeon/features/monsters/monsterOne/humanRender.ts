@@ -1,35 +1,14 @@
-import type {
-  DungeonMessage,
-  DungeonTablePreview,
-  TableContext,
-} from '../../../../types/dungeon';
+import type { DungeonTablePreview, TableContext } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
+import { human, Human } from './monsterOneTables';
+import { buildPreview } from '../../../adapters/render/shared';
 import {
-  human,
-  Human,
-} from '../../../features/monsters/monsterOne/monsterOneTables';
-import { buildPreview } from '../shared';
-import {
-  monsterTextDescription,
   hasPendingChildren,
+  monsterTextDescription,
   type MonsterDescription,
-} from './shared';
-import {
-  summarizePartyResult,
-  type PartySummary,
-} from '../../../helpers/party/formatPartyResult';
-import { buildPartyCompactSummary } from './partySummary';
-
-export function buildPartyCharacterMessage(
-  summary: PartySummary,
-  display: 'detail' | 'compact'
-): DungeonMessage {
-  return {
-    kind: 'character-party',
-    summary,
-    display,
-  };
-}
+} from '../render/shared';
+import { summarizePartyResult } from '../../../helpers/party/formatPartyResult';
+import { buildPartyCharacterMessage } from '../render/partyMessage';
 
 export function describeHumanMonster(
   node: OutcomeEventNode
@@ -76,10 +55,6 @@ export function buildHumanPreview(
   });
 }
 
-export function buildPartyCompactText(summary: PartySummary): string {
-  return buildPartyCompactSummary(summary);
-}
-
 function humanLabel(command: Human): string {
   switch (command) {
     case Human.Bandit_5to15:
@@ -94,3 +69,4 @@ function humanLabel(command: Human): string {
       return Human[command] ?? 'Human';
   }
 }
+

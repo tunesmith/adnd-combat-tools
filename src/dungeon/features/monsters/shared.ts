@@ -2,16 +2,16 @@ import type { TableContext } from '../../../types/dungeon';
 import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
 import type { DungeonOutcomeNode, OutcomeEventNode } from '../../domain/outcome';
 
-export type WanderingMonsterContext = {
+export type MonsterDungeonLevelContext = {
   dungeonLevel?: number;
 };
 
-export type WanderingMonsterResolverOptions = WanderingMonsterContext & {
+export type MonsterDungeonLevelResolverOptions = MonsterDungeonLevelContext & {
   roll?: number;
 };
 
-export function createWanderingMonsterContextHandlers(
-  resolver: (options?: WanderingMonsterResolverOptions) => DungeonOutcomeNode,
+export function createMonsterDungeonLevelContextHandlers(
+  resolver: (options?: MonsterDungeonLevelResolverOptions) => DungeonOutcomeNode,
   fallbackDungeonLevel: number
 ): {
   resolvePending: PendingResolver;
@@ -72,7 +72,7 @@ function readDungeonLevelFromContextOrId(
   id: string,
   fallback?: number
 ): number | undefined {
-  if (isWanderingContext(context)) return context.level;
+  if (isMonsterDungeonLevelContext(context)) return context.level;
 
   const parts = id.split(':');
   if (parts.length >= 2) {
@@ -83,7 +83,7 @@ function readDungeonLevelFromContextOrId(
   return fallback;
 }
 
-function isWanderingContext(
+function isMonsterDungeonLevelContext(
   context: unknown
 ): context is Extract<TableContext, { kind: 'wandering' }> {
   return (

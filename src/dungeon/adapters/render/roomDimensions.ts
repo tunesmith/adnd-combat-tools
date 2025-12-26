@@ -14,7 +14,7 @@ import {
 import { renderNumberOfExitsCompact } from '../../features/navigation/exit/numberOfExitsRender';
 import { renderCompactUnusualDetails } from './unusualShape';
 import { describeChamberRoomContents } from './chamberRoomContents';
-import { collectCharacterPartyMessages } from './monsters';
+import { collectCharacterPartyMessages } from '../../features/monsters/render';
 
 export function renderRoomDimensionsDetail(
   outcome: OutcomeEventNode,

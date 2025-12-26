@@ -6,11 +6,11 @@ import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import {
   monsterOne,
   MonsterOne,
-} from '../../../features/monsters/monsterOne/monsterOneTables';
+} from '../monsterOne/monsterOneTables';
 import {
   monsterTwo,
   MonsterTwo,
-} from '../../../features/monsters/monsterTwo/monsterTwoTable';
+} from '../monsterTwo/monsterTwoTable';
 import {
   monsterThree,
   MonsterThree,
@@ -63,13 +63,16 @@ import {
   dragonTen,
   DragonTen,
 } from '../../../../tables/dungeon/monster/monsterTen';
-import { buildPreview, findChildEvent } from '../shared';
+import {
+  buildPreview,
+  findChildEvent,
+} from '../../../adapters/render/shared';
 import {
   monsterTextDescription,
   hasPendingChildren,
   type MonsterDescription,
 } from './shared';
-import { buildPartyCharacterMessage } from './human';
+import { buildPartyCharacterMessage } from './partyMessage';
 import { summarizePartyResult } from '../../../helpers/party/formatPartyResult';
 
 type StandardTableId =

@@ -6,9 +6,9 @@ import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   getMonsterLevelTable,
   MonsterLevel,
-} from '../../../features/monsters/monsterLevel/monsterLevelTable';
-import { buildPreview } from '../shared';
-import { hasPendingChildren, type MonsterDescription } from './shared';
+} from './monsterLevelTable';
+import { buildPreview } from '../../../adapters/render/shared';
+import { hasPendingChildren, type MonsterDescription } from '../render/shared';
 
 export function describeMonsterLevel(
   node: OutcomeEventNode

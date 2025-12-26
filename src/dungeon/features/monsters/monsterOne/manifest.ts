@@ -3,13 +3,13 @@ import { wrapResolver } from '../../shared';
 import {
   renderMonsterCompactNodes,
   renderMonsterDetailNodes,
-} from '../../../adapters/render/monsters';
+} from '../render';
 import { buildPreview } from '../../../adapters/render/shared';
 import { monsterOne, MonsterOne } from './monsterOneTables';
-import { createWanderingMonsterContextHandlers } from '../shared';
+import { createMonsterDungeonLevelContextHandlers } from '../shared';
 import { resolveMonsterOne } from './monsterOneResolvers';
 
-const { resolvePending, registry } = createWanderingMonsterContextHandlers(
+const { resolvePending, registry } = createMonsterDungeonLevelContextHandlers(
   resolveMonsterOne,
   1
 );

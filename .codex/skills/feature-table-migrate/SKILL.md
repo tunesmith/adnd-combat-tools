@@ -40,7 +40,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Add `resolvePending` for any table that can appear as a pending-roll (including subtables).
      - If pending resolution needs context, compute it from `pending.context` and/or `ancestors`.
    - For treasure tables, prefer `createTreasureMagicContextHandlers(resolver)` from `src/dungeon/features/treasure/shared.ts` to supply both `resolvePending` + `registry` without duplicating context parsing.
-   - For wandering monster tables, prefer `createWanderingMonsterContextHandlers(resolver, fallbackDungeonLevel)` from `src/dungeon/features/monsters/shared.ts` to supply both `resolvePending` + `registry` without duplicating context parsing.
+   - For monster tables that need a dungeon level, prefer `createMonsterDungeonLevelContextHandlers(resolver, fallbackDungeonLevel)` from `src/dungeon/features/monsters/shared.ts` to supply both `resolvePending` + `registry` without duplicating context parsing.
    - Add `registry` when the resolver needs special argument mapping.
      - Example: if a table resolver expects `countRoll` instead of `roll`, implement a custom `registry` that maps `roll` → `countRoll` (or refactor the resolver to accept `roll` directly).
    - If a treasure resolver creates nested `pending-roll` nodes and needs stable ids, propagate `context: { kind: 'treasureMagic', level, treasureRoll, rollIndex }` to the pending nodes so manual resolution can also compute stable `pending.id` values downstream.

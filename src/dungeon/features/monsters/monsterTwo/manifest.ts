@@ -3,13 +3,13 @@ import { wrapResolver } from '../../shared';
 import {
   renderMonsterCompactNodes,
   renderMonsterDetailNodes,
-} from '../../../adapters/render/monsters';
+} from '../render';
 import { buildPreview } from '../../../adapters/render/shared';
-import { createWanderingMonsterContextHandlers } from '../shared';
+import { createMonsterDungeonLevelContextHandlers } from '../shared';
 import { resolveMonsterTwo } from './monsterTwoResolvers';
 import { monsterTwo, MonsterTwo } from './monsterTwoTable';
 
-const { resolvePending, registry } = createWanderingMonsterContextHandlers(
+const { resolvePending, registry } = createMonsterDungeonLevelContextHandlers(
   resolveMonsterTwo,
   1
 );
@@ -37,4 +37,3 @@ export const monsterTwoTables: ReadonlyArray<DungeonTableDefinition> = [
     registry,
   },
 ];
-

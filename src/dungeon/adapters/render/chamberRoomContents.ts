@@ -15,9 +15,9 @@ import { describeChamberRoomStairs } from './chamberRoomStairs';
 import {
   describeMonsterOutcome,
   collectCharacterPartyMessages,
-} from './monsters';
+} from '../../features/monsters/render';
 import { renderTrickTrapCompact } from '../../features/hazards/trickTrap/trickTrapRender';
-import { compactMessagesToText } from './monsters/partySummary';
+import { compactMessagesToText } from './compactMessagesToText';
 import { collectTreasureCompactSummaries } from './treasure';
 
 export function renderChamberRoomContentsDetail(

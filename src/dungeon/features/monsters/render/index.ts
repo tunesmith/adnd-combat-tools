@@ -5,9 +5,12 @@ import type {
   TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import type { AppendPreviewFn } from '../shared';
+import type { AppendPreviewFn } from '../../../adapters/render/shared';
 import type { MonsterDescription } from './shared';
-import { describeMonsterLevel, buildMonsterLevelPreview } from './level';
+import {
+  describeMonsterLevel,
+  buildMonsterLevelPreview,
+} from '../monsterLevel/monsterLevelRender';
 import {
   describeStandardMonster,
   describeDragonMonster,
@@ -16,9 +19,10 @@ import {
   isStandardTableId,
   isDragonTableId,
 } from './standard';
-import { describeHumanMonster, buildHumanPreview } from './human';
-
-export { renderWanderingMonsterCompact } from './wandering';
+import {
+  describeHumanMonster,
+  buildHumanPreview,
+} from '../monsterOne/humanRender';
 
 export type { MonsterDescription } from './shared';
 
@@ -76,7 +80,6 @@ export function renderMonsterDetailNodes(
 ): DungeonRenderNode[] {
   const description = describeMonsterOutcome(outcome);
   if (!description) return [];
-  // console.log('renderMonsterCompactNodes', description);
   const heading: DungeonMessage = {
     kind: 'heading',
     level: 4,

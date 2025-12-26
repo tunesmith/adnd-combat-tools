@@ -3,7 +3,7 @@ import type {
   DungeonRenderNode,
   DungeonTablePreview,
 } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { periodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { TrickTrap } from '../../features/hazards/trickTrap/trickTrapTable';
@@ -15,12 +15,13 @@ import { renderPassageTurnCompact } from '../../features/navigation/passageTurn/
 import { describeChamberDimensions } from './chamberDimensions';
 import { renderStairsCompact } from '../../features/navigation/exit/stairsRender';
 import {
-  renderWanderingMonsterCompact,
+  describeMonsterOutcome,
   collectCharacterPartyMessages,
-} from './monsters';
+} from '../../features/monsters/render';
 import { renderTrickTrapCompact } from '../../features/hazards/trickTrap/trickTrapRender';
 import { renderChamberDimensionsCompact } from './chamberDimensions';
 import { collectTreasureCompactMessages } from './treasure';
+import { MonsterLevel } from '../../features/monsters/monsterLevel/monsterLevelTable';
 
 export const DEAD_END_FALLBACK_TEXT =
   'The passage reaches a dead end. Walls left, right, and ahead can each be checked for a 25% chance of a secret door. Characters would still need to roll to detect. ';
@@ -241,6 +242,151 @@ type PeriodicSummary = {
   nodes?: DungeonRenderNode[];
 };
 
+const MONSTER_LEVEL_KIND: Partial<Record<MonsterLevel, OutcomeEvent['kind']>> =
+  {
+    [MonsterLevel.One]: 'monsterOne',
+    [MonsterLevel.Two]: 'monsterTwo',
+    [MonsterLevel.Three]: 'monsterThree',
+    [MonsterLevel.Four]: 'monsterFour',
+    [MonsterLevel.Five]: 'monsterFive',
+    [MonsterLevel.Six]: 'monsterSix',
+    [MonsterLevel.Seven]: 'monsterSeven',
+    [MonsterLevel.Eight]: 'monsterEight',
+    [MonsterLevel.Nine]: 'monsterNine',
+    [MonsterLevel.Ten]: 'monsterTen',
+  };
+
+type MonsterEncounterSummary = {
+  text: string;
+  nodes?: DungeonRenderNode[];
+};
+
+function formatWanderingMonsterText(encounterText: string): string {
+  const suffix = encounterText.trim();
+  const rawText =
+    suffix.length > 0 ? `Wandering Monster: ${suffix}` : 'Wandering Monster.';
+  return rawText.endsWith(' ') || rawText.endsWith('.')
+    ? rawText
+    : `${rawText} `;
+}
+
+function summarizeMonsterEncounterFromMonsterLevelNode(
+  levelNode?: OutcomeEventNode
+): MonsterEncounterSummary {
+  if (!levelNode || levelNode.event.kind !== 'monsterLevel') {
+    return { text: '' };
+  }
+  return summarizeMonsterEncounterFromLevelNode(levelNode);
+}
+
+function summarizeMonsterEncounterFromLevelNode(
+  node: OutcomeEventNode
+): MonsterEncounterSummary {
+  if (node.event.kind !== 'monsterLevel') {
+    return { text: '' };
+  }
+  const mapping = MONSTER_LEVEL_KIND[node.event.result];
+  if (!mapping) {
+    return { text: '' };
+  }
+  const monsterNode = findChildEvent(node, mapping);
+  if (!monsterNode) {
+    return { text: '' };
+  }
+  const summary = summarizeMonsterEncounterFromMonsterNode(monsterNode);
+  if (!summary) {
+    return { text: '' };
+  }
+  return summary;
+}
+
+function summarizeMonsterEncounterFromMonsterNode(
+  node: OutcomeEventNode
+): MonsterEncounterSummary | undefined {
+  const description = describeMonsterOutcome(node);
+  if (description) {
+    if (description.compactMessages && description.compactMessages.length > 0) {
+      return {
+        text: '',
+        nodes: description.compactMessages,
+      };
+    }
+    const compact = description.compactText.trim();
+    if (compact.length > 0) {
+      return { text: compact };
+    }
+  }
+  switch (node.event.kind) {
+    case 'monsterOne': {
+      const humanNode = findChildEvent(node, 'human');
+      if (humanNode) return summarizeMonsterEncounterFromMonsterNode(humanNode);
+      if (node.event.text) return { text: node.event.text };
+      break;
+    }
+    case 'monsterTwo':
+    case 'monsterThree': {
+      const dragon = findChildEvent(node, 'dragonThree');
+      if (dragon) return summarizeMonsterEncounterFromMonsterNode(dragon);
+      break;
+    }
+    case 'monsterFour': {
+      const younger = findChildEvent(node, 'dragonFourYounger');
+      if (younger) return summarizeMonsterEncounterFromMonsterNode(younger);
+      const older = findChildEvent(node, 'dragonFourOlder');
+      if (older) return summarizeMonsterEncounterFromMonsterNode(older);
+      break;
+    }
+    case 'monsterFive': {
+      const younger = findChildEvent(node, 'dragonFiveYounger');
+      if (younger) return summarizeMonsterEncounterFromMonsterNode(younger);
+      const older = findChildEvent(node, 'dragonFiveOlder');
+      if (older) return summarizeMonsterEncounterFromMonsterNode(older);
+      break;
+    }
+    case 'monsterSix': {
+      const dragon = findChildEvent(node, 'dragonSix');
+      if (dragon) return summarizeMonsterEncounterFromMonsterNode(dragon);
+      break;
+    }
+    case 'monsterSeven': {
+      const dragon = findChildEvent(node, 'dragonSeven');
+      if (dragon) return summarizeMonsterEncounterFromMonsterNode(dragon);
+      break;
+    }
+    case 'monsterEight': {
+      const dragon = findChildEvent(node, 'dragonEight');
+      if (dragon) return summarizeMonsterEncounterFromMonsterNode(dragon);
+      break;
+    }
+    case 'monsterNine': {
+      const dragon = findChildEvent(node, 'dragonNine');
+      if (dragon) return summarizeMonsterEncounterFromMonsterNode(dragon);
+      break;
+    }
+    case 'monsterTen': {
+      const dragon = findChildEvent(node, 'dragonTen');
+      if (dragon) return summarizeMonsterEncounterFromMonsterNode(dragon);
+      break;
+    }
+    case 'dragonThree':
+    case 'dragonFourYounger':
+    case 'dragonFourOlder':
+    case 'dragonFiveYounger':
+    case 'dragonFiveOlder':
+    case 'dragonSix':
+    case 'dragonSeven':
+    case 'dragonEight':
+    case 'dragonNine':
+    case 'dragonTen':
+    case 'human':
+      if (node.event.text) return { text: node.event.text };
+      break;
+    default:
+      break;
+  }
+  return undefined;
+}
+
 function summarizePeriodicResult(
   result: PeriodicCheck,
   node: OutcomeEventNode,
@@ -367,17 +513,18 @@ function summarizePeriodicResult(
             })
           : { text: '' };
       const monsterLevelNode = findChildEvent(node, 'monsterLevel');
-      const monsterSummary = renderWanderingMonsterCompact(
+      const encounter = summarizeMonsterEncounterFromMonsterLevelNode(
         monsterLevelNode && monsterLevelNode.event.kind === 'monsterLevel'
           ? monsterLevelNode
           : undefined
       );
+      const monsterText = formatWanderingMonsterText(encounter.text);
       const combinedNodes = [
         ...(prefixSummary.nodes ?? []),
-        ...(monsterSummary.nodes ?? []),
+        ...(encounter.nodes ?? []),
       ];
       return {
-        text: `${prefixSummary.text}${monsterSummary.text}`,
+        text: `${prefixSummary.text}${monsterText}`,
         nodes: combinedNodes.length > 0 ? combinedNodes : undefined,
       };
     }

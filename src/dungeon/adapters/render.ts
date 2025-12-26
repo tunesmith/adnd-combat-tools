@@ -69,7 +69,7 @@ import {
   buildMonsterPreview,
   renderMonsterDetailNodes,
   renderMonsterCompactNodes,
-} from './render/monsters';
+} from '../features/monsters/render';
 import {
   renderTreasureDetail,
   renderTreasureCompactNodes,

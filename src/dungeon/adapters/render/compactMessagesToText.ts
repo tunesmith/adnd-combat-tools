@@ -1,9 +1,9 @@
-import { formatCharacterSummary } from '../../../helpers/party/formatPartyResult';
-import type { PartySummary } from '../../../helpers/party/formatPartyResult';
-import type { DungeonMessage } from '../../../../types/dungeon';
-import { iounStonesCompactSentence } from '../../../features/treasure/miscMagicE3/miscMagicE3SubtablesRender';
+import { formatCharacterSummary } from '../../helpers/party/formatPartyResult';
+import type { PartySummary } from '../../helpers/party/formatPartyResult';
+import type { DungeonMessage } from '../../../types/dungeon';
+import { iounStonesCompactSentence } from '../../features/treasure/miscMagicE3/miscMagicE3SubtablesRender';
 
-export function buildPartyCompactSummary(summary: PartySummary): string {
+function buildPartyCompactSummary(summary: PartySummary): string {
   const mainDescriptions = summary.main.map(({ member, followers }) => {
     const memberText = formatCharacterSummary(member);
     if (followers.length === 0) return memberText;
@@ -12,6 +12,7 @@ export function buildPartyCompactSummary(summary: PartySummary): string {
       .join(', ');
     return `${memberText} (followers: ${followerText})`;
   });
+
   const parts: string[] = [];
   if (mainDescriptions.length > 0) {
     parts.push(`Main characters: ${mainDescriptions.join('; ')}`);
@@ -45,3 +46,4 @@ function messageToText(message: DungeonMessage): string {
       return '';
   }
 }
+
