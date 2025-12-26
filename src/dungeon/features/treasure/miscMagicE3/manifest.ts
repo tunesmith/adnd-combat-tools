@@ -63,7 +63,9 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureFigurineOfWondrousPower',
     heading: 'Figurine of Wondrous Power',
     resolver: wrapResolver(resolveTreasureFigurineOfWondrousPower),
-    ...createTreasureMagicContextHandlers(resolveTreasureFigurineOfWondrousPower),
+    ...createTreasureMagicContextHandlers(
+      resolveTreasureFigurineOfWondrousPower
+    ),
     renderers: {
       renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
       renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
@@ -140,7 +142,9 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
     id: 'treasureHornOfValhallaAttunement',
     heading: 'Attunement',
     resolver: wrapResolver(resolveTreasureHornOfValhallaAttunement),
-    ...createTreasureMagicContextHandlers(resolveTreasureHornOfValhallaAttunement),
+    ...createTreasureMagicContextHandlers(
+      resolveTreasureHornOfValhallaAttunement
+    ),
     renderers: {
       renderDetail: renderTreasureHornOfValhallaAttunementDetail,
       renderCompact: renderTreasureHornOfValhallaAttunementCompact,
@@ -159,4 +163,3 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: () => resolveTreasureHornOfValhallaAlignment({}),
   },
 ];
-

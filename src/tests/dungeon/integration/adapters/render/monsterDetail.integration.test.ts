@@ -312,9 +312,8 @@ describe('Monster describe helpers', () => {
     const withReminder = resolveSequenceWithRolls([20, 1, 17, 23], 5);
     const reminderText =
       'A younger dragon is indicated. Roll on the younger dragon subtable for details.';
-    const reminderParagraphs = renderDetailTree(withReminder).filter(
-      isParagraph
-    );
+    const reminderParagraphs =
+      renderDetailTree(withReminder).filter(isParagraph);
     expect(reminderParagraphs.map((p) => p.text.trim())).toContain(
       reminderText
     );

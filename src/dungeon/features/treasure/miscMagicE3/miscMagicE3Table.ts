@@ -83,4 +83,3 @@ export const treasureMiscMagicE3: Table<TreasureMiscMagicE3> = {
     { range: [93, 100], command: TreasureMiscMagicE3.KeoghtomsOintment },
   ],
 };
-

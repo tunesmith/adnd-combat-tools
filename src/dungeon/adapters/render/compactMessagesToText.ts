@@ -46,4 +46,3 @@ function messageToText(message: DungeonMessage): string {
       return '';
   }
 }
-

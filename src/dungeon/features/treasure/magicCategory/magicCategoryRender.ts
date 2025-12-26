@@ -1,4 +1,7 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureMagicCategory,

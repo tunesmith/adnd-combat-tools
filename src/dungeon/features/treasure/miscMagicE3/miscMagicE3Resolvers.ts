@@ -5,10 +5,7 @@ import type {
   TreasureIounStoneStatus,
   TreasureIounStonesResult,
 } from '../../../domain/outcome';
-import {
-  treasureMiscMagicE3,
-  TreasureMiscMagicE3,
-} from './miscMagicE3Table';
+import { treasureMiscMagicE3, TreasureMiscMagicE3 } from './miscMagicE3Table';
 import {
   IOUN_STONE_DEFINITIONS,
   treasureFigurineMarbleElephant,
@@ -63,7 +60,9 @@ export function resolveTreasureMiscMagicE3(
     children.push({
       type: 'pending-roll',
       table: 'treasureFigurineOfWondrousPower',
-      id: rollIndex ? `treasureFigurineOfWondrousPower:${rollIndex}` : undefined,
+      id: rollIndex
+        ? `treasureFigurineOfWondrousPower:${rollIndex}`
+        : undefined,
       context,
     });
   } else if (command === TreasureMiscMagicE3.GirdleOfGiantStrength) {
@@ -169,7 +168,8 @@ export function resolveTreasureFigurineMarbleElephant(options?: {
 export function resolveTreasureGirdleOfGiantStrength(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureGirdleOfGiantStrength.sides);
+  const usedRoll =
+    options?.roll ?? rollDice(treasureGirdleOfGiantStrength.sides);
   const command: TreasureGirdleOfGiantStrength = getTableEntry(
     usedRoll,
     treasureGirdleOfGiantStrength
@@ -235,7 +235,10 @@ export function resolveTreasureIounStones(options?: {
     const preset = rolls[index];
     const usedRoll =
       preset !== undefined ? preset : rollDice(treasureIounStones.sides);
-    const type: TreasureIounStoneType = getTableEntry(usedRoll, treasureIounStones);
+    const type: TreasureIounStoneType = getTableEntry(
+      usedRoll,
+      treasureIounStones
+    );
     const definition = IOUN_STONE_DEFINITIONS[type];
     const firstIndex = seen.get(type);
     const status: TreasureIounStoneStatus =
@@ -287,7 +290,9 @@ export function resolveTreasureHornOfValhallaType(
     {
       type: 'pending-roll',
       table: 'treasureHornOfValhallaAttunement',
-      id: rollIndex ? `treasureHornOfValhallaAttunement:${rollIndex}` : undefined,
+      id: rollIndex
+        ? `treasureHornOfValhallaAttunement:${rollIndex}`
+        : undefined,
       context: {
         kind: 'treasureMagic',
         level: options?.level ?? 1,
@@ -322,7 +327,9 @@ export function resolveTreasureHornOfValhallaAttunement(
     children.push({
       type: 'pending-roll',
       table: 'treasureHornOfValhallaAlignment',
-      id: rollIndex ? `treasureHornOfValhallaAlignment:${rollIndex}` : undefined,
+      id: rollIndex
+        ? `treasureHornOfValhallaAlignment:${rollIndex}`
+        : undefined,
       context: {
         kind: 'treasureMagic',
         level: options?.level ?? 1,

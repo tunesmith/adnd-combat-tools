@@ -81,4 +81,3 @@ export const buildTreasureContainerPreview: TablePreviewFactory = (tableId) =>
       label: TreasureContainer[entry.command] ?? String(entry.command),
     })),
   });
-

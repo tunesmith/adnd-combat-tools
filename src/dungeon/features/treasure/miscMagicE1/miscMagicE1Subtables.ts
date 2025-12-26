@@ -185,4 +185,3 @@ export const treasureArtifactOrRelic: Table<TreasureArtifactOrRelic> = {
     { range: [100], command: TreasureArtifactOrRelic.WandOfOrcus },
   ],
 };
-

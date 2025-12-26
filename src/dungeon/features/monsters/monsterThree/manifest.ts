@@ -1,9 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import {
-  renderMonsterCompactNodes,
-  renderMonsterDetailNodes,
-} from '../render';
+import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import { buildPreview } from '../../../adapters/render/shared';
 import { createMonsterDungeonLevelContextHandlers } from '../shared';
 import {
@@ -12,7 +9,10 @@ import {
   MonsterThree,
   monsterThree,
 } from './monsterThreeTables';
-import { resolveDragonThree, resolveMonsterThree } from './monsterThreeResolvers';
+import {
+  resolveDragonThree,
+  resolveMonsterThree,
+} from './monsterThreeResolvers';
 
 const {
   resolvePending: resolveMonsterThreePending,
@@ -68,4 +68,3 @@ export const monsterThreeTables: ReadonlyArray<DungeonTableDefinition> = [
     registry: dragonThreeRegistry,
   },
 ];
-

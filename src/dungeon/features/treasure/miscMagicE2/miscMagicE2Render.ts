@@ -1,9 +1,9 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import {
-  treasureMiscMagicE2,
-  TreasureMiscMagicE2,
-} from './miscMagicE2Table';
+import { treasureMiscMagicE2, TreasureMiscMagicE2 } from './miscMagicE2Table';
 import {
   buildPreview,
   findChildEvent,

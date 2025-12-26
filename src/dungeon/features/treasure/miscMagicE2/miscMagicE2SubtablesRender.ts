@@ -1,4 +1,7 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureCarpetOfFlying,
@@ -37,7 +40,9 @@ export function renderTreasureCarpetOfFlyingDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${CARPET_SIZE_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${CARPET_SIZE_LABELS[outcome.event.result]}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -103,7 +108,9 @@ export function renderTreasureCloakOfProtectionDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${CLOAK_BONUS_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${CLOAK_BONUS_LABELS[outcome.event.result]}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -168,7 +175,9 @@ export function renderTreasureCrystalBallDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${CRYSTAL_BALL_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${CRYSTAL_BALL_LABELS[outcome.event.result]}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -232,7 +241,9 @@ export function renderTreasureDeckOfManyThingsDetail(
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [
-      `roll: ${outcome.roll} — ${DECK_OF_MANY_THINGS_LABELS[outcome.event.result]}`,
+      `roll: ${outcome.roll} — ${
+        DECK_OF_MANY_THINGS_LABELS[outcome.event.result]
+      }`,
     ],
   };
   const paragraph: DungeonMessage = {
@@ -281,11 +292,13 @@ export function deckSentence(result: TreasureDeckOfManyThings): string {
   return `There is a deck of many things containing ${plaques} plaques.`;
 }
 
-const EYES_OF_PETRIFICATION_LABELS: Record<TreasureEyesOfPetrification, string> =
-  {
-    [TreasureEyesOfPetrification.Basilisk]: 'eyes of petrification (basilisk)',
-    [TreasureEyesOfPetrification.Normal]: 'eyes of petrification (normal)',
-  };
+const EYES_OF_PETRIFICATION_LABELS: Record<
+  TreasureEyesOfPetrification,
+  string
+> = {
+  [TreasureEyesOfPetrification.Basilisk]: 'eyes of petrification (basilisk)',
+  [TreasureEyesOfPetrification.Normal]: 'eyes of petrification (normal)',
+};
 
 export function renderTreasureEyesOfPetrificationDetail(
   outcome: OutcomeEventNode,
@@ -300,7 +313,9 @@ export function renderTreasureEyesOfPetrificationDetail(
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [
-      `roll: ${outcome.roll} — ${EYES_OF_PETRIFICATION_LABELS[outcome.event.result]}`,
+      `roll: ${outcome.roll} — ${
+        EYES_OF_PETRIFICATION_LABELS[outcome.event.result]
+      }`,
     ],
   };
   const paragraph: DungeonMessage = {
@@ -346,4 +361,3 @@ export const buildTreasureEyesOfPetrificationPreview: TablePreviewFactory = (
 export function eyesSentence(result: TreasureEyesOfPetrification): string {
   return `There are ${EYES_OF_PETRIFICATION_LABELS[result]}.`;
 }
-

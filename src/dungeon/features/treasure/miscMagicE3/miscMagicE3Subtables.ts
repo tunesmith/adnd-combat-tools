@@ -346,4 +346,3 @@ export const IOUN_STONE_DEFINITIONS: Record<
     effect: 'burned out, "dead" stone',
   },
 };
-

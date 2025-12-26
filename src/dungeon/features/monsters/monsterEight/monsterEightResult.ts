@@ -1,14 +1,7 @@
-import {
-  formatMonsterCount,
-  getNumberOfMonsters,
-} from '../monsterCounts';
+import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import { characterResult } from '../../../services/monster/characterResult';
-import {
-  monsterEight,
-  MonsterEight,
-  DragonEight,
-} from './monsterEightTables';
+import { monsterEight, MonsterEight, DragonEight } from './monsterEightTables';
 import type { PartyResult } from '../../../models/character/characterSheet';
 import { dragonSubtableReminder } from '../dragonSubtableReminder';
 

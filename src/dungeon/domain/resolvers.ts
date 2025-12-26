@@ -152,9 +152,7 @@ import type {
   TreasureGemCategoryId,
 } from './outcome';
 import { human } from '../features/monsters/monsterOne/monsterOneTables';
-import {
-  humanTextForCommand,
-} from '../features/monsters/monsterOne/monsterOneResult';
+import { humanTextForCommand } from '../features/monsters/monsterOne/monsterOneResult';
 import {
   oneToFour,
   OneToFour,

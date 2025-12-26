@@ -1,4 +1,7 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureRodsStavesWands,
@@ -58,7 +61,11 @@ export function renderTreasureRodStaffWandDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureRodStaffWand') return [];
-  const heading: DungeonMessage = { kind: 'heading', level: 4, text: 'Rod, Staff, or Wand' };
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Rod, Staff, or Wand',
+  };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${resolveRodStaffWandLabel(outcome)}`],
@@ -77,7 +84,11 @@ export function renderTreasureRodStaffWandCompact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureRodStaffWand') return [];
-  const heading: DungeonMessage = { kind: 'heading', level: 4, text: 'Rod, Staff, or Wand' };
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Rod, Staff, or Wand',
+  };
   const text: DungeonMessage = {
     kind: 'paragraph',
     text: `There is a ${resolveRodStaffWandLabel(outcome)}.`,
@@ -92,14 +103,20 @@ export function renderTreasureStaffSerpentDetail(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureStaffSerpent') return [];
-  const heading: DungeonMessage = { kind: 'heading', level: 4, text: 'Serpent Form' };
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Serpent Form',
+  };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${SERPENT_LABELS[outcome.event.result]}`],
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: `The staff transforms into the ${SERPENT_LABELS[outcome.event.result]} form.`,
+    text: `The staff transforms into the ${
+      SERPENT_LABELS[outcome.event.result]
+    } form.`,
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -111,17 +128,25 @@ export function renderTreasureStaffSerpentCompact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   if (outcome.event.kind !== 'treasureStaffSerpent') return [];
-  const heading: DungeonMessage = { kind: 'heading', level: 4, text: 'Serpent Form' };
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Serpent Form',
+  };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: `The staff transforms into the ${SERPENT_LABELS[outcome.event.result]} form.`,
+    text: `The staff transforms into the ${
+      SERPENT_LABELS[outcome.event.result]
+    } form.`,
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
   return nodes;
 }
 
-export const buildTreasureRodStaffWandPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasureRodStaffWandPreview: TablePreviewFactory = (
+  tableId
+) =>
   buildPreview(tableId, {
     title: 'Rod, Staff, or Wand',
     sides: treasureRodsStavesWands.sides,
@@ -131,7 +156,9 @@ export const buildTreasureRodStaffWandPreview: TablePreviewFactory = (tableId) =
     })),
   });
 
-export const buildTreasureStaffSerpentPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasureStaffSerpentPreview: TablePreviewFactory = (
+  tableId
+) =>
   buildPreview(tableId, {
     title: 'Serpent Form',
     sides: treasureStaffSerpent.sides,

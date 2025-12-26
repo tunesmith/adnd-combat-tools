@@ -1,6 +1,9 @@
 import type { TableContext } from '../../../types/dungeon';
 import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
-import type { DungeonOutcomeNode, OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonOutcomeNode,
+  OutcomeEventNode,
+} from '../../domain/outcome';
 
 export type MonsterDungeonLevelContext = {
   dungeonLevel?: number;
@@ -11,7 +14,9 @@ export type MonsterDungeonLevelResolverOptions = MonsterDungeonLevelContext & {
 };
 
 export function createMonsterDungeonLevelContextHandlers(
-  resolver: (options?: MonsterDungeonLevelResolverOptions) => DungeonOutcomeNode,
+  resolver: (
+    options?: MonsterDungeonLevelResolverOptions
+  ) => DungeonOutcomeNode,
   fallbackDungeonLevel: number
 ): {
   resolvePending: PendingResolver;

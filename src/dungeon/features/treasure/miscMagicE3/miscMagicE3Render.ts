@@ -1,9 +1,9 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import {
-  treasureMiscMagicE3,
-  TreasureMiscMagicE3,
-} from './miscMagicE3Table';
+import { treasureMiscMagicE3, TreasureMiscMagicE3 } from './miscMagicE3Table';
 import {
   buildPreview,
   findChildEvent,
@@ -261,4 +261,3 @@ function articleFor(label: string): 'a' | 'an' {
   const first = label.trim().charAt(0).toLowerCase();
   return 'aeiou'.includes(first) ? 'an' : 'a';
 }
-

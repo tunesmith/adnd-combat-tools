@@ -1,9 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import {
-  renderMonsterCompactNodes,
-  renderMonsterDetailNodes,
-} from '../render';
+import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import { buildPreview } from '../../../adapters/render/shared';
 import { monsterOne, MonsterOne } from './monsterOneTables';
 import { createMonsterDungeonLevelContextHandlers } from '../shared';

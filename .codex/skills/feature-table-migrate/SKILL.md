@@ -20,22 +20,26 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
 ## Workflow
 
 1. Identify scope and context.
+
    - Use `rg "<tableId>" src` to find the table data, resolver, render, preview, registry, and tests.
    - Confirm the event kind and heading; keep ids/headings stable.
 
 2. Inventory files and choose placement.
+
    - Prefer `src/dungeon/features/<area>/<featureName>/` with a `manifest.ts`.
    - Move table data (enum + `Table<...>` entries) into the feature folder when owned by the feature; keep it in `src/tables/dungeon` only if it is shared across multiple features/areas.
      - After migrating a feature, `rg "tables/dungeon/<name>" src` to ensure no stale imports remain.
      - If the moved table exports types used by `src/tables/dungeon/dungeonTypes.ts`, update that file too (it hard-imports many dungeon enums/types and will break `tsc` if paths change).
 
 3. Create feature files and move code.
+
    - Create `<featureName>Table.ts` or `<featureName>Tables.ts` for table data.
    - Create `<featureName>Resolvers.ts` for resolver logic.
    - Create `<featureName>Render.ts` for detail/compact renderers and preview builder.
    - Update imports for moved tables and helpers.
 
 4. Add the manifest entry.
+
    - Add a `DungeonTableDefinition` entry with `id`, `heading`, `resolver`, `renderers`, `buildPreview`.
    - Add `resolvePending` for any table that can appear as a pending-roll (including subtables).
      - If pending resolution needs context, compute it from `pending.context` and/or `ancestors`.
@@ -47,6 +51,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Use `wrapResolver` or a typed resolver to avoid `unknown` options.
 
 5. Wire into the feature bundle.
+
    - Export the table list from the feature `manifest.ts`.
    - Add the new list to the category index:
      - `src/dungeon/features/treasure/index.ts`
@@ -56,6 +61,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Ensure the category exports `*_PENDING_RESOLVERS` via `createPendingResolverMap(...)` and re-export it from the category `bundle.ts`.
 
 6. Remove old wiring and duplicates.
+
    - Delete base resolver entries in `src/dungeon/helpers/registry.ts` for migrated ids.
    - Remove ids/headings from `src/dungeon/features/baseTables/bundle.ts` if the table is now a feature.
    - Remove manual adapters/previews in `src/dungeon/adapters/render.ts` if they still exist for that id.
@@ -64,6 +70,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Remove redundant cases from `src/dungeon/helpers/outcomeTree.ts` once `resolvePending` is feature-owned (remember `pending.table` may include suffixes like `:<rollIndex>`, so use the base id).
 
 7. Update imports and tests.
+
    - Update `src/dungeon/helpers/outcomeTree.ts` and tests that import the old resolver path.
    - Update moved enum/type imports in:
      - `src/dungeon/domain/outcome.ts`

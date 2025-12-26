@@ -1,4 +1,7 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   BAG_OF_HOLDING_STATS,
@@ -32,7 +35,9 @@ export function renderTreasureBagOfHoldingDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${labelForBagOfHolding(outcome.event.result)}`],
+    items: [
+      `roll: ${outcome.roll} — ${labelForBagOfHolding(outcome.event.result)}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -125,7 +130,9 @@ export function renderTreasureBagOfTricksDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${labelForBagOfTricks(outcome.event.result)}`],
+    items: [
+      `roll: ${outcome.roll} — ${labelForBagOfTricks(outcome.event.result)}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -203,7 +210,11 @@ export function renderTreasureBracersOfDefenseDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${labelForBracersOfDefense(outcome.event.result)}`],
+    items: [
+      `roll: ${outcome.roll} — ${labelForBracersOfDefense(
+        outcome.event.result
+      )}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -274,7 +285,11 @@ export function renderTreasureBucknardsEverfullPurseDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${labelForBucknardsEverfullPurse(outcome.event.result)}`],
+    items: [
+      `roll: ${outcome.roll} — ${labelForBucknardsEverfullPurse(
+        outcome.event.result
+      )}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -375,7 +390,9 @@ export function renderTreasureArtifactOrRelicDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${labelForArtifact(outcome.event.result)}`],
+    items: [
+      `roll: ${outcome.roll} — ${labelForArtifact(outcome.event.result)}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -422,4 +439,3 @@ function articleForArtifact(result: TreasureArtifactOrRelic): string {
   const first = label[0]?.toLowerCase() ?? 'a';
   return 'aeiou'.includes(first) ? 'an' : 'a';
 }
-

@@ -1,4 +1,7 @@
-import type { DungeonTablePreview, TableContext } from '../../../../types/dungeon';
+import type {
+  DungeonTablePreview,
+  TableContext,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { human, Human } from './monsterOneTables';
 import { buildPreview } from '../../../adapters/render/shared';
@@ -69,4 +72,3 @@ function humanLabel(command: Human): string {
       return Human[command] ?? 'Human';
   }
 }
-

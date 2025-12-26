@@ -53,4 +53,3 @@ export const protectionTables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: () => resolveTreasureProtectionHiddenBy({}),
   },
 ];
-

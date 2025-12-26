@@ -1,14 +1,7 @@
-import {
-  formatMonsterCount,
-  getNumberOfMonsters,
-} from '../monsterCounts';
+import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import { characterResult } from '../../../services/monster/characterResult';
-import {
-  monsterTen,
-  MonsterTen,
-  DragonTen,
-} from './monsterTenTables';
+import { monsterTen, MonsterTen, DragonTen } from './monsterTenTables';
 import type { PartyResult } from '../../../models/character/characterSheet';
 import { dragonSubtableReminder } from '../dragonSubtableReminder';
 

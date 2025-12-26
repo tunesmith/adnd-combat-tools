@@ -43,8 +43,7 @@ export function resolveTreasureProtectionType(
 export function resolveTreasureProtectionGuardedBy(
   options?: TreasureProtectionResolverOptions
 ): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureProtectionGuardedBy.sides);
+  const usedRoll = options?.roll ?? rollDice(treasureProtectionGuardedBy.sides);
   const command = getTableEntry(usedRoll, treasureProtectionGuardedBy);
   const event: OutcomeEvent = {
     kind: 'treasureProtectionGuardedBy',

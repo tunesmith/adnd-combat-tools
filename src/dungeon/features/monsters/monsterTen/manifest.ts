@@ -1,9 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import {
-  renderMonsterCompactNodes,
-  renderMonsterDetailNodes,
-} from '../render';
+import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import { buildPreview } from '../../../adapters/render/shared';
 import { createMonsterDungeonLevelContextHandlers } from '../shared';
 import {
@@ -19,10 +16,8 @@ const {
   registry: monsterTenRegistry,
 } = createMonsterDungeonLevelContextHandlers(resolveMonsterTen, 1);
 
-const {
-  resolvePending: resolveDragonTenPending,
-  registry: dragonTenRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveDragonTen, 10);
+const { resolvePending: resolveDragonTenPending, registry: dragonTenRegistry } =
+  createMonsterDungeonLevelContextHandlers(resolveDragonTen, 10);
 
 export const monsterTenTables: ReadonlyArray<DungeonTableDefinition> = [
   {

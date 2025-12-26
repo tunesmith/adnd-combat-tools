@@ -28,4 +28,3 @@ export const treasureContainer: Table<TreasureContainer> = {
     { range: [19, 20], command: TreasureContainer.Loose },
   ],
 };
-

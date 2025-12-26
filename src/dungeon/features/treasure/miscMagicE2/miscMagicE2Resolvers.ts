@@ -1,9 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
-import {
-  treasureMiscMagicE2,
-  TreasureMiscMagicE2,
-} from './miscMagicE2Table';
+import { treasureMiscMagicE2, TreasureMiscMagicE2 } from './miscMagicE2Table';
 import {
   treasureCarpetOfFlying,
   treasureCloakOfProtection,
@@ -102,8 +99,7 @@ export function resolveTreasureCarpetOfFlying(options?: {
 export function resolveTreasureCloakOfProtection(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureCloakOfProtection.sides);
+  const usedRoll = options?.roll ?? rollDice(treasureCloakOfProtection.sides);
   const command: TreasureCloakOfProtection = getTableEntry(
     usedRoll,
     treasureCloakOfProtection
@@ -157,8 +153,7 @@ export function resolveTreasureDeckOfManyThings(options?: {
 export function resolveTreasureEyesOfPetrification(options?: {
   roll?: number;
 }): DungeonOutcomeNode {
-  const usedRoll =
-    options?.roll ?? rollDice(treasureEyesOfPetrification.sides);
+  const usedRoll = options?.roll ?? rollDice(treasureEyesOfPetrification.sides);
   const command: TreasureEyesOfPetrification = getTableEntry(
     usedRoll,
     treasureEyesOfPetrification

@@ -1,9 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
-import {
-  treasureMiscMagicE1,
-  TreasureMiscMagicE1,
-} from './miscMagicE1Table';
+import { treasureMiscMagicE1, TreasureMiscMagicE1 } from './miscMagicE1Table';
 import type {
   TreasureArtifactOrRelic,
   TreasureBagOfHolding,

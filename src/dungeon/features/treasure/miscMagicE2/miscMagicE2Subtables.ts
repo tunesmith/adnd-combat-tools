@@ -78,4 +78,3 @@ export const treasureEyesOfPetrification: Table<TreasureEyesOfPetrification> = {
     { range: [26, 100], command: TreasureEyesOfPetrification.Normal },
   ],
 };
-

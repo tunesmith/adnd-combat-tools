@@ -216,7 +216,9 @@ export const dungeonSixteen: Table<MonsterLevel> = {
   ],
 };
 
-export function getMonsterLevelTable(dungeonLevel: number): Table<MonsterLevel> {
+export function getMonsterLevelTable(
+  dungeonLevel: number
+): Table<MonsterLevel> {
   switch (dungeonLevel) {
     case 1:
       return dungeonOne;

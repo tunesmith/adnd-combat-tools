@@ -281,4 +281,3 @@ export const buildTreasureProtectionHiddenByPreview: TablePreviewFactory = (
       label: HIDDEN_BY_LABELS[entry.command],
     })),
   });
-

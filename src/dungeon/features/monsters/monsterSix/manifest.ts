@@ -1,12 +1,14 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import {
-  renderMonsterCompactNodes,
-  renderMonsterDetailNodes,
-} from '../render';
+import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import { buildPreview } from '../../../adapters/render/shared';
 import { createMonsterDungeonLevelContextHandlers } from '../shared';
-import { DragonSix, dragonSix, MonsterSix, monsterSix } from './monsterSixTables';
+import {
+  DragonSix,
+  dragonSix,
+  MonsterSix,
+  monsterSix,
+} from './monsterSixTables';
 import { resolveDragonSix, resolveMonsterSix } from './monsterSixResolvers';
 
 const {
@@ -14,10 +16,8 @@ const {
   registry: monsterSixRegistry,
 } = createMonsterDungeonLevelContextHandlers(resolveMonsterSix, 1);
 
-const {
-  resolvePending: resolveDragonSixPending,
-  registry: dragonSixRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveDragonSix, 6);
+const { resolvePending: resolveDragonSixPending, registry: dragonSixRegistry } =
+  createMonsterDungeonLevelContextHandlers(resolveDragonSix, 6);
 
 export const monsterSixTables: ReadonlyArray<DungeonTableDefinition> = [
   {

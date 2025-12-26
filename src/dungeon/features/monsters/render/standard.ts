@@ -3,14 +3,8 @@ import type {
   TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
-import {
-  monsterOne,
-  MonsterOne,
-} from '../monsterOne/monsterOneTables';
-import {
-  monsterTwo,
-  MonsterTwo,
-} from '../monsterTwo/monsterTwoTable';
+import { monsterOne, MonsterOne } from '../monsterOne/monsterOneTables';
+import { monsterTwo, MonsterTwo } from '../monsterTwo/monsterTwoTable';
 import {
   monsterThree,
   MonsterThree,
@@ -63,10 +57,7 @@ import {
   dragonTen,
   DragonTen,
 } from '../monsterTen/monsterTenTables';
-import {
-  buildPreview,
-  findChildEvent,
-} from '../../../adapters/render/shared';
+import { buildPreview, findChildEvent } from '../../../adapters/render/shared';
 import {
   monsterTextDescription,
   hasPendingChildren,

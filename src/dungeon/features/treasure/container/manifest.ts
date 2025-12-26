@@ -20,4 +20,3 @@ export const containerTables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: () => resolveTreasureContainer({}),
   },
 ];
-

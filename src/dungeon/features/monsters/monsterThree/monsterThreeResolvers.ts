@@ -1,10 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
-import {
-  dragonThree,
-  MonsterThree,
-  monsterThree,
-} from './monsterThreeTables';
+import { dragonThree, MonsterThree, monsterThree } from './monsterThreeTables';
 import {
   dragonThreeTextForCommand,
   monsterThreeTextForCommand,

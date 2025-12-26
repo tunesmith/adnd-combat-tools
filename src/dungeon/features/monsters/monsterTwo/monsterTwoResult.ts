@@ -1,12 +1,6 @@
-import {
-  formatMonsterCount,
-  getNumberOfMonsters,
-} from '../monsterCounts';
+import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import {
-  MonsterTwo,
-  monsterTwo,
-} from './monsterTwoTable';
+import { MonsterTwo, monsterTwo } from './monsterTwoTable';
 import { characterResult } from '../../../services/monster/characterResult';
 import type { PartyResult } from '../../../models/character/characterSheet';
 

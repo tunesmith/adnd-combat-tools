@@ -59,4 +59,3 @@ export const dragonThree: Table<DragonThree> = {
     { range: [63, 100], command: DragonThree.White_VeryYoung_1 },
   ],
 };
-

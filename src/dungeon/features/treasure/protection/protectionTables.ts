@@ -100,4 +100,3 @@ export const treasureProtectionHiddenBy: Table<TreasureProtectionHiddenBy> = {
     { range: [16, 20], command: TreasureProtectionHiddenBy.SecretRoomNearby },
   ],
 };
-

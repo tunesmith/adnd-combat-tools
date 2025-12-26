@@ -73,7 +73,9 @@ export function resolveTreasureMagicCategory(
     children.push({
       type: 'pending-roll',
       table: 'treasureMiscMagicE1',
-      id: event.rollIndex ? `treasureMiscMagicE1:${event.rollIndex}` : undefined,
+      id: event.rollIndex
+        ? `treasureMiscMagicE1:${event.rollIndex}`
+        : undefined,
       context: {
         kind: 'treasureMagic',
         level: event.level,
@@ -85,7 +87,9 @@ export function resolveTreasureMagicCategory(
     children.push({
       type: 'pending-roll',
       table: 'treasureMiscMagicE2',
-      id: event.rollIndex ? `treasureMiscMagicE2:${event.rollIndex}` : undefined,
+      id: event.rollIndex
+        ? `treasureMiscMagicE2:${event.rollIndex}`
+        : undefined,
       context: {
         kind: 'treasureMagic',
         level: event.level,
@@ -97,7 +101,9 @@ export function resolveTreasureMagicCategory(
     children.push({
       type: 'pending-roll',
       table: 'treasureMiscMagicE3',
-      id: event.rollIndex ? `treasureMiscMagicE3:${event.rollIndex}` : undefined,
+      id: event.rollIndex
+        ? `treasureMiscMagicE3:${event.rollIndex}`
+        : undefined,
       context: {
         kind: 'treasureMagic',
         level: event.level,
@@ -109,7 +115,9 @@ export function resolveTreasureMagicCategory(
     children.push({
       type: 'pending-roll',
       table: 'treasureMiscMagicE4',
-      id: event.rollIndex ? `treasureMiscMagicE4:${event.rollIndex}` : undefined,
+      id: event.rollIndex
+        ? `treasureMiscMagicE4:${event.rollIndex}`
+        : undefined,
       context: {
         kind: 'treasureMagic',
         level: event.level,
@@ -121,7 +129,9 @@ export function resolveTreasureMagicCategory(
     children.push({
       type: 'pending-roll',
       table: 'treasureMiscMagicE5',
-      id: event.rollIndex ? `treasureMiscMagicE5:${event.rollIndex}` : undefined,
+      id: event.rollIndex
+        ? `treasureMiscMagicE5:${event.rollIndex}`
+        : undefined,
       context: {
         kind: 'treasureMagic',
         level: event.level,
@@ -159,7 +169,9 @@ export function resolveTreasureMagicCategory(
     children.push({
       type: 'pending-roll',
       table: 'treasureMiscWeapons',
-      id: event.rollIndex ? `treasureMiscWeapons:${event.rollIndex}` : undefined,
+      id: event.rollIndex
+        ? `treasureMiscWeapons:${event.rollIndex}`
+        : undefined,
       context: {
         kind: 'treasureMagic',
         level: event.level,

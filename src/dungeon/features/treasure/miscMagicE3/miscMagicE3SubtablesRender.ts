@@ -1,4 +1,7 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type {
   OutcomeEventNode,
   TreasureIounStonesResult,
@@ -101,7 +104,9 @@ function buildFigurineNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${figurinePreviewLabel(outcome.event.result)}`],
+    items: [
+      `roll: ${outcome.roll} — ${figurinePreviewLabel(outcome.event.result)}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -148,7 +153,9 @@ export function renderTreasureFigurineMarbleElephantDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${marbleElephantLabel(outcome.event.result)}`],
+    items: [
+      `roll: ${outcome.roll} — ${marbleElephantLabel(outcome.event.result)}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -237,7 +244,9 @@ export function renderTreasureGirdleOfGiantStrengthDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${GIANT_STRENGTH_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${GIANT_STRENGTH_LABELS[outcome.event.result]}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -307,7 +316,9 @@ export function renderTreasureInstrumentOfTheBardsDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${INSTRUMENT_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${INSTRUMENT_LABELS[outcome.event.result]}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -389,7 +400,9 @@ export function renderTreasureIronFlaskDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${IRON_FLASK_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${IRON_FLASK_LABELS[outcome.event.result]}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -603,7 +616,9 @@ export function renderTreasureHornOfValhallaTypeDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${HORN_TYPE_LABELS[outcome.event.result]}`],
+    items: [
+      `roll: ${outcome.roll} — ${HORN_TYPE_LABELS[outcome.event.result]}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -731,7 +746,9 @@ export function renderTreasureHornOfValhallaAlignmentDetail(
   };
   const bullet: DungeonMessage = {
     kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${hornAlignmentLabel(outcome.event.result)}`],
+    items: [
+      `roll: ${outcome.roll} — ${hornAlignmentLabel(outcome.event.result)}`,
+    ],
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
@@ -845,13 +862,17 @@ export function alignmentSentence(
   return `The horn is ${hornAlignmentLabel(alignment)}.`;
 }
 
-function hornAttunementLabel(attunement: TreasureHornOfValhallaAttunement): string {
+function hornAttunementLabel(
+  attunement: TreasureHornOfValhallaAttunement
+): string {
   return attunement === TreasureHornOfValhallaAttunement.NonAligned
     ? 'Non-aligned'
     : 'Aligned';
 }
 
-function hornAlignmentLabel(alignment: TreasureHornOfValhallaAlignment): string {
+function hornAlignmentLabel(
+  alignment: TreasureHornOfValhallaAlignment
+): string {
   return HORN_ALIGNMENT_LABELS[alignment];
 }
 

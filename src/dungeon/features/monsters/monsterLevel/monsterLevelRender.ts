@@ -3,10 +3,7 @@ import type {
   TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import {
-  getMonsterLevelTable,
-  MonsterLevel,
-} from './monsterLevelTable';
+import { getMonsterLevelTable, MonsterLevel } from './monsterLevelTable';
 import { buildPreview } from '../../../adapters/render/shared';
 import { hasPendingChildren, type MonsterDescription } from '../render/shared';
 

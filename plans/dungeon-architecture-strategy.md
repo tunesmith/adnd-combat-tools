@@ -181,4 +181,3 @@ We’re “done” when:
 - Generic message-to-text utilities should live in a generic module (not under a misleading path like `render/monsters/partySummary.ts`).
 - Avoid duplication of small helpers like `formatRange`; centralize once the migration settles to reduce churn.
 - Treat “services that format/render domain results” as features/render helpers, not as orchestration services.
-
