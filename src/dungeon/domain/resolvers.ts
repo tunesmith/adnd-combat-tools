@@ -3739,8 +3739,9 @@ export function resolveMonsterFour(options?: {
   const usedRoll = options?.roll ?? rollDice(monsterFour.sides);
   const result = getTableEntry(usedRoll, monsterFour);
   const children: DungeonOutcomeNode[] = [];
-  let text: string | undefined;
-  let party: PartyResult | undefined;
+  const resolved = monsterFourTextForCommand(dungeonLevel, result);
+  const party: PartyResult | undefined = resolved.party;
+  const text: string | undefined = party ? undefined : resolved.text;
   if (result === MonsterFour.DragonYounger) {
     children.push({
       type: 'pending-roll',
@@ -3753,10 +3754,6 @@ export function resolveMonsterFour(options?: {
       table: 'dragonFourOlder',
       context: { kind: 'wandering', level: dungeonLevel },
     });
-  } else {
-    const resolved = monsterFourTextForCommand(dungeonLevel, result);
-    text = resolved.party ? undefined : resolved.text;
-    party = resolved.party;
   }
   return {
     type: 'event',
@@ -3820,8 +3817,9 @@ export function resolveMonsterFive(options?: {
   const usedRoll = options?.roll ?? rollDice(monsterFive.sides);
   const result = getTableEntry(usedRoll, monsterFive);
   const children: DungeonOutcomeNode[] = [];
-  let text: string | undefined;
-  let party: PartyResult | undefined;
+  const resolved = monsterFiveTextForCommand(dungeonLevel, result);
+  const party: PartyResult | undefined = resolved.party;
+  const text: string | undefined = party ? undefined : resolved.text;
   if (result === MonsterFive.DragonYounger) {
     children.push({
       type: 'pending-roll',
@@ -3834,10 +3832,6 @@ export function resolveMonsterFive(options?: {
       table: 'dragonFiveOlder',
       context: { kind: 'wandering', level: dungeonLevel },
     });
-  } else {
-    const resolved = monsterFiveTextForCommand(dungeonLevel, result);
-    text = resolved.party ? undefined : resolved.text;
-    party = resolved.party;
   }
   return {
     type: 'event',
@@ -3901,18 +3895,15 @@ export function resolveMonsterSix(options?: {
   const usedRoll = options?.roll ?? rollDice(monsterSix.sides);
   const result = getTableEntry(usedRoll, monsterSix);
   const children: DungeonOutcomeNode[] = [];
-  let text: string | undefined;
-  let party: PartyResult | undefined;
+  const resolved = monsterSixTextForCommand(dungeonLevel, result);
+  const party: PartyResult | undefined = resolved.party;
+  const text: string | undefined = party ? undefined : resolved.text;
   if (result === MonsterSix.Dragon) {
     children.push({
       type: 'pending-roll',
       table: 'dragonSix',
       context: { kind: 'wandering', level: dungeonLevel },
     });
-  } else {
-    const resolved = monsterSixTextForCommand(dungeonLevel, result);
-    text = resolved.party ? undefined : resolved.text;
-    party = resolved.party;
   }
   return {
     type: 'event',

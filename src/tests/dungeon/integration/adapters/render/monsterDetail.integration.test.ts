@@ -1,6 +1,7 @@
 import {
   toCompactRender,
   toDetailRender,
+  renderDetailTree,
 } from '../../../../../dungeon/adapters/render';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
@@ -18,6 +19,7 @@ import {
 } from '../../../../../tables/dungeon/monster/monsterNine';
 import { MonsterTen } from '../../../../../tables/dungeon/monster/monsterTen';
 import { applyResolvedOutcome } from '../../../../../dungeon/helpers/outcomeTree';
+import { resolveSequenceWithRolls } from '../../../../support/dungeon/detail-utils';
 import type {
   PartyResult,
   CharacterSheet,
@@ -290,15 +292,40 @@ describe('Monster describe helpers', () => {
       dragonOutcome
     ) as OutcomeEventNode;
 
-    const detailParagraphs = toDetailRender(outcome).filter(isParagraph);
-    expect(detailParagraphs.map((p) => p.text.trim())).toContain(
-      'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die).'
-    );
+    const parentDetailParagraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(parentDetailParagraphs.map((p) => p.text.trim())).toEqual([]);
+
+    const detailParagraphs = renderDetailTree(outcome).filter(isParagraph);
+    const detailTexts = detailParagraphs.map((p) => p.text.trim());
+    const dragonText =
+      'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die).';
+    expect(detailTexts).toContain(dragonText);
+    expect(detailTexts.filter((t) => t === dragonText)).toHaveLength(1);
 
     const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
     expect(compactParagraphs.map((p) => p.text.trim())).toContain(
       'There are two brass dragons: one ancient (8 hp/die) and one old (6 hp/die).'
     );
+  });
+
+  test('dragon reminders appear before roll and de-dupe after resolution', () => {
+    const withReminder = resolveSequenceWithRolls([20, 1, 17, 23], 5);
+    const reminderText =
+      'A younger dragon is indicated. Roll on the younger dragon subtable for details.';
+    const reminderParagraphs = renderDetailTree(withReminder).filter(
+      isParagraph
+    );
+    expect(reminderParagraphs.map((p) => p.text.trim())).toContain(
+      reminderText
+    );
+
+    const withDragon = resolveSequenceWithRolls([20, 1, 17, 23, 1], 5);
+    const dragonText =
+      'There is 1 young adult black dragon with 4 hit points per die. (Determine the number of hit dice for a dragon as normal.)';
+    const dragonParagraphs = renderDetailTree(withDragon).filter(isParagraph);
+    const dragonTexts = dragonParagraphs.map((p) => p.text.trim());
+    expect(dragonTexts).toContain(dragonText);
+    expect(dragonTexts.filter((text) => text === dragonText)).toHaveLength(1);
   });
 
   test('human parties render structured detail and compact output', () => {

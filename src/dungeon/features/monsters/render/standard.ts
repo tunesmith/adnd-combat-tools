@@ -278,12 +278,13 @@ export function describeStandardMonster(
   const textInfo = monsterTextDescription(
     'text' in event ? event.text : undefined
   );
+  const suppressDetailParagraphs = hasResolvedDragonChild(node);
   return {
     heading: config.title,
     label:
       config.labels[event.result as keyof typeof config.labels] ??
       String(event.result),
-    detailParagraphs: textInfo.detailParagraphs,
+    detailParagraphs: suppressDetailParagraphs ? [] : textInfo.detailParagraphs,
     compactText: textInfo.compactText,
     appendPending: hasPendingChildren(node),
   };
@@ -403,4 +404,10 @@ function findDragonChildKind(
     default:
       return undefined;
   }
+}
+
+function hasResolvedDragonChild(node: OutcomeEventNode): boolean {
+  const childKind = findDragonChildKind(node);
+  if (!childKind) return false;
+  return !!findChildEvent(node, childKind);
 }

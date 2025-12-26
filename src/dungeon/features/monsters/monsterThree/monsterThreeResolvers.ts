@@ -18,18 +18,15 @@ export function resolveMonsterThree(options?: {
   const usedRoll = options?.roll ?? rollDice(monsterThree.sides);
   const result = getTableEntry(usedRoll, monsterThree);
   const children: DungeonOutcomeNode[] = [];
-  let text: string | undefined;
-  let party = undefined;
+  const resolved = monsterThreeTextForCommand(dungeonLevel, result);
+  const party = resolved.party;
+  const text = party ? undefined : resolved.text;
   if (result === MonsterThree.Dragon) {
     children.push({
       type: 'pending-roll',
       table: 'dragonThree',
       context: { kind: 'wandering', level: dungeonLevel },
     });
-  } else {
-    const resolved = monsterThreeTextForCommand(dungeonLevel, result);
-    text = resolved.party ? undefined : resolved.text;
-    party = resolved.party;
   }
   return {
     type: 'event',
