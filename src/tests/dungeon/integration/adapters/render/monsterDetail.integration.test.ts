@@ -11,7 +11,7 @@ import {
 } from '../../../../../dungeon/features/monsters/monsterOne/monsterOneTables';
 import { MonsterTwo } from '../../../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
 import { MonsterLevel } from '../../../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
-import { MonsterSeven } from '../../../../../tables/dungeon/monster/monsterSeven';
+import { MonsterSeven } from '../../../../../dungeon/features/monsters/monsterSeven/monsterSevenTables';
 import { MonsterEight } from '../../../../../tables/dungeon/monster/monsterEight';
 import {
   MonsterNine,
