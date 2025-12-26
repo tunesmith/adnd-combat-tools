@@ -60,7 +60,7 @@ import {
 import {
   MonsterNine,
   monsterNine,
-} from '../../tables/dungeon/monster/monsterNine';
+} from '../features/monsters/monsterNine/monsterNineTables';
 import {
   MonsterTen,
   monsterTen,

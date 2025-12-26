@@ -15,10 +15,8 @@ import {
   resolveChamberDimensions,
   resolveChamberRoomContents,
   resolveChamberRoomStairs,
-  resolveDragonNine,
   resolveDragonTen,
   resolveHuman,
-  resolveMonsterNine,
   resolveMonsterTen,
   resolveRoomDimensions,
   resolveCircularContents,
@@ -157,17 +155,9 @@ function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
 }
 
 const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
-  monsterNine: ({ roll, context }) => {
-    const dungeonLevel = readDungeonLevel(context, 'monsterNine', 1);
-    return fromOutcome(resolveMonsterNine({ roll, dungeonLevel }));
-  },
   monsterTen: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterTen', 1);
     return fromOutcome(resolveMonsterTen({ roll, dungeonLevel }));
-  },
-  dragonNine: ({ roll, context }) => {
-    const dungeonLevel = readDungeonLevel(context, 'dragonNine', 9);
-    return fromOutcome(resolveDragonNine({ roll, dungeonLevel }));
   },
   dragonTen: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonTen', 10);

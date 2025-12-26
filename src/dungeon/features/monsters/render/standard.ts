@@ -56,7 +56,7 @@ import {
   MonsterNine,
   dragonNine,
   DragonNine,
-} from '../../../../tables/dungeon/monster/monsterNine';
+} from '../monsterNine/monsterNineTables';
 import {
   monsterTen,
   MonsterTen,

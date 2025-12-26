@@ -1,17 +1,16 @@
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from '../../features/monsters/monsterCounts';
-import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
-import { characterResult } from './characterResult';
+} from '../monsterCounts';
+import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
+import { characterResult } from '../../../services/monster/characterResult';
 import {
   monsterNine,
   MonsterNine,
   DragonNine,
-} from '../../../tables/dungeon/monster/monsterNine';
-import { formatPartyResult } from '../../helpers/party/formatPartyResult';
-import type { PartyResult } from '../../models/character/characterSheet';
-import { dragonSubtableReminder } from '../../features/monsters/dragonSubtableReminder';
+} from './monsterNineTables';
+import type { PartyResult } from '../../../models/character/characterSheet';
+import { dragonSubtableReminder } from '../dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;
@@ -37,7 +36,7 @@ export const monsterNineTextForCommand = (
   switch (command) {
     case MonsterNine.Character: {
       const characters = characterResult(9, dungeonLevel);
-      text = formatPartyResult(characters);
+      text = '';
       party = characters;
       break;
     }

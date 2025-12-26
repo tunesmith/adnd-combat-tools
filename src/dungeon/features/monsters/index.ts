@@ -12,6 +12,7 @@ import { monsterFiveTables } from './monsterFive/manifest';
 import { monsterSixTables } from './monsterSix/manifest';
 import { monsterSevenTables } from './monsterSeven/manifest';
 import { monsterEightTables } from './monsterEight/manifest';
+import { monsterNineTables } from './monsterNine/manifest';
 import { monsterThreeTables } from './monsterThree/manifest';
 import { monsterTwoTables } from './monsterTwo/manifest';
 
@@ -31,6 +32,7 @@ const monsterDefinitions = defineMonsterTables([
   ...monsterSixTables,
   ...monsterSevenTables,
   ...monsterEightTables,
+  ...monsterNineTables,
 ] as ReadonlyArray<DungeonTableDefinition<unknown>>);
 
 export const MONSTER_TABLE_DEFINITIONS = monsterDefinitions;

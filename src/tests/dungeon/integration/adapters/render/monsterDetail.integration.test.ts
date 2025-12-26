@@ -16,7 +16,7 @@ import { MonsterEight } from '../../../../../dungeon/features/monsters/monsterEi
 import {
   MonsterNine,
   DragonNine,
-} from '../../../../../tables/dungeon/monster/monsterNine';
+} from '../../../../../dungeon/features/monsters/monsterNine/monsterNineTables';
 import { MonsterTen } from '../../../../../tables/dungeon/monster/monsterTen';
 import { applyResolvedOutcome } from '../../../../../dungeon/helpers/outcomeTree';
 import { resolveSequenceWithRolls } from '../../../../support/dungeon/detail-utils';
