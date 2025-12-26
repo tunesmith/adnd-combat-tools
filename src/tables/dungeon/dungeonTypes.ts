@@ -69,7 +69,10 @@ import type {
   DragonSeven,
   MonsterSeven,
 } from '../../dungeon/features/monsters/monsterSeven/monsterSevenTables';
-import type { DragonEight, MonsterEight } from './monster/monsterEight';
+import type {
+  DragonEight,
+  MonsterEight,
+} from '../../dungeon/features/monsters/monsterEight/monsterEightTables';
 import type { DragonNine, MonsterNine } from './monster/monsterNine';
 import type { DragonTen, MonsterTen } from './monster/monsterTen';
 import type { CharacterRace } from './monster/character/characterRace';

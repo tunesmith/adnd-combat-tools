@@ -69,7 +69,7 @@ import type {
 import type {
   MonsterEight,
   DragonEight,
-} from '../../tables/dungeon/monster/monsterEight';
+} from '../features/monsters/monsterEight/monsterEightTables';
 import type {
   MonsterNine,
   DragonNine,

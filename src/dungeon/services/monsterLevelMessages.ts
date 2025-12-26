@@ -56,7 +56,7 @@ import {
 import {
   MonsterEight,
   monsterEight,
-} from '../../tables/dungeon/monster/monsterEight';
+} from '../features/monsters/monsterEight/monsterEightTables';
 import {
   MonsterNine,
   monsterNine,

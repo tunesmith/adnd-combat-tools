@@ -154,11 +154,6 @@ import type {
 } from './outcome';
 import { human } from '../features/monsters/monsterOne/monsterOneTables';
 import {
-  monsterEight,
-  MonsterEight,
-  dragonEight,
-} from '../../tables/dungeon/monster/monsterEight';
-import {
   monsterNine,
   MonsterNine,
   dragonNine,
@@ -171,10 +166,6 @@ import {
 import {
   humanTextForCommand,
 } from '../features/monsters/monsterOne/monsterOneResult';
-import {
-  monsterEightTextForCommand,
-  dragonEightTextForCommand,
-} from '../services/monster/monsterEightResult';
 import {
   monsterNineTextForCommand,
   dragonNineTextForCommand,
@@ -3691,38 +3682,6 @@ export function resolveTransporterLocation(options?: {
 
 export { resolveIllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallResolvers';
 
-export function resolveMonsterEight(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 1;
-  const usedRoll = options?.roll ?? rollDice(monsterEight.sides);
-  const result = getTableEntry(usedRoll, monsterEight);
-  const children: DungeonOutcomeNode[] = [];
-  const resolved = monsterEightTextForCommand(dungeonLevel, result);
-  const party: PartyResult | undefined = resolved.party;
-  const text: string | undefined = party ? undefined : resolved.text;
-  if (result === MonsterEight.Dragon) {
-    children.push({
-      type: 'pending-roll',
-      table: 'dragonEight',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'monsterEight',
-      result,
-      dungeonLevel,
-      text,
-      party,
-    },
-    children: children.length ? children : undefined,
-  };
-}
-
 export function resolveMonsterNine(options?: {
   roll?: number;
   dungeonLevel?: number;
@@ -3784,26 +3743,6 @@ export function resolveMonsterTen(options?: {
       party,
     },
     children: children.length ? children : undefined,
-  };
-}
-
-export function resolveDragonEight(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 8;
-  const usedRoll = options?.roll ?? rollDice(dragonEight.sides);
-  const result = getTableEntry(usedRoll, dragonEight);
-  const text = dragonEightTextForCommand(dungeonLevel, result);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'dragonEight',
-      result,
-      dungeonLevel,
-      text,
-    } as OutcomeEvent,
   };
 }
 

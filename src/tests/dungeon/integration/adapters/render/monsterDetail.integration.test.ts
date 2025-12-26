@@ -12,7 +12,7 @@ import {
 import { MonsterTwo } from '../../../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
 import { MonsterLevel } from '../../../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
 import { MonsterSeven } from '../../../../../dungeon/features/monsters/monsterSeven/monsterSevenTables';
-import { MonsterEight } from '../../../../../tables/dungeon/monster/monsterEight';
+import { MonsterEight } from '../../../../../dungeon/features/monsters/monsterEight/monsterEightTables';
 import {
   MonsterNine,
   DragonNine,

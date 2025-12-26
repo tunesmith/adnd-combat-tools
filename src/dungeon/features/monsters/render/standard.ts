@@ -50,7 +50,7 @@ import {
   MonsterEight,
   dragonEight,
   DragonEight,
-} from '../../../../tables/dungeon/monster/monsterEight';
+} from '../monsterEight/monsterEightTables';
 import {
   monsterNine,
   MonsterNine,
