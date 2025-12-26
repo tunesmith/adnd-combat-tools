@@ -42,7 +42,7 @@ import {
   dragonFiveYounger,
   DragonFiveOlder,
   dragonFiveOlder,
-} from '../../tables/dungeon/monster/monsterFive';
+} from '../features/monsters/monsterFive/monsterFiveTables';
 import {
   MonsterSix,
   monsterSix,
@@ -72,7 +72,7 @@ import {
 import { monsterTwoTextForCommand } from '../features/monsters/monsterTwo/monsterTwoResult';
 import { monsterThreeTextForCommand } from '../features/monsters/monsterThree/monsterThreeResult';
 import { monsterFourTextForCommand } from '../features/monsters/monsterFour/monsterFourResult';
-import { monsterFiveTextForCommand } from './monster/monsterFiveResult';
+import { monsterFiveTextForCommand } from '../features/monsters/monsterFive/monsterFiveResult';
 import { monsterSixTextForCommand } from './monster/monsterSixResult';
 
 function rangeText(range: number[]): string {

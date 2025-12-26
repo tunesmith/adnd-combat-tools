@@ -26,14 +26,11 @@ import {
   resolvePoolAlignment,
   resolveTransporterLocation,
   resolveTrickTrap,
-  resolveMonsterFive,
   resolveMonsterSix,
   resolveMonsterSeven,
   resolveMonsterEight,
   resolveMonsterNine,
   resolveMonsterTen,
-  resolveDragonFiveYounger,
-  resolveDragonFiveOlder,
   resolveDragonSix,
   resolveDragonSeven,
   resolveDragonEight,
@@ -846,10 +843,6 @@ function resolvePendingNode(
       return resolveTrickTrap({});
     case 'illusionaryWallNature':
       return resolveIllusionaryWallNature({});
-    case 'monsterFive': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveMonsterFive({ dungeonLevel });
-    }
     case 'monsterSix': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterSix({ dungeonLevel });
@@ -869,14 +862,6 @@ function resolvePendingNode(
     case 'monsterTen': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 1);
       return resolveMonsterTen({ dungeonLevel });
-    }
-    case 'dragonFiveYounger': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 5);
-      return resolveDragonFiveYounger({ dungeonLevel });
-    }
-    case 'dragonFiveOlder': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 5);
-      return resolveDragonFiveOlder({ dungeonLevel });
     }
     case 'dragonSix': {
       const dungeonLevel = readDungeonLevelFromPending(pending, 6);

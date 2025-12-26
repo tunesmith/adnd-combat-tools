@@ -154,12 +154,6 @@ import type {
 } from './outcome';
 import { human } from '../features/monsters/monsterOne/monsterOneTables';
 import {
-  monsterFive,
-  MonsterFive,
-  dragonFiveYounger,
-  dragonFiveOlder,
-} from '../../tables/dungeon/monster/monsterFive';
-import {
   monsterSix,
   MonsterSix,
   dragonSix,
@@ -187,11 +181,6 @@ import {
 import {
   humanTextForCommand,
 } from '../features/monsters/monsterOne/monsterOneResult';
-import {
-  monsterFiveTextForCommand,
-  dragonFiveYoungerTextForCommand,
-  dragonFiveOlderTextForCommand,
-} from '../services/monster/monsterFiveResult';
 import {
   monsterSixTextForCommand,
   dragonSixTextForCommand,
@@ -3719,84 +3708,6 @@ export function resolveTransporterLocation(options?: {
 }
 
 export { resolveIllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallResolvers';
-
-export function resolveMonsterFive(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 1;
-  const usedRoll = options?.roll ?? rollDice(monsterFive.sides);
-  const result = getTableEntry(usedRoll, monsterFive);
-  const children: DungeonOutcomeNode[] = [];
-  const resolved = monsterFiveTextForCommand(dungeonLevel, result);
-  const party: PartyResult | undefined = resolved.party;
-  const text: string | undefined = party ? undefined : resolved.text;
-  if (result === MonsterFive.DragonYounger) {
-    children.push({
-      type: 'pending-roll',
-      table: 'dragonFiveYounger',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
-  } else if (result === MonsterFive.DragonOlder) {
-    children.push({
-      type: 'pending-roll',
-      table: 'dragonFiveOlder',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'monsterFive',
-      result,
-      dungeonLevel,
-      text,
-      party,
-    },
-    children: children.length ? children : undefined,
-  };
-}
-
-export function resolveDragonFiveYounger(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 5;
-  const usedRoll = options?.roll ?? rollDice(dragonFiveYounger.sides);
-  const result = getTableEntry(usedRoll, dragonFiveYounger);
-  const text = dragonFiveYoungerTextForCommand(dungeonLevel, result);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'dragonFiveYounger',
-      result,
-      dungeonLevel,
-      text,
-    },
-  };
-}
-
-export function resolveDragonFiveOlder(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 5;
-  const usedRoll = options?.roll ?? rollDice(dragonFiveOlder.sides);
-  const result = getTableEntry(usedRoll, dragonFiveOlder);
-  const text = dragonFiveOlderTextForCommand(dungeonLevel, result);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'dragonFiveOlder',
-      result,
-      dungeonLevel,
-      text,
-    },
-  };
-}
 
 export function resolveMonsterSix(options?: {
   roll?: number;

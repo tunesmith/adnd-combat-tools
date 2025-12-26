@@ -32,7 +32,7 @@ import {
   DragonFiveYounger,
   dragonFiveOlder,
   DragonFiveOlder,
-} from '../../../../tables/dungeon/monster/monsterFive';
+} from '../monsterFive/monsterFiveTables';
 import {
   monsterSix,
   MonsterSix,

@@ -57,7 +57,7 @@ import type {
   MonsterFive,
   DragonFiveYounger,
   DragonFiveOlder,
-} from '../../tables/dungeon/monster/monsterFive';
+} from '../features/monsters/monsterFive/monsterFiveTables';
 import type {
   MonsterSix,
   DragonSix,

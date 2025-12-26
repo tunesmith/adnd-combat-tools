@@ -15,15 +15,12 @@ import {
   resolveChamberDimensions,
   resolveChamberRoomContents,
   resolveChamberRoomStairs,
-  resolveDragonFiveOlder,
-  resolveDragonFiveYounger,
   resolveDragonSix,
   resolveDragonSeven,
   resolveDragonEight,
   resolveDragonNine,
   resolveDragonTen,
   resolveHuman,
-  resolveMonsterFive,
   resolveMonsterSix,
   resolveMonsterSeven,
   resolveMonsterEight,
@@ -166,10 +163,6 @@ function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
 }
 
 const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
-  monsterFive: ({ roll, context }) => {
-    const dungeonLevel = readDungeonLevel(context, 'monsterFive', 1);
-    return fromOutcome(resolveMonsterFive({ roll, dungeonLevel }));
-  },
   monsterSix: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterSix', 1);
     return fromOutcome(resolveMonsterSix({ roll, dungeonLevel }));
@@ -189,14 +182,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
   monsterTen: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'monsterTen', 1);
     return fromOutcome(resolveMonsterTen({ roll, dungeonLevel }));
-  },
-  dragonFiveYounger: ({ roll, context }) => {
-    const dungeonLevel = readDungeonLevel(context, 'dragonFiveYounger', 5);
-    return fromOutcome(resolveDragonFiveYounger({ roll, dungeonLevel }));
-  },
-  dragonFiveOlder: ({ roll, context }) => {
-    const dungeonLevel = readDungeonLevel(context, 'dragonFiveOlder', 5);
-    return fromOutcome(resolveDragonFiveOlder({ roll, dungeonLevel }));
   },
   dragonSix: ({ roll, context }) => {
     const dungeonLevel = readDungeonLevel(context, 'dragonSix', 6);

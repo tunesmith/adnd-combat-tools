@@ -1,18 +1,17 @@
 import {
   formatMonsterCount,
   getNumberOfMonsters,
-} from '../../features/monsters/monsterCounts';
-import { getTableEntry, rollDice } from '../../helpers/dungeonLookup';
-import { characterResult } from './characterResult';
+} from '../monsterCounts';
+import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
+import { characterResult } from '../../../services/monster/characterResult';
 import {
   DragonFiveOlder,
   DragonFiveYounger,
   MonsterFive,
   monsterFive,
-} from '../../../tables/dungeon/monster/monsterFive';
-import { formatPartyResult } from '../../helpers/party/formatPartyResult';
-import type { PartyResult } from '../../models/character/characterSheet';
-import { dragonSubtableReminder } from '../../features/monsters/dragonSubtableReminder';
+} from './monsterFiveTables';
+import type { PartyResult } from '../../../models/character/characterSheet';
+import { dragonSubtableReminder } from '../dragonSubtableReminder';
 
 type MonsterTextResult = {
   text: string;
@@ -28,7 +27,7 @@ export const monsterFiveTextForCommand = (
   switch (command) {
     case MonsterFive.Character: {
       const characters = characterResult(5, dungeonLevel);
-      text = formatPartyResult(characters);
+      text = '';
       party = characters;
       break;
     }
@@ -90,7 +89,7 @@ export const monsterFiveTextForCommand = (
       text = formatMonsterCount(
         lizards,
         'subterranean lizard',
-        `subterranean lizards`
+        'subterranean lizards'
       );
       break;
     }
