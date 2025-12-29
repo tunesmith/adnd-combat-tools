@@ -29,16 +29,6 @@ import {
   resolveTreasureMiscMagicE5,
   resolveTreasureRobeOfUsefulItems,
   resolveTreasureRobeOfTheArchmagi,
-  resolveTreasureMiscMagicE4,
-  resolveTreasureManualOfGolems,
-  resolveTreasureMedallionRange,
-  resolveTreasureNecklaceOfMissiles,
-  resolveTreasurePearlOfPowerEffect,
-  resolveTreasurePearlOfPowerRecall,
-  resolveTreasurePearlOfWisdom,
-  resolveTreasurePeriaptProofAgainstPoison,
-  resolveTreasurePhylacteryLongYears,
-  resolveTreasureQuaalFeatherToken,
   resolveTreasureScarabOfProtectionCurse,
   resolveTreasureScarabOfProtectionCurseResolution,
   resolveTreasureArmorShields,
@@ -238,8 +228,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureMiscMagicE4: ({ roll }) =>
-    fromOutcome(resolveTreasureMiscMagicE4({ roll })),
   treasureMiscMagicE5: ({ roll }) =>
     fromOutcome(resolveTreasureMiscMagicE5({ roll })),
   treasureArmorShields: ({ roll, context }) => {
@@ -563,24 +551,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
     fromOutcome(resolveTreasureScarabOfProtectionCurse({ roll })),
   treasureScarabOfProtectionCurseResolution: ({ roll }) =>
     fromOutcome(resolveTreasureScarabOfProtectionCurseResolution({ roll })),
-  treasureManualOfGolems: ({ roll }) =>
-    fromOutcome(resolveTreasureManualOfGolems({ roll })),
-  treasureMedallionRange: ({ roll }) =>
-    fromOutcome(resolveTreasureMedallionRange({ roll })),
-  treasureNecklaceOfMissiles: ({ roll }) =>
-    fromOutcome(resolveTreasureNecklaceOfMissiles({ roll })),
-  treasurePearlOfPowerEffect: ({ roll }) =>
-    fromOutcome(resolveTreasurePearlOfPowerEffect({ roll })),
-  treasurePearlOfPowerRecall: ({ roll }) =>
-    fromOutcome(resolveTreasurePearlOfPowerRecall({ roll })),
-  treasurePearlOfWisdom: ({ roll }) =>
-    fromOutcome(resolveTreasurePearlOfWisdom({ roll })),
-  treasurePeriaptProofAgainstPoison: ({ roll }) =>
-    fromOutcome(resolveTreasurePeriaptProofAgainstPoison({ roll })),
-  treasurePhylacteryLongYears: ({ roll }) =>
-    fromOutcome(resolveTreasurePhylacteryLongYears({ roll })),
-  treasureQuaalFeatherToken: ({ roll }) =>
-    fromOutcome(resolveTreasureQuaalFeatherToken({ roll })),
 };
 
 const HAZARD_TABLE_RESOLVERS: Record<string, RegistryResolver> =

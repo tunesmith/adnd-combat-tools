@@ -141,25 +141,25 @@ import type {
   TreasureInstrumentOfTheBards,
   TreasureIronFlaskContent,
 } from '../features/treasure/miscMagicE3/miscMagicE3Subtables';
-import type { TreasureMiscMagicE4 } from '../../tables/dungeon/treasureMiscMagicE4';
+import type { TreasureMiscMagicE4 } from '../features/treasure/miscMagicE4/miscMagicE4Table';
 import type { TreasureMiscMagicE5 } from '../../tables/dungeon/treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from '../../tables/dungeon/treasureRobeOfTheArchmagi';
 import type { RobeOfUsefulItemsExtraPatch } from '../../tables/dungeon/treasureRobeOfUsefulItems';
 import type { RobeOfUsefulItemsBasePatchType } from '../helpers/robeOfUsefulItems';
 import type { TreasureStaffSerpent } from '../features/treasure/rodStaffWand/rodStaffWandTables';
 import type { TreasureRodStaffWand } from '../features/treasure/rodStaffWand/rodStaffWandTables';
-import type { TreasureManualOfGolems } from '../../tables/dungeon/treasureManualOfGolems';
-import type { TreasureMedallionRange } from '../../tables/dungeon/treasureMedallionEspRange';
-import type { TreasureNecklaceOfMissiles } from '../../tables/dungeon/treasureNecklaceOfMissiles';
 import type {
+  TreasureManualOfGolems,
+  TreasureMedallionRange,
+  TreasureNecklaceOfMissiles,
+  TreasureNecklacePrayerBead,
   TreasurePearlOfPowerEffect,
   TreasurePearlOfPowerRecallResult,
-} from '../../tables/dungeon/treasurePearlOfPower';
-import type { TreasurePearlOfWisdomOutcome } from '../../tables/dungeon/treasurePearlOfWisdom';
-import type { TreasurePeriaptPoisonBonus } from '../../tables/dungeon/treasurePeriaptProofAgainstPoison';
-import type { TreasurePhylacteryLongYearsOutcome } from '../../tables/dungeon/treasurePhylacteryLongYears';
-import type { TreasureQuaalFeatherToken } from '../../tables/dungeon/treasureQuaalFeatherToken';
-import type { TreasureNecklacePrayerBead } from '../../tables/dungeon/treasureNecklacePrayerBeads';
+  TreasurePearlOfWisdomOutcome,
+  TreasurePeriaptPoisonBonus,
+  TreasurePhylacteryLongYearsOutcome,
+  TreasureQuaalFeatherToken,
+} from '../features/treasure/miscMagicE4/miscMagicE4Subtables';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,

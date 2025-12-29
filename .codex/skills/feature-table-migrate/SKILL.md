@@ -66,6 +66,10 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
    - Remove ids/headings from `src/dungeon/features/baseTables/bundle.ts` if the table is now a feature.
    - Remove manual adapters/previews in `src/dungeon/adapters/render.ts` if they still exist for that id.
      - Monster tables: also remove the id from `MONSTER_PREVIEW_BASES` and any `monsterAdapter` entries so the feature `buildPreview`/renderers aren’t overwritten by the generic monster wiring.
+   - Detail mode preview gotcha:
+     - `src/dungeon/adapters/render.ts` also has `previewForEventNode()` which can emit `table-preview` nodes for **event** kinds (not just `pending-roll`).
+     - If you add a real table definition/preview factory for an id, a previously inert `previewForEventNode()` mapping can become visible in the UI.
+     - Keep event previews only for tables the user is expected to roll manually; suppress event previews for internally-resolved/multi-roll events (e.g. prayer beads).
    - Re-export the moved resolver from `src/dungeon/domain/resolvers.ts` if other imports rely on it, or update those imports directly.
    - Remove redundant cases from `src/dungeon/helpers/outcomeTree.ts` once `resolvePending` is feature-owned (remember `pending.table` may include suffixes like `:<rollIndex>`, so use the base id).
 
@@ -77,6 +81,7 @@ Migrate a dungeon table and its resolver/render/preview into the feature convent
      - `src/tables/dungeon/dungeonTypes.ts`
    - Search for render-helper imports outside the table renderer (e.g. `src/components/**`, `src/dungeon/adapters/render/**`) when moving sentence/summary helpers.
    - Keep behavior identical; avoid refactors during the move.
+   - If you adjust event previews (see above), add/adjust an integration test using `uiPreviewHarness` to assert the presence/absence of `table-preview` nodes in detail mode.
 
 8. Validate.
    - Run `npm run tsc` (this catches `src/tables/dungeon/dungeonTypes.ts` import breakage early).

@@ -76,11 +76,6 @@ import {
   buildTreasurePreview,
 } from './render/treasure';
 import {
-  renderTreasureMiscMagicE4Detail,
-  renderTreasureMiscMagicE4Compact,
-  buildTreasureMiscMagicE4Preview,
-} from './render/treasureMiscMagicE4';
-import {
   renderTreasureMiscMagicE5Detail,
   renderTreasureMiscMagicE5Compact,
   buildTreasureMiscMagicE5Preview,
@@ -91,56 +86,9 @@ import {
   buildTreasureRobeOfTheArchmagiPreview,
 } from './render/treasureRobeOfTheArchmagi';
 import {
-  renderTreasureManualOfGolemsDetail,
-  renderTreasureManualOfGolemsCompact,
-  buildTreasureManualOfGolemsPreview,
-} from './render/treasureManualOfGolems';
-import {
-  renderTreasureMedallionRangeDetail,
-  renderTreasureMedallionRangeCompact,
-  buildTreasureMedallionRangePreview,
-} from './render/treasureMedallionRange';
-import {
-  renderTreasureNecklaceOfMissilesDetail,
-  renderTreasureNecklaceOfMissilesCompact,
-  buildTreasureNecklaceOfMissilesPreview,
-} from './render/treasureNecklaceOfMissiles';
-import {
-  renderTreasurePearlOfPowerEffectDetail,
-  renderTreasurePearlOfPowerEffectCompact,
-  renderTreasurePearlOfPowerRecallDetail,
-  renderTreasurePearlOfPowerRecallCompact,
-  buildTreasurePearlOfPowerEffectPreview,
-  buildTreasurePearlOfPowerRecallPreview,
-} from './render/treasurePearlOfPower';
-import {
-  renderTreasurePearlOfWisdomDetail,
-  renderTreasurePearlOfWisdomCompact,
-  buildTreasurePearlOfWisdomPreview,
-} from './render/treasurePearlOfWisdom';
-import {
-  renderTreasurePeriaptProofAgainstPoisonDetail,
-  renderTreasurePeriaptProofAgainstPoisonCompact,
-  buildTreasurePeriaptProofAgainstPoisonPreview,
-} from './render/treasurePeriaptProofAgainstPoison';
-import {
-  renderTreasurePhylacteryLongYearsDetail,
-  renderTreasurePhylacteryLongYearsCompact,
-  buildTreasurePhylacteryLongYearsPreview,
-} from './render/treasurePhylacteryLongYears';
-import {
-  renderTreasureQuaalFeatherTokenDetail,
-  renderTreasureQuaalFeatherTokenCompact,
-  buildTreasureQuaalFeatherTokenPreview,
-} from './render/treasureQuaalFeatherToken';
-import {
   renderTreasureRobeOfUsefulItemsDetail,
   renderTreasureRobeOfUsefulItemsCompact,
 } from './render/treasureRobeOfUsefulItems';
-import {
-  renderTreasureNecklaceOfPrayerBeadsDetail,
-  renderTreasureNecklaceOfPrayerBeadsCompact,
-} from './render/treasureNecklaceOfPrayerBeads';
 import {
   renderTreasureArmorShieldsDetail,
   renderTreasureArmorShieldsCompact,
@@ -296,10 +244,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureDetail,
     renderCompact: withoutAppend(renderTreasureCompactNodes),
   },
-  treasureMiscMagicE4: {
-    renderDetail: renderTreasureMiscMagicE4Detail,
-    renderCompact: renderTreasureMiscMagicE4Compact,
-  },
   treasureMiscMagicE5: {
     renderDetail: renderTreasureMiscMagicE5Detail,
     renderCompact: renderTreasureMiscMagicE5Compact,
@@ -360,46 +304,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureScarabOfProtectionCurseResolutionDetail,
     renderCompact: renderTreasureScarabOfProtectionCurseResolutionCompact,
   },
-  treasureManualOfGolems: {
-    renderDetail: renderTreasureManualOfGolemsDetail,
-    renderCompact: renderTreasureManualOfGolemsCompact,
-  },
-  treasureMedallionRange: {
-    renderDetail: renderTreasureMedallionRangeDetail,
-    renderCompact: renderTreasureMedallionRangeCompact,
-  },
-  treasureNecklaceOfMissiles: {
-    renderDetail: renderTreasureNecklaceOfMissilesDetail,
-    renderCompact: renderTreasureNecklaceOfMissilesCompact,
-  },
-  treasurePearlOfPowerEffect: {
-    renderDetail: renderTreasurePearlOfPowerEffectDetail,
-    renderCompact: renderTreasurePearlOfPowerEffectCompact,
-  },
-  treasurePearlOfPowerRecall: {
-    renderDetail: renderTreasurePearlOfPowerRecallDetail,
-    renderCompact: renderTreasurePearlOfPowerRecallCompact,
-  },
-  treasurePearlOfWisdom: {
-    renderDetail: renderTreasurePearlOfWisdomDetail,
-    renderCompact: renderTreasurePearlOfWisdomCompact,
-  },
-  treasurePeriaptProofAgainstPoison: {
-    renderDetail: renderTreasurePeriaptProofAgainstPoisonDetail,
-    renderCompact: renderTreasurePeriaptProofAgainstPoisonCompact,
-  },
-  treasurePhylacteryLongYears: {
-    renderDetail: renderTreasurePhylacteryLongYearsDetail,
-    renderCompact: renderTreasurePhylacteryLongYearsCompact,
-  },
-  treasureQuaalFeatherToken: {
-    renderDetail: renderTreasureQuaalFeatherTokenDetail,
-    renderCompact: renderTreasureQuaalFeatherTokenCompact,
-  },
-  treasureNecklaceOfPrayerBeads: {
-    renderDetail: renderTreasureNecklaceOfPrayerBeadsDetail,
-    renderCompact: renderTreasureNecklaceOfPrayerBeadsCompact,
-  },
   treasureRobeOfUsefulItems: {
     renderDetail: renderTreasureRobeOfUsefulItemsDetail,
     renderCompact: renderTreasureRobeOfUsefulItemsCompact,
@@ -447,7 +351,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   poolAlignment: buildPoolAlignmentPreview,
   transporterLocation: buildTransporterLocationPreview,
   treasure: buildTreasurePreview,
-  treasureMiscMagicE4: buildTreasureMiscMagicE4Preview,
   treasureMiscMagicE5: buildTreasureMiscMagicE5Preview,
   treasureArmorShields: buildTreasureArmorShieldsPreview,
   treasureSwords: buildTreasureSwordsPreview,
@@ -471,16 +374,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureScarabOfProtectionCurseResolution:
     buildTreasureScarabOfProtectionCurseResolutionPreview,
   treasureMiscWeapons: buildTreasureMiscWeaponsPreview,
-  treasureManualOfGolems: buildTreasureManualOfGolemsPreview,
-  treasureMedallionRange: buildTreasureMedallionRangePreview,
-  treasureNecklaceOfMissiles: buildTreasureNecklaceOfMissilesPreview,
-  treasurePearlOfPowerEffect: buildTreasurePearlOfPowerEffectPreview,
-  treasurePearlOfPowerRecall: buildTreasurePearlOfPowerRecallPreview,
-  treasurePearlOfWisdom: buildTreasurePearlOfWisdomPreview,
-  treasurePeriaptProofAgainstPoison:
-    buildTreasurePeriaptProofAgainstPoisonPreview,
-  treasurePhylacteryLongYears: buildTreasurePhylacteryLongYearsPreview,
-  treasureQuaalFeatherToken: buildTreasureQuaalFeatherTokenPreview,
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, NAVIGATION_PREVIEW_FACTORIES);
@@ -1050,9 +943,6 @@ function previewForEventNode(
       break;
     case 'treasureQuaalFeatherToken':
       tableId = 'treasureQuaalFeatherToken';
-      break;
-    case 'treasureNecklaceOfPrayerBeads':
-      tableId = 'treasureNecklaceOfPrayerBeads';
       break;
     case 'treasureFigurineOfWondrousPower':
       tableId = 'treasureFigurineOfWondrousPower';

@@ -28,7 +28,6 @@ import {
   resolveTrickTrap,
   resolveHuman,
   resolveTreasure,
-  resolveTreasureMiscMagicE4,
   resolveTreasureMiscMagicE5,
   resolveTreasureRobeOfUsefulItems,
   resolveTreasureRobeOfTheArchmagi,
@@ -41,16 +40,6 @@ import {
   resolveTreasureSwordUnusual,
   resolveTreasureSwordAlignment,
   resolveTreasureSwordPrimaryAbility,
-  resolveTreasureMedallionRange,
-  resolveTreasureNecklaceOfMissiles,
-  resolveTreasureNecklaceOfPrayerBeads,
-  resolveTreasurePearlOfPowerEffect,
-  resolveTreasurePearlOfPowerRecall,
-  resolveTreasurePearlOfWisdom,
-  resolveTreasurePeriaptProofAgainstPoison,
-  resolveTreasurePhylacteryLongYears,
-  resolveTreasureQuaalFeatherToken,
-  resolveTreasureManualOfGolems,
   resolveRoomDimensions,
 } from '../domain/resolvers';
 import { readTreasureMagicContext } from '../features/treasure/shared';
@@ -749,8 +738,6 @@ function resolvePendingNode(
     }
     case 'gasTrapEffect':
       return resolveGasTrapEffect({});
-    case 'treasureMiscMagicE4':
-      return resolveTreasureMiscMagicE4({});
     case 'treasureMiscMagicE5':
       return resolveTreasureMiscMagicE5({});
     case 'treasureArmorShields': {
@@ -801,28 +788,6 @@ function resolvePendingNode(
       return resolveTreasureScarabOfProtectionCurse({});
     case 'treasureScarabOfProtectionCurseResolution':
       return resolveTreasureScarabOfProtectionCurseResolution({});
-    case 'treasureManualOfGolems':
-      return resolveTreasureManualOfGolems({});
-    case 'treasureNecklaceOfMissiles':
-      return resolveTreasureNecklaceOfMissiles({});
-    case 'treasureNecklaceOfPrayerBeads':
-      return resolveTreasureNecklaceOfPrayerBeads({});
-    case 'treasurePearlOfPowerEffect':
-      return resolveTreasurePearlOfPowerEffect({});
-    case 'treasurePearlOfPowerRecall':
-      return resolveTreasurePearlOfPowerRecall({});
-    case 'treasurePearlOfWisdom':
-      return resolveTreasurePearlOfWisdom({});
-    case 'treasurePeriaptProofAgainstPoison':
-      return resolveTreasurePeriaptProofAgainstPoison({});
-    case 'treasurePhylacteryLongYears':
-      return resolveTreasurePhylacteryLongYears({});
-    case 'treasureQuaalFeatherToken':
-      return resolveTreasureQuaalFeatherToken({});
-    case 'treasureNecklaceOfPrayerBeads':
-      return resolveTreasureNecklaceOfPrayerBeads({});
-    case 'treasureMedallionRange':
-      return resolveTreasureMedallionRange({});
     case 'transmuteType':
       return resolveTransmuteType({});
     case 'poolAlignment':

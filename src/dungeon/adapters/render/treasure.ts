@@ -46,21 +46,23 @@ import {
   ironFlaskSentence,
   toIounStonesSummary,
 } from '../../features/treasure/miscMagicE3/miscMagicE3SubtablesRender';
-import { miscMagicE4Sentence } from './treasureMiscMagicE4';
+import { miscMagicE4Sentence } from '../../features/treasure/miscMagicE4/miscMagicE4Render';
 import { miscMagicE5Sentence } from './treasureMiscMagicE5';
 import { TreasureMiscMagicE5 } from '../../../tables/dungeon/treasureMiscMagicE5';
 import { TreasureMagicCategory } from '../../features/treasure/magicCategory/magicCategoryTable';
 import { toRobeOfUsefulItemsSummary } from './treasureRobeOfUsefulItems';
-import { medallionRangeParenthetical } from './treasureMedallionRange';
-import { TreasureMiscMagicE4 } from '../../../tables/dungeon/treasureMiscMagicE4';
-import { manualOfGolemsSentence } from './treasureManualOfGolems';
-import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
-import { pearlParenthetical } from './treasurePearlOfPower';
-import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
-import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
-import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
-import { quaalFeatherTokenParenthetical } from './treasureQuaalFeatherToken';
-import { toPrayerBeadsSummary } from './treasureNecklaceOfPrayerBeads';
+import { TreasureMiscMagicE4 } from '../../features/treasure/miscMagicE4/miscMagicE4Table';
+import {
+  manualOfGolemsSentence,
+  medallionRangeParenthetical,
+  necklaceOfMissilesParenthetical,
+  pearlParenthetical,
+  pearlOfWisdomParenthetical,
+  periaptPoisonParenthetical,
+  phylacteryLongYearsParenthetical,
+  quaalFeatherTokenParenthetical,
+  toPrayerBeadsSummary,
+} from '../../features/treasure/miscMagicE4/miscMagicE4SubtablesRender';
 import {
   cloakSentence,
   crystalBallSentence,

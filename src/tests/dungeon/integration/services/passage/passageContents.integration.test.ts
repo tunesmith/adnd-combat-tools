@@ -43,11 +43,13 @@ import {
   TreasureHornOfValhallaAttunement,
   TreasureHornOfValhallaAlignment,
 } from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
-import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
+import { TreasureMiscMagicE4 } from '../../../../../dungeon/features/treasure/miscMagicE4/miscMagicE4Table';
 import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
 import { TreasureRobeOfTheArchmagi } from '../../../../../tables/dungeon/treasureRobeOfTheArchmagi';
-import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
-import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
+import {
+  TreasureManualOfGolems,
+  TreasureMedallionRange,
+} from '../../../../../dungeon/features/treasure/miscMagicE4/miscMagicE4Subtables';
 import {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
@@ -2243,7 +2245,16 @@ describe('passage contents', () => {
     if (!miscTarget) throw new Error('missing misc magic E4 target');
     feed = resolvePreview(feed, miscTarget, 30);
 
-    const detailText = renderDetail(feed)
+    const detailNodes = renderDetail(feed);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'table-preview' &&
+          node.id === 'treasureNecklaceOfPrayerBeads'
+      )
+    ).toBe(false);
+
+    const detailText = detailNodes
       .filter(
         (node): node is { kind: 'paragraph'; text: string } =>
           node.kind === 'paragraph'

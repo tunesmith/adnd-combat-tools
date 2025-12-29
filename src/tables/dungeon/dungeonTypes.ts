@@ -154,23 +154,23 @@ import type {
   TreasureHornOfValhallaAlignment,
   TreasureIounStoneType,
 } from '../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
-import type { TreasureMiscMagicE4 } from './treasureMiscMagicE4';
+import type { TreasureMiscMagicE4 } from '../../dungeon/features/treasure/miscMagicE4/miscMagicE4Table';
 import type { TreasureMiscMagicE5 } from './treasureMiscMagicE5';
 import type { TreasureRobeOfTheArchmagi } from './treasureRobeOfTheArchmagi';
 import type { RobeOfUsefulItemsExtraPatch } from './treasureRobeOfUsefulItems';
-import type { TreasureManualOfGolems } from './treasureManualOfGolems';
-import type { TreasureMedallionRange } from './treasureMedallionEspRange';
-import type { TreasureNecklaceOfMissiles } from './treasureNecklaceOfMissiles';
 import type {
+  TreasureManualOfGolems,
+  TreasureMedallionRange,
+  TreasureNecklaceOfMissiles,
+  TreasureNecklacePrayerBead,
   TreasurePearlOfPowerEffect,
   TreasurePearlOfPowerRecall,
   TreasurePearlOfPowerRecallResult,
-} from './treasurePearlOfPower';
-import type { TreasurePearlOfWisdomOutcome } from './treasurePearlOfWisdom';
-import type { TreasurePeriaptPoisonBonus } from './treasurePeriaptProofAgainstPoison';
-import type { TreasurePhylacteryLongYearsOutcome } from './treasurePhylacteryLongYears';
-import type { TreasureQuaalFeatherToken } from './treasureQuaalFeatherToken';
-import type { TreasureNecklacePrayerBead } from './treasureNecklacePrayerBeads';
+  TreasurePearlOfWisdomOutcome,
+  TreasurePeriaptPoisonBonus,
+  TreasurePhylacteryLongYearsOutcome,
+  TreasureQuaalFeatherToken,
+} from '../../dungeon/features/treasure/miscMagicE4/miscMagicE4Subtables';
 import type {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,

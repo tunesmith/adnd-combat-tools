@@ -1,0 +1,334 @@
+import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
+import type {
+  DungeonOutcomeNode,
+  OutcomeEvent,
+  TreasureNecklaceOfPrayerBeadsResult,
+} from '../../../domain/outcome';
+import { treasureMiscMagicE4, TreasureMiscMagicE4 } from './miscMagicE4Table';
+import type {
+  TreasureManualOfGolems,
+  TreasureMedallionRange,
+  TreasureNecklaceOfMissiles,
+  TreasurePearlOfPowerRecall,
+  TreasurePearlOfPowerRecallResult,
+  TreasurePearlOfWisdomOutcome,
+  TreasurePeriaptPoisonBonus,
+  TreasurePhylacteryLongYearsOutcome,
+  TreasureQuaalFeatherToken,
+} from './miscMagicE4Subtables';
+import {
+  resolvePearlRecallResult,
+  treasureManualOfGolems,
+  treasureMedallionRange,
+  treasureNecklaceOfMissiles,
+  treasureNecklacePrayerBeads,
+  treasurePearlOfPowerEffect,
+  treasurePearlOfPowerRecall,
+  treasurePearlOfWisdom,
+  treasurePeriaptPoisonBonus,
+  treasurePhylacteryLongYears,
+  treasureQuaalFeatherToken,
+  TreasurePearlOfPowerEffect,
+} from './miscMagicE4Subtables';
+
+export type TreasureMiscMagicE4ResolverOptions = {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+};
+
+export function resolveTreasureMiscMagicE4(
+  options?: TreasureMiscMagicE4ResolverOptions
+): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureMiscMagicE4.sides);
+  const command: TreasureMiscMagicE4 = getTableEntry(
+    usedRoll,
+    treasureMiscMagicE4
+  );
+  const rollIndex = options?.rollIndex;
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasureMiscMagicE4.ManualOfGolems) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureManualOfGolems',
+      id: rollIndex ? `treasureManualOfGolems:${rollIndex}` : undefined,
+    });
+  } else if (command === TreasureMiscMagicE4.MedallionOfESP) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureMedallionRange',
+      id: rollIndex ? `treasureMedallionRange:${rollIndex}` : undefined,
+    });
+  } else if (command === TreasureMiscMagicE4.MedallionOfThoughtProjection) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureMedallionRange',
+      id: rollIndex ? `treasureMedallionRange:${rollIndex}` : undefined,
+    });
+  } else if (command === TreasureMiscMagicE4.NecklaceOfMissiles) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureNecklaceOfMissiles',
+      id: rollIndex ? `treasureNecklaceOfMissiles:${rollIndex}` : undefined,
+    });
+  } else if (command === TreasureMiscMagicE4.NecklaceOfPrayerBeads) {
+    children.push(resolveTreasureNecklaceOfPrayerBeads());
+  } else if (command === TreasureMiscMagicE4.PearlOfPower) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePearlOfPowerEffect',
+      id: rollIndex ? `treasurePearlOfPowerEffect:${rollIndex}` : undefined,
+    });
+  } else if (command === TreasureMiscMagicE4.PearlOfWisdom) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePearlOfWisdom',
+      id: rollIndex ? `treasurePearlOfWisdom:${rollIndex}` : undefined,
+    });
+  } else if (command === TreasureMiscMagicE4.PhylacteryOfLongYears) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePhylacteryLongYears',
+      id: rollIndex ? `treasurePhylacteryLongYears:${rollIndex}` : undefined,
+    });
+  } else if (command === TreasureMiscMagicE4.PeriaptOfProofAgainstPoison) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePeriaptProofAgainstPoison',
+      id: rollIndex
+        ? `treasurePeriaptProofAgainstPoison:${rollIndex}`
+        : undefined,
+    });
+  } else if (command === TreasureMiscMagicE4.QuaalsFeatherToken) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasureQuaalFeatherToken',
+      id: rollIndex ? `treasureQuaalFeatherToken:${rollIndex}` : undefined,
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureMiscMagicE4',
+      result: command,
+      level: options?.level,
+      treasureRoll: options?.treasureRoll,
+      rollIndex,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasureManualOfGolems(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureManualOfGolems.sides);
+  const command: TreasureManualOfGolems = getTableEntry(
+    usedRoll,
+    treasureManualOfGolems
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureManualOfGolems',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureMedallionRange(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureMedallionRange.sides);
+  const command: TreasureMedallionRange = getTableEntry(
+    usedRoll,
+    treasureMedallionRange
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureMedallionRange',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureNecklaceOfMissiles(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureNecklaceOfMissiles.sides);
+  const command: TreasureNecklaceOfMissiles = getTableEntry(
+    usedRoll,
+    treasureNecklaceOfMissiles
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureNecklaceOfMissiles',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasurePearlOfPowerEffect(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePearlOfPowerEffect.sides);
+  const command: TreasurePearlOfPowerEffect = getTableEntry(
+    usedRoll,
+    treasurePearlOfPowerEffect
+  );
+  const children: DungeonOutcomeNode[] = [];
+  if (command === TreasurePearlOfPowerEffect.Recall) {
+    children.push({
+      type: 'pending-roll',
+      table: 'treasurePearlOfPowerRecall',
+    });
+  }
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePearlOfPowerEffect',
+      result: command,
+    } as OutcomeEvent,
+    children: children.length ? children : undefined,
+  };
+}
+
+export function resolveTreasurePearlOfPowerRecall(options?: {
+  roll?: number;
+  d6?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePearlOfPowerRecall.sides);
+  const command: TreasurePearlOfPowerRecall = getTableEntry(
+    usedRoll,
+    treasurePearlOfPowerRecall
+  );
+  const d6Roll = options?.d6 ?? rollDice(6);
+  const result: TreasurePearlOfPowerRecallResult = resolvePearlRecallResult(
+    command,
+    () => d6Roll
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePearlOfPowerRecall',
+      result,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasurePearlOfWisdom(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePearlOfWisdom.sides);
+  const command: TreasurePearlOfWisdomOutcome = getTableEntry(
+    usedRoll,
+    treasurePearlOfWisdom
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePearlOfWisdom',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasurePeriaptProofAgainstPoison(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePeriaptPoisonBonus.sides);
+  const command: TreasurePeriaptPoisonBonus = getTableEntry(
+    usedRoll,
+    treasurePeriaptPoisonBonus
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePeriaptProofAgainstPoison',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasurePhylacteryLongYears(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasurePhylacteryLongYears.sides);
+  const command: TreasurePhylacteryLongYearsOutcome = getTableEntry(
+    usedRoll,
+    treasurePhylacteryLongYears
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasurePhylacteryLongYears',
+      result: command,
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureNecklaceOfPrayerBeads(options?: {
+  totalRoll?: number;
+  specialCountRoll?: number;
+  specialRolls?: number[];
+}): DungeonOutcomeNode {
+  const totalBase = options?.totalRoll ?? rollDice(6);
+  const totalBeads = 24 + totalBase;
+  const semiPrecious = Math.round(totalBeads * 0.6);
+  const fancy = totalBeads - semiPrecious;
+
+  const countBase = options?.specialCountRoll ?? rollDice(4);
+  const specialCount = countBase + 2;
+  const specialRolls: number[] = options?.specialRolls ?? [];
+  const specialBeads: TreasureNecklaceOfPrayerBeadsResult['specialBeads'] =
+    Array.from({ length: specialCount }, (_, index) => {
+      const roll =
+        specialRolls[index] ?? rollDice(treasureNecklacePrayerBeads.sides);
+      const type = getTableEntry(roll, treasureNecklacePrayerBeads);
+      return { type, roll };
+    });
+
+  return {
+    type: 'event',
+    roll: totalBeads,
+    event: {
+      kind: 'treasureNecklaceOfPrayerBeads',
+      result: {
+        totalBeads,
+        semiPrecious,
+        fancy,
+        specialBeads,
+      },
+    } as OutcomeEvent,
+  };
+}
+
+export function resolveTreasureQuaalFeatherToken(options?: {
+  roll?: number;
+}): DungeonOutcomeNode {
+  const usedRoll = options?.roll ?? rollDice(treasureQuaalFeatherToken.sides);
+  const command: TreasureQuaalFeatherToken = getTableEntry(
+    usedRoll,
+    treasureQuaalFeatherToken
+  );
+  return {
+    type: 'event',
+    roll: usedRoll,
+    event: {
+      kind: 'treasureQuaalFeatherToken',
+      result: command,
+    } as OutcomeEvent,
+  };
+}

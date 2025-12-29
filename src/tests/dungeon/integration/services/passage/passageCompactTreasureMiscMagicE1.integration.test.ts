@@ -30,15 +30,17 @@ import {
   TreasureHornOfValhallaAlignment,
   TreasureIounStoneType,
 } from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
-import { TreasureMiscMagicE4 } from '../../../../../tables/dungeon/treasureMiscMagicE4';
+import { TreasureMiscMagicE4 } from '../../../../../dungeon/features/treasure/miscMagicE4/miscMagicE4Table';
 import { TreasureRobeOfTheArchmagi } from '../../../../../tables/dungeon/treasureRobeOfTheArchmagi';
 import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
-import { TreasureManualOfGolems } from '../../../../../tables/dungeon/treasureManualOfGolems';
-import { TreasureMedallionRange } from '../../../../../tables/dungeon/treasureMedallionEspRange';
-import { TreasurePearlOfPowerEffect } from '../../../../../tables/dungeon/treasurePearlOfPower';
-import { TreasurePearlOfWisdomOutcome } from '../../../../../tables/dungeon/treasurePearlOfWisdom';
-import { TreasurePhylacteryLongYearsOutcome } from '../../../../../tables/dungeon/treasurePhylacteryLongYears';
-import { TreasureQuaalFeatherToken } from '../../../../../tables/dungeon/treasureQuaalFeatherToken';
+import {
+  TreasureManualOfGolems,
+  TreasureMedallionRange,
+  TreasurePearlOfPowerEffect,
+  TreasurePearlOfWisdomOutcome,
+  TreasurePhylacteryLongYearsOutcome,
+  TreasureQuaalFeatherToken,
+} from '../../../../../dungeon/features/treasure/miscMagicE4/miscMagicE4Subtables';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 describe('passage compact treasure misc magic E1 handling', () => {

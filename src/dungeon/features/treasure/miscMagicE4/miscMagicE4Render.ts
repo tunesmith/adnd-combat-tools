@@ -1,23 +1,27 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { treasureMiscMagicE4, TreasureMiscMagicE4 } from './miscMagicE4Table';
 import {
-  treasureMiscMagicE4,
-  TreasureMiscMagicE4,
-} from '../../../tables/dungeon/treasureMiscMagicE4';
-import { buildPreview, findChildEvent } from './shared';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
-import { manualOfGolemsSentence } from './treasureManualOfGolems';
-import { medallionRangeParenthetical } from './treasureMedallionRange';
-import { necklaceOfMissilesParenthetical } from './treasureNecklaceOfMissiles';
-import { pearlParenthetical } from './treasurePearlOfPower';
-import { pearlOfWisdomParenthetical } from './treasurePearlOfWisdom';
-import { periaptPoisonParenthetical } from './treasurePeriaptProofAgainstPoison';
-import { phylacteryLongYearsParenthetical } from './treasurePhylacteryLongYears';
-import { quaalFeatherTokenParenthetical } from './treasureQuaalFeatherToken';
+  buildPreview,
+  findChildEvent,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
 import {
+  manualOfGolemsSentence,
+  medallionRangeParenthetical,
+  necklaceOfMissilesParenthetical,
   necklaceOfPrayerBeadsParenthetical,
+  pearlParenthetical,
+  pearlOfWisdomParenthetical,
+  periaptPoisonParenthetical,
+  phylacteryLongYearsParenthetical,
+  quaalFeatherTokenParenthetical,
   toPrayerBeadsSummary,
-} from './treasureNecklaceOfPrayerBeads';
+} from './miscMagicE4SubtablesRender';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:

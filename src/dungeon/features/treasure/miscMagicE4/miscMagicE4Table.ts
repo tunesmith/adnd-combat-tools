@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum TreasureMiscMagicE4 {
   LibramOfGainfulConjuration,
@@ -54,7 +54,10 @@ export const treasureMiscMagicE4: Table<TreasureMiscMagicE4> = {
       command: TreasureMiscMagicE4.ManualOfPuissantSkillAtArms,
     },
     { range: [9], command: TreasureMiscMagicE4.ManualOfQuicknessOfAction },
-    { range: [10], command: TreasureMiscMagicE4.ManualOfStealthyPilfering },
+    {
+      range: [10],
+      command: TreasureMiscMagicE4.ManualOfStealthyPilfering,
+    },
     { range: [11], command: TreasureMiscMagicE4.MattockOfTheTitans },
     { range: [12], command: TreasureMiscMagicE4.MaulOfTheTitans },
     { range: [13, 15], command: TreasureMiscMagicE4.MedallionOfESP },
@@ -67,11 +70,11 @@ export const treasureMiscMagicE4: Table<TreasureMiscMagicE4> = {
     { range: [20], command: TreasureMiscMagicE4.MirrorOfOpposition },
     { range: [21, 23], command: TreasureMiscMagicE4.NecklaceOfAdaptation },
     { range: [24, 27], command: TreasureMiscMagicE4.NecklaceOfMissiles },
+    { range: [28, 33], command: TreasureMiscMagicE4.NecklaceOfPrayerBeads },
     {
-      range: [28, 33],
-      command: TreasureMiscMagicE4.NecklaceOfPrayerBeads,
+      range: [34, 35],
+      command: TreasureMiscMagicE4.NecklaceOfStrangulation,
     },
-    { range: [34, 35], command: TreasureMiscMagicE4.NecklaceOfStrangulation },
     { range: [36, 38], command: TreasureMiscMagicE4.NetOfEntrapment },
     { range: [39, 42], command: TreasureMiscMagicE4.NetOfSnaring },
     {
