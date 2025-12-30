@@ -720,7 +720,9 @@ export function phylacteryLongYearsParenthetical(
     : 'fast aging';
 }
 
-function phylacterySentence(outcome: TreasurePhylacteryLongYearsOutcome): string {
+function phylacterySentence(
+  outcome: TreasurePhylacteryLongYearsOutcome
+): string {
   if (outcome === TreasurePhylacteryLongYearsOutcome.SlowAging) {
     return 'The wearer ages at three-quarters the normal rate (one quarter slower).';
   }
@@ -804,7 +806,9 @@ export function quaalFeatherTokenParenthetical(
 }
 
 function quaalTokenDescription(token: TreasureQuaalFeatherToken): string {
-  return `The token produces a ${quaalTokenLabel(token)} effect when activated.`;
+  return `The token produces a ${quaalTokenLabel(
+    token
+  )} effect when activated.`;
 }
 
 export function renderTreasureQuaalFeatherTokenDetail(

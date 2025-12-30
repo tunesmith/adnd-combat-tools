@@ -5,12 +5,14 @@ import type {
   RobeOfUsefulItemsResult,
 } from '../../../domain/outcome';
 import { treasureMiscMagicE5, TreasureMiscMagicE5 } from './miscMagicE5Table';
+import type {
+  TreasureRobeOfTheArchmagi,
+  TreasureScarabOfProtectionCurseResolution,
+} from './miscMagicE5Subtables';
 import {
   RobeOfUsefulItemsExtraPatch,
   ROBE_OF_USEFUL_ITEMS_BASE_PATCHES,
-  TreasureRobeOfTheArchmagi,
   TreasureScarabOfProtectionCurse,
-  TreasureScarabOfProtectionCurseResolution,
   treasureRobeOfTheArchmagi,
   treasureRobeOfUsefulItems,
   treasureScarabOfProtectionCurse,
