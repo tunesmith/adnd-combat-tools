@@ -28,11 +28,6 @@ import {
   resolveTrickTrap,
   resolveHuman,
   resolveTreasure,
-  resolveTreasureMiscMagicE5,
-  resolveTreasureRobeOfUsefulItems,
-  resolveTreasureRobeOfTheArchmagi,
-  resolveTreasureScarabOfProtectionCurse,
-  resolveTreasureScarabOfProtectionCurseResolution,
   resolveTreasureMiscWeapons,
   resolveTreasureArmorShields,
   resolveTreasureSwords,
@@ -738,8 +733,6 @@ function resolvePendingNode(
     }
     case 'gasTrapEffect':
       return resolveGasTrapEffect({});
-    case 'treasureMiscMagicE5':
-      return resolveTreasureMiscMagicE5({});
     case 'treasureArmorShields': {
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureArmorShields(context);
@@ -780,14 +773,6 @@ function resolvePendingNode(
       const context = readTreasureMagicContext(pending.context, ancestors);
       return resolveTreasureMiscWeapons(context);
     }
-    case 'treasureRobeOfUsefulItems':
-      return resolveTreasureRobeOfUsefulItems({});
-    case 'treasureRobeOfTheArchmagi':
-      return resolveTreasureRobeOfTheArchmagi({});
-    case 'treasureScarabOfProtectionCurse':
-      return resolveTreasureScarabOfProtectionCurse({});
-    case 'treasureScarabOfProtectionCurseResolution':
-      return resolveTreasureScarabOfProtectionCurseResolution({});
     case 'transmuteType':
       return resolveTransmuteType({});
     case 'poolAlignment':

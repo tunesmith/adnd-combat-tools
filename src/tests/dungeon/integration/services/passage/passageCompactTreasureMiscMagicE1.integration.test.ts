@@ -31,8 +31,8 @@ import {
   TreasureIounStoneType,
 } from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
 import { TreasureMiscMagicE4 } from '../../../../../dungeon/features/treasure/miscMagicE4/miscMagicE4Table';
-import { TreasureRobeOfTheArchmagi } from '../../../../../tables/dungeon/treasureRobeOfTheArchmagi';
-import { TreasureMiscMagicE5 } from '../../../../../tables/dungeon/treasureMiscMagicE5';
+import { TreasureRobeOfTheArchmagi } from '../../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Subtables';
+import { TreasureMiscMagicE5 } from '../../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Table';
 import {
   TreasureManualOfGolems,
   TreasureMedallionRange,

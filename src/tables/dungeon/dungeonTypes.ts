@@ -155,9 +155,13 @@ import type {
   TreasureIounStoneType,
 } from '../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
 import type { TreasureMiscMagicE4 } from '../../dungeon/features/treasure/miscMagicE4/miscMagicE4Table';
-import type { TreasureMiscMagicE5 } from './treasureMiscMagicE5';
-import type { TreasureRobeOfTheArchmagi } from './treasureRobeOfTheArchmagi';
-import type { RobeOfUsefulItemsExtraPatch } from './treasureRobeOfUsefulItems';
+import type { TreasureMiscMagicE5 } from '../../dungeon/features/treasure/miscMagicE5/miscMagicE5Table';
+import type {
+  RobeOfUsefulItemsExtraPatch,
+  TreasureRobeOfTheArchmagi,
+  TreasureScarabOfProtectionCurse,
+  TreasureScarabOfProtectionCurseResolution,
+} from '../../dungeon/features/treasure/miscMagicE5/miscMagicE5Subtables';
 import type {
   TreasureManualOfGolems,
   TreasureMedallionRange,
@@ -171,10 +175,6 @@ import type {
   TreasurePhylacteryLongYearsOutcome,
   TreasureQuaalFeatherToken,
 } from '../../dungeon/features/treasure/miscMagicE4/miscMagicE4Subtables';
-import type {
-  TreasureScarabOfProtectionCurse,
-  TreasureScarabOfProtectionCurseResolution,
-} from './treasureScarabOfProtection';
 import type { TreasureArmorShield } from './treasureArmorShields';
 import type { TreasureMiscWeapon } from './treasureMiscWeapons';
 import type {

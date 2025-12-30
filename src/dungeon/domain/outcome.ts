@@ -142,10 +142,14 @@ import type {
   TreasureIronFlaskContent,
 } from '../features/treasure/miscMagicE3/miscMagicE3Subtables';
 import type { TreasureMiscMagicE4 } from '../features/treasure/miscMagicE4/miscMagicE4Table';
-import type { TreasureMiscMagicE5 } from '../../tables/dungeon/treasureMiscMagicE5';
-import type { TreasureRobeOfTheArchmagi } from '../../tables/dungeon/treasureRobeOfTheArchmagi';
-import type { RobeOfUsefulItemsExtraPatch } from '../../tables/dungeon/treasureRobeOfUsefulItems';
-import type { RobeOfUsefulItemsBasePatchType } from '../helpers/robeOfUsefulItems';
+import type { TreasureMiscMagicE5 } from '../features/treasure/miscMagicE5/miscMagicE5Table';
+import type {
+  RobeOfUsefulItemsBasePatchType,
+  RobeOfUsefulItemsExtraPatch,
+  TreasureRobeOfTheArchmagi,
+  TreasureScarabOfProtectionCurse,
+  TreasureScarabOfProtectionCurseResolution,
+} from '../features/treasure/miscMagicE5/miscMagicE5Subtables';
 import type { TreasureStaffSerpent } from '../features/treasure/rodStaffWand/rodStaffWandTables';
 import type { TreasureRodStaffWand } from '../features/treasure/rodStaffWand/rodStaffWandTables';
 import type {
@@ -166,10 +170,6 @@ import type {
   TreasureProtectionHiddenBy,
 } from '../features/treasure/protection/protectionTables';
 import type { PartyResult } from '../models/character/characterSheet';
-import type {
-  TreasureScarabOfProtectionCurse,
-  TreasureScarabOfProtectionCurseResolution,
-} from '../../tables/dungeon/treasureScarabOfProtection';
 import type {
   TreasureSword,
   TreasureSwordKind,

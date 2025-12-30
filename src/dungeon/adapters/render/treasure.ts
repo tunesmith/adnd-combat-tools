@@ -47,10 +47,10 @@ import {
   toIounStonesSummary,
 } from '../../features/treasure/miscMagicE3/miscMagicE3SubtablesRender';
 import { miscMagicE4Sentence } from '../../features/treasure/miscMagicE4/miscMagicE4Render';
-import { miscMagicE5Sentence } from './treasureMiscMagicE5';
-import { TreasureMiscMagicE5 } from '../../../tables/dungeon/treasureMiscMagicE5';
+import { miscMagicE5Sentence } from '../../features/treasure/miscMagicE5/miscMagicE5Render';
+import { TreasureMiscMagicE5 } from '../../features/treasure/miscMagicE5/miscMagicE5Table';
 import { TreasureMagicCategory } from '../../features/treasure/magicCategory/magicCategoryTable';
-import { toRobeOfUsefulItemsSummary } from './treasureRobeOfUsefulItems';
+import { toRobeOfUsefulItemsSummary } from '../../features/treasure/miscMagicE5/miscMagicE5SubtablesRender';
 import { TreasureMiscMagicE4 } from '../../features/treasure/miscMagicE4/miscMagicE4Table';
 import {
   manualOfGolemsSentence,

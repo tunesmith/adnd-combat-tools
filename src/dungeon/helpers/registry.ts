@@ -26,11 +26,6 @@ import {
   resolveUnusualShape,
   resolveUnusualSize,
   resolveTreasure,
-  resolveTreasureMiscMagicE5,
-  resolveTreasureRobeOfUsefulItems,
-  resolveTreasureRobeOfTheArchmagi,
-  resolveTreasureScarabOfProtectionCurse,
-  resolveTreasureScarabOfProtectionCurseResolution,
   resolveTreasureArmorShields,
   resolveTreasureSwords,
   resolveTreasureSwordAlignment,
@@ -228,8 +223,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureMiscMagicE5: ({ roll }) =>
-    fromOutcome(resolveTreasureMiscMagicE5({ roll })),
   treasureArmorShields: ({ roll, context }) => {
     const level =
       context && context.kind === 'treasureMagic' ? context.level : 1;
@@ -543,14 +536,6 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
       })
     );
   },
-  treasureRobeOfUsefulItems: () =>
-    fromOutcome(resolveTreasureRobeOfUsefulItems()),
-  treasureRobeOfTheArchmagi: ({ roll }) =>
-    fromOutcome(resolveTreasureRobeOfTheArchmagi({ roll })),
-  treasureScarabOfProtectionCurse: ({ roll }) =>
-    fromOutcome(resolveTreasureScarabOfProtectionCurse({ roll })),
-  treasureScarabOfProtectionCurseResolution: ({ roll }) =>
-    fromOutcome(resolveTreasureScarabOfProtectionCurseResolution({ roll })),
 };
 
 const HAZARD_TABLE_RESOLVERS: Record<string, RegistryResolver> =

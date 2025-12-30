@@ -76,20 +76,6 @@ import {
   buildTreasurePreview,
 } from './render/treasure';
 import {
-  renderTreasureMiscMagicE5Detail,
-  renderTreasureMiscMagicE5Compact,
-  buildTreasureMiscMagicE5Preview,
-} from './render/treasureMiscMagicE5';
-import {
-  renderTreasureRobeOfTheArchmagiDetail,
-  renderTreasureRobeOfTheArchmagiCompact,
-  buildTreasureRobeOfTheArchmagiPreview,
-} from './render/treasureRobeOfTheArchmagi';
-import {
-  renderTreasureRobeOfUsefulItemsDetail,
-  renderTreasureRobeOfUsefulItemsCompact,
-} from './render/treasureRobeOfUsefulItems';
-import {
   renderTreasureArmorShieldsDetail,
   renderTreasureArmorShieldsCompact,
   buildTreasureArmorShieldsPreview,
@@ -130,14 +116,6 @@ import {
   renderTreasureMiscWeaponsCompact,
   buildTreasureMiscWeaponsPreview,
 } from './render/treasureMiscWeapons';
-import {
-  renderTreasureScarabOfProtectionCurseDetail,
-  renderTreasureScarabOfProtectionCurseCompact,
-  buildTreasureScarabOfProtectionCursePreview,
-  renderTreasureScarabOfProtectionCurseResolutionDetail,
-  renderTreasureScarabOfProtectionCurseResolutionCompact,
-  buildTreasureScarabOfProtectionCurseResolutionPreview,
-} from './render/treasureScarabOfProtection';
 import { isTableContext } from '../helpers/outcomeTree';
 import {
   buildCircularContentsPreview,
@@ -244,10 +222,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureDetail,
     renderCompact: withoutAppend(renderTreasureCompactNodes),
   },
-  treasureMiscMagicE5: {
-    renderDetail: renderTreasureMiscMagicE5Detail,
-    renderCompact: renderTreasureMiscMagicE5Compact,
-  },
   treasureArmorShields: {
     renderDetail: renderTreasureArmorShieldsDetail,
     renderCompact: renderTreasureArmorShieldsCompact,
@@ -292,22 +266,6 @@ const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
     renderDetail: renderTreasureMiscWeaponsDetail,
     renderCompact: renderTreasureMiscWeaponsCompact,
   },
-  treasureRobeOfTheArchmagi: {
-    renderDetail: renderTreasureRobeOfTheArchmagiDetail,
-    renderCompact: renderTreasureRobeOfTheArchmagiCompact,
-  },
-  treasureScarabOfProtectionCurse: {
-    renderDetail: renderTreasureScarabOfProtectionCurseDetail,
-    renderCompact: renderTreasureScarabOfProtectionCurseCompact,
-  },
-  treasureScarabOfProtectionCurseResolution: {
-    renderDetail: renderTreasureScarabOfProtectionCurseResolutionDetail,
-    renderCompact: renderTreasureScarabOfProtectionCurseResolutionCompact,
-  },
-  treasureRobeOfUsefulItems: {
-    renderDetail: renderTreasureRobeOfUsefulItemsDetail,
-    renderCompact: renderTreasureRobeOfUsefulItemsCompact,
-  },
   monsterFour: monsterAdapter,
   monsterFive: monsterAdapter,
   monsterSix: monsterAdapter,
@@ -351,7 +309,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   poolAlignment: buildPoolAlignmentPreview,
   transporterLocation: buildTransporterLocationPreview,
   treasure: buildTreasurePreview,
-  treasureMiscMagicE5: buildTreasureMiscMagicE5Preview,
   treasureArmorShields: buildTreasureArmorShieldsPreview,
   treasureSwords: buildTreasureSwordsPreview,
   treasureSwordKind: buildTreasureSwordKindPreview,
@@ -369,10 +326,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
   treasureSwordAlignment: buildTreasureSwordAlignmentPreview,
   treasureSwordAlignmentChaotic: buildTreasureSwordAlignmentChaoticPreview,
   treasureSwordAlignmentLawful: buildTreasureSwordAlignmentLawfulPreview,
-  treasureRobeOfTheArchmagi: buildTreasureRobeOfTheArchmagiPreview,
-  treasureScarabOfProtectionCurse: buildTreasureScarabOfProtectionCursePreview,
-  treasureScarabOfProtectionCurseResolution:
-    buildTreasureScarabOfProtectionCurseResolutionPreview,
   treasureMiscWeapons: buildTreasureMiscWeaponsPreview,
 };
 

@@ -1,21 +1,25 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import {
-  treasureMiscMagicE5,
-  TreasureMiscMagicE5,
-} from '../../../tables/dungeon/treasureMiscMagicE5';
-import type { TreasureRobeOfTheArchmagi } from '../../../tables/dungeon/treasureRobeOfTheArchmagi';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import { treasureMiscMagicE5, TreasureMiscMagicE5 } from './miscMagicE5Table';
+import type { TreasureRobeOfTheArchmagi } from './miscMagicE5Subtables';
 import type {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
-} from '../../../tables/dungeon/treasureScarabOfProtection';
-import { buildPreview, findChildEvent } from './shared';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+} from './miscMagicE5Subtables';
+import {
+  buildPreview,
+  findChildEvent,
+  type AppendPreviewFn,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
 import {
   robeOfTheArchmagiAlignmentDisplay,
   robeOfTheArchmagiParenthetical,
-} from './treasureRobeOfTheArchmagi';
-import { scarabOfProtectionParenthetical } from './treasureScarabOfProtection';
+  scarabOfProtectionParenthetical,
+} from './miscMagicE5SubtablesRender';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE5, string> = {
   [TreasureMiscMagicE5.RobeOfTheArchmagi]: 'Robe of the Archmagi',

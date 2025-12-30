@@ -1,11 +1,11 @@
 import {
   resolveTreasureScarabOfProtectionCurse,
   resolveTreasureScarabOfProtectionCurseResolution,
-} from '../../../../dungeon/domain/resolvers';
+} from '../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Resolvers';
 import {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
-} from '../../../../tables/dungeon/treasureScarabOfProtection';
+} from '../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Subtables';
 import type { PendingRoll } from '../../../../dungeon/domain/outcome';
 
 describe('Scarab of Protection subtables', () => {

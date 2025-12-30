@@ -1,5 +1,5 @@
-import { resolveTreasureRobeOfUsefulItems } from '../../../../dungeon/domain/resolvers';
-import { toRobeOfUsefulItemsSummary } from '../../../../dungeon/adapters/render/treasureRobeOfUsefulItems';
+import { resolveTreasureRobeOfUsefulItems } from '../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Resolvers';
+import { toRobeOfUsefulItemsSummary } from '../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5SubtablesRender';
 import * as dungeonLookup from '../../../../dungeon/helpers/dungeonLookup';
 
 describe('resolveTreasureRobeOfUsefulItems', () => {
