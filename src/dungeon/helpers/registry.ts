@@ -52,29 +52,11 @@ import {
   type OutcomeRenderSnapshot,
 } from './outcomePipeline';
 import {
-  NAVIGATION_REGISTRY_OUTCOMES,
-  NAVIGATION_TABLE_HEADINGS,
-  NAVIGATION_TABLE_ID_LIST,
-} from '../features/navigation/bundle';
-import type { NavigationTableId } from '../features/navigation/bundle';
-import {
-  HAZARD_REGISTRY_OUTCOMES,
-  HAZARD_TABLE_HEADINGS,
-  HAZARD_TABLE_ID_LIST,
-} from '../features/hazards/bundle';
-import type { HazardTableId } from '../features/hazards/bundle';
-import {
-  TREASURE_REGISTRY_OUTCOMES,
-  TREASURE_TABLE_HEADINGS,
-  TREASURE_TABLE_ID_LIST,
-} from '../features/treasure/bundle';
-import type { TreasureTableId } from '../features/treasure/bundle';
-import {
-  MONSTER_REGISTRY_OUTCOMES,
-  MONSTER_TABLE_HEADINGS,
-  MONSTER_TABLE_ID_LIST,
-} from '../features/monsters/bundle';
-import type { MonsterTableId } from '../features/monsters/bundle';
+  ALL_REGISTRY_OUTCOMES,
+  ALL_TABLE_HEADINGS,
+  ALL_TABLE_ID_LIST,
+  type FeatureTableId,
+} from '../features/bundle';
 import {
   BASE_TABLE_HEADINGS,
   BASE_TABLE_ID_LIST,
@@ -97,25 +79,12 @@ export type RegistryResolver = (opts: {
   };
 }) => RegistryResolution;
 
-const NAVIGATION_TABLE_RESOLVERS: Record<string, RegistryResolver> =
-  Object.fromEntries(
-    Object.entries(NAVIGATION_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
-      id,
-      (opts) => fromOutcome(buildOutcome(opts)),
-    ])
-  );
 export type TableId =
-  | NavigationTableId
-  | HazardTableId
-  | TreasureTableId
-  | MonsterTableId
+  | FeatureTableId
   | BaseTableId;
 
 const TABLE_ID_LIST: ReadonlyArray<TableId> = [
-  ...NAVIGATION_TABLE_ID_LIST,
-  ...HAZARD_TABLE_ID_LIST,
-  ...TREASURE_TABLE_ID_LIST,
-  ...MONSTER_TABLE_ID_LIST,
+  ...ALL_TABLE_ID_LIST,
   ...BASE_TABLE_ID_LIST,
 ];
 
@@ -124,10 +93,7 @@ function isTableId(x: string): x is TableId {
 }
 
 export const TABLE_HEADINGS: Record<TableId, string> = {
-  ...NAVIGATION_TABLE_HEADINGS,
-  ...HAZARD_TABLE_HEADINGS,
-  ...TREASURE_TABLE_HEADINGS,
-  ...MONSTER_TABLE_HEADINGS,
+  ...ALL_TABLE_HEADINGS,
   ...BASE_TABLE_HEADINGS,
 } as Record<TableId, string>;
 
@@ -538,35 +504,16 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
   },
 };
 
-const HAZARD_TABLE_RESOLVERS: Record<string, RegistryResolver> =
+const FEATURE_TABLE_RESOLVERS: Record<string, RegistryResolver> =
   Object.fromEntries(
-    Object.entries(HAZARD_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
-      id,
-      (opts) => fromOutcome(buildOutcome(opts)),
-    ])
-  );
-
-const TREASURE_TABLE_RESOLVERS: Record<string, RegistryResolver> =
-  Object.fromEntries(
-    Object.entries(TREASURE_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
-      id,
-      (opts) => fromOutcome(buildOutcome(opts)),
-    ])
-  );
-
-const MONSTER_TABLE_RESOLVERS: Record<string, RegistryResolver> =
-  Object.fromEntries(
-    Object.entries(MONSTER_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
+    Object.entries(ALL_REGISTRY_OUTCOMES).map(([id, buildOutcome]) => [
       id,
       (opts) => fromOutcome(buildOutcome(opts)),
     ])
   );
 
 export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
-  ...NAVIGATION_TABLE_RESOLVERS,
-  ...HAZARD_TABLE_RESOLVERS,
-  ...TREASURE_TABLE_RESOLVERS,
-  ...MONSTER_TABLE_RESOLVERS,
+  ...FEATURE_TABLE_RESOLVERS,
   ...BASE_TABLE_RESOLVERS,
 } as Record<TableId, RegistryResolver>;
 

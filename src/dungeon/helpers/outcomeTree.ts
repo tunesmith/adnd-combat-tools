@@ -39,15 +39,9 @@ import {
 } from '../domain/resolvers';
 import { readTreasureMagicContext } from '../features/treasure/shared';
 import {
-  NAVIGATION_CHILD_POST_PROCESSORS,
-  NAVIGATION_PENDING_RESOLVERS,
-} from '../features/navigation/bundle';
-import {
-  HAZARD_CHILD_POST_PROCESSORS,
-  HAZARD_PENDING_RESOLVERS,
-} from '../features/hazards/bundle';
-import { TREASURE_PENDING_RESOLVERS } from '../features/treasure/bundle';
-import { MONSTER_PENDING_RESOLVERS } from '../features/monsters/bundle';
+  ALL_CHILD_POST_PROCESSORS,
+  ALL_PENDING_RESOLVERS,
+} from '../features/bundle';
 import { resolveGasTrapEffect } from '../features/hazards/gasTrap/gasTrapResolvers';
 import type { TableContext } from '../../types/dungeon';
 import { DoorLocation } from '../features/navigation/doorChain/doorChainTable';
@@ -586,13 +580,9 @@ function enrichEventNode(
     default:
       break;
   }
-  const navPostProcess = NAVIGATION_CHILD_POST_PROCESSORS[node.event.kind];
-  if (navPostProcess) {
-    children = navPostProcess(node, children, resolveNested);
-  }
-  const hazardPostProcess = HAZARD_CHILD_POST_PROCESSORS[node.event.kind];
-  if (hazardPostProcess) {
-    children = hazardPostProcess(node, children, resolveNested);
+  const postProcess = ALL_CHILD_POST_PROCESSORS[node.event.kind];
+  if (postProcess) {
+    children = postProcess(node, children, resolveNested);
   }
   return {
     type: 'event',
@@ -636,24 +626,9 @@ function resolvePendingNode(
   ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined {
   const base = pending.table.split(':')[0] ?? '';
-  const navResolve = NAVIGATION_PENDING_RESOLVERS[base];
-  if (navResolve) {
-    const resolved = navResolve(pending, ancestors);
-    if (resolved) return resolved;
-  }
-  const hazardResolve = HAZARD_PENDING_RESOLVERS[base];
-  if (hazardResolve) {
-    const resolved = hazardResolve(pending, ancestors);
-    if (resolved) return resolved;
-  }
-  const treasureResolve = TREASURE_PENDING_RESOLVERS[base];
-  if (treasureResolve) {
-    const resolved = treasureResolve(pending, ancestors);
-    if (resolved) return resolved;
-  }
-  const monsterResolve = MONSTER_PENDING_RESOLVERS[base];
-  if (monsterResolve) {
-    const resolved = monsterResolve(pending, ancestors);
+  const featureResolve = ALL_PENDING_RESOLVERS[base];
+  if (featureResolve) {
+    const resolved = featureResolve(pending, ancestors);
     if (resolved) return resolved;
   }
   switch (base) {
