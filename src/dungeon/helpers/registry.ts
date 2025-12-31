@@ -78,9 +78,7 @@ export type RegistryResolver = (opts: {
   };
 }) => RegistryResolution;
 
-export type TableId =
-  | FeatureTableId
-  | BaseTableId;
+export type TableId = FeatureTableId | BaseTableId;
 
 const TABLE_ID_LIST: ReadonlyArray<TableId> = [
   ...ALL_TABLE_ID_LIST,

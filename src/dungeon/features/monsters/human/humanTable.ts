@@ -16,4 +16,3 @@ export const human: Table<Human> = {
     { range: [46, 100], command: Human.Character },
   ],
 };
-

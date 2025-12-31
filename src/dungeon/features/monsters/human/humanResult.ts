@@ -56,4 +56,3 @@ export const humanResult = (dungeonLevel: number): string => {
   const command = getTableEntry(roll, human);
   return humanTextForCommand(dungeonLevel, command).text;
 };
-

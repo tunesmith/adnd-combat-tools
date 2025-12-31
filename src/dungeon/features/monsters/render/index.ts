@@ -19,10 +19,7 @@ import {
   isStandardTableId,
   isDragonTableId,
 } from './standard';
-import {
-  describeHumanMonster,
-  buildHumanPreview,
-} from '../human/humanRender';
+import { describeHumanMonster, buildHumanPreview } from '../human/humanRender';
 
 export type { MonsterDescription } from './shared';
 

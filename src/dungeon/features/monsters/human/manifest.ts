@@ -24,4 +24,3 @@ export const humanTables: ReadonlyArray<DungeonTableDefinition> = [
     registry,
   },
 ];
-

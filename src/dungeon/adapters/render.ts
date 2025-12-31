@@ -122,10 +122,7 @@ import {
   renderCircularContentsDetail,
 } from './render/circularContents';
 import type { AppendPreviewFn } from './render/shared';
-import {
-  ALL_PREVIEW_FACTORIES,
-  ALL_RENDER_ADAPTERS,
-} from '../features/bundle';
+import { ALL_PREVIEW_FACTORIES, ALL_RENDER_ADAPTERS } from '../features/bundle';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
