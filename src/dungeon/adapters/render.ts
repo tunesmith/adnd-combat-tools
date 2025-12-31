@@ -11,116 +11,10 @@ import type {
 } from '../../types/dungeon';
 import { PASSAGE_CONTINUES_SUFFIX } from './render/periodicOutcome';
 import {
-  renderRoomDimensionsDetail,
-  renderRoomDimensionsCompactNodes,
-  buildRoomDimensionsPreview,
-} from './render/roomDimensions';
-import {
-  renderChamberDimensionsDetail,
-  renderChamberDimensionsCompact,
-  buildChamberDimensionsPreview,
-} from './render/chamberDimensions';
-import {
-  renderCircularPoolDetail,
-  renderCircularPoolCompact,
-  buildCircularPoolPreview,
-} from './render/circularPools';
-import {
-  renderCircularMagicPoolDetail,
-  renderCircularMagicPoolCompact,
-  buildCircularMagicPoolPreview,
-} from './render/magicPool';
-import {
-  renderTransmuteTypeDetail,
-  renderTransmuteTypeCompact,
-  buildTransmuteTypePreview,
-} from './render/transmuteType';
-import {
-  renderPoolAlignmentDetail,
-  renderPoolAlignmentCompact,
-  buildPoolAlignmentPreview,
-} from './render/poolAlignment';
-import {
-  renderTransporterLocationDetail,
-  renderTransporterLocationCompact,
-  buildTransporterLocationPreview,
-} from './render/transporterLocation';
-import {
-  renderUnusualSizeDetail,
-  renderUnusualSizeCompact,
-  buildUnusualSizePreview,
-} from './render/unusualSize';
-import {
-  renderUnusualShapeDetail,
-  renderUnusualShapeCompact,
-  buildUnusualShapePreview,
-} from './render/unusualShape';
-import {
-  renderChamberRoomContentsDetail,
-  renderChamberRoomContentsCompact,
-  buildChamberRoomContentsPreview,
-} from './render/chamberRoomContents';
-import {
-  renderChamberRoomStairsDetail,
-  renderChamberRoomStairsCompact,
-  buildChamberRoomStairsPreview,
-} from './render/chamberRoomStairs';
-import {
   renderMonsterDetailNodes,
   renderMonsterCompactNodes,
 } from '../features/monsters/render';
-import {
-  renderTreasureDetail,
-  renderTreasureCompactNodes,
-  buildTreasurePreview,
-} from './render/treasure';
-import {
-  renderTreasureArmorShieldsDetail,
-  renderTreasureArmorShieldsCompact,
-  buildTreasureArmorShieldsPreview,
-} from './render/treasureArmorShields';
-import {
-  renderTreasureSwordsDetail,
-  renderTreasureSwordsCompact,
-  buildTreasureSwordsPreview,
-  renderTreasureSwordKindDetail,
-  renderTreasureSwordKindCompact,
-  buildTreasureSwordKindPreview,
-  renderTreasureSwordUnusualDetail,
-  renderTreasureSwordUnusualCompact,
-  buildTreasureSwordUnusualPreview,
-  renderTreasureSwordPrimaryAbilityDetail,
-  renderTreasureSwordPrimaryAbilityCompact,
-  buildTreasureSwordPrimaryAbilityPreview,
-  renderTreasureSwordExtraordinaryPowerDetail,
-  renderTreasureSwordExtraordinaryPowerCompact,
-  buildTreasureSwordExtraordinaryPowerPreview,
-  renderTreasureSwordSpecialPurposeDetail,
-  renderTreasureSwordSpecialPurposeCompact,
-  renderTreasureSwordSpecialPurposePowerDetail,
-  renderTreasureSwordSpecialPurposePowerCompact,
-  buildTreasureSwordSpecialPurposePreview,
-  buildTreasureSwordSpecialPurposePowerPreview,
-  renderTreasureSwordDragonSlayerColorDetail,
-  renderTreasureSwordDragonSlayerColorCompact,
-  buildTreasureSwordDragonSlayerColorPreview,
-  renderTreasureSwordAlignmentDetail,
-  renderTreasureSwordAlignmentCompact,
-  buildTreasureSwordAlignmentPreview,
-  buildTreasureSwordAlignmentChaoticPreview,
-  buildTreasureSwordAlignmentLawfulPreview,
-} from './render/treasureSwords';
-import {
-  renderTreasureMiscWeaponsDetail,
-  renderTreasureMiscWeaponsCompact,
-  buildTreasureMiscWeaponsPreview,
-} from './render/treasureMiscWeapons';
 import { isTableContext } from '../helpers/outcomeTree';
-import {
-  buildCircularContentsPreview,
-  renderCircularContentsCompact,
-  renderCircularContentsDetail,
-} from './render/circularContents';
 import type { AppendPreviewFn } from './render/shared';
 import { ALL_PREVIEW_FACTORIES, ALL_RENDER_ADAPTERS } from '../features/bundle';
 
@@ -141,115 +35,12 @@ type RenderAdapter = {
   renderCompact: RenderCompactFn;
 };
 
-const withoutAppend =
-  (
-    renderer: (node: OutcomeEventNode) => DungeonRenderNode[]
-  ): RenderCompactFn =>
-  (node, _append) =>
-    renderer(node);
-
 const monsterAdapter: RenderAdapter = {
   renderDetail: renderMonsterDetailNodes,
   renderCompact: renderMonsterCompactNodes,
 };
 
 const RENDER_ADAPTERS: Partial<Record<OutcomeEventKind, RenderAdapter>> = {
-  roomDimensions: {
-    renderDetail: renderRoomDimensionsDetail,
-    renderCompact: withoutAppend(renderRoomDimensionsCompactNodes),
-  },
-  chamberDimensions: {
-    renderDetail: renderChamberDimensionsDetail,
-    renderCompact: withoutAppend(renderChamberDimensionsCompact),
-  },
-  circularContents: {
-    renderDetail: renderCircularContentsDetail,
-    renderCompact: renderCircularContentsCompact,
-  },
-  circularPool: {
-    renderDetail: renderCircularPoolDetail,
-    renderCompact: renderCircularPoolCompact,
-  },
-  circularMagicPool: {
-    renderDetail: renderCircularMagicPoolDetail,
-    renderCompact: renderCircularMagicPoolCompact,
-  },
-  transmuteType: {
-    renderDetail: renderTransmuteTypeDetail,
-    renderCompact: withoutAppend(renderTransmuteTypeCompact),
-  },
-  poolAlignment: {
-    renderDetail: renderPoolAlignmentDetail,
-    renderCompact: withoutAppend(renderPoolAlignmentCompact),
-  },
-  transporterLocation: {
-    renderDetail: renderTransporterLocationDetail,
-    renderCompact: withoutAppend(renderTransporterLocationCompact),
-  },
-  unusualShape: {
-    renderDetail: renderUnusualShapeDetail,
-    renderCompact: withoutAppend(renderUnusualShapeCompact),
-  },
-  unusualSize: {
-    renderDetail: renderUnusualSizeDetail,
-    renderCompact: withoutAppend(renderUnusualSizeCompact),
-  },
-  chamberRoomContents: {
-    renderDetail: renderChamberRoomContentsDetail,
-    renderCompact: renderChamberRoomContentsCompact,
-  },
-  chamberRoomStairs: {
-    renderDetail: renderChamberRoomStairsDetail,
-    renderCompact: renderChamberRoomStairsCompact,
-  },
-  treasure: {
-    renderDetail: renderTreasureDetail,
-    renderCompact: withoutAppend(renderTreasureCompactNodes),
-  },
-  treasureArmorShields: {
-    renderDetail: renderTreasureArmorShieldsDetail,
-    renderCompact: renderTreasureArmorShieldsCompact,
-  },
-  treasureSwords: {
-    renderDetail: renderTreasureSwordsDetail,
-    renderCompact: renderTreasureSwordsCompact,
-  },
-  treasureSwordKind: {
-    renderDetail: renderTreasureSwordKindDetail,
-    renderCompact: renderTreasureSwordKindCompact,
-  },
-  treasureSwordUnusual: {
-    renderDetail: renderTreasureSwordUnusualDetail,
-    renderCompact: renderTreasureSwordUnusualCompact,
-  },
-  treasureSwordPrimaryAbility: {
-    renderDetail: renderTreasureSwordPrimaryAbilityDetail,
-    renderCompact: renderTreasureSwordPrimaryAbilityCompact,
-  },
-  treasureSwordExtraordinaryPower: {
-    renderDetail: renderTreasureSwordExtraordinaryPowerDetail,
-    renderCompact: renderTreasureSwordExtraordinaryPowerCompact,
-  },
-  treasureSwordSpecialPurpose: {
-    renderDetail: renderTreasureSwordSpecialPurposeDetail,
-    renderCompact: renderTreasureSwordSpecialPurposeCompact,
-  },
-  treasureSwordSpecialPurposePower: {
-    renderDetail: renderTreasureSwordSpecialPurposePowerDetail,
-    renderCompact: renderTreasureSwordSpecialPurposePowerCompact,
-  },
-  treasureSwordDragonSlayerColor: {
-    renderDetail: renderTreasureSwordDragonSlayerColorDetail,
-    renderCompact: renderTreasureSwordDragonSlayerColorCompact,
-  },
-  treasureSwordAlignment: {
-    renderDetail: renderTreasureSwordAlignmentDetail,
-    renderCompact: renderTreasureSwordAlignmentCompact,
-  },
-  treasureMiscWeapons: {
-    renderDetail: renderTreasureMiscWeaponsDetail,
-    renderCompact: renderTreasureMiscWeaponsCompact,
-  },
   monsterFour: monsterAdapter,
   monsterFive: monsterAdapter,
   monsterSix: monsterAdapter,
@@ -277,37 +68,6 @@ type PendingPreviewBuilder = (
 ) => DungeonTablePreview | undefined;
 
 const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
-  roomDimensions: buildRoomDimensionsPreview,
-  chamberDimensions: buildChamberDimensionsPreview,
-  unusualShape: buildUnusualShapePreview,
-  unusualSize: (tableId, context) => buildUnusualSizePreview(tableId, context),
-  chamberRoomContents: buildChamberRoomContentsPreview,
-  chamberRoomStairs: buildChamberRoomStairsPreview,
-  circularContents: buildCircularContentsPreview,
-  circularPool: buildCircularPoolPreview,
-  circularMagicPool: buildCircularMagicPoolPreview,
-  transmuteType: buildTransmuteTypePreview,
-  poolAlignment: buildPoolAlignmentPreview,
-  transporterLocation: buildTransporterLocationPreview,
-  treasure: buildTreasurePreview,
-  treasureArmorShields: buildTreasureArmorShieldsPreview,
-  treasureSwords: buildTreasureSwordsPreview,
-  treasureSwordKind: buildTreasureSwordKindPreview,
-  treasureSwordUnusual: buildTreasureSwordUnusualPreview,
-  treasureSwordPrimaryAbility: buildTreasureSwordPrimaryAbilityPreview,
-  treasureSwordPrimaryAbilityRestricted:
-    buildTreasureSwordPrimaryAbilityPreview,
-  treasureSwordExtraordinaryPower: buildTreasureSwordExtraordinaryPowerPreview,
-  treasureSwordExtraordinaryPowerRestricted:
-    buildTreasureSwordExtraordinaryPowerPreview,
-  treasureSwordSpecialPurpose: buildTreasureSwordSpecialPurposePreview,
-  treasureSwordSpecialPurposePower:
-    buildTreasureSwordSpecialPurposePowerPreview,
-  treasureSwordDragonSlayerColor: buildTreasureSwordDragonSlayerColorPreview,
-  treasureSwordAlignment: buildTreasureSwordAlignmentPreview,
-  treasureSwordAlignmentChaotic: buildTreasureSwordAlignmentChaoticPreview,
-  treasureSwordAlignmentLawful: buildTreasureSwordAlignmentLawfulPreview,
-  treasureMiscWeapons: buildTreasureMiscWeaponsPreview,
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, ALL_PREVIEW_FACTORIES);

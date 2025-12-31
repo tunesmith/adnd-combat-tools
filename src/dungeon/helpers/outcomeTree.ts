@@ -6,45 +6,17 @@ import type {
   PendingRoll,
 } from '../domain/outcome';
 import type {
-  TreasureSword,
   TreasureSwordExtraordinaryPowerResult,
   TreasureSwordSpecialPurposeResult,
 } from '../../tables/dungeon/treasureSwords';
 import { describeSwordSpecialPurpose } from '../../tables/dungeon/treasureSwords';
 import type { TreasureSwordAlignment } from '../../tables/dungeon/treasureSwordAlignment';
 import {
-  resolveChamberDimensions,
-  resolveChamberRoomContents,
-  resolveChamberRoomStairs,
-  resolveCircularContents,
-  resolveCircularMagicPool,
-  resolveCircularPool,
-  resolveIllusionaryWallNature,
-  resolvePoolAlignment,
-  resolveRoomDimensions,
-  resolveTransmuteType,
-  resolveTransporterLocation,
-  resolveTreasure,
-  resolveTreasureArmorShields,
-  resolveTreasureMiscWeapons,
-  resolveTreasureSwordAlignment,
-  resolveTreasureSwordKind,
-  resolveTreasureSwordPrimaryAbility,
-  resolveTreasureSwords,
-  resolveTreasureSwordUnusual,
-  resolveTrickTrap,
-  resolveUnusualShape,
-  resolveUnusualSize,
-} from '../domain/resolvers';
-import { readTreasureMagicContext } from '../features/treasure/shared';
-import {
   ALL_CHILD_POST_PROCESSORS,
   ALL_PENDING_RESOLVERS,
 } from '../features/bundle';
-import { resolveGasTrapEffect } from '../features/hazards/gasTrap/gasTrapResolvers';
 import type { TableContext } from '../../types/dungeon';
 import { DoorLocation } from '../features/navigation/doorChain/doorChainTable';
-import { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 
 const MAX_DEPTH = 32;
 
@@ -308,33 +280,6 @@ export function isTableContext(x: unknown): x is TableContext {
     return slotOk && indexOk;
   }
   return false;
-}
-
-function readChamberDimensionsContext(
-  context: unknown
-): { forcedContents?: ChamberRoomContents; level?: number } | undefined {
-  if (!context || typeof context !== 'object') return undefined;
-  const kind = (context as { kind?: unknown }).kind;
-  if (kind !== 'chamberDimensions') return undefined;
-  const forced = (context as { forcedContents?: unknown }).forcedContents;
-  const levelValue = (context as { level?: unknown }).level;
-  const result: {
-    forcedContents?: ChamberRoomContents;
-    level?: number;
-  } = {};
-  if (typeof forced === 'number') {
-    const numeric = forced;
-    if (
-      numeric >= ChamberRoomContents.Empty &&
-      numeric <= ChamberRoomContents.Treasure
-    ) {
-      result.forcedContents = numeric as ChamberRoomContents;
-    }
-  }
-  if (typeof levelValue === 'number' && Number.isFinite(levelValue)) {
-    result.level = levelValue;
-  }
-  return result;
 }
 
 function collectDoorChainExisting(
@@ -611,140 +556,7 @@ function resolvePendingNode(
 ): DungeonOutcomeNode | undefined {
   const base = pending.table.split(':')[0] ?? '';
   const featureResolve = ALL_PENDING_RESOLVERS[base];
-  if (featureResolve) {
-    const resolved = featureResolve(pending, ancestors);
-    if (resolved) return resolved;
-  }
-  switch (base) {
-    case 'roomDimensions': {
-      const ctx = pending.context as
-        | { kind?: unknown; level?: unknown }
-        | undefined;
-      const level =
-        ctx && ctx.kind === 'chamberDimensions' && typeof ctx.level === 'number'
-          ? ctx.level
-          : 1;
-      return resolveRoomDimensions({ level });
-    }
-    case 'chamberDimensions': {
-      const chamberContext = readChamberDimensionsContext(pending.context);
-      const derivedLevel = deriveDungeonLevelFromAncestors(ancestors);
-      const level =
-        chamberContext?.level !== undefined
-          ? chamberContext.level
-          : derivedLevel;
-      const hasContext =
-        (chamberContext && chamberContext.forcedContents !== undefined) ||
-        level !== undefined;
-      return resolveChamberDimensions(
-        hasContext
-          ? {
-              context: {
-                forcedContents: chamberContext?.forcedContents,
-                level,
-              },
-            }
-          : undefined
-      );
-    }
-    case 'unusualShape':
-      return resolveUnusualShape({});
-    case 'unusualSize': {
-      const context = readUnusualSizeContext(pending.context);
-      return resolveUnusualSize({
-        extra: context?.extra,
-        isRoom: context?.isRoom,
-      });
-    }
-    case 'chamberRoomContents': {
-      const contextLevel =
-        isTableContext(pending.context) &&
-        pending.context.kind === 'chamberContents'
-          ? pending.context.level
-          : undefined;
-      const derivedLevel = deriveDungeonLevelFromAncestors(ancestors);
-      const level = contextLevel ?? derivedLevel ?? 1;
-      return resolveChamberRoomContents({ level });
-    }
-    case 'chamberRoomStairs':
-      return resolveChamberRoomStairs({});
-    case 'circularContents':
-      return resolveCircularContents({});
-    case 'circularPool': {
-      const level = deriveDungeonLevelFromAncestors(ancestors) ?? 1;
-      return resolveCircularPool({ level });
-    }
-    case 'circularMagicPool':
-      return resolveCircularMagicPool({});
-    case 'treasure': {
-      const rawContext = pending.context as TableContext | undefined;
-      const ctx =
-        rawContext && rawContext.kind === 'treasure' ? rawContext : undefined;
-      const level =
-        ctx?.level ?? deriveDungeonLevelFromAncestors(ancestors) ?? 1;
-      const withMonster = ctx?.withMonster ?? false;
-      return resolveTreasure({
-        level,
-        withMonster,
-        rollIndex: ctx?.rollIndex,
-        totalRolls: ctx?.totalRolls,
-      });
-    }
-    case 'gasTrapEffect':
-      return resolveGasTrapEffect({});
-    case 'treasureArmorShields': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureArmorShields(context);
-    }
-    case 'treasureSwords': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureSwords(context);
-    }
-    case 'treasureSwordKind':
-      return resolveTreasureSwordKind({});
-    case 'treasureSwordUnusual': {
-      const context = readTreasureSwordContext(pending.context, ancestors);
-      return resolveTreasureSwordUnusual(context);
-    }
-    case 'treasureSwordPrimaryAbility': {
-      const context = readSwordPrimaryAbilityContext(pending.context);
-      return resolveTreasureSwordPrimaryAbility({
-        slotKey: context.slotKey,
-        rollIndex: context.rollIndex,
-        tableVariant: context.tableVariant ?? 'standard',
-      });
-    }
-    case 'treasureSwordPrimaryAbilityRestricted': {
-      const context = readSwordPrimaryAbilityContext(pending.context);
-      return resolveTreasureSwordPrimaryAbility({
-        slotKey: context.slotKey,
-        rollIndex: context.rollIndex,
-        tableVariant: 'restricted',
-      });
-    }
-    case 'treasureSwordAlignment':
-      return resolveTreasureSwordAlignment({ variant: 'standard' });
-    case 'treasureSwordAlignmentChaotic':
-      return resolveTreasureSwordAlignment({ variant: 'chaotic' });
-    case 'treasureSwordAlignmentLawful':
-      return resolveTreasureSwordAlignment({ variant: 'lawful' });
-    case 'treasureMiscWeapons': {
-      const context = readTreasureMagicContext(pending.context, ancestors);
-      return resolveTreasureMiscWeapons(context);
-    }
-    case 'transmuteType':
-      return resolveTransmuteType({});
-    case 'poolAlignment':
-      return resolvePoolAlignment({});
-    case 'transporterLocation':
-      return resolveTransporterLocation({});
-    case 'trickTrap':
-      return resolveTrickTrap({});
-    case 'illusionaryWallNature':
-      return resolveIllusionaryWallNature({});
-    default:
-      return undefined;
-  }
+  return featureResolve ? featureResolve(pending, ancestors) : undefined;
 }
 
 export function propagateSwordAlignmentInfo(
@@ -991,133 +803,6 @@ export function parseDoorChainSequence(
     if (Number.isInteger(seq)) return seq;
   }
   return fallback;
-}
-
-function readUnusualSizeContext(
-  context: unknown
-): { extra: number; isRoom?: boolean } | undefined {
-  if (!isTableContext(context)) return undefined;
-  if (context.kind !== 'unusualSize') return undefined;
-  const extra = typeof context.extra === 'number' ? context.extra : undefined;
-  if (extra === undefined) return undefined;
-  const isRoom =
-    context.isRoom === undefined || typeof context.isRoom === 'boolean'
-      ? context.isRoom
-      : undefined;
-  return { extra, isRoom };
-}
-
-function readTreasureSwordContext(
-  context: unknown,
-  ancestors: OutcomeEventNode[]
-): {
-  sword?: TreasureSword;
-  rollIndex?: number;
-  alignmentRoll?: number;
-  languageRolls?: number[];
-  primaryAbilityRolls?: number[];
-  extraordinaryPowerRolls?: number[];
-} {
-  if (
-    context &&
-    typeof context === 'object' &&
-    (context as { kind?: unknown }).kind === 'treasureSword'
-  ) {
-    const swordValue = (context as { sword?: unknown }).sword;
-    const rollIndexValue = (context as { rollIndex?: unknown }).rollIndex;
-    const alignmentRollValue = (context as { alignmentRoll?: unknown })
-      .alignmentRoll;
-    const languageRollsValue = (context as { languageRolls?: unknown })
-      .languageRolls;
-    const primaryAbilityRollsValue = (
-      context as { primaryAbilityRolls?: unknown }
-    ).primaryAbilityRolls;
-    const extraordinaryPowerRollsValue = (
-      context as { extraordinaryPowerRolls?: unknown }
-    ).extraordinaryPowerRolls;
-    return {
-      sword:
-        typeof swordValue === 'number'
-          ? (swordValue as TreasureSword)
-          : findSwordFromAncestors(ancestors),
-      rollIndex:
-        typeof rollIndexValue === 'number' ? rollIndexValue : undefined,
-      alignmentRoll:
-        typeof alignmentRollValue === 'number' ? alignmentRollValue : undefined,
-      languageRolls: Array.isArray(languageRollsValue)
-        ? [...(languageRollsValue as number[])]
-        : undefined,
-      primaryAbilityRolls: Array.isArray(primaryAbilityRollsValue)
-        ? [...(primaryAbilityRollsValue as number[])]
-        : undefined,
-      extraordinaryPowerRolls: Array.isArray(extraordinaryPowerRollsValue)
-        ? [...(extraordinaryPowerRollsValue as number[])]
-        : undefined,
-    };
-  }
-  return { sword: findSwordFromAncestors(ancestors) };
-}
-
-function readSwordPrimaryAbilityContext(context: unknown): {
-  slotKey?: string;
-  rollIndex?: number;
-  tableVariant?: 'standard' | 'restricted';
-} {
-  if (!context || typeof context !== 'object') {
-    return {};
-  }
-  const candidate = context as {
-    slotKey?: unknown;
-    rollIndex?: unknown;
-    tableVariant?: unknown;
-    ignoreHigh?: unknown;
-  };
-  const slotKey =
-    typeof candidate.slotKey === 'string' ? candidate.slotKey : undefined;
-  const rollIndex =
-    typeof candidate.rollIndex === 'number' ? candidate.rollIndex : undefined;
-  let tableVariant: 'standard' | 'restricted' | undefined;
-  if (
-    candidate.tableVariant === 'restricted' ||
-    candidate.ignoreHigh === true
-  ) {
-    tableVariant = 'restricted';
-  } else if (candidate.tableVariant === 'standard') {
-    tableVariant = 'standard';
-  }
-  return { slotKey, rollIndex, tableVariant };
-}
-
-function findSwordFromAncestors(
-  ancestors: OutcomeEventNode[]
-): TreasureSword | undefined {
-  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
-    const ancestor = ancestors[index];
-    if (!ancestor || ancestor.type !== 'event') continue;
-    if (ancestor.event.kind === 'treasureSwords') {
-      return ancestor.event.result;
-    }
-  }
-  return undefined;
-}
-
-function deriveDungeonLevelFromAncestors(
-  ancestors: OutcomeEventNode[]
-): number | undefined {
-  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
-    const ancestor = ancestors[index];
-    if (!ancestor) continue;
-    if (ancestor.event.kind === 'periodicCheck') {
-      return ancestor.event.level;
-    }
-    if (ancestor.event.kind === 'doorBeyond') {
-      const doorLevel = ancestor.event.level;
-      if (typeof doorLevel === 'number') {
-        return doorLevel;
-      }
-    }
-  }
-  return undefined;
 }
 
 function totalAreaFromUnusualSize(node: OutcomeEventNode): number | undefined {
