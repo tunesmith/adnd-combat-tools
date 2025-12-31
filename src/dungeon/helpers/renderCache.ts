@@ -36,10 +36,7 @@ export function filterForCompact(
       );
       return !allRoll;
     }
-    if (n.kind === 'roll-trace') {
-      return false;
-    }
-    return true;
+    return n.kind !== 'roll-trace';
   });
 }
 

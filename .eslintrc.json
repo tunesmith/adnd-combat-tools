@@ -30,6 +30,7 @@
       "error",
       { "devDependencies": ["**/src/tests/**", "**/*.test.*", "**/*.spec.*"] }
     ],
+    "import/no-useless-path-segments": ["warn", { "noUselessIndex": true }],
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off"
   },

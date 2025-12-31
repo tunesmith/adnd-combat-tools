@@ -1,6 +1,5 @@
 import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
-import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import { MonsterTwo, monsterTwo } from './monsterTwoTable';
+import { MonsterTwo } from './monsterTwoTable';
 import { characterResult } from '../../../services/monster/characterResult';
 import type { PartyResult } from '../../../models/character/characterSheet';
 
@@ -93,10 +92,4 @@ export const monsterTwoTextForCommand = (
     }
   }
   return { text, party };
-};
-
-export const monsterTwoResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterTwo.sides);
-  const command = getTableEntry(roll, monsterTwo);
-  return monsterTwoTextForCommand(dungeonLevel, command).text;
 };

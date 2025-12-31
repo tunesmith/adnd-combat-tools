@@ -11,9 +11,7 @@ import { HAZARD_TABLE_DEFINITIONS } from './hazards';
 import { TREASURE_TABLE_DEFINITIONS } from './treasure';
 import { MONSTER_TABLE_DEFINITIONS } from './monsters';
 
-const defineAllTables = <
-  T extends ReadonlyArray<DungeonTableDefinition<unknown>>
->(
+const defineAllTables = <T extends ReadonlyArray<DungeonTableDefinition>>(
   defs: T
 ): T => defs;
 
@@ -22,7 +20,7 @@ const featureDefinitions = defineAllTables([
   ...HAZARD_TABLE_DEFINITIONS,
   ...TREASURE_TABLE_DEFINITIONS,
   ...MONSTER_TABLE_DEFINITIONS,
-] as ReadonlyArray<DungeonTableDefinition<unknown>>);
+] as ReadonlyArray<DungeonTableDefinition>);
 
 export const ALL_TABLE_DEFINITIONS = featureDefinitions;
 export const ALL_RENDER_ADAPTERS = createRenderAdapterMap(featureDefinitions);

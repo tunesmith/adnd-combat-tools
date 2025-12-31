@@ -16,7 +16,7 @@ import { chasmTables } from './chasm/manifest';
 import { doorChainTables } from './doorChain/manifest';
 
 const defineNavigationTables = <
-  T extends ReadonlyArray<DungeonTableDefinition<unknown>>
+  T extends ReadonlyArray<DungeonTableDefinition>
 >(
   defs: T
 ): T => defs;

@@ -1,6 +1,5 @@
 import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
-import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import { DragonThree, MonsterThree, monsterThree } from './monsterThreeTables';
+import { DragonThree, MonsterThree } from './monsterThreeTables';
 import { characterResult } from '../../../services/monster/characterResult';
 import { dragonSubtableReminder } from '../dragonSubtableReminder';
 import type { PartyResult } from '../../../models/character/characterSheet';
@@ -112,12 +111,6 @@ export const monsterThreeTextForCommand = (
     }
   }
   return { text, party };
-};
-
-export const monsterThreeResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterThree.sides);
-  const command = getTableEntry(roll, monsterThree);
-  return monsterThreeTextForCommand(dungeonLevel, command).text;
 };
 
 export const dragonThreeTextForCommand = (

@@ -5,36 +5,36 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
-import { describeSwordSpecialPurpose } from '../../tables/dungeon/treasureSwords';
 import type {
   TreasureSword,
   TreasureSwordExtraordinaryPowerResult,
   TreasureSwordSpecialPurposeResult,
 } from '../../tables/dungeon/treasureSwords';
+import { describeSwordSpecialPurpose } from '../../tables/dungeon/treasureSwords';
 import type { TreasureSwordAlignment } from '../../tables/dungeon/treasureSwordAlignment';
 import {
-  resolveIllusionaryWallNature,
   resolveChamberDimensions,
-  resolveUnusualShape,
-  resolveUnusualSize,
   resolveChamberRoomContents,
   resolveChamberRoomStairs,
   resolveCircularContents,
-  resolveCircularPool,
   resolveCircularMagicPool,
-  resolveTransmuteType,
+  resolveCircularPool,
+  resolveIllusionaryWallNature,
   resolvePoolAlignment,
-  resolveTransporterLocation,
-  resolveTrickTrap,
-  resolveTreasure,
-  resolveTreasureMiscWeapons,
-  resolveTreasureArmorShields,
-  resolveTreasureSwords,
-  resolveTreasureSwordKind,
-  resolveTreasureSwordUnusual,
-  resolveTreasureSwordAlignment,
-  resolveTreasureSwordPrimaryAbility,
   resolveRoomDimensions,
+  resolveTransmuteType,
+  resolveTransporterLocation,
+  resolveTreasure,
+  resolveTreasureArmorShields,
+  resolveTreasureMiscWeapons,
+  resolveTreasureSwordAlignment,
+  resolveTreasureSwordKind,
+  resolveTreasureSwordPrimaryAbility,
+  resolveTreasureSwords,
+  resolveTreasureSwordUnusual,
+  resolveTrickTrap,
+  resolveUnusualShape,
+  resolveUnusualSize,
 } from '../domain/resolvers';
 import { readTreasureMagicContext } from '../features/treasure/shared';
 import {
@@ -373,8 +373,8 @@ export function resolveOutcomeNode(
       ancestors
     );
     ancestors.pop();
-    const enriched = enrichEventNode(node, resolvedChildren, depth + 1);
-    return enriched;
+
+    return enrichEventNode(node, resolvedChildren, depth + 1);
   }
   const resolved = resolvePendingNode(node, ancestors);
   if (!resolved) return undefined;
@@ -1122,10 +1122,7 @@ function deriveDungeonLevelFromAncestors(
   for (let index = ancestors.length - 1; index >= 0; index -= 1) {
     const ancestor = ancestors[index];
     if (!ancestor) continue;
-    if (
-      ancestor.event.kind === 'periodicCheck' &&
-      typeof ancestor.event.level === 'number'
-    ) {
+    if (ancestor.event.kind === 'periodicCheck') {
       return ancestor.event.level;
     }
     if (ancestor.event.kind === 'doorBeyond') {

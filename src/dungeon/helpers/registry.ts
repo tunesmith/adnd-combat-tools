@@ -45,7 +45,7 @@ import {
   isTableContext,
   normalizeOutcomeTree,
   propagateSwordAlignmentInfo,
-} from '../helpers/outcomeTree';
+} from './outcomeTree';
 import {
   createOutcomeRenderSnapshot,
   type OutcomeRenderSnapshot,
@@ -131,7 +131,7 @@ const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
     );
   },
   chamberRoomContents: ({ roll, context, id }) => {
-    let level = 1;
+    let level: number;
     if (context && context.kind === 'chamberContents') {
       level = context.level;
     } else {

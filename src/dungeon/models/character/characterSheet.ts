@@ -2,7 +2,7 @@ import type { CharacterRace } from '../../../tables/dungeon/monster/character/ch
 import type { Attributes } from '../attributes';
 import type { Gender } from './gender';
 import type { CharacterClass } from '../characterClass';
-import type { Alignment } from '../../models/allowedAlignmentsByClass';
+import type { Alignment } from '../allowedAlignmentsByClass';
 
 enum CharacterRole {
   Main,

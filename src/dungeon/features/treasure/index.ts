@@ -18,9 +18,7 @@ import { miscMagicE3Tables } from './miscMagicE3/manifest';
 import { miscMagicE4Tables } from './miscMagicE4/manifest';
 import { miscMagicE5Tables } from './miscMagicE5/manifest';
 
-const defineTreasureTables = <
-  T extends ReadonlyArray<DungeonTableDefinition<unknown>>
->(
+const defineTreasureTables = <T extends ReadonlyArray<DungeonTableDefinition>>(
   defs: T
 ): T => defs;
 
@@ -37,7 +35,7 @@ const treasureDefinitions = defineTreasureTables([
   ...miscMagicE5Tables,
   ...protectionTables,
   ...containerTables,
-] as ReadonlyArray<DungeonTableDefinition<unknown>>);
+] as ReadonlyArray<DungeonTableDefinition>);
 
 export const TREASURE_TABLE_DEFINITIONS = treasureDefinitions;
 export const TREASURE_RENDER_ADAPTERS =

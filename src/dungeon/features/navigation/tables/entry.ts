@@ -32,7 +32,7 @@ const resolvePendingNavigationEntry = (
         context &&
         (context as { kind?: string; level?: number }).kind ===
           'chamberDimensions' &&
-        typeof (context as { level?: number }).level === 'number'
+        true
           ? (context as { level?: number }).level
           : 1;
       return resolveRoomDimensions({ level });

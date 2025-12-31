@@ -1,7 +1,7 @@
 import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
-import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
+import { rollDice } from '../../../helpers/dungeonLookup';
 import { characterResult } from '../../../services/monster/characterResult';
-import { monsterTen, MonsterTen, DragonTen } from './monsterTenTables';
+import { MonsterTen, DragonTen } from './monsterTenTables';
 import type { PartyResult } from '../../../models/character/characterSheet';
 import { dragonSubtableReminder } from '../dragonSubtableReminder';
 
@@ -100,12 +100,6 @@ export const monsterTenTextForCommand = (
       break;
   }
   return { text, party };
-};
-
-export const monsterTenResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterTen.sides);
-  const command = getTableEntry(roll, monsterTen);
-  return monsterTenTextForCommand(dungeonLevel, command).text;
 };
 
 export const dragonTenTextForCommand = (

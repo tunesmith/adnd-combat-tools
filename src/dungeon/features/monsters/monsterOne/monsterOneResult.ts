@@ -1,7 +1,6 @@
 import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
-import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import { humanResult } from '../human/humanResult';
-import { MonsterOne, monsterOne } from './monsterOneTables';
+import { MonsterOne } from './monsterOneTables';
 
 export const monsterOneTextForCommand = (
   dungeonLevel: number,
@@ -97,10 +96,4 @@ export const monsterOneTextForCommand = (
       return formatMonsterCount(zombies, 'zombie', 'zombies');
     }
   }
-};
-
-export const monsterOneResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterOne.sides);
-  const command = getTableEntry(roll, monsterOne);
-  return monsterOneTextForCommand(dungeonLevel, command);
 };

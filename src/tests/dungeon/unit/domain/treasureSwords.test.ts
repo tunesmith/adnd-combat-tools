@@ -564,7 +564,7 @@ describe('resolveTreasureSwords', () => {
     );
     expect(standardPreviews).toHaveLength(2);
     const collapsedPreviews = standardPreviews.filter(
-      (preview) => (preview as { autoCollapse?: boolean }).autoCollapse === true
+      (preview) => (preview as { autoCollapse?: boolean }).autoCollapse
     );
     expect(collapsedPreviews.length).toBeGreaterThan(0);
     const restrictedPreviews = detailNodes.filter(

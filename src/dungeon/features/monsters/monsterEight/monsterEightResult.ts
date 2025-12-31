@@ -1,7 +1,6 @@
 import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
-import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import { characterResult } from '../../../services/monster/characterResult';
-import { monsterEight, MonsterEight, DragonEight } from './monsterEightTables';
+import { MonsterEight, DragonEight } from './monsterEightTables';
 import type { PartyResult } from '../../../models/character/characterSheet';
 import { dragonSubtableReminder } from '../dragonSubtableReminder';
 
@@ -200,12 +199,6 @@ export const monsterEightTextForCommand = (
       break;
   }
   return { text, party };
-};
-
-export const monsterEightResult = (dungeonLevel: number): string => {
-  const roll = rollDice(monsterEight.sides);
-  const command = getTableEntry(roll, monsterEight);
-  return monsterEightTextForCommand(dungeonLevel, command).text;
 };
 
 export const dragonEightTextForCommand = (

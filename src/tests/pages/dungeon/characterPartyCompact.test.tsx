@@ -1,5 +1,5 @@
 import ReactDOMServer from 'react-dom/server';
-import { renderNode } from '../../../pages/dungeon/index';
+import { renderNode } from '../../../pages/dungeon';
 import { renderPeriodicCheckCompact } from '../../../dungeon/adapters/render/periodicOutcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { MonsterLevel } from '../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
