@@ -5,10 +5,8 @@ import {
 } from '../../../../../dungeon/adapters/render';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
-import {
-  MonsterOne,
-  Human,
-} from '../../../../../dungeon/features/monsters/monsterOne/monsterOneTables';
+import { Human } from '../../../../../dungeon/features/monsters/human/humanTable';
+import { MonsterOne } from '../../../../../dungeon/features/monsters/monsterOne/monsterOneTables';
 import { MonsterTwo } from '../../../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
 import { MonsterLevel } from '../../../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
 import { MonsterSeven } from '../../../../../dungeon/features/monsters/monsterSeven/monsterSevenTables';

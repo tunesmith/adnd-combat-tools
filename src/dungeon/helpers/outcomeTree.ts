@@ -26,7 +26,6 @@ import {
   resolvePoolAlignment,
   resolveTransporterLocation,
   resolveTrickTrap,
-  resolveHuman,
   resolveTreasure,
   resolveTreasureMiscWeapons,
   resolveTreasureArmorShields,
@@ -336,21 +335,6 @@ function readChamberDimensionsContext(
     result.level = levelValue;
   }
   return result;
-}
-
-export function readDungeonLevelFromPending(
-  pending: PendingRoll,
-  fallback: number
-): number {
-  const parts = pending.table.split(':');
-  if (parts.length >= 2) {
-    const parsed = Number(parts[1]);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  }
-  if (isTableContext(pending.context) && pending.context.kind === 'wandering') {
-    return pending.context.level;
-  }
-  return fallback;
 }
 
 function collectDoorChainExisting(
@@ -758,10 +742,6 @@ function resolvePendingNode(
       return resolveTrickTrap({});
     case 'illusionaryWallNature':
       return resolveIllusionaryWallNature({});
-    case 'human': {
-      const dungeonLevel = readDungeonLevelFromPending(pending, 1);
-      return resolveHuman({ dungeonLevel });
-    }
     default:
       return undefined;
   }

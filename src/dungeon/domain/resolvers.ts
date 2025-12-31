@@ -114,8 +114,6 @@ import type {
   TreasureGemKind,
   TreasureGemCategoryId,
 } from './outcome';
-import { human } from '../features/monsters/monsterOne/monsterOneTables';
-import { humanTextForCommand } from '../features/monsters/monsterOne/monsterOneResult';
 import {
   oneToFour,
   OneToFour,
@@ -3237,25 +3235,3 @@ export function resolveTransporterLocation(options?: {
 }
 
 export { resolveIllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallResolvers';
-
-export function resolveHuman(options?: {
-  roll?: number;
-  dungeonLevel?: number;
-}): DungeonOutcomeNode {
-  const dungeonLevel = options?.dungeonLevel ?? 1;
-  const usedRoll = options?.roll ?? rollDice(human.sides);
-  const result = getTableEntry(usedRoll, human);
-  const { text, party } = humanTextForCommand(dungeonLevel, result);
-  const eventText = party ? undefined : text;
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'human',
-      result,
-      dungeonLevel,
-      text: eventText,
-      party,
-    },
-  };
-}

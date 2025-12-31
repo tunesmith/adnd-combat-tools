@@ -65,10 +65,8 @@ import {
   MonsterTen,
   monsterTen,
 } from '../features/monsters/monsterTen/monsterTenTables';
-import {
-  humanResult,
-  monsterOneTextForCommand,
-} from '../features/monsters/monsterOne/monsterOneResult';
+import { humanResult } from '../features/monsters/human/humanResult';
+import { monsterOneTextForCommand } from '../features/monsters/monsterOne/monsterOneResult';
 import { monsterTwoTextForCommand } from '../features/monsters/monsterTwo/monsterTwoResult';
 import { monsterThreeTextForCommand } from '../features/monsters/monsterThree/monsterThreeResult';
 import { monsterFourTextForCommand } from '../features/monsters/monsterFour/monsterFourResult';

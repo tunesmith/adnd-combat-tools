@@ -39,10 +39,8 @@ import type {
   TransporterLocation,
 } from '../../tables/dungeon/magicPool';
 import type { MonsterLevel } from '../features/monsters/monsterLevel/monsterLevelTable';
-import type {
-  MonsterOne,
-  Human,
-} from '../features/monsters/monsterOne/monsterOneTables';
+import type { Human } from '../features/monsters/human/humanTable';
+import type { MonsterOne } from '../features/monsters/monsterOne/monsterOneTables';
 import type { MonsterTwo } from '../features/monsters/monsterTwo/monsterTwoTable';
 import type {
   MonsterThree,

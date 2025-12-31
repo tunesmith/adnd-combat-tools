@@ -15,7 +15,6 @@ import {
   resolveChamberDimensions,
   resolveChamberRoomContents,
   resolveChamberRoomStairs,
-  resolveHuman,
   resolveRoomDimensions,
   resolveCircularContents,
   resolveCircularPool,
@@ -104,10 +103,6 @@ function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
 }
 
 const BASE_TABLE_RESOLVERS: Record<string, RegistryResolver> = {
-  human: ({ roll, context }) => {
-    const dungeonLevel = readDungeonLevel(context, 'human', 1);
-    return fromOutcome(resolveHuman({ roll, dungeonLevel }));
-  },
   roomDimensions: ({ roll, context }) => {
     // Prefer explicit level from context (carried from doorBeyond -> room)
     let level = 1;

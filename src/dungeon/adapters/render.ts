@@ -66,7 +66,6 @@ import {
   buildChamberRoomStairsPreview,
 } from './render/chamberRoomStairs';
 import {
-  buildMonsterPreview,
   renderMonsterDetailNodes,
   renderMonsterCompactNodes,
 } from '../features/monsters/render';
@@ -315,31 +314,6 @@ const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
 };
 
 Object.assign(PENDING_PREVIEW_FACTORIES, ALL_PREVIEW_FACTORIES);
-
-const MONSTER_PREVIEW_BASES = [
-  'monsterFour',
-  'monsterFive',
-  'monsterSix',
-  'monsterSeven',
-  'monsterEight',
-  'monsterNine',
-  'monsterTen',
-  'dragonFourYounger',
-  'dragonFourOlder',
-  'dragonFiveYounger',
-  'dragonFiveOlder',
-  'dragonSix',
-  'dragonSeven',
-  'dragonEight',
-  'dragonNine',
-  'dragonTen',
-  'human',
-];
-
-for (const base of MONSTER_PREVIEW_BASES) {
-  PENDING_PREVIEW_FACTORIES[base] = (tableId, context) =>
-    buildMonsterPreview(tableId, context);
-}
 
 function withTargetId(
   preview: DungeonTablePreview,

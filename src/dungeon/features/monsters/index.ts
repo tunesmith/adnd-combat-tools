@@ -7,6 +7,7 @@ import {
 } from '../types';
 import { monsterLevelTables } from './monsterLevel/manifest';
 import { monsterOneTables } from './monsterOne/manifest';
+import { humanTables } from './human/manifest';
 import { monsterFourTables } from './monsterFour/manifest';
 import { monsterFiveTables } from './monsterFive/manifest';
 import { monsterSixTables } from './monsterSix/manifest';
@@ -26,6 +27,7 @@ const defineMonsterTables = <
 const monsterDefinitions = defineMonsterTables([
   ...monsterLevelTables,
   ...monsterOneTables,
+  ...humanTables,
   ...monsterTwoTables,
   ...monsterThreeTables,
   ...monsterFourTables,

@@ -22,7 +22,7 @@ import {
 import {
   describeHumanMonster,
   buildHumanPreview,
-} from '../monsterOne/humanRender';
+} from '../human/humanRender';
 
 export type { MonsterDescription } from './shared';
 

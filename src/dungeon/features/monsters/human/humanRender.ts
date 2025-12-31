@@ -3,7 +3,7 @@ import type {
   TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import { human, Human } from './monsterOneTables';
+import { human, Human } from './humanTable';
 import { buildPreview } from '../../../adapters/render/shared';
 import {
   hasPendingChildren,
