@@ -16,6 +16,7 @@ import type {
 } from '../../../dungeon/models/character/characterSheet';
 import type { OutcomeEventNode } from '../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../types/dungeon';
+import type { Dispatch, SetStateAction } from 'react';
 
 const baseAttributes: Attributes = {
   [Attribute.Strength]: 12,
@@ -130,10 +131,10 @@ describe('character party compact rendering', () => {
       0,
       'party-test',
       {},
-      (() => undefined) as React.Dispatch<
-        React.SetStateAction<Record<string, number | undefined>>
+      (() => undefined) as Dispatch<
+        SetStateAction<Record<string, number | undefined>>
       >,
-      (() => undefined) as React.Dispatch<React.SetStateAction<unknown>>,
+      (() => undefined) as Dispatch<SetStateAction<unknown>>,
       true
     );
 

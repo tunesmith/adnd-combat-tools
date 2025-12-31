@@ -13,14 +13,7 @@ import type {
 import {
   stairs,
   Stairs,
-  egressOne,
-  egressTwo,
-  egressThree,
 } from '../features/navigation/exit/stairsTable';
-import {
-  numberOfExits,
-  NumberOfExits,
-} from '../features/navigation/exit/numberOfExitsTable';
 import {
   passageWidth,
   PassageWidth,
@@ -114,10 +107,6 @@ import type {
   TreasureGemKind,
   TreasureGemCategoryId,
 } from './outcome';
-import {
-  oneToFour,
-  OneToFour,
-} from '../features/navigation/exit/numberOfExitsTable';
 import { resolveSubtable } from './resolveSubtable';
 import { buildTreasureEvent } from './buildTreasureEvent';
 export {
@@ -355,116 +344,6 @@ export function resolvePassageWidth(options?: {
     roll: usedRoll,
     event,
     children: children.length ? children : undefined,
-  };
-}
-
-export function resolveEgress(options: {
-  roll?: number;
-  which: 'one' | 'two' | 'three';
-}): DungeonOutcomeNode {
-  const table =
-    options.which === 'one'
-      ? egressOne
-      : options.which === 'two'
-      ? egressTwo
-      : egressThree;
-  const usedRoll = options.roll ?? rollDice(table.sides);
-  const command = getTableEntry(usedRoll, table);
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'egress',
-      result: command,
-      which: options.which,
-    } as OutcomeEvent,
-  };
-}
-
-export function resolveNumberOfExits(options: {
-  roll?: number;
-  length: number;
-  width: number;
-  isRoom: boolean;
-}): DungeonOutcomeNode {
-  const usedRoll = options.roll ?? rollDice(numberOfExits.sides);
-  const command = getTableEntry(usedRoll, numberOfExits);
-  const area = options.length * options.width;
-  let count = 0;
-  switch (command) {
-    case NumberOfExits.OneTwo600:
-      count = area <= 600 ? 1 : 2;
-      break;
-    case NumberOfExits.TwoThree600:
-      count = area <= 600 ? 2 : 3;
-      break;
-    case NumberOfExits.ThreeFour600:
-      count = area <= 600 ? 3 : 4;
-      break;
-    case NumberOfExits.ZeroOne1200:
-      count = area <= 1200 ? 0 : 1;
-      break;
-    case NumberOfExits.ZeroOne1600:
-      count = area <= 1600 ? 0 : 1;
-      break;
-    case NumberOfExits.OneToFour: {
-      const countRoll = rollDice(oneToFour.sides);
-      const bucket = getTableEntry(countRoll, oneToFour);
-      count =
-        bucket === OneToFour.One
-          ? 1
-          : bucket === OneToFour.Two
-          ? 2
-          : bucket === OneToFour.Three
-          ? 3
-          : 4;
-      break;
-    }
-    case NumberOfExits.DoorChamberOrPassageRoom:
-      count = 1;
-      break;
-  }
-  const origin: 'room' | 'chamber' = options.isRoom ? 'room' : 'chamber';
-  const baseExitType: 'door' | 'passage' = options.isRoom ? 'door' : 'passage';
-  const exitType =
-    command === NumberOfExits.DoorChamberOrPassageRoom
-      ? baseExitType === 'door'
-        ? 'passage'
-        : 'door'
-      : baseExitType;
-
-  const children: DungeonOutcomeNode[] = [];
-  if (count > 0) {
-    for (let index = 1; index <= count; index += 1) {
-      children.push({
-        type: 'pending-roll',
-        table: exitType === 'door' ? 'doorExitLocation' : 'passageExitLocation',
-        id: `exit:${exitType}:${index}`,
-        context: {
-          kind: 'exit',
-          exitType,
-          index,
-          total: count,
-          origin,
-        },
-      });
-    }
-  }
-
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event: {
-      kind: 'numberOfExits',
-      result: command,
-      context: {
-        length: options.length,
-        width: options.width,
-        isRoom: options.isRoom,
-      },
-      count,
-    } as OutcomeEvent,
-    children: children.length > 0 ? children : undefined,
   };
 }
 

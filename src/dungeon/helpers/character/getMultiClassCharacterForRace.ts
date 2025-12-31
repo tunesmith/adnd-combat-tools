@@ -15,6 +15,7 @@ import { getAlignmentForClasses } from './getAlignment';
  * @param characterRace
  * @param numClasses
  * @param characterLevel
+ * @param requiredClasses
  */
 export function getMultiClassCharacterForRace(
   characterRace: CharacterRace,

@@ -1,25 +1,16 @@
 import type {
   DungeonMessage,
   DungeonRenderNode,
-  DungeonTablePreview,
-  TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { AppendPreviewFn } from '../../../adapters/render/shared';
 import type { MonsterDescription } from './shared';
-import {
-  describeMonsterLevel,
-  buildMonsterLevelPreview,
-} from '../monsterLevel/monsterLevelRender';
+import { describeMonsterLevel } from '../monsterLevel/monsterLevelRender';
 import {
   describeStandardMonster,
   describeDragonMonster,
-  buildStandardMonsterPreview,
-  buildDragonPreview,
-  isStandardTableId,
-  isDragonTableId,
 } from './standard';
-import { describeHumanMonster, buildHumanPreview } from '../human/humanRender';
+import { describeHumanMonster } from '../human/humanRender';
 
 export type { MonsterDescription } from './shared';
 
@@ -132,24 +123,4 @@ export function renderMonsterCompactNodes(
     appendPendingPreviews(outcome, nodes);
   }
   return nodes;
-}
-
-export function buildMonsterPreview(
-  tableId: string,
-  context?: TableContext
-): DungeonTablePreview | undefined {
-  const base = tableId.split(':')[0] || tableId;
-  if (base === 'monsterLevel') {
-    return buildMonsterLevelPreview(tableId, context);
-  }
-  if (isStandardTableId(base)) {
-    return buildStandardMonsterPreview(base, context);
-  }
-  if (isDragonTableId(base)) {
-    return buildDragonPreview(base, context);
-  }
-  if (base === 'human') {
-    return buildHumanPreview(tableId, context);
-  }
-  return undefined;
 }

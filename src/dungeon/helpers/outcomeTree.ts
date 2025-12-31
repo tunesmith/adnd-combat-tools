@@ -981,21 +981,6 @@ function matchesTarget(nodeId: string | undefined, targetId: string): boolean {
   return !!nodeId && nodeId === targetId;
 }
 
-export function readExitsContext(
-  context: unknown
-): { length: number; width: number; isRoom: boolean } | undefined {
-  if (!isTableContext(context)) return undefined;
-  if (context.kind !== 'exits') return undefined;
-  const length =
-    typeof context.length === 'number' ? context.length : undefined;
-  const width = typeof context.width === 'number' ? context.width : undefined;
-  const isRoom =
-    typeof context.isRoom === 'boolean' ? context.isRoom : undefined;
-  if (length === undefined || width === undefined || isRoom === undefined)
-    return undefined;
-  return { length, width, isRoom };
-}
-
 export function parseDoorChainSequence(
   table: string,
   fallback: number

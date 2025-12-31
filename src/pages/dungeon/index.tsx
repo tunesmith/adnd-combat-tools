@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import styles from './dungeon.module.css';
 import { rollDice } from '../../dungeon/helpers/dungeonLookup';
@@ -296,15 +296,13 @@ function renderNode(
   key: number,
   feedItemId: string,
   overrides: Record<string, number | undefined>,
-  setOverrides: React.Dispatch<
-    React.SetStateAction<Record<string, number | undefined>>
-  >,
-  setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
+  setOverrides: Dispatch<SetStateAction<Record<string, number | undefined>>>,
+  setFeed: Dispatch<SetStateAction<FeedItem[]>>,
   enablePreviewControls = true,
   collapsed?: Record<string, boolean>,
-  setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  setCollapsed?: Dispatch<SetStateAction<Record<string, boolean>>>,
   resolved?: Record<string, boolean>,
-  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>
 ): JSX.Element {
   switch (m.kind) {
     case 'heading':
@@ -505,13 +503,11 @@ function resolvePreview(
   tp: DungeonTablePreview,
   feedItemId: string,
   overrides: Record<string, number | undefined>,
-  setOverrides: React.Dispatch<
-    React.SetStateAction<Record<string, number | undefined>>
-  >,
-  setFeed: React.Dispatch<React.SetStateAction<FeedItem[]>>,
+  setOverrides: Dispatch<SetStateAction<Record<string, number | undefined>>>,
+  setFeed: Dispatch<SetStateAction<FeedItem[]>>,
   shouldRoll: boolean,
-  setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
-  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  setCollapsed?: Dispatch<SetStateAction<Record<string, boolean>>>,
+  setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>
 ) {
   const targetKey = tp.targetId ?? tp.id;
   let usedRoll: number | undefined = overrides[targetKey];

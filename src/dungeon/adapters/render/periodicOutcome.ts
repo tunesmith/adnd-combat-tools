@@ -7,7 +7,7 @@ import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { periodicCheck } from '../../../tables/dungeon/periodicCheck';
 import { TrickTrap } from '../../features/hazards/trickTrap/trickTrapTable';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+import type { AppendPreviewFn } from './shared';
 import { buildPreview, findChildEvent } from './shared';
 import { renderDoorChainCompact } from '../../features/navigation/doorChain/doorChainRender';
 import { describeSidePassage } from '../../features/navigation/sidePassage/sidePassageRender';
@@ -30,17 +30,6 @@ export const TRICK_TRAP_FALLBACK_TEXT =
 // Stock continuation used after resolving a trick/trap from periodic check
 export const PASSAGE_CONTINUES_SUFFIX =
   " The current passage continues, check again in 30'. ";
-
-export const buildPeriodicCheckPreview: TablePreviewFactory = (tableId) =>
-  buildPreview(tableId, {
-    title: 'Periodic Check',
-    sides: 20,
-    entries: Object.entries(PeriodicCheck)
-      .filter((entry): entry is [string, number] =>
-        Number.isNaN(Number(entry[0]))
-      )
-      .map(([label, command]) => ({ range: [command], label })),
-  });
 
 export function periodicBaseTexts(
   result: PeriodicCheck,
@@ -155,13 +144,6 @@ export function renderPeriodicCheckCompact(
     nodes.push(...summary.nodes);
   }
   return nodes;
-}
-
-export function renderWanderingWhereFrom(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'wanderingWhereFrom') return '';
-  return summarizePeriodicResult(node.event.result, node, {
-    mode: 'compact',
-  }).text;
 }
 
 export function renderWanderingWhereFromDetail(

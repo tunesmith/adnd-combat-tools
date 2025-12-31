@@ -20,7 +20,6 @@ import type { CharacterClass } from '../../models/characterClass';
  * @param selectedClasses
  * @param attributes
  * @param characterLevel
- * @param numClasses
  */
 export const getProfessions = (
   characterRace: CharacterRace,

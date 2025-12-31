@@ -16,6 +16,7 @@ import type { CharacterClass } from '../../../models/characterClass';
  *
  * @param characterRace
  * @param numClasses
+ * @param requiredClasses
  */
 export const getMultiClassForRace = (
   characterRace: CharacterRace,
