@@ -4,10 +4,7 @@ import type {
   TreasureMiscWeaponResult,
 } from '../../../domain/outcome';
 import { buildTreasureEvent } from '../shared';
-import {
-  treasureMiscWeapons,
-  TreasureMiscWeapon,
-} from './miscWeaponsTable';
+import { treasureMiscWeapons, TreasureMiscWeapon } from './miscWeaponsTable';
 
 export type TreasureMiscWeaponsResolverOptions = {
   roll?: number;

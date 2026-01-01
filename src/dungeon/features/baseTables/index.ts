@@ -146,7 +146,9 @@ type TreasureSwordExtraordinaryPowerOptions = Parameters<
   typeof resolveTreasureSwordExtraordinaryPower
 >[0];
 
-type TreasureSwordAlignmentOptions = Parameters<typeof resolveTreasureSwordAlignment>[0];
+type TreasureSwordAlignmentOptions = Parameters<
+  typeof resolveTreasureSwordAlignment
+>[0];
 
 const treasureSwordsHandlers = createTreasureMagicContextHandlers(
   resolveTreasureSwords
@@ -159,7 +161,10 @@ function readDungeonLevelFromId(
 ): number {
   if (context && typeof context === 'object') {
     const kind = (context as { kind?: unknown }).kind;
-    if (kind === 'wandering' && typeof (context as { level?: unknown }).level === 'number') {
+    if (
+      kind === 'wandering' &&
+      typeof (context as { level?: unknown }).level === 'number'
+    ) {
       return (context as { level: number }).level;
     }
   }
@@ -229,9 +234,7 @@ function readUnusualSizeContext(
   const isRoom = (context as { isRoom?: unknown }).isRoom;
   if (typeof extra !== 'number') return undefined;
   const normalizedIsRoom =
-    isRoom === undefined || typeof isRoom === 'boolean'
-      ? isRoom
-      : undefined;
+    isRoom === undefined || typeof isRoom === 'boolean' ? isRoom : undefined;
   return { extra, isRoom: normalizedIsRoom };
 }
 
@@ -417,7 +420,9 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildRoomDimensionsPreview,
     registry: ({ roll, context }) => {
       const level =
-        context && context.kind === 'chamberDimensions' && context.level !== undefined
+        context &&
+        context.kind === 'chamberDimensions' &&
+        context.level !== undefined
           ? context.level
           : 1;
       return resolveRoomDimensions({ roll, level });
@@ -880,7 +885,8 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordAlignmentCompact,
     },
     buildPreview: buildTreasureSwordAlignmentPreview,
-    resolvePending: () => resolveTreasureSwordAlignment({ variant: 'standard' }),
+    resolvePending: () =>
+      resolveTreasureSwordAlignment({ variant: 'standard' }),
   },
   {
     id: 'treasureSwordAlignmentChaotic',

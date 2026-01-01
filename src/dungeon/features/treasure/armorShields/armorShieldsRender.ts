@@ -1,9 +1,9 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import {
-  treasureArmorShields,
-  TreasureArmorShield,
-} from './armorShieldsTable';
+import { treasureArmorShields, TreasureArmorShield } from './armorShieldsTable';
 import { buildPreview } from '../../../adapters/render/shared';
 import type {
   AppendPreviewFn,

@@ -1,4 +1,4 @@
-import { resolveTreasureArmorShields } from '../../../../dungeon/domain/resolvers';
+import { resolveTreasureArmorShields } from '../../../../dungeon/features/treasure/armorShields/armorShieldsResolvers';
 import { TreasureArmorShield } from '../../../../dungeon/features/treasure/armorShields/armorShieldsTable';
 
 describe('resolveTreasureArmorShields', () => {

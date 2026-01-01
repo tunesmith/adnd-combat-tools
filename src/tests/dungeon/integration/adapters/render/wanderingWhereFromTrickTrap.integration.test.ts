@@ -4,7 +4,7 @@ import {
   renderWanderingWhereFromDetail,
   renderWanderingWhereFromCompactNodes,
 } from '../../../../../dungeon/adapters/render/periodicOutcome';
-import { resolveTrickTrap } from '../../../../../dungeon/domain/resolvers';
+import { resolveTrickTrap } from '../../../../../dungeon/features/hazards/trickTrap/trickTrapResolvers';
 import type { AppendPreviewFn } from '../../../../../dungeon/adapters/render/shared';
 
 const noopAppend: AppendPreviewFn = () => undefined;

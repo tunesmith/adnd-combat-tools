@@ -4,7 +4,10 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
-import type { DoorChainLaterality, DungeonOutcomeNode } from '../domain/outcome';
+import type {
+  DoorChainLaterality,
+  DungeonOutcomeNode,
+} from '../domain/outcome';
 import { renderDetailTree } from '../adapters/render';
 import {
   applyResolvedOutcome,

@@ -67,8 +67,7 @@ type PendingPreviewBuilder = (
   context?: TableContext
 ) => DungeonTablePreview | undefined;
 
-const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {
-};
+const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {};
 
 Object.assign(PENDING_PREVIEW_FACTORIES, ALL_PREVIEW_FACTORIES);
 

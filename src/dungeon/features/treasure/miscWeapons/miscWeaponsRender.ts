@@ -1,12 +1,12 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type {
   OutcomeEventNode,
   TreasureMiscWeaponResult,
 } from '../../../domain/outcome';
-import {
-  treasureMiscWeapons,
-  TreasureMiscWeapon,
-} from './miscWeaponsTable';
+import { treasureMiscWeapons, TreasureMiscWeapon } from './miscWeaponsTable';
 import { buildPreview } from '../../../adapters/render/shared';
 import type {
   AppendPreviewFn,

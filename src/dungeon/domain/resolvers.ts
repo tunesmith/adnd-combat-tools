@@ -10,10 +10,7 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from './outcome';
-import {
-  stairs,
-  Stairs,
-} from '../features/navigation/exit/stairsTable';
+import { stairs, Stairs } from '../features/navigation/exit/stairsTable';
 import {
   passageWidth,
   PassageWidth,
@@ -26,7 +23,6 @@ import {
   poolAlignment,
   transporterLocation,
 } from '../../tables/dungeon/magicPool';
-export { resolveTrickTrap } from '../features/hazards/trickTrap/trickTrapResolvers';
 import {
   roomDimensions,
   RoomDimensions,
@@ -102,40 +98,6 @@ import type {
   TreasureGemKind,
   TreasureGemCategoryId,
 } from './outcome';
-export {
-  resolveTreasurePotion,
-  resolveTreasurePotionAnimalControl,
-  resolveTreasurePotionDragonControl,
-  resolveTreasurePotionGiantControl,
-  resolveTreasurePotionGiantStrength,
-  resolveTreasurePotionHumanControl,
-  resolveTreasurePotionUndeadControl,
-} from '../features/treasure/potion/potionResolvers';
-export { resolveTreasureArmorShields } from '../features/treasure/armorShields/armorShieldsResolvers';
-export {
-  resolveTreasureScroll,
-  resolveTreasureScrollProtectionElementals,
-  resolveTreasureScrollProtectionLycanthropes,
-} from '../features/treasure/scroll/scrollResolvers';
-export {
-  resolveTreasureRing,
-  resolveTreasureRingContrariness,
-  resolveTreasureRingElementalCommand,
-  resolveTreasureRingProtection,
-  resolveTreasureRingRegeneration,
-  resolveTreasureRingTelekinesis,
-  resolveTreasureRingThreeWishes,
-  resolveTreasureRingWizardry,
-} from '../features/treasure/ring/ringResolvers';
-export {
-  resolveTreasureArtifactOrRelic,
-  resolveTreasureBagOfHolding,
-  resolveTreasureBagOfTricks,
-  resolveTreasureBracersOfDefense,
-  resolveTreasureBucknardsEverfullPurse,
-  resolveTreasureMiscMagicE1,
-} from '../features/treasure/miscMagicE1/miscMagicE1Resolvers';
-
 export function resolvePeriodicCheck(options?: {
   roll?: number;
   level?: number;
@@ -3049,5 +3011,3 @@ export function resolveTransporterLocation(options?: {
     event: { kind: 'transporterLocation', result: command } as OutcomeEvent,
   };
 }
-
-export { resolveIllusionaryWallNature } from '../features/hazards/illusionaryWall/illusionaryWallResolvers';
