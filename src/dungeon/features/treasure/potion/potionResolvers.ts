@@ -1,7 +1,11 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import type { DungeonOutcomeNode } from '../../../domain/outcome';
 import type { Table } from '../../../../tables/dungeon/dungeonTypes';
-import { buildTreasureEvent, type TreasureEvent } from '../shared';
+import {
+  buildTreasureEvent,
+  type TreasureEvent,
+  type TreasureEventKind,
+} from '../shared';
 import {
   treasurePotion,
   TreasurePotion,
@@ -143,7 +147,7 @@ function resolvePotionSubtable<
     | TreasurePotionUndeadControl
 >(
   table: Table<T>,
-  kind: OutcomeEvent['kind'],
+  kind: TreasureEventKind,
   options?: {
     roll?: number;
     level?: number;

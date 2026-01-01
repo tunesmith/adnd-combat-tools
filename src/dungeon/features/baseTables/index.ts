@@ -13,7 +13,6 @@ import {
   resolveTransporterLocation,
   resolveTransmuteType,
   resolveTreasure,
-  resolveTreasureMiscWeapons,
   resolveTreasureSwords,
   resolveTreasureSwordAlignment,
   resolveTreasureSwordDragonSlayerColor,
@@ -86,11 +85,6 @@ import {
   renderTreasureDetail,
 } from '../../adapters/render/treasure';
 import {
-  buildTreasureMiscWeaponsPreview,
-  renderTreasureMiscWeaponsCompact,
-  renderTreasureMiscWeaponsDetail,
-} from '../../adapters/render/treasureMiscWeapons';
-import {
   buildTreasureSwordsPreview,
   renderTreasureSwordsCompact,
   renderTreasureSwordsDetail,
@@ -156,9 +150,6 @@ type TreasureSwordAlignmentOptions = Parameters<typeof resolveTreasureSwordAlign
 
 const treasureSwordsHandlers = createTreasureMagicContextHandlers(
   resolveTreasureSwords
-);
-const treasureMiscWeaponsHandlers = createTreasureMagicContextHandlers(
-  resolveTreasureMiscWeapons
 );
 
 function readDungeonLevelFromId(
@@ -912,17 +903,6 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
     },
     buildPreview: buildTreasureSwordAlignmentLawfulPreview,
     resolvePending: () => resolveTreasureSwordAlignment({ variant: 'lawful' }),
-  },
-  {
-    id: 'treasureMiscWeapons',
-    heading: 'Miscellaneous Weapons (Table H)',
-    resolver: wrapResolver(resolveTreasureMiscWeapons),
-    renderers: {
-      renderDetail: renderTreasureMiscWeaponsDetail,
-      renderCompact: renderTreasureMiscWeaponsCompact,
-    },
-    buildPreview: buildTreasureMiscWeaponsPreview,
-    ...treasureMiscWeaponsHandlers,
   },
   {
     id: 'circularContents',

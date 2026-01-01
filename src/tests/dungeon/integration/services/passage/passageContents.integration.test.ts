@@ -54,7 +54,7 @@ import {
   TreasureScarabOfProtectionCurse,
   TreasureScarabOfProtectionCurseResolution,
 } from '../../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Subtables';
-import { TreasureMiscWeapon } from '../../../../../tables/dungeon/treasureMiscWeapons';
+import { TreasureMiscWeapon } from '../../../../../dungeon/features/treasure/miscWeapons/miscWeaponsTable';
 import {
   TreasureSword,
   TreasureSwordKind,

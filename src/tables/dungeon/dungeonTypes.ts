@@ -174,7 +174,7 @@ import type {
   TreasureQuaalFeatherToken,
 } from '../../dungeon/features/treasure/miscMagicE4/miscMagicE4Subtables';
 import type { TreasureArmorShield } from '../../dungeon/features/treasure/armorShields/armorShieldsTable';
-import type { TreasureMiscWeapon } from './treasureMiscWeapons';
+import type { TreasureMiscWeapon } from '../../dungeon/features/treasure/miscWeapons/miscWeaponsTable';
 import type {
   TreasureSword,
   TreasureSwordKind,

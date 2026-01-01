@@ -1,5 +1,5 @@
-import { resolveTreasureMiscWeapons } from '../../../../dungeon/domain/resolvers';
-import { TreasureMiscWeapon } from '../../../../tables/dungeon/treasureMiscWeapons';
+import { resolveTreasureMiscWeapons } from '../../../../dungeon/features/treasure/miscWeapons/miscWeaponsResolvers';
+import { TreasureMiscWeapon } from '../../../../dungeon/features/treasure/miscWeapons/miscWeaponsTable';
 
 describe('resolveTreasureMiscWeapons', () => {
   it('rolls quantity for arrows', () => {

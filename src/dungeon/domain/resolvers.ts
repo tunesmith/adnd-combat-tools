@@ -86,10 +86,6 @@ import type {
   TreasureSwordDragonSlayerColorResult,
 } from '../../tables/dungeon/treasureSwords';
 import {
-  treasureMiscWeapons,
-  TreasureMiscWeapon,
-} from '../../tables/dungeon/treasureMiscWeapons';
-import {
   treasureSwordAlignment,
   treasureSwordAlignmentChaotic,
   treasureSwordAlignmentLawful,
@@ -2915,49 +2911,6 @@ function mapSwordLanguageRoll(roll: number): number {
   if (roll <= 95) return 4;
   if (roll <= 99) return 5;
   return 6;
-}
-
-export function resolveTreasureMiscWeapons(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(treasureMiscWeapons.sides);
-  const item: TreasureMiscWeapon = getTableEntry(usedRoll, treasureMiscWeapons);
-  let quantity: number | undefined;
-  switch (item) {
-    case TreasureMiscWeapon.ArrowPlus1:
-      quantity = rollDice(12, 2);
-      break;
-    case TreasureMiscWeapon.ArrowPlus2:
-      quantity = rollDice(8, 2);
-      break;
-    case TreasureMiscWeapon.ArrowPlus3:
-      quantity = rollDice(6, 2);
-      break;
-    case TreasureMiscWeapon.BoltPlus2:
-      quantity = rollDice(10, 2);
-      break;
-    default:
-      quantity = undefined;
-      break;
-  }
-  const event: OutcomeEvent = {
-    kind: 'treasureMiscWeapons',
-    result: {
-      item,
-      quantity,
-    },
-    level: options?.level ?? 1,
-    treasureRoll: options?.treasureRoll ?? usedRoll,
-    rollIndex: options?.rollIndex,
-  };
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event,
-  };
 }
 
 function representativeRollForChamberContents(

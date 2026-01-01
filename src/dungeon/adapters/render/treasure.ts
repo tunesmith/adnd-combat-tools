@@ -77,7 +77,7 @@ import {
   formatSwordIntelligence,
   summarizePrimaryAbilities,
 } from './treasureSwords';
-import { miscWeaponSentence } from './treasureMiscWeapons';
+import { miscWeaponSentence } from '../../features/treasure/miscWeapons/miscWeaponsRender';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,

@@ -179,7 +179,7 @@ import type {
   TreasureSwordDragonSlayerColorResult,
 } from '../../tables/dungeon/treasureSwords';
 import type { TreasureSwordAlignmentResult } from '../../tables/dungeon/treasureSwordAlignment';
-import type { TreasureMiscWeapon } from '../../tables/dungeon/treasureMiscWeapons';
+import type { TreasureMiscWeapon } from '../features/treasure/miscWeapons/miscWeaponsTable';
 import type { TreasureArmorShield } from '../features/treasure/armorShields/armorShieldsTable';
 
 export type DoorChainLaterality = 'Left' | 'Right';

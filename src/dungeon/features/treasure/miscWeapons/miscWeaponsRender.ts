@@ -1,14 +1,17 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
 import type {
   OutcomeEventNode,
   TreasureMiscWeaponResult,
-} from '../../domain/outcome';
+} from '../../../domain/outcome';
 import {
   treasureMiscWeapons,
   TreasureMiscWeapon,
-} from '../../../tables/dungeon/treasureMiscWeapons';
-import { buildPreview } from './shared';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+} from './miscWeaponsTable';
+import { buildPreview } from '../../../adapters/render/shared';
+import type {
+  AppendPreviewFn,
+  TablePreviewFactory,
+} from '../../../adapters/render/shared';
 
 const ITEM_LABELS: Record<TreasureMiscWeapon, string> = {
   [TreasureMiscWeapon.ArrowPlus1]: 'Arrows +1',
