@@ -1,11 +1,14 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { DungeonMessage, DungeonRenderNode } from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureArmorShields,
   TreasureArmorShield,
-} from '../../../tables/dungeon/treasureArmorShields';
-import { buildPreview } from './shared';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+} from './armorShieldsTable';
+import { buildPreview } from '../../../adapters/render/shared';
+import type {
+  AppendPreviewFn,
+  TablePreviewFactory,
+} from '../../../adapters/render/shared';
 
 const ARMOR_SHIELD_LABELS: Record<TreasureArmorShield, string> = {
   [TreasureArmorShield.ChainMailPlus1]: 'Chain mail +1',

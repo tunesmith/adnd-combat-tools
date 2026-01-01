@@ -173,7 +173,7 @@ import type {
   TreasurePhylacteryLongYearsOutcome,
   TreasureQuaalFeatherToken,
 } from '../../dungeon/features/treasure/miscMagicE4/miscMagicE4Subtables';
-import type { TreasureArmorShield } from './treasureArmorShields';
+import type { TreasureArmorShield } from '../../dungeon/features/treasure/armorShields/armorShieldsTable';
 import type { TreasureMiscWeapon } from './treasureMiscWeapons';
 import type {
   TreasureSword,

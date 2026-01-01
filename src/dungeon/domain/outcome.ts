@@ -180,7 +180,7 @@ import type {
 } from '../../tables/dungeon/treasureSwords';
 import type { TreasureSwordAlignmentResult } from '../../tables/dungeon/treasureSwordAlignment';
 import type { TreasureMiscWeapon } from '../../tables/dungeon/treasureMiscWeapons';
-import type { TreasureArmorShield } from '../../tables/dungeon/treasureArmorShields';
+import type { TreasureArmorShield } from '../features/treasure/armorShields/armorShieldsTable';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 

@@ -71,7 +71,7 @@ import {
 } from '../../features/treasure/miscMagicE2/miscMagicE2SubtablesRender';
 import { TreasureProtectionType } from '../../features/treasure/protection/protectionTables';
 import { BAG_OF_HOLDING_STATS } from '../../features/treasure/miscMagicE1/miscMagicE1Subtables';
-import { armorShieldSentence } from './treasureArmorShields';
+import { armorShieldSentence } from '../../features/treasure/armorShields/armorShieldsRender';
 import {
   swordSentence,
   formatSwordIntelligence,

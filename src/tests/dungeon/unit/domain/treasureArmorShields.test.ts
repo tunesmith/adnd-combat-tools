@@ -1,5 +1,5 @@
 import { resolveTreasureArmorShields } from '../../../../dungeon/domain/resolvers';
-import { TreasureArmorShield } from '../../../../tables/dungeon/treasureArmorShields';
+import { TreasureArmorShield } from '../../../../dungeon/features/treasure/armorShields/armorShieldsTable';
 
 describe('resolveTreasureArmorShields', () => {
   it('returns the expected armor result for a given roll', () => {

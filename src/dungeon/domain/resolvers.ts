@@ -50,7 +50,6 @@ import {
   treasureWithMonster,
   TreasureWithoutMonster,
 } from '../../tables/dungeon/treasure';
-import { treasureArmorShields } from '../../tables/dungeon/treasureArmorShields';
 import {
   treasureSwords,
   TreasureSword,
@@ -107,8 +106,6 @@ import type {
   TreasureGemKind,
   TreasureGemCategoryId,
 } from './outcome';
-import { resolveSubtable } from './resolveSubtable';
-import { buildTreasureEvent } from './buildTreasureEvent';
 export {
   resolveTreasurePotion,
   resolveTreasurePotionAnimalControl,
@@ -118,6 +115,7 @@ export {
   resolveTreasurePotionHumanControl,
   resolveTreasurePotionUndeadControl,
 } from '../features/treasure/potion/potionResolvers';
+export { resolveTreasureArmorShields } from '../features/treasure/armorShields/armorShieldsResolvers';
 export {
   resolveTreasureScroll,
   resolveTreasureScrollProtectionElementals,
@@ -1868,20 +1866,6 @@ function findByRange<T extends { range: [number, number] }>(
 
 function isWithinRange(range: [number, number], roll: number): boolean {
   return roll >= range[0] && roll <= range[1];
-}
-
-export function resolveTreasureArmorShields(options?: {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-}): DungeonOutcomeNode {
-  return resolveSubtable({
-    table: treasureArmorShields,
-    roll: options?.roll,
-    buildEvent: (command, usedRoll) =>
-      buildTreasureEvent('treasureArmorShields', command, usedRoll, options),
-  });
 }
 
 export function resolveTreasureSwords(options?: {

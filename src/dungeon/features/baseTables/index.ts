@@ -13,7 +13,6 @@ import {
   resolveTransporterLocation,
   resolveTransmuteType,
   resolveTreasure,
-  resolveTreasureArmorShields,
   resolveTreasureMiscWeapons,
   resolveTreasureSwords,
   resolveTreasureSwordAlignment,
@@ -87,11 +86,6 @@ import {
   renderTreasureDetail,
 } from '../../adapters/render/treasure';
 import {
-  buildTreasureArmorShieldsPreview,
-  renderTreasureArmorShieldsCompact,
-  renderTreasureArmorShieldsDetail,
-} from '../../adapters/render/treasureArmorShields';
-import {
   buildTreasureMiscWeaponsPreview,
   renderTreasureMiscWeaponsCompact,
   renderTreasureMiscWeaponsDetail,
@@ -160,9 +154,6 @@ type TreasureSwordExtraordinaryPowerOptions = Parameters<
 
 type TreasureSwordAlignmentOptions = Parameters<typeof resolveTreasureSwordAlignment>[0];
 
-const treasureArmorShieldsHandlers = createTreasureMagicContextHandlers(
-  resolveTreasureArmorShields
-);
 const treasureSwordsHandlers = createTreasureMagicContextHandlers(
   resolveTreasureSwords
 );
@@ -599,17 +590,6 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
         ctx && typeof ctx.totalRolls === 'number' ? ctx.totalRolls : undefined;
       return resolveTreasure({ level, withMonster, rollIndex, totalRolls });
     },
-  },
-  {
-    id: 'treasureArmorShields',
-    heading: 'Armor & Shields (Table F)',
-    resolver: wrapResolver(resolveTreasureArmorShields),
-    renderers: {
-      renderDetail: renderTreasureArmorShieldsDetail,
-      renderCompact: renderTreasureArmorShieldsCompact,
-    },
-    buildPreview: buildTreasureArmorShieldsPreview,
-    ...treasureArmorShieldsHandlers,
   },
   {
     id: 'treasureSwords',
