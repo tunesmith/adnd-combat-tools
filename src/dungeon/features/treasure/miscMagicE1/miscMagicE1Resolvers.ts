@@ -1,6 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import { treasureMiscMagicE1, TreasureMiscMagicE1 } from './miscMagicE1Table';
+import { buildTreasureEvent } from '../shared';
 import type {
   TreasureArtifactOrRelic,
   TreasureBagOfHolding,
@@ -72,13 +73,12 @@ export function resolveTreasureMiscMagicE1(options?: {
   return {
     type: 'event',
     roll: usedRoll,
-    event: {
-      kind: 'treasureMiscMagicE1',
-      result: command,
-      level: options?.level,
-      treasureRoll: options?.treasureRoll,
-      rollIndex: options?.rollIndex,
-    } as OutcomeEvent,
+    event: buildTreasureEvent(
+      'treasureMiscMagicE1',
+      command,
+      usedRoll,
+      options
+    ),
     children: children.length ? children : undefined,
   };
 }

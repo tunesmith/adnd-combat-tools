@@ -5,6 +5,7 @@ import type {
   RobeOfUsefulItemsResult,
 } from '../../../domain/outcome';
 import { treasureMiscMagicE5, TreasureMiscMagicE5 } from './miscMagicE5Table';
+import { buildTreasureEvent } from '../shared';
 import type {
   TreasureRobeOfTheArchmagi,
   TreasureScarabOfProtectionCurseResolution,
@@ -51,10 +52,12 @@ export function resolveTreasureMiscMagicE5(
   return {
     type: 'event',
     roll: usedRoll,
-    event: {
-      kind: 'treasureMiscMagicE5',
-      result: command,
-    } as OutcomeEvent,
+    event: buildTreasureEvent(
+      'treasureMiscMagicE5',
+      command,
+      usedRoll,
+      options
+    ),
     children: children.length ? children : undefined,
   };
 }

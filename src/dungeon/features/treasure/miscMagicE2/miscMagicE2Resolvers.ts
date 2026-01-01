@@ -1,6 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import { treasureMiscMagicE2, TreasureMiscMagicE2 } from './miscMagicE2Table';
+import { buildTreasureEvent } from '../shared';
 import {
   treasureCarpetOfFlying,
   treasureCloakOfProtection,
@@ -67,13 +68,12 @@ export function resolveTreasureMiscMagicE2(
   return {
     type: 'event',
     roll: usedRoll,
-    event: {
-      kind: 'treasureMiscMagicE2',
-      result: command,
-      level: options?.level,
-      treasureRoll: options?.treasureRoll,
-      rollIndex,
-    } as OutcomeEvent,
+    event: buildTreasureEvent(
+      'treasureMiscMagicE2',
+      command,
+      usedRoll,
+      options
+    ),
     children: children.length ? children : undefined,
   };
 }

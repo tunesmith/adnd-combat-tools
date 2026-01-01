@@ -6,6 +6,7 @@ import {
   treasureScrollProtectionElementals,
   treasureScrollProtectionLycanthropes,
 } from './scrollTables';
+import { buildTreasureEvent } from '../shared';
 
 type ScrollCaster = 'magic-user' | 'illusionist' | 'cleric' | 'druid';
 
@@ -14,6 +15,8 @@ type ScrollSpellDetail = {
   magicUserRange: [number, number];
   clericRange: [number, number];
 };
+
+type TreasureScrollEvent = Extract<OutcomeEvent, { kind: 'treasureScroll' }>;
 
 const SCROLL_SPELL_DETAILS: Partial<Record<TreasureScroll, ScrollSpellDetail>> =
   {
@@ -147,12 +150,8 @@ export function resolveTreasureScroll(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureScrolls.sides);
   const command = getTableEntry(usedRoll, treasureScrolls);
-  const event: OutcomeEvent = {
-    kind: 'treasureScroll',
-    result: command,
-    level: options?.level ?? 1,
-    treasureRoll: options?.treasureRoll ?? usedRoll,
-    rollIndex: options?.rollIndex,
+  const event: TreasureScrollEvent = {
+    ...buildTreasureEvent('treasureScroll', command, usedRoll, options),
     scroll: { type: 'curse' },
   };
   const children: DungeonOutcomeNode[] = [];

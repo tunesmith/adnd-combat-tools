@@ -11,6 +11,7 @@ import {
   treasureRingThreeWishes,
   treasureRingWizardry,
 } from './ringTables';
+import { buildTreasureEvent } from '../shared';
 
 type SpellStoringCaster = 'magic-user' | 'illusionist' | 'cleric' | 'druid';
 
@@ -101,11 +102,7 @@ export function resolveTreasureRing(options?: {
     type: 'event',
     roll: usedRoll,
     event: {
-      kind: 'treasureRing',
-      result: command,
-      level: options?.level ?? 1,
-      treasureRoll: options?.treasureRoll ?? usedRoll,
-      rollIndex: options?.rollIndex,
+      ...buildTreasureEvent('treasureRing', command, usedRoll, options),
       spellStoring,
     } as OutcomeEvent,
     children: children.length ? children : undefined,

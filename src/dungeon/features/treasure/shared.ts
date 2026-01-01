@@ -1,7 +1,9 @@
 import type {
   DungeonOutcomeNode,
+  OutcomeEvent,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import type { Command } from '../../../tables/dungeon/dungeonTypes';
 import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
 
 export function formatOrdinal(level: number): string {
@@ -28,6 +30,36 @@ export type TreasureMagicContext = {
 export type TreasureMagicResolverOptions = TreasureMagicContext & {
   roll?: number;
 };
+
+export type TreasureEvent<
+  K extends OutcomeEvent['kind'] = OutcomeEvent['kind']
+> = Extract<OutcomeEvent, { kind: K }> & {
+  level: number;
+  treasureRoll: number;
+  rollIndex?: number;
+};
+
+type TreasureSubtableOptions = {
+  roll?: number;
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+};
+
+export function buildTreasureEvent<K extends OutcomeEvent['kind']>(
+  kind: K,
+  command: Command,
+  roll: number,
+  options?: TreasureSubtableOptions
+): TreasureEvent<K> {
+  return {
+    kind,
+    result: command,
+    level: options?.level ?? 1,
+    treasureRoll: options?.treasureRoll ?? roll,
+    rollIndex: options?.rollIndex,
+  } as TreasureEvent<K>;
+}
 
 export function createTreasureMagicContextHandlers(
   resolver: (options?: TreasureMagicResolverOptions) => DungeonOutcomeNode

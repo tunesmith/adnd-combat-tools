@@ -1,6 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import type { Table } from '../../../../tables/dungeon/dungeonTypes';
+import { buildTreasureEvent, type TreasureEvent } from '../shared';
 import {
   treasurePotion,
   TreasurePotion,
@@ -26,13 +27,12 @@ export function resolveTreasurePotion(options?: {
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasurePotion.sides);
   const command = getTableEntry(usedRoll, treasurePotion);
-  const event: OutcomeEvent = {
-    kind: 'treasurePotion',
-    result: command,
-    level: options?.level ?? 1,
-    treasureRoll: options?.treasureRoll ?? usedRoll,
-    rollIndex: options?.rollIndex,
-  };
+  const event = buildTreasureEvent(
+    'treasurePotion',
+    command,
+    usedRoll,
+    options
+  );
   const children: DungeonOutcomeNode[] = [];
   if (command === TreasurePotion.AnimalControl) {
     children.push(buildPotionPending('treasurePotionAnimalControl', event));
@@ -161,37 +161,18 @@ function resolvePotionSubtable<
   };
 }
 
-function buildTreasureEvent(
-  kind: OutcomeEvent['kind'],
-  result: unknown,
-  usedRoll: number,
-  options?: {
-    level?: number;
-    treasureRoll?: number;
-    rollIndex?: number;
-  }
-): OutcomeEvent {
-  return {
-    kind,
-    result,
-    level: options?.level ?? 1,
-    treasureRoll: options?.treasureRoll ?? usedRoll,
-    rollIndex: options?.rollIndex,
-  } as OutcomeEvent;
-}
-
 function buildPotionPending(
   table: string,
-  event: OutcomeEvent
+  event: TreasureEvent
 ): DungeonOutcomeNode {
   return {
     type: 'pending-roll',
     table,
     context: {
       kind: 'treasureMagic',
-      level: (event as { level?: number }).level ?? 1,
-      treasureRoll: (event as { treasureRoll?: number }).treasureRoll,
-      rollIndex: (event as { rollIndex?: number }).rollIndex,
+      level: event.level,
+      treasureRoll: event.treasureRoll,
+      rollIndex: event.rollIndex,
     },
   };
 }

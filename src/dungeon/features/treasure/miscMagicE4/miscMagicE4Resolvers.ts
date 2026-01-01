@@ -5,6 +5,7 @@ import type {
   TreasureNecklaceOfPrayerBeadsResult,
 } from '../../../domain/outcome';
 import { treasureMiscMagicE4, TreasureMiscMagicE4 } from './miscMagicE4Table';
+import { buildTreasureEvent } from '../shared';
 import type {
   TreasureManualOfGolems,
   TreasureMedallionRange,
@@ -110,13 +111,12 @@ export function resolveTreasureMiscMagicE4(
   return {
     type: 'event',
     roll: usedRoll,
-    event: {
-      kind: 'treasureMiscMagicE4',
-      result: command,
-      level: options?.level,
-      treasureRoll: options?.treasureRoll,
-      rollIndex,
-    } as OutcomeEvent,
+    event: buildTreasureEvent(
+      'treasureMiscMagicE4',
+      command,
+      usedRoll,
+      options
+    ),
     children: children.length ? children : undefined,
   };
 }

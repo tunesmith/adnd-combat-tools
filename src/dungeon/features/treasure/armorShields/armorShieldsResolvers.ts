@@ -1,7 +1,7 @@
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
-import { buildTreasureEvent } from '../../../domain/buildTreasureEvent';
 import { resolveSubtable } from '../../../domain/resolveSubtable';
 import { treasureArmorShields } from './armorShieldsTable';
+import { buildTreasureEvent } from '../shared';
 
 export type TreasureArmorShieldsResolverOptions = {
   roll?: number;

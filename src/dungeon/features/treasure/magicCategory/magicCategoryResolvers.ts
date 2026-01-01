@@ -1,9 +1,10 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import type { DungeonOutcomeNode } from '../../../domain/outcome';
 import {
   treasureMagicCategory,
   TreasureMagicCategory,
 } from './magicCategoryTable';
+import { buildTreasureEvent } from '../shared';
 
 export type TreasureMagicCategoryResolverOptions = {
   roll?: number;
@@ -17,13 +18,12 @@ export function resolveTreasureMagicCategory(
 ): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureMagicCategory.sides);
   const command = getTableEntry(usedRoll, treasureMagicCategory);
-  const event: OutcomeEvent = {
-    kind: 'treasureMagicCategory',
-    result: command,
-    level: options?.level ?? 1,
-    treasureRoll: options?.treasureRoll ?? usedRoll,
-    rollIndex: options?.rollIndex,
-  };
+  const event = buildTreasureEvent(
+    'treasureMagicCategory',
+    command,
+    usedRoll,
+    options
+  );
   const children: DungeonOutcomeNode[] = [];
   if (command === TreasureMagicCategory.Potions) {
     children.push({

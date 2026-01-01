@@ -6,6 +6,7 @@ import type {
   TreasureIounStonesResult,
 } from '../../../domain/outcome';
 import { treasureMiscMagicE3, TreasureMiscMagicE3 } from './miscMagicE3Table';
+import { buildTreasureEvent } from '../shared';
 import {
   IOUN_STONE_DEFINITIONS,
   treasureFigurineMarbleElephant,
@@ -45,14 +46,18 @@ export function resolveTreasureMiscMagicE3(
     usedRoll,
     treasureMiscMagicE3
   );
-  const rollIndex = options?.rollIndex;
+  const event = buildTreasureEvent(
+    'treasureMiscMagicE3',
+    command,
+    usedRoll,
+    options
+  );
+  const rollIndex = event.rollIndex;
   const children: DungeonOutcomeNode[] = [];
-  const level = options?.level ?? 1;
-  const treasureRoll = options?.treasureRoll ?? usedRoll;
   const context = {
     kind: 'treasureMagic' as const,
-    level,
-    treasureRoll,
+    level: event.level,
+    treasureRoll: event.treasureRoll,
     rollIndex,
   };
 
@@ -100,13 +105,7 @@ export function resolveTreasureMiscMagicE3(
   return {
     type: 'event',
     roll: usedRoll,
-    event: {
-      kind: 'treasureMiscMagicE3',
-      result: command,
-      level: options?.level,
-      treasureRoll: options?.treasureRoll,
-      rollIndex,
-    } as OutcomeEvent,
+    event,
     children: children.length ? children : undefined,
   };
 }
