@@ -815,7 +815,7 @@ export type TreasureGemValueAdjustment =
   | { type: 'increasePercent'; percent: number }
   | { type: 'decreasePercent'; percent: number };
 
-export type TreasureGemKindProperty = 'transparent' | 'translucent' | 'opaque';
+type TreasureGemKindProperty = 'transparent' | 'translucent' | 'opaque';
 
 export type TreasureGemKind = {
   name: string;
@@ -852,7 +852,7 @@ export type TreasureEntry = {
 
 export type TreasureIounStoneStatus = 'active' | 'duplicate' | 'dead';
 
-export type TreasureIounStone = {
+type TreasureIounStone = {
   index: number;
   roll: number;
   type: TreasureIounStoneType;
@@ -863,7 +863,7 @@ export type TreasureIounStone = {
   duplicateOf?: number;
 };
 
-export type TreasureNecklacePrayerBeadSpecial = {
+type TreasureNecklacePrayerBeadSpecial = {
   roll: number;
   type: TreasureNecklacePrayerBead;
 };
@@ -880,12 +880,12 @@ export type TreasureIounStonesResult = {
   stones: TreasureIounStone[];
 };
 
-export type RobeOfUsefulItemsBasePatchResult = {
+type RobeOfUsefulItemsBasePatchResult = {
   type: RobeOfUsefulItemsBasePatchType;
   count: number;
 };
 
-export type RobeOfUsefulItemsExtraPatchResult = {
+type RobeOfUsefulItemsExtraPatchResult = {
   roll: number;
   item: Exclude<
     RobeOfUsefulItemsExtraPatch,

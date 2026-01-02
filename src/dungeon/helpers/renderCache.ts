@@ -21,7 +21,7 @@ export function buildRenderCache(outcome?: DungeonOutcomeNode): RenderCache {
   };
 }
 
-export function filterForCompact(
+function filterForCompact(
   nodes: DungeonRenderNode[],
   action: DungeonAction
 ): DungeonRenderNode[] {
@@ -40,7 +40,7 @@ export function filterForCompact(
   });
 }
 
-export function filterForDetail(
+function filterForDetail(
   nodes: DungeonRenderNode[],
   action: DungeonAction
 ): DungeonRenderNode[] {

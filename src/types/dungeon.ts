@@ -9,23 +9,23 @@ import type { PartySummary } from '../dungeon/helpers/party/formatPartyResult';
 
 export type DungeonAction = 'passage' | 'door';
 
-export type DungeonParagraph = {
+type DungeonParagraph = {
   kind: 'paragraph';
   text: string;
 };
 
-export type DungeonHeading = {
+type DungeonHeading = {
   kind: 'heading';
   level?: 2 | 3 | 4;
   text: string;
 };
 
-export type DungeonBulletList = {
+type DungeonBulletList = {
   kind: 'bullet-list';
   items: string[];
 };
 
-export type DungeonCharacterPartyMessage = {
+type DungeonCharacterPartyMessage = {
   kind: 'character-party';
   summary: PartySummary;
   display: 'detail' | 'compact';
@@ -46,7 +46,7 @@ export type IounStonesSummary = {
   stones: IounStoneListEntry[];
 };
 
-export type DungeonIounStonesMessage = {
+type DungeonIounStonesMessage = {
   kind: 'ioun-stones';
   summary: IounStonesSummary;
   display: 'detail' | 'compact';
@@ -65,7 +65,7 @@ export type PrayerBeadsSummary = {
   breakdown: PrayerBeadsBreakdownEntry[];
 };
 
-export type DungeonPrayerBeadsMessage = {
+type DungeonPrayerBeadsMessage = {
   kind: 'prayer-beads';
   summary: PrayerBeadsSummary;
   display: 'detail' | 'compact';
@@ -85,7 +85,7 @@ export type RobeOfUsefulItemsSummary = {
   entries: RobeOfUsefulItemsSummaryEntry[];
 };
 
-export type DungeonRobeOfUsefulItemsMessage = {
+type DungeonRobeOfUsefulItemsMessage = {
   kind: 'robe-of-useful-items';
   summary: RobeOfUsefulItemsSummary;
   display: 'detail' | 'compact';
@@ -112,9 +112,9 @@ export type DungeonRollTrace = {
   items: RollTraceItem[];
 };
 
-export type DungeonRenderable = DungeonMessage | DungeonRollTrace;
+type DungeonRenderable = DungeonMessage | DungeonRollTrace;
 
-export type TablePreviewEntry = {
+type TablePreviewEntry = {
   range: string;
   label: string;
 };

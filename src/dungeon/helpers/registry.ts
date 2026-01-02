@@ -34,7 +34,7 @@ type RegistryResolution = {
   outcome?: DungeonOutcomeNode;
 };
 
-export type RegistryResolver = (opts: {
+type RegistryResolver = (opts: {
   roll?: number;
   id: string;
   context?: TableContext;
@@ -44,7 +44,7 @@ export type RegistryResolver = (opts: {
   };
 }) => RegistryResolution;
 
-export type TableId = FeatureTableId;
+type TableId = FeatureTableId;
 
 const TABLE_ID_LIST: ReadonlyArray<TableId> = ALL_TABLE_ID_LIST;
 
@@ -52,7 +52,7 @@ function isTableId(x: string): x is TableId {
   return TABLE_ID_LIST.some((tableId) => tableId === x);
 }
 
-export const TABLE_HEADINGS: Record<TableId, string> = ALL_TABLE_HEADINGS;
+const TABLE_HEADINGS: Record<TableId, string> = ALL_TABLE_HEADINGS;
 
 function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
   const normalized = normalizeOutcomeTree(outcome);
@@ -68,11 +68,11 @@ const FEATURE_TABLE_RESOLVERS: Record<string, RegistryResolver> =
     ])
   );
 
-export const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
+const TABLE_RESOLVERS: Record<TableId, RegistryResolver> = {
   ...FEATURE_TABLE_RESOLVERS,
 } as Record<TableId, RegistryResolver>;
 
-export function resolveRegistryTable(opts: {
+function resolveRegistryTable(opts: {
   tableId: string;
   roll?: number;
   context?: TableContext;
@@ -97,7 +97,7 @@ export function resolveRegistryTable(opts: {
   });
 }
 
-export type OutcomeRollApplication = {
+type OutcomeRollApplication = {
   outcome: DungeonOutcomeNode;
   snapshot: OutcomeRenderSnapshot;
 };
@@ -241,7 +241,7 @@ export type FeedLike = {
   pendingCount?: number;
 };
 
-export function updateResolvedBlock<T extends FeedLike>(
+function updateResolvedBlock<T extends FeedLike>(
   fi: T,
   feedItemId: string,
   targetId: string,

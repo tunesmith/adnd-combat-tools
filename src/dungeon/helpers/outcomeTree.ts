@@ -793,7 +793,7 @@ function matchesTarget(nodeId: string | undefined, targetId: string): boolean {
   return !!nodeId && nodeId === targetId;
 }
 
-export function parseDoorChainSequence(
+function parseDoorChainSequence(
   table: string,
   fallback: number
 ): number {

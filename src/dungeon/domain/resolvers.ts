@@ -255,7 +255,7 @@ export function resolveWanderingWhereFrom(options?: {
  * door is straight ahead; if another door is not indicated,
  * then ignore the result and check again 30' past the door.
  */
-export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
+function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(stairs.sides);
   const command = getTableEntry(usedRoll, stairs);
   const event: OutcomeEvent = {

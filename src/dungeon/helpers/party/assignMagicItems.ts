@@ -96,7 +96,7 @@ function highestCharacterLevel(character: CharacterSheet): number {
   return maxLevel;
 }
 
-export function assignMagicItemsToCharacter(character: CharacterSheet): void {
+function assignMagicItemsToCharacter(character: CharacterSheet): void {
   const level = highestCharacterLevel(character);
   if (level <= 0) {
     character.magicItems = [];

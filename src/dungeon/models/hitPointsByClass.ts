@@ -1,6 +1,6 @@
 import { CharacterClass } from './characterClass';
 
-export interface HitDiceDetails {
+interface HitDiceDetails {
   hitDie: number;
   firstLevelDice: number;
   numberOfDice: number;

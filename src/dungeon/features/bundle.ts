@@ -24,7 +24,7 @@ const featureDefinitions = defineAllTables([
   ...BASE_TABLE_DEFINITIONS,
 ] as ReadonlyArray<DungeonTableDefinition>);
 
-export const ALL_TABLE_DEFINITIONS = featureDefinitions;
+const ALL_TABLE_DEFINITIONS = featureDefinitions;
 export const ALL_RENDER_ADAPTERS = createRenderAdapterMap(featureDefinitions);
 export const ALL_PREVIEW_FACTORIES =
   createPreviewFactoryMap(featureDefinitions);

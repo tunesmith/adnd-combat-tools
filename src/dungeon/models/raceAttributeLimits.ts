@@ -2,7 +2,7 @@ import { CharacterRace } from '../../tables/dungeon/monster/character/characterR
 import type { Attribute } from './attributes';
 import type { Gender } from './character/gender';
 
-export interface AttributeRange {
+interface AttributeRange {
   min: number;
   max: number;
 }

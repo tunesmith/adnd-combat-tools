@@ -24,7 +24,7 @@ export type PartyCharacterSummary = {
   magicItems: CharacterMagicItem[];
 };
 
-export type PartySummaryMember = {
+type PartySummaryMember = {
   member: PartyCharacterSummary;
   followers: PartyCharacterSummary[];
 };
@@ -101,7 +101,7 @@ export function alignmentToCode(alignment: Alignment): string {
   return alignmentCodeMap[alignment] ?? 'N';
 }
 
-export const alignmentNameMap: Record<Alignment, string> = {
+const alignmentNameMap: Record<Alignment, string> = {
   [Alignment.LawfulGood]: 'Lawful Good',
   [Alignment.LawfulNeutral]: 'Lawful Neutral',
   [Alignment.LawfulEvil]: 'Lawful Evil',

@@ -193,7 +193,7 @@ export type Table<T> = {
 };
 
 // Define a non-empty range tuple
-export type Range = [number, ...number[]];
+type Range = [number, ...number[]];
 
 export type Entry<T> = {
   range: Range;

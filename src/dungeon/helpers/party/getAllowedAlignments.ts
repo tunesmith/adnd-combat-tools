@@ -10,7 +10,7 @@ const findIntersection = (arrays: Alignment[][]): Alignment[] => {
 };
 
 // Function to compute allowed alignments for a given party
-export const getAllowedAlignments = (
+const getAllowedAlignments = (
   characterClasses: CharacterClass[]
 ): Alignment[] => {
   if (characterClasses.length === 0) {
