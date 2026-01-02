@@ -260,7 +260,7 @@ export const treasureIounStones: Table<TreasureIounStoneType> = {
   ],
 };
 
-export type IounStoneDefinition = {
+type IounStoneDefinition = {
   color: string;
   shape: string;
   effect: string;

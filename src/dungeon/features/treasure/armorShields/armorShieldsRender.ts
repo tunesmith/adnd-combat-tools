@@ -45,7 +45,7 @@ export function armorShieldSentence(result: TreasureArmorShield): string {
   return `There is ${ARMOR_SHIELD_LABELS[result]}.`;
 }
 
-export function armorShieldLabel(result: TreasureArmorShield): string {
+function armorShieldLabel(result: TreasureArmorShield): string {
   return ARMOR_SHIELD_LABELS[result];
 }
 

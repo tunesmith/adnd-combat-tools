@@ -20,13 +20,13 @@ export function formatOrdinal(level: number): string {
   return `${level}${suffix}`;
 }
 
-export type TreasureMagicContext = {
+type TreasureMagicContext = {
   level?: number;
   treasureRoll?: number;
   rollIndex?: number;
 };
 
-export type TreasureMagicResolverOptions = TreasureMagicContext & {
+type TreasureMagicResolverOptions = TreasureMagicContext & {
   roll?: number;
 };
 
@@ -83,13 +83,13 @@ export function createTreasureMagicContextHandlers(
   };
 }
 
-export function readTreasureMagicRegistryContext(
+function readTreasureMagicRegistryContext(
   context?: unknown
 ): TreasureMagicContext {
   return readTreasureMagicContextFromContext(context) ?? {};
 }
 
-export function readTreasureMagicContext(
+function readTreasureMagicContext(
   context: unknown,
   ancestors: OutcomeEventNode[]
 ): TreasureMagicContext {

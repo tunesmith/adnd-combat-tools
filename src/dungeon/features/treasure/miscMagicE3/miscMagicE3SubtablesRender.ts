@@ -199,14 +199,14 @@ export const buildTreasureFigurineMarbleElephantPreview: TablePreviewFactory = (
     ),
   });
 
-export function marbleElephantSentence(
+function marbleElephantSentence(
   result: TreasureFigurineMarbleElephant
 ): string {
   const label = marbleElephantLabel(result);
   return `The marble elephant takes the form of ${withArticle(label)}.`;
 }
 
-export function marbleElephantVariantName(
+function marbleElephantVariantName(
   result: TreasureFigurineMarbleElephant
 ): string {
   return MARBLE_ELEPHANT_VARIANT_NAMES[result];
@@ -840,7 +840,7 @@ export function hornSentence({
   return `There is ${article} ${typeLabel} (${hornAlignmentLabel(alignment)}).`;
 }
 
-export function attunementSentence({
+function attunementSentence({
   attunement,
   alignment,
 }: {
@@ -856,7 +856,7 @@ export function attunementSentence({
   return `The horn is aligned ${hornAlignmentLabel(alignment)}.`;
 }
 
-export function alignmentSentence(
+function alignmentSentence(
   alignment: TreasureHornOfValhallaAlignment
 ): string {
   return `The horn is ${hornAlignmentLabel(alignment)}.`;

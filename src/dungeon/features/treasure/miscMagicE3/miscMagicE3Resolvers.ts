@@ -31,7 +31,7 @@ import type {
   TreasureIronFlaskContent,
 } from './miscMagicE3Subtables';
 
-export type TreasureMiscMagicE3ResolverOptions = {
+type TreasureMiscMagicE3ResolverOptions = {
   roll?: number;
   level?: number;
   treasureRoll?: number;

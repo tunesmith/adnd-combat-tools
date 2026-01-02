@@ -17,7 +17,7 @@ import type {
   TreasureEyesOfPetrification,
 } from './miscMagicE2Subtables';
 
-export type TreasureMiscMagicE2ResolverOptions = {
+type TreasureMiscMagicE2ResolverOptions = {
   roll?: number;
   level?: number;
   treasureRoll?: number;

@@ -20,7 +20,7 @@ import {
   treasureScarabOfProtectionCursedResolution,
 } from './miscMagicE5Subtables';
 
-export type TreasureMiscMagicE5ResolverOptions = {
+type TreasureMiscMagicE5ResolverOptions = {
   roll?: number;
   level?: number;
   treasureRoll?: number;

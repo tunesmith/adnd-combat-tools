@@ -46,7 +46,7 @@ const RESOLUTION_LABELS: Record<
   [TreasureScarabOfProtectionCurseResolution.Permanent]: 'Permanent curse',
 };
 
-export function robeOfTheArchmagiAlignment(
+function robeOfTheArchmagiAlignment(
   outcome: TreasureRobeOfTheArchmagi
 ): 'good' | 'neutral' | 'evil' {
   switch (outcome) {
@@ -71,7 +71,7 @@ export function robeOfTheArchmagiAlignmentDisplay(
     | 'Evil';
 }
 
-export function robeOfTheArchmagiSentence(
+function robeOfTheArchmagiSentence(
   outcome: TreasureRobeOfTheArchmagi
 ): string {
   return `The robe is aligned with ${robeOfTheArchmagiAlignment(outcome)}.`;
@@ -146,7 +146,7 @@ export function scarabOfProtectionParenthetical(
     : '-2, cursed';
 }
 
-export function scarabOfProtectionCurseSentence(
+function scarabOfProtectionCurseSentence(
   result: TreasureScarabOfProtectionCurse
 ): string {
   return result === TreasureScarabOfProtectionCurse.Cursed
@@ -154,7 +154,7 @@ export function scarabOfProtectionCurseSentence(
     : 'The scarab is protective, granting a +1 bonus to saving throws versus magic and absorbing 12 drains/effects.';
 }
 
-export function scarabOfProtectionResolutionSentence(
+function scarabOfProtectionResolutionSentence(
   result: TreasureScarabOfProtectionCurseResolution
 ): string {
   return result === TreasureScarabOfProtectionCurseResolution.Removable

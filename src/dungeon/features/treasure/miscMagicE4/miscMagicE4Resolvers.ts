@@ -32,7 +32,7 @@ import {
   TreasurePearlOfPowerEffect,
 } from './miscMagicE4Subtables';
 
-export type TreasureMiscMagicE4ResolverOptions = {
+type TreasureMiscMagicE4ResolverOptions = {
   roll?: number;
   level?: number;
   treasureRoll?: number;

@@ -26,7 +26,7 @@ import {
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
 
-export const POTION_LABELS: Record<TreasurePotion, string> = {
+const POTION_LABELS: Record<TreasurePotion, string> = {
   [TreasurePotion.AnimalControl]: 'animal control',
   [TreasurePotion.Clairaudience]: 'clairaudience',
   [TreasurePotion.Clairvoyance]: 'clairvoyance',
@@ -64,7 +64,7 @@ export const POTION_LABELS: Record<TreasurePotion, string> = {
   [TreasurePotion.WaterBreathing]: 'water breathing',
 };
 
-export function potionSentence(result: TreasurePotion): string {
+function potionSentence(result: TreasurePotion): string {
   const label = POTION_LABELS[result];
   return `There is a potion of ${label}.`;
 }

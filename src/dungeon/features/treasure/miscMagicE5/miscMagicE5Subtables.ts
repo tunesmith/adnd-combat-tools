@@ -39,7 +39,7 @@ export type RobeOfUsefulItemsBasePatchType =
   | 'rope'
   | 'sack';
 
-export type RobeOfUsefulItemsBasePatchDefinition = {
+type RobeOfUsefulItemsBasePatchDefinition = {
   type: RobeOfUsefulItemsBasePatchType;
   label: string;
   count: number;

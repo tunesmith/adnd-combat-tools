@@ -55,7 +55,7 @@ const ITEM_LABELS: Record<TreasureMiscWeapon, string> = {
   [TreasureMiscWeapon.TridentPlus3]: 'Trident (Military Fork) +3',
 };
 
-export function miscWeaponLabel(item: TreasureMiscWeapon): string {
+function miscWeaponLabel(item: TreasureMiscWeapon): string {
   return ITEM_LABELS[item];
 }
 

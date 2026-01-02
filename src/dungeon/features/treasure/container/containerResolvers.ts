@@ -2,7 +2,7 @@ import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import { treasureContainer } from './containerTable';
 
-export type TreasureContainerResolverOptions = {
+type TreasureContainerResolverOptions = {
   roll?: number;
 };
 

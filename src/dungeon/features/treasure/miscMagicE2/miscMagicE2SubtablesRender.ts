@@ -84,7 +84,7 @@ export const buildTreasureCarpetOfFlyingPreview: TablePreviewFactory = (
     })),
   });
 
-export function carpetSentence(result: TreasureCarpetOfFlying): string {
+function carpetSentence(result: TreasureCarpetOfFlying): string {
   return `The carpet is ${CARPET_SIZE_LABELS[result]}.`;
 }
 

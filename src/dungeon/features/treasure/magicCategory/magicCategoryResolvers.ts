@@ -6,7 +6,7 @@ import {
 } from './magicCategoryTable';
 import { buildTreasureEvent } from '../shared';
 
-export type TreasureMagicCategoryResolverOptions = {
+type TreasureMagicCategoryResolverOptions = {
   roll?: number;
   level?: number;
   treasureRoll?: number;

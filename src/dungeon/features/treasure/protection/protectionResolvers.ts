@@ -7,7 +7,7 @@ import {
   treasureProtectionHiddenBy,
 } from './protectionTables';
 
-export type TreasureProtectionResolverOptions = {
+type TreasureProtectionResolverOptions = {
   roll?: number;
 };
 

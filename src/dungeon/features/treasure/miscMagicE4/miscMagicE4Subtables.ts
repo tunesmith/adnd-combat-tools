@@ -37,7 +37,7 @@ export const treasureMedallionRange: Table<TreasureMedallionRange> = {
   ],
 };
 
-export type TreasureNecklaceMissile = {
+type TreasureNecklaceMissile = {
   dice: number;
   count: number;
 };

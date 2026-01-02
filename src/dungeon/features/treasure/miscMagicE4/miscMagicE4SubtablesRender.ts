@@ -388,7 +388,7 @@ function formatBreakdown(breakdown: PrayerBeadsBreakdownEntry[]): string[] {
   );
 }
 
-export function describePearlEffect(
+function describePearlEffect(
   effect: TreasurePearlOfPowerEffect,
   recall?: TreasurePearlOfPowerRecallResult
 ): string {
