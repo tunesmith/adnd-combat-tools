@@ -4,12 +4,11 @@ import type {
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { AppendPreviewFn } from '../../../adapters/render/shared';
-import type { MonsterDescription } from './shared';
 import { describeMonsterLevel } from '../monsterLevel/monsterLevelRender';
 import { describeStandardMonster, describeDragonMonster } from './standard';
 import { describeHumanMonster } from '../human/humanRender';
 
-export type { MonsterDescription } from './shared';
+import type { MonsterDescription } from './shared';
 
 export function describeMonsterOutcome(
   node: OutcomeEventNode

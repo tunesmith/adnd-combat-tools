@@ -38,11 +38,11 @@ const monsterDefinitions = defineMonsterTables([
 ] as ReadonlyArray<DungeonTableDefinition>);
 
 export const MONSTER_TABLE_DEFINITIONS = monsterDefinitions;
-export const MONSTER_RENDER_ADAPTERS =
+const MONSTER_RENDER_ADAPTERS =
   createRenderAdapterMap(monsterDefinitions);
-export const MONSTER_PREVIEW_FACTORIES =
+const MONSTER_PREVIEW_FACTORIES =
   createPreviewFactoryMap(monsterDefinitions);
-export const MONSTER_REGISTRY_OUTCOMES =
+const MONSTER_REGISTRY_OUTCOMES =
   createRegistryOutcomeMap(monsterDefinitions);
-export const MONSTER_PENDING_RESOLVERS =
+const MONSTER_PENDING_RESOLVERS =
   createPendingResolverMap(monsterDefinitions);

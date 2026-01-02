@@ -303,7 +303,7 @@ export function describeDragonMonster(
   };
 }
 
-export function buildStandardMonsterPreview(
+function buildStandardMonsterPreview(
   tableId: StandardTableId,
   context?: TableContext
 ): DungeonTablePreview {
@@ -319,7 +319,7 @@ export function buildStandardMonsterPreview(
   });
 }
 
-export function buildDragonPreview(
+function buildDragonPreview(
   tableId: DragonTableId,
   context?: TableContext
 ): DungeonTablePreview {
@@ -335,11 +335,11 @@ export function buildDragonPreview(
   });
 }
 
-export function isStandardTableId(value: string): value is StandardTableId {
+function isStandardTableId(value: string): value is StandardTableId {
   return value in STANDARD_CONFIG;
 }
 
-export function isDragonTableId(value: string): value is DragonTableId {
+function isDragonTableId(value: string): value is DragonTableId {
   return value in DRAGON_CONFIG;
 }
 

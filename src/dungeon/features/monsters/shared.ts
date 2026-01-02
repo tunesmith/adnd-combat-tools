@@ -5,11 +5,11 @@ import type {
   OutcomeEventNode,
 } from '../../domain/outcome';
 
-export type MonsterDungeonLevelContext = {
+type MonsterDungeonLevelContext = {
   dungeonLevel?: number;
 };
 
-export type MonsterDungeonLevelResolverOptions = MonsterDungeonLevelContext & {
+type MonsterDungeonLevelResolverOptions = MonsterDungeonLevelContext & {
   roll?: number;
 };
 
