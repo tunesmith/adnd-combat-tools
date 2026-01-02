@@ -22,7 +22,7 @@ import {
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
 
-export type StairsDeps = {
+type StairsDeps = {
   renderChamberSummary?: (node: OutcomeEventNode) => string;
 };
 
@@ -84,7 +84,7 @@ export function renderStairsCompactNodes(
   return [heading, bullet, { kind: 'paragraph', text }];
 }
 
-export function describeStairs(
+function describeStairs(
   node: OutcomeEventNode,
   deps?: StairsDeps
 ): {

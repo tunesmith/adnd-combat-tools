@@ -21,12 +21,12 @@ const hazardDefinitions = defineHazardTables([
 ]);
 
 export const HAZARD_TABLE_DEFINITIONS = hazardDefinitions;
-export const HAZARD_RENDER_ADAPTERS = createRenderAdapterMap(hazardDefinitions);
-export const HAZARD_PREVIEW_FACTORIES =
+const HAZARD_RENDER_ADAPTERS = createRenderAdapterMap(hazardDefinitions);
+const HAZARD_PREVIEW_FACTORIES =
   createPreviewFactoryMap(hazardDefinitions);
-export const HAZARD_REGISTRY_OUTCOMES =
+const HAZARD_REGISTRY_OUTCOMES =
   createRegistryOutcomeMap(hazardDefinitions);
-export const HAZARD_CHILD_POST_PROCESSORS =
+const HAZARD_CHILD_POST_PROCESSORS =
   createChildPostProcessorMap(hazardDefinitions);
-export const HAZARD_PENDING_RESOLVERS =
+const HAZARD_PENDING_RESOLVERS =
   createPendingResolverMap(hazardDefinitions);

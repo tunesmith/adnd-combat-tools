@@ -37,7 +37,7 @@ export function renderPassageTurnsDetail(
   return nodes;
 }
 
-export function describePassageTurn(node: OutcomeEventNode): {
+function describePassageTurn(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {

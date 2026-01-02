@@ -15,7 +15,7 @@ import {
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
 
-export const DOOR_CHAIN_FALLBACK_TEXT =
+const DOOR_CHAIN_FALLBACK_TEXT =
   "There are no other doors. The main passage extends -- check again in 30'. ";
 
 export function renderDoorLocationDetail(

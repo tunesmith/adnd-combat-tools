@@ -94,7 +94,7 @@ export function buildNumberOfExitsPreview(
   };
 }
 
-export function describeNumberOfExits(
+function describeNumberOfExits(
   node: OutcomeEventNode,
   options: { includeInstructions: boolean }
 ): {
@@ -136,7 +136,7 @@ function hasExitAlternative(node: OutcomeEventNode | undefined): boolean {
   return false;
 }
 
-export function collectExitSummariesWithMeta(node: OutcomeEventNode): {
+function collectExitSummariesWithMeta(node: OutcomeEventNode): {
   sentences: string[];
   hasAlternative: boolean;
 } {

@@ -33,18 +33,18 @@ const navigationDefinitions = defineNavigationTables([
 ]);
 
 export const NAVIGATION_TABLE_DEFINITIONS = navigationDefinitions;
-export const NAVIGATION_RENDER_ADAPTERS = createRenderAdapterMap(
+const NAVIGATION_RENDER_ADAPTERS = createRenderAdapterMap(
   navigationDefinitions
 );
-export const NAVIGATION_PREVIEW_FACTORIES = createPreviewFactoryMap(
+const NAVIGATION_PREVIEW_FACTORIES = createPreviewFactoryMap(
   navigationDefinitions
 );
-export const NAVIGATION_REGISTRY_OUTCOMES = createRegistryOutcomeMap(
+const NAVIGATION_REGISTRY_OUTCOMES = createRegistryOutcomeMap(
   navigationDefinitions
 );
-export const NAVIGATION_CHILD_POST_PROCESSORS = createChildPostProcessorMap(
+const NAVIGATION_CHILD_POST_PROCESSORS = createChildPostProcessorMap(
   navigationDefinitions
 );
-export const NAVIGATION_PENDING_RESOLVERS = createPendingResolverMap(
+const NAVIGATION_PENDING_RESOLVERS = createPendingResolverMap(
   navigationDefinitions
 );

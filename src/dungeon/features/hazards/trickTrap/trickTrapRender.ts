@@ -34,7 +34,7 @@ export function renderTrickTrapDetail(
   return nodes;
 }
 
-export function describeTrickTrap(node: OutcomeEventNode): {
+function describeTrickTrap(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {

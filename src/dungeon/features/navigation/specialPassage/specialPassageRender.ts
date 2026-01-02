@@ -55,7 +55,7 @@ export function renderSpecialPassageDetail(
   return nodes;
 }
 
-export function describeSpecialPassage(node: OutcomeEventNode): {
+function describeSpecialPassage(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {
@@ -418,7 +418,7 @@ function formatStreamConstruction(result: StreamConstruction): string {
     : '';
 }
 
-export function describeRiverConstruction(node: OutcomeEventNode): {
+function describeRiverConstruction(node: OutcomeEventNode): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
 } {
