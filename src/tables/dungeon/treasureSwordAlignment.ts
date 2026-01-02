@@ -12,7 +12,7 @@ export enum TreasureSwordAlignment {
   NeutralGood,
 }
 
-export type SwordAlignmentDetail = {
+type SwordAlignmentDetail = {
   label: string;
   requiresLanguageTable: boolean;
 };

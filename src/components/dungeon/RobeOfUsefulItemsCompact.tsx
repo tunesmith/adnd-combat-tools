@@ -1,6 +1,6 @@
 import type { RobeOfUsefulItemsSummary } from '../../types/dungeon';
 
-export type RobeOfUsefulItemsCompactProps = {
+type RobeOfUsefulItemsCompactProps = {
   summary: RobeOfUsefulItemsSummary;
 };
 

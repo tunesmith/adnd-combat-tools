@@ -1,6 +1,6 @@
 import type { PrayerBeadsSummary } from '../../types/dungeon';
 
-export type PrayerBeadsDetailProps = {
+type PrayerBeadsDetailProps = {
   summary: PrayerBeadsSummary;
 };
 

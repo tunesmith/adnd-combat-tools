@@ -1,6 +1,6 @@
 import type { IounStonesSummary } from '../../types/dungeon';
 
-export type IounStonesDetailProps = {
+type IounStonesDetailProps = {
   summary: IounStonesSummary;
 };
 

@@ -60,7 +60,7 @@ type DetailFinalPhase = DetailPhase & {
   compact: RenderSnapshot;
 };
 
-export type DetailRunResult = {
+type DetailRunResult = {
   action: DungeonAction;
   rollsUsed: number[];
   initial: DetailPhase;
@@ -68,7 +68,7 @@ export type DetailRunResult = {
   unusedRolls: number[];
 };
 
-export type CompactRunResult = {
+type CompactRunResult = {
   action: DungeonAction;
   rollUsed: number;
   rollsUsed: number[];
@@ -89,7 +89,7 @@ type CompactExecution = {
   fallbackMessages: DungeonRenderNode[];
 };
 
-export interface RenderSnapshot {
+interface RenderSnapshot {
   nodes: ReadonlyArray<SnapshotEntry>;
   headings(): string[];
   paragraphs(): string[];
@@ -101,7 +101,7 @@ export interface RenderSnapshot {
   rollTrace(): DungeonRollTrace | undefined;
 }
 
-export function parseRollSequence(input: RollInput): ParsedRoll[] {
+function parseRollSequence(input: RollInput): ParsedRoll[] {
   if (Array.isArray(input)) {
     return input.map(normalizeDirective);
   }
@@ -217,7 +217,7 @@ export function simulateDetailRun(options: {
   };
 }
 
-export function simulateCompactRun(options: {
+function simulateCompactRun(options: {
   action: DungeonAction;
   roll: RollInput;
   dungeonLevel?: number;

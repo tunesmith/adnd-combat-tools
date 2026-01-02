@@ -232,16 +232,16 @@ export const treasureSwordUnusual: Table<TreasureSwordUnusual> = {
   ],
 };
 
-export type SwordCommunicationMode =
+type SwordCommunicationMode =
   | 'none'
   | 'semi-empathy'
   | 'empathy'
   | 'speech'
   | 'speech and telepathy';
 
-export type SwordLanguageCapability = 'none' | 'mundane' | 'magical';
+type SwordLanguageCapability = 'none' | 'mundane' | 'magical';
 
-export type SwordUnusualDetails = {
+type SwordUnusualDetails = {
   label: string;
   category: 'normal' | 'intelligent';
   intelligence?: number;
@@ -259,7 +259,7 @@ export type TreasureSwordUnusualResult = SwordUnusualDetails & {
   languagesKnown?: number;
 };
 
-export type DragonSlayerColorDetail = {
+type DragonSlayerColorDetail = {
   label: string;
   alignment: TreasureSwordAlignment;
 };
@@ -425,7 +425,7 @@ function buildDragonSlayerColorTable(
   };
 }
 
-export const treasureSwordDragonSlayerColor: Table<TreasureSwordDragonSlayerColor> =
+const treasureSwordDragonSlayerColor: Table<TreasureSwordDragonSlayerColor> =
   buildDragonSlayerColorTable(DRAGON_SLAYER_COLOR_ORDER);
 
 const treasureSwordDragonSlayerColorLawfulGood = buildDragonSlayerColorTable(
@@ -797,7 +797,7 @@ export type TreasureSwordDragonSlayerColorResult = {
   alignment: TreasureSwordAlignment;
 };
 
-export const SWORD_PRIMARY_ABILITY_DETAILS: Record<
+const SWORD_PRIMARY_ABILITY_DETAILS: Record<
   TreasureSwordPrimaryAbility,
   SwordPrimaryAbilityDetail
 > = {
@@ -906,7 +906,7 @@ type SwordExtraordinaryPowerDetail =
       template: (multiplier: number) => string;
     };
 
-export const SWORD_EXTRAORDINARY_POWER_DETAILS: Record<
+const SWORD_EXTRAORDINARY_POWER_DETAILS: Record<
   TreasureSwordExtraordinaryPower,
   SwordExtraordinaryPowerDetail
 > = {

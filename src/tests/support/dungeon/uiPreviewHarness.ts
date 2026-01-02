@@ -19,7 +19,7 @@ import type {
   PendingRoll,
 } from '../../../dungeon/domain/outcome';
 
-export type FeedSnapshot = {
+type FeedSnapshot = {
   id: string;
   action: DungeonAction;
   roll: number;
