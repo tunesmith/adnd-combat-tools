@@ -1,10 +1,4 @@
 import type { DungeonTableDefinition } from '../types';
-import {
-  createPendingResolverMap,
-  createPreviewFactoryMap,
-  createRegistryOutcomeMap,
-  createRenderAdapterMap,
-} from '../types';
 import { monsterLevelTables } from './monsterLevel/manifest';
 import { monsterOneTables } from './monsterOne/manifest';
 import { humanTables } from './human/manifest';
@@ -38,11 +32,3 @@ const monsterDefinitions = defineMonsterTables([
 ] as ReadonlyArray<DungeonTableDefinition>);
 
 export const MONSTER_TABLE_DEFINITIONS = monsterDefinitions;
-const MONSTER_RENDER_ADAPTERS =
-  createRenderAdapterMap(monsterDefinitions);
-const MONSTER_PREVIEW_FACTORIES =
-  createPreviewFactoryMap(monsterDefinitions);
-const MONSTER_REGISTRY_OUTCOMES =
-  createRegistryOutcomeMap(monsterDefinitions);
-const MONSTER_PENDING_RESOLVERS =
-  createPendingResolverMap(monsterDefinitions);

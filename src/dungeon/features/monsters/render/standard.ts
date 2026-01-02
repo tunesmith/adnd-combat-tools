@@ -1,7 +1,3 @@
-import type {
-  DungeonTablePreview,
-  TableContext,
-} from '../../../../types/dungeon';
 import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import { monsterOne, MonsterOne } from '../monsterOne/monsterOneTables';
 import { monsterTwo, MonsterTwo } from '../monsterTwo/monsterTwoTable';
@@ -57,7 +53,7 @@ import {
   dragonTen,
   DragonTen,
 } from '../monsterTen/monsterTenTables';
-import { buildPreview, findChildEvent } from '../../../adapters/render/shared';
+import { findChildEvent } from '../../../adapters/render/shared';
 import {
   monsterTextDescription,
   hasPendingChildren,
@@ -301,46 +297,6 @@ export function describeDragonMonster(
     compactText: textInfo.compactText,
     appendPending: hasPendingChildren(node),
   };
-}
-
-function buildStandardMonsterPreview(
-  tableId: StandardTableId,
-  context?: TableContext
-): DungeonTablePreview {
-  const config = STANDARD_CONFIG[tableId];
-  return buildPreview(tableId, {
-    title: config.title,
-    sides: config.table.sides,
-    entries: config.table.entries.map((entry) => ({
-      range: entry.range,
-      label: config.labels[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
-}
-
-function buildDragonPreview(
-  tableId: DragonTableId,
-  context?: TableContext
-): DungeonTablePreview {
-  const config = DRAGON_CONFIG[tableId];
-  return buildPreview(tableId, {
-    title: config.title,
-    sides: config.table.sides,
-    entries: config.table.entries.map((entry) => ({
-      range: entry.range,
-      label: config.labels[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
-}
-
-function isStandardTableId(value: string): value is StandardTableId {
-  return value in STANDARD_CONFIG;
-}
-
-function isDragonTableId(value: string): value is DragonTableId {
-  return value in DRAGON_CONFIG;
 }
 
 function readResolvedChildText(node: OutcomeEventNode): string | undefined {

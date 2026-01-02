@@ -9,6 +9,16 @@ import {
   stairs,
 } from './stairsTable';
 
+/**
+ * When doing passage checks, the rules subtly imply this looks for *closed*
+ * doors. Opening a door is a fresh move. For closed doors, we don't need to
+ * roll what is behind the door. Roll for that when a decision is made to
+ * open a door (or when the situation calls for it, like listening at doors).
+ *
+ * Check again immediately on TABLE I (periodicCheck) unless
+ * door is straight ahead; if another door is not indicated,
+ * then ignore the result and check again 30' past the door.
+ */
 export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(stairs.sides);
   const command = getTableEntry(usedRoll, stairs);

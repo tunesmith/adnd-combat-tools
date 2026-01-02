@@ -1,11 +1,4 @@
 import type { DungeonTableDefinition } from '../types';
-import {
-  createChildPostProcessorMap,
-  createPendingResolverMap,
-  createPreviewFactoryMap,
-  createRegistryOutcomeMap,
-  createRenderAdapterMap,
-} from '../types';
 import { entryTables } from './tables/entry';
 import { sidePassageTables } from './sidePassage/manifest';
 import { passageTurnTables } from './passageTurn/manifest';
@@ -33,18 +26,3 @@ const navigationDefinitions = defineNavigationTables([
 ]);
 
 export const NAVIGATION_TABLE_DEFINITIONS = navigationDefinitions;
-const NAVIGATION_RENDER_ADAPTERS = createRenderAdapterMap(
-  navigationDefinitions
-);
-const NAVIGATION_PREVIEW_FACTORIES = createPreviewFactoryMap(
-  navigationDefinitions
-);
-const NAVIGATION_REGISTRY_OUTCOMES = createRegistryOutcomeMap(
-  navigationDefinitions
-);
-const NAVIGATION_CHILD_POST_PROCESSORS = createChildPostProcessorMap(
-  navigationDefinitions
-);
-const NAVIGATION_PENDING_RESOLVERS = createPendingResolverMap(
-  navigationDefinitions
-);

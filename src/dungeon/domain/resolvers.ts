@@ -10,7 +10,6 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from './outcome';
-import { stairs, Stairs } from '../features/navigation/exit/stairsTable';
 import {
   passageWidth,
   PassageWidth,
@@ -241,43 +240,6 @@ export function resolveWanderingWhereFrom(options?: {
       kind: 'wanderingWhereFrom',
       result: command,
     } as OutcomeEvent,
-    children: children.length ? children : undefined,
-  };
-}
-
-/**
- * When doing passage checks, the rules subtly imply this looks for *closed*
- * doors. Opening a door is a fresh move. For closed doors, we don't need to
- * roll what is behind the door. Roll for that when a decision is made to
- * open a door (or when the situation calls for it, like listening at doors).
- *
- * Check again immediately on TABLE I (periodicCheck) unless
- * door is straight ahead; if another door is not indicated,
- * then ignore the result and check again 30' past the door.
- */
-function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
-  const usedRoll = options?.roll ?? rollDice(stairs.sides);
-  const command = getTableEntry(usedRoll, stairs);
-  const event: OutcomeEvent = {
-    kind: 'stairs',
-    result: command,
-  } as OutcomeEvent;
-  const children: DungeonOutcomeNode[] = [];
-  if (command === Stairs.DownOne) {
-    children.push({ type: 'pending-roll', table: 'egress:one' });
-  } else if (command === Stairs.DownTwo) {
-    children.push({ type: 'pending-roll', table: 'egress:two' });
-  } else if (command === Stairs.DownThree) {
-    children.push({ type: 'pending-roll', table: 'egress:three' });
-  } else if (command === Stairs.UpDead || command === Stairs.DownDead) {
-    children.push({ type: 'pending-roll', table: 'chute' });
-  } else if (command === Stairs.UpOneDownTwo) {
-    children.push({ type: 'pending-roll', table: 'chamberDimensions' });
-  }
-  return {
-    type: 'event',
-    roll: usedRoll,
-    event,
     children: children.length ? children : undefined,
   };
 }
