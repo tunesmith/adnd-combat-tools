@@ -1,10 +1,4 @@
 import type { DungeonTableDefinition } from '../types';
-import {
-  createPendingResolverMap,
-  createPreviewFactoryMap,
-  createRegistryOutcomeMap,
-  createRenderAdapterMap,
-} from '../types';
 import { magicCategoryTables } from './magicCategory/manifest';
 import { potionTables } from './potion/manifest';
 import { scrollTables } from './scroll/manifest';
@@ -42,11 +36,3 @@ const treasureDefinitions = defineTreasureTables([
 ] as ReadonlyArray<DungeonTableDefinition>);
 
 export const TREASURE_TABLE_DEFINITIONS = treasureDefinitions;
-export const TREASURE_RENDER_ADAPTERS =
-  createRenderAdapterMap(treasureDefinitions);
-export const TREASURE_PREVIEW_FACTORIES =
-  createPreviewFactoryMap(treasureDefinitions);
-export const TREASURE_REGISTRY_OUTCOMES =
-  createRegistryOutcomeMap(treasureDefinitions);
-export const TREASURE_PENDING_RESOLVERS =
-  createPendingResolverMap(treasureDefinitions);

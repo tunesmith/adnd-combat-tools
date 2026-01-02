@@ -1,6 +1,6 @@
 import { CharacterClass } from '../../models/characterClass';
 
-export interface HitPointBonus {
+interface HitPointBonus {
   bonus: number;
   reRoll: number;
 }
