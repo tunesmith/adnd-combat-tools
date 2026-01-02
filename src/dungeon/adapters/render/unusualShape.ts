@@ -67,7 +67,7 @@ export function renderUnusualShapeCompact(
   return nodes;
 }
 
-export function describeUnusualShapeExtras(node: OutcomeEventNode): string {
+function describeUnusualShapeExtras(node: OutcomeEventNode): string {
   if (node.event.kind !== 'unusualShape') return '';
   const sentences = collectCircularChainSentences(node);
   if (sentences.length === 0) return '';
@@ -169,7 +169,7 @@ export const buildUnusualShapePreview: TablePreviewFactory = (tableId) =>
     })),
   });
 
-export function formatUnusualShape(result: UnusualShape): string {
+function formatUnusualShape(result: UnusualShape): string {
   switch (result) {
     case UnusualShape.Circular:
       return 'It is circular. ';

@@ -14,7 +14,7 @@ import type {
 } from '../adapters/render/shared';
 import type { Table } from '../../tables/dungeon/dungeonTypes';
 
-export type ResolveNestedNode = (
+type ResolveNestedNode = (
   outcome: DungeonOutcomeNode
 ) => OutcomeEventNode | undefined;
 
@@ -28,12 +28,12 @@ export type CompactRenderer = (
   appendPendingPreviews: AppendPreviewFn
 ) => DungeonRenderNode[];
 
-export type RenderAdapter = {
+type RenderAdapter = {
   renderDetail: DetailRenderer;
   renderCompact: CompactRenderer;
 };
 
-export type PostProcessChildren = (
+type PostProcessChildren = (
   node: OutcomeEventNode,
   children: OutcomeEventNode[],
   resolveNode: ResolveNestedNode
@@ -133,7 +133,7 @@ export function createChildPostProcessorMap(
   return map;
 }
 
-export function buildPreviewFromTable(
+function buildPreviewFromTable(
   tableId: string,
   heading: string,
   table: Table<unknown>,

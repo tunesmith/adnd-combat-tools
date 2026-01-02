@@ -184,7 +184,7 @@ export const buildTreasurePreview: TablePreviewFactory = (tableId, context) => {
   });
 };
 
-export function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
+function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
   if (outcome.event.kind !== 'treasure') return '';
   const { entries } = outcome.event;
   const resolvedMagic = describeResolvedMagic(outcome);

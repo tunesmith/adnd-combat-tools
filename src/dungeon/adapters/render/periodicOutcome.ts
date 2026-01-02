@@ -23,15 +23,15 @@ import { renderChamberDimensionsCompact } from './chamberDimensions';
 import { collectTreasureCompactMessages } from './treasure';
 import { MonsterLevel } from '../../features/monsters/monsterLevel/monsterLevelTable';
 
-export const DEAD_END_FALLBACK_TEXT =
+const DEAD_END_FALLBACK_TEXT =
   'The passage reaches a dead end. Walls left, right, and ahead can each be checked for a 25% chance of a secret door. Characters would still need to roll to detect. ';
-export const TRICK_TRAP_FALLBACK_TEXT =
+const TRICK_TRAP_FALLBACK_TEXT =
   "There is a trick or trap -- check again in 30'. ";
 // Stock continuation used after resolving a trick/trap from periodic check
 export const PASSAGE_CONTINUES_SUFFIX =
   " The current passage continues, check again in 30'. ";
 
-export function periodicBaseTexts(
+function periodicBaseTexts(
   result: PeriodicCheck,
   options?: { avoidMonster?: boolean }
 ): { detail: string; compact: string } {

@@ -135,7 +135,7 @@ function decorateSwordLabel(
     : withColor;
 }
 
-export function swordLabel(
+function swordLabel(
   sword: TreasureSword,
   kind?: TreasureSwordKind
 ): string {
@@ -494,7 +494,7 @@ export const buildTreasureSwordUnusualPreview: TablePreviewFactory = (
     context,
   });
 
-export type PrimaryAbilitySummary = {
+type PrimaryAbilitySummary = {
   ability: TreasureSwordPrimaryAbility;
   count: number;
   description: string;
