@@ -2,9 +2,9 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
   TableContext,
-} from '../../../types/dungeon';
-import type { OutcomeEventNode } from '../../domain/outcome';
-import type { Table } from '../../../tables/dungeon/dungeonTypes';
+} from '../../../../types/dungeon';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 import {
   treasureSwords,
   TreasureSword,
@@ -34,25 +34,28 @@ import {
   type TreasureSwordExtraordinaryPowerResult,
   type TreasureSwordSpecialPurposeResult,
   type TreasureSwordSpecialPurposePowerResult,
-} from '../../../tables/dungeon/treasureSwords';
+} from '../../../../tables/dungeon/treasureSwords';
 import type {
   TreasureSwordSpecialPurpose,
   TreasureSwordSpecialPurposeCommand,
   TreasureSwordSpecialPurposePower,
   TreasureSwordSpecialPurposePowerCommand,
-} from '../../../tables/dungeon/treasureSwords';
+} from '../../../../tables/dungeon/treasureSwords';
 import {
   treasureSwordAlignment,
   treasureSwordAlignmentChaotic,
   treasureSwordAlignmentLawful,
   SWORD_ALIGNMENT_DETAILS,
-} from '../../../tables/dungeon/treasureSwordAlignment';
+} from '../../../../tables/dungeon/treasureSwordAlignment';
 import type {
   TreasureSwordAlignment,
   TreasureSwordAlignmentResult,
-} from '../../../tables/dungeon/treasureSwordAlignment';
-import { buildPreview, findChildEvent } from './shared';
-import type { AppendPreviewFn, TablePreviewFactory } from './shared';
+} from '../../../../tables/dungeon/treasureSwordAlignment';
+import { buildPreview, findChildEvent } from '../../../adapters/render/shared';
+import type {
+  AppendPreviewFn,
+  TablePreviewFactory,
+} from '../../../adapters/render/shared';
 
 const SWORD_LABELS: Record<TreasureSword, string> = {
   [TreasureSword.SwordPlus1]: 'Sword +1',

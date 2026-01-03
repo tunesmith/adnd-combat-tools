@@ -31,7 +31,7 @@ import type {
   TreasureSwordSpecialPurposeResult,
   TreasureSwordSpecialPurposePowerResult,
 } from '../../../../tables/dungeon/treasureSwords';
-import { summarizePrimaryAbilities } from '../../../../dungeon/adapters/render/treasureSwords';
+import { summarizePrimaryAbilities } from '../../../../dungeon/features/treasure/swords/swordsRender';
 import {
   TreasureSwordAlignment,
   type TreasureSwordAlignmentResult,

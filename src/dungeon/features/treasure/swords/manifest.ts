@@ -45,7 +45,7 @@ import {
   renderTreasureSwordSpecialPurposePowerDetail,
   renderTreasureSwordUnusualCompact,
   renderTreasureSwordUnusualDetail,
-} from '../../../adapters/render/treasureSwords';
+} from './swordsRender';
 
 type TreasureSwordPrimaryAbilityOptions = Parameters<
   typeof resolveTreasureSwordPrimaryAbility
