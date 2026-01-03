@@ -38,7 +38,7 @@ import {
   treasureSwordSpecialPurpose,
   treasureSwordSpecialPurposePower,
   treasureSwordUnusual,
-} from '../../../../tables/dungeon/treasureSwords';
+} from './swordsTables';
 import {
   SWORD_ALIGNMENT_DETAILS as SWORD_ALIGNMENT,
   TreasureSwordAlignment,
@@ -46,7 +46,7 @@ import {
   treasureSwordAlignment,
   treasureSwordAlignmentChaotic,
   treasureSwordAlignmentLawful,
-} from '../../../../tables/dungeon/treasureSwordAlignment';
+} from './swordsAlignmentTable';
 
 export function resolveTreasureSwords(options?: {
   roll?: number;
@@ -1096,4 +1096,3 @@ function mapSwordLanguageRoll(roll: number): number {
   if (roll <= 99) return 5;
   return 6;
 }
-

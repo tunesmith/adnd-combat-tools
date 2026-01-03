@@ -177,8 +177,8 @@ import type {
   TreasureSwordSpecialPurposeResult,
   TreasureSwordSpecialPurposePowerResult,
   TreasureSwordDragonSlayerColorResult,
-} from '../../tables/dungeon/treasureSwords';
-import type { TreasureSwordAlignmentResult } from '../../tables/dungeon/treasureSwordAlignment';
+} from '../features/treasure/swords/swordsTables';
+import type { TreasureSwordAlignmentResult } from '../features/treasure/swords/swordsAlignmentTable';
 import type { TreasureMiscWeapon } from '../features/treasure/miscWeapons/miscWeaponsTable';
 import type { TreasureArmorShield } from '../features/treasure/armorShields/armorShieldsTable';
 

@@ -15,8 +15,8 @@ import {
   TreasureSword,
   TreasureSwordExtraordinaryPower,
   type TreasureSwordExtraordinaryPowerResult,
-} from '../../../../tables/dungeon/treasureSwords';
-import { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSwordAlignment';
+} from '../../../../dungeon/features/treasure/swords/swordsTables';
+import { TreasureSwordAlignment } from '../../../../dungeon/features/treasure/swords/swordsAlignmentTable';
 
 function collectPreviewIds(detailNodes: DungeonRenderNode[]): string[] {
   return detailNodes

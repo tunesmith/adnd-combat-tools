@@ -25,17 +25,17 @@ import {
   describeSwordSpecialPurpose,
   TreasureSwordDragonSlayerColor,
   type TreasureSwordDragonSlayerColorResult,
-} from '../../../../tables/dungeon/treasureSwords';
+} from '../../../../dungeon/features/treasure/swords/swordsTables';
 import type {
   TreasureSwordPrimaryAbilityResult,
   TreasureSwordSpecialPurposeResult,
   TreasureSwordSpecialPurposePowerResult,
-} from '../../../../tables/dungeon/treasureSwords';
+} from '../../../../dungeon/features/treasure/swords/swordsTables';
 import { summarizePrimaryAbilities } from '../../../../dungeon/features/treasure/swords/swordsRender';
 import {
   TreasureSwordAlignment,
   type TreasureSwordAlignmentResult,
-} from '../../../../tables/dungeon/treasureSwordAlignment';
+} from '../../../../dungeon/features/treasure/swords/swordsAlignmentTable';
 
 describe('resolveTreasureSwords', () => {
   it('creates pending rolls for kind and unusual tables by default', () => {

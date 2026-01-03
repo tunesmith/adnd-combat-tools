@@ -34,23 +34,23 @@ import {
   type TreasureSwordExtraordinaryPowerResult,
   type TreasureSwordSpecialPurposeResult,
   type TreasureSwordSpecialPurposePowerResult,
-} from '../../../../tables/dungeon/treasureSwords';
+} from './swordsTables';
 import type {
   TreasureSwordSpecialPurpose,
   TreasureSwordSpecialPurposeCommand,
   TreasureSwordSpecialPurposePower,
   TreasureSwordSpecialPurposePowerCommand,
-} from '../../../../tables/dungeon/treasureSwords';
+} from './swordsTables';
 import {
   treasureSwordAlignment,
   treasureSwordAlignmentChaotic,
   treasureSwordAlignmentLawful,
   SWORD_ALIGNMENT_DETAILS,
-} from '../../../../tables/dungeon/treasureSwordAlignment';
+} from './swordsAlignmentTable';
 import type {
   TreasureSwordAlignment,
   TreasureSwordAlignmentResult,
-} from '../../../../tables/dungeon/treasureSwordAlignment';
+} from './swordsAlignmentTable';
 import { buildPreview, findChildEvent } from '../../../adapters/render/shared';
 import type {
   AppendPreviewFn,

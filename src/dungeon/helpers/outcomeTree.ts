@@ -8,9 +8,9 @@ import type {
 import type {
   TreasureSwordExtraordinaryPowerResult,
   TreasureSwordSpecialPurposeResult,
-} from '../../tables/dungeon/treasureSwords';
-import { describeSwordSpecialPurpose } from '../../tables/dungeon/treasureSwords';
-import type { TreasureSwordAlignment } from '../../tables/dungeon/treasureSwordAlignment';
+} from '../features/treasure/swords/swordsTables';
+import { describeSwordSpecialPurpose } from '../features/treasure/swords/swordsTables';
+import type { TreasureSwordAlignment } from '../features/treasure/swords/swordsAlignmentTable';
 import {
   ALL_CHILD_POST_PROCESSORS,
   ALL_PENDING_RESOLVERS,

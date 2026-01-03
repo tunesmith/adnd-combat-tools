@@ -12,8 +12,8 @@ import {
   resolveTreasureSwordSpecialPurposePower,
   resolveTreasureSwordUnusual,
 } from './swordsResolvers';
-import type { TreasureSword } from '../../../../tables/dungeon/treasureSwords';
-import type { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSwordAlignment';
+import type { TreasureSword } from './swordsTables';
+import type { TreasureSwordAlignment } from './swordsAlignmentTable';
 import { createTreasureMagicContextHandlers } from '../shared';
 import {
   buildTreasureSwordsPreview,

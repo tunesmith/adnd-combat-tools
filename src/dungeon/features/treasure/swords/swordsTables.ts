@@ -1,8 +1,8 @@
-import type { Table, Entry } from './dungeonTypes';
+import type { Table, Entry } from '../../../../tables/dungeon/dungeonTypes';
 import {
   TreasureSwordAlignment,
   SWORD_ALIGNMENT_DETAILS,
-} from './treasureSwordAlignment';
+} from './swordsAlignmentTable';
 
 export enum TreasureSword {
   SwordPlus1,

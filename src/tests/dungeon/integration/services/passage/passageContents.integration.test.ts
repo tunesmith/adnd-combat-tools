@@ -59,7 +59,7 @@ import {
   TreasureSword,
   TreasureSwordKind,
   TreasureSwordUnusual,
-} from '../../../../../tables/dungeon/treasureSwords';
+} from '../../../../../dungeon/features/treasure/swords/swordsTables';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 

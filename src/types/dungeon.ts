@@ -3,8 +3,8 @@ import type {
   DungeonOutcomeNode,
 } from '../dungeon/domain/outcome';
 import type { ChamberRoomContents } from '../tables/dungeon/chamberRoomContents';
-import type { TreasureSword } from '../tables/dungeon/treasureSwords';
-import type { TreasureSwordAlignment } from '../tables/dungeon/treasureSwordAlignment';
+import type { TreasureSword } from '../dungeon/features/treasure/swords/swordsTables';
+import type { TreasureSwordAlignment } from '../dungeon/features/treasure/swords/swordsAlignmentTable';
 import type { PartySummary } from '../dungeon/helpers/party/formatPartyResult';
 
 export type DungeonAction = 'passage' | 'door';

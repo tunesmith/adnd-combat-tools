@@ -184,8 +184,8 @@ import type {
   TreasureSwordDragonSlayerColor,
   TreasureSwordSpecialPurposeCommand,
   TreasureSwordSpecialPurposePowerCommand,
-} from './treasureSwords';
-import type { TreasureSwordAlignment } from './treasureSwordAlignment';
+} from '../../dungeon/features/treasure/swords/swordsTables';
+import type { TreasureSwordAlignment } from '../../dungeon/features/treasure/swords/swordsAlignmentTable';
 
 export type Table<T> = {
   sides: number;
