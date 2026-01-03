@@ -9,7 +9,7 @@ import {
   resolveTreasureSwordUnusual,
   resolveTreasureSwordSpecialPurpose,
   resolveTreasureSwordSpecialPurposePower,
-} from '../../../../dungeon/domain/resolvers';
+} from '../../../../dungeon/features/treasure/swords/swordsResolvers';
 import {
   renderDetailTree,
   toCompactRender,

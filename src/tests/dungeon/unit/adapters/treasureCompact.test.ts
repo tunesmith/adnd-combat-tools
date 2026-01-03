@@ -1,5 +1,5 @@
 import { renderTreasureCompactNodes } from '../../../../dungeon/adapters/render/treasure';
-import { resolveTreasureSwords } from '../../../../dungeon/domain/resolvers';
+import { resolveTreasureSwords } from '../../../../dungeon/features/treasure/swords/swordsResolvers';
 import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
 import { TreasureWithoutMonster } from '../../../../tables/dungeon/treasure';
 import { TreasureMagicCategory } from '../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';

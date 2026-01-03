@@ -11,7 +11,7 @@ import {
   resolveTreasureSwordSpecialPurpose,
   resolveTreasureSwordSpecialPurposePower,
   resolveTreasureSwordUnusual,
-} from '../../../domain/resolvers';
+} from './swordsResolvers';
 import type { TreasureSword } from '../../../../tables/dungeon/treasureSwords';
 import type { TreasureSwordAlignment } from '../../../../tables/dungeon/treasureSwordAlignment';
 import { createTreasureMagicContextHandlers } from '../shared';
@@ -558,4 +558,3 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: () => resolveTreasureSwordAlignment({ variant: 'lawful' }),
   },
 ];
-

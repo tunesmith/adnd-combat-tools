@@ -4,7 +4,7 @@ import {
   resolveTreasureSwordExtraordinaryPower,
   resolveTreasureSwordSpecialPurpose,
   resolveTreasureSwordUnusual,
-} from '../../../../dungeon/domain/resolvers';
+} from '../../../../dungeon/features/treasure/swords/swordsResolvers';
 import type { PendingRoll } from '../../../../dungeon/domain/outcome';
 import {
   applyResolvedOutcome,
