@@ -15,7 +15,6 @@ import {
   findPendingWithAncestors,
   isTableContext,
   normalizeOutcomeTree,
-  propagateSwordAlignmentInfo,
 } from './outcomeTree';
 import {
   createOutcomeRenderSnapshot,
@@ -25,6 +24,7 @@ import {
   ALL_REGISTRY_OUTCOMES,
   ALL_TABLE_HEADINGS,
   ALL_TABLE_ID_LIST,
+  postProcessOutcomeTree,
   type FeatureTableId,
 } from '../features/bundle';
 
@@ -56,8 +56,11 @@ const TABLE_HEADINGS: Record<TableId, string> = ALL_TABLE_HEADINGS;
 
 function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
   const normalized = normalizeOutcomeTree(outcome);
-  const propagated = propagateSwordAlignmentInfo(normalized);
-  return { outcome: propagated, messages: renderDetailTree(propagated) };
+  const postProcessed = postProcessOutcomeTree(normalized);
+  return {
+    outcome: postProcessed,
+    messages: renderDetailTree(postProcessed),
+  };
 }
 
 const FEATURE_TABLE_RESOLVERS: Record<string, RegistryResolver> =
@@ -167,65 +170,54 @@ function resolvePendingTargetId(
       (pending.id === undefined && pending.table === requestedId)
   );
   if (exactMatch) return requestedId;
-  if (
-    base !== 'treasureSwordSpecialPurpose' &&
-    base !== 'treasureSwordSpecialPurposePower' &&
-    base !== 'treasureSwordDragonSlayerColor'
-  ) {
-    return requestedId;
+  const slotKey = readSlotKeyHint(context);
+  if (slotKey) {
+    const slotMatch = findPendingWithAncestors(existing, (pending) => {
+      const pendingBase = String(pending.table.split(':')[0] ?? '');
+      if (pendingBase !== base) return false;
+      return readSlotKeyHint(pending.context) === slotKey;
+    });
+    if (slotMatch) {
+      return slotMatch.pending.id ?? slotMatch.pending.table;
+    }
   }
-  const slotKey = extractSlotKey(base, context, requestedId);
-  if (!slotKey) return requestedId;
-  const slotMatch = findPendingWithAncestors(existing, (pending) => {
+
+  const tableMatch = findPendingWithAncestors(
+    existing,
+    (pending) => pending.table === requestedId
+  );
+  if (tableMatch) {
+    return tableMatch.pending.id ?? tableMatch.pending.table;
+  }
+
+  const firstByBase = findPendingWithAncestors(existing, (pending) => {
     const pendingBase = String(pending.table.split(':')[0] ?? '');
-    if (pendingBase !== base) return false;
-    const candidateSlot = readSlotKeyFromContext(base, pending.context);
-    return candidateSlot === slotKey;
+    return pendingBase === base;
   });
-  if (!slotMatch) return requestedId;
-  return slotMatch.pending.id ?? slotMatch.pending.table;
+  if (!firstByBase) return requestedId;
+  const firstTarget = firstByBase.pending.id ?? firstByBase.pending.table;
+  const secondByBase = findPendingWithAncestors(existing, (pending) => {
+    const pendingBase = String(pending.table.split(':')[0] ?? '');
+    const target = pending.id ?? pending.table;
+    return pendingBase === base && target !== firstTarget;
+  });
+  if (!secondByBase) {
+    return firstTarget;
+  }
+  return requestedId;
 }
 
-function extractSlotKey(
-  base: string,
-  context: TableContext | undefined,
-  requestedId: string
-): string | undefined {
-  const fromContext = readSlotKeyFromContext(base, context);
-  if (fromContext) return fromContext;
-  const idx = requestedId.indexOf(':');
-  if (idx === -1) return undefined;
-  const slot = requestedId.slice(idx + 1);
-  return slot.length > 0 ? slot : undefined;
-}
-
-function readSlotKeyFromContext(
-  base: string,
-  context: unknown
-): string | undefined {
+function readSlotKeyHint(context: unknown): string | undefined {
   if (!isTableContext(context)) return undefined;
-  if (
-    base === 'treasureSwordSpecialPurpose' &&
-    context.kind === 'treasureSwordSpecialPurpose'
-  ) {
-    if (typeof context.slotKey === 'string') return context.slotKey;
-    if (typeof context.parentSlotKey === 'string') return context.parentSlotKey;
-    return undefined;
+  const candidate = context as { slotKey?: unknown; parentSlotKey?: unknown };
+  if (typeof candidate.slotKey === 'string' && candidate.slotKey.length > 0) {
+    return candidate.slotKey;
   }
   if (
-    base === 'treasureSwordSpecialPurposePower' &&
-    context.kind === 'treasureSwordSpecialPurposePower'
+    typeof candidate.parentSlotKey === 'string' &&
+    candidate.parentSlotKey.length > 0
   ) {
-    if (typeof context.slotKey === 'string') return context.slotKey;
-    if (typeof context.parentSlotKey === 'string') return context.parentSlotKey;
-    return undefined;
-  }
-  if (
-    base === 'treasureSwordDragonSlayerColor' &&
-    context.kind === 'treasureSwordDragonSlayerColor'
-  ) {
-    if (typeof context.slotKey === 'string') return context.slotKey;
-    return undefined;
+    return candidate.parentSlotKey;
   }
   return undefined;
 }

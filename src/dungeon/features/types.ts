@@ -18,6 +18,8 @@ type ResolveNestedNode = (
   outcome: DungeonOutcomeNode
 ) => OutcomeEventNode | undefined;
 
+type OutcomePostProcessor = (outcome: DungeonOutcomeNode) => DungeonOutcomeNode;
+
 export type DetailRenderer = (
   node: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
@@ -64,6 +66,7 @@ export type DungeonTableDefinition<TOptions = unknown> = {
   registry?: RegistryOutcomeBuilder;
   table?: Table<unknown>;
   postProcessChildren?: PostProcessChildren;
+  postProcessOutcome?: OutcomePostProcessor;
 };
 
 export function createRenderAdapterMap<TOptions>(
@@ -131,6 +134,21 @@ export function createChildPostProcessorMap(
     }
   }
   return map;
+}
+
+export function createOutcomePostProcessorList(
+  defs: ReadonlyArray<DungeonTableDefinition>
+): OutcomePostProcessor[] {
+  const processors: OutcomePostProcessor[] = [];
+  const seen = new Set<OutcomePostProcessor>();
+  for (const def of defs) {
+    const processor = def.postProcessOutcome;
+    if (processor && !seen.has(processor)) {
+      processors.push(processor);
+      seen.add(processor);
+    }
+  }
+  return processors;
 }
 
 function buildPreviewFromTable(

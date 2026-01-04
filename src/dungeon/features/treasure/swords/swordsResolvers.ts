@@ -5,22 +5,24 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../../../domain/outcome';
+import type {
+  TreasureSwordDragonSlayerColor,
+  TreasureSwordKind,
+  TreasureSwordPrimaryAbility,
+  TreasureSwordSpecialPurpose,
+  TreasureSwordSpecialPurposePower,
+} from './swordsTables';
 import {
   DRAGON_SLAYER_COLOR_DETAILS,
   SWORD_UNUSUAL_DETAILS,
   TreasureSword,
-  TreasureSwordDragonSlayerColor,
   type TreasureSwordDragonSlayerColorResult,
   type TreasureSwordExtraordinaryPowerResult,
   TreasureSwordExtraordinaryPower,
   TreasureSwordExtraordinaryPowerCommand,
-  TreasureSwordKind,
-  TreasureSwordPrimaryAbility,
   TreasureSwordPrimaryAbilityCommand,
   type TreasureSwordPrimaryAbilityResult,
-  TreasureSwordSpecialPurpose,
   type TreasureSwordSpecialPurposePowerResult,
-  TreasureSwordSpecialPurposePower,
   type TreasureSwordSpecialPurposeResult,
   TreasureSwordUnusual,
   type TreasureSwordUnusualResult,
@@ -786,7 +788,10 @@ export function resolveTreasureSwordDragonSlayerColor(options?: {
     return rollDice(table.sides);
   };
   const usedRoll = resolveRoll();
-  const command: TreasureSwordDragonSlayerColor = getTableEntry(usedRoll, table);
+  const command: TreasureSwordDragonSlayerColor = getTableEntry(
+    usedRoll,
+    table
+  );
   const detail = DRAGON_SLAYER_COLOR_DETAILS[command];
   const result: TreasureSwordDragonSlayerColorResult = {
     kind: 'dragonSlayerColor',

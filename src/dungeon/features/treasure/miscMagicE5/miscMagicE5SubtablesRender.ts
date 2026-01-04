@@ -71,9 +71,7 @@ export function robeOfTheArchmagiAlignmentDisplay(
     | 'Evil';
 }
 
-function robeOfTheArchmagiSentence(
-  outcome: TreasureRobeOfTheArchmagi
-): string {
+function robeOfTheArchmagiSentence(outcome: TreasureRobeOfTheArchmagi): string {
   return `The robe is aligned with ${robeOfTheArchmagiAlignment(outcome)}.`;
 }
 

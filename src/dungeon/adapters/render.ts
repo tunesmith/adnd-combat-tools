@@ -939,22 +939,6 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   const factory = PENDING_PREVIEW_FACTORIES[base];
   if (!factory) return undefined;
   const context = isTableContext(p.context) ? p.context : undefined;
-  if (context) {
-    const alignmentMissing =
-      (base === 'treasureSwordSpecialPurpose' &&
-        context.kind === 'treasureSwordSpecialPurpose' &&
-        (context.alignment === undefined ||
-          context.alignmentReady === false)) ||
-      (base === 'treasureSwordSpecialPurposePower' &&
-        context.kind === 'treasureSwordSpecialPurposePower' &&
-        context.alignment === undefined) ||
-      (base === 'treasureSwordDragonSlayerColor' &&
-        context.kind === 'treasureSwordDragonSlayerColor' &&
-        context.alignmentReady === false);
-    if (alignmentMissing) {
-      return undefined;
-    }
-  }
   return factory(p.table, context);
 }
 

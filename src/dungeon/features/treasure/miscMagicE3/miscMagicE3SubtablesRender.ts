@@ -856,9 +856,7 @@ function attunementSentence({
   return `The horn is aligned ${hornAlignmentLabel(alignment)}.`;
 }
 
-function alignmentSentence(
-  alignment: TreasureHornOfValhallaAlignment
-): string {
+function alignmentSentence(alignment: TreasureHornOfValhallaAlignment): string {
   return `The horn is ${hornAlignmentLabel(alignment)}.`;
 }
 

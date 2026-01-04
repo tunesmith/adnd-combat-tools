@@ -138,10 +138,7 @@ function decorateSwordLabel(
     : withColor;
 }
 
-function swordLabel(
-  sword: TreasureSword,
-  kind?: TreasureSwordKind
-): string {
+function swordLabel(sword: TreasureSword, kind?: TreasureSwordKind): string {
   const base = SWORD_LABELS[sword];
   return applySwordKindLabel(base, kind);
 }
@@ -656,11 +653,9 @@ function compactExtraordinaryDescription(
         ? 'choose 1 extraordinary power'
         : `choose ${count} extraordinary powers`;
     case TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose: {
-      const base =
-        count === 1
-          ? 'choose 1 extraordinary power, then roll for a special purpose and power'
-          : `choose ${count} extraordinary powers, then roll for a special purpose and power for each`;
-      return base;
+      return count === 1
+        ? 'choose 1 extraordinary power, then roll for a special purpose and power'
+        : `choose ${count} extraordinary powers, then roll for a special purpose and power for each`;
     }
     default:
       return describeSwordExtraordinaryPower(power, count);
@@ -1184,8 +1179,13 @@ export function renderTreasureSwordDragonSlayerColorCompact(
 export const buildTreasureSwordSpecialPurposePreview: TablePreviewFactory = (
   tableId,
   context
-) =>
-  buildPreview(tableId, {
+) => {
+  if (context && context.kind === 'treasureSwordSpecialPurpose') {
+    if (context.alignment === undefined || context.alignmentReady === false) {
+      return undefined;
+    }
+  }
+  return buildPreview(tableId, {
     title: 'Sword Special Purpose',
     sides: treasureSwordSpecialPurpose.sides,
     entries: treasureSwordSpecialPurpose.entries.map(({ range, command }) => {
@@ -1202,10 +1202,18 @@ export const buildTreasureSwordSpecialPurposePreview: TablePreviewFactory = (
     }),
     context,
   });
+};
 
 export const buildTreasureSwordSpecialPurposePowerPreview: TablePreviewFactory =
-  (tableId, context) =>
-    buildPreview(tableId, {
+  (tableId, context) => {
+    if (
+      context &&
+      context.kind === 'treasureSwordSpecialPurposePower' &&
+      context.alignment === undefined
+    ) {
+      return undefined;
+    }
+    return buildPreview(tableId, {
       title: 'Special Purpose Power',
       sides: treasureSwordSpecialPurposePower.sides,
       entries: treasureSwordSpecialPurposePower.entries.map(
@@ -1216,12 +1224,20 @@ export const buildTreasureSwordSpecialPurposePowerPreview: TablePreviewFactory =
       ),
       context,
     });
+  };
 
 export const buildTreasureSwordDragonSlayerColorPreview: TablePreviewFactory = (
   tableId,
   context
-) =>
-  buildPreview(tableId, {
+) => {
+  if (
+    context &&
+    context.kind === 'treasureSwordDragonSlayerColor' &&
+    context.alignmentReady === false
+  ) {
+    return undefined;
+  }
+  return buildPreview(tableId, {
     title: 'Dragon Slayer Target',
     ...(() => {
       const alignment =
@@ -1243,6 +1259,7 @@ export const buildTreasureSwordDragonSlayerColorPreview: TablePreviewFactory = (
     })(),
     context,
   });
+};
 
 function findSwordAlignmentEvent(
   node: OutcomeEventNode
@@ -1520,8 +1537,7 @@ function swordAlignmentDescription(
 }
 
 function alignmentStatement(result: TreasureSwordAlignmentResult): string {
-  const base = `The sword is ${result.label}.`;
-  return base;
+  return `The sword is ${result.label}.`;
 }
 
 export function formatSwordIntelligence(

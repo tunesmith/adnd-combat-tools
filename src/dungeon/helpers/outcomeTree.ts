@@ -5,12 +5,6 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
-import type {
-  TreasureSwordExtraordinaryPowerResult,
-  TreasureSwordSpecialPurposeResult,
-} from '../features/treasure/swords/swordsTables';
-import { describeSwordSpecialPurpose } from '../features/treasure/swords/swordsTables';
-import type { TreasureSwordAlignment } from '../features/treasure/swords/swordsAlignmentTable';
 import {
   ALL_CHILD_POST_PROCESSORS,
   ALL_PENDING_RESOLVERS,
@@ -272,13 +266,6 @@ export function isTableContext(x: unknown): x is TableContext {
       typeof obj.alignmentReady === 'boolean';
     return slotOk && indexOk && alignmentOk && readyOk;
   }
-  if (kind === 'treasureSwordDragonSlayerColor') {
-    const obj = x as { slotKey?: unknown; rollIndex?: unknown };
-    const slotOk = obj.slotKey === undefined || typeof obj.slotKey === 'string';
-    const indexOk =
-      obj.rollIndex === undefined || typeof obj.rollIndex === 'number';
-    return slotOk && indexOk;
-  }
   return false;
 }
 
@@ -504,8 +491,6 @@ function enrichEventNode(
       }
       break;
     }
-    case 'treasureSwordUnusual':
-      break;
     default:
       break;
   }
@@ -522,8 +507,6 @@ function enrichEventNode(
       : undefined,
   };
 }
-
-// Alignment propagation helpers defined later
 
 function findPendingWithAncestorsInternal(
   node: DungeonOutcomeNode | undefined,
@@ -559,220 +542,6 @@ function resolvePendingNode(
   return featureResolve ? featureResolve(pending, ancestors) : undefined;
 }
 
-export function propagateSwordAlignmentInfo(
-  node: DungeonOutcomeNode
-): DungeonOutcomeNode {
-  return propagateAlignment(node, undefined);
-}
-
-function propagateAlignment(
-  node: DungeonOutcomeNode,
-  currentAlignment: TreasureSwordAlignment | undefined
-): DungeonOutcomeNode {
-  if (node.type === 'event') {
-    let nextAlignment = currentAlignment;
-    if (node.event.kind === 'treasureSwordAlignment') {
-      nextAlignment = node.event.result.alignment;
-    } else if (node.event.kind === 'treasureSwordUnusual') {
-      const alignmentChild = (node.children || []).find(
-        (child): child is OutcomeEventNode =>
-          child.type === 'event' &&
-          child.event.kind === 'treasureSwordAlignment'
-      );
-      if (
-        alignmentChild &&
-        alignmentChild.event.kind === 'treasureSwordAlignment'
-      ) {
-        const alignmentResult = alignmentChild.event.result;
-        nextAlignment = alignmentResult.alignment;
-      }
-    }
-    const originalChildren = node.children ?? [];
-    const updatedChildren = originalChildren.map((child) =>
-      propagateAlignment(child, nextAlignment)
-    );
-    let childrenChanged = false;
-    for (let i = 0; i < originalChildren.length; i += 1) {
-      if (originalChildren[i] !== updatedChildren[i]) {
-        childrenChanged = true;
-        break;
-      }
-    }
-
-    let updatedNode = node;
-    if (
-      node.event.kind === 'treasureSwordExtraordinaryPower' &&
-      nextAlignment !== undefined
-    ) {
-      updatedNode = applyAlignmentToExtraordinaryEvent(node, updatedChildren);
-    } else if (
-      node.event.kind === 'treasureSwordSpecialPurpose' &&
-      nextAlignment !== undefined
-    ) {
-      updatedNode = applyAlignmentToSpecialPurposeEvent(node, nextAlignment);
-      if (childrenChanged && updatedNode.children) {
-        updatedNode = {
-          ...updatedNode,
-          children: updatedChildren,
-        };
-      }
-    } else if (childrenChanged) {
-      updatedNode = {
-        ...node,
-        children: updatedChildren,
-      };
-    }
-    return updatedNode;
-  }
-
-  if (
-    node.type === 'pending-roll' &&
-    node.table === 'treasureSwordSpecialPurpose' &&
-    currentAlignment !== undefined
-  ) {
-    const existing =
-      node.context && typeof node.context === 'object'
-        ? (node.context as SpecialPurposeContext)
-        : undefined;
-    const alreadyAligned =
-      existing?.alignment === currentAlignment &&
-      existing?.alignmentReady === true;
-    if (alreadyAligned) return node;
-    const nextContext: SpecialPurposeContext = {
-      kind: 'treasureSwordSpecialPurpose',
-      ...existing,
-      alignment: currentAlignment,
-      alignmentReady: true,
-    };
-    return {
-      ...node,
-      context: nextContext,
-    };
-  }
-  if (
-    node.type === 'pending-roll' &&
-    node.table === 'treasureSwordSpecialPurposePower' &&
-    currentAlignment !== undefined
-  ) {
-    const existing =
-      node.context && typeof node.context === 'object'
-        ? (node.context as {
-            slotKey?: string;
-            rollIndex?: number;
-            parentSlotKey?: string;
-            alignment?: TreasureSwordAlignment;
-          })
-        : undefined;
-    const alreadyAligned = existing?.alignment === currentAlignment;
-    if (alreadyAligned) return node;
-    const nextContext = {
-      kind: 'treasureSwordSpecialPurposePower' as const,
-      ...existing,
-      alignment: currentAlignment,
-    };
-    return {
-      ...node,
-      context: nextContext,
-    };
-  }
-  if (
-    node.type === 'pending-roll' &&
-    node.table === 'treasureSwordDragonSlayerColor'
-  ) {
-    const existing =
-      node.context && typeof node.context === 'object'
-        ? (node.context as {
-            slotKey?: string;
-            rollIndex?: number;
-            alignment?: TreasureSwordAlignment;
-            alignmentReady?: boolean;
-          })
-        : undefined;
-    if (currentAlignment === undefined) {
-      if (existing?.alignmentReady === false) return node;
-      return node;
-    }
-    const alreadyAligned =
-      existing?.alignment === currentAlignment &&
-      existing?.alignmentReady === true;
-    if (alreadyAligned) return node;
-    const nextContext = {
-      kind: 'treasureSwordDragonSlayerColor' as const,
-      ...existing,
-      alignment: currentAlignment,
-      alignmentReady: true,
-    };
-    return {
-      ...node,
-      context: nextContext,
-    };
-  }
-  return node;
-}
-
-function applyAlignmentToExtraordinaryEvent(
-  node: OutcomeEventNode,
-  children: DungeonOutcomeNode[]
-): OutcomeEventNode {
-  if (node.event.kind !== 'treasureSwordExtraordinaryPower') return node;
-  const result = node.event.result;
-  let updated = node;
-  if (result.kind === 'power' && result.alignmentRequired) {
-    const nextResult: Extract<
-      TreasureSwordExtraordinaryPowerResult,
-      { kind: 'power' }
-    > = {
-      ...result,
-      alignmentRequired: undefined,
-    };
-    updated = {
-      ...node,
-      event: {
-        ...node.event,
-        result: nextResult,
-      },
-    };
-  }
-  if (children.length > 0) {
-    updated = {
-      ...updated,
-      children,
-    };
-  }
-  return updated;
-}
-
-function applyAlignmentToSpecialPurposeEvent(
-  node: OutcomeEventNode,
-  alignment: TreasureSwordAlignment
-): OutcomeEventNode {
-  if (node.event.kind !== 'treasureSwordSpecialPurpose') return node;
-  const result = node.event.result;
-  if (result.alignment === alignment) return node;
-  const updatedResult: TreasureSwordSpecialPurposeResult = {
-    ...result,
-    alignment,
-    description: describeSwordSpecialPurpose(result.purpose, { alignment }),
-  };
-  return {
-    ...node,
-    event: {
-      ...node.event,
-      result: updatedResult,
-    },
-    children: node.children,
-  };
-}
-
-type SpecialPurposeContext = {
-  kind: 'treasureSwordSpecialPurpose';
-  slotKey?: string;
-  rollIndex?: number;
-  parentSlotKey?: string;
-  alignment?: TreasureSwordAlignment;
-  alignmentReady?: boolean;
-};
-
 function buildChildId(
   parentId: string,
   child: DungeonOutcomeNode,
@@ -793,10 +562,7 @@ function matchesTarget(nodeId: string | undefined, targetId: string): boolean {
   return !!nodeId && nodeId === targetId;
 }
 
-function parseDoorChainSequence(
-  table: string,
-  fallback: number
-): number {
+function parseDoorChainSequence(table: string, fallback: number): number {
   const parts = table.split(':');
   if (parts.length >= 2) {
     const seq = Number(parts[1]);

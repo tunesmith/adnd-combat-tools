@@ -38,7 +38,7 @@ export function findChildEvent<K extends OutcomeEvent['kind']>(
 export type TablePreviewFactory = (
   tableId: string,
   context?: TableContext
-) => DungeonTablePreview;
+) => DungeonTablePreview | undefined;
 
 export function buildPreview(
   tableId: string,

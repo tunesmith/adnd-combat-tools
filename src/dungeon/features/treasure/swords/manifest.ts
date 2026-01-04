@@ -46,6 +46,7 @@ import {
   renderTreasureSwordUnusualCompact,
   renderTreasureSwordUnusualDetail,
 } from './swordsRender';
+import { postProcessSwordsOutcomeTree } from './swordsOutcomePostProcessor';
 
 type TreasureSwordPrimaryAbilityOptions = Parameters<
   typeof resolveTreasureSwordPrimaryAbility
@@ -243,6 +244,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordsCompact,
     },
     buildPreview: buildTreasureSwordsPreview,
+    postProcessOutcome: postProcessSwordsOutcomeTree,
     ...treasureSwordsHandlers,
   },
   {

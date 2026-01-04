@@ -1,6 +1,8 @@
 import type { DungeonTableDefinition } from './types';
+import type { DungeonOutcomeNode } from '../domain/outcome';
 import {
   createChildPostProcessorMap,
+  createOutcomePostProcessorList,
   createPendingResolverMap,
   createPreviewFactoryMap,
   createRegistryOutcomeMap,
@@ -34,6 +36,18 @@ export const ALL_PENDING_RESOLVERS =
   createPendingResolverMap(featureDefinitions);
 export const ALL_CHILD_POST_PROCESSORS =
   createChildPostProcessorMap(featureDefinitions);
+
+const ALL_OUTCOME_POST_PROCESSORS =
+  createOutcomePostProcessorList(featureDefinitions);
+
+export function postProcessOutcomeTree(
+  outcome: DungeonOutcomeNode
+): DungeonOutcomeNode {
+  return ALL_OUTCOME_POST_PROCESSORS.reduce(
+    (acc, processor) => processor(acc),
+    outcome
+  );
+}
 
 export type FeatureTableId = typeof ALL_TABLE_DEFINITIONS[number]['id'];
 
