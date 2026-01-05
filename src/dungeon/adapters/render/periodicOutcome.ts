@@ -20,7 +20,7 @@ import {
 } from '../../features/monsters/render';
 import { renderTrickTrapCompact } from '../../features/hazards/trickTrap/trickTrapRender';
 import { renderChamberDimensionsCompact } from './chamberDimensions';
-import { collectTreasureCompactMessages } from './treasure';
+import { collectTreasureCompactMessages } from '../../features/treasure/treasure/treasureRender';
 import { MonsterLevel } from '../../features/monsters/monsterLevel/monsterLevelTable';
 
 const DEAD_END_FALLBACK_TEXT =

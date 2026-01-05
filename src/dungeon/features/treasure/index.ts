@@ -1,4 +1,5 @@
 import type { DungeonTableDefinition } from '../types';
+import { treasureTables } from './treasure/manifest';
 import { magicCategoryTables } from './magicCategory/manifest';
 import { potionTables } from './potion/manifest';
 import { scrollTables } from './scroll/manifest';
@@ -20,6 +21,7 @@ const defineTreasureTables = <T extends ReadonlyArray<DungeonTableDefinition>>(
 ): T => defs;
 
 const treasureDefinitions = defineTreasureTables([
+  ...treasureTables,
   ...magicCategoryTables,
   ...potionTables,
   ...scrollTables,

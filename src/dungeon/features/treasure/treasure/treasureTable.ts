@@ -1,4 +1,4 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
 
 export enum TreasureWithoutMonster {
   CopperPerLevel,
@@ -41,3 +41,4 @@ export const treasureWithMonster: Table<TreasureWithoutMonster> = {
     { range: [88, 100], command: TreasureWithoutMonster.Magic },
   ],
 };
+

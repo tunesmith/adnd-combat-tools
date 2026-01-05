@@ -90,7 +90,7 @@ import type { IllusionaryWallNature } from '../../dungeon/features/hazards/illus
 import type { GasTrapEffect } from '../../dungeon/features/hazards/gasTrap/gasTrapTable';
 import type { ChamberRoomContents } from './chamberRoomContents';
 import type { ChamberRoomStairs } from './chamberRoomStairs';
-import type { TreasureWithoutMonster } from './treasure';
+import type { TreasureWithoutMonster } from '../../dungeon/features/treasure/treasure/treasureTable';
 import type {
   TreasureProtectionType,
   TreasureProtectionGuardedBy,

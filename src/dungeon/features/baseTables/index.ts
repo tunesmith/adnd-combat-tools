@@ -12,7 +12,6 @@ import {
   resolveRoomDimensions,
   resolveTransporterLocation,
   resolveTransmuteType,
-  resolveTreasure,
   resolveUnusualShape,
   resolveUnusualSize,
 } from '../../domain/resolvers';
@@ -67,11 +66,6 @@ import {
   renderTransmuteTypeCompact,
   renderTransmuteTypeDetail,
 } from '../../adapters/render/transmuteType';
-import {
-  buildTreasurePreview,
-  renderTreasureCompactNodes,
-  renderTreasureDetail,
-} from '../../adapters/render/treasure';
 import {
   buildUnusualShapePreview,
   renderUnusualShapeCompact,
@@ -311,51 +305,6 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
         extra: parsed?.extra,
         isRoom: parsed?.isRoom,
       });
-    },
-  },
-  {
-    id: 'treasure',
-    heading: 'Treasure',
-    resolver: wrapResolver(resolveTreasure),
-    renderers: {
-      renderDetail: renderTreasureDetail,
-      renderCompact: withoutAppend(renderTreasureCompactNodes),
-    },
-    buildPreview: buildTreasurePreview,
-    registry: ({ roll, context }) => {
-      const ctx = context && context.kind === 'treasure' ? context : undefined;
-      return resolveTreasure({
-        roll,
-        level: ctx?.level ?? 1,
-        withMonster: ctx?.withMonster ?? false,
-        rollIndex: ctx?.rollIndex,
-        totalRolls: ctx?.totalRolls,
-      });
-    },
-    resolvePending: (pending, ancestors) => {
-      const raw = pending.context;
-      const ctx =
-        raw &&
-        typeof raw === 'object' &&
-        (raw as { kind?: unknown }).kind === 'treasure'
-          ? (raw as {
-              level?: unknown;
-              withMonster?: unknown;
-              rollIndex?: unknown;
-              totalRolls?: unknown;
-            })
-          : undefined;
-      const level =
-        (ctx && typeof ctx.level === 'number' ? ctx.level : undefined) ??
-        deriveDungeonLevelFromAncestors(ancestors) ??
-        1;
-      const withMonster =
-        ctx && typeof ctx.withMonster === 'boolean' ? ctx.withMonster : false;
-      const rollIndex =
-        ctx && typeof ctx.rollIndex === 'number' ? ctx.rollIndex : undefined;
-      const totalRolls =
-        ctx && typeof ctx.totalRolls === 'number' ? ctx.totalRolls : undefined;
-      return resolveTreasure({ level, withMonster, rollIndex, totalRolls });
     },
   },
   {

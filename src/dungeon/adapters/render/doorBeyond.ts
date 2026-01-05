@@ -6,7 +6,7 @@ import { renderPassageWidthCompact } from '../../features/navigation/passageWidt
 import { renderRoomDimensionsCompact } from './roomDimensions';
 import { describeChamberDimensions } from './chamberDimensions';
 import { collectCharacterPartyMessages } from '../../features/monsters/render';
-import { collectTreasureCompactMessages } from './treasure';
+import { collectTreasureCompactMessages } from '../../features/treasure/treasure/treasureRender';
 
 export function renderDoorBeyondDetail(
   outcome: OutcomeEventNode,

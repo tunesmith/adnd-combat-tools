@@ -13,11 +13,11 @@ import type {
 } from '../../../../../dungeon/domain/outcome';
 import { describeChamberRoomContents } from '../../../../../dungeon/adapters/render/chamberRoomContents';
 import { collectCharacterPartyMessages } from '../../../../../dungeon/features/monsters/render';
-import { collectTreasureCompactMessages } from '../../../../../dungeon/adapters/render/treasure';
+import { collectTreasureCompactMessages } from '../../../../../dungeon/features/treasure/treasure/treasureRender';
 import { renderTreasureContainerCompact } from '../../../../../dungeon/features/treasure/container/containerRender';
 import { resolveTreasureContainer } from '../../../../../dungeon/features/treasure/container/containerResolvers';
 import { TreasureMagicCategory } from '../../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
-import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
+import { TreasureWithoutMonster } from '../../../../../dungeon/features/treasure/treasure/treasureTable';
 import { TreasurePotion } from '../../../../../dungeon/features/treasure/potion/potionTables';
 import { TreasureScroll } from '../../../../../dungeon/features/treasure/scroll/scrollTables';
 import { TreasureMiscMagicE1 } from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Table';

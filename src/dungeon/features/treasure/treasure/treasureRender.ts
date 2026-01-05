@@ -1,4 +1,7 @@
-import type { DungeonMessage, DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonMessage,
+  DungeonRenderNode,
+} from '../../../../types/dungeon';
 import type {
   OutcomeEventNode,
   TreasureEntry,
@@ -6,38 +9,38 @@ import type {
   TreasureGemLot,
   TreasureGemValueAdjustment,
   TreasureGemKind,
-} from '../../domain/outcome';
+} from '../../../domain/outcome';
 import {
   treasureWithMonster,
   treasureWithoutMonster,
   TreasureWithoutMonster,
-} from '../../../tables/dungeon/treasure';
-import { resolvedPotionSentence } from '../../features/treasure/potion/potionRender';
-import { resolvedScrollSentence } from '../../features/treasure/scroll/scrollRender';
-import { ringSentence } from '../../features/treasure/ring/ringRender';
-import { resolveRodStaffWandLabel } from '../../features/treasure/rodStaffWand/rodStaffWandRender';
+} from './treasureTable';
+import { resolvedPotionSentence } from '../potion/potionRender';
+import { resolvedScrollSentence } from '../scroll/scrollRender';
+import { ringSentence } from '../ring/ringRender';
+import { resolveRodStaffWandLabel } from '../rodStaffWand/rodStaffWandRender';
 import {
   buildPreview,
   joinSegments,
   findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
-} from './shared';
-import { describeTreasureContainerResult } from '../../features/treasure/container/containerRender';
+} from '../../../adapters/render/shared';
+import { describeTreasureContainerResult } from '../container/containerRender';
 import {
   describeTreasureProtectionGuardedBy,
   describeTreasureProtectionHiddenBy,
-} from '../../features/treasure/protection/protectionRender';
-import { treasureMiscMagicE1Sentence } from '../../features/treasure/miscMagicE1/miscMagicE1Render';
+} from '../protection/protectionRender';
+import { treasureMiscMagicE1Sentence } from '../miscMagicE1/miscMagicE1Render';
 import {
   artifactSentence,
   bagOfHoldingSentence,
   bagOfTricksSentence,
   bracersSentence,
   purseSentence,
-} from '../../features/treasure/miscMagicE1/miscMagicE1SubtablesRender';
-import { miscMagicE2Sentence } from '../../features/treasure/miscMagicE2/miscMagicE2Render';
-import { miscMagicE3Sentence } from '../../features/treasure/miscMagicE3/miscMagicE3Render';
+} from '../miscMagicE1/miscMagicE1SubtablesRender';
+import { miscMagicE2Sentence } from '../miscMagicE2/miscMagicE2Render';
+import { miscMagicE3Sentence } from '../miscMagicE3/miscMagicE3Render';
 import {
   figurineSentence,
   girdleSentence,
@@ -45,13 +48,13 @@ import {
   instrumentOfTheBardsSentence,
   ironFlaskSentence,
   toIounStonesSummary,
-} from '../../features/treasure/miscMagicE3/miscMagicE3SubtablesRender';
-import { miscMagicE4Sentence } from '../../features/treasure/miscMagicE4/miscMagicE4Render';
-import { miscMagicE5Sentence } from '../../features/treasure/miscMagicE5/miscMagicE5Render';
-import { TreasureMiscMagicE5 } from '../../features/treasure/miscMagicE5/miscMagicE5Table';
-import { TreasureMagicCategory } from '../../features/treasure/magicCategory/magicCategoryTable';
-import { toRobeOfUsefulItemsSummary } from '../../features/treasure/miscMagicE5/miscMagicE5SubtablesRender';
-import { TreasureMiscMagicE4 } from '../../features/treasure/miscMagicE4/miscMagicE4Table';
+} from '../miscMagicE3/miscMagicE3SubtablesRender';
+import { miscMagicE4Sentence } from '../miscMagicE4/miscMagicE4Render';
+import { miscMagicE5Sentence } from '../miscMagicE5/miscMagicE5Render';
+import { TreasureMiscMagicE5 } from '../miscMagicE5/miscMagicE5Table';
+import { TreasureMagicCategory } from '../magicCategory/magicCategoryTable';
+import { toRobeOfUsefulItemsSummary } from '../miscMagicE5/miscMagicE5SubtablesRender';
+import { TreasureMiscMagicE4 } from '../miscMagicE4/miscMagicE4Table';
 import {
   manualOfGolemsSentence,
   medallionRangeParenthetical,
@@ -62,22 +65,22 @@ import {
   phylacteryLongYearsParenthetical,
   quaalFeatherTokenParenthetical,
   toPrayerBeadsSummary,
-} from '../../features/treasure/miscMagicE4/miscMagicE4SubtablesRender';
+} from '../miscMagicE4/miscMagicE4SubtablesRender';
 import {
   cloakSentence,
   crystalBallSentence,
   deckSentence,
   eyesSentence,
-} from '../../features/treasure/miscMagicE2/miscMagicE2SubtablesRender';
-import { TreasureProtectionType } from '../../features/treasure/protection/protectionTables';
-import { BAG_OF_HOLDING_STATS } from '../../features/treasure/miscMagicE1/miscMagicE1Subtables';
-import { armorShieldSentence } from '../../features/treasure/armorShields/armorShieldsRender';
+} from '../miscMagicE2/miscMagicE2SubtablesRender';
+import { TreasureProtectionType } from '../protection/protectionTables';
+import { BAG_OF_HOLDING_STATS } from '../miscMagicE1/miscMagicE1Subtables';
+import { armorShieldSentence } from '../armorShields/armorShieldsRender';
 import {
   swordSentence,
   formatSwordIntelligence,
   summarizePrimaryAbilities,
-} from '../../features/treasure/swords/swordsRender';
-import { miscWeaponSentence } from '../../features/treasure/miscWeapons/miscWeaponsRender';
+} from '../swords/swordsRender';
+import { miscWeaponSentence } from '../miscWeapons/miscWeaponsRender';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,

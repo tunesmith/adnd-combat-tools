@@ -1,6 +1,6 @@
-import { resolveTreasure } from '../../../../dungeon/domain/resolvers';
+import { resolveTreasure } from '../../../../dungeon/features/treasure/treasure/treasureResolvers';
 import * as dungeonLookup from '../../../../dungeon/helpers/dungeonLookup';
-import { TreasureWithoutMonster } from '../../../../tables/dungeon/treasure';
+import { TreasureWithoutMonster } from '../../../../dungeon/features/treasure/treasure/treasureTable';
 
 describe('treasure gem generation', () => {
   it('creates gem lots with value adjustments', () => {

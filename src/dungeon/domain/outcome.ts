@@ -86,7 +86,7 @@ import type { GasTrapEffect } from '../features/hazards/gasTrap/gasTrapTable';
 import type { TrickTrap } from '../features/hazards/trickTrap/trickTrapTable';
 import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
 import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
-import type { TreasureWithoutMonster } from '../../tables/dungeon/treasure';
+import type { TreasureWithoutMonster } from '../features/treasure/treasure/treasureTable';
 import type { TreasureContainer } from '../features/treasure/container/containerTable';
 import type { TreasureMagicCategory } from '../features/treasure/magicCategory/magicCategoryTable';
 import type {

@@ -11,7 +11,7 @@ import {
   describeMonsterOutcome,
   collectCharacterPartyMessages,
 } from '../../features/monsters/render';
-import { collectTreasureCompactSummaries } from './treasure';
+import { collectTreasureCompactSummaries } from '../../features/treasure/treasure/treasureRender';
 
 export function renderCircularPoolDetail(
   outcome: OutcomeEventNode,

@@ -18,7 +18,7 @@ import {
 } from '../../features/monsters/render';
 import { renderTrickTrapCompact } from '../../features/hazards/trickTrap/trickTrapRender';
 import { compactMessagesToText } from './compactMessagesToText';
-import { collectTreasureCompactSummaries } from './treasure';
+import { collectTreasureCompactSummaries } from '../../features/treasure/treasure/treasureRender';
 
 export function renderChamberRoomContentsDetail(
   outcome: OutcomeEventNode,

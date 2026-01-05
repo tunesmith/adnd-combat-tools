@@ -1,4 +1,4 @@
-import { TreasureWithoutMonster } from '../../../../../tables/dungeon/treasure';
+import { TreasureWithoutMonster } from '../../../../../dungeon/features/treasure/treasure/treasureTable';
 import type {
   OutcomeEvent,
   OutcomeEventNode,

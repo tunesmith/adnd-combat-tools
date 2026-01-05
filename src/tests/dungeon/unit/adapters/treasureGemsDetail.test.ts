@@ -1,10 +1,10 @@
-import { renderTreasureCompactNodes } from '../../../../dungeon/adapters/render/treasure';
+import { renderTreasureCompactNodes } from '../../../../dungeon/features/treasure/treasure/treasureRender';
 import type {
   OutcomeEventNode,
   TreasureEntry,
   TreasureGemLot,
 } from '../../../../dungeon/domain/outcome';
-import { TreasureWithoutMonster } from '../../../../tables/dungeon/treasure';
+import { TreasureWithoutMonster } from '../../../../dungeon/features/treasure/treasure/treasureTable';
 
 describe('gem rendering', () => {
   it('lists detailed gem lot descriptions', () => {
