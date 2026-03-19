@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { deflate } from "zlib";
 import {
@@ -73,6 +73,44 @@ const partyFieldDefinitions: { key: RoundCombatantField; label: string }[] = [
 
 const enemyFieldDefinitions = partyFieldDefinitions;
 const PARTY_COLUMN_MIN_WIDTH_PX = 112;
+const URL_WARNING_THRESHOLD = 6000;
+
+const AutoHeightTextarea = ({
+  className,
+  value,
+  onChange,
+}: {
+  className?: string;
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const resizeTextarea = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "0px";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
+  useLayoutEffect(() => {
+    resizeTextarea();
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      rows={1}
+      className={className}
+      value={value}
+      onInput={resizeTextarea}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+};
 
 const updateCurrentRound = (
   state: TrackerState,
@@ -95,7 +133,10 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
   const [encodedTrackerState, setEncodedTrackerState] = useState<
     string | undefined
   >(undefined);
+  const [showUrlWarning, setShowUrlWarning] = useState<boolean>(false);
+  const [urlWarningLength, setUrlWarningLength] = useState<number>(0);
   const idCounter = useRef<number>(getNextCombatantKey(initialState));
+  const urlWarningShown = useRef<boolean>(false);
 
   const reducer = (state: TrackerState, action: TrackerAction): TrackerState => {
     switch (action.type) {
@@ -214,12 +255,44 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
       return;
     }
 
+    const nextUrl = new URL(
+      `${window.location.pathname}?s=${encodedTrackerState}`,
+      window.location.origin
+    ).toString();
+
     window.history.replaceState(
       {},
       "",
       `${window.location.pathname}?s=${encodedTrackerState}`
     );
+
+    if (nextUrl.length >= URL_WARNING_THRESHOLD) {
+      setUrlWarningLength(nextUrl.length);
+      if (!urlWarningShown.current) {
+        setShowUrlWarning(true);
+        urlWarningShown.current = true;
+      }
+      return;
+    }
+
+    urlWarningShown.current = false;
   }, [encodedTrackerState]);
+
+  useEffect(() => {
+    if (!showUrlWarning) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowUrlWarning(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showUrlWarning]);
 
   if (!currentRound) {
     return <></>;
@@ -243,11 +316,10 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
       }
     >
       <span className={styles["hpMaxValue"]}>{maxHp || "-"}</span>
-      <input
+      <AutoHeightTextarea
         className={styles["hpCurrentInput"]}
-        type={"text"}
         value={hp}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={onChange}
       />
     </div>
   );
@@ -606,6 +678,49 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
           </table>
         </div>
       </div>
+      {showUrlWarning && (
+        <>
+          <div
+            className={styles["modalShadow"]}
+            onClick={() => setShowUrlWarning(false)}
+          />
+          <div
+            className={`${styles["modal"]} ${styles["urlWarningModal"]}`}
+            role={"dialog"}
+            aria-modal={"true"}
+            aria-labelledby={"url-warning-title"}
+            aria-describedby={"url-warning-description"}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={"url-warning-title"} className={styles["modalTitle"]}>
+              Tracker URL Is Getting Long
+            </div>
+            <div className={styles["modalBody"]}>
+              <div className={styles["urlWarningCount"]}>
+                {urlWarningLength.toLocaleString()} characters
+              </div>
+              <p id={"url-warning-description"} className={styles["modalText"]}>
+                This tracker is stored entirely in the URL. Once it gets this
+                large, some browsers, chat apps, and notes tools may stop
+                saving or reopening it reliably.
+              </p>
+              <p className={styles["modalText"]}>
+                If you want to keep it portable, consider trimming longer notes
+                or splitting the combat into shorter tracker URLs.
+              </p>
+            </div>
+            <div className={styles["modalActions"]}>
+              <button
+                type={"button"}
+                className={styles["toolbarButtonPrimary"]}
+                onClick={() => setShowUrlWarning(false)}
+              >
+                Continue Editing
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -207,10 +207,10 @@
 }
 
 .cellEntryLabel {
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     line-height: 1;
     letter-spacing: 0.04em;
-    color: rgba(240, 239, 221, 0.9);
+    color: rgba(240, 239, 221, 0.72);
     white-space: nowrap;
 }
 
@@ -224,14 +224,17 @@
     width: 100%;
     min-width: 0;
     min-height: 1.65rem;
-    border: 1px solid rgba(240, 239, 221, 0.25);
-    background: rgba(240, 239, 221, 0.06);
+    border: 1px solid rgba(240, 239, 221, 0.36);
+    background: rgba(240, 239, 221, 0.12);
     color: var(--eggshell);
     font-family: 'Sura', serif;
-    font-size: 0.88rem;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.05;
     padding: 0.12rem 0.15rem;
     text-align: center;
     box-sizing: border-box;
+    box-shadow: inset 0 0 0 1px rgba(240, 239, 221, 0.06);
 }
 
 .enemyMetaCell {
@@ -287,21 +290,21 @@
 .hpEditorEnemy {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
+    align-items: stretch;
     width: 100%;
     min-height: 2.6rem;
 }
 
 .hpMaxValue {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
     min-width: 2.2rem;
     padding: 0.3rem 0.4rem;
     border-right: 1px solid rgba(240, 239, 221, 0.22);
     color: rgba(240, 239, 221, 0.95);
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.1;
 }
 
 .hpCurrentInput {
@@ -313,8 +316,13 @@
     color: var(--eggshell);
     font-family: 'Sura', serif;
     font-size: 0.95rem;
-    line-height: 1;
+    line-height: 1.1;
     padding: 0.3rem 0.4rem;
+    resize: none;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: pre-wrap;
 }
 
 .summaryCell {
@@ -492,6 +500,40 @@
     padding: 0.85rem 0.75rem;
     font-size: 1.25rem;
     z-index: 1;
+}
+
+.urlWarningModal {
+    width: min(34rem, calc(100vw - 2rem));
+}
+
+.modalBody {
+    padding: 0.9rem 0.9rem 0.2rem;
+}
+
+.urlWarningCount {
+    display: inline-block;
+    margin-bottom: 0.85rem;
+    border: 1px solid var(--copper);
+    background: rgba(175, 127, 0, 0.14);
+    color: #111;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.1;
+    padding: 0.45rem 0.6rem;
+}
+
+.modalText {
+    margin: 0 0 0.9rem;
+    color: #111;
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0 0.9rem;
 }
 
 .textInput {
