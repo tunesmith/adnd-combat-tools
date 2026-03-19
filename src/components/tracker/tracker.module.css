@@ -70,8 +70,10 @@
 .tableWrap {
     display: inline-block;
     overflow: auto;
+    position: relative;
     width: max-content;
     max-width: 100%;
+    max-height: calc(100vh - 11rem);
     border: 4px solid var(--copper);
     background: rgba(240, 239, 221, 0.08);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -112,10 +114,15 @@
 }
 
 .cornerHeader {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 7;
     min-width: 7.5rem;
     padding: 0.65rem;
     background: linear-gradient(135deg, var(--caput-martuum), var(--dark-olive-green));
     text-align: center;
+    box-shadow: 2px 0 0 0 var(--copper), 0 2px 0 0 var(--copper);
 }
 
 .cornerLabel {
@@ -145,26 +152,36 @@
 }
 
 .partyHeader {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 6;
     min-width: 7rem;
     padding: 0;
     background: var(--dark-olive-green);
+    box-shadow: 0 2px 0 0 var(--copper);
 }
 
 .enemyHeader {
-    position: relative;
+    position: sticky;
+    left: 0;
+    z-index: 5;
     min-width: 7.8125rem;
     max-width: 17.1875rem;
     padding: 0;
     background: var(--caput-martuum);
+    box-shadow: 2px 0 0 0 var(--copper);
 }
 
 .enemyFieldHeader {
+    position: sticky;
+    top: 0;
+    z-index: 6;
     min-width: 7rem;
     padding: 0.75rem 0.5rem;
     background: var(--caput-martuum);
     color: var(--eggshell);
     font-size: 1rem;
+    box-shadow: 0 2px 0 0 var(--copper);
 }
 
 .enemyHpHeader {
@@ -249,6 +266,9 @@
 }
 
 .partyFieldLabel {
+    position: sticky;
+    left: 0;
+    z-index: 5;
     min-width: 7.8125rem;
     max-width: 17.1875rem;
     padding: 0.7rem 0.8rem;
@@ -256,6 +276,7 @@
     background: var(--dark-olive-green);
     color: var(--eggshell);
     font-size: 1rem;
+    box-shadow: 2px 0 0 0 var(--copper);
 }
 
 .partyMetaCell {
@@ -585,5 +606,9 @@
 
     .summaryCell {
         min-width: 18rem;
+    }
+
+    .tableWrap {
+        max-height: calc(100vh - 9rem);
     }
 }
