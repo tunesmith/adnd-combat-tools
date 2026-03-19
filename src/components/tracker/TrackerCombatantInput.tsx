@@ -4,21 +4,13 @@ import type { ChangeEvent, FocusEvent } from "react";
 import type { SingleValue } from "react-select";
 import Select from "react-select";
 import customStyles from "../../helpers/selectCustomStyles";
-import {
-  attackerClassOptions,
-  BARD,
-  getGeneralClass,
-  MONSTER,
-} from "../../tables/attackerClass";
+import { attackerClassOptions, getGeneralClass, MONSTER } from "../../tables/attackerClass";
 import {
   expandedArmorTypes,
   getExpandedArmorOptionsByClass,
 } from "../../tables/armorType";
-import {
-  getLevelOptionsByCombatClass,
-  monsterLevels,
-} from "../../tables/combatLevel";
-import { getWeaponOptions, weapons } from "../../tables/weapon";
+import { getLevelOptionsByCombatClass } from "../../tables/combatLevel";
+import { getWeaponOptions } from "../../tables/weapon";
 import type {
   ArmorClassOption,
   CreatureOption,
@@ -174,15 +166,6 @@ const TrackerCombatantInput = ({
     }
   };
 
-  const classLabel =
-    attackerClassOptions.find((option) => option.value === draft.class)?.label ||
-    "Creature";
-  const levelLabel =
-    draft.class === MONSTER ? monsterLevels.get(draft.level)?.label : draft.level;
-  const armorLabel = armorTypeOptions.find(
-    (option) => option.value === draft.armorType
-  )?.label;
-  const weaponLabel = weapons.get(draft.weapon)?.name;
   const modalRoot =
     typeof document !== "undefined"
       ? document.getElementById("app-modal")
@@ -202,22 +185,6 @@ const TrackerCombatantInput = ({
         <span className={styles["combatantName"]}>
           {draft.name || (side === "party" ? "Party Member" : "Enemy")}
         </span>
-        <span className={styles["combatantMeta"]}>
-          {classLabel}
-          {levelLabel && (
-            <>
-              {" "}
-              {draft.class === MONSTER ? "HD" : draft.class === BARD ? "F" : "L"}
-              {levelLabel}
-            </>
-          )}
-        </span>
-        <span className={styles["combatantMeta"]}>
-          AC {draft.armorClass}
-          {draft.maxHp ? `, HP ${draft.maxHp}` : ""}
-        </span>
-        {armorLabel && <span className={styles["combatantMeta"]}>{armorLabel}</span>}
-        {weaponLabel && <span className={styles["combatantMeta"]}>{weaponLabel}</span>}
       </button>
       <button
         type={"button"}
@@ -255,7 +222,7 @@ const TrackerCombatantInput = ({
                 className={styles["modalLabel"]}
                 htmlFor={`max-hp-${draft.key}`}
               >
-                Starting HP
+                Max HP
               </label>
               <input
                 id={`max-hp-${draft.key}`}
@@ -264,7 +231,7 @@ const TrackerCombatantInput = ({
                 value={draft.maxHp || ""}
                 onChange={handleMaxHpChange}
                 onBlur={handleMaxHpBlur}
-                placeholder={"Optional default for round 1"}
+                placeholder={"Optional default maximum HP"}
               />
               <label className={styles["modalLabel"]}>Class</label>
               <Select

@@ -10,6 +10,7 @@ import {
 } from "../../helpers/trackerState";
 import type {
   TrackerCombatant,
+  TrackerCellState,
   TrackerCombatantRoundState,
   TrackerRound,
   TrackerState,
@@ -25,11 +26,18 @@ interface CombatTrackerProps {
 type TrackerSide = "party" | "enemy";
 type RoundField = "partyInitiative" | "enemyInitiative" | "summary";
 type RoundCombatantField = keyof TrackerCombatantRoundState;
+type CellField = keyof TrackerCellState;
 
 type TrackerAction =
   | { type: "select-round"; index: number }
   | { type: "set-round-field"; field: RoundField; value: string }
-  | { type: "set-cell"; rowIndex: number; columnIndex: number; value: string }
+  | {
+      type: "set-cell";
+      rowIndex: number;
+      columnIndex: number;
+      field: CellField;
+      value: string;
+    }
   | {
       type: "set-party-state";
       index: number;
@@ -54,6 +62,7 @@ type TrackerAction =
   | { type: "remove-round" };
 
 const partyFieldDefinitions: { key: RoundCombatantField; label: string }[] = [
+  { key: "maxHp", label: "Max HP" },
   { key: "hp", label: "HP" },
   { key: "effect", label: "Effect" },
   { key: "action", label: "Action" },
@@ -104,7 +113,12 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
           cells: round.cells.map((row, rowIndex) =>
             rowIndex === action.rowIndex
               ? row.map((cell, columnIndex) =>
-                  columnIndex === action.columnIndex ? action.value : cell
+                  columnIndex === action.columnIndex
+                    ? {
+                        ...cell,
+                        [action.field]: action.value,
+                      }
+                    : cell
                 )
               : row
           ),
@@ -202,8 +216,8 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
           <div>
             <div className={styles["pageTitle"]}>AD&amp;D Combat Tracker</div>
             <div className={styles["pageHint"]}>
-              Track outcomes in the cells. Corner numbers are the target rolls in
-              each direction.
+              Top half records enemy attacks into the party. Bottom half records
+              party attacks into the enemy. The labels show the target rolls.
             </div>
           </div>
           <div className={styles["toolbarButtons"]}>
@@ -293,6 +307,8 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                       <input
                         className={styles["initiativeInput"]}
                         type={"text"}
+                        inputMode={"numeric"}
+                        maxLength={1}
                         value={currentRound.partyInitiative}
                         onChange={(event) =>
                           dispatch({
@@ -308,6 +324,8 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                       <input
                         className={styles["initiativeInput"]}
                         type={"text"}
+                        inputMode={"numeric"}
+                        maxLength={1}
                         value={currentRound.enemyInitiative}
                         onChange={(event) =>
                           dispatch({
@@ -384,12 +402,29 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                       key={`cell-${combatant.key}-${partyCombatant.key}`}
                       rowCombatant={combatant}
                       columnCombatant={partyCombatant}
-                      value={currentRound.cells[enemyIndex]?.[partyIndex] || ""}
-                      onChange={(value) =>
+                      enemyToPartyValue={
+                        currentRound.cells[enemyIndex]?.[partyIndex]
+                          ?.enemyToParty || ""
+                      }
+                      partyToEnemyValue={
+                        currentRound.cells[enemyIndex]?.[partyIndex]
+                          ?.partyToEnemy || ""
+                      }
+                      onEnemyToPartyChange={(value) =>
                         dispatch({
                           type: "set-cell",
                           rowIndex: enemyIndex,
                           columnIndex: partyIndex,
+                          field: "enemyToParty",
+                          value,
+                        })
+                      }
+                      onPartyToEnemyChange={(value) =>
+                        dispatch({
+                          type: "set-cell",
+                          rowIndex: enemyIndex,
+                          columnIndex: partyIndex,
+                          field: "partyToEnemy",
                           value,
                         })
                       }
@@ -404,7 +439,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                         key={`enemy-field-${combatant.key}-${field.key}`}
                         className={styles["enemyMetaCell"]}
                       >
-                        {field.key === "hp" ? (
+                        {field.key === "hp" || field.key === "maxHp" ? (
                           <input
                             className={styles["metaInput"]}
                             type={"text"}
@@ -451,7 +486,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                         key={`party-field-${combatant.key}-${field.key}`}
                         className={styles["partyMetaCell"]}
                       >
-                        {field.key === "hp" ? (
+                        {field.key === "hp" || field.key === "maxHp" ? (
                           <input
                             className={styles["metaInput"]}
                             type={"text"}

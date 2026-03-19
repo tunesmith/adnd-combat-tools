@@ -21,9 +21,15 @@ describe("tracker state helpers", () => {
     if (!firstRow) {
       throw new Error("Missing first interaction row");
     }
-    firstRow[0] = "xx";
+    const firstCell = firstRow[0];
+    if (!firstCell) {
+      throw new Error("Missing first interaction cell");
+    }
+    firstCell.enemyToParty = "xx";
+    firstCell.partyToEnemy = "6";
 
     firstRound.partyStates[0] = {
+      maxHp: "41",
       hp: "21",
       effect: "hopeless",
       action: "cast",
@@ -31,6 +37,7 @@ describe("tracker state helpers", () => {
       notes: "Bracers of defense",
     };
     firstRound.enemyStates[0] = {
+      maxHp: "20",
       hp: "20-4=16",
       effect: "turned 3/6",
       action: "advance",
@@ -53,8 +60,12 @@ describe("tracker state helpers", () => {
     expect(nextRound.partyInitiative).toBe("");
     expect(nextRound.enemyInitiative).toBe("");
     expect(nextRound.summary).toBe("");
-    expect(nextRoundFirstRow[0]).toBe("");
+    expect(nextRoundFirstRow[0]).toEqual({
+      enemyToParty: "",
+      partyToEnemy: "",
+    });
     expect(nextRound.partyStates[0]).toEqual({
+      maxHp: "41",
       hp: "21",
       effect: "hopeless",
       action: "",
@@ -62,6 +73,7 @@ describe("tracker state helpers", () => {
       notes: "Bracers of defense",
     });
     expect(nextRound.enemyStates[0]).toEqual({
+      maxHp: "20",
       hp: "20-4=16",
       effect: "turned 3/6",
       action: "",
@@ -89,6 +101,7 @@ describe("tracker state helpers", () => {
     expect(nextRound.partyStates).toHaveLength(previousRound.partyStates.length + 1);
     expect(nextRow).toHaveLength(previousRow.length + 1);
     expect(addedPartyState?.hp).toBe("");
+    expect(addedPartyState?.maxHp).toBe("");
   });
 
   test("updating max hp refreshes blank round hp values without overwriting custom values", () => {
@@ -102,14 +115,19 @@ describe("tracker state helpers", () => {
     if (!firstPartyState) {
       throw new Error("Missing first party round state");
     }
+    firstPartyState.maxHp = "";
     firstPartyState.hp = "";
     initialState.rounds.push({
       partyInitiative: firstRound.partyInitiative,
       enemyInitiative: firstRound.enemyInitiative,
       summary: firstRound.summary,
-      cells: firstRound.cells.map((row) => row.slice()),
+      cells: firstRound.cells.map((row) =>
+        row.map((cell) => ({
+          ...cell,
+        }))
+      ),
       partyStates: firstRound.partyStates.map((state, index) =>
-        index === 0 ? { ...state, hp: "17" } : { ...state }
+        index === 0 ? { ...state, maxHp: "18", hp: "17" } : { ...state }
       ),
       enemyStates: firstRound.enemyStates.map((state) => ({
         ...state,
@@ -127,7 +145,9 @@ describe("tracker state helpers", () => {
       throw new Error("Missing updated rounds");
     }
 
+    expect(updatedFirstRound.partyStates[0]?.maxHp).toBe("24");
     expect(updatedFirstRound.partyStates[0]?.hp).toBe("24");
+    expect(updatedSecondRound.partyStates[0]?.maxHp).toBe("18");
     expect(updatedSecondRound.partyStates[0]?.hp).toBe("17");
   });
 });

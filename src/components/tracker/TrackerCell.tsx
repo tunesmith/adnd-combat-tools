@@ -6,15 +6,19 @@ import styles from "./tracker.module.css";
 interface TrackerCellProps {
   rowCombatant: TrackerCombatant;
   columnCombatant: TrackerCombatant;
-  value: string;
-  onChange: (value: string) => void;
+  enemyToPartyValue: string;
+  partyToEnemyValue: string;
+  onEnemyToPartyChange: (value: string) => void;
+  onPartyToEnemyChange: (value: string) => void;
 }
 
 const TrackerCell = ({
   rowCombatant,
   columnCombatant,
-  value,
-  onChange,
+  enemyToPartyValue,
+  partyToEnemyValue,
+  onEnemyToPartyChange,
+  onPartyToEnemyChange,
 }: TrackerCellProps) => {
   const rowTargetArmor = expandedArmorTypes.find(
     (armorProps) => armorProps.key === columnCombatant.armorType
@@ -41,14 +45,29 @@ const TrackerCell = ({
   return (
     <td className={styles["interactionCell"]}>
       <div className={styles["cellShell"]}>
-        <span className={styles["cellHintTop"]}>{rowToHit}</span>
-        <span className={styles["cellHintBottom"]}>{columnToHit}</span>
-        <input
-          className={styles["cellInput"]}
-          type={"text"}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-        />
+        <div className={styles["cellHalfEnemy"]}>
+          <div className={styles["cellEntryHeader"]}>
+            <span className={styles["cellEntryLabel"]}>E {rowToHit}+</span>
+          </div>
+          <input
+            className={styles["cellEntryInput"]}
+            type={"text"}
+            value={enemyToPartyValue}
+            onChange={(event) => onEnemyToPartyChange(event.target.value)}
+          />
+        </div>
+        <div className={styles["cellDivider"]} />
+        <div className={styles["cellHalfParty"]}>
+          <div className={styles["cellEntryHeader"]}>
+            <span className={styles["cellEntryLabel"]}>P {columnToHit}+</span>
+          </div>
+          <input
+            className={styles["cellEntryInput"]}
+            type={"text"}
+            value={partyToEnemyValue}
+            onChange={(event) => onPartyToEnemyChange(event.target.value)}
+          />
+        </div>
       </div>
     </td>
   );

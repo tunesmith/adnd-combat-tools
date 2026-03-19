@@ -1,6 +1,7 @@
 import { FIGHTER, MONSTER } from "../tables/attackerClass";
 import type {
   TrackerCombatant,
+  TrackerCellState,
   TrackerCombatantRoundState,
   TrackerRound,
   TrackerState,
@@ -40,6 +41,7 @@ export const createTrackerCombatant = (
 export const createCombatantRoundState = (
   maxHp: string = ""
 ): TrackerCombatantRoundState => ({
+  maxHp,
   hp: maxHp,
   effect: "",
   action: "",
@@ -47,9 +49,17 @@ export const createCombatantRoundState = (
   notes: "",
 });
 
-const createEmptyCells = (enemyCount: number, partyCount: number): string[][] =>
+const createEmptyCell = (): TrackerCellState => ({
+  enemyToParty: "",
+  partyToEnemy: "",
+});
+
+const createEmptyCells = (
+  enemyCount: number,
+  partyCount: number
+): TrackerCellState[][] =>
   Array.from({ length: enemyCount }, () =>
-    Array.from({ length: partyCount }, () => "")
+    Array.from({ length: partyCount }, () => createEmptyCell())
   );
 
 export const createTrackerRound = (
@@ -63,6 +73,7 @@ export const createTrackerRound = (
   cells: createEmptyCells(enemies.length, party.length),
   partyStates: previousRound
     ? previousRound.partyStates.map((state) => ({
+        maxHp: state.maxHp,
         hp: state.hp,
         effect: state.effect,
         action: "",
@@ -72,6 +83,7 @@ export const createTrackerRound = (
     : party.map((combatant) => createCombatantRoundState(combatant.maxHp)),
   enemyStates: previousRound
     ? previousRound.enemyStates.map((state) => ({
+        maxHp: state.maxHp,
         hp: state.hp,
         effect: state.effect,
         action: "",
@@ -96,7 +108,7 @@ export const createInitialTrackerState = (): TrackerState => {
   const enemies = createDefaultEnemies();
 
   return {
-    version: 1,
+    version: 2,
     party,
     enemies,
     rounds: [createTrackerRound(party, enemies)],
@@ -148,7 +160,7 @@ export const addCombatant = (
       party: state.party.concat(combatant),
       rounds: state.rounds.map((round) => ({
         ...round,
-        cells: round.cells.map((row) => row.concat("")),
+        cells: round.cells.map((row) => row.concat(createEmptyCell())),
         partyStates: round.partyStates.concat(
           createCombatantRoundState(combatant.maxHp)
         ),
@@ -162,7 +174,7 @@ export const addCombatant = (
     rounds: state.rounds.map((round) => ({
       ...round,
       cells: round.cells.concat([
-        Array.from({ length: state.party.length }, () => ""),
+        Array.from({ length: state.party.length }, () => createEmptyCell()),
       ]),
       enemyStates: round.enemyStates.concat(
         createCombatantRoundState(combatant.maxHp)
@@ -213,21 +225,28 @@ export const updateCombatant = (
 ): TrackerState => {
   const previousCombatant =
     side === "party" ? state.party[index] : state.enemies[index];
+  const previousMaxHp = previousCombatant?.maxHp || "";
+  const nextMaxHp = combatant.maxHp || "";
 
-  const applyHpDefault = (
+  const applyRoundDefaults = (
     roundState: TrackerCombatantRoundState
   ): TrackerCombatantRoundState => {
-    if (
-      combatant.maxHp !== previousCombatant?.maxHp &&
-      (!roundState.hp || roundState.hp === previousCombatant?.maxHp)
-    ) {
-      return {
-        ...roundState,
-        hp: combatant.maxHp || "",
-      };
+    if (nextMaxHp === previousMaxHp) {
+      return roundState;
     }
 
-    return roundState;
+    const shouldUpdateMaxHp =
+      !roundState.maxHp || roundState.maxHp === previousMaxHp;
+    const shouldUpdateHp =
+      !roundState.hp ||
+      roundState.hp === previousMaxHp ||
+      roundState.hp === roundState.maxHp;
+
+    return {
+      ...roundState,
+      maxHp: shouldUpdateMaxHp ? nextMaxHp : roundState.maxHp,
+      hp: shouldUpdateHp ? nextMaxHp : roundState.hp,
+    };
   };
 
   if (side === "party") {
@@ -239,7 +258,7 @@ export const updateCombatant = (
       rounds: state.rounds.map((round) => ({
         ...round,
         partyStates: round.partyStates.map((partyState, partyIndex) =>
-          partyIndex === index ? applyHpDefault(partyState) : partyState
+          partyIndex === index ? applyRoundDefaults(partyState) : partyState
         ),
       })),
     };
@@ -253,7 +272,7 @@ export const updateCombatant = (
     rounds: state.rounds.map((round) => ({
       ...round,
       enemyStates: round.enemyStates.map((enemyState, enemyIndex) =>
-        enemyIndex === index ? applyHpDefault(enemyState) : enemyState
+        enemyIndex === index ? applyRoundDefaults(enemyState) : enemyState
       ),
     })),
   };
