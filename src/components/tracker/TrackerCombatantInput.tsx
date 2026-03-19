@@ -180,6 +180,7 @@ const TrackerCombatantInput = ({
             ? styles["combatantButtonParty"]
             : styles["combatantButtonEnemy"]
         }
+        aria-label={`Edit ${draft.name || (side === "party" ? "party member" : "enemy")}`}
         onClick={() => setOpen(true)}
       >
         <span className={styles["combatantName"]}>
@@ -190,7 +191,11 @@ const TrackerCombatantInput = ({
         type={"button"}
         className={styles["removeCombatant"]}
         disabled={!canRemove}
-        onClick={onRemove}
+        aria-label={`Remove ${draft.name || (side === "party" ? "party member" : "enemy")}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          onRemove();
+        }}
       >
         x
       </button>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { deflate } from "zlib";
 import {
   addCombatant,
@@ -83,6 +84,30 @@ const updateCurrentRound = (
 
 const getNextCombatantKey = (state: TrackerState): number =>
   Math.max(0, ...state.party.map((combatant) => combatant.key), ...state.enemies.map((combatant) => combatant.key)) + 1;
+
+const getCombatantDisplayName = (
+  combatant: TrackerCombatant | undefined,
+  side: TrackerSide
+): string =>
+  combatant?.name?.trim() || (side === "party" ? "Party Member" : "Enemy");
+
+const getPartyColumnStyle = (combatant: TrackerCombatant): CSSProperties => ({
+  width: `max(5rem, calc(${Math.max(
+    getCombatantDisplayName(combatant, "party").length,
+    6
+  )}ch + 0.75rem))`,
+});
+
+const getEnemyHeaderColumnStyle = (
+  combatants: TrackerCombatant[]
+): CSSProperties => ({
+  width: `max(11rem, calc(${Math.max(
+    10,
+    ...combatants.map((combatant) =>
+      getCombatantDisplayName(combatant, "enemy").length
+    )
+  )}ch + 0.75rem))`,
+});
 
 const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
   const initialState = useMemo<TrackerState>(
@@ -174,6 +199,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const currentRound = state.rounds[state.activeRound];
+  const enemyHeaderColumnStyle = getEnemyHeaderColumnStyle(state.enemies);
 
   useEffect(() => {
     deflate(JSON.stringify(state), (err, buffer) => {
@@ -358,7 +384,11 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                   </div>
                 </th>
                 {state.party.map((combatant, partyIndex) => (
-                  <th key={`party-header-${combatant.key}`} className={styles["partyHeader"]}>
+                  <th
+                    key={`party-header-${combatant.key}`}
+                    className={styles["partyHeader"]}
+                    style={getPartyColumnStyle(combatant)}
+                  >
                     <TrackerCombatantInput
                       combatant={combatant}
                       side={"party"}
@@ -394,7 +424,10 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
             <tbody>
               {state.enemies.map((combatant, enemyIndex) => (
                 <tr key={`enemy-row-${combatant.key}`}>
-                  <th className={styles["enemyHeader"]}>
+                  <th
+                    className={styles["enemyHeader"]}
+                    style={enemyHeaderColumnStyle}
+                  >
                     <TrackerCombatantInput
                       combatant={combatant}
                       side={"enemy"}
@@ -421,6 +454,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                       key={`cell-${combatant.key}-${partyCombatant.key}`}
                       rowCombatant={combatant}
                       columnCombatant={partyCombatant}
+                      style={getPartyColumnStyle(partyCombatant)}
                       enemyToPartyValue={
                         currentRound.cells[enemyIndex]?.[partyIndex]
                           ?.enemyToParty || ""
@@ -494,7 +528,12 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
             <tfoot>
               {partyFieldDefinitions.map((field, fieldIndex) => (
                 <tr key={`party-field-row-${field.key}`}>
-                  <th className={styles["partyFieldLabel"]}>{field.label}</th>
+                  <th
+                    className={styles["partyFieldLabel"]}
+                    style={enemyHeaderColumnStyle}
+                  >
+                    {field.label}
+                  </th>
                   {state.party.map((combatant, partyIndex) => {
                     const stateValue =
                       currentRound.partyStates[partyIndex]?.[field.key] || "";
@@ -503,6 +542,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                       <td
                         key={`party-field-${combatant.key}-${field.key}`}
                         className={styles["partyMetaCell"]}
+                        style={getPartyColumnStyle(combatant)}
                       >
                         {field.key === "hp" ? (
                           renderHpEditor(

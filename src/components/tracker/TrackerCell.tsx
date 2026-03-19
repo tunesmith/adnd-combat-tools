@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import getToHit from "../../helpers/getToHit";
 import { expandedArmorTypes } from "../../tables/armorType";
 import type { TrackerCombatant } from "../../types/tracker";
@@ -6,6 +7,7 @@ import styles from "./tracker.module.css";
 interface TrackerCellProps {
   rowCombatant: TrackerCombatant;
   columnCombatant: TrackerCombatant;
+  style?: CSSProperties;
   enemyToPartyValue: string;
   partyToEnemyValue: string;
   onEnemyToPartyChange: (value: string) => void;
@@ -15,6 +17,7 @@ interface TrackerCellProps {
 const TrackerCell = ({
   rowCombatant,
   columnCombatant,
+  style,
   enemyToPartyValue,
   partyToEnemyValue,
   onEnemyToPartyChange,
@@ -43,7 +46,7 @@ const TrackerCell = ({
   );
 
   return (
-    <td className={styles["interactionCell"]}>
+    <td className={styles["interactionCell"]} style={style}>
       <div className={styles["cellShell"]}>
         <div className={styles["cellHalfEnemyInline"]}>
           <span className={styles["cellEntryLabel"]}>{rowToHit}</span>
