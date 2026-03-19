@@ -46,7 +46,7 @@ const TrackerCell = ({
     <td className={styles["interactionCell"]}>
       <div className={styles["cellShell"]}>
         <div className={styles["cellHalfEnemyInline"]}>
-          <span className={styles["cellEntryLabel"]}>E {rowToHit}+</span>
+          <span className={styles["cellEntryLabel"]}>{rowToHit}</span>
           <input
             className={styles["cellEntryInputInline"]}
             type={"text"}
@@ -56,13 +56,13 @@ const TrackerCell = ({
         </div>
         <div className={styles["cellDividerVertical"]} />
         <div className={styles["cellHalfPartyInline"]}>
+          <span className={styles["cellEntryLabel"]}>{columnToHit}</span>
           <input
             className={styles["cellEntryInputInline"]}
             type={"text"}
             value={partyToEnemyValue}
             onChange={(event) => onPartyToEnemyChange(event.target.value)}
           />
-          <span className={styles["cellEntryLabel"]}>P {columnToHit}+</span>
         </div>
       </div>
     </td>
