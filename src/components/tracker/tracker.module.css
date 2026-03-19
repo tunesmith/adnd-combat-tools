@@ -310,6 +310,12 @@
     min-height: 100%;
 }
 
+.combatantShell:hover .removeCombatant,
+.combatantShell:focus-within .removeCombatant {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .combatantButtonParty,
 .combatantButtonEnemy {
     width: 100%;
@@ -338,6 +344,7 @@
 }
 
 .removeCombatant {
+    opacity: 0;
     position: absolute;
     top: 0.4rem;
     right: 0.4rem;
@@ -348,6 +355,8 @@
     height: 1.5rem;
     font-family: 'Sura', serif;
     cursor: pointer;
+    pointer-events: none;
+    transition-duration: 0.2s;
 }
 
 .removeCombatant:disabled {
