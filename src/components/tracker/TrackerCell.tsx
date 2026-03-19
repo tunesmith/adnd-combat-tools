@@ -7,21 +7,21 @@ import styles from "./tracker.module.css";
 interface TrackerCellProps {
   rowCombatant: TrackerCombatant;
   columnCombatant: TrackerCombatant;
-  style?: CSSProperties;
   enemyToPartyValue: string;
   partyToEnemyValue: string;
   onEnemyToPartyChange: (value: string) => void;
   onPartyToEnemyChange: (value: string) => void;
+  style?: CSSProperties;
 }
 
 const TrackerCell = ({
   rowCombatant,
   columnCombatant,
-  style,
   enemyToPartyValue,
   partyToEnemyValue,
   onEnemyToPartyChange,
   onPartyToEnemyChange,
+  style,
 }: TrackerCellProps) => {
   const rowTargetArmor = expandedArmorTypes.find(
     (armorProps) => armorProps.key === columnCombatant.armorType

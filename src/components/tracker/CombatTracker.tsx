@@ -19,6 +19,7 @@ import type {
 import TrackerCell from "./TrackerCell";
 import TrackerCombatantInput from "./TrackerCombatantInput";
 import styles from "./tracker.module.css";
+import { getTrackerCombatantWidestLineWidth } from "../../helpers/trackerCombatantDisplay";
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -71,6 +72,7 @@ const partyFieldDefinitions: { key: RoundCombatantField; label: string }[] = [
 ];
 
 const enemyFieldDefinitions = partyFieldDefinitions;
+const PARTY_COLUMN_MIN_WIDTH_PX = 112;
 
 const updateCurrentRound = (
   state: TrackerState,
@@ -84,30 +86,6 @@ const updateCurrentRound = (
 
 const getNextCombatantKey = (state: TrackerState): number =>
   Math.max(0, ...state.party.map((combatant) => combatant.key), ...state.enemies.map((combatant) => combatant.key)) + 1;
-
-const getCombatantDisplayName = (
-  combatant: TrackerCombatant | undefined,
-  side: TrackerSide
-): string =>
-  combatant?.name?.trim() || (side === "party" ? "Party Member" : "Enemy");
-
-const getPartyColumnStyle = (combatant: TrackerCombatant): CSSProperties => ({
-  width: `max(5rem, calc(${Math.max(
-    getCombatantDisplayName(combatant, "party").length,
-    6
-  )}ch + 0.75rem))`,
-});
-
-const getEnemyHeaderColumnStyle = (
-  combatants: TrackerCombatant[]
-): CSSProperties => ({
-  width: `max(11rem, calc(${Math.max(
-    10,
-    ...combatants.map((combatant) =>
-      getCombatantDisplayName(combatant, "enemy").length
-    )
-  )}ch + 0.75rem))`,
-});
 
 const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
   const initialState = useMemo<TrackerState>(
@@ -199,7 +177,26 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const currentRound = state.rounds[state.activeRound];
-  const enemyHeaderColumnStyle = getEnemyHeaderColumnStyle(state.enemies);
+  const partyColumnStyles = useMemo<CSSProperties[]>(
+    () =>
+      state.party.map((combatant) => {
+        const widestLineWidth = getTrackerCombatantWidestLineWidth(
+          combatant,
+          "party"
+        );
+        const width = Math.max(
+          PARTY_COLUMN_MIN_WIDTH_PX,
+          widestLineWidth
+        );
+
+        return {
+          width: `${width}px`,
+          minWidth: `${width}px`,
+          maxWidth: `${width}px`,
+        };
+      }),
+    [state.party]
+  );
 
   useEffect(() => {
     deflate(JSON.stringify(state), (err, buffer) => {
@@ -246,10 +243,10 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
       }
     >
       <span className={styles["hpMaxValue"]}>{maxHp || "-"}</span>
-      <textarea
+      <input
         className={styles["hpCurrentInput"]}
+        type={"text"}
         value={hp}
-        rows={1}
         onChange={(event) => onChange(event.target.value)}
       />
     </div>
@@ -387,7 +384,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                   <th
                     key={`party-header-${combatant.key}`}
                     className={styles["partyHeader"]}
-                    style={getPartyColumnStyle(combatant)}
+                    style={partyColumnStyles[partyIndex]}
                   >
                     <TrackerCombatantInput
                       combatant={combatant}
@@ -411,10 +408,14 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                     />
                   </th>
                 ))}
-                  {enemyFieldDefinitions.map((field) => (
+                {enemyFieldDefinitions.map((field) => (
                   <th
                     key={`enemy-field-header-${field.key}`}
-                    className={styles["enemyFieldHeader"]}
+                    className={
+                      field.key === "hp"
+                        ? `${styles["enemyFieldHeader"]} ${styles["enemyHpHeader"]}`
+                        : styles["enemyFieldHeader"]
+                    }
                   >
                     {field.key === "hp" ? "HP" : field.label}
                   </th>
@@ -426,7 +427,6 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                 <tr key={`enemy-row-${combatant.key}`}>
                   <th
                     className={styles["enemyHeader"]}
-                    style={enemyHeaderColumnStyle}
                   >
                     <TrackerCombatantInput
                       combatant={combatant}
@@ -452,9 +452,9 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                   {state.party.map((partyCombatant, partyIndex) => (
                     <TrackerCell
                       key={`cell-${combatant.key}-${partyCombatant.key}`}
+                      style={partyColumnStyles[partyIndex]}
                       rowCombatant={combatant}
                       columnCombatant={partyCombatant}
-                      style={getPartyColumnStyle(partyCombatant)}
                       enemyToPartyValue={
                         currentRound.cells[enemyIndex]?.[partyIndex]
                           ?.enemyToParty || ""
@@ -490,7 +490,11 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                     return (
                       <td
                         key={`enemy-field-${combatant.key}-${field.key}`}
-                        className={styles["enemyMetaCell"]}
+                        className={
+                          field.key === "hp"
+                            ? `${styles["enemyMetaCell"]} ${styles["enemyHpCell"]}`
+                            : styles["enemyMetaCell"]
+                        }
                       >
                         {field.key === "hp" ? (
                           renderHpEditor(
@@ -530,7 +534,6 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                 <tr key={`party-field-row-${field.key}`}>
                   <th
                     className={styles["partyFieldLabel"]}
-                    style={enemyHeaderColumnStyle}
                   >
                     {field.label}
                   </th>
@@ -542,7 +545,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                       <td
                         key={`party-field-${combatant.key}-${field.key}`}
                         className={styles["partyMetaCell"]}
-                        style={getPartyColumnStyle(combatant)}
+                        style={partyColumnStyles[partyIndex]}
                       >
                         {field.key === "hp" ? (
                           renderHpEditor(

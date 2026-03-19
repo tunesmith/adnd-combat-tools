@@ -146,14 +146,15 @@
 
 .partyHeader {
     position: relative;
-    min-width: 5rem;
+    min-width: 7rem;
     padding: 0;
     background: var(--dark-olive-green);
 }
 
 .enemyHeader {
     position: relative;
-    min-width: 11rem;
+    min-width: 7.8125rem;
+    max-width: 17.1875rem;
     padding: 0;
     background: var(--caput-martuum);
 }
@@ -166,15 +167,21 @@
     font-size: 1rem;
 }
 
+.enemyHpHeader {
+    width: 5.75rem;
+    min-width: 5.75rem;
+    max-width: 5.75rem;
+}
+
 .interactionCell {
-    min-width: 5rem;
+    padding: 0;
     background: linear-gradient(90deg, rgba(90, 40, 41, 0.96) 0%, rgba(90, 40, 41, 0.96) 50%, rgba(84, 111, 58, 0.96) 50%, rgba(84, 111, 58, 0.96) 100%);
 }
 
 .cellShell {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
     width: 100%;
+    min-width: 7rem;
     align-items: stretch;
     min-height: 4.15rem;
 }
@@ -182,11 +189,13 @@
 .cellHalfEnemyInline,
 .cellHalfPartyInline {
     display: flex;
+    flex: 1 1 0;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 0.15rem;
-    padding: 0.2rem;
+    padding: 0.1rem 0.15rem;
+    min-width: 0;
 }
 
 .cellHalfEnemyInline {
@@ -206,6 +215,8 @@
 }
 
 .cellDividerVertical {
+    flex: 0 0 auto;
+    width: 1px;
     border-left: 1px solid rgba(240, 239, 221, 0.22);
 }
 
@@ -218,8 +229,9 @@
     color: var(--eggshell);
     font-family: 'Sura', serif;
     font-size: 0.88rem;
-    padding: 0.15rem 0.2rem;
+    padding: 0.12rem 0.15rem;
     text-align: center;
+    box-sizing: border-box;
 }
 
 .enemyMetaCell {
@@ -227,8 +239,15 @@
     background: var(--caput-martuum);
 }
 
+.enemyHpCell {
+    width: 5.75rem;
+    min-width: 5.75rem;
+    max-width: 5.75rem;
+}
+
 .partyFieldLabel {
-    min-width: 11rem;
+    min-width: 7.8125rem;
+    max-width: 17.1875rem;
     padding: 0.7rem 0.8rem;
     text-align: left;
     background: var(--dark-olive-green);
@@ -237,7 +256,7 @@
 }
 
 .partyMetaCell {
-    min-width: 5rem;
+    min-width: 7rem;
     background: var(--dark-olive-green);
 }
 
@@ -267,32 +286,35 @@
 .hpEditorParty,
 .hpEditorEnemy {
     display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: stretch;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
     width: 100%;
-    min-height: 2.8rem;
+    min-height: 2.6rem;
 }
 
 .hpMaxValue {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     min-width: 2.2rem;
-    padding: 0.35rem 0.4rem;
+    padding: 0.3rem 0.4rem;
     border-right: 1px solid rgba(240, 239, 221, 0.22);
     color: rgba(240, 239, 221, 0.95);
+    font-weight: 700;
+    line-height: 1;
 }
 
 .hpCurrentInput {
     width: 100%;
-    min-height: 2.8rem;
+    min-width: 0;
+    min-height: 2.6rem;
     border: 0;
-    resize: none;
     background: transparent;
     color: var(--eggshell);
     font-family: 'Sura', serif;
     font-size: 0.95rem;
-    padding: 0.35rem 0.45rem;
+    line-height: 1;
+    padding: 0.3rem 0.4rem;
 }
 
 .summaryCell {
@@ -322,8 +344,9 @@
 }
 
 .combatantShell {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .combatantShell:hover .removeCombatant,
@@ -332,22 +355,41 @@
     pointer-events: auto;
 }
 
-.combatantShell:hover .combatantName,
-.combatantShell:focus-within .combatantName {
+.combatantShell:hover .combatantContent,
+.combatantShell:focus-within .combatantContent {
     text-decoration: underline;
+}
+
+.combatantSizer,
+.combatantButtonParty,
+.combatantButtonEnemy {
+    box-sizing: border-box;
+    text-align: center;
+    font-family: 'Sura', serif;
+}
+
+.combatantSizer {
+    width: auto;
+}
+
+.combatantSizerParty,
+.combatantButtonParty {
+    padding: 0.64rem 0.04rem 0.14rem;
+}
+
+.combatantSizerEnemy,
+.combatantButtonEnemy {
+    padding: 0.2rem 0.04rem 0.08rem;
 }
 
 .combatantButtonParty,
 .combatantButtonEnemy {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute;
+    inset: 0;
+    display: block;
     width: 100%;
     height: 100%;
     border: 0;
-    text-align: center;
-    padding: 0.5rem;
-    font-family: 'Sura', serif;
     cursor: pointer;
 }
 
@@ -361,15 +403,36 @@
     color: var(--eggshell);
 }
 
+.combatantContent {
+    display: block;
+    width: auto;
+}
+
+.combatantContentHidden {
+    visibility: hidden;
+}
+
 .combatantName {
     display: block;
-    font-size: 1rem;
+    font-size: 1.125rem;
     font-weight: 700;
     line-height: 1.1;
-    white-space: nowrap;
-    word-break: normal;
-    overflow-wrap: normal;
     text-align: center;
+    white-space: nowrap;
+    margin-bottom: 0.12rem;
+}
+
+.combatantDetail {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.12;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.combatantDetail + .combatantDetail {
+    margin-top: 0.08rem;
 }
 
 .removeCombatant {

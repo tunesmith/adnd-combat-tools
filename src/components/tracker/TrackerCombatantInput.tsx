@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, FocusEvent } from "react";
 import type { SingleValue } from "react-select";
 import Select from "react-select";
+import { getTrackerCombatantHeaderDisplay } from "../../helpers/trackerCombatantDisplay";
 import customStyles from "../../helpers/selectCustomStyles";
 import { attackerClassOptions, getGeneralClass, MONSTER } from "../../tables/attackerClass";
 import {
@@ -69,6 +70,10 @@ const TrackerCombatantInput = ({
         label: `AC ${10 - index}`,
       })),
     []
+  );
+  const headerDisplay = useMemo(
+    () => getTrackerCombatantHeaderDisplay(draft, side),
+    [draft, side]
   );
 
   const commit = (nextCombatant: TrackerCombatant) => {
@@ -170,9 +175,33 @@ const TrackerCombatantInput = ({
     typeof document !== "undefined"
       ? document.getElementById("app-modal")
       : null;
+  const sizerClassName =
+    side === "party"
+      ? `${styles["combatantSizer"]} ${styles["combatantSizerParty"]}`
+      : `${styles["combatantSizer"]} ${styles["combatantSizerEnemy"]}`;
+
+  const renderHeaderContent = (hidden = false) => (
+    <span
+      className={
+        hidden
+          ? `${styles["combatantContent"]} ${styles["combatantContentHidden"]}`
+          : styles["combatantContent"]
+      }
+    >
+      <span className={styles["combatantName"]}>{headerDisplay.name}</span>
+      {headerDisplay.detailLines.map((line, index) => (
+        <span key={`${draft.key}-${index}-${line}`} className={styles["combatantDetail"]}>
+          {line}
+        </span>
+      ))}
+    </span>
+  );
 
   return (
     <div className={styles["combatantShell"]}>
+      <div className={sizerClassName} aria-hidden={"true"}>
+        {renderHeaderContent(true)}
+      </div>
       <button
         type={"button"}
         className={
@@ -183,9 +212,7 @@ const TrackerCombatantInput = ({
         aria-label={`Edit ${draft.name || (side === "party" ? "party member" : "enemy")}`}
         onClick={() => setOpen(true)}
       >
-        <span className={styles["combatantName"]}>
-          {draft.name || (side === "party" ? "Party Member" : "Enemy")}
-        </span>
+        {renderHeaderContent()}
       </button>
       <button
         type={"button"}
