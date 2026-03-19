@@ -175,6 +175,8 @@ const TrackerCombatantInput = ({
     typeof document !== "undefined"
       ? document.getElementById("app-modal")
       : null;
+  const selectMenuPortalTarget =
+    typeof document !== "undefined" ? document.body : null;
   const sizerClassName =
     side === "party"
       ? `${styles["combatantSizer"]} ${styles["combatantSizerParty"]}`
@@ -270,6 +272,8 @@ const TrackerCombatantInput = ({
                 isSearchable={false}
                 instanceId={`creatureClass-${draft.key}`}
                 styles={customStyles}
+                menuPortalTarget={selectMenuPortalTarget}
+                menuPosition={"fixed"}
                 value={attackerClassOptions.filter(
                   (option) => option.value === draft.class
                 )}
@@ -281,6 +285,8 @@ const TrackerCombatantInput = ({
                 isSearchable={false}
                 instanceId={`level-${draft.key}`}
                 styles={customStyles}
+                menuPortalTarget={selectMenuPortalTarget}
+                menuPosition={"fixed"}
                 value={levelOptions.filter((option) => option.value === draft.level)}
                 options={levelOptions}
                 onChange={handleLevel}
@@ -290,6 +296,8 @@ const TrackerCombatantInput = ({
                 isSearchable={false}
                 instanceId={`armorType-${draft.key}`}
                 styles={customStyles}
+                menuPortalTarget={selectMenuPortalTarget}
+                menuPosition={"fixed"}
                 value={armorTypeOptions.filter(
                   (option) => option.value === draft.armorType
                 )}
@@ -301,6 +309,8 @@ const TrackerCombatantInput = ({
                 isSearchable={false}
                 instanceId={`armorClass-${draft.key}`}
                 styles={customStyles}
+                menuPortalTarget={selectMenuPortalTarget}
+                menuPosition={"fixed"}
                 value={armorClassOptions.filter(
                   (option) => option.value === draft.armorClass
                 )}
@@ -312,6 +322,8 @@ const TrackerCombatantInput = ({
                 isSearchable={false}
                 instanceId={`weapon-${draft.key}`}
                 styles={customStyles}
+                menuPortalTarget={selectMenuPortalTarget}
+                menuPosition={"fixed"}
                 value={weaponOptions.filter((option) => option.value === draft.weapon)}
                 options={weaponOptions}
                 onChange={handleWeapon}

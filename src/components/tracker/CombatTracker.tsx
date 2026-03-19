@@ -65,9 +65,9 @@ type TrackerAction =
 
 const partyFieldDefinitions: { key: RoundCombatantField; label: string }[] = [
   { key: "hp", label: "HP" },
-  { key: "effect", label: "Effect" },
-  { key: "action", label: "Action" },
+  { key: "action", label: "Intention" },
   { key: "result", label: "Result" },
+  { key: "effect", label: "Effect" },
   { key: "notes", label: "Notes" },
 ];
 

@@ -1,6 +1,7 @@
 const customStyles: {
   control: (provided: any) => any;
   option: (provided: any) => any;
+  menuPortal: (provided: any) => any;
 } = {
   control: (provided) => ({
     ...provided,
@@ -15,6 +16,11 @@ const customStyles: {
       color: 'black',
     };
   },
+
+  menuPortal: (provided) => ({
+    ...provided,
+    zIndex: 20,
+  }),
 };
 
 export default customStyles;
