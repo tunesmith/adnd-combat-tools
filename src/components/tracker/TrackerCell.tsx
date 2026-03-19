@@ -45,28 +45,24 @@ const TrackerCell = ({
   return (
     <td className={styles["interactionCell"]}>
       <div className={styles["cellShell"]}>
-        <div className={styles["cellHalfEnemy"]}>
-          <div className={styles["cellEntryHeader"]}>
-            <span className={styles["cellEntryLabel"]}>E {rowToHit}+</span>
-          </div>
+        <div className={styles["cellHalfEnemyInline"]}>
+          <span className={styles["cellEntryLabel"]}>E {rowToHit}+</span>
           <input
-            className={styles["cellEntryInput"]}
+            className={styles["cellEntryInputInline"]}
             type={"text"}
             value={enemyToPartyValue}
             onChange={(event) => onEnemyToPartyChange(event.target.value)}
           />
         </div>
-        <div className={styles["cellDivider"]} />
-        <div className={styles["cellHalfParty"]}>
-          <div className={styles["cellEntryHeader"]}>
-            <span className={styles["cellEntryLabel"]}>P {columnToHit}+</span>
-          </div>
+        <div className={styles["cellDividerVertical"]} />
+        <div className={styles["cellHalfPartyInline"]}>
           <input
-            className={styles["cellEntryInput"]}
+            className={styles["cellEntryInputInline"]}
             type={"text"}
             value={partyToEnemyValue}
             onChange={(event) => onPartyToEnemyChange(event.target.value)}
           />
+          <span className={styles["cellEntryLabel"]}>P {columnToHit}+</span>
         </div>
       </div>
     </td>

@@ -62,12 +62,11 @@ type TrackerAction =
   | { type: "remove-round" };
 
 const partyFieldDefinitions: { key: RoundCombatantField; label: string }[] = [
-  { key: "maxHp", label: "Max HP" },
   { key: "hp", label: "HP" },
   { key: "effect", label: "Effect" },
   { key: "action", label: "Action" },
   { key: "result", label: "Result" },
-  { key: "notes", label: "Notes / Abilities" },
+  { key: "notes", label: "Notes" },
 ];
 
 const enemyFieldDefinitions = partyFieldDefinitions;
@@ -209,6 +208,27 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
     return current;
   };
 
+  const renderHpEditor = (
+    maxHp: string | undefined,
+    hp: string,
+    onChange: (value: string) => void,
+    side: TrackerSide
+  ) => (
+    <div
+      className={
+        side === "party" ? styles["hpEditorParty"] : styles["hpEditorEnemy"]
+      }
+    >
+      <span className={styles["hpMaxValue"]}>{maxHp || "-"}</span>
+      <textarea
+        className={styles["hpCurrentInput"]}
+        value={hp}
+        rows={1}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </div>
+  );
+
   return (
     <div id={"app-modal"}>
       <div className={styles["page"]}>
@@ -216,8 +236,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
           <div>
             <div className={styles["pageTitle"]}>AD&amp;D Combat Tracker</div>
             <div className={styles["pageHint"]}>
-              Top half records enemy attacks into the party. Bottom half records
-              party attacks into the enemy. The labels show the target rolls.
+              Enemy on the left of each matchup cell, party on the right.
             </div>
           </div>
           <div className={styles["toolbarButtons"]}>
@@ -300,10 +319,10 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
             <thead>
               <tr>
                 <th className={styles["cornerHeader"]}>
-                  <div className={styles["cornerLabel"]}>Init (Party / Enemies)</div>
+                  <div className={styles["cornerLabel"]}>Init</div>
                   <div className={styles["initiativeGrid"]}>
                     <label className={styles["initiativeField"]}>
-                      Party
+                      <span className={styles["initiativeLabel"]}>P</span>
                       <input
                         className={styles["initiativeInput"]}
                         type={"text"}
@@ -320,7 +339,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                       />
                     </label>
                     <label className={styles["initiativeField"]}>
-                      Enemies
+                      <span className={styles["initiativeLabel"]}>E</span>
                       <input
                         className={styles["initiativeInput"]}
                         type={"text"}
@@ -362,12 +381,12 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                     />
                   </th>
                 ))}
-                {enemyFieldDefinitions.map((field) => (
+                  {enemyFieldDefinitions.map((field) => (
                   <th
                     key={`enemy-field-header-${field.key}`}
                     className={styles["enemyFieldHeader"]}
                   >
-                    {field.label}
+                    {field.key === "hp" ? "HP" : field.label}
                   </th>
                 ))}
               </tr>
@@ -439,20 +458,19 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                         key={`enemy-field-${combatant.key}-${field.key}`}
                         className={styles["enemyMetaCell"]}
                       >
-                        {field.key === "hp" || field.key === "maxHp" ? (
-                          <input
-                            className={styles["metaInput"]}
-                            type={"text"}
-                            value={stateValue}
-                            onChange={(event) =>
+                        {field.key === "hp" ? (
+                          renderHpEditor(
+                            combatant.maxHp,
+                            stateValue,
+                            (value) =>
                               dispatch({
                                 type: "set-enemy-state",
                                 index: enemyIndex,
                                 field: field.key,
-                                value: event.target.value,
-                              })
-                            }
-                          />
+                                value,
+                              }),
+                            "enemy"
+                          )
                         ) : (
                           <textarea
                             className={styles["metaTextarea"]}
@@ -486,20 +504,19 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
                         key={`party-field-${combatant.key}-${field.key}`}
                         className={styles["partyMetaCell"]}
                       >
-                        {field.key === "hp" || field.key === "maxHp" ? (
-                          <input
-                            className={styles["metaInput"]}
-                            type={"text"}
-                            value={stateValue}
-                            onChange={(event) =>
+                        {field.key === "hp" ? (
+                          renderHpEditor(
+                            combatant.maxHp,
+                            stateValue,
+                            (value) =>
                               dispatch({
                                 type: "set-party-state",
                                 index: partyIndex,
                                 field: field.key,
-                                value: event.target.value,
-                              })
-                            }
-                          />
+                                value,
+                              }),
+                            "party"
+                          )
                         ) : (
                           <textarea
                             className={styles["metaTextarea"]}

@@ -104,9 +104,10 @@
 }
 
 .cornerHeader {
-    min-width: 10rem;
+    min-width: 7.5rem;
     padding: 0.65rem;
     background: linear-gradient(135deg, var(--caput-martuum), var(--dark-olive-green));
+    text-align: center;
 }
 
 .cornerLabel {
@@ -118,7 +119,7 @@
     display: grid;
     grid-template-columns: repeat(2, auto);
     gap: 0.5rem;
-    justify-content: start;
+    justify-content: center;
 }
 
 .initiativeField {
@@ -129,18 +130,24 @@
     font-size: 0.8rem;
 }
 
+.initiativeLabel {
+    display: inline-block;
+    min-width: 0.85rem;
+    text-align: center;
+}
+
 .partyHeader {
-    min-width: 8.5rem;
+    min-width: 7.25rem;
     background: var(--dark-olive-green);
 }
 
 .enemyHeader {
-    min-width: 14rem;
+    min-width: 11rem;
     background: var(--caput-martuum);
 }
 
 .enemyFieldHeader {
-    min-width: 8rem;
+    min-width: 7rem;
     padding: 0.75rem 0.5rem;
     background: var(--caput-martuum);
     color: var(--eggshell);
@@ -148,56 +155,64 @@
 }
 
 .interactionCell {
-    min-width: 8rem;
-    background: linear-gradient(180deg, rgba(90, 40, 41, 0.96) 0%, rgba(90, 40, 41, 0.96) 50%, rgba(84, 111, 58, 0.96) 50%, rgba(84, 111, 58, 0.96) 100%);
+    min-width: 11rem;
+    background: linear-gradient(90deg, rgba(90, 40, 41, 0.96) 0%, rgba(90, 40, 41, 0.96) 50%, rgba(84, 111, 58, 0.96) 50%, rgba(84, 111, 58, 0.96) 100%);
 }
 
 .cellShell {
     display: grid;
-    grid-template-rows: 1fr auto 1fr;
-    min-height: 5.5rem;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    min-height: 3.4rem;
 }
 
-.cellHalfEnemy,
-.cellHalfParty {
-    padding: 0.3rem;
-}
-
-.cellEntryHeader {
+.cellHalfEnemyInline,
+.cellHalfPartyInline {
     display: flex;
-    justify-content: center;
-    margin-bottom: 0.2rem;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem;
+}
+
+.cellHalfEnemyInline {
+    justify-content: flex-start;
+}
+
+.cellHalfPartyInline {
+    justify-content: flex-end;
 }
 
 .cellEntryLabel {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     letter-spacing: 0.04em;
     color: rgba(240, 239, 221, 0.9);
+    white-space: nowrap;
 }
 
-.cellDivider {
-    border-top: 1px solid rgba(240, 239, 221, 0.22);
+.cellDividerVertical {
+    border-left: 1px solid rgba(240, 239, 221, 0.22);
 }
 
-.cellEntryInput {
+.cellEntryInputInline {
     width: 100%;
-    min-height: 1.65rem;
+    min-width: 0;
+    min-height: 1.8rem;
     border: 1px solid rgba(240, 239, 221, 0.25);
     background: rgba(240, 239, 221, 0.06);
     color: var(--eggshell);
     font-family: 'Sura', serif;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     padding: 0.2rem 0.3rem;
     text-align: center;
 }
 
 .enemyMetaCell {
-    min-width: 8rem;
+    min-width: 7rem;
     background: var(--caput-martuum);
 }
 
 .partyFieldLabel {
-    min-width: 14rem;
+    min-width: 11rem;
     padding: 0.7rem 0.8rem;
     text-align: left;
     background: var(--dark-olive-green);
@@ -206,13 +221,13 @@
 }
 
 .partyMetaCell {
-    min-width: 8.5rem;
+    min-width: 7.25rem;
     background: var(--dark-olive-green);
 }
 
 .metaTextarea {
     width: 100%;
-    min-height: 4.2rem;
+    min-height: 3.2rem;
     border: 0;
     resize: vertical;
     background: transparent;
@@ -231,6 +246,37 @@
     font-family: 'Sura', serif;
     font-size: 1rem;
     padding: 0.45rem;
+}
+
+.hpEditorParty,
+.hpEditorEnemy {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: stretch;
+    width: 100%;
+    min-height: 2.8rem;
+}
+
+.hpMaxValue {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2rem;
+    padding: 0.35rem 0.4rem;
+    border-right: 1px solid rgba(240, 239, 221, 0.22);
+    color: rgba(240, 239, 221, 0.95);
+}
+
+.hpCurrentInput {
+    width: 100%;
+    min-height: 2.8rem;
+    border: 0;
+    resize: none;
+    background: transparent;
+    color: var(--eggshell);
+    font-family: 'Sura', serif;
+    font-size: 0.95rem;
+    padding: 0.35rem 0.45rem;
 }
 
 .summaryCell {
@@ -267,7 +313,7 @@
 .combatantButtonParty,
 .combatantButtonEnemy {
     width: 100%;
-    min-height: 4rem;
+    min-height: 3.6rem;
     border: 0;
     text-align: center;
     padding: 0.75rem 2.1rem 0.75rem 0.75rem;
@@ -353,7 +399,7 @@
 }
 
 .initiativeInput {
-    width: 3rem;
+    width: 2.4rem;
     border: 1px solid var(--copper);
     background: var(--eggshell);
     color: #111;
@@ -370,7 +416,8 @@
 
 .metaTextarea::placeholder,
 .metaInput::placeholder,
-.cellEntryInput::placeholder {
+.cellEntryInputInline::placeholder,
+.hpCurrentInput::placeholder {
     color: rgba(240, 239, 221, 0.55);
 }
 

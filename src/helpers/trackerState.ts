@@ -41,7 +41,6 @@ export const createTrackerCombatant = (
 export const createCombatantRoundState = (
   maxHp: string = ""
 ): TrackerCombatantRoundState => ({
-  maxHp,
   hp: maxHp,
   effect: "",
   action: "",
@@ -73,7 +72,6 @@ export const createTrackerRound = (
   cells: createEmptyCells(enemies.length, party.length),
   partyStates: previousRound
     ? previousRound.partyStates.map((state) => ({
-        maxHp: state.maxHp,
         hp: state.hp,
         effect: state.effect,
         action: "",
@@ -83,7 +81,6 @@ export const createTrackerRound = (
     : party.map((combatant) => createCombatantRoundState(combatant.maxHp)),
   enemyStates: previousRound
     ? previousRound.enemyStates.map((state) => ({
-        maxHp: state.maxHp,
         hp: state.hp,
         effect: state.effect,
         action: "",
@@ -108,7 +105,7 @@ export const createInitialTrackerState = (): TrackerState => {
   const enemies = createDefaultEnemies();
 
   return {
-    version: 2,
+    version: 3,
     party,
     enemies,
     rounds: [createTrackerRound(party, enemies)],
@@ -235,16 +232,11 @@ export const updateCombatant = (
       return roundState;
     }
 
-    const shouldUpdateMaxHp =
-      !roundState.maxHp || roundState.maxHp === previousMaxHp;
     const shouldUpdateHp =
-      !roundState.hp ||
-      roundState.hp === previousMaxHp ||
-      roundState.hp === roundState.maxHp;
+      !roundState.hp || roundState.hp === previousMaxHp;
 
     return {
       ...roundState,
-      maxHp: shouldUpdateMaxHp ? nextMaxHp : roundState.maxHp,
       hp: shouldUpdateHp ? nextMaxHp : roundState.hp,
     };
   };
