@@ -15,7 +15,7 @@ const encodeLegacyState = (value: unknown): Promise<string> =>
   });
 
 describe("tracker codec", () => {
-  test("migrates version 2 tracker state into version 3 shape", () => {
+  test("migrates version 2 tracker state into round-snapshot shape", () => {
     const legacyState: TrackerStateV2 = {
       version: 2,
       party: [
@@ -75,9 +75,9 @@ describe("tracker codec", () => {
 
     const migrated = transformTrackerState(legacyState);
 
-    expect(migrated.version).toBe(4);
-    expect(migrated.party[0]?.maxHp).toBe("19");
-    expect(migrated.enemies[0]?.maxHp).toBe("11");
+    expect(migrated.version).toBe(5);
+    expect(migrated.rounds[0]?.party[0]?.maxHp).toBe("19");
+    expect(migrated.rounds[0]?.enemies[0]?.maxHp).toBe("11");
     expect(migrated.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: "xx",
       partyToEnemy: "16",
@@ -159,9 +159,9 @@ describe("tracker codec", () => {
 
     const decoded = await decodeTrackerState(encodedState);
 
-    expect(decoded.version).toBe(4);
-    expect(decoded.party[0]?.maxHp).toBe("14");
-    expect(decoded.enemies[0]?.maxHp).toBe("8");
+    expect(decoded.version).toBe(5);
+    expect(decoded.rounds[0]?.party[0]?.maxHp).toBe("14");
+    expect(decoded.rounds[0]?.enemies[0]?.maxHp).toBe("8");
     expect(decoded.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: "",
       partyToEnemy: "dead",

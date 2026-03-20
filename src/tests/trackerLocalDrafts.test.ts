@@ -25,60 +25,62 @@ class MemoryStorage implements StorageLike {
   }
 }
 
-const createTrackerState = (label: string, activeRound: number): TrackerState => ({
-  version: 4,
-  party: [
-    {
-      key: 1,
-      name: `${label} Party`,
-      class: 1,
-      level: 5,
-      armorType: 10,
-      armorClass: 0,
-      weapon: 12,
-      maxHp: "21",
-    },
-  ],
-  enemies: [
-    {
-      key: 2,
-      name: `${label} Enemy`,
-      class: 10,
-      level: 3,
-      armorType: 5,
-      armorClass: 5,
-      weapon: 0,
-      maxHp: "8",
-    },
-  ],
-  rounds: [
-    {
-      partyInitiative: "",
-      enemyInitiative: "",
-      summary: "",
-      cells: [[{ enemyToParty: "", partyToEnemy: "", isVisible: false }]],
-      partyStates: [
-        {
-          hp: "21",
-          effect: "",
-          action: "",
-          result: "",
-          notes: "",
-        },
-      ],
-      enemyStates: [
-        {
-          hp: "8",
-          effect: "",
-          action: "",
-          result: "",
-          notes: "",
-        },
-      ],
-    },
-  ],
-  activeRound,
-});
+const createTrackerState = (label: string, activeRound: number): TrackerState => {
+  const rounds = Array.from({ length: activeRound + 1 }, () => ({
+    party: [
+      {
+        key: 1,
+        name: `${label} Party`,
+        class: 1,
+        level: 5,
+        armorType: 10,
+        armorClass: 0,
+        weapon: 12,
+        maxHp: "21",
+      },
+    ],
+    enemies: [
+      {
+        key: 2,
+        name: `${label} Enemy`,
+        class: 10,
+        level: 3,
+        armorType: 5,
+        armorClass: 5,
+        weapon: 0,
+        maxHp: "8",
+      },
+    ],
+    partyInitiative: "",
+    enemyInitiative: "",
+    summary: "",
+    cells: [[{ enemyToParty: "", partyToEnemy: "", isVisible: false }]],
+    partyStates: [
+      {
+        hp: "21",
+        effect: "",
+        action: "",
+        result: "",
+        notes: "",
+      },
+    ],
+    enemyStates: [
+      {
+        hp: "8",
+        effect: "",
+        action: "",
+        result: "",
+        notes: "",
+      },
+    ],
+  }));
+
+  return {
+    version: 5,
+    rounds,
+    activeRound,
+  };
+};
 
 describe("tracker local drafts", () => {
   test("creates a stable session draft id once one exists", () => {

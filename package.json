@@ -3,6 +3,9 @@
   "homepage": "http://tunesmith.github.io/adnd-combat-tools",
   "version": "0.2.2",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build && next export",

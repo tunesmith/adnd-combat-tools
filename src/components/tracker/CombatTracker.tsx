@@ -140,7 +140,12 @@ const updateCurrentRound = (
 });
 
 const getNextCombatantKey = (state: TrackerState): number =>
-  Math.max(0, ...state.party.map((combatant) => combatant.key), ...state.enemies.map((combatant) => combatant.key)) + 1;
+  Math.max(
+    0,
+    ...state.rounds.flatMap((round) =>
+      round.party.concat(round.enemies).map((combatant) => combatant.key)
+    )
+  ) + 1;
 
 const formatDraftNameSummary = (names: string[]): string => {
   if (names.length === 0) {
@@ -275,14 +280,16 @@ const CombatTracker = ({
         );
       case "add-combatant":
         return addCombatant(state, action.side, action.key);
-      case "remove-combatant":
+      case "remove-combatant": {
+        const activeRound = state.rounds[state.activeRound];
         if (
-          (action.side === "party" && state.party.length <= 1) ||
-          (action.side === "enemy" && state.enemies.length <= 1)
+          (action.side === "party" && (activeRound?.party.length || 0) <= 1) ||
+          (action.side === "enemy" && (activeRound?.enemies.length || 0) <= 1)
         ) {
           return state;
         }
         return removeCombatant(state, action.side, action.index);
+      }
       case "advance-round":
         return insertRoundAfterActive(state);
       case "remove-round":
@@ -297,7 +304,7 @@ const CombatTracker = ({
   const hasTrackerChanged = state !== initialStateRef.current;
   const partyColumnStyles = useMemo<CSSProperties[]>(
     () =>
-      state.party.map((combatant) => {
+      (currentRound?.party || []).map((combatant) => {
         const widestLineWidth = getTrackerCombatantWidestLineWidth(
           combatant,
           "party"
@@ -313,17 +320,18 @@ const CombatTracker = ({
           maxWidth: `${width}px`,
         };
       }),
-    [state.party]
+    [currentRound]
   );
 
   useEffect(() => {
     idCounter.current =
       Math.max(
         0,
-        ...state.party.map((combatant) => combatant.key),
-        ...state.enemies.map((combatant) => combatant.key)
+        ...state.rounds.flatMap((round) =>
+          round.party.concat(round.enemies).map((combatant) => combatant.key)
+        )
       ) + 1;
-  }, [state.party, state.enemies]);
+  }, [state.rounds]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -728,7 +736,7 @@ const CombatTracker = ({
                     </label>
                   </div>
                 </th>
-                {state.party.map((combatant, partyIndex) => (
+                {currentRound.party.map((combatant, partyIndex) => (
                   <th
                     key={`party-header-${combatant.key}`}
                     className={styles["partyHeader"]}
@@ -737,7 +745,7 @@ const CombatTracker = ({
                     <TrackerCombatantInput
                       combatant={combatant}
                       side={"party"}
-                      canRemove={state.party.length > 1}
+                      canRemove={currentRound.party.length > 1}
                       onRemove={() =>
                         dispatch({
                           type: "remove-combatant",
@@ -771,7 +779,7 @@ const CombatTracker = ({
               </tr>
             </thead>
             <tbody>
-              {state.enemies.map((combatant, enemyIndex) => (
+              {currentRound.enemies.map((combatant, enemyIndex) => (
                 <tr key={`enemy-row-${combatant.key}`}>
                   <th
                     className={styles["enemyHeader"]}
@@ -779,7 +787,7 @@ const CombatTracker = ({
                     <TrackerCombatantInput
                       combatant={combatant}
                       side={"enemy"}
-                      canRemove={state.enemies.length > 1}
+                      canRemove={currentRound.enemies.length > 1}
                       onRemove={() =>
                         dispatch({
                           type: "remove-combatant",
@@ -797,7 +805,7 @@ const CombatTracker = ({
                       }
                     />
                   </th>
-                  {state.party.map((partyCombatant, partyIndex) => (
+                  {currentRound.party.map((partyCombatant, partyIndex) => (
                     <TrackerCell
                       key={`cell-${combatant.key}-${partyCombatant.key}`}
                       style={partyColumnStyles[partyIndex]}
@@ -897,7 +905,7 @@ const CombatTracker = ({
                   >
                     {field.label}
                   </th>
-                  {state.party.map((combatant, partyIndex) => {
+                  {currentRound.party.map((combatant, partyIndex) => {
                     const stateValue =
                       currentRound.partyStates[partyIndex]?.[field.key] || "";
 

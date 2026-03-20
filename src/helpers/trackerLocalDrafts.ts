@@ -99,13 +99,18 @@ export const saveTrackerLocalDraft = (
   encodedState: string,
   state: TrackerState
 ): TrackerLocalDraftRecord[] => {
+  const currentRound = state.rounds[state.activeRound];
   const nextDraft: TrackerLocalDraftRecord = {
     id: draftId,
     encodedState,
     updatedAt: Date.now(),
     roundNumber: state.activeRound + 1,
-    partyNames: state.party.map((combatant) => combatant.name || "Unnamed"),
-    enemyNames: state.enemies.map((combatant) => combatant.name || "Unnamed"),
+    partyNames: (currentRound?.party || []).map(
+      (combatant) => combatant.name || "Unnamed"
+    ),
+    enemyNames: (currentRound?.enemies || []).map(
+      (combatant) => combatant.name || "Unnamed"
+    ),
   };
 
   const drafts = listTrackerLocalDrafts(storage).filter(

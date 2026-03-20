@@ -9,7 +9,9 @@ describe("tracker state helpers", () => {
   test("new trackers start with matchup cells hidden until a target matters", () => {
     const initialState = createInitialTrackerState();
 
-    expect(initialState.version).toBe(4);
+    expect(initialState.version).toBe(5);
+    expect(initialState.rounds[0]?.party).toHaveLength(3);
+    expect(initialState.rounds[0]?.enemies).toHaveLength(3);
     expect(initialState.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: "",
       partyToEnemy: "",
@@ -66,7 +68,7 @@ describe("tracker state helpers", () => {
     }
 
     expect(nextState.activeRound).toBe(1);
-    expect(nextState.party[0]?.maxHp).toBe("");
+    expect(nextRound.party[0]?.maxHp).toBe("");
     expect(nextRound.partyInitiative).toBe("");
     expect(nextRound.enemyInitiative).toBe("");
     expect(nextRound.summary).toBe("");
@@ -111,7 +113,8 @@ describe("tracker state helpers", () => {
     }
     const addedPartyState = nextRound.partyStates[nextRound.partyStates.length - 1];
 
-    expect(nextState.party).toHaveLength(initialState.party.length + 1);
+    expect(nextRound.party).toHaveLength(previousRound.party.length + 1);
+    expect(previousRound.party).toHaveLength(initialState.rounds[0]?.party.length || 0);
     expect(nextRound.partyStates).toHaveLength(previousRound.partyStates.length + 1);
     expect(nextRow).toHaveLength(previousRow.length + 1);
     expect(addedPartyState?.hp).toBe("");
@@ -124,8 +127,8 @@ describe("tracker state helpers", () => {
 
   test("updating max hp refreshes blank round hp values without overwriting custom values", () => {
     const initialState = createInitialTrackerState();
-    const currentCombatant = initialState.party[0];
     const firstRound = initialState.rounds[0];
+    const currentCombatant = firstRound?.party[0];
     if (!currentCombatant || !firstRound) {
       throw new Error("Missing initial tracker data");
     }
@@ -134,11 +137,17 @@ describe("tracker state helpers", () => {
       throw new Error("Missing first party round state");
     }
     firstPartyState.hp = "";
-    initialState.party[0] = {
+    firstRound.party[0] = {
       ...currentCombatant,
       maxHp: "",
     };
     initialState.rounds.push({
+      party: firstRound.party.map((combatant) => ({
+        ...combatant,
+      })),
+      enemies: firstRound.enemies.map((combatant) => ({
+        ...combatant,
+      })),
       partyInitiative: firstRound.partyInitiative,
       enemyInitiative: firstRound.enemyInitiative,
       summary: firstRound.summary,
@@ -166,8 +175,40 @@ describe("tracker state helpers", () => {
       throw new Error("Missing updated rounds");
     }
 
-    expect(nextState.party[0]?.maxHp).toBe("24");
+    expect(updatedFirstRound.party[0]?.maxHp).toBe("24");
+    expect(updatedSecondRound.party[0]?.maxHp).toBe("");
     expect(updatedFirstRound.partyStates[0]?.hp).toBe("24");
     expect(updatedSecondRound.partyStates[0]?.hp).toBe("17");
+  });
+
+  test("changing combatant metadata in a later round does not mutate previous rounds", () => {
+    const initialState = createInitialTrackerState();
+    const roundTwoState = insertRoundAfterActive(initialState);
+    roundTwoState.activeRound = 1;
+
+    const roundOneCombatant = roundTwoState.rounds[0]?.enemies[0];
+    const roundTwoCombatant = roundTwoState.rounds[1]?.enemies[0];
+    if (!roundOneCombatant || !roundTwoCombatant) {
+      throw new Error("Missing combatants");
+    }
+
+    const updated = updateCombatant(roundTwoState, "enemy", 0, {
+      ...roundTwoCombatant,
+      weapon: 12,
+    });
+
+    expect(updated.rounds[0]?.enemies[0]?.weapon).toBe(roundOneCombatant.weapon);
+    expect(updated.rounds[1]?.enemies[0]?.weapon).toBe(12);
+  });
+
+  test("adding a combatant in a later round does not mutate previous rounds", () => {
+    const initialState = createInitialTrackerState();
+    const roundTwoState = insertRoundAfterActive(initialState);
+    roundTwoState.activeRound = 1;
+
+    const updated = addCombatant(roundTwoState, "enemy", 99);
+
+    expect(updated.rounds[0]?.enemies).toHaveLength(3);
+    expect(updated.rounds[1]?.enemies).toHaveLength(4);
   });
 });
