@@ -6,6 +6,17 @@ import {
 } from "../helpers/trackerState";
 
 describe("tracker state helpers", () => {
+  test("new trackers start with matchup cells hidden until a target matters", () => {
+    const initialState = createInitialTrackerState();
+
+    expect(initialState.version).toBe(4);
+    expect(initialState.rounds[0]?.cells[0]?.[0]).toEqual({
+      enemyToParty: "",
+      partyToEnemy: "",
+      isVisible: false,
+    });
+  });
+
   test("advancing a round carries persistent fields and clears transient ones", () => {
     const initialState = createInitialTrackerState();
     const firstRound = initialState.rounds[0];
@@ -62,6 +73,12 @@ describe("tracker state helpers", () => {
     expect(nextRoundFirstRow[0]).toEqual({
       enemyToParty: "",
       partyToEnemy: "",
+      isVisible: true,
+    });
+    expect(nextRoundFirstRow[1]).toEqual({
+      enemyToParty: "",
+      partyToEnemy: "",
+      isVisible: false,
     });
     expect(nextRound.partyStates[0]).toEqual({
       hp: "21",
@@ -98,6 +115,11 @@ describe("tracker state helpers", () => {
     expect(nextRound.partyStates).toHaveLength(previousRound.partyStates.length + 1);
     expect(nextRow).toHaveLength(previousRow.length + 1);
     expect(addedPartyState?.hp).toBe("");
+    expect(nextRow[nextRow.length - 1]).toEqual({
+      enemyToParty: "",
+      partyToEnemy: "",
+      isVisible: false,
+    });
   });
 
   test("updating max hp refreshes blank round hp values without overwriting custom values", () => {

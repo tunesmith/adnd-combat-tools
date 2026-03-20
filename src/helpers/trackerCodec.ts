@@ -37,6 +37,7 @@ const migrateRoundStateV2 = (
 const migrateCell = (value: string): TrackerCellState => ({
   enemyToParty: value,
   partyToEnemy: "",
+  isVisible: true,
 });
 
 const migrateRound = (
@@ -88,6 +89,7 @@ const migrateRoundV2 = (
     row.map((cell) => ({
       enemyToParty: cell.enemyToParty,
       partyToEnemy: cell.partyToEnemy,
+      isVisible: true,
     }))
   ),
   partyStates: round.partyStates.map((state, index) =>
@@ -101,8 +103,27 @@ const migrateRoundV2 = (
 export const transformTrackerState = (
   state: TrackerStateAnyVersion
 ): TrackerState => {
-  if (state.version === 3) {
+  if (state.version === 4) {
     return state;
+  }
+
+  if (state.version === 3) {
+    return {
+      version: 4,
+      party: state.party,
+      enemies: state.enemies,
+      rounds: state.rounds.map((round) => ({
+        ...round,
+        cells: round.cells.map((row) =>
+          row.map((cell) => ({
+            enemyToParty: cell.enemyToParty,
+            partyToEnemy: cell.partyToEnemy,
+            isVisible: true,
+          }))
+        ),
+      })),
+      activeRound: state.activeRound,
+    };
   }
 
   if (state.version === 2) {
@@ -119,7 +140,7 @@ export const transformTrackerState = (
     );
 
     return {
-      version: 3,
+      version: 4,
       party: state.party.map((combatant, index) => ({
         ...combatant,
         maxHp: partyMaxHp[index],
@@ -136,7 +157,7 @@ export const transformTrackerState = (
   }
 
   return {
-    version: 3,
+    version: 4,
     party: state.party,
     enemies: state.enemies,
     rounds: state.rounds.map((round) => migrateRound(round, state)),

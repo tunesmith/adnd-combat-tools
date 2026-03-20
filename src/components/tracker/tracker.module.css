@@ -203,11 +203,30 @@
     background: linear-gradient(90deg, rgba(90, 40, 41, 0.96) 0%, rgba(90, 40, 41, 0.96) 50%, rgba(84, 111, 58, 0.96) 50%, rgba(84, 111, 58, 0.96) 100%);
 }
 
+.interactionCellCollapsed {
+    background: transparent;
+}
+
+.interactionCellToggleable {
+    cursor: pointer;
+}
+
+.interactionCellToggleable:focus-visible {
+    outline: 2px solid rgba(240, 239, 221, 0.72);
+    outline-offset: -2px;
+}
+
 .cellShell {
     display: flex;
     width: 100%;
     min-width: 7rem;
     align-items: stretch;
+    min-height: 4.15rem;
+}
+
+.cellShellCollapsed {
+    width: 100%;
+    min-width: 7rem;
     min-height: 4.15rem;
 }
 

@@ -12,9 +12,15 @@ export interface TrackerCombatantRoundStateV1 {
   notes: string;
 }
 
+export interface TrackerCellStateLegacy {
+  enemyToParty: string;
+  partyToEnemy: string;
+}
+
 export interface TrackerCellState {
   enemyToParty: string;
   partyToEnemy: string;
+  isVisible: boolean;
 }
 
 export interface TrackerRoundV1 {
@@ -39,7 +45,7 @@ export interface TrackerRoundV2 {
   partyInitiative: string;
   enemyInitiative: string;
   summary: string;
-  cells: TrackerCellState[][];
+  cells: TrackerCellStateLegacy[][];
   partyStates: TrackerCombatantRoundStateV2[];
   enemyStates: TrackerCombatantRoundStateV2[];
 }
@@ -81,9 +87,28 @@ export interface TrackerStateV3 {
   version: 3;
   party: TrackerCombatant[];
   enemies: TrackerCombatant[];
+  rounds: {
+    partyInitiative: string;
+    enemyInitiative: string;
+    summary: string;
+    cells: TrackerCellStateLegacy[][];
+    partyStates: TrackerCombatantRoundState[];
+    enemyStates: TrackerCombatantRoundState[];
+  }[];
+  activeRound: number;
+}
+
+export interface TrackerStateV4 {
+  version: 4;
+  party: TrackerCombatant[];
+  enemies: TrackerCombatant[];
   rounds: TrackerRound[];
   activeRound: number;
 }
 
-export type TrackerState = TrackerStateV3;
-export type TrackerStateAnyVersion = TrackerStateV1 | TrackerStateV2 | TrackerStateV3;
+export type TrackerState = TrackerStateV4;
+export type TrackerStateAnyVersion =
+  | TrackerStateV1
+  | TrackerStateV2
+  | TrackerStateV3
+  | TrackerStateV4;

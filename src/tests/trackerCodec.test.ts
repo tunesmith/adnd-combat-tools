@@ -75,9 +75,14 @@ describe("tracker codec", () => {
 
     const migrated = transformTrackerState(legacyState);
 
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(migrated.party[0]?.maxHp).toBe("19");
     expect(migrated.enemies[0]?.maxHp).toBe("11");
+    expect(migrated.rounds[0]?.cells[0]?.[0]).toEqual({
+      enemyToParty: "xx",
+      partyToEnemy: "16",
+      isVisible: true,
+    });
     expect(migrated.rounds[0]?.partyStates[0]).toEqual({
       hp: "19",
       effect: "",
@@ -154,12 +159,13 @@ describe("tracker codec", () => {
 
     const decoded = await decodeTrackerState(encodedState);
 
-    expect(decoded.version).toBe(3);
+    expect(decoded.version).toBe(4);
     expect(decoded.party[0]?.maxHp).toBe("14");
     expect(decoded.enemies[0]?.maxHp).toBe("8");
     expect(decoded.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: "",
       partyToEnemy: "dead",
+      isVisible: true,
     });
   });
 });

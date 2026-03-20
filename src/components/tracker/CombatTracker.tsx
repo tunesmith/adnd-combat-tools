@@ -44,6 +44,12 @@ type TrackerAction =
   | { type: "select-round"; index: number }
   | { type: "set-round-field"; field: RoundField; value: string }
   | {
+      type: "set-cell-visibility";
+      rowIndex: number;
+      columnIndex: number;
+      value: boolean;
+    }
+  | {
       type: "set-cell";
       rowIndex: number;
       columnIndex: number;
@@ -203,6 +209,22 @@ const CombatTracker = ({
           ...round,
           [action.field]: action.value,
         }));
+      case "set-cell-visibility":
+        return updateCurrentRound(state, (round) => ({
+          ...round,
+          cells: round.cells.map((row, rowIndex) =>
+            rowIndex === action.rowIndex
+              ? row.map((cell, columnIndex) =>
+                  columnIndex === action.columnIndex
+                    ? {
+                        ...cell,
+                        isVisible: action.value,
+                      }
+                    : cell
+                )
+              : row
+          ),
+        }));
       case "set-cell":
         return updateCurrentRound(state, (round) => ({
           ...round,
@@ -213,6 +235,7 @@ const CombatTracker = ({
                     ? {
                         ...cell,
                         [action.field]: action.value,
+                        isVisible: true,
                       }
                     : cell
                 )
@@ -787,6 +810,18 @@ const CombatTracker = ({
                       partyToEnemyValue={
                         currentRound.cells[enemyIndex]?.[partyIndex]
                           ?.partyToEnemy || ""
+                      }
+                      isVisible={
+                        currentRound.cells[enemyIndex]?.[partyIndex]?.isVisible ||
+                        false
+                      }
+                      onToggleVisibility={(value) =>
+                        dispatch({
+                          type: "set-cell-visibility",
+                          rowIndex: enemyIndex,
+                          columnIndex: partyIndex,
+                          value,
+                        })
                       }
                       onEnemyToPartyChange={(value) =>
                         dispatch({

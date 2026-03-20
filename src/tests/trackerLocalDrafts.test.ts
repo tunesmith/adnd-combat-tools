@@ -26,7 +26,7 @@ class MemoryStorage implements StorageLike {
 }
 
 const createTrackerState = (label: string, activeRound: number): TrackerState => ({
-  version: 3,
+  version: 4,
   party: [
     {
       key: 1,
@@ -56,7 +56,7 @@ const createTrackerState = (label: string, activeRound: number): TrackerState =>
       partyInitiative: "",
       enemyInitiative: "",
       summary: "",
-      cells: [[{ enemyToParty: "", partyToEnemy: "" }]],
+      cells: [[{ enemyToParty: "", partyToEnemy: "", isVisible: false }]],
       partyStates: [
         {
           hp: "21",

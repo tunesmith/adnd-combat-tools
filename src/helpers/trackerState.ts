@@ -51,7 +51,11 @@ export const createCombatantRoundState = (
 const createEmptyCell = (): TrackerCellState => ({
   enemyToParty: "",
   partyToEnemy: "",
+  isVisible: false,
 });
+
+const hasCellContent = (cell: TrackerCellState): boolean =>
+  Boolean(cell.enemyToParty.trim() || cell.partyToEnemy.trim());
 
 const createEmptyCells = (
   enemyCount: number,
@@ -61,6 +65,28 @@ const createEmptyCells = (
     Array.from({ length: partyCount }, () => createEmptyCell())
   );
 
+const createNextRoundCells = (
+  party: TrackerCombatant[],
+  enemies: TrackerCombatant[],
+  previousRound?: TrackerRound
+): TrackerCellState[][] => {
+  if (!previousRound) {
+    return createEmptyCells(enemies.length, party.length);
+  }
+
+  return Array.from({ length: enemies.length }, (_, enemyIndex) =>
+    Array.from({ length: party.length }, (_, partyIndex) => {
+      const previousCell = previousRound.cells[enemyIndex]?.[partyIndex];
+
+      return {
+        enemyToParty: "",
+        partyToEnemy: "",
+        isVisible: previousCell ? hasCellContent(previousCell) : false,
+      };
+    })
+  );
+};
+
 export const createTrackerRound = (
   party: TrackerCombatant[],
   enemies: TrackerCombatant[],
@@ -69,7 +95,7 @@ export const createTrackerRound = (
   partyInitiative: "",
   enemyInitiative: "",
   summary: "",
-  cells: createEmptyCells(enemies.length, party.length),
+  cells: createNextRoundCells(party, enemies, previousRound),
   partyStates: previousRound
     ? previousRound.partyStates.map((state) => ({
         hp: state.hp,
@@ -105,7 +131,7 @@ export const createInitialTrackerState = (): TrackerState => {
   const enemies = createDefaultEnemies();
 
   return {
-    version: 3,
+    version: 4,
     party,
     enemies,
     rounds: [createTrackerRound(party, enemies)],
@@ -152,11 +178,11 @@ export const addCombatant = (
   );
 
   if (side === "party") {
-    return {
-      ...state,
-      party: state.party.concat(combatant),
-      rounds: state.rounds.map((round) => ({
-        ...round,
+  return {
+    ...state,
+    party: state.party.concat(combatant),
+    rounds: state.rounds.map((round) => ({
+      ...round,
         cells: round.cells.map((row) => row.concat(createEmptyCell())),
         partyStates: round.partyStates.concat(
           createCombatantRoundState(combatant.maxHp)
