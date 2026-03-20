@@ -91,6 +91,7 @@ const enemyFieldDefinitions = partyFieldDefinitions;
 const PARTY_COLUMN_MIN_WIDTH_PX = 112;
 const LOCAL_DRAFT_AUTOSAVE_MS = 750;
 const URL_WARNING_THRESHOLD = 6000;
+const SHARE_URL_COPIED_MS = 2200;
 
 const AutoHeightTextarea = ({
   className,
@@ -195,10 +196,18 @@ const CombatTracker = ({
   );
   const [showUrlWarning, setShowUrlWarning] = useState<boolean>(false);
   const [urlWarningLength, setUrlWarningLength] = useState<number>(0);
+  const [addressBarUrlTruncated, setAddressBarUrlTruncated] =
+    useState<boolean>(false);
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  const [shareModalUrl, setShareModalUrl] = useState<string | undefined>(
+    undefined
+  );
+  const [shareCopied, setShareCopied] = useState<boolean>(false);
   const idCounter = useRef<number>(getNextCombatantKey(initialState));
   const pausedEncodedState = useRef<string | undefined>(undefined);
   const urlWarningShown = useRef<boolean>(false);
   const recoverPromptHandled = useRef<boolean>(false);
+  const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const reducer = (state: TrackerState, action: TrackerAction): TrackerState => {
     switch (action.type) {
@@ -398,6 +407,22 @@ const CombatTracker = ({
       `${window.location.pathname}?s=${encodedTrackerState}`
     );
 
+    const actualEncodedState = window.location.search.startsWith("?s=")
+      ? window.location.search.slice(3)
+      : "";
+
+    if (actualEncodedState !== encodedTrackerState) {
+      setAddressBarUrlTruncated(true);
+      setUrlWarningLength(nextUrl.length);
+      if (!urlWarningShown.current) {
+        setShowUrlWarning(true);
+        urlWarningShown.current = true;
+      }
+      return;
+    }
+
+    setAddressBarUrlTruncated(false);
+
     if (nextUrl.length >= URL_WARNING_THRESHOLD) {
       setUrlWarningLength(nextUrl.length);
       if (!urlWarningShown.current) {
@@ -454,7 +479,7 @@ const CombatTracker = ({
   }, [autosavePaused, draftId, encodedTrackerState, hasTrackerChanged, state]);
 
   useEffect(() => {
-    if (!showUrlWarning && !showRecoverModal) {
+    if (!showUrlWarning && !showRecoverModal && !showShareModal) {
       return;
     }
 
@@ -462,6 +487,7 @@ const CombatTracker = ({
       if (event.key === "Escape") {
         setShowUrlWarning(false);
         setShowRecoverModal(false);
+        setShowShareModal(false);
         setRecoverError(undefined);
       }
     };
@@ -469,7 +495,28 @@ const CombatTracker = ({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showRecoverModal, showUrlWarning]);
+  }, [showRecoverModal, showShareModal, showUrlWarning]);
+
+  useEffect(() => {
+    if (!shareCopied) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShareCopied(false);
+    }, SHARE_URL_COPIED_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [shareCopied]);
+
+  useEffect(() => {
+    if (!showShareModal) {
+      return;
+    }
+
+    shareTextareaRef.current?.focus();
+    shareTextareaRef.current?.select();
+  }, [showShareModal]);
 
   if (!currentRound) {
     return <></>;
@@ -484,6 +531,40 @@ const CombatTracker = ({
   const closeRecoverModal = () => {
     setShowRecoverModal(false);
     setRecoverError(undefined);
+  };
+
+  const closeShareModal = () => {
+    setShowShareModal(false);
+  };
+
+  const buildShareUrl = () => {
+    if (typeof window === "undefined" || !encodedTrackerState) {
+      return undefined;
+    }
+
+    return new URL(
+      `${window.location.pathname}?s=${encodedTrackerState}`,
+      window.location.origin
+    ).toString();
+  };
+
+  const handleCopyShareUrl = async () => {
+    const shareUrl = buildShareUrl();
+
+    if (!shareUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setShareModalUrl(undefined);
+      setShowShareModal(false);
+    } catch (_error) {
+      setShareCopied(false);
+      setShareModalUrl(shareUrl);
+      setShowShareModal(true);
+    }
   };
 
   const handleClearCurrentDraft = () => {
@@ -601,26 +682,6 @@ const CombatTracker = ({
           <div className={styles["toolbarButtons"]}>
             <button
               type={"button"}
-              className={styles["toolbarButton"]}
-              disabled={state.activeRound === 0}
-              onClick={() =>
-                dispatch({ type: "select-round", index: state.activeRound - 1 })
-              }
-            >
-              Previous Round
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              disabled={state.activeRound >= state.rounds.length - 1}
-              onClick={() =>
-                dispatch({ type: "select-round", index: state.activeRound + 1 })
-              }
-            >
-              Next Round
-            </button>
-            <button
-              type={"button"}
               className={styles["toolbarButtonPrimary"]}
               onClick={() => dispatch({ type: "advance-round" })}
             >
@@ -633,6 +694,14 @@ const CombatTracker = ({
               onClick={() => dispatch({ type: "remove-round" })}
             >
               Delete Round
+            </button>
+            <button
+              type={"button"}
+              className={styles["toolbarButton"]}
+              disabled={!encodedTrackerState}
+              onClick={() => void handleCopyShareUrl()}
+            >
+              {shareCopied ? "Share URL Copied" : "Copy Share URL"}
             </button>
             <button
               type={"button"}
@@ -1085,23 +1154,92 @@ const CombatTracker = ({
               <div className={styles["urlWarningCount"]}>
                 {urlWarningLength.toLocaleString()} characters
               </div>
-              <p id={"url-warning-description"} className={styles["modalText"]}>
-                This tracker is stored entirely in the URL. Once it gets this
-                large, some browsers, chat apps, and notes tools may stop
-                saving or reopening it reliably.
-              </p>
-              <p className={styles["modalText"]}>
-                If you want to keep it portable, consider trimming longer notes
-                or splitting the combat into shorter tracker URLs.
-              </p>
+              {addressBarUrlTruncated ? (
+                <>
+                  <p
+                    id={"url-warning-description"}
+                    className={styles["modalText"]}
+                  >
+                    This browser could not keep the full tracker URL in the
+                    address bar. The page may still work locally, but the
+                    displayed address-bar URL can reopen as corrupted elsewhere.
+                  </p>
+                  <p className={styles["modalText"]}>
+                    Use Copy Share URL to copy the full encoded tracker state
+                    directly instead of relying on the browser&apos;s displayed
+                    URL.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p
+                    id={"url-warning-description"}
+                    className={styles["modalText"]}
+                  >
+                    This tracker is stored entirely in the URL. Once it gets
+                    this large, some browsers, chat apps, and notes tools may
+                    stop saving or reopening it reliably.
+                  </p>
+                  <p className={styles["modalText"]}>
+                    If you want to keep it portable, consider trimming longer
+                    notes or splitting the combat into shorter tracker URLs.
+                  </p>
+                </>
+              )}
             </div>
             <div className={styles["modalActions"]}>
               <button
                 type={"button"}
                 className={styles["toolbarButtonPrimary"]}
+                onClick={() => void handleCopyShareUrl()}
+              >
+                {shareCopied ? "Share URL Copied" : "Copy Share URL"}
+              </button>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
                 onClick={() => setShowUrlWarning(false)}
               >
                 Continue Editing
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+      {showShareModal && shareModalUrl && (
+        <>
+          <div className={styles["modalShadow"]} onClick={closeShareModal} />
+          <div
+            className={`${styles["modal"]} ${styles["shareModal"]}`}
+            role={"dialog"}
+            aria-modal={"true"}
+            aria-labelledby={"share-url-title"}
+            aria-describedby={"share-url-description"}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={"share-url-title"} className={styles["modalTitle"]}>
+              Copy Share URL
+            </div>
+            <div className={styles["modalBody"]}>
+              <p id={"share-url-description"} className={styles["modalText"]}>
+                Clipboard access was blocked, so the full tracker URL is shown
+                here instead.
+              </p>
+              <textarea
+                ref={shareTextareaRef}
+                readOnly
+                className={styles["shareUrlTextarea"]}
+                value={shareModalUrl}
+                onFocus={(event) => event.currentTarget.select()}
+              />
+            </div>
+            <div className={styles["modalActions"]}>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                onClick={closeShareModal}
+              >
+                Close
               </button>
             </div>
           </div>
