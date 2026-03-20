@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { deflate } from "zlib";
 import {
   addCombatant,
   createInitialTrackerState,
@@ -16,6 +15,15 @@ import type {
   TrackerRound,
   TrackerState,
 } from "../../types/tracker";
+import { decodeTrackerState, encodeTrackerState } from "../../helpers/trackerCodec";
+import {
+  deleteTrackerLocalDraft,
+  getOrCreateTrackerSessionDraftId,
+  listTrackerLocalDrafts,
+  saveTrackerLocalDraft,
+  setTrackerSessionDraftId,
+  type TrackerLocalDraftRecord,
+} from "../../helpers/trackerLocalDrafts";
 import TrackerCell from "./TrackerCell";
 import TrackerCombatantInput from "./TrackerCombatantInput";
 import styles from "./tracker.module.css";
@@ -23,6 +31,7 @@ import { getTrackerCombatantWidestLineWidth } from "../../helpers/trackerCombata
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
+  loadedFromEncodedState?: boolean;
 }
 
 type TrackerSide = "party" | "enemy";
@@ -31,6 +40,7 @@ type RoundCombatantField = keyof TrackerCombatantRoundState;
 type CellField = keyof TrackerCellState;
 
 type TrackerAction =
+  | { type: "replace-state"; state: TrackerState }
   | { type: "select-round"; index: number }
   | { type: "set-round-field"; field: RoundField; value: string }
   | {
@@ -73,6 +83,7 @@ const partyFieldDefinitions: { key: RoundCombatantField; label: string }[] = [
 
 const enemyFieldDefinitions = partyFieldDefinitions;
 const PARTY_COLUMN_MIN_WIDTH_PX = 112;
+const LOCAL_DRAFT_AUTOSAVE_MS = 750;
 const URL_WARNING_THRESHOLD = 6000;
 
 const AutoHeightTextarea = ({
@@ -125,21 +136,63 @@ const updateCurrentRound = (
 const getNextCombatantKey = (state: TrackerState): number =>
   Math.max(0, ...state.party.map((combatant) => combatant.key), ...state.enemies.map((combatant) => combatant.key)) + 1;
 
-const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
+const formatDraftNameSummary = (names: string[]): string => {
+  if (names.length === 0) {
+    return "Unnamed";
+  }
+
+  if (names.length <= 2) {
+    return names.join(", ");
+  }
+
+  return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
+};
+
+const formatDraftSavedAt = (updatedAt: number): string =>
+  new Date(updatedAt).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+const CombatTracker = ({
+  rememberedState,
+  loadedFromEncodedState = false,
+}: CombatTrackerProps) => {
   const initialState = useMemo<TrackerState>(
     () => rememberedState || createInitialTrackerState(),
     [rememberedState]
   );
+  const initialStateRef = useRef<TrackerState>(initialState);
   const [encodedTrackerState, setEncodedTrackerState] = useState<
     string | undefined
   >(undefined);
+  const [draftId, setDraftId] = useState<string | undefined>(undefined);
+  const [savedDrafts, setSavedDrafts] = useState<TrackerLocalDraftRecord[]>([]);
+  const [showRecoverModal, setShowRecoverModal] = useState<boolean>(false);
+  const [recoverError, setRecoverError] = useState<string | undefined>(
+    undefined
+  );
+  const [autosavePaused, setAutosavePaused] = useState<boolean>(false);
+  const [hasLocalDraft, setHasLocalDraft] = useState<boolean>(false);
+  const [lastLocalSaveAt, setLastLocalSaveAt] = useState<number | undefined>(
+    undefined
+  );
+  const [recoveringDraftId, setRecoveringDraftId] = useState<string | undefined>(
+    undefined
+  );
   const [showUrlWarning, setShowUrlWarning] = useState<boolean>(false);
   const [urlWarningLength, setUrlWarningLength] = useState<number>(0);
   const idCounter = useRef<number>(getNextCombatantKey(initialState));
+  const pausedEncodedState = useRef<string | undefined>(undefined);
   const urlWarningShown = useRef<boolean>(false);
+  const recoverPromptHandled = useRef<boolean>(false);
 
   const reducer = (state: TrackerState, action: TrackerAction): TrackerState => {
     switch (action.type) {
+      case "replace-state":
+        return action.state;
       case "select-round":
         return {
           ...state,
@@ -218,6 +271,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const currentRound = state.rounds[state.activeRound];
+  const hasTrackerChanged = state !== initialStateRef.current;
   const partyColumnStyles = useMemo<CSSProperties[]>(
     () =>
       state.party.map((combatant) => {
@@ -240,14 +294,61 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
   );
 
   useEffect(() => {
-    deflate(JSON.stringify(state), (err, buffer) => {
-      if (err) {
-        console.error("An error occurred:", err);
-        process.exitCode = 1;
-        return;
+    idCounter.current =
+      Math.max(
+        0,
+        ...state.party.map((combatant) => combatant.key),
+        ...state.enemies.map((combatant) => combatant.key)
+      ) + 1;
+  }, [state.party, state.enemies]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const nextDrafts = listTrackerLocalDrafts(window.localStorage);
+      const nextDraftId = getOrCreateTrackerSessionDraftId(window.sessionStorage);
+      const currentDraft = nextDrafts.find((draft) => draft.id === nextDraftId);
+
+      setDraftId(nextDraftId);
+      setSavedDrafts(nextDrafts);
+      setHasLocalDraft(Boolean(currentDraft));
+      setLastLocalSaveAt(currentDraft?.updatedAt);
+
+      if (
+        !loadedFromEncodedState &&
+        !recoverPromptHandled.current &&
+        (Boolean(currentDraft) || nextDrafts.length > 0)
+      ) {
+        setShowRecoverModal(true);
+        recoverPromptHandled.current = true;
       }
-      setEncodedTrackerState(encodeURIComponent(buffer.toString("base64")));
-    });
+    } catch (error) {
+      console.error("Unable to initialize tracker drafts:", error);
+    }
+  }, [loadedFromEncodedState]);
+
+  useEffect(() => {
+    let active = true;
+
+    encodeTrackerState(state)
+      .then((nextEncodedState) => {
+        if (!active) {
+          return;
+        }
+
+        setEncodedTrackerState(nextEncodedState);
+      })
+      .catch((error) => {
+        console.error("An error occurred:", error);
+        process.exitCode = 1;
+      });
+
+    return () => {
+      active = false;
+    };
   }, [state]);
 
   useEffect(() => {
@@ -279,20 +380,65 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
   }, [encodedTrackerState]);
 
   useEffect(() => {
-    if (!showUrlWarning) {
+    if (
+      typeof window === "undefined" ||
+      !draftId ||
+      !encodedTrackerState ||
+      !hasTrackerChanged
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      try {
+        if (
+          autosavePaused &&
+          encodedTrackerState === pausedEncodedState.current
+        ) {
+          return;
+        }
+
+        if (autosavePaused) {
+          setAutosavePaused(false);
+          pausedEncodedState.current = undefined;
+        }
+
+        const nextDrafts = saveTrackerLocalDraft(
+          window.localStorage,
+          draftId,
+          encodedTrackerState,
+          state
+        );
+        const currentDraft = nextDrafts.find((draft) => draft.id === draftId);
+
+        setSavedDrafts(nextDrafts);
+        setHasLocalDraft(Boolean(currentDraft));
+        setLastLocalSaveAt(currentDraft?.updatedAt);
+      } catch (error) {
+        console.error("Unable to save tracker draft:", error);
+      }
+    }, LOCAL_DRAFT_AUTOSAVE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [autosavePaused, draftId, encodedTrackerState, hasTrackerChanged, state]);
+
+  useEffect(() => {
+    if (!showUrlWarning && !showRecoverModal) {
       return;
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setShowUrlWarning(false);
+        setShowRecoverModal(false);
+        setRecoverError(undefined);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showUrlWarning]);
+  }, [showRecoverModal, showUrlWarning]);
 
   if (!currentRound) {
     return <></>;
@@ -303,6 +449,93 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
     idCounter.current += 1;
     return current;
   };
+
+  const closeRecoverModal = () => {
+    setShowRecoverModal(false);
+    setRecoverError(undefined);
+  };
+
+  const handleClearCurrentDraft = () => {
+    if (
+      typeof window === "undefined" ||
+      !draftId
+    ) {
+      return;
+    }
+
+    try {
+      const nextDrafts = deleteTrackerLocalDraft(window.localStorage, draftId);
+      setSavedDrafts(nextDrafts);
+      setHasLocalDraft(false);
+      setLastLocalSaveAt(undefined);
+      setAutosavePaused(true);
+      pausedEncodedState.current = encodedTrackerState;
+    } catch (error) {
+      console.error("Unable to clear tracker draft:", error);
+    }
+  };
+
+  const handleDeleteDraft = (targetDraftId: string) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const nextDrafts = deleteTrackerLocalDraft(
+        window.localStorage,
+        targetDraftId
+      );
+      setSavedDrafts(nextDrafts);
+
+      if (targetDraftId === draftId) {
+        setHasLocalDraft(false);
+        setLastLocalSaveAt(undefined);
+        setAutosavePaused(true);
+        pausedEncodedState.current = encodedTrackerState;
+      }
+
+      if (nextDrafts.length === 0) {
+        closeRecoverModal();
+      }
+    } catch (error) {
+      console.error("Unable to delete tracker draft:", error);
+    }
+  };
+
+  const handleRestoreDraft = async (draft: TrackerLocalDraftRecord) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    setRecoveringDraftId(draft.id);
+    setRecoverError(undefined);
+
+    try {
+      const restoredState = await decodeTrackerState(draft.encodedState);
+      initialStateRef.current = restoredState;
+      dispatch({ type: "replace-state", state: restoredState });
+      setTrackerSessionDraftId(window.sessionStorage, draft.id);
+      setDraftId(draft.id);
+      setHasLocalDraft(true);
+      setLastLocalSaveAt(draft.updatedAt);
+      setAutosavePaused(false);
+      pausedEncodedState.current = undefined;
+      closeRecoverModal();
+    } catch (error) {
+      console.error("Unable to restore tracker draft:", error);
+      setRecoverError(
+        "This local draft could not be restored. It may be corrupted or from an older broken save."
+      );
+    } finally {
+      setRecoveringDraftId(undefined);
+    }
+  };
+
+  const localDraftStatus = autosavePaused
+    ? "Local autosave paused until the next edit."
+    : hasLocalDraft && lastLocalSaveAt
+      ? `Saved locally ${formatDraftSavedAt(lastLocalSaveAt)}`
+      : "Local recovery will start after your next edit.";
 
   const renderHpEditor = (
     maxHp: string | undefined,
@@ -373,6 +606,25 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
             <button
               type={"button"}
               className={styles["toolbarButton"]}
+              disabled={savedDrafts.length === 0}
+              onClick={() => {
+                setRecoverError(undefined);
+                setShowRecoverModal(true);
+              }}
+            >
+              Recover Local Draft
+            </button>
+            <button
+              type={"button"}
+              className={styles["toolbarButton"]}
+              disabled={!hasLocalDraft}
+              onClick={handleClearCurrentDraft}
+            >
+              Clear Local Draft
+            </button>
+            <button
+              type={"button"}
+              className={styles["toolbarButton"]}
               onClick={() =>
                 dispatch({ type: "add-combatant", side: "party", key: nextKey() })
               }
@@ -388,6 +640,7 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
             >
               Add Enemy
             </button>
+            <div className={styles["toolbarStatus"]}>{localDraftStatus}</div>
           </div>
         </div>
         <div className={styles["roundTabs"]}>
@@ -678,6 +931,96 @@ const CombatTracker = ({ rememberedState }: CombatTrackerProps) => {
           </table>
         </div>
       </div>
+      {showRecoverModal && (
+        <>
+          <div className={styles["modalShadow"]} onClick={closeRecoverModal} />
+          <div
+            className={`${styles["modal"]} ${styles["recoverModal"]}`}
+            role={"dialog"}
+            aria-modal={"true"}
+            aria-labelledby={"recover-drafts-title"}
+            aria-describedby={"recover-drafts-description"}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={"recover-drafts-title"} className={styles["modalTitle"]}>
+              Recover Local Draft
+            </div>
+            <div className={styles["modalBody"]}>
+              <p
+                id={"recover-drafts-description"}
+                className={styles["modalText"]}
+              >
+                Local drafts stay on this browser so you can recover a combat if
+                the tab closes before you save the URL elsewhere.
+              </p>
+              {recoverError && (
+                <p className={styles["recoverError"]}>{recoverError}</p>
+              )}
+              {savedDrafts.length > 0 ? (
+                <div className={styles["draftList"]}>
+                  {savedDrafts.map((draft) => (
+                    <div
+                      key={draft.id}
+                      className={
+                        draft.id === draftId
+                          ? `${styles["draftCard"]} ${styles["draftCardCurrent"]}`
+                          : styles["draftCard"]
+                      }
+                    >
+                      <div className={styles["draftCardHeader"]}>
+                        <div className={styles["draftCardTitle"]}>
+                          {formatDraftNameSummary(draft.partyNames)} vs{" "}
+                          {formatDraftNameSummary(draft.enemyNames)}
+                        </div>
+                        <div className={styles["draftCardMeta"]}>
+                          Round {draft.roundNumber} • Saved{" "}
+                          {formatDraftSavedAt(draft.updatedAt)}
+                          {draft.id === draftId ? " • This tab" : ""}
+                        </div>
+                      </div>
+                      <div className={styles["draftCardActions"]}>
+                        <button
+                          type={"button"}
+                          className={styles["toolbarButtonPrimary"]}
+                          disabled={recoveringDraftId === draft.id}
+                          onClick={() => void handleRestoreDraft(draft)}
+                        >
+                          {recoveringDraftId === draft.id
+                            ? "Restoring..."
+                            : "Restore Here"}
+                        </button>
+                        <button
+                          type={"button"}
+                          className={styles["toolbarButton"]}
+                          disabled={recoveringDraftId === draft.id}
+                          onClick={() => handleDeleteDraft(draft.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className={styles["modalText"]}>
+                  No local drafts are stored on this browser yet.
+                </p>
+              )}
+            </div>
+            <div className={styles["modalActions"]}>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                onClick={closeRecoverModal}
+              >
+                {hasTrackerChanged || loadedFromEncodedState
+                  ? "Keep Current Tracker"
+                  : "Start New Tracker"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
       {showUrlWarning && (
         <>
           <div

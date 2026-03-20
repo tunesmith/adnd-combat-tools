@@ -34,6 +34,14 @@
     justify-content: flex-end;
 }
 
+.toolbarStatus {
+    align-self: center;
+    color: rgba(240, 239, 221, 0.86);
+    font-size: 0.95rem;
+    line-height: 1.2;
+    max-width: 19rem;
+}
+
 .toolbarButton,
 .toolbarButtonPrimary,
 .roundTab,
@@ -527,6 +535,10 @@
     width: min(34rem, calc(100vw - 2rem));
 }
 
+.recoverModal {
+    width: min(40rem, calc(100vw - 2rem));
+}
+
 .modalBody {
     padding: 0.9rem 0.9rem 0.2rem;
 }
@@ -548,6 +560,56 @@
     color: #111;
     font-size: 1rem;
     line-height: 1.35;
+}
+
+.recoverError {
+    margin: 0 0 0.9rem;
+    border: 1px solid rgba(140, 33, 33, 0.35);
+    background: rgba(140, 33, 33, 0.08);
+    color: #111;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    padding: 0.65rem 0.75rem;
+}
+
+.draftList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.draftCard {
+    border: 1px solid var(--copper);
+    background: rgba(175, 127, 0, 0.08);
+    padding: 0.75rem;
+}
+
+.draftCardCurrent {
+    background: rgba(175, 127, 0, 0.16);
+}
+
+.draftCardHeader {
+    margin-bottom: 0.6rem;
+}
+
+.draftCardTitle {
+    color: #111;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.draftCardMeta {
+    margin-top: 0.2rem;
+    color: rgba(17, 17, 17, 0.82);
+    font-size: 0.9rem;
+    line-height: 1.25;
+}
+
+.draftCardActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .modalActions {
@@ -602,6 +664,10 @@
 
     .toolbarButtons {
         justify-content: flex-start;
+    }
+
+    .toolbarStatus {
+        max-width: 100%;
     }
 
     .summaryCell {
