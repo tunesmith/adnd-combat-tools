@@ -270,6 +270,10 @@
     min-height: 4.15rem;
 }
 
+.cellShellSingle {
+    display: block;
+}
+
 .cellHalfEnemyInline,
 .cellHalfPartyInline {
     display: flex;
@@ -280,6 +284,11 @@
     gap: 0.15rem;
     padding: 0.1rem 0.15rem;
     min-width: 0;
+}
+
+.cellHalfSingle {
+    width: 100%;
+    height: 100%;
 }
 
 .cellHalfEnemyInline {
@@ -621,6 +630,12 @@
     max-height: calc(100vh - 3rem);
 }
 
+.combatModal {
+    top: 1.5rem;
+    width: min(52rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 3rem);
+}
+
 .modalBody {
     padding: 0.9rem 0.9rem 0.2rem;
 }
@@ -767,6 +782,283 @@
     padding: 0.45rem;
     margin: 0 0.75rem;
     resize: vertical;
+}
+
+.combatWizardMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.combatWizardNav {
+    display: flex;
+    gap: 0.45rem;
+    margin-left: auto;
+}
+
+.combatWizardBadge,
+.combatWizardResolvedBadge {
+    display: inline-block;
+    border: 1px solid var(--copper);
+    color: #111;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.1;
+    padding: 0.35rem 0.55rem;
+}
+
+.combatWizardBadge {
+    background: rgba(175, 127, 0, 0.08);
+}
+
+.combatWizardResolvedBadge {
+    background: rgba(84, 111, 58, 0.14);
+}
+
+.combatWizardProgress {
+    color: rgba(17, 17, 17, 0.78);
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.combatWizardName {
+    color: #111;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 0.45rem;
+}
+
+.combatWizardBodyResolved {
+    opacity: 0.82;
+}
+
+.combatWizardReadOnlyValue {
+    margin: 0 0.75rem 0.75rem;
+    border: 1px solid var(--copper);
+    background: rgba(175, 127, 0, 0.08);
+    color: #111;
+    font-size: 1rem;
+    line-height: 1.35;
+    padding: 0.55rem 0.65rem;
+}
+
+.combatWizardTextarea {
+    width: calc(100% - 1.5rem);
+    min-height: 4.8rem;
+    border: 1px solid var(--copper);
+    background: var(--eggshell);
+    color: #111;
+    font-family: 'Sura', serif;
+    font-size: 1rem;
+    line-height: 1.35;
+    padding: 0.45rem;
+    margin: 0 0.75rem;
+    resize: vertical;
+}
+
+.combatWizardEmptyTargets {
+    margin: 0 0.75rem;
+    border: 1px solid rgba(172, 114, 35, 0.36);
+    background: rgba(175, 127, 0, 0.08);
+    color: #111;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    padding: 0.75rem 0.8rem;
+}
+
+.combatWizardGridWrap {
+    margin: 0 0.75rem;
+    max-height: min(58vh, 34rem);
+    overflow: auto;
+    border: 1px solid rgba(172, 114, 35, 0.36);
+    background: #ece8d6;
+}
+
+.combatWizardGridTable,
+.combatWizardListTable {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    color: #111;
+}
+
+.combatWizardGridTable th,
+.combatWizardGridTable td,
+.combatWizardListTable th,
+.combatWizardListTable td {
+    border-right: 1px solid rgba(172, 114, 35, 0.36);
+    border-bottom: 1px solid rgba(172, 114, 35, 0.36);
+    vertical-align: top;
+}
+
+.combatWizardGridTable tr:last-child th,
+.combatWizardGridTable tr:last-child td,
+.combatWizardListTable tr:last-child th,
+.combatWizardListTable tr:last-child td {
+    border-bottom: 0;
+}
+
+.combatWizardGridTable th:last-child,
+.combatWizardGridTable td:last-child,
+.combatWizardListTable th:last-child,
+.combatWizardListTable td:last-child {
+    border-right: 0;
+}
+
+.combatWizardGridTable tbody tr:first-child {
+    height: 4.2rem;
+}
+
+.combatWizardCorner,
+.combatWizardColumnHeader,
+.combatWizardRowHeader,
+.combatWizardHpLabel {
+    color: var(--eggshell);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.combatWizardCorner {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    min-width: 6.8rem;
+    padding: 0.6rem 0.7rem;
+    background: linear-gradient(135deg, var(--caput-martuum), var(--dark-olive-green));
+    box-shadow: inset 0 -2px 0 var(--copper);
+    text-align: left;
+}
+
+.combatWizardColumnHeader {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    min-width: 7.5rem;
+    padding: 0.6rem 0.45rem;
+    background: var(--dark-olive-green);
+    box-shadow: inset 0 -2px 0 var(--copper);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.combatWizardRowHeader,
+.combatWizardHpLabel {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 6.8rem;
+    max-width: 11rem;
+    padding: 0.7rem 0.65rem;
+    background: var(--caput-martuum);
+    text-align: left;
+}
+
+.combatWizardHpLabelEnemy {
+    background: var(--dark-olive-green);
+}
+
+.combatWizardHpLabelParty {
+    background: var(--caput-martuum);
+}
+
+.combatWizardGridTable .interactionCell,
+.combatWizardListTable .interactionCell {
+    min-width: 7.5rem;
+    height: 4.2rem;
+    background: #663837;
+}
+
+.combatWizardGridTable .cellShell,
+.combatWizardListTable .cellShell {
+    min-width: 7.5rem;
+    min-height: 4.2rem;
+}
+
+.combatWizardGridTable .cellHalfEnemyInline,
+.combatWizardGridTable .cellHalfPartyInline,
+.combatWizardListTable .cellHalfEnemyInline,
+.combatWizardListTable .cellHalfPartyInline {
+    gap: 0.14rem;
+    padding: 0.16rem 0.18rem;
+}
+
+.combatWizardGridTable .cellEntryLabel,
+.combatWizardListTable .cellEntryLabel {
+    font-size: 0.76rem;
+}
+
+.combatWizardGridTable .cellEntryInputInline,
+.combatWizardListTable .cellEntryInputInline {
+    min-height: 1.65rem;
+    font-size: 1rem;
+    padding: 0.12rem 0.15rem;
+}
+
+.combatWizardHpCell {
+    min-width: 7.2rem;
+    background: rgba(175, 127, 0, 0.08);
+}
+
+.combatWizardHpCellEnemy {
+    background: rgba(84, 111, 58, 0.96);
+}
+
+.combatWizardHpCellParty {
+    background: rgba(90, 40, 41, 0.96);
+}
+
+.combatWizardHpEditor {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: stretch;
+    width: 100%;
+    min-height: 2.5rem;
+}
+
+.combatWizardHpEditorEnemy,
+.combatWizardHpEditorParty {
+    color: var(--eggshell);
+}
+
+.combatWizardHpMaxValue {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-width: 2rem;
+    padding: 0.35rem 0.45rem;
+    border-right: 1px solid rgba(17, 17, 17, 0.18);
+    color: #111;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.combatWizardHpMaxValueEnemy,
+.combatWizardHpMaxValueParty {
+    color: var(--eggshell);
+    border-right: 1px solid rgba(240, 239, 221, 0.22);
+}
+
+.combatWizardHpInput {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.5rem;
+    border: 0;
+    background: transparent;
+    color: #111;
+    font-family: 'Sura', serif;
+    font-size: 0.95rem;
+    line-height: 1.15;
+    padding: 0.35rem 0.4rem;
+    resize: none;
+}
+
+.combatWizardHpInputEnemy,
+.combatWizardHpInputParty {
+    color: var(--eggshell);
 }
 
 .intentionsWizardGridWrap {

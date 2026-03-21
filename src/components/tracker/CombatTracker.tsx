@@ -33,6 +33,10 @@ import {
   replaceIntentionWizardEntry,
   type IntentionWizardEntry,
 } from "../../helpers/trackerIntentionsWizard";
+import {
+  buildCombatWizardEntries,
+  type CombatWizardEntry,
+} from "../../helpers/trackerCombatWizard";
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -226,6 +230,11 @@ const CombatTracker = ({
     IntentionWizardEntry[]
   >([]);
   const [intentionWizardIndex, setIntentionWizardIndex] = useState<number>(0);
+  const [showCombatWizard, setShowCombatWizard] = useState<boolean>(false);
+  const [combatWizardIndex, setCombatWizardIndex] = useState<number>(0);
+  const [combatWizardAnchorKey, setCombatWizardAnchorKey] = useState<
+    number | undefined
+  >(undefined);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleDraft, setTitleDraft] = useState<string>("");
   const idCounter = useRef<number>(getNextCombatantKey(initialState));
@@ -233,6 +242,7 @@ const CombatTracker = ({
   const urlWarningShown = useRef<boolean>(false);
   const recoverPromptHandled = useRef<boolean>(false);
   const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const combatResultTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const reducer = (state: TrackerState, action: TrackerAction): TrackerState => {
@@ -344,6 +354,15 @@ const CombatTracker = ({
   const [state, dispatch] = useReducer(reducer, initialState);
   const currentRound = state.rounds[state.activeRound];
   const trackerTitle = state.title || "";
+  const canOpenCombatWizard = Boolean(
+    currentRound?.partyInitiative.trim() && currentRound?.enemyInitiative.trim()
+  );
+  const combatWizardEntries = useMemo<CombatWizardEntry[]>(
+    () => (currentRound ? buildCombatWizardEntries(currentRound) : []),
+    [currentRound]
+  );
+  const currentCombatWizardEntry = combatWizardEntries[combatWizardIndex];
+  const currentCombatWizardEntryKey = currentCombatWizardEntry?.combatantKey;
   const hasTrackerChanged = state !== initialStateRef.current;
   const partyColumnStyles = useMemo<CSSProperties[]>(
     () =>
@@ -517,7 +536,8 @@ const CombatTracker = ({
       !showUrlWarning &&
       !showRecoverModal &&
       !showShareModal &&
-      !showIntentionsWizard
+      !showIntentionsWizard &&
+      !showCombatWizard
     ) {
       return;
     }
@@ -528,6 +548,7 @@ const CombatTracker = ({
         setShowRecoverModal(false);
         setShowShareModal(false);
         setShowIntentionsWizard(false);
+        setShowCombatWizard(false);
         setRecoverError(undefined);
       }
     };
@@ -535,7 +556,32 @@ const CombatTracker = ({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showIntentionsWizard, showRecoverModal, showShareModal, showUrlWarning]);
+  }, [
+    showCombatWizard,
+    showIntentionsWizard,
+    showRecoverModal,
+    showShareModal,
+    showUrlWarning,
+  ]);
+
+  useEffect(() => {
+    if (combatWizardEntries.length === 0) {
+      setCombatWizardIndex(0);
+      return;
+    }
+
+    if (combatWizardIndex >= combatWizardEntries.length) {
+      setCombatWizardIndex(combatWizardEntries.length - 1);
+    }
+  }, [combatWizardEntries, combatWizardIndex]);
+
+  useEffect(() => {
+    if (!currentCombatWizardEntry) {
+      return;
+    }
+
+    setCombatWizardAnchorKey(currentCombatWizardEntry.combatantKey);
+  }, [currentCombatWizardEntry]);
 
   useEffect(() => {
     if (!shareCopied) {
@@ -557,6 +603,30 @@ const CombatTracker = ({
     shareTextareaRef.current?.focus();
     shareTextareaRef.current?.select();
   }, [showShareModal]);
+
+  useEffect(() => {
+    if (!showCombatWizard || currentCombatWizardEntryKey === undefined) {
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      const textarea = combatResultTextareaRef.current;
+
+      if (!textarea) {
+        return;
+      }
+
+      textarea.focus();
+      const cursorPosition = textarea.value.length;
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [
+    combatWizardIndex,
+    currentCombatWizardEntryKey,
+    showCombatWizard,
+  ]);
 
   useEffect(() => {
     if (!isEditingTitle) {
@@ -650,6 +720,26 @@ const CombatTracker = ({
     setShowIntentionsWizard(false);
   };
 
+  const openCombatWizard = () => {
+    if (!canOpenCombatWizard) {
+      return;
+    }
+
+    const nextEntries = buildCombatWizardEntries(currentRound);
+    const anchorIndex = combatWizardAnchorKey
+      ? nextEntries.findIndex(
+          (entry) => entry.combatantKey === combatWizardAnchorKey
+        )
+      : -1;
+
+    setCombatWizardIndex(anchorIndex >= 0 ? anchorIndex : 0);
+    setShowCombatWizard(true);
+  };
+
+  const closeCombatWizard = () => {
+    setShowCombatWizard(false);
+  };
+
   const updateWizardEntry = (updater: (entry: IntentionWizardEntry) => IntentionWizardEntry) => {
     if (!currentIntentionWizardEntry) {
       return;
@@ -669,6 +759,15 @@ const CombatTracker = ({
 
   const currentIntentionWizardEntry =
     intentionWizardEntries[intentionWizardIndex];
+
+  const updateCombatWizardResult = (entry: CombatWizardEntry, value: string) => {
+    dispatch({
+      type: entry.side === "enemy" ? "set-enemy-state" : "set-party-state",
+      index: entry.index,
+      field: "result",
+      value,
+    });
+  };
 
   const handleClearCurrentDraft = () => {
     if (
@@ -761,7 +860,9 @@ const CombatTracker = ({
   const renderInteractionCell = (
     enemyIndex: number,
     partyIndex: number,
-    style?: CSSProperties
+    style?: CSSProperties,
+    allowVisibilityToggle = true,
+    displayMode: "both" | "enemyOnly" | "partyOnly" = "both"
   ) => {
     const enemyCombatant = currentRound.enemies[enemyIndex];
     const partyCombatant = currentRound.party[partyIndex];
@@ -781,6 +882,8 @@ const CombatTracker = ({
         partyToEnemyValue={cellState.partyToEnemy}
         enemyToPartyVisible={cellState.enemyToPartyVisible}
         partyToEnemyVisible={cellState.partyToEnemyVisible}
+        allowVisibilityToggle={allowVisibilityToggle}
+        displayMode={displayMode}
         onEnemyToPartyVisibilityChange={(value) =>
           dispatch({
             type: "set-cell-visibility",
@@ -841,6 +944,193 @@ const CombatTracker = ({
     </div>
   );
 
+  const renderCombatWizardHpEditor = (
+    maxHp: string | undefined,
+    hp: string,
+    onChange: (value: string) => void,
+    side: CombatWizardEntry["side"]
+  ) => (
+    <div
+      className={
+        side === "party"
+          ? `${styles["combatWizardHpEditor"]} ${styles["combatWizardHpEditorParty"]}`
+          : `${styles["combatWizardHpEditor"]} ${styles["combatWizardHpEditorEnemy"]}`
+      }
+    >
+      <span
+        className={
+          side === "party"
+            ? `${styles["combatWizardHpMaxValue"]} ${styles["combatWizardHpMaxValueParty"]}`
+            : `${styles["combatWizardHpMaxValue"]} ${styles["combatWizardHpMaxValueEnemy"]}`
+        }
+      >
+        {maxHp || "-"}
+      </span>
+      <AutoHeightTextarea
+        className={
+          side === "party"
+            ? `${styles["combatWizardHpInput"]} ${styles["combatWizardHpInputParty"]}`
+            : `${styles["combatWizardHpInput"]} ${styles["combatWizardHpInputEnemy"]}`
+        }
+        value={hp}
+        onChange={onChange}
+      />
+    </div>
+  );
+
+  const renderCombatWizardTargets = (entry: CombatWizardEntry) => {
+    if (entry.targetIndices.length === 0) {
+      return (
+        <div className={styles["combatWizardEmptyTargets"]}>
+          No targets are active in the grid for this combatant. You can still
+          fill out the action result, or close this modal and adjust targets in
+          the tracker.
+        </div>
+      );
+    }
+
+    if (entry.side === "enemy") {
+      return (
+        <div className={styles["combatWizardGridWrap"]}>
+          <table className={styles["combatWizardGridTable"]}>
+            <thead>
+              <tr>
+                <th className={styles["combatWizardCorner"]}>Target</th>
+                {entry.targetIndices.map((partyIndex) => {
+                  const partyCombatant = currentRound.party[partyIndex];
+                  if (!partyCombatant) {
+                    return null;
+                  }
+
+                  return (
+                    <th
+                      key={`combat-party-header-${partyCombatant.key}`}
+                      className={styles["combatWizardColumnHeader"]}
+                    >
+                      {getPartyDisplayName(partyIndex)}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th className={styles["combatWizardRowHeader"]}>
+                  {entry.combatantName}
+                </th>
+                {entry.targetIndices.map((partyIndex) =>
+                  renderInteractionCell(
+                    entry.index,
+                    partyIndex,
+                    undefined,
+                    false,
+                    "enemyOnly"
+                  )
+                )}
+              </tr>
+              <tr>
+                <th
+                  className={`${styles["combatWizardHpLabel"]} ${styles["combatWizardHpLabelEnemy"]}`}
+                >
+                  HP
+                </th>
+                {entry.targetIndices.map((partyIndex) => {
+                  const partyCombatant = currentRound.party[partyIndex];
+                  const partyState = currentRound.partyStates[partyIndex];
+
+                  if (!partyCombatant || !partyState) {
+                    return null;
+                  }
+
+                  return (
+                    <td
+                      key={`combat-party-hp-${partyCombatant.key}`}
+                      className={`${styles["combatWizardHpCell"]} ${styles["combatWizardHpCellEnemy"]}`}
+                    >
+                      {renderCombatWizardHpEditor(
+                        partyCombatant.maxHp,
+                        partyState.hp,
+                        (value) =>
+                          dispatch({
+                            type: "set-party-state",
+                            index: partyIndex,
+                            field: "hp",
+                            value,
+                          }),
+                        "enemy"
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles["combatWizardGridWrap"]}>
+        <table className={styles["combatWizardListTable"]}>
+          <thead>
+            <tr>
+              <th className={styles["combatWizardCorner"]}>Target</th>
+              <th className={styles["combatWizardColumnHeader"]}>
+                {entry.combatantName}
+              </th>
+              <th
+                className={`${styles["combatWizardColumnHeader"]} ${styles["combatWizardHpLabelParty"]}`}
+              >
+                HP
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {entry.targetIndices.map((enemyIndex) => {
+              const enemyCombatant = currentRound.enemies[enemyIndex];
+              const enemyState = currentRound.enemyStates[enemyIndex];
+
+              if (!enemyCombatant || !enemyState) {
+                return null;
+              }
+
+              return (
+                <tr key={`combat-enemy-row-${enemyCombatant.key}`}>
+                  <th className={styles["combatWizardRowHeader"]}>
+                    {getEnemyDisplayName(enemyIndex)}
+                  </th>
+                  {renderInteractionCell(
+                    enemyIndex,
+                    entry.index,
+                    undefined,
+                    false,
+                    "partyOnly"
+                  )}
+                  <td
+                    className={`${styles["combatWizardHpCell"]} ${styles["combatWizardHpCellParty"]}`}
+                  >
+                    {renderCombatWizardHpEditor(
+                      enemyCombatant.maxHp,
+                      enemyState.hp,
+                      (value) =>
+                        dispatch({
+                          type: "set-enemy-state",
+                          index: enemyIndex,
+                          field: "hp",
+                          value,
+                        }),
+                      "party"
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
     <div id={"app-modal"}>
       <div className={styles["page"]}>
@@ -873,6 +1163,14 @@ const CombatTracker = ({
               onClick={openIntentionsWizard}
             >
               Register Intentions
+            </button>
+            <button
+              type={"button"}
+              className={styles["toolbarButton"]}
+              disabled={!canOpenCombatWizard}
+              onClick={openCombatWizard}
+            >
+              Combat
             </button>
             <button
               type={"button"}
@@ -1581,6 +1879,106 @@ const CombatTracker = ({
                   Done
                 </button>
               )}
+            </div>
+          </div>
+        </>
+      )}
+      {showCombatWizard && currentCombatWizardEntry && (
+        <>
+          <div className={styles["modalShadow"]} onClick={closeCombatWizard} />
+          <div
+            className={`${styles["modal"]} ${styles["combatModal"]}`}
+            role={"dialog"}
+            aria-modal={"true"}
+            aria-labelledby={"combat-wizard-title"}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={"combat-wizard-title"} className={styles["modalTitle"]}>
+              Combat
+            </div>
+            <div
+              className={
+                currentCombatWizardEntry.resolved
+                  ? `${styles["modalBody"]} ${styles["combatWizardBodyResolved"]}`
+                  : styles["modalBody"]
+              }
+            >
+              <div className={styles["combatWizardMeta"]}>
+                <span className={styles["combatWizardBadge"]}>
+                  {currentCombatWizardEntry.side === "enemy" ? "Enemy" : "Party"}
+                </span>
+                <span className={styles["combatWizardProgress"]}>
+                  {combatWizardIndex + 1} of {combatWizardEntries.length}
+                </span>
+                {currentCombatWizardEntry.resolved ? (
+                  <span className={styles["combatWizardResolvedBadge"]}>
+                    Resolved
+                  </span>
+                ) : null}
+                <div className={styles["combatWizardNav"]}>
+                  <button
+                    type={"button"}
+                    className={styles["toolbarButton"]}
+                    disabled={combatWizardIndex === 0}
+                    onClick={() =>
+                      setCombatWizardIndex((previousIndex) =>
+                        Math.max(0, previousIndex - 1)
+                      )
+                    }
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type={"button"}
+                    className={styles["toolbarButtonPrimary"]}
+                    disabled={combatWizardIndex >= combatWizardEntries.length - 1}
+                    onClick={() =>
+                      setCombatWizardIndex((previousIndex) =>
+                        Math.min(combatWizardEntries.length - 1, previousIndex + 1)
+                      )
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+              <div className={styles["combatWizardName"]}>
+                {currentCombatWizardEntry.combatantName}
+              </div>
+              <div className={styles["modalLabel"]}>Intention</div>
+              <div className={styles["combatWizardReadOnlyValue"]}>
+                {currentCombatWizardEntry.intention || "No intention recorded."}
+              </div>
+              <label
+                className={styles["modalLabel"]}
+                htmlFor={"combat-wizard-result"}
+              >
+                Result
+              </label>
+              <textarea
+                ref={combatResultTextareaRef}
+                id={"combat-wizard-result"}
+                className={styles["combatWizardTextarea"]}
+                value={currentCombatWizardEntry.result}
+                onChange={(event) =>
+                  updateCombatWizardResult(
+                    currentCombatWizardEntry,
+                    event.target.value
+                  )
+                }
+                placeholder={"misses, hits for 6, sleep: one saves, two asleep..."}
+              />
+              <div className={styles["modalLabel"]}>Current Targets</div>
+              {renderCombatWizardTargets(currentCombatWizardEntry)}
+            </div>
+            <div className={styles["modalActions"]}>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                onClick={closeCombatWizard}
+              >
+                Close
+              </button>
             </div>
           </div>
         </>
