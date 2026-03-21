@@ -1,7 +1,9 @@
 import {
   addCombatant,
   createInitialTrackerState,
+  getDefaultRoundLabel,
   insertRoundAfterActive,
+  incrementRoundLabel,
   updateCombatant,
 } from "../helpers/trackerState";
 
@@ -9,7 +11,8 @@ describe("tracker state helpers", () => {
   test("new trackers start with matchup cells hidden until a target matters", () => {
     const initialState = createInitialTrackerState();
 
-    expect(initialState.version).toBe(6);
+    expect(initialState.version).toBe(7);
+    expect(initialState.rounds[0]?.label).toBe("Round 1");
     expect(initialState.rounds[0]?.party).toHaveLength(3);
     expect(initialState.rounds[0]?.enemies).toHaveLength(3);
     expect(initialState.rounds[0]?.cells[0]?.[0]).toEqual({
@@ -73,6 +76,7 @@ describe("tracker state helpers", () => {
     }
 
     expect(nextState.activeRound).toBe(1);
+    expect(nextRound.label).toBe("Round 2");
     expect(nextRound.party[0]?.maxHp).toBe("");
     expect(nextRound.partyInitiative).toBe("");
     expect(nextRound.enemyInitiative).toBe("");
@@ -133,6 +137,27 @@ describe("tracker state helpers", () => {
     });
   });
 
+  test("advancing rounds continues the current round label pattern", () => {
+    const initialState = createInitialTrackerState();
+    initialState.rounds[0]!.label = "Surprise 1";
+
+    const surpriseTwoState = insertRoundAfterActive(initialState);
+    expect(surpriseTwoState.rounds[1]?.label).toBe("Surprise 2");
+
+    surpriseTwoState.activeRound = 1;
+    surpriseTwoState.rounds[1]!.label = "Round 1";
+
+    const roundTwoState = insertRoundAfterActive(surpriseTwoState);
+    expect(roundTwoState.rounds[2]?.label).toBe("Round 2");
+  });
+
+  test("round label helpers preserve numbering patterns", () => {
+    expect(getDefaultRoundLabel(3)).toBe("Round 3");
+    expect(incrementRoundLabel("Round 1")).toBe("Round 2");
+    expect(incrementRoundLabel("Surprise1")).toBe("Surprise2");
+    expect(incrementRoundLabel("Ambush")).toBe("Ambush 2");
+  });
+
   test("updating max hp refreshes blank round hp values without overwriting custom values", () => {
     const initialState = createInitialTrackerState();
     const firstRound = initialState.rounds[0];
@@ -150,6 +175,7 @@ describe("tracker state helpers", () => {
       maxHp: "",
     };
     initialState.rounds.push({
+      label: "Round 2",
       party: firstRound.party.map((combatant) => ({
         ...combatant,
       })),

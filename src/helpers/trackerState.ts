@@ -11,6 +11,7 @@ type TrackerSide = "party" | "enemy";
 
 const DEFAULT_PARTY_COUNT = 3;
 const DEFAULT_ENEMY_COUNT = 3;
+const DEFAULT_ROUND_PREFIX = "Round";
 
 const createBaseCombatant = (
   key: number,
@@ -47,6 +48,31 @@ export const createCombatantRoundState = (
   result: "",
   notes: "",
 });
+
+export const getDefaultRoundLabel = (roundNumber: number): string =>
+  `${DEFAULT_ROUND_PREFIX} ${roundNumber}`;
+
+export const incrementRoundLabel = (label: string): string => {
+  const trimmedLabel = label.trim();
+
+  if (!trimmedLabel) {
+    return getDefaultRoundLabel(2);
+  }
+
+  const trailingNumberMatch = trimmedLabel.match(/^(.*?)(\d+)$/);
+
+  if (!trailingNumberMatch) {
+    return `${trimmedLabel} 2`;
+  }
+
+  const prefix = trailingNumberMatch[1] || "";
+  const currentNumber = trailingNumberMatch[2] || "";
+  const nextNumber = (parseInt(currentNumber, 10) + 1)
+    .toString()
+    .padStart(currentNumber.length, "0");
+
+  return `${prefix}${nextNumber}`;
+};
 
 const createEmptyCell = (): TrackerCellState => ({
   enemyToParty: "",
@@ -106,8 +132,10 @@ const createNextRoundCells = (
 export const createTrackerRound = (
   party: TrackerCombatant[],
   enemies: TrackerCombatant[],
+  label: string,
   previousRound?: TrackerRound
 ): TrackerRound => ({
+  label,
   party: cloneCombatants(party),
   enemies: cloneCombatants(enemies),
   partyInitiative: "",
@@ -172,8 +200,8 @@ export const createInitialTrackerState = (): TrackerState => {
   const enemies = createDefaultEnemies();
 
   return {
-    version: 6,
-    rounds: [createTrackerRound(party, enemies)],
+    version: 7,
+    rounds: [createTrackerRound(party, enemies, getDefaultRoundLabel(1))],
     activeRound: 0,
   };
 };
@@ -186,6 +214,7 @@ export const insertRoundAfterActive = (state: TrackerState): TrackerState => {
   const newRound = createTrackerRound(
     currentRound.party,
     currentRound.enemies,
+    incrementRoundLabel(currentRound.label),
     currentRound
   );
   const rounds = state.rounds.slice();

@@ -79,8 +79,12 @@ export interface TrackerRoundV5 extends TrackerRoundV4 {
   enemies: TrackerCombatant[];
 }
 
-export interface TrackerRound extends Omit<TrackerRoundV5, "cells"> {
+export interface TrackerRoundV6 extends Omit<TrackerRoundV5, "cells"> {
   cells: TrackerCellState[][];
+}
+
+export interface TrackerRound extends TrackerRoundV6 {
+  label: string;
 }
 
 export interface TrackerStateV1 {
@@ -131,15 +135,23 @@ export interface TrackerStateV5 {
 export interface TrackerStateV6 {
   version: 6;
   title?: string;
+  rounds: TrackerRoundV6[];
+  activeRound: number;
+}
+
+export interface TrackerStateV7 {
+  version: 7;
+  title?: string;
   rounds: TrackerRound[];
   activeRound: number;
 }
 
-export type TrackerState = TrackerStateV6;
+export type TrackerState = TrackerStateV7;
 export type TrackerStateAnyVersion =
   | TrackerStateV1
   | TrackerStateV2
   | TrackerStateV3
   | TrackerStateV4
   | TrackerStateV5
-  | TrackerStateV6;
+  | TrackerStateV6
+  | TrackerStateV7;

@@ -79,7 +79,8 @@ describe("tracker codec", () => {
 
     const migrated = transformTrackerState(legacyState);
 
-    expect(migrated.version).toBe(6);
+    expect(migrated.version).toBe(7);
+    expect(migrated.rounds[0]?.label).toBe("Round 1");
     expect(migrated.rounds[0]?.party[0]?.maxHp).toBe("19");
     expect(migrated.rounds[0]?.enemies[0]?.maxHp).toBe("11");
     expect(migrated.rounds[0]?.cells[0]?.[0]).toEqual({
@@ -164,7 +165,8 @@ describe("tracker codec", () => {
 
     const decoded = await decodeTrackerState(encodedState);
 
-    expect(decoded.version).toBe(6);
+    expect(decoded.version).toBe(7);
+    expect(decoded.rounds[0]?.label).toBe("Round 1");
     expect(decoded.rounds[0]?.party[0]?.maxHp).toBe("14");
     expect(decoded.rounds[0]?.enemies[0]?.maxHp).toBe("8");
     expect(decoded.rounds[0]?.cells[0]?.[0]).toEqual({
@@ -233,7 +235,8 @@ describe("tracker codec", () => {
 
     const migrated = transformTrackerState(versionFiveState);
 
-    expect(migrated.version).toBe(6);
+    expect(migrated.version).toBe(7);
+    expect(migrated.rounds[0]?.label).toBe("Round 1");
     expect(migrated.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: "xx",
       partyToEnemy: "",
@@ -242,12 +245,80 @@ describe("tracker codec", () => {
     });
   });
 
+  test("migrates version 6 tracker state to labeled rounds", () => {
+    const migrated = transformTrackerState({
+      version: 6,
+      title: "Bridge Ambush",
+      rounds: [
+        {
+          party: [
+            {
+              key: 1,
+              name: "Lodi",
+              class: 1,
+              level: 7,
+              armorType: 10,
+              armorClass: -1,
+              weapon: 12,
+              maxHp: "19",
+            },
+          ],
+          enemies: [
+            {
+              key: 2,
+              name: "Ghoul",
+              class: 10,
+              level: 3,
+              armorType: 1,
+              armorClass: 6,
+              weapon: 0,
+              maxHp: "11",
+            },
+          ],
+          partyInitiative: "",
+          enemyInitiative: "",
+          summary: "",
+          cells: [[{
+            enemyToParty: "",
+            partyToEnemy: "",
+            enemyToPartyVisible: false,
+            partyToEnemyVisible: false,
+          }]],
+          partyStates: [
+            {
+              hp: "19",
+              effect: "",
+              action: "",
+              result: "",
+              notes: "",
+            },
+          ],
+          enemyStates: [
+            {
+              hp: "11",
+              effect: "",
+              action: "",
+              result: "",
+              notes: "",
+            },
+          ],
+        },
+      ],
+      activeRound: 0,
+    });
+
+    expect(migrated.version).toBe(7);
+    expect(migrated.title).toBe("Bridge Ambush");
+    expect(migrated.rounds[0]?.label).toBe("Round 1");
+  });
+
   test("roundtrips current-version tracker titles through the codec", async () => {
     const encoded = await encodeTrackerState({
-      version: 6,
+      version: 7,
       title: "Assault on the Shrine",
       rounds: [
         {
+          label: "Surprise 1",
           party: [
             {
               key: 1,
@@ -307,6 +378,7 @@ describe("tracker codec", () => {
     const decoded = await decodeTrackerState(encoded);
 
     expect(decoded.title).toBe("Assault on the Shrine");
+    expect(decoded.rounds[0]?.label).toBe("Surprise 1");
     expect(decoded.rounds[0]?.partyStates[0]?.action).toBe("shoot bow");
   });
 });

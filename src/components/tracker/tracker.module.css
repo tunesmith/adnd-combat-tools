@@ -40,6 +40,28 @@
     justify-content: flex-end;
 }
 
+.toolbarControls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: flex-end;
+}
+
+.toolbarSubrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.toolbarSubgroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
 .toolbarStatus {
     align-self: center;
     color: rgba(240, 239, 221, 0.86);
@@ -50,6 +72,7 @@
 
 .toolbarButton,
 .toolbarButtonPrimary,
+.toolbarButtonDanger,
 .roundTab,
 .roundTabActive {
     border: 2px solid var(--copper);
@@ -67,11 +90,67 @@
     color: var(--caput-martuum);
 }
 
+.toolbarButtonDanger {
+    background: rgba(140, 33, 33, 0.14);
+    color: #111;
+}
+
 .toolbarButton:disabled,
+.toolbarButtonDanger:disabled,
 .roundTab:disabled,
 .roundTabActive:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+.toolbarMenuWrap {
+    position: relative;
+}
+
+.toolbarMenu {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    z-index: 8;
+    min-width: 13.5rem;
+    border: 2px solid var(--copper);
+    background: var(--eggshell);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+    padding: 0.25rem 0;
+}
+
+.toolbarMenuItem {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: var(--caput-martuum);
+    font-family: 'Sura', serif;
+    font-size: 1rem;
+    line-height: 1.2;
+    text-align: left;
+    padding: 0.55rem 0.8rem;
+    cursor: pointer;
+}
+
+.toolbarMenuItem:hover,
+.toolbarMenuItem:focus-visible {
+    background: rgba(175, 127, 0, 0.12);
+}
+
+.toolbarMenuItemDanger {
+    color: #6f1717;
+}
+
+.toolbarMenuItem:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.toolbarMenuDivider {
+    height: 1px;
+    margin: 0.25rem 0;
+    background: rgba(172, 114, 35, 0.36);
 }
 
 .roundTabs {
@@ -99,9 +178,38 @@
     text-align: center;
 }
 
-.roundHeadingRound {
+.roundHeadingRoundButton {
+    display: block;
+    border: 0;
+    background: transparent;
+    color: var(--eggshell);
+    font-family: 'Sura', serif;
     font-size: 2rem;
     line-height: 1.1;
+    margin: 0 auto;
+    padding: 0;
+    cursor: pointer;
+}
+
+.roundHeadingRoundButton:hover,
+.roundHeadingRoundButton:focus-visible {
+    text-decoration: underline;
+}
+
+.roundHeadingLabelInput {
+    display: block;
+    width: min(20rem, calc(100% - 2rem));
+    border: 2px solid var(--copper);
+    background: rgba(240, 239, 221, 0.08);
+    color: var(--eggshell);
+    font-family: 'Sura', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0.1rem auto 0;
+    padding: 0.25rem 0.55rem;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .roundHeadingTitleButton,
@@ -135,6 +243,7 @@
 }
 
 .roundHeadingTitleInput {
+    display: block;
     width: min(32rem, calc(100% - 2rem));
     border: 2px solid var(--copper);
     background: rgba(240, 239, 221, 0.08);
@@ -628,6 +737,10 @@
 
 .shareModal {
     width: min(40rem, calc(100vw - 2rem));
+}
+
+.confirmModal {
+    width: min(28rem, calc(100vw - 2rem));
 }
 
 .intentionsModal {
@@ -1221,6 +1334,14 @@
     }
 
     .toolbarButtons {
+        justify-content: flex-start;
+    }
+
+    .toolbarControls {
+        align-items: flex-start;
+    }
+
+    .toolbarSubrow {
         justify-content: flex-start;
     }
 

@@ -63,6 +63,7 @@ type CellVisibilityField = Extract<
 type TrackerAction =
   | { type: "replace-state"; state: TrackerState }
   | { type: "set-title"; value: string }
+  | { type: "set-round-label"; value: string }
   | { type: "select-round"; index: number }
   | { type: "set-round-field"; field: RoundField; value: string }
   | {
@@ -256,6 +257,8 @@ const CombatTracker = ({
     undefined
   );
   const [shareCopied, setShareCopied] = useState<boolean>(false);
+  const [showMoreActions, setShowMoreActions] = useState<boolean>(false);
+  const [showDeleteRoundModal, setShowDeleteRoundModal] = useState<boolean>(false);
   const [showIntentionsWizard, setShowIntentionsWizard] = useState<boolean>(false);
   const [intentionWizardEntries, setIntentionWizardEntries] = useState<
     IntentionWizardEntry[]
@@ -268,6 +271,8 @@ const CombatTracker = ({
   >(undefined);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleDraft, setTitleDraft] = useState<string>("");
+  const [isEditingRoundLabel, setIsEditingRoundLabel] = useState<boolean>(false);
+  const [roundLabelDraft, setRoundLabelDraft] = useState<string>("");
   const idCounter = useRef<number>(getNextCombatantKey(initialState));
   const pausedEncodedState = useRef<string | undefined>(undefined);
   const urlWarningShown = useRef<boolean>(false);
@@ -275,6 +280,8 @@ const CombatTracker = ({
   const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const combatResultTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const roundLabelInputRef = useRef<HTMLInputElement | null>(null);
+  const moreActionsRef = useRef<HTMLDivElement | null>(null);
 
   const reducer = (state: TrackerState, action: TrackerAction): TrackerState => {
     switch (action.type) {
@@ -285,6 +292,11 @@ const CombatTracker = ({
           ...state,
           title: action.value || undefined,
         };
+      case "set-round-label":
+        return updateCurrentRound(state, (round) => ({
+          ...round,
+          label: action.value,
+        }));
       case "select-round":
         return {
           ...state,
@@ -384,6 +396,7 @@ const CombatTracker = ({
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const currentRound = state.rounds[state.activeRound];
+  const currentRoundLabel = currentRound?.label || "";
   const trackerTitle = state.title || "";
   const canOpenCombatWizard = Boolean(
     currentRound?.partyInitiative.trim() && currentRound?.enemyInitiative.trim()
@@ -578,8 +591,10 @@ const CombatTracker = ({
         setShowUrlWarning(false);
         setShowRecoverModal(false);
         setShowShareModal(false);
+        setShowDeleteRoundModal(false);
         setShowIntentionsWizard(false);
         setShowCombatWizard(false);
+        setShowMoreActions(false);
         setRecoverError(undefined);
       }
     };
@@ -589,11 +604,29 @@ const CombatTracker = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     showCombatWizard,
+    showDeleteRoundModal,
     showIntentionsWizard,
+    showMoreActions,
     showRecoverModal,
     showShareModal,
     showUrlWarning,
   ]);
+
+  useEffect(() => {
+    if (!showMoreActions) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!moreActionsRef.current?.contains(event.target as Node)) {
+        setShowMoreActions(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+
+    return () => window.removeEventListener("mousedown", handlePointerDown);
+  }, [showMoreActions]);
 
   useEffect(() => {
     if (combatWizardEntries.length === 0) {
@@ -666,6 +699,12 @@ const CombatTracker = ({
   }, [isEditingTitle, trackerTitle]);
 
   useEffect(() => {
+    if (!isEditingRoundLabel) {
+      setRoundLabelDraft(currentRoundLabel);
+    }
+  }, [currentRoundLabel, isEditingRoundLabel]);
+
+  useEffect(() => {
     if (!isEditingTitle) {
       return;
     }
@@ -673,6 +712,15 @@ const CombatTracker = ({
     titleInputRef.current?.focus();
     titleInputRef.current?.select();
   }, [isEditingTitle]);
+
+  useEffect(() => {
+    if (!isEditingRoundLabel) {
+      return;
+    }
+
+    roundLabelInputRef.current?.focus();
+    roundLabelInputRef.current?.select();
+  }, [isEditingRoundLabel]);
 
   if (!currentRound) {
     return <></>;
@@ -691,6 +739,10 @@ const CombatTracker = ({
 
   const closeShareModal = () => {
     setShowShareModal(false);
+  };
+
+  const closeDeleteRoundModal = () => {
+    setShowDeleteRoundModal(false);
   };
 
   const buildShareUrl = () => {
@@ -741,6 +793,25 @@ const CombatTracker = ({
     setIsEditingTitle(false);
   };
 
+  const openRoundLabelEditor = () => {
+    setRoundLabelDraft(currentRoundLabel);
+    setIsEditingRoundLabel(true);
+  };
+
+  const commitRoundLabelEdit = () => {
+    const nextLabel = roundLabelDraft.trim() || currentRoundLabel;
+    dispatch({
+      type: "set-round-label",
+      value: nextLabel,
+    });
+    setIsEditingRoundLabel(false);
+  };
+
+  const cancelRoundLabelEdit = () => {
+    setRoundLabelDraft(currentRoundLabel);
+    setIsEditingRoundLabel(false);
+  };
+
   const openIntentionsWizard = () => {
     setIntentionWizardEntries(buildIntentionWizardEntries(currentRound));
     setIntentionWizardIndex(0);
@@ -769,6 +840,11 @@ const CombatTracker = ({
 
   const closeCombatWizard = () => {
     setShowCombatWizard(false);
+  };
+
+  const confirmDeleteRound = () => {
+    dispatch({ type: "remove-round" });
+    setShowDeleteRoundModal(false);
   };
 
   const updateWizardEntry = (updater: (entry: IntentionWizardEntry) => IntentionWizardEntry) => {
@@ -1172,83 +1248,112 @@ const CombatTracker = ({
               Enemy on the left of each matchup cell, party on the right.
             </div>
           </div>
-          <div className={styles["toolbarButtons"]}>
-            <button
-              type={"button"}
-              className={styles["toolbarButtonPrimary"]}
-              onClick={() => dispatch({ type: "advance-round" })}
-            >
-              Advance Round
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              disabled={state.rounds.length <= 1}
-              onClick={() => dispatch({ type: "remove-round" })}
-            >
-              Delete Round
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              onClick={openIntentionsWizard}
-            >
-              Register Intentions
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              disabled={!canOpenCombatWizard}
-              onClick={openCombatWizard}
-            >
-              Combat
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              disabled={!encodedTrackerState}
-              onClick={() => void handleCopyShareUrl()}
-            >
-              {shareCopied ? "Share URL Copied" : "Copy Share URL"}
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              disabled={savedDrafts.length === 0}
-              onClick={() => {
-                setRecoverError(undefined);
-                setShowRecoverModal(true);
-              }}
-            >
-              Recover Local Draft
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              disabled={!hasLocalDraft}
-              onClick={handleClearCurrentDraft}
-            >
-              Clear Local Draft
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              onClick={() =>
-                dispatch({ type: "add-combatant", side: "party", key: nextKey() })
-              }
-            >
-              Add Party Member
-            </button>
-            <button
-              type={"button"}
-              className={styles["toolbarButton"]}
-              onClick={() =>
-                dispatch({ type: "add-combatant", side: "enemy", key: nextKey() })
-              }
-            >
-              Add Enemy
-            </button>
-            <div className={styles["toolbarStatus"]}>{localDraftStatus}</div>
+          <div className={styles["toolbarControls"]}>
+            <div className={styles["toolbarButtons"]}>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                onClick={openIntentionsWizard}
+              >
+                Register Intentions
+              </button>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                disabled={!canOpenCombatWizard}
+                onClick={openCombatWizard}
+              >
+                Combat
+              </button>
+              <button
+                type={"button"}
+                className={styles["toolbarButtonPrimary"]}
+                onClick={() => dispatch({ type: "advance-round" })}
+              >
+                Advance Round
+              </button>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                disabled={!encodedTrackerState}
+                onClick={() => void handleCopyShareUrl()}
+              >
+                {shareCopied ? "Share URL Copied" : "Copy Share URL"}
+              </button>
+              <div className={styles["toolbarMenuWrap"]} ref={moreActionsRef}>
+                <button
+                  type={"button"}
+                  className={styles["toolbarButton"]}
+                  aria-haspopup={"menu"}
+                  aria-expanded={showMoreActions}
+                  onClick={() => setShowMoreActions((previous) => !previous)}
+                >
+                  More
+                </button>
+                {showMoreActions ? (
+                  <div className={styles["toolbarMenu"]} role={"menu"}>
+                    <button
+                      type={"button"}
+                      className={styles["toolbarMenuItem"]}
+                      disabled={savedDrafts.length === 0}
+                      onClick={() => {
+                        setRecoverError(undefined);
+                        setShowRecoverModal(true);
+                        setShowMoreActions(false);
+                      }}
+                    >
+                      Recover Local Draft
+                    </button>
+                    <button
+                      type={"button"}
+                      className={styles["toolbarMenuItem"]}
+                      disabled={!hasLocalDraft}
+                      onClick={() => {
+                        handleClearCurrentDraft();
+                        setShowMoreActions(false);
+                      }}
+                    >
+                      Clear Local Draft
+                    </button>
+                    <div className={styles["toolbarMenuDivider"]} />
+                    <button
+                      type={"button"}
+                      className={`${styles["toolbarMenuItem"]} ${styles["toolbarMenuItemDanger"]}`}
+                      disabled={state.rounds.length <= 1}
+                      onClick={() => {
+                        setShowDeleteRoundModal(true);
+                        setShowMoreActions(false);
+                      }}
+                    >
+                      Delete Round
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            <div className={styles["toolbarSubrow"]}>
+              <div className={styles["toolbarSubgroup"]}>
+                <button
+                  type={"button"}
+                  className={styles["toolbarButton"]}
+                  onClick={() =>
+                    dispatch({ type: "add-combatant", side: "party", key: nextKey() })
+                  }
+                >
+                  Add Party Member
+                </button>
+                <button
+                  type={"button"}
+                  className={styles["toolbarButton"]}
+                  onClick={() =>
+                    dispatch({ type: "add-combatant", side: "enemy", key: nextKey() })
+                  }
+                >
+                  Add Enemy
+                </button>
+              </div>
+              <div className={styles["toolbarStatus"]}>{localDraftStatus}</div>
+            </div>
           </div>
         </div>
         <div className={styles["roundTabs"]}>
@@ -1263,7 +1368,7 @@ const CombatTracker = ({
               }
               onClick={() => dispatch({ type: "select-round", index: roundIndex })}
             >
-              Round {roundIndex + 1}
+              {state.rounds[roundIndex]?.label || `Round ${roundIndex + 1}`}
             </button>
           ))}
         </div>
@@ -1311,9 +1416,39 @@ const CombatTracker = ({
                 Add Combat Title
               </button>
             )}
-            <div className={styles["roundHeadingRound"]}>
-              Round {state.activeRound + 1}
-            </div>
+            {isEditingRoundLabel ? (
+              <input
+                ref={roundLabelInputRef}
+                type={"text"}
+                className={styles["roundHeadingLabelInput"]}
+                value={roundLabelDraft}
+                onChange={(event) => setRoundLabelDraft(event.target.value)}
+                onBlur={commitRoundLabelEdit}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    commitRoundLabelEdit();
+                    return;
+                  }
+
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    cancelRoundLabelEdit();
+                  }
+                }}
+                aria-label={"Round Label"}
+              />
+            ) : (
+              <button
+                type={"button"}
+                className={styles["roundHeadingRoundButton"]}
+                onClick={openRoundLabelEditor}
+              >
+                {currentRoundLabel}
+              </button>
+            )}
           </div>
           <table className={styles["trackerTable"]}>
             <thead>
@@ -1758,6 +1893,45 @@ const CombatTracker = ({
                 onClick={closeShareModal}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+      {showDeleteRoundModal && (
+        <>
+          <div className={styles["modalShadow"]} onClick={closeDeleteRoundModal} />
+          <div
+            className={`${styles["modal"]} ${styles["confirmModal"]}`}
+            role={"dialog"}
+            aria-modal={"true"}
+            aria-labelledby={"delete-round-title"}
+            aria-describedby={"delete-round-description"}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={"delete-round-title"} className={styles["modalTitle"]}>
+              Delete Round
+            </div>
+            <div className={styles["modalBody"]}>
+              <p id={"delete-round-description"} className={styles["modalText"]}>
+                Delete {currentRoundLabel}? This removes the round and its
+                recorded actions from the tracker.
+              </p>
+            </div>
+            <div className={styles["modalActions"]}>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                onClick={closeDeleteRoundModal}
+              >
+                Cancel
+              </button>
+              <button
+                type={"button"}
+                className={styles["toolbarButtonDanger"]}
+                onClick={confirmDeleteRound}
+              >
+                Delete Round
               </button>
             </div>
           </div>

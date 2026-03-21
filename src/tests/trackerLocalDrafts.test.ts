@@ -31,6 +31,7 @@ const createTrackerState = (
   title?: string
 ): TrackerState => {
   const rounds = Array.from({ length: activeRound + 1 }, () => ({
+    label: "Round 1",
     party: [
       {
         key: 1,
@@ -85,7 +86,7 @@ const createTrackerState = (
   }));
 
   return {
-    version: 6,
+    version: 7,
     title,
     rounds,
     activeRound,
