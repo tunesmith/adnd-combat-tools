@@ -377,12 +377,15 @@
     width: 100%;
     min-height: 3.2rem;
     border: 0;
-    resize: vertical;
     background: transparent;
     color: var(--eggshell);
     font-family: 'Sura', serif;
     font-size: 1rem;
+    line-height: 1.35;
     padding: 0.45rem;
+    resize: none;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .metaInput {
@@ -453,12 +456,15 @@
     width: 100%;
     min-height: 17rem;
     border: 0;
-    resize: vertical;
     background: transparent;
     color: #111;
     font-family: 'Sura', serif;
     font-size: 1rem;
+    line-height: 1.35;
     padding: 0.45rem;
+    resize: none;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .combatantShell {
@@ -781,7 +787,9 @@
     line-height: 1.35;
     padding: 0.45rem;
     margin: 0 0.75rem;
-    resize: vertical;
+    resize: none;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .combatWizardMeta {
@@ -856,7 +864,9 @@
     line-height: 1.35;
     padding: 0.45rem;
     margin: 0 0.75rem;
-    resize: vertical;
+    resize: none;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .combatWizardEmptyTargets {

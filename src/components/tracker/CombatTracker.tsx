@@ -1,5 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
+import type { CSSProperties, TextareaHTMLAttributes } from "react";
 import {
   addCombatant,
   createInitialTrackerState,
@@ -108,15 +116,21 @@ const LOCAL_DRAFT_AUTOSAVE_MS = 750;
 const URL_WARNING_THRESHOLD = 6000;
 const SHARE_URL_COPIED_MS = 2200;
 
-const AutoHeightTextarea = ({
-  className,
-  value,
-  onChange,
-}: {
-  className?: string;
+type AutoHeightTextareaProps = Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "onChange" | "value"
+> & {
   value: string;
   onChange: (value: string) => void;
-}) => {
+};
+
+const AutoHeightTextarea = forwardRef<
+  HTMLTextAreaElement,
+  AutoHeightTextareaProps
+>(function AutoHeightTextarea(
+  { className, onInput, value, onChange, rows = 1, ...props },
+  forwardedRef
+) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const resizeTextarea = () => {
@@ -135,15 +149,32 @@ const AutoHeightTextarea = ({
 
   return (
     <textarea
-      ref={textareaRef}
-      rows={1}
+      {...props}
+      ref={(node) => {
+        textareaRef.current = node;
+
+        if (!forwardedRef) {
+          return;
+        }
+
+        if (typeof forwardedRef === "function") {
+          forwardedRef(node);
+          return;
+        }
+
+        forwardedRef.current = node;
+      }}
+      rows={rows}
       className={className}
       value={value}
-      onInput={resizeTextarea}
+      onInput={(event) => {
+        resizeTextarea();
+        onInput?.(event);
+      }}
       onChange={(event) => onChange(event.target.value)}
     />
   );
-};
+});
 
 const updateCurrentRound = (
   state: TrackerState,
@@ -1429,15 +1460,15 @@ const CombatTracker = ({
                             "enemy"
                           )
                         ) : (
-                          <textarea
+                          <AutoHeightTextarea
                             className={styles["metaTextarea"]}
                             value={stateValue}
-                            onChange={(event) =>
+                            onChange={(value) =>
                               dispatch({
                                 type: "set-enemy-state",
                                 index: enemyIndex,
                                 field: field.key,
-                                value: event.target.value,
+                                value,
                               })
                             }
                           />
@@ -1480,15 +1511,15 @@ const CombatTracker = ({
                             "party"
                           )
                         ) : (
-                          <textarea
+                          <AutoHeightTextarea
                             className={styles["metaTextarea"]}
                             value={stateValue}
-                            onChange={(event) =>
+                            onChange={(value) =>
                               dispatch({
                                 type: "set-party-state",
                                 index: partyIndex,
                                 field: field.key,
-                                value: event.target.value,
+                                value,
                               })
                             }
                           />
@@ -1503,14 +1534,14 @@ const CombatTracker = ({
                       rowSpan={partyFieldDefinitions.length}
                     >
                       <label className={styles["summaryLabel"]}>Round Notes</label>
-                      <textarea
+                      <AutoHeightTextarea
                         className={styles["summaryTextarea"]}
                         value={currentRound.summary}
-                        onChange={(event) =>
+                        onChange={(value) =>
                           dispatch({
                             type: "set-round-field",
                             field: "summary",
-                            value: event.target.value,
+                            value,
                           })
                         }
                         placeholder={
@@ -1763,14 +1794,14 @@ const CombatTracker = ({
               >
                 Intention
               </label>
-              <textarea
+              <AutoHeightTextarea
                 id={"intentions-wizard-text"}
                 className={styles["intentionsWizardTextarea"]}
                 value={currentIntentionWizardEntry.intention}
-                onChange={(event) =>
+                onChange={(value) =>
                   updateWizardEntry((entry) => ({
                     ...entry,
-                    intention: event.target.value,
+                    intention: value,
                   }))
                 }
                 placeholder={"advance, attack, cast sleep, hold, charge..."}
@@ -1955,15 +1986,15 @@ const CombatTracker = ({
               >
                 Result
               </label>
-              <textarea
+              <AutoHeightTextarea
                 ref={combatResultTextareaRef}
                 id={"combat-wizard-result"}
                 className={styles["combatWizardTextarea"]}
                 value={currentCombatWizardEntry.result}
-                onChange={(event) =>
+                onChange={(value) =>
                   updateCombatWizardResult(
                     currentCombatWizardEntry,
-                    event.target.value
+                    value
                   )
                 }
                 placeholder={"misses, hits for 6, sleep: one saves, two asleep..."}
