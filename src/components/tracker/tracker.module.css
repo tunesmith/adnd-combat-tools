@@ -15,13 +15,19 @@
     margin-bottom: 1rem;
 }
 
+.pageHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-width: 34rem;
+}
+
 .pageTitle {
     font-size: 2.5rem;
     line-height: 1;
 }
 
 .pageHint {
-    margin-top: 0.5rem;
     max-width: 52rem;
     font-size: 1rem;
 }
@@ -91,7 +97,56 @@
 .roundHeading {
     padding: 1rem 1rem 0;
     text-align: center;
+}
+
+.roundHeadingRound {
     font-size: 2rem;
+    line-height: 1.1;
+}
+
+.roundHeadingTitleButton,
+.roundHeadingTitlePlaceholder {
+    display: inline-block;
+    border: 0;
+    background: transparent;
+    color: var(--eggshell);
+    font-family: 'Sura', serif;
+    line-height: 1.15;
+    margin-bottom: 0.2rem;
+    padding: 0;
+    cursor: pointer;
+}
+
+.roundHeadingTitleButton {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.roundHeadingTitleButton:hover,
+.roundHeadingTitleButton:focus-visible,
+.roundHeadingTitlePlaceholder:hover,
+.roundHeadingTitlePlaceholder:focus-visible {
+    text-decoration: underline;
+}
+
+.roundHeadingTitlePlaceholder {
+    font-size: 1rem;
+    color: rgba(240, 239, 221, 0.84);
+}
+
+.roundHeadingTitleInput {
+    width: min(32rem, calc(100% - 2rem));
+    border: 2px solid var(--copper);
+    background: rgba(240, 239, 221, 0.08);
+    color: var(--eggshell);
+    font-family: 'Sura', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0 auto 0.25rem;
+    padding: 0.35rem 0.55rem;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .trackerTable {
@@ -627,6 +682,13 @@
 .draftCardMeta {
     margin-top: 0.2rem;
     color: rgba(17, 17, 17, 0.82);
+    font-size: 0.9rem;
+    line-height: 1.25;
+}
+
+.draftCardSummary {
+    margin-top: 0.28rem;
+    color: rgba(17, 17, 17, 0.8);
     font-size: 0.9rem;
     line-height: 1.25;
 }

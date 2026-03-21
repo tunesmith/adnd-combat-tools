@@ -51,6 +51,7 @@ type CellVisibilityField = Extract<
 
 type TrackerAction =
   | { type: "replace-state"; state: TrackerState }
+  | { type: "set-title"; value: string }
   | { type: "select-round"; index: number }
   | { type: "set-round-field"; field: RoundField; value: string }
   | {
@@ -179,6 +180,13 @@ const formatDraftSavedAt = (updatedAt: number): string =>
     minute: "2-digit",
   });
 
+const formatDraftTitle = (draft: TrackerLocalDraftRecord): string =>
+  draft.title?.trim()
+    ? draft.title
+    : `${formatDraftNameSummary(draft.partyNames)} vs ${formatDraftNameSummary(
+        draft.enemyNames
+      )}`;
+
 const CombatTracker = ({
   rememberedState,
   loadedFromEncodedState = false,
@@ -219,16 +227,24 @@ const CombatTracker = ({
     IntentionWizardEntry[]
   >([]);
   const [intentionWizardIndex, setIntentionWizardIndex] = useState<number>(0);
+  const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
+  const [titleDraft, setTitleDraft] = useState<string>("");
   const idCounter = useRef<number>(getNextCombatantKey(initialState));
   const pausedEncodedState = useRef<string | undefined>(undefined);
   const urlWarningShown = useRef<boolean>(false);
   const recoverPromptHandled = useRef<boolean>(false);
   const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const reducer = (state: TrackerState, action: TrackerAction): TrackerState => {
     switch (action.type) {
       case "replace-state":
         return action.state;
+      case "set-title":
+        return {
+          ...state,
+          title: action.value || undefined,
+        };
       case "select-round":
         return {
           ...state,
@@ -328,6 +344,7 @@ const CombatTracker = ({
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const currentRound = state.rounds[state.activeRound];
+  const trackerTitle = state.title || "";
   const hasTrackerChanged = state !== initialStateRef.current;
   const partyColumnStyles = useMemo<CSSProperties[]>(
     () =>
@@ -542,6 +559,21 @@ const CombatTracker = ({
     shareTextareaRef.current?.select();
   }, [showShareModal]);
 
+  useEffect(() => {
+    if (!isEditingTitle) {
+      setTitleDraft(trackerTitle);
+    }
+  }, [isEditingTitle, trackerTitle]);
+
+  useEffect(() => {
+    if (!isEditingTitle) {
+      return;
+    }
+
+    titleInputRef.current?.focus();
+    titleInputRef.current?.select();
+  }, [isEditingTitle]);
+
   if (!currentRound) {
     return <></>;
   }
@@ -589,6 +621,24 @@ const CombatTracker = ({
       setShareModalUrl(shareUrl);
       setShowShareModal(true);
     }
+  };
+
+  const openTitleEditor = () => {
+    setTitleDraft(trackerTitle);
+    setIsEditingTitle(true);
+  };
+
+  const commitTitleEdit = () => {
+    dispatch({
+      type: "set-title",
+      value: titleDraft.trim(),
+    });
+    setIsEditingTitle(false);
+  };
+
+  const cancelTitleEdit = () => {
+    setTitleDraft(trackerTitle);
+    setIsEditingTitle(false);
   };
 
   const openIntentionsWizard = () => {
@@ -750,7 +800,7 @@ const CombatTracker = ({
     <div id={"app-modal"}>
       <div className={styles["page"]}>
         <div className={styles["toolbar"]}>
-          <div>
+          <div className={styles["pageHeader"]}>
             <div className={styles["pageTitle"]}>AD&amp;D Combat Tracker</div>
             <div className={styles["pageHint"]}>
               Enemy on the left of each matchup cell, party on the right.
@@ -845,7 +895,51 @@ const CombatTracker = ({
         </div>
         <div className={styles["tableWrap"]}>
           <div className={styles["roundHeading"]}>
-            Round {state.activeRound + 1}
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                type={"text"}
+                className={styles["roundHeadingTitleInput"]}
+                value={titleDraft}
+                onChange={(event) => setTitleDraft(event.target.value)}
+                onBlur={commitTitleEdit}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    commitTitleEdit();
+                    return;
+                  }
+
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    cancelTitleEdit();
+                  }
+                }}
+                aria-label={"Combat Title"}
+                placeholder={"Add Combat Title"}
+              />
+            ) : trackerTitle ? (
+              <button
+                type={"button"}
+                className={styles["roundHeadingTitleButton"]}
+                onClick={openTitleEditor}
+              >
+                {trackerTitle}
+              </button>
+            ) : (
+              <button
+                type={"button"}
+                className={styles["roundHeadingTitlePlaceholder"]}
+                onClick={openTitleEditor}
+              >
+                Add Combat Title
+              </button>
+            )}
+            <div className={styles["roundHeadingRound"]}>
+              Round {state.activeRound + 1}
+            </div>
           </div>
           <table className={styles["trackerTable"]}>
             <thead>
@@ -1179,14 +1273,19 @@ const CombatTracker = ({
                     >
                       <div className={styles["draftCardHeader"]}>
                         <div className={styles["draftCardTitle"]}>
-                          {formatDraftNameSummary(draft.partyNames)} vs{" "}
-                          {formatDraftNameSummary(draft.enemyNames)}
+                          {formatDraftTitle(draft)}
                         </div>
                         <div className={styles["draftCardMeta"]}>
                           Round {draft.roundNumber} • Saved{" "}
                           {formatDraftSavedAt(draft.updatedAt)}
                           {draft.id === draftId ? " • This tab" : ""}
                         </div>
+                        {draft.title?.trim() ? (
+                          <div className={styles["draftCardSummary"]}>
+                            {formatDraftNameSummary(draft.partyNames)} vs{" "}
+                            {formatDraftNameSummary(draft.enemyNames)}
+                          </div>
+                        ) : null}
                       </div>
                       <div className={styles["draftCardActions"]}>
                         <button

@@ -130,6 +130,7 @@ export interface TrackerStateV5 {
 
 export interface TrackerStateV6 {
   version: 6;
+  title?: string;
   rounds: TrackerRound[];
   activeRound: number;
 }

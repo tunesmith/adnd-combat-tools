@@ -25,7 +25,11 @@ class MemoryStorage implements StorageLike {
   }
 }
 
-const createTrackerState = (label: string, activeRound: number): TrackerState => {
+const createTrackerState = (
+  label: string,
+  activeRound: number,
+  title?: string
+): TrackerState => {
   const rounds = Array.from({ length: activeRound + 1 }, () => ({
     party: [
       {
@@ -82,6 +86,7 @@ const createTrackerState = (label: string, activeRound: number): TrackerState =>
 
   return {
     version: 6,
+    title,
     rounds,
     activeRound,
   };
@@ -99,7 +104,7 @@ describe("tracker local drafts", () => {
   test("saves and lists tracker drafts with preview metadata", () => {
     const storage = new MemoryStorage();
     const firstState = createTrackerState("First", 0);
-    const secondState = createTrackerState("Second", 3);
+    const secondState = createTrackerState("Second", 3, "Assault on the Shrine");
 
     saveTrackerLocalDraft(storage, "draft-1", "encoded-1", firstState);
     const drafts = saveTrackerLocalDraft(storage, "draft-2", "encoded-2", secondState);
@@ -107,6 +112,7 @@ describe("tracker local drafts", () => {
     expect(drafts).toHaveLength(2);
     expect(drafts[0]?.id).toBe("draft-2");
     expect(drafts[0]?.roundNumber).toBe(4);
+    expect(drafts[0]?.title).toBe("Assault on the Shrine");
     expect(drafts[0]?.partyNames).toEqual(["Second Party"]);
     expect(getTrackerLocalDraft(storage, "draft-1")?.encodedState).toBe("encoded-1");
     expect(listTrackerLocalDrafts(storage).map((draft) => draft.id)).toEqual([

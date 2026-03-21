@@ -1,5 +1,9 @@
 import { deflate } from "zlib";
-import { decodeTrackerState, transformTrackerState } from "../helpers/trackerCodec";
+import {
+  decodeTrackerState,
+  encodeTrackerState,
+  transformTrackerState,
+} from "../helpers/trackerCodec";
 import type { TrackerStateV2, TrackerStateV5 } from "../types/tracker";
 
 const encodeLegacyState = (value: unknown): Promise<string> =>
@@ -236,5 +240,73 @@ describe("tracker codec", () => {
       enemyToPartyVisible: true,
       partyToEnemyVisible: true,
     });
+  });
+
+  test("roundtrips current-version tracker titles through the codec", async () => {
+    const encoded = await encodeTrackerState({
+      version: 6,
+      title: "Assault on the Shrine",
+      rounds: [
+        {
+          party: [
+            {
+              key: 1,
+              name: "Lodi",
+              class: 1,
+              level: 7,
+              armorType: 10,
+              armorClass: -1,
+              weapon: 12,
+              maxHp: "19",
+            },
+          ],
+          enemies: [
+            {
+              key: 2,
+              name: "Ghoul",
+              class: 10,
+              level: 3,
+              armorType: 1,
+              armorClass: 6,
+              weapon: 0,
+              maxHp: "11",
+            },
+          ],
+          partyInitiative: "4",
+          enemyInitiative: "5",
+          summary: "",
+          cells: [[{
+            enemyToParty: "xx",
+            partyToEnemy: "",
+            enemyToPartyVisible: true,
+            partyToEnemyVisible: false,
+          }]],
+          partyStates: [
+            {
+              hp: "19",
+              effect: "",
+              action: "shoot bow",
+              result: "",
+              notes: "",
+            },
+          ],
+          enemyStates: [
+            {
+              hp: "11",
+              effect: "",
+              action: "advance",
+              result: "",
+              notes: "",
+            },
+          ],
+        },
+      ],
+      activeRound: 0,
+    });
+
+    const decoded = await decodeTrackerState(encoded);
+
+    expect(decoded.title).toBe("Assault on the Shrine");
+    expect(decoded.rounds[0]?.partyStates[0]?.action).toBe("shoot bow");
   });
 });

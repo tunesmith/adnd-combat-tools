@@ -11,6 +11,7 @@ export interface TrackerLocalDraftRecord {
   encodedState: string;
   updatedAt: number;
   roundNumber: number;
+  title?: string;
   partyNames: string[];
   enemyNames: string[];
 }
@@ -52,6 +53,8 @@ const parseStore = (rawValue: string | null): TrackerLocalDraftStore => {
                 typeof draft.encodedState === "string" &&
                 typeof draft.updatedAt === "number" &&
                 typeof draft.roundNumber === "number" &&
+                (typeof draft.title === "undefined" ||
+                  typeof draft.title === "string") &&
                 Array.isArray(draft.partyNames) &&
                 Array.isArray(draft.enemyNames)
             )
@@ -105,6 +108,7 @@ export const saveTrackerLocalDraft = (
     encodedState,
     updatedAt: Date.now(),
     roundNumber: state.activeRound + 1,
+    title: state.title?.trim() || undefined,
     partyNames: (currentRound?.party || []).map(
       (combatant) => combatant.name || "Unnamed"
     ),
