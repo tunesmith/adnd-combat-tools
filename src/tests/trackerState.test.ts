@@ -219,4 +219,48 @@ describe("tracker state helpers", () => {
     expect(updated.rounds[0]?.enemies).toHaveLength(3);
     expect(updated.rounds[1]?.enemies).toHaveLength(4);
   });
+
+  test("adding an enemy copies the previous enemy and increments its name", () => {
+    const initialState = createInitialTrackerState();
+    const round = initialState.rounds[0];
+
+    if (!round) {
+      throw new Error("Missing initial round");
+    }
+
+    const lastEnemy = round.enemies[round.enemies.length - 1];
+    if (!lastEnemy) {
+      throw new Error("Missing last enemy");
+    }
+
+    lastEnemy.name = "Gnoll 2";
+    lastEnemy.level = 4;
+    lastEnemy.armorType = 5;
+    lastEnemy.armorClass = 6;
+    lastEnemy.weapon = 11;
+    lastEnemy.maxHp = "20";
+
+    const updated = addCombatant(initialState, "enemy", 99);
+    const updatedRound = updated.rounds[0];
+    const addedEnemy = updatedRound?.enemies[updatedRound.enemies.length - 1];
+    const addedEnemyState =
+      updatedRound?.enemyStates[updatedRound.enemyStates.length - 1];
+
+    expect(addedEnemy).toMatchObject({
+      key: 99,
+      name: "Gnoll 3",
+      level: 4,
+      armorType: 5,
+      armorClass: 6,
+      weapon: 11,
+      maxHp: "20",
+    });
+    expect(addedEnemyState).toEqual({
+      hp: "20",
+      effect: "",
+      action: "",
+      result: "",
+      notes: "",
+    });
+  });
 });

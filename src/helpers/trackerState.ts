@@ -144,6 +144,29 @@ const createDefaultEnemies = () =>
     createTrackerCombatant(index + DEFAULT_PARTY_COUNT + 1, "enemy", index)
   );
 
+const incrementCopiedEnemyName = (
+  previousName: string | undefined,
+  fallbackCount: number
+): string => {
+  const trimmedName = previousName?.trim() || "";
+
+  if (!trimmedName) {
+    return `Enemy ${fallbackCount + 1}`;
+  }
+
+  const trailingNumberMatch = trimmedName.match(/^(.*?)(?:\s+(\d+))$/);
+  if (trailingNumberMatch) {
+    const baseName = trailingNumberMatch[1]?.trim() || trimmedName;
+    const currentNumber = parseInt(trailingNumberMatch[2] || "", 10);
+
+    if (Number.isFinite(currentNumber)) {
+      return `${baseName} ${currentNumber + 1}`;
+    }
+  }
+
+  return `${trimmedName} 2`;
+};
+
 export const createInitialTrackerState = (): TrackerState => {
   const party = createDefaultParty();
   const enemies = createDefaultEnemies();
@@ -199,11 +222,25 @@ export const addCombatant = (
     return state;
   }
 
-  const combatant = createTrackerCombatant(
-    nextKey,
-    side,
-    side === "party" ? currentRound.party.length : currentRound.enemies.length
-  );
+  const combatant =
+    side === "party"
+      ? createTrackerCombatant(nextKey, side, currentRound.party.length)
+      : (() => {
+          const previousEnemy = currentRound.enemies[currentRound.enemies.length - 1];
+
+          if (!previousEnemy) {
+            return createTrackerCombatant(nextKey, side, currentRound.enemies.length);
+          }
+
+          return {
+            ...cloneCombatant(previousEnemy),
+            key: nextKey,
+            name: incrementCopiedEnemyName(
+              previousEnemy.name,
+              currentRound.enemies.length
+            ),
+          };
+        })();
 
   if (side === "party") {
     return {
