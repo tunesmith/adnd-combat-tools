@@ -28,6 +28,12 @@ import TrackerCell from "./TrackerCell";
 import TrackerCombatantInput from "./TrackerCombatantInput";
 import styles from "./tracker.module.css";
 import { getTrackerCombatantWidestLineWidth } from "../../helpers/trackerCombatantDisplay";
+import {
+  buildIntentionWizardEntries,
+  replaceIntentionWizardEntry,
+  toggleIntentionWizardEntryTarget,
+  type IntentionWizardEntry,
+} from "../../helpers/trackerIntentionsWizard";
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -172,62 +178,6 @@ const formatDraftSavedAt = (updatedAt: number): string =>
     hour: "numeric",
     minute: "2-digit",
   });
-
-interface IntentionWizardEntry {
-  side: TrackerSide;
-  index: number;
-  combatantKey: number;
-  combatantName: string;
-  targetOptions: {
-    targetIndex: number;
-    targetKey: number;
-    targetName: string;
-    selected: boolean;
-    lockedOpen: boolean;
-  }[];
-  intention: string;
-}
-
-const buildIntentionWizardEntries = (
-  round: TrackerRound
-): IntentionWizardEntry[] => {
-  const enemyEntries: IntentionWizardEntry[] = round.enemies.map(
-    (combatant, index) => ({
-      side: "enemy",
-      index,
-      combatantKey: combatant.key,
-      combatantName: combatant.name || `Enemy ${index + 1}`,
-      targetOptions: round.party.map((targetCombatant, targetIndex) => ({
-        targetIndex,
-        targetKey: targetCombatant.key,
-        targetName: targetCombatant.name || `Party ${targetIndex + 1}`,
-        selected:
-          round.cells[index]?.[targetIndex]?.enemyToPartyVisible || false,
-        lockedOpen: Boolean(round.cells[index]?.[targetIndex]?.enemyToParty.trim()),
-      })),
-      intention: round.enemyStates[index]?.action || "",
-    })
-  );
-  const partyEntries: IntentionWizardEntry[] = round.party.map(
-    (combatant, index) => ({
-      side: "party",
-      index,
-      combatantKey: combatant.key,
-      combatantName: combatant.name || `Party ${index + 1}`,
-      targetOptions: round.enemies.map((targetCombatant, targetIndex) => ({
-        targetIndex,
-        targetKey: targetCombatant.key,
-        targetName: targetCombatant.name || `Enemy ${targetIndex + 1}`,
-        selected:
-          round.cells[targetIndex]?.[index]?.partyToEnemyVisible || false,
-        lockedOpen: Boolean(round.cells[targetIndex]?.[index]?.partyToEnemy.trim()),
-      })),
-      intention: round.partyStates[index]?.action || "",
-    })
-  );
-
-  return enemyEntries.concat(partyEntries);
-};
 
 const CombatTracker = ({
   rememberedState,
@@ -651,75 +601,43 @@ const CombatTracker = ({
     setShowIntentionsWizard(false);
   };
 
-  const updateWizardEntry = (
-    updater: (entry: IntentionWizardEntry) => IntentionWizardEntry
-  ) => {
-    setIntentionWizardEntries((previousEntries) => {
-      const currentEntry = previousEntries[intentionWizardIndex];
-      if (!currentEntry) {
-        return previousEntries;
-      }
+  const updateWizardEntry = (updater: (entry: IntentionWizardEntry) => IntentionWizardEntry) => {
+    if (!currentIntentionWizardEntry) {
+      return;
+    }
 
-      const nextEntry = updater(currentEntry);
-      const nextEntries = previousEntries.map((entry, index) =>
-        index === intentionWizardIndex ? nextEntry : entry
-      );
-
-      dispatch({
-        type: nextEntry.side === "enemy" ? "set-enemy-state" : "set-party-state",
-        index: nextEntry.index,
-        field: "action",
-        value: nextEntry.intention,
-      });
-
-      return nextEntries;
+    const nextEntry = updater(currentIntentionWizardEntry);
+    setIntentionWizardEntries((previousEntries) =>
+      replaceIntentionWizardEntry(previousEntries, intentionWizardIndex, nextEntry)
+    );
+    dispatch({
+      type: nextEntry.side === "enemy" ? "set-enemy-state" : "set-party-state",
+      index: nextEntry.index,
+      field: "action",
+      value: nextEntry.intention,
     });
   };
 
   const toggleWizardTarget = (targetIndex: number) => {
-    setIntentionWizardEntries((previousEntries) => {
-      const currentEntry = previousEntries[intentionWizardIndex];
-      if (!currentEntry) {
-        return previousEntries;
-      }
+    if (!currentIntentionWizardEntry) {
+      return;
+    }
 
-      const nextTargetOptions = currentEntry.targetOptions.map((targetOption) =>
-        targetOption.targetIndex === targetIndex && !targetOption.lockedOpen
-          ? {
-              ...targetOption,
-              selected: !targetOption.selected,
-            }
-          : targetOption
-      );
-      const changedTarget = nextTargetOptions.find(
-        (targetOption) => targetOption.targetIndex === targetIndex
-      );
+    const { nextEntry, visibilityChange } = toggleIntentionWizardEntryTarget(
+      currentIntentionWizardEntry,
+      targetIndex
+    );
 
-      if (!changedTarget || changedTarget.lockedOpen) {
-        return previousEntries;
-      }
+    if (!visibilityChange) {
+      return;
+    }
 
-      dispatch({
-        type: "set-cell-visibility",
-        rowIndex:
-          currentEntry.side === "enemy" ? currentEntry.index : targetIndex,
-        columnIndex:
-          currentEntry.side === "enemy" ? targetIndex : currentEntry.index,
-        field:
-          currentEntry.side === "enemy"
-            ? "enemyToPartyVisible"
-            : "partyToEnemyVisible",
-        value: changedTarget.selected,
-      });
-
-      return previousEntries.map((entry, index) =>
-        index === intentionWizardIndex
-          ? {
-              ...entry,
-              targetOptions: nextTargetOptions,
-            }
-          : entry
-      );
+    setIntentionWizardEntries((previousEntries) =>
+      replaceIntentionWizardEntry(previousEntries, intentionWizardIndex, nextEntry)
+    );
+    dispatch({
+      type: "set-cell-visibility",
+      ...visibilityChange,
     });
   };
 
