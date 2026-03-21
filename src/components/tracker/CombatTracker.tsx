@@ -111,7 +111,7 @@ const partyFieldDefinitions: { key: RoundCombatantField; label: string }[] = [
   { key: "hp", label: "HP" },
   { key: "action", label: "Intention" },
   { key: "result", label: "Result" },
-  { key: "effect", label: "Effect" },
+  { key: "effect", label: "Current Effect" },
   { key: "notes", label: "Notes" },
 ];
 
@@ -283,6 +283,7 @@ const CombatTracker = ({
   const recoverPromptHandled = useRef<boolean>(false);
   const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const combatResultTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const intentionsTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const roundLabelInputRef = useRef<HTMLInputElement | null>(null);
   const moreActionsRef = useRef<HTMLDivElement | null>(null);
@@ -762,6 +763,32 @@ const CombatTracker = ({
     roundLabelInputRef.current?.select();
   }, [isEditingRoundLabel]);
 
+  const currentIntentionWizardEntry =
+    intentionWizardEntries[intentionWizardIndex];
+  const currentIntentionResolved = Boolean(
+    currentIntentionWizardEntry?.intention.trim()
+  );
+
+  useEffect(() => {
+    if (!showIntentionsWizard || !currentIntentionWizardEntry) {
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      const textarea = intentionsTextareaRef.current;
+
+      if (!textarea) {
+        return;
+      }
+
+      textarea.focus();
+      const cursorPosition = textarea.value.length;
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [currentIntentionWizardEntry, intentionWizardIndex, showIntentionsWizard]);
+
   if (!currentRound) {
     return <></>;
   }
@@ -904,17 +931,20 @@ const CombatTracker = ({
     });
   };
 
-  const currentIntentionWizardEntry =
-    intentionWizardEntries[intentionWizardIndex];
-  const currentIntentionResolved = Boolean(
-    currentIntentionWizardEntry?.intention.trim()
-  );
-
   const updateCombatWizardResult = (entry: CombatWizardEntry, value: string) => {
     dispatch({
       type: entry.side === "enemy" ? "set-enemy-state" : "set-party-state",
       index: entry.index,
       field: "result",
+      value,
+    });
+  };
+
+  const updateCombatWizardEffect = (entry: CombatWizardEntry, value: string) => {
+    dispatch({
+      type: entry.side === "enemy" ? "set-enemy-state" : "set-party-state",
+      index: entry.index,
+      field: "effect",
       value,
     });
   };
@@ -1128,6 +1158,22 @@ const CombatTracker = ({
     </div>
   );
 
+  const renderCombatWizardEffectEditor = (
+    value: string,
+    onChange: (value: string) => void,
+    side: CombatWizardEntry["side"]
+  ) => (
+    <AutoHeightTextarea
+      className={
+        side === "party"
+          ? `${styles["combatWizardEffectInput"]} ${styles["combatWizardEffectInputParty"]}`
+          : `${styles["combatWizardEffectInput"]} ${styles["combatWizardEffectInputEnemy"]}`
+      }
+      value={value}
+      onChange={onChange}
+    />
+  );
+
   const renderCombatWizardTargets = (entry: CombatWizardEntry) => {
     if (entry.targetIndices.length === 0) {
       return (
@@ -1213,6 +1259,39 @@ const CombatTracker = ({
                   );
                 })}
               </tr>
+              <tr>
+                <th
+                  className={`${styles["combatWizardHpLabel"]} ${styles["combatWizardHpLabelEnemy"]}`}
+                >
+                  Current Effect
+                </th>
+                {entry.targetIndices.map((partyIndex) => {
+                  const partyState = currentRound.partyStates[partyIndex];
+
+                  if (!partyState) {
+                    return null;
+                  }
+
+                  return (
+                    <td
+                      key={`combat-party-effect-${partyIndex}`}
+                      className={`${styles["combatWizardEffectCell"]} ${styles["combatWizardEffectCellEnemy"]}`}
+                    >
+                      {renderCombatWizardEffectEditor(
+                        partyState.effect,
+                        (value) =>
+                          dispatch({
+                            type: "set-party-state",
+                            index: partyIndex,
+                            field: "effect",
+                            value,
+                          }),
+                        "enemy"
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1232,6 +1311,11 @@ const CombatTracker = ({
                 className={`${styles["combatWizardColumnHeader"]} ${styles["combatWizardHpLabelParty"]}`}
               >
                 HP
+              </th>
+              <th
+                className={`${styles["combatWizardColumnHeader"]} ${styles["combatWizardHpLabelParty"]}`}
+              >
+                Current Effect
               </th>
             </tr>
           </thead>
@@ -1267,6 +1351,21 @@ const CombatTracker = ({
                           type: "set-enemy-state",
                           index: enemyIndex,
                           field: "hp",
+                          value,
+                        }),
+                      "party"
+                    )}
+                  </td>
+                  <td
+                    className={`${styles["combatWizardEffectCell"]} ${styles["combatWizardEffectCellParty"]}`}
+                  >
+                    {renderCombatWizardEffectEditor(
+                      enemyState.effect,
+                      (value) =>
+                        dispatch({
+                          type: "set-enemy-state",
+                          index: enemyIndex,
+                          field: "effect",
                           value,
                         }),
                       "party"
@@ -2052,6 +2151,7 @@ const CombatTracker = ({
                 Intention
               </label>
               <AutoHeightTextarea
+                ref={intentionsTextareaRef}
                 id={"intentions-wizard-text"}
                 className={styles["intentionsWizardTextarea"]}
                 value={currentIntentionWizardEntry.intention}
@@ -2089,7 +2189,9 @@ const CombatTracker = ({
                           renderInteractionCell(
                             currentIntentionWizardEntry.index,
                             partyIndex,
-                            undefined
+                            undefined,
+                            true,
+                            "enemyOnly"
                           )
                         )}
                       </tr>
@@ -2114,7 +2216,9 @@ const CombatTracker = ({
                           {renderInteractionCell(
                             enemyIndex,
                             currentIntentionWizardEntry.index,
-                            undefined
+                            undefined,
+                            true,
+                            "partyOnly"
                           )}
                         </tr>
                       ))}
@@ -2219,6 +2323,25 @@ const CombatTracker = ({
                   )
                 }
                 placeholder={"misses, hits for 6, sleep: one saves, two asleep..."}
+              />
+              <label
+                className={styles["modalLabel"]}
+                htmlFor={"combat-wizard-effect"}
+              >
+                Current Effect
+              </label>
+              <AutoHeightTextarea
+                id={"combat-wizard-effect"}
+                className={styles["combatWizardTextarea"]}
+                value={
+                  currentCombatWizardEntry.side === "enemy"
+                    ? currentRound.enemyStates[currentCombatWizardEntry.index]?.effect || ""
+                    : currentRound.partyStates[currentCombatWizardEntry.index]?.effect || ""
+                }
+                onChange={(value) =>
+                  updateCombatWizardEffect(currentCombatWizardEntry, value)
+                }
+                placeholder={"hopeless 1/9, slowed 3/8, bless, stoneskin..."}
               />
               <div className={styles["modalLabel"]}>Current Targets</div>
               {renderCombatWizardTargets(currentCombatWizardEntry)}

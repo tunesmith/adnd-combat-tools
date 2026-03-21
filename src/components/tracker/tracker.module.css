@@ -1148,11 +1148,24 @@
     background: rgba(175, 127, 0, 0.08);
 }
 
+.combatWizardEffectCell {
+    min-width: 8.5rem;
+    background: rgba(175, 127, 0, 0.08);
+}
+
 .combatWizardHpCellEnemy {
     background: rgba(84, 111, 58, 0.96);
 }
 
 .combatWizardHpCellParty {
+    background: rgba(90, 40, 41, 0.96);
+}
+
+.combatWizardEffectCellEnemy {
+    background: rgba(84, 111, 58, 0.96);
+}
+
+.combatWizardEffectCellParty {
     background: rgba(90, 40, 41, 0.96);
 }
 
@@ -1203,6 +1216,27 @@
 
 .combatWizardHpInputEnemy,
 .combatWizardHpInputParty {
+    color: var(--eggshell);
+}
+
+.combatWizardEffectInput {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.5rem;
+    border: 0;
+    background: transparent;
+    color: #111;
+    font-family: 'Sura', serif;
+    font-size: 0.95rem;
+    line-height: 1.15;
+    padding: 0.35rem 0.4rem;
+    resize: none;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.combatWizardEffectInputEnemy,
+.combatWizardEffectInputParty {
     color: var(--eggshell);
 }
 
