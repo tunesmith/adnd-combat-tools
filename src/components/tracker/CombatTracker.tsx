@@ -173,6 +173,62 @@ const formatDraftSavedAt = (updatedAt: number): string =>
     minute: "2-digit",
   });
 
+interface IntentionWizardEntry {
+  side: TrackerSide;
+  index: number;
+  combatantKey: number;
+  combatantName: string;
+  targetOptions: {
+    targetIndex: number;
+    targetKey: number;
+    targetName: string;
+    selected: boolean;
+    lockedOpen: boolean;
+  }[];
+  intention: string;
+}
+
+const buildIntentionWizardEntries = (
+  round: TrackerRound
+): IntentionWizardEntry[] => {
+  const enemyEntries: IntentionWizardEntry[] = round.enemies.map(
+    (combatant, index) => ({
+      side: "enemy",
+      index,
+      combatantKey: combatant.key,
+      combatantName: combatant.name || `Enemy ${index + 1}`,
+      targetOptions: round.party.map((targetCombatant, targetIndex) => ({
+        targetIndex,
+        targetKey: targetCombatant.key,
+        targetName: targetCombatant.name || `Party ${targetIndex + 1}`,
+        selected:
+          round.cells[index]?.[targetIndex]?.enemyToPartyVisible || false,
+        lockedOpen: Boolean(round.cells[index]?.[targetIndex]?.enemyToParty.trim()),
+      })),
+      intention: round.enemyStates[index]?.action || "",
+    })
+  );
+  const partyEntries: IntentionWizardEntry[] = round.party.map(
+    (combatant, index) => ({
+      side: "party",
+      index,
+      combatantKey: combatant.key,
+      combatantName: combatant.name || `Party ${index + 1}`,
+      targetOptions: round.enemies.map((targetCombatant, targetIndex) => ({
+        targetIndex,
+        targetKey: targetCombatant.key,
+        targetName: targetCombatant.name || `Enemy ${targetIndex + 1}`,
+        selected:
+          round.cells[targetIndex]?.[index]?.partyToEnemyVisible || false,
+        lockedOpen: Boolean(round.cells[targetIndex]?.[index]?.partyToEnemy.trim()),
+      })),
+      intention: round.partyStates[index]?.action || "",
+    })
+  );
+
+  return enemyEntries.concat(partyEntries);
+};
+
 const CombatTracker = ({
   rememberedState,
   loadedFromEncodedState = false,
@@ -208,6 +264,11 @@ const CombatTracker = ({
     undefined
   );
   const [shareCopied, setShareCopied] = useState<boolean>(false);
+  const [showIntentionsWizard, setShowIntentionsWizard] = useState<boolean>(false);
+  const [intentionWizardEntries, setIntentionWizardEntries] = useState<
+    IntentionWizardEntry[]
+  >([]);
+  const [intentionWizardIndex, setIntentionWizardIndex] = useState<number>(0);
   const idCounter = useRef<number>(getNextCombatantKey(initialState));
   const pausedEncodedState = useRef<string | undefined>(undefined);
   const urlWarningShown = useRef<boolean>(false);
@@ -486,7 +547,12 @@ const CombatTracker = ({
   }, [autosavePaused, draftId, encodedTrackerState, hasTrackerChanged, state]);
 
   useEffect(() => {
-    if (!showUrlWarning && !showRecoverModal && !showShareModal) {
+    if (
+      !showUrlWarning &&
+      !showRecoverModal &&
+      !showShareModal &&
+      !showIntentionsWizard
+    ) {
       return;
     }
 
@@ -495,6 +561,7 @@ const CombatTracker = ({
         setShowUrlWarning(false);
         setShowRecoverModal(false);
         setShowShareModal(false);
+        setShowIntentionsWizard(false);
         setRecoverError(undefined);
       }
     };
@@ -502,7 +569,7 @@ const CombatTracker = ({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showRecoverModal, showShareModal, showUrlWarning]);
+  }, [showIntentionsWizard, showRecoverModal, showShareModal, showUrlWarning]);
 
   useEffect(() => {
     if (!shareCopied) {
@@ -573,6 +640,91 @@ const CombatTracker = ({
       setShowShareModal(true);
     }
   };
+
+  const openIntentionsWizard = () => {
+    setIntentionWizardEntries(buildIntentionWizardEntries(currentRound));
+    setIntentionWizardIndex(0);
+    setShowIntentionsWizard(true);
+  };
+
+  const closeIntentionsWizard = () => {
+    setShowIntentionsWizard(false);
+  };
+
+  const updateWizardEntry = (
+    updater: (entry: IntentionWizardEntry) => IntentionWizardEntry
+  ) => {
+    setIntentionWizardEntries((previousEntries) => {
+      const currentEntry = previousEntries[intentionWizardIndex];
+      if (!currentEntry) {
+        return previousEntries;
+      }
+
+      const nextEntry = updater(currentEntry);
+      const nextEntries = previousEntries.map((entry, index) =>
+        index === intentionWizardIndex ? nextEntry : entry
+      );
+
+      dispatch({
+        type: nextEntry.side === "enemy" ? "set-enemy-state" : "set-party-state",
+        index: nextEntry.index,
+        field: "action",
+        value: nextEntry.intention,
+      });
+
+      return nextEntries;
+    });
+  };
+
+  const toggleWizardTarget = (targetIndex: number) => {
+    setIntentionWizardEntries((previousEntries) => {
+      const currentEntry = previousEntries[intentionWizardIndex];
+      if (!currentEntry) {
+        return previousEntries;
+      }
+
+      const nextTargetOptions = currentEntry.targetOptions.map((targetOption) =>
+        targetOption.targetIndex === targetIndex && !targetOption.lockedOpen
+          ? {
+              ...targetOption,
+              selected: !targetOption.selected,
+            }
+          : targetOption
+      );
+      const changedTarget = nextTargetOptions.find(
+        (targetOption) => targetOption.targetIndex === targetIndex
+      );
+
+      if (!changedTarget || changedTarget.lockedOpen) {
+        return previousEntries;
+      }
+
+      dispatch({
+        type: "set-cell-visibility",
+        rowIndex:
+          currentEntry.side === "enemy" ? currentEntry.index : targetIndex,
+        columnIndex:
+          currentEntry.side === "enemy" ? targetIndex : currentEntry.index,
+        field:
+          currentEntry.side === "enemy"
+            ? "enemyToPartyVisible"
+            : "partyToEnemyVisible",
+        value: changedTarget.selected,
+      });
+
+      return previousEntries.map((entry, index) =>
+        index === intentionWizardIndex
+          ? {
+              ...entry,
+              targetOptions: nextTargetOptions,
+            }
+          : entry
+      );
+    });
+  };
+
+  const currentIntentionWizardEntry =
+    intentionWizardEntries[intentionWizardIndex];
 
   const handleClearCurrentDraft = () => {
     if (
@@ -701,6 +853,13 @@ const CombatTracker = ({
               onClick={() => dispatch({ type: "remove-round" })}
             >
               Delete Round
+            </button>
+            <button
+              type={"button"}
+              className={styles["toolbarButton"]}
+              onClick={openIntentionsWizard}
+            >
+              Register Intentions
             </button>
             <button
               type={"button"}
@@ -1262,6 +1421,130 @@ const CombatTracker = ({
               >
                 Close
               </button>
+            </div>
+          </div>
+        </>
+      )}
+      {showIntentionsWizard && currentIntentionWizardEntry && (
+        <>
+          <div className={styles["modalShadow"]} onClick={closeIntentionsWizard} />
+          <div
+            className={`${styles["modal"]} ${styles["intentionsModal"]}`}
+            role={"dialog"}
+            aria-modal={"true"}
+            aria-labelledby={"intentions-wizard-title"}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={"intentions-wizard-title"} className={styles["modalTitle"]}>
+              Register Intentions
+            </div>
+            <div className={styles["modalBody"]}>
+              <div className={styles["intentionsWizardMeta"]}>
+                <span className={styles["intentionsWizardBadge"]}>
+                  {currentIntentionWizardEntry.side === "enemy" ? "Enemy" : "Party"}
+                </span>
+                <span className={styles["intentionsWizardProgress"]}>
+                  {intentionWizardIndex + 1} of {intentionWizardEntries.length}
+                </span>
+              </div>
+              <div className={styles["intentionsWizardName"]}>
+                {currentIntentionWizardEntry.combatantName}
+              </div>
+              <label
+                className={styles["modalLabel"]}
+                htmlFor={"intentions-wizard-text"}
+              >
+                Intention
+              </label>
+              <textarea
+                id={"intentions-wizard-text"}
+                className={styles["intentionsWizardTextarea"]}
+                value={currentIntentionWizardEntry.intention}
+                onChange={(event) =>
+                  updateWizardEntry((entry) => ({
+                    ...entry,
+                    intention: event.target.value,
+                  }))
+                }
+                placeholder={"advance, attack, cast sleep, hold, charge..."}
+              />
+              <div className={styles["modalLabel"]}>Targets</div>
+              <div className={styles["intentionsWizardTargets"]}>
+                {currentIntentionWizardEntry.targetOptions.map((targetOption) => (
+                  <label
+                    key={`${currentIntentionWizardEntry.combatantKey}-${targetOption.targetKey}`}
+                    className={
+                      targetOption.selected
+                        ? `${styles["intentionsWizardTarget"]} ${styles["intentionsWizardTargetActive"]}`
+                        : styles["intentionsWizardTarget"]
+                    }
+                  >
+                    <input
+                      type={"checkbox"}
+                      checked={targetOption.selected}
+                      disabled={targetOption.lockedOpen}
+                      onChange={() => toggleWizardTarget(targetOption.targetIndex)}
+                    />
+                    <span>{targetOption.targetName}</span>
+                  </label>
+                ))}
+              </div>
+              <div className={styles["intentionsWizardPreview"]}>
+                <span className={styles["intentionsWizardPreviewLabel"]}>
+                  Active targets:
+                </span>
+                <span className={styles["intentionsWizardPreviewValue"]}>
+                  {currentIntentionWizardEntry.targetOptions
+                    .filter((targetOption) => targetOption.selected)
+                    .map((targetOption) => targetOption.targetName)
+                    .join(", ") || "None selected"}
+                </span>
+              </div>
+            </div>
+            <div className={styles["modalActions"]}>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                disabled={intentionWizardIndex === 0}
+                onClick={() =>
+                  setIntentionWizardIndex((previousIndex) =>
+                    Math.max(0, previousIndex - 1)
+                  )
+                }
+              >
+                Previous
+              </button>
+              <button
+                type={"button"}
+                className={styles["toolbarButton"]}
+                onClick={closeIntentionsWizard}
+              >
+                Close
+              </button>
+              {intentionWizardIndex < intentionWizardEntries.length - 1 ? (
+                <button
+                  type={"button"}
+                  className={styles["toolbarButtonPrimary"]}
+                  onClick={() =>
+                    setIntentionWizardIndex((previousIndex) =>
+                      Math.min(
+                        intentionWizardEntries.length - 1,
+                        previousIndex + 1
+                      )
+                    )
+                  }
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  type={"button"}
+                  className={styles["toolbarButtonPrimary"]}
+                  onClick={closeIntentionsWizard}
+                >
+                  Done
+                </button>
+              )}
             </div>
           </div>
         </>
