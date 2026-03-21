@@ -858,10 +858,17 @@
 
 .intentionsWizardMeta {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 0.75rem;
     align-items: center;
     margin-bottom: 0.75rem;
+}
+
+.intentionsWizardNav {
+    display: flex;
+    gap: 0.45rem;
+    margin-left: auto;
 }
 
 .intentionsWizardBadge {
@@ -881,12 +888,27 @@
     line-height: 1.2;
 }
 
+.intentionsWizardResolvedBadge {
+    display: inline-block;
+    border: 1px solid var(--copper);
+    background: rgba(84, 111, 58, 0.14);
+    color: #111;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.1;
+    padding: 0.35rem 0.55rem;
+}
+
 .intentionsWizardName {
     color: #111;
     font-size: 1.35rem;
     font-weight: 700;
     line-height: 1.15;
     margin-bottom: 0.45rem;
+}
+
+.intentionsWizardBodyResolved {
+    opacity: 0.82;
 }
 
 .intentionsWizardTextarea {

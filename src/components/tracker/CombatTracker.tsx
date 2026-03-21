@@ -906,6 +906,9 @@ const CombatTracker = ({
 
   const currentIntentionWizardEntry =
     intentionWizardEntries[intentionWizardIndex];
+  const currentIntentionResolved = Boolean(
+    currentIntentionWizardEntry?.intention.trim()
+  );
 
   const updateCombatWizardResult = (entry: CombatWizardEntry, value: string) => {
     dispatch({
@@ -1990,7 +1993,13 @@ const CombatTracker = ({
             <div id={"intentions-wizard-title"} className={styles["modalTitle"]}>
               Register Intentions
             </div>
-            <div className={styles["modalBody"]}>
+            <div
+              className={
+                currentIntentionResolved
+                  ? `${styles["modalBody"]} ${styles["intentionsWizardBodyResolved"]}`
+                  : styles["modalBody"]
+              }
+            >
               <div className={styles["intentionsWizardMeta"]}>
                 <span className={styles["intentionsWizardBadge"]}>
                   {currentIntentionWizardEntry.side === "enemy" ? "Enemy" : "Party"}
@@ -1998,6 +2007,40 @@ const CombatTracker = ({
                 <span className={styles["intentionsWizardProgress"]}>
                   {intentionWizardIndex + 1} of {intentionWizardEntries.length}
                 </span>
+                {currentIntentionResolved ? (
+                  <span className={styles["intentionsWizardResolvedBadge"]}>
+                    Resolved
+                  </span>
+                ) : null}
+                <div className={styles["intentionsWizardNav"]}>
+                  <button
+                    type={"button"}
+                    className={styles["toolbarButton"]}
+                    disabled={intentionWizardIndex === 0}
+                    onClick={() =>
+                      setIntentionWizardIndex((previousIndex) =>
+                        Math.max(0, previousIndex - 1)
+                      )
+                    }
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type={"button"}
+                    className={styles["toolbarButtonPrimary"]}
+                    disabled={intentionWizardIndex >= intentionWizardEntries.length - 1}
+                    onClick={() =>
+                      setIntentionWizardIndex((previousIndex) =>
+                        Math.min(
+                          intentionWizardEntries.length - 1,
+                          previousIndex + 1
+                        )
+                      )
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
               <div className={styles["intentionsWizardName"]}>
                 {currentIntentionWizardEntry.combatantName}
@@ -2084,46 +2127,10 @@ const CombatTracker = ({
               <button
                 type={"button"}
                 className={styles["toolbarButton"]}
-                disabled={intentionWizardIndex === 0}
-                onClick={() =>
-                  setIntentionWizardIndex((previousIndex) =>
-                    Math.max(0, previousIndex - 1)
-                  )
-                }
-              >
-                Previous
-              </button>
-              <button
-                type={"button"}
-                className={styles["toolbarButton"]}
                 onClick={closeIntentionsWizard}
               >
                 Close
               </button>
-              {intentionWizardIndex < intentionWizardEntries.length - 1 ? (
-                <button
-                  type={"button"}
-                  className={styles["toolbarButtonPrimary"]}
-                  onClick={() =>
-                    setIntentionWizardIndex((previousIndex) =>
-                      Math.min(
-                        intentionWizardEntries.length - 1,
-                        previousIndex + 1
-                      )
-                    )
-                  }
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type={"button"}
-                  className={styles["toolbarButtonPrimary"]}
-                  onClick={closeIntentionsWizard}
-                >
-                  Done
-                </button>
-              )}
             </div>
           </div>
         </>
