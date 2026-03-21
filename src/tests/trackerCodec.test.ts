@@ -2,6 +2,7 @@ import { deflate } from "zlib";
 import {
   decodeTrackerState,
   encodeTrackerState,
+  encodeTrackerStateSync,
   transformTrackerState,
 } from "../helpers/trackerCodec";
 import type { TrackerStateV2, TrackerStateV5 } from "../types/tracker";
@@ -380,5 +381,74 @@ describe("tracker codec", () => {
     expect(decoded.title).toBe("Assault on the Shrine");
     expect(decoded.rounds[0]?.label).toBe("Surprise 1");
     expect(decoded.rounds[0]?.partyStates[0]?.action).toBe("shoot bow");
+  });
+
+  test("sync encoder matches the async codec path", async () => {
+    const state = transformTrackerState({
+      version: 6,
+      title: "Bridge Ambush",
+      rounds: [
+        {
+          party: [
+            {
+              key: 1,
+              name: "Lodi",
+              class: 1,
+              level: 7,
+              armorType: 10,
+              armorClass: -1,
+              weapon: 12,
+              maxHp: "19",
+            },
+          ],
+          enemies: [
+            {
+              key: 2,
+              name: "Ghoul",
+              class: 10,
+              level: 3,
+              armorType: 1,
+              armorClass: 6,
+              weapon: 0,
+              maxHp: "11",
+            },
+          ],
+          partyInitiative: "4",
+          enemyInitiative: "5",
+          summary: "Late save smoke test",
+          cells: [[{
+            enemyToParty: "xx",
+            partyToEnemy: "",
+            enemyToPartyVisible: true,
+            partyToEnemyVisible: false,
+          }]],
+          partyStates: [
+            {
+              hp: "19",
+              effect: "",
+              action: "attack",
+              result: "",
+              notes: "",
+            },
+          ],
+          enemyStates: [
+            {
+              hp: "11",
+              effect: "",
+              action: "advance",
+              result: "",
+              notes: "",
+            },
+          ],
+        },
+      ],
+      activeRound: 0,
+    });
+
+    const asyncEncoded = await encodeTrackerState(state);
+    const syncEncoded = encodeTrackerStateSync(state);
+
+    expect(syncEncoded).toBe(asyncEncoded);
+    await expect(decodeTrackerState(syncEncoded)).resolves.toEqual(state);
   });
 });

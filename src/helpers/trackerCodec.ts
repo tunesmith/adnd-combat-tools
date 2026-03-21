@@ -1,4 +1,4 @@
-import { deflate, unzip } from "zlib";
+import { deflate, deflateSync, unzip } from "zlib";
 import { getDefaultRoundLabel } from "./trackerState";
 import type {
   TrackerCellState,
@@ -304,6 +304,9 @@ export const encodeTrackerState = (state: TrackerState): Promise<string> =>
       resolve(encodeURIComponent(buffer.toString("base64")));
     });
   });
+
+export const encodeTrackerStateSync = (state: TrackerState): string =>
+  encodeURIComponent(deflateSync(JSON.stringify(state)).toString("base64"));
 
 export const decodeTrackerState = (
   encodedState: string

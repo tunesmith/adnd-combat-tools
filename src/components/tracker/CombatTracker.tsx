@@ -23,7 +23,11 @@ import type {
   TrackerRound,
   TrackerState,
 } from "../../types/tracker";
-import { decodeTrackerState, encodeTrackerState } from "../../helpers/trackerCodec";
+import {
+  decodeTrackerState,
+  encodeTrackerState,
+  encodeTrackerStateSync,
+} from "../../helpers/trackerCodec";
 import {
   deleteTrackerLocalDraft,
   getOrCreateTrackerSessionDraftId,
@@ -574,6 +578,42 @@ const CombatTracker = ({
 
     return () => window.clearTimeout(timeoutId);
   }, [autosavePaused, draftId, encodedTrackerState, hasTrackerChanged, state]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !draftId || !hasTrackerChanged) {
+      return;
+    }
+
+    const saveDraftNow = () => {
+      try {
+        const encodedState = encodeTrackerStateSync(state);
+
+        if (
+          autosavePaused &&
+          encodedState === pausedEncodedState.current
+        ) {
+          return;
+        }
+
+        saveTrackerLocalDraft(
+          window.localStorage,
+          draftId,
+          encodedState,
+          state
+        );
+      } catch (error) {
+        console.error("Unable to save tracker draft before unload:", error);
+      }
+    };
+
+    window.addEventListener("pagehide", saveDraftNow);
+    window.addEventListener("beforeunload", saveDraftNow);
+
+    return () => {
+      window.removeEventListener("pagehide", saveDraftNow);
+      window.removeEventListener("beforeunload", saveDraftNow);
+    };
+  }, [autosavePaused, draftId, hasTrackerChanged, state]);
 
   useEffect(() => {
     if (
