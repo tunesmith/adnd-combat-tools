@@ -616,7 +616,9 @@
 }
 
 .intentionsModal {
-    width: min(34rem, calc(100vw - 2rem));
+    top: 1.5rem;
+    width: min(50rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 3rem);
 }
 
 .modalBody {
@@ -767,55 +769,110 @@
     resize: vertical;
 }
 
-.intentionsWizardTargets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+.intentionsWizardGridWrap {
     margin: 0 0.75rem;
+    max-height: min(62vh, 34rem);
+    overflow: auto;
+    border: 1px solid rgba(172, 114, 35, 0.36);
+    background: #ece8d6;
 }
 
-.intentionsWizardTarget {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    border: 1px solid var(--copper);
-    background: rgba(175, 127, 0, 0.08);
+.intentionsWizardGridTable {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
     color: #111;
-    font-size: 0.95rem;
-    line-height: 1.2;
-    padding: 0.35rem 0.55rem;
 }
 
-.intentionsWizardTargetActive {
-    background: rgba(175, 127, 0, 0.18);
+.intentionsWizardGridTable th,
+.intentionsWizardGridTable td {
+    border-right: 1px solid rgba(172, 114, 35, 0.36);
+    border-bottom: 1px solid rgba(172, 114, 35, 0.36);
+    vertical-align: top;
 }
 
-.intentionsWizardTarget input {
-    margin: 0;
+.intentionsWizardGridTable tbody tr {
+    height: 4.2rem;
 }
 
-.intentionsWizardPreview {
-    margin: 0.9rem 0.75rem 0.2rem;
-    border: 1px solid rgba(172, 114, 35, 0.32);
-    background: rgba(175, 127, 0, 0.08);
-    color: #111;
-    padding: 0.6rem 0.7rem;
+.intentionsWizardGridTable tr:last-child th,
+.intentionsWizardGridTable tr:last-child td {
+    border-bottom: 0;
 }
 
-.intentionsWizardPreviewLabel {
-    display: block;
-    font-size: 0.85rem;
+.intentionsWizardGridTable th:last-child,
+.intentionsWizardGridTable td:last-child {
+    border-right: 0;
+}
+
+.intentionsWizardCorner,
+.intentionsWizardColumnHeader,
+.intentionsWizardRowHeader {
+    color: var(--eggshell);
     font-weight: 700;
     line-height: 1.15;
-    margin-bottom: 0.25rem;
-    opacity: 0.82;
 }
 
-.intentionsWizardPreviewValue {
-    display: block;
-    font-size: 0.95rem;
-    line-height: 1.3;
-    word-break: break-word;
+.intentionsWizardCorner {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    min-width: 6.8rem;
+    padding: 0.6rem 0.7rem;
+    background: linear-gradient(135deg, var(--caput-martuum), var(--dark-olive-green));
+    box-shadow: inset 0 -2px 0 var(--copper);
+    text-align: left;
+}
+
+.intentionsWizardColumnHeader {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    min-width: 7.5rem;
+    padding: 0.6rem 0.45rem;
+    background: var(--dark-olive-green);
+    box-shadow: inset 0 -2px 0 var(--copper);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.intentionsWizardRowHeader {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 6.8rem;
+    max-width: 11rem;
+    padding: 0.7rem 0.65rem;
+    background: var(--caput-martuum);
+    text-align: left;
+}
+
+.intentionsWizardGridTable .interactionCell {
+    min-width: 7.5rem;
+    height: 4.2rem;
+    background: #663837;
+}
+
+.intentionsWizardGridTable .cellShell {
+    min-width: 7.5rem;
+    min-height: 4.2rem;
+}
+
+.intentionsWizardGridTable .cellHalfEnemyInline,
+.intentionsWizardGridTable .cellHalfPartyInline {
+    gap: 0.14rem;
+    padding: 0.16rem 0.18rem;
+}
+
+.intentionsWizardGridTable .cellEntryLabel {
+    font-size: 0.76rem;
+}
+
+.intentionsWizardGridTable .cellEntryInputInline {
+    min-height: 1.65rem;
+    font-size: 1rem;
+    padding: 0.12rem 0.15rem;
 }
 
 .textInput {

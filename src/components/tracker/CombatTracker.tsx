@@ -31,7 +31,6 @@ import { getTrackerCombatantWidestLineWidth } from "../../helpers/trackerCombata
 import {
   buildIntentionWizardEntries,
   replaceIntentionWizardEntry,
-  toggleIntentionWizardEntryTarget,
   type IntentionWizardEntry,
 } from "../../helpers/trackerIntentionsWizard";
 
@@ -668,29 +667,6 @@ const CombatTracker = ({
     });
   };
 
-  const toggleWizardTarget = (targetIndex: number) => {
-    if (!currentIntentionWizardEntry) {
-      return;
-    }
-
-    const { nextEntry, visibilityChange } = toggleIntentionWizardEntryTarget(
-      currentIntentionWizardEntry,
-      targetIndex
-    );
-
-    if (!visibilityChange) {
-      return;
-    }
-
-    setIntentionWizardEntries((previousEntries) =>
-      replaceIntentionWizardEntry(previousEntries, intentionWizardIndex, nextEntry)
-    );
-    dispatch({
-      type: "set-cell-visibility",
-      ...visibilityChange,
-    });
-  };
-
   const currentIntentionWizardEntry =
     intentionWizardEntries[intentionWizardIndex];
 
@@ -775,6 +751,75 @@ const CombatTracker = ({
     : hasLocalDraft && lastLocalSaveAt
       ? `Saved locally ${formatDraftSavedAt(lastLocalSaveAt)}`
       : "Local recovery will start after your next edit.";
+
+  const getPartyDisplayName = (partyIndex: number): string =>
+    currentRound.party[partyIndex]?.name || `Party ${partyIndex + 1}`;
+
+  const getEnemyDisplayName = (enemyIndex: number): string =>
+    currentRound.enemies[enemyIndex]?.name || `Enemy ${enemyIndex + 1}`;
+
+  const renderInteractionCell = (
+    enemyIndex: number,
+    partyIndex: number,
+    style?: CSSProperties
+  ) => {
+    const enemyCombatant = currentRound.enemies[enemyIndex];
+    const partyCombatant = currentRound.party[partyIndex];
+    const cellState = currentRound.cells[enemyIndex]?.[partyIndex];
+
+    if (!enemyCombatant || !partyCombatant || !cellState) {
+      return null;
+    }
+
+    return (
+      <TrackerCell
+        key={`cell-${enemyCombatant.key}-${partyCombatant.key}`}
+        style={style}
+        rowCombatant={enemyCombatant}
+        columnCombatant={partyCombatant}
+        enemyToPartyValue={cellState.enemyToParty}
+        partyToEnemyValue={cellState.partyToEnemy}
+        enemyToPartyVisible={cellState.enemyToPartyVisible}
+        partyToEnemyVisible={cellState.partyToEnemyVisible}
+        onEnemyToPartyVisibilityChange={(value) =>
+          dispatch({
+            type: "set-cell-visibility",
+            rowIndex: enemyIndex,
+            columnIndex: partyIndex,
+            field: "enemyToPartyVisible",
+            value,
+          })
+        }
+        onPartyToEnemyVisibilityChange={(value) =>
+          dispatch({
+            type: "set-cell-visibility",
+            rowIndex: enemyIndex,
+            columnIndex: partyIndex,
+            field: "partyToEnemyVisible",
+            value,
+          })
+        }
+        onEnemyToPartyChange={(value) =>
+          dispatch({
+            type: "set-cell",
+            rowIndex: enemyIndex,
+            columnIndex: partyIndex,
+            field: "enemyToParty",
+            value,
+          })
+        }
+        onPartyToEnemyChange={(value) =>
+          dispatch({
+            type: "set-cell",
+            rowIndex: enemyIndex,
+            columnIndex: partyIndex,
+            field: "partyToEnemy",
+            value,
+          })
+        }
+      />
+    );
+  };
 
   const renderHpEditor = (
     maxHp: string | undefined,
@@ -1052,65 +1097,12 @@ const CombatTracker = ({
                       }
                     />
                   </th>
-                  {currentRound.party.map((partyCombatant, partyIndex) => (
-                    <TrackerCell
-                      key={`cell-${combatant.key}-${partyCombatant.key}`}
-                      style={partyColumnStyles[partyIndex]}
-                      rowCombatant={combatant}
-                      columnCombatant={partyCombatant}
-                      enemyToPartyValue={
-                        currentRound.cells[enemyIndex]?.[partyIndex]
-                          ?.enemyToParty || ""
-                      }
-                      partyToEnemyValue={
-                        currentRound.cells[enemyIndex]?.[partyIndex]
-                          ?.partyToEnemy || ""
-                      }
-                      enemyToPartyVisible={
-                        currentRound.cells[enemyIndex]?.[partyIndex]
-                          ?.enemyToPartyVisible || false
-                      }
-                      partyToEnemyVisible={
-                        currentRound.cells[enemyIndex]?.[partyIndex]
-                          ?.partyToEnemyVisible || false
-                      }
-                      onEnemyToPartyVisibilityChange={(value) =>
-                        dispatch({
-                          type: "set-cell-visibility",
-                          rowIndex: enemyIndex,
-                          columnIndex: partyIndex,
-                          field: "enemyToPartyVisible",
-                          value,
-                        })
-                      }
-                      onPartyToEnemyVisibilityChange={(value) =>
-                        dispatch({
-                          type: "set-cell-visibility",
-                          rowIndex: enemyIndex,
-                          columnIndex: partyIndex,
-                          field: "partyToEnemyVisible",
-                          value,
-                        })
-                      }
-                      onEnemyToPartyChange={(value) =>
-                        dispatch({
-                          type: "set-cell",
-                          rowIndex: enemyIndex,
-                          columnIndex: partyIndex,
-                          field: "enemyToParty",
-                          value,
-                        })
-                      }
-                      onPartyToEnemyChange={(value) =>
-                        dispatch({
-                          type: "set-cell",
-                          rowIndex: enemyIndex,
-                          columnIndex: partyIndex,
-                          field: "partyToEnemy",
-                          value,
-                        })
-                      }
-                    />
+                  {currentRound.party.map((_, partyIndex) => (
+                    renderInteractionCell(
+                      enemyIndex,
+                      partyIndex,
+                      partyColumnStyles[partyIndex]
+                    )
                   ))}
                   {enemyFieldDefinitions.map((field) => {
                     const stateValue =
@@ -1486,36 +1478,63 @@ const CombatTracker = ({
                 placeholder={"advance, attack, cast sleep, hold, charge..."}
               />
               <div className={styles["modalLabel"]}>Targets</div>
-              <div className={styles["intentionsWizardTargets"]}>
-                {currentIntentionWizardEntry.targetOptions.map((targetOption) => (
-                  <label
-                    key={`${currentIntentionWizardEntry.combatantKey}-${targetOption.targetKey}`}
-                    className={
-                      targetOption.selected
-                        ? `${styles["intentionsWizardTarget"]} ${styles["intentionsWizardTargetActive"]}`
-                        : styles["intentionsWizardTarget"]
-                    }
-                  >
-                    <input
-                      type={"checkbox"}
-                      checked={targetOption.selected}
-                      disabled={targetOption.lockedOpen}
-                      onChange={() => toggleWizardTarget(targetOption.targetIndex)}
-                    />
-                    <span>{targetOption.targetName}</span>
-                  </label>
-                ))}
-              </div>
-              <div className={styles["intentionsWizardPreview"]}>
-                <span className={styles["intentionsWizardPreviewLabel"]}>
-                  Active targets:
-                </span>
-                <span className={styles["intentionsWizardPreviewValue"]}>
-                  {currentIntentionWizardEntry.targetOptions
-                    .filter((targetOption) => targetOption.selected)
-                    .map((targetOption) => targetOption.targetName)
-                    .join(", ") || "None selected"}
-                </span>
+              <div className={styles["intentionsWizardGridWrap"]}>
+                {currentIntentionWizardEntry.side === "enemy" ? (
+                  <table className={styles["intentionsWizardGridTable"]}>
+                    <thead>
+                      <tr>
+                        <th className={styles["intentionsWizardCorner"]}>Target</th>
+                        {currentRound.party.map((partyCombatant, partyIndex) => (
+                          <th
+                            key={`intentions-party-header-${partyCombatant.key}`}
+                            className={styles["intentionsWizardColumnHeader"]}
+                          >
+                            {getPartyDisplayName(partyIndex)}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th className={styles["intentionsWizardRowHeader"]}>
+                          {currentIntentionWizardEntry.combatantName}
+                        </th>
+                        {currentRound.party.map((_, partyIndex) =>
+                          renderInteractionCell(
+                            currentIntentionWizardEntry.index,
+                            partyIndex,
+                            undefined
+                          )
+                        )}
+                      </tr>
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className={styles["intentionsWizardGridTable"]}>
+                    <thead>
+                      <tr>
+                        <th className={styles["intentionsWizardCorner"]}>Target</th>
+                        <th className={styles["intentionsWizardColumnHeader"]}>
+                          {currentIntentionWizardEntry.combatantName}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentRound.enemies.map((enemyCombatant, enemyIndex) => (
+                        <tr key={`intentions-enemy-row-${enemyCombatant.key}`}>
+                          <th className={styles["intentionsWizardRowHeader"]}>
+                            {getEnemyDisplayName(enemyIndex)}
+                          </th>
+                          {renderInteractionCell(
+                            enemyIndex,
+                            currentIntentionWizardEntry.index,
+                            undefined
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
             <div className={styles["modalActions"]}>
