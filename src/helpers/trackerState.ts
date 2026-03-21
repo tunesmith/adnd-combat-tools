@@ -51,7 +51,8 @@ export const createCombatantRoundState = (
 const createEmptyCell = (): TrackerCellState => ({
   enemyToParty: "",
   partyToEnemy: "",
-  isVisible: false,
+  enemyToPartyVisible: false,
+  partyToEnemyVisible: false,
 });
 
 const cloneCombatant = (combatant: TrackerCombatant): TrackerCombatant => ({
@@ -61,8 +62,11 @@ const cloneCombatant = (combatant: TrackerCombatant): TrackerCombatant => ({
 const cloneCombatants = (combatants: TrackerCombatant[]): TrackerCombatant[] =>
   combatants.map((combatant) => cloneCombatant(combatant));
 
-const hasCellContent = (cell: TrackerCellState): boolean =>
-  Boolean(cell.enemyToParty.trim() || cell.partyToEnemy.trim());
+const hasEnemyToPartyContent = (cell: TrackerCellState): boolean =>
+  Boolean(cell.enemyToParty.trim());
+
+const hasPartyToEnemyContent = (cell: TrackerCellState): boolean =>
+  Boolean(cell.partyToEnemy.trim());
 
 const createEmptyCells = (
   enemyCount: number,
@@ -88,7 +92,12 @@ const createNextRoundCells = (
       return {
         enemyToParty: "",
         partyToEnemy: "",
-        isVisible: previousCell ? hasCellContent(previousCell) : false,
+        enemyToPartyVisible: previousCell
+          ? hasEnemyToPartyContent(previousCell)
+          : false,
+        partyToEnemyVisible: previousCell
+          ? hasPartyToEnemyContent(previousCell)
+          : false,
       };
     })
   );
@@ -140,7 +149,7 @@ export const createInitialTrackerState = (): TrackerState => {
   const enemies = createDefaultEnemies();
 
   return {
-    version: 5,
+    version: 6,
     rounds: [createTrackerRound(party, enemies)],
     activeRound: 0,
   };

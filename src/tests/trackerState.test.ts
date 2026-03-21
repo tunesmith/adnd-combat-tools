@@ -9,13 +9,14 @@ describe("tracker state helpers", () => {
   test("new trackers start with matchup cells hidden until a target matters", () => {
     const initialState = createInitialTrackerState();
 
-    expect(initialState.version).toBe(5);
+    expect(initialState.version).toBe(6);
     expect(initialState.rounds[0]?.party).toHaveLength(3);
     expect(initialState.rounds[0]?.enemies).toHaveLength(3);
     expect(initialState.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: "",
       partyToEnemy: "",
-      isVisible: false,
+      enemyToPartyVisible: false,
+      partyToEnemyVisible: false,
     });
   });
 
@@ -39,7 +40,11 @@ describe("tracker state helpers", () => {
       throw new Error("Missing first interaction cell");
     }
     firstCell.enemyToParty = "xx";
-    firstCell.partyToEnemy = "6";
+    const secondCell = firstRow[1];
+    if (!secondCell) {
+      throw new Error("Missing second interaction cell");
+    }
+    secondCell.partyToEnemy = "6";
 
     firstRound.partyStates[0] = {
       hp: "21",
@@ -75,12 +80,14 @@ describe("tracker state helpers", () => {
     expect(nextRoundFirstRow[0]).toEqual({
       enemyToParty: "",
       partyToEnemy: "",
-      isVisible: true,
+      enemyToPartyVisible: true,
+      partyToEnemyVisible: false,
     });
     expect(nextRoundFirstRow[1]).toEqual({
       enemyToParty: "",
       partyToEnemy: "",
-      isVisible: false,
+      enemyToPartyVisible: false,
+      partyToEnemyVisible: true,
     });
     expect(nextRound.partyStates[0]).toEqual({
       hp: "21",
@@ -121,7 +128,8 @@ describe("tracker state helpers", () => {
     expect(nextRow[nextRow.length - 1]).toEqual({
       enemyToParty: "",
       partyToEnemy: "",
-      isVisible: false,
+      enemyToPartyVisible: false,
+      partyToEnemyVisible: false,
     });
   });
 

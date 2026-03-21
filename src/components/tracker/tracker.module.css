@@ -199,33 +199,18 @@
 }
 
 .interactionCell {
+    position: relative;
     padding: 0;
-    background: linear-gradient(90deg, rgba(90, 40, 41, 0.96) 0%, rgba(90, 40, 41, 0.96) 50%, rgba(84, 111, 58, 0.96) 50%, rgba(84, 111, 58, 0.96) 100%);
-}
-
-.interactionCellCollapsed {
-    background: transparent;
-}
-
-.interactionCellToggleable {
-    cursor: pointer;
-}
-
-.interactionCellToggleable:focus-visible {
-    outline: 2px solid rgba(240, 239, 221, 0.72);
-    outline-offset: -2px;
+    background: #663837;
 }
 
 .cellShell {
     display: flex;
+    position: absolute;
+    inset: 0;
     width: 100%;
-    min-width: 7rem;
+    height: 100%;
     align-items: stretch;
-    min-height: 4.15rem;
-}
-
-.cellShellCollapsed {
-    width: 100%;
     min-width: 7rem;
     min-height: 4.15rem;
 }
@@ -243,11 +228,30 @@
 }
 
 .cellHalfEnemyInline {
-    justify-content: center;
+    background: rgba(90, 40, 41, 0.96);
 }
 
 .cellHalfPartyInline {
+    background: rgba(84, 111, 58, 0.96);
+}
+
+.cellHalfEnemyInline,
+.cellHalfPartyInline {
     justify-content: center;
+}
+
+.cellHalfToggleable {
+    cursor: pointer;
+}
+
+.cellHalfToggleable:focus-visible {
+    outline: 2px solid rgba(240, 239, 221, 0.72);
+    outline-offset: -2px;
+}
+
+.cellHalfCollapsed {
+    gap: 0;
+    background: transparent;
 }
 
 .cellEntryLabel {
@@ -256,12 +260,6 @@
     letter-spacing: 0.04em;
     color: rgba(240, 239, 221, 0.72);
     white-space: nowrap;
-}
-
-.cellDividerVertical {
-    flex: 0 0 auto;
-    width: 1px;
-    border-left: 1px solid rgba(240, 239, 221, 0.22);
 }
 
 .cellEntryInputInline {

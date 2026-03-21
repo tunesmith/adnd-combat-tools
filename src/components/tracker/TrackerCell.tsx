@@ -12,8 +12,10 @@ interface TrackerCellProps {
   columnCombatant: TrackerCombatant;
   enemyToPartyValue: string;
   partyToEnemyValue: string;
-  isVisible: boolean;
-  onToggleVisibility: (value: boolean) => void;
+  enemyToPartyVisible: boolean;
+  partyToEnemyVisible: boolean;
+  onEnemyToPartyVisibilityChange: (value: boolean) => void;
+  onPartyToEnemyVisibilityChange: (value: boolean) => void;
   onEnemyToPartyChange: (value: string) => void;
   onPartyToEnemyChange: (value: string) => void;
   style?: CSSProperties;
@@ -24,8 +26,10 @@ const TrackerCell = ({
   columnCombatant,
   enemyToPartyValue,
   partyToEnemyValue,
-  isVisible,
-  onToggleVisibility,
+  enemyToPartyVisible,
+  partyToEnemyVisible,
+  onEnemyToPartyVisibilityChange,
+  onPartyToEnemyVisibilityChange,
   onEnemyToPartyChange,
   onPartyToEnemyChange,
   style,
@@ -51,83 +55,122 @@ const TrackerCell = ({
     rowCombatant.armorClass,
     columnCombatant.weapon
   );
-  const cellHasContent = Boolean(
-    enemyToPartyValue.trim() || partyToEnemyValue.trim()
-  );
-  const isToggleEnabled = !isVisible || !cellHasContent;
+  const enemyHasContent = Boolean(enemyToPartyValue.trim());
+  const partyHasContent = Boolean(partyToEnemyValue.trim());
+  const enemyToggleEnabled = !enemyToPartyVisible || !enemyHasContent;
+  const partyToggleEnabled = !partyToEnemyVisible || !partyHasContent;
 
-  const handleToggle = () => {
-    if (!isToggleEnabled) {
-      return;
-    }
-
-    onToggleVisibility(!isVisible);
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLTableCellElement>) => {
+  const handleHalfKeyDown = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+    onToggle: () => void,
+    isToggleEnabled: boolean
+  ) => {
     if (!isToggleEnabled) {
       return;
     }
 
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      handleToggle();
+      onToggle();
     }
   };
 
   return (
-    <td
-      className={
-        [
-          styles["interactionCell"],
-          !isVisible ? styles["interactionCellCollapsed"] : "",
-          isToggleEnabled ? styles["interactionCellToggleable"] : "",
-        ]
-          .filter(Boolean)
-          .join(" ")
-      }
-      style={style}
-      onClick={isToggleEnabled ? handleToggle : undefined}
-      onKeyDown={isToggleEnabled ? handleKeyDown : undefined}
-      tabIndex={isToggleEnabled ? 0 : undefined}
-      role={isToggleEnabled ? "button" : undefined}
-      aria-label={
-        isToggleEnabled
-          ? isVisible
-            ? "Hide empty matchup cell"
-            : "Show matchup cell"
-          : undefined
-      }
-    >
-      {isVisible ? (
-        <div className={styles["cellShell"]}>
-          <div className={styles["cellHalfEnemyInline"]}>
-            <span className={styles["cellEntryLabel"]}>{rowToHit}</span>
-            <input
-              className={styles["cellEntryInputInline"]}
-              type={"text"}
-              value={enemyToPartyValue}
-              onClick={(event) => event.stopPropagation()}
-              onKeyDown={(event) => event.stopPropagation()}
-              onChange={(event) => onEnemyToPartyChange(event.target.value)}
-            />
-          </div>
-          <div className={styles["cellDividerVertical"]} />
-          <div className={styles["cellHalfPartyInline"]}>
-            <span className={styles["cellEntryLabel"]}>{columnToHit}</span>
-            <input
-              className={styles["cellEntryInputInline"]}
-              type={"text"}
-              value={partyToEnemyValue}
-              onClick={(event) => event.stopPropagation()}
-              onKeyDown={(event) => event.stopPropagation()}
-              onChange={(event) => onPartyToEnemyChange(event.target.value)}
-            />
-          </div>
+    <td className={styles["interactionCell"]} style={style}>
+      <div className={styles["cellShell"]}>
+        <div
+          className={
+            [
+              styles["cellHalfEnemyInline"],
+              enemyToggleEnabled ? styles["cellHalfToggleable"] : "",
+              !enemyToPartyVisible ? styles["cellHalfCollapsed"] : "",
+            ]
+              .filter(Boolean)
+              .join(" ")
+          }
+          onClick={
+            enemyToggleEnabled
+              ? () => onEnemyToPartyVisibilityChange(!enemyToPartyVisible)
+              : undefined
+          }
+          onKeyDown={(event) =>
+            handleHalfKeyDown(
+              event,
+              () => onEnemyToPartyVisibilityChange(!enemyToPartyVisible),
+              enemyToggleEnabled
+            )
+          }
+          tabIndex={enemyToggleEnabled ? 0 : undefined}
+          role={enemyToggleEnabled ? "button" : undefined}
+          aria-label={
+            enemyToggleEnabled
+              ? enemyToPartyVisible
+                ? "Hide empty enemy attack input"
+                : "Show enemy attack input"
+              : undefined
+          }
+        >
+          {enemyToPartyVisible ? (
+            <>
+              <span className={styles["cellEntryLabel"]}>{rowToHit}</span>
+              <input
+                className={styles["cellEntryInputInline"]}
+                type={"text"}
+                value={enemyToPartyValue}
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+                onChange={(event) => onEnemyToPartyChange(event.target.value)}
+              />
+            </>
+          ) : null}
         </div>
-      ) : (
-        <div className={styles["cellShellCollapsed"]} />
-      )}
+        <div
+          className={
+            [
+              styles["cellHalfPartyInline"],
+              partyToggleEnabled ? styles["cellHalfToggleable"] : "",
+              !partyToEnemyVisible ? styles["cellHalfCollapsed"] : "",
+            ]
+              .filter(Boolean)
+              .join(" ")
+          }
+          onClick={
+            partyToggleEnabled
+              ? () => onPartyToEnemyVisibilityChange(!partyToEnemyVisible)
+              : undefined
+          }
+          onKeyDown={(event) =>
+            handleHalfKeyDown(
+              event,
+              () => onPartyToEnemyVisibilityChange(!partyToEnemyVisible),
+              partyToggleEnabled
+            )
+          }
+          tabIndex={partyToggleEnabled ? 0 : undefined}
+          role={partyToggleEnabled ? "button" : undefined}
+          aria-label={
+            partyToggleEnabled
+              ? partyToEnemyVisible
+                ? "Hide empty party attack input"
+                : "Show party attack input"
+              : undefined
+          }
+        >
+          {partyToEnemyVisible ? (
+            <>
+              <span className={styles["cellEntryLabel"]}>{columnToHit}</span>
+              <input
+                className={styles["cellEntryInputInline"]}
+                type={"text"}
+                value={partyToEnemyValue}
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+                onChange={(event) => onPartyToEnemyChange(event.target.value)}
+              />
+            </>
+          ) : null}
+        </div>
+      </div>
     </td>
   );
 };

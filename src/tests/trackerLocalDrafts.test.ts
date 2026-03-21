@@ -54,7 +54,12 @@ const createTrackerState = (label: string, activeRound: number): TrackerState =>
     partyInitiative: "",
     enemyInitiative: "",
     summary: "",
-    cells: [[{ enemyToParty: "", partyToEnemy: "", isVisible: false }]],
+    cells: [[{
+      enemyToParty: "",
+      partyToEnemy: "",
+      enemyToPartyVisible: false,
+      partyToEnemyVisible: false,
+    }]],
     partyStates: [
       {
         hp: "21",
@@ -76,7 +81,7 @@ const createTrackerState = (label: string, activeRound: number): TrackerState =>
   }));
 
   return {
-    version: 5,
+    version: 6,
     rounds,
     activeRound,
   };

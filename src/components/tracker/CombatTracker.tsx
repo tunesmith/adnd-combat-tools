@@ -37,7 +37,11 @@ interface CombatTrackerProps {
 type TrackerSide = "party" | "enemy";
 type RoundField = "partyInitiative" | "enemyInitiative" | "summary";
 type RoundCombatantField = keyof TrackerCombatantRoundState;
-type CellField = keyof TrackerCellState;
+type CellField = Extract<keyof TrackerCellState, "enemyToParty" | "partyToEnemy">;
+type CellVisibilityField = Extract<
+  keyof TrackerCellState,
+  "enemyToPartyVisible" | "partyToEnemyVisible"
+>;
 
 type TrackerAction =
   | { type: "replace-state"; state: TrackerState }
@@ -47,6 +51,7 @@ type TrackerAction =
       type: "set-cell-visibility";
       rowIndex: number;
       columnIndex: number;
+      field: CellVisibilityField;
       value: boolean;
     }
   | {
@@ -232,7 +237,7 @@ const CombatTracker = ({
                   columnIndex === action.columnIndex
                     ? {
                         ...cell,
-                        isVisible: action.value,
+                        [action.field]: action.value,
                       }
                     : cell
                 )
@@ -249,7 +254,9 @@ const CombatTracker = ({
                     ? {
                         ...cell,
                         [action.field]: action.value,
-                        isVisible: true,
+                        ...(action.field === "enemyToParty"
+                          ? { enemyToPartyVisible: true }
+                          : { partyToEnemyVisible: true }),
                       }
                     : cell
                 )
@@ -888,15 +895,29 @@ const CombatTracker = ({
                         currentRound.cells[enemyIndex]?.[partyIndex]
                           ?.partyToEnemy || ""
                       }
-                      isVisible={
-                        currentRound.cells[enemyIndex]?.[partyIndex]?.isVisible ||
-                        false
+                      enemyToPartyVisible={
+                        currentRound.cells[enemyIndex]?.[partyIndex]
+                          ?.enemyToPartyVisible || false
                       }
-                      onToggleVisibility={(value) =>
+                      partyToEnemyVisible={
+                        currentRound.cells[enemyIndex]?.[partyIndex]
+                          ?.partyToEnemyVisible || false
+                      }
+                      onEnemyToPartyVisibilityChange={(value) =>
                         dispatch({
                           type: "set-cell-visibility",
                           rowIndex: enemyIndex,
                           columnIndex: partyIndex,
+                          field: "enemyToPartyVisible",
+                          value,
+                        })
+                      }
+                      onPartyToEnemyVisibilityChange={(value) =>
+                        dispatch({
+                          type: "set-cell-visibility",
+                          rowIndex: enemyIndex,
+                          columnIndex: partyIndex,
+                          field: "partyToEnemyVisible",
                           value,
                         })
                       }
