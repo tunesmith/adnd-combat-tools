@@ -21,16 +21,19 @@ import type {
 } from "../../types/option";
 
 const Calculator = () => {
+  const initialAttackerLevelOptions = getLevelOptionsByCombatClass(MONSTER);
+  const initialWeaponOptions = getWeaponOptions(MONSTER);
+  const initialArmorTypeOptions = getArmorOptions;
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
   const [attackerClass, setAttackerClass] = useState<number>(MONSTER);
   const prevAttackerClass = useRef<number>(MONSTER);
   const [attackerLevelOptions, setAttackerLevelOptions] = useState(
-    getLevelOptionsByCombatClass(MONSTER)
+    initialAttackerLevelOptions
   );
-  const [weaponOptions, setWeaponOptions] = useState(getWeaponOptions(MONSTER));
-  const [armorTypeOptions, setArmorTypeOptions] = useState(getArmorOptions);
+  const [weaponOptions, setWeaponOptions] = useState(initialWeaponOptions);
+  const [armorTypeOptions, setArmorTypeOptions] = useState(initialArmorTypeOptions);
   const [targetArmorType, setTargetArmorType] = useState<string>(
-    armorTypeOptions[0]!.value
+    initialArmorTypeOptions[0]?.value ?? ""
   );
 
   const armorClassOptions = useRef(
@@ -40,7 +43,7 @@ const Calculator = () => {
   );
   const [attackerLevel, setAttackerLevel] = useState<number>(3);
   const [attackerWeapon, setAttackerWeapon] = useState<number>(
-    weaponOptions[0]!.value
+    initialWeaponOptions[0]?.value ?? 0
   );
 
   const [toHit, setToHit] = useState<number | undefined>(undefined);
