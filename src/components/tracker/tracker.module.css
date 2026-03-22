@@ -96,6 +96,7 @@
 }
 
 .toolbarButton:disabled,
+.toolbarButtonPrimary:disabled,
 .toolbarButtonDanger:disabled,
 .roundTab:disabled,
 .roundTabActive:disabled {

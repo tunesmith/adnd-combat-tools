@@ -268,11 +268,16 @@ const CombatTracker = ({
     IntentionWizardEntry[]
   >([]);
   const [intentionWizardIndex, setIntentionWizardIndex] = useState<number>(0);
+  const [intentionResolvedOnEntry, setIntentionResolvedOnEntry] =
+    useState<boolean>(false);
+  const [intentionWizardAnchorKeysByRound, setIntentionWizardAnchorKeysByRound] =
+    useState<Record<number, number | undefined>>({});
   const [showCombatWizard, setShowCombatWizard] = useState<boolean>(false);
   const [combatWizardIndex, setCombatWizardIndex] = useState<number>(0);
-  const [combatWizardAnchorKey, setCombatWizardAnchorKey] = useState<
-    number | undefined
-  >(undefined);
+  const [combatResolvedOnEntry, setCombatResolvedOnEntry] =
+    useState<boolean>(false);
+  const [combatWizardAnchorKeysByRound, setCombatWizardAnchorKeysByRound] =
+    useState<Record<number, number | undefined>>({});
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleDraft, setTitleDraft] = useState<string>("");
   const [isEditingRoundLabel, setIsEditingRoundLabel] = useState<boolean>(false);
@@ -406,6 +411,8 @@ const CombatTracker = ({
   const canOpenCombatWizard = Boolean(
     currentRound?.partyInitiative.trim() && currentRound?.enemyInitiative.trim()
   );
+  const currentIntentionWizardEntry =
+    intentionWizardEntries[intentionWizardIndex];
   const combatWizardEntries = useMemo<CombatWizardEntry[]>(
     () => (currentRound ? buildCombatWizardEntries(currentRound) : []),
     [currentRound]
@@ -670,23 +677,65 @@ const CombatTracker = ({
   }, [showMoreActions]);
 
   useEffect(() => {
+    setShowIntentionsWizard(false);
+    setIntentionWizardIndex(0);
+    setIntentionResolvedOnEntry(false);
+    setShowCombatWizard(false);
+    setCombatWizardIndex(0);
+    setCombatResolvedOnEntry(false);
+  }, [state.activeRound]);
+
+  useEffect(() => {
+    if (intentionWizardEntries.length === 0) {
+      setIntentionWizardIndex(0);
+      setIntentionResolvedOnEntry(false);
+      return;
+    }
+
+    if (intentionWizardIndex >= intentionWizardEntries.length) {
+      const nextIndex = intentionWizardEntries.length - 1;
+      setIntentionWizardIndex(nextIndex);
+      setIntentionResolvedOnEntry(
+        Boolean(intentionWizardEntries[nextIndex]?.intention.trim())
+      );
+    }
+  }, [intentionWizardEntries, intentionWizardIndex]);
+
+  useEffect(() => {
+    if (!showIntentionsWizard || !currentIntentionWizardEntry) {
+      return;
+    }
+
+    setIntentionWizardAnchorKeysByRound((previous) => ({
+      ...previous,
+      [state.activeRound]: currentIntentionWizardEntry.combatantKey,
+    }));
+  }, [currentIntentionWizardEntry, showIntentionsWizard, state.activeRound]);
+
+  useEffect(() => {
     if (combatWizardEntries.length === 0) {
       setCombatWizardIndex(0);
+      setCombatResolvedOnEntry(false);
       return;
     }
 
     if (combatWizardIndex >= combatWizardEntries.length) {
-      setCombatWizardIndex(combatWizardEntries.length - 1);
+      const nextIndex = combatWizardEntries.length - 1;
+      setCombatWizardIndex(nextIndex);
+      setCombatResolvedOnEntry(Boolean(combatWizardEntries[nextIndex]?.result.trim()));
     }
   }, [combatWizardEntries, combatWizardIndex]);
 
   useEffect(() => {
-    if (!currentCombatWizardEntry) {
+    if (!showCombatWizard || !currentCombatWizardEntry) {
       return;
     }
 
-    setCombatWizardAnchorKey(currentCombatWizardEntry.combatantKey);
-  }, [currentCombatWizardEntry]);
+    setCombatWizardAnchorKeysByRound((previous) => ({
+      ...previous,
+      [state.activeRound]: currentCombatWizardEntry.combatantKey,
+    }));
+  }, [currentCombatWizardEntry, showCombatWizard, state.activeRound]);
 
   useEffect(() => {
     if (!shareCopied) {
@@ -762,12 +811,6 @@ const CombatTracker = ({
     roundLabelInputRef.current?.focus();
     roundLabelInputRef.current?.select();
   }, [isEditingRoundLabel]);
-
-  const currentIntentionWizardEntry =
-    intentionWizardEntries[intentionWizardIndex];
-  const currentIntentionResolved = Boolean(
-    currentIntentionWizardEntry?.intention.trim()
-  );
 
   useEffect(() => {
     if (!showIntentionsWizard || !currentIntentionWizardEntry) {
@@ -880,13 +923,41 @@ const CombatTracker = ({
   };
 
   const openIntentionsWizard = () => {
-    setIntentionWizardEntries(buildIntentionWizardEntries(currentRound));
-    setIntentionWizardIndex(0);
+    const nextEntries = buildIntentionWizardEntries(currentRound);
+    const anchorKey = intentionWizardAnchorKeysByRound[state.activeRound];
+    const anchorIndex = anchorKey
+      ? nextEntries.findIndex(
+          (entry) => entry.combatantKey === anchorKey
+        )
+      : -1;
+    const nextIndex = anchorIndex >= 0 ? anchorIndex : 0;
+
+    setIntentionWizardEntries(nextEntries);
+    setIntentionWizardIndex(nextIndex);
+    setIntentionResolvedOnEntry(Boolean(nextEntries[nextIndex]?.intention.trim()));
     setShowIntentionsWizard(true);
   };
 
   const closeIntentionsWizard = () => {
     setShowIntentionsWizard(false);
+  };
+
+  const navigateIntentionsWizard = (nextIndex: number) => {
+    if (intentionWizardEntries.length === 0) {
+      setIntentionResolvedOnEntry(false);
+      setIntentionWizardIndex(0);
+      return;
+    }
+
+    const boundedIndex = Math.max(
+      0,
+      Math.min(intentionWizardEntries.length - 1, nextIndex)
+    );
+
+    setIntentionResolvedOnEntry(
+      Boolean(intentionWizardEntries[boundedIndex]?.intention.trim())
+    );
+    setIntentionWizardIndex(boundedIndex);
   };
 
   const openCombatWizard = () => {
@@ -895,18 +966,39 @@ const CombatTracker = ({
     }
 
     const nextEntries = buildCombatWizardEntries(currentRound);
-    const anchorIndex = combatWizardAnchorKey
+    const anchorKey = combatWizardAnchorKeysByRound[state.activeRound];
+    const anchorIndex = anchorKey
       ? nextEntries.findIndex(
-          (entry) => entry.combatantKey === combatWizardAnchorKey
+          (entry) => entry.combatantKey === anchorKey
         )
       : -1;
 
-    setCombatWizardIndex(anchorIndex >= 0 ? anchorIndex : 0);
+    const nextIndex = anchorIndex >= 0 ? anchorIndex : 0;
+    setCombatWizardIndex(nextIndex);
+    setCombatResolvedOnEntry(Boolean(nextEntries[nextIndex]?.result.trim()));
     setShowCombatWizard(true);
   };
 
   const closeCombatWizard = () => {
     setShowCombatWizard(false);
+  };
+
+  const navigateCombatWizard = (nextIndex: number) => {
+    if (combatWizardEntries.length === 0) {
+      setCombatResolvedOnEntry(false);
+      setCombatWizardIndex(0);
+      return;
+    }
+
+    const boundedIndex = Math.max(
+      0,
+      Math.min(combatWizardEntries.length - 1, nextIndex)
+    );
+
+    setCombatResolvedOnEntry(
+      Boolean(combatWizardEntries[boundedIndex]?.result.trim())
+    );
+    setCombatWizardIndex(boundedIndex);
   };
 
   const confirmDeleteRound = () => {
@@ -941,6 +1033,18 @@ const CombatTracker = ({
   };
 
   const updateCombatWizardEffect = (entry: CombatWizardEntry, value: string) => {
+    dispatch({
+      type: entry.side === "enemy" ? "set-enemy-state" : "set-party-state",
+      index: entry.index,
+      field: "effect",
+      value,
+    });
+  };
+
+  const updateIntentionsWizardEffect = (
+    entry: IntentionWizardEntry,
+    value: string
+  ) => {
     dispatch({
       type: entry.side === "enemy" ? "set-enemy-state" : "set-party-state",
       index: entry.index,
@@ -2094,7 +2198,7 @@ const CombatTracker = ({
             </div>
             <div
               className={
-                currentIntentionResolved
+                intentionResolvedOnEntry
                   ? `${styles["modalBody"]} ${styles["intentionsWizardBodyResolved"]}`
                   : styles["modalBody"]
               }
@@ -2106,7 +2210,7 @@ const CombatTracker = ({
                 <span className={styles["intentionsWizardProgress"]}>
                   {intentionWizardIndex + 1} of {intentionWizardEntries.length}
                 </span>
-                {currentIntentionResolved ? (
+                {intentionResolvedOnEntry ? (
                   <span className={styles["intentionsWizardResolvedBadge"]}>
                     Resolved
                   </span>
@@ -2116,11 +2220,7 @@ const CombatTracker = ({
                     type={"button"}
                     className={styles["toolbarButton"]}
                     disabled={intentionWizardIndex === 0}
-                    onClick={() =>
-                      setIntentionWizardIndex((previousIndex) =>
-                        Math.max(0, previousIndex - 1)
-                      )
-                    }
+                    onClick={() => navigateIntentionsWizard(intentionWizardIndex - 1)}
                   >
                     Previous
                   </button>
@@ -2128,14 +2228,7 @@ const CombatTracker = ({
                     type={"button"}
                     className={styles["toolbarButtonPrimary"]}
                     disabled={intentionWizardIndex >= intentionWizardEntries.length - 1}
-                    onClick={() =>
-                      setIntentionWizardIndex((previousIndex) =>
-                        Math.min(
-                          intentionWizardEntries.length - 1,
-                          previousIndex + 1
-                        )
-                      )
-                    }
+                    onClick={() => navigateIntentionsWizard(intentionWizardIndex + 1)}
                   >
                     Next
                   </button>
@@ -2162,6 +2255,27 @@ const CombatTracker = ({
                   }))
                 }
                 placeholder={"advance, attack, cast sleep, hold, charge..."}
+              />
+              <label
+                className={styles["modalLabel"]}
+                htmlFor={"intentions-wizard-effect"}
+              >
+                Current Effect
+              </label>
+              <AutoHeightTextarea
+                id={"intentions-wizard-effect"}
+                className={styles["intentionsWizardTextarea"]}
+                value={
+                  currentIntentionWizardEntry.side === "enemy"
+                    ? currentRound.enemyStates[currentIntentionWizardEntry.index]?.effect ||
+                      ""
+                    : currentRound.partyStates[currentIntentionWizardEntry.index]?.effect ||
+                      ""
+                }
+                onChange={(value) =>
+                  updateIntentionsWizardEffect(currentIntentionWizardEntry, value)
+                }
+                placeholder={"hopeless 1/9, slowed 3/8, bless, stoneskin..."}
               />
               <div className={styles["modalLabel"]}>Targets</div>
               <div className={styles["intentionsWizardGridWrap"]}>
@@ -2195,6 +2309,39 @@ const CombatTracker = ({
                           )
                         )}
                       </tr>
+                      <tr>
+                        <th
+                          className={`${styles["combatWizardHpLabel"]} ${styles["combatWizardHpLabelEnemy"]}`}
+                        >
+                          Current Effect
+                        </th>
+                        {currentRound.party.map((_, partyIndex) => {
+                          const partyState = currentRound.partyStates[partyIndex];
+
+                          if (!partyState) {
+                            return null;
+                          }
+
+                          return (
+                            <td
+                              key={`intentions-party-effect-${partyIndex}`}
+                              className={`${styles["combatWizardEffectCell"]} ${styles["combatWizardEffectCellEnemy"]}`}
+                            >
+                              {renderCombatWizardEffectEditor(
+                                partyState.effect,
+                                (value) =>
+                                  dispatch({
+                                    type: "set-party-state",
+                                    index: partyIndex,
+                                    field: "effect",
+                                    value,
+                                  }),
+                                "enemy"
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
                     </tbody>
                   </table>
                 ) : (
@@ -2204,6 +2351,11 @@ const CombatTracker = ({
                         <th className={styles["intentionsWizardCorner"]}>Target</th>
                         <th className={styles["intentionsWizardColumnHeader"]}>
                           {currentIntentionWizardEntry.combatantName}
+                        </th>
+                        <th
+                          className={`${styles["combatWizardColumnHeader"]} ${styles["combatWizardHpLabelParty"]}`}
+                        >
+                          Current Effect
                         </th>
                       </tr>
                     </thead>
@@ -2220,6 +2372,21 @@ const CombatTracker = ({
                             true,
                             "partyOnly"
                           )}
+                          <td
+                            className={`${styles["combatWizardEffectCell"]} ${styles["combatWizardEffectCellParty"]}`}
+                          >
+                            {renderCombatWizardEffectEditor(
+                              currentRound.enemyStates[enemyIndex]?.effect || "",
+                              (value) =>
+                                dispatch({
+                                  type: "set-enemy-state",
+                                  index: enemyIndex,
+                                  field: "effect",
+                                  value,
+                                }),
+                              "party"
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -2254,7 +2421,7 @@ const CombatTracker = ({
             </div>
             <div
               className={
-                currentCombatWizardEntry.resolved
+                combatResolvedOnEntry
                   ? `${styles["modalBody"]} ${styles["combatWizardBodyResolved"]}`
                   : styles["modalBody"]
               }
@@ -2266,7 +2433,7 @@ const CombatTracker = ({
                 <span className={styles["combatWizardProgress"]}>
                   {combatWizardIndex + 1} of {combatWizardEntries.length}
                 </span>
-                {currentCombatWizardEntry.resolved ? (
+                {combatResolvedOnEntry ? (
                   <span className={styles["combatWizardResolvedBadge"]}>
                     Resolved
                   </span>
@@ -2276,11 +2443,7 @@ const CombatTracker = ({
                     type={"button"}
                     className={styles["toolbarButton"]}
                     disabled={combatWizardIndex === 0}
-                    onClick={() =>
-                      setCombatWizardIndex((previousIndex) =>
-                        Math.max(0, previousIndex - 1)
-                      )
-                    }
+                    onClick={() => navigateCombatWizard(combatWizardIndex - 1)}
                   >
                     Previous
                   </button>
@@ -2288,11 +2451,7 @@ const CombatTracker = ({
                     type={"button"}
                     className={styles["toolbarButtonPrimary"]}
                     disabled={combatWizardIndex >= combatWizardEntries.length - 1}
-                    onClick={() =>
-                      setCombatWizardIndex((previousIndex) =>
-                        Math.min(combatWizardEntries.length - 1, previousIndex + 1)
-                      )
-                    }
+                    onClick={() => navigateCombatWizard(combatWizardIndex + 1)}
                   >
                     Next
                   </button>
