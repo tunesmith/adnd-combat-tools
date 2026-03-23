@@ -4,12 +4,20 @@ import { trickTrap, TrickTrap } from './trickTrapTable';
 
 export function resolveTrickTrap(options?: {
   roll?: number;
+  level?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(trickTrap.sides);
   const command = getTableEntry(usedRoll, trickTrap);
   const children: DungeonOutcomeNode[] = [];
   if (command === TrickTrap.IllusionaryWall) {
-    children.push({ type: 'pending-roll', table: 'illusionaryWallNature' });
+    children.push({
+      type: 'pending-roll',
+      table: 'illusionaryWallNature',
+      context:
+        options?.level === undefined
+          ? undefined
+          : { kind: 'wandering', level: options.level },
+    });
   } else if (command === TrickTrap.GasCorridor) {
     children.push({ type: 'pending-roll', table: 'gasTrapEffect' });
   }

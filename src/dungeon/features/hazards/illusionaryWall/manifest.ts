@@ -1,14 +1,20 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
+import type { TableContext } from '../../../../types/dungeon';
+import {
+  buildEventPreviewFromFactory,
+  markContextualResolution,
+  wrapResolver,
+} from '../../shared';
 import {
   renderIllusionaryWallNatureDetail,
   renderIllusionaryWallNatureCompact,
   buildIllusionaryWallNaturePreview,
 } from './illusionaryWallRender';
 import { resolveIllusionaryWallNature } from './illusionaryWallResolvers';
+import { readHazardDungeonLevel } from '../shared';
 
 export const illusionaryWallTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  markContextualResolution({
     id: 'illusionaryWallNature',
     heading: 'Illusionary Wall Nature',
     resolver: wrapResolver(resolveIllusionaryWallNature),
@@ -17,6 +23,30 @@ export const illusionaryWallTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderIllusionaryWallNatureCompact,
     },
     buildPreview: buildIllusionaryWallNaturePreview,
-    resolvePending: () => resolveIllusionaryWallNature({}),
-  },
+    buildEventPreview: (node, ancestors) =>
+      node.event.kind === 'illusionaryWallNature'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildIllusionaryWallNaturePreview,
+            {
+              context: {
+                kind: 'wandering',
+                level: readHazardDungeonLevel(undefined, ancestors ?? []),
+              },
+            }
+          )
+        : undefined,
+    registry: ({ roll, context }) =>
+      resolveIllusionaryWallNature({
+        roll,
+        level: readHazardDungeonLevel(context, []),
+      }),
+    resolvePending: (pending, ancestors) =>
+      resolveIllusionaryWallNature({
+        level: readHazardDungeonLevel(
+          pending.context as TableContext | undefined,
+          ancestors
+        ),
+      }),
+  }),
 ];

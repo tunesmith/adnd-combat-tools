@@ -8,6 +8,7 @@ import {
 
 export function resolveIllusionaryWallNature(options?: {
   roll?: number;
+  level?: number;
   takeOverride?: (tableId: string) => number | undefined;
 }): DungeonOutcomeNode {
   const overridden = options?.takeOverride?.('illusionaryWallNature');
@@ -22,6 +23,7 @@ export function resolveIllusionaryWallNature(options?: {
       context: {
         kind: 'chamberDimensions',
         forcedContents: ChamberRoomContents.MonsterAndTreasure,
+        level: options?.level,
       },
     });
   }

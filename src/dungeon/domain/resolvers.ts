@@ -69,7 +69,11 @@ export function resolvePeriodicCheck(options?: {
       children.push({ type: 'pending-roll', table: 'stairs' });
       break;
     case PeriodicCheck.TrickTrap:
-      children.push({ type: 'pending-roll', table: 'trickTrap' });
+      children.push({
+        type: 'pending-roll',
+        table: 'trickTrap',
+        context: { kind: 'wandering', level },
+      });
       break;
     case PeriodicCheck.WanderingMonster:
       children.push({
@@ -179,7 +183,11 @@ export function resolveWanderingWhereFrom(options?: {
       children.push({ type: 'pending-roll', table: 'stairs' });
       break;
     case PeriodicCheck.TrickTrap:
-      children.push({ type: 'pending-roll', table: 'trickTrap' });
+      children.push({
+        type: 'pending-roll',
+        table: 'trickTrap',
+        context: { kind: 'wandering', level: options?.level ?? 1 },
+      });
       break;
     default:
       break;
@@ -530,7 +538,11 @@ export function resolveChamberRoomContents(options?: {
       children.push({ type: 'pending-roll', table: 'chamberRoomStairs' });
       break;
     case ChamberRoomContents.TrickTrap:
-      children.push({ type: 'pending-roll', table: 'trickTrap' });
+      children.push({
+        type: 'pending-roll',
+        table: 'trickTrap',
+        context: { kind: 'wandering', level },
+      });
       break;
     default:
       break;

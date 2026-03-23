@@ -205,6 +205,7 @@ describe('uiPreviewHarness', () => {
       action: 'passage',
       roll: 19,
       detailMode: true,
+      dungeonLevel: 4,
     });
 
     feed = resolvePendingPreview(feed, 'trickTrap', 19);
@@ -218,7 +219,11 @@ describe('uiPreviewHarness', () => {
     );
     expect(chamberPreviewBefore).toBeDefined();
     expect(chamberPreviewBefore?.context).toEqual(
-      expect.objectContaining({ kind: 'chamberDimensions' })
+      expect.objectContaining({
+        kind: 'chamberDimensions',
+        forcedContents: ChamberRoomContents.MonsterAndTreasure,
+        level: 4,
+      })
     );
     feed = resolvePendingPreview(feed, 'chamberDimensions', 1);
 
@@ -248,6 +253,9 @@ describe('uiPreviewHarness', () => {
       return last.split(':')[0];
     });
     expect(pendingBases).not.toContain('chamberRoomContents');
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('monsterLevel:4');
+    expect(pendingTables).not.toContain('monsterLevel:1');
   });
 
   test('wandering trick trap retains generic summary before wall detail', () => {
@@ -422,6 +430,7 @@ describe('uiPreviewHarness', () => {
       action: 'passage',
       roll: 19,
       detailMode: true,
+      dungeonLevel: 4,
     });
 
     feed = resolvePendingPreview(feed, 'trickTrap', 19);
@@ -433,6 +442,7 @@ describe('uiPreviewHarness', () => {
       expect.objectContaining({
         kind: 'chamberDimensions',
         forcedContents: ChamberRoomContents.MonsterAndTreasure,
+        level: 4,
       })
     );
 
@@ -458,6 +468,9 @@ describe('uiPreviewHarness', () => {
     expect(contentsEvent.event.result).toBe(
       ChamberRoomContents.MonsterAndTreasure
     );
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('monsterLevel:4');
+    expect(pendingTables).not.toContain('monsterLevel:1');
 
     const previews = renderDetail(feed).filter(
       (node): node is DungeonTablePreview => node.kind === 'table-preview'

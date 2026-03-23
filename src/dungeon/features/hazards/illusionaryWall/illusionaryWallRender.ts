@@ -59,7 +59,8 @@ export function describeIllusionaryWallNature(node: OutcomeEventNode): string {
 }
 
 export const buildIllusionaryWallNaturePreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Illusionary Wall Nature',
@@ -68,6 +69,7 @@ export const buildIllusionaryWallNaturePreview: TablePreviewFactory = (
       range: entry.range,
       label: ILLUSIONARY_DETAILS[entry.command].trim(),
     })),
+    context,
   });
 
 const ILLUSIONARY_DETAILS: Record<IllusionaryWallNature, string> = {
