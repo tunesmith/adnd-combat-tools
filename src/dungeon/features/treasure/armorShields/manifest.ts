@@ -1,5 +1,8 @@
 import type { DungeonTableDefinition } from '../../types';
-import { createTreasureMagicContextHandlers } from '../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureArmorShieldsPreview,
   renderTreasureArmorShieldsCompact,
@@ -23,5 +26,9 @@ export const armorShieldsTables: ReadonlyArray<
       renderCompact: renderTreasureArmorShieldsCompact,
     },
     buildPreview: buildTreasureArmorShieldsPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureArmorShields',
+      buildTreasureArmorShieldsPreview
+    ),
   },
 ];

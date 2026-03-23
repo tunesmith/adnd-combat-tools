@@ -94,7 +94,8 @@ export function renderTreasureArmorShieldsCompact(
 }
 
 export const buildTreasureArmorShieldsPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Armor & Shields (Table F)',
@@ -103,4 +104,5 @@ export const buildTreasureArmorShieldsPreview: TablePreviewFactory = (
       range,
       label: armorShieldLabel(command),
     })),
+    context,
   });

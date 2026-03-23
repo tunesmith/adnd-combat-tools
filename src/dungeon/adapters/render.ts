@@ -257,45 +257,6 @@ function previewForEventNode(
     case 'gasTrapEffect':
       tableId = 'gasTrapEffect';
       break;
-    case 'treasureScroll': {
-      const scrollEvent = event;
-      tableId = 'treasureScroll';
-      context = {
-        kind: 'treasureMagic',
-        level: scrollEvent.level,
-        treasureRoll: scrollEvent.treasureRoll,
-        rollIndex: scrollEvent.rollIndex,
-      };
-      break;
-    }
-    case 'treasureScrollProtectionElementals':
-      tableId = 'treasureScrollProtectionElementals';
-      break;
-    case 'treasureScrollProtectionLycanthropes':
-      tableId = 'treasureScrollProtectionLycanthropes';
-      break;
-    case 'treasureRing': {
-      const ring = event;
-      tableId = 'treasureRing';
-      context = {
-        kind: 'treasureMagic',
-        level: ring.level,
-        treasureRoll: ring.treasureRoll,
-        rollIndex: ring.rollIndex,
-      };
-      break;
-    }
-    case 'treasureArmorShields': {
-      const armor = event;
-      tableId = 'treasureArmorShields';
-      context = {
-        kind: 'treasureMagic',
-        level: armor.level,
-        treasureRoll: armor.treasureRoll,
-        rollIndex: armor.rollIndex,
-      };
-      break;
-    }
     case 'treasureSwords': {
       const sword = event;
       tableId = 'treasureSwords';
@@ -395,41 +356,6 @@ function previewForEventNode(
       }
       break;
     }
-    case 'treasureMiscWeapons': {
-      const weapon = event;
-      tableId = 'treasureMiscWeapons';
-      context = {
-        kind: 'treasureMagic',
-        level: weapon.level,
-        treasureRoll: weapon.treasureRoll,
-        rollIndex: weapon.rollIndex,
-      };
-      break;
-    }
-    case 'treasureRingContrariness':
-      tableId = 'treasureRingContrariness';
-      break;
-    case 'treasureRingElementalCommand':
-      tableId = 'treasureRingElementalCommand';
-      break;
-    case 'treasureRingProtection':
-      tableId = 'treasureRingProtection';
-      break;
-    case 'treasureRingRegeneration':
-      tableId = 'treasureRingRegeneration';
-      break;
-    case 'treasureRingTelekinesis':
-      tableId = 'treasureRingTelekinesis';
-      break;
-    case 'treasureRingThreeWishes':
-      tableId = 'treasureRingThreeWishes';
-      break;
-    case 'treasureRingWizardry':
-      tableId = 'treasureRingWizardry';
-      break;
-    case 'treasureRodStaffWand':
-      tableId = 'treasureRodStaffWand';
-      break;
     case 'treasureBagOfHolding':
       tableId = 'treasureBagOfHolding';
       break;
@@ -534,9 +460,6 @@ function previewForEventNode(
       break;
     case 'treasureMiscMagicE1':
       tableId = 'treasureMiscMagicE1';
-      break;
-    case 'treasureStaffSerpent':
-      tableId = 'treasureStaffSerpent';
       break;
     case 'treasure': {
       const treasure = event;

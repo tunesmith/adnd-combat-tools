@@ -1,6 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { createTreasureMagicContextHandlers } from '../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureScrollPreview,
   buildTreasureScrollProtectionElementalsPreview,
@@ -29,6 +32,10 @@ export const scrollTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureScrollCompact,
     },
     buildPreview: buildTreasureScrollPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureScroll',
+      buildTreasureScrollPreview
+    ),
   },
   {
     id: 'treasureScrollProtectionElementals',
@@ -39,6 +46,13 @@ export const scrollTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureScrollProtectionElementalsCompact,
     },
     buildPreview: buildTreasureScrollProtectionElementalsPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureScrollProtectionElementals'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureScrollProtectionElementalsPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureScrollProtectionElementals({}),
   },
   {
@@ -50,6 +64,13 @@ export const scrollTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureScrollProtectionLycanthropesCompact,
     },
     buildPreview: buildTreasureScrollProtectionLycanthropesPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureScrollProtectionLycanthropes'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureScrollProtectionLycanthropesPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureScrollProtectionLycanthropes({}),
   },
 ];

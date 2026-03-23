@@ -1,5 +1,8 @@
 import type { DungeonTableDefinition } from '../../types';
-import { createTreasureMagicContextHandlers } from '../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureMiscWeaponsPreview,
   renderTreasureMiscWeaponsCompact,
@@ -23,5 +26,9 @@ export const miscWeaponsTables: ReadonlyArray<
       renderCompact: renderTreasureMiscWeaponsCompact,
     },
     buildPreview: buildTreasureMiscWeaponsPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureMiscWeapons',
+      buildTreasureMiscWeaponsPreview
+    ),
   },
 ];

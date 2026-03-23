@@ -99,7 +99,10 @@ export function renderTreasureScrollCompact(
   return nodes;
 }
 
-export const buildTreasureScrollPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasureScrollPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Scroll',
     sides: treasureScrolls.sides,
@@ -107,6 +110,7 @@ export const buildTreasureScrollPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: SCROLL_LABELS[entry.command],
     })),
+    context,
   });
 
 export function renderTreasureScrollProtectionElementalsDetail(
@@ -156,7 +160,7 @@ export function renderTreasureScrollProtectionElementalsCompact(
 }
 
 export const buildTreasureScrollProtectionElementalsPreview: TablePreviewFactory =
-  (tableId) =>
+  (tableId, context) =>
     buildPreview(tableId, {
       title: 'Elemental Protection',
       sides: treasureScrollProtectionElementals.sides,
@@ -164,6 +168,7 @@ export const buildTreasureScrollProtectionElementalsPreview: TablePreviewFactory
         range: entry.range,
         label: elementalsLabel(entry.command),
       })),
+      context,
     });
 
 export function renderTreasureScrollProtectionLycanthropesDetail(
@@ -213,7 +218,7 @@ export function renderTreasureScrollProtectionLycanthropesCompact(
 }
 
 export const buildTreasureScrollProtectionLycanthropesPreview: TablePreviewFactory =
-  (tableId) =>
+  (tableId, context) =>
     buildPreview(tableId, {
       title: 'Lycanthrope Protection',
       sides: treasureScrollProtectionLycanthropes.sides,
@@ -221,6 +226,7 @@ export const buildTreasureScrollProtectionLycanthropesPreview: TablePreviewFacto
         range: entry.range,
         label: lycanthropePreviewLabel(entry.command),
       })),
+      context,
     });
 
 export function resolvedScrollSentence(node: OutcomeEventNode): string {

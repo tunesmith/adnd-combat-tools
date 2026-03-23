@@ -145,7 +145,8 @@ export function renderTreasureStaffSerpentCompact(
 }
 
 export const buildTreasureRodStaffWandPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Rod, Staff, or Wand',
@@ -154,10 +155,12 @@ export const buildTreasureRodStaffWandPreview: TablePreviewFactory = (
       range: entry.range,
       label: ROD_STAFF_WAND_LABELS[entry.command],
     })),
+    context,
   });
 
 export const buildTreasureStaffSerpentPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Serpent Form',
@@ -166,6 +169,7 @@ export const buildTreasureStaffSerpentPreview: TablePreviewFactory = (
       range: entry.range,
       label: SERPENT_LABELS[entry.command],
     })),
+    context,
   });
 
 export function resolveRodStaffWandLabel(node: OutcomeEventNode): string {

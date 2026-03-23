@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
   buildTreasureRodStaffWandPreview,
   buildTreasureStaffSerpentPreview,
@@ -24,6 +24,10 @@ export const rodStaffWandTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRodStaffWandCompact,
     },
     buildPreview: buildTreasureRodStaffWandPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRodStaffWand'
+        ? buildEventPreviewFromFactory(node, buildTreasureRodStaffWandPreview)
+        : undefined,
   },
   {
     id: 'treasureStaffSerpent',
@@ -35,5 +39,9 @@ export const rodStaffWandTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureStaffSerpentCompact,
     },
     buildPreview: buildTreasureStaffSerpentPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureStaffSerpent'
+        ? buildEventPreviewFromFactory(node, buildTreasureStaffSerpentPreview)
+        : undefined,
   },
 ];

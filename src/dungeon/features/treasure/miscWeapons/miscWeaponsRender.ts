@@ -134,7 +134,10 @@ export function renderTreasureMiscWeaponsCompact(
   return nodes;
 }
 
-export const buildTreasureMiscWeaponsPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasureMiscWeaponsPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Miscellaneous Weapons (Table H)',
     sides: treasureMiscWeapons.sides,
@@ -142,4 +145,5 @@ export const buildTreasureMiscWeaponsPreview: TablePreviewFactory = (tableId) =>
       range,
       label: miscWeaponLabel(command),
     })),
+    context,
   });

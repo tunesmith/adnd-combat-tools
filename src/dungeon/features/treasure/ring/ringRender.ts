@@ -157,7 +157,10 @@ export function renderTreasureRingCompact(
   return nodes;
 }
 
-export const buildTreasureRingPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasureRingPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Ring',
     sides: treasureRings.sides,
@@ -165,10 +168,12 @@ export const buildTreasureRingPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: TreasureRing[entry.command] ?? String(entry.command),
     })),
+    context,
   });
 
 export const buildTreasureRingContrarinessPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Contrariness Effect',
@@ -177,10 +182,12 @@ export const buildTreasureRingContrarinessPreview: TablePreviewFactory = (
       range: entry.range,
       label: contrarinessPreviewLabel(entry.command),
     })),
+    context,
   });
 
 export const buildTreasureRingElementalCommandPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Elemental Focus',
@@ -189,10 +196,12 @@ export const buildTreasureRingElementalCommandPreview: TablePreviewFactory = (
       range: entry.range,
       label: elementalCommandPreviewLabel(entry.command),
     })),
+    context,
   });
 
 export const buildTreasureRingProtectionPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Protection Bonus',
@@ -201,10 +210,12 @@ export const buildTreasureRingProtectionPreview: TablePreviewFactory = (
       range: entry.range,
       label: protectionPreviewLabel(entry.command),
     })),
+    context,
   });
 
 export const buildTreasureRingRegenerationPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Regeneration Type',
@@ -213,10 +224,12 @@ export const buildTreasureRingRegenerationPreview: TablePreviewFactory = (
       range: entry.range,
       label: regenerationPreviewLabel(entry.command),
     })),
+    context,
   });
 
 export const buildTreasureRingTelekinesisPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Telekinetic Capacity',
@@ -225,10 +238,12 @@ export const buildTreasureRingTelekinesisPreview: TablePreviewFactory = (
       range: entry.range,
       label: telekinesisPreviewLabel(entry.command),
     })),
+    context,
   });
 
 export const buildTreasureRingThreeWishesPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Wish Capacity',
@@ -237,10 +252,12 @@ export const buildTreasureRingThreeWishesPreview: TablePreviewFactory = (
       range: entry.range,
       label: threeWishesPreviewLabel(entry.command),
     })),
+    context,
   });
 
 export const buildTreasureRingWizardryPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Spell Doubling',
@@ -249,6 +266,7 @@ export const buildTreasureRingWizardryPreview: TablePreviewFactory = (
       range: entry.range,
       label: wizardryPreviewLabel(entry.command),
     })),
+    context,
   });
 
 export function renderTreasureRingContrarinessDetail(

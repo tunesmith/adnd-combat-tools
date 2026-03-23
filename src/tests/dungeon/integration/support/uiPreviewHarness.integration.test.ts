@@ -17,6 +17,11 @@ import { DoorBeyond, doorBeyond } from '../../../../tables/dungeon/doorBeyond';
 import { ChamberRoomContents } from '../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
 import { TreasureMagicCategory } from '../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
 import { TreasurePotion } from '../../../../dungeon/features/treasure/potion/potionTables';
+import { TreasureScroll } from '../../../../dungeon/features/treasure/scroll/scrollTables';
+import { TreasureRing } from '../../../../dungeon/features/treasure/ring/ringTables';
+import { TreasureArmorShield } from '../../../../dungeon/features/treasure/armorShields/armorShieldsTable';
+import { TreasureMiscWeapon } from '../../../../dungeon/features/treasure/miscWeapons/miscWeaponsTable';
+import { TreasureRodStaffWand } from '../../../../dungeon/features/treasure/rodStaffWand/rodStaffWandTables';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -593,6 +598,194 @@ describe('uiPreviewHarness', () => {
     const pendingTables = collectPendingTables(feed.outcome);
     expect(pendingTables).toContain('treasurePotionHumanControl');
     expect(pendingTables).not.toContain('treasurePotionAnimalControl');
+  });
+
+  test('resolved treasure scroll preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 21);
+    feed = resolvePendingPreview(feed, 'treasureScroll', 65);
+
+    const scrollPreview = findPreview(renderDetail(feed), 'treasureScroll');
+    expect(scrollPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 21,
+      rollIndex: 1,
+    });
+
+    if (!scrollPreview) {
+      throw new Error('Expected treasure scroll preview');
+    }
+
+    feed = resolvePreview(feed, scrollPreview.targetId ?? scrollPreview.id, 72);
+
+    const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
+    expect(scrollEvent).toBeDefined();
+    if (scrollEvent?.event.kind === 'treasureScroll') {
+      expect(scrollEvent.event.result).toBe(
+        TreasureScroll.ProtectionLycanthropes
+      );
+    }
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureScrollProtectionLycanthropes');
+    expect(pendingTables).not.toContain('treasureScrollProtectionElementals');
+  });
+
+  test('resolved treasure ring preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 36);
+    feed = resolvePendingPreview(feed, 'treasureRing', 45);
+
+    const ringPreview = findPreview(renderDetail(feed), 'treasureRing');
+    expect(ringPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 36,
+      rollIndex: 1,
+    });
+
+    if (!ringPreview) {
+      throw new Error('Expected treasure ring preview');
+    }
+
+    feed = resolvePreview(feed, ringPreview.targetId ?? ringPreview.id, 1);
+
+    const ringEvent = findOutcomeEvent(feed.outcome, 'treasureRing');
+    expect(ringEvent).toBeDefined();
+    if (ringEvent?.event.kind === 'treasureRing') {
+      expect(ringEvent.event.result).toBe(TreasureRing.Contrariness);
+    }
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureRingContrariness');
+    expect(pendingTables).not.toContain('treasureRingProtection');
+  });
+
+  test('resolved armor and shields preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 61);
+    feed = resolvePendingPreview(feed, 'treasureArmorShields', 1);
+
+    const armorPreview = findPreview(
+      renderDetail(feed),
+      'treasureArmorShields'
+    );
+    expect(armorPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 61,
+      rollIndex: 1,
+    });
+
+    if (!armorPreview) {
+      throw new Error('Expected treasure armor and shields preview');
+    }
+
+    feed = resolvePreview(feed, armorPreview.targetId ?? armorPreview.id, 98);
+
+    const armorEvent = findOutcomeEvent(feed.outcome, 'treasureArmorShields');
+    expect(armorEvent).toBeDefined();
+    if (armorEvent?.event.kind === 'treasureArmorShields') {
+      expect(armorEvent.event.result).toBe(
+        TreasureArmorShield.ShieldMinus1MissileAttractor
+      );
+    }
+  });
+
+  test('resolved miscellaneous weapons preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 87);
+    feed = resolvePendingPreview(feed, 'treasureMiscWeapons', 1);
+
+    const miscPreview = findPreview(renderDetail(feed), 'treasureMiscWeapons');
+    expect(miscPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 87,
+      rollIndex: 1,
+    });
+
+    if (!miscPreview) {
+      throw new Error('Expected treasure miscellaneous weapons preview');
+    }
+
+    feed = resolvePreview(feed, miscPreview.targetId ?? miscPreview.id, 100);
+
+    const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscWeapons');
+    expect(miscEvent).toBeDefined();
+    if (miscEvent?.event.kind === 'treasureMiscWeapons') {
+      expect(miscEvent.event.result.item).toBe(TreasureMiscWeapon.TridentPlus3);
+    }
+  });
+
+  test('resolved rod staff wand preview reroll remains feature-owned', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 41);
+    feed = resolvePendingPreview(feed, 'treasureRodStaffWand', 1);
+
+    const rodPreview = findPreview(renderDetail(feed), 'treasureRodStaffWand');
+    expect(rodPreview).toBeDefined();
+
+    if (!rodPreview) {
+      throw new Error('Expected rod staff wand preview');
+    }
+
+    feed = resolvePreview(feed, rodPreview.targetId ?? rodPreview.id, 25);
+
+    const rodEvent = findOutcomeEvent(feed.outcome, 'treasureRodStaffWand');
+    expect(rodEvent).toBeDefined();
+    if (rodEvent?.event.kind === 'treasureRodStaffWand') {
+      expect(rodEvent.event.result).toBe(TreasureRodStaffWand.StaffSerpent);
+    }
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureStaffSerpent');
   });
 });
 

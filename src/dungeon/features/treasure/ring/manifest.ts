@@ -1,6 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { createTreasureMagicContextHandlers } from '../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureRingContrarinessPreview,
   buildTreasureRingElementalCommandPreview,
@@ -49,6 +52,10 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingCompact,
     },
     buildPreview: buildTreasureRingPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureRing',
+      buildTreasureRingPreview
+    ),
   },
   {
     id: 'treasureRingContrariness',
@@ -59,6 +66,13 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingContrarinessCompact,
     },
     buildPreview: buildTreasureRingContrarinessPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRingContrariness'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureRingContrarinessPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureRingContrariness({}),
   },
   {
@@ -70,6 +84,13 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingElementalCommandCompact,
     },
     buildPreview: buildTreasureRingElementalCommandPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRingElementalCommand'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureRingElementalCommandPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureRingElementalCommand({}),
   },
   {
@@ -81,6 +102,10 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingProtectionCompact,
     },
     buildPreview: buildTreasureRingProtectionPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRingProtection'
+        ? buildEventPreviewFromFactory(node, buildTreasureRingProtectionPreview)
+        : undefined,
     resolvePending: () => resolveTreasureRingProtection({}),
   },
   {
@@ -92,6 +117,13 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingRegenerationCompact,
     },
     buildPreview: buildTreasureRingRegenerationPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRingRegeneration'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureRingRegenerationPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureRingRegeneration({}),
   },
   {
@@ -103,6 +135,13 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingTelekinesisCompact,
     },
     buildPreview: buildTreasureRingTelekinesisPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRingTelekinesis'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureRingTelekinesisPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureRingTelekinesis({}),
   },
   {
@@ -114,6 +153,13 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingThreeWishesCompact,
     },
     buildPreview: buildTreasureRingThreeWishesPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRingThreeWishes'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureRingThreeWishesPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureRingThreeWishes({}),
   },
   {
@@ -125,6 +171,10 @@ export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRingWizardryCompact,
     },
     buildPreview: buildTreasureRingWizardryPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRingWizardry'
+        ? buildEventPreviewFromFactory(node, buildTreasureRingWizardryPreview)
+        : undefined,
     resolvePending: () => resolveTreasureRingWizardry({}),
   },
 ];
