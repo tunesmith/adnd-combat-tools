@@ -1,30 +1,34 @@
-import { createPortal } from "react-dom";
-import { useEffect, useMemo, useState } from "react";
-import type { ChangeEvent, FocusEvent } from "react";
-import type { SingleValue } from "react-select";
-import Select from "react-select";
-import { getTrackerCombatantHeaderDisplay } from "../../helpers/trackerCombatantDisplay";
-import customStyles from "../../helpers/selectCustomStyles";
-import { attackerClassOptions, getGeneralClass, MONSTER } from "../../tables/attackerClass";
+import { createPortal } from 'react-dom';
+import { useEffect, useMemo, useState } from 'react';
+import type { ChangeEvent, FocusEvent } from 'react';
+import type { SingleValue } from 'react-select';
+import Select from 'react-select';
+import { getTrackerCombatantHeaderDisplay } from '../../helpers/trackerCombatantDisplay';
+import customStyles from '../../helpers/selectCustomStyles';
+import {
+  attackerClassOptions,
+  getGeneralClass,
+  MONSTER,
+} from '../../tables/attackerClass';
 import {
   expandedArmorTypes,
   getExpandedArmorOptionsByClass,
-} from "../../tables/armorType";
-import { getLevelOptionsByCombatClass } from "../../tables/combatLevel";
-import { getWeaponOptions } from "../../tables/weapon";
+} from '../../tables/armorType';
+import { getLevelOptionsByCombatClass } from '../../tables/combatLevel';
+import { getWeaponOptions } from '../../tables/weapon';
 import type {
   ArmorClassOption,
   CreatureOption,
   ExpandedArmorTypeOption,
   LevelOption,
   WeaponOption,
-} from "../../types/option";
-import type { TrackerCombatant } from "../../types/tracker";
-import styles from "./tracker.module.css";
+} from '../../types/option';
+import type { TrackerCombatant } from '../../types/tracker';
+import styles from './tracker.module.css';
 
 interface TrackerCombatantInputProps {
   combatant: TrackerCombatant;
-  side: "party" | "enemy";
+  side: 'party' | 'enemy';
   canRemove: boolean;
   onRemove: () => void;
   onUpdate: (combatant: TrackerCombatant) => void;
@@ -115,7 +119,8 @@ const TrackerCombatantInput = ({
       return;
     }
 
-    const nextArmorTypeOptions = getExpandedArmorOptionsByClass(newCreatureClass);
+    const nextArmorTypeOptions =
+      getExpandedArmorOptionsByClass(newCreatureClass);
     const nextWeaponOptions = getWeaponOptions(newCreatureClass);
     const nextArmorType = nextArmorTypeOptions[0]?.value || draft.armorType;
     const nextWeapon = nextWeaponOptions[0]?.value || draft.weapon;
@@ -172,27 +177,30 @@ const TrackerCombatantInput = ({
   };
 
   const modalRoot =
-    typeof document !== "undefined"
-      ? document.getElementById("app-modal")
+    typeof document !== 'undefined'
+      ? document.getElementById('app-modal')
       : null;
   const selectMenuPortalTarget =
-    typeof document !== "undefined" ? document.body : null;
+    typeof document !== 'undefined' ? document.body : null;
   const sizerClassName =
-    side === "party"
-      ? `${styles["combatantSizer"]} ${styles["combatantSizerParty"]}`
-      : `${styles["combatantSizer"]} ${styles["combatantSizerEnemy"]}`;
+    side === 'party'
+      ? `${styles['combatantSizer']} ${styles['combatantSizerParty']}`
+      : `${styles['combatantSizer']} ${styles['combatantSizerEnemy']}`;
 
   const renderHeaderContent = (hidden = false) => (
     <span
       className={
         hidden
-          ? `${styles["combatantContent"]} ${styles["combatantContentHidden"]}`
-          : styles["combatantContent"]
+          ? `${styles['combatantContent']} ${styles['combatantContentHidden']}`
+          : styles['combatantContent']
       }
     >
-      <span className={styles["combatantName"]}>{headerDisplay.name}</span>
+      <span className={styles['combatantName']}>{headerDisplay.name}</span>
       {headerDisplay.detailLines.map((line, index) => (
-        <span key={`${draft.key}-${index}-${line}`} className={styles["combatantDetail"]}>
+        <span
+          key={`${draft.key}-${index}-${line}`}
+          className={styles['combatantDetail']}
+        >
           {line}
         </span>
       ))}
@@ -200,27 +208,31 @@ const TrackerCombatantInput = ({
   );
 
   return (
-    <div className={styles["combatantShell"]}>
-      <div className={sizerClassName} aria-hidden={"true"}>
+    <div className={styles['combatantShell']}>
+      <div className={sizerClassName} aria-hidden={'true'}>
         {renderHeaderContent(true)}
       </div>
       <button
-        type={"button"}
+        type={'button'}
         className={
-          side === "party"
-            ? styles["combatantButtonParty"]
-            : styles["combatantButtonEnemy"]
+          side === 'party'
+            ? styles['combatantButtonParty']
+            : styles['combatantButtonEnemy']
         }
-        aria-label={`Edit ${draft.name || (side === "party" ? "party member" : "enemy")}`}
+        aria-label={`Edit ${
+          draft.name || (side === 'party' ? 'party member' : 'enemy')
+        }`}
         onClick={() => setOpen(true)}
       >
         {renderHeaderContent()}
       </button>
       <button
-        type={"button"}
-        className={styles["removeCombatant"]}
+        type={'button'}
+        className={styles['removeCombatant']}
         disabled={!canRemove}
-        aria-label={`Remove ${draft.name || (side === "party" ? "party member" : "enemy")}`}
+        aria-label={`Remove ${
+          draft.name || (side === 'party' ? 'party member' : 'enemy')
+        }`}
         onClick={(event) => {
           event.stopPropagation();
           onRemove();
@@ -233,98 +245,105 @@ const TrackerCombatantInput = ({
         createPortal(
           <>
             <div
-              className={styles["modalShadow"]}
+              className={styles['modalShadow']}
               onClick={() => setOpen(false)}
             />
-            <div className={styles["modal"]}>
-              <div className={styles["modalTitle"]}>
-                {side === "party" ? "Edit Party Member" : "Edit Enemy"}
+            <div className={styles['modal']}>
+              <div className={styles['modalTitle']}>
+                {side === 'party' ? 'Edit Party Member' : 'Edit Enemy'}
               </div>
-              <label className={styles["modalLabel"]} htmlFor={`name-${draft.key}`}>
+              <label
+                className={styles['modalLabel']}
+                htmlFor={`name-${draft.key}`}
+              >
                 Name
               </label>
               <input
                 id={`name-${draft.key}`}
-                className={styles["textInput"]}
-                type={"text"}
-                value={draft.name || ""}
+                className={styles['textInput']}
+                type={'text'}
+                value={draft.name || ''}
                 onChange={handleNameChange}
                 onBlur={handleNameBlur}
-                placeholder={"Name or label"}
+                placeholder={'Name or label'}
               />
               <label
-                className={styles["modalLabel"]}
+                className={styles['modalLabel']}
                 htmlFor={`max-hp-${draft.key}`}
               >
                 Max HP
               </label>
               <input
                 id={`max-hp-${draft.key}`}
-                className={styles["textInput"]}
-                type={"text"}
-                value={draft.maxHp || ""}
+                className={styles['textInput']}
+                type={'text'}
+                value={draft.maxHp || ''}
                 onChange={handleMaxHpChange}
                 onBlur={handleMaxHpBlur}
-                placeholder={"Optional default maximum HP"}
+                placeholder={'Optional default maximum HP'}
               />
-              <label className={styles["modalLabel"]}>Class</label>
+              <label className={styles['modalLabel']}>Class</label>
               <Select
                 isSearchable={false}
                 instanceId={`creatureClass-${draft.key}`}
                 styles={customStyles}
                 menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={"fixed"}
+                menuPosition={'fixed'}
                 value={attackerClassOptions.filter(
                   (option) => option.value === draft.class
                 )}
                 options={attackerClassOptions}
                 onChange={handleCreatureClass}
               />
-              <label className={styles["modalLabel"]}>Level</label>
+              <label className={styles['modalLabel']}>Level</label>
               <Select
                 isSearchable={false}
                 instanceId={`level-${draft.key}`}
                 styles={customStyles}
                 menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={"fixed"}
-                value={levelOptions.filter((option) => option.value === draft.level)}
+                menuPosition={'fixed'}
+                value={levelOptions.filter(
+                  (option) => option.value === draft.level
+                )}
                 options={levelOptions}
                 onChange={handleLevel}
               />
-              <label className={styles["modalLabel"]}>Armor Type</label>
+              <label className={styles['modalLabel']}>Armor Type</label>
               <Select
                 isSearchable={false}
                 instanceId={`armorType-${draft.key}`}
                 styles={customStyles}
                 menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={"fixed"}
+                menuPosition={'fixed'}
                 value={armorTypeOptions.filter(
                   (option) => option.value === draft.armorType
                 )}
                 options={armorTypeOptions}
                 onChange={handleArmorType}
               />
-              <label className={styles["modalLabel"]}>Armor Class</label>
+              <label className={styles['modalLabel']}>Armor Class</label>
               <Select
                 isSearchable={false}
                 instanceId={`armorClass-${draft.key}`}
                 styles={customStyles}
                 menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={"fixed"}
+                menuPosition={'fixed'}
                 value={armorClassOptions.filter(
                   (option) => option.value === draft.armorClass
                 )}
                 options={armorClassOptions}
                 onChange={handleArmorClass}
               />
-              <label className={styles["modalLabel"]}>Weapon</label>
+              <label className={styles['modalLabel']}>Weapon</label>
               <Select
                 isSearchable={false}
                 instanceId={`weapon-${draft.key}`}
                 styles={customStyles}
                 menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={"fixed"}
-                value={weaponOptions.filter((option) => option.value === draft.weapon)}
+                menuPosition={'fixed'}
+                value={weaponOptions.filter(
+                  (option) => option.value === draft.weapon
+                )}
                 options={weaponOptions}
                 onChange={handleWeapon}
               />

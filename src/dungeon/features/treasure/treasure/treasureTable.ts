@@ -41,4 +41,3 @@ export const treasureWithMonster: Table<TreasureWithoutMonster> = {
     { range: [88, 100], command: TreasureWithoutMonster.Magic },
   ],
 };
-

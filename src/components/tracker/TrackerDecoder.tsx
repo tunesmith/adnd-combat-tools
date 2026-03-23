@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import type { TrackerState } from "../../types/tracker";
-import { decodeTrackerState } from "../../helpers/trackerCodec";
-import CombatTracker from "./CombatTracker";
+import { useEffect, useState } from 'react';
+import type { TrackerState } from '../../types/tracker';
+import { decodeTrackerState } from '../../helpers/trackerCodec';
+import CombatTracker from './CombatTracker';
 
 interface TrackerDecoderProps {
   encodedState: string;
@@ -22,7 +22,7 @@ const TrackerDecoder = ({ encodedState }: TrackerDecoderProps) => {
         setResult(decodedState);
       })
       .catch((error) => {
-        console.error("An error occurred:", error);
+        console.error('An error occurred:', error);
         process.exitCode = 1;
       });
 
@@ -32,7 +32,11 @@ const TrackerDecoder = ({ encodedState }: TrackerDecoderProps) => {
   }, [encodedState]);
 
   return (
-    <>{result && <CombatTracker rememberedState={result} loadedFromEncodedState />}</>
+    <>
+      {result && (
+        <CombatTracker rememberedState={result} loadedFromEncodedState />
+      )}
+    </>
   );
 };
 

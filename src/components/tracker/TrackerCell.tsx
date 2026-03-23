@@ -1,11 +1,8 @@
-import type {
-  CSSProperties,
-  KeyboardEvent as ReactKeyboardEvent,
-} from "react";
-import getToHit from "../../helpers/getToHit";
-import { expandedArmorTypes } from "../../tables/armorType";
-import type { TrackerCombatant } from "../../types/tracker";
-import styles from "./tracker.module.css";
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import getToHit from '../../helpers/getToHit';
+import { expandedArmorTypes } from '../../tables/armorType';
+import type { TrackerCombatant } from '../../types/tracker';
+import styles from './tracker.module.css';
 
 interface TrackerCellProps {
   rowCombatant: TrackerCombatant;
@@ -19,7 +16,7 @@ interface TrackerCellProps {
   onEnemyToPartyChange: (value: string) => void;
   onPartyToEnemyChange: (value: string) => void;
   allowVisibilityToggle?: boolean;
-  displayMode?: "both" | "enemyOnly" | "partyOnly";
+  displayMode?: 'both' | 'enemyOnly' | 'partyOnly';
   style?: CSSProperties;
 }
 
@@ -35,7 +32,7 @@ const TrackerCell = ({
   onEnemyToPartyChange,
   onPartyToEnemyChange,
   allowVisibilityToggle = true,
-  displayMode = "both",
+  displayMode = 'both',
   style,
 }: TrackerCellProps) => {
   const rowTargetArmor = expandedArmorTypes.find(
@@ -61,8 +58,8 @@ const TrackerCell = ({
   );
   const enemyHasContent = Boolean(enemyToPartyValue.trim());
   const partyHasContent = Boolean(partyToEnemyValue.trim());
-  const showEnemyHalf = displayMode !== "partyOnly";
-  const showPartyHalf = displayMode !== "enemyOnly";
+  const showEnemyHalf = displayMode !== 'partyOnly';
+  const showPartyHalf = displayMode !== 'enemyOnly';
   const enemyToggleEnabled =
     allowVisibilityToggle && (!enemyToPartyVisible || !enemyHasContent);
   const partyToggleEnabled =
@@ -77,36 +74,32 @@ const TrackerCell = ({
       return;
     }
 
-    if (event.key === "Enter" || event.key === " ") {
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       onToggle();
     }
   };
 
   return (
-    <td className={styles["interactionCell"]} style={style}>
+    <td className={styles['interactionCell']} style={style}>
       <div
-        className={
-          [
-            styles["cellShell"],
-            displayMode !== "both" ? styles["cellShellSingle"] : "",
-          ]
-            .filter(Boolean)
-            .join(" ")
-        }
+        className={[
+          styles['cellShell'],
+          displayMode !== 'both' ? styles['cellShellSingle'] : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         {showEnemyHalf ? (
           <div
-            className={
-              [
-                styles["cellHalfEnemyInline"],
-                displayMode !== "both" ? styles["cellHalfSingle"] : "",
-                enemyToggleEnabled ? styles["cellHalfToggleable"] : "",
-                !enemyToPartyVisible ? styles["cellHalfCollapsed"] : "",
-              ]
-                .filter(Boolean)
-                .join(" ")
-            }
+            className={[
+              styles['cellHalfEnemyInline'],
+              displayMode !== 'both' ? styles['cellHalfSingle'] : '',
+              enemyToggleEnabled ? styles['cellHalfToggleable'] : '',
+              !enemyToPartyVisible ? styles['cellHalfCollapsed'] : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             onClick={
               enemyToggleEnabled
                 ? () => onEnemyToPartyVisibilityChange(!enemyToPartyVisible)
@@ -120,21 +113,21 @@ const TrackerCell = ({
               )
             }
             tabIndex={enemyToggleEnabled ? 0 : undefined}
-            role={enemyToggleEnabled ? "button" : undefined}
+            role={enemyToggleEnabled ? 'button' : undefined}
             aria-label={
               enemyToggleEnabled
                 ? enemyToPartyVisible
-                  ? "Hide empty enemy attack input"
-                  : "Show enemy attack input"
+                  ? 'Hide empty enemy attack input'
+                  : 'Show enemy attack input'
                 : undefined
             }
           >
             {enemyToPartyVisible ? (
               <>
-                <span className={styles["cellEntryLabel"]}>{rowToHit}</span>
+                <span className={styles['cellEntryLabel']}>{rowToHit}</span>
                 <input
-                  className={styles["cellEntryInputInline"]}
-                  type={"text"}
+                  className={styles['cellEntryInputInline']}
+                  type={'text'}
                   value={enemyToPartyValue}
                   onClick={(event) => event.stopPropagation()}
                   onKeyDown={(event) => event.stopPropagation()}
@@ -146,16 +139,14 @@ const TrackerCell = ({
         ) : null}
         {showPartyHalf ? (
           <div
-            className={
-              [
-                styles["cellHalfPartyInline"],
-                displayMode !== "both" ? styles["cellHalfSingle"] : "",
-                partyToggleEnabled ? styles["cellHalfToggleable"] : "",
-                !partyToEnemyVisible ? styles["cellHalfCollapsed"] : "",
-              ]
-                .filter(Boolean)
-                .join(" ")
-            }
+            className={[
+              styles['cellHalfPartyInline'],
+              displayMode !== 'both' ? styles['cellHalfSingle'] : '',
+              partyToggleEnabled ? styles['cellHalfToggleable'] : '',
+              !partyToEnemyVisible ? styles['cellHalfCollapsed'] : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             onClick={
               partyToggleEnabled
                 ? () => onPartyToEnemyVisibilityChange(!partyToEnemyVisible)
@@ -169,21 +160,21 @@ const TrackerCell = ({
               )
             }
             tabIndex={partyToggleEnabled ? 0 : undefined}
-            role={partyToggleEnabled ? "button" : undefined}
+            role={partyToggleEnabled ? 'button' : undefined}
             aria-label={
               partyToggleEnabled
                 ? partyToEnemyVisible
-                  ? "Hide empty party attack input"
-                  : "Show party attack input"
+                  ? 'Hide empty party attack input'
+                  : 'Show party attack input'
                 : undefined
             }
           >
             {partyToEnemyVisible ? (
               <>
-                <span className={styles["cellEntryLabel"]}>{columnToHit}</span>
+                <span className={styles['cellEntryLabel']}>{columnToHit}</span>
                 <input
-                  className={styles["cellEntryInputInline"]}
-                  type={"text"}
+                  className={styles['cellEntryInputInline']}
+                  type={'text'}
                   value={partyToEnemyValue}
                   onClick={(event) => event.stopPropagation()}
                   onKeyDown={(event) => event.stopPropagation()}

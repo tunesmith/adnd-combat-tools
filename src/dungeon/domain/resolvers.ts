@@ -4,10 +4,7 @@ import {
   PeriodicCheck,
 } from '../../tables/dungeon/periodicCheck';
 import { doorBeyond, DoorBeyond } from '../../tables/dungeon/doorBeyond';
-import type {
-  DungeonOutcomeNode,
-  OutcomeEvent,
-} from './outcome';
+import type { DungeonOutcomeNode, OutcomeEvent } from './outcome';
 import {
   passageWidth,
   PassageWidth,

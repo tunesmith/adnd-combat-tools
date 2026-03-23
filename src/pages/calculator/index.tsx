@@ -31,9 +31,11 @@ const Calculator = () => {
     initialAttackerLevelOptions
   );
   const [weaponOptions, setWeaponOptions] = useState(initialWeaponOptions);
-  const [armorTypeOptions, setArmorTypeOptions] = useState(initialArmorTypeOptions);
+  const [armorTypeOptions, setArmorTypeOptions] = useState(
+    initialArmorTypeOptions
+  );
   const [targetArmorType, setTargetArmorType] = useState<string>(
-    initialArmorTypeOptions[0]?.value ?? ""
+    initialArmorTypeOptions[0]?.value ?? ''
   );
 
   const armorClassOptions = useRef(

@@ -1,21 +1,23 @@
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import CombatTracker from "../../components/tracker/CombatTracker";
-import TrackerDecoder from "../../components/tracker/TrackerDecoder";
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import CombatTracker from '../../components/tracker/CombatTracker';
+import TrackerDecoder from '../../components/tracker/TrackerDecoder';
 
 const getEncodedStateFromLocation = (): string | undefined => {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return undefined;
   }
 
-  const encodedState = new URLSearchParams(window.location.search).get("s");
+  const encodedState = new URLSearchParams(window.location.search).get('s');
   return encodedState || undefined;
 };
 
 const TrackerIndexPage = () => {
   const router = useRouter();
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [encodedState, setEncodedState] = useState<string | undefined>(undefined);
+  const [encodedState, setEncodedState] = useState<string | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (!router.isReady) {
@@ -28,10 +30,10 @@ const TrackerIndexPage = () => {
     };
 
     syncFromLocation();
-    window.addEventListener("popstate", syncFromLocation);
+    window.addEventListener('popstate', syncFromLocation);
 
     return () => {
-      window.removeEventListener("popstate", syncFromLocation);
+      window.removeEventListener('popstate', syncFromLocation);
     };
   }, [router.isReady]);
 
