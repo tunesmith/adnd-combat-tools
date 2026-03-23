@@ -2,6 +2,7 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
   DungeonTablePreview,
+  TableContext,
 } from '../../../types/dungeon';
 import type { OutcomeEvent, OutcomeEventNode } from '../../domain/outcome';
 import { PeriodicCheck } from '../../../tables/dungeon/periodicCheck';
@@ -205,7 +206,8 @@ export function renderWanderingWhereFromCompactNodes(
 }
 
 export function buildWanderingWhereFromPreview(
-  tableId: string
+  tableId: string,
+  context?: TableContext
 ): DungeonTablePreview {
   return buildPreview(tableId, {
     title: 'Where From',
@@ -216,6 +218,7 @@ export function buildWanderingWhereFromPreview(
         range: entry.range,
         label: PeriodicCheck[entry.command] ?? String(entry.command),
       })),
+    context,
   });
 }
 

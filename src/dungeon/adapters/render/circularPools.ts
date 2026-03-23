@@ -37,7 +37,10 @@ export function renderCircularPoolCompact(
   return nodes;
 }
 
-export const buildCircularPoolPreview: TablePreviewFactory = (tableId) =>
+export const buildCircularPoolPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Pool',
     sides: pool.sides,
@@ -45,6 +48,7 @@ export const buildCircularPoolPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: Pool[entry.command] ?? String(entry.command),
     })),
+    context,
   });
 
 function buildCircularPoolNodes(

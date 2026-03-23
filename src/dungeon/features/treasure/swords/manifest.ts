@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
+import { markContextualResolution, wrapResolver } from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   resolveTreasureSwords,
@@ -258,7 +258,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildTreasureSwordKindPreview,
     resolvePending: () => resolveTreasureSwordKind({}),
   },
-  {
+  markContextualResolution({
     id: 'treasureSwordUnusual',
     heading: 'Sword Unusual Traits',
     resolver: wrapResolver(resolveTreasureSwordUnusual),
@@ -316,8 +316,8 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       const options = readTreasureSwordContext(pending.context, ancestors);
       return resolveTreasureSwordUnusual(options);
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'treasureSwordPrimaryAbility',
     heading: 'Primary Ability',
     resolver: wrapResolver(resolveTreasureSwordPrimaryAbility),
@@ -343,8 +343,8 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         tableVariant: parsed.tableVariant ?? 'standard',
       });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'treasureSwordPrimaryAbilityRestricted',
     heading: 'Primary Ability (01-92)',
     resolver: wrapResolver(resolveTreasureSwordPrimaryAbilityRestricted),
@@ -370,8 +370,8 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         tableVariant: 'restricted',
       });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'treasureSwordExtraordinaryPower',
     heading: 'Extraordinary Power',
     resolver: wrapResolver(resolveTreasureSwordExtraordinaryPower),
@@ -390,8 +390,8 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         alignment: parsed.alignment,
       });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'treasureSwordExtraordinaryPowerRestricted',
     heading: 'Extraordinary Power (01-97)',
     resolver: wrapResolver(resolveTreasureSwordExtraordinaryPowerRestricted),
@@ -410,8 +410,8 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         alignment: parsed.alignment,
       });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'treasureSwordDragonSlayerColor',
     heading: 'Dragon Slayer Target',
     resolver: wrapResolver(resolveTreasureSwordDragonSlayerColor),
@@ -444,8 +444,8 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         alignment,
       });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'treasureSwordSpecialPurpose',
     heading: 'Sword Special Purpose',
     resolver: wrapResolver(resolveTreasureSwordSpecialPurpose),
@@ -484,8 +484,8 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         alignment,
       });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'treasureSwordSpecialPurposePower',
     heading: 'Sword Special Purpose Power',
     resolver: wrapResolver(resolveTreasureSwordSpecialPurposePower),
@@ -524,7 +524,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         alignment,
       });
     },
-  },
+  }),
   {
     id: 'treasureSwordAlignment',
     heading: 'Sword Alignment',

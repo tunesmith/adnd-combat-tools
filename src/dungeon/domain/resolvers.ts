@@ -72,7 +72,11 @@ export function resolvePeriodicCheck(options?: {
       children.push({ type: 'pending-roll', table: 'trickTrap' });
       break;
     case PeriodicCheck.WanderingMonster:
-      children.push({ type: 'pending-roll', table: 'wanderingWhereFrom' });
+      children.push({
+        type: 'pending-roll',
+        table: 'wanderingWhereFrom',
+        context: { kind: 'wandering', level },
+      });
       children.push({
         type: 'pending-roll',
         table: `monsterLevel:${level}`,
@@ -139,6 +143,7 @@ export function resolveDoorBeyond(options?: {
 
 export function resolveWanderingWhereFrom(options?: {
   roll?: number;
+  level?: number;
 }): DungeonOutcomeNode {
   let usedRoll = options?.roll ?? rollDice(periodicCheck.sides);
   let command = getTableEntry(usedRoll, periodicCheck);
@@ -161,7 +166,14 @@ export function resolveWanderingWhereFrom(options?: {
       children.push({ type: 'pending-roll', table: 'passageTurns' });
       break;
     case PeriodicCheck.Chamber:
-      children.push({ type: 'pending-roll', table: 'chamberDimensions' });
+      children.push({
+        type: 'pending-roll',
+        table: 'chamberDimensions',
+        context: {
+          kind: 'chamberDimensions',
+          level: options?.level ?? 1,
+        },
+      });
       break;
     case PeriodicCheck.Stairs:
       children.push({ type: 'pending-roll', table: 'stairs' });
@@ -274,7 +286,11 @@ export function resolveRoomDimensions(options?: {
       });
       break;
     case RoomDimensions.Unusual:
-      children.push({ type: 'pending-roll', table: 'unusualShape' });
+      children.push({
+        type: 'pending-roll',
+        table: 'unusualShape',
+        context: { kind: 'wandering', level: dungeonLevel },
+      });
       children.push({
         type: 'pending-roll',
         table: 'unusualSize',
@@ -356,7 +372,11 @@ export function resolveChamberDimensions(options?: {
       });
       break;
     case ChamberDimensions.Unusual:
-      children.push({ type: 'pending-roll', table: 'unusualShape' });
+      children.push({
+        type: 'pending-roll',
+        table: 'unusualShape',
+        context: { kind: 'wandering', level: dungeonLevel },
+      });
       children.push({
         type: 'pending-roll',
         table: 'unusualSize',
@@ -388,12 +408,20 @@ export function resolveChamberDimensions(options?: {
 
 export function resolveUnusualShape(options?: {
   roll?: number;
+  level?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(unusualShape.sides);
   const command = getTableEntry(usedRoll, unusualShape);
   const children: DungeonOutcomeNode[] = [];
   if (command === UnusualShape.Circular) {
-    children.push({ type: 'pending-roll', table: 'circularContents' });
+    children.push({
+      type: 'pending-roll',
+      table: 'circularContents',
+      context:
+        options?.level !== undefined
+          ? { kind: 'wandering', level: options.level }
+          : undefined,
+    });
   }
   return {
     type: 'event',
@@ -578,12 +606,20 @@ function representativeRollForChamberContents(
 
 export function resolveCircularContents(options?: {
   roll?: number;
+  level?: number;
 }): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(circularContents.sides);
   const command = getTableEntry(usedRoll, circularContents);
   const children: DungeonOutcomeNode[] = [];
   if (command === CircularContents.Pool) {
-    children.push({ type: 'pending-roll', table: 'circularPool' });
+    children.push({
+      type: 'pending-roll',
+      table: 'circularPool',
+      context:
+        options?.level !== undefined
+          ? { kind: 'wandering', level: options.level }
+          : undefined,
+    });
   }
   return {
     type: 'event',

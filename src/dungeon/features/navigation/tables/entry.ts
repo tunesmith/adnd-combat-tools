@@ -1,5 +1,8 @@
 import type { DungeonTableDefinition } from '../../types';
-import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import type {
+  DungeonOutcomeNode,
+  OutcomeEventNode,
+} from '../../../domain/outcome';
 import type { TableContext } from '../../../../types/dungeon';
 import {
   renderPeriodicCheckDetail,
@@ -19,11 +22,12 @@ import {
   resolveWanderingWhereFrom,
 } from '../../../domain/resolvers';
 import { withoutAppend } from '../shared';
-import { wrapResolver } from '../../shared';
+import { markContextualResolution, wrapResolver } from '../../shared';
 
 const resolvePendingNavigationEntry = (
   pending: string,
-  context: TableContext | undefined
+  context: TableContext | undefined,
+  ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined => {
   const base = pending.split(':')[0] ?? pending;
   switch (base) {
@@ -38,14 +42,33 @@ const resolvePendingNavigationEntry = (
       return resolveRoomDimensions({ level });
     }
     case 'wanderingWhereFrom':
-      return resolveWanderingWhereFrom({});
+      return resolveWanderingWhereFrom({
+        level: readWanderingLevel(context, ancestors),
+      });
     default:
       return undefined;
   }
 };
 
+function readWanderingLevel(
+  context: TableContext | undefined,
+  ancestors: OutcomeEventNode[]
+): number {
+  if (context?.kind === 'wandering') {
+    return context.level;
+  }
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const ancestor = ancestors[index];
+    if (!ancestor) continue;
+    if (ancestor.event.kind === 'periodicCheck') {
+      return ancestor.event.level;
+    }
+  }
+  return 1;
+}
+
 export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  markContextualResolution({
     id: 'periodicCheck',
     heading: 'Passage',
     resolver: wrapResolver(resolvePeriodicCheck),
@@ -59,7 +82,7 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
         c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
       return resolvePeriodicCheck({ roll, level });
     },
-  },
+  }),
   {
     id: 'doorBeyond',
     heading: 'Door',
@@ -69,7 +92,7 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderDoorBeyondCompact),
     },
   },
-  {
+  markContextualResolution({
     id: 'wanderingWhereFrom',
     heading: 'Where From',
     resolver: wrapResolver(resolveWanderingWhereFrom),
@@ -78,10 +101,16 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
     },
     buildPreview: buildWanderingWhereFromPreview,
-    resolvePending: (pending) =>
+    registry: ({ roll, context }) =>
+      resolveWanderingWhereFrom({
+        roll,
+        level: context?.kind === 'wandering' ? context.level : 1,
+      }),
+    resolvePending: (pending, ancestors) =>
       resolvePendingNavigationEntry(
         pending.table,
-        pending.context as TableContext | undefined
+        pending.context as TableContext | undefined,
+        ancestors
       ),
-  },
+  }),
 ];

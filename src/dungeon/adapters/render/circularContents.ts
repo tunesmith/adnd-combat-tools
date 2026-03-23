@@ -27,7 +27,10 @@ export function renderCircularContentsCompact(
   return nodes;
 }
 
-export const buildCircularContentsPreview: TablePreviewFactory = (tableId) =>
+export const buildCircularContentsPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Circular Contents',
     sides: circularContents.sides,
@@ -35,6 +38,7 @@ export const buildCircularContentsPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: CircularContents[entry.command] ?? String(entry.command),
     })),
+    context,
   });
 
 function buildCircularContentsNodes(

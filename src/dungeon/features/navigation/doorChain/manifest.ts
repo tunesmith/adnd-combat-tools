@@ -1,7 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
 import type { DoorChainLaterality } from '../../../domain/outcome';
 import { NO_COMPACT_RENDER } from '../shared';
-import { wrapResolver } from '../../shared';
+import { markContextualResolution, wrapResolver } from '../../shared';
 import {
   buildDoorLocationPreview,
   buildPeriodicDoorOnlyPreview,
@@ -16,7 +16,7 @@ import { DoorLocation } from './doorChainTable';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 
 export const doorChainTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  markContextualResolution({
     id: 'periodicCheckDoorOnly',
     heading: 'Periodic Check (doors only)',
     resolver: wrapResolver(resolvePeriodicDoorOnly),
@@ -36,8 +36,8 @@ export const doorChainTables: ReadonlyArray<DungeonTableDefinition> = [
       const sequence = parseDoorChainSequence(pending.table, existing.length);
       return resolvePeriodicDoorOnly({ existing, sequence });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'doorLocation',
     heading: 'Door Location',
     resolver: wrapResolver(resolveDoorLocation),
@@ -57,7 +57,7 @@ export const doorChainTables: ReadonlyArray<DungeonTableDefinition> = [
       const sequence = parseDoorChainSequence(pending.table, existing.length);
       return resolveDoorLocation({ existing, sequence });
     },
-  },
+  }),
 ];
 
 function toDoorChainLaterality(

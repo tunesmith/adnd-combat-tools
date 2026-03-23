@@ -39,7 +39,7 @@ import {
   buildNumberOfExitsPreview,
 } from './numberOfExitsRender';
 import { withoutAppend } from '../shared';
-import { wrapResolver } from '../../shared';
+import { markContextualResolution, wrapResolver } from '../../shared';
 
 export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -53,7 +53,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildStairsPreview,
     resolvePending: () => resolveStairs({}),
   },
-  {
+  markContextualResolution({
     id: 'egress',
     heading: 'Egress',
     resolver: (options) =>
@@ -77,8 +77,8 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
         suffix === 'two' ? 'two' : suffix === 'three' ? 'three' : 'one';
       return resolveEgress({ which });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'numberOfExits',
     heading: 'Exits',
     resolver: (options) =>
@@ -116,8 +116,8 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
         isRoom: ctx?.isRoom ?? false,
       });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'passageExitLocation',
     heading: 'Passage Exit Location',
     resolver: wrapResolver(resolvePassageExitLocation),
@@ -135,8 +135,8 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       resolvePassageExitLocation({
         context: readExitContext(pending.context as TableContext | undefined),
       }),
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'doorExitLocation',
     heading: 'Door Exit Location',
     resolver: wrapResolver(resolveDoorExitLocation),
@@ -154,8 +154,8 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       resolveDoorExitLocation({
         context: readExitContext(pending.context as TableContext | undefined),
       }),
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'exitDirection',
     heading: 'Exit Direction',
     resolver: wrapResolver(resolveExitDirection),
@@ -175,8 +175,8 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
           pending.context as TableContext | undefined
         ),
       }),
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'exitAlternative',
     heading: 'Exit Alternative',
     resolver: wrapResolver(resolveExitAlternative),
@@ -196,7 +196,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
           pending.context as TableContext | undefined
         ),
       }),
-  },
+  }),
   {
     id: 'chute',
     heading: 'Chute',

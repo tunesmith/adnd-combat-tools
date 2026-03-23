@@ -68,10 +68,12 @@ export function buildTreasureEvent<K extends OutcomeEventWithResultKind>(
 export function createTreasureMagicContextHandlers(
   resolver: (options?: TreasureMagicResolverOptions) => DungeonOutcomeNode
 ): {
+  manualResolution: 'contextual';
   resolvePending: PendingResolver;
   registry: RegistryOutcomeBuilder;
 } {
   return {
+    manualResolution: 'contextual',
     resolvePending: (pending, ancestors) => {
       const options = readTreasureMagicContext(pending.context, ancestors);
       return resolver(options);

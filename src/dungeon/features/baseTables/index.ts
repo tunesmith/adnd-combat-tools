@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition, DetailRenderer } from '../types';
-import { wrapResolver } from '../shared';
+import { markContextualResolution, wrapResolver } from '../shared';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import {
   resolveChamberDimensions,
@@ -174,7 +174,7 @@ function readUnusualSizeContext(
 }
 
 export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  markContextualResolution({
     id: 'roomDimensions',
     heading: 'Room Dimensions',
     resolver: wrapResolver(resolveRoomDimensions),
@@ -202,8 +202,8 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
           : 1;
       return resolveRoomDimensions({ level });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'chamberDimensions',
     heading: 'Chamber Dimensions',
     resolver: wrapResolver(resolveChamberDimensions),
@@ -232,8 +232,8 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
         hasContext ? { context: { forcedContents, level } } : undefined
       );
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'chamberRoomContents',
     heading: 'Contents',
     resolver: wrapResolver(resolveChamberRoomContents),
@@ -261,7 +261,7 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
       const level = contextLevel ?? derivedLevel ?? 1;
       return resolveChamberRoomContents({ level });
     },
-  },
+  }),
   {
     id: 'chamberRoomStairs',
     heading: 'Stairway',
@@ -273,7 +273,7 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildChamberRoomStairsPreview,
     resolvePending: () => resolveChamberRoomStairs({}),
   },
-  {
+  markContextualResolution({
     id: 'unusualShape',
     heading: 'Unusual Shape',
     resolver: wrapResolver(resolveUnusualShape),
@@ -282,9 +282,21 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderUnusualShapeCompact),
     },
     buildPreview: buildUnusualShapePreview,
-    resolvePending: () => resolveUnusualShape({}),
-  },
-  {
+    registry: ({ roll, context, id }) => {
+      const level = readDungeonLevelFromId(context, id, 1);
+      return resolveUnusualShape({ roll, level });
+    },
+    resolvePending: (pending, ancestors) => {
+      const level =
+        readDungeonLevelFromId(
+          pending.context,
+          pending.id ?? pending.table,
+          deriveDungeonLevelFromAncestors(ancestors) ?? 1
+        ) ?? 1;
+      return resolveUnusualShape({ level });
+    },
+  }),
+  markContextualResolution({
     id: 'unusualSize',
     heading: 'Unusual Size',
     resolver: wrapResolver(resolveUnusualSize),
@@ -306,8 +318,8 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
         isRoom: parsed?.isRoom,
       });
     },
-  },
-  {
+  }),
+  markContextualResolution({
     id: 'circularContents',
     heading: 'Circular Contents',
     resolver: wrapResolver(resolveCircularContents),
@@ -316,9 +328,21 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderCircularContentsCompact,
     },
     buildPreview: buildCircularContentsPreview,
-    resolvePending: () => resolveCircularContents({}),
-  },
-  {
+    registry: ({ roll, context, id }) => {
+      const level = readDungeonLevelFromId(context, id, 1);
+      return resolveCircularContents({ roll, level });
+    },
+    resolvePending: (pending, ancestors) => {
+      const level =
+        readDungeonLevelFromId(
+          pending.context,
+          pending.id ?? pending.table,
+          deriveDungeonLevelFromAncestors(ancestors) ?? 1
+        ) ?? 1;
+      return resolveCircularContents({ level });
+    },
+  }),
+  markContextualResolution({
     id: 'circularPool',
     heading: 'Pool',
     resolver: wrapResolver(resolveCircularPool),
@@ -327,11 +351,20 @@ export const BASE_TABLE_DEFINITIONS: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderCircularPoolCompact,
     },
     buildPreview: buildCircularPoolPreview,
-    resolvePending: (_pending, ancestors) => {
-      const level = deriveDungeonLevelFromAncestors(ancestors) ?? 1;
+    registry: ({ roll, context, id }) => {
+      const level = readDungeonLevelFromId(context, id, 1);
+      return resolveCircularPool({ roll, level });
+    },
+    resolvePending: (pending, ancestors) => {
+      const level =
+        readDungeonLevelFromId(
+          pending.context,
+          pending.id ?? pending.table,
+          deriveDungeonLevelFromAncestors(ancestors) ?? 1
+        ) ?? 1;
       return resolveCircularPool({ level });
     },
-  },
+  }),
   {
     id: 'circularMagicPool',
     heading: 'Magic Pool Effect',

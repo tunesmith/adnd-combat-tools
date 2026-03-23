@@ -353,6 +353,25 @@ describe('uiPreviewHarness', () => {
     }
     expect(alternativeEvent.event.exitType).toBe('passage');
   });
+
+  test('circular pool preview resolution preserves dungeon level', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 18);
+    feed = resolvePendingPreview(feed, 'unusualShape', 2);
+    feed = resolvePendingPreview(feed, 'unusualSize', 1);
+    feed = resolvePendingPreview(feed, 'circularContents', 1);
+    feed = resolvePendingPreview(feed, 'circularPool', 11);
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('monsterLevel:4');
+    expect(pendingTables).not.toContain('monsterLevel:1');
+  });
 });
 
 function pickRollForDoorBeyond(cmd: DoorBeyond): number {
@@ -378,4 +397,17 @@ function findOutcomeEvent(
     }
   }
   return undefined;
+}
+
+function collectPendingTables(node: OutcomeEventNode | undefined): string[] {
+  if (!node || node.type !== 'event' || !node.children) return [];
+  const pending: string[] = [];
+  for (const child of node.children) {
+    if (child.type === 'pending-roll') {
+      pending.push(child.table);
+      continue;
+    }
+    pending.push(...collectPendingTables(child));
+  }
+  return pending;
 }

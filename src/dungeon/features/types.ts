@@ -56,18 +56,33 @@ export type RegistryOutcomeBuilder = (opts: {
   };
 }) => DungeonOutcomeNode;
 
-export type DungeonTableDefinition<TOptions = unknown> = {
+type DungeonTableDefinitionBase<TOptions> = {
   id: string;
   heading: string;
   resolver: (options?: TOptions) => DungeonOutcomeNode;
   renderers: RenderAdapter;
   buildPreview?: TablePreviewFactory;
   resolvePending?: PendingResolver;
-  registry?: RegistryOutcomeBuilder;
   table?: Table<unknown>;
   postProcessChildren?: PostProcessChildren;
   postProcessOutcome?: OutcomePostProcessor;
 };
+
+type RollOnlyTableDefinition<TOptions> =
+  DungeonTableDefinitionBase<TOptions> & {
+    manualResolution?: 'roll-only';
+    registry?: RegistryOutcomeBuilder;
+  };
+
+type ContextualTableDefinition<TOptions> =
+  DungeonTableDefinitionBase<TOptions> & {
+    manualResolution: 'contextual';
+    registry: RegistryOutcomeBuilder;
+  };
+
+export type DungeonTableDefinition<TOptions = unknown> =
+  | RollOnlyTableDefinition<TOptions>
+  | ContextualTableDefinition<TOptions>;
 
 export function createRenderAdapterMap<TOptions>(
   defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
@@ -100,6 +115,11 @@ export function createRegistryOutcomeMap<TOptions>(
 ): Record<string, RegistryOutcomeBuilder> {
   const map: Record<string, RegistryOutcomeBuilder> = {};
   for (const def of defs) {
+    if (def.manualResolution === 'contextual' && !def.registry) {
+      throw new Error(
+        `Dungeon table "${def.id}" requires an explicit registry handler.`
+      );
+    }
     map[def.id] =
       def.registry ??
       ((opts) =>

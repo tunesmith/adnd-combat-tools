@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition, DetailRenderer } from '../../types';
-import { wrapResolver } from '../../shared';
+import { markContextualResolution, wrapResolver } from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { resolveTreasure } from './treasureResolvers';
 import {
@@ -40,7 +40,7 @@ function deriveDungeonLevelFromAncestors(
 }
 
 export const treasureTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  markContextualResolution({
     id: 'treasure',
     heading: 'Treasure',
     resolver: wrapResolver(resolveTreasure),
@@ -84,5 +84,5 @@ export const treasureTables: ReadonlyArray<DungeonTableDefinition> = [
         ctx && typeof ctx.totalRolls === 'number' ? ctx.totalRolls : undefined;
       return resolveTreasure({ level, withMonster, rollIndex, totalRolls });
     },
-  },
+  }),
 ];

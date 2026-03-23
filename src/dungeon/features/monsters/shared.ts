@@ -19,10 +19,12 @@ export function createMonsterDungeonLevelContextHandlers(
   ) => DungeonOutcomeNode,
   fallbackDungeonLevel: number
 ): {
+  manualResolution: 'contextual';
   resolvePending: PendingResolver;
   registry: RegistryOutcomeBuilder;
 } {
   return {
+    manualResolution: 'contextual',
     resolvePending: (pending, ancestors) => {
       const dungeonLevel = readDungeonLevelFromPending(
         pending.table,

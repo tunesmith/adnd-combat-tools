@@ -159,7 +159,10 @@ export function renderCompactUnusualDetails(node: OutcomeEventNode): string {
   return text;
 }
 
-export const buildUnusualShapePreview: TablePreviewFactory = (tableId) =>
+export const buildUnusualShapePreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Unusual Shape',
     sides: unusualShapeTable.sides,
@@ -167,6 +170,7 @@ export const buildUnusualShapePreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: UnusualShape[entry.command] ?? String(entry.command),
     })),
+    context,
   });
 
 function formatUnusualShape(result: UnusualShape): string {
