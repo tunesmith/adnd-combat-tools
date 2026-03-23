@@ -1,17 +1,17 @@
-import { FIGHTER, MONSTER } from "../tables/attackerClass";
+import { FIGHTER, MONSTER } from '../tables/attackerClass';
 import type {
   TrackerCombatant,
   TrackerCellState,
   TrackerCombatantRoundState,
   TrackerRound,
   TrackerState,
-} from "../types/tracker";
+} from '../types/tracker';
 
-type TrackerSide = "party" | "enemy";
+type TrackerSide = 'party' | 'enemy';
 
 const DEFAULT_PARTY_COUNT = 3;
 const DEFAULT_ENEMY_COUNT = 3;
-const DEFAULT_ROUND_PREFIX = "Round";
+const DEFAULT_ROUND_PREFIX = 'Round';
 
 const createBaseCombatant = (
   key: number,
@@ -20,12 +20,12 @@ const createBaseCombatant = (
 ): TrackerCombatant => ({
   key,
   name,
-  class: side === "party" ? FIGHTER : MONSTER,
-  level: side === "party" ? 1 : 3,
-  armorType: side === "party" ? 2 : 1,
-  armorClass: side === "party" ? 10 : 5,
+  class: side === 'party' ? FIGHTER : MONSTER,
+  level: side === 'party' ? 1 : 3,
+  armorType: side === 'party' ? 2 : 1,
+  armorClass: side === 'party' ? 10 : 5,
   weapon: 1,
-  maxHp: "",
+  maxHp: '',
 });
 
 export const createTrackerCombatant = (
@@ -36,17 +36,17 @@ export const createTrackerCombatant = (
   createBaseCombatant(
     key,
     side,
-    `${side === "party" ? "Party" : "Enemy"} ${count + 1}`
+    `${side === 'party' ? 'Party' : 'Enemy'} ${count + 1}`
   );
 
 export const createCombatantRoundState = (
-  maxHp: string = ""
+  maxHp: string = ''
 ): TrackerCombatantRoundState => ({
   hp: maxHp,
-  effect: "",
-  action: "",
-  result: "",
-  notes: "",
+  effect: '',
+  action: '',
+  result: '',
+  notes: '',
 });
 
 export const getDefaultRoundLabel = (roundNumber: number): string =>
@@ -65,18 +65,18 @@ export const incrementRoundLabel = (label: string): string => {
     return `${trimmedLabel} 2`;
   }
 
-  const prefix = trailingNumberMatch[1] || "";
-  const currentNumber = trailingNumberMatch[2] || "";
+  const prefix = trailingNumberMatch[1] || '';
+  const currentNumber = trailingNumberMatch[2] || '';
   const nextNumber = (parseInt(currentNumber, 10) + 1)
     .toString()
-    .padStart(currentNumber.length, "0");
+    .padStart(currentNumber.length, '0');
 
   return `${prefix}${nextNumber}`;
 };
 
 const createEmptyCell = (): TrackerCellState => ({
-  enemyToParty: "",
-  partyToEnemy: "",
+  enemyToParty: '',
+  partyToEnemy: '',
   enemyToPartyVisible: false,
   partyToEnemyVisible: false,
 });
@@ -116,8 +116,8 @@ const createNextRoundCells = (
       const previousCell = previousRound.cells[enemyIndex]?.[partyIndex];
 
       return {
-        enemyToParty: "",
-        partyToEnemy: "",
+        enemyToParty: '',
+        partyToEnemy: '',
         enemyToPartyVisible: previousCell
           ? hasEnemyToPartyContent(previousCell)
           : false,
@@ -138,16 +138,16 @@ export const createTrackerRound = (
   label,
   party: cloneCombatants(party),
   enemies: cloneCombatants(enemies),
-  partyInitiative: "",
-  enemyInitiative: "",
-  summary: "",
+  partyInitiative: '',
+  enemyInitiative: '',
+  summary: '',
   cells: createNextRoundCells(party, enemies, previousRound),
   partyStates: previousRound
     ? previousRound.partyStates.map((state) => ({
         hp: state.hp,
         effect: state.effect,
-        action: "",
-        result: "",
+        action: '',
+        result: '',
         notes: state.notes,
       }))
     : party.map((combatant) => createCombatantRoundState(combatant.maxHp)),
@@ -155,8 +155,8 @@ export const createTrackerRound = (
     ? previousRound.enemyStates.map((state) => ({
         hp: state.hp,
         effect: state.effect,
-        action: "",
-        result: "",
+        action: '',
+        result: '',
         notes: state.notes,
       }))
     : enemies.map((combatant) => createCombatantRoundState(combatant.maxHp)),
@@ -164,19 +164,19 @@ export const createTrackerRound = (
 
 const createDefaultParty = () =>
   Array.from({ length: DEFAULT_PARTY_COUNT }, (_, index) =>
-    createTrackerCombatant(index + 1, "party", index)
+    createTrackerCombatant(index + 1, 'party', index)
   );
 
 const createDefaultEnemies = () =>
   Array.from({ length: DEFAULT_ENEMY_COUNT }, (_, index) =>
-    createTrackerCombatant(index + DEFAULT_PARTY_COUNT + 1, "enemy", index)
+    createTrackerCombatant(index + DEFAULT_PARTY_COUNT + 1, 'enemy', index)
   );
 
 const incrementCopiedEnemyName = (
   previousName: string | undefined,
   fallbackCount: number
 ): string => {
-  const trimmedName = previousName?.trim() || "";
+  const trimmedName = previousName?.trim() || '';
 
   if (!trimmedName) {
     return `Enemy ${fallbackCount + 1}`;
@@ -185,7 +185,7 @@ const incrementCopiedEnemyName = (
   const trailingNumberMatch = trimmedName.match(/^(.*?)(?:\s+(\d+))$/);
   if (trailingNumberMatch) {
     const baseName = trailingNumberMatch[1]?.trim() || trimmedName;
-    const currentNumber = parseInt(trailingNumberMatch[2] || "", 10);
+    const currentNumber = parseInt(trailingNumberMatch[2] || '', 10);
 
     if (Number.isFinite(currentNumber)) {
       return `${baseName} ${currentNumber + 1}`;
@@ -252,13 +252,18 @@ export const addCombatant = (
   }
 
   const combatant =
-    side === "party"
+    side === 'party'
       ? createTrackerCombatant(nextKey, side, currentRound.party.length)
       : (() => {
-          const previousEnemy = currentRound.enemies[currentRound.enemies.length - 1];
+          const previousEnemy =
+            currentRound.enemies[currentRound.enemies.length - 1];
 
           if (!previousEnemy) {
-            return createTrackerCombatant(nextKey, side, currentRound.enemies.length);
+            return createTrackerCombatant(
+              nextKey,
+              side,
+              currentRound.enemies.length
+            );
           }
 
           return {
@@ -271,7 +276,7 @@ export const addCombatant = (
           };
         })();
 
-  if (side === "party") {
+  if (side === 'party') {
     return {
       ...state,
       rounds: state.rounds.map((round, roundIndex) =>
@@ -297,7 +302,9 @@ export const addCombatant = (
             ...round,
             enemies: round.enemies.concat(cloneCombatant(combatant)),
             cells: round.cells.concat([
-              Array.from({ length: round.party.length }, () => createEmptyCell()),
+              Array.from({ length: round.party.length }, () =>
+                createEmptyCell()
+              ),
             ]),
             enemyStates: round.enemyStates.concat(
               createCombatantRoundState(combatant.maxHp)
@@ -318,14 +325,16 @@ export const removeCombatant = (
     return state;
   }
 
-  if (side === "party") {
+  if (side === 'party') {
     return {
       ...state,
       rounds: state.rounds.map((round, roundIndex) =>
         roundIndex === state.activeRound
           ? {
               ...round,
-              party: round.party.filter((_, partyIndex) => partyIndex !== index),
+              party: round.party.filter(
+                (_, partyIndex) => partyIndex !== index
+              ),
               cells: round.cells.map((row) =>
                 row.filter((_, partyIndex) => partyIndex !== index)
               ),
@@ -344,7 +353,9 @@ export const removeCombatant = (
       roundIndex === state.activeRound
         ? {
             ...round,
-            enemies: round.enemies.filter((_, enemyIndex) => enemyIndex !== index),
+            enemies: round.enemies.filter(
+              (_, enemyIndex) => enemyIndex !== index
+            ),
             cells: round.cells.filter((_, enemyIndex) => enemyIndex !== index),
             enemyStates: round.enemyStates.filter(
               (_, enemyIndex) => enemyIndex !== index
@@ -367,9 +378,9 @@ export const updateCombatant = (
   }
 
   const previousCombatant =
-    side === "party" ? currentRound.party[index] : currentRound.enemies[index];
-  const previousMaxHp = previousCombatant?.maxHp || "";
-  const nextMaxHp = combatant.maxHp || "";
+    side === 'party' ? currentRound.party[index] : currentRound.enemies[index];
+  const previousMaxHp = previousCombatant?.maxHp || '';
+  const nextMaxHp = combatant.maxHp || '';
 
   const applyRoundDefaults = (
     roundState: TrackerCombatantRoundState
@@ -378,8 +389,7 @@ export const updateCombatant = (
       return roundState;
     }
 
-    const shouldUpdateHp =
-      !roundState.hp || roundState.hp === previousMaxHp;
+    const shouldUpdateHp = !roundState.hp || roundState.hp === previousMaxHp;
 
     return {
       ...roundState,
@@ -387,7 +397,7 @@ export const updateCombatant = (
     };
   };
 
-  if (side === "party") {
+  if (side === 'party') {
     return {
       ...state,
       rounds: state.rounds.map((round, roundIndex) =>
@@ -398,7 +408,9 @@ export const updateCombatant = (
                 partyIndex === index ? cloneCombatant(combatant) : member
               ),
               partyStates: round.partyStates.map((partyState, partyIndex) =>
-                partyIndex === index ? applyRoundDefaults(partyState) : partyState
+                partyIndex === index
+                  ? applyRoundDefaults(partyState)
+                  : partyState
               ),
             }
           : round

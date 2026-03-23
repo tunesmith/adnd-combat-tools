@@ -1,6 +1,6 @@
-import type { TrackerRound } from "../types/tracker";
+import type { TrackerRound } from '../types/tracker';
 
-export type IntentionWizardSide = "party" | "enemy";
+export type IntentionWizardSide = 'party' | 'enemy';
 
 export interface IntentionWizardEntry {
   side: IntentionWizardSide;
@@ -15,20 +15,20 @@ export const buildIntentionWizardEntries = (
 ): IntentionWizardEntry[] => {
   const enemyEntries: IntentionWizardEntry[] = round.enemies.map(
     (combatant, index) => ({
-      side: "enemy",
+      side: 'enemy',
       index,
       combatantKey: combatant.key,
       combatantName: combatant.name || `Enemy ${index + 1}`,
-      intention: round.enemyStates[index]?.action || "",
+      intention: round.enemyStates[index]?.action || '',
     })
   );
   const partyEntries: IntentionWizardEntry[] = round.party.map(
     (combatant, index) => ({
-      side: "party",
+      side: 'party',
       index,
       combatantKey: combatant.key,
       combatantName: combatant.name || `Party ${index + 1}`,
-      intention: round.partyStates[index]?.action || "",
+      intention: round.partyStates[index]?.action || '',
     })
   );
 

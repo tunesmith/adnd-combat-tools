@@ -1,4 +1,4 @@
-import type { Creature } from "./creature";
+import type { Creature } from './creature';
 
 export interface TrackerCombatant extends Creature {
   maxHp?: string;
@@ -79,7 +79,7 @@ export interface TrackerRoundV5 extends TrackerRoundV4 {
   enemies: TrackerCombatant[];
 }
 
-export interface TrackerRoundV6 extends Omit<TrackerRoundV5, "cells"> {
+export interface TrackerRoundV6 extends Omit<TrackerRoundV5, 'cells'> {
   cells: TrackerCellState[][];
 }
 
