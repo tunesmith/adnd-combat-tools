@@ -1,6 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { createTreasureMagicContextHandlers } from '../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureMiscMagicE5Preview,
   renderTreasureMiscMagicE5Compact,
@@ -38,6 +41,10 @@ export const miscMagicE5Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureMiscMagicE5Compact,
     },
     buildPreview: buildTreasureMiscMagicE5Preview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureMiscMagicE5',
+      buildTreasureMiscMagicE5Preview
+    ),
   },
   {
     id: 'treasureRobeOfTheArchmagi',
@@ -49,6 +56,13 @@ export const miscMagicE5Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureRobeOfTheArchmagiCompact,
     },
     buildPreview: buildTreasureRobeOfTheArchmagiPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureRobeOfTheArchmagi'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureRobeOfTheArchmagiPreview
+          )
+        : undefined,
   },
   {
     id: 'treasureScarabOfProtectionCurse',
@@ -60,6 +74,13 @@ export const miscMagicE5Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureScarabOfProtectionCurseCompact,
     },
     buildPreview: buildTreasureScarabOfProtectionCursePreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureScarabOfProtectionCurse'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureScarabOfProtectionCursePreview
+          )
+        : undefined,
   },
   {
     id: 'treasureScarabOfProtectionCurseResolution',
@@ -71,6 +92,13 @@ export const miscMagicE5Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureScarabOfProtectionCurseResolutionCompact,
     },
     buildPreview: buildTreasureScarabOfProtectionCurseResolutionPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureScarabOfProtectionCurseResolution'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureScarabOfProtectionCurseResolutionPreview
+          )
+        : undefined,
   },
   {
     id: 'treasureRobeOfUsefulItems',

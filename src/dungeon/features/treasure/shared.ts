@@ -92,10 +92,49 @@ export function createTreasureMagicEventPreviewBuilder(
   kind: TreasureEventKind,
   buildPreview: TablePreviewFactory
 ) {
+  return (node: OutcomeEventNode, ancestors: OutcomeEventNode[] = []) =>
+    node.event.kind === kind
+      ? buildEventPreviewFromFactory(node, buildPreview, {
+          context:
+            buildTreasureMagicEventContext(node) ??
+            buildTreasureMagicPreviewContextFromAncestors(ancestors),
+        })
+      : undefined;
+}
+
+export function createTreasureEventPreviewBuilder(
+  buildPreview: TablePreviewFactory
+) {
+  return (node: OutcomeEventNode) =>
+    node.event.kind === 'treasure'
+      ? buildEventPreviewFromFactory(node, buildPreview, {
+          context: {
+            kind: 'treasure',
+            level: node.event.level,
+            withMonster: node.event.withMonster,
+            rollIndex: node.event.rollIndex,
+            totalRolls: node.event.totalRolls,
+          },
+        })
+      : undefined;
+}
+
+type TreasureProtectionEventKind =
+  | 'treasureProtectionType'
+  | 'treasureProtectionGuardedBy'
+  | 'treasureProtectionHiddenBy';
+
+export function createTreasureProtectionEventPreviewBuilder(
+  kind: TreasureProtectionEventKind,
+  buildPreview: TablePreviewFactory
+) {
   return (node: OutcomeEventNode) =>
     node.event.kind === kind
       ? buildEventPreviewFromFactory(node, buildPreview, {
-          context: buildTreasureMagicEventContext(node),
+          context: {
+            kind: 'treasureProtection',
+            treasureRoll: node.roll,
+          },
         })
       : undefined;
 }
@@ -112,7 +151,12 @@ function readTreasureMagicContext(
 ): TreasureMagicContext {
   const direct = readTreasureMagicContextFromContext(context);
   if (direct) return direct;
+  return readTreasureMagicContextFromAncestors(ancestors);
+}
 
+function readTreasureMagicContextFromAncestors(
+  ancestors: OutcomeEventNode[]
+): TreasureMagicContext {
   let level: number | undefined;
   let treasureRoll: number | undefined;
   let rollIndex: number | undefined;
@@ -133,6 +177,12 @@ function readTreasureMagicContext(
       case 'treasurePotion':
       case 'treasureScroll':
       case 'treasureRing':
+      case 'treasureRodStaffWand':
+      case 'treasureMiscMagicE1':
+      case 'treasureMiscMagicE2':
+      case 'treasureMiscMagicE3':
+      case 'treasureMiscMagicE4':
+      case 'treasureMiscMagicE5':
       case 'treasureArmorShields':
       case 'treasureSwords':
       case 'treasureMiscWeapons': {
@@ -197,5 +247,23 @@ function buildTreasureMagicEventContext(
     treasureRoll: event.treasureRoll,
     rollIndex:
       typeof event.rollIndex === 'number' ? event.rollIndex : undefined,
+  };
+}
+
+function buildTreasureMagicPreviewContextFromAncestors(
+  ancestors: OutcomeEventNode[]
+): Extract<TableContext, { kind: 'treasureMagic' }> | undefined {
+  const context = readTreasureMagicContextFromAncestors(ancestors);
+  if (
+    typeof context.level !== 'number' ||
+    typeof context.treasureRoll !== 'number'
+  ) {
+    return undefined;
+  }
+  return {
+    kind: 'treasureMagic',
+    level: context.level,
+    treasureRoll: context.treasureRoll,
+    rollIndex: context.rollIndex,
   };
 }

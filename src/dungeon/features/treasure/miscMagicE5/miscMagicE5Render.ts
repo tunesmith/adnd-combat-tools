@@ -166,7 +166,10 @@ export function renderTreasureMiscMagicE5Compact(
   return nodes;
 }
 
-export const buildTreasureMiscMagicE5Preview: TablePreviewFactory = (tableId) =>
+export const buildTreasureMiscMagicE5Preview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Miscellaneous Magic (Table E.5)',
     sides: treasureMiscMagicE5.sides,
@@ -174,6 +177,7 @@ export const buildTreasureMiscMagicE5Preview: TablePreviewFactory = (tableId) =>
       range,
       label: ITEM_LABELS[command],
     })),
+    context,
   });
 
 export function miscMagicE5Sentence(

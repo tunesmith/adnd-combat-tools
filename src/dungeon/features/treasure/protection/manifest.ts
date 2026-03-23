@@ -1,5 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
+import { createTreasureProtectionEventPreviewBuilder } from '../shared';
 import {
   buildTreasureProtectionGuardedByPreview,
   buildTreasureProtectionHiddenByPreview,
@@ -28,6 +29,10 @@ export const protectionTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureProtectionTypeCompact,
     },
     buildPreview: buildTreasureProtectionTypePreview,
+    buildEventPreview: createTreasureProtectionEventPreviewBuilder(
+      'treasureProtectionType',
+      buildTreasureProtectionTypePreview
+    ),
     resolvePending: () => resolveTreasureProtectionType({}),
   },
   {
@@ -39,6 +44,10 @@ export const protectionTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildTreasureProtectionGuardedByPreview,
+    buildEventPreview: createTreasureProtectionEventPreviewBuilder(
+      'treasureProtectionGuardedBy',
+      buildTreasureProtectionGuardedByPreview
+    ),
     resolvePending: () => resolveTreasureProtectionGuardedBy({}),
   },
   {
@@ -50,6 +59,10 @@ export const protectionTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildTreasureProtectionHiddenByPreview,
+    buildEventPreview: createTreasureProtectionEventPreviewBuilder(
+      'treasureProtectionHiddenBy',
+      buildTreasureProtectionHiddenByPreview
+    ),
     resolvePending: () => resolveTreasureProtectionHiddenBy({}),
   },
 ];

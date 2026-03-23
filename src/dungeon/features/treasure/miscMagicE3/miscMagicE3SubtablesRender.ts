@@ -66,7 +66,7 @@ export function renderTreasureFigurineOfWondrousPowerCompact(
 }
 
 export const buildTreasureFigurineOfWondrousPowerPreview: TablePreviewFactory =
-  (tableId) =>
+  (tableId, context) =>
     buildPreview(tableId, {
       title: 'Figurine of Wondrous Power',
       sides: treasureFigurineOfWondrousPower.sides,
@@ -76,6 +76,7 @@ export const buildTreasureFigurineOfWondrousPowerPreview: TablePreviewFactory =
           label: figurinePreviewLabel(command),
         })
       ),
+      context,
     });
 
 export function figurineSentence(
@@ -779,7 +780,8 @@ export function renderTreasureHornOfValhallaAlignmentCompact(
 }
 
 export const buildTreasureHornOfValhallaTypePreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Horn Type',
@@ -788,10 +790,11 @@ export const buildTreasureHornOfValhallaTypePreview: TablePreviewFactory = (
       range,
       label: HORN_TYPE_LABELS[command],
     })),
+    context,
   });
 
 export const buildTreasureHornOfValhallaAttunementPreview: TablePreviewFactory =
-  (tableId) =>
+  (tableId, context) =>
     buildPreview(tableId, {
       title: 'Horn Attunement',
       sides: treasureHornOfValhallaAttunement.sides,
@@ -801,6 +804,7 @@ export const buildTreasureHornOfValhallaAttunementPreview: TablePreviewFactory =
           label: hornAttunementLabel(command),
         })
       ),
+      context,
     });
 
 export const buildTreasureHornOfValhallaAlignmentPreview: TablePreviewFactory =

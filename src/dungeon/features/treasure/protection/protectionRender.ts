@@ -247,7 +247,8 @@ export function renderTreasureProtectionHiddenByDetail(
 }
 
 export const buildTreasureProtectionTypePreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Treasure Protection',
@@ -256,10 +257,12 @@ export const buildTreasureProtectionTypePreview: TablePreviewFactory = (
       range: entry.range,
       label: TreasureProtectionType[entry.command] ?? String(entry.command),
     })),
+    context,
   });
 
 export const buildTreasureProtectionGuardedByPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Treasure Guarded By',
@@ -268,10 +271,12 @@ export const buildTreasureProtectionGuardedByPreview: TablePreviewFactory = (
       range: entry.range,
       label: GUARDED_BY_LABELS[entry.command],
     })),
+    context,
   });
 
 export const buildTreasureProtectionHiddenByPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Treasure Hidden By/In',
@@ -280,4 +285,5 @@ export const buildTreasureProtectionHiddenByPreview: TablePreviewFactory = (
       range: entry.range,
       label: HIDDEN_BY_LABELS[entry.command],
     })),
+    context,
   });

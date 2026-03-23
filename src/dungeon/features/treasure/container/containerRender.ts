@@ -72,7 +72,10 @@ export function renderTreasureContainerCompact(
   return nodes;
 }
 
-export const buildTreasureContainerPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasureContainerPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Treasure Container',
     sides: treasureContainer.sides,
@@ -80,4 +83,5 @@ export const buildTreasureContainerPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: TreasureContainer[entry.command] ?? String(entry.command),
     })),
+    context,
   });

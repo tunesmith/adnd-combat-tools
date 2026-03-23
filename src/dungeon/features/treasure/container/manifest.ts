@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
   buildTreasureContainerPreview,
   renderTreasureContainerCompact,
@@ -17,6 +17,12 @@ export const containerTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureContainerCompact,
     },
     buildPreview: buildTreasureContainerPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureContainer'
+        ? buildEventPreviewFromFactory(node, buildTreasureContainerPreview, {
+            context: { kind: 'treasureContainer' },
+          })
+        : undefined,
     resolvePending: () => resolveTreasureContainer({}),
   },
 ];

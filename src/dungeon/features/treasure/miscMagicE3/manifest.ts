@@ -1,6 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { createTreasureMagicContextHandlers } from '../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureMiscMagicE3Preview,
   renderTreasureMiscMagicE3Compact,
@@ -58,6 +61,10 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureMiscMagicE3Compact,
     },
     buildPreview: buildTreasureMiscMagicE3Preview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureMiscMagicE3',
+      buildTreasureMiscMagicE3Preview
+    ),
   },
   {
     id: 'treasureFigurineOfWondrousPower',
@@ -71,6 +78,10 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
     },
     buildPreview: buildTreasureFigurineOfWondrousPowerPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureFigurineOfWondrousPower',
+      buildTreasureFigurineOfWondrousPowerPreview
+    ),
   },
   {
     id: 'treasureFigurineMarbleElephant',
@@ -81,6 +92,13 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureFigurineMarbleElephantCompact,
     },
     buildPreview: buildTreasureFigurineMarbleElephantPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureFigurineMarbleElephant'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureFigurineMarbleElephantPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureFigurineMarbleElephant({}),
   },
   {
@@ -92,6 +110,13 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureGirdleOfGiantStrengthCompact,
     },
     buildPreview: buildTreasureGirdleOfGiantStrengthPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureGirdleOfGiantStrength'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureGirdleOfGiantStrengthPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureGirdleOfGiantStrength({}),
   },
   {
@@ -103,6 +128,13 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureInstrumentOfTheBardsCompact,
     },
     buildPreview: buildTreasureInstrumentOfTheBardsPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureInstrumentOfTheBards'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureInstrumentOfTheBardsPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureInstrumentOfTheBards({}),
   },
   {
@@ -114,6 +146,10 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureIronFlaskCompact,
     },
     buildPreview: buildTreasureIronFlaskPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureIronFlask'
+        ? buildEventPreviewFromFactory(node, buildTreasureIronFlaskPreview)
+        : undefined,
     resolvePending: () => resolveTreasureIronFlask({}),
   },
   {
@@ -137,6 +173,10 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureHornOfValhallaTypeCompact,
     },
     buildPreview: buildTreasureHornOfValhallaTypePreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureHornOfValhallaType',
+      buildTreasureHornOfValhallaTypePreview
+    ),
   },
   {
     id: 'treasureHornOfValhallaAttunement',
@@ -150,6 +190,10 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureHornOfValhallaAttunementCompact,
     },
     buildPreview: buildTreasureHornOfValhallaAttunementPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureHornOfValhallaAttunement',
+      buildTreasureHornOfValhallaAttunementPreview
+    ),
   },
   {
     id: 'treasureHornOfValhallaAlignment',
@@ -160,6 +204,13 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureHornOfValhallaAlignmentCompact,
     },
     buildPreview: buildTreasureHornOfValhallaAlignmentPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureHornOfValhallaAlignment'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureHornOfValhallaAlignmentPreview
+          )
+        : undefined,
     resolvePending: () => resolveTreasureHornOfValhallaAlignment({}),
   },
 ];

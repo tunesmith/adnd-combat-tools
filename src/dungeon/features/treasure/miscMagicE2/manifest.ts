@@ -1,6 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { createTreasureMagicContextHandlers } from '../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureMiscMagicE2Preview,
   renderTreasureMiscMagicE2Compact,
@@ -43,6 +46,10 @@ export const miscMagicE2Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureMiscMagicE2Compact,
     },
     buildPreview: buildTreasureMiscMagicE2Preview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureMiscMagicE2',
+      buildTreasureMiscMagicE2Preview
+    ),
   },
   {
     id: 'treasureCarpetOfFlying',
@@ -54,6 +61,10 @@ export const miscMagicE2Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureCarpetOfFlyingCompact,
     },
     buildPreview: buildTreasureCarpetOfFlyingPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureCarpetOfFlying'
+        ? buildEventPreviewFromFactory(node, buildTreasureCarpetOfFlyingPreview)
+        : undefined,
   },
   {
     id: 'treasureCloakOfProtection',
@@ -65,6 +76,13 @@ export const miscMagicE2Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureCloakOfProtectionCompact,
     },
     buildPreview: buildTreasureCloakOfProtectionPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureCloakOfProtection'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureCloakOfProtectionPreview
+          )
+        : undefined,
   },
   {
     id: 'treasureCrystalBall',
@@ -76,6 +94,10 @@ export const miscMagicE2Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureCrystalBallCompact,
     },
     buildPreview: buildTreasureCrystalBallPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureCrystalBall'
+        ? buildEventPreviewFromFactory(node, buildTreasureCrystalBallPreview)
+        : undefined,
   },
   {
     id: 'treasureDeckOfManyThings',
@@ -87,6 +109,13 @@ export const miscMagicE2Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureDeckOfManyThingsCompact,
     },
     buildPreview: buildTreasureDeckOfManyThingsPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureDeckOfManyThings'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureDeckOfManyThingsPreview
+          )
+        : undefined,
   },
   {
     id: 'treasureEyesOfPetrification',
@@ -98,5 +127,12 @@ export const miscMagicE2Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureEyesOfPetrificationCompact,
     },
     buildPreview: buildTreasureEyesOfPetrificationPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureEyesOfPetrification'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureEyesOfPetrificationPreview
+          )
+        : undefined,
   },
 ];

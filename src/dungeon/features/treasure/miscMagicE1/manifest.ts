@@ -1,6 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { createTreasureMagicContextHandlers } from '../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureMiscMagicE1Preview,
   renderTreasureMiscMagicE1Compact,
@@ -43,6 +46,10 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureMiscMagicE1Compact,
     },
     buildPreview: buildTreasureMiscMagicE1Preview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureMiscMagicE1',
+      buildTreasureMiscMagicE1Preview
+    ),
   },
   {
     id: 'treasureBagOfHolding',
@@ -54,6 +61,10 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureBagOfHoldingCompact,
     },
     buildPreview: buildTreasureBagOfHoldingPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureBagOfHolding'
+        ? buildEventPreviewFromFactory(node, buildTreasureBagOfHoldingPreview)
+        : undefined,
   },
   {
     id: 'treasureBagOfTricks',
@@ -65,6 +76,10 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureBagOfTricksCompact,
     },
     buildPreview: buildTreasureBagOfTricksPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureBagOfTricks'
+        ? buildEventPreviewFromFactory(node, buildTreasureBagOfTricksPreview)
+        : undefined,
   },
   {
     id: 'treasureBracersOfDefense',
@@ -76,6 +91,13 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureBracersOfDefenseCompact,
     },
     buildPreview: buildTreasureBracersOfDefensePreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureBracersOfDefense'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureBracersOfDefensePreview
+          )
+        : undefined,
   },
   {
     id: 'treasureBucknardsEverfullPurse',
@@ -87,6 +109,13 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureBucknardsEverfullPurseCompact,
     },
     buildPreview: buildTreasureBucknardsEverfullPursePreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureBucknardsEverfullPurse'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureBucknardsEverfullPursePreview
+          )
+        : undefined,
   },
   {
     id: 'treasureArtifactOrRelic',
@@ -98,5 +127,12 @@ export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureArtifactOrRelicCompact,
     },
     buildPreview: buildTreasureArtifactOrRelicPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureArtifactOrRelic'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureArtifactOrRelicPreview
+          )
+        : undefined,
   },
 ];

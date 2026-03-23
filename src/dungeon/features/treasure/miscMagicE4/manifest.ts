@@ -1,6 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { createTreasureMagicContextHandlers } from '../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureMiscMagicE4Preview,
   renderTreasureMiscMagicE4Compact,
@@ -63,6 +66,10 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureMiscMagicE4Compact,
     },
     buildPreview: buildTreasureMiscMagicE4Preview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureMiscMagicE4',
+      buildTreasureMiscMagicE4Preview
+    ),
   },
   {
     id: 'treasureManualOfGolems',
@@ -74,6 +81,10 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureManualOfGolemsCompact,
     },
     buildPreview: buildTreasureManualOfGolemsPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureManualOfGolems'
+        ? buildEventPreviewFromFactory(node, buildTreasureManualOfGolemsPreview)
+        : undefined,
   },
   {
     id: 'treasureMedallionRange',
@@ -85,6 +96,10 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureMedallionRangeCompact,
     },
     buildPreview: buildTreasureMedallionRangePreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureMedallionRange'
+        ? buildEventPreviewFromFactory(node, buildTreasureMedallionRangePreview)
+        : undefined,
   },
   {
     id: 'treasureNecklaceOfMissiles',
@@ -96,6 +111,13 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureNecklaceOfMissilesCompact,
     },
     buildPreview: buildTreasureNecklaceOfMissilesPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureNecklaceOfMissiles'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureNecklaceOfMissilesPreview
+          )
+        : undefined,
   },
   {
     id: 'treasureNecklaceOfPrayerBeads',
@@ -120,6 +142,13 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasurePearlOfPowerEffectCompact,
     },
     buildPreview: buildTreasurePearlOfPowerEffectPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasurePearlOfPowerEffect'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasurePearlOfPowerEffectPreview
+          )
+        : undefined,
   },
   {
     id: 'treasurePearlOfPowerRecall',
@@ -131,6 +160,13 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasurePearlOfPowerRecallCompact,
     },
     buildPreview: buildTreasurePearlOfPowerRecallPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasurePearlOfPowerRecall'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasurePearlOfPowerRecallPreview
+          )
+        : undefined,
   },
   {
     id: 'treasurePearlOfWisdom',
@@ -142,6 +178,10 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasurePearlOfWisdomCompact,
     },
     buildPreview: buildTreasurePearlOfWisdomPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasurePearlOfWisdom'
+        ? buildEventPreviewFromFactory(node, buildTreasurePearlOfWisdomPreview)
+        : undefined,
   },
   {
     id: 'treasurePeriaptProofAgainstPoison',
@@ -153,6 +193,13 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasurePeriaptProofAgainstPoisonCompact,
     },
     buildPreview: buildTreasurePeriaptProofAgainstPoisonPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasurePeriaptProofAgainstPoison'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasurePeriaptProofAgainstPoisonPreview
+          )
+        : undefined,
   },
   {
     id: 'treasurePhylacteryLongYears',
@@ -164,6 +211,13 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasurePhylacteryLongYearsCompact,
     },
     buildPreview: buildTreasurePhylacteryLongYearsPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasurePhylacteryLongYears'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasurePhylacteryLongYearsPreview
+          )
+        : undefined,
   },
   {
     id: 'treasureQuaalFeatherToken',
@@ -175,5 +229,12 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureQuaalFeatherTokenCompact,
     },
     buildPreview: buildTreasureQuaalFeatherTokenPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureQuaalFeatherToken'
+        ? buildEventPreviewFromFactory(
+            node,
+            buildTreasureQuaalFeatherTokenPreview
+          )
+        : undefined,
   },
 ];

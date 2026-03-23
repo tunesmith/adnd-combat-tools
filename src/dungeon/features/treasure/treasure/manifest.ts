@@ -1,6 +1,7 @@
 import type { DungeonTableDefinition, DetailRenderer } from '../../types';
 import { markContextualResolution, wrapResolver } from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
+import { createTreasureEventPreviewBuilder } from '../shared';
 import { resolveTreasure } from './treasureResolvers';
 import {
   buildTreasurePreview,
@@ -49,6 +50,7 @@ export const treasureTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderTreasureCompactNodes),
     },
     buildPreview: buildTreasurePreview,
+    buildEventPreview: createTreasureEventPreviewBuilder(buildTreasurePreview),
     registry: ({ roll, context }) => {
       const ctx = context && context.kind === 'treasure' ? context : undefined;
       return resolveTreasure({

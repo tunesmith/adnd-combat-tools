@@ -561,6 +561,88 @@ describe('uiPreviewHarness', () => {
     expect(pendingTables).not.toContain('treasurePotion');
   });
 
+  test('resolved treasure preview reroll preserves treasure context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const treasurePreview = findPreview(renderDetail(feed), 'treasure');
+    expect(treasurePreview?.context).toEqual(
+      expect.objectContaining({
+        kind: 'treasure',
+        level: 4,
+        withMonster: false,
+        rollIndex: 1,
+      })
+    );
+
+    if (!treasurePreview) {
+      throw new Error('Expected treasure preview');
+    }
+
+    feed = resolvePreview(
+      feed,
+      treasurePreview.targetId ?? treasurePreview.id,
+      1
+    );
+
+    const treasureEvent = findOutcomeEvent(feed.outcome, 'treasure');
+    expect(treasureEvent?.roll).toBe(1);
+
+    const protectionPreview = findPreview(
+      renderDetail(feed),
+      'treasureProtectionType'
+    );
+    expect(protectionPreview?.context).toEqual({
+      kind: 'treasureProtection',
+      treasureRoll: 1,
+    });
+  });
+
+  test('resolved treasure protection preview reroll stays feature-owned', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureProtectionType', 9);
+
+    const protectionPreview = findPreview(
+      renderDetail(feed),
+      'treasureProtectionType'
+    );
+    expect(protectionPreview?.context).toEqual({
+      kind: 'treasureProtection',
+      treasureRoll: 9,
+    });
+
+    if (!protectionPreview) {
+      throw new Error('Expected treasure protection preview');
+    }
+
+    feed = resolvePreview(
+      feed,
+      protectionPreview.targetId ?? protectionPreview.id,
+      1
+    );
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureProtectionGuardedBy');
+    expect(pendingTables).not.toContain('treasureProtectionHiddenBy');
+  });
+
   test('resolved treasure potion preview reroll preserves treasure magic context', () => {
     let feed = createFeedSnapshot({
       action: 'passage',
@@ -786,6 +868,75 @@ describe('uiPreviewHarness', () => {
 
     const pendingTables = collectPendingTables(feed.outcome);
     expect(pendingTables).toContain('treasureStaffSerpent');
+  });
+
+  test('resolved miscellaneous magic preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 52);
+    feed = resolvePendingPreview(feed, 'treasureMiscMagicE3', 1);
+
+    const miscPreview = findPreview(renderDetail(feed), 'treasureMiscMagicE3');
+    expect(miscPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 52,
+      rollIndex: 1,
+    });
+
+    if (!miscPreview) {
+      throw new Error('Expected miscellaneous magic preview');
+    }
+
+    feed = resolvePreview(feed, miscPreview.targetId ?? miscPreview.id, 54);
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureHornOfValhallaType');
+    expect(pendingTables).not.toContain('treasureFigurineOfWondrousPower');
+  });
+
+  test('resolved horn of valhalla preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 52);
+    feed = resolvePendingPreview(feed, 'treasureMiscMagicE3', 54);
+    feed = resolvePendingPreview(feed, 'treasureHornOfValhallaType', 1);
+
+    const hornPreview = findPreview(
+      renderDetail(feed),
+      'treasureHornOfValhallaType'
+    );
+    expect(hornPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 52,
+      rollIndex: 1,
+    });
+
+    if (!hornPreview) {
+      throw new Error('Expected horn of valhalla preview');
+    }
+
+    feed = resolvePreview(feed, hornPreview.targetId ?? hornPreview.id, 20);
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureHornOfValhallaAttunement');
   });
 });
 
