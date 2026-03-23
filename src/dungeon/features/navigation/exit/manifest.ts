@@ -126,19 +126,14 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderPassageExitLocationCompact,
     },
     buildPreview: buildPassageExitLocationPreview,
+    registry: ({ roll, context }) =>
+      resolvePassageExitLocation({
+        roll,
+        context: readExitContext(context),
+      }),
     resolvePending: (pending) =>
       resolvePassageExitLocation({
-        context:
-          pending.context &&
-          (pending.context as { kind?: unknown }).kind === 'exit'
-            ? {
-                index: (pending.context as { index?: number }).index,
-                total: (pending.context as { total?: number }).total,
-                origin: (pending.context as { origin?: 'room' | 'chamber' })
-                  .origin,
-                id: (pending.context as { id?: string }).id,
-              }
-            : undefined,
+        context: readExitContext(pending.context as TableContext | undefined),
       }),
   },
   {
@@ -150,19 +145,14 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderDoorExitLocationCompact,
     },
     buildPreview: buildDoorExitLocationPreview,
+    registry: ({ roll, context }) =>
+      resolveDoorExitLocation({
+        roll,
+        context: readExitContext(context),
+      }),
     resolvePending: (pending) =>
       resolveDoorExitLocation({
-        context:
-          pending.context &&
-          (pending.context as { kind?: unknown }).kind === 'exit'
-            ? {
-                index: (pending.context as { index?: number }).index,
-                total: (pending.context as { total?: number }).total,
-                origin: (pending.context as { origin?: 'room' | 'chamber' })
-                  .origin,
-                id: (pending.context as { id?: string }).id,
-              }
-            : undefined,
+        context: readExitContext(pending.context as TableContext | undefined),
       }),
   },
   {
@@ -174,18 +164,16 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderExitDirectionCompact,
     },
     buildPreview: buildExitDirectionPreview,
+    registry: ({ roll, context }) =>
+      resolveExitDirection({
+        roll,
+        context: readExitDirectionContext(context),
+      }),
     resolvePending: (pending) =>
       resolveExitDirection({
-        context:
-          pending.context &&
-          (pending.context as { kind?: unknown }).kind === 'exitDirection'
-            ? {
-                index: (pending.context as { index?: number }).index,
-                total: (pending.context as { total?: number }).total,
-                origin: (pending.context as { origin?: 'room' | 'chamber' })
-                  .origin,
-              }
-            : undefined,
+        context: readExitDirectionContext(
+          pending.context as TableContext | undefined
+        ),
       }),
   },
   {
@@ -197,16 +185,16 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderExitAlternativeCompact),
     },
     buildPreview: buildExitAlternativePreview,
+    registry: ({ roll, context }) =>
+      resolveExitAlternative({
+        roll,
+        context: readExitAlternativeContext(context),
+      }),
     resolvePending: (pending) =>
       resolveExitAlternative({
-        context:
-          pending.context &&
-          (pending.context as { kind?: unknown }).kind === 'exitAlternative'
-            ? {
-                exitType: (pending.context as { exitType?: 'door' | 'passage' })
-                  .exitType,
-              }
-            : undefined,
+        context: readExitAlternativeContext(
+          pending.context as TableContext | undefined
+        ),
       }),
   },
   {
@@ -250,5 +238,36 @@ function readExitsContext(
     length: context.length,
     width: context.width,
     isRoom: context.isRoom,
+  };
+}
+
+function readExitContext(
+  context: TableContext | undefined
+): { index?: number; total?: number; origin?: 'room' | 'chamber' } | undefined {
+  if (!context || context.kind !== 'exit') return undefined;
+  return {
+    index: context.index,
+    total: context.total,
+    origin: context.origin,
+  };
+}
+
+function readExitDirectionContext(
+  context: TableContext | undefined
+): { index?: number; total?: number; origin?: 'room' | 'chamber' } | undefined {
+  if (!context || context.kind !== 'exitDirection') return undefined;
+  return {
+    index: context.index,
+    total: context.total,
+    origin: context.origin,
+  };
+}
+
+function readExitAlternativeContext(
+  context: TableContext | undefined
+): { exitType?: 'door' | 'passage' } | undefined {
+  if (!context || context.kind !== 'exitAlternative') return undefined;
+  return {
+    exitType: context.exitType,
   };
 }

@@ -12,6 +12,7 @@ import {
 } from '../../../support/dungeon/uiPreviewHarness';
 import { resolveViaRegistry } from '../../../../dungeon/helpers/registry';
 import type { OutcomeEvent } from '../../../../dungeon/domain/outcome';
+import { DoorBeyond, doorBeyond } from '../../../../tables/dungeon/doorBeyond';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -269,7 +270,98 @@ describe('uiPreviewHarness', () => {
     );
     expect(illusionarySummaries.length).toBe(1);
   });
+
+  test('door preview resolution preserves exit metadata', () => {
+    let feed = createFeedSnapshot({
+      action: 'door',
+      roll: pickRollForDoorBeyond(DoorBeyond.Room),
+      detailMode: true,
+    });
+
+    feed = resolvePendingPreview(feed, 'roomDimensions', 11);
+    feed = resolvePendingPreview(feed, 'numberOfExits', 4);
+    feed = resolvePendingPreview(feed, 'doorExitLocation', 18);
+
+    const doorExitEvent = findOutcomeEvent(feed.outcome, 'doorExitLocation');
+    expect(doorExitEvent?.event.kind).toBe('doorExitLocation');
+    if (!doorExitEvent || doorExitEvent.event.kind !== 'doorExitLocation') {
+      throw new Error('Expected door exit location event');
+    }
+    expect(doorExitEvent.event.index).toBe(1);
+    expect(doorExitEvent.event.total).toBe(2);
+    expect(doorExitEvent.event.origin).toBe('room');
+
+    feed = resolvePendingPreview(feed, 'exitAlternative', 4);
+
+    const alternativeEvent = findOutcomeEvent(feed.outcome, 'exitAlternative');
+    expect(alternativeEvent?.event.kind).toBe('exitAlternative');
+    if (
+      !alternativeEvent ||
+      alternativeEvent.event.kind !== 'exitAlternative'
+    ) {
+      throw new Error('Expected exit alternative event');
+    }
+    expect(alternativeEvent.event.exitType).toBe('door');
+  });
+
+  test('passage preview resolution preserves exit metadata', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'numberOfExits', 4);
+    feed = resolvePendingPreview(feed, 'passageExitLocation', 9);
+
+    const passageExitEvent = findOutcomeEvent(
+      feed.outcome,
+      'passageExitLocation'
+    );
+    expect(passageExitEvent?.event.kind).toBe('passageExitLocation');
+    if (
+      !passageExitEvent ||
+      passageExitEvent.event.kind !== 'passageExitLocation'
+    ) {
+      throw new Error('Expected passage exit location event');
+    }
+    expect(passageExitEvent.event.index).toBe(1);
+    expect(passageExitEvent.event.total).toBe(3);
+    expect(passageExitEvent.event.origin).toBe('chamber');
+
+    feed = resolvePendingPreview(feed, 'exitDirection', 20);
+
+    const directionEvent = findOutcomeEvent(feed.outcome, 'exitDirection');
+    expect(directionEvent?.event.kind).toBe('exitDirection');
+    if (!directionEvent || directionEvent.event.kind !== 'exitDirection') {
+      throw new Error('Expected exit direction event');
+    }
+    expect(directionEvent.event.index).toBe(1);
+    expect(directionEvent.event.total).toBe(3);
+    expect(directionEvent.event.origin).toBe('chamber');
+
+    feed = resolvePendingPreview(feed, 'exitAlternative', 7);
+
+    const alternativeEvent = findOutcomeEvent(feed.outcome, 'exitAlternative');
+    expect(alternativeEvent?.event.kind).toBe('exitAlternative');
+    if (
+      !alternativeEvent ||
+      alternativeEvent.event.kind !== 'exitAlternative'
+    ) {
+      throw new Error('Expected exit alternative event');
+    }
+    expect(alternativeEvent.event.exitType).toBe('passage');
+  });
 });
+
+function pickRollForDoorBeyond(cmd: DoorBeyond): number {
+  const entry = doorBeyond.entries.find(
+    (candidate) => candidate.command === cmd
+  );
+  if (!entry) throw new Error('No entry for command');
+  return entry.range[0];
+}
 
 function findOutcomeEvent(
   node: OutcomeEventNode | undefined,
