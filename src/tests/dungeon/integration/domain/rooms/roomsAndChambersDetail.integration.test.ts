@@ -3,12 +3,12 @@ import {
   roomDimensions,
   ChamberDimensions,
   chamberDimensions,
-} from '../../../../../tables/dungeon/chambersRooms';
+  ChamberRoomContents,
+} from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
 import {
   resolveRoomDimensions,
   resolveChamberDimensions,
-} from '../../../../../dungeon/domain/resolvers';
-import { ChamberRoomContents } from '../../../../../tables/dungeon/chamberRoomContents';
+} from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
 import type { DungeonTablePreview } from '../../../../../types/dungeon';

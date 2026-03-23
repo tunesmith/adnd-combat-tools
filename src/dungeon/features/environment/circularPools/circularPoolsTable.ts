@@ -1,4 +1,40 @@
-import type { Table } from './dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/dungeonTypes';
+
+export enum CircularContents {
+  Pool,
+  Well,
+  Shaft,
+  Normal,
+}
+
+export const circularContents: Table<CircularContents> = {
+  sides: 20,
+  entries: [
+    { range: [1, 5], command: CircularContents.Pool },
+    { range: [6, 7], command: CircularContents.Well },
+    { range: [8, 10], command: CircularContents.Shaft },
+    { range: [11, 20], command: CircularContents.Normal },
+  ],
+};
+
+export enum Pool {
+  NoPool,
+  PoolNoMonster,
+  PoolMonster,
+  PoolMonsterTreasure,
+  MagicPool,
+}
+
+export const pool: Table<Pool> = {
+  sides: 20,
+  entries: [
+    { range: [1, 8], command: Pool.NoPool },
+    { range: [9, 10], command: Pool.PoolNoMonster },
+    { range: [11, 12], command: Pool.PoolMonster },
+    { range: [13, 18], command: Pool.PoolMonsterTreasure },
+    { range: [19, 20], command: Pool.MagicPool },
+  ],
+};
 
 export enum MagicPool {
   TransmuteGold,
@@ -26,7 +62,7 @@ export const transmuteType: Table<TransmuteType> = {
   sides: 20,
   entries: [
     { range: [1, 11], command: TransmuteType.GoldToPlatinum },
-    { range: [2, 20], command: TransmuteType.GoldToLead },
+    { range: [12, 20], command: TransmuteType.GoldToLead },
   ],
 };
 

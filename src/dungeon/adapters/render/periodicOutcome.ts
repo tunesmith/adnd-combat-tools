@@ -13,14 +13,16 @@ import { buildPreview, findChildEvent } from './shared';
 import { renderDoorChainCompact } from '../../features/navigation/doorChain/doorChainRender';
 import { describeSidePassage } from '../../features/navigation/sidePassage/sidePassageRender';
 import { renderPassageTurnCompact } from '../../features/navigation/passageTurn/passageTurnRender';
-import { describeChamberDimensions } from './chamberDimensions';
+import {
+  describeChamberDimensions,
+  renderChamberDimensionsCompact,
+} from '../../features/environment/roomsChambers/roomsChambersRender';
 import { renderStairsCompact } from '../../features/navigation/exit/stairsRender';
 import {
   describeMonsterOutcome,
   collectCharacterPartyMessages,
 } from '../../features/monsters/render';
 import { renderTrickTrapCompact } from '../../features/hazards/trickTrap/trickTrapRender';
-import { renderChamberDimensionsCompact } from './chamberDimensions';
 import { collectTreasureCompactMessages } from '../../features/treasure/treasure/treasureRender';
 import { MonsterLevel } from '../../features/monsters/monsterLevel/monsterLevelTable';
 

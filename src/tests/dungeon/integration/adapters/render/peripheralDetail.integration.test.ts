@@ -8,7 +8,7 @@ import { resolvePeriodicDoorOnly } from '../../../../../dungeon/features/navigat
 import { resolveGasTrapEffect } from '../../../../../dungeon/features/hazards/gasTrap/gasTrapResolvers';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
-import { ChamberRoomContents } from '../../../../../tables/dungeon/chamberRoomContents';
+import { ChamberRoomContents } from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
 
 function isParagraph(
   node: DungeonRenderNode

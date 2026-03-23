@@ -1,11 +1,15 @@
-import { renderChamberRoomContentsCompact } from '../../../../../dungeon/adapters/render/chamberRoomContents';
-import { renderRoomDimensionsCompactNodes } from '../../../../../dungeon/adapters/render/roomDimensions';
-import { renderCircularPoolCompact } from '../../../../../dungeon/adapters/render/circularPools';
+import {
+  renderChamberRoomContentsCompact,
+  renderRoomDimensionsCompactNodes,
+} from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersRender';
+import { renderCircularPoolCompact } from '../../../../../dungeon/features/environment/circularPools/circularPoolsRender';
 import type { AppendPreviewFn } from '../../../../../dungeon/adapters/render/shared';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
-import { ChamberRoomContents } from '../../../../../tables/dungeon/chamberRoomContents';
-import { RoomDimensions } from '../../../../../tables/dungeon/chambersRooms';
-import { Pool } from '../../../../../tables/dungeon/pool';
+import {
+  ChamberRoomContents,
+  RoomDimensions,
+} from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
+import { Pool } from '../../../../../dungeon/features/environment/circularPools/circularPoolsTable';
 import { MonsterTwo } from '../../../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
 import { MonsterLevel } from '../../../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
 import type {

@@ -8,13 +8,13 @@ import type { PassageWidth } from '../features/navigation/passageWidth/passageWi
 import type {
   RoomDimensions,
   ChamberDimensions,
-} from '../../tables/dungeon/chambersRooms';
+  ChamberRoomContents,
+  ChamberRoomStairs,
+} from '../features/environment/roomsChambers/roomsChambersTable';
 import type { NumberOfExits } from '../features/navigation/exit/numberOfExitsTable';
-import type {
-  UnusualShape,
-  CircularContents,
-} from '../../tables/dungeon/unusualShape';
-import type { UnusualSize } from '../../tables/dungeon/unusualSize';
+import type { CircularContents } from '../features/environment/circularPools/circularPoolsTable';
+import type { UnusualShape } from '../features/environment/unusualSpace/unusualSpaceTable';
+import type { UnusualSize } from '../features/environment/unusualSpace/unusualSpaceTable';
 import type {
   DoorLocation,
   PeriodicCheckDoorOnly,
@@ -31,13 +31,13 @@ import type {
   ChasmConstruction,
   JumpingPlaceWidth,
 } from '../features/navigation/chasm/chasmTable';
-import type { Pool } from '../../tables/dungeon/pool';
+import type { Pool } from '../features/environment/circularPools/circularPoolsTable';
 import type {
   MagicPool,
   TransmuteType,
   PoolAlignment,
   TransporterLocation,
-} from '../../tables/dungeon/magicPool';
+} from '../features/environment/circularPools/circularPoolsTable';
 import type { MonsterLevel } from '../features/monsters/monsterLevel/monsterLevelTable';
 import type { Human } from '../features/monsters/human/humanTable';
 import type { MonsterOne } from '../features/monsters/monsterOne/monsterOneTables';
@@ -84,8 +84,6 @@ import type {
 } from '../features/navigation/exit/exitLocationsTable';
 import type { GasTrapEffect } from '../features/hazards/gasTrap/gasTrapTable';
 import type { TrickTrap } from '../features/hazards/trickTrap/trickTrapTable';
-import type { ChamberRoomContents } from '../../tables/dungeon/chamberRoomContents';
-import type { ChamberRoomStairs } from '../../tables/dungeon/chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../features/treasure/treasure/treasureTable';
 import type { TreasureContainer } from '../features/treasure/container/containerTable';
 import type { TreasureMagicCategory } from '../features/treasure/magicCategory/magicCategoryTable';

@@ -1,7 +1,7 @@
 import type { DungeonTablePreview, TableContext } from '../../types/dungeon';
 import type { DungeonOutcomeNode, OutcomeEventNode } from '../domain/outcome';
 import type { TablePreviewFactory } from '../adapters/render/shared';
-import type { DungeonTableDefinition } from './types';
+import type { DetailRenderer, DungeonTableDefinition } from './types';
 
 export const wrapResolver =
   <T>(resolver: (options?: T) => DungeonOutcomeNode) =>
@@ -35,3 +35,15 @@ export function buildEventPreviewFromFactory(
   if (!preview) return undefined;
   return options?.autoCollapse ? { ...preview, autoCollapse: true } : preview;
 }
+
+export const withoutAppend =
+  (
+    renderer: (
+      node: Parameters<DetailRenderer>[0]
+    ) => ReturnType<DetailRenderer>
+  ) =>
+  (
+    node: Parameters<DetailRenderer>[0],
+    _append: Parameters<DetailRenderer>[1]
+  ) =>
+    renderer(node);

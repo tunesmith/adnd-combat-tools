@@ -17,9 +17,17 @@ import type { DoorBeyond } from './doorBeyond';
 import type { DoorLocation } from '../../dungeon/features/navigation/doorChain/doorChainTable';
 import type { PeriodicCheck } from './periodicCheck';
 import type { PassageTurns } from '../../dungeon/features/navigation/passageTurn/passageTurnTable';
-import type { ChamberDimensions, RoomDimensions } from './chambersRooms';
-import type { CircularContents, UnusualShape } from './unusualShape';
-import type { UnusualSize } from './unusualSize';
+import type {
+  ChamberDimensions,
+  ChamberRoomContents,
+  ChamberRoomStairs,
+  RoomDimensions,
+} from '../../dungeon/features/environment/roomsChambers/roomsChambersTable';
+import type {
+  UnusualShape,
+  UnusualSize,
+} from '../../dungeon/features/environment/unusualSpace/unusualSpaceTable';
+import type { CircularContents } from '../../dungeon/features/environment/circularPools/circularPoolsTable';
 import type {
   NumberOfExits,
   OneToFour,
@@ -34,13 +42,13 @@ import type {
   Egress,
   Stairs,
 } from '../../dungeon/features/navigation/exit/stairsTable';
-import type { Pool } from './pool';
+import type { Pool } from '../../dungeon/features/environment/circularPools/circularPoolsTable';
 import type {
   MagicPool,
   PoolAlignment,
   TransmuteType,
   TransporterLocation,
-} from './magicPool';
+} from '../../dungeon/features/environment/circularPools/circularPoolsTable';
 import type {
   MonsterDistributionLevel,
   MonsterLevel,
@@ -88,8 +96,6 @@ import type { PeriodicCheckDoorOnly } from '../../dungeon/features/navigation/do
 import type { TrickTrap } from '../../dungeon/features/hazards/trickTrap/trickTrapTable';
 import type { IllusionaryWallNature } from '../../dungeon/features/hazards/illusionaryWall/illusionaryWallTable';
 import type { GasTrapEffect } from '../../dungeon/features/hazards/gasTrap/gasTrapTable';
-import type { ChamberRoomContents } from './chamberRoomContents';
-import type { ChamberRoomStairs } from './chamberRoomStairs';
 import type { TreasureWithoutMonster } from '../../dungeon/features/treasure/treasure/treasureTable';
 import type {
   TreasureProtectionType,

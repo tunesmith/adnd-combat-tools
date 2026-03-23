@@ -18,9 +18,9 @@ import {
 import {
   resolveDoorBeyond,
   resolvePeriodicCheck,
-  resolveRoomDimensions,
   resolveWanderingWhereFrom,
 } from '../../../domain/resolvers';
+import { resolveRoomDimensions } from '../../environment/roomsChambers/roomsChambersResolvers';
 import { withoutAppend } from '../shared';
 import {
   buildEventPreviewFromFactory,

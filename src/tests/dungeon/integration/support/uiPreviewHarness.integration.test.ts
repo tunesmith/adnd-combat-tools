@@ -14,7 +14,7 @@ import {
 import { resolveViaRegistry } from '../../../../dungeon/helpers/registry';
 import type { OutcomeEvent } from '../../../../dungeon/domain/outcome';
 import { DoorBeyond, doorBeyond } from '../../../../tables/dungeon/doorBeyond';
-import { ChamberRoomContents } from '../../../../tables/dungeon/chamberRoomContents';
+import { ChamberRoomContents } from '../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {

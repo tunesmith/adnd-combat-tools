@@ -13,7 +13,7 @@ import { NAVIGATION_TABLE_DEFINITIONS } from './navigation';
 import { HAZARD_TABLE_DEFINITIONS } from './hazards';
 import { TREASURE_TABLE_DEFINITIONS } from './treasure';
 import { MONSTER_TABLE_DEFINITIONS } from './monsters';
-import { BASE_TABLE_DEFINITIONS } from './baseTables';
+import { ENVIRONMENT_TABLE_DEFINITIONS } from './environment';
 
 const defineAllTables = <T extends ReadonlyArray<DungeonTableDefinition>>(
   defs: T
@@ -24,7 +24,7 @@ const featureDefinitions = defineAllTables([
   ...HAZARD_TABLE_DEFINITIONS,
   ...TREASURE_TABLE_DEFINITIONS,
   ...MONSTER_TABLE_DEFINITIONS,
-  ...BASE_TABLE_DEFINITIONS,
+  ...ENVIRONMENT_TABLE_DEFINITIONS,
 ] as ReadonlyArray<DungeonTableDefinition>);
 
 const ALL_TABLE_DEFINITIONS = featureDefinitions;

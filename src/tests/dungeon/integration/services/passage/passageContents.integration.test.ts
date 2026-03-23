@@ -11,7 +11,7 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../../../../../dungeon/domain/outcome';
-import { describeChamberRoomContents } from '../../../../../dungeon/adapters/render/chamberRoomContents';
+import { describeChamberRoomContents } from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersRender';
 import { collectCharacterPartyMessages } from '../../../../../dungeon/features/monsters/render';
 import { collectTreasureCompactMessages } from '../../../../../dungeon/features/treasure/treasure/treasureRender';
 import { renderTreasureContainerCompact } from '../../../../../dungeon/features/treasure/container/containerRender';

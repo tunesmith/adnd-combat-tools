@@ -5,7 +5,7 @@ import {
 import {
   resolveCircularMagicPool,
   resolveTransporterLocation,
-} from '../../../../../dungeon/domain/resolvers';
+} from '../../../../../dungeon/features/environment/circularPools/circularPoolsResolvers';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 

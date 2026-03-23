@@ -1,6 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
-import { ChamberRoomContents } from '../../../../tables/dungeon/chamberRoomContents';
+import { ChamberRoomContents } from '../../environment/roomsChambers/roomsChambersTable';
 import {
   illusionaryWallNature,
   IllusionaryWallNature,
