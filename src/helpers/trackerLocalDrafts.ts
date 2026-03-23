@@ -1,4 +1,4 @@
-import type { TrackerState } from "../types/tracker";
+import type { TrackerState } from '../types/tracker';
 
 export interface StorageLike {
   getItem: (key: string) => string | null;
@@ -21,9 +21,10 @@ interface TrackerLocalDraftStore {
   drafts: TrackerLocalDraftRecord[];
 }
 
-const TRACKER_LOCAL_DRAFT_STORAGE_KEY = "adnd-combat-tools/tracker-local-drafts";
-export const TRACKER_SESSION_DRAFT_ID_KEY =
-  "adnd-combat-tools/tracker-session-draft-id";
+const TRACKER_LOCAL_DRAFT_STORAGE_KEY =
+  'adnd-combat-tools/tracker-local-drafts';
+const TRACKER_SESSION_DRAFT_ID_KEY =
+  'adnd-combat-tools/tracker-session-draft-id';
 const TRACKER_LOCAL_DRAFT_LIMIT = 12;
 
 const createEmptyStore = (): TrackerLocalDraftStore => ({
@@ -45,19 +46,18 @@ const parseStore = (rawValue: string | null): TrackerLocalDraftStore => {
     return {
       version: 1,
       drafts: parsed.drafts
-        .filter(
-          (draft): draft is TrackerLocalDraftRecord =>
-            Boolean(
-              draft &&
-                typeof draft.id === "string" &&
-                typeof draft.encodedState === "string" &&
-                typeof draft.updatedAt === "number" &&
-                typeof draft.roundNumber === "number" &&
-                (typeof draft.title === "undefined" ||
-                  typeof draft.title === "string") &&
-                Array.isArray(draft.partyNames) &&
-                Array.isArray(draft.enemyNames)
-            )
+        .filter((draft): draft is TrackerLocalDraftRecord =>
+          Boolean(
+            draft &&
+              typeof draft.id === 'string' &&
+              typeof draft.encodedState === 'string' &&
+              typeof draft.updatedAt === 'number' &&
+              typeof draft.roundNumber === 'number' &&
+              (typeof draft.title === 'undefined' ||
+                typeof draft.title === 'string') &&
+              Array.isArray(draft.partyNames) &&
+              Array.isArray(draft.enemyNames)
+          )
         )
         .sort((left, right) => right.updatedAt - left.updatedAt),
     };
@@ -76,10 +76,7 @@ const writeStore = (
     drafts: nextDrafts,
   };
 
-  storage.setItem(
-    TRACKER_LOCAL_DRAFT_STORAGE_KEY,
-    JSON.stringify(nextStore)
-  );
+  storage.setItem(TRACKER_LOCAL_DRAFT_STORAGE_KEY, JSON.stringify(nextStore));
   return nextDrafts;
 };
 
@@ -110,10 +107,10 @@ export const saveTrackerLocalDraft = (
     roundNumber: state.activeRound + 1,
     title: state.title?.trim() || undefined,
     partyNames: (currentRound?.party || []).map(
-      (combatant) => combatant.name || "Unnamed"
+      (combatant) => combatant.name || 'Unnamed'
     ),
     enemyNames: (currentRound?.enemies || []).map(
-      (combatant) => combatant.name || "Unnamed"
+      (combatant) => combatant.name || 'Unnamed'
     ),
   };
 
@@ -143,8 +140,8 @@ export const deleteTrackerLocalDraft = (
 
 const generateDraftId = (): string => {
   if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
   ) {
     return crypto.randomUUID();
   }

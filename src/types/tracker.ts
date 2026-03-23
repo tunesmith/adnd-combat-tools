@@ -1,4 +1,4 @@
-import type { Creature } from "./creature";
+import type { Creature } from './creature';
 
 export interface TrackerCombatant extends Creature {
   maxHp?: string;
@@ -12,7 +12,7 @@ export interface TrackerCombatantRoundStateV1 {
   notes: string;
 }
 
-export interface TrackerCellStateLegacy {
+interface TrackerCellStateLegacy {
   enemyToParty: string;
   partyToEnemy: string;
 }
@@ -65,7 +65,7 @@ export interface TrackerCombatantRoundState {
   notes: string;
 }
 
-export interface TrackerRoundV4 {
+interface TrackerRoundV4 {
   partyInitiative: string;
   enemyInitiative: string;
   summary: string;
@@ -79,7 +79,7 @@ export interface TrackerRoundV5 extends TrackerRoundV4 {
   enemies: TrackerCombatant[];
 }
 
-export interface TrackerRoundV6 extends Omit<TrackerRoundV5, "cells"> {
+export interface TrackerRoundV6 extends Omit<TrackerRoundV5, 'cells'> {
   cells: TrackerCellState[][];
 }
 
@@ -103,7 +103,7 @@ export interface TrackerStateV2 {
   activeRound: number;
 }
 
-export interface TrackerStateV3 {
+interface TrackerStateV3 {
   version: 3;
   party: TrackerCombatant[];
   enemies: TrackerCombatant[];
@@ -132,14 +132,14 @@ export interface TrackerStateV5 {
   activeRound: number;
 }
 
-export interface TrackerStateV6 {
+interface TrackerStateV6 {
   version: 6;
   title?: string;
   rounds: TrackerRoundV6[];
   activeRound: number;
 }
 
-export interface TrackerStateV7 {
+interface TrackerStateV7 {
   version: 7;
   title?: string;
   rounds: TrackerRound[];

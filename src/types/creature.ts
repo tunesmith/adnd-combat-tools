@@ -58,7 +58,7 @@ export type StateV3 = (EmptyObject | CreatureV3)[][];
  * For version 4, we transitioned to a numerical row id for each class,
  * and (soon) a numerical row id for each combat level.
  */
-export type CreatureV4 = {
+type CreatureV4 = {
   key: number;
   name?: string;
   class: number;

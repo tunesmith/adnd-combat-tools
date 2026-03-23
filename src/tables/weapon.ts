@@ -765,7 +765,7 @@ export const weapons = new Map<number, WeaponInfo>([
   ],
 ]);
 
-export const uaWeapons = new Map<number, WeaponInfo>([
+const uaWeapons = new Map<number, WeaponInfo>([
   [
     61,
     {
@@ -977,11 +977,16 @@ export const uaWeapons = new Map<number, WeaponInfo>([
   ],
 ]);
 
+void uaWeapons;
+
+export const getWeaponInfo = (weapon: number): WeaponInfo | undefined =>
+  weapons.get(weapon);
+
 export const getWeaponAdjustment = (
   weapon: number,
   armorType: number
 ): number => {
-  const weaponProps = weapons.get(weapon);
+  const weaponProps = getWeaponInfo(weapon);
   if (weaponProps) {
     const weaponAdjustment = weaponProps.acAdjustments[armorType];
     if (weaponAdjustment || weaponAdjustment === 0) {
