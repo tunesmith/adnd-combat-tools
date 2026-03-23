@@ -20,7 +20,6 @@ export const doorBeyondMessages = (options?: {
   roll?: number;
   doorAhead?: boolean;
   detailMode?: boolean;
-  takeOverride?: (tableId: string) => number | undefined;
   level?: number;
 }): {
   usedRoll?: number;

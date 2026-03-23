@@ -9,7 +9,6 @@ export function runDungeonStep(
     doorAhead?: boolean;
     detailMode?: boolean;
     level?: number;
-    takeOverride?: (tableId: string) => number | undefined;
   }
 ): DungeonStep {
   switch (action) {
@@ -35,7 +34,6 @@ export function runDungeonStep(
           doorAhead: options?.doorAhead,
           detailMode: options?.detailMode,
           level: options?.level,
-          takeOverride: options?.takeOverride,
         });
       return {
         action,

@@ -68,13 +68,6 @@ const DungeonIndexPage = () => {
       roll,
       detailMode,
       level: dungeonLevel,
-      takeOverride: (tableId: string) => {
-        const v = overrides[tableId];
-        if (v === undefined) return undefined;
-        // consume one-time
-        setOverrides((prev) => ({ ...prev, [tableId]: undefined }));
-        return v;
-      },
     });
     const renderCache = step.renderCache ?? buildRenderCache(step.outcome);
     const pendingCount = step.pendingCount ?? countPendingNodes(step.outcome);
@@ -104,7 +97,6 @@ const DungeonIndexPage = () => {
     e.preventDefault();
     if (!isValid || parsedRoll === undefined) return;
     addToFeed(action, parsedRoll);
-    // Actual dungeon generation will be wired in a later step
   };
 
   const handleRoll = () => {

@@ -8,16 +8,13 @@ export type RenderCache = {
 };
 
 export function buildRenderCache(outcome?: DungeonOutcomeNode): RenderCache {
-  const detailSnapshot = createOutcomeRenderSnapshot(outcome, {
+  const snapshot = createOutcomeRenderSnapshot(outcome, {
     autoResolve: false,
   });
-  const compactSnapshot = createOutcomeRenderSnapshot(outcome, {
-    autoResolve: false,
-  });
-  if (!detailSnapshot || !compactSnapshot) return {};
+  if (!snapshot) return {};
   return {
-    detail: detailSnapshot.detail,
-    compact: compactSnapshot.compact,
+    detail: snapshot.detail,
+    compact: snapshot.compact,
   };
 }
 

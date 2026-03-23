@@ -773,7 +773,7 @@ const uaWeapons = new Map<number, WeaponInfo>([
       name: 'Aklys (held)',
       acAdjustments: [-7, -6, -5, -4, -3, -2, -1, -1, 0, 0, 1],
       length: 2,
-      speedFactor: 4, // UA says 4 (+1) with no explanation. For melee it's just a club though, which is 4.
+      speedFactor: 4, // UA says 4 (+1) with no explanation. For melee, it's just a club though, which is 4.
     },
   ],
   [

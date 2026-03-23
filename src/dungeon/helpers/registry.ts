@@ -137,22 +137,10 @@ export function applyOutcomeRoll(opts: {
     normalizedResolution
   );
   const normalizedApplied = normalizeOutcomeTree(applied);
-  const detailSnapshot = createOutcomeRenderSnapshot(normalizedApplied, {
+  const snapshot = createOutcomeRenderSnapshot(normalizedApplied, {
     autoResolve: false,
   });
-  const compactSnapshot = createOutcomeRenderSnapshot(normalizedApplied, {
-    autoResolve: false,
-  });
-  if (!detailSnapshot || !compactSnapshot) return undefined;
-  const snapshot: OutcomeRenderSnapshot = {
-    normalized: detailSnapshot.normalized,
-    compactOutcome: compactSnapshot.compactOutcome,
-    detail: detailSnapshot.detail,
-    detailResolved: compactSnapshot.detailResolved,
-    compact: compactSnapshot.compact,
-    pendingCount: detailSnapshot.pendingCount,
-    resolvedPendingCount: compactSnapshot.resolvedPendingCount,
-  };
+  if (!snapshot) return undefined;
   return { outcome: normalizedApplied, snapshot };
 }
 
