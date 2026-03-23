@@ -114,7 +114,8 @@ export function renderTreasureMagicCategoryCompact(
 }
 
 export const buildTreasureMagicCategoryPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Magical Treasure',
@@ -123,4 +124,5 @@ export const buildTreasureMagicCategoryPreview: TablePreviewFactory = (
       range: entry.range,
       label: MAGIC_CATEGORY_INFO[entry.command].label,
     })),
+    context,
   });

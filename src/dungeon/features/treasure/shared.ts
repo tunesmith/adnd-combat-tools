@@ -3,7 +3,10 @@ import type {
   OutcomeEvent,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import type { TableContext } from '../../../types/dungeon';
+import type { TablePreviewFactory } from '../../adapters/render/shared';
 import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
+import { buildEventPreviewFromFactory } from '../shared';
 
 export function formatOrdinal(level: number): string {
   const remainder = level % 10;
@@ -85,6 +88,18 @@ export function createTreasureMagicContextHandlers(
   };
 }
 
+export function createTreasureMagicEventPreviewBuilder(
+  kind: TreasureEventKind,
+  buildPreview: TablePreviewFactory
+) {
+  return (node: OutcomeEventNode) =>
+    node.event.kind === kind
+      ? buildEventPreviewFromFactory(node, buildPreview, {
+          context: buildTreasureMagicEventContext(node),
+        })
+      : undefined;
+}
+
 function readTreasureMagicRegistryContext(
   context?: unknown
 ): TreasureMagicContext {
@@ -160,4 +175,27 @@ function readTreasureMagicContextFromContext(
   const rollIndex =
     typeof raw.rollIndex === 'number' ? raw.rollIndex : undefined;
   return { level, treasureRoll, rollIndex };
+}
+
+function buildTreasureMagicEventContext(
+  node: OutcomeEventNode
+): Extract<TableContext, { kind: 'treasureMagic' }> | undefined {
+  const event = node.event as {
+    level?: unknown;
+    treasureRoll?: unknown;
+    rollIndex?: unknown;
+  };
+  if (
+    typeof event.level !== 'number' ||
+    typeof event.treasureRoll !== 'number'
+  ) {
+    return undefined;
+  }
+  return {
+    kind: 'treasureMagic',
+    level: event.level,
+    treasureRoll: event.treasureRoll,
+    rollIndex:
+      typeof event.rollIndex === 'number' ? event.rollIndex : undefined,
+  };
 }

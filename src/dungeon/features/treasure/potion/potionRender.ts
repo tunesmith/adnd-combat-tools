@@ -111,7 +111,10 @@ export function renderTreasurePotionCompact(
   return nodes;
 }
 
-export const buildTreasurePotionPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasurePotionPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Potion',
     sides: treasurePotion.sides,
@@ -119,6 +122,7 @@ export const buildTreasurePotionPreview: TablePreviewFactory = (tableId) =>
       range: entry.range,
       label: TreasurePotion[entry.command] ?? String(entry.command),
     })),
+    context,
   });
 
 export function renderTreasurePotionAnimalControlDetail(
@@ -168,7 +172,8 @@ export function renderTreasurePotionAnimalControlCompact(
 }
 
 export const buildTreasurePotionAnimalControlPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Animal Control Target',
@@ -177,6 +182,7 @@ export const buildTreasurePotionAnimalControlPreview: TablePreviewFactory = (
       range: entry.range,
       label: animalControlLabel(entry.command),
     })),
+    context,
   });
 
 export function renderTreasurePotionDragonControlDetail(
@@ -226,7 +232,8 @@ export function renderTreasurePotionDragonControlCompact(
 }
 
 export const buildTreasurePotionDragonControlPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Dragon Control Target',
@@ -235,6 +242,7 @@ export const buildTreasurePotionDragonControlPreview: TablePreviewFactory = (
       range: entry.range,
       label: dragonControlLabel(entry.command),
     })),
+    context,
   });
 
 export function renderTreasurePotionGiantControlDetail(
@@ -284,7 +292,8 @@ export function renderTreasurePotionGiantControlCompact(
 }
 
 export const buildTreasurePotionGiantControlPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Giant Control Target',
@@ -293,6 +302,7 @@ export const buildTreasurePotionGiantControlPreview: TablePreviewFactory = (
       range: entry.range,
       label: giantControlLabel(entry.command),
     })),
+    context,
   });
 
 export function renderTreasurePotionGiantStrengthDetail(
@@ -342,7 +352,8 @@ export function renderTreasurePotionGiantStrengthCompact(
 }
 
 export const buildTreasurePotionGiantStrengthPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Giant Strength Target',
@@ -351,6 +362,7 @@ export const buildTreasurePotionGiantStrengthPreview: TablePreviewFactory = (
       range: entry.range,
       label: giantStrengthLabel(entry.command),
     })),
+    context,
   });
 
 export function renderTreasurePotionHumanControlDetail(
@@ -400,7 +412,8 @@ export function renderTreasurePotionHumanControlCompact(
 }
 
 export const buildTreasurePotionHumanControlPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Human Control Target',
@@ -409,6 +422,7 @@ export const buildTreasurePotionHumanControlPreview: TablePreviewFactory = (
       range: entry.range,
       label: humanControlLabel(entry.command),
     })),
+    context,
   });
 
 export function renderTreasurePotionUndeadControlDetail(
@@ -458,7 +472,8 @@ export function renderTreasurePotionUndeadControlCompact(
 }
 
 export const buildTreasurePotionUndeadControlPreview: TablePreviewFactory = (
-  tableId
+  tableId,
+  context
 ) =>
   buildPreview(tableId, {
     title: 'Undead Control Target',
@@ -467,6 +482,7 @@ export const buildTreasurePotionUndeadControlPreview: TablePreviewFactory = (
       range: entry.range,
       label: undeadControlLabel(entry.command),
     })),
+    context,
   });
 
 function animalControlSentence(result: TreasurePotionAnimalControl): string {

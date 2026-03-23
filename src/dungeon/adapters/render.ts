@@ -257,83 +257,6 @@ function previewForEventNode(
     case 'gasTrapEffect':
       tableId = 'gasTrapEffect';
       break;
-    case 'treasureMagicCategory': {
-      const treasureMagic = event;
-      tableId = 'treasureMagicCategory';
-      context = {
-        kind: 'treasureMagic',
-        level: treasureMagic.level,
-        treasureRoll: treasureMagic.treasureRoll,
-        rollIndex: treasureMagic.rollIndex,
-      };
-      break;
-    }
-    case 'treasurePotion': {
-      const potion = event;
-      tableId = 'treasurePotion';
-      context = {
-        kind: 'treasureMagic',
-        level: potion.level,
-        treasureRoll: potion.treasureRoll,
-        rollIndex: potion.rollIndex,
-      };
-      break;
-    }
-    case 'treasurePotionDragonControl': {
-      const dragon = event;
-      tableId = 'treasurePotionDragonControl';
-      context = {
-        kind: 'treasureMagic',
-        level: dragon.level,
-        treasureRoll: dragon.treasureRoll,
-        rollIndex: dragon.rollIndex,
-      };
-      break;
-    }
-    case 'treasurePotionGiantControl': {
-      const giant = event;
-      tableId = 'treasurePotionGiantControl';
-      context = {
-        kind: 'treasureMagic',
-        level: giant.level,
-        treasureRoll: giant.treasureRoll,
-        rollIndex: giant.rollIndex,
-      };
-      break;
-    }
-    case 'treasurePotionGiantStrength': {
-      const strength = event;
-      tableId = 'treasurePotionGiantStrength';
-      context = {
-        kind: 'treasureMagic',
-        level: strength.level,
-        treasureRoll: strength.treasureRoll,
-        rollIndex: strength.rollIndex,
-      };
-      break;
-    }
-    case 'treasurePotionHumanControl': {
-      const human = event;
-      tableId = 'treasurePotionHumanControl';
-      context = {
-        kind: 'treasureMagic',
-        level: human.level,
-        treasureRoll: human.treasureRoll,
-        rollIndex: human.rollIndex,
-      };
-      break;
-    }
-    case 'treasurePotionUndeadControl': {
-      const undead = event;
-      tableId = 'treasurePotionUndeadControl';
-      context = {
-        kind: 'treasureMagic',
-        level: undead.level,
-        treasureRoll: undead.treasureRoll,
-        rollIndex: undead.rollIndex,
-      };
-      break;
-    }
     case 'treasureScroll': {
       const scrollEvent = event;
       tableId = 'treasureScroll';
@@ -615,17 +538,6 @@ function previewForEventNode(
     case 'treasureStaffSerpent':
       tableId = 'treasureStaffSerpent';
       break;
-    case 'treasurePotionAnimalControl': {
-      const potionCategory = event;
-      tableId = 'treasurePotionAnimalControl';
-      context = {
-        kind: 'treasureMagic',
-        level: potionCategory.level,
-        treasureRoll: potionCategory.treasureRoll,
-        rollIndex: potionCategory.rollIndex,
-      };
-      break;
-    }
     case 'treasure': {
       const treasure = event;
       tableId = 'treasure';

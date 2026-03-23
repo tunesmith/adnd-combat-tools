@@ -15,6 +15,8 @@ import { resolveViaRegistry } from '../../../../dungeon/helpers/registry';
 import type { OutcomeEvent } from '../../../../dungeon/domain/outcome';
 import { DoorBeyond, doorBeyond } from '../../../../tables/dungeon/doorBeyond';
 import { ChamberRoomContents } from '../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
+import { TreasureMagicCategory } from '../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
+import { TreasurePotion } from '../../../../dungeon/features/treasure/potion/potionTables';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -509,6 +511,88 @@ describe('uiPreviewHarness', () => {
     const pendingTables = collectPendingTables(feed.outcome);
     expect(pendingTables).toContain('monsterLevel:4');
     expect(pendingTables).not.toContain('monsterLevel:1');
+  });
+
+  test('resolved treasure magic category preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 2);
+
+    const magicPreview = findPreview(
+      renderDetail(feed),
+      'treasureMagicCategory'
+    );
+    expect(magicPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 99,
+      rollIndex: 1,
+    });
+
+    if (!magicPreview) {
+      throw new Error('Expected treasure magic category preview');
+    }
+
+    feed = resolvePreview(feed, magicPreview.targetId ?? magicPreview.id, 44);
+
+    const magicEvent = findOutcomeEvent(feed.outcome, 'treasureMagicCategory');
+    expect(magicEvent).toBeDefined();
+    if (magicEvent?.event.kind === 'treasureMagicCategory') {
+      expect(magicEvent.event.result).toBe(
+        TreasureMagicCategory.RodsStavesWands
+      );
+    }
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureRodStaffWand');
+    expect(pendingTables).not.toContain('treasurePotion');
+  });
+
+  test('resolved treasure potion preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 2);
+    feed = resolvePendingPreview(feed, 'treasurePotion', 2);
+
+    const potionPreview = findPreview(renderDetail(feed), 'treasurePotion');
+    expect(potionPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 2,
+      rollIndex: 1,
+    });
+
+    if (!potionPreview) {
+      throw new Error('Expected treasure potion preview');
+    }
+
+    feed = resolvePreview(feed, potionPreview.targetId ?? potionPreview.id, 50);
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (potionEvent?.event.kind === 'treasurePotion') {
+      expect(potionEvent.event.result).toBe(TreasurePotion.HumanControl);
+    }
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasurePotionHumanControl');
+    expect(pendingTables).not.toContain('treasurePotionAnimalControl');
   });
 });
 

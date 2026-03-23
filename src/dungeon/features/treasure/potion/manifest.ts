@@ -1,5 +1,8 @@
 import type { DungeonTableDefinition } from '../../types';
-import { createTreasureMagicContextHandlers } from '../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasurePotionAnimalControlPreview,
   buildTreasurePotionDragonControlPreview,
@@ -53,6 +56,10 @@ export const potionTables: ReadonlyArray<
       renderCompact: renderTreasurePotionCompact,
     },
     buildPreview: buildTreasurePotionPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasurePotion',
+      buildTreasurePotionPreview
+    ),
   },
   {
     id: 'treasurePotionAnimalControl',
@@ -64,6 +71,10 @@ export const potionTables: ReadonlyArray<
       renderCompact: renderTreasurePotionAnimalControlCompact,
     },
     buildPreview: buildTreasurePotionAnimalControlPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasurePotionAnimalControl',
+      buildTreasurePotionAnimalControlPreview
+    ),
   },
   {
     id: 'treasurePotionDragonControl',
@@ -75,6 +86,10 @@ export const potionTables: ReadonlyArray<
       renderCompact: renderTreasurePotionDragonControlCompact,
     },
     buildPreview: buildTreasurePotionDragonControlPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasurePotionDragonControl',
+      buildTreasurePotionDragonControlPreview
+    ),
   },
   {
     id: 'treasurePotionGiantControl',
@@ -86,6 +101,10 @@ export const potionTables: ReadonlyArray<
       renderCompact: renderTreasurePotionGiantControlCompact,
     },
     buildPreview: buildTreasurePotionGiantControlPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasurePotionGiantControl',
+      buildTreasurePotionGiantControlPreview
+    ),
   },
   {
     id: 'treasurePotionGiantStrength',
@@ -97,6 +116,10 @@ export const potionTables: ReadonlyArray<
       renderCompact: renderTreasurePotionGiantStrengthCompact,
     },
     buildPreview: buildTreasurePotionGiantStrengthPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasurePotionGiantStrength',
+      buildTreasurePotionGiantStrengthPreview
+    ),
   },
   {
     id: 'treasurePotionHumanControl',
@@ -108,6 +131,10 @@ export const potionTables: ReadonlyArray<
       renderCompact: renderTreasurePotionHumanControlCompact,
     },
     buildPreview: buildTreasurePotionHumanControlPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasurePotionHumanControl',
+      buildTreasurePotionHumanControlPreview
+    ),
   },
   {
     id: 'treasurePotionUndeadControl',
@@ -119,5 +146,9 @@ export const potionTables: ReadonlyArray<
       renderCompact: renderTreasurePotionUndeadControlCompact,
     },
     buildPreview: buildTreasurePotionUndeadControlPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasurePotionUndeadControl',
+      buildTreasurePotionUndeadControlPreview
+    ),
   },
 ];

@@ -1,6 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
-import { createTreasureMagicContextHandlers } from '../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureMagicCategoryPreview,
   renderTreasureMagicCategoryCompact,
@@ -19,5 +22,9 @@ export const magicCategoryTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureMagicCategoryCompact,
     },
     buildPreview: buildTreasureMagicCategoryPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureMagicCategory',
+      buildTreasureMagicCategoryPreview
+    ),
   },
 ];
