@@ -16,7 +16,11 @@ import {
 } from '../features/monsters/render';
 import { isTableContext } from '../helpers/outcomeTree';
 import type { AppendPreviewFn } from './render/shared';
-import { ALL_PREVIEW_FACTORIES, ALL_RENDER_ADAPTERS } from '../features/bundle';
+import {
+  ALL_EVENT_PREVIEW_BUILDERS,
+  ALL_PREVIEW_FACTORIES,
+  ALL_RENDER_ADAPTERS,
+} from '../features/bundle';
 
 type OutcomeEventKind = OutcomeEventNode['event']['kind'];
 
@@ -70,6 +74,15 @@ type PendingPreviewBuilder = (
 const PENDING_PREVIEW_FACTORIES: Record<string, PendingPreviewBuilder> = {};
 
 Object.assign(PENDING_PREVIEW_FACTORIES, ALL_PREVIEW_FACTORIES);
+
+const EVENT_PREVIEW_BUILDERS: Partial<
+  Record<
+    OutcomeEventKind,
+    (node: OutcomeEventNode) => DungeonTablePreview | undefined
+  >
+> = {};
+
+Object.assign(EVENT_PREVIEW_BUILDERS, ALL_EVENT_PREVIEW_BUILDERS);
 
 function withTargetId(
   preview: DungeonTablePreview,
@@ -213,6 +226,10 @@ function appendPendingPreviews(
 function previewForEventNode(
   node: OutcomeEventNode
 ): DungeonTablePreview | undefined {
+  const featurePreview = EVENT_PREVIEW_BUILDERS[node.event.kind]?.(node);
+  if (featurePreview) {
+    return featurePreview;
+  }
   const event = node.event;
   let tableId: string | undefined;
   let context: TableContext | undefined;
@@ -223,21 +240,6 @@ function previewForEventNode(
       break;
     case 'doorBeyond':
       tableId = 'doorBeyond';
-      break;
-    case 'doorLocation':
-      tableId = `doorLocation:${event.sequence}`;
-      break;
-    case 'periodicCheckDoorOnly':
-      tableId = `periodicCheckDoorOnly:${event.sequence}`;
-      break;
-    case 'sidePassages':
-      tableId = 'sidePassages';
-      break;
-    case 'passageTurns':
-      tableId = 'passageTurns';
-      break;
-    case 'passageWidth':
-      tableId = 'passageWidth';
       break;
     case 'roomDimensions':
       tableId = 'roomDimensions';
@@ -262,12 +264,6 @@ function previewForEventNode(
       break;
     case 'transporterLocation':
       tableId = 'transporterLocation';
-      break;
-    case 'specialPassage':
-      tableId = 'specialPassage';
-      break;
-    case 'stairs':
-      tableId = 'stairs';
       break;
     case 'trickTrap':
       tableId = 'trickTrap';
@@ -675,33 +671,6 @@ function previewForEventNode(
       tableId = 'treasureProtectionHiddenBy';
       context = { kind: 'treasureProtection', treasureRoll: node.roll };
       break;
-    case 'passageExitLocation':
-      tableId = 'passageExitLocation';
-      break;
-    case 'doorExitLocation':
-      tableId = 'doorExitLocation';
-      break;
-    case 'exitDirection':
-      tableId = 'exitDirection';
-      break;
-    case 'exitAlternative':
-      tableId = 'exitAlternative';
-      break;
-    case 'egress':
-      tableId = `egress:${event.which}`;
-      break;
-    case 'chute':
-      tableId = 'chute';
-      break;
-    case 'numberOfExits':
-      tableId = 'numberOfExits';
-      context = {
-        kind: 'exits',
-        length: event.context.length,
-        width: event.context.width,
-        isRoom: event.context.isRoom,
-      };
-      break;
     case 'unusualShape':
       tableId = 'unusualShape';
       break;
@@ -714,33 +683,6 @@ function previewForEventNode(
       break;
     case 'chamberRoomStairs':
       tableId = 'chamberRoomStairs';
-      break;
-    case 'wanderingWhereFrom':
-      tableId = 'wanderingWhereFrom';
-      break;
-    case 'galleryStairLocation':
-      tableId = 'galleryStairLocation';
-      break;
-    case 'galleryStairOccurrence':
-      tableId = 'galleryStairOccurrence';
-      break;
-    case 'streamConstruction':
-      tableId = 'streamConstruction';
-      break;
-    case 'riverConstruction':
-      tableId = 'riverConstruction';
-      break;
-    case 'riverBoatBank':
-      tableId = 'riverBoatBank';
-      break;
-    case 'chasmDepth':
-      tableId = 'chasmDepth';
-      break;
-    case 'chasmConstruction':
-      tableId = 'chasmConstruction';
-      break;
-    case 'jumpingPlaceWidth':
-      tableId = 'jumpingPlaceWidth';
       break;
     case 'monsterLevel':
       tableId = `monsterLevel:${event.dungeonLevel}`;

@@ -14,7 +14,7 @@ import {
 } from './chasmResolvers';
 import { ChasmConstruction } from './chasmTable';
 import { NO_COMPACT_RENDER } from '../shared';
-import { wrapResolver } from '../../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 
 export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -26,6 +26,10 @@ export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildChasmDepthPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'chasmDepth'
+        ? buildEventPreviewFromFactory(node, buildChasmDepthPreview)
+        : undefined,
     resolvePending: () => resolveChasmDepth({}),
   },
   {
@@ -37,6 +41,10 @@ export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildChasmConstructionPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'chasmConstruction'
+        ? buildEventPreviewFromFactory(node, buildChasmConstructionPreview)
+        : undefined,
     resolvePending: () => resolveChasmConstruction({}),
     postProcessChildren: (node, children, resolveNode) => {
       const result = (node.event as { result?: unknown }).result;
@@ -59,6 +67,10 @@ export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildJumpingPlaceWidthPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'jumpingPlaceWidth'
+        ? buildEventPreviewFromFactory(node, buildJumpingPlaceWidthPreview)
+        : undefined,
     resolvePending: () => resolveJumpingPlaceWidth({}),
   },
 ];

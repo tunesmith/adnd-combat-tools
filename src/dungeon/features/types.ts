@@ -46,6 +46,10 @@ export type PendingResolver = (
   ancestors: OutcomeEventNode[]
 ) => DungeonOutcomeNode | undefined;
 
+type EventPreviewBuilder = (
+  node: OutcomeEventNode
+) => DungeonTablePreview | undefined;
+
 export type RegistryOutcomeBuilder = (opts: {
   roll?: number;
   id: string;
@@ -62,6 +66,7 @@ type DungeonTableDefinitionBase<TOptions> = {
   resolver: (options?: TOptions) => DungeonOutcomeNode;
   renderers: RenderAdapter;
   buildPreview?: TablePreviewFactory;
+  buildEventPreview?: EventPreviewBuilder;
   resolvePending?: PendingResolver;
   table?: Table<unknown>;
   postProcessChildren?: PostProcessChildren;
@@ -105,6 +110,18 @@ export function createPreviewFactoryMap<TOptions>(
       const table = def.table;
       map[def.id] = (tableId, context) =>
         buildPreviewFromTable(tableId, def.heading, table, context);
+    }
+  }
+  return map;
+}
+
+export function createEventPreviewMap<TOptions>(
+  defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
+): Partial<Record<string, EventPreviewBuilder>> {
+  const map: Partial<Record<string, EventPreviewBuilder>> = {};
+  for (const def of defs) {
+    if (def.buildEventPreview) {
+      map[def.id] = def.buildEventPreview;
     }
   }
   return map;

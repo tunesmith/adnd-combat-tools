@@ -22,7 +22,11 @@ import {
   resolveWanderingWhereFrom,
 } from '../../../domain/resolvers';
 import { withoutAppend } from '../shared';
-import { markContextualResolution, wrapResolver } from '../../shared';
+import {
+  buildEventPreviewFromFactory,
+  markContextualResolution,
+  wrapResolver,
+} from '../../shared';
 
 const resolvePendingNavigationEntry = (
   pending: string,
@@ -101,6 +105,10 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderWanderingWhereFromCompactNodes),
     },
     buildPreview: buildWanderingWhereFromPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'wanderingWhereFrom'
+        ? buildEventPreviewFromFactory(node, buildWanderingWhereFromPreview)
+        : undefined,
     registry: ({ roll, context }) =>
       resolveWanderingWhereFrom({
         roll,

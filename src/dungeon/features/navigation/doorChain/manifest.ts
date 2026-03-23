@@ -1,7 +1,11 @@
 import type { DungeonTableDefinition } from '../../types';
 import type { DoorChainLaterality } from '../../../domain/outcome';
 import { NO_COMPACT_RENDER } from '../shared';
-import { markContextualResolution, wrapResolver } from '../../shared';
+import {
+  buildEventPreviewFromFactory,
+  markContextualResolution,
+  wrapResolver,
+} from '../../shared';
 import {
   buildDoorLocationPreview,
   buildPeriodicDoorOnlyPreview,
@@ -25,6 +29,12 @@ export const doorChainTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildPeriodicDoorOnlyPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'periodicCheckDoorOnly'
+        ? buildEventPreviewFromFactory(node, buildPeriodicDoorOnlyPreview, {
+            tableId: `periodicCheckDoorOnly:${node.event.sequence}`,
+          })
+        : undefined,
     registry: ({ roll, doorChain, id }) => {
       const existing = (doorChain?.existing as DoorChainLaterality[]) ?? [];
       const sequence =
@@ -46,6 +56,12 @@ export const doorChainTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildDoorLocationPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'doorLocation'
+        ? buildEventPreviewFromFactory(node, buildDoorLocationPreview, {
+            tableId: `doorLocation:${node.event.sequence}`,
+          })
+        : undefined,
     registry: ({ roll, doorChain, id }) => {
       const existing = (doorChain?.existing as DoorChainLaterality[]) ?? [];
       const sequence =

@@ -40,6 +40,9 @@ describe('door-chain detail rendering', () => {
   it('schedules periodicCheckDoorOnly:0 after the first lateral door', () => {
     const outcome = asEvent(resolveSequenceWithRolls([3, 1], 1));
     const previews = extractPreviews(renderDetailTree(outcome));
+    expect(previews.some((preview) => preview.id === 'doorLocation:0')).toBe(
+      true
+    );
     const target = previews.find(
       (preview) => preview.id === 'periodicCheckDoorOnly:0'
     );

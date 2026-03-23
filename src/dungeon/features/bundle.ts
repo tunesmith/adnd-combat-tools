@@ -2,6 +2,7 @@ import type { DungeonTableDefinition } from './types';
 import type { DungeonOutcomeNode } from '../domain/outcome';
 import {
   createChildPostProcessorMap,
+  createEventPreviewMap,
   createOutcomePostProcessorList,
   createPendingResolverMap,
   createPreviewFactoryMap,
@@ -30,6 +31,8 @@ const ALL_TABLE_DEFINITIONS = featureDefinitions;
 export const ALL_RENDER_ADAPTERS = createRenderAdapterMap(featureDefinitions);
 export const ALL_PREVIEW_FACTORIES =
   createPreviewFactoryMap(featureDefinitions);
+export const ALL_EVENT_PREVIEW_BUILDERS =
+  createEventPreviewMap(featureDefinitions);
 export const ALL_REGISTRY_OUTCOMES =
   createRegistryOutcomeMap(featureDefinitions);
 export const ALL_PENDING_RESOLVERS =

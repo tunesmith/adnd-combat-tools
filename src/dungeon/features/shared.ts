@@ -1,4 +1,6 @@
-import type { DungeonOutcomeNode } from '../domain/outcome';
+import type { DungeonTablePreview, TableContext } from '../../types/dungeon';
+import type { DungeonOutcomeNode, OutcomeEventNode } from '../domain/outcome';
+import type { TablePreviewFactory } from '../adapters/render/shared';
 import type { DungeonTableDefinition } from './types';
 
 export const wrapResolver =
@@ -15,4 +17,21 @@ export function markContextualResolution<TOptions>(
     ...definition,
     manualResolution: 'contextual',
   };
+}
+
+export function buildEventPreviewFromFactory(
+  node: OutcomeEventNode,
+  buildPreview: TablePreviewFactory,
+  options?: {
+    tableId?: string;
+    context?: TableContext;
+    autoCollapse?: boolean;
+  }
+): DungeonTablePreview | undefined {
+  const preview = buildPreview(
+    options?.tableId ?? node.event.kind,
+    options?.context
+  );
+  if (!preview) return undefined;
+  return options?.autoCollapse ? { ...preview, autoCollapse: true } : preview;
 }

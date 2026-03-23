@@ -6,7 +6,7 @@ import {
 } from './passageWidthRender';
 import { resolvePassageWidth } from './passageWidthResolvers';
 import { withoutAppend } from '../shared';
-import { wrapResolver } from '../../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 
 export const passageWidthTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -18,6 +18,10 @@ export const passageWidthTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderPassageWidthCompactNodes),
     },
     buildPreview: buildPassageWidthPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'passageWidth'
+        ? buildEventPreviewFromFactory(node, buildPassageWidthPreview)
+        : undefined,
     resolvePending: () => resolvePassageWidth({}),
   },
 ];

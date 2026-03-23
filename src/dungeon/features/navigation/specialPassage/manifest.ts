@@ -25,7 +25,7 @@ import {
 } from './specialPassageResolvers';
 import { GalleryStairLocation, RiverConstruction } from './specialPassageTable';
 import { NO_COMPACT_RENDER, withoutAppend } from '../shared';
-import { wrapResolver } from '../../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 
 export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -37,6 +37,10 @@ export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderSpecialPassageCompactNodes),
     },
     buildPreview: buildSpecialPassagePreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'specialPassage'
+        ? buildEventPreviewFromFactory(node, buildSpecialPassagePreview)
+        : undefined,
     resolvePending: () => resolveSpecialPassage({}),
   },
   {
@@ -48,6 +52,10 @@ export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderGalleryStairLocationCompact,
     },
     buildPreview: buildGalleryStairLocationPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'galleryStairLocation'
+        ? buildEventPreviewFromFactory(node, buildGalleryStairLocationPreview)
+        : undefined,
     resolvePending: () => resolveGalleryStairLocation({}),
     postProcessChildren: (node, children, resolveNode) => {
       const result = (node.event as { result?: unknown }).result;
@@ -70,6 +78,10 @@ export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderGalleryStairOccurrenceCompact),
     },
     buildPreview: buildGalleryStairOccurrencePreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'galleryStairOccurrence'
+        ? buildEventPreviewFromFactory(node, buildGalleryStairOccurrencePreview)
+        : undefined,
     resolvePending: () => resolveGalleryStairOccurrence({}),
   },
   {
@@ -81,6 +93,10 @@ export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildStreamConstructionPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'streamConstruction'
+        ? buildEventPreviewFromFactory(node, buildStreamConstructionPreview)
+        : undefined,
     resolvePending: () => resolveStreamConstruction({}),
   },
   {
@@ -92,6 +108,10 @@ export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderRiverConstructionCompact,
     },
     buildPreview: buildRiverConstructionPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'riverConstruction'
+        ? buildEventPreviewFromFactory(node, buildRiverConstructionPreview)
+        : undefined,
     resolvePending: () => resolveRiverConstruction({}),
     postProcessChildren: (node, children, resolveNode) => {
       const result = (node.event as { result?: unknown }).result;
@@ -114,6 +134,10 @@ export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildRiverBoatBankPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'riverBoatBank'
+        ? buildEventPreviewFromFactory(node, buildRiverBoatBankPreview)
+        : undefined,
     resolvePending: () => resolveRiverBoatBank({}),
   },
 ];

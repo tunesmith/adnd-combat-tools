@@ -6,7 +6,7 @@ import {
 } from './passageTurnRender';
 import { resolvePassageTurns } from './passageTurnResolvers';
 import { withoutAppend } from '../shared';
-import { wrapResolver } from '../../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 
 export const passageTurnTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -18,6 +18,10 @@ export const passageTurnTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderPassageTurnsCompactNodes),
     },
     buildPreview: buildPassageTurnPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'passageTurns'
+        ? buildEventPreviewFromFactory(node, buildPassageTurnPreview)
+        : undefined,
     resolvePending: () => resolvePassageTurns({}),
   },
 ];

@@ -39,7 +39,11 @@ import {
   buildNumberOfExitsPreview,
 } from './numberOfExitsRender';
 import { withoutAppend } from '../shared';
-import { markContextualResolution, wrapResolver } from '../../shared';
+import {
+  buildEventPreviewFromFactory,
+  markContextualResolution,
+  wrapResolver,
+} from '../../shared';
 
 export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -51,6 +55,10 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend((node) => renderStairsCompactNodes(node)),
     },
     buildPreview: buildStairsPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'stairs'
+        ? buildEventPreviewFromFactory(node, buildStairsPreview)
+        : undefined,
     resolvePending: () => resolveStairs({}),
   },
   markContextualResolution({
@@ -67,6 +75,12 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderEgressCompact),
     },
     buildPreview: buildEgressPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'egress'
+        ? buildEventPreviewFromFactory(node, buildEgressPreview, {
+            tableId: `egress:${node.event.which}`,
+          })
+        : undefined,
     registry: ({ roll, id }) => {
       const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';
       return resolveEgress({ roll, which: key });
@@ -96,6 +110,17 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     buildPreview: (tableId, context) =>
       buildNumberOfExitsPreview(tableId, context),
+    buildEventPreview: (node) =>
+      node.event.kind === 'numberOfExits'
+        ? buildEventPreviewFromFactory(node, buildNumberOfExitsPreview, {
+            context: {
+              kind: 'exits',
+              length: node.event.context.length,
+              width: node.event.context.width,
+              isRoom: node.event.context.isRoom,
+            },
+          })
+        : undefined,
     registry: ({ roll, context }) => {
       const ctx = readExitsContext(context);
       return resolveNumberOfExits({
@@ -126,6 +151,12 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderPassageExitLocationCompact,
     },
     buildPreview: buildPassageExitLocationPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'passageExitLocation'
+        ? buildEventPreviewFromFactory(node, buildPassageExitLocationPreview, {
+            context: buildResolvedExitContext(node),
+          })
+        : undefined,
     registry: ({ roll, context }) =>
       resolvePassageExitLocation({
         roll,
@@ -145,6 +176,12 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderDoorExitLocationCompact,
     },
     buildPreview: buildDoorExitLocationPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'doorExitLocation'
+        ? buildEventPreviewFromFactory(node, buildDoorExitLocationPreview, {
+            context: buildResolvedExitContext(node),
+          })
+        : undefined,
     registry: ({ roll, context }) =>
       resolveDoorExitLocation({
         roll,
@@ -164,6 +201,17 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderExitDirectionCompact,
     },
     buildPreview: buildExitDirectionPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'exitDirection'
+        ? buildEventPreviewFromFactory(node, buildExitDirectionPreview, {
+            context: {
+              kind: 'exitDirection',
+              index: node.event.index,
+              total: node.event.total,
+              origin: node.event.origin,
+            },
+          })
+        : undefined,
     registry: ({ roll, context }) =>
       resolveExitDirection({
         roll,
@@ -185,6 +233,18 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderExitAlternativeCompact),
     },
     buildPreview: buildExitAlternativePreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'exitAlternative'
+        ? buildEventPreviewFromFactory(node, buildExitAlternativePreview, {
+            context:
+              node.event.exitType === undefined
+                ? undefined
+                : {
+                    kind: 'exitAlternative',
+                    exitType: node.event.exitType,
+                  },
+          })
+        : undefined,
     registry: ({ roll, context }) =>
       resolveExitAlternative({
         roll,
@@ -206,6 +266,10 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: withoutAppend(renderChuteCompact),
     },
     buildPreview: buildChutePreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'chute'
+        ? buildEventPreviewFromFactory(node, buildChutePreview)
+        : undefined,
     resolvePending: () => resolveChute({}),
   },
 ];
@@ -270,4 +334,28 @@ function readExitAlternativeContext(
   return {
     exitType: context.exitType,
   };
+}
+
+function buildResolvedExitContext(
+  node: Parameters<NonNullable<DungeonTableDefinition['buildEventPreview']>>[0]
+): TableContext | undefined {
+  if (node.event.kind === 'passageExitLocation') {
+    return {
+      kind: 'exit',
+      exitType: 'passage',
+      index: node.event.index,
+      total: node.event.total,
+      origin: node.event.origin,
+    };
+  }
+  if (node.event.kind === 'doorExitLocation') {
+    return {
+      kind: 'exit',
+      exitType: 'door',
+      index: node.event.index,
+      total: node.event.total,
+      origin: node.event.origin,
+    };
+  }
+  return undefined;
 }

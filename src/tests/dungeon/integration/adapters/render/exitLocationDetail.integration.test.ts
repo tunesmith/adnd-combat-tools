@@ -42,6 +42,9 @@ describe('exit location detail rendering', () => {
           : undefined,
     });
     const door = asEvent(doorNode);
+    if (door.event.kind !== 'doorExitLocation') {
+      throw new Error('Expected door exit location event');
+    }
     const enriched: OutcomeEventNode = {
       ...exits,
       children: [door],
@@ -61,6 +64,16 @@ describe('exit location detail rendering', () => {
       (node): node is Extract<typeof node, { kind: 'table-preview' }> =>
         node.kind === 'table-preview'
     );
+    const doorPreview = previewNodes.find(
+      (preview) => preview.id === 'doorExitLocation'
+    );
+    expect(doorPreview?.context).toEqual({
+      kind: 'exit',
+      exitType: 'door',
+      index: door.event.index,
+      total: door.event.total,
+      origin: door.event.origin,
+    });
     expect(
       previewNodes.some((preview) => preview.id === 'exitAlternative')
     ).toBe(true);
@@ -145,11 +158,18 @@ describe('exit location detail rendering', () => {
             }
           : undefined,
     });
+    const resolvedDirection = asEvent(direction);
+    if (resolvedDirection.event.kind !== 'exitDirection') {
+      throw new Error('Expected exit direction event');
+    }
     const alternativePending = passage.children?.find(
       (child): child is PendingRoll =>
         child.type === 'pending-roll' && child.table === 'exitAlternative'
     );
-    const passageChildren: DungeonOutcomeNode[] = [direction];
+    if (passage.event.kind !== 'passageExitLocation') {
+      throw new Error('Expected passage exit location event');
+    }
+    const passageChildren: DungeonOutcomeNode[] = [resolvedDirection];
     if (alternativePending) passageChildren.push(alternativePending);
     const passageWithDirection: OutcomeEventNode = {
       ...passage,
@@ -187,6 +207,25 @@ describe('exit location detail rendering', () => {
       (node): node is Extract<typeof node, { kind: 'table-preview' }> =>
         node.kind === 'table-preview'
     );
+    const passagePreview = previewNodes.find(
+      (preview) => preview.id === 'passageExitLocation'
+    );
+    expect(passagePreview?.context).toEqual({
+      kind: 'exit',
+      exitType: 'passage',
+      index: passage.event.index,
+      total: passage.event.total,
+      origin: passage.event.origin,
+    });
+    const directionPreview = previewNodes.find(
+      (preview) => preview.id === 'exitDirection'
+    );
+    expect(directionPreview?.context).toEqual({
+      kind: 'exitDirection',
+      index: resolvedDirection.event.index,
+      total: resolvedDirection.event.total,
+      origin: resolvedDirection.event.origin,
+    });
     expect(
       previewNodes.some((preview) => preview.id === 'exitAlternative')
     ).toBe(true);
