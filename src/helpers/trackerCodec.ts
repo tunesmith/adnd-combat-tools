@@ -1,5 +1,5 @@
-import { deflate, deflateSync, unzip } from "zlib";
-import { getDefaultRoundLabel } from "./trackerState";
+import { deflate, deflateSync, unzip } from 'zlib';
+import { getDefaultRoundLabel } from './trackerState';
 import type {
   TrackerCellState,
   TrackerCellStateV5,
@@ -16,7 +16,7 @@ import type {
   TrackerStateAnyVersion,
   TrackerStateV4,
   TrackerStateV1,
-} from "../types/tracker";
+} from '../types/tracker';
 
 const cloneCombatants = (combatants: TrackerCombatant[]): TrackerCombatant[] =>
   combatants.map((combatant) => ({
@@ -27,7 +27,7 @@ const migrateRoundState = (
   oldState: TrackerCombatantRoundStateV1,
   combatantMaxHp?: string
 ): TrackerCombatantRoundState => ({
-  hp: oldState.hp || combatantMaxHp || "",
+  hp: oldState.hp || combatantMaxHp || '',
   effect: oldState.effect,
   action: oldState.action,
   result: oldState.result,
@@ -38,7 +38,7 @@ const migrateRoundStateV2 = (
   oldState: TrackerCombatantRoundStateV2,
   combatantMaxHp?: string
 ): TrackerCombatantRoundState => ({
-  hp: oldState.hp || combatantMaxHp || oldState.maxHp || "",
+  hp: oldState.hp || combatantMaxHp || oldState.maxHp || '',
   effect: oldState.effect,
   action: oldState.action,
   result: oldState.result,
@@ -47,7 +47,7 @@ const migrateRoundStateV2 = (
 
 const migrateCell = (value: string): TrackerCellState => ({
   enemyToParty: value,
-  partyToEnemy: "",
+  partyToEnemy: '',
   enemyToPartyVisible: true,
   partyToEnemyVisible: true,
 });
@@ -82,7 +82,7 @@ const migrateRound = (
 const resolveCombatantMaxHpFromV2 = (
   currentMaxHp: string | undefined,
   rounds: TrackerRoundV2[],
-  side: "party" | "enemy",
+  side: 'party' | 'enemy',
   index: number
 ): string => {
   if (currentMaxHp) {
@@ -91,13 +91,13 @@ const resolveCombatantMaxHpFromV2 = (
 
   for (const round of rounds) {
     const roundState =
-      side === "party" ? round.partyStates[index] : round.enemyStates[index];
+      side === 'party' ? round.partyStates[index] : round.enemyStates[index];
     if (roundState?.maxHp) {
       return roundState.maxHp;
     }
   }
 
-  return "";
+  return '';
 };
 
 const migrateRoundV2 = (
@@ -142,7 +142,7 @@ const migrateRoundV2 = (
 
 const attachRoundRoster = (
   state: TrackerStateV4,
-  round: TrackerStateV4["rounds"][number],
+  round: TrackerStateV4['rounds'][number],
   roundIndex: number
 ): TrackerRound => ({
   label: getDefaultRoundLabel(roundIndex + 1),
@@ -160,7 +160,10 @@ const attachRoundRoster = (
   })),
 });
 
-const migrateRoundV5 = (round: TrackerRoundV5, roundIndex: number): TrackerRound => ({
+const migrateRoundV5 = (
+  round: TrackerRoundV5,
+  roundIndex: number
+): TrackerRound => ({
   label: getDefaultRoundLabel(roundIndex + 1),
   party: cloneCombatants(round.party),
   enemies: cloneCombatants(round.enemies),
@@ -176,7 +179,10 @@ const migrateRoundV5 = (round: TrackerRoundV5, roundIndex: number): TrackerRound
   })),
 });
 
-const migrateRoundV6 = (round: TrackerRoundV6, roundIndex: number): TrackerRound => ({
+const migrateRoundV6 = (
+  round: TrackerRoundV6,
+  roundIndex: number
+): TrackerRound => ({
   label: getDefaultRoundLabel(roundIndex + 1),
   party: cloneCombatants(round.party),
   enemies: cloneCombatants(round.enemies),
@@ -257,15 +263,10 @@ export const transformTrackerState = (
 
   if (state.version === 2) {
     const partyMaxHp = state.party.map((combatant, index) =>
-      resolveCombatantMaxHpFromV2(combatant.maxHp, state.rounds, "party", index)
+      resolveCombatantMaxHpFromV2(combatant.maxHp, state.rounds, 'party', index)
     );
     const enemyMaxHp = state.enemies.map((combatant, index) =>
-      resolveCombatantMaxHpFromV2(
-        combatant.maxHp,
-        state.rounds,
-        "enemy",
-        index
-      )
+      resolveCombatantMaxHpFromV2(combatant.maxHp, state.rounds, 'enemy', index)
     );
 
     return {
@@ -301,12 +302,12 @@ export const encodeTrackerState = (state: TrackerState): Promise<string> =>
         return;
       }
 
-      resolve(encodeURIComponent(buffer.toString("base64")));
+      resolve(encodeURIComponent(buffer.toString('base64')));
     });
   });
 
 export const encodeTrackerStateSync = (state: TrackerState): string =>
-  encodeURIComponent(deflateSync(JSON.stringify(state)).toString("base64"));
+  encodeURIComponent(deflateSync(JSON.stringify(state)).toString('base64'));
 
 export const decodeTrackerState = (
   encodedState: string
@@ -315,7 +316,7 @@ export const decodeTrackerState = (
     let buffer: Buffer;
 
     try {
-      buffer = Buffer.from(decodeURIComponent(encodedState), "base64");
+      buffer = Buffer.from(decodeURIComponent(encodedState), 'base64');
     } catch (error) {
       reject(error);
       return;
