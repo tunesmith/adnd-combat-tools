@@ -17,6 +17,7 @@
     "@typescript-eslint/consistent-type-imports": ["warn", { "fixStyle": "separate-type-imports" }],
     "unused-imports/no-unused-imports": "warn",
     "import/no-extraneous-dependencies": ["error", { "devDependencies": ["**/src/tests/**", "**/*.test.*", "**/*.spec.*"] }],
+    "import/no-unused-modules": ["warn", { "unusedExports": true, "missingExports": false }],
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off"
   },
