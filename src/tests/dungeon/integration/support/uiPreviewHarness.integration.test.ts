@@ -6,6 +6,7 @@ import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
 import {
   createFeedSnapshot,
   resolvePendingPreview,
+  resolvePreview,
   renderCompact,
   renderDetail,
   listPendingPreviewTargets,
@@ -13,6 +14,7 @@ import {
 import { resolveViaRegistry } from '../../../../dungeon/helpers/registry';
 import type { OutcomeEvent } from '../../../../dungeon/domain/outcome';
 import { DoorBeyond, doorBeyond } from '../../../../tables/dungeon/doorBeyond';
+import { ChamberRoomContents } from '../../../../tables/dungeon/chamberRoomContents';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -372,6 +374,129 @@ describe('uiPreviewHarness', () => {
     expect(pendingTables).toContain('monsterLevel:4');
     expect(pendingTables).not.toContain('monsterLevel:1');
   });
+
+  test('resolved chamber contents preview reroll preserves dungeon level', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 1);
+
+    const contentsPreview = findPreview(
+      renderDetail(feed),
+      'chamberRoomContents'
+    );
+    expect(contentsPreview?.context).toEqual({
+      kind: 'chamberContents',
+      level: 4,
+    });
+
+    if (!contentsPreview) {
+      throw new Error('Expected chamber contents preview');
+    }
+
+    feed = resolvePreview(
+      feed,
+      contentsPreview.targetId ?? contentsPreview.id,
+      13
+    );
+
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent?.event.kind).toBe('chamberRoomContents');
+    if (!contentsEvent || contentsEvent.event.kind !== 'chamberRoomContents') {
+      throw new Error('Expected chamber room contents event');
+    }
+    expect(contentsEvent.event.result).toBe(ChamberRoomContents.MonsterOnly);
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('monsterLevel:4');
+    expect(pendingTables).not.toContain('monsterLevel:1');
+  });
+
+  test('resolved chamber dimensions preview reroll preserves forced contents', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 19,
+      detailMode: true,
+    });
+
+    feed = resolvePendingPreview(feed, 'trickTrap', 19);
+    feed = resolvePendingPreview(feed, 'illusionaryWallNature', 12);
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 1);
+
+    const chamberPreview = findPreview(renderDetail(feed), 'chamberDimensions');
+    expect(chamberPreview?.context).toEqual(
+      expect.objectContaining({
+        kind: 'chamberDimensions',
+        forcedContents: ChamberRoomContents.MonsterAndTreasure,
+      })
+    );
+
+    if (!chamberPreview) {
+      throw new Error('Expected chamber dimensions preview');
+    }
+
+    feed = resolvePreview(
+      feed,
+      chamberPreview.targetId ?? chamberPreview.id,
+      5
+    );
+
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent?.event.kind).toBe('chamberRoomContents');
+    expect(
+      (contentsEvent?.event as { autoResolved?: boolean } | undefined)
+        ?.autoResolved
+    ).toBe(true);
+    if (!contentsEvent || contentsEvent.event.kind !== 'chamberRoomContents') {
+      throw new Error('Expected chamber room contents event');
+    }
+    expect(contentsEvent.event.result).toBe(
+      ChamberRoomContents.MonsterAndTreasure
+    );
+
+    const previews = renderDetail(feed).filter(
+      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+    );
+    expect(
+      previews.some((preview) => preview.id === 'chamberRoomContents')
+    ).toBe(false);
+  });
+
+  test('resolved circular pool preview reroll preserves dungeon level', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 18);
+    feed = resolvePendingPreview(feed, 'unusualShape', 1);
+    feed = resolvePendingPreview(feed, 'unusualSize', 1);
+    feed = resolvePendingPreview(feed, 'circularContents', 1);
+    feed = resolvePendingPreview(feed, 'circularPool', 1);
+
+    const poolPreview = findPreview(renderDetail(feed), 'circularPool');
+    expect(poolPreview?.context).toEqual({
+      kind: 'wandering',
+      level: 4,
+    });
+
+    if (!poolPreview) {
+      throw new Error('Expected circular pool preview');
+    }
+
+    feed = resolvePreview(feed, poolPreview.targetId ?? poolPreview.id, 11);
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('monsterLevel:4');
+    expect(pendingTables).not.toContain('monsterLevel:1');
+  });
 });
 
 function pickRollForDoorBeyond(cmd: DoorBeyond): number {
@@ -410,4 +535,14 @@ function collectPendingTables(node: OutcomeEventNode | undefined): string[] {
     pending.push(...collectPendingTables(child));
   }
   return pending;
+}
+
+function findPreview(
+  nodes: DungeonRenderNode[],
+  id: string
+): DungeonTablePreview | undefined {
+  return nodes.find(
+    (node): node is DungeonTablePreview =>
+      node.kind === 'table-preview' && node.id === id
+  );
 }

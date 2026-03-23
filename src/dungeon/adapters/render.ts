@@ -78,7 +78,10 @@ Object.assign(PENDING_PREVIEW_FACTORIES, ALL_PREVIEW_FACTORIES);
 const EVENT_PREVIEW_BUILDERS: Partial<
   Record<
     OutcomeEventKind,
-    (node: OutcomeEventNode) => DungeonTablePreview | undefined
+    (
+      node: OutcomeEventNode,
+      ancestors?: OutcomeEventNode[]
+    ) => DungeonTablePreview | undefined
   >
 > = {};
 
@@ -224,9 +227,13 @@ function appendPendingPreviews(
 }
 
 function previewForEventNode(
-  node: OutcomeEventNode
+  node: OutcomeEventNode,
+  ancestors: OutcomeEventNode[] = []
 ): DungeonTablePreview | undefined {
-  const featurePreview = EVENT_PREVIEW_BUILDERS[node.event.kind]?.(node);
+  const featurePreview = EVENT_PREVIEW_BUILDERS[node.event.kind]?.(
+    node,
+    ancestors
+  );
   if (featurePreview) {
     return featurePreview;
   }
@@ -240,30 +247,6 @@ function previewForEventNode(
       break;
     case 'doorBeyond':
       tableId = 'doorBeyond';
-      break;
-    case 'roomDimensions':
-      tableId = 'roomDimensions';
-      break;
-    case 'chamberDimensions':
-      tableId = 'chamberDimensions';
-      break;
-    case 'circularContents':
-      tableId = 'circularContents';
-      break;
-    case 'circularPool':
-      tableId = 'circularPool';
-      break;
-    case 'circularMagicPool':
-      tableId = 'circularMagicPool';
-      break;
-    case 'transmuteType':
-      tableId = 'transmuteType';
-      break;
-    case 'poolAlignment':
-      tableId = 'poolAlignment';
-      break;
-    case 'transporterLocation':
-      tableId = 'transporterLocation';
       break;
     case 'trickTrap':
       tableId = 'trickTrap';
@@ -671,19 +654,6 @@ function previewForEventNode(
       tableId = 'treasureProtectionHiddenBy';
       context = { kind: 'treasureProtection', treasureRoll: node.roll };
       break;
-    case 'unusualShape':
-      tableId = 'unusualShape';
-      break;
-    case 'unusualSize':
-      tableId = 'unusualSize';
-      break;
-    case 'chamberRoomContents':
-      if (event.autoResolved) return undefined;
-      tableId = 'chamberRoomContents';
-      break;
-    case 'chamberRoomStairs':
-      tableId = 'chamberRoomStairs';
-      break;
     case 'monsterLevel':
       tableId = `monsterLevel:${event.dungeonLevel}`;
       context = { kind: 'wandering', level: event.dungeonLevel };
@@ -808,10 +778,11 @@ export function toDetailRender(
 export function renderDetailTree(
   outcome: DungeonOutcomeNode,
   includeHeading = true,
-  seenPreviews: Set<string> = new Set()
+  seenPreviews: Set<string> = new Set(),
+  ancestors: OutcomeEventNode[] = []
 ): DungeonRenderNode[] {
   if (outcome.type !== 'event') return [];
-  const preview = previewForEventNode(outcome);
+  const preview = previewForEventNode(outcome, ancestors);
   const nodes: DungeonRenderNode[] = [];
   const pendingPreviewIds = new Set<string>();
   if (Array.isArray(outcome.children)) {
@@ -859,7 +830,10 @@ export function renderDetailTree(
   if (!outcome.children) return nodes;
   for (const child of outcome.children) {
     if (child.type !== 'event') continue;
-    const childRendered = renderDetailTree(child, false, seenPreviews);
+    const childRendered = renderDetailTree(child, false, seenPreviews, [
+      ...ancestors,
+      outcome,
+    ]);
     nodes.push(...childRendered);
     // After resolving a Trick/Trap that originates from a periodic check,
     // add the standard continuation note.

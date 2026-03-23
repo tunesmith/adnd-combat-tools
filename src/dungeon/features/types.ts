@@ -47,7 +47,8 @@ export type PendingResolver = (
 ) => DungeonOutcomeNode | undefined;
 
 type EventPreviewBuilder = (
-  node: OutcomeEventNode
+  node: OutcomeEventNode,
+  ancestors?: OutcomeEventNode[]
 ) => DungeonTablePreview | undefined;
 
 export type RegistryOutcomeBuilder = (opts: {
