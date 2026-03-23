@@ -4,7 +4,7 @@ import type {
   TableContext,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
-import type { Table } from '../../../../tables/dungeon/dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/tableTypes';
 import {
   treasureSwords,
   TreasureSword,

@@ -12,7 +12,7 @@ import type {
   AppendPreviewFn,
   TablePreviewFactory,
 } from '../adapters/render/shared';
-import type { Table } from '../../tables/dungeon/dungeonTypes';
+import type { Table } from '../../tables/dungeon/tableTypes';
 
 type ResolveNestedNode = (
   outcome: DungeonOutcomeNode

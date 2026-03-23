@@ -1,15 +1,12 @@
 import type { DungeonTableDefinition } from '../../types';
 import {
   buildEventPreviewFromFactory,
-  markContextualResolution,
   withoutAppend,
   wrapResolver,
 } from '../../shared';
-import type { OutcomeEventNode } from '../../../domain/outcome';
-import type { TableContext } from '../../../../types/dungeon';
 import {
-  deriveEnvironmentDungeonLevelFromAncestors,
-  readEnvironmentDungeonLevelFromId,
+  buildEnvironmentWanderingLevelContext,
+  createEnvironmentDungeonLevelContextHandlers,
 } from '../shared';
 import {
   resolveCircularContents,
@@ -40,67 +37,14 @@ import {
   renderTransmuteTypeDetail,
 } from './circularPoolsRender';
 
-function readDungeonLevelFromContext(context: unknown): number | undefined {
-  if (!context || typeof context !== 'object') return undefined;
-  const kind = (context as { kind?: unknown }).kind;
-  if (
-    (kind === 'wandering' ||
-      kind === 'chamberContents' ||
-      kind === 'chamberDimensions' ||
-      kind === 'treasure') &&
-    typeof (context as { level?: unknown }).level === 'number'
-  ) {
-    return (context as { level: number }).level;
-  }
-  return undefined;
-}
-
-function readDungeonLevelFromNode(node: OutcomeEventNode): number | undefined {
-  const eventLevel = (node.event as { level?: unknown }).level;
-  if (typeof eventLevel === 'number' && Number.isFinite(eventLevel)) {
-    return eventLevel;
-  }
-  const dungeonLevel = (node.event as { dungeonLevel?: unknown }).dungeonLevel;
-  if (typeof dungeonLevel === 'number' && Number.isFinite(dungeonLevel)) {
-    return dungeonLevel;
-  }
-  for (const child of node.children ?? []) {
-    if (child.type === 'pending-roll') {
-      const pendingLevel = readDungeonLevelFromContext(child.context);
-      if (pendingLevel !== undefined) return pendingLevel;
-      continue;
-    }
-    const childLevel = readDungeonLevelFromNode(child);
-    if (childLevel !== undefined) return childLevel;
-  }
-  return undefined;
-}
-
-function deriveDungeonLevel(
-  node: OutcomeEventNode,
-  ancestors: OutcomeEventNode[] = []
-): number | undefined {
-  const level = readDungeonLevelFromNode(node);
-  if (level !== undefined) return level;
-  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
-    const ancestor = ancestors[index];
-    if (!ancestor) continue;
-    const ancestorLevel = readDungeonLevelFromNode(ancestor);
-    if (ancestorLevel !== undefined) return ancestorLevel;
-  }
-  return undefined;
-}
-
-function buildWanderingLevelContext(
-  node: OutcomeEventNode,
-  ancestors: OutcomeEventNode[] = []
-): Extract<TableContext, { kind: 'wandering' }> | undefined {
-  const level = deriveDungeonLevel(node, ancestors);
-  return level === undefined ? undefined : { kind: 'wandering', level };
-}
+const circularContentsContextHandlers =
+  createEnvironmentDungeonLevelContextHandlers(resolveCircularContents, 1);
+const circularPoolContextHandlers =
+  createEnvironmentDungeonLevelContextHandlers(resolveCircularPool, 1);
 
 export const circularPoolsTables: ReadonlyArray<DungeonTableDefinition> = [
-  markContextualResolution({
+  {
+    ...circularContentsContextHandlers,
     id: 'circularContents',
     heading: 'Circular Contents',
     resolver: wrapResolver(resolveCircularContents),
@@ -112,24 +56,12 @@ export const circularPoolsTables: ReadonlyArray<DungeonTableDefinition> = [
     buildEventPreview: (node, ancestors) =>
       node.event.kind === 'circularContents'
         ? buildEventPreviewFromFactory(node, buildCircularContentsPreview, {
-            context: buildWanderingLevelContext(node, ancestors),
+            context: buildEnvironmentWanderingLevelContext(node, ancestors),
           })
         : undefined,
-    registry: ({ roll, context, id }) => {
-      const level = readEnvironmentDungeonLevelFromId(context, id, 1);
-      return resolveCircularContents({ roll, level });
-    },
-    resolvePending: (pending, ancestors) => {
-      const level =
-        readEnvironmentDungeonLevelFromId(
-          pending.context,
-          pending.id ?? pending.table,
-          deriveEnvironmentDungeonLevelFromAncestors(ancestors) ?? 1
-        ) ?? 1;
-      return resolveCircularContents({ level });
-    },
-  }),
-  markContextualResolution({
+  },
+  {
+    ...circularPoolContextHandlers,
     id: 'circularPool',
     heading: 'Pool',
     resolver: wrapResolver(resolveCircularPool),
@@ -141,23 +73,10 @@ export const circularPoolsTables: ReadonlyArray<DungeonTableDefinition> = [
     buildEventPreview: (node, ancestors) =>
       node.event.kind === 'circularPool'
         ? buildEventPreviewFromFactory(node, buildCircularPoolPreview, {
-            context: buildWanderingLevelContext(node, ancestors),
+            context: buildEnvironmentWanderingLevelContext(node, ancestors),
           })
         : undefined,
-    registry: ({ roll, context, id }) => {
-      const level = readEnvironmentDungeonLevelFromId(context, id, 1);
-      return resolveCircularPool({ roll, level });
-    },
-    resolvePending: (pending, ancestors) => {
-      const level =
-        readEnvironmentDungeonLevelFromId(
-          pending.context,
-          pending.id ?? pending.table,
-          deriveEnvironmentDungeonLevelFromAncestors(ancestors) ?? 1
-        ) ?? 1;
-      return resolveCircularPool({ level });
-    },
-  }),
+  },
   {
     id: 'circularMagicPool',
     heading: 'Magic Pool Effect',

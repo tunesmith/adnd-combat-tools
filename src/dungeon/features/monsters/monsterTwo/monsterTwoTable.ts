@@ -1,4 +1,4 @@
-import type { Table } from '../../../../tables/dungeon/dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/tableTypes';
 
 export enum MonsterTwo {
   Badger_1to4_Gnoll_4to10,

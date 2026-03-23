@@ -1,19 +1,37 @@
-import type { OutcomeEventNode } from '../../domain/outcome';
+import type { TableContext } from '../../../types/dungeon';
+import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
+import type {
+  DungeonOutcomeNode,
+  OutcomeEventNode,
+} from '../../domain/outcome';
 
-export function readEnvironmentDungeonLevelFromId(
+type EnvironmentDungeonLevelResolverOptions = {
+  roll?: number;
+  level?: number;
+};
+
+function readEnvironmentDungeonLevel(context: unknown): number | undefined {
+  if (!context || typeof context !== 'object') return undefined;
+  const kind = (context as { kind?: unknown }).kind;
+  if (
+    (kind === 'wandering' ||
+      kind === 'chamberContents' ||
+      kind === 'chamberDimensions' ||
+      kind === 'treasure') &&
+    typeof (context as { level?: unknown }).level === 'number'
+  ) {
+    return (context as { level: number }).level;
+  }
+  return undefined;
+}
+
+function readEnvironmentDungeonLevelFromId(
   context: unknown,
   id: string,
   fallback: number
 ): number {
-  if (context && typeof context === 'object') {
-    const kind = (context as { kind?: unknown }).kind;
-    if (
-      kind === 'wandering' &&
-      typeof (context as { level?: unknown }).level === 'number'
-    ) {
-      return (context as { level: number }).level;
-    }
-  }
+  const contextLevel = readEnvironmentDungeonLevel(context);
+  if (contextLevel !== undefined) return contextLevel;
   const parts = id.split(':');
   if (parts.length >= 2) {
     const parsed = Number(parts[1]);
@@ -24,21 +42,86 @@ export function readEnvironmentDungeonLevelFromId(
   return fallback;
 }
 
+function readEnvironmentDungeonLevelFromNode(
+  node: OutcomeEventNode
+): number | undefined {
+  const eventLevel = (node.event as { level?: unknown }).level;
+  if (typeof eventLevel === 'number' && Number.isFinite(eventLevel)) {
+    return eventLevel;
+  }
+  const dungeonLevel = (node.event as { dungeonLevel?: unknown }).dungeonLevel;
+  if (typeof dungeonLevel === 'number' && Number.isFinite(dungeonLevel)) {
+    return dungeonLevel;
+  }
+  for (const child of node.children ?? []) {
+    if (child.type === 'pending-roll') {
+      const pendingLevel = readEnvironmentDungeonLevel(child.context);
+      if (pendingLevel !== undefined) return pendingLevel;
+      continue;
+    }
+    const childLevel = readEnvironmentDungeonLevelFromNode(child);
+    if (childLevel !== undefined) return childLevel;
+  }
+  return undefined;
+}
+
 export function deriveEnvironmentDungeonLevelFromAncestors(
   ancestors: OutcomeEventNode[]
 ): number | undefined {
   for (let index = ancestors.length - 1; index >= 0; index -= 1) {
     const ancestor = ancestors[index];
     if (!ancestor) continue;
-    if (ancestor.event.kind === 'periodicCheck') {
-      return ancestor.event.level;
-    }
-    if (ancestor.event.kind === 'doorBeyond') {
-      const doorLevel = ancestor.event.level;
-      if (typeof doorLevel === 'number') {
-        return doorLevel;
-      }
-    }
+    const level = readEnvironmentDungeonLevelFromNode(ancestor);
+    if (level !== undefined) return level;
   }
   return undefined;
+}
+
+export function deriveEnvironmentDungeonLevel(
+  node: OutcomeEventNode,
+  ancestors: OutcomeEventNode[] = []
+): number | undefined {
+  return (
+    readEnvironmentDungeonLevelFromNode(node) ??
+    deriveEnvironmentDungeonLevelFromAncestors(ancestors)
+  );
+}
+
+export function buildEnvironmentWanderingLevelContext(
+  node: OutcomeEventNode,
+  ancestors: OutcomeEventNode[] = []
+): Extract<TableContext, { kind: 'wandering' }> | undefined {
+  const level = deriveEnvironmentDungeonLevel(node, ancestors);
+  return level === undefined ? undefined : { kind: 'wandering', level };
+}
+
+export function createEnvironmentDungeonLevelContextHandlers(
+  resolver: (
+    options?: EnvironmentDungeonLevelResolverOptions
+  ) => DungeonOutcomeNode,
+  fallbackLevel: number
+): {
+  manualResolution: 'contextual';
+  resolvePending: PendingResolver;
+  registry: RegistryOutcomeBuilder;
+} {
+  return {
+    manualResolution: 'contextual',
+    resolvePending: (pending, ancestors) => {
+      const level = readEnvironmentDungeonLevelFromId(
+        pending.context,
+        pending.id ?? pending.table,
+        deriveEnvironmentDungeonLevelFromAncestors(ancestors) ?? fallbackLevel
+      );
+      return resolver({ level });
+    },
+    registry: ({ roll, context, id }) => {
+      const level = readEnvironmentDungeonLevelFromId(
+        context,
+        id,
+        fallbackLevel
+      );
+      return resolver({ roll, level });
+    },
+  };
 }

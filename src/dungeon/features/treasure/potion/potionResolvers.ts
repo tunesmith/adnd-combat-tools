@@ -1,6 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
-import type { Table } from '../../../../tables/dungeon/dungeonTypes';
+import type { Table } from '../../../../tables/dungeon/tableTypes';
 import {
   buildTreasureEvent,
   type TreasureEvent,

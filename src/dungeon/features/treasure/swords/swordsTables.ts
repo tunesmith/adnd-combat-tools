@@ -1,4 +1,4 @@
-import type { Table, Entry } from '../../../../tables/dungeon/dungeonTypes';
+import type { Table, Entry } from '../../../../tables/dungeon/tableTypes';
 import {
   TreasureSwordAlignment,
   SWORD_ALIGNMENT_DETAILS,

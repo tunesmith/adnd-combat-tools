@@ -8,8 +8,9 @@ import {
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { TableContext } from '../../../../types/dungeon';
 import {
+  createEnvironmentDungeonLevelContextHandlers,
+  deriveEnvironmentDungeonLevel,
   deriveEnvironmentDungeonLevelFromAncestors,
-  readEnvironmentDungeonLevelFromId,
 } from '../shared';
 import { ChamberRoomContents } from './roomsChambersTable';
 import {
@@ -32,6 +33,11 @@ import {
   renderRoomDimensionsCompactNodes,
   renderRoomDimensionsDetail,
 } from './roomsChambersRender';
+
+const roomDimensionsContextHandlers =
+  createEnvironmentDungeonLevelContextHandlers(resolveRoomDimensions, 1);
+const chamberRoomContentsContextHandlers =
+  createEnvironmentDungeonLevelContextHandlers(resolveChamberRoomContents, 1);
 
 function readChamberDimensionsContext(
   context: unknown
@@ -60,57 +66,6 @@ function readChamberDimensionsContext(
   return result;
 }
 
-function readDungeonLevelFromContext(context: unknown): number | undefined {
-  if (!context || typeof context !== 'object') return undefined;
-  const kind = (context as { kind?: unknown }).kind;
-  if (
-    (kind === 'wandering' ||
-      kind === 'chamberContents' ||
-      kind === 'chamberDimensions' ||
-      kind === 'treasure') &&
-    typeof (context as { level?: unknown }).level === 'number'
-  ) {
-    return (context as { level: number }).level;
-  }
-  return undefined;
-}
-
-function readDungeonLevelFromNode(node: OutcomeEventNode): number | undefined {
-  const eventLevel = (node.event as { level?: unknown }).level;
-  if (typeof eventLevel === 'number' && Number.isFinite(eventLevel)) {
-    return eventLevel;
-  }
-  const dungeonLevel = (node.event as { dungeonLevel?: unknown }).dungeonLevel;
-  if (typeof dungeonLevel === 'number' && Number.isFinite(dungeonLevel)) {
-    return dungeonLevel;
-  }
-  for (const child of node.children ?? []) {
-    if (child.type === 'pending-roll') {
-      const pendingLevel = readDungeonLevelFromContext(child.context);
-      if (pendingLevel !== undefined) return pendingLevel;
-      continue;
-    }
-    const childLevel = readDungeonLevelFromNode(child);
-    if (childLevel !== undefined) return childLevel;
-  }
-  return undefined;
-}
-
-function deriveDungeonLevel(
-  node: OutcomeEventNode,
-  ancestors: OutcomeEventNode[] = []
-): number | undefined {
-  const level = readDungeonLevelFromNode(node);
-  if (level !== undefined) return level;
-  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
-    const ancestor = ancestors[index];
-    if (!ancestor) continue;
-    const ancestorLevel = readDungeonLevelFromNode(ancestor);
-    if (ancestorLevel !== undefined) return ancestorLevel;
-  }
-  return undefined;
-}
-
 function readForcedContentsFromNode(
   node: OutcomeEventNode
 ): ChamberRoomContents | undefined {
@@ -130,7 +85,7 @@ function buildRoomDimensionsContext(
   node: OutcomeEventNode,
   ancestors: OutcomeEventNode[] = []
 ): Extract<TableContext, { kind: 'chamberDimensions' }> | undefined {
-  const level = deriveDungeonLevel(node, ancestors);
+  const level = deriveEnvironmentDungeonLevel(node, ancestors);
   return level === undefined ? undefined : { kind: 'chamberDimensions', level };
 }
 
@@ -138,7 +93,7 @@ function buildChamberDimensionsContext(
   node: OutcomeEventNode,
   ancestors: OutcomeEventNode[] = []
 ): Extract<TableContext, { kind: 'chamberDimensions' }> | undefined {
-  const level = deriveDungeonLevel(node, ancestors);
+  const level = deriveEnvironmentDungeonLevel(node, ancestors);
   const forcedContents = readForcedContentsFromNode(node);
   if (level === undefined && forcedContents === undefined) return undefined;
   return {
@@ -152,12 +107,13 @@ function buildChamberRoomContentsContext(
   node: OutcomeEventNode,
   ancestors: OutcomeEventNode[] = []
 ): Extract<TableContext, { kind: 'chamberContents' }> | undefined {
-  const level = deriveDungeonLevel(node, ancestors);
+  const level = deriveEnvironmentDungeonLevel(node, ancestors);
   return level === undefined ? undefined : { kind: 'chamberContents', level };
 }
 
 export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
-  markContextualResolution({
+  {
+    ...roomDimensionsContextHandlers,
     id: 'roomDimensions',
     heading: 'Room Dimensions',
     resolver: wrapResolver(resolveRoomDimensions),
@@ -172,26 +128,7 @@ export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
             context: buildRoomDimensionsContext(node, ancestors),
           })
         : undefined,
-    registry: ({ roll, context }) => {
-      const level =
-        context &&
-        context.kind === 'chamberDimensions' &&
-        context.level !== undefined
-          ? context.level
-          : 1;
-      return resolveRoomDimensions({ roll, level });
-    },
-    resolvePending: (pending) => {
-      const level =
-        pending.context &&
-        typeof pending.context === 'object' &&
-        (pending.context as { kind?: unknown }).kind === 'chamberDimensions' &&
-        typeof (pending.context as { level?: unknown }).level === 'number'
-          ? (pending.context as { level: number }).level
-          : 1;
-      return resolveRoomDimensions({ level });
-    },
-  }),
+  },
   markContextualResolution({
     id: 'chamberDimensions',
     heading: 'Chamber Dimensions',
@@ -229,7 +166,8 @@ export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
       );
     },
   }),
-  markContextualResolution({
+  {
+    ...chamberRoomContentsContextHandlers,
     id: 'chamberRoomContents',
     heading: 'Contents',
     resolver: wrapResolver(resolveChamberRoomContents),
@@ -244,27 +182,7 @@ export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
             context: buildChamberRoomContentsContext(node, ancestors),
           })
         : undefined,
-    registry: ({ roll, context, id }) => {
-      const level =
-        context && context.kind === 'chamberContents'
-          ? context.level
-          : readEnvironmentDungeonLevelFromId(context, id, 1);
-      return resolveChamberRoomContents({ roll, level });
-    },
-    resolvePending: (pending, ancestors) => {
-      const contextLevel =
-        pending.context &&
-        typeof pending.context === 'object' &&
-        (pending.context as { kind?: unknown }).kind === 'chamberContents' &&
-        typeof (pending.context as { level?: unknown }).level === 'number'
-          ? (pending.context as { level: number }).level
-          : undefined;
-      const derivedLevel =
-        deriveEnvironmentDungeonLevelFromAncestors(ancestors);
-      const level = contextLevel ?? derivedLevel ?? 1;
-      return resolveChamberRoomContents({ level });
-    },
-  }),
+  },
   {
     id: 'chamberRoomStairs',
     heading: 'Stairway',

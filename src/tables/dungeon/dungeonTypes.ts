@@ -193,19 +193,6 @@ import type {
 } from '../../dungeon/features/treasure/swords/swordsTables';
 import type { TreasureSwordAlignment } from '../../dungeon/features/treasure/swords/swordsAlignmentTable';
 
-export type Table<T> = {
-  sides: number;
-  entries: [Entry<T>, ...Entry<T>[]];
-};
-
-// Define a non-empty range tuple
-type Range = [number, ...number[]];
-
-export type Entry<T> = {
-  range: Range;
-  command: T;
-};
-
 export type Command =
   | PeriodicCheck
   | DoorLocation

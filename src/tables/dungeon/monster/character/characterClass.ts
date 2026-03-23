@@ -1,4 +1,4 @@
-import type { Table } from '../../dungeonTypes';
+import type { Table } from '../../tableTypes';
 
 export enum CharacterClassTable {
   Cleric,

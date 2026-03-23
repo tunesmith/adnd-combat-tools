@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../helpers/dungeonLookup';
-import type { Command, Table } from '../../tables/dungeon/dungeonTypes';
+import type { Table } from '../../tables/dungeon/tableTypes';
+import type { Command } from '../../tables/dungeon/dungeonTypes';
 import type { DungeonOutcomeNode, OutcomeEvent } from './outcome';
 
 type ResolveSubtableArgs<
