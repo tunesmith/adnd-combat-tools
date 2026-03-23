@@ -23,6 +23,12 @@
   },
   "overrides": [
     {
+      "files": ["**/src/pages/**/*"],
+      "rules": {
+        "import/no-unused-modules": "off"
+      }
+    },
+    {
       "files": ["**/src/tests/**/*", "**/*.test.*", "**/*.spec.*"],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off",
