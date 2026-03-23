@@ -11,6 +11,11 @@ const customStyles = {
     backgroundColor: '#F0EFDD',
     color: 'black',
   }),
+
+  menuPortal: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    zIndex: 20,
+  }),
 };
 
 export default customStyles;

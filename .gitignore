@@ -39,3 +39,7 @@ yarn-error.log*
 
 # typescript
 tsconfig.tsbuildinfo
+
+# playwright-cli (Codex skill artifacts)
+.playwright-cli/
+output/playwright/
