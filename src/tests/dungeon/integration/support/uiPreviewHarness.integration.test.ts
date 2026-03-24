@@ -22,6 +22,10 @@ import { TreasureRing } from '../../../../dungeon/features/treasure/ring/ringTab
 import { TreasureArmorShield } from '../../../../dungeon/features/treasure/armorShields/armorShieldsTable';
 import { TreasureMiscWeapon } from '../../../../dungeon/features/treasure/miscWeapons/miscWeaponsTable';
 import { TreasureRodStaffWand } from '../../../../dungeon/features/treasure/rodStaffWand/rodStaffWandTables';
+import {
+  TreasureSword,
+  TreasureSwordUnusual,
+} from '../../../../dungeon/features/treasure/swords/swordsTables';
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -835,6 +839,154 @@ describe('uiPreviewHarness', () => {
     if (miscEvent?.event.kind === 'treasureMiscWeapons') {
       expect(miscEvent.event.result.item).toBe(TreasureMiscWeapon.TridentPlus3);
     }
+  });
+
+  test('resolved swords preview reroll preserves treasure magic context', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 76);
+    feed = resolvePendingPreview(feed, 'treasureSwords', 1);
+
+    const swordsPreview = findPreview(renderDetail(feed), 'treasureSwords');
+    expect(swordsPreview?.context).toEqual({
+      kind: 'treasureMagic',
+      level: 4,
+      treasureRoll: 76,
+      rollIndex: 1,
+    });
+
+    if (!swordsPreview) {
+      throw new Error('Expected swords preview');
+    }
+
+    feed = resolvePreview(feed, swordsPreview.targetId ?? swordsPreview.id, 80);
+
+    const swordEvent = findOutcomeEvent(feed.outcome, 'treasureSwords');
+    expect(swordEvent).toBeDefined();
+    if (swordEvent?.event.kind === 'treasureSwords') {
+      expect(swordEvent.event.result).toBe(TreasureSword.SwordPlus5HolyAvenger);
+    }
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureSwordKind');
+    expect(pendingTables).toContain('treasureSwordUnusual');
+    expect(findPreview(renderDetail(feed), 'treasureSwordAlignment')).toBe(
+      undefined
+    );
+  });
+
+  test('resolved sword unusual reroll preserves sword context and alignment preview', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 76);
+    feed = resolvePendingPreview(feed, 'treasureSwords', 1);
+    feed = resolvePendingPreview(feed, 'treasureSwordKind', 80);
+    feed = resolvePendingPreview(feed, 'treasureSwordUnusual', 1);
+
+    const unusualPreview = findPreview(
+      renderDetail(feed),
+      'treasureSwordUnusual'
+    );
+    expect(unusualPreview?.context).toEqual({
+      kind: 'treasureSword',
+      sword: TreasureSword.SwordPlus1,
+      rollIndex: 1,
+    });
+
+    if (!unusualPreview) {
+      throw new Error('Expected sword unusual preview');
+    }
+
+    feed = resolvePreview(
+      feed,
+      unusualPreview.targetId ?? unusualPreview.id,
+      80
+    );
+
+    const unusualEvent = findOutcomeEvent(feed.outcome, 'treasureSwordUnusual');
+    expect(unusualEvent).toBeDefined();
+    if (unusualEvent?.event.kind === 'treasureSwordUnusual') {
+      expect(unusualEvent.event.result.variant).toBe(
+        TreasureSwordUnusual.Intelligence12
+      );
+    }
+
+    const alignmentPreview = findPreview(
+      renderDetail(feed),
+      'treasureSwordAlignment'
+    );
+    expect(alignmentPreview).toBeDefined();
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureSwordAlignment');
+    expect(pendingTables).toContain('treasureSwordPrimaryAbility');
+  });
+
+  test('resolved sword primary ability preview reroll stays feature-owned', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+    feed = resolvePendingPreview(feed, 'treasureMagicCategory', 76);
+    feed = resolvePendingPreview(feed, 'treasureSwords', 15);
+    feed = resolvePendingPreview(feed, 'treasureSwordKind', 5);
+    feed = resolvePendingPreview(feed, 'treasureSwordUnusual', 78);
+    feed = resolvePendingPreview(feed, 'treasureSwordPrimaryAbility', 5);
+
+    const abilityPreview = findPreview(
+      renderDetail(feed),
+      'treasureSwordPrimaryAbility'
+    );
+    expect(abilityPreview).toBeDefined();
+    expect(abilityPreview?.autoCollapse).toBe(true);
+
+    if (!abilityPreview) {
+      throw new Error('Expected sword primary ability preview');
+    }
+
+    feed = resolvePreview(
+      feed,
+      abilityPreview.targetId ?? abilityPreview.id,
+      93
+    );
+
+    const rerolledAbilityPreview = findPreview(
+      renderDetail(feed),
+      'treasureSwordPrimaryAbility'
+    );
+    expect(rerolledAbilityPreview).toBeDefined();
+    expect(rerolledAbilityPreview?.autoCollapse).toBe(true);
+
+    const restrictedPreview = findPreview(
+      renderDetail(feed),
+      'treasureSwordPrimaryAbilityRestricted'
+    );
+    expect(restrictedPreview).toBeDefined();
+
+    const pendingTables = collectPendingTables(feed.outcome);
+    expect(pendingTables).toContain('treasureSwordPrimaryAbilityRestricted');
   });
 
   test('resolved rod staff wand preview reroll remains feature-owned', () => {

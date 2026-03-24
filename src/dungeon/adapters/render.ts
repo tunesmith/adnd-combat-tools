@@ -101,31 +101,6 @@ function previewKey(preview: DungeonTablePreview): string {
     : preview.id;
 }
 
-function parseNodeContextFromId(
-  id: string | undefined,
-  prefix: string
-): { slotKey?: string; rollIndex?: number } {
-  if (!id || !id.startsWith(prefix)) {
-    return {};
-  }
-  const remainder = id.slice(prefix.length);
-  if (!remainder) return {};
-  const colonIndex = remainder.indexOf(':');
-  if (colonIndex === -1) {
-    return { slotKey: remainder };
-  }
-  const maybeIndex = remainder.slice(0, colonIndex);
-  const potentialSlot = remainder.slice(colonIndex + 1);
-  const parsedIndex = Number.parseInt(maybeIndex, 10);
-  if (Number.isNaN(parsedIndex)) {
-    return { slotKey: remainder };
-  }
-  return {
-    slotKey: potentialSlot,
-    rollIndex: parsedIndex,
-  };
-}
-
 function extractTableVariant(result: unknown): 'standard' | 'restricted' {
   if (result && typeof result === 'object') {
     const tableVariant = (result as { tableVariant?: unknown }).tableVariant;
@@ -162,41 +137,6 @@ function shouldSuppressPreview(
     }
   }
   return true;
-}
-
-function abilityPreviewContextFromNode(
-  node: OutcomeEventNode,
-  variant: 'standard' | 'restricted'
-): TableContext | undefined {
-  const info = parseNodeContextFromId(node.id, 'treasureSwordPrimaryAbility:');
-  if (!info.slotKey && info.rollIndex === undefined) {
-    return undefined;
-  }
-  return {
-    kind: 'treasureSwordPrimaryAbility',
-    slotKey: info.slotKey,
-    rollIndex: info.rollIndex,
-    tableVariant: variant,
-  };
-}
-
-function extraordinaryPreviewContextFromNode(
-  node: OutcomeEventNode,
-  variant: 'standard' | 'restricted'
-): TableContext | undefined {
-  const info = parseNodeContextFromId(
-    node.id,
-    'treasureSwordExtraordinaryPower:'
-  );
-  if (!info.slotKey && info.rollIndex === undefined) {
-    return undefined;
-  }
-  return {
-    kind: 'treasureSwordExtraordinaryPower',
-    slotKey: info.slotKey,
-    rollIndex: info.rollIndex,
-    tableVariant: variant,
-  };
 }
 
 function appendPendingPreviews(
@@ -240,7 +180,6 @@ function previewForEventNode(
   const event = node.event;
   let tableId: string | undefined;
   let context: TableContext | undefined;
-  let autoCollapse = false;
   switch (event.kind) {
     case 'periodicCheck':
       tableId = 'periodicCheck';
@@ -257,105 +196,6 @@ function previewForEventNode(
     case 'gasTrapEffect':
       tableId = 'gasTrapEffect';
       break;
-    case 'treasureSwords': {
-      const sword = event;
-      tableId = 'treasureSwords';
-      context = {
-        kind: 'treasureMagic',
-        level: sword.level,
-        treasureRoll: sword.treasureRoll,
-        rollIndex: sword.rollIndex,
-      };
-      break;
-    }
-    case 'treasureSwordKind':
-      tableId = 'treasureSwordKind';
-      break;
-    case 'treasureSwordUnusual':
-      tableId = 'treasureSwordUnusual';
-      break;
-    case 'treasureSwordPrimaryAbility': {
-      const result = event.result;
-      const variant =
-        result.kind === 'ability'
-          ? result.tableVariant
-          : result.tableVariant ?? 'standard';
-      tableId =
-        variant === 'restricted'
-          ? 'treasureSwordPrimaryAbilityRestricted'
-          : 'treasureSwordPrimaryAbility';
-      const abilityContext = abilityPreviewContextFromNode(node, variant);
-      if (abilityContext) {
-        context = abilityContext;
-      }
-      if (result.kind === 'ability' || result.kind === 'instruction') {
-        autoCollapse = true;
-      }
-      break;
-    }
-    case 'treasureSwordExtraordinaryPower': {
-      const result = event.result;
-      const variant =
-        result.kind === 'power'
-          ? result.tableVariant
-          : result.tableVariant ?? 'standard';
-      tableId =
-        variant === 'restricted'
-          ? 'treasureSwordExtraordinaryPowerRestricted'
-          : 'treasureSwordExtraordinaryPower';
-      const extraContext = extraordinaryPreviewContextFromNode(node, variant);
-      if (extraContext) {
-        context = extraContext;
-      }
-      if (result.kind === 'power' || result.kind === 'instruction') {
-        autoCollapse = true;
-      }
-      break;
-    }
-    case 'treasureSwordSpecialPurpose': {
-      tableId = 'treasureSwordSpecialPurpose';
-      const info = parseNodeContextFromId(
-        node.id,
-        'treasureSwordSpecialPurpose:'
-      );
-      const alignment = event.result?.alignment;
-      context = {
-        kind: 'treasureSwordSpecialPurpose',
-        slotKey: info.slotKey,
-        rollIndex: info.rollIndex,
-        alignment,
-      };
-      autoCollapse = true;
-      break;
-    }
-    case 'treasureSwordSpecialPurposePower': {
-      tableId = 'treasureSwordSpecialPurposePower';
-      const info = parseNodeContextFromId(
-        node.id,
-        'treasureSwordSpecialPurposePower:'
-      );
-      context = {
-        kind: 'treasureSwordSpecialPurposePower',
-        slotKey: info.slotKey,
-        rollIndex: info.rollIndex,
-      };
-      autoCollapse = true;
-      break;
-    }
-    case 'treasureSwordAlignment': {
-      const alignmentSource = event.result.source;
-      if (alignmentSource === 'fixed') {
-        return undefined;
-      }
-      if (alignmentSource === 'chaotic') {
-        tableId = 'treasureSwordAlignmentChaotic';
-      } else if (alignmentSource === 'lawful') {
-        tableId = 'treasureSwordAlignmentLawful';
-      } else {
-        tableId = 'treasureSwordAlignment';
-      }
-      break;
-    }
     case 'monsterLevel':
       tableId = `monsterLevel:${event.dungeonLevel}`;
       context = { kind: 'wandering', level: event.dungeonLevel };
@@ -455,9 +295,6 @@ function previewForEventNode(
     context,
   });
   if (!preview) return undefined;
-  if (autoCollapse) {
-    preview.autoCollapse = true;
-  }
   return withTargetId(preview, node.id ?? tableId);
 }
 

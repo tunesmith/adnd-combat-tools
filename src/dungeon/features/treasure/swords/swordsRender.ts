@@ -315,7 +315,10 @@ export function renderTreasureSwordsCompact(
   return nodes;
 }
 
-export const buildTreasureSwordsPreview: TablePreviewFactory = (tableId) =>
+export const buildTreasureSwordsPreview: TablePreviewFactory = (
+  tableId,
+  context
+) =>
   buildPreview(tableId, {
     title: 'Swords (Table G)',
     sides: treasureSwords.sides,
@@ -323,6 +326,7 @@ export const buildTreasureSwordsPreview: TablePreviewFactory = (tableId) =>
       range,
       label: SWORD_LABELS[command],
     })),
+    context,
   });
 
 export function renderTreasureSwordKindDetail(

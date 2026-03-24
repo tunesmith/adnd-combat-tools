@@ -1,6 +1,11 @@
 import type { DungeonTableDefinition } from '../../types';
-import { markContextualResolution, wrapResolver } from '../../shared';
+import {
+  buildEventPreviewFromFactory,
+  markContextualResolution,
+  wrapResolver,
+} from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { TableContext } from '../../../../types/dungeon';
 import {
   resolveTreasureSwords,
   resolveTreasureSwordAlignment,
@@ -14,7 +19,10 @@ import {
 } from './swordsResolvers';
 import type { TreasureSword } from './swordsTables';
 import type { TreasureSwordAlignment } from './swordsAlignmentTable';
-import { createTreasureMagicContextHandlers } from '../shared';
+import {
+  createTreasureMagicContextHandlers,
+  createTreasureMagicEventPreviewBuilder,
+} from '../shared';
 import {
   buildTreasureSwordsPreview,
   renderTreasureSwordsCompact,
@@ -73,6 +81,22 @@ function findSwordFromAncestors(
     if (ancestor.event.kind === 'treasureSwords') {
       return ancestor.event.result;
     }
+  }
+  return undefined;
+}
+
+function buildTreasureSwordPreviewContext(
+  ancestors: OutcomeEventNode[]
+): Extract<TableContext, { kind: 'treasureSword' }> | undefined {
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const ancestor = ancestors[index];
+    if (!ancestor || ancestor.type !== 'event') continue;
+    if (ancestor.event.kind !== 'treasureSwords') continue;
+    return {
+      kind: 'treasureSword',
+      sword: ancestor.event.result,
+      rollIndex: ancestor.event.rollIndex,
+    };
   }
   return undefined;
 }
@@ -202,6 +226,200 @@ function readSwordExtraordinaryPowerContext(context: unknown): {
   return { slotKey, rollIndex, tableVariant, alignment };
 }
 
+function parseNodeContextFromId(
+  id: string | undefined,
+  prefix: string
+): { slotKey?: string; rollIndex?: number } {
+  if (!id || !id.startsWith(prefix)) {
+    return {};
+  }
+  const remainder = id.slice(prefix.length);
+  if (!remainder) return {};
+  const colonIndex = remainder.indexOf(':');
+  if (colonIndex === -1) {
+    return { slotKey: remainder };
+  }
+  const maybeIndex = remainder.slice(0, colonIndex);
+  const potentialSlot = remainder.slice(colonIndex + 1);
+  const parsedIndex = Number.parseInt(maybeIndex, 10);
+  if (Number.isNaN(parsedIndex)) {
+    return { slotKey: remainder };
+  }
+  return {
+    slotKey: potentialSlot,
+    rollIndex: parsedIndex,
+  };
+}
+
+function buildSwordPrimaryAbilityPreviewContext(
+  node: OutcomeEventNode,
+  variant: 'standard' | 'restricted'
+): TableContext | undefined {
+  const info = parseNodeContextFromId(node.id, 'treasureSwordPrimaryAbility:');
+  if (!info.slotKey && info.rollIndex === undefined) {
+    return undefined;
+  }
+  return {
+    kind: 'treasureSwordPrimaryAbility',
+    slotKey: info.slotKey,
+    rollIndex: info.rollIndex,
+    tableVariant: variant,
+  };
+}
+
+function buildSwordExtraordinaryPowerPreviewContext(
+  node: OutcomeEventNode,
+  variant: 'standard' | 'restricted'
+): TableContext | undefined {
+  const info = parseNodeContextFromId(
+    node.id,
+    'treasureSwordExtraordinaryPower:'
+  );
+  if (!info.slotKey && info.rollIndex === undefined) {
+    return undefined;
+  }
+  return {
+    kind: 'treasureSwordExtraordinaryPower',
+    slotKey: info.slotKey,
+    rollIndex: info.rollIndex,
+    tableVariant: variant,
+  };
+}
+
+function buildTreasureSwordPrimaryAbilityEventPreview(node: OutcomeEventNode) {
+  if (node.event.kind !== 'treasureSwordPrimaryAbility') {
+    return undefined;
+  }
+  const result = node.event.result;
+  const variant =
+    result.kind === 'ability'
+      ? result.tableVariant
+      : result.tableVariant ?? 'standard';
+  const tableId =
+    variant === 'restricted'
+      ? 'treasureSwordPrimaryAbilityRestricted'
+      : 'treasureSwordPrimaryAbility';
+  return buildEventPreviewFromFactory(
+    node,
+    buildTreasureSwordPrimaryAbilityPreview,
+    {
+      tableId,
+      context: buildSwordPrimaryAbilityPreviewContext(node, variant),
+      autoCollapse: result.kind === 'ability' || result.kind === 'instruction',
+    }
+  );
+}
+
+function buildTreasureSwordExtraordinaryPowerEventPreview(
+  node: OutcomeEventNode
+) {
+  if (node.event.kind !== 'treasureSwordExtraordinaryPower') {
+    return undefined;
+  }
+  const result = node.event.result;
+  const variant =
+    result.kind === 'power'
+      ? result.tableVariant
+      : result.tableVariant ?? 'standard';
+  const tableId =
+    variant === 'restricted'
+      ? 'treasureSwordExtraordinaryPowerRestricted'
+      : 'treasureSwordExtraordinaryPower';
+  return buildEventPreviewFromFactory(
+    node,
+    buildTreasureSwordExtraordinaryPowerPreview,
+    {
+      tableId,
+      context: buildSwordExtraordinaryPowerPreviewContext(node, variant),
+      autoCollapse: result.kind === 'power' || result.kind === 'instruction',
+    }
+  );
+}
+
+function buildTreasureSwordSpecialPurposeEventPreview(node: OutcomeEventNode) {
+  if (node.event.kind !== 'treasureSwordSpecialPurpose') {
+    return undefined;
+  }
+  const info = parseNodeContextFromId(node.id, 'treasureSwordSpecialPurpose:');
+  return buildEventPreviewFromFactory(
+    node,
+    buildTreasureSwordSpecialPurposePreview,
+    {
+      context: {
+        kind: 'treasureSwordSpecialPurpose',
+        slotKey: info.slotKey,
+        rollIndex: info.rollIndex,
+        alignment: node.event.result.alignment,
+      },
+      autoCollapse: true,
+    }
+  );
+}
+
+function buildTreasureSwordSpecialPurposePowerEventPreview(
+  node: OutcomeEventNode
+) {
+  if (node.event.kind !== 'treasureSwordSpecialPurposePower') {
+    return undefined;
+  }
+  const info = parseNodeContextFromId(
+    node.id,
+    'treasureSwordSpecialPurposePower:'
+  );
+  return buildEventPreviewFromFactory(
+    node,
+    buildTreasureSwordSpecialPurposePowerPreview,
+    {
+      context: {
+        kind: 'treasureSwordSpecialPurposePower',
+        slotKey: info.slotKey,
+        rollIndex: info.rollIndex,
+      },
+      autoCollapse: true,
+    }
+  );
+}
+
+function buildTreasureSwordAlignmentEventPreview(node: OutcomeEventNode) {
+  if (node.event.kind !== 'treasureSwordAlignment') {
+    return undefined;
+  }
+  if (node.event.result.source === 'fixed') {
+    return undefined;
+  }
+  if (node.event.result.source === 'chaotic') {
+    return buildEventPreviewFromFactory(
+      node,
+      buildTreasureSwordAlignmentChaoticPreview,
+      {
+        tableId: 'treasureSwordAlignmentChaotic',
+      }
+    );
+  }
+  if (node.event.result.source === 'lawful') {
+    return buildEventPreviewFromFactory(
+      node,
+      buildTreasureSwordAlignmentLawfulPreview,
+      {
+        tableId: 'treasureSwordAlignmentLawful',
+      }
+    );
+  }
+  return buildEventPreviewFromFactory(node, buildTreasureSwordAlignmentPreview);
+}
+
+function buildTreasureSwordUnusualEventPreview(
+  node: OutcomeEventNode,
+  ancestors: OutcomeEventNode[] = []
+) {
+  if (node.event.kind !== 'treasureSwordUnusual') {
+    return undefined;
+  }
+  return buildEventPreviewFromFactory(node, buildTreasureSwordUnusualPreview, {
+    context: buildTreasureSwordPreviewContext(ancestors),
+  });
+}
+
 const resolveTreasureSwordPrimaryAbilityRestricted = (
   options?: TreasureSwordPrimaryAbilityOptions
 ) =>
@@ -244,6 +462,10 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordsCompact,
     },
     buildPreview: buildTreasureSwordsPreview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      'treasureSwords',
+      buildTreasureSwordsPreview
+    ),
     postProcessOutcome: postProcessSwordsOutcomeTree,
     ...treasureSwordsHandlers,
   },
@@ -256,6 +478,10 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordKindCompact,
     },
     buildPreview: buildTreasureSwordKindPreview,
+    buildEventPreview: (node) =>
+      node.event.kind === 'treasureSwordKind'
+        ? buildEventPreviewFromFactory(node, buildTreasureSwordKindPreview)
+        : undefined,
     resolvePending: () => resolveTreasureSwordKind({}),
   },
   markContextualResolution({
@@ -267,6 +493,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordUnusualCompact,
     },
     buildPreview: buildTreasureSwordUnusualPreview,
+    buildEventPreview: buildTreasureSwordUnusualEventPreview,
     registry: ({ roll, context }) => {
       let sword: TreasureSword | undefined;
       let rollIndex: number | undefined;
@@ -326,6 +553,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordPrimaryAbilityCompact,
     },
     buildPreview: buildTreasureSwordPrimaryAbilityPreview,
+    buildEventPreview: buildTreasureSwordPrimaryAbilityEventPreview,
     registry: ({ roll, context }) => {
       const parsed = readSwordPrimaryAbilityContext(context);
       return resolveTreasureSwordPrimaryAbility({
@@ -380,6 +608,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordExtraordinaryPowerCompact,
     },
     buildPreview: buildTreasureSwordExtraordinaryPowerPreview,
+    buildEventPreview: buildTreasureSwordExtraordinaryPowerEventPreview,
     registry: ({ roll, context }) => {
       const parsed = readSwordExtraordinaryPowerContext(context);
       return resolveTreasureSwordExtraordinaryPower({
@@ -454,6 +683,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordSpecialPurposeCompact,
     },
     buildPreview: buildTreasureSwordSpecialPurposePreview,
+    buildEventPreview: buildTreasureSwordSpecialPurposeEventPreview,
     registry: ({ roll, context }) => {
       const parsed =
         context && typeof context === 'object'
@@ -494,6 +724,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordSpecialPurposePowerCompact,
     },
     buildPreview: buildTreasureSwordSpecialPurposePowerPreview,
+    buildEventPreview: buildTreasureSwordSpecialPurposePowerEventPreview,
     registry: ({ roll, context }) => {
       const parsed =
         context && typeof context === 'object'
@@ -534,6 +765,7 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderTreasureSwordAlignmentCompact,
     },
     buildPreview: buildTreasureSwordAlignmentPreview,
+    buildEventPreview: buildTreasureSwordAlignmentEventPreview,
     resolvePending: () =>
       resolveTreasureSwordAlignment({ variant: 'standard' }),
   },
