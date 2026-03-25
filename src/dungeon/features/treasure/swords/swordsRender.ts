@@ -34,11 +34,13 @@ import {
   type TreasureSwordExtraordinaryPowerResult,
   type TreasureSwordSpecialPurposeResult,
   type TreasureSwordSpecialPurposePowerResult,
+  toTreasureSwordExtraordinaryPower,
+  toTreasureSwordPrimaryAbility,
+  toTreasureSwordSpecialPurpose,
+  toTreasureSwordSpecialPurposePower,
 } from './swordsTables';
 import type {
-  TreasureSwordSpecialPurpose,
   TreasureSwordSpecialPurposeCommand,
-  TreasureSwordSpecialPurposePower,
   TreasureSwordSpecialPurposePowerCommand,
 } from './swordsTables';
 import {
@@ -783,7 +785,12 @@ function primaryAbilityPreviewLabel(
     case TreasureSwordPrimaryAbilityCommand.ExtraordinaryPower:
       return 'Roll on the Extraordinary Power table instead';
     default: {
-      const ability = command as unknown as TreasureSwordPrimaryAbility;
+      const ability = toTreasureSwordPrimaryAbility(command);
+      if (ability === undefined) {
+        throw new Error(
+          `Unsupported sword primary ability preview command: ${command}`
+        );
+      }
       return describeSwordPrimaryAbility(ability, 1);
     }
   }
@@ -800,7 +807,12 @@ function extraordinaryPowerPreviewLabel(
     case TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose:
       return 'Choose one power, then roll for a special purpose and power';
     default: {
-      const power = command as unknown as TreasureSwordExtraordinaryPower;
+      const power = toTreasureSwordExtraordinaryPower(command);
+      if (power === undefined) {
+        throw new Error(
+          `Unsupported sword extraordinary power preview command: ${command}`
+        );
+      }
       return describeSwordExtraordinaryPower(power, 1);
     }
   }
@@ -1016,14 +1028,14 @@ function specialPurposePreviewLabel(
   command: TreasureSwordSpecialPurposeCommand,
   alignment?: TreasureSwordAlignment
 ): string {
-  const purpose = command as unknown as TreasureSwordSpecialPurpose;
+  const purpose = toTreasureSwordSpecialPurpose(command);
   return describeSwordSpecialPurpose(purpose, { alignment });
 }
 
 function specialPurposePowerPreviewLabel(
   command: TreasureSwordSpecialPurposePowerCommand
 ): string {
-  const power = command as unknown as TreasureSwordSpecialPurposePower;
+  const power = toTreasureSwordSpecialPurposePower(command);
   return describeSwordSpecialPurposePower(power);
 }
 

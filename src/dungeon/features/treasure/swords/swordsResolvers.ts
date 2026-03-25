@@ -9,9 +9,6 @@ import type {
 import type {
   TreasureSwordDragonSlayerColor,
   TreasureSwordKind,
-  TreasureSwordPrimaryAbility,
-  TreasureSwordSpecialPurpose,
-  TreasureSwordSpecialPurposePower,
 } from './swordsTables';
 import {
   DRAGON_SLAYER_COLOR_DETAILS,
@@ -32,6 +29,10 @@ import {
   describeSwordSpecialPurpose,
   describeSwordSpecialPurposePower,
   dragonSlayerColorTableForAlignment,
+  toTreasureSwordExtraordinaryPower,
+  toTreasureSwordPrimaryAbility,
+  toTreasureSwordSpecialPurpose,
+  toTreasureSwordSpecialPurposePower,
   treasureSwords,
   treasureSwordExtraordinaryPower,
   treasureSwordExtraordinaryPowerRestricted,
@@ -50,6 +51,20 @@ import {
   treasureSwordAlignmentChaotic,
   treasureSwordAlignmentLawful,
 } from './swordsAlignmentTable';
+
+function resolveBoundedRoll(roll: number | undefined, sides: number): number {
+  if (roll === undefined) {
+    return rollDice(sides);
+  }
+  const provided = Math.trunc(roll);
+  if (!Number.isFinite(provided) || provided < 1) {
+    return 1;
+  }
+  if (provided > sides) {
+    return sides;
+  }
+  return provided;
+}
 
 export function resolveTreasureSwords(options?: {
   roll?: number;
@@ -375,22 +390,7 @@ export function resolveTreasureSwordPrimaryAbility(options?: {
     variant === 'restricted'
       ? treasureSwordPrimaryAbilityRestricted
       : treasureSwordPrimaryAbility;
-
-  const resolveRoll = (): number => {
-    if (options?.roll !== undefined) {
-      const provided = Math.trunc(options.roll);
-      if (!Number.isFinite(provided) || provided < 1) {
-        return 1;
-      }
-      if (provided > table.sides) {
-        return table.sides;
-      }
-      return provided;
-    }
-    return rollDice(table.sides);
-  };
-
-  const usedRoll = resolveRoll();
+  const usedRoll = resolveBoundedRoll(options?.roll, table.sides);
   const command = getTableEntry(usedRoll, table);
 
   if (
@@ -455,7 +455,10 @@ export function resolveTreasureSwordPrimaryAbility(options?: {
     return node;
   }
 
-  const ability = command as unknown as TreasureSwordPrimaryAbility;
+  const ability = toTreasureSwordPrimaryAbility(command);
+  if (ability === undefined) {
+    throw new Error(`Unsupported sword primary ability command: ${command}`);
+  }
   const result: TreasureSwordPrimaryAbilityResult = {
     kind: 'ability',
     ability,
@@ -520,22 +523,7 @@ export function resolveTreasureSwordExtraordinaryPower(options?: {
     variant === 'restricted'
       ? treasureSwordExtraordinaryPowerRestricted
       : treasureSwordExtraordinaryPower;
-
-  const resolveRoll = (): number => {
-    if (options?.roll !== undefined) {
-      const provided = Math.trunc(options.roll);
-      if (!Number.isFinite(provided) || provided < 1) {
-        return 1;
-      }
-      if (provided > table.sides) {
-        return table.sides;
-      }
-      return provided;
-    }
-    return rollDice(table.sides);
-  };
-
-  const usedRoll = resolveRoll();
+  const usedRoll = resolveBoundedRoll(options?.roll, table.sides);
   const command = getTableEntry(usedRoll, table);
 
   if (
@@ -574,13 +562,12 @@ export function resolveTreasureSwordExtraordinaryPower(options?: {
     return node;
   }
 
-  const power =
-    command === TreasureSwordExtraordinaryPowerCommand.ChooseAny
-      ? TreasureSwordExtraordinaryPower.ChooseAny
-      : command ===
-        TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose
-      ? TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose
-      : (command as unknown as TreasureSwordExtraordinaryPower);
+  const power = toTreasureSwordExtraordinaryPower(command);
+  if (power === undefined) {
+    throw new Error(
+      `Unsupported sword extraordinary power command: ${command}`
+    );
+  }
   const result: TreasureSwordExtraordinaryPowerResult = {
     kind: 'power',
     power,
@@ -670,22 +657,12 @@ export function resolveTreasureSwordSpecialPurpose(options?: {
   const slotKey = options?.slotKey ?? createDungeonRandomId('purpose');
   const parentSlotKey = options?.parentSlotKey;
   const alignment = options?.alignment;
-  const resolveRoll = (): number => {
-    if (options?.roll !== undefined) {
-      const provided = Math.trunc(options.roll);
-      if (!Number.isFinite(provided) || provided < 1) {
-        return 1;
-      }
-      if (provided > treasureSwordSpecialPurpose.sides) {
-        return treasureSwordSpecialPurpose.sides;
-      }
-      return provided;
-    }
-    return rollDice(treasureSwordSpecialPurpose.sides);
-  };
-  const usedRoll = resolveRoll();
+  const usedRoll = resolveBoundedRoll(
+    options?.roll,
+    treasureSwordSpecialPurpose.sides
+  );
   const command = getTableEntry(usedRoll, treasureSwordSpecialPurpose);
-  const purpose = command as unknown as TreasureSwordSpecialPurpose;
+  const purpose = toTreasureSwordSpecialPurpose(command);
   const result: TreasureSwordSpecialPurposeResult = {
     kind: 'purpose',
     purpose,
@@ -727,22 +704,12 @@ export function resolveTreasureSwordSpecialPurposePower(options?: {
   alignment?: TreasureSwordAlignment;
 }): DungeonOutcomeNode {
   const slotKey = options?.slotKey ?? createDungeonRandomId('purpose-power');
-  const resolveRoll = (): number => {
-    if (options?.roll !== undefined) {
-      const provided = Math.trunc(options.roll);
-      if (!Number.isFinite(provided) || provided < 1) {
-        return 1;
-      }
-      if (provided > treasureSwordSpecialPurposePower.sides) {
-        return treasureSwordSpecialPurposePower.sides;
-      }
-      return provided;
-    }
-    return rollDice(treasureSwordSpecialPurposePower.sides);
-  };
-  const usedRoll = resolveRoll();
+  const usedRoll = resolveBoundedRoll(
+    options?.roll,
+    treasureSwordSpecialPurposePower.sides
+  );
   const command = getTableEntry(usedRoll, treasureSwordSpecialPurposePower);
-  const power = command as unknown as TreasureSwordSpecialPurposePower;
+  const power = toTreasureSwordSpecialPurposePower(command);
   const result: TreasureSwordSpecialPurposePowerResult = {
     kind: 'specialPurposePower',
     power,
@@ -770,20 +737,7 @@ export function resolveTreasureSwordDragonSlayerColor(options?: {
 }): DungeonOutcomeNode {
   const slotKey = options?.slotKey ?? createDungeonRandomId('dragon-slayer');
   const table = dragonSlayerColorTableForAlignment(options?.alignment);
-  const resolveRoll = (): number => {
-    if (options?.roll !== undefined) {
-      const provided = Math.trunc(options.roll);
-      if (!Number.isFinite(provided) || provided < 1) {
-        return 1;
-      }
-      if (provided > table.sides) {
-        return table.sides;
-      }
-      return provided;
-    }
-    return rollDice(table.sides);
-  };
-  const usedRoll = resolveRoll();
+  const usedRoll = resolveBoundedRoll(options?.roll, table.sides);
   const command: TreasureSwordDragonSlayerColor = getTableEntry(
     usedRoll,
     table

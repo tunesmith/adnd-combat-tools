@@ -156,7 +156,7 @@ export enum TreasureSwordSpecialPurposeCommand {
   SlayNonHumanMonsters,
 }
 
-export enum TreasureSwordSpecialPurposePower {
+enum TreasureSwordSpecialPurposePower {
   Blindness,
   Confusion,
   Disintegrate,
@@ -174,6 +174,124 @@ export enum TreasureSwordSpecialPurposePowerCommand {
   Insanity,
   Paralysis,
   SavingThrowBonus,
+}
+
+export function toTreasureSwordPrimaryAbility(
+  command: TreasureSwordPrimaryAbilityCommand
+): TreasureSwordPrimaryAbility | undefined {
+  switch (command) {
+    case TreasureSwordPrimaryAbilityCommand.DetectShiftingRooms:
+      return TreasureSwordPrimaryAbility.DetectShiftingRooms;
+    case TreasureSwordPrimaryAbilityCommand.DetectSlopingPassages:
+      return TreasureSwordPrimaryAbility.DetectSlopingPassages;
+    case TreasureSwordPrimaryAbilityCommand.DetectLargeTraps:
+      return TreasureSwordPrimaryAbility.DetectLargeTraps;
+    case TreasureSwordPrimaryAbilityCommand.DetectAlignment:
+      return TreasureSwordPrimaryAbility.DetectAlignment;
+    case TreasureSwordPrimaryAbilityCommand.DetectPreciousMetals:
+      return TreasureSwordPrimaryAbility.DetectPreciousMetals;
+    case TreasureSwordPrimaryAbilityCommand.DetectGems:
+      return TreasureSwordPrimaryAbility.DetectGems;
+    case TreasureSwordPrimaryAbilityCommand.DetectMagic:
+      return TreasureSwordPrimaryAbility.DetectMagic;
+    case TreasureSwordPrimaryAbilityCommand.DetectSecretDoors:
+      return TreasureSwordPrimaryAbility.DetectSecretDoors;
+    case TreasureSwordPrimaryAbilityCommand.DetectInvisibleObjects:
+      return TreasureSwordPrimaryAbility.DetectInvisibleObjects;
+    case TreasureSwordPrimaryAbilityCommand.LocateObject:
+      return TreasureSwordPrimaryAbility.LocateObject;
+    case TreasureSwordPrimaryAbilityCommand.RollTwice:
+      return undefined;
+    case TreasureSwordPrimaryAbilityCommand.ExtraordinaryPower:
+      return TreasureSwordPrimaryAbility.ExtraordinaryPower;
+  }
+}
+
+export function toTreasureSwordExtraordinaryPower(
+  command: TreasureSwordExtraordinaryPowerCommand
+): TreasureSwordExtraordinaryPower | undefined {
+  switch (command) {
+    case TreasureSwordExtraordinaryPowerCommand.CharmPersonOnContact:
+      return TreasureSwordExtraordinaryPower.CharmPersonOnContact;
+    case TreasureSwordExtraordinaryPowerCommand.Clairaudience:
+      return TreasureSwordExtraordinaryPower.Clairaudience;
+    case TreasureSwordExtraordinaryPowerCommand.Clairvoyance:
+      return TreasureSwordExtraordinaryPower.Clairvoyance;
+    case TreasureSwordExtraordinaryPowerCommand.DetermineDirectionsAndDepth:
+      return TreasureSwordExtraordinaryPower.DetermineDirectionsAndDepth;
+    case TreasureSwordExtraordinaryPowerCommand.Esp:
+      return TreasureSwordExtraordinaryPower.Esp;
+    case TreasureSwordExtraordinaryPowerCommand.Flying:
+      return TreasureSwordExtraordinaryPower.Flying;
+    case TreasureSwordExtraordinaryPowerCommand.Heal:
+      return TreasureSwordExtraordinaryPower.Heal;
+    case TreasureSwordExtraordinaryPowerCommand.Illusion:
+      return TreasureSwordExtraordinaryPower.Illusion;
+    case TreasureSwordExtraordinaryPowerCommand.Levitation:
+      return TreasureSwordExtraordinaryPower.Levitation;
+    case TreasureSwordExtraordinaryPowerCommand.Strength:
+      return TreasureSwordExtraordinaryPower.Strength;
+    case TreasureSwordExtraordinaryPowerCommand.Telekinesis:
+      return TreasureSwordExtraordinaryPower.Telekinesis;
+    case TreasureSwordExtraordinaryPowerCommand.Telepathy:
+      return TreasureSwordExtraordinaryPower.Telepathy;
+    case TreasureSwordExtraordinaryPowerCommand.Teleportation:
+      return TreasureSwordExtraordinaryPower.Teleportation;
+    case TreasureSwordExtraordinaryPowerCommand.XRayVision:
+      return TreasureSwordExtraordinaryPower.XRayVision;
+    case TreasureSwordExtraordinaryPowerCommand.RollTwice:
+      return undefined;
+    case TreasureSwordExtraordinaryPowerCommand.ChooseAny:
+      return TreasureSwordExtraordinaryPower.ChooseAny;
+    case TreasureSwordExtraordinaryPowerCommand.ChooseAnyAndSpecialPurpose:
+      return TreasureSwordExtraordinaryPower.ChooseAnyAndSpecialPurpose;
+  }
+}
+
+export function toTreasureSwordSpecialPurpose(
+  command: TreasureSwordSpecialPurposeCommand
+): TreasureSwordSpecialPurpose {
+  switch (command) {
+    case TreasureSwordSpecialPurposeCommand.DefeatOpposedAlignment:
+      return TreasureSwordSpecialPurpose.DefeatOpposedAlignment;
+    case TreasureSwordSpecialPurposeCommand.KillClerics:
+      return TreasureSwordSpecialPurpose.KillClerics;
+    case TreasureSwordSpecialPurposeCommand.KillFighters:
+      return TreasureSwordSpecialPurpose.KillFighters;
+    case TreasureSwordSpecialPurposeCommand.KillMagicUsers:
+      return TreasureSwordSpecialPurpose.KillMagicUsers;
+    case TreasureSwordSpecialPurposeCommand.KillThieves:
+      return TreasureSwordSpecialPurpose.KillThieves;
+    case TreasureSwordSpecialPurposeCommand.KillBardsOrMonks:
+      return TreasureSwordSpecialPurpose.KillBardsOrMonks;
+    case TreasureSwordSpecialPurposeCommand.OverthrowLawOrChaos:
+      return TreasureSwordSpecialPurpose.OverthrowLawOrChaos;
+    case TreasureSwordSpecialPurposeCommand.SlayGoodOrEvil:
+      return TreasureSwordSpecialPurpose.SlayGoodOrEvil;
+    case TreasureSwordSpecialPurposeCommand.SlayNonHumanMonsters:
+      return TreasureSwordSpecialPurpose.SlayNonHumanMonsters;
+  }
+}
+
+export function toTreasureSwordSpecialPurposePower(
+  command: TreasureSwordSpecialPurposePowerCommand
+): TreasureSwordSpecialPurposePower {
+  switch (command) {
+    case TreasureSwordSpecialPurposePowerCommand.Blindness:
+      return TreasureSwordSpecialPurposePower.Blindness;
+    case TreasureSwordSpecialPurposePowerCommand.Confusion:
+      return TreasureSwordSpecialPurposePower.Confusion;
+    case TreasureSwordSpecialPurposePowerCommand.Disintegrate:
+      return TreasureSwordSpecialPurposePower.Disintegrate;
+    case TreasureSwordSpecialPurposePowerCommand.Fear:
+      return TreasureSwordSpecialPurposePower.Fear;
+    case TreasureSwordSpecialPurposePowerCommand.Insanity:
+      return TreasureSwordSpecialPurposePower.Insanity;
+    case TreasureSwordSpecialPurposePowerCommand.Paralysis:
+      return TreasureSwordSpecialPurposePower.Paralysis;
+    case TreasureSwordSpecialPurposePowerCommand.SavingThrowBonus:
+      return TreasureSwordSpecialPurposePower.SavingThrowBonus;
+  }
 }
 
 export const treasureSwords: Table<TreasureSword> = {
