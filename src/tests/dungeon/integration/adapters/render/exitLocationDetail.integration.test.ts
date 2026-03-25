@@ -11,7 +11,7 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../../../../../dungeon/domain/outcome';
-import { isTableContext } from '../../../../../dungeon/helpers/outcomeTree';
+import { readTableContext } from '../../../../../dungeon/helpers/tableContext';
 
 function asEvent(node: DungeonOutcomeNode): OutcomeEventNode {
   if (node.type !== 'event') throw new Error('Expected event node');
@@ -28,16 +28,15 @@ describe('exit location detail rendering', () => {
     });
     const exits = asEvent(exitsNode);
     const pending = exits.children?.[0] as PendingRoll | undefined;
+    const pendingContext = readTableContext(pending?.context);
     const doorNode = resolveDoorExitLocation({
       roll: 18,
       context:
-        pending &&
-        isTableContext(pending.context) &&
-        pending.context.kind === 'exit'
+        pendingContext && pendingContext.kind === 'exit'
           ? {
-              index: pending.context.index,
-              total: pending.context.total,
-              origin: pending.context.origin,
+              index: pendingContext.index,
+              total: pendingContext.total,
+              origin: pendingContext.origin,
             }
           : undefined,
     });
@@ -128,16 +127,15 @@ describe('exit location detail rendering', () => {
     });
     const exits = asEvent(exitsNode);
     const pending = exits.children?.[0] as PendingRoll | undefined;
+    const pendingContext = readTableContext(pending?.context);
     const passageNode = resolvePassageExitLocation({
       roll: 9,
       context:
-        pending &&
-        isTableContext(pending.context) &&
-        pending.context.kind === 'exit'
+        pendingContext && pendingContext.kind === 'exit'
           ? {
-              index: pending.context.index,
-              total: pending.context.total,
-              origin: pending.context.origin,
+              index: pendingContext.index,
+              total: pendingContext.total,
+              origin: pendingContext.origin,
             }
           : undefined,
     });
@@ -145,16 +143,15 @@ describe('exit location detail rendering', () => {
     const directionPending = passage.children?.find(
       (child): child is PendingRoll => child.type === 'pending-roll'
     );
+    const directionContext = readTableContext(directionPending?.context);
     const direction = resolveExitDirection({
       roll: 20,
       context:
-        directionPending &&
-        isTableContext(directionPending.context) &&
-        directionPending.context.kind === 'exitDirection'
+        directionContext && directionContext.kind === 'exitDirection'
           ? {
-              index: directionPending.context.index,
-              total: directionPending.context.total,
-              origin: directionPending.context.origin,
+              index: directionContext.index,
+              total: directionContext.total,
+              origin: directionContext.origin,
             }
           : undefined,
     });

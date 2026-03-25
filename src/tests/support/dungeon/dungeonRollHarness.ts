@@ -8,10 +8,12 @@ import type {
   RollTraceItem,
 } from '../../../types/dungeon';
 import type { DungeonOutcomeNode } from '../../../dungeon/domain/outcome';
+import { normalizeOutcomeTree } from '../../../dungeon/helpers/outcomeTree';
 import {
-  isTableContext,
-  normalizeOutcomeTree,
-} from '../../../dungeon/helpers/outcomeTree';
+  cloneTableContext,
+  freezeTableContext,
+  readTableContext,
+} from '../../../dungeon/helpers/tableContext';
 import {
   buildRenderCache,
   selectMessagesForMode,
@@ -542,8 +544,7 @@ function selectPendingFromDirective(
 }
 
 function resolveContext(context: unknown): TableContext | undefined {
-  if (isTableContext(context)) return context;
-  return undefined;
+  return readTableContext(context);
 }
 
 function createSnapshot(nodes: DungeonRenderNode[]): RenderSnapshot {
@@ -743,23 +744,7 @@ function clonePreview(preview: DungeonTablePreview): DungeonTablePreview {
 }
 
 function cloneContext(context: TableContext): TableContext {
-  switch (context.kind) {
-    case 'doorChain':
-      return { kind: 'doorChain', existing: [...context.existing] };
-    case 'wandering':
-      return { kind: 'wandering', level: context.level };
-    case 'exits':
-      return {
-        kind: 'exits',
-        length: context.length,
-        width: context.width,
-        isRoom: context.isRoom,
-      };
-    case 'unusualSize':
-      return { kind: 'unusualSize', extra: context.extra };
-    default:
-      return context;
-  }
+  return cloneTableContext(context);
 }
 
 function cloneRollTrace(trace: DungeonRollTrace): DungeonRollTrace {
@@ -776,14 +761,7 @@ function cloneRollTrace(trace: DungeonRollTrace): DungeonRollTrace {
 }
 
 function freezeContext(context: TableContext): void {
-  switch (context.kind) {
-    case 'doorChain':
-      Object.freeze(context.existing);
-      break;
-    default:
-      break;
-  }
-  Object.freeze(context);
+  freezeTableContext(context);
 }
 
 function freezeTraceItem(item: RollTraceItem): void {

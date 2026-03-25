@@ -185,7 +185,10 @@ export type TableContext =
       kind: 'treasureSword';
       sword: TreasureSword;
       rollIndex?: number;
+      alignmentRoll?: number;
       languageRolls?: number[];
+      primaryAbilityRolls?: number[];
+      extraordinaryPowerRolls?: number[];
       dragonSlayerColorRoll?: number;
       luckBladeWishes?: number;
     }

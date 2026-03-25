@@ -13,9 +13,9 @@ import {
   applyResolvedOutcome,
   deriveDoorChainContext,
   findPendingWithAncestors,
-  isTableContext,
   normalizeOutcomeTree,
 } from './outcomeTree';
+import { isTableContext } from './tableContext';
 import {
   createOutcomeRenderSnapshot,
   type OutcomeRenderSnapshot,

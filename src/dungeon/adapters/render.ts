@@ -14,7 +14,7 @@ import {
   renderMonsterDetailNodes,
   renderMonsterCompactNodes,
 } from '../features/monsters/render';
-import { isTableContext } from '../helpers/outcomeTree';
+import { readTableContext } from '../helpers/tableContext';
 import type { AppendPreviewFn } from './render/shared';
 import {
   ALL_EVENT_PREVIEW_BUILDERS,
@@ -393,7 +393,7 @@ function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
   const base = String(p.table.split(':')[0]);
   const factory = PENDING_PREVIEW_FACTORIES[base];
   if (!factory) return undefined;
-  const context = isTableContext(p.context) ? p.context : undefined;
+  const context = readTableContext(p.context);
   return factory(p.table, context);
 }
 

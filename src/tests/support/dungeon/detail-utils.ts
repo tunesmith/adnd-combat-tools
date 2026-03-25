@@ -6,11 +6,10 @@ import type {
 } from '../../../dungeon/domain/outcome';
 import {
   applyResolvedOutcome,
-  isTableContext,
   normalizeOutcomeTree,
 } from '../../../dungeon/helpers/outcomeTree';
 import { applyOutcomeRoll } from '../../../dungeon/helpers/registry';
-import type { TableContext } from '../../../types/dungeon';
+import { readTableContext } from '../../../dungeon/helpers/tableContext';
 import { resolvePeriodicCheck } from '../../../dungeon/domain/resolvers';
 
 export function resolveSequenceWithRolls(
@@ -31,9 +30,7 @@ export function resolveSequenceWithRolls(
       tableId: pending.table,
       targetId: pending.id,
       roll,
-      context: isTableContext(pending.context)
-        ? (pending.context as TableContext)
-        : undefined,
+      context: readTableContext(pending.context),
     });
     if (!applied) {
       throw new Error(`No outcome available for table ${pending.table}`);
