@@ -36,6 +36,19 @@ const DungeonTablePreviewCard = ({
     ? styles['statusResolved']
     : styles['statusPending'];
 
+  const isPending = enablePreviewControls && !hasResolved;
+
+  const entries = (
+    <div className={styles['entries']}>
+      {preview.entries.map((entry, index) => (
+        <div className={styles['entryRow']} key={`${entry.range}-${index}`}>
+          <code className={styles['range']}>{entry.range}</code>
+          <span>{entry.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+
   const surface = (
     <>
       <div className={styles['header']}>
@@ -57,20 +70,11 @@ const DungeonTablePreviewCard = ({
         </div>
       </div>
 
-      {!isCollapsed && (
-        <div className={styles['entries']}>
-          {preview.entries.map((entry, index) => (
-            <div className={styles['entryRow']} key={`${entry.range}-${index}`}>
-              <code className={styles['range']}>{entry.range}</code>
-              <span>{entry.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {!isPending && !isCollapsed && entries}
 
       {isCollapsed && hasResolved && (
         <div className={styles['collapsedNote']}>
-          Resolved. Expand to review the full table.
+          Expand to review the full table.
         </div>
       )}
     </>
@@ -93,45 +97,67 @@ const DungeonTablePreviewCard = ({
       )}
 
       {!isCollapsed && enablePreviewControls && onOverrideChange && (
-        <div className={styles['controls']}>
-          <label className={styles['overrideField']}>
-            <span className={styles['overrideLabel']}>Override roll</span>
-            <input
-              className={styles['overrideInput']}
-              type="number"
-              min={1}
-              max={preview.sides}
-              value={overrideValue ?? ''}
-              onChange={(event) => {
-                const value = event.target.value
-                  ? Number(event.target.value)
-                  : undefined;
-                onOverrideChange(value);
-              }}
-            />
-            <span className={styles['overrideHint']}>
-              Enter a value to force the next result.
-            </span>
-          </label>
+        <>
+          <div className={styles['controls']}>
+            {isPending && (
+              <div className={styles['pendingLead']}>
+                Resolve this table now. AutoRoll is the fastest path; use an
+                override when you want a specific result.
+              </div>
+            )}
 
-          <div className={styles['actions']}>
-            <button
-              type="button"
-              className={`${styles['button']} ${styles['buttonSecondary']}`}
-              onClick={onUseOverride}
-              disabled={overrideValue === undefined}
-            >
-              Use override
-            </button>
-            <button
-              type="button"
-              className={`${styles['button']} ${styles['buttonPrimary']}`}
-              onClick={onAutoRoll}
-            >
-              AutoRoll
-            </button>
+            <div className={styles['actions']}>
+              <button
+                type="button"
+                className={`${styles['button']} ${styles['buttonPrimary']}`}
+                onClick={onAutoRoll}
+              >
+                AutoRoll
+              </button>
+            </div>
+
+            <div className={styles['overrideCluster']}>
+              <label className={styles['overrideField']}>
+                <span className={styles['overrideLabel']}>Override roll</span>
+                <input
+                  className={styles['overrideInput']}
+                  type="number"
+                  min={1}
+                  max={preview.sides}
+                  value={overrideValue ?? ''}
+                  onChange={(event) => {
+                    const value = event.target.value
+                      ? Number(event.target.value)
+                      : undefined;
+                    onOverrideChange(value);
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                className={`${styles['button']} ${styles['buttonSecondary']}`}
+                onClick={onUseOverride}
+                disabled={overrideValue === undefined}
+              >
+                Use override
+              </button>
+            </div>
           </div>
-        </div>
+
+          {isPending ? (
+            <details className={styles['oddsDisclosure']}>
+              <summary className={styles['oddsSummary']}>
+                Show odds table
+              </summary>
+              {entries}
+            </details>
+          ) : (
+            <div className={styles['overrideHint']}>
+              Use AutoRoll to reroll this table, or enter an override to force a
+              specific result.
+            </div>
+          )}
+        </>
       )}
     </div>
   );

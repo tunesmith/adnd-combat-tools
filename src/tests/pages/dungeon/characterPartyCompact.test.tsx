@@ -180,7 +180,7 @@ describe('character party compact rendering', () => {
     const markup = ReactDOMServer.renderToStaticMarkup(element);
     expect(markup).toContain('Resolved');
     expect(markup).not.toContain('Pending');
-    expect(markup).toContain('Resolved. Expand to review the full table.');
+    expect(markup).toContain('Expand to review the full table.');
     expect(markup).not.toContain('1-6');
   });
 });

@@ -148,13 +148,10 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     });
 
     // Enable Detail mode
-    const detailLabel = requireElement(
-      findLabel('Detail mode'),
-      'detail mode label'
-    );
+    const detailLabel = requireElement(findLabel('Detail'), 'detail label');
     const detailCheckbox = requireElement(
-      detailLabel.querySelector<HTMLInputElement>('input[type="checkbox"]'),
-      'detail mode checkbox'
+      detailLabel.querySelector<HTMLInputElement>('input[type="radio"]'),
+      'detail radio'
     );
     await act(async () => {
       detailCheckbox.click();
@@ -248,13 +245,10 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       ReactDOM.render(<DungeonIndexPage />, container as HTMLDivElement);
     });
 
-    const detailLabel = requireElement(
-      findLabel('Detail mode'),
-      'detail mode label'
-    );
+    const detailLabel = requireElement(findLabel('Detail'), 'detail label');
     const detailCheckbox = requireElement(
-      detailLabel.querySelector<HTMLInputElement>('input[type="checkbox"]'),
-      'detail mode checkbox'
+      detailLabel.querySelector<HTMLInputElement>('input[type="radio"]'),
+      'detail radio'
     );
     await act(async () => {
       detailCheckbox.click();

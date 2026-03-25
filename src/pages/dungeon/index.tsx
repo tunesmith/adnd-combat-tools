@@ -35,6 +35,7 @@ type FeedItem = {
   id: string;
   action: ActionKind;
   roll: number;
+  level: number;
   outcome?: DungeonOutcomeNode;
   renderCache: RenderCache;
   messages: DungeonRenderNode[];
@@ -52,8 +53,6 @@ const DungeonIndexPage = () => {
   const [dungeonLevel, setDungeonLevel] = useState<number>(1);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [resolved, setResolved] = useState<Record<string, boolean>>({});
-  const [showReferenceTables, setShowReferenceTables] =
-    useState<boolean>(false);
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
   const parsedRoll = useMemo(() => {
@@ -65,14 +64,6 @@ const DungeonIndexPage = () => {
   const isValid = useMemo(() => {
     return parsedRoll !== undefined && parsedRoll >= 1 && parsedRoll <= 20;
   }, [parsedRoll]);
-
-  const rootPreviewNodes = useMemo(
-    () => getRootPreviewNodes(action, dungeonLevel),
-    [action, dungeonLevel]
-  );
-
-  const referenceTitle =
-    action === 'door' ? 'Door starting table' : 'Passage starting table';
 
   const addToFeed = (act: ActionKind, roll: number) => {
     const step = runDungeonStep(act, {
@@ -92,6 +83,7 @@ const DungeonIndexPage = () => {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       action: act,
       roll,
+      level: dungeonLevel,
       outcome: step.outcome,
       renderCache,
       messages,
@@ -163,6 +155,23 @@ const DungeonIndexPage = () => {
                 </div>
 
                 <label>
+                  Dungeon level:
+                  <select
+                    className={styles['numberInput']}
+                    value={dungeonLevel}
+                    onChange={(e) =>
+                      setDungeonLevel(Number(e.target.value) || 1)
+                    }
+                  >
+                    {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
                   d20 Roll:
                   <input
                     className={styles['numberInput']}
@@ -194,93 +203,12 @@ const DungeonIndexPage = () => {
                 </button>
               </div>
             </section>
-
-            <section className={styles['controlSection']}>
-              <div className={styles['controlSectionHeader']}>
-                <div className={styles['controlSectionTitle']}>
-                  View and Context
-                </div>
-                <div className={styles['controlSectionHint']}>
-                  Detail mode exposes pending subtables and manual overrides.
-                </div>
-              </div>
-              <div className={styles['controlsRow']}>
-                <label className={styles['checkboxLabel']}>
-                  <input
-                    type="checkbox"
-                    checked={detailMode}
-                    onChange={(e) => setDetailMode(e.target.checked)}
-                  />
-                  Detail mode
-                </label>
-                <label>
-                  Dungeon level:
-                  <select
-                    className={styles['numberInput']}
-                    value={dungeonLevel}
-                    onChange={(e) =>
-                      setDungeonLevel(Number(e.target.value) || 1)
-                    }
-                  >
-                    {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </section>
           </div>
 
           {rollInput.length > 0 && !isValid && (
             <div className={styles['errorText']}>Enter an integer 1–20.</div>
           )}
         </form>
-
-        {detailMode && (
-          <section className={styles['referencePanel']}>
-            <div className={styles['referenceHeader']}>
-              <div>
-                <div className={styles['referenceEyebrow']}>
-                  Lookup reference
-                </div>
-                <div className={styles['referenceTitle']}>{referenceTitle}</div>
-                <div className={styles['referenceText']}>
-                  Keep the feed below as the main workflow. Open this when you
-                  want to inspect the top-level odds.
-                </div>
-              </div>
-              <button
-                type="button"
-                className={styles['button']}
-                onClick={() => setShowReferenceTables((prev) => !prev)}
-                aria-expanded={showReferenceTables}
-                aria-controls="dungeon-reference-body"
-              >
-                {showReferenceTables ? 'Hide reference' : 'Show reference'}
-              </button>
-            </div>
-            {showReferenceTables && (
-              <div
-                className={styles['referenceBody']}
-                id="dungeon-reference-body"
-              >
-                {rootPreviewNodes.map((n, i) =>
-                  renderNode(
-                    n,
-                    i,
-                    'root',
-                    overrides,
-                    setOverrides,
-                    setFeed,
-                    false
-                  )
-                )}
-              </div>
-            )}
-          </section>
-        )}
 
         <div
           role="status"
@@ -297,6 +225,42 @@ const DungeonIndexPage = () => {
         />
 
         <div className={styles['feed']}>
+          <div className={styles['feedHeader']}>
+            <div className={styles['feedModeDock']}>
+              <div
+                className={styles['segmentedControl']}
+                role="radiogroup"
+                aria-label="Feed view"
+              >
+                <label
+                  className={`${styles['segmentOption']} ${
+                    !detailMode ? styles['segmentOptionActive'] : ''
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="view-mode"
+                    checked={!detailMode}
+                    onChange={() => setDetailMode(false)}
+                  />
+                  Compact
+                </label>
+                <label
+                  className={`${styles['segmentOption']} ${
+                    detailMode ? styles['segmentOptionActive'] : ''
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="view-mode"
+                    checked={detailMode}
+                    onChange={() => setDetailMode(true)}
+                  />
+                  Detail
+                </label>
+              </div>
+            </div>
+          </div>
           {feed.length === 0 ? (
             <div className={styles['placeholder']}>
               Make a selection, enter 1–20 or click AutoRoll.
@@ -348,26 +312,44 @@ const DungeonIndexPage = () => {
                     const pendingTargetIds = collectPendingTargetIds(
                       item.outcome
                     );
-                    return selectMessagesForMode(
-                      item.action,
-                      detailMode,
-                      item.renderCache,
-                      item.messages
-                    ).map((m, i) =>
-                      renderNode(
-                        m,
-                        i,
-                        item.id,
-                        overrides,
-                        setOverrides,
-                        setFeed,
-                        true,
-                        collapsed,
-                        setCollapsed,
-                        resolved,
-                        setResolved,
-                        pendingTargetIds
-                      )
+                    const renderedNodes = [
+                      ...(detailMode
+                        ? getRootPreviewNodes(item.action, item.level).map(
+                            (node) => ({
+                              node:
+                                node.kind === 'table-preview'
+                                  ? { ...node, autoCollapse: true }
+                                  : node,
+                              enablePreviewControls: false,
+                            })
+                          )
+                        : []),
+                      ...selectMessagesForMode(
+                        item.action,
+                        detailMode,
+                        item.renderCache,
+                        item.messages
+                      ).map((node) => ({
+                        node,
+                        enablePreviewControls: true,
+                      })),
+                    ];
+                    return renderedNodes.map(
+                      ({ node, enablePreviewControls }, i) =>
+                        renderNode(
+                          node,
+                          i,
+                          item.id,
+                          overrides,
+                          setOverrides,
+                          setFeed,
+                          enablePreviewControls,
+                          collapsed,
+                          setCollapsed,
+                          resolved,
+                          setResolved,
+                          pendingTargetIds
+                        )
                     );
                   })()}
                 </div>

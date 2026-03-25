@@ -45,8 +45,8 @@
 }
 
 .controlSection {
-  flex: 1 1 320px;
-  min-width: 280px;
+  flex: 1 1 100%;
+  min-width: 0;
   padding: 0.85rem 1rem;
   border: 1px solid rgba(240, 239, 221, 0.18);
   background: rgba(0, 0, 0, 0.1);
@@ -89,12 +89,6 @@
   border: 1px solid var(--copper);
 }
 
-.checkboxLabel {
-  display: inline-flex;
-  gap: 0.35rem;
-  align-items: center;
-}
-
 .errorText {
   color: var(--goldenrod);
 }
@@ -113,10 +107,16 @@
 }
 
 .feed {
-  margin-top: 1rem;
+  margin-top: 0;
   background-color: rgba(0, 0, 0, 0.1);
   padding: 0.5rem;
   min-height: 3rem;
+}
+
+.feedHeader {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
 }
 
 .feedItem {
@@ -195,41 +195,43 @@
   margin: 0.35rem 0;
 }
 
-.referencePanel {
-  margin-top: 0.75rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(240, 239, 221, 0.18);
-  background: rgba(0, 0, 0, 0.12);
-}
-
-.referenceHeader {
+.feedModeDock {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
 }
 
-.referenceEyebrow {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.85;
+.segmentedControl {
+  display: inline-flex;
+  border: 2px solid var(--copper);
+  background: rgba(0, 0, 0, 0.14);
 }
 
-.referenceTitle {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-top: 0.15rem;
+.segmentOption {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--eggshell);
 }
 
-.referenceText {
-  font-size: 0.92rem;
-  margin-top: 0.25rem;
-  opacity: 0.85;
+.segmentOption + .segmentOption {
+  border-left: 1px solid rgba(240, 239, 221, 0.16);
 }
 
-.referenceBody {
-  margin-top: 0.75rem;
+.segmentOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmentOptionActive {
+  background: var(--eggshell);
+  color: var(--caput-martuum);
 }
 
 .toolbar {
@@ -251,7 +253,7 @@
     min-width: 0;
   }
 
-  .referenceHeader {
-    flex-direction: column;
+  .segmentOption {
+    min-width: 84px;
   }
 }
