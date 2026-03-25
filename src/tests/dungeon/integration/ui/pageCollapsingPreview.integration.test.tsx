@@ -188,6 +188,11 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     const feedItemEl = await waitFor(() =>
       document.querySelector<HTMLElement>('.feedItem')
     );
+    expect(document.body.textContent ?? '').toContain('Periodic Check');
+    expect(document.body.textContent ?? '').toContain('1–2');
+    expect(document.body.textContent ?? '').not.toContain(
+      'Expand to review the full table.'
+    );
     expect(feedItemEl?.textContent ?? '').toContain('Door Location');
   });
 

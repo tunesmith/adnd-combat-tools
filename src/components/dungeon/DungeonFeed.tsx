@@ -63,22 +63,30 @@ const DungeonFeed = ({
   setResolved,
   recordPreviewResolution,
 }: DungeonFeedProps) => {
+  const rootPreviewNodes = detailMode
+    ? getRootPreviewNodes(action, dungeonLevel)
+    : [];
+
+  const rootPreviewStack = detailMode ? (
+    <div className={styles['initialPreviewStack']}>
+      {rootPreviewNodes.map((node, index) => {
+        if (node.kind !== 'table-preview') return null;
+        return (
+          <DungeonTablePreviewCard
+            key={`${action}:${dungeonLevel}:${node.id}:${index}`}
+            preview={node}
+            enablePreviewControls={false}
+            statusLabelOverride={feed.length === 0 ? 'Start' : undefined}
+            statusToneOverride={feed.length === 0 ? 'pending' : 'reference'}
+          />
+        );
+      })}
+    </div>
+  ) : null;
+
   if (feed.length === 0) {
     return detailMode ? (
-      <div className={styles['initialPreviewStack']}>
-        {getRootPreviewNodes(action, dungeonLevel).map((node, index) => {
-          if (node.kind !== 'table-preview') return null;
-          return (
-            <DungeonTablePreviewCard
-              key={`${action}:${dungeonLevel}:${node.id}:${index}`}
-              preview={node}
-              enablePreviewControls={false}
-              statusLabelOverride="Start"
-              statusToneOverride="pending"
-            />
-          );
-        })}
-      </div>
+      rootPreviewStack
     ) : (
       <div className={styles['placeholder']}>
         Make a selection, enter 1–20 or click AutoRoll.
@@ -88,6 +96,7 @@ const DungeonFeed = ({
 
   return (
     <>
+      {rootPreviewStack}
       {feed.map((item) => (
         <div className={styles['feedItem']} key={item.id}>
           <div className={styles['itemHeader']}>
@@ -133,17 +142,6 @@ const DungeonFeed = ({
             {(() => {
               const pendingTargetIds = collectPendingTargetIds(item.outcome);
               const renderedNodes = [
-                ...(detailMode
-                  ? getRootPreviewNodes(item.action, item.level).map(
-                      (node) => ({
-                        node:
-                          node.kind === 'table-preview'
-                            ? { ...node, autoCollapse: true }
-                            : node,
-                        enablePreviewControls: false,
-                      })
-                    )
-                  : []),
                 ...selectMessagesForMode(
                   item.action,
                   detailMode,
