@@ -10,6 +10,7 @@ import {
   buildEnvironmentWanderingLevelContext,
   createEnvironmentDungeonLevelContextHandlers,
 } from '../shared';
+import { readTableContextOfKind } from '../../../helpers/tableContext';
 import {
   resolveUnusualShape,
   resolveUnusualSize,
@@ -29,15 +30,9 @@ const unusualShapeContextHandlers =
 function readUnusualSizeContext(
   context: unknown
 ): { extra: number; isRoom?: boolean } | undefined {
-  if (!context || typeof context !== 'object') return undefined;
-  const kind = (context as { kind?: unknown }).kind;
-  if (kind !== 'unusualSize') return undefined;
-  const extra = (context as { extra?: unknown }).extra;
-  const isRoom = (context as { isRoom?: unknown }).isRoom;
-  if (typeof extra !== 'number') return undefined;
-  const normalizedIsRoom =
-    isRoom === undefined || typeof isRoom === 'boolean' ? isRoom : undefined;
-  return { extra, isRoom: normalizedIsRoom };
+  const parsed = readTableContextOfKind(context, 'unusualSize');
+  if (!parsed) return undefined;
+  return { extra: parsed.extra, isRoom: parsed.isRoom };
 }
 
 function readIsRoomFromNode(node: OutcomeEventNode): boolean | undefined {
@@ -46,15 +41,8 @@ function readIsRoomFromNode(node: OutcomeEventNode): boolean | undefined {
   if (node.event.kind === 'numberOfExits') return node.event.context.isRoom;
   for (const child of node.children ?? []) {
     if (child.type === 'pending-roll') {
-      const context = child.context;
-      if (
-        context &&
-        typeof context === 'object' &&
-        (context as { kind?: unknown }).kind === 'exits' &&
-        typeof (context as { isRoom?: unknown }).isRoom === 'boolean'
-      ) {
-        return (context as { isRoom: boolean }).isRoom;
-      }
+      const exitsContext = readTableContextOfKind(child.context, 'exits');
+      if (exitsContext) return exitsContext.isRoom;
       continue;
     }
     const childIsRoom = readIsRoomFromNode(child);

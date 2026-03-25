@@ -7,6 +7,7 @@ import type { TableContext } from '../../../types/dungeon';
 import type { TablePreviewFactory } from '../../adapters/render/shared';
 import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
 import { buildEventPreviewFromFactory } from '../shared';
+import { readTableContextOfKind } from '../../helpers/tableContext';
 
 export function formatOrdinal(level: number): string {
   const remainder = level % 10;
@@ -211,20 +212,13 @@ function readTreasureMagicContextFromAncestors(
 function readTreasureMagicContextFromContext(
   context: unknown
 ): TreasureMagicContext | undefined {
-  if (!context || typeof context !== 'object') return undefined;
-  const kind = (context as { kind?: unknown }).kind;
-  if (kind !== 'treasureMagic') return undefined;
-  const raw = context as {
-    level?: unknown;
-    treasureRoll?: unknown;
-    rollIndex?: unknown;
+  const parsed = readTableContextOfKind(context, 'treasureMagic');
+  if (!parsed) return undefined;
+  return {
+    level: parsed.level,
+    treasureRoll: parsed.treasureRoll,
+    rollIndex: parsed.rollIndex,
   };
-  const level = typeof raw.level === 'number' ? raw.level : undefined;
-  const treasureRoll =
-    typeof raw.treasureRoll === 'number' ? raw.treasureRoll : undefined;
-  const rollIndex =
-    typeof raw.rollIndex === 'number' ? raw.rollIndex : undefined;
-  return { level, treasureRoll, rollIndex };
 }
 
 function buildTreasureMagicEventContext(

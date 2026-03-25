@@ -1,6 +1,7 @@
 import type { DungeonTableDefinition, DetailRenderer } from '../../types';
 import { markContextualResolution, wrapResolver } from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
+import { readTableContextOfKind } from '../../../helpers/tableContext';
 import { createTreasureEventPreviewBuilder } from '../shared';
 import { resolveTreasure } from './treasureResolvers';
 import {
@@ -52,7 +53,7 @@ export const treasureTables: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildTreasurePreview,
     buildEventPreview: createTreasureEventPreviewBuilder(buildTreasurePreview),
     registry: ({ roll, context }) => {
-      const ctx = context && context.kind === 'treasure' ? context : undefined;
+      const ctx = readTableContextOfKind(context, 'treasure');
       return resolveTreasure({
         roll,
         level: ctx?.level ?? 1,
@@ -62,28 +63,12 @@ export const treasureTables: ReadonlyArray<DungeonTableDefinition> = [
       });
     },
     resolvePending: (pending, ancestors) => {
-      const raw = pending.context;
-      const ctx =
-        raw &&
-        typeof raw === 'object' &&
-        (raw as { kind?: unknown }).kind === 'treasure'
-          ? (raw as {
-              level?: unknown;
-              withMonster?: unknown;
-              rollIndex?: unknown;
-              totalRolls?: unknown;
-            })
-          : undefined;
+      const ctx = readTableContextOfKind(pending.context, 'treasure');
       const level =
-        (ctx && typeof ctx.level === 'number' ? ctx.level : undefined) ??
-        deriveDungeonLevelFromAncestors(ancestors) ??
-        1;
-      const withMonster =
-        ctx && typeof ctx.withMonster === 'boolean' ? ctx.withMonster : false;
-      const rollIndex =
-        ctx && typeof ctx.rollIndex === 'number' ? ctx.rollIndex : undefined;
-      const totalRolls =
-        ctx && typeof ctx.totalRolls === 'number' ? ctx.totalRolls : undefined;
+        ctx?.level ?? deriveDungeonLevelFromAncestors(ancestors) ?? 1;
+      const withMonster = ctx?.withMonster ?? false;
+      const rollIndex = ctx?.rollIndex;
+      const totalRolls = ctx?.totalRolls;
       return resolveTreasure({ level, withMonster, rollIndex, totalRolls });
     },
   }),

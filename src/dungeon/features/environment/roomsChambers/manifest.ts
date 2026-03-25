@@ -12,6 +12,7 @@ import {
   deriveEnvironmentDungeonLevel,
   deriveEnvironmentDungeonLevelFromAncestors,
 } from '../shared';
+import { readTableContextOfKind } from '../../../helpers/tableContext';
 import { ChamberRoomContents } from './roomsChambersTable';
 import {
   resolveChamberDimensions,
@@ -42,26 +43,23 @@ const chamberRoomContentsContextHandlers =
 function readChamberDimensionsContext(
   context: unknown
 ): { forcedContents?: ChamberRoomContents; level?: number } | undefined {
-  if (!context || typeof context !== 'object') return undefined;
-  const kind = (context as { kind?: unknown }).kind;
-  if (kind !== 'chamberDimensions') return undefined;
-  const forced = (context as { forcedContents?: unknown }).forcedContents;
-  const levelValue = (context as { level?: unknown }).level;
+  const parsed = readTableContextOfKind(context, 'chamberDimensions');
+  if (!parsed) return undefined;
   const result: {
     forcedContents?: ChamberRoomContents;
     level?: number;
   } = {};
-  if (typeof forced === 'number') {
-    const numeric = forced;
+  if (typeof parsed.forcedContents === 'number') {
+    const numeric = parsed.forcedContents;
     if (
       numeric >= ChamberRoomContents.Empty &&
       numeric <= ChamberRoomContents.Treasure
     ) {
-      result.forcedContents = numeric as ChamberRoomContents;
+      result.forcedContents = numeric;
     }
   }
-  if (typeof levelValue === 'number' && Number.isFinite(levelValue)) {
-    result.level = levelValue;
+  if (typeof parsed.level === 'number' && Number.isFinite(parsed.level)) {
+    result.level = parsed.level;
   }
   return result;
 }

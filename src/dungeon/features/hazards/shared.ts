@@ -1,13 +1,12 @@
-import type { TableContext } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
+import { readTableContextOfKind } from '../../helpers/tableContext';
 
 export function readHazardDungeonLevel(
-  context: TableContext | undefined,
+  context: unknown,
   ancestors: OutcomeEventNode[]
 ): number {
-  if (context?.kind === 'wandering') {
-    return context.level;
-  }
+  const wanderingContext = readTableContextOfKind(context, 'wandering');
+  if (wanderingContext) return wanderingContext.level;
   for (let index = ancestors.length - 1; index >= 0; index -= 1) {
     const ancestor = ancestors[index];
     if (!ancestor) continue;

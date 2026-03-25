@@ -1,9 +1,9 @@
-import type { TableContext } from '../../../types/dungeon';
 import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import { readTableContextOfKind } from '../../helpers/tableContext';
 
 type MonsterDungeonLevelContext = {
   dungeonLevel?: number;
@@ -79,7 +79,8 @@ function readDungeonLevelFromContextOrId(
   id: string,
   fallback?: number
 ): number | undefined {
-  if (isMonsterDungeonLevelContext(context)) return context.level;
+  const wanderingContext = readTableContextOfKind(context, 'wandering');
+  if (wanderingContext) return wanderingContext.level;
 
   const parts = id.split(':');
   if (parts.length >= 2) {
@@ -88,15 +89,4 @@ function readDungeonLevelFromContextOrId(
   }
 
   return fallback;
-}
-
-function isMonsterDungeonLevelContext(
-  context: unknown
-): context is Extract<TableContext, { kind: 'wandering' }> {
-  return (
-    !!context &&
-    typeof context === 'object' &&
-    (context as { kind?: unknown }).kind === 'wandering' &&
-    typeof (context as { level?: unknown }).level === 'number'
-  );
 }

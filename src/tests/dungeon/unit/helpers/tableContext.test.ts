@@ -2,6 +2,7 @@ import {
   cloneTableContext,
   freezeTableContext,
   readTableContext,
+  readTableContextOfKind,
 } from '../../../../dungeon/helpers/tableContext';
 import type { TableContext } from '../../../../types/dungeon';
 
@@ -59,5 +60,18 @@ describe('tableContext helpers', () => {
     expect(Object.isFrozen(cloned.languageRolls ?? [])).toBe(true);
     expect(Object.isFrozen(cloned.primaryAbilityRolls ?? [])).toBe(true);
     expect(Object.isFrozen(cloned.extraordinaryPowerRolls ?? [])).toBe(true);
+  });
+
+  test('reads a specific context kind from unknown input', () => {
+    expect(
+      readTableContextOfKind({ kind: 'wandering', level: 4 }, 'wandering')
+    ).toEqual({
+      kind: 'wandering',
+      level: 4,
+    });
+
+    expect(
+      readTableContextOfKind({ kind: 'wandering', level: 4 }, 'exits')
+    ).toBeUndefined();
   });
 });

@@ -4,9 +4,16 @@ import type { TablePreviewFactory } from '../adapters/render/shared';
 import type { DetailRenderer, DungeonTableDefinition } from './types';
 
 export const wrapResolver =
-  <T>(resolver: (options?: T) => DungeonOutcomeNode) =>
+  <T>(
+    resolver: (options?: T) => DungeonOutcomeNode
+  ): ((options?: unknown) => DungeonOutcomeNode) =>
   (options?: unknown) =>
     resolver(options as T);
+
+export const withDefaultResolverOptions =
+  <T>(resolver: (options: T) => DungeonOutcomeNode, defaults: T) =>
+  (options?: unknown) =>
+    resolver((options ?? defaults) as T);
 
 export function markContextualResolution<TOptions>(
   definition: DungeonTableDefinition<TOptions> & {

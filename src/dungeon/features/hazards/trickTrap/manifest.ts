@@ -1,5 +1,4 @@
 import type { DungeonTableDefinition } from '../../types';
-import type { TableContext } from '../../../../types/dungeon';
 import {
   buildEventPreviewFromFactory,
   markContextualResolution,
@@ -39,10 +38,7 @@ export const trickTrapTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending, ancestors) =>
       resolveTrickTrap({
-        level: readHazardDungeonLevel(
-          pending.context as TableContext | undefined,
-          ancestors
-        ),
+        level: readHazardDungeonLevel(pending.context, ancestors),
       }),
   }),
 ];

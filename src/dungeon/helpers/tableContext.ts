@@ -201,6 +201,21 @@ export function readTableContext(context: unknown): TableContext | undefined {
   return isTableContext(context) ? context : undefined;
 }
 
+function isTableContextOfKind<K extends TableContextKind>(
+  context: unknown,
+  kind: K
+): context is TableContextOf<K> {
+  const parsed = readTableContext(context);
+  return parsed !== undefined && parsed.kind === kind;
+}
+
+export function readTableContextOfKind<K extends TableContextKind>(
+  context: unknown,
+  kind: K
+): TableContextOf<K> | undefined {
+  return isTableContextOfKind(context, kind) ? context : undefined;
+}
+
 export function cloneTableContext(context: TableContext): TableContext {
   switch (context.kind) {
     case 'doorChain':

@@ -4,6 +4,7 @@ import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import { readTableContext } from '../../helpers/tableContext';
 
 type EnvironmentDungeonLevelResolverOptions = {
   roll?: number;
@@ -11,18 +12,19 @@ type EnvironmentDungeonLevelResolverOptions = {
 };
 
 function readEnvironmentDungeonLevel(context: unknown): number | undefined {
-  if (!context || typeof context !== 'object') return undefined;
-  const kind = (context as { kind?: unknown }).kind;
-  if (
-    (kind === 'wandering' ||
-      kind === 'chamberContents' ||
-      kind === 'chamberDimensions' ||
-      kind === 'treasure') &&
-    typeof (context as { level?: unknown }).level === 'number'
-  ) {
-    return (context as { level: number }).level;
+  const parsed = readTableContext(context);
+  if (!parsed) return undefined;
+
+  switch (parsed.kind) {
+    case 'wandering':
+    case 'chamberContents':
+    case 'treasure':
+      return parsed.level;
+    case 'chamberDimensions':
+      return parsed.level;
+    default:
+      return undefined;
   }
-  return undefined;
 }
 
 function readEnvironmentDungeonLevelFromId(

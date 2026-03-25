@@ -3,7 +3,6 @@ import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../../domain/outcome';
-import type { TableContext } from '../../../../types/dungeon';
 import {
   renderPeriodicCheckDetail,
   renderPeriodicCheckCompact,
@@ -20,6 +19,7 @@ import {
   resolvePeriodicCheck,
   resolveWanderingWhereFrom,
 } from '../../../domain/resolvers';
+import { readTableContextOfKind } from '../../../helpers/tableContext';
 import { resolveRoomDimensions } from '../../environment/roomsChambers/roomsChambersResolvers';
 import { withoutAppend } from '../shared';
 import {
@@ -30,19 +30,14 @@ import {
 
 const resolvePendingNavigationEntry = (
   pending: string,
-  context: TableContext | undefined,
+  context: unknown,
   ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined => {
   const base = pending.split(':')[0] ?? pending;
   switch (base) {
     case 'roomDimensions': {
       const level =
-        context &&
-        (context as { kind?: string; level?: number }).kind ===
-          'chamberDimensions' &&
-        true
-          ? (context as { level?: number }).level
-          : 1;
+        readTableContextOfKind(context, 'chamberDimensions')?.level ?? 1;
       return resolveRoomDimensions({ level });
     }
     case 'wanderingWhereFrom':
@@ -55,12 +50,11 @@ const resolvePendingNavigationEntry = (
 };
 
 function readWanderingLevel(
-  context: TableContext | undefined,
+  context: unknown,
   ancestors: OutcomeEventNode[]
 ): number {
-  if (context?.kind === 'wandering') {
-    return context.level;
-  }
+  const wanderingContext = readTableContextOfKind(context, 'wandering');
+  if (wanderingContext) return wanderingContext.level;
   for (let index = ancestors.length - 1; index >= 0; index -= 1) {
     const ancestor = ancestors[index];
     if (!ancestor) continue;
@@ -80,12 +74,11 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderPeriodicCheckDetail,
       renderCompact: withoutAppend(renderPeriodicCheckCompact),
     },
-    registry: ({ roll, context }) => {
-      const c = (context || {}) as { kind?: string; level?: number };
-      const level =
-        c.kind === 'wandering' && typeof c.level === 'number' ? c.level : 1;
-      return resolvePeriodicCheck({ roll, level });
-    },
+    registry: ({ roll, context }) =>
+      resolvePeriodicCheck({
+        roll,
+        level: readTableContextOfKind(context, 'wandering')?.level ?? 1,
+      }),
   }),
   {
     id: 'doorBeyond',
@@ -112,13 +105,9 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
     registry: ({ roll, context }) =>
       resolveWanderingWhereFrom({
         roll,
-        level: context?.kind === 'wandering' ? context.level : 1,
+        level: readTableContextOfKind(context, 'wandering')?.level ?? 1,
       }),
     resolvePending: (pending, ancestors) =>
-      resolvePendingNavigationEntry(
-        pending.table,
-        pending.context as TableContext | undefined,
-        ancestors
-      ),
+      resolvePendingNavigationEntry(pending.table, pending.context, ancestors),
   }),
 ];

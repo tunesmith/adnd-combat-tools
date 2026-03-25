@@ -42,8 +42,29 @@ import { withoutAppend } from '../shared';
 import {
   buildEventPreviewFromFactory,
   markContextualResolution,
+  withDefaultResolverOptions,
   wrapResolver,
 } from '../../shared';
+import { readTableContextOfKind } from '../../../helpers/tableContext';
+
+type EgressResolverOptions = Parameters<typeof resolveEgress>[0];
+type NumberOfExitsResolverOptions = Parameters<typeof resolveNumberOfExits>[0];
+type ExitLocationContext = NonNullable<
+  NonNullable<Parameters<typeof resolvePassageExitLocation>[0]>['context']
+>;
+type ExitDirectionContext = NonNullable<
+  NonNullable<Parameters<typeof resolveExitDirection>[0]>['context']
+>;
+type ExitAlternativeContext = NonNullable<
+  NonNullable<Parameters<typeof resolveExitAlternative>[0]>['context']
+>;
+
+const DEFAULT_EGRESS_OPTIONS: EgressResolverOptions = { which: 'one' };
+const DEFAULT_NUMBER_OF_EXITS_OPTIONS: NumberOfExitsResolverOptions = {
+  length: 10,
+  width: 10,
+  isRoom: false,
+};
 
 export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -64,12 +85,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   markContextualResolution({
     id: 'egress',
     heading: 'Egress',
-    resolver: (options) =>
-      resolveEgress(
-        (options as { roll?: number; which: 'one' | 'two' | 'three' }) ?? {
-          which: 'one',
-        }
-      ),
+    resolver: withDefaultResolverOptions(resolveEgress, DEFAULT_EGRESS_OPTIONS),
     renderers: {
       renderDetail: renderEgressDetail,
       renderCompact: withoutAppend(renderEgressCompact),
@@ -95,15 +111,10 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   markContextualResolution({
     id: 'numberOfExits',
     heading: 'Exits',
-    resolver: (options) =>
-      resolveNumberOfExits(
-        (options as {
-          roll?: number;
-          length: number;
-          width: number;
-          isRoom: boolean;
-        }) ?? { length: 10, width: 10, isRoom: false }
-      ),
+    resolver: withDefaultResolverOptions(
+      resolveNumberOfExits,
+      DEFAULT_NUMBER_OF_EXITS_OPTIONS
+    ),
     renderers: {
       renderDetail: renderNumberOfExitsDetail,
       renderCompact: withoutAppend(renderNumberOfExitsCompact),
@@ -122,25 +133,12 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
           })
         : undefined,
     registry: ({ roll, context }) => {
-      const ctx = readExitsContext(context);
-      return resolveNumberOfExits({
-        roll,
-        length: ctx?.length ?? 10,
-        width: ctx?.width ?? 10,
-        isRoom: ctx?.isRoom ?? false,
-      });
-    },
-    resolvePending: (pending) => {
-      const ctx = readExitsContextLocal(
-        pending.context as TableContext | undefined
+      return resolveNumberOfExits(
+        buildNumberOfExitsResolverOptions(context, roll)
       );
-      return resolveNumberOfExits({
-        roll: undefined,
-        length: ctx?.length ?? 10,
-        width: ctx?.width ?? 10,
-        isRoom: ctx?.isRoom ?? false,
-      });
     },
+    resolvePending: (pending) =>
+      resolveNumberOfExits(buildNumberOfExitsResolverOptions(pending.context)),
   }),
   markContextualResolution({
     id: 'passageExitLocation',
@@ -164,7 +162,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending) =>
       resolvePassageExitLocation({
-        context: readExitContext(pending.context as TableContext | undefined),
+        context: readExitContext(pending.context),
       }),
   }),
   markContextualResolution({
@@ -189,7 +187,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending) =>
       resolveDoorExitLocation({
-        context: readExitContext(pending.context as TableContext | undefined),
+        context: readExitContext(pending.context),
       }),
   }),
   markContextualResolution({
@@ -219,9 +217,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending) =>
       resolveExitDirection({
-        context: readExitDirectionContext(
-          pending.context as TableContext | undefined
-        ),
+        context: readExitDirectionContext(pending.context),
       }),
   }),
   markContextualResolution({
@@ -252,9 +248,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending) =>
       resolveExitAlternative({
-        context: readExitAlternativeContext(
-          pending.context as TableContext | undefined
-        ),
+        context: readExitAlternativeContext(pending.context),
       }),
   }),
   {
@@ -274,65 +268,63 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
   },
 ];
 
-function readExitsContextLocal(
-  context: TableContext | undefined
-): { length: number; width: number; isRoom: boolean } | undefined {
-  if (!context || typeof context !== 'object') return undefined;
-  if ((context as { kind?: unknown }).kind !== 'exits') return undefined;
-  const { length, width, isRoom } = context as {
-    length?: number;
-    width?: number;
-    isRoom?: boolean;
-  };
-  if (
-    typeof length !== 'number' ||
-    typeof width !== 'number' ||
-    typeof isRoom !== 'boolean'
-  ) {
-    return undefined;
-  }
-  return { length, width, isRoom };
-}
-
 function readExitsContext(
-  context: TableContext | undefined
-): { length: number; width: number; isRoom: boolean } | undefined {
-  if (!context || context.kind !== 'exits') return undefined;
+  context: unknown
+): NumberOfExitsResolverOptions | undefined {
+  const exitsContext = readTableContextOfKind(context, 'exits');
+  if (!exitsContext) return undefined;
   return {
-    length: context.length,
-    width: context.width,
-    isRoom: context.isRoom,
+    length: exitsContext.length,
+    width: exitsContext.width,
+    isRoom: exitsContext.isRoom,
   };
 }
 
-function readExitContext(
-  context: TableContext | undefined
-): { index?: number; total?: number; origin?: 'room' | 'chamber' } | undefined {
-  if (!context || context.kind !== 'exit') return undefined;
+function readExitContext(context: unknown): ExitLocationContext | undefined {
+  const exitContext = readTableContextOfKind(context, 'exit');
+  if (!exitContext) return undefined;
   return {
-    index: context.index,
-    total: context.total,
-    origin: context.origin,
+    index: exitContext.index,
+    total: exitContext.total,
+    origin: exitContext.origin,
   };
 }
 
 function readExitDirectionContext(
-  context: TableContext | undefined
-): { index?: number; total?: number; origin?: 'room' | 'chamber' } | undefined {
-  if (!context || context.kind !== 'exitDirection') return undefined;
+  context: unknown
+): ExitDirectionContext | undefined {
+  const exitDirectionContext = readTableContextOfKind(context, 'exitDirection');
+  if (!exitDirectionContext) return undefined;
   return {
-    index: context.index,
-    total: context.total,
-    origin: context.origin,
+    index: exitDirectionContext.index,
+    total: exitDirectionContext.total,
+    origin: exitDirectionContext.origin,
   };
 }
 
 function readExitAlternativeContext(
-  context: TableContext | undefined
-): { exitType?: 'door' | 'passage' } | undefined {
-  if (!context || context.kind !== 'exitAlternative') return undefined;
+  context: unknown
+): ExitAlternativeContext | undefined {
+  const exitAlternativeContext = readTableContextOfKind(
+    context,
+    'exitAlternative'
+  );
+  if (!exitAlternativeContext) return undefined;
   return {
-    exitType: context.exitType,
+    exitType: exitAlternativeContext.exitType,
+  };
+}
+
+function buildNumberOfExitsResolverOptions(
+  context: unknown,
+  roll?: number
+): NumberOfExitsResolverOptions {
+  const exitsContext = readExitsContext(context);
+  return {
+    roll,
+    length: exitsContext?.length ?? DEFAULT_NUMBER_OF_EXITS_OPTIONS.length,
+    width: exitsContext?.width ?? DEFAULT_NUMBER_OF_EXITS_OPTIONS.width,
+    isRoom: exitsContext?.isRoom ?? DEFAULT_NUMBER_OF_EXITS_OPTIONS.isRoom,
   };
 }
 

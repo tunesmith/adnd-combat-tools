@@ -6,6 +6,7 @@ import {
 } from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { TableContext } from '../../../../types/dungeon';
+import { readTableContextOfKind } from '../../../helpers/tableContext';
 import {
   resolveTreasureSwords,
   resolveTreasureSwordAlignment,
@@ -113,48 +114,22 @@ function readTreasureSwordContext(
   extraordinaryPowerRolls?: number[];
   dragonSlayerColorRoll?: number;
 } {
-  if (
-    context &&
-    typeof context === 'object' &&
-    (context as { kind?: unknown }).kind === 'treasureSword'
-  ) {
-    const swordValue = (context as { sword?: unknown }).sword;
-    const rollIndexValue = (context as { rollIndex?: unknown }).rollIndex;
-    const alignmentRollValue = (context as { alignmentRoll?: unknown })
-      .alignmentRoll;
-    const languageRollsValue = (context as { languageRolls?: unknown })
-      .languageRolls;
-    const primaryAbilityRollsValue = (
-      context as { primaryAbilityRolls?: unknown }
-    ).primaryAbilityRolls;
-    const extraordinaryPowerRollsValue = (
-      context as { extraordinaryPowerRolls?: unknown }
-    ).extraordinaryPowerRolls;
-    const dragonSlayerColorRollValue = (
-      context as { dragonSlayerColorRoll?: unknown }
-    ).dragonSlayerColorRoll;
+  const swordContext = readTableContextOfKind(context, 'treasureSword');
+  if (swordContext) {
     return {
-      sword:
-        typeof swordValue === 'number'
-          ? (swordValue as TreasureSword)
-          : findSwordFromAncestors(ancestors),
-      rollIndex:
-        typeof rollIndexValue === 'number' ? rollIndexValue : undefined,
-      alignmentRoll:
-        typeof alignmentRollValue === 'number' ? alignmentRollValue : undefined,
-      languageRolls: Array.isArray(languageRollsValue)
-        ? [...(languageRollsValue as number[])]
+      sword: swordContext.sword ?? findSwordFromAncestors(ancestors),
+      rollIndex: swordContext.rollIndex,
+      alignmentRoll: swordContext.alignmentRoll,
+      languageRolls: swordContext.languageRolls
+        ? [...swordContext.languageRolls]
         : undefined,
-      primaryAbilityRolls: Array.isArray(primaryAbilityRollsValue)
-        ? [...(primaryAbilityRollsValue as number[])]
+      primaryAbilityRolls: swordContext.primaryAbilityRolls
+        ? [...swordContext.primaryAbilityRolls]
         : undefined,
-      extraordinaryPowerRolls: Array.isArray(extraordinaryPowerRollsValue)
-        ? [...(extraordinaryPowerRollsValue as number[])]
+      extraordinaryPowerRolls: swordContext.extraordinaryPowerRolls
+        ? [...swordContext.extraordinaryPowerRolls]
         : undefined,
-      dragonSlayerColorRoll:
-        typeof dragonSlayerColorRollValue === 'number'
-          ? dragonSlayerColorRollValue
-          : undefined,
+      dragonSlayerColorRoll: swordContext.dragonSlayerColorRoll,
     };
   }
   return { sword: findSwordFromAncestors(ancestors) };
@@ -165,19 +140,11 @@ function readSwordPrimaryAbilityContext(context: unknown): {
   rollIndex?: number;
   tableVariant?: 'standard' | 'restricted';
 } {
-  if (!context || typeof context !== 'object') {
-    return {};
-  }
-  const candidate = context as {
-    slotKey?: unknown;
-    rollIndex?: unknown;
-    tableVariant?: unknown;
-    ignoreHigh?: unknown;
-  };
-  const slotKey =
-    typeof candidate.slotKey === 'string' ? candidate.slotKey : undefined;
-  const rollIndex =
-    typeof candidate.rollIndex === 'number' ? candidate.rollIndex : undefined;
+  const candidate = readTableContextOfKind(
+    context,
+    'treasureSwordPrimaryAbility'
+  );
+  if (!candidate) return {};
   let tableVariant: 'standard' | 'restricted' | undefined;
   if (
     candidate.tableVariant === 'restricted' ||
@@ -187,7 +154,11 @@ function readSwordPrimaryAbilityContext(context: unknown): {
   } else if (candidate.tableVariant === 'standard') {
     tableVariant = 'standard';
   }
-  return { slotKey, rollIndex, tableVariant };
+  return {
+    slotKey: candidate.slotKey,
+    rollIndex: candidate.rollIndex,
+    tableVariant,
+  };
 }
 
 function readSwordExtraordinaryPowerContext(context: unknown): {
@@ -196,20 +167,11 @@ function readSwordExtraordinaryPowerContext(context: unknown): {
   tableVariant?: 'standard' | 'restricted';
   alignment?: TreasureSwordAlignment;
 } {
-  if (!context || typeof context !== 'object') {
-    return {};
-  }
-  const candidate = context as {
-    slotKey?: unknown;
-    rollIndex?: unknown;
-    tableVariant?: unknown;
-    ignoreHigh?: unknown;
-    alignment?: unknown;
-  };
-  const slotKey =
-    typeof candidate.slotKey === 'string' ? candidate.slotKey : undefined;
-  const rollIndex =
-    typeof candidate.rollIndex === 'number' ? candidate.rollIndex : undefined;
+  const candidate = readTableContextOfKind(
+    context,
+    'treasureSwordExtraordinaryPower'
+  );
+  if (!candidate) return {};
   let tableVariant: 'standard' | 'restricted' | undefined;
   if (
     candidate.tableVariant === 'restricted' ||
@@ -219,11 +181,12 @@ function readSwordExtraordinaryPowerContext(context: unknown): {
   } else if (candidate.tableVariant === 'standard') {
     tableVariant = 'standard';
   }
-  const alignment =
-    typeof candidate.alignment === 'number'
-      ? (candidate.alignment as TreasureSwordAlignment)
-      : undefined;
-  return { slotKey, rollIndex, tableVariant, alignment };
+  return {
+    slotKey: candidate.slotKey,
+    rollIndex: candidate.rollIndex,
+    tableVariant,
+    alignment: candidate.alignment,
+  };
 }
 
 function parseNodeContextFromId(
@@ -495,48 +458,15 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildTreasureSwordUnusualPreview,
     buildEventPreview: buildTreasureSwordUnusualEventPreview,
     registry: ({ roll, context }) => {
-      let sword: TreasureSword | undefined;
-      let rollIndex: number | undefined;
-      let languageRolls: number[] | undefined;
-      let primaryAbilityRolls: number[] | undefined;
-      let extraordinaryPowerRolls: number[] | undefined;
-      let dragonSlayerColorRoll: number | undefined;
-      if (context && typeof context === 'object') {
-        const candidate = context as {
-          sword?: unknown;
-          rollIndex?: unknown;
-          languageRolls?: unknown;
-          primaryAbilityRolls?: unknown;
-          extraordinaryPowerRolls?: unknown;
-          dragonSlayerColorRoll?: unknown;
-        };
-        if (typeof candidate.sword === 'number') {
-          sword = candidate.sword as TreasureSword;
-        }
-        if (typeof candidate.rollIndex === 'number') {
-          rollIndex = candidate.rollIndex;
-        }
-        if (Array.isArray(candidate.languageRolls)) {
-          languageRolls = [...candidate.languageRolls];
-        }
-        if (Array.isArray(candidate.primaryAbilityRolls)) {
-          primaryAbilityRolls = [...candidate.primaryAbilityRolls];
-        }
-        if (Array.isArray(candidate.extraordinaryPowerRolls)) {
-          extraordinaryPowerRolls = [...candidate.extraordinaryPowerRolls];
-        }
-        if (typeof candidate.dragonSlayerColorRoll === 'number') {
-          dragonSlayerColorRoll = candidate.dragonSlayerColorRoll;
-        }
-      }
+      const parsed = readTreasureSwordContext(context, []);
       return resolveTreasureSwordUnusual({
         roll,
-        sword,
-        rollIndex,
-        languageRolls,
-        primaryAbilityRolls,
-        extraordinaryPowerRolls,
-        dragonSlayerColorRoll,
+        sword: parsed.sword,
+        rollIndex: parsed.rollIndex,
+        languageRolls: parsed.languageRolls,
+        primaryAbilityRolls: parsed.primaryAbilityRolls,
+        extraordinaryPowerRolls: parsed.extraordinaryPowerRolls,
+        dragonSlayerColorRoll: parsed.dragonSlayerColorRoll,
       });
     },
     resolvePending: (pending, ancestors) => {
@@ -650,27 +580,15 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     buildPreview: buildTreasureSwordDragonSlayerColorPreview,
     registry: ({ roll, context }) => {
-      const parsed =
-        context && typeof context === 'object'
-          ? (context as {
-              slotKey?: unknown;
-              rollIndex?: unknown;
-              alignment?: unknown;
-            })
-          : {};
-      const slotKey =
-        typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
-      const rollIndex =
-        typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
-      const alignment =
-        typeof parsed.alignment === 'number'
-          ? (parsed.alignment as TreasureSwordAlignment)
-          : undefined;
+      const parsed = readTableContextOfKind(
+        context,
+        'treasureSwordDragonSlayerColor'
+      );
       return resolveTreasureSwordDragonSlayerColor({
         roll,
-        slotKey,
-        rollIndex,
-        alignment,
+        slotKey: parsed?.slotKey,
+        rollIndex: parsed?.rollIndex,
+        alignment: parsed?.alignment,
       });
     },
   }),
@@ -685,33 +603,16 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildTreasureSwordSpecialPurposePreview,
     buildEventPreview: buildTreasureSwordSpecialPurposeEventPreview,
     registry: ({ roll, context }) => {
-      const parsed =
-        context && typeof context === 'object'
-          ? (context as {
-              slotKey?: unknown;
-              rollIndex?: unknown;
-              parentSlotKey?: unknown;
-              alignment?: unknown;
-            })
-          : {};
-      const slotKey =
-        typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
-      const rollIndex =
-        typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
-      const parentSlotKey =
-        typeof parsed.parentSlotKey === 'string'
-          ? parsed.parentSlotKey
-          : undefined;
-      const alignment =
-        typeof parsed.alignment === 'number'
-          ? (parsed.alignment as TreasureSwordAlignment)
-          : undefined;
+      const parsed = readTableContextOfKind(
+        context,
+        'treasureSwordSpecialPurpose'
+      );
       return resolveTreasureSwordSpecialPurpose({
         roll,
-        slotKey,
-        rollIndex,
-        parentSlotKey,
-        alignment,
+        slotKey: parsed?.slotKey,
+        rollIndex: parsed?.rollIndex,
+        parentSlotKey: parsed?.parentSlotKey,
+        alignment: parsed?.alignment,
       });
     },
   }),
@@ -726,33 +627,16 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
     buildPreview: buildTreasureSwordSpecialPurposePowerPreview,
     buildEventPreview: buildTreasureSwordSpecialPurposePowerEventPreview,
     registry: ({ roll, context }) => {
-      const parsed =
-        context && typeof context === 'object'
-          ? (context as {
-              slotKey?: unknown;
-              rollIndex?: unknown;
-              parentSlotKey?: unknown;
-              alignment?: unknown;
-            })
-          : {};
-      const slotKey =
-        typeof parsed.slotKey === 'string' ? parsed.slotKey : undefined;
-      const rollIndex =
-        typeof parsed.rollIndex === 'number' ? parsed.rollIndex : undefined;
-      const parentSlotKey =
-        typeof parsed.parentSlotKey === 'string'
-          ? parsed.parentSlotKey
-          : undefined;
-      const alignment =
-        typeof parsed.alignment === 'number'
-          ? (parsed.alignment as TreasureSwordAlignment)
-          : undefined;
+      const parsed = readTableContextOfKind(
+        context,
+        'treasureSwordSpecialPurposePower'
+      );
       return resolveTreasureSwordSpecialPurposePower({
         roll,
-        slotKey,
-        rollIndex,
-        parentSlotKey,
-        alignment,
+        slotKey: parsed?.slotKey,
+        rollIndex: parsed?.rollIndex,
+        parentSlotKey: parsed?.parentSlotKey,
+        alignment: parsed?.alignment,
       });
     },
   }),
