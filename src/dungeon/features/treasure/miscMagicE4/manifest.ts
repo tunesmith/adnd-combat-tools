@@ -122,7 +122,7 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'treasureNecklaceOfPrayerBeads',
     heading: 'Necklace of Prayer Beads',
-    resolver: wrapResolver(resolveTreasureNecklaceOfPrayerBeads),
+    resolver: () => resolveTreasureNecklaceOfPrayerBeads({}),
     resolvePending: () => resolveTreasureNecklaceOfPrayerBeads({}),
     registry: ({ roll }) =>
       resolveTreasureNecklaceOfPrayerBeads({ totalRoll: roll }),

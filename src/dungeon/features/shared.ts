@@ -1,19 +1,28 @@
 import type { DungeonTablePreview, TableContext } from '../../types/dungeon';
 import type { DungeonOutcomeNode, OutcomeEventNode } from '../domain/outcome';
 import type { TablePreviewFactory } from '../adapters/render/shared';
-import type { DetailRenderer, DungeonTableDefinition } from './types';
+import type {
+  DetailRenderer,
+  DungeonTableDefinition,
+  ManualRollResolver,
+  RollResolverOptions,
+} from './types';
 
 export const wrapResolver =
-  <T>(
-    resolver: (options?: T) => DungeonOutcomeNode
-  ): ((options?: unknown) => DungeonOutcomeNode) =>
-  (options?: unknown) =>
-    resolver(options as T);
+  (resolver: ManualRollResolver): ManualRollResolver =>
+  (options?: RollResolverOptions) =>
+    resolver(options);
 
 export const withDefaultResolverOptions =
-  <T>(resolver: (options: T) => DungeonOutcomeNode, defaults: T) =>
-  (options?: unknown) =>
-    resolver((options ?? defaults) as T);
+  <TDefaults extends object>(
+    resolver: (options: TDefaults & RollResolverOptions) => DungeonOutcomeNode,
+    defaults: TDefaults
+  ): ManualRollResolver =>
+  (options?: RollResolverOptions) =>
+    resolver({
+      ...defaults,
+      ...(options ?? {}),
+    });
 
 export function markContextualResolution<TOptions>(
   definition: DungeonTableDefinition<TOptions> & {

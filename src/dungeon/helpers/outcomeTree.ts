@@ -278,9 +278,7 @@ function enrichEventNode(
     type: 'event',
     event: node.event,
     roll: node.roll,
-    children: children.length
-      ? (children as unknown as DungeonOutcomeNode[])
-      : undefined,
+    children: children.length ? children : undefined,
   };
 }
 

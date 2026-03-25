@@ -51,6 +51,14 @@ type EventPreviewBuilder = (
   ancestors?: OutcomeEventNode[]
 ) => DungeonTablePreview | undefined;
 
+export type RollResolverOptions = {
+  roll?: number;
+};
+
+export type ManualRollResolver = (
+  options?: RollResolverOptions
+) => DungeonOutcomeNode;
+
 export type RegistryOutcomeBuilder = (opts: {
   roll?: number;
   id: string;
@@ -61,10 +69,10 @@ export type RegistryOutcomeBuilder = (opts: {
   };
 }) => DungeonOutcomeNode;
 
-type DungeonTableDefinitionBase<TOptions> = {
+type DungeonTableDefinitionBase = {
   id: string;
   heading: string;
-  resolver: (options?: TOptions) => DungeonOutcomeNode;
+  resolver: ManualRollResolver;
   renderers: RenderAdapter;
   buildPreview?: TablePreviewFactory;
   buildEventPreview?: EventPreviewBuilder;
@@ -74,24 +82,26 @@ type DungeonTableDefinitionBase<TOptions> = {
   postProcessOutcome?: OutcomePostProcessor;
 };
 
-type RollOnlyTableDefinition<TOptions> =
-  DungeonTableDefinitionBase<TOptions> & {
-    manualResolution?: 'roll-only';
-    registry?: RegistryOutcomeBuilder;
-  };
+type RollOnlyTableDefinition = DungeonTableDefinitionBase & {
+  manualResolution?: 'roll-only';
+  registry?: RegistryOutcomeBuilder;
+};
 
-type ContextualTableDefinition<TOptions> =
-  DungeonTableDefinitionBase<TOptions> & {
-    manualResolution: 'contextual';
-    registry: RegistryOutcomeBuilder;
-  };
+type ContextualTableDefinition = DungeonTableDefinitionBase & {
+  manualResolution: 'contextual';
+  registry: RegistryOutcomeBuilder;
+};
 
 export type DungeonTableDefinition<TOptions = unknown> =
-  | RollOnlyTableDefinition<TOptions>
-  | ContextualTableDefinition<TOptions>;
+  | (RollOnlyTableDefinition & {
+      readonly __optionShape?: TOptions;
+    })
+  | (ContextualTableDefinition & {
+      readonly __optionShape?: TOptions;
+    });
 
-export function createRenderAdapterMap<TOptions>(
-  defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
+export function createRenderAdapterMap(
+  defs: ReadonlyArray<DungeonTableDefinition>
 ): Partial<Record<string, RenderAdapter>> {
   const map: Partial<Record<string, RenderAdapter>> = {};
   for (const def of defs) {
@@ -100,8 +110,8 @@ export function createRenderAdapterMap<TOptions>(
   return map;
 }
 
-export function createPreviewFactoryMap<TOptions>(
-  defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
+export function createPreviewFactoryMap(
+  defs: ReadonlyArray<DungeonTableDefinition>
 ): Record<string, TablePreviewFactory> {
   const map: Record<string, TablePreviewFactory> = {};
   for (const def of defs) {
@@ -116,8 +126,8 @@ export function createPreviewFactoryMap<TOptions>(
   return map;
 }
 
-export function createEventPreviewMap<TOptions>(
-  defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
+export function createEventPreviewMap(
+  defs: ReadonlyArray<DungeonTableDefinition>
 ): Partial<Record<string, EventPreviewBuilder>> {
   const map: Partial<Record<string, EventPreviewBuilder>> = {};
   for (const def of defs) {
@@ -128,8 +138,8 @@ export function createEventPreviewMap<TOptions>(
   return map;
 }
 
-export function createRegistryOutcomeMap<TOptions>(
-  defs: ReadonlyArray<DungeonTableDefinition<TOptions>>
+export function createRegistryOutcomeMap(
+  defs: ReadonlyArray<DungeonTableDefinition>
 ): Record<string, RegistryOutcomeBuilder> {
   const map: Record<string, RegistryOutcomeBuilder> = {};
   for (const def of defs) {
@@ -142,9 +152,7 @@ export function createRegistryOutcomeMap<TOptions>(
       def.registry ??
       ((opts) =>
         def.resolver(
-          opts.roll === undefined
-            ? undefined
-            : ({ roll: opts.roll } as unknown as TOptions)
+          opts.roll === undefined ? undefined : { roll: opts.roll }
         ));
   }
   return map;

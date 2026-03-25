@@ -5,10 +5,11 @@ import {
 
 describe('feature registry contract', () => {
   test('throws when a contextual table omits an explicit registry handler', () => {
-    const invalidDefinition = {
+    const invalidDefinition: DungeonTableDefinition = {
       id: 'invalidContextualTable',
       heading: 'Invalid',
       manualResolution: 'contextual',
+      registry: undefined as never,
       resolver: () => ({
         type: 'event',
         roll: 1,
@@ -18,7 +19,7 @@ describe('feature registry contract', () => {
         renderDetail: () => [],
         renderCompact: () => [],
       },
-    } as unknown as DungeonTableDefinition;
+    };
 
     expect(() => createRegistryOutcomeMap([invalidDefinition])).toThrow(
       'Dungeon table "invalidContextualTable" requires an explicit registry handler.'
