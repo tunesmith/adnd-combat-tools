@@ -31,6 +31,10 @@
   border: 1px dashed rgba(240, 239, 221, 0.2);
 }
 
+.initialPreviewStack {
+  padding: 0.25rem 0;
+}
+
 .formContainer {
   display: flex;
   flex-direction: column;
@@ -45,6 +49,7 @@
 }
 
 .controlSection {
+  --generate-control-height: 3.5rem;
   flex: 1 1 100%;
   min-width: 0;
   padding: 0.85rem 1rem;
@@ -52,41 +57,119 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
-.controlSectionHeader {
-  margin-bottom: 0.75rem;
+.generateLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 1rem 1.5rem;
+  align-items: end;
 }
 
-.controlSectionTitle {
-  font-size: 0.9rem;
+.triggerGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  justify-self: start;
+}
+
+.actionSegmentedControl {
+  display: inline-flex;
+  width: fit-content;
+  min-height: var(--generate-control-height);
+  border: 2px solid rgba(212, 141, 39, 0.85);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 0.18rem;
+  gap: 0.25rem;
+  box-sizing: border-box;
+}
+
+.actionOption {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  min-height: calc(var(--generate-control-height) - 0.36rem);
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  color: rgba(240, 239, 221, 0.86);
+  transition: background-color 120ms ease, color 120ms ease,
+    transform 120ms ease;
+}
+
+.actionOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.actionOptionActive {
+  background: var(--eggshell);
+  color: var(--dark-olive-green);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fieldLabel {
+  font-size: 0.82rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.9;
+  letter-spacing: 0.05em;
+  opacity: 0.82;
 }
 
-.controlSectionHint {
-  font-size: 0.85rem;
-  opacity: 0.8;
-  margin-top: 0.2rem;
+.fieldControl {
+  font: inherit;
+  color: var(--caput-martuum);
+  background: rgba(240, 239, 221, 0.97);
+  border: 2px solid rgba(212, 141, 39, 0.85);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  height: var(--generate-control-height);
+  min-height: var(--generate-control-height);
+  box-sizing: border-box;
 }
 
-.controlsRow {
+.fieldControl:focus {
+  outline: 2px solid rgba(240, 239, 221, 0.45);
+  outline-offset: 1px;
+}
+
+.rollGroup {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: end;
+  gap: 0.85rem;
+  justify-self: center;
 }
 
-.actionSelector {
+.rollInput {
+  width: 6rem;
+}
+
+.rollActions {
   display: flex;
-  gap: 0.75rem;
-  align-items: center;
+  align-items: end;
 }
 
-.numberInput {
-  width: 80px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--copper);
+.rollDivider {
+  align-self: end;
+  padding-bottom: 0.9rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+}
+
+.contextGroup {
+  justify-self: end;
+}
+
+.levelInput {
+  width: 7rem;
 }
 
 .errorText {
@@ -104,6 +187,21 @@
 .button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.buttonPrimary {
+  background-color: rgba(240, 239, 221, 0.98);
+  color: var(--dark-olive-green);
+}
+
+.controlButton {
+  font: inherit;
+  min-height: var(--generate-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  box-sizing: border-box;
 }
 
 .feed {
@@ -253,7 +351,31 @@
     min-width: 0;
   }
 
+  .generateLayout {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .contextGroup {
+    justify-self: stretch;
+  }
+
+  .rollGroup {
+    flex-wrap: wrap;
+  }
+
+  .rollDivider {
+    width: 100%;
+    padding-bottom: 0;
+    text-align: center;
+  }
+
   .segmentOption {
     min-width: 84px;
+  }
+
+  .actionOption {
+    min-width: 0;
+    flex: 1 1 0;
   }
 }

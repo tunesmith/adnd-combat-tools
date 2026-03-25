@@ -4,6 +4,8 @@ import styles from './DungeonTablePreviewCard.module.css';
 type DungeonTablePreviewCardProps = {
   preview: DungeonTablePreview;
   enablePreviewControls?: boolean;
+  statusLabelOverride?: string;
+  statusToneOverride?: 'pending' | 'resolved' | 'reference';
   overrideValue?: number;
   onOverrideChange?: (value: number | undefined) => void;
   onUseOverride?: () => void;
@@ -16,6 +18,8 @@ type DungeonTablePreviewCardProps = {
 const DungeonTablePreviewCard = ({
   preview,
   enablePreviewControls = true,
+  statusLabelOverride,
+  statusToneOverride,
   overrideValue,
   onOverrideChange,
   onUseOverride,
@@ -24,19 +28,30 @@ const DungeonTablePreviewCard = ({
   hasResolved = false,
   onToggleCollapse,
 }: DungeonTablePreviewCardProps) => {
-  const statusLabel = !enablePreviewControls
-    ? 'Reference'
-    : hasResolved
-    ? 'Resolved'
-    : 'Pending';
+  const statusTone =
+    statusToneOverride ??
+    (!enablePreviewControls
+      ? 'reference'
+      : hasResolved
+      ? 'resolved'
+      : 'pending');
 
-  const statusClass = !enablePreviewControls
-    ? styles['statusReference']
-    : hasResolved
-    ? styles['statusResolved']
-    : styles['statusPending'];
+  const statusLabel =
+    statusLabelOverride ??
+    (statusTone === 'reference'
+      ? 'Reference'
+      : statusTone === 'resolved'
+      ? 'Resolved'
+      : 'Pending');
 
-  const isPending = enablePreviewControls && !hasResolved;
+  const statusClass =
+    statusTone === 'reference'
+      ? styles['statusReference']
+      : statusTone === 'resolved'
+      ? styles['statusResolved']
+      : styles['statusPending'];
+
+  const shouldShowEntriesInline = !isCollapsed;
 
   const entries = (
     <div className={styles['entries']}>
@@ -70,7 +85,7 @@ const DungeonTablePreviewCard = ({
         </div>
       </div>
 
-      {!isPending && !isCollapsed && entries}
+      {shouldShowEntriesInline && entries}
 
       {isCollapsed && hasResolved && (
         <div className={styles['collapsedNote']}>
@@ -99,13 +114,6 @@ const DungeonTablePreviewCard = ({
       {!isCollapsed && enablePreviewControls && onOverrideChange && (
         <>
           <div className={styles['controls']}>
-            {isPending && (
-              <div className={styles['pendingLead']}>
-                Resolve this table now. AutoRoll is the fastest path; use an
-                override when you want a specific result.
-              </div>
-            )}
-
             <div className={styles['actions']}>
               <button
                 type="button"
@@ -131,32 +139,15 @@ const DungeonTablePreviewCard = ({
                       : undefined;
                     onOverrideChange(value);
                   }}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    onUseOverride?.();
+                  }}
                 />
               </label>
-              <button
-                type="button"
-                className={`${styles['button']} ${styles['buttonSecondary']}`}
-                onClick={onUseOverride}
-                disabled={overrideValue === undefined}
-              >
-                Use override
-              </button>
             </div>
           </div>
-
-          {isPending ? (
-            <details className={styles['oddsDisclosure']}>
-              <summary className={styles['oddsSummary']}>
-                Show odds table
-              </summary>
-              {entries}
-            </details>
-          ) : (
-            <div className={styles['overrideHint']}>
-              Use AutoRoll to reroll this table, or enter an override to force a
-              specific result.
-            </div>
-          )}
         </>
       )}
     </div>

@@ -1,4 +1,4 @@
-import type { Dispatch, FormEvent, SetStateAction } from 'react';
+import type { Dispatch, KeyboardEvent, SetStateAction } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import styles from './dungeon.module.css';
 import { rollDice } from '../../dungeon/helpers/dungeonLookup';
@@ -96,8 +96,7 @@ const DungeonIndexPage = () => {
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  const submitManualRoll = () => {
     if (!isValid || parsedRoll === undefined) return;
     addToFeed(action, parsedRoll);
   };
@@ -106,6 +105,12 @@ const DungeonIndexPage = () => {
     const r = rollDice(20);
     setRollInput(String(r));
     addToFeed(action, r);
+  };
+
+  const handleRollInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    submitManualRoll();
   };
 
   return (
@@ -121,43 +126,82 @@ const DungeonIndexPage = () => {
             Clear Feed
           </button>
         </div>
-        <form className={styles['formContainer']} onSubmit={handleSubmit}>
+        <div className={styles['formContainer']}>
           <div className={styles['controlSections']}>
             <section className={styles['controlSection']}>
-              <div className={styles['controlSectionHeader']}>
-                <div className={styles['controlSectionTitle']}>Generate</div>
-                <div className={styles['controlSectionHint']}>
-                  Choose the starting trigger, then roll or auto-roll it.
+              <div className={styles['generateLayout']}>
+                <div className={styles['triggerGroup']}>
+                  <div className={styles['fieldLabel']}>Start from</div>
+                  <div
+                    className={styles['actionSegmentedControl']}
+                    role="radiogroup"
+                    aria-label="Starting trigger"
+                  >
+                    <label
+                      className={`${styles['actionOption']} ${
+                        action === 'passage' ? styles['actionOptionActive'] : ''
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="action"
+                        value="passage"
+                        checked={action === 'passage'}
+                        onChange={() => setAction('passage')}
+                      />
+                      <span>Passage</span>
+                    </label>
+                    <label
+                      className={`${styles['actionOption']} ${
+                        action === 'door' ? styles['actionOptionActive'] : ''
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="action"
+                        value="door"
+                        checked={action === 'door'}
+                        onChange={() => setAction('door')}
+                      />
+                      <span>Door</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
-              <div className={styles['controlsRow']}>
-                <div className={styles['actionSelector']}>
-                  <label>
+
+                <div className={styles['rollGroup']}>
+                  <div className={styles['rollActions']}>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonPrimary']} ${styles['controlButton']}`}
+                      onClick={handleRoll}
+                      aria-label="Automatically roll a d20 and submit"
+                    >
+                      AutoRoll
+                    </button>
+                  </div>
+                  <div className={styles['rollDivider']}>-OR-</div>
+                  <label className={styles['fieldGroup']}>
+                    <span className={styles['fieldLabel']}>d20 Roll</span>
                     <input
-                      type="radio"
-                      name="action"
-                      value="passage"
-                      checked={action === 'passage'}
-                      onChange={() => setAction('passage')}
+                      className={`${styles['fieldControl']} ${styles['rollInput']}`}
+                      type="number"
+                      min={1}
+                      max={20}
+                      inputMode="numeric"
+                      value={rollInput}
+                      onChange={(e) => setRollInput(e.target.value)}
+                      onKeyDown={handleRollInputKeyDown}
+                      aria-invalid={rollInput.length > 0 && !isValid}
                     />
-                    Passage
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="action"
-                      value="door"
-                      checked={action === 'door'}
-                      onChange={() => setAction('door')}
-                    />
-                    Door
                   </label>
                 </div>
 
-                <label>
-                  Dungeon level:
+                <label
+                  className={`${styles['fieldGroup']} ${styles['contextGroup']}`}
+                >
+                  <span className={styles['fieldLabel']}>Dungeon level</span>
                   <select
-                    className={styles['numberInput']}
+                    className={`${styles['fieldControl']} ${styles['levelInput']}`}
                     value={dungeonLevel}
                     onChange={(e) =>
                       setDungeonLevel(Number(e.target.value) || 1)
@@ -170,37 +214,6 @@ const DungeonIndexPage = () => {
                     ))}
                   </select>
                 </label>
-
-                <label>
-                  d20 Roll:
-                  <input
-                    className={styles['numberInput']}
-                    type="number"
-                    min={1}
-                    max={20}
-                    inputMode="numeric"
-                    value={rollInput}
-                    onChange={(e) => setRollInput(e.target.value)}
-                    aria-invalid={rollInput.length > 0 && !isValid}
-                  />
-                </label>
-
-                <button
-                  type="submit"
-                  className={styles['button']}
-                  disabled={!isValid}
-                >
-                  Submit
-                </button>
-
-                <button
-                  type="button"
-                  className={styles['button']}
-                  onClick={handleRoll}
-                  aria-label="Automatically roll a d20 and submit"
-                >
-                  AutoRoll
-                </button>
               </div>
             </section>
           </div>
@@ -208,7 +221,7 @@ const DungeonIndexPage = () => {
           {rollInput.length > 0 && !isValid && (
             <div className={styles['errorText']}>Enter an integer 1–20.</div>
           )}
-        </form>
+        </div>
 
         <div
           role="status"
@@ -262,9 +275,28 @@ const DungeonIndexPage = () => {
             </div>
           </div>
           {feed.length === 0 ? (
-            <div className={styles['placeholder']}>
-              Make a selection, enter 1–20 or click AutoRoll.
-            </div>
+            detailMode ? (
+              <div className={styles['initialPreviewStack']}>
+                {getRootPreviewNodes(action, dungeonLevel).map(
+                  (node, index) => {
+                    if (node.kind !== 'table-preview') return null;
+                    return (
+                      <DungeonTablePreviewCard
+                        key={`${action}:${dungeonLevel}:${node.id}:${index}`}
+                        preview={node}
+                        enablePreviewControls={false}
+                        statusLabelOverride="Start"
+                        statusToneOverride="pending"
+                      />
+                    );
+                  }
+                )}
+              </div>
+            ) : (
+              <div className={styles['placeholder']}>
+                Make a selection, enter 1–20 or click AutoRoll.
+              </div>
+            )
           ) : (
             feed.map((item) => (
               <div className={styles['feedItem']} key={item.id}>

@@ -104,7 +104,6 @@ function findPreviewCardByTitle(
   while (current) {
     const hasPreviewButtons =
       findButtonByText('AutoRoll', current) !== null ||
-      findButtonByText('Use override', current) !== null ||
       current.querySelector('button[aria-label="Expand table"]') !== null ||
       current.querySelector('button[aria-label="Collapse table"]') !== null;
     if (hasPreviewButtons) {
@@ -139,6 +138,59 @@ function requireElement<T>(value: T | null | undefined, message: string): T {
 }
 
 describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
+  it('shows the initial detail preview and lets it launch the first roll', async () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    await act(async () => {
+      ReactDOM.render(<DungeonIndexPage />, container as HTMLDivElement);
+    });
+
+    const detailLabel = requireElement(findLabel('Detail'), 'detail label');
+    const detailRadio = requireElement(
+      detailLabel.querySelector<HTMLInputElement>('input[type="radio"]'),
+      'detail radio'
+    );
+    await act(async () => {
+      detailRadio.click();
+    });
+
+    await waitFor(() =>
+      (document.body.textContent ?? '').includes('Periodic Check') ? true : null
+    );
+    expect(document.body.textContent ?? '').toContain('Start');
+    expect(document.body.textContent ?? '').toContain('1–2');
+    expect(document.body.textContent ?? '').not.toContain(
+      'Make a selection, enter 1–20 or click AutoRoll.'
+    );
+
+    const rollLabel = requireElement(findLabel('d20 Roll'), 'roll label');
+    const rollInput = requireElement(
+      rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'roll input'
+    );
+    await act(async () => {
+      (rollInput as any).value = '12';
+      ReactTestUtils.Simulate.change(rollInput, {
+        target: { value: '12' },
+      } as any);
+    });
+
+    await act(async () => {
+      ReactTestUtils.Simulate.keyDown(rollInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
+    });
+
+    const feedItemEl = await waitFor(() =>
+      document.querySelector<HTMLElement>('.feedItem')
+    );
+    expect(feedItemEl?.textContent ?? '').toContain('Door Location');
+  });
+
   it('collapses Door Location preview after submitting override 13', async () => {
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -157,8 +209,8 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       detailCheckbox.click();
     });
 
-    // Add a feed item using main override (enter 3) and Submit
-    const rollLabel = requireElement(findLabel('d20 Roll:'), 'roll label');
+    // Add a feed item using main override (enter 3) and Enter
+    const rollLabel = requireElement(findLabel('d20 Roll'), 'roll label');
     const rollInput = requireElement(
       rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
       'roll input'
@@ -170,12 +222,13 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
         target: { value: '3' },
       } as any);
     });
-    const mainSubmit = requireElement(
-      findButtonByText('Submit'),
-      'main submit button'
-    );
     await act(async () => {
-      mainSubmit.click();
+      ReactTestUtils.Simulate.keyDown(rollInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
     });
     // Find Door Location preview in feed and lock to its feed item container
     const feedEl = requireElement(
@@ -206,12 +259,13 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       } as any);
     });
 
-    const previewSubmit = requireElement(
-      findButtonByText('Use override', feedItemEl),
-      'door location preview submit'
-    );
     await act(async () => {
-      previewSubmit.click();
+      ReactTestUtils.Simulate.keyDown(overrideInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
     });
     // Allow React to commit state
     // await act(async () => {
@@ -254,7 +308,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       detailCheckbox.click();
     });
 
-    const rollLabel = requireElement(findLabel('d20 Roll:'), 'roll label');
+    const rollLabel = requireElement(findLabel('d20 Roll'), 'roll label');
     const rollInput = requireElement(
       rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
       'roll input'
@@ -266,12 +320,13 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       } as any);
     });
 
-    const mainSubmit = requireElement(
-      findButtonByText('Submit'),
-      'main submit button'
-    );
     await act(async () => {
-      mainSubmit.click();
+      ReactTestUtils.Simulate.keyDown(rollInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
     });
 
     const findPreviewContainer = (title: string) =>
@@ -296,12 +351,13 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
         target: { value: '3' },
       } as any);
     });
-    const doorLocationSubmit = requireElement(
-      findButtonByText('Use override', doorLocationBlock),
-      'door location submit button'
-    );
     await act(async () => {
-      doorLocationSubmit.click();
+      ReactTestUtils.Simulate.keyDown(doorLocationInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
     });
 
     await waitFor(() =>
@@ -329,12 +385,13 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
         target: { value: '3' },
       } as any);
     });
-    const doorContinuationSubmit = requireElement(
-      findButtonByText('Use override', doorContinuationBlock),
-      'door continuation submit button'
-    );
     await act(async () => {
-      doorContinuationSubmit.click();
+      ReactTestUtils.Simulate.keyDown(doorContinuationInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
     });
 
     const doorContinuationBlockAfter = await findPreviewContainer(
