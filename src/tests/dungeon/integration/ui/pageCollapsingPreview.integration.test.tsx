@@ -91,12 +91,29 @@ function findButtonByText(
   return buttons.find((b) => b.textContent?.trim() === text) ?? null;
 }
 
-function findDivByText(
-  text: string,
+function findPreviewCardByTitle(
+  title: string,
   root: ParentNode = document
 ): HTMLDivElement | null {
-  const divs = Array.from(root.querySelectorAll('div')) as HTMLDivElement[];
-  return divs.find((d) => (d.textContent ?? '').includes(text)) ?? null;
+  const titleNode = Array.from(root.querySelectorAll('div'))
+    .filter((el): el is HTMLDivElement => el instanceof HTMLDivElement)
+    .find((div) => div.textContent?.trim() === title);
+  if (!titleNode) return null;
+
+  let current: HTMLElement | null = titleNode;
+  while (current) {
+    const hasPreviewButtons =
+      findButtonByText('AutoRoll', current) !== null ||
+      findButtonByText('Use override', current) !== null ||
+      current.querySelector('button[aria-label="Expand table"]') !== null ||
+      current.querySelector('button[aria-label="Collapse table"]') !== null;
+    if (hasPreviewButtons) {
+      return current as HTMLDivElement;
+    }
+    current = current.parentElement;
+  }
+
+  return null;
 }
 
 async function waitFor<T>(
@@ -173,14 +190,12 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       'feed item container'
     );
     // Sanity check that this feed item contains the Door Location header
-    const headerOk = (feedItemEl.textContent ?? '').includes(
-      'Door Location (d20)'
-    );
+    const headerOk = (feedItemEl.textContent ?? '').includes('Door Location');
     expect(headerOk).toBe(true);
 
     // Set override 13 and submit inside preview
     const overrideLabel = requireElement(
-      findLabel('Override next roll:', feedItemEl),
+      findLabel('Override roll', feedItemEl),
       'door location override label'
     );
     const overrideInput = requireElement(
@@ -195,7 +210,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     });
 
     const previewSubmit = requireElement(
-      findButtonByText('Submit', feedItemEl),
+      findButtonByText('Use override', feedItemEl),
       'door location preview submit'
     );
     await act(async () => {
@@ -208,7 +223,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
 
     // Re-grab the preview block after rerender
     const previewBlockAfter = await waitFor(() =>
-      findDivByText('Door Location (d20)', feedItemEl)
+      findPreviewCardByTitle('Door Location', feedItemEl)
     );
 
     // Expect correct behaviour now: preview collapsed, chevron present
@@ -218,10 +233,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       ),
       'preview chevron button'
     );
-    const overrideStillVisible = findLabel(
-      'Override next roll:',
-      previewBlockAfter
-    );
+    const overrideStillVisible = findLabel('Override roll', previewBlockAfter);
     expect(overrideStillVisible).toBeNull();
     // Entries should be hidden (not present)
     const entryLeft = (previewBlockAfter.textContent ?? '').includes('1–6');
@@ -270,22 +282,12 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
 
     const findPreviewContainer = (title: string) =>
       waitFor(() => {
-        const heading = Array.from(document.querySelectorAll('div'))
-          .filter((el): el is HTMLDivElement => el instanceof HTMLDivElement)
-          .find((div) => {
-            if (div.style.fontWeight !== '700') return false;
-            return div.textContent?.trim() === title;
-          });
-        if (!heading) return null;
-        const container = heading.closest(
-          'div[style*="padding"]'
-        ) as HTMLDivElement | null;
-        return container;
+        return findPreviewCardByTitle(title);
       });
 
-    const doorLocationBlock = await findPreviewContainer('Door Location (d20)');
+    const doorLocationBlock = await findPreviewContainer('Door Location');
     const doorLocationOverride = requireElement(
-      findLabel('Override next roll:', doorLocationBlock),
+      findLabel('Override roll', doorLocationBlock),
       'door location override label'
     );
     const doorLocationInput = requireElement(
@@ -301,7 +303,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       } as any);
     });
     const doorLocationSubmit = requireElement(
-      findButtonByText('Submit', doorLocationBlock),
+      findButtonByText('Use override', doorLocationBlock),
       'door location submit button'
     );
     await act(async () => {
@@ -309,18 +311,16 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     });
 
     await waitFor(() =>
-      findLabel('Override next roll:', doorLocationBlock) ? null : true
+      findLabel('Override roll', doorLocationBlock) ? null : true
     );
 
-    expect(document.body.textContent ?? '').toContain(
-      'Door Continuation (d20)'
-    );
+    expect(document.body.textContent ?? '').toContain('Door Continuation');
 
     const doorContinuationBlock = await findPreviewContainer(
-      'Door Continuation (d20)'
+      'Door Continuation'
     );
     const doorContinuationOverride = requireElement(
-      findLabel('Override next roll:', doorContinuationBlock),
+      findLabel('Override roll', doorContinuationBlock),
       'door continuation override label'
     );
     const doorContinuationInput = requireElement(
@@ -336,7 +336,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       } as any);
     });
     const doorContinuationSubmit = requireElement(
-      findButtonByText('Submit', doorContinuationBlock),
+      findButtonByText('Use override', doorContinuationBlock),
       'door continuation submit button'
     );
     await act(async () => {
@@ -344,7 +344,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     });
 
     const doorContinuationBlockAfter = await findPreviewContainer(
-      'Door Continuation (d20)'
+      'Door Continuation'
     );
 
     // Verify the preview collapses and keeps controls hidden once resolved.
@@ -355,7 +355,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       'door continuation chevron'
     );
     const overrideStillVisible = findLabel(
-      'Override next roll:',
+      'Override roll',
       doorContinuationBlockAfter
     );
     expect(overrideStillVisible).toBeNull();

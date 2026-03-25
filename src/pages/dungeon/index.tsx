@@ -27,6 +27,7 @@ import { PrayerBeadsDetail } from '../../components/dungeon/PrayerBeadsDetail';
 import { PrayerBeadsCompact } from '../../components/dungeon/PrayerBeadsCompact';
 import { RobeOfUsefulItemsDetail } from '../../components/dungeon/RobeOfUsefulItemsDetail';
 import { RobeOfUsefulItemsCompact } from '../../components/dungeon/RobeOfUsefulItemsCompact';
+import { DungeonTablePreviewCard } from '../../components/dungeon/DungeonTablePreviewCard';
 
 type ActionKind = 'passage' | 'door';
 
@@ -51,6 +52,8 @@ const DungeonIndexPage = () => {
   const [dungeonLevel, setDungeonLevel] = useState<number>(1);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [resolved, setResolved] = useState<Record<string, boolean>>({});
+  const [showReferenceTables, setShowReferenceTables] =
+    useState<boolean>(false);
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
   const parsedRoll = useMemo(() => {
@@ -62,6 +65,14 @@ const DungeonIndexPage = () => {
   const isValid = useMemo(() => {
     return parsedRoll !== undefined && parsedRoll >= 1 && parsedRoll <= 20;
   }, [parsedRoll]);
+
+  const rootPreviewNodes = useMemo(
+    () => getRootPreviewNodes(action, dungeonLevel),
+    [action, dungeonLevel]
+  );
+
+  const referenceTitle =
+    action === 'door' ? 'Door starting table' : 'Passage starting table';
 
   const addToFeed = (act: ActionKind, roll: number) => {
     const step = runDungeonStep(act, {
@@ -119,83 +130,107 @@ const DungeonIndexPage = () => {
           </button>
         </div>
         <form className={styles['formContainer']} onSubmit={handleSubmit}>
-          <div className={styles['controlsRow']}>
-            <div className={styles['actionSelector']}>
-              <label>
-                <input
-                  type="radio"
-                  name="action"
-                  value="passage"
-                  checked={action === 'passage'}
-                  onChange={() => setAction('passage')}
-                />
-                Passage
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="action"
-                  value="door"
-                  checked={action === 'door'}
-                  onChange={() => setAction('door')}
-                />
-                Door
-              </label>
-            </div>
+          <div className={styles['controlSections']}>
+            <section className={styles['controlSection']}>
+              <div className={styles['controlSectionHeader']}>
+                <div className={styles['controlSectionTitle']}>Generate</div>
+                <div className={styles['controlSectionHint']}>
+                  Choose the starting trigger, then roll or auto-roll it.
+                </div>
+              </div>
+              <div className={styles['controlsRow']}>
+                <div className={styles['actionSelector']}>
+                  <label>
+                    <input
+                      type="radio"
+                      name="action"
+                      value="passage"
+                      checked={action === 'passage'}
+                      onChange={() => setAction('passage')}
+                    />
+                    Passage
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="action"
+                      value="door"
+                      checked={action === 'door'}
+                      onChange={() => setAction('door')}
+                    />
+                    Door
+                  </label>
+                </div>
 
-            <label>
-              d20 Roll:
-              <input
-                className={styles['numberInput']}
-                type="number"
-                min={1}
-                max={20}
-                inputMode="numeric"
-                value={rollInput}
-                onChange={(e) => setRollInput(e.target.value)}
-                aria-invalid={rollInput.length > 0 && !isValid}
-              />
-            </label>
+                <label>
+                  d20 Roll:
+                  <input
+                    className={styles['numberInput']}
+                    type="number"
+                    min={1}
+                    max={20}
+                    inputMode="numeric"
+                    value={rollInput}
+                    onChange={(e) => setRollInput(e.target.value)}
+                    aria-invalid={rollInput.length > 0 && !isValid}
+                  />
+                </label>
 
-            <button
-              type="submit"
-              className={styles['button']}
-              disabled={!isValid}
-            >
-              Submit
-            </button>
+                <button
+                  type="submit"
+                  className={styles['button']}
+                  disabled={!isValid}
+                >
+                  Submit
+                </button>
 
-            <button
-              type="button"
-              className={styles['button']}
-              onClick={handleRoll}
-              aria-label="Automatically roll a d20 and submit"
-            >
-              AutoRoll
-            </button>
+                <button
+                  type="button"
+                  className={styles['button']}
+                  onClick={handleRoll}
+                  aria-label="Automatically roll a d20 and submit"
+                >
+                  AutoRoll
+                </button>
+              </div>
+            </section>
 
-            <label style={{ marginLeft: 'auto' }}>
-              <input
-                type="checkbox"
-                checked={detailMode}
-                onChange={(e) => setDetailMode(e.target.checked)}
-              />
-              Detail mode
-            </label>
-            <label style={{ marginLeft: '1rem' }}>
-              Dungeon level:
-              <select
-                className={styles['numberInput']}
-                value={dungeonLevel}
-                onChange={(e) => setDungeonLevel(Number(e.target.value) || 1)}
-              >
-                {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <section className={styles['controlSection']}>
+              <div className={styles['controlSectionHeader']}>
+                <div className={styles['controlSectionTitle']}>
+                  View and Context
+                </div>
+                <div className={styles['controlSectionHint']}>
+                  Detail mode exposes pending subtables and manual overrides.
+                </div>
+              </div>
+              <div className={styles['controlsRow']}>
+                <label className={styles['checkboxLabel']}>
+                  <input
+                    type="checkbox"
+                    checked={detailMode}
+                    onChange={(e) => setDetailMode(e.target.checked)}
+                  />
+                  Detail mode
+                </label>
+                <label>
+                  Dungeon level:
+                  <select
+                    className={styles['numberInput']}
+                    value={dungeonLevel}
+                    onChange={(e) =>
+                      setDungeonLevel(Number(e.target.value) || 1)
+                    }
+                  >
+                    {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </section>
           </div>
 
           {rollInput.length > 0 && !isValid && (
@@ -204,11 +239,47 @@ const DungeonIndexPage = () => {
         </form>
 
         {detailMode && (
-          <div style={{ marginTop: '0.5rem' }}>
-            {getRootPreviewNodes(action, dungeonLevel).map((n, i) =>
-              renderNode(n, i, 'root', overrides, setOverrides, setFeed, false)
+          <section className={styles['referencePanel']}>
+            <div className={styles['referenceHeader']}>
+              <div>
+                <div className={styles['referenceEyebrow']}>
+                  Lookup reference
+                </div>
+                <div className={styles['referenceTitle']}>{referenceTitle}</div>
+                <div className={styles['referenceText']}>
+                  Keep the feed below as the main workflow. Open this when you
+                  want to inspect the top-level odds.
+                </div>
+              </div>
+              <button
+                type="button"
+                className={styles['button']}
+                onClick={() => setShowReferenceTables((prev) => !prev)}
+                aria-expanded={showReferenceTables}
+                aria-controls="dungeon-reference-body"
+              >
+                {showReferenceTables ? 'Hide reference' : 'Show reference'}
+              </button>
+            </div>
+            {showReferenceTables && (
+              <div
+                className={styles['referenceBody']}
+                id="dungeon-reference-body"
+              >
+                {rootPreviewNodes.map((n, i) =>
+                  renderNode(
+                    n,
+                    i,
+                    'root',
+                    overrides,
+                    setOverrides,
+                    setFeed,
+                    false
+                  )
+                )}
+              </div>
             )}
-          </div>
+          </section>
         )}
 
         <div
@@ -245,34 +316,60 @@ const DungeonIndexPage = () => {
                   </span>
                   {item.pendingCount > 0 && (
                     <span className={styles['pendingBadge']}>
-                      {item.pendingCount} pending
+                      {formatPendingBadge(item.pendingCount)}
                     </span>
                   )}
                   {!detailMode && (
                     <span className={styles['roll']}>(roll: {item.roll})</span>
                   )}
                 </div>
+                {!detailMode && item.pendingCount > 0 && (
+                  <div className={styles['compactPendingNotice']}>
+                    <div className={styles['compactPendingCopy']}>
+                      <div className={styles['compactPendingTitle']}>
+                        {formatPendingTitle(item.pendingCount)}
+                      </div>
+                      <div className={styles['compactPendingText']}>
+                        This result is partial. Switch to detail mode to resolve
+                        the remaining subtables and rerolls.
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['compactPendingButton']}`}
+                      onClick={() => setDetailMode(true)}
+                    >
+                      Open detail mode
+                    </button>
+                  </div>
+                )}
                 <div className={styles['messages']}>
-                  {selectMessagesForMode(
-                    item.action,
-                    detailMode,
-                    item.renderCache,
-                    item.messages
-                  ).map((m, i) =>
-                    renderNode(
-                      m,
-                      i,
-                      item.id,
-                      overrides,
-                      setOverrides,
-                      setFeed,
-                      true,
-                      collapsed,
-                      setCollapsed,
-                      resolved,
-                      setResolved
-                    )
-                  )}
+                  {(() => {
+                    const pendingTargetIds = collectPendingTargetIds(
+                      item.outcome
+                    );
+                    return selectMessagesForMode(
+                      item.action,
+                      detailMode,
+                      item.renderCache,
+                      item.messages
+                    ).map((m, i) =>
+                      renderNode(
+                        m,
+                        i,
+                        item.id,
+                        overrides,
+                        setOverrides,
+                        setFeed,
+                        true,
+                        collapsed,
+                        setCollapsed,
+                        resolved,
+                        setResolved,
+                        pendingTargetIds
+                      )
+                    );
+                  })()}
                 </div>
               </div>
             ))
@@ -294,7 +391,8 @@ function renderNode(
   collapsed?: Record<string, boolean>,
   setCollapsed?: Dispatch<SetStateAction<Record<string, boolean>>>,
   resolved?: Record<string, boolean>,
-  setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>
+  setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>,
+  pendingTargetIds?: ReadonlySet<string>
 ): JSX.Element {
   switch (m.kind) {
     case 'heading':
@@ -339,121 +437,59 @@ function renderNode(
       const tp = m;
       const targetKey = tp.targetId ?? tp.id;
       const keyId = `${feedItemId}:${targetKey}`;
-      const defaultCollapsed = tp.autoCollapse === true;
+      const isPending = pendingTargetIds?.has(targetKey) ?? false;
+      const defaultCollapsed =
+        tp.autoCollapse === true || (enablePreviewControls && !isPending);
       const collapsedState = collapsed ? collapsed[keyId] : undefined;
       const isCollapsed =
         collapsedState !== undefined ? collapsedState : defaultCollapsed;
-      const hasResolved = !!(resolved && resolved[keyId]) || defaultCollapsed;
+      const hasResolved =
+        !!(resolved && resolved[keyId]) || defaultCollapsed || !isPending;
       return (
-        <div
+        <DungeonTablePreviewCard
           key={key}
-          style={{
-            border: '1px dashed var(--copper)',
-            padding: '0.5rem',
-            margin: '0.5rem 0',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <div style={{ fontWeight: 700 }}>
-              {tp.title} (d{tp.sides})
-            </div>
-            {setCollapsed && hasResolved && (
-              <button
-                type="button"
-                onClick={() =>
-                  setCollapsed((prev) => ({ ...prev, [keyId]: !isCollapsed }))
-                }
-                title={isCollapsed ? 'Expand table' : 'Collapse table'}
-                aria-label={isCollapsed ? 'Expand table' : 'Collapse table'}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--eggshell)',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  lineHeight: 1,
-                }}
-              >
-                {isCollapsed ? '▸' : '▾'}
-              </button>
-            )}
-          </div>
-          {!isCollapsed && (
-            <div style={{ fontSize: '0.95em' }}>
-              {tp.entries.map((e, i) => (
-                <div key={i}>
-                  <code style={{ opacity: 0.85 }}>{e.range}</code>: {e.label}
-                </div>
-              ))}
-            </div>
-          )}
-          {!isCollapsed && enablePreviewControls && (
-            <div
-              style={{
-                marginTop: '0.5rem',
-                display: 'flex',
-                gap: 8,
-                alignItems: 'center',
-              }}
-            >
-              <label>
-                Override next roll:
-                <input
-                  type="number"
-                  min={1}
-                  max={tp.sides}
-                  value={overrides[targetKey] ?? ''}
-                  onChange={(e) => {
-                    const value = e.target.value
-                      ? Number(e.target.value)
-                      : undefined;
-                    setOverrides((prev) => ({ ...prev, [targetKey]: value }));
-                  }}
-                  className={styles['numberInput']}
-                  style={{ width: 80, marginLeft: 8 }}
-                />
-              </label>
-              <button
-                type="button"
-                className={styles['button']}
-                onClick={() =>
-                  resolvePreview(
-                    tp,
-                    feedItemId,
-                    overrides,
-                    setOverrides,
-                    setFeed,
-                    false,
-                    setCollapsed,
-                    setResolved
-                  )
-                }
-                style={{ padding: '6px 12px' }}
-              >
-                Submit
-              </button>
-              <button
-                type="button"
-                className={styles['button']}
-                onClick={() =>
-                  resolvePreview(
-                    tp,
-                    feedItemId,
-                    overrides,
-                    setOverrides,
-                    setFeed,
-                    true,
-                    setCollapsed,
-                    setResolved
-                  )
-                }
-                style={{ padding: '6px 12px' }}
-              >
-                AutoRoll
-              </button>
-            </div>
-          )}
-        </div>
+          preview={tp}
+          enablePreviewControls={enablePreviewControls}
+          overrideValue={overrides[targetKey]}
+          onOverrideChange={(value) =>
+            setOverrides((prev) => ({ ...prev, [targetKey]: value }))
+          }
+          onUseOverride={() =>
+            resolvePreview(
+              tp,
+              feedItemId,
+              overrides,
+              setOverrides,
+              setFeed,
+              false,
+              setCollapsed,
+              setResolved
+            )
+          }
+          onAutoRoll={() =>
+            resolvePreview(
+              tp,
+              feedItemId,
+              overrides,
+              setOverrides,
+              setFeed,
+              true,
+              setCollapsed,
+              setResolved
+            )
+          }
+          isCollapsed={isCollapsed}
+          hasResolved={hasResolved}
+          onToggleCollapse={
+            setCollapsed && hasResolved
+              ? () =>
+                  setCollapsed((prev) => ({
+                    ...prev,
+                    [keyId]: !isCollapsed,
+                  }))
+              : undefined
+          }
+        />
       );
     }
     case 'roll-trace':
@@ -541,6 +577,34 @@ function getRootPreviewNodes(
     level: dungeonLevel,
   });
   return messages.filter((m) => m.kind === 'table-preview');
+}
+
+function formatPendingBadge(pendingCount: number): string {
+  return `${pendingCount} pending ${pendingCount === 1 ? 'step' : 'steps'}`;
+}
+
+function formatPendingTitle(pendingCount: number): string {
+  return `${pendingCount} ${
+    pendingCount === 1 ? 'step is' : 'steps are'
+  } still pending.`;
+}
+
+function collectPendingTargetIds(
+  node?: DungeonOutcomeNode
+): ReadonlySet<string> {
+  const targets = new Set<string>();
+
+  const walk = (current?: DungeonOutcomeNode) => {
+    if (!current) return;
+    if (current.type === 'pending-roll') {
+      targets.add(current.id ?? current.table);
+      return;
+    }
+    current.children?.forEach((child) => walk(child));
+  };
+
+  walk(node);
+  return targets;
 }
 
 export { renderNode };

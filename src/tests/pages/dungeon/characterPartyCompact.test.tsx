@@ -15,7 +15,10 @@ import type {
   CharacterSheet,
 } from '../../../dungeon/models/character/characterSheet';
 import type { OutcomeEventNode } from '../../../dungeon/domain/outcome';
-import type { DungeonRenderNode } from '../../../types/dungeon';
+import type {
+  DungeonRenderNode,
+  DungeonTablePreview,
+} from '../../../types/dungeon';
 import type { Dispatch, SetStateAction } from 'react';
 
 const baseAttributes: Attributes = {
@@ -141,5 +144,43 @@ describe('character party compact rendering', () => {
     const markup = ReactDOMServer.renderToStaticMarkup(element);
     expect(markup).toContain('<ul');
     expect(markup).toContain('<li');
+  });
+
+  test('table previews render as resolved when they are not pending in the outcome tree', () => {
+    const preview: DungeonTablePreview = {
+      kind: 'table-preview',
+      id: 'doorLocation:0',
+      targetId: 'root.periodicCheck.0.doorLocation:0',
+      title: 'Door Location',
+      sides: 20,
+      entries: [
+        { range: '1-6', label: 'Left' },
+        { range: '7-12', label: 'Right' },
+        { range: '13-20', label: 'Ahead' },
+      ],
+    };
+
+    const element = renderNode(
+      preview,
+      0,
+      'preview-test',
+      {},
+      (() => undefined) as Dispatch<
+        SetStateAction<Record<string, number | undefined>>
+      >,
+      (() => undefined) as Dispatch<SetStateAction<unknown>>,
+      true,
+      {},
+      (() => undefined) as Dispatch<SetStateAction<Record<string, boolean>>>,
+      {},
+      (() => undefined) as Dispatch<SetStateAction<Record<string, boolean>>>,
+      new Set<string>()
+    );
+
+    const markup = ReactDOMServer.renderToStaticMarkup(element);
+    expect(markup).toContain('Resolved');
+    expect(markup).not.toContain('Pending');
+    expect(markup).toContain('Resolved. Expand to review the full table.');
+    expect(markup).not.toContain('1-6');
   });
 });

@@ -26,12 +26,47 @@
 
 .placeholder {
   color: var(--eggshell);
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px dashed rgba(240, 239, 221, 0.2);
 }
 
 .formContainer {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.controlSections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.controlSection {
+  flex: 1 1 320px;
+  min-width: 280px;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(240, 239, 221, 0.18);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.controlSectionHeader {
+  margin-bottom: 0.75rem;
+}
+
+.controlSectionTitle {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+
+.controlSectionHint {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-top: 0.2rem;
 }
 
 .controlsRow {
@@ -52,6 +87,12 @@
   padding: 6px 8px;
   border-radius: 4px;
   border: 1px solid var(--copper);
+}
+
+.checkboxLabel {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
 }
 
 .errorText {
@@ -88,6 +129,7 @@
 .itemHeader {
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 0.5rem;
 }
@@ -117,6 +159,34 @@
   text-transform: uppercase;
 }
 
+.compactPendingNotice {
+  margin: 0.6rem 0 0.9rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(215, 165, 45, 0.35);
+  background: rgba(215, 165, 45, 0.12);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.compactPendingCopy {
+  flex: 1 1 260px;
+}
+
+.compactPendingTitle {
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.compactPendingText {
+  font-size: 0.92rem;
+}
+
+.compactPendingButton {
+  white-space: nowrap;
+}
+
 .roll {
   font-weight: 700;
 }
@@ -125,7 +195,63 @@
   margin: 0.35rem 0;
 }
 
+.referencePanel {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(240, 239, 221, 0.18);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.referenceHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.referenceEyebrow {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
+.referenceTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+
+.referenceText {
+  font-size: 0.92rem;
+  margin-top: 0.25rem;
+  opacity: 0.85;
+}
+
+.referenceBody {
+  margin-top: 0.75rem;
+}
+
 .toolbar {
   display: flex;
   justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .outerContainer {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .controlSection {
+    min-width: 0;
+  }
+
+  .referenceHeader {
+    flex-direction: column;
+  }
 }

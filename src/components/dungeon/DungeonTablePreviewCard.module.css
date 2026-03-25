@@ -1,0 +1,177 @@
+.card {
+  border: 1px dashed var(--copper);
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.surfaceButton,
+.surfaceStatic {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+.surfaceButton {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.surfaceButton:hover {
+  background: rgba(240, 239, 221, 0.04);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.headingGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.title {
+  font-weight: 700;
+}
+
+.die {
+  opacity: 0.85;
+  font-size: 0.95rem;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.status {
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.statusPending {
+  background: rgba(215, 165, 45, 0.18);
+  color: var(--eggshell);
+}
+
+.statusResolved {
+  background: rgba(240, 239, 221, 0.16);
+  color: var(--eggshell);
+}
+
+.statusReference {
+  background: rgba(90, 40, 41, 0.35);
+  color: var(--eggshell);
+}
+
+.collapseIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.entries {
+  margin-top: 0.6rem;
+  font-size: 0.95rem;
+}
+
+.entryRow {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.range {
+  opacity: 0.85;
+}
+
+.collapsedNote {
+  margin-top: 0.55rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.controls {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(240, 239, 221, 0.16);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.overrideField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.overrideLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.overrideHint {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.overrideInput {
+  width: 88px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--copper);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.button {
+  border: 2px solid var(--copper);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonPrimary {
+  background: var(--eggshell);
+  color: var(--caput-martuum);
+}
+
+.buttonSecondary {
+  background: transparent;
+  color: var(--eggshell);
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .metaRow {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
