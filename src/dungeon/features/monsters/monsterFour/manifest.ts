@@ -1,8 +1,14 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
 import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
-import { buildPreview } from '../../../adapters/render/shared';
-import { createMonsterDungeonLevelContextHandlers } from '../shared';
+import {
+  buildPreview,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
+import {
+  createMonsterDungeonLevelContextHandlers,
+  createMonsterEventPreviewBuilder,
+} from '../shared';
 import {
   DragonFourOlder,
   DragonFourYounger,
@@ -32,6 +38,39 @@ const {
   registry: dragonFourOlderRegistry,
 } = createMonsterDungeonLevelContextHandlers(resolveDragonFourOlder, 4);
 
+const buildMonsterFourPreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Monster (Level 4)',
+    sides: monsterFour.sides,
+    entries: monsterFour.entries.map((entry) => ({
+      range: entry.range,
+      label: MonsterFour[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
+const buildDragonFourYoungerPreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Dragon (Level 4 Younger)',
+    sides: dragonFourYounger.sides,
+    entries: dragonFourYounger.entries.map((entry) => ({
+      range: entry.range,
+      label: DragonFourYounger[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
+const buildDragonFourOlderPreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Dragon (Level 4 Older)',
+    sides: dragonFourOlder.sides,
+    entries: dragonFourOlder.entries.map((entry) => ({
+      range: entry.range,
+      label: DragonFourOlder[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
 export const monsterFourTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'monsterFour',
@@ -41,16 +80,10 @@ export const monsterFourTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Monster (Level 4)',
-        sides: monsterFour.sides,
-        entries: monsterFour.entries.map((entry) => ({
-          range: entry.range,
-          label: MonsterFour[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildMonsterFourPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildMonsterFourPreview
+    ),
     resolvePending: resolveMonsterFourPending,
     registry: monsterFourRegistry,
   },
@@ -62,16 +95,10 @@ export const monsterFourTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Dragon (Level 4 Younger)',
-        sides: dragonFourYounger.sides,
-        entries: dragonFourYounger.entries.map((entry) => ({
-          range: entry.range,
-          label: DragonFourYounger[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildDragonFourYoungerPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildDragonFourYoungerPreview
+    ),
     resolvePending: resolveDragonFourYoungerPending,
     registry: dragonFourYoungerRegistry,
   },
@@ -83,16 +110,10 @@ export const monsterFourTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Dragon (Level 4 Older)',
-        sides: dragonFourOlder.sides,
-        entries: dragonFourOlder.entries.map((entry) => ({
-          range: entry.range,
-          label: DragonFourOlder[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildDragonFourOlderPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildDragonFourOlderPreview
+    ),
     resolvePending: resolveDragonFourOlderPending,
     registry: dragonFourOlderRegistry,
   },

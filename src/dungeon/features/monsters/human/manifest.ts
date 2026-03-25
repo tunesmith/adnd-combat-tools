@@ -1,7 +1,10 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
 import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
-import { createMonsterDungeonLevelContextHandlers } from '../shared';
+import {
+  createMonsterDungeonLevelContextHandlers,
+  createMonsterEventPreviewBuilder,
+} from '../shared';
 import { buildHumanPreview } from './humanRender';
 import { resolveHuman } from './humanResolvers';
 
@@ -20,6 +23,7 @@ export const humanTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderMonsterCompactNodes,
     },
     buildPreview: buildHumanPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(buildHumanPreview),
     resolvePending,
     registry,
   },

@@ -1,8 +1,14 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
 import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
-import { buildPreview } from '../../../adapters/render/shared';
-import { createMonsterDungeonLevelContextHandlers } from '../shared';
+import {
+  buildPreview,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
+import {
+  createMonsterDungeonLevelContextHandlers,
+  createMonsterEventPreviewBuilder,
+} from '../shared';
 import {
   DragonTen,
   dragonTen,
@@ -19,6 +25,28 @@ const {
 const { resolvePending: resolveDragonTenPending, registry: dragonTenRegistry } =
   createMonsterDungeonLevelContextHandlers(resolveDragonTen, 10);
 
+const buildMonsterTenPreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Monster (Level 10)',
+    sides: monsterTen.sides,
+    entries: monsterTen.entries.map((entry) => ({
+      range: entry.range,
+      label: MonsterTen[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
+const buildDragonTenPreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Dragon (Level 10)',
+    sides: dragonTen.sides,
+    entries: dragonTen.entries.map((entry) => ({
+      range: entry.range,
+      label: DragonTen[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
 export const monsterTenTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'monsterTen',
@@ -28,16 +56,8 @@ export const monsterTenTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Monster (Level 10)',
-        sides: monsterTen.sides,
-        entries: monsterTen.entries.map((entry) => ({
-          range: entry.range,
-          label: MonsterTen[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildMonsterTenPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(buildMonsterTenPreview),
     resolvePending: resolveMonsterTenPending,
     registry: monsterTenRegistry,
   },
@@ -49,16 +69,8 @@ export const monsterTenTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Dragon (Level 10)',
-        sides: dragonTen.sides,
-        entries: dragonTen.entries.map((entry) => ({
-          range: entry.range,
-          label: DragonTen[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildDragonTenPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(buildDragonTenPreview),
     resolvePending: resolveDragonTenPending,
     registry: dragonTenRegistry,
   },

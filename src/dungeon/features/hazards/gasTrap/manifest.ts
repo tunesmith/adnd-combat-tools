@@ -5,7 +5,7 @@ import {
   buildGasTrapEffectPreview,
 } from './gasTrapRender';
 import { resolveGasTrapEffect } from './gasTrapResolvers';
-import { wrapResolver } from '../../shared';
+import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 
 export const gasTrapTables: ReadonlyArray<DungeonTableDefinition> = [
   {
@@ -17,6 +17,8 @@ export const gasTrapTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderGasTrapEffectCompact,
     },
     buildPreview: buildGasTrapEffectPreview,
+    buildEventPreview: (node) =>
+      buildEventPreviewFromFactory(node, buildGasTrapEffectPreview),
     resolvePending: () => resolveGasTrapEffect({}),
   },
 ];

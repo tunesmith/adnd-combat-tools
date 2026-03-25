@@ -1,8 +1,14 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
 import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
-import { buildPreview } from '../../../adapters/render/shared';
-import { createMonsterDungeonLevelContextHandlers } from '../shared';
+import {
+  buildPreview,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
+import {
+  createMonsterDungeonLevelContextHandlers,
+  createMonsterEventPreviewBuilder,
+} from '../shared';
 import {
   DragonThree,
   dragonThree,
@@ -24,6 +30,28 @@ const {
   registry: dragonThreeRegistry,
 } = createMonsterDungeonLevelContextHandlers(resolveDragonThree, 3);
 
+const buildMonsterThreePreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Monster (Level 3)',
+    sides: monsterThree.sides,
+    entries: monsterThree.entries.map((entry) => ({
+      range: entry.range,
+      label: MonsterThree[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
+const buildDragonThreePreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Dragon (Level 3)',
+    sides: dragonThree.sides,
+    entries: dragonThree.entries.map((entry) => ({
+      range: entry.range,
+      label: DragonThree[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
 export const monsterThreeTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'monsterThree',
@@ -33,16 +61,10 @@ export const monsterThreeTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Monster (Level 3)',
-        sides: monsterThree.sides,
-        entries: monsterThree.entries.map((entry) => ({
-          range: entry.range,
-          label: MonsterThree[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildMonsterThreePreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildMonsterThreePreview
+    ),
     resolvePending: resolveMonsterThreePending,
     registry: monsterThreeRegistry,
   },
@@ -54,16 +76,10 @@ export const monsterThreeTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Dragon (Level 3)',
-        sides: dragonThree.sides,
-        entries: dragonThree.entries.map((entry) => ({
-          range: entry.range,
-          label: DragonThree[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildDragonThreePreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildDragonThreePreview
+    ),
     resolvePending: resolveDragonThreePending,
     registry: dragonThreeRegistry,
   },

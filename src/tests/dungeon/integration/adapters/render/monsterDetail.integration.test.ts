@@ -144,6 +144,26 @@ describe('Monster describe helpers', () => {
     expect(compactPreviews.map((p) => p.id)).toContain('human');
   });
 
+  test('monsterOne detail tree includes an event preview with wandering context', () => {
+    const outcome: OutcomeEventNode = {
+      type: 'event',
+      roll: 7,
+      event: {
+        kind: 'monsterOne',
+        result: MonsterOne.Orc_7to12,
+        dungeonLevel: 1,
+        text: 'There are 6 orcs.',
+      },
+    };
+
+    const previews = renderDetailTree(outcome).filter(isPreview);
+    const monsterPreview = previews.find(
+      (preview) => preview.id === 'monsterOne'
+    );
+    expect(monsterPreview).toBeDefined();
+    expect(monsterPreview?.context).toEqual({ kind: 'wandering', level: 1 });
+  });
+
   test('monsterLevel produces no detail when above level ten', () => {
     const aboveTen = (MonsterLevel.Ten + 2) as MonsterLevel;
     const outcome: OutcomeEventNode = {
@@ -161,6 +181,28 @@ describe('Monster describe helpers', () => {
 
     const compactParagraphs = toCompactRender(outcome).filter(isParagraph);
     expect(compactParagraphs.map((p) => p.text.trim())).toEqual([]);
+  });
+
+  test('monsterLevel detail tree uses a level-scoped preview id', () => {
+    const outcome: OutcomeEventNode = {
+      type: 'event',
+      roll: 18,
+      event: {
+        kind: 'monsterLevel',
+        result: MonsterLevel.Nine,
+        dungeonLevel: 4,
+      },
+    };
+
+    const previews = renderDetailTree(outcome).filter(isPreview);
+    const monsterLevelPreview = previews.find(
+      (preview) => preview.id === 'monsterLevel:4'
+    );
+    expect(monsterLevelPreview).toBeDefined();
+    expect(monsterLevelPreview?.context).toEqual({
+      kind: 'wandering',
+      level: 4,
+    });
   });
 
   test('monsterSeven detail renders text like lower levels', () => {

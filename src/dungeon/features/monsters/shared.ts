@@ -1,9 +1,12 @@
 import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
+import type { DungeonTablePreview } from '../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../domain/outcome';
 import { readTableContextOfKind } from '../../helpers/tableContext';
+import type { TablePreviewFactory } from '../../adapters/render/shared';
+import { buildEventPreviewFromFactory } from '../shared';
 
 type MonsterDungeonLevelContext = {
   dungeonLevel?: number;
@@ -42,6 +45,27 @@ export function createMonsterDungeonLevelContextHandlers(
       );
       return resolver({ roll, dungeonLevel });
     },
+  };
+}
+
+export function createMonsterEventPreviewBuilder(
+  buildPreview: TablePreviewFactory,
+  options?: {
+    levelScopedTableId?: boolean;
+  }
+): (node: OutcomeEventNode) => DungeonTablePreview | undefined {
+  return (node) => {
+    const dungeonLevel = readMonsterDungeonLevel(node);
+    if (dungeonLevel === undefined) return undefined;
+    return buildEventPreviewFromFactory(node, buildPreview, {
+      tableId: options?.levelScopedTableId
+        ? `${node.event.kind}:${dungeonLevel}`
+        : undefined,
+      context: {
+        kind: 'wandering',
+        level: dungeonLevel,
+      },
+    });
   };
 }
 
@@ -89,4 +113,15 @@ function readDungeonLevelFromContextOrId(
   }
 
   return fallback;
+}
+
+function readMonsterDungeonLevel(node: OutcomeEventNode): number | undefined {
+  const candidate = node.event as { dungeonLevel?: unknown };
+  if (
+    typeof candidate.dungeonLevel === 'number' &&
+    Number.isFinite(candidate.dungeonLevel)
+  ) {
+    return candidate.dungeonLevel;
+  }
+  return undefined;
 }

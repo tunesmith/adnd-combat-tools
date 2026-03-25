@@ -1,8 +1,14 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
 import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
-import { buildPreview } from '../../../adapters/render/shared';
-import { createMonsterDungeonLevelContextHandlers } from '../shared';
+import {
+  buildPreview,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
+import {
+  createMonsterDungeonLevelContextHandlers,
+  createMonsterEventPreviewBuilder,
+} from '../shared';
 import {
   DragonNine,
   dragonNine,
@@ -21,6 +27,28 @@ const {
   registry: dragonNineRegistry,
 } = createMonsterDungeonLevelContextHandlers(resolveDragonNine, 9);
 
+const buildMonsterNinePreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Monster (Level 9)',
+    sides: monsterNine.sides,
+    entries: monsterNine.entries.map((entry) => ({
+      range: entry.range,
+      label: MonsterNine[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
+const buildDragonNinePreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Dragon (Level 9)',
+    sides: dragonNine.sides,
+    entries: dragonNine.entries.map((entry) => ({
+      range: entry.range,
+      label: DragonNine[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
 export const monsterNineTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'monsterNine',
@@ -30,16 +58,10 @@ export const monsterNineTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Monster (Level 9)',
-        sides: monsterNine.sides,
-        entries: monsterNine.entries.map((entry) => ({
-          range: entry.range,
-          label: MonsterNine[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildMonsterNinePreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildMonsterNinePreview
+    ),
     resolvePending: resolveMonsterNinePending,
     registry: monsterNineRegistry,
   },
@@ -51,16 +73,8 @@ export const monsterNineTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Dragon (Level 9)',
-        sides: dragonNine.sides,
-        entries: dragonNine.entries.map((entry) => ({
-          range: entry.range,
-          label: DragonNine[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildDragonNinePreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(buildDragonNinePreview),
     resolvePending: resolveDragonNinePending,
     registry: dragonNineRegistry,
   },

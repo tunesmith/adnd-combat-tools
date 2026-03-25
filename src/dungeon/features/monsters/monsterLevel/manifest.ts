@@ -2,7 +2,10 @@ import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
 import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import { buildMonsterLevelPreview } from './monsterLevelRender';
-import { createMonsterDungeonLevelContextHandlers } from '../shared';
+import {
+  createMonsterDungeonLevelContextHandlers,
+  createMonsterEventPreviewBuilder,
+} from '../shared';
 import { resolveMonsterLevel } from './monsterLevelResolvers';
 
 const { resolvePending, registry } = createMonsterDungeonLevelContextHandlers(
@@ -20,6 +23,12 @@ export const monsterLevelTables: ReadonlyArray<DungeonTableDefinition> = [
       renderCompact: renderMonsterCompactNodes,
     },
     buildPreview: buildMonsterLevelPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildMonsterLevelPreview,
+      {
+        levelScopedTableId: true,
+      }
+    ),
     resolvePending,
     registry,
   },

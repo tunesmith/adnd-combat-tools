@@ -1,8 +1,14 @@
 import type { DungeonTableDefinition } from '../../types';
 import { wrapResolver } from '../../shared';
 import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
-import { buildPreview } from '../../../adapters/render/shared';
-import { createMonsterDungeonLevelContextHandlers } from '../shared';
+import {
+  buildPreview,
+  type TablePreviewFactory,
+} from '../../../adapters/render/shared';
+import {
+  createMonsterDungeonLevelContextHandlers,
+  createMonsterEventPreviewBuilder,
+} from '../shared';
 import {
   DragonFiveOlder,
   DragonFiveYounger,
@@ -32,6 +38,39 @@ const {
   registry: dragonFiveOlderRegistry,
 } = createMonsterDungeonLevelContextHandlers(resolveDragonFiveOlder, 5);
 
+const buildMonsterFivePreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Monster (Level 5)',
+    sides: monsterFive.sides,
+    entries: monsterFive.entries.map((entry) => ({
+      range: entry.range,
+      label: MonsterFive[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
+const buildDragonFiveYoungerPreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Dragon (Level 5 Younger)',
+    sides: dragonFiveYounger.sides,
+    entries: dragonFiveYounger.entries.map((entry) => ({
+      range: entry.range,
+      label: DragonFiveYounger[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
+const buildDragonFiveOlderPreview: TablePreviewFactory = (tableId, context) =>
+  buildPreview(tableId, {
+    title: 'Dragon (Level 5 Older)',
+    sides: dragonFiveOlder.sides,
+    entries: dragonFiveOlder.entries.map((entry) => ({
+      range: entry.range,
+      label: DragonFiveOlder[entry.command] ?? String(entry.command),
+    })),
+    context,
+  });
+
 export const monsterFiveTables: ReadonlyArray<DungeonTableDefinition> = [
   {
     id: 'monsterFive',
@@ -41,16 +80,10 @@ export const monsterFiveTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Monster (Level 5)',
-        sides: monsterFive.sides,
-        entries: monsterFive.entries.map((entry) => ({
-          range: entry.range,
-          label: MonsterFive[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildMonsterFivePreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildMonsterFivePreview
+    ),
     resolvePending: resolveMonsterFivePending,
     registry: monsterFiveRegistry,
   },
@@ -62,16 +95,10 @@ export const monsterFiveTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Dragon (Level 5 Younger)',
-        sides: dragonFiveYounger.sides,
-        entries: dragonFiveYounger.entries.map((entry) => ({
-          range: entry.range,
-          label: DragonFiveYounger[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildDragonFiveYoungerPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildDragonFiveYoungerPreview
+    ),
     resolvePending: resolveDragonFiveYoungerPending,
     registry: dragonFiveYoungerRegistry,
   },
@@ -83,16 +110,10 @@ export const monsterFiveTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: (tableId, context) =>
-      buildPreview(tableId, {
-        title: 'Dragon (Level 5 Older)',
-        sides: dragonFiveOlder.sides,
-        entries: dragonFiveOlder.entries.map((entry) => ({
-          range: entry.range,
-          label: DragonFiveOlder[entry.command] ?? String(entry.command),
-        })),
-        context,
-      }),
+    buildPreview: buildDragonFiveOlderPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(
+      buildDragonFiveOlderPreview
+    ),
     resolvePending: resolveDragonFiveOlderPending,
     registry: dragonFiveOlderRegistry,
   },
