@@ -1,6 +1,11 @@
 import { rollAttributeDice } from '../../../../../../dungeon/helpers/character/attributes/rollAttributeDice';
+import * as dungeonRandom from '../../../../../../dungeon/helpers/dungeonRandom';
 
 describe('rollAttributeDice', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('throws an error if dice is less than 3', () => {
     expect(() => rollAttributeDice(2)).toThrow(
       'The number of dice must be at least 3'
@@ -47,5 +52,18 @@ describe('rollAttributeDice', () => {
 
     const result = rollAttributeDice(4, mockRandomGenerator);
     expect(result).toBe(15); // 6 + 5 + 4
+  });
+
+  it('uses dungeon RNG for the default d6 roller', () => {
+    const randomSpy = jest
+      .spyOn(dungeonRandom, 'nextDungeonRandomInt')
+      .mockReturnValueOnce(2)
+      .mockReturnValueOnce(6)
+      .mockReturnValueOnce(3)
+      .mockReturnValueOnce(5);
+
+    expect(rollAttributeDice(4)).toBe(14); // 6 + 5 + 3
+    expect(randomSpy).toHaveBeenCalledTimes(4);
+    expect(randomSpy).toHaveBeenNthCalledWith(1, 6);
   });
 });

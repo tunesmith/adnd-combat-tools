@@ -1,4 +1,5 @@
 import { getTableEntry, rollDice } from '../../dungeonLookup';
+import { nextDungeonRandomInt } from '../../dungeonRandom';
 import {
   characterClass,
   CharacterClassTable,
@@ -33,6 +34,8 @@ export const getCharacterClass = (): CharacterClass => {
     case CharacterClassTable.Assassin:
       return CharacterClass.Assassin;
     case CharacterClassTable.MonkBard:
-      return Math.random() < 0.5 ? CharacterClass.Monk : CharacterClass.Bard;
+      return nextDungeonRandomInt(2) === 1
+        ? CharacterClass.Monk
+        : CharacterClass.Bard;
   }
 };

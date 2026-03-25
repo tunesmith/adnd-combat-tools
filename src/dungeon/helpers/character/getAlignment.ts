@@ -3,6 +3,7 @@ import {
   Alignment,
 } from '../../models/allowedAlignmentsByClass';
 import type { CharacterClass } from '../../models/characterClass';
+import { nextDungeonRandomInt } from '../dungeonRandom';
 
 const intersection = (arrays: Alignment[][]): Alignment[] => {
   if (arrays.length === 0) return [];
@@ -15,7 +16,7 @@ const pickRandom = (options: Alignment[]): Alignment => {
   if (options.length === 0) {
     return Alignment.TrueNeutral;
   }
-  const index = Math.floor(Math.random() * options.length);
+  const index = nextDungeonRandomInt(options.length) - 1;
   return options[index] ?? Alignment.TrueNeutral;
 };
 

@@ -1,6 +1,8 @@
+import { nextDungeonRandomInt } from '../../dungeonRandom';
+
 export const rollAttributeDice = (
   dice: number,
-  randomGenerator: () => number = () => Math.floor(Math.random() * 6) + 1
+  randomGenerator: () => number = () => nextDungeonRandomInt(6)
 ): number => {
   if (dice < 3) {
     throw new Error('The number of dice must be at least 3');
