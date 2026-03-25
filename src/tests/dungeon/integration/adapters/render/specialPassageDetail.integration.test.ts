@@ -2,7 +2,7 @@ import {
   renderDetailTree,
   toCompactRender,
 } from '../../../../../dungeon/adapters/render';
-import { resolvePeriodicCheck } from '../../../../../dungeon/domain/resolvers';
+import { resolvePeriodicCheck } from '../../../../../dungeon/features/navigation/entry/entryResolvers';
 import { resolvePassageWidth } from '../../../../../dungeon/features/navigation/passageWidth/passageWidthResolvers';
 import { resolvePassageTurns } from '../../../../../dungeon/features/navigation/passageTurn/passageTurnResolvers';
 import {

@@ -1,5 +1,5 @@
 import { toDetailRender } from '../../../../../dungeon/adapters/render';
-import { resolveDoorBeyond } from '../../../../../dungeon/domain/resolvers';
+import { resolveDoorBeyond } from '../../../../../dungeon/features/navigation/entry/entryResolvers';
 import {
   resolveDoorLocation,
   resolvePeriodicDoorOnly,

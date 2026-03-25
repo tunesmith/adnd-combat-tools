@@ -10,7 +10,7 @@ import {
 } from '../../../dungeon/helpers/outcomeTree';
 import { applyOutcomeRoll } from '../../../dungeon/helpers/registry';
 import { readTableContext } from '../../../dungeon/helpers/tableContext';
-import { resolvePeriodicCheck } from '../../../dungeon/domain/resolvers';
+import { resolvePeriodicCheck } from '../../../dungeon/features/navigation/entry/entryResolvers';
 
 export function resolveSequenceWithRolls(
   rolls: number[],

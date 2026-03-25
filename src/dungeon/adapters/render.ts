@@ -9,7 +9,7 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../types/dungeon';
-import { PASSAGE_CONTINUES_SUFFIX } from './render/periodicOutcome';
+import { PASSAGE_CONTINUES_SUFFIX } from '../features/navigation/entry/entryRender';
 import {
   renderMonsterDetailNodes,
   renderMonsterCompactNodes,
@@ -181,12 +181,6 @@ function previewForEventNode(
   let tableId: string | undefined;
   let context: TableContext | undefined;
   switch (event.kind) {
-    case 'periodicCheck':
-      tableId = 'periodicCheck';
-      break;
-    case 'doorBeyond':
-      tableId = 'doorBeyond';
-      break;
     case 'trickTrap':
       tableId = 'trickTrap';
       break;

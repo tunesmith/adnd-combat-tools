@@ -1,13 +1,8 @@
-import { DoorBeyond, doorBeyond } from '../../tables/dungeon/doorBeyond';
-import type {
-  DungeonMessage,
-  DungeonRollTrace,
-  DungeonTablePreview,
-  DungeonRenderNode,
-} from '../../types/dungeon';
+import type { DungeonRenderNode } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
-import { resolveDoorBeyond } from '../domain/resolvers';
 import { createOutcomeRenderSnapshot } from '../helpers/outcomePipeline';
+import { resolveDoorBeyond } from '../features/navigation/entry/entryResolvers';
+import { buildDoorStartMessages } from '../features/navigation/entry/entryRender';
 
 /**
  * Legacy string result (kept for compact mode parity and tests)
@@ -33,26 +28,11 @@ export const doorBeyondMessages = (options?: {
 } => {
   const doorAhead = options?.doorAhead ?? false;
   if (options?.detailMode && options.roll === undefined) {
-    const preview: DungeonTablePreview = {
-      kind: 'table-preview',
-      id: 'doorBeyond',
-      targetId: 'doorBeyond',
-      title: 'Door Beyond',
-      sides: doorBeyond.sides,
-      entries: doorBeyond.entries.map((e) => ({
-        range:
-          e.range.length === 1
-            ? `${e.range[0]}`
-            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-        label: DoorBeyond[e.command] ?? String(e.command),
-      })),
+    return {
+      usedRoll: undefined,
+      messages: buildDoorStartMessages(),
+      outcome: undefined,
     };
-    const messages: (
-      | DungeonMessage
-      | DungeonRollTrace
-      | DungeonTablePreview
-    )[] = [{ kind: 'heading', level: 3, text: 'Door' }, preview];
-    return { usedRoll: undefined, messages, outcome: undefined };
   }
   const node = resolveDoorBeyond({
     roll: options?.roll,

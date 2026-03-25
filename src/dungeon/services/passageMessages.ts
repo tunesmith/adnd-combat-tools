@@ -1,15 +1,8 @@
-import {
-  PeriodicCheck,
-  periodicCheck,
-} from '../../tables/dungeon/periodicCheck';
-import type {
-  DungeonMessage,
-  DungeonTablePreview,
-  DungeonRenderNode,
-} from '../../types/dungeon';
+import type { DungeonRenderNode } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
-import { resolvePeriodicCheck } from '../domain/resolvers';
 import { createOutcomeRenderSnapshot } from '../helpers/outcomePipeline';
+import { resolvePeriodicCheck } from '../features/navigation/entry/entryResolvers';
+import { buildPassageStartMessages } from '../features/navigation/entry/entryRender';
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -40,28 +33,11 @@ export const passageMessages = (options?: {
 } => {
   const level = options?.level ?? 1;
   if (options?.detailMode && options.roll === undefined) {
-    const preview: DungeonTablePreview = {
-      kind: 'table-preview',
-      id: 'periodicCheck',
-      targetId: 'periodicCheck',
-      title: 'Periodic Check',
-      sides: periodicCheck.sides,
-      entries: periodicCheck.entries.map((e) => ({
-        range:
-          e.range.length === 1
-            ? `${e.range[0]}`
-            : `${e.range[0]}–${e.range[e.range.length - 1]}`,
-        label: PeriodicCheck[e.command] ?? String(e.command),
-      })),
-      context: options?.level
-        ? { kind: 'wandering', level: options.level }
-        : undefined,
+    return {
+      usedRoll: undefined,
+      messages: buildPassageStartMessages(options?.level),
+      outcome: undefined,
     };
-    const messages: (DungeonMessage | DungeonTablePreview)[] = [
-      { kind: 'heading', level: 3, text: 'Passage' },
-      preview,
-    ];
-    return { usedRoll: undefined, messages, outcome: undefined };
   }
   const node = resolvePeriodicCheck({
     roll: options?.roll,

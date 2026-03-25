@@ -13,9 +13,11 @@ import type {
 } from '../../dungeon/features/navigation/chasm/chasmTable';
 import type { PassageWidth } from '../../dungeon/features/navigation/passageWidth/passageWidthTable';
 import type { SidePassages } from '../../dungeon/features/navigation/sidePassage/sidePassageTable';
-import type { DoorBeyond } from './doorBeyond';
+import type {
+  DoorBeyond,
+  PeriodicCheck,
+} from '../../dungeon/features/navigation/entry/entryTable';
 import type { DoorLocation } from '../../dungeon/features/navigation/doorChain/doorChainTable';
-import type { PeriodicCheck } from './periodicCheck';
 import type { PassageTurns } from '../../dungeon/features/navigation/passageTurn/passageTurnTable';
 import type {
   ChamberDimensions,

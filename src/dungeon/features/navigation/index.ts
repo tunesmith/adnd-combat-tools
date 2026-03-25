@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../types';
-import { entryTables } from './tables/entry';
+import { entryTables } from './entry/manifest';
 import { sidePassageTables } from './sidePassage/manifest';
 import { passageTurnTables } from './passageTurn/manifest';
 import { specialPassageTables } from './specialPassage/manifest';

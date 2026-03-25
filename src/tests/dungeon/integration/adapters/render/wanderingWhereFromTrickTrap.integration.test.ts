@@ -1,9 +1,9 @@
-import { PeriodicCheck } from '../../../../../tables/dungeon/periodicCheck';
+import { PeriodicCheck } from '../../../../../dungeon/features/navigation/entry/entryTable';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import {
   renderWanderingWhereFromDetail,
   renderWanderingWhereFromCompactNodes,
-} from '../../../../../dungeon/adapters/render/periodicOutcome';
+} from '../../../../../dungeon/features/navigation/entry/entryRender';
 import { resolveTrickTrap } from '../../../../../dungeon/features/hazards/trickTrap/trickTrapResolvers';
 import type { AppendPreviewFn } from '../../../../../dungeon/adapters/render/shared';
 

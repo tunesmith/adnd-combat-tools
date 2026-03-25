@@ -5,7 +5,7 @@ import { passageMessages } from '../../../../../dungeon/services/passageMessages
 import {
   periodicCheck,
   PeriodicCheck,
-} from '../../../../../tables/dungeon/periodicCheck';
+} from '../../../../../dungeon/features/navigation/entry/entryTable';
 import type {
   DungeonMessage,
   DungeonRenderNode,

@@ -2,7 +2,7 @@ import { doorBeyondMessages } from '../../../../../dungeon/services/doorBeyondMe
 import {
   doorBeyond,
   DoorBeyond,
-} from '../../../../../tables/dungeon/doorBeyond';
+} from '../../../../../dungeon/features/navigation/entry/entryTable';
 import type { DungeonTablePreview } from '../../../../../types/dungeon';
 
 function pickRollForDoorBeyond(cmd: DoorBeyond): number {

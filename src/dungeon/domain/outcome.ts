@@ -1,5 +1,7 @@
-import type { PeriodicCheck } from '../../tables/dungeon/periodicCheck';
-import type { DoorBeyond } from '../../tables/dungeon/doorBeyond';
+import type {
+  DoorBeyond,
+  PeriodicCheck,
+} from '../features/navigation/entry/entryTable';
 import type { SidePassages } from '../features/navigation/sidePassage/sidePassageTable';
 import type { PassageTurns } from '../features/navigation/passageTurn/passageTurnTable';
 import type { Stairs, Egress } from '../features/navigation/exit/stairsTable';

@@ -1,5 +1,5 @@
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
-import { resolvePeriodicCheck } from '../../../../../dungeon/domain/resolvers';
+import { resolvePeriodicCheck } from '../../../../../dungeon/features/navigation/entry/entryResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { resolveSequenceWithRolls } from '../../../../support/dungeon/detail-utils';
 import type {

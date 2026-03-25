@@ -4,23 +4,23 @@ import type {
   OutcomeEventNode,
 } from '../../../domain/outcome';
 import {
-  renderPeriodicCheckDetail,
-  renderPeriodicCheckCompact,
-  renderWanderingWhereFromDetail,
-  renderWanderingWhereFromCompactNodes,
+  buildDoorBeyondPreview,
+  buildPeriodicCheckPreview,
   buildWanderingWhereFromPreview,
-} from '../../../adapters/render/periodicOutcome';
-import {
-  renderDoorBeyondDetail,
   renderDoorBeyondCompact,
-} from '../../../adapters/render/doorBeyond';
+  renderDoorBeyondDetail,
+  renderPeriodicCheckCompact,
+  renderPeriodicCheckDetail,
+  renderWanderingWhereFromCompactNodes,
+  renderWanderingWhereFromDetail,
+} from './entryRender';
+import { readTableContextOfKind } from '../../../helpers/tableContext';
+import { resolveRoomDimensions } from '../../environment/roomsChambers/roomsChambersResolvers';
 import {
   resolveDoorBeyond,
   resolvePeriodicCheck,
   resolveWanderingWhereFrom,
-} from '../../../domain/resolvers';
-import { readTableContextOfKind } from '../../../helpers/tableContext';
-import { resolveRoomDimensions } from '../../environment/roomsChambers/roomsChambersResolvers';
+} from './entryResolvers';
 import { withoutAppend } from '../shared';
 import {
   buildEventPreviewFromFactory,
@@ -74,6 +74,7 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderPeriodicCheckDetail,
       renderCompact: withoutAppend(renderPeriodicCheckCompact),
     },
+    buildPreview: buildPeriodicCheckPreview,
     registry: ({ roll, context }) =>
       resolvePeriodicCheck({
         roll,
@@ -88,6 +89,7 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
       renderDetail: renderDoorBeyondDetail,
       renderCompact: withoutAppend(renderDoorBeyondCompact),
     },
+    buildPreview: buildDoorBeyondPreview,
   },
   markContextualResolution({
     id: 'wanderingWhereFrom',

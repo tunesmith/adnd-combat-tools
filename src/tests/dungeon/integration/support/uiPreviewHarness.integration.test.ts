@@ -13,7 +13,10 @@ import {
 } from '../../../support/dungeon/uiPreviewHarness';
 import { resolveViaRegistry } from '../../../../dungeon/helpers/registry';
 import type { OutcomeEvent } from '../../../../dungeon/domain/outcome';
-import { DoorBeyond, doorBeyond } from '../../../../tables/dungeon/doorBeyond';
+import {
+  DoorBeyond,
+  doorBeyond,
+} from '../../../../dungeon/features/navigation/entry/entryTable';
 import { ChamberRoomContents } from '../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
 import { TreasureMagicCategory } from '../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
 import { TreasurePotion } from '../../../../dungeon/features/treasure/potion/potionTables';

@@ -2,7 +2,7 @@ import { simulateDetailRun } from '../../../../support/dungeon/dungeonRollHarnes
 import {
   DoorBeyond,
   doorBeyond,
-} from '../../../../../tables/dungeon/doorBeyond';
+} from '../../../../../dungeon/features/navigation/entry/entryTable';
 
 function rollForDoor(cmd: DoorBeyond): number {
   const entry = doorBeyond.entries.find((e) => e.command === cmd);
