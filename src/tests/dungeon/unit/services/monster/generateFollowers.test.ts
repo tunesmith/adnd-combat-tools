@@ -1,4 +1,5 @@
 import { generateFollowers } from '../../../../../dungeon/services/monster/characterResult';
+import * as characterResultModule from '../../../../../dungeon/services/monster/characterResult';
 import type { CharacterSheet } from '../../../../../dungeon/models/character/characterSheet';
 import { CharacterClass } from '../../../../../dungeon/models/characterClass';
 import { CharacterRace } from '../../../../../tables/dungeon/monster/character/characterRace';
@@ -33,8 +34,12 @@ const buildPartyMember = (alignment: Alignment): CharacterSheet => ({
   alignment,
 });
 
-const buildAssassinMember = (): CharacterSheet => ({
-  professions: [{ level: 1, characterClass: CharacterClass.Assassin }],
+const buildCharacterWithProfessions = (
+  professions: CharacterSheet['professions'],
+  alignment: Alignment,
+  charisma = 16
+): CharacterSheet => ({
+  professions,
   characterRace: CharacterRace.Human,
   attributes: {
     [Attribute.Strength]: 12,
@@ -42,14 +47,33 @@ const buildAssassinMember = (): CharacterSheet => ({
     [Attribute.Wisdom]: 12,
     [Attribute.Dexterity]: 12,
     [Attribute.Constitution]: 12,
-    [Attribute.Charisma]: 7,
+    [Attribute.Charisma]: charisma,
   },
   gender: Gender.Female,
-  hitPoints: 6,
+  hitPoints: 20,
   isBard: false,
   bardLevels: baseBardLevels,
   followers: [],
-  alignment: Alignment.ChaoticEvil,
+  alignment,
+});
+
+const buildCharacter = (
+  characterClass: CharacterClass,
+  alignment: Alignment,
+  level = 5,
+  charisma = 16
+): CharacterSheet =>
+  buildCharacterWithProfessions(
+    [{ level, characterClass }],
+    alignment,
+    charisma
+  );
+
+const buildAssassinMember = (): CharacterSheet =>
+  buildCharacter(CharacterClass.Assassin, Alignment.ChaoticEvil, 1, 7);
+
+afterEach(() => {
+  jest.restoreAllMocks();
 });
 
 describe('generateFollowers men-at-arms', () => {
@@ -88,5 +112,187 @@ describe('generateFollowers men-at-arms', () => {
     assassin.followers.forEach((follower) => {
       expect(follower.isManAtArms).toBe(true);
     });
+  });
+});
+
+describe('generateFollowers class restrictions', () => {
+  it('rejects cleric henchmen for monks', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest
+      .spyOn(characterResultModule, 'createCharacters')
+      .mockReturnValue([
+        buildCharacter(CharacterClass.Cleric, Alignment.LawfulNeutral, 2),
+      ]);
+
+    const monk = buildCharacter(
+      CharacterClass.Monk,
+      Alignment.LawfulNeutral,
+      6
+    );
+    generateFollowers([monk], 1, 2);
+
+    expect(monk.followers).toHaveLength(0);
+  });
+
+  it('accepts thief henchmen for monks', () => {
+    jest
+      .spyOn(characterResultModule, 'createCharacters')
+      .mockReturnValue([
+        buildCharacter(CharacterClass.Thief, Alignment.TrueNeutral, 2),
+      ]);
+
+    const monk = buildCharacter(
+      CharacterClass.Monk,
+      Alignment.LawfulNeutral,
+      6
+    );
+    generateFollowers([monk], 1, 2);
+
+    expect(monk.followers).toHaveLength(1);
+    expect(monk.followers[0]?.professions[0]?.characterClass).toBe(
+      CharacterClass.Thief
+    );
+  });
+
+  it('accepts compatible multi-class henchmen for monks', () => {
+    jest.spyOn(characterResultModule, 'createCharacters').mockReturnValue([
+      buildCharacterWithProfessions(
+        [
+          { level: 2, characterClass: CharacterClass.Fighter },
+          { level: 2, characterClass: CharacterClass.Thief },
+        ],
+        Alignment.TrueNeutral
+      ),
+    ]);
+
+    const monk = buildCharacter(
+      CharacterClass.Monk,
+      Alignment.LawfulNeutral,
+      6
+    );
+    generateFollowers([monk], 1, 2);
+
+    expect(monk.followers).toHaveLength(1);
+    expect(monk.followers[0]?.professions).toEqual([
+      { level: 2, characterClass: CharacterClass.Fighter },
+      { level: 2, characterClass: CharacterClass.Thief },
+    ]);
+  });
+
+  it('caps monk henchmen by charisma', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest
+      .spyOn(characterResultModule, 'createCharacters')
+      .mockReturnValue([
+        buildCharacter(CharacterClass.Thief, Alignment.TrueNeutral, 2),
+      ]);
+
+    const monk = buildCharacter(
+      CharacterClass.Monk,
+      Alignment.LawfulNeutral,
+      8,
+      7
+    );
+    generateFollowers([monk], 4, 2);
+
+    expect(monk.followers).toHaveLength(3);
+  });
+
+  it('rejects thief henchmen for low-level assassins', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest
+      .spyOn(characterResultModule, 'createCharacters')
+      .mockReturnValue([
+        buildCharacter(CharacterClass.Thief, Alignment.ChaoticEvil, 2),
+      ]);
+
+    const assassin = buildCharacter(
+      CharacterClass.Assassin,
+      Alignment.ChaoticEvil,
+      4
+    );
+    generateFollowers([assassin], 1, 2);
+
+    expect(assassin.followers).toHaveLength(0);
+  });
+
+  it('accepts thief henchmen for assassins starting at level 8', () => {
+    jest
+      .spyOn(characterResultModule, 'createCharacters')
+      .mockReturnValue([
+        buildCharacter(CharacterClass.Thief, Alignment.ChaoticEvil, 2),
+      ]);
+
+    const assassin = buildCharacter(
+      CharacterClass.Assassin,
+      Alignment.ChaoticEvil,
+      8
+    );
+    generateFollowers([assassin], 1, 2);
+
+    expect(assassin.followers).toHaveLength(1);
+    expect(assassin.followers[0]?.professions[0]?.characterClass).toBe(
+      CharacterClass.Thief
+    );
+  });
+
+  it('accepts unrestricted henchmen for assassins starting at level 12', () => {
+    jest
+      .spyOn(characterResultModule, 'createCharacters')
+      .mockReturnValue([
+        buildCharacter(CharacterClass.Fighter, Alignment.ChaoticNeutral, 2),
+      ]);
+
+    const assassin = buildCharacter(
+      CharacterClass.Assassin,
+      Alignment.ChaoticEvil,
+      12
+    );
+    generateFollowers([assassin], 1, 2);
+
+    expect(assassin.followers).toHaveLength(1);
+    expect(assassin.followers[0]?.professions[0]?.characterClass).toBe(
+      CharacterClass.Fighter
+    );
+  });
+
+  it('uses the more restrictive rule set for multi-class leaders', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest
+      .spyOn(characterResultModule, 'createCharacters')
+      .mockReturnValue([
+        buildCharacter(CharacterClass.Thief, Alignment.ChaoticEvil, 2),
+      ]);
+
+    const clericAssassin = buildCharacterWithProfessions(
+      [
+        { level: 4, characterClass: CharacterClass.Cleric },
+        { level: 4, characterClass: CharacterClass.Assassin },
+      ],
+      Alignment.ChaoticEvil
+    );
+    generateFollowers([clericAssassin], 1, 2);
+
+    expect(clericAssassin.followers).toHaveLength(0);
+  });
+
+  it('applies the strictest count restriction for multi-class leaders', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest
+      .spyOn(characterResultModule, 'createCharacters')
+      .mockReturnValue([
+        buildCharacter(CharacterClass.Assassin, Alignment.ChaoticEvil, 2),
+      ]);
+
+    const rangerAssassin = buildCharacterWithProfessions(
+      [
+        { level: 7, characterClass: CharacterClass.Ranger },
+        { level: 7, characterClass: CharacterClass.Assassin },
+      ],
+      Alignment.ChaoticEvil
+    );
+    generateFollowers([rangerAssassin], 1, 2);
+
+    expect(rangerAssassin.followers).toHaveLength(0);
   });
 });

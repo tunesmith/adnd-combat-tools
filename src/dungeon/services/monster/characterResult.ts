@@ -19,6 +19,7 @@ import { CharacterClass } from '../../models/characterClass';
 import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
 import { canPartyHireHenchmen } from '../../helpers/party/canPartyHireHenchmen';
 import { getMaxHenchmenForMember } from '../../helpers/character/henchmen/getMaxHenchmenForMember';
+import { isCompatibleFollowerForMember } from '../../helpers/character/henchmen/isCompatibleFollowerForMember';
 import {
   isAlignmentCompatible,
   areAlignmentsCompatible,
@@ -208,7 +209,6 @@ export const generateFollowers = (
   while (remainingFollowers > 0) {
     let generatedFollowersThisPass = 0;
     for (const member of mainParty) {
-      // TODO I forgot to check compatible followers for monks/assassins
       if (!isMenAtArms) {
         // Henchmen limits (class restrictions and CHA caps) do not apply to men-at-arms.
         const maxFollowersForMember = getMaxHenchmenForMember(
@@ -228,6 +228,9 @@ export const generateFollowers = (
         if (henchmen.length === 0) continue;
         const candidate = henchmen[0];
         if (!candidate) continue;
+        if (!isCompatibleFollowerForMember(member, candidate)) {
+          continue;
+        }
         if (!areAlignmentsCompatible(member.alignment, candidate.alignment)) {
           continue;
         }

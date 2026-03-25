@@ -22,7 +22,7 @@ export const getMaxHenchmenForProfession = (
 ): number => {
   switch (profession.characterClass) {
     case CharacterClass.Monk:
-      return getMonkHenchmen(profession.level);
+      return getMonkHenchmen(profession.level, maxHenchmenByCharisma);
 
     case CharacterClass.Assassin:
       return getAssassinHenchmen(

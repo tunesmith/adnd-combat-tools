@@ -8,8 +8,12 @@
  * a party of 9.
  *
  * @param level
+ * @param maxHenchmenByCharisma
  */
-export const getMonkHenchmen = (level: number): number => {
+export const getMonkHenchmen = (
+  level: number,
+  maxHenchmenByCharisma: number
+): number => {
   if (level < 6) return 0;
-  return level - 6 + 2;
+  return Math.min(level - 6 + 2, maxHenchmenByCharisma);
 };

@@ -4,8 +4,8 @@ import { getMaxHenchmenForProfession } from './getMaxHenchmenForProfession';
 
 /**
  * Number of henchmen per character depend on a few different things,
- * including charisma and character class. Multi-class characters
- * are unlimited though, other than by charisma.
+ * including charisma and character class. If a multi-class character
+ * has class-based restrictions, the most restrictive count applies.
  *
  * @param member
  * @param mainParty
@@ -16,21 +16,20 @@ export const getMaxHenchmenForMember = (
 ): number => {
   const maxHenchmenByCharisma = getMaxHenchmenByCharisma(member.attributes.CHA);
 
-  // Multi-class characters can always hire henchmen:
-  // A cleric/ranger or cleric/assassin can because clerics can
-  if (member.professions.length > 1) {
+  if (member.professions.length === 0) {
     return maxHenchmenByCharisma;
   }
 
-  // Single-class logic: Directly access the only profession
-  const [onlyProfession] = member.professions;
-  if (!onlyProfession) {
-    // Fallback: if no profession is present, defer to CHA-based limit
-    return maxHenchmenByCharisma;
-  }
-  return getMaxHenchmenForProfession(
-    onlyProfession,
-    mainParty,
+  return member.professions.reduce(
+    (currentMax, profession) =>
+      Math.min(
+        currentMax,
+        getMaxHenchmenForProfession(
+          profession,
+          mainParty,
+          maxHenchmenByCharisma
+        )
+      ),
     maxHenchmenByCharisma
   );
 };
