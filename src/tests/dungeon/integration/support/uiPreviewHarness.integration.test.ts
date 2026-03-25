@@ -125,7 +125,8 @@ describe('uiPreviewHarness', () => {
                 ) => Record<string, boolean>
               )(resolvedMap)
             : (updater as Record<string, boolean>);
-      }
+      },
+      state[0]
     );
 
     expect(result).toBe(true);

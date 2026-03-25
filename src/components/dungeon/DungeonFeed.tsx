@@ -16,6 +16,7 @@ import type {
   DungeonAction,
   DungeonRenderNode,
   DungeonRollTrace,
+  DungeonRollSource,
   DungeonTablePreview,
   RollTraceItem,
 } from '../../types/dungeon';
@@ -37,6 +38,14 @@ type DungeonFeedProps = {
   setCollapsed: Dispatch<SetStateAction<Record<string, boolean>>>;
   resolved: Record<string, boolean>;
   setResolved: Dispatch<SetStateAction<Record<string, boolean>>>;
+  recordPreviewResolution: (entry: {
+    feedStep: number;
+    tableId: string;
+    targetId: string;
+    title: string;
+    roll: number;
+    rollSource: DungeonRollSource;
+  }) => void;
 };
 
 const DungeonFeed = ({
@@ -52,6 +61,7 @@ const DungeonFeed = ({
   setCollapsed,
   resolved,
   setResolved,
+  recordPreviewResolution,
 }: DungeonFeedProps) => {
   if (feed.length === 0) {
     return detailMode ? (
@@ -158,7 +168,10 @@ const DungeonFeed = ({
                     setCollapsed,
                     resolved,
                     setResolved,
-                    pendingTargetIds
+                    pendingTargetIds,
+                    item.sequence,
+                    recordPreviewResolution,
+                    item
                   )
               );
             })()}
@@ -181,7 +194,17 @@ function renderNode(
   setCollapsed?: Dispatch<SetStateAction<Record<string, boolean>>>,
   resolved?: Record<string, boolean>,
   setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>,
-  pendingTargetIds?: ReadonlySet<string>
+  pendingTargetIds?: ReadonlySet<string>,
+  feedSequence?: number,
+  recordPreviewResolution?: (entry: {
+    feedStep: number;
+    tableId: string;
+    targetId: string;
+    title: string;
+    roll: number;
+    rollSource: DungeonRollSource;
+  }) => void,
+  feedItem?: FeedItem
 ): JSX.Element {
   switch (node.kind) {
     case 'heading':
@@ -251,7 +274,10 @@ function renderNode(
               setFeed,
               false,
               setCollapsed,
-              setResolved
+              setResolved,
+              feedSequence,
+              recordPreviewResolution,
+              feedItem
             )
           }
           onAutoRoll={() =>
@@ -263,7 +289,10 @@ function renderNode(
               setFeed,
               true,
               setCollapsed,
-              setResolved
+              setResolved,
+              feedSequence,
+              recordPreviewResolution,
+              feedItem
             )
           }
           isCollapsed={isCollapsed}
@@ -325,7 +354,17 @@ function resolvePreview(
   setFeed: Dispatch<SetStateAction<FeedItem[]>>,
   shouldRoll: boolean,
   setCollapsed?: Dispatch<SetStateAction<Record<string, boolean>>>,
-  setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>
+  setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>,
+  feedSequence?: number,
+  recordPreviewResolution?: (entry: {
+    feedStep: number;
+    tableId: string;
+    targetId: string;
+    title: string;
+    roll: number;
+    rollSource: DungeonRollSource;
+  }) => void,
+  feedItem?: FeedItem
 ) {
   const targetKey = preview.targetId ?? preview.id;
   let usedRoll: number | undefined = overrides[targetKey];
@@ -333,17 +372,29 @@ function resolvePreview(
   if (shouldRoll && usedRoll === undefined) {
     usedRoll = rollDice(preview.sides);
   }
+  if (usedRoll === undefined) return;
   if (overrides[targetKey] !== undefined) {
     setOverrides((prev) => ({ ...prev, [targetKey]: undefined }));
   }
-  resolveViaRegistry(
+  const resolved = resolveViaRegistry(
     preview,
     feedItemId,
     usedRoll,
     setFeed,
     setCollapsed,
-    setResolved
+    setResolved,
+    feedItem
   );
+  if (resolved && recordPreviewResolution && feedSequence !== undefined) {
+    recordPreviewResolution({
+      feedStep: feedSequence,
+      tableId: preview.id,
+      targetId: targetKey,
+      title: preview.title,
+      roll: usedRoll,
+      rollSource: shouldRoll ? 'auto' : 'manual',
+    });
+  }
 }
 
 function getRootPreviewNodes(

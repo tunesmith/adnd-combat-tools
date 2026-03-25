@@ -415,4 +415,110 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     );
     expect(entryDoor).toBe(false);
   });
+
+  it('copies replay info with the run seed and committed inputs', async () => {
+    const writeText = jest.fn<Promise<void>, [string]>().mockResolvedValue();
+    Object.defineProperty(global.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    await act(async () => {
+      ReactDOM.render(<DungeonIndexPage />, container as HTMLDivElement);
+    });
+
+    const detailLabel = requireElement(findLabel('Detail'), 'detail label');
+    const detailRadio = requireElement(
+      detailLabel.querySelector<HTMLInputElement>('input[type="radio"]'),
+      'detail radio'
+    );
+    await act(async () => {
+      detailRadio.click();
+    });
+
+    const rollLabel = requireElement(findLabel('d20 Roll'), 'roll label');
+    const rollInput = requireElement(
+      rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'roll input'
+    );
+    await act(async () => {
+      (rollInput as any).value = '3';
+      ReactTestUtils.Simulate.change(rollInput, {
+        target: { value: '3' },
+      } as any);
+    });
+    await act(async () => {
+      ReactTestUtils.Simulate.keyDown(rollInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
+    });
+
+    const feedItemEl = requireElement(
+      await waitFor(() => document.querySelector<HTMLElement>('.feedItem')),
+      'feed item container'
+    );
+    const overrideLabel = requireElement(
+      findLabel('Override roll', feedItemEl),
+      'door location override label'
+    );
+    const overrideInput = requireElement(
+      overrideLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'door location override input'
+    );
+    await act(async () => {
+      (overrideInput as any).value = '13';
+      ReactTestUtils.Simulate.change(overrideInput, {
+        target: { value: '13' },
+      } as any);
+    });
+    await act(async () => {
+      ReactTestUtils.Simulate.keyDown(overrideInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
+    });
+
+    const copyButton = requireElement(
+      findButtonByText('Copy Replay Info'),
+      'copy replay info button'
+    );
+    await act(async () => {
+      copyButton.click();
+    });
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    const copied = JSON.parse(writeText.mock.calls[0]?.[0] ?? '{}');
+    expect(copied.page).toBe('dungeon');
+    expect(copied.version).toBe('0.2.2');
+    expect(typeof copied.seed).toBe('string');
+    expect(copied.seed.length).toBeGreaterThan(0);
+    expect(copied.items).toEqual([
+      {
+        kind: 'root-step',
+        feedStep: 1,
+        action: 'passage',
+        roll: 3,
+        rollSource: 'manual',
+        detailMode: true,
+        level: 1,
+      },
+      {
+        kind: 'preview-resolution',
+        feedStep: 1,
+        tableId: 'doorLocation:0',
+        targetId: 'root.periodicCheck.0.doorLocation:0',
+        title: 'Door Location',
+        roll: 13,
+        rollSource: 'manual',
+      },
+    ]);
+  });
 });

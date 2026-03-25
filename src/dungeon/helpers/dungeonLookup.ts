@@ -1,10 +1,11 @@
 import type { Table } from '../../tables/dungeon/tableTypes';
 import type { Command } from '../../tables/dungeon/dungeonTypes';
+import { nextDungeonRandomInt } from './dungeonRandom';
 
 export const rollDice = (sides: number, rolls: number = 1): number => {
   let total = 0;
   for (let i = 0; i < rolls; i++) {
-    total += Math.floor(Math.random() * sides) + 1;
+    total += nextDungeonRandomInt(sides);
   }
   return total;
 };

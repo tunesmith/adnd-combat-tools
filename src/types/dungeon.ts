@@ -8,6 +8,35 @@ import type { TreasureSwordAlignment } from '../dungeon/features/treasure/swords
 import type { PartySummary } from '../dungeon/helpers/party/formatPartyResult';
 
 export type DungeonAction = 'passage' | 'door';
+export type DungeonRollSource = 'manual' | 'auto';
+
+export type DungeonReplayItem =
+  | {
+      kind: 'root-step';
+      feedStep: number;
+      action: DungeonAction;
+      roll: number;
+      rollSource: DungeonRollSource;
+      detailMode: boolean;
+      level: number;
+    }
+  | {
+      kind: 'preview-resolution';
+      feedStep: number;
+      tableId: string;
+      targetId: string;
+      title: string;
+      roll: number;
+      rollSource: DungeonRollSource;
+    };
+
+export type DungeonReplayInfo = {
+  app: 'adnd-combat-tools';
+  page: 'dungeon';
+  version: string;
+  seed: string;
+  items: DungeonReplayItem[];
+};
 
 type DungeonParagraph = {
   kind: 'paragraph';

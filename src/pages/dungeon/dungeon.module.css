@@ -335,7 +335,21 @@
 .toolbar {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   margin-bottom: 0.75rem;
+}
+
+.toolbarGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.toolbarStatus {
+  font-size: 0.82rem;
+  color: rgba(240, 239, 221, 0.88);
 }
 
 @media (max-width: 640px) {

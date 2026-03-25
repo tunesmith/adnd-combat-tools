@@ -5,10 +5,7 @@ import {
   selectMessagesForMode,
   type RenderCache,
 } from '../../../dungeon/helpers/renderCache';
-import {
-  resolveViaRegistry,
-  type FeedLike,
-} from '../../../dungeon/helpers/registry';
+import { resolveViaRegistry } from '../../../dungeon/helpers/registry';
 import type {
   DungeonAction,
   DungeonRenderNode,
@@ -74,34 +71,48 @@ export function resolvePreview(
     throw new Error(`Preview ${previewId} not found in feed messages.`);
   }
   let nextFeed = feed;
-  resolveViaRegistry(preview, feed.id, roll, (updater) => {
-    const base: FeedLike[] = [
-      {
-        id: feed.id,
-        messages: feed.messages,
-        outcome: feed.outcome,
-        renderCache: feed.renderCache,
-        pendingCount: feed.pendingCount,
-      },
-    ];
-    const updated = typeof updater === 'function' ? updater(base) : updater;
-    const next = updated[0];
-    if (!next || !next.outcome || next.outcome.type !== 'event') {
-      throw new Error('Registry update did not return an event outcome.');
+  resolveViaRegistry(
+    preview,
+    feed.id,
+    roll,
+    (updater) => {
+      const base = [
+        {
+          id: feed.id,
+          messages: feed.messages,
+          outcome: feed.outcome,
+          renderCache: feed.renderCache,
+          pendingCount: feed.pendingCount,
+        },
+      ];
+      const updated = typeof updater === 'function' ? updater(base) : updater;
+      const next = updated[0];
+      if (!next || !next.outcome || next.outcome.type !== 'event') {
+        throw new Error('Registry update did not return an event outcome.');
+      }
+      const renderCache: RenderCache =
+        next.renderCache ?? buildRenderCache(next.outcome);
+      nextFeed = {
+        id: next.id,
+        action: feed.action,
+        roll: feed.roll,
+        outcome: next.outcome,
+        messages: next.messages,
+        renderCache,
+        pendingCount: next.pendingCount ?? countPendingNodes(next.outcome),
+      };
+      return updated;
+    },
+    undefined,
+    undefined,
+    {
+      id: feed.id,
+      messages: feed.messages,
+      outcome: feed.outcome,
+      renderCache: feed.renderCache,
+      pendingCount: feed.pendingCount,
     }
-    const renderCache: RenderCache =
-      next.renderCache ?? buildRenderCache(next.outcome);
-    nextFeed = {
-      id: next.id,
-      action: feed.action,
-      roll: feed.roll,
-      outcome: next.outcome,
-      messages: next.messages,
-      renderCache,
-      pendingCount: next.pendingCount ?? countPendingNodes(next.outcome),
-    };
-    return updated;
-  });
+  );
   return nextFeed;
 }
 

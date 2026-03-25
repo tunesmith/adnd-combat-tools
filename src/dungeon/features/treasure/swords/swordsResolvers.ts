@@ -1,4 +1,5 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
+import { createDungeonRandomId } from '../../../helpers/dungeonRandom';
 import type {
   DungeonOutcomeNode,
   OutcomeEvent,
@@ -368,8 +369,7 @@ export function resolveTreasureSwordPrimaryAbility(options?: {
   tableVariant?: 'standard' | 'restricted';
 }): DungeonOutcomeNode {
   const rollIndex = options?.rollIndex;
-  const slotKey =
-    options?.slotKey ?? `auto-${Math.random().toString(36).slice(2)}`;
+  const slotKey = options?.slotKey ?? createDungeonRandomId('auto');
   const variant = options?.tableVariant ?? 'standard';
   const table =
     variant === 'restricted'
@@ -514,8 +514,7 @@ export function resolveTreasureSwordExtraordinaryPower(options?: {
   alignment?: TreasureSwordAlignment;
 }): DungeonOutcomeNode {
   const rollIndex = options?.rollIndex;
-  const slotKey =
-    options?.slotKey ?? `extra-${Math.random().toString(36).slice(2)}`;
+  const slotKey = options?.slotKey ?? createDungeonRandomId('extra');
   const variant = options?.tableVariant ?? 'standard';
   const table =
     variant === 'restricted'
@@ -668,8 +667,7 @@ export function resolveTreasureSwordSpecialPurpose(options?: {
   parentSlotKey?: string;
   alignment?: TreasureSwordAlignment;
 }): DungeonOutcomeNode {
-  const slotKey =
-    options?.slotKey ?? `purpose-${Math.random().toString(36).slice(2)}`;
+  const slotKey = options?.slotKey ?? createDungeonRandomId('purpose');
   const parentSlotKey = options?.parentSlotKey;
   const alignment = options?.alignment;
   const resolveRoll = (): number => {
@@ -728,8 +726,7 @@ export function resolveTreasureSwordSpecialPurposePower(options?: {
   parentSlotKey?: string;
   alignment?: TreasureSwordAlignment;
 }): DungeonOutcomeNode {
-  const slotKey =
-    options?.slotKey ?? `purpose-power-${Math.random().toString(36).slice(2)}`;
+  const slotKey = options?.slotKey ?? createDungeonRandomId('purpose-power');
   const resolveRoll = (): number => {
     if (options?.roll !== undefined) {
       const provided = Math.trunc(options.roll);
@@ -771,8 +768,7 @@ export function resolveTreasureSwordDragonSlayerColor(options?: {
   rollIndex?: number;
   alignment?: TreasureSwordAlignment;
 }): DungeonOutcomeNode {
-  const slotKey =
-    options?.slotKey ?? `dragon-slayer-${Math.random().toString(36).slice(2)}`;
+  const slotKey = options?.slotKey ?? createDungeonRandomId('dragon-slayer');
   const table = dragonSlayerColorTableForAlignment(options?.alignment);
   const resolveRoll = (): number => {
     if (options?.roll !== undefined) {

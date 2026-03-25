@@ -25,6 +25,10 @@ const DungeonIndexPage = () => {
     isValid,
     handleRoll,
     handleRollInputKeyDown,
+    copyReplayInfo,
+    replayStatus,
+    hasReplayInfo,
+    recordPreviewResolution,
   } = useDungeonPageState();
 
   return (
@@ -32,13 +36,26 @@ const DungeonIndexPage = () => {
       <div className={styles['title']}>AD&D Random Dungeon Generator</div>
       <div className={styles['contentContainer']}>
         <div className={styles['toolbar']}>
-          <button
-            type="button"
-            className={styles['button']}
-            onClick={clearFeed}
-          >
-            Clear Feed
-          </button>
+          <div className={styles['toolbarGroup']}>
+            {replayStatus && (
+              <span className={styles['toolbarStatus']}>{replayStatus}</span>
+            )}
+            <button
+              type="button"
+              className={styles['button']}
+              onClick={copyReplayInfo}
+              disabled={!hasReplayInfo}
+            >
+              Copy Replay Info
+            </button>
+            <button
+              type="button"
+              className={styles['button']}
+              onClick={clearFeed}
+            >
+              Clear Feed
+            </button>
+          </div>
         </div>
         <div className={styles['formContainer']}>
           <div className={styles['controlSections']}>
@@ -203,6 +220,7 @@ const DungeonIndexPage = () => {
             setCollapsed={setCollapsed}
             resolved={resolved}
             setResolved={setResolved}
+            recordPreviewResolution={recordPreviewResolution}
           />
         </div>
       </div>

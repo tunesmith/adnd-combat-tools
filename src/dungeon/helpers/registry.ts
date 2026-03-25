@@ -210,7 +210,7 @@ function readSlotKeyHint(context: unknown): string | undefined {
   return undefined;
 }
 
-export type FeedLike = {
+type FeedLike = {
   id: string;
   messages: DungeonRenderNode[];
   outcome?: DungeonOutcomeNode;
@@ -219,6 +219,11 @@ export type FeedLike = {
     compact?: DungeonRenderNode[];
   };
   pendingCount?: number;
+};
+
+type FeedResolution<T extends FeedLike> = {
+  nextFeedItem: T;
+  keyVariants: string[];
 };
 
 function updateResolvedBlock<T extends FeedLike>(
@@ -263,19 +268,140 @@ function updateResolvedBlock<T extends FeedLike>(
   return { ...fi, messages: newMessages };
 }
 
+function buildFeedResolution<T extends FeedLike>(opts: {
+  feedItem: T;
+  feedItemId: string;
+  preview: DungeonTablePreview;
+  usedRoll: number | undefined;
+  targetKey: string;
+  heading: string;
+}): FeedResolution<T> | undefined {
+  const keyVariants = collectKeyVariants(opts.targetKey, opts.preview.id);
+  const extraKeyVariants = new Set<string>();
+
+  if (opts.feedItem.outcome) {
+    const applied = applyOutcomeRoll({
+      outcome: opts.feedItem.outcome,
+      tableId: opts.preview.id,
+      targetId: opts.targetKey,
+      roll: opts.usedRoll,
+      context: opts.preview.context,
+    });
+    if (applied) {
+      const { outcome, snapshot } = applied;
+      const previewTargets = collectPreviewTargetsForTable(
+        snapshot.detail,
+        opts.preview.id
+      ).filter((key) => key === opts.targetKey);
+      for (const key of previewTargets) extraKeyVariants.add(key);
+      return {
+        nextFeedItem: {
+          ...opts.feedItem,
+          outcome,
+          pendingCount: snapshot.pendingCount,
+          messages: snapshot.detail,
+          renderCache: {
+            ...opts.feedItem.renderCache,
+            detail: snapshot.detail,
+            compact: snapshot.compact,
+          },
+        },
+        keyVariants: Array.from(
+          new Set([...keyVariants, ...Array.from(extraKeyVariants)])
+        ),
+      };
+    }
+  }
+
+  const tableResult = resolveRegistryTable({
+    tableId: opts.preview.id,
+    roll: opts.usedRoll,
+    context: opts.preview.context,
+    outcome: opts.feedItem.outcome,
+    targetId: opts.targetKey,
+  });
+  if (!tableResult) return undefined;
+
+  const previewTargets = collectPreviewTargetsForTable(
+    tableResult.messages,
+    opts.preview.id
+  ).filter((key) => key === opts.targetKey);
+  for (const key of previewTargets) extraKeyVariants.add(key);
+  return {
+    nextFeedItem: updateResolvedBlock(
+      opts.feedItem,
+      opts.feedItemId,
+      opts.targetKey,
+      tableResult.messages,
+      opts.heading
+    ),
+    keyVariants: Array.from(
+      new Set([...keyVariants, ...Array.from(extraKeyVariants)])
+    ),
+  };
+}
+
+function markResolvedKeys(
+  feedItemId: string,
+  keyVariants: string[],
+  setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+): void {
+  if (setCollapsed) {
+    setCollapsed((prev) => {
+      const next = { ...prev };
+      for (const key of keyVariants) next[`${feedItemId}:${key}`] = true;
+      return next;
+    });
+  }
+  if (setResolved) {
+    setResolved((prev) => {
+      const next = { ...prev };
+      for (const key of keyVariants) next[`${feedItemId}:${key}`] = true;
+      return next;
+    });
+  }
+}
+
 export function resolveViaRegistry<T extends FeedLike>(
   tp: DungeonTablePreview,
   feedItemId: string,
   usedRoll: number | undefined,
   setFeed?: React.Dispatch<React.SetStateAction<T[]>>,
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
-  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  currentFeedItem?: T
 ): boolean {
   const base = String(tp.id.split(':')[0] ?? '');
   if (!isTableId(base)) return false;
 
   const heading = TABLE_HEADINGS[base] ?? base;
   const targetKey = tp.targetId ?? tp.id;
+
+  if (currentFeedItem) {
+    const resolution = buildFeedResolution({
+      feedItem: currentFeedItem,
+      feedItemId,
+      preview: tp,
+      usedRoll,
+      targetKey,
+      heading,
+    });
+    if (!resolution) return false;
+    if (setFeed) {
+      setFeed((prev) =>
+        prev.map((fi) => (fi.id === feedItemId ? resolution.nextFeedItem : fi))
+      );
+    }
+    markResolvedKeys(
+      feedItemId,
+      resolution.keyVariants,
+      setCollapsed,
+      setResolved
+    );
+    return true;
+  }
+
   const keyVariants = collectKeyVariants(targetKey, tp.id);
   let resolved = false;
   const extraKeyVariants = new Set<string>();
@@ -386,21 +512,12 @@ export function resolveViaRegistry<T extends FeedLike>(
   extraKeyVariants.forEach((key) => {
     combinedKeyVariantSet.add(key);
   });
-  const combinedKeyVariants = Array.from(combinedKeyVariantSet);
-  if (setCollapsed) {
-    setCollapsed((prev) => {
-      const next = { ...prev };
-      for (const k of combinedKeyVariants) next[`${feedItemId}:${k}`] = true;
-      return next;
-    });
-  }
-  if (setResolved) {
-    setResolved((prev) => {
-      const next = { ...prev };
-      for (const k of combinedKeyVariants) next[`${feedItemId}:${k}`] = true;
-      return next;
-    });
-  }
+  markResolvedKeys(
+    feedItemId,
+    Array.from(combinedKeyVariantSet),
+    setCollapsed,
+    setResolved
+  );
   return true;
 }
 
