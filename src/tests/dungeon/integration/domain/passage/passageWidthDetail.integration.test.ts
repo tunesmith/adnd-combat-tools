@@ -25,4 +25,38 @@ describe('Passage width detail behaviour', () => {
     if (!first) throw new Error('Expected one paragraph');
     expect(typeof first.text).toBe('string');
   });
+
+  test('Passage Width follows Appendix A boundary ranges', () => {
+    const rolls = [
+      { roll: 12, text: "The passage is 10' wide." },
+      { roll: 13, text: "The passage is 20' wide." },
+      { roll: 17, text: "The passage is 30' wide." },
+      { roll: 18, text: "The passage is 5' wide." },
+    ];
+
+    for (const { roll, text } of rolls) {
+      const detailNodes = detailNodesFor(resolvePassageWidth({ roll }));
+      expect(
+        detailNodes.some(
+          (node) => node.kind === 'paragraph' && node.text.includes(text)
+        )
+      ).toBe(true);
+    }
+
+    const specialNodes = detailNodesFor(resolvePassageWidth({ roll: 19 }));
+    expect(
+      collectTablePreviewIds(specialNodes).includes('specialPassage')
+    ).toBe(true);
+  });
 });
+
+function collectTablePreviewIds(nodes: DungeonRenderNode[]): string[] {
+  return nodes
+    .filter(
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'table-preview'; id: string }> =>
+        node.kind === 'table-preview'
+    )
+    .map((node) => node.id);
+}
