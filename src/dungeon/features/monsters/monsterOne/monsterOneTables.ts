@@ -7,7 +7,7 @@ export enum MonsterOne {
   DemonManes_1to4,
   Dwarf_4to14,
   EarSeeker_1,
-  Elf_4to11, // corrected from 3-11 to 4-11, per Fiend Folio, and since 3-11 doesn't make sense
+  Elf_3to11,
   Gnome_5to15,
   Goblin_6to15,
   Halfling_9to16_RatGiant_5to20,
@@ -32,7 +32,7 @@ export const monsterOne: Table<MonsterOne> = {
     { range: [15], command: MonsterOne.DemonManes_1to4 },
     { range: [16, 17], command: MonsterOne.Dwarf_4to14 },
     { range: [18], command: MonsterOne.EarSeeker_1 },
-    { range: [19], command: MonsterOne.Elf_4to11 },
+    { range: [19], command: MonsterOne.Elf_3to11 },
     { range: [20, 21], command: MonsterOne.Gnome_5to15 },
     { range: [22, 26], command: MonsterOne.Goblin_6to15 },
     { range: [27, 28], command: MonsterOne.Halfling_9to16_RatGiant_5to20 },

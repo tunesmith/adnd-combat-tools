@@ -158,7 +158,7 @@ const monsterSevenEntries: Partial<Record<MonsterSeven, MonsterTextEntry>> = {
   ),
   [MonsterSeven.Shedu_1to2]: countTextEntry(1, 2, 'shedu', 'shedu'),
   [MonsterSeven.SlugGiant]: countTextEntry(1, 1, 'giant slug', 'giant slugs'),
-  [MonsterSeven.Spectre]: countTextEntry(1, 2, 'spectre', 'spectres'),
+  [MonsterSeven.Spectre]: countTextEntry(1, 1, 'spectre', 'spectres'),
   [MonsterSeven.Trapper]: countTextEntry(1, 1, 'trapper', 'trappers'),
   [MonsterSeven.UmberHulk]: countTextEntry(1, 1, 'umber hulk', 'umber hulks'),
   [MonsterSeven.WillOWisp_1to3]: countTextEntry(

@@ -23,7 +23,7 @@ const monsterOneEntries: Partial<Record<MonsterOne, MonsterTextEntry>> = {
   ),
   [MonsterOne.Dwarf_4to14]: countTextEntry(2, 6, 'dwarf', 'dwarves', 2),
   [MonsterOne.EarSeeker_1]: countTextEntry(1, 1, 'ear seeker', 'ear seekers'),
-  [MonsterOne.Elf_4to11]: countTextEntry(1, 8, 'elf', 'elves', 3),
+  [MonsterOne.Elf_3to11]: countTextEntry(1, 8, 'elf', 'elves', 2),
   [MonsterOne.Gnome_5to15]: countTextEntry(2, 6, 'gnome', 'gnomes', 3),
   [MonsterOne.Goblin_6to15]: countTextEntry(1, 10, 'goblin', 'goblins', 5),
   [MonsterOne.Hobgoblin_2to8]: countTextEntry(2, 4, 'hobgoblin', 'hobgoblins'),
