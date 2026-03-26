@@ -18,6 +18,7 @@ import {
   renderGalleryStairOccurrenceDetail,
   renderRiverConstructionCompact,
   renderRiverConstructionDetail,
+  renderStreamConstructionDetail,
 } from './specialPassageSubtableRender';
 import {
   resolveGalleryStairLocation,
@@ -83,7 +84,7 @@ export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
     heading: 'Stream Construction',
     resolver: wrapResolver(resolveStreamConstruction),
     renderers: {
-      renderDetail: (_node, _append) => [],
+      renderDetail: renderStreamConstructionDetail,
       renderCompact: NO_COMPACT_RENDER,
     },
     buildPreview: buildStreamConstructionPreview,

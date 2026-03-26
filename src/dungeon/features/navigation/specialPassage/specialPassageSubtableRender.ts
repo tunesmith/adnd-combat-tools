@@ -8,9 +8,11 @@ import {
   GalleryStairLocation,
   GalleryStairOccurrence,
   RiverConstruction,
+  StreamConstruction,
 } from './specialPassageTable';
 import {
   describeRiverConstruction,
+  formatStreamConstruction,
   formatGalleryStairLocation,
   formatGalleryStairOccurrence,
 } from './specialPassageSummary';
@@ -66,6 +68,16 @@ export function renderRiverConstructionCompact(
   appendPendingPreviews: AppendPreviewFn
 ): DungeonRenderNode[] {
   const nodes = buildRiverConstructionNodes(outcome, false);
+  if (nodes.length === 0) return nodes;
+  appendPendingPreviews(outcome, nodes);
+  return nodes;
+}
+
+export function renderStreamConstructionDetail(
+  outcome: OutcomeEventNode,
+  appendPendingPreviews: AppendPreviewFn
+): DungeonRenderNode[] {
+  const nodes = buildStreamConstructionNodes(outcome);
   if (nodes.length === 0) return nodes;
   appendPendingPreviews(outcome, nodes);
   return nodes;
@@ -155,4 +167,27 @@ function buildRiverConstructionNodes(
         ]
       : [];
   return [heading, bullet, ...compactParagraph];
+}
+
+function buildStreamConstructionNodes(
+  outcome: OutcomeEventNode
+): DungeonRenderNode[] {
+  if (outcome.event.kind !== 'streamConstruction') return [];
+  const heading: DungeonMessage = {
+    kind: 'heading',
+    level: 4,
+    text: 'Stream Construction',
+  };
+  const label =
+    StreamConstruction[outcome.event.result] ?? String(outcome.event.result);
+  const bullet: DungeonMessage = {
+    kind: 'bullet-list',
+    items: [`roll: ${outcome.roll} — ${label}`],
+  };
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  const description = formatStreamConstruction(outcome.event.result).trim();
+  if (description.length > 0) {
+    nodes.push({ kind: 'paragraph', text: description });
+  }
+  return nodes;
 }

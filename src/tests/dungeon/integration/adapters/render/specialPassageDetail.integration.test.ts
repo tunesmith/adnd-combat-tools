@@ -88,6 +88,68 @@ describe('detail rendering with special passage', () => {
     );
   });
 
+  it('renders stream bridge output in detail mode after resolution', () => {
+    const resolvedTree = resolveSequenceWithRolls([12, 1, 19, 13, 1], 1);
+    const detailNodes = renderDetailTree(resolvedTree);
+    const streamPreviewIndex = detailNodes.findIndex(
+      (node) =>
+        node.kind === 'table-preview' && node.id === 'streamConstruction'
+    );
+    const streamBulletIndex = detailNodes.findIndex(
+      (node) =>
+        node.kind === 'bullet-list' && node.items.includes('roll: 1 — Bridged')
+    );
+    const bridgeParagraphIndex = detailNodes.findIndex(
+      (node) =>
+        node.kind === 'paragraph' &&
+        node.text.trim() === 'A bridge crosses the stream.'
+    );
+
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.trim() === "A stream, 10' wide, bisects the passage."
+      )
+    ).toBe(true);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.trim() === 'A bridge crosses the stream.'
+      )
+    ).toBe(true);
+    expect(streamPreviewIndex).toBeGreaterThan(-1);
+    expect(streamBulletIndex).toBeGreaterThan(streamPreviewIndex);
+    expect(bridgeParagraphIndex).toBeGreaterThan(streamBulletIndex);
+  });
+
+  it('keeps stream obstacle as a no-prose detail result', () => {
+    const resolvedTree = resolveSequenceWithRolls([12, 1, 19, 13, 16], 1);
+    const detailNodes = renderDetailTree(resolvedTree);
+
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'table-preview' && node.id === 'streamConstruction'
+      )
+    ).toBe(true);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'bullet-list' &&
+          node.items.includes('roll: 16 — Obstacle')
+      )
+    ).toBe(true);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.trim() === 'A bridge crosses the stream.'
+      )
+    ).toBe(false);
+  });
+
   it('keeps gallery stair occurrence preview pending when passage end is rolled', () => {
     const resolvedTree = resolveSequenceWithRolls([12, 1, 19, 11, 5], 1);
     const detailNodes = renderDetailTree(resolvedTree);

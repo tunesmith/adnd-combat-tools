@@ -193,7 +193,7 @@ export function describeRiverConstruction(node: OutcomeEventNode): {
   };
 }
 
-function formatStreamConstruction(result: StreamConstruction): string {
+export function formatStreamConstruction(result: StreamConstruction): string {
   return result === StreamConstruction.Bridged
     ? 'A bridge crosses the stream. '
     : '';
