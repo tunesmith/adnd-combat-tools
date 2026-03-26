@@ -184,8 +184,73 @@ import type { TreasureArmorShield } from '../features/treasure/armorShields/armo
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
-// Domain outcome event kinds cover high-level tables we resolve.
-export type OutcomeEvent =
+type ResultOutcomeEvent<Kind extends string, TResult> = {
+  kind: Kind;
+  result: TResult;
+};
+
+type DungeonLevelResultOutcomeEvent<
+  Kind extends string,
+  TResult
+> = ResultOutcomeEvent<Kind, TResult> & {
+  dungeonLevel: number;
+};
+
+type MonsterTextOutcomeEvent<
+  Kind extends string,
+  TResult
+> = DungeonLevelResultOutcomeEvent<Kind, TResult> & {
+  text?: string;
+  party?: PartyResult;
+};
+
+type DragonTextOutcomeEvent<
+  Kind extends string,
+  TResult
+> = DungeonLevelResultOutcomeEvent<Kind, TResult> & {
+  text: string;
+};
+
+type TreasureRollOutcomeEvent<
+  Kind extends string,
+  TResult
+> = ResultOutcomeEvent<Kind, TResult> & {
+  level: number;
+  treasureRoll: number;
+  rollIndex?: number;
+};
+
+type OptionalTreasureRollOutcomeEvent<
+  Kind extends string,
+  TResult
+> = ResultOutcomeEvent<Kind, TResult> & {
+  level?: number;
+  treasureRoll?: number;
+  rollIndex?: number;
+};
+
+type TreasureScrollDetails =
+  | {
+      type: 'spells';
+      caster: 'magic-user' | 'illusionist' | 'cleric' | 'druid';
+      spellLevels: number[];
+    }
+  | {
+      type: 'protection';
+      protection: TreasureScroll;
+      elementals?: TreasureScrollProtectionElementals;
+      lycanthropes?: TreasureScrollProtectionLycanthropes;
+    }
+  | {
+      type: 'curse';
+    };
+
+type SpellStoringDetails = {
+  caster: 'magic-user' | 'illusionist' | 'cleric' | 'druid';
+  spellLevels: number[];
+};
+
+type NavigationOutcomeEvent =
   | {
       kind: 'periodicCheck';
       result: PeriodicCheck;
@@ -216,214 +281,96 @@ export type OutcomeEvent =
         existing: DoorChainLaterality[];
       };
     }
-  | { kind: 'sidePassages'; result: SidePassages }
-  | { kind: 'passageTurns'; result: PassageTurns }
-  | { kind: 'stairs'; result: Stairs }
-  | { kind: 'specialPassage'; result: SpecialPassage }
-  | { kind: 'passageWidth'; result: PassageWidth }
-  | { kind: 'roomDimensions'; result: RoomDimensions }
-  | { kind: 'chamberDimensions'; result: ChamberDimensions }
-  | { kind: 'egress'; result: Egress; which: 'one' | 'two' | 'three' }
-  | { kind: 'chute'; result: number }
-  | {
-      kind: 'numberOfExits';
-      result: NumberOfExits;
+  | ResultOutcomeEvent<'sidePassages', SidePassages>
+  | ResultOutcomeEvent<'passageTurns', PassageTurns>
+  | ResultOutcomeEvent<'stairs', Stairs>
+  | ResultOutcomeEvent<'specialPassage', SpecialPassage>
+  | ResultOutcomeEvent<'passageWidth', PassageWidth>
+  | (ResultOutcomeEvent<'egress', Egress> & {
+      which: 'one' | 'two' | 'three';
+    })
+  | ResultOutcomeEvent<'chute', number>
+  | (ResultOutcomeEvent<'numberOfExits', NumberOfExits> & {
       context: { length: number; width: number; isRoom: boolean };
       count: number;
-    }
-  | { kind: 'unusualShape'; result: UnusualShape }
-  | { kind: 'circularContents'; result: CircularContents }
-  | { kind: 'circularPool'; result: Pool }
-  | { kind: 'circularMagicPool'; result: MagicPool }
-  | { kind: 'transmuteType'; result: TransmuteType }
-  | { kind: 'poolAlignment'; result: PoolAlignment }
-  | { kind: 'transporterLocation'; result: TransporterLocation }
-  | { kind: 'unusualSize'; result: UnusualSize; extra: number; area?: number }
-  | {
-      kind: 'chamberRoomContents';
-      result: ChamberRoomContents;
-      autoResolved?: boolean;
-    }
-  | { kind: 'chamberRoomStairs'; result: ChamberRoomStairs }
-  | { kind: 'trickTrap'; result: TrickTrap }
-  | { kind: 'illusionaryWallNature'; result: IllusionaryWallNature }
-  | {
-      kind: 'passageExitLocation';
-      result: ExitLocation;
+    })
+  | (ResultOutcomeEvent<'passageExitLocation', ExitLocation> & {
       index: number;
       total: number;
       origin: 'room' | 'chamber';
-    }
-  | {
-      kind: 'doorExitLocation';
-      result: ExitLocation;
+    })
+  | (ResultOutcomeEvent<'doorExitLocation', ExitLocation> & {
       index: number;
       total: number;
       origin: 'room' | 'chamber';
-    }
-  | {
-      kind: 'exitDirection';
-      result: ExitDirection;
+    })
+  | (ResultOutcomeEvent<'exitDirection', ExitDirection> & {
       index: number;
       total: number;
       origin: 'room' | 'chamber';
-    }
-  | {
-      kind: 'exitAlternative';
-      result: ExitAlternative;
+    })
+  | (ResultOutcomeEvent<'exitAlternative', ExitAlternative> & {
       exitType?: 'door' | 'passage';
-    }
-  | { kind: 'gasTrapEffect'; result: GasTrapEffect }
-  | { kind: 'wanderingWhereFrom'; result: PeriodicCheck }
-  | { kind: 'galleryStairLocation'; result: GalleryStairLocation }
-  | { kind: 'galleryStairOccurrence'; result: GalleryStairOccurrence }
-  | { kind: 'streamConstruction'; result: StreamConstruction }
-  | { kind: 'riverConstruction'; result: RiverConstruction }
-  | { kind: 'riverBoatBank'; result: RiverBoatBank }
-  | { kind: 'chasmDepth'; result: ChasmDepth }
-  | { kind: 'chasmConstruction'; result: ChasmConstruction }
-  | { kind: 'jumpingPlaceWidth'; result: JumpingPlaceWidth }
-  | {
-      kind: 'monsterLevel';
-      result: MonsterLevel;
-      dungeonLevel: number;
-    }
-  | {
-      kind: 'monsterOne';
-      result: MonsterOne;
-      dungeonLevel: number;
-      text?: string;
-    }
-  | {
-      kind: 'monsterTwo';
-      result: MonsterTwo;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'monsterThree';
-      result: MonsterThree;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'monsterFour';
-      result: MonsterFour;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'monsterFive';
-      result: MonsterFive;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'monsterSix';
-      result: MonsterSix;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'monsterSeven';
-      result: MonsterSeven;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'monsterEight';
-      result: MonsterEight;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'monsterNine';
-      result: MonsterNine;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'monsterTen';
-      result: MonsterTen;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
-  | {
-      kind: 'dragonThree';
-      result: DragonThree;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonFourYounger';
-      result: DragonFourYounger;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonFourOlder';
-      result: DragonFourOlder;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonFiveYounger';
-      result: DragonFiveYounger;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonFiveOlder';
-      result: DragonFiveOlder;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonSix';
-      result: DragonSix;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonSeven';
-      result: DragonSeven;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonEight';
-      result: DragonEight;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonNine';
-      result: DragonNine;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'dragonTen';
-      result: DragonTen;
-      dungeonLevel: number;
-      text: string;
-    }
-  | {
-      kind: 'human';
-      result: Human;
-      dungeonLevel: number;
-      text?: string;
-      party?: PartyResult;
-    }
+    })
+  | ResultOutcomeEvent<'wanderingWhereFrom', PeriodicCheck>
+  | ResultOutcomeEvent<'galleryStairLocation', GalleryStairLocation>
+  | ResultOutcomeEvent<'galleryStairOccurrence', GalleryStairOccurrence>
+  | ResultOutcomeEvent<'streamConstruction', StreamConstruction>
+  | ResultOutcomeEvent<'riverConstruction', RiverConstruction>
+  | ResultOutcomeEvent<'riverBoatBank', RiverBoatBank>
+  | ResultOutcomeEvent<'chasmDepth', ChasmDepth>
+  | ResultOutcomeEvent<'chasmConstruction', ChasmConstruction>
+  | ResultOutcomeEvent<'jumpingPlaceWidth', JumpingPlaceWidth>;
+
+type EnvironmentOutcomeEvent =
+  | ResultOutcomeEvent<'roomDimensions', RoomDimensions>
+  | ResultOutcomeEvent<'chamberDimensions', ChamberDimensions>
+  | ResultOutcomeEvent<'unusualShape', UnusualShape>
+  | ResultOutcomeEvent<'circularContents', CircularContents>
+  | ResultOutcomeEvent<'circularPool', Pool>
+  | ResultOutcomeEvent<'circularMagicPool', MagicPool>
+  | ResultOutcomeEvent<'transmuteType', TransmuteType>
+  | ResultOutcomeEvent<'poolAlignment', PoolAlignment>
+  | ResultOutcomeEvent<'transporterLocation', TransporterLocation>
+  | (ResultOutcomeEvent<'unusualSize', UnusualSize> & {
+      extra: number;
+      area?: number;
+    })
+  | (ResultOutcomeEvent<'chamberRoomContents', ChamberRoomContents> & {
+      autoResolved?: boolean;
+    })
+  | ResultOutcomeEvent<'chamberRoomStairs', ChamberRoomStairs>;
+
+type HazardOutcomeEvent =
+  | ResultOutcomeEvent<'trickTrap', TrickTrap>
+  | ResultOutcomeEvent<'illusionaryWallNature', IllusionaryWallNature>
+  | ResultOutcomeEvent<'gasTrapEffect', GasTrapEffect>;
+
+type MonsterOutcomeEvent =
+  | DungeonLevelResultOutcomeEvent<'monsterLevel', MonsterLevel>
+  | MonsterTextOutcomeEvent<'monsterOne', MonsterOne>
+  | MonsterTextOutcomeEvent<'monsterTwo', MonsterTwo>
+  | MonsterTextOutcomeEvent<'monsterThree', MonsterThree>
+  | MonsterTextOutcomeEvent<'monsterFour', MonsterFour>
+  | MonsterTextOutcomeEvent<'monsterFive', MonsterFive>
+  | MonsterTextOutcomeEvent<'monsterSix', MonsterSix>
+  | MonsterTextOutcomeEvent<'monsterSeven', MonsterSeven>
+  | MonsterTextOutcomeEvent<'monsterEight', MonsterEight>
+  | MonsterTextOutcomeEvent<'monsterNine', MonsterNine>
+  | MonsterTextOutcomeEvent<'monsterTen', MonsterTen>
+  | DragonTextOutcomeEvent<'dragonThree', DragonThree>
+  | DragonTextOutcomeEvent<'dragonFourYounger', DragonFourYounger>
+  | DragonTextOutcomeEvent<'dragonFourOlder', DragonFourOlder>
+  | DragonTextOutcomeEvent<'dragonFiveYounger', DragonFiveYounger>
+  | DragonTextOutcomeEvent<'dragonFiveOlder', DragonFiveOlder>
+  | DragonTextOutcomeEvent<'dragonSix', DragonSix>
+  | DragonTextOutcomeEvent<'dragonSeven', DragonSeven>
+  | DragonTextOutcomeEvent<'dragonEight', DragonEight>
+  | DragonTextOutcomeEvent<'dragonNine', DragonNine>
+  | DragonTextOutcomeEvent<'dragonTen', DragonTen>
+  | MonsterTextOutcomeEvent<'human', Human>;
+
+type TreasureOutcomeEvent =
   | {
       kind: 'treasure';
       level: number;
@@ -432,358 +379,181 @@ export type OutcomeEvent =
       rollIndex?: number;
       totalRolls?: number;
     }
-  | {
-      kind: 'treasureContainer';
-      result: TreasureContainer;
-    }
-  | {
-      kind: 'treasureProtectionType';
-      result: TreasureProtectionType;
-    }
-  | {
-      kind: 'treasureProtectionGuardedBy';
-      result: TreasureProtectionGuardedBy;
-    }
-  | {
-      kind: 'treasureProtectionHiddenBy';
-      result: TreasureProtectionHiddenBy;
-    }
-  | {
-      kind: 'treasureMagicCategory';
-      result: TreasureMagicCategory;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasurePotion';
-      result: TreasurePotion;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasurePotionAnimalControl';
-      result: TreasurePotionAnimalControl;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasurePotionDragonControl';
-      result: TreasurePotionDragonControl;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasurePotionGiantControl';
-      result: TreasurePotionGiantControl;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasurePotionGiantStrength';
-      result: TreasurePotionGiantStrength;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasurePotionHumanControl';
-      result: TreasurePotionHumanControl;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasurePotionUndeadControl';
-      result: TreasurePotionUndeadControl;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasureScroll';
-      result: TreasureScroll;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-      scroll:
-        | {
-            type: 'spells';
-            caster: 'magic-user' | 'illusionist' | 'cleric' | 'druid';
-            spellLevels: number[];
-          }
-        | {
-            type: 'protection';
-            protection: TreasureScroll;
-            elementals?: TreasureScrollProtectionElementals;
-            lycanthropes?: TreasureScrollProtectionLycanthropes;
-          }
-        | {
-            type: 'curse';
-          };
-    }
-  | {
-      kind: 'treasureScrollProtectionElementals';
-      result: TreasureScrollProtectionElementals;
-    }
-  | {
-      kind: 'treasureScrollProtectionLycanthropes';
-      result: TreasureScrollProtectionLycanthropes;
-    }
-  | {
-      kind: 'treasureRing';
-      result: TreasureRing;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-      spellStoring?: {
-        caster: 'magic-user' | 'illusionist' | 'cleric' | 'druid';
-        spellLevels: number[];
-      };
-    }
-  | {
-      kind: 'treasureRingContrariness';
-      result: TreasureRingContrariness;
-    }
-  | {
-      kind: 'treasureRingElementalCommand';
-      result: TreasureRingElementalCommand;
-    }
-  | {
-      kind: 'treasureRingProtection';
-      result: TreasureRingProtection;
-    }
-  | {
-      kind: 'treasureRingRegeneration';
-      result: TreasureRingRegeneration;
-    }
-  | {
-      kind: 'treasureRingTelekinesis';
-      result: TreasureRingTelekinesis;
-    }
-  | {
-      kind: 'treasureRingThreeWishes';
-      result: TreasureRingThreeWishes;
-    }
-  | {
-      kind: 'treasureRingWizardry';
-      result: TreasureRingWizardry;
-    }
-  | {
-      kind: 'treasureRodStaffWand';
-      result: TreasureRodStaffWand;
-    }
-  | {
-      kind: 'treasureBagOfHolding';
-      result: TreasureBagOfHolding;
-    }
-  | {
-      kind: 'treasureBagOfTricks';
-      result: TreasureBagOfTricks;
-    }
-  | {
-      kind: 'treasureBracersOfDefense';
-      result: TreasureBracersOfDefense;
-    }
-  | {
-      kind: 'treasureBucknardsEverfullPurse';
-      result: TreasureBucknardsEverfullPurse;
-    }
-  | {
-      kind: 'treasureArtifactOrRelic';
-      result: TreasureArtifactOrRelic;
-    }
-  | {
-      kind: 'treasureDeckOfManyThings';
-      result: TreasureDeckOfManyThings;
-    }
-  | {
-      kind: 'treasureFigurineOfWondrousPower';
-      result: TreasureFigurineOfWondrousPower;
-    }
-  | {
-      kind: 'treasureFigurineMarbleElephant';
-      result: TreasureFigurineMarbleElephant;
-    }
-  | {
-      kind: 'treasureGirdleOfGiantStrength';
-      result: TreasureGirdleOfGiantStrength;
-    }
-  | {
-      kind: 'treasureHornOfValhallaType';
-      result: TreasureHornOfValhallaType;
-    }
-  | {
-      kind: 'treasureHornOfValhallaAttunement';
-      result: TreasureHornOfValhallaAttunement;
-    }
-  | {
-      kind: 'treasureHornOfValhallaAlignment';
-      result: TreasureHornOfValhallaAlignment;
-    }
-  | {
-      kind: 'treasureIounStones';
-      result: TreasureIounStonesResult;
-    }
-  | {
-      kind: 'treasureEyesOfPetrification';
-      result: TreasureEyesOfPetrification;
-    }
-  | {
-      kind: 'treasureMiscMagicE1';
-      result: TreasureMiscMagicE1;
-      level?: number;
-      treasureRoll?: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasureMiscMagicE2';
-      result: TreasureMiscMagicE2;
-      level?: number;
-      treasureRoll?: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasureMiscMagicE3';
-      result: TreasureMiscMagicE3;
-    }
-  | {
-      kind: 'treasureMiscMagicE4';
-      result: TreasureMiscMagicE4;
-    }
-  | {
-      kind: 'treasureMiscMagicE5';
-      result: TreasureMiscMagicE5;
-    }
-  | {
-      kind: 'treasureScarabOfProtectionCurse';
-      result: TreasureScarabOfProtectionCurse;
-    }
-  | {
-      kind: 'treasureScarabOfProtectionCurseResolution';
-      result: TreasureScarabOfProtectionCurseResolution;
-    }
-  | {
-      kind: 'treasureArmorShields';
-      result: TreasureArmorShield;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasureSwords';
-      result: TreasureSword;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
+  | ResultOutcomeEvent<'treasureContainer', TreasureContainer>
+  | ResultOutcomeEvent<'treasureProtectionType', TreasureProtectionType>
+  | ResultOutcomeEvent<
+      'treasureProtectionGuardedBy',
+      TreasureProtectionGuardedBy
+    >
+  | ResultOutcomeEvent<'treasureProtectionHiddenBy', TreasureProtectionHiddenBy>
+  | TreasureRollOutcomeEvent<'treasureMagicCategory', TreasureMagicCategory>
+  | TreasureRollOutcomeEvent<'treasurePotion', TreasurePotion>
+  | TreasureRollOutcomeEvent<
+      'treasurePotionAnimalControl',
+      TreasurePotionAnimalControl
+    >
+  | TreasureRollOutcomeEvent<
+      'treasurePotionDragonControl',
+      TreasurePotionDragonControl
+    >
+  | TreasureRollOutcomeEvent<
+      'treasurePotionGiantControl',
+      TreasurePotionGiantControl
+    >
+  | TreasureRollOutcomeEvent<
+      'treasurePotionGiantStrength',
+      TreasurePotionGiantStrength
+    >
+  | TreasureRollOutcomeEvent<
+      'treasurePotionHumanControl',
+      TreasurePotionHumanControl
+    >
+  | TreasureRollOutcomeEvent<
+      'treasurePotionUndeadControl',
+      TreasurePotionUndeadControl
+    >
+  | (TreasureRollOutcomeEvent<'treasureScroll', TreasureScroll> & {
+      scroll: TreasureScrollDetails;
+    })
+  | ResultOutcomeEvent<
+      'treasureScrollProtectionElementals',
+      TreasureScrollProtectionElementals
+    >
+  | ResultOutcomeEvent<
+      'treasureScrollProtectionLycanthropes',
+      TreasureScrollProtectionLycanthropes
+    >
+  | (TreasureRollOutcomeEvent<'treasureRing', TreasureRing> & {
+      spellStoring?: SpellStoringDetails;
+    })
+  | ResultOutcomeEvent<'treasureRingContrariness', TreasureRingContrariness>
+  | ResultOutcomeEvent<
+      'treasureRingElementalCommand',
+      TreasureRingElementalCommand
+    >
+  | ResultOutcomeEvent<'treasureRingProtection', TreasureRingProtection>
+  | ResultOutcomeEvent<'treasureRingRegeneration', TreasureRingRegeneration>
+  | ResultOutcomeEvent<'treasureRingTelekinesis', TreasureRingTelekinesis>
+  | ResultOutcomeEvent<'treasureRingThreeWishes', TreasureRingThreeWishes>
+  | ResultOutcomeEvent<'treasureRingWizardry', TreasureRingWizardry>
+  | ResultOutcomeEvent<'treasureRodStaffWand', TreasureRodStaffWand>
+  | ResultOutcomeEvent<'treasureBagOfHolding', TreasureBagOfHolding>
+  | ResultOutcomeEvent<'treasureBagOfTricks', TreasureBagOfTricks>
+  | ResultOutcomeEvent<'treasureBracersOfDefense', TreasureBracersOfDefense>
+  | ResultOutcomeEvent<
+      'treasureBucknardsEverfullPurse',
+      TreasureBucknardsEverfullPurse
+    >
+  | ResultOutcomeEvent<'treasureArtifactOrRelic', TreasureArtifactOrRelic>
+  | ResultOutcomeEvent<'treasureDeckOfManyThings', TreasureDeckOfManyThings>
+  | ResultOutcomeEvent<
+      'treasureFigurineOfWondrousPower',
+      TreasureFigurineOfWondrousPower
+    >
+  | ResultOutcomeEvent<
+      'treasureFigurineMarbleElephant',
+      TreasureFigurineMarbleElephant
+    >
+  | ResultOutcomeEvent<
+      'treasureGirdleOfGiantStrength',
+      TreasureGirdleOfGiantStrength
+    >
+  | ResultOutcomeEvent<'treasureHornOfValhallaType', TreasureHornOfValhallaType>
+  | ResultOutcomeEvent<
+      'treasureHornOfValhallaAttunement',
+      TreasureHornOfValhallaAttunement
+    >
+  | ResultOutcomeEvent<
+      'treasureHornOfValhallaAlignment',
+      TreasureHornOfValhallaAlignment
+    >
+  | ResultOutcomeEvent<'treasureIounStones', TreasureIounStonesResult>
+  | ResultOutcomeEvent<
+      'treasureEyesOfPetrification',
+      TreasureEyesOfPetrification
+    >
+  | OptionalTreasureRollOutcomeEvent<'treasureMiscMagicE1', TreasureMiscMagicE1>
+  | OptionalTreasureRollOutcomeEvent<'treasureMiscMagicE2', TreasureMiscMagicE2>
+  | ResultOutcomeEvent<'treasureMiscMagicE3', TreasureMiscMagicE3>
+  | ResultOutcomeEvent<'treasureMiscMagicE4', TreasureMiscMagicE4>
+  | ResultOutcomeEvent<'treasureMiscMagicE5', TreasureMiscMagicE5>
+  | ResultOutcomeEvent<
+      'treasureScarabOfProtectionCurse',
+      TreasureScarabOfProtectionCurse
+    >
+  | ResultOutcomeEvent<
+      'treasureScarabOfProtectionCurseResolution',
+      TreasureScarabOfProtectionCurseResolution
+    >
+  | TreasureRollOutcomeEvent<'treasureArmorShields', TreasureArmorShield>
+  | (TreasureRollOutcomeEvent<'treasureSwords', TreasureSword> & {
       luckBladeWishes?: number;
-    }
-  | { kind: 'treasureSwordKind'; result: TreasureSwordKind }
-  | { kind: 'treasureSwordUnusual'; result: TreasureSwordUnusualResult }
-  | {
-      kind: 'treasureSwordPrimaryAbility';
-      result: TreasureSwordPrimaryAbilityResult;
-    }
-  | {
-      kind: 'treasureSwordExtraordinaryPower';
-      result: TreasureSwordExtraordinaryPowerResult;
-    }
-  | {
-      kind: 'treasureSwordSpecialPurpose';
-      result: TreasureSwordSpecialPurposeResult;
-    }
-  | {
-      kind: 'treasureSwordSpecialPurposePower';
-      result: TreasureSwordSpecialPurposePowerResult;
-    }
-  | {
-      kind: 'treasureSwordDragonSlayerColor';
-      result: TreasureSwordDragonSlayerColorResult;
-    }
-  | { kind: 'treasureSwordAlignment'; result: TreasureSwordAlignmentResult }
-  | {
-      kind: 'treasureMiscWeapons';
-      result: TreasureMiscWeaponResult;
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
-      kind: 'treasureRobeOfTheArchmagi';
-      result: TreasureRobeOfTheArchmagi;
-    }
-  | {
-      kind: 'treasureRobeOfUsefulItems';
-      result: RobeOfUsefulItemsResult;
-    }
-  | {
-      kind: 'treasureManualOfGolems';
-      result: TreasureManualOfGolems;
-    }
-  | {
-      kind: 'treasureMedallionRange';
-      result: TreasureMedallionRange;
-    }
-  | {
-      kind: 'treasureNecklaceOfMissiles';
-      result: TreasureNecklaceOfMissiles;
-    }
-  | {
-      kind: 'treasureNecklaceOfPrayerBeads';
-      result: TreasureNecklaceOfPrayerBeadsResult;
-    }
-  | {
-      kind: 'treasurePearlOfPowerEffect';
-      result: TreasurePearlOfPowerEffect;
-    }
-  | {
-      kind: 'treasurePearlOfPowerRecall';
-      result: TreasurePearlOfPowerRecallResult;
-    }
-  | {
-      kind: 'treasurePearlOfWisdom';
-      result: TreasurePearlOfWisdomOutcome;
-    }
-  | {
-      kind: 'treasurePeriaptProofAgainstPoison';
-      result: TreasurePeriaptPoisonBonus;
-    }
-  | {
-      kind: 'treasurePhylacteryLongYears';
-      result: TreasurePhylacteryLongYearsOutcome;
-    }
-  | {
-      kind: 'treasureQuaalFeatherToken';
-      result: TreasureQuaalFeatherToken;
-    }
-  | {
-      kind: 'treasureCarpetOfFlying';
-      result: TreasureCarpetOfFlying;
-    }
-  | {
-      kind: 'treasureCloakOfProtection';
-      result: TreasureCloakOfProtection;
-    }
-  | {
-      kind: 'treasureInstrumentOfTheBards';
-      result: TreasureInstrumentOfTheBards;
-    }
-  | {
-      kind: 'treasureIronFlask';
-      result: TreasureIronFlaskContent;
-    }
-  | {
-      kind: 'treasureCrystalBall';
-      result: TreasureCrystalBall;
-    }
-  | {
-      kind: 'treasureStaffSerpent';
-      result: TreasureStaffSerpent;
-    };
+    })
+  | ResultOutcomeEvent<'treasureSwordKind', TreasureSwordKind>
+  | ResultOutcomeEvent<'treasureSwordUnusual', TreasureSwordUnusualResult>
+  | ResultOutcomeEvent<
+      'treasureSwordPrimaryAbility',
+      TreasureSwordPrimaryAbilityResult
+    >
+  | ResultOutcomeEvent<
+      'treasureSwordExtraordinaryPower',
+      TreasureSwordExtraordinaryPowerResult
+    >
+  | ResultOutcomeEvent<
+      'treasureSwordSpecialPurpose',
+      TreasureSwordSpecialPurposeResult
+    >
+  | ResultOutcomeEvent<
+      'treasureSwordSpecialPurposePower',
+      TreasureSwordSpecialPurposePowerResult
+    >
+  | ResultOutcomeEvent<
+      'treasureSwordDragonSlayerColor',
+      TreasureSwordDragonSlayerColorResult
+    >
+  | ResultOutcomeEvent<'treasureSwordAlignment', TreasureSwordAlignmentResult>
+  | TreasureRollOutcomeEvent<'treasureMiscWeapons', TreasureMiscWeaponResult>
+  | ResultOutcomeEvent<'treasureRobeOfTheArchmagi', TreasureRobeOfTheArchmagi>
+  | ResultOutcomeEvent<'treasureRobeOfUsefulItems', RobeOfUsefulItemsResult>
+  | ResultOutcomeEvent<'treasureManualOfGolems', TreasureManualOfGolems>
+  | ResultOutcomeEvent<'treasureMedallionRange', TreasureMedallionRange>
+  | ResultOutcomeEvent<'treasureNecklaceOfMissiles', TreasureNecklaceOfMissiles>
+  | ResultOutcomeEvent<
+      'treasureNecklaceOfPrayerBeads',
+      TreasureNecklaceOfPrayerBeadsResult
+    >
+  | ResultOutcomeEvent<'treasurePearlOfPowerEffect', TreasurePearlOfPowerEffect>
+  | ResultOutcomeEvent<
+      'treasurePearlOfPowerRecall',
+      TreasurePearlOfPowerRecallResult
+    >
+  | ResultOutcomeEvent<'treasurePearlOfWisdom', TreasurePearlOfWisdomOutcome>
+  | ResultOutcomeEvent<
+      'treasurePeriaptProofAgainstPoison',
+      TreasurePeriaptPoisonBonus
+    >
+  | ResultOutcomeEvent<
+      'treasurePhylacteryLongYears',
+      TreasurePhylacteryLongYearsOutcome
+    >
+  | ResultOutcomeEvent<'treasureQuaalFeatherToken', TreasureQuaalFeatherToken>
+  | ResultOutcomeEvent<'treasureCarpetOfFlying', TreasureCarpetOfFlying>
+  | ResultOutcomeEvent<'treasureCloakOfProtection', TreasureCloakOfProtection>
+  | ResultOutcomeEvent<
+      'treasureInstrumentOfTheBards',
+      TreasureInstrumentOfTheBards
+    >
+  | ResultOutcomeEvent<'treasureIronFlask', TreasureIronFlaskContent>
+  | ResultOutcomeEvent<'treasureCrystalBall', TreasureCrystalBall>
+  | ResultOutcomeEvent<'treasureStaffSerpent', TreasureStaffSerpent>;
+
+// Domain outcome event kinds cover high-level tables we resolve.
+export type OutcomeEvent =
+  | NavigationOutcomeEvent
+  | EnvironmentOutcomeEvent
+  | HazardOutcomeEvent
+  | MonsterOutcomeEvent
+  | TreasureOutcomeEvent;
 
 export type TreasureJewelryPiece = {
   type: string;

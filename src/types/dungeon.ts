@@ -172,44 +172,84 @@ export type AnyDungeonTablePreview =
   | RootDungeonTablePreview
   | TargetedDungeonTablePreview;
 
-export type TableContext =
+type RollIndexContext = {
+  rollIndex?: number;
+};
+
+type ExitType = 'door' | 'passage';
+type ExitOrigin = 'room' | 'chamber';
+
+type LevelContext<Kind extends string> = {
+  kind: Kind;
+  level: number;
+};
+
+type ExitIndexContext<Kind extends 'exit' | 'exitDirection'> = {
+  kind: Kind;
+  index: number;
+  total: number;
+  origin: ExitOrigin;
+};
+
+type TreasureRollContext<Kind extends string> = LevelContext<Kind> &
+  RollIndexContext & {
+    treasureRoll: number;
+  };
+
+type TreasureSwordSlotContext<Kind extends string> = {
+  kind: Kind;
+  slotKey?: string;
+} & RollIndexContext;
+
+type TreasureSwordVariantContext<Kind extends string> =
+  TreasureSwordSlotContext<Kind> & {
+    tableVariant?: 'standard' | 'restricted';
+    ignoreHigh?: boolean;
+  };
+
+type TreasureSwordAlignedSlotContext<Kind extends string> =
+  TreasureSwordSlotContext<Kind> & {
+    alignment?: TreasureSwordAlignment;
+  };
+
+type TreasureSwordParentedContext<Kind extends string> =
+  TreasureSwordAlignedSlotContext<Kind> & {
+    parentSlotKey?: string;
+  };
+
+type TreasureSwordAlignmentReadyContext<Kind extends string> =
+  TreasureSwordAlignedSlotContext<Kind> & {
+    alignmentReady?: boolean;
+  };
+
+type NavigationTableContext =
   | { kind: 'exits'; length: number; width: number; isRoom: boolean }
   | { kind: 'doorChain'; existing: DoorChainLaterality[] }
-  | { kind: 'wandering'; level: number }
+  | LevelContext<'wandering'>
   | { kind: 'unusualSize'; extra: number; isRoom?: boolean }
-  | {
-      kind: 'exit';
-      exitType: 'door' | 'passage';
-      index: number;
-      total: number;
-      origin: 'room' | 'chamber';
-    }
-  | {
-      kind: 'exitDirection';
-      index: number;
-      total: number;
-      origin: 'room' | 'chamber';
-    }
+  | (ExitIndexContext<'exit'> & {
+      exitType: ExitType;
+    })
+  | ExitIndexContext<'exitDirection'>
   | {
       kind: 'exitAlternative';
-      exitType: 'door' | 'passage';
-    }
+      exitType: ExitType;
+    };
+
+type EnvironmentTableContext =
   | {
       kind: 'chamberDimensions';
       forcedContents?: ChamberRoomContents;
       level?: number;
     }
-  | {
-      kind: 'chamberContents';
-      level: number;
-    }
-  | {
-      kind: 'treasure';
-      level: number;
-      withMonster: boolean;
-      rollIndex?: number;
-      totalRolls?: number;
-    }
+  | LevelContext<'chamberContents'>;
+
+type TreasureTableContext =
+  | (LevelContext<'treasure'> &
+      RollIndexContext & {
+        withMonster: boolean;
+        totalRolls?: number;
+      })
   | {
       kind: 'treasureProtection';
       treasureRoll?: number;
@@ -217,65 +257,36 @@ export type TableContext =
   | {
       kind: 'treasureContainer';
     }
-  | {
-      kind: 'treasureMagic';
-      level: number;
-      treasureRoll: number;
-      rollIndex?: number;
-    }
-  | {
+  | TreasureRollContext<'treasureMagic'>
+  | ({
       kind: 'treasureSword';
       sword: TreasureSword;
-      rollIndex?: number;
       alignmentRoll?: number;
       languageRolls?: number[];
       primaryAbilityRolls?: number[];
       extraordinaryPowerRolls?: number[];
       dragonSlayerColorRoll?: number;
       luckBladeWishes?: number;
-    }
+    } & RollIndexContext)
   | {
       kind: 'treasureSwordAlignment';
       variant: 'standard' | 'chaotic' | 'lawful';
       sword?: TreasureSword;
     }
-  | {
-      kind: 'treasureSwordPrimaryAbility';
-      slotKey?: string;
-      rollIndex?: number;
-      tableVariant?: 'standard' | 'restricted';
-      ignoreHigh?: boolean;
-    }
-  | {
-      kind: 'treasureSwordExtraordinaryPower';
-      slotKey?: string;
-      rollIndex?: number;
-      tableVariant?: 'standard' | 'restricted';
-      ignoreHigh?: boolean;
+  | TreasureSwordVariantContext<'treasureSwordPrimaryAbility'>
+  | (TreasureSwordVariantContext<'treasureSwordExtraordinaryPower'> & {
       alignment?: TreasureSwordAlignment;
-    }
-  | {
-      kind: 'treasureSwordSpecialPurpose';
-      slotKey?: string;
-      rollIndex?: number;
-      parentSlotKey?: string;
-      alignment?: TreasureSwordAlignment;
+    })
+  | (TreasureSwordParentedContext<'treasureSwordSpecialPurpose'> & {
       alignmentReady?: boolean;
-    }
-  | {
-      kind: 'treasureSwordSpecialPurposePower';
-      slotKey?: string;
-      rollIndex?: number;
-      parentSlotKey?: string;
-      alignment?: TreasureSwordAlignment;
-    }
-  | {
-      kind: 'treasureSwordDragonSlayerColor';
-      slotKey?: string;
-      rollIndex?: number;
-      alignment?: TreasureSwordAlignment;
-      alignmentReady?: boolean;
-    };
+    })
+  | TreasureSwordParentedContext<'treasureSwordSpecialPurposePower'>
+  | TreasureSwordAlignmentReadyContext<'treasureSwordDragonSlayerColor'>;
+
+export type TableContext =
+  | NavigationTableContext
+  | EnvironmentTableContext
+  | TreasureTableContext;
 
 export type DungeonRenderNode = DungeonRenderable | AnyDungeonTablePreview;
 
