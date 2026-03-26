@@ -1,5 +1,9 @@
 import { passageMessages } from './passageMessages';
 import { doorBeyondMessages } from './doorBeyondMessages';
+import {
+  withDungeonRandomSession,
+  type DungeonRandomSession,
+} from '../helpers/dungeonRandom';
 import type { DungeonAction, DungeonStep } from '../../types/dungeon';
 
 export function runDungeonStep(
@@ -9,40 +13,44 @@ export function runDungeonStep(
     doorAhead?: boolean;
     detailMode?: boolean;
     level?: number;
+    session?: DungeonRandomSession;
   }
 ): DungeonStep {
-  switch (action) {
-    case 'passage': {
-      const { messages, outcome, renderCache, pendingCount } = passageMessages({
-        roll: options?.roll,
-        detailMode: options?.detailMode,
-        level: options?.level,
-      });
-      return {
-        action,
-        roll: options?.roll,
-        outcome,
-        messages,
-        renderCache,
-        pendingCount,
-      };
-    }
-    case 'door': {
-      const { messages, outcome, renderCache, pendingCount } =
-        doorBeyondMessages({
+  return withDungeonRandomSession(options?.session, () => {
+    switch (action) {
+      case 'passage': {
+        const { messages, outcome, renderCache, pendingCount } =
+          passageMessages({
+            roll: options?.roll,
+            detailMode: options?.detailMode,
+            level: options?.level,
+          });
+        return {
+          action,
           roll: options?.roll,
-          doorAhead: options?.doorAhead,
-          detailMode: options?.detailMode,
-          level: options?.level,
-        });
-      return {
-        action,
-        roll: options?.roll,
-        outcome,
-        messages,
-        renderCache,
-        pendingCount,
-      };
+          outcome,
+          messages,
+          renderCache,
+          pendingCount,
+        };
+      }
+      case 'door': {
+        const { messages, outcome, renderCache, pendingCount } =
+          doorBeyondMessages({
+            roll: options?.roll,
+            doorAhead: options?.doorAhead,
+            detailMode: options?.detailMode,
+            level: options?.level,
+          });
+        return {
+          action,
+          roll: options?.roll,
+          outcome,
+          messages,
+          renderCache,
+          pendingCount,
+        };
+      }
     }
-  }
+  });
 }

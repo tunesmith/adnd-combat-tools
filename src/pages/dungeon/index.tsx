@@ -4,6 +4,7 @@ import { useDungeonPageState } from '../../components/dungeon/useDungeonPageStat
 
 const DungeonIndexPage = () => {
   const {
+    session,
     action,
     setAction,
     rollInput,
@@ -37,17 +38,6 @@ const DungeonIndexPage = () => {
       <div className={styles['contentContainer']}>
         <div className={styles['toolbar']}>
           <div className={styles['toolbarGroup']}>
-            {replayStatus && (
-              <span className={styles['toolbarStatus']}>{replayStatus}</span>
-            )}
-            <button
-              type="button"
-              className={styles['button']}
-              onClick={copyReplayInfo}
-              disabled={!hasReplayInfo}
-            >
-              Copy Replay Info
-            </button>
             <button
               type="button"
               className={styles['button']}
@@ -211,6 +201,7 @@ const DungeonIndexPage = () => {
             action={action}
             detailMode={detailMode}
             dungeonLevel={dungeonLevel}
+            session={session}
             feed={feed}
             setDetailMode={setDetailMode}
             overrides={overrides}
@@ -222,6 +213,19 @@ const DungeonIndexPage = () => {
             setResolved={setResolved}
             recordPreviewResolution={recordPreviewResolution}
           />
+          <div className={styles['debugTools']}>
+            {replayStatus && (
+              <span className={styles['debugStatus']}>{replayStatus}</span>
+            )}
+            <button
+              type="button"
+              className={styles['debugButton']}
+              onClick={copyReplayInfo}
+              disabled={!hasReplayInfo}
+            >
+              Copy Replay Info
+            </button>
+          </div>
         </div>
       </div>
     </div>

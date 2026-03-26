@@ -1,4 +1,4 @@
-type DungeonRandomSession = {
+export type DungeonRandomSession = {
   readonly seed: string;
   nextInt: (sides: number) => number;
   nextId: (prefix: string) => string;
@@ -69,12 +69,6 @@ export function createDungeonRandomSession(
       )}-${nextUint32().toString(36)}`;
     },
   };
-}
-
-export function setActiveDungeonRandomSession(
-  session: DungeonRandomSession | undefined
-): void {
-  activeDungeonRandomSession = session;
 }
 
 export function withDungeonRandomSession<T>(

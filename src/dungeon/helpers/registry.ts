@@ -21,6 +21,10 @@ import {
   type OutcomeRenderSnapshot,
 } from './outcomePipeline';
 import {
+  withDungeonRandomSession,
+  type DungeonRandomSession,
+} from './dungeonRandom';
+import {
   ALL_REGISTRY_OUTCOMES,
   ALL_TABLE_HEADINGS,
   ALL_TABLE_ID_LIST,
@@ -111,37 +115,40 @@ export function applyOutcomeRoll(opts: {
   targetId?: string;
   roll?: number;
   context?: TableContext;
+  session?: DungeonRandomSession;
 }): OutcomeRollApplication | undefined {
-  const normalizedExisting = normalizeOutcomeTree(opts.outcome);
-  const targetId = resolvePendingTargetId(
-    normalizedExisting,
-    opts.tableId,
-    opts.targetId ?? opts.tableId,
-    opts.context
-  );
-  const resolution = resolveRegistryTable({
-    tableId: opts.tableId,
-    roll: opts.roll,
-    context: opts.context,
-    outcome: normalizedExisting,
-    targetId,
+  return withDungeonRandomSession(opts.session, () => {
+    const normalizedExisting = normalizeOutcomeTree(opts.outcome);
+    const targetId = resolvePendingTargetId(
+      normalizedExisting,
+      opts.tableId,
+      opts.targetId ?? opts.tableId,
+      opts.context
+    );
+    const resolution = resolveRegistryTable({
+      tableId: opts.tableId,
+      roll: opts.roll,
+      context: opts.context,
+      outcome: normalizedExisting,
+      targetId,
+    });
+    if (!resolution || !resolution.outcome) return undefined;
+    const normalizedResolution = normalizeOutcomeTree(
+      resolution.outcome,
+      targetId
+    );
+    const applied = applyResolvedOutcome(
+      normalizedExisting,
+      targetId,
+      normalizedResolution
+    );
+    const normalizedApplied = normalizeOutcomeTree(applied);
+    const snapshot = createOutcomeRenderSnapshot(normalizedApplied, {
+      autoResolve: false,
+    });
+    if (!snapshot) return undefined;
+    return { outcome: normalizedApplied, snapshot };
   });
-  if (!resolution || !resolution.outcome) return undefined;
-  const normalizedResolution = normalizeOutcomeTree(
-    resolution.outcome,
-    targetId
-  );
-  const applied = applyResolvedOutcome(
-    normalizedExisting,
-    targetId,
-    normalizedResolution
-  );
-  const normalizedApplied = normalizeOutcomeTree(applied);
-  const snapshot = createOutcomeRenderSnapshot(normalizedApplied, {
-    autoResolve: false,
-  });
-  if (!snapshot) return undefined;
-  return { outcome: normalizedApplied, snapshot };
 }
 
 function resolvePendingTargetId(
@@ -275,6 +282,7 @@ function buildFeedResolution<T extends FeedLike>(opts: {
   usedRoll: number | undefined;
   targetKey: string;
   heading: string;
+  session?: DungeonRandomSession;
 }): FeedResolution<T> | undefined {
   const keyVariants = collectKeyVariants(opts.targetKey, opts.preview.id);
   const extraKeyVariants = new Set<string>();
@@ -286,6 +294,7 @@ function buildFeedResolution<T extends FeedLike>(opts: {
       targetId: opts.targetKey,
       roll: opts.usedRoll,
       context: opts.preview.context,
+      session: opts.session,
     });
     if (applied) {
       const { outcome, snapshot } = applied;
@@ -313,13 +322,15 @@ function buildFeedResolution<T extends FeedLike>(opts: {
     }
   }
 
-  const tableResult = resolveRegistryTable({
-    tableId: opts.preview.id,
-    roll: opts.usedRoll,
-    context: opts.preview.context,
-    outcome: opts.feedItem.outcome,
-    targetId: opts.targetKey,
-  });
+  const tableResult = withDungeonRandomSession(opts.session, () =>
+    resolveRegistryTable({
+      tableId: opts.preview.id,
+      roll: opts.usedRoll,
+      context: opts.preview.context,
+      outcome: opts.feedItem.outcome,
+      targetId: opts.targetKey,
+    })
+  );
   if (!tableResult) return undefined;
 
   const previewTargets = collectPreviewTargetsForTable(
@@ -370,7 +381,8 @@ export function resolveViaRegistry<T extends FeedLike>(
   setFeed?: React.Dispatch<React.SetStateAction<T[]>>,
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
-  currentFeedItem?: T
+  currentFeedItem?: T,
+  session?: DungeonRandomSession
 ): boolean {
   const base = String(tp.id.split(':')[0] ?? '');
   if (!isTableId(base)) return false;
@@ -386,6 +398,7 @@ export function resolveViaRegistry<T extends FeedLike>(
       usedRoll,
       targetKey,
       heading,
+      session,
     });
     if (!resolution) return false;
     if (setFeed) {
@@ -408,102 +421,105 @@ export function resolveViaRegistry<T extends FeedLike>(
 
   if (setFeed) {
     setFeed((prev) =>
-      prev.map((fi) =>
-        fi.id !== feedItemId
-          ? fi
-          : (() => {
-              const existingOutcome = fi.outcome;
-              if (existingOutcome) {
-                const applied = applyOutcomeRoll({
-                  outcome: existingOutcome,
+      withDungeonRandomSession(session, () =>
+        prev.map((fi) =>
+          fi.id !== feedItemId
+            ? fi
+            : (() => {
+                const existingOutcome = fi.outcome;
+                if (existingOutcome) {
+                  const applied = applyOutcomeRoll({
+                    outcome: existingOutcome,
+                    tableId: tp.id,
+                    targetId: targetKey,
+                    roll: usedRoll,
+                    context: tp.context,
+                    session,
+                  });
+                  if (applied) {
+                    resolved = true;
+                    const { outcome, snapshot } = applied;
+                    const previewTargets = collectPreviewTargetsForTable(
+                      snapshot.detail,
+                      tp.id
+                    ).filter((key) => key === targetKey);
+                    for (const key of previewTargets) extraKeyVariants.add(key);
+                    if (setCollapsed) {
+                      setCollapsed((prev) => {
+                        const next = { ...prev };
+                        for (const k of keyVariants)
+                          next[`${feedItemId}:${k}`] = true;
+                        for (const k of previewTargets)
+                          next[`${feedItemId}:${k}`] = true;
+                        return next;
+                      });
+                    }
+                    if (setResolved) {
+                      setResolved((prev) => {
+                        const next = { ...prev };
+                        for (const k of keyVariants)
+                          next[`${feedItemId}:${k}`] = true;
+                        for (const k of previewTargets)
+                          next[`${feedItemId}:${k}`] = true;
+                        return next;
+                      });
+                    }
+                    return {
+                      ...fi,
+                      outcome,
+                      pendingCount: snapshot.pendingCount,
+                      messages: snapshot.detail,
+                      renderCache: {
+                        ...fi.renderCache,
+                        detail: snapshot.detail,
+                        compact: snapshot.compact,
+                      },
+                    } as T;
+                  }
+                }
+                const tableResult = resolveRegistryTable({
                   tableId: tp.id,
-                  targetId: targetKey,
                   roll: usedRoll,
                   context: tp.context,
+                  outcome: fi.outcome,
+                  targetId: targetKey,
                 });
-                if (applied) {
-                  resolved = true;
-                  const { outcome, snapshot } = applied;
-                  const previewTargets = collectPreviewTargetsForTable(
-                    snapshot.detail,
-                    tp.id
-                  ).filter((key) => key === targetKey);
-                  for (const key of previewTargets) extraKeyVariants.add(key);
-                  if (setCollapsed) {
-                    setCollapsed((prev) => {
-                      const next = { ...prev };
-                      for (const k of keyVariants)
-                        next[`${feedItemId}:${k}`] = true;
-                      for (const k of previewTargets)
-                        next[`${feedItemId}:${k}`] = true;
-                      return next;
-                    });
-                  }
-                  if (setResolved) {
-                    setResolved((prev) => {
-                      const next = { ...prev };
-                      for (const k of keyVariants)
-                        next[`${feedItemId}:${k}`] = true;
-                      for (const k of previewTargets)
-                        next[`${feedItemId}:${k}`] = true;
-                      return next;
-                    });
-                  }
-                  return {
-                    ...fi,
-                    outcome,
-                    pendingCount: snapshot.pendingCount,
-                    messages: snapshot.detail,
-                    renderCache: {
-                      ...fi.renderCache,
-                      detail: snapshot.detail,
-                      compact: snapshot.compact,
-                    },
-                  } as T;
+                if (!tableResult) return fi;
+                resolved = true;
+                const previewTargets = collectPreviewTargetsForTable(
+                  tableResult.messages,
+                  tp.id
+                ).filter((key) => key === targetKey);
+                for (const key of previewTargets) extraKeyVariants.add(key);
+                if (setCollapsed) {
+                  setCollapsed((prev) => {
+                    const next = { ...prev };
+                    for (const k of keyVariants)
+                      next[`${feedItemId}:${k}`] = true;
+                    for (const k of previewTargets)
+                      next[`${feedItemId}:${k}`] = true;
+                    return next;
+                  });
                 }
-              }
-              const tableResult = resolveRegistryTable({
-                tableId: tp.id,
-                roll: usedRoll,
-                context: tp.context,
-                outcome: fi.outcome,
-                targetId: targetKey,
-              });
-              if (!tableResult) return fi;
-              resolved = true;
-              const previewTargets = collectPreviewTargetsForTable(
-                tableResult.messages,
-                tp.id
-              ).filter((key) => key === targetKey);
-              for (const key of previewTargets) extraKeyVariants.add(key);
-              if (setCollapsed) {
-                setCollapsed((prev) => {
-                  const next = { ...prev };
-                  for (const k of keyVariants)
-                    next[`${feedItemId}:${k}`] = true;
-                  for (const k of previewTargets)
-                    next[`${feedItemId}:${k}`] = true;
-                  return next;
-                });
-              }
-              if (setResolved) {
-                setResolved((prev) => {
-                  const next = { ...prev };
-                  for (const k of keyVariants)
-                    next[`${feedItemId}:${k}`] = true;
-                  for (const k of previewTargets)
-                    next[`${feedItemId}:${k}`] = true;
-                  return next;
-                });
-              }
-              return updateResolvedBlock(
-                fi,
-                feedItemId,
-                targetKey,
-                tableResult.messages,
-                heading
-              );
-            })()
+                if (setResolved) {
+                  setResolved((prev) => {
+                    const next = { ...prev };
+                    for (const k of keyVariants)
+                      next[`${feedItemId}:${k}`] = true;
+                    for (const k of previewTargets)
+                      next[`${feedItemId}:${k}`] = true;
+                    return next;
+                  });
+                }
+                return updateResolvedBlock(
+                  fi,
+                  feedItemId,
+                  targetKey,
+                  tableResult.messages,
+                  heading
+                );
+              })()
+        )
       )
     );
   }

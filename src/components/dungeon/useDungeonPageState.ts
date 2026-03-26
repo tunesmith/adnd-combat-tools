@@ -1,11 +1,11 @@
 import type { KeyboardEvent } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import packageJson from '../../../package.json';
 import { runDungeonStep } from '../../dungeon/services/adapters';
 import { rollDice } from '../../dungeon/helpers/dungeonLookup';
 import {
   createDungeonRandomSession,
-  setActiveDungeonRandomSession,
+  withDungeonRandomSession,
 } from '../../dungeon/helpers/dungeonRandom';
 import {
   buildRenderCache,
@@ -59,13 +59,6 @@ export function useDungeonPageState() {
   const [replayStatus, setReplayStatus] = useState<string | null>(null);
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    setActiveDungeonRandomSession(sessionRef.current);
-    return () => {
-      setActiveDungeonRandomSession(undefined);
-    };
-  }, []);
-
   const parsedRoll = useMemo(() => {
     const value = Number(rollInput);
     if (!Number.isInteger(value)) return undefined;
@@ -94,6 +87,7 @@ export function useDungeonPageState() {
       roll,
       detailMode,
       level: dungeonLevel,
+      session: sessionRef.current,
     });
     const renderCache = step.renderCache ?? buildRenderCache(step.outcome);
     const pendingCount = step.pendingCount ?? countPendingNodes(step.outcome);
@@ -137,7 +131,9 @@ export function useDungeonPageState() {
   };
 
   const handleRoll = () => {
-    const roll = rollDice(20);
+    const roll = withDungeonRandomSession(sessionRef.current, () =>
+      rollDice(20)
+    );
     setRollInput(String(roll));
     addToFeed(action, roll, 'auto');
   };
@@ -174,7 +170,6 @@ export function useDungeonPageState() {
     nextFeedSequenceRef.current = 1;
     replayItemsRef.current = [];
     runSeedRef.current = nextSession.seed;
-    setActiveDungeonRandomSession(nextSession);
     setFeed([]);
     setRollInput('');
     setOverrides({});
@@ -222,6 +217,7 @@ export function useDungeonPageState() {
   };
 
   return {
+    session: sessionRef.current,
     action,
     setAction,
     rollInput,

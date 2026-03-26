@@ -1,3 +1,4 @@
+import { createDungeonRandomSession } from '../../../../../dungeon/helpers/dungeonRandom';
 import { runDungeonStep } from '../../../../../dungeon/services/adapters';
 
 describe('adapters', () => {
@@ -17,5 +18,16 @@ describe('adapters', () => {
     expect(step.outcome).toBeDefined();
     expect(step.outcome?.type).toBe('event');
     expect(step.messages.length).toBeGreaterThan(0);
+  });
+
+  it('replays automatic steps for the same explicit session seed', () => {
+    const runSeededStep = () =>
+      runDungeonStep('passage', {
+        detailMode: false,
+        level: 1,
+        session: createDungeonRandomSession('deadbeef'),
+      });
+
+    expect(runSeededStep()).toEqual(runSeededStep());
   });
 });

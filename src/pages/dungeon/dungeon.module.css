@@ -347,9 +347,44 @@
   justify-content: flex-end;
 }
 
-.toolbarStatus {
-  font-size: 0.82rem;
-  color: rgba(240, 239, 221, 0.88);
+.debugTools {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+  min-height: 1.5rem;
+}
+
+.debugStatus {
+  font-size: 0.78rem;
+  color: rgba(240, 239, 221, 0.6);
+}
+
+.debugButton {
+  font: inherit;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(240, 239, 221, 0.18);
+  background: transparent;
+  color: rgba(240, 239, 221, 0.48);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.debugButton:hover:not(:disabled),
+.debugButton:focus-visible:not(:disabled) {
+  color: rgba(240, 239, 221, 0.78);
+  border-color: rgba(240, 239, 221, 0.34);
+  background: rgba(240, 239, 221, 0.05);
+}
+
+.debugButton:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
 }
 
 @media (max-width: 640px) {

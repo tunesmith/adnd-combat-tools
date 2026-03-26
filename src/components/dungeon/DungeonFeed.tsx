@@ -22,6 +22,10 @@ import type {
 } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import { selectMessagesForMode } from '../../dungeon/helpers/renderCache';
+import {
+  withDungeonRandomSession,
+  type DungeonRandomSession,
+} from '../../dungeon/helpers/dungeonRandom';
 import type { FeedItem } from './useDungeonPageState';
 import styles from '../../pages/dungeon/dungeon.module.css';
 
@@ -29,6 +33,7 @@ type DungeonFeedProps = {
   action: DungeonAction;
   detailMode: boolean;
   dungeonLevel: number;
+  session: DungeonRandomSession;
   feed: FeedItem[];
   setDetailMode: Dispatch<SetStateAction<boolean>>;
   overrides: Record<string, number | undefined>;
@@ -52,6 +57,7 @@ const DungeonFeed = ({
   action,
   detailMode,
   dungeonLevel,
+  session,
   feed,
   setDetailMode,
   overrides,
@@ -169,7 +175,8 @@ const DungeonFeed = ({
                     pendingTargetIds,
                     item.sequence,
                     recordPreviewResolution,
-                    item
+                    item,
+                    session
                   )
               );
             })()}
@@ -202,7 +209,8 @@ function renderNode(
     roll: number;
     rollSource: DungeonRollSource;
   }) => void,
-  feedItem?: FeedItem
+  feedItem?: FeedItem,
+  session?: DungeonRandomSession
 ): JSX.Element {
   switch (node.kind) {
     case 'heading':
@@ -275,7 +283,8 @@ function renderNode(
               setResolved,
               feedSequence,
               recordPreviewResolution,
-              feedItem
+              feedItem,
+              session
             )
           }
           onAutoRoll={() =>
@@ -290,7 +299,8 @@ function renderNode(
               setResolved,
               feedSequence,
               recordPreviewResolution,
-              feedItem
+              feedItem,
+              session
             )
           }
           isCollapsed={isCollapsed}
@@ -362,13 +372,14 @@ function resolvePreview(
     roll: number;
     rollSource: DungeonRollSource;
   }) => void,
-  feedItem?: FeedItem
+  feedItem?: FeedItem,
+  session?: DungeonRandomSession
 ) {
   const targetKey = preview.targetId ?? preview.id;
   let usedRoll: number | undefined = overrides[targetKey];
   if (!shouldRoll && usedRoll === undefined) return;
   if (shouldRoll && usedRoll === undefined) {
-    usedRoll = rollDice(preview.sides);
+    usedRoll = withDungeonRandomSession(session, () => rollDice(preview.sides));
   }
   if (usedRoll === undefined) return;
   if (overrides[targetKey] !== undefined) {
@@ -381,7 +392,8 @@ function resolvePreview(
     setFeed,
     setCollapsed,
     setResolved,
-    feedItem
+    feedItem,
+    session
   );
   if (resolved && recordPreviewResolution && feedSequence !== undefined) {
     recordPreviewResolution({
