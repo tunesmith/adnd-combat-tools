@@ -4,7 +4,7 @@ import type {
   DungeonAction,
   DungeonRenderNode,
   DungeonRollSource,
-  DungeonTablePreview,
+  TargetedDungeonTablePreview,
 } from '../../types/dungeon';
 
 export type FeedItem = {
@@ -29,7 +29,7 @@ export type PreviewResolutionEntry = {
 };
 
 export type PreviewResolutionRequest = {
-  preview: DungeonTablePreview;
+  preview: TargetedDungeonTablePreview;
   feedItemId: string;
   shouldRoll: boolean;
   feedSequence?: number;

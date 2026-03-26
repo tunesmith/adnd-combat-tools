@@ -1,8 +1,8 @@
 import type React from 'react';
 import type {
   DungeonRenderNode,
-  DungeonTablePreview,
   TableContext,
+  TargetedDungeonTablePreview,
 } from '../../types/dungeon';
 import type {
   DoorChainLaterality,
@@ -119,12 +119,15 @@ export function applyOutcomeRoll(opts: {
 }): OutcomeRollApplication | undefined {
   return withDungeonRandomSession(opts.session, () => {
     const normalizedExisting = normalizeOutcomeTree(opts.outcome);
-    const targetId = resolvePendingTargetId(
-      normalizedExisting,
-      opts.tableId,
-      opts.targetId ?? opts.tableId,
-      opts.context
-    );
+    const targetId =
+      opts.targetId !== undefined
+        ? findExplicitTargetId(normalizedExisting, opts.targetId)
+        : resolvePendingTargetId(
+            normalizedExisting,
+            opts.tableId,
+            opts.context
+          );
+    if (!targetId) return undefined;
     const resolution = resolveRegistryTable({
       tableId: opts.tableId,
       roll: opts.roll,
@@ -151,20 +154,29 @@ export function applyOutcomeRoll(opts: {
   });
 }
 
+function findExplicitTargetId(
+  existing: DungeonOutcomeNode,
+  requestedId: string
+): string | undefined {
+  return hasOutcomeTargetId(existing, requestedId) ? requestedId : undefined;
+}
+
+function hasOutcomeTargetId(
+  node: DungeonOutcomeNode | undefined,
+  targetId: string
+): boolean {
+  if (!node) return false;
+  if (node.id === targetId) return true;
+  if (node.type !== 'event' || !node.children) return false;
+  return node.children.some((child) => hasOutcomeTargetId(child, targetId));
+}
+
 function resolvePendingTargetId(
   existing: DungeonOutcomeNode,
   tableId: string,
-  requestedId: string,
   context?: TableContext
-): string {
+): string | undefined {
   const base = String(tableId.split(':')[0] ?? '');
-  const exactMatch = findPendingWithAncestors(
-    existing,
-    (pending) =>
-      (pending.id !== undefined && pending.id === requestedId) ||
-      (pending.id === undefined && pending.table === requestedId)
-  );
-  if (exactMatch) return requestedId;
   const slotKey = readSlotKeyHint(context);
   if (slotKey) {
     const slotMatch = findPendingWithAncestors(existing, (pending) => {
@@ -179,7 +191,7 @@ function resolvePendingTargetId(
 
   const tableMatch = findPendingWithAncestors(
     existing,
-    (pending) => pending.table === requestedId
+    (pending) => pending.table === tableId
   );
   if (tableMatch) {
     return tableMatch.pending.id ?? tableMatch.pending.table;
@@ -189,17 +201,14 @@ function resolvePendingTargetId(
     const pendingBase = String(pending.table.split(':')[0] ?? '');
     return pendingBase === base;
   });
-  if (!firstByBase) return requestedId;
+  if (!firstByBase) return undefined;
   const firstTarget = firstByBase.pending.id ?? firstByBase.pending.table;
   const secondByBase = findPendingWithAncestors(existing, (pending) => {
     const pendingBase = String(pending.table.split(':')[0] ?? '');
     const target = pending.id ?? pending.table;
     return pendingBase === base && target !== firstTarget;
   });
-  if (!secondByBase) {
-    return firstTarget;
-  }
-  return requestedId;
+  return secondByBase ? undefined : firstTarget;
 }
 
 function readSlotKeyHint(context: unknown): string | undefined {
@@ -278,7 +287,7 @@ function updateResolvedBlock<T extends FeedLike>(
 function buildFeedResolution<T extends FeedLike>(opts: {
   feedItem: T;
   feedItemId: string;
-  preview: DungeonTablePreview;
+  preview: TargetedDungeonTablePreview;
   usedRoll: number | undefined;
   targetKey: string;
   heading: string;
@@ -320,6 +329,7 @@ function buildFeedResolution<T extends FeedLike>(opts: {
         ),
       };
     }
+    return undefined;
   }
 
   const tableResult = withDungeonRandomSession(opts.session, () =>
@@ -375,7 +385,7 @@ function markResolvedKeys(
 }
 
 export function resolveViaRegistry<T extends FeedLike>(
-  tp: DungeonTablePreview,
+  tp: TargetedDungeonTablePreview,
   feedItemId: string,
   usedRoll: number | undefined,
   setFeed?: React.Dispatch<React.SetStateAction<T[]>>,

@@ -159,6 +159,10 @@ export type DungeonTablePreview = {
   autoCollapse?: boolean;
 };
 
+export type TargetedDungeonTablePreview = DungeonTablePreview & {
+  targetId: string;
+};
+
 export type TableContext =
   | { kind: 'exits'; length: number; width: number; isRoom: boolean }
   | { kind: 'doorChain'; existing: DoorChainLaterality[] }

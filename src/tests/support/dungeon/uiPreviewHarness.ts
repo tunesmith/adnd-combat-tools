@@ -10,6 +10,7 @@ import type {
   DungeonAction,
   DungeonRenderNode,
   DungeonTablePreview,
+  TargetedDungeonTablePreview,
 } from '../../../types/dungeon';
 import type {
   OutcomeEventNode,
@@ -69,6 +70,9 @@ export function resolvePreview(
   const preview = findPreview(feed.messages, previewId);
   if (!preview) {
     throw new Error(`Preview ${previewId} not found in feed messages.`);
+  }
+  if (!preview.targetId) {
+    throw new Error(`Preview ${previewId} is missing a targetId.`);
   }
   let nextFeed = feed;
   resolveViaRegistry(
@@ -168,25 +172,27 @@ export function resolvePendingPreview(
 function findPreview(
   nodes: DungeonRenderNode[],
   id: string
-): DungeonTablePreview | undefined {
+): TargetedDungeonTablePreview | undefined {
   for (const node of nodes) {
     if (node.kind !== 'table-preview') continue;
-    if (node.id === id) return node;
-    if (node.targetId && node.targetId === id) return node;
+    if (!node.targetId) continue;
+    if (node.id === id) return node as TargetedDungeonTablePreview;
+    if (node.targetId === id) return node as TargetedDungeonTablePreview;
   }
   return undefined;
 }
 
-function getPendingPreviews(feed: FeedSnapshot): DungeonTablePreview[] {
+function getPendingPreviews(feed: FeedSnapshot): TargetedDungeonTablePreview[] {
   const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
   return renderDetail(feed)
-    .filter((n): n is DungeonTablePreview => n.kind === 'table-preview')
+    .filter(
+      (n): n is TargetedDungeonTablePreview =>
+        n.kind === 'table-preview' &&
+        typeof n.targetId === 'string' &&
+        n.targetId.length > 0
+    )
     .filter((preview) => {
-      const key =
-        preview.targetId && preview.targetId.length > 0
-          ? preview.targetId
-          : preview.id;
-      return pendingTargets.has(key);
+      return pendingTargets.has(preview.targetId);
     });
 }
 

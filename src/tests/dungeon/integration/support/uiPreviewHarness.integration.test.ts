@@ -1,6 +1,7 @@
 import type {
   DungeonRenderNode,
   DungeonTablePreview,
+  TargetedDungeonTablePreview,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
 import {
@@ -71,8 +72,10 @@ describe('uiPreviewHarness', () => {
 
     // Locate the door continuation preview after resolving door location.
     const preview = renderDetail(feed).find(
-      (node): node is DungeonTablePreview =>
+      (node): node is TargetedDungeonTablePreview =>
         node.kind === 'table-preview' &&
+        typeof node.targetId === 'string' &&
+        node.targetId.length > 0 &&
         node.id.startsWith('periodicCheckDoorOnly')
     );
     expect(preview).toBeDefined();
@@ -162,6 +165,106 @@ describe('uiPreviewHarness', () => {
     );
     expect(withCurrentFeedItem.collapsed[keyBase]).toBe(true);
     expect(withCurrentFeedItem.resolvedMap[keyBase]).toBe(true);
+  });
+
+  test('detail feed previews always carry target ids', () => {
+    const feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 12,
+      detailMode: true,
+    });
+
+    const previews = renderDetail(feed).filter(
+      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+    );
+
+    expect(previews.length).toBeGreaterThan(0);
+    expect(
+      previews.every(
+        (preview) =>
+          typeof preview.targetId === 'string' && preview.targetId.length > 0
+      )
+    ).toBe(true);
+  });
+
+  test('resolveViaRegistry rejects mismatched explicit preview targets', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 3,
+      detailMode: true,
+    });
+
+    feed = resolvePendingPreview(feed, 'doorLocation', 1);
+
+    const preview = renderDetail(feed).find(
+      (node): node is TargetedDungeonTablePreview =>
+        node.kind === 'table-preview' &&
+        typeof node.targetId === 'string' &&
+        node.targetId.length > 0 &&
+        node.id.startsWith('periodicCheckDoorOnly')
+    );
+    expect(preview).toBeDefined();
+
+    if (!preview?.targetId) {
+      throw new Error('Expected targeted periodicCheckDoorOnly preview');
+    }
+
+    type FeedState = {
+      id: string;
+      messages: DungeonRenderNode[];
+      outcome?: OutcomeEventNode;
+      renderCache?: {
+        detail?: DungeonRenderNode[];
+        compact?: DungeonRenderNode[];
+      };
+      pendingCount?: number;
+    };
+
+    const initialFeedState: FeedState = {
+      id: feed.id,
+      messages: feed.messages,
+      outcome: feed.outcome,
+      renderCache: feed.renderCache,
+      pendingCount: feed.pendingCount,
+    };
+
+    let state: FeedState[] = [initialFeedState];
+    let collapsed: Record<string, boolean> = {};
+    let resolvedMap: Record<string, boolean> = {};
+
+    const result = resolveViaRegistry(
+      { ...preview, targetId: `${preview.targetId}.missing` },
+      feed.id,
+      3,
+      (updater) => {
+        state = applyUpdater(
+          state,
+          updater as FeedState[] | ((prev: FeedState[]) => FeedState[])
+        );
+      },
+      (updater) => {
+        collapsed = applyUpdater(
+          collapsed,
+          updater as
+            | Record<string, boolean>
+            | ((prev: Record<string, boolean>) => Record<string, boolean>)
+        );
+      },
+      (updater) => {
+        resolvedMap = applyUpdater(
+          resolvedMap,
+          updater as
+            | Record<string, boolean>
+            | ((prev: Record<string, boolean>) => Record<string, boolean>)
+        );
+      },
+      initialFeedState
+    );
+
+    expect(result).toBe(false);
+    expect(state).toEqual([initialFeedState]);
+    expect(collapsed).toEqual({});
+    expect(resolvedMap).toEqual({});
   });
 
   test('captures chamber unusual size reroll behaviour (current UI)', () => {

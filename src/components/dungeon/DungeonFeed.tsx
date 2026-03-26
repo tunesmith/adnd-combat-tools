@@ -14,6 +14,7 @@ import type {
   DungeonRenderNode,
   DungeonRollTrace,
   RollTraceItem,
+  TargetedDungeonTablePreview,
 } from '../../types/dungeon';
 import { selectMessagesForMode } from '../../dungeon/helpers/renderCache';
 import styles from '../../pages/dungeon/dungeon.module.css';
@@ -189,6 +190,8 @@ function renderNode(
         <RobeOfUsefulItemsDetail key={key} summary={node.summary} />
       );
     case 'table-preview': {
+      const targetedPreview: TargetedDungeonTablePreview | undefined =
+        node.targetId ? (node as TargetedDungeonTablePreview) : undefined;
       const targetKey = node.targetId ?? node.id;
       const keyId = `${feedItemId}:${targetKey}`;
       const isPending = pendingTargetIds?.has(targetKey) ?? false;
@@ -210,24 +213,26 @@ function renderNode(
               ? (value) => previewController.onOverrideChange(targetKey, value)
               : undefined
           }
-          onUseOverride={() =>
+          onUseOverride={() => {
+            if (!targetedPreview) return;
             previewController?.onResolvePreview({
-              preview: node,
+              preview: targetedPreview,
               feedItemId,
               shouldRoll: false,
               feedSequence,
               feedItem,
-            })
-          }
-          onAutoRoll={() =>
+            });
+          }}
+          onAutoRoll={() => {
+            if (!targetedPreview) return;
             previewController?.onResolvePreview({
-              preview: node,
+              preview: targetedPreview,
               feedItemId,
               shouldRoll: true,
               feedSequence,
               feedItem,
-            })
-          }
+            });
+          }}
           isCollapsed={isCollapsed}
           hasResolved={hasResolved}
           onToggleCollapse={

@@ -12,7 +12,7 @@ import type {
   DungeonAction,
   DungeonRenderNode,
   DungeonRollSource,
-  DungeonTablePreview,
+  TargetedDungeonTablePreview,
 } from '../../types/dungeon';
 import type { FeedItem, PreviewResolutionEntry } from './feedTypes';
 
@@ -50,7 +50,7 @@ export function collectPendingTargetIds(
 }
 
 export function resolveDungeonFeedPreview(options: {
-  preview: DungeonTablePreview;
+  preview: TargetedDungeonTablePreview;
   feedItemId: string;
   shouldRoll: boolean;
   feedSequence?: number;
@@ -65,7 +65,7 @@ export function resolveDungeonFeedPreview(options: {
   setResolved: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   onResolved?: (entry: PreviewResolutionEntry) => void;
 }): boolean {
-  const targetKey = options.preview.targetId ?? options.preview.id;
+  const targetKey = options.preview.targetId;
   let usedRoll: number | undefined = options.overrides[targetKey];
   if (!options.shouldRoll && usedRoll === undefined) return false;
   if (options.shouldRoll && usedRoll === undefined) {
