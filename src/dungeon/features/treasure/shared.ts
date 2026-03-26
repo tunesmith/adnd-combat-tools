@@ -141,13 +141,13 @@ export function createTreasureProtectionEventPreviewBuilder(
 }
 
 function readTreasureMagicRegistryContext(
-  context?: unknown
+  context?: TableContext
 ): TreasureMagicContext {
   return readTreasureMagicContextFromContext(context) ?? {};
 }
 
 function readTreasureMagicContext(
-  context: unknown,
+  context: TableContext | undefined,
   ancestors: OutcomeEventNode[]
 ): TreasureMagicContext {
   const direct = readTreasureMagicContextFromContext(context);
@@ -210,7 +210,7 @@ function readTreasureMagicContextFromAncestors(
 }
 
 function readTreasureMagicContextFromContext(
-  context: unknown
+  context: TableContext | undefined
 ): TreasureMagicContext | undefined {
   const parsed = readTableContextOfKind(context, 'treasureMagic');
   if (!parsed) return undefined;

@@ -16,7 +16,6 @@ import { normalizeOutcomeTree } from '../../../dungeon/helpers/outcomeTree';
 import {
   cloneTableContext,
   freezeTableContext,
-  readTableContext,
 } from '../../../dungeon/helpers/tableContext';
 import {
   buildRenderCache,
@@ -51,7 +50,7 @@ export enum DirectiveMode {
 type PendingDescriptor = {
   id: string;
   table: string;
-  context?: unknown;
+  context?: TableContext;
 };
 
 type SnapshotEntry = Readonly<DungeonRenderNode>;
@@ -165,7 +164,7 @@ export function simulateDetailRun(options: {
       tableId: pending.table,
       targetId,
       roll: directive.roll,
-      context: resolveContext(pending.context),
+      context: pending.context,
     });
     if (!applied) {
       throw new Error(`No outcome available for table ${pending.table}.`);
@@ -324,7 +323,7 @@ export function simulateCompactRunWithSequence(options: {
       tableId: pending.table,
       targetId,
       roll: directive.roll,
-      context: resolveContext(pending.context),
+      context: pending.context,
     });
     if (!applied) {
       throw new Error(`No outcome available for table ${pending.table}.`);
@@ -545,10 +544,6 @@ function selectPendingFromDirective(
     if (tableMatch) return tableMatch;
   }
   return pendingList[0];
-}
-
-function resolveContext(context: unknown): TableContext | undefined {
-  return readTableContext(context);
 }
 
 function createSnapshot(nodes: DungeonRenderNode[]): RenderSnapshot {

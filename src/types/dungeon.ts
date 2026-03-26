@@ -189,6 +189,7 @@ type ExitIndexContext<Kind extends 'exit' | 'exitDirection'> = {
   index: number;
   total: number;
   origin: ExitOrigin;
+  id?: string;
 };
 
 type TreasureRollContext<Kind extends string> = LevelContext<Kind> &

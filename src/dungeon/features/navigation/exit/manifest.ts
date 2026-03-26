@@ -269,7 +269,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
 ];
 
 function readExitsContext(
-  context: unknown
+  context: TableContext | undefined
 ): NumberOfExitsResolverOptions | undefined {
   const exitsContext = readTableContextOfKind(context, 'exits');
   if (!exitsContext) return undefined;
@@ -280,7 +280,9 @@ function readExitsContext(
   };
 }
 
-function readExitContext(context: unknown): ExitLocationContext | undefined {
+function readExitContext(
+  context: TableContext | undefined
+): ExitLocationContext | undefined {
   const exitContext = readTableContextOfKind(context, 'exit');
   if (!exitContext) return undefined;
   return {
@@ -291,7 +293,7 @@ function readExitContext(context: unknown): ExitLocationContext | undefined {
 }
 
 function readExitDirectionContext(
-  context: unknown
+  context: TableContext | undefined
 ): ExitDirectionContext | undefined {
   const exitDirectionContext = readTableContextOfKind(context, 'exitDirection');
   if (!exitDirectionContext) return undefined;
@@ -303,7 +305,7 @@ function readExitDirectionContext(
 }
 
 function readExitAlternativeContext(
-  context: unknown
+  context: TableContext | undefined
 ): ExitAlternativeContext | undefined {
   const exitAlternativeContext = readTableContextOfKind(
     context,
@@ -316,7 +318,7 @@ function readExitAlternativeContext(
 }
 
 function buildNumberOfExitsResolverOptions(
-  context: unknown,
+  context: TableContext | undefined,
   roll?: number
 ): NumberOfExitsResolverOptions {
   const exitsContext = readExitsContext(context);

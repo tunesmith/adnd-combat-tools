@@ -17,6 +17,7 @@ type TableContextCandidate = {
   index?: unknown;
   total?: unknown;
   origin?: unknown;
+  id?: unknown;
   forcedContents?: unknown;
   withMonster?: unknown;
   rollIndex?: unknown;
@@ -107,11 +108,13 @@ const TABLE_CONTEXT_VALIDATORS: {
     isExitType(context.exitType) &&
     typeof context.index === 'number' &&
     typeof context.total === 'number' &&
-    isOrigin(context.origin),
+    isOrigin(context.origin) &&
+    isOptionalString(context.id),
   exitDirection: (context): context is TableContextOf<'exitDirection'> =>
     typeof context.index === 'number' &&
     typeof context.total === 'number' &&
-    isOrigin(context.origin),
+    isOrigin(context.origin) &&
+    isOptionalString(context.id),
   exitAlternative: (context): context is TableContextOf<'exitAlternative'> =>
     isExitType(context.exitType),
   chamberDimensions: (
@@ -188,7 +191,7 @@ const TABLE_CONTEXT_VALIDATORS: {
     isOptionalBoolean(context.alignmentReady),
 };
 
-export function isTableContext(context: unknown): context is TableContext {
+function isTableContext(context: unknown): context is TableContext {
   if (!context || typeof context !== 'object') return false;
   const kind = (context as TableContextCandidate).kind;
   if (typeof kind !== 'string') return false;

@@ -11,7 +11,9 @@ type EnvironmentDungeonLevelResolverOptions = {
   level?: number;
 };
 
-function readEnvironmentDungeonLevel(context: unknown): number | undefined {
+function readEnvironmentDungeonLevel(
+  context: TableContext | undefined
+): number | undefined {
   const parsed = readTableContext(context);
   if (!parsed) return undefined;
 
@@ -28,7 +30,7 @@ function readEnvironmentDungeonLevel(context: unknown): number | undefined {
 }
 
 function readEnvironmentDungeonLevelFromId(
-  context: unknown,
+  context: TableContext | undefined,
   id: string,
   fallback: number
 ): number {

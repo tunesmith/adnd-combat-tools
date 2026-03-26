@@ -181,6 +181,7 @@ import type {
 import type { TreasureSwordAlignmentResult } from '../features/treasure/swords/swordsAlignmentTable';
 import type { TreasureMiscWeapon } from '../features/treasure/miscWeapons/miscWeaponsTable';
 import type { TreasureArmorShield } from '../features/treasure/armorShields/armorShieldsTable';
+import type { TableContext } from '../../types/dungeon';
 
 export type DoorChainLaterality = 'Left' | 'Right';
 
@@ -680,7 +681,7 @@ export type PendingRoll = {
   table: string;
   id?: string;
   // optional context used by the UI to thread chains like door locations
-  context?: unknown;
+  context?: TableContext;
 };
 
 export type OutcomeEventNode = {

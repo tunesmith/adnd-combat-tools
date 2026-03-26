@@ -1,4 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
+import type { TableContext } from '../../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
@@ -30,7 +31,7 @@ import {
 
 const resolvePendingNavigationEntry = (
   pending: string,
-  context: unknown,
+  context: TableContext | undefined,
   ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined => {
   const base = pending.split(':')[0] ?? pending;
@@ -50,7 +51,7 @@ const resolvePendingNavigationEntry = (
 };
 
 function readWanderingLevel(
-  context: unknown,
+  context: TableContext | undefined,
   ancestors: OutcomeEventNode[]
 ): number {
   const wanderingContext = readTableContextOfKind(context, 'wandering');

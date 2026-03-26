@@ -3,7 +3,7 @@ import type {
   PendingResolver,
   RegistryOutcomeBuilder,
 } from '../types';
-import type { DungeonTablePreview } from '../../../types/dungeon';
+import type { DungeonTablePreview, TableContext } from '../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
@@ -129,7 +129,7 @@ function createMonsterEventPreviewBuilder(
 
 function readDungeonLevelFromPending(
   pendingId: string,
-  context: unknown,
+  context: TableContext | undefined,
   ancestors: OutcomeEventNode[],
   fallback: number
 ): number {
@@ -157,7 +157,7 @@ function readDungeonLevelFromPending(
 }
 
 function readDungeonLevelFromContextOrId(
-  context: unknown,
+  context: TableContext | undefined,
   id: string,
   fallback?: number
 ): number | undefined {

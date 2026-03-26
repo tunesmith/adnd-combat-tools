@@ -1,8 +1,9 @@
+import type { TableContext } from '../../../types/dungeon';
 import type { OutcomeEventNode } from '../../domain/outcome';
 import { readTableContextOfKind } from '../../helpers/tableContext';
 
 export function readHazardDungeonLevel(
-  context: unknown,
+  context: TableContext | undefined,
   ancestors: OutcomeEventNode[]
 ): number {
   const wanderingContext = readTableContextOfKind(context, 'wandering');

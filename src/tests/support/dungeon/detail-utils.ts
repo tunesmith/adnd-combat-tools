@@ -9,7 +9,6 @@ import {
   normalizeOutcomeTree,
 } from '../../../dungeon/helpers/outcomeTree';
 import { applyOutcomeRoll } from '../../../dungeon/helpers/registry';
-import { readTableContext } from '../../../dungeon/helpers/tableContext';
 import { resolvePeriodicCheck } from '../../../dungeon/features/navigation/entry/entryResolvers';
 
 export function resolveSequenceWithRolls(
@@ -30,7 +29,7 @@ export function resolveSequenceWithRolls(
       tableId: pending.table,
       targetId: pending.id,
       roll,
-      context: readTableContext(pending.context),
+      context: pending.context,
     });
     if (!applied) {
       throw new Error(`No outcome available for table ${pending.table}`);

@@ -19,7 +19,6 @@ import {
   findPendingWithAncestors,
   normalizeOutcomeTree,
 } from './outcomeTree';
-import { isTableContext } from './tableContext';
 import {
   createOutcomeRenderSnapshot,
   type OutcomeRenderSnapshot,
@@ -215,19 +214,17 @@ function resolvePendingTargetId(
   return secondByBase ? undefined : firstTarget;
 }
 
-function readSlotKeyHint(context: unknown): string | undefined {
-  if (!isTableContext(context)) return undefined;
-  const candidate = context as { slotKey?: unknown; parentSlotKey?: unknown };
-  if (typeof candidate.slotKey === 'string' && candidate.slotKey.length > 0) {
-    return candidate.slotKey;
+function readSlotKeyHint(context?: TableContext): string | undefined {
+  switch (context?.kind) {
+    case 'treasureSwordPrimaryAbility':
+    case 'treasureSwordExtraordinaryPower':
+    case 'treasureSwordSpecialPurpose':
+    case 'treasureSwordSpecialPurposePower':
+    case 'treasureSwordDragonSlayerColor':
+      return context.slotKey;
+    default:
+      return undefined;
   }
-  if (
-    typeof candidate.parentSlotKey === 'string' &&
-    candidate.parentSlotKey.length > 0
-  ) {
-    return candidate.parentSlotKey;
-  }
-  return undefined;
 }
 
 type FeedLike = {
