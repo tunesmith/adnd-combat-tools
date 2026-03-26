@@ -2,7 +2,7 @@ import {
   allowedAlignmentsByClass,
   Alignment,
 } from '../../models/allowedAlignmentsByClass';
-import type { CharacterClass } from '../../models/characterClass';
+import { CharacterClass } from '../../models/characterClass';
 import { nextDungeonRandomInt } from '../dungeonRandom';
 
 const intersection = (arrays: Alignment[][]): Alignment[] => {
@@ -20,11 +20,25 @@ const pickRandom = (options: Alignment[]): Alignment => {
   return options[index] ?? Alignment.TrueNeutral;
 };
 
+const pickMonkAlignment = (): Alignment => {
+  const roll = nextDungeonRandomInt(100);
+  if (roll <= 50) {
+    return Alignment.LawfulGood;
+  }
+  if (roll <= 85) {
+    return Alignment.LawfulNeutral;
+  }
+  return Alignment.LawfulEvil;
+};
+
 export const getAlignmentForClasses = (
   classes: CharacterClass[]
 ): Alignment => {
   if (classes.length === 0) {
     return Alignment.TrueNeutral;
+  }
+  if (classes.length === 1 && classes[0] === CharacterClass.Monk) {
+    return pickMonkAlignment();
   }
   const allowedSets = classes
     .map((cls) => allowedAlignmentsByClass[cls]?.self ?? [])

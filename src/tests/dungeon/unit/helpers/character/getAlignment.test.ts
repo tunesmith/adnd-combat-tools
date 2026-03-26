@@ -18,4 +18,24 @@ describe('getAlignmentForClasses', () => {
     );
     expect(randomSpy).toHaveBeenCalledWith(3);
   });
+
+  it('uses weighted alignment chances for monks', () => {
+    const randomSpy = jest
+      .spyOn(dungeonRandom, 'nextDungeonRandomInt')
+      .mockReturnValueOnce(50)
+      .mockReturnValueOnce(85)
+      .mockReturnValueOnce(86);
+
+    expect(getAlignmentForClasses([CharacterClass.Monk])).toBe(
+      Alignment.LawfulGood
+    );
+    expect(getAlignmentForClasses([CharacterClass.Monk])).toBe(
+      Alignment.LawfulNeutral
+    );
+    expect(getAlignmentForClasses([CharacterClass.Monk])).toBe(
+      Alignment.LawfulEvil
+    );
+
+    expect(randomSpy).toHaveBeenCalledWith(100);
+  });
 });

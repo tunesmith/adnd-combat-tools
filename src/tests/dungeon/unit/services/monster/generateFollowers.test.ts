@@ -103,13 +103,54 @@ describe('generateFollowers men-at-arms', () => {
     });
   });
 
-  it('lets low-level assassins recruit men-at-arms despite henchmen limits', () => {
+  it('does not assign men-at-arms to assassins below level 4', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const assassin = buildAssassinMember();
+
+    generateFollowers([assassin], 3, 0);
+
+    expect(assassin.followers).toHaveLength(0);
+  });
+
+  it('assigns men-at-arms to assassins starting at level 4', () => {
+    const assassin = buildCharacter(
+      CharacterClass.Assassin,
+      Alignment.ChaoticEvil,
+      4
+    );
 
     generateFollowers([assassin], 3, 0);
 
     expect(assassin.followers).toHaveLength(3);
     assassin.followers.forEach((follower) => {
+      expect(follower.isManAtArms).toBe(true);
+    });
+  });
+
+  it('does not assign men-at-arms to rangers below level 8', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const ranger = buildCharacter(
+      CharacterClass.Ranger,
+      Alignment.NeutralGood,
+      7
+    );
+
+    generateFollowers([ranger], 2, 0);
+
+    expect(ranger.followers).toHaveLength(0);
+  });
+
+  it('assigns men-at-arms to rangers starting at level 8', () => {
+    const ranger = buildCharacter(
+      CharacterClass.Ranger,
+      Alignment.NeutralGood,
+      8
+    );
+
+    generateFollowers([ranger], 2, 0);
+
+    expect(ranger.followers).toHaveLength(2);
+    ranger.followers.forEach((follower) => {
       expect(follower.isManAtArms).toBe(true);
     });
   });

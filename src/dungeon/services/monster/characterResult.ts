@@ -209,6 +209,18 @@ export const generateFollowers = (
   while (remainingFollowers > 0) {
     let generatedFollowersThisPass = 0;
     for (const member of mainParty) {
+      if (
+        isMenAtArms &&
+        member.professions.some(
+          (profession) =>
+            (profession.characterClass === CharacterClass.Ranger &&
+              profession.level < 8) ||
+            (profession.characterClass === CharacterClass.Assassin &&
+              profession.level < 4)
+        )
+      ) {
+        continue;
+      }
       if (!isMenAtArms) {
         // Henchmen limits (class restrictions and CHA caps) do not apply to men-at-arms.
         const maxFollowersForMember = getMaxHenchmenForMember(
