@@ -1,95 +1,74 @@
 import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
 import { MonsterTwo } from './monsterTwoTable';
 import { characterResult } from '../../../services/monster/characterResult';
-import type { PartyResult } from '../../../models/character/characterSheet';
+import {
+  countTextEntry,
+  partyTextResult,
+  resolveMonsterTextFromEntries,
+  type MonsterTextEntry,
+  type MonsterTextResult,
+} from '../resultHelpers';
 
-type MonsterTextResult = {
-  text: string;
-  party?: PartyResult;
+const monsterTwoEntries: Partial<Record<MonsterTwo, MonsterTextEntry>> = {
+  [MonsterTwo.CentipedeGiant_3to13]: countTextEntry(
+    2,
+    6,
+    'giant centipede',
+    'giant centipedes',
+    1
+  ),
+  [MonsterTwo.DevilLemure_2to5]: countTextEntry(
+    1,
+    4,
+    'lemure devil',
+    'lemure devils',
+    1
+  ),
+  [MonsterTwo.GasSpore_1to2]: countTextEntry(1, 2, 'gas spore', 'gas spores'),
+  [MonsterTwo.Gnoll_4to10]: countTextEntry(2, 4, 'gnoll', 'gnolls', 2),
+  [MonsterTwo.Piercer_1to4]: countTextEntry(1, 4, 'piercer', 'piercers'),
+  [MonsterTwo.RatGiant_6to24]: countTextEntry(6, 4, 'giant rat', 'giant rats'),
+  [MonsterTwo.RotGrub_1to4]: countTextEntry(1, 4, 'rot grubs', 'rot grubs'),
+  [MonsterTwo.Shrieker_1to3]: countTextEntry(1, 3, 'shrieker', 'shriekers'),
+  [MonsterTwo.Stirge_5to15]: countTextEntry(2, 6, 'stirge', 'stirges', 3),
+  [MonsterTwo.ToadGiant_1to4]: countTextEntry(
+    1,
+    4,
+    'giant toad',
+    'giant toads'
+  ),
+  [MonsterTwo.Troglodyte_2to8]: countTextEntry(
+    2,
+    4,
+    'troglodyte',
+    'troglodytes'
+  ),
 };
 
 export const monsterTwoTextForCommand = (
   dungeonLevel: number,
   command: MonsterTwo
 ): MonsterTextResult => {
-  let text = '';
-  let party: PartyResult | undefined;
   switch (command) {
     case MonsterTwo.Badger_1to4_Gnoll_4to10: {
       if (dungeonLevel <= 3) {
         const badgers = getNumberOfMonsters(2, dungeonLevel, 1, 4);
-        text = formatMonsterCount(badgers, 'badger', 'badgers');
+        return { text: formatMonsterCount(badgers, 'badger', 'badgers') };
       } else {
         const gnolls = getNumberOfMonsters(2, dungeonLevel, 2, 4, 2);
-        text = formatMonsterCount(gnolls, 'gnoll', 'gnolls');
+        return { text: formatMonsterCount(gnolls, 'gnoll', 'gnolls') };
       }
-      break;
     }
-    case MonsterTwo.CentipedeGiant_3to13: {
-      const centipedes = getNumberOfMonsters(2, dungeonLevel, 2, 6, 1);
-      text = formatMonsterCount(
-        centipedes,
-        'giant centipede',
-        'giant centipedes'
-      );
-      break;
-    }
-    case MonsterTwo.Character: {
-      const characters = characterResult(2, dungeonLevel);
-      text = '';
-      party = characters;
-      break;
-    }
-    case MonsterTwo.DevilLemure_2to5: {
-      const devils = getNumberOfMonsters(2, dungeonLevel, 1, 4, 1);
-      text = formatMonsterCount(devils, 'lemure devil', 'lemure devils');
-      break;
-    }
-    case MonsterTwo.GasSpore_1to2: {
-      const gasSpores = getNumberOfMonsters(2, dungeonLevel, 1, 2);
-      text = formatMonsterCount(gasSpores, 'gas spore', 'gas spores');
-      break;
-    }
-    case MonsterTwo.Gnoll_4to10: {
-      const gnolls = getNumberOfMonsters(2, dungeonLevel, 2, 4, 2);
-      text = formatMonsterCount(gnolls, 'gnoll', 'gnolls');
-      break;
-    }
-    case MonsterTwo.Piercer_1to4: {
-      const piercers = getNumberOfMonsters(2, dungeonLevel, 1, 4);
-      text = formatMonsterCount(piercers, 'piercer', 'piercers');
-      break;
-    }
-    case MonsterTwo.RatGiant_6to24: {
-      const giantRats = getNumberOfMonsters(2, dungeonLevel, 6, 4);
-      text = formatMonsterCount(giantRats, 'giant rat', 'giant rats');
-      break;
-    }
-    case MonsterTwo.RotGrub_1to4: {
-      const rotGrubs = getNumberOfMonsters(2, dungeonLevel, 1, 4);
-      text = formatMonsterCount(rotGrubs, 'rot grubs', 'rot grubs');
-      break;
-    }
-    case MonsterTwo.Shrieker_1to3: {
-      const shriekers = getNumberOfMonsters(2, dungeonLevel, 1, 3);
-      text = formatMonsterCount(shriekers, 'shrieker', 'shriekers');
-      break;
-    }
-    case MonsterTwo.Stirge_5to15: {
-      const stirges = getNumberOfMonsters(2, dungeonLevel, 2, 6, 3);
-      text = formatMonsterCount(stirges, 'stirge', 'stirges');
-      break;
-    }
-    case MonsterTwo.ToadGiant_1to4: {
-      const toads = getNumberOfMonsters(2, dungeonLevel, 1, 4);
-      text = formatMonsterCount(toads, 'giant toad', 'giant toads');
-      break;
-    }
-    case MonsterTwo.Troglodyte_2to8: {
-      const troglodytes = getNumberOfMonsters(2, dungeonLevel, 2, 4);
-      text = formatMonsterCount(troglodytes, 'troglodyte', 'troglodytes');
-      break;
-    }
+    case MonsterTwo.Character:
+      return partyTextResult(characterResult(2, dungeonLevel));
+    default:
+      return {
+        text: resolveMonsterTextFromEntries(
+          2,
+          dungeonLevel,
+          command,
+          monsterTwoEntries
+        ),
+      };
   }
-  return { text, party };
 };

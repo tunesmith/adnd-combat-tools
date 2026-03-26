@@ -1,238 +1,222 @@
-import { formatMonsterCount, getNumberOfMonsters } from '../monsterCounts';
+import { formatMonsterCount } from '../monsterCounts';
 import { characterResult } from '../../../services/monster/characterResult';
 import { MonsterEight, DragonEight } from './monsterEightTables';
-import type { PartyResult } from '../../../models/character/characterSheet';
 import { dragonSubtableReminder } from '../dragonSubtableReminder';
+import {
+  computedCountTextEntry,
+  countTextEntry,
+  partyTextResult,
+  resolveMonsterTextFromEntries,
+  type MonsterTextEntry,
+  type MonsterTextResult,
+} from '../resultHelpers';
 
-type MonsterTextResult = {
-  text: string;
-  party?: PartyResult;
+const monsterEightEntries: Partial<Record<MonsterEight, MonsterTextEntry>> = {
+  [MonsterEight.AerialServant]: countTextEntry(
+    1,
+    1,
+    'aerial servant',
+    'aerial servants'
+  ),
+  [MonsterEight.DemonTypeIV]: countTextEntry(
+    1,
+    1,
+    'type IV demon',
+    'type IV demons'
+  ),
+  [MonsterEight.DemonTypeV]: countTextEntry(
+    1,
+    1,
+    'type V demon',
+    'type V demons'
+  ),
+  [MonsterEight.DemonTypeVI]: countTextEntry(
+    1,
+    1,
+    'type VI demon',
+    'type VI demons'
+  ),
+  [MonsterEight.DevilIce]: countTextEntry(1, 1, 'ice devil', 'ice devils'),
+  [MonsterEight.Ghost]: countTextEntry(1, 1, 'ghost', 'ghosts'),
+  [MonsterEight.GiantCloud_1to2]: countTextEntry(
+    1,
+    2,
+    'cloud giant',
+    'cloud giants'
+  ),
+  [MonsterEight.GolemClay]: countTextEntry(1, 1, 'clay golem', 'clay golems'),
+  [MonsterEight.Hydra_13to16Heads]: computedCountTextEntry(
+    1,
+    4,
+    (heads) =>
+      formatMonsterCount(1, `${heads}-headed hydra`, `${heads}-headed hydrae`),
+    12
+  ),
+  [MonsterEight.HydraPyro_12Heads]: computedCountTextEntry(
+    1,
+    1,
+    (heads) =>
+      formatMonsterCount(
+        1,
+        `${heads}-headed pyrohydra`,
+        `${heads}-headed pyrohydrae`
+      ),
+    11
+  ),
+  [MonsterEight.IntellectDevourer_1to2]: countTextEntry(
+    1,
+    2,
+    'intellect devourer',
+    'intellect devourers'
+  ),
+  [MonsterEight.LurkerAbove]: countTextEntry(
+    1,
+    1,
+    'lurker above',
+    'lurkers above'
+  ),
+  [MonsterEight.MoldBrown]: countTextEntry(
+    1,
+    1,
+    'patch of brown mold',
+    'patches of brown mold'
+  ),
+  [MonsterEight.MoldYellow]: countTextEntry(
+    1,
+    1,
+    'patch of yellow mold',
+    'patches of yellow mold'
+  ),
+  [MonsterEight.MindFlayer_1to4]: countTextEntry(
+    1,
+    4,
+    'mind flayer',
+    'mind flayers'
+  ),
+  [MonsterEight.NagaGuardian_1to2]: countTextEntry(
+    1,
+    2,
+    'guardian naga',
+    'guardian nagas'
+  ),
+  [MonsterEight.NeoOtyugh]: countTextEntry(1, 1, 'neo-otyugh', 'neo-otyugh'),
+  [MonsterEight.PurpleWorm]: countTextEntry(
+    1,
+    1,
+    'purple worm',
+    'purple worms'
+  ),
+  [MonsterEight.RustMonster]: countTextEntry(
+    1,
+    1,
+    'rust monster',
+    'rust monsters'
+  ),
+  [MonsterEight.SlugGiant]: countTextEntry(1, 1, 'giant slug', 'giant slugs'),
+  [MonsterEight.Trapper]: countTextEntry(1, 1, 'trapper', 'trappers'),
+  [MonsterEight.Vampire]: countTextEntry(1, 1, 'vampire', 'vampires'),
+  [MonsterEight.WillOWisp_2to5]: countTextEntry(
+    1,
+    4,
+    "will-o'-wisp",
+    "will-o'-wisps",
+    1
+  ),
+  [MonsterEight.Xorn_2to5]: countTextEntry(1, 4, 'xorn', 'xorn', 1),
+};
+
+const dragonEightEntries: Record<DragonEight, MonsterTextEntry> = {
+  [DragonEight.Black_Ancient_8]: countTextEntry(
+    1,
+    1,
+    'ancient black dragon',
+    'ancient black dragons'
+  ),
+  [DragonEight.Blue_VeryOld_7]: countTextEntry(
+    1,
+    1,
+    'very old blue dragon',
+    'very old blue dragons'
+  ),
+  [DragonEight.Brass_Ancient_8]: countTextEntry(
+    1,
+    1,
+    'ancient brass dragon',
+    'ancient brass dragons'
+  ),
+  [DragonEight.Bronze_VeryOld_7]: countTextEntry(
+    1,
+    1,
+    'very old bronze dragon',
+    'very old bronze dragons'
+  ),
+  [DragonEight.Copper_VeryOld_7]: countTextEntry(
+    1,
+    1,
+    'very old copper dragon',
+    'very old copper dragons'
+  ),
+  [DragonEight.Gold_VeryOld_7]: countTextEntry(
+    1,
+    1,
+    'very old gold dragon',
+    'very old gold dragons'
+  ),
+  [DragonEight.Green_VeryOld_7]: countTextEntry(
+    1,
+    1,
+    'very old green dragon',
+    'very old green dragons'
+  ),
+  [DragonEight.Red_VeryOld_7]: countTextEntry(
+    1,
+    1,
+    'very old red dragon',
+    'very old red dragons'
+  ),
+  [DragonEight.Silver_VeryOld_7]: countTextEntry(
+    1,
+    1,
+    'very old silver dragon',
+    'very old silver dragons'
+  ),
+  [DragonEight.White_Ancient_8]: countTextEntry(
+    1,
+    1,
+    'ancient white dragon',
+    'ancient white dragons'
+  ),
 };
 
 export const monsterEightTextForCommand = (
   dungeonLevel: number,
   command: MonsterEight
 ): MonsterTextResult => {
-  let text = '';
-  let party: PartyResult | undefined;
   switch (command) {
-    case MonsterEight.AerialServant:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'aerial servant',
-        'aerial servants'
-      );
-      break;
-    case MonsterEight.Character: {
-      const characters = characterResult(8, dungeonLevel);
-      text = '';
-      party = characters;
-      break;
-    }
-    case MonsterEight.DemonTypeIV:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'type IV demon',
-        'type IV demons'
-      );
-      break;
-    case MonsterEight.DemonTypeV:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'type V demon',
-        'type V demons'
-      );
-      break;
-    case MonsterEight.DemonTypeVI:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'type VI demon',
-        'type VI demons'
-      );
-      break;
-    case MonsterEight.DevilIce:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'ice devil',
-        'ice devils'
-      );
-      break;
+    case MonsterEight.Character:
+      return partyTextResult(characterResult(8, dungeonLevel));
     case MonsterEight.Dragon:
-      text = dragonSubtableReminder('A dragon is indicated');
-      break;
-    case MonsterEight.Ghost:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'ghost',
-        'ghosts'
-      );
-      break;
-    case MonsterEight.GiantCloud_1to2:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 2),
-        'cloud giant',
-        'cloud giants'
-      );
-      break;
-    case MonsterEight.GolemClay:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'clay golem',
-        'clay golems'
-      );
-      break;
-    case MonsterEight.Hydra_13to16Heads: {
-      const heads = getNumberOfMonsters(8, dungeonLevel, 1, 4, 12);
-      text = formatMonsterCount(
-        1,
-        `${heads}-headed hydra`,
-        `${heads}-headed hydrae`
-      );
-      break;
-    }
-    case MonsterEight.HydraPyro_12Heads: {
-      const heads = getNumberOfMonsters(8, dungeonLevel, 1, 1, 11);
-      text = formatMonsterCount(
-        1,
-        `${heads}-headed pyrohydra`,
-        `${heads}-headed pyrohydrae`
-      );
-      break;
-    }
-    case MonsterEight.IntellectDevourer_1to2:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 2),
-        'intellect devourer',
-        'intellect devourers'
-      );
-      break;
-    case MonsterEight.LurkerAbove:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'lurker above',
-        'lurkers above'
-      );
-      break;
-    case MonsterEight.MoldBrown:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'patch of brown mold',
-        'patches of brown mold'
-      );
-      break;
-    case MonsterEight.MoldYellow:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'patch of yellow mold',
-        'patches of yellow mold'
-      );
-      break;
-    case MonsterEight.MindFlayer_1to4:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 4),
-        'mind flayer',
-        'mind flayers'
-      );
-      break;
-    case MonsterEight.NagaGuardian_1to2:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 2),
-        'guardian naga',
-        'guardian nagas'
-      );
-      break;
-    case MonsterEight.NeoOtyugh:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'neo-otyugh',
-        'neo-otyugh'
-      );
-      break;
-    case MonsterEight.PurpleWorm:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'purple worm',
-        'purple worms'
-      );
-      break;
-    case MonsterEight.RustMonster:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'rust monster',
-        'rust monsters'
-      );
-      break;
-    case MonsterEight.SlugGiant:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'giant slug',
-        'giant slugs'
-      );
-      break;
-    case MonsterEight.Trapper:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'trapper',
-        'trappers'
-      );
-      break;
-    case MonsterEight.Vampire:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 1),
-        'vampire',
-        'vampires'
-      );
-      break;
-    case MonsterEight.WillOWisp_2to5:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 4, 1),
-        "will-o'-wisp",
-        "will-o'-wisps"
-      );
-      break;
-    case MonsterEight.Xorn_2to5:
-      text = formatMonsterCount(
-        getNumberOfMonsters(8, dungeonLevel, 1, 4, 1),
-        'xorn',
-        'xorn'
-      );
-      break;
+      return { text: dragonSubtableReminder('A dragon is indicated') };
+    default:
+      return {
+        text: resolveMonsterTextFromEntries(
+          8,
+          dungeonLevel,
+          command,
+          monsterEightEntries
+        ),
+      };
   }
-  return { text, party };
 };
 
 export const dragonEightTextForCommand = (
   dungeonLevel: number,
   command: DragonEight
 ): string => {
-  const label = dragonEightLabel(command);
-  const count = getNumberOfMonsters(8, dungeonLevel, 1, 1);
-  return formatMonsterCount(count, label, label);
+  return resolveMonsterTextFromEntries(
+    8,
+    dungeonLevel,
+    command,
+    dragonEightEntries
+  );
 };
-
-function dragonEightLabel(command: DragonEight): string {
-  switch (command) {
-    case DragonEight.Black_Ancient_8:
-      return 'ancient black dragon';
-    case DragonEight.Blue_VeryOld_7:
-      return 'very old blue dragon';
-    case DragonEight.Brass_Ancient_8:
-      return 'ancient brass dragon';
-    case DragonEight.Bronze_VeryOld_7:
-      return 'very old bronze dragon';
-    case DragonEight.Copper_VeryOld_7:
-      return 'very old copper dragon';
-    case DragonEight.Gold_VeryOld_7:
-      return 'very old gold dragon';
-    case DragonEight.Green_VeryOld_7:
-      return 'very old green dragon';
-    case DragonEight.Red_VeryOld_7:
-      return 'very old red dragon';
-    case DragonEight.Silver_VeryOld_7:
-      return 'very old silver dragon';
-    case DragonEight.White_Ancient_8:
-      return 'ancient white dragon';
-    default:
-      return 'ancient dragon';
-  }
-}
