@@ -55,8 +55,10 @@ function collectTablePreviewIds(nodes: DungeonRenderNode[]): string[] {
     .filter(
       (
         node
-      ): node is Extract<DungeonRenderNode, { kind: 'table-preview'; id: string }> =>
-        node.kind === 'table-preview'
+      ): node is Extract<
+        DungeonRenderNode,
+        { kind: 'table-preview'; id: string }
+      > => node.kind === 'table-preview'
     )
     .map((node) => node.id);
 }
