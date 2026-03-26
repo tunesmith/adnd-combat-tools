@@ -1,13 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import {
-  buildPreview,
-  type TablePreviewFactory,
-} from '../../../adapters/render/shared';
-import {
-  createMonsterDungeonLevelContextHandlers,
-  createMonsterEventPreviewBuilder,
+  createMonsterPreviewFactory,
+  createMonsterTableDefinition,
 } from '../shared';
 import {
   DragonFiveOlder,
@@ -23,98 +17,44 @@ import {
   resolveMonsterFive,
 } from './monsterFiveResolvers';
 
-const {
-  resolvePending: resolveMonsterFivePending,
-  registry: monsterFiveRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveMonsterFive, 1);
+const buildMonsterFivePreview = createMonsterPreviewFactory({
+  title: 'Monster (Level 5)',
+  table: monsterFive,
+  labelFor: (command) => MonsterFive[command] ?? String(command),
+});
 
-const {
-  resolvePending: resolveDragonFiveYoungerPending,
-  registry: dragonFiveYoungerRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveDragonFiveYounger, 5);
+const buildDragonFiveYoungerPreview = createMonsterPreviewFactory({
+  title: 'Dragon (Level 5 Younger)',
+  table: dragonFiveYounger,
+  labelFor: (command) => DragonFiveYounger[command] ?? String(command),
+});
 
-const {
-  resolvePending: resolveDragonFiveOlderPending,
-  registry: dragonFiveOlderRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveDragonFiveOlder, 5);
-
-const buildMonsterFivePreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Monster (Level 5)',
-    sides: monsterFive.sides,
-    entries: monsterFive.entries.map((entry) => ({
-      range: entry.range,
-      label: MonsterFive[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
-
-const buildDragonFiveYoungerPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Dragon (Level 5 Younger)',
-    sides: dragonFiveYounger.sides,
-    entries: dragonFiveYounger.entries.map((entry) => ({
-      range: entry.range,
-      label: DragonFiveYounger[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
-
-const buildDragonFiveOlderPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Dragon (Level 5 Older)',
-    sides: dragonFiveOlder.sides,
-    entries: dragonFiveOlder.entries.map((entry) => ({
-      range: entry.range,
-      label: DragonFiveOlder[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
+const buildDragonFiveOlderPreview = createMonsterPreviewFactory({
+  title: 'Dragon (Level 5 Older)',
+  table: dragonFiveOlder,
+  labelFor: (command) => DragonFiveOlder[command] ?? String(command),
+});
 
 export const monsterFiveTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  createMonsterTableDefinition({
     id: 'monsterFive',
     heading: 'Monster (Level 5)',
-    resolver: wrapResolver(resolveMonsterFive),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveMonsterFive,
+    fallbackDungeonLevel: 1,
     buildPreview: buildMonsterFivePreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(
-      buildMonsterFivePreview
-    ),
-    resolvePending: resolveMonsterFivePending,
-    registry: monsterFiveRegistry,
-  },
-  {
+  }),
+  createMonsterTableDefinition({
     id: 'dragonFiveYounger',
     heading: 'Dragon (Level 5 Younger)',
-    resolver: wrapResolver(resolveDragonFiveYounger),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveDragonFiveYounger,
+    fallbackDungeonLevel: 5,
     buildPreview: buildDragonFiveYoungerPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(
-      buildDragonFiveYoungerPreview
-    ),
-    resolvePending: resolveDragonFiveYoungerPending,
-    registry: dragonFiveYoungerRegistry,
-  },
-  {
+  }),
+  createMonsterTableDefinition({
     id: 'dragonFiveOlder',
     heading: 'Dragon (Level 5 Older)',
-    resolver: wrapResolver(resolveDragonFiveOlder),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveDragonFiveOlder,
+    fallbackDungeonLevel: 5,
     buildPreview: buildDragonFiveOlderPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(
-      buildDragonFiveOlderPreview
-    ),
-    resolvePending: resolveDragonFiveOlderPending,
-    registry: dragonFiveOlderRegistry,
-  },
+  }),
 ];

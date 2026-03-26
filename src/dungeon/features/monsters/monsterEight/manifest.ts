@@ -1,13 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import {
-  buildPreview,
-  type TablePreviewFactory,
-} from '../../../adapters/render/shared';
-import {
-  createMonsterDungeonLevelContextHandlers,
-  createMonsterEventPreviewBuilder,
+  createMonsterPreviewFactory,
+  createMonsterTableDefinition,
 } from '../shared';
 import {
   DragonEight,
@@ -20,67 +14,31 @@ import {
   resolveMonsterEight,
 } from './monsterEightResolvers';
 
-const {
-  resolvePending: resolveMonsterEightPending,
-  registry: monsterEightRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveMonsterEight, 1);
+const buildMonsterEightPreview = createMonsterPreviewFactory({
+  title: 'Monster (Level 8)',
+  table: monsterEight,
+  labelFor: (command) => MonsterEight[command] ?? String(command),
+});
 
-const {
-  resolvePending: resolveDragonEightPending,
-  registry: dragonEightRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveDragonEight, 8);
-
-const buildMonsterEightPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Monster (Level 8)',
-    sides: monsterEight.sides,
-    entries: monsterEight.entries.map((entry) => ({
-      range: entry.range,
-      label: MonsterEight[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
-
-const buildDragonEightPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Dragon (Level 8)',
-    sides: dragonEight.sides,
-    entries: dragonEight.entries.map((entry) => ({
-      range: entry.range,
-      label: DragonEight[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
+const buildDragonEightPreview = createMonsterPreviewFactory({
+  title: 'Dragon (Level 8)',
+  table: dragonEight,
+  labelFor: (command) => DragonEight[command] ?? String(command),
+});
 
 export const monsterEightTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  createMonsterTableDefinition({
     id: 'monsterEight',
     heading: 'Monster (Level 8)',
-    resolver: wrapResolver(resolveMonsterEight),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveMonsterEight,
+    fallbackDungeonLevel: 1,
     buildPreview: buildMonsterEightPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(
-      buildMonsterEightPreview
-    ),
-    resolvePending: resolveMonsterEightPending,
-    registry: monsterEightRegistry,
-  },
-  {
+  }),
+  createMonsterTableDefinition({
     id: 'dragonEight',
     heading: 'Dragon (Level 8)',
-    resolver: wrapResolver(resolveDragonEight),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveDragonEight,
+    fallbackDungeonLevel: 8,
     buildPreview: buildDragonEightPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(
-      buildDragonEightPreview
-    ),
-    resolvePending: resolveDragonEightPending,
-    registry: dragonEightRegistry,
-  },
+  }),
 ];

@@ -1,12 +1,21 @@
-import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
+import type {
+  DungeonTableDefinition,
+  PendingResolver,
+  RegistryOutcomeBuilder,
+} from '../types';
 import type { DungeonTablePreview } from '../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import type { Table } from '../../../tables/dungeon/tableTypes';
 import { readTableContextOfKind } from '../../helpers/tableContext';
-import type { TablePreviewFactory } from '../../adapters/render/shared';
-import { buildEventPreviewFromFactory } from '../shared';
+import {
+  buildPreview,
+  type TablePreviewFactory,
+} from '../../adapters/render/shared';
+import { renderMonsterCompactNodes, renderMonsterDetailNodes } from './render';
+import { buildEventPreviewFromFactory, wrapResolver } from '../shared';
 
 type MonsterDungeonLevelContext = {
   dungeonLevel?: number;
@@ -16,7 +25,24 @@ type MonsterDungeonLevelResolverOptions = MonsterDungeonLevelContext & {
   roll?: number;
 };
 
-export function createMonsterDungeonLevelContextHandlers(
+export function createMonsterPreviewFactory<TCommand>(options: {
+  title: string;
+  table: Table<TCommand>;
+  labelFor: (command: TCommand) => string;
+}): TablePreviewFactory {
+  return (tableId, context) =>
+    buildPreview(tableId, {
+      title: options.title,
+      sides: options.table.sides,
+      entries: options.table.entries.map((entry) => ({
+        range: entry.range,
+        label: options.labelFor(entry.command),
+      })),
+      context,
+    });
+}
+
+function createMonsterDungeonLevelContextHandlers(
   resolver: (
     options?: MonsterDungeonLevelResolverOptions
   ) => DungeonOutcomeNode,
@@ -48,7 +74,39 @@ export function createMonsterDungeonLevelContextHandlers(
   };
 }
 
-export function createMonsterEventPreviewBuilder(
+export function createMonsterTableDefinition(options: {
+  id: string;
+  heading: string;
+  resolver: (
+    options?: MonsterDungeonLevelResolverOptions
+  ) => DungeonOutcomeNode;
+  fallbackDungeonLevel: number;
+  buildPreview: TablePreviewFactory;
+  levelScopedEventPreview?: boolean;
+}): DungeonTableDefinition {
+  const { resolvePending, registry } = createMonsterDungeonLevelContextHandlers(
+    options.resolver,
+    options.fallbackDungeonLevel
+  );
+
+  return {
+    id: options.id,
+    heading: options.heading,
+    resolver: wrapResolver(options.resolver),
+    renderers: {
+      renderDetail: renderMonsterDetailNodes,
+      renderCompact: renderMonsterCompactNodes,
+    },
+    buildPreview: options.buildPreview,
+    buildEventPreview: createMonsterEventPreviewBuilder(options.buildPreview, {
+      levelScopedTableId: options.levelScopedEventPreview,
+    }),
+    resolvePending,
+    registry,
+  };
+}
+
+function createMonsterEventPreviewBuilder(
   buildPreview: TablePreviewFactory,
   options?: {
     levelScopedTableId?: boolean;

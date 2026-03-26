@@ -1,13 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import {
-  buildPreview,
-  type TablePreviewFactory,
-} from '../../../adapters/render/shared';
-import {
-  createMonsterDungeonLevelContextHandlers,
-  createMonsterEventPreviewBuilder,
+  createMonsterPreviewFactory,
+  createMonsterTableDefinition,
 } from '../shared';
 import {
   DragonFourOlder,
@@ -23,98 +17,44 @@ import {
   resolveMonsterFour,
 } from './monsterFourResolvers';
 
-const {
-  resolvePending: resolveMonsterFourPending,
-  registry: monsterFourRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveMonsterFour, 1);
+const buildMonsterFourPreview = createMonsterPreviewFactory({
+  title: 'Monster (Level 4)',
+  table: monsterFour,
+  labelFor: (command) => MonsterFour[command] ?? String(command),
+});
 
-const {
-  resolvePending: resolveDragonFourYoungerPending,
-  registry: dragonFourYoungerRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveDragonFourYounger, 4);
+const buildDragonFourYoungerPreview = createMonsterPreviewFactory({
+  title: 'Dragon (Level 4 Younger)',
+  table: dragonFourYounger,
+  labelFor: (command) => DragonFourYounger[command] ?? String(command),
+});
 
-const {
-  resolvePending: resolveDragonFourOlderPending,
-  registry: dragonFourOlderRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveDragonFourOlder, 4);
-
-const buildMonsterFourPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Monster (Level 4)',
-    sides: monsterFour.sides,
-    entries: monsterFour.entries.map((entry) => ({
-      range: entry.range,
-      label: MonsterFour[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
-
-const buildDragonFourYoungerPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Dragon (Level 4 Younger)',
-    sides: dragonFourYounger.sides,
-    entries: dragonFourYounger.entries.map((entry) => ({
-      range: entry.range,
-      label: DragonFourYounger[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
-
-const buildDragonFourOlderPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Dragon (Level 4 Older)',
-    sides: dragonFourOlder.sides,
-    entries: dragonFourOlder.entries.map((entry) => ({
-      range: entry.range,
-      label: DragonFourOlder[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
+const buildDragonFourOlderPreview = createMonsterPreviewFactory({
+  title: 'Dragon (Level 4 Older)',
+  table: dragonFourOlder,
+  labelFor: (command) => DragonFourOlder[command] ?? String(command),
+});
 
 export const monsterFourTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  createMonsterTableDefinition({
     id: 'monsterFour',
     heading: 'Monster (Level 4)',
-    resolver: wrapResolver(resolveMonsterFour),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveMonsterFour,
+    fallbackDungeonLevel: 1,
     buildPreview: buildMonsterFourPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(
-      buildMonsterFourPreview
-    ),
-    resolvePending: resolveMonsterFourPending,
-    registry: monsterFourRegistry,
-  },
-  {
+  }),
+  createMonsterTableDefinition({
     id: 'dragonFourYounger',
     heading: 'Dragon (Level 4 Younger)',
-    resolver: wrapResolver(resolveDragonFourYounger),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveDragonFourYounger,
+    fallbackDungeonLevel: 4,
     buildPreview: buildDragonFourYoungerPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(
-      buildDragonFourYoungerPreview
-    ),
-    resolvePending: resolveDragonFourYoungerPending,
-    registry: dragonFourYoungerRegistry,
-  },
-  {
+  }),
+  createMonsterTableDefinition({
     id: 'dragonFourOlder',
     heading: 'Dragon (Level 4 Older)',
-    resolver: wrapResolver(resolveDragonFourOlder),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveDragonFourOlder,
+    fallbackDungeonLevel: 4,
     buildPreview: buildDragonFourOlderPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(
-      buildDragonFourOlderPreview
-    ),
-    resolvePending: resolveDragonFourOlderPending,
-    registry: dragonFourOlderRegistry,
-  },
+  }),
 ];

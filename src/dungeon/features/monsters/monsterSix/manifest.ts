@@ -1,13 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import { renderMonsterCompactNodes, renderMonsterDetailNodes } from '../render';
 import {
-  buildPreview,
-  type TablePreviewFactory,
-} from '../../../adapters/render/shared';
-import {
-  createMonsterDungeonLevelContextHandlers,
-  createMonsterEventPreviewBuilder,
+  createMonsterPreviewFactory,
+  createMonsterTableDefinition,
 } from '../shared';
 import {
   DragonSix,
@@ -17,61 +11,31 @@ import {
 } from './monsterSixTables';
 import { resolveDragonSix, resolveMonsterSix } from './monsterSixResolvers';
 
-const {
-  resolvePending: resolveMonsterSixPending,
-  registry: monsterSixRegistry,
-} = createMonsterDungeonLevelContextHandlers(resolveMonsterSix, 1);
+const buildMonsterSixPreview = createMonsterPreviewFactory({
+  title: 'Monster (Level 6)',
+  table: monsterSix,
+  labelFor: (command) => MonsterSix[command] ?? String(command),
+});
 
-const { resolvePending: resolveDragonSixPending, registry: dragonSixRegistry } =
-  createMonsterDungeonLevelContextHandlers(resolveDragonSix, 6);
-
-const buildMonsterSixPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Monster (Level 6)',
-    sides: monsterSix.sides,
-    entries: monsterSix.entries.map((entry) => ({
-      range: entry.range,
-      label: MonsterSix[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
-
-const buildDragonSixPreview: TablePreviewFactory = (tableId, context) =>
-  buildPreview(tableId, {
-    title: 'Dragon (Level 6)',
-    sides: dragonSix.sides,
-    entries: dragonSix.entries.map((entry) => ({
-      range: entry.range,
-      label: DragonSix[entry.command] ?? String(entry.command),
-    })),
-    context,
-  });
+const buildDragonSixPreview = createMonsterPreviewFactory({
+  title: 'Dragon (Level 6)',
+  table: dragonSix,
+  labelFor: (command) => DragonSix[command] ?? String(command),
+});
 
 export const monsterSixTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  createMonsterTableDefinition({
     id: 'monsterSix',
     heading: 'Monster (Level 6)',
-    resolver: wrapResolver(resolveMonsterSix),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveMonsterSix,
+    fallbackDungeonLevel: 1,
     buildPreview: buildMonsterSixPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(buildMonsterSixPreview),
-    resolvePending: resolveMonsterSixPending,
-    registry: monsterSixRegistry,
-  },
-  {
+  }),
+  createMonsterTableDefinition({
     id: 'dragonSix',
     heading: 'Dragon (Level 6)',
-    resolver: wrapResolver(resolveDragonSix),
-    renderers: {
-      renderDetail: renderMonsterDetailNodes,
-      renderCompact: renderMonsterCompactNodes,
-    },
+    resolver: resolveDragonSix,
+    fallbackDungeonLevel: 6,
     buildPreview: buildDragonSixPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(buildDragonSixPreview),
-    resolvePending: resolveDragonSixPending,
-    registry: dragonSixRegistry,
-  },
+  }),
 ];

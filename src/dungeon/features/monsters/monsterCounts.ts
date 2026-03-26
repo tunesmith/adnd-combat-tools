@@ -63,6 +63,7 @@ export const getNumberOfMonsters = (
   } else {
     // e.g. dungeon level 5, monster level 1: increase monsters
     const levelDifference = dungeonLevel - monsterLevel;
-    return rollDice(sides, rolls * levelDifference) + plus * levelDifference;
+    const multiplier = levelDifference + 1;
+    return rollDice(sides, rolls * multiplier) + plus * multiplier;
   }
 };
