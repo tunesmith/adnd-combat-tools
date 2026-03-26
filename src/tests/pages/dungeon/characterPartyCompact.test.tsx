@@ -19,7 +19,7 @@ import type {
   DungeonRenderNode,
   DungeonTablePreview,
 } from '../../../types/dungeon';
-import type { Dispatch, SetStateAction } from 'react';
+import type { PreviewInteractionController } from '../../../components/dungeon/feedTypes';
 
 const baseAttributes: Attributes = {
   [Attribute.Strength]: 12,
@@ -129,17 +129,7 @@ describe('character party compact rendering', () => {
     expect(partyMessage).toBeDefined();
     if (!partyMessage) return;
 
-    const element = renderNode(
-      partyMessage,
-      0,
-      'party-test',
-      {},
-      (() => undefined) as Dispatch<
-        SetStateAction<Record<string, number | undefined>>
-      >,
-      (() => undefined) as Dispatch<SetStateAction<unknown>>,
-      true
-    );
+    const element = renderNode(partyMessage, 0, 'party-test');
 
     const markup = ReactDOMServer.renderToStaticMarkup(element);
     expect(markup).toContain('<ul');
@@ -160,20 +150,21 @@ describe('character party compact rendering', () => {
       ],
     };
 
+    const previewController: PreviewInteractionController = {
+      overrides: {},
+      collapsed: {},
+      resolved: {},
+      onOverrideChange: () => undefined,
+      onResolvePreview: () => undefined,
+      onToggleCollapse: () => undefined,
+    };
+
     const element = renderNode(
       preview,
       0,
       'preview-test',
-      {},
-      (() => undefined) as Dispatch<
-        SetStateAction<Record<string, number | undefined>>
-      >,
-      (() => undefined) as Dispatch<SetStateAction<unknown>>,
+      previewController,
       true,
-      {},
-      (() => undefined) as Dispatch<SetStateAction<Record<string, boolean>>>,
-      {},
-      (() => undefined) as Dispatch<SetStateAction<Record<string, boolean>>>,
       new Set<string>()
     );
 

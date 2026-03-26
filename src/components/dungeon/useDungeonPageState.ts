@@ -1,6 +1,16 @@
 import type { KeyboardEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import packageJson from '../../../package.json';
+import {
+  getRootPreviewNodes,
+  resolveDungeonFeedPreview,
+} from './dungeonFeedController';
+import type {
+  FeedItem,
+  PreviewInteractionController,
+  PreviewResolutionEntry,
+  PreviewResolutionRequest,
+} from './feedTypes';
 import { runDungeonStep } from '../../dungeon/services/adapters';
 import { rollDice } from '../../dungeon/helpers/dungeonLookup';
 import {
@@ -10,29 +20,14 @@ import {
 import {
   buildRenderCache,
   selectMessagesForMode,
-  type RenderCache,
 } from '../../dungeon/helpers/renderCache';
 import { countPendingNodes } from '../../dungeon/helpers/outcomeTree';
 import type {
   DungeonAction,
-  DungeonRenderNode,
   DungeonReplayInfo,
   DungeonReplayItem,
   DungeonRollSource,
 } from '../../types/dungeon';
-import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
-
-export type FeedItem = {
-  id: string;
-  sequence: number;
-  action: DungeonAction;
-  roll: number;
-  level: number;
-  outcome?: DungeonOutcomeNode;
-  renderCache: RenderCache;
-  messages: DungeonRenderNode[];
-  pendingCount: number;
-};
 
 function createFeedItemId(): string {
   const uuid = globalThis.crypto?.randomUUID?.();
@@ -144,14 +139,7 @@ export function useDungeonPageState() {
     submitManualRoll();
   };
 
-  const recordPreviewResolution = (entry: {
-    feedStep: number;
-    tableId: string;
-    targetId: string;
-    title: string;
-    roll: number;
-    rollSource: DungeonRollSource;
-  }) => {
+  const recordPreviewResolution = (entry: PreviewResolutionEntry) => {
     setReplayStatus(null);
     appendReplayItem({
       kind: 'preview-resolution',
@@ -161,6 +149,42 @@ export function useDungeonPageState() {
       title: entry.title,
       roll: entry.roll,
       rollSource: entry.rollSource,
+    });
+  };
+
+  const handlePreviewOverrideChange = (
+    targetKey: string,
+    value: number | undefined
+  ) => {
+    setOverrides((prev) => ({ ...prev, [targetKey]: value }));
+  };
+
+  const handlePreviewCollapseToggle = (
+    feedItemId: string,
+    targetKey: string,
+    nextCollapsed: boolean
+  ) => {
+    setCollapsed((prev) => ({
+      ...prev,
+      [`${feedItemId}:${targetKey}`]: nextCollapsed,
+    }));
+  };
+
+  const handlePreviewResolve = (request: PreviewResolutionRequest) => {
+    setReplayStatus(null);
+    resolveDungeonFeedPreview({
+      preview: request.preview,
+      feedItemId: request.feedItemId,
+      shouldRoll: request.shouldRoll,
+      feedSequence: request.feedSequence,
+      feedItem: request.feedItem,
+      session: sessionRef.current,
+      overrides,
+      setOverrides,
+      setFeed,
+      setCollapsed,
+      setResolved,
+      onResolved: recordPreviewResolution,
     });
   };
 
@@ -216,25 +240,33 @@ export function useDungeonPageState() {
     }
   };
 
+  const rootPreviewNodes = useMemo(
+    () => (detailMode ? getRootPreviewNodes(action, dungeonLevel) : []),
+    [action, detailMode, dungeonLevel]
+  );
+
+  const previewController: PreviewInteractionController = {
+    overrides,
+    collapsed,
+    resolved,
+    onOverrideChange: handlePreviewOverrideChange,
+    onResolvePreview: handlePreviewResolve,
+    onToggleCollapse: handlePreviewCollapseToggle,
+  };
+
   return {
-    session: sessionRef.current,
     action,
     setAction,
     rollInput,
     setRollInput,
     feed,
-    setFeed,
     clearFeed,
     detailMode,
     setDetailMode,
-    overrides,
-    setOverrides,
     dungeonLevel,
     setDungeonLevel,
-    collapsed,
-    setCollapsed,
-    resolved,
-    setResolved,
+    rootPreviewNodes,
+    previewController,
     liveRegionRef,
     isValid,
     handleRoll,
@@ -242,6 +274,5 @@ export function useDungeonPageState() {
     copyReplayInfo,
     replayStatus,
     hasReplayInfo: replayItems.length > 0,
-    recordPreviewResolution,
   };
 }

@@ -4,24 +4,18 @@ import { useDungeonPageState } from '../../components/dungeon/useDungeonPageStat
 
 const DungeonIndexPage = () => {
   const {
-    session,
     action,
     setAction,
     rollInput,
     setRollInput,
     feed,
-    setFeed,
     clearFeed,
     detailMode,
     setDetailMode,
-    overrides,
-    setOverrides,
     dungeonLevel,
     setDungeonLevel,
-    collapsed,
-    setCollapsed,
-    resolved,
-    setResolved,
+    rootPreviewNodes,
+    previewController,
     liveRegionRef,
     isValid,
     handleRoll,
@@ -29,7 +23,6 @@ const DungeonIndexPage = () => {
     copyReplayInfo,
     replayStatus,
     hasReplayInfo,
-    recordPreviewResolution,
   } = useDungeonPageState();
 
   return (
@@ -198,20 +191,11 @@ const DungeonIndexPage = () => {
             </div>
           </div>
           <DungeonFeed
-            action={action}
             detailMode={detailMode}
-            dungeonLevel={dungeonLevel}
-            session={session}
+            rootPreviewNodes={rootPreviewNodes}
             feed={feed}
             setDetailMode={setDetailMode}
-            overrides={overrides}
-            setOverrides={setOverrides}
-            setFeed={setFeed}
-            collapsed={collapsed}
-            setCollapsed={setCollapsed}
-            resolved={resolved}
-            setResolved={setResolved}
-            recordPreviewResolution={recordPreviewResolution}
+            previewController={previewController}
           />
           <div className={styles['debugTools']}>
             {replayStatus && (

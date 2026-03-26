@@ -1,8 +1,4 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { rollDice } from '../../dungeon/helpers/dungeonLookup';
-import { doorBeyondMessages } from '../../dungeon/services/doorBeyondMessages';
-import { passageMessages } from '../../dungeon/services/passageMessages';
-import { resolveViaRegistry } from '../../dungeon/helpers/registry';
 import { CharacterPartyCompact } from './CharacterPartyCompact';
 import { CharacterPartyDetail } from './CharacterPartyDetail';
 import { DungeonTablePreviewCard } from './DungeonTablePreviewCard';
@@ -12,74 +8,38 @@ import { PrayerBeadsCompact } from './PrayerBeadsCompact';
 import { PrayerBeadsDetail } from './PrayerBeadsDetail';
 import { RobeOfUsefulItemsCompact } from './RobeOfUsefulItemsCompact';
 import { RobeOfUsefulItemsDetail } from './RobeOfUsefulItemsDetail';
+import { collectPendingTargetIds } from './dungeonFeedController';
+import type { FeedItem, PreviewInteractionController } from './feedTypes';
 import type {
-  DungeonAction,
   DungeonRenderNode,
   DungeonRollTrace,
-  DungeonRollSource,
-  DungeonTablePreview,
   RollTraceItem,
 } from '../../types/dungeon';
-import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import { selectMessagesForMode } from '../../dungeon/helpers/renderCache';
-import {
-  withDungeonRandomSession,
-  type DungeonRandomSession,
-} from '../../dungeon/helpers/dungeonRandom';
-import type { FeedItem } from './useDungeonPageState';
 import styles from '../../pages/dungeon/dungeon.module.css';
 
 type DungeonFeedProps = {
-  action: DungeonAction;
   detailMode: boolean;
-  dungeonLevel: number;
-  session: DungeonRandomSession;
+  rootPreviewNodes: DungeonRenderNode[];
   feed: FeedItem[];
   setDetailMode: Dispatch<SetStateAction<boolean>>;
-  overrides: Record<string, number | undefined>;
-  setOverrides: Dispatch<SetStateAction<Record<string, number | undefined>>>;
-  setFeed: Dispatch<SetStateAction<FeedItem[]>>;
-  collapsed: Record<string, boolean>;
-  setCollapsed: Dispatch<SetStateAction<Record<string, boolean>>>;
-  resolved: Record<string, boolean>;
-  setResolved: Dispatch<SetStateAction<Record<string, boolean>>>;
-  recordPreviewResolution: (entry: {
-    feedStep: number;
-    tableId: string;
-    targetId: string;
-    title: string;
-    roll: number;
-    rollSource: DungeonRollSource;
-  }) => void;
+  previewController: PreviewInteractionController;
 };
 
 const DungeonFeed = ({
-  action,
   detailMode,
-  dungeonLevel,
-  session,
+  rootPreviewNodes,
   feed,
   setDetailMode,
-  overrides,
-  setOverrides,
-  setFeed,
-  collapsed,
-  setCollapsed,
-  resolved,
-  setResolved,
-  recordPreviewResolution,
+  previewController,
 }: DungeonFeedProps) => {
-  const rootPreviewNodes = detailMode
-    ? getRootPreviewNodes(action, dungeonLevel)
-    : [];
-
   const rootPreviewStack = detailMode ? (
     <div className={styles['initialPreviewStack']}>
       {rootPreviewNodes.map((node, index) => {
         if (node.kind !== 'table-preview') return null;
         return (
           <DungeonTablePreviewCard
-            key={`${action}:${dungeonLevel}:${node.id}:${index}`}
+            key={`${node.id}:${index}`}
             preview={node}
             enablePreviewControls={false}
             statusLabelOverride={feed.length === 0 ? 'Start' : undefined}
@@ -164,19 +124,11 @@ const DungeonFeed = ({
                     node,
                     index,
                     item.id,
-                    overrides,
-                    setOverrides,
-                    setFeed,
+                    previewController,
                     enablePreviewControls,
-                    collapsed,
-                    setCollapsed,
-                    resolved,
-                    setResolved,
                     pendingTargetIds,
                     item.sequence,
-                    recordPreviewResolution,
-                    item,
-                    session
+                    item
                   )
               );
             })()}
@@ -191,26 +143,11 @@ function renderNode(
   node: DungeonRenderNode,
   key: number,
   feedItemId: string,
-  overrides: Record<string, number | undefined>,
-  setOverrides: Dispatch<SetStateAction<Record<string, number | undefined>>>,
-  setFeed: Dispatch<SetStateAction<FeedItem[]>>,
+  previewController?: PreviewInteractionController,
   enablePreviewControls = true,
-  collapsed?: Record<string, boolean>,
-  setCollapsed?: Dispatch<SetStateAction<Record<string, boolean>>>,
-  resolved?: Record<string, boolean>,
-  setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>,
   pendingTargetIds?: ReadonlySet<string>,
   feedSequence?: number,
-  recordPreviewResolution?: (entry: {
-    feedStep: number;
-    tableId: string;
-    targetId: string;
-    title: string;
-    roll: number;
-    rollSource: DungeonRollSource;
-  }) => void,
-  feedItem?: FeedItem,
-  session?: DungeonRandomSession
+  feedItem?: FeedItem
 ): JSX.Element {
   switch (node.kind) {
     case 'heading':
@@ -257,61 +194,50 @@ function renderNode(
       const isPending = pendingTargetIds?.has(targetKey) ?? false;
       const defaultCollapsed =
         node.autoCollapse === true || (enablePreviewControls && !isPending);
-      const collapsedState = collapsed ? collapsed[keyId] : undefined;
+      const collapsedState = previewController?.collapsed[keyId];
       const isCollapsed =
         collapsedState !== undefined ? collapsedState : defaultCollapsed;
       const hasResolved =
-        !!(resolved && resolved[keyId]) || defaultCollapsed || !isPending;
+        !!previewController?.resolved[keyId] || defaultCollapsed || !isPending;
       return (
         <DungeonTablePreviewCard
           key={key}
           preview={node}
           enablePreviewControls={enablePreviewControls}
-          overrideValue={overrides[targetKey]}
-          onOverrideChange={(value) =>
-            setOverrides((prev) => ({ ...prev, [targetKey]: value }))
+          overrideValue={previewController?.overrides[targetKey]}
+          onOverrideChange={
+            previewController
+              ? (value) => previewController.onOverrideChange(targetKey, value)
+              : undefined
           }
           onUseOverride={() =>
-            resolvePreview(
-              node,
+            previewController?.onResolvePreview({
+              preview: node,
               feedItemId,
-              overrides,
-              setOverrides,
-              setFeed,
-              false,
-              setCollapsed,
-              setResolved,
+              shouldRoll: false,
               feedSequence,
-              recordPreviewResolution,
               feedItem,
-              session
-            )
+            })
           }
           onAutoRoll={() =>
-            resolvePreview(
-              node,
+            previewController?.onResolvePreview({
+              preview: node,
               feedItemId,
-              overrides,
-              setOverrides,
-              setFeed,
-              true,
-              setCollapsed,
-              setResolved,
+              shouldRoll: true,
               feedSequence,
-              recordPreviewResolution,
               feedItem,
-              session
-            )
+            })
           }
           isCollapsed={isCollapsed}
           hasResolved={hasResolved}
           onToggleCollapse={
-            setCollapsed && hasResolved
+            previewController?.onToggleCollapse && hasResolved
               ? () =>
-                  setCollapsed((prev) => ({
-                    ...prev,
-                    [keyId]: !isCollapsed,
-                  }))
+                  previewController.onToggleCollapse?.(
+                    feedItemId,
+                    targetKey,
+                    !isCollapsed
+                  )
               : undefined
           }
         />
@@ -354,74 +280,6 @@ function renderTraceList(trace: DungeonRollTrace) {
   );
 }
 
-function resolvePreview(
-  preview: DungeonTablePreview,
-  feedItemId: string,
-  overrides: Record<string, number | undefined>,
-  setOverrides: Dispatch<SetStateAction<Record<string, number | undefined>>>,
-  setFeed: Dispatch<SetStateAction<FeedItem[]>>,
-  shouldRoll: boolean,
-  setCollapsed?: Dispatch<SetStateAction<Record<string, boolean>>>,
-  setResolved?: Dispatch<SetStateAction<Record<string, boolean>>>,
-  feedSequence?: number,
-  recordPreviewResolution?: (entry: {
-    feedStep: number;
-    tableId: string;
-    targetId: string;
-    title: string;
-    roll: number;
-    rollSource: DungeonRollSource;
-  }) => void,
-  feedItem?: FeedItem,
-  session?: DungeonRandomSession
-) {
-  const targetKey = preview.targetId ?? preview.id;
-  let usedRoll: number | undefined = overrides[targetKey];
-  if (!shouldRoll && usedRoll === undefined) return;
-  if (shouldRoll && usedRoll === undefined) {
-    usedRoll = withDungeonRandomSession(session, () => rollDice(preview.sides));
-  }
-  if (usedRoll === undefined) return;
-  if (overrides[targetKey] !== undefined) {
-    setOverrides((prev) => ({ ...prev, [targetKey]: undefined }));
-  }
-  const resolved = resolveViaRegistry(
-    preview,
-    feedItemId,
-    usedRoll,
-    setFeed,
-    setCollapsed,
-    setResolved,
-    feedItem,
-    session
-  );
-  if (resolved && recordPreviewResolution && feedSequence !== undefined) {
-    recordPreviewResolution({
-      feedStep: feedSequence,
-      tableId: preview.id,
-      targetId: targetKey,
-      title: preview.title,
-      roll: usedRoll,
-      rollSource: shouldRoll ? 'auto' : 'manual',
-    });
-  }
-}
-
-function getRootPreviewNodes(
-  action: DungeonAction,
-  dungeonLevel: number
-): DungeonRenderNode[] {
-  if (action === 'door') {
-    const { messages } = doorBeyondMessages({ detailMode: true });
-    return messages.filter((message) => message.kind === 'table-preview');
-  }
-  const { messages } = passageMessages({
-    detailMode: true,
-    level: dungeonLevel,
-  });
-  return messages.filter((message) => message.kind === 'table-preview');
-}
-
 function formatPendingBadge(pendingCount: number): string {
   return `${pendingCount} pending ${pendingCount === 1 ? 'step' : 'steps'}`;
 }
@@ -430,24 +288,6 @@ function formatPendingTitle(pendingCount: number): string {
   return `${pendingCount} ${
     pendingCount === 1 ? 'step is' : 'steps are'
   } still pending.`;
-}
-
-function collectPendingTargetIds(
-  node?: DungeonOutcomeNode
-): ReadonlySet<string> {
-  const targets = new Set<string>();
-
-  const walk = (current?: DungeonOutcomeNode) => {
-    if (!current) return;
-    if (current.type === 'pending-roll') {
-      targets.add(current.id ?? current.table);
-      return;
-    }
-    current.children?.forEach((child) => walk(child));
-  };
-
-  walk(node);
-  return targets;
 }
 
 export { DungeonFeed, renderNode };
