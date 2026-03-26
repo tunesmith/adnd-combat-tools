@@ -36,6 +36,10 @@ import {
   TreasureSwordAlignment,
   type TreasureSwordAlignmentResult,
 } from '../../../../dungeon/features/treasure/swords/swordsAlignmentTable';
+import {
+  collectPreviews,
+  collectPreviewTargetKeys,
+} from '../../../support/dungeon/previewUtils';
 
 describe('resolveTreasureSwords', () => {
   it('creates pending rolls for kind and unusual tables by default', () => {
@@ -213,10 +217,8 @@ describe('resolveTreasureSwords', () => {
     expect(alignmentEvent.event.result.source).toBe('fixed');
 
     const detailNodes = renderDetailTree(node);
-    const alignmentPreview = detailNodes.some(
-      (child) =>
-        child.kind === 'table-preview' &&
-        child.id.startsWith('treasureSwordAlignment')
+    const alignmentPreview = collectPreviews(detailNodes).some((child) =>
+      child.id.startsWith('treasureSwordAlignment')
     );
     expect(alignmentPreview).toBe(false);
   });
@@ -263,10 +265,8 @@ describe('resolveTreasureSwords', () => {
     expect(alignmentEvent.event.result.source).toBe('fixed');
 
     const detailNodes = renderDetailTree(node);
-    const alignmentPreview = detailNodes.some(
-      (child) =>
-        child.kind === 'table-preview' &&
-        child.id.startsWith('treasureSwordAlignment')
+    const alignmentPreview = collectPreviews(detailNodes).some((child) =>
+      child.id.startsWith('treasureSwordAlignment')
     );
     expect(alignmentPreview).toBe(false);
   });
@@ -283,10 +283,8 @@ describe('resolveTreasureSwords', () => {
     }
 
     const detailNodes = renderDetailTree(node);
-    const alignmentPreview = detailNodes.find(
-      (child) =>
-        child.kind === 'table-preview' &&
-        child.id.startsWith('treasureSwordAlignment')
+    const alignmentPreview = collectPreviews(detailNodes).find((child) =>
+      child.id.startsWith('treasureSwordAlignment')
     );
     expect(alignmentPreview).toBeDefined();
   });
@@ -556,9 +554,8 @@ describe('resolveTreasureSwords', () => {
     );
 
     const detailNodes = renderDetailTree(node);
-    const standardPreviews = detailNodes.filter(
+    const standardPreviews = collectPreviews(detailNodes).filter(
       (child) =>
-        child.kind === 'table-preview' &&
         child.id.startsWith('treasureSwordPrimaryAbility') &&
         !child.id.startsWith('treasureSwordPrimaryAbilityRestricted')
     );
@@ -567,10 +564,8 @@ describe('resolveTreasureSwords', () => {
       (preview) => (preview as { autoCollapse?: boolean }).autoCollapse
     );
     expect(collapsedPreviews.length).toBeGreaterThan(0);
-    const restrictedPreviews = detailNodes.filter(
-      (child) =>
-        child.kind === 'table-preview' &&
-        child.id.startsWith('treasureSwordPrimaryAbilityRestricted')
+    const restrictedPreviews = collectPreviews(detailNodes).filter((child) =>
+      child.id.startsWith('treasureSwordPrimaryAbilityRestricted')
     );
     expect(restrictedPreviews.length).toBeGreaterThan(0);
   });
@@ -763,9 +758,7 @@ describe('resolveTreasureSwords', () => {
     instructionNode.children = [resolvedFirst, resolvedSecond];
 
     const detailNodes = renderDetailTree(instructionNode);
-    const previewIds = detailNodes
-      .filter((child) => child.kind === 'table-preview')
-      .map((child) => (child as { targetId?: string }).targetId ?? '');
+    const previewIds = collectPreviewTargetKeys(detailNodes);
     expect(
       previewIds.some((id) => id.startsWith('treasureSwordExtraordinaryPower'))
     ).toBe(true);
@@ -1238,10 +1231,8 @@ describe('resolveTreasureSwords', () => {
     instructionNode.children = instructionChildren;
 
     const detailNodes = renderDetailTree(node);
-    const remainingRestrictedPreviews = detailNodes.filter(
-      (child) =>
-        child.kind === 'table-preview' &&
-        child.id.startsWith('treasureSwordPrimaryAbilityRestricted')
+    const remainingRestrictedPreviews = collectPreviews(detailNodes).filter(
+      (child) => child.id.startsWith('treasureSwordPrimaryAbilityRestricted')
     );
     expect(remainingRestrictedPreviews.length).toBeGreaterThan(0);
   });

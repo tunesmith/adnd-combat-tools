@@ -1,13 +1,9 @@
 import type {
   AnyDungeonTablePreview,
   DungeonRenderNode,
-  TargetedDungeonTablePreview,
 } from '../../../../types/dungeon';
-import {
-  getDungeonTablePreviewTargetKey,
-  isDungeonTablePreview,
-  isTargetedDungeonTablePreview,
-} from '../../../../types/dungeon';
+import { getDungeonTablePreviewTargetKey } from '../../../../types/dungeon';
+import { isTargetedDungeonTablePreview } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
 import {
   createFeedSnapshot,
@@ -35,6 +31,11 @@ import {
   TreasureSword,
   TreasureSwordUnusual,
 } from '../../../../dungeon/features/treasure/swords/swordsTables';
+import {
+  collectPreviews,
+  collectTargetedPreviews,
+  findPreviewById,
+} from '../../../support/dungeon/previewUtils';
 
 function applyUpdater<T>(current: T, updater: T | ((prev: T) => T)): T {
   return typeof updater === 'function'
@@ -76,10 +77,8 @@ describe('uiPreviewHarness', () => {
     feed = resolvePendingPreview(feed, 'doorLocation', 1);
 
     // Locate the door continuation preview after resolving door location.
-    const preview = renderDetail(feed).find(
-      (node): node is TargetedDungeonTablePreview =>
-        isTargetedDungeonTablePreview(node) &&
-        node.id.startsWith('periodicCheckDoorOnly')
+    const preview = collectTargetedPreviews(renderDetail(feed)).find((node) =>
+      node.id.startsWith('periodicCheckDoorOnly')
     );
     expect(preview).toBeDefined();
 
@@ -177,7 +176,7 @@ describe('uiPreviewHarness', () => {
       detailMode: true,
     });
 
-    const previews = renderDetail(feed).filter(isDungeonTablePreview);
+    const previews = collectPreviews(renderDetail(feed));
 
     expect(previews.length).toBeGreaterThan(0);
     expect(previews.every(isTargetedDungeonTablePreview)).toBe(true);
@@ -192,10 +191,8 @@ describe('uiPreviewHarness', () => {
 
     feed = resolvePendingPreview(feed, 'doorLocation', 1);
 
-    const preview = renderDetail(feed).find(
-      (node): node is TargetedDungeonTablePreview =>
-        isTargetedDungeonTablePreview(node) &&
-        node.id.startsWith('periodicCheckDoorOnly')
+    const preview = collectTargetedPreviews(renderDetail(feed)).find((node) =>
+      node.id.startsWith('periodicCheckDoorOnly')
     );
     expect(preview).toBeDefined();
 
@@ -349,7 +346,7 @@ describe('uiPreviewHarness', () => {
     feed = resolvePendingPreview(feed, 'trickTrap', 19);
     feed = resolvePendingPreview(feed, 'illusionaryWallNature', 12);
 
-    const previewsBefore = renderDetail(feed).filter(isDungeonTablePreview);
+    const previewsBefore = collectPreviews(renderDetail(feed));
     const chamberPreviewBefore = previewsBefore.find(
       (node) => node.id.split(':')[0] === 'chamberDimensions'
     );
@@ -368,7 +365,7 @@ describe('uiPreviewHarness', () => {
     expect((contentsEvent?.event as any).autoResolved).toBe(true);
 
     const detail = renderDetail(feed);
-    const previews = detail.filter(isDungeonTablePreview);
+    const previews = collectPreviews(detail);
     const hasContentsPreview = previews.some((preview) => {
       const previewBase = preview.id.split(':')[0];
       const targetBase = getDungeonTablePreviewTargetKey(preview)
@@ -606,7 +603,7 @@ describe('uiPreviewHarness', () => {
     expect(pendingTables).toContain('monsterLevel:4');
     expect(pendingTables).not.toContain('monsterLevel:1');
 
-    const previews = renderDetail(feed).filter(isDungeonTablePreview);
+    const previews = collectPreviews(renderDetail(feed));
     expect(
       previews.some((preview) => preview.id === 'chamberRoomContents')
     ).toBe(false);
@@ -1299,8 +1296,5 @@ function findPreview(
   nodes: DungeonRenderNode[],
   id: string
 ): AnyDungeonTablePreview | undefined {
-  return nodes.find(
-    (node): node is AnyDungeonTablePreview =>
-      isDungeonTablePreview(node) && node.id === id
-  );
+  return findPreviewById(nodes, id);
 }

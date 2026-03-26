@@ -28,6 +28,10 @@ import { Gender } from '../../../../../dungeon/models/character/gender';
 import type { Attributes } from '../../../../../dungeon/models/attributes';
 import { formatPartyResult } from '../../../../../dungeon/helpers/party/formatPartyResult';
 import { Alignment } from '../../../../../dungeon/models/allowedAlignmentsByClass';
+import {
+  collectPreviews,
+  findPreviewById,
+} from '../../../../support/dungeon/previewUtils';
 
 const sampleAttributes = {
   STR: 15,
@@ -84,12 +88,6 @@ function isParagraph(
   return node.kind === 'paragraph';
 }
 
-function isPreview(
-  node: DungeonRenderNode
-): node is Extract<DungeonRenderNode, { kind: 'table-preview'; id: string }> {
-  return node.kind === 'table-preview';
-}
-
 function isCharacterParty(
   node: DungeonRenderNode
 ): node is Extract<DungeonRenderNode, { kind: 'character-party' }> {
@@ -137,10 +135,10 @@ describe('Monster describe helpers', () => {
       ],
     };
 
-    const detailPreviews = toDetailRender(outcome).filter(isPreview);
+    const detailPreviews = collectPreviews(toDetailRender(outcome));
     expect(detailPreviews.map((p) => p.id)).toContain('human');
 
-    const compactPreviews = toCompactRender(outcome).filter(isPreview);
+    const compactPreviews = collectPreviews(toCompactRender(outcome));
     expect(compactPreviews.map((p) => p.id)).toContain('human');
   });
 
@@ -156,10 +154,8 @@ describe('Monster describe helpers', () => {
       },
     };
 
-    const previews = renderDetailTree(outcome).filter(isPreview);
-    const monsterPreview = previews.find(
-      (preview) => preview.id === 'monsterOne'
-    );
+    const previews = renderDetailTree(outcome);
+    const monsterPreview = findPreviewById(previews, 'monsterOne');
     expect(monsterPreview).toBeDefined();
     expect(monsterPreview?.context).toEqual({ kind: 'wandering', level: 1 });
   });
@@ -194,9 +190,9 @@ describe('Monster describe helpers', () => {
       },
     };
 
-    const previews = renderDetailTree(outcome).filter(isPreview);
-    const monsterLevelPreview = previews.find(
-      (preview) => preview.id === 'monsterLevel:4'
+    const monsterLevelPreview = findPreviewById(
+      renderDetailTree(outcome),
+      'monsterLevel:4'
     );
     expect(monsterLevelPreview).toBeDefined();
     expect(monsterLevelPreview?.context).toEqual({

@@ -10,6 +10,7 @@ import {
   isParagraphNode,
   resolveSequenceWithRolls,
 } from '../../../../support/dungeon/detail-utils';
+import { collectPreviews } from '../../../../support/dungeon/previewUtils';
 
 describe('detail rendering with special passage', () => {
   it('allows inspecting the detail nodes for a special passage sequence', () => {
@@ -26,27 +27,27 @@ describe('detail rendering with special passage', () => {
     );
     const detailNodes = renderDetailTree(withWidth);
     expect(
-      detailNodes.filter(
-        (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
-      ).length
-    ).toBe(1);
+      collectPreviews(detailNodes).filter(
+        (node) => node.id === 'specialPassage'
+      )
+    ).toHaveLength(1);
   });
 
   it('captures special passage preview via staged dungeon steps', () => {
     const resolvedTree = resolveSequenceWithRolls([12, 1, 19], 1);
     const detailNodes = renderDetailTree(resolvedTree);
     expect(
-      detailNodes.filter(
-        (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
-      ).length
-    ).toBe(1);
+      collectPreviews(detailNodes).filter(
+        (node) => node.id === 'specialPassage'
+      )
+    ).toHaveLength(1);
   });
 
   it('verifies that specialPassage only shows up once in detail mode', () => {
     const resolvedTree = resolveSequenceWithRolls([12, 1, 19, 20], 1);
     const detailNodes = renderDetailTree(resolvedTree);
-    const specialPassagePreviews = detailNodes.filter(
-      (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
+    const specialPassagePreviews = collectPreviews(detailNodes).filter(
+      (node) => node.id === 'specialPassage'
     );
     expect(specialPassagePreviews).toHaveLength(1);
   });
@@ -54,12 +55,12 @@ describe('detail rendering with special passage', () => {
   it('verifies that proper output shows in deep chasms', () => {
     const resolvedTree = resolveSequenceWithRolls([12, 1, 19, 20, 6, 1], 1);
     const detailNodes = renderDetailTree(resolvedTree);
-    const chasmDepthPreviews = detailNodes.filter(
-      (node) => node.kind === 'table-preview' && node.id === 'chasmDepth'
+    const chasmDepthPreviews = collectPreviews(detailNodes).filter(
+      (node) => node.id === 'chasmDepth'
     );
     expect(chasmDepthPreviews).toHaveLength(1);
-    const chasmConstructionPreviews = detailNodes.filter(
-      (node) => node.kind === 'table-preview' && node.id === 'chasmConstruction'
+    const chasmConstructionPreviews = collectPreviews(detailNodes).filter(
+      (node) => node.id === 'chasmConstruction'
     );
     expect(chasmConstructionPreviews).toHaveLength(1);
     expect(
@@ -90,14 +91,9 @@ describe('detail rendering with special passage', () => {
   it('keeps gallery stair occurrence preview pending when passage end is rolled', () => {
     const resolvedTree = resolveSequenceWithRolls([12, 1, 19, 11, 5], 1);
     const detailNodes = renderDetailTree(resolvedTree);
-    const locationPreviewIndex = detailNodes.findIndex(
-      (node) =>
-        node.kind === 'table-preview' && node.id === 'galleryStairLocation'
-    );
-    const occurrencePreviewIndex = detailNodes.findIndex(
-      (node) =>
-        node.kind === 'table-preview' && node.id === 'galleryStairOccurrence'
-    );
+    const previewIds = collectPreviews(detailNodes).map((node) => node.id);
+    const locationPreviewIndex = previewIds.indexOf('galleryStairLocation');
+    const occurrencePreviewIndex = previewIds.indexOf('galleryStairOccurrence');
     expect(locationPreviewIndex).toBeGreaterThan(-1);
     expect(occurrencePreviewIndex).toBeGreaterThan(locationPreviewIndex);
   });

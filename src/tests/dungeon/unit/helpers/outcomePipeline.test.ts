@@ -1,4 +1,4 @@
-import type { DungeonRenderNode } from '../../../../types/dungeon';
+import { getDungeonTablePreviewTargetKey } from '../../../../types/dungeon';
 import { createOutcomeRenderSnapshot } from '../../../../dungeon/helpers/outcomePipeline';
 import {
   resolveTreasureSwordExtraordinaryPower,
@@ -17,17 +17,12 @@ import {
   type TreasureSwordExtraordinaryPowerResult,
 } from '../../../../dungeon/features/treasure/swords/swordsTables';
 import { TreasureSwordAlignment } from '../../../../dungeon/features/treasure/swords/swordsAlignmentTable';
-
-function collectPreviewIds(detailNodes: DungeonRenderNode[]): string[] {
-  return detailNodes
-    .filter(
-      (
-        node
-      ): node is Extract<typeof node, { kind: 'table-preview'; id: string }> =>
-        node.kind === 'table-preview'
-    )
-    .map((preview) => preview.id);
-}
+import {
+  collectPreviewIds,
+  collectPreviews,
+  hasPreviewId,
+  requirePreviewById,
+} from '../../../support/dungeon/previewUtils';
 
 describe('createOutcomeRenderSnapshot', () => {
   describe('treasure sword alignment propagation', () => {
@@ -207,50 +202,35 @@ describe('createOutcomeRenderSnapshot', () => {
       if (!snapshot) {
         throw new Error('Expected snapshot for unusual sword');
       }
-      const previews = snapshot.detail.filter(
-        (
-          node
-        ): node is Extract<
-          typeof node,
-          { kind: 'table-preview'; id: string }
-        > => node.kind === 'table-preview'
+      const previews = collectPreviews(snapshot.detail);
+      const specialPreview = requirePreviewById(
+        snapshot.detail,
+        'treasureSwordSpecialPurpose'
       );
-      const specialPreview = previews.find(
-        (preview) => preview.id === 'treasureSwordSpecialPurpose'
+      const powerPreviewInitial = requirePreviewById(
+        snapshot.detail,
+        'treasureSwordSpecialPurposePower'
       );
-      expect(specialPreview).toBeDefined();
-      const powerPreviewInitial = previews.find(
-        (preview) => preview.id === 'treasureSwordSpecialPurposePower'
-      );
-      expect(powerPreviewInitial).toBeDefined();
+      expect(previews).toContain(specialPreview);
+      expect(previews).toContain(powerPreviewInitial);
       const applied = applyOutcomeRoll({
         outcome,
-        tableId: specialPreview?.id ?? 'treasureSwordSpecialPurpose',
-        targetId: specialPreview?.targetId ?? specialPreview?.id,
+        tableId: specialPreview.id,
+        targetId: getDungeonTablePreviewTargetKey(specialPreview),
         roll: 17,
-        context: specialPreview?.context,
+        context: specialPreview.context,
       });
       if (!applied) {
         throw new Error('Expected resolved outcome');
       }
       const afterSnapshot = applied.snapshot;
-      const afterPreviews = afterSnapshot.detail.filter(
-        (
-          node
-        ): node is Extract<
-          typeof node,
-          { kind: 'table-preview'; id: string }
-        > => node.kind === 'table-preview'
-      );
       expect(
-        afterPreviews.some(
-          (preview) => preview.id === 'treasureSwordSpecialPurposePower'
-        )
+        hasPreviewId(afterSnapshot.detail, 'treasureSwordSpecialPurposePower')
       ).toBe(true);
-      const powerPreview = afterPreviews.find(
-        (preview) => preview.id === 'treasureSwordSpecialPurposePower'
+      const powerPreview = requirePreviewById(
+        afterSnapshot.detail,
+        'treasureSwordSpecialPurposePower'
       );
-      expect(powerPreview).toBeDefined();
       const purposeParagraph = afterSnapshot.detail.find(
         (
           node
@@ -262,27 +242,17 @@ describe('createOutcomeRenderSnapshot', () => {
 
       const powered = applyOutcomeRoll({
         outcome: applied.outcome,
-        tableId: powerPreview?.id ?? 'treasureSwordSpecialPurposePower',
-        targetId: powerPreview?.targetId ?? powerPreview?.id,
+        tableId: powerPreview.id,
+        targetId: getDungeonTablePreviewTargetKey(powerPreview),
         roll: 11,
-        context: powerPreview?.context,
+        context: powerPreview.context,
       });
       if (!powered) {
         throw new Error('Expected resolved power outcome');
       }
       const powerSnapshot = powered.snapshot;
-      const powerPreviews = powerSnapshot.detail.filter(
-        (
-          node
-        ): node is Extract<
-          typeof node,
-          { kind: 'table-preview'; id: string }
-        > => node.kind === 'table-preview'
-      );
       expect(
-        powerPreviews.some(
-          (preview) => preview.id === 'treasureSwordSpecialPurposePower'
-        )
+        hasPreviewId(powerSnapshot.detail, 'treasureSwordSpecialPurposePower')
       ).toBe(false);
       const powerParagraph = powerSnapshot.detail.find(
         (
@@ -305,71 +275,45 @@ describe('createOutcomeRenderSnapshot', () => {
       if (!baseSnapshot) {
         throw new Error('Expected snapshot for unusual sword outcome');
       }
-      const basePreviews = baseSnapshot.detail.filter(
-        (
-          node
-        ): node is Extract<
-          typeof node,
-          { kind: 'table-preview'; id: string }
-        > => node.kind === 'table-preview'
+      const powerPreview = requirePreviewById(
+        baseSnapshot.detail,
+        'treasureSwordSpecialPurposePower'
       );
-      const powerPreview = basePreviews.find(
-        (preview) => preview.id === 'treasureSwordSpecialPurposePower'
-      );
-      const specialPreview = basePreviews.find(
-        (preview) => preview.id === 'treasureSwordSpecialPurpose'
-      );
-      expect(powerPreview).toBeDefined();
-      expect(specialPreview).toBeDefined();
       const powerResolved = applyOutcomeRoll({
         outcome: baseOutcome,
-        tableId: powerPreview?.id ?? 'treasureSwordSpecialPurposePower',
-        targetId: powerPreview?.targetId ?? powerPreview?.id,
+        tableId: powerPreview.id,
+        targetId: getDungeonTablePreviewTargetKey(powerPreview),
         roll: 8,
-        context: powerPreview?.context,
+        context: powerPreview.context,
       });
       if (!powerResolved) {
         throw new Error('Expected power outcome resolution');
       }
-      const afterPowerPreviews = powerResolved.snapshot.detail.filter(
-        (
-          node
-        ): node is Extract<
-          typeof node,
-          { kind: 'table-preview'; id: string }
-        > => node.kind === 'table-preview'
-      );
       expect(
-        afterPowerPreviews.some(
-          (preview) => preview.id === 'treasureSwordSpecialPurposePower'
+        hasPreviewId(
+          powerResolved.snapshot.detail,
+          'treasureSwordSpecialPurposePower'
         )
       ).toBe(false);
-      const stillNeedsPurpose = afterPowerPreviews.find(
-        (preview) => preview.id === 'treasureSwordSpecialPurpose'
+      const stillNeedsPurpose = requirePreviewById(
+        powerResolved.snapshot.detail,
+        'treasureSwordSpecialPurpose'
       );
-      expect(stillNeedsPurpose).toBeDefined();
 
       const purposeResolved = applyOutcomeRoll({
         outcome: powerResolved.outcome,
-        tableId: stillNeedsPurpose?.id ?? 'treasureSwordSpecialPurpose',
-        targetId: stillNeedsPurpose?.targetId ?? stillNeedsPurpose?.id,
+        tableId: stillNeedsPurpose.id,
+        targetId: getDungeonTablePreviewTargetKey(stillNeedsPurpose),
         roll: 12,
-        context: stillNeedsPurpose?.context,
+        context: stillNeedsPurpose.context,
       });
       if (!purposeResolved) {
         throw new Error('Expected special purpose outcome');
       }
-      const finalPreviews = purposeResolved.snapshot.detail.filter(
-        (
-          node
-        ): node is Extract<
-          typeof node,
-          { kind: 'table-preview'; id: string }
-        > => node.kind === 'table-preview'
-      );
       expect(
-        finalPreviews.some(
-          (preview) => preview.id === 'treasureSwordSpecialPurposePower'
+        hasPreviewId(
+          purposeResolved.snapshot.detail,
+          'treasureSwordSpecialPurposePower'
         )
       ).toBe(false);
       const finalParagraphs = purposeResolved.snapshot.detail.filter(

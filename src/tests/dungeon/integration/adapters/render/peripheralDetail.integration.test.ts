@@ -9,17 +9,12 @@ import { resolveGasTrapEffect } from '../../../../../dungeon/features/hazards/ga
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import { ChamberRoomContents } from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
+import { collectPreviewIds } from '../../../../support/dungeon/previewUtils';
 
 function isParagraph(
   node: DungeonRenderNode
 ): node is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> {
   return node.kind === 'paragraph';
-}
-
-function isPreview(
-  node: DungeonRenderNode
-): node is Extract<DungeonRenderNode, { kind: 'table-preview' }> {
-  return node.kind === 'table-preview';
 }
 
 describe('Detail helpers for door chains and traps', () => {
@@ -67,10 +62,7 @@ describe('Detail helpers for door chains and traps', () => {
     const paragraphs = nodes.filter(isParagraph).map((p) => p.text);
     expect(paragraphs).toContain('There is an illusionary wall. ');
     expect(paragraphs).toContain('It conceals a chamber. ');
-    const previews = nodes.filter(isPreview);
-    expect(previews.map((preview) => preview.id)).toContain(
-      'illusionaryWallNature'
-    );
+    expect(collectPreviewIds(nodes)).toContain('illusionaryWallNature');
   });
 
   test('gas trap detail tree includes preview and resolved description', () => {
@@ -85,7 +77,6 @@ describe('Detail helpers for door chains and traps', () => {
     expect(paragraphs).toContain(
       'Poison: killed unless saving throw versus poison is made. '
     );
-    const previews = nodes.filter(isPreview);
-    expect(previews.map((preview) => preview.id)).toContain('gasTrapEffect');
+    expect(collectPreviewIds(nodes)).toContain('gasTrapEffect');
   });
 });

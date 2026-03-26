@@ -62,6 +62,10 @@ import {
 } from '../../../../../dungeon/features/treasure/swords/swordsTables';
 import type { DungeonRenderNode } from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
+import {
+  collectPreviews,
+  hasPreviewId,
+} from '../../../../support/dungeon/previewUtils';
 
 describe('passage contents', () => {
   it('shows empty chamber contents once resolved', () => {
@@ -1469,9 +1473,8 @@ describe('passage contents', () => {
     expect(swordUnusualEvent.event.result.communication).toBe('semi-empathy');
 
     const detailNodes = renderDetail(feed);
-    const swordPreview = detailNodes.find(
-      (node): node is Extract<DungeonRenderNode, { kind: 'table-preview' }> =>
-        node.kind === 'table-preview' && node.id.startsWith('treasureSwords')
+    const swordPreview = collectPreviews(detailNodes).find((node) =>
+      node.id.startsWith('treasureSwords')
     );
     expect(swordPreview).toBeDefined();
 
@@ -1546,10 +1549,8 @@ describe('passage contents', () => {
     expect(miscWeaponEvent.event.result.quantity).toBe(2);
 
     const detailNodes = renderDetail(feed);
-    const miscPreview = detailNodes.find(
-      (node): node is Extract<DungeonRenderNode, { kind: 'table-preview' }> =>
-        node.kind === 'table-preview' &&
-        node.id.startsWith('treasureMiscWeapons')
+    const miscPreview = collectPreviews(detailNodes).find((node) =>
+      node.id.startsWith('treasureMiscWeapons')
     );
     expect(miscPreview).toBeDefined();
 
@@ -2246,13 +2247,9 @@ describe('passage contents', () => {
     feed = resolvePreview(feed, miscTarget, 30);
 
     const detailNodes = renderDetail(feed);
-    expect(
-      detailNodes.some(
-        (node) =>
-          node.kind === 'table-preview' &&
-          node.id === 'treasureNecklaceOfPrayerBeads'
-      )
-    ).toBe(false);
+    expect(hasPreviewId(detailNodes, 'treasureNecklaceOfPrayerBeads')).toBe(
+      false
+    );
 
     const detailText = detailNodes
       .filter(

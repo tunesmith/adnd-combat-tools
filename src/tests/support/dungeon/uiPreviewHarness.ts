@@ -11,15 +11,16 @@ import type {
   DungeonRenderNode,
   TargetedDungeonTablePreview,
 } from '../../../types/dungeon';
-import {
-  getDungeonTablePreviewTargetKey,
-  isDungeonTablePreview,
-  isTargetedDungeonTablePreview,
-} from '../../../types/dungeon';
+import { getDungeonTablePreviewTargetKey } from '../../../types/dungeon';
 import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../../../dungeon/domain/outcome';
+import {
+  collectPreviews,
+  collectTargetedPreviews,
+  findTargetedPreviewByRef,
+} from './previewUtils';
 
 type FeedSnapshot = {
   id: string;
@@ -141,8 +142,7 @@ export function renderDetail(feed: FeedSnapshot): DungeonRenderNode[] {
 
 export function listPendingPreviewTargets(feed: FeedSnapshot): string[] {
   const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
-  return renderDetail(feed)
-    .filter(isDungeonTablePreview)
+  return collectPreviews(renderDetail(feed))
     .map(getDungeonTablePreviewTargetKey)
     .filter((id) => pendingTargets.has(id));
 }
@@ -170,18 +170,14 @@ function findPreview(
   nodes: DungeonRenderNode[],
   id: string
 ): TargetedDungeonTablePreview | undefined {
-  return nodes.find(
-    (node): node is TargetedDungeonTablePreview =>
-      isTargetedDungeonTablePreview(node) &&
-      (node.id === id || node.targetId === id)
-  );
+  return findTargetedPreviewByRef(nodes, id);
 }
 
 function getPendingPreviews(feed: FeedSnapshot): TargetedDungeonTablePreview[] {
   const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
-  return renderDetail(feed)
-    .filter(isTargetedDungeonTablePreview)
-    .filter((preview) => pendingTargets.has(preview.targetId));
+  return collectTargetedPreviews(renderDetail(feed)).filter((preview) =>
+    pendingTargets.has(preview.targetId)
+  );
 }
 
 function collectPendingTargets(node: OutcomeEventNode): string[] {

@@ -11,6 +11,10 @@ import {
   findEventByKind,
   resolveSequenceWithRolls,
 } from '../../../support/dungeon/detail-utils';
+import {
+  collectPreviews,
+  findPreviewById,
+} from '../../../support/dungeon/previewUtils';
 
 describe('reroll updates', () => {
   it('replaces passage width text when rerolled', () => {
@@ -39,8 +43,8 @@ describe('reroll updates', () => {
         (node) => node.kind === 'paragraph' && node.text.includes("30' wide")
       )
     ).toHaveLength(1);
-    const widthPreviews = detailNodes.filter(
-      (node) => node.kind === 'table-preview' && node.id === 'passageWidth'
+    const widthPreviews = collectPreviews(detailNodes).filter(
+      (node) => node.id === 'passageWidth'
     );
     expect(widthPreviews).toHaveLength(1);
     expect(countPendingNodes(rerolledTree)).toBe(0);
@@ -117,10 +121,7 @@ describe('reroll updates', () => {
           node.text.includes('columns down the center')
       )
     ).toBe(false);
-    const previews = detailNodes.filter(
-      (node) => node.kind === 'table-preview' && node.id === 'specialPassage'
-    );
-    expect(previews).toHaveLength(1);
+    expect(findPreviewById(detailNodes, 'specialPassage')).toBeDefined();
     expect(countPendingNodes(rerolledTree)).toBeGreaterThan(0);
   });
 });

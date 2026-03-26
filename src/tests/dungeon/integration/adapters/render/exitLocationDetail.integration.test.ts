@@ -12,6 +12,11 @@ import type {
   PendingRoll,
 } from '../../../../../dungeon/domain/outcome';
 import { readTableContext } from '../../../../../dungeon/helpers/tableContext';
+import {
+  collectPreviews,
+  findPreviewById,
+  hasPreviewId,
+} from '../../../../support/dungeon/previewUtils';
 
 function asEvent(node: DungeonOutcomeNode): OutcomeEventNode {
   if (node.type !== 'event') throw new Error('Expected event node');
@@ -59,13 +64,8 @@ describe('exit location detail rendering', () => {
       textNodes.some((p) => p.text.includes('Door 1') && p.text.includes(':'))
     ).toBe(true);
     expect(textNodes.some((p) => p.text.includes('(or'))).toBe(false);
-    const previewNodes = nodes.filter(
-      (node): node is Extract<typeof node, { kind: 'table-preview' }> =>
-        node.kind === 'table-preview'
-    );
-    const doorPreview = previewNodes.find(
-      (preview) => preview.id === 'doorExitLocation'
-    );
+    const previewNodes = collectPreviews(nodes);
+    const doorPreview = findPreviewById(nodes, 'doorExitLocation');
     expect(doorPreview?.context).toEqual({
       kind: 'exit',
       exitType: 'door',
@@ -73,9 +73,9 @@ describe('exit location detail rendering', () => {
       total: door.event.total,
       origin: door.event.origin,
     });
-    expect(
-      previewNodes.some((preview) => preview.id === 'exitAlternative')
-    ).toBe(true);
+    expect(previewNodes).toContainEqual(
+      expect.objectContaining({ id: 'exitAlternative' })
+    );
     const altEventNode = resolveExitAlternative({
       roll: 4,
       context: { exitType: 'door' },
@@ -200,13 +200,7 @@ describe('exit location detail rendering', () => {
         )
       )
     ).toBe(false);
-    const previewNodes = nodes.filter(
-      (node): node is Extract<typeof node, { kind: 'table-preview' }> =>
-        node.kind === 'table-preview'
-    );
-    const passagePreview = previewNodes.find(
-      (preview) => preview.id === 'passageExitLocation'
-    );
+    const passagePreview = findPreviewById(nodes, 'passageExitLocation');
     expect(passagePreview?.context).toEqual({
       kind: 'exit',
       exitType: 'passage',
@@ -214,17 +208,13 @@ describe('exit location detail rendering', () => {
       total: passage.event.total,
       origin: passage.event.origin,
     });
-    const directionPreview = previewNodes.find(
-      (preview) => preview.id === 'exitDirection'
-    );
+    const directionPreview = findPreviewById(nodes, 'exitDirection');
     expect(directionPreview?.context).toEqual({
       kind: 'exitDirection',
       index: resolvedDirection.event.index,
       total: resolvedDirection.event.total,
       origin: resolvedDirection.event.origin,
     });
-    expect(
-      previewNodes.some((preview) => preview.id === 'exitAlternative')
-    ).toBe(true);
+    expect(hasPreviewId(nodes, 'exitAlternative')).toBe(true);
   });
 });
