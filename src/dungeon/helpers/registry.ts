@@ -415,125 +415,34 @@ export function resolveViaRegistry<T extends FeedLike>(
     return true;
   }
 
-  const keyVariants = collectKeyVariants(targetKey, tp.id);
   let resolved = false;
-  const extraKeyVariants = new Set<string>();
 
   if (setFeed) {
     setFeed((prev) =>
-      withDungeonRandomSession(session, () =>
-        prev.map((fi) =>
-          fi.id !== feedItemId
-            ? fi
-            : (() => {
-                const existingOutcome = fi.outcome;
-                if (existingOutcome) {
-                  const applied = applyOutcomeRoll({
-                    outcome: existingOutcome,
-                    tableId: tp.id,
-                    targetId: targetKey,
-                    roll: usedRoll,
-                    context: tp.context,
-                    session,
-                  });
-                  if (applied) {
-                    resolved = true;
-                    const { outcome, snapshot } = applied;
-                    const previewTargets = collectPreviewTargetsForTable(
-                      snapshot.detail,
-                      tp.id
-                    ).filter((key) => key === targetKey);
-                    for (const key of previewTargets) extraKeyVariants.add(key);
-                    if (setCollapsed) {
-                      setCollapsed((prev) => {
-                        const next = { ...prev };
-                        for (const k of keyVariants)
-                          next[`${feedItemId}:${k}`] = true;
-                        for (const k of previewTargets)
-                          next[`${feedItemId}:${k}`] = true;
-                        return next;
-                      });
-                    }
-                    if (setResolved) {
-                      setResolved((prev) => {
-                        const next = { ...prev };
-                        for (const k of keyVariants)
-                          next[`${feedItemId}:${k}`] = true;
-                        for (const k of previewTargets)
-                          next[`${feedItemId}:${k}`] = true;
-                        return next;
-                      });
-                    }
-                    return {
-                      ...fi,
-                      outcome,
-                      pendingCount: snapshot.pendingCount,
-                      messages: snapshot.detail,
-                      renderCache: {
-                        ...fi.renderCache,
-                        detail: snapshot.detail,
-                        compact: snapshot.compact,
-                      },
-                    } as T;
-                  }
-                }
-                const tableResult = resolveRegistryTable({
-                  tableId: tp.id,
-                  roll: usedRoll,
-                  context: tp.context,
-                  outcome: fi.outcome,
-                  targetId: targetKey,
-                });
-                if (!tableResult) return fi;
-                resolved = true;
-                const previewTargets = collectPreviewTargetsForTable(
-                  tableResult.messages,
-                  tp.id
-                ).filter((key) => key === targetKey);
-                for (const key of previewTargets) extraKeyVariants.add(key);
-                if (setCollapsed) {
-                  setCollapsed((prev) => {
-                    const next = { ...prev };
-                    for (const k of keyVariants)
-                      next[`${feedItemId}:${k}`] = true;
-                    for (const k of previewTargets)
-                      next[`${feedItemId}:${k}`] = true;
-                    return next;
-                  });
-                }
-                if (setResolved) {
-                  setResolved((prev) => {
-                    const next = { ...prev };
-                    for (const k of keyVariants)
-                      next[`${feedItemId}:${k}`] = true;
-                    for (const k of previewTargets)
-                      next[`${feedItemId}:${k}`] = true;
-                    return next;
-                  });
-                }
-                return updateResolvedBlock(
-                  fi,
-                  feedItemId,
-                  targetKey,
-                  tableResult.messages,
-                  heading
-                );
-              })()
-        )
-      )
+      prev.map((fi) => {
+        if (fi.id !== feedItemId) return fi;
+        const resolution = buildFeedResolution({
+          feedItem: fi,
+          feedItemId,
+          preview: tp,
+          usedRoll,
+          targetKey,
+          heading,
+          session,
+        });
+        if (!resolution) return fi;
+        resolved = true;
+        markResolvedKeys(
+          feedItemId,
+          resolution.keyVariants,
+          setCollapsed,
+          setResolved
+        );
+        return resolution.nextFeedItem;
+      })
     );
   }
   if (!resolved) return false;
-  const combinedKeyVariantSet = new Set<string>(keyVariants);
-  extraKeyVariants.forEach((key) => {
-    combinedKeyVariantSet.add(key);
-  });
-  markResolvedKeys(
-    feedItemId,
-    Array.from(combinedKeyVariantSet),
-    setCollapsed,
-    setResolved
-  );
   return true;
 }
 

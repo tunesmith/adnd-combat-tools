@@ -30,6 +30,12 @@ import {
   TreasureSwordUnusual,
 } from '../../../../dungeon/features/treasure/swords/swordsTables';
 
+function applyUpdater<T>(current: T, updater: T | ((prev: T) => T)): T {
+  return typeof updater === 'function'
+    ? (updater as (prev: T) => T)(current)
+    : updater;
+}
+
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
     let feed = createFeedSnapshot({
@@ -54,7 +60,7 @@ describe('uiPreviewHarness', () => {
     ]);
   });
 
-  test('UI collapse maps update for door continuation resolution', () => {
+  test('UI collapse maps update identically with and without current feed item', () => {
     let feed = createFeedSnapshot({
       action: 'passage',
       roll: 3,
@@ -82,15 +88,15 @@ describe('uiPreviewHarness', () => {
       pendingCount?: number;
     };
 
-    let state: FeedState[] = [
-      {
-        id: feed.id,
-        messages: feed.messages,
-        outcome: feed.outcome,
-        renderCache: feed.renderCache,
-        pendingCount: feed.pendingCount,
-      },
-    ];
+    const initialFeedState: FeedState = {
+      id: feed.id,
+      messages: feed.messages,
+      outcome: feed.outcome,
+      renderCache: feed.renderCache,
+      pendingCount: feed.pendingCount,
+    };
+
+    let state: FeedState[] = [initialFeedState];
 
     let collapsed: Record<string, boolean> = {};
     let resolvedMap: Record<string, boolean> = {};
@@ -99,43 +105,63 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected periodicCheckDoorOnly preview');
     }
 
-    const result = resolveViaRegistry(
-      preview,
-      feed.id,
-      3,
-      (updater) => {
-        state =
-          typeof updater === 'function'
-            ? (updater as (prev: FeedState[]) => FeedState[])(state)
-            : (updater as FeedState[]);
-      },
-      (updater) => {
-        collapsed =
-          typeof updater === 'function'
-            ? (
-                updater as (
-                  prev: Record<string, boolean>
-                ) => Record<string, boolean>
-              )(collapsed)
-            : (updater as Record<string, boolean>);
-      },
-      (updater) => {
-        resolvedMap =
-          typeof updater === 'function'
-            ? (
-                updater as (
-                  prev: Record<string, boolean>
-                ) => Record<string, boolean>
-              )(resolvedMap)
-            : (updater as Record<string, boolean>);
-      },
-      state[0]
-    );
+    const runResolution = (currentFeedItem?: FeedState) => {
+      state = [initialFeedState];
+      collapsed = {};
+      resolvedMap = {};
 
-    expect(result).toBe(true);
+      const result = resolveViaRegistry(
+        preview,
+        feed.id,
+        3,
+        (updater) => {
+          state = applyUpdater(
+            state,
+            updater as FeedState[] | ((prev: FeedState[]) => FeedState[])
+          );
+        },
+        (updater) => {
+          collapsed = applyUpdater(
+            collapsed,
+            updater as
+              | Record<string, boolean>
+              | ((prev: Record<string, boolean>) => Record<string, boolean>)
+          );
+        },
+        (updater) => {
+          resolvedMap = applyUpdater(
+            resolvedMap,
+            updater as
+              | Record<string, boolean>
+              | ((prev: Record<string, boolean>) => Record<string, boolean>)
+          );
+        },
+        currentFeedItem
+      );
+
+      return {
+        result,
+        state,
+        collapsed,
+        resolvedMap,
+      };
+    };
+
+    const withCurrentFeedItem = runResolution(initialFeedState);
+    const withoutCurrentFeedItem = runResolution();
+
+    expect(withCurrentFeedItem.result).toBe(true);
+    expect(withoutCurrentFeedItem.result).toBe(true);
     const keyBase = `${feed.id}:${preview.targetId ?? preview.id}`;
-    expect(collapsed[keyBase]).toBe(true);
-    expect(resolvedMap[keyBase]).toBe(true);
+    expect(withCurrentFeedItem.state).toEqual(withoutCurrentFeedItem.state);
+    expect(withCurrentFeedItem.collapsed).toEqual(
+      withoutCurrentFeedItem.collapsed
+    );
+    expect(withCurrentFeedItem.resolvedMap).toEqual(
+      withoutCurrentFeedItem.resolvedMap
+    );
+    expect(withCurrentFeedItem.collapsed[keyBase]).toBe(true);
+    expect(withCurrentFeedItem.resolvedMap[keyBase]).toBe(true);
   });
 
   test('captures chamber unusual size reroll behaviour (current UI)', () => {
