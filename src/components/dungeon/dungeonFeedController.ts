@@ -10,8 +10,8 @@ import { passageMessages } from '../../dungeon/services/passageMessages';
 import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
 import type {
   DungeonAction,
-  DungeonRenderNode,
   DungeonRollSource,
+  RootDungeonTablePreview,
   TargetedDungeonTablePreview,
 } from '../../types/dungeon';
 import type { FeedItem, PreviewResolutionEntry } from './feedTypes';
@@ -19,16 +19,22 @@ import type { FeedItem, PreviewResolutionEntry } from './feedTypes';
 export function getRootPreviewNodes(
   action: DungeonAction,
   dungeonLevel: number
-): DungeonRenderNode[] {
+): RootDungeonTablePreview[] {
   if (action === 'door') {
     const { messages } = doorBeyondMessages({ detailMode: true });
-    return messages.filter((message) => message.kind === 'table-preview');
+    return messages.filter(
+      (message): message is RootDungeonTablePreview =>
+        message.kind === 'table-preview'
+    );
   }
   const { messages } = passageMessages({
     detailMode: true,
     level: dungeonLevel,
   });
-  return messages.filter((message) => message.kind === 'table-preview');
+  return messages.filter(
+    (message): message is RootDungeonTablePreview =>
+      message.kind === 'table-preview'
+  );
 }
 
 export function collectPendingTargetIds(

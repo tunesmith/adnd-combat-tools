@@ -7,9 +7,9 @@ import {
 } from '../../../dungeon/helpers/renderCache';
 import { resolveViaRegistry } from '../../../dungeon/helpers/registry';
 import type {
+  AnyDungeonTablePreview,
   DungeonAction,
   DungeonRenderNode,
-  DungeonTablePreview,
   TargetedDungeonTablePreview,
 } from '../../../types/dungeon';
 import type {
@@ -141,7 +141,7 @@ export function renderDetail(feed: FeedSnapshot): DungeonRenderNode[] {
 export function listPendingPreviewTargets(feed: FeedSnapshot): string[] {
   const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
   return renderDetail(feed)
-    .filter((n): n is DungeonTablePreview => n.kind === 'table-preview')
+    .filter((n): n is AnyDungeonTablePreview => n.kind === 'table-preview')
     .map((preview) =>
       preview.targetId && preview.targetId.length > 0
         ? preview.targetId

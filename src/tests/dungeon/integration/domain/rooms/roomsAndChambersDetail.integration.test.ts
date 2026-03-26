@@ -11,7 +11,7 @@ import {
 } from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
-import type { DungeonTablePreview } from '../../../../../types/dungeon';
+import type { AnyDungeonTablePreview } from '../../../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
@@ -42,7 +42,7 @@ describe('Room and chamber detail previews', () => {
     const detailNodes = detailNodesFor(resolveRoomDimensions({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'numberOfExits')).toBe(true);
   });
 
@@ -51,7 +51,7 @@ describe('Room and chamber detail previews', () => {
     const detailNodes = detailNodesFor(resolveChamberDimensions({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'numberOfExits')).toBe(true);
   });
 
@@ -60,7 +60,7 @@ describe('Room and chamber detail previews', () => {
     const detailNodes = detailNodesFor(resolveChamberDimensions({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     const ids = previews.map((p) => p.id);
     expect(ids.includes('unusualShape')).toBe(true);
     expect(
@@ -107,7 +107,7 @@ describe('Room and chamber detail previews', () => {
 
     const detailNodes = renderDetailTree(normalized);
     const previews = detailNodes.filter(
-      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
     );
     const previewIds = previews.map(
       (preview) => preview.targetId ?? preview.id

@@ -1,10 +1,10 @@
 import { runDungeonStep } from '../../../dungeon/services/adapters';
 import * as dungeonLookup from '../../../dungeon/helpers/dungeonLookup';
 import type {
+  AnyDungeonTablePreview,
   DungeonAction,
   DungeonRenderNode,
   DungeonRollTrace,
-  DungeonTablePreview,
   RollTraceItem,
 } from '../../../types/dungeon';
 import type { DungeonOutcomeNode } from '../../../dungeon/domain/outcome';
@@ -98,8 +98,8 @@ interface RenderSnapshot {
   bulletLists(): string[][];
   previewIds(): string[];
   previewTitles(): string[];
-  previews(): DungeonTablePreview[];
-  findPreview(id: string): DungeonTablePreview | undefined;
+  previews(): AnyDungeonTablePreview[];
+  findPreview(id: string): AnyDungeonTablePreview | undefined;
   rollTrace(): DungeonRollTrace | undefined;
 }
 
@@ -568,7 +568,7 @@ function createSnapshot(nodes: DungeonRenderNode[]): RenderSnapshot {
     )
     .map((n) => [...n.items]);
   const previews = cloned.filter(
-    (n): n is DungeonTablePreview => n.kind === 'table-preview'
+    (n): n is AnyDungeonTablePreview => n.kind === 'table-preview'
   );
   const previewMap = new Map(previews.map((p) => [p.id, p]));
   const trace = cloned.find(
@@ -731,7 +731,7 @@ function freezePartyCharacterSummary(character: PartyCharacterSummary): void {
   Object.freeze(character);
 }
 
-function clonePreview(preview: DungeonTablePreview): DungeonTablePreview {
+function clonePreview(preview: AnyDungeonTablePreview): AnyDungeonTablePreview {
   return {
     kind: 'table-preview',
     id: preview.id,

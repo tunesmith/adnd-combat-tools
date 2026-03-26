@@ -148,10 +148,9 @@ type TablePreviewEntry = {
   label: string;
 };
 
-export type DungeonTablePreview = {
+type DungeonTablePreviewBase = {
   kind: 'table-preview';
   id: string; // stable identifier, e.g., table name
-  targetId?: string; // unique path for this occurrence in the outcome tree
   title: string;
   sides: number;
   entries: TablePreviewEntry[];
@@ -159,9 +158,19 @@ export type DungeonTablePreview = {
   autoCollapse?: boolean;
 };
 
-export type TargetedDungeonTablePreview = DungeonTablePreview & {
+export type DungeonTablePreview = DungeonTablePreviewBase & {
+  targetId?: never;
+};
+
+export type RootDungeonTablePreview = DungeonTablePreview;
+
+export type TargetedDungeonTablePreview = DungeonTablePreviewBase & {
   targetId: string;
 };
+
+export type AnyDungeonTablePreview =
+  | RootDungeonTablePreview
+  | TargetedDungeonTablePreview;
 
 export type TableContext =
   | { kind: 'exits'; length: number; width: number; isRoom: boolean }
@@ -268,7 +277,7 @@ export type TableContext =
       alignmentReady?: boolean;
     };
 
-export type DungeonRenderNode = DungeonRenderable | DungeonTablePreview;
+export type DungeonRenderNode = DungeonRenderable | AnyDungeonTablePreview;
 
 export type DungeonStep = {
   action: DungeonAction;

@@ -5,7 +5,7 @@ import {
 import { resolveStairs } from '../../../../../dungeon/features/navigation/exit/stairsResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
-import type { DungeonTablePreview } from '../../../../../types/dungeon';
+import type { AnyDungeonTablePreview } from '../../../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
@@ -30,7 +30,7 @@ describe('Stairs detail previews', () => {
     const detailNodes = detailNodesFor(resolveStairs({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'egress:one')).toBe(true);
   });
 
@@ -39,7 +39,7 @@ describe('Stairs detail previews', () => {
     const detailNodes = detailNodesFor(resolveStairs({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'egress:two')).toBe(true);
   });
 
@@ -48,7 +48,7 @@ describe('Stairs detail previews', () => {
     const detailNodes = detailNodesFor(resolveStairs({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'egress:three')).toBe(true);
   });
 
@@ -57,7 +57,7 @@ describe('Stairs detail previews', () => {
     const detailNodes = detailNodesFor(resolveStairs({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'chute')).toBe(true);
   });
 
@@ -66,7 +66,7 @@ describe('Stairs detail previews', () => {
     const detailNodes = detailNodesFor(resolveStairs({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'chute')).toBe(true);
   });
 
@@ -75,7 +75,7 @@ describe('Stairs detail previews', () => {
     const detailNodes = detailNodesFor(resolveStairs({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'chamberDimensions')).toBe(true);
   });
 });

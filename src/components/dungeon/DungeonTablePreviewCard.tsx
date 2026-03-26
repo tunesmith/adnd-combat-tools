@@ -1,8 +1,8 @@
-import type { DungeonTablePreview } from '../../types/dungeon';
+import type { AnyDungeonTablePreview } from '../../types/dungeon';
 import styles from './DungeonTablePreviewCard.module.css';
 
 type DungeonTablePreviewCardProps = {
-  preview: DungeonTablePreview;
+  preview: AnyDungeonTablePreview;
   enablePreviewControls?: boolean;
   statusLabelOverride?: string;
   statusToneOverride?: 'pending' | 'resolved' | 'reference';

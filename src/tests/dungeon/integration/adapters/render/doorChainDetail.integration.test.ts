@@ -3,14 +3,14 @@ import { resolvePeriodicCheck } from '../../../../../dungeon/features/navigation
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { resolveSequenceWithRolls } from '../../../../support/dungeon/detail-utils';
 import type {
+  AnyDungeonTablePreview,
   DungeonRenderNode,
-  DungeonTablePreview,
 } from '../../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 
-function extractPreviews(nodes: DungeonRenderNode[]): DungeonTablePreview[] {
+function extractPreviews(nodes: DungeonRenderNode[]): AnyDungeonTablePreview[] {
   return nodes.filter(
-    (node): node is DungeonTablePreview => node.kind === 'table-preview'
+    (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
   );
 }
 

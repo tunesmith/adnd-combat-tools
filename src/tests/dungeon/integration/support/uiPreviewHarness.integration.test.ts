@@ -1,6 +1,6 @@
 import type {
+  AnyDungeonTablePreview,
   DungeonRenderNode,
-  DungeonTablePreview,
   TargetedDungeonTablePreview,
 } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
@@ -175,7 +175,7 @@ describe('uiPreviewHarness', () => {
     });
 
     const previews = renderDetail(feed).filter(
-      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
     );
 
     expect(previews.length).toBeGreaterThan(0);
@@ -356,7 +356,7 @@ describe('uiPreviewHarness', () => {
     feed = resolvePendingPreview(feed, 'illusionaryWallNature', 12);
 
     const previewsBefore = renderDetail(feed).filter(
-      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
     );
     const chamberPreviewBefore = previewsBefore.find(
       (node) => node.id.split(':')[0] === 'chamberDimensions'
@@ -377,7 +377,7 @@ describe('uiPreviewHarness', () => {
 
     const detail = renderDetail(feed);
     const previews = detail.filter(
-      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
     );
     const hasContentsPreview = previews.some((preview) => {
       const previewBase = preview.id.split(':')[0];
@@ -617,7 +617,7 @@ describe('uiPreviewHarness', () => {
     expect(pendingTables).not.toContain('monsterLevel:1');
 
     const previews = renderDetail(feed).filter(
-      (node): node is DungeonTablePreview => node.kind === 'table-preview'
+      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
     );
     expect(
       previews.some((preview) => preview.id === 'chamberRoomContents')
@@ -1266,9 +1266,9 @@ function collectPendingTables(node: OutcomeEventNode | undefined): string[] {
 function findPreview(
   nodes: DungeonRenderNode[],
   id: string
-): DungeonTablePreview | undefined {
+): AnyDungeonTablePreview | undefined {
   return nodes.find(
-    (node): node is DungeonTablePreview =>
+    (node): node is AnyDungeonTablePreview =>
       node.kind === 'table-preview' && node.id === id
   );
 }

@@ -5,7 +5,7 @@ import {
 import { resolveSpecialPassage } from '../../../../../dungeon/features/navigation/specialPassage/specialPassageResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
-import type { DungeonTablePreview } from '../../../../../types/dungeon';
+import type { AnyDungeonTablePreview } from '../../../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
@@ -30,7 +30,7 @@ describe('Special passage detail previews', () => {
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'galleryStairLocation')).toBe(true);
   });
 
@@ -39,7 +39,7 @@ describe('Special passage detail previews', () => {
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'streamConstruction')).toBe(true);
   });
 
@@ -48,7 +48,7 @@ describe('Special passage detail previews', () => {
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     expect(previews.some((p) => p.id === 'riverConstruction')).toBe(true);
   });
 
@@ -57,7 +57,7 @@ describe('Special passage detail previews', () => {
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
     const previews = detailNodes.filter(
       (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    ) as AnyDungeonTablePreview[];
     const ids = previews.map((p) => p.id);
     expect(ids.includes('chasmDepth')).toBe(true);
     expect(ids.includes('chasmConstruction')).toBe(true);

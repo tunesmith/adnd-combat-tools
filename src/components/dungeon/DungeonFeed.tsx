@@ -14,6 +14,7 @@ import type {
   DungeonRenderNode,
   DungeonRollTrace,
   RollTraceItem,
+  RootDungeonTablePreview,
   TargetedDungeonTablePreview,
 } from '../../types/dungeon';
 import { selectMessagesForMode } from '../../dungeon/helpers/renderCache';
@@ -21,7 +22,7 @@ import styles from '../../pages/dungeon/dungeon.module.css';
 
 type DungeonFeedProps = {
   detailMode: boolean;
-  rootPreviewNodes: DungeonRenderNode[];
+  rootPreviewNodes: RootDungeonTablePreview[];
   feed: FeedItem[];
   setDetailMode: Dispatch<SetStateAction<boolean>>;
   previewController: PreviewInteractionController;
@@ -191,7 +192,7 @@ function renderNode(
       );
     case 'table-preview': {
       const targetedPreview: TargetedDungeonTablePreview | undefined =
-        node.targetId ? (node as TargetedDungeonTablePreview) : undefined;
+        node.targetId ? node : undefined;
       const targetKey = node.targetId ?? node.id;
       const keyId = `${feedItemId}:${targetKey}`;
       const isPending = pendingTargetIds?.has(targetKey) ?? false;

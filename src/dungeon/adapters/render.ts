@@ -5,9 +5,11 @@ import type {
   PendingRoll,
 } from '../domain/outcome';
 import type {
+  AnyDungeonTablePreview,
   DungeonRenderNode,
   DungeonTablePreview,
   TableContext,
+  TargetedDungeonTablePreview,
 } from '../../types/dungeon';
 import { PASSAGE_CONTINUES_SUFFIX } from '../features/navigation/entry/entryRender';
 import {
@@ -88,14 +90,14 @@ const EVENT_PREVIEW_BUILDERS: Partial<
 Object.assign(EVENT_PREVIEW_BUILDERS, ALL_EVENT_PREVIEW_BUILDERS);
 
 function withTargetId(
-  preview: DungeonTablePreview,
+  preview: AnyDungeonTablePreview,
   fallback: string
-): DungeonTablePreview {
+): TargetedDungeonTablePreview {
   if (preview.targetId && preview.targetId.length > 0) return preview;
   return { ...preview, targetId: fallback };
 }
 
-function previewKey(preview: DungeonTablePreview): string {
+function previewKey(preview: AnyDungeonTablePreview): string {
   return preview.targetId && preview.targetId.length > 0
     ? preview.targetId
     : preview.id;

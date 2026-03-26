@@ -17,7 +17,7 @@ import type {
 import type { OutcomeEventNode } from '../../../dungeon/domain/outcome';
 import type {
   DungeonRenderNode,
-  DungeonTablePreview,
+  TargetedDungeonTablePreview,
 } from '../../../types/dungeon';
 import type { PreviewInteractionController } from '../../../components/dungeon/feedTypes';
 
@@ -137,7 +137,7 @@ describe('character party compact rendering', () => {
   });
 
   test('table previews render as resolved when they are not pending in the outcome tree', () => {
-    const preview: DungeonTablePreview = {
+    const preview: TargetedDungeonTablePreview = {
       kind: 'table-preview',
       id: 'doorLocation:0',
       targetId: 'root.periodicCheck.0.doorLocation:0',
