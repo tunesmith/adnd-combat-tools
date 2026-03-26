@@ -7,6 +7,10 @@ import type {
   DungeonRollTrace,
   RollTraceItem,
 } from '../../../types/dungeon';
+import {
+  isDungeonTablePreview,
+  isTargetedDungeonTablePreview,
+} from '../../../types/dungeon';
 import type { DungeonOutcomeNode } from '../../../dungeon/domain/outcome';
 import { normalizeOutcomeTree } from '../../../dungeon/helpers/outcomeTree';
 import {
@@ -567,9 +571,7 @@ function createSnapshot(nodes: DungeonRenderNode[]): RenderSnapshot {
         n.kind === 'bullet-list'
     )
     .map((n) => [...n.items]);
-  const previews = cloned.filter(
-    (n): n is AnyDungeonTablePreview => n.kind === 'table-preview'
-  );
+  const previews = cloned.filter(isDungeonTablePreview);
   const previewMap = new Map(previews.map((p) => [p.id, p]));
   const trace = cloned.find(
     (n): n is DungeonRollTrace => n.kind === 'roll-trace'
@@ -732,15 +734,17 @@ function freezePartyCharacterSummary(character: PartyCharacterSummary): void {
 }
 
 function clonePreview(preview: AnyDungeonTablePreview): AnyDungeonTablePreview {
-  return {
-    kind: 'table-preview',
+  const clone = {
+    kind: 'table-preview' as const,
     id: preview.id,
-    targetId: preview.targetId,
     title: preview.title,
     sides: preview.sides,
     entries: preview.entries.map((entry) => ({ ...entry })),
     context: preview.context ? cloneContext(preview.context) : undefined,
   };
+  return isTargetedDungeonTablePreview(preview)
+    ? { ...clone, targetId: preview.targetId }
+    : clone;
 }
 
 function cloneContext(context: TableContext): TableContext {

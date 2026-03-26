@@ -15,7 +15,10 @@ import type {
   DungeonRollTrace,
   RollTraceItem,
   RootDungeonTablePreview,
-  TargetedDungeonTablePreview,
+} from '../../types/dungeon';
+import {
+  getDungeonTablePreviewTargetKey,
+  isTargetedDungeonTablePreview,
 } from '../../types/dungeon';
 import { selectMessagesForMode } from '../../dungeon/helpers/renderCache';
 import styles from '../../pages/dungeon/dungeon.module.css';
@@ -37,18 +40,15 @@ const DungeonFeed = ({
 }: DungeonFeedProps) => {
   const rootPreviewStack = detailMode ? (
     <div className={styles['initialPreviewStack']}>
-      {rootPreviewNodes.map((node, index) => {
-        if (node.kind !== 'table-preview') return null;
-        return (
-          <DungeonTablePreviewCard
-            key={`${node.id}:${index}`}
-            preview={node}
-            enablePreviewControls={false}
-            statusLabelOverride={feed.length === 0 ? 'Start' : undefined}
-            statusToneOverride={feed.length === 0 ? 'pending' : 'reference'}
-          />
-        );
-      })}
+      {rootPreviewNodes.map((node, index) => (
+        <DungeonTablePreviewCard
+          key={`${node.id}:${index}`}
+          preview={node}
+          enablePreviewControls={false}
+          statusLabelOverride={feed.length === 0 ? 'Start' : undefined}
+          statusToneOverride={feed.length === 0 ? 'pending' : 'reference'}
+        />
+      ))}
     </div>
   ) : null;
 
@@ -191,9 +191,10 @@ function renderNode(
         <RobeOfUsefulItemsDetail key={key} summary={node.summary} />
       );
     case 'table-preview': {
-      const targetedPreview: TargetedDungeonTablePreview | undefined =
-        node.targetId ? node : undefined;
-      const targetKey = node.targetId ?? node.id;
+      const targetedPreview = isTargetedDungeonTablePreview(node)
+        ? node
+        : undefined;
+      const targetKey = getDungeonTablePreviewTargetKey(node);
       const keyId = `${feedItemId}:${targetKey}`;
       const isPending = pendingTargetIds?.has(targetKey) ?? false;
       const defaultCollapsed =

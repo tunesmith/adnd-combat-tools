@@ -7,10 +7,14 @@ import {
 } from '../../../dungeon/helpers/renderCache';
 import { resolveViaRegistry } from '../../../dungeon/helpers/registry';
 import type {
-  AnyDungeonTablePreview,
   DungeonAction,
   DungeonRenderNode,
   TargetedDungeonTablePreview,
+} from '../../../types/dungeon';
+import {
+  getDungeonTablePreviewTargetKey,
+  isDungeonTablePreview,
+  isTargetedDungeonTablePreview,
 } from '../../../types/dungeon';
 import type {
   OutcomeEventNode,
@@ -70,9 +74,6 @@ export function resolvePreview(
   const preview = findPreview(feed.messages, previewId);
   if (!preview) {
     throw new Error(`Preview ${previewId} not found in feed messages.`);
-  }
-  if (!preview.targetId) {
-    throw new Error(`Preview ${previewId} is missing a targetId.`);
   }
   let nextFeed = feed;
   resolveViaRegistry(
@@ -141,12 +142,8 @@ export function renderDetail(feed: FeedSnapshot): DungeonRenderNode[] {
 export function listPendingPreviewTargets(feed: FeedSnapshot): string[] {
   const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
   return renderDetail(feed)
-    .filter((n): n is AnyDungeonTablePreview => n.kind === 'table-preview')
-    .map((preview) =>
-      preview.targetId && preview.targetId.length > 0
-        ? preview.targetId
-        : preview.id
-    )
+    .filter(isDungeonTablePreview)
+    .map(getDungeonTablePreviewTargetKey)
     .filter((id) => pendingTargets.has(id));
 }
 
@@ -162,38 +159,29 @@ export function resolvePendingPreview(
   if (!pendingPreview) {
     throw new Error(`No pending preview found for table ${tableBase}.`);
   }
-  const key =
-    pendingPreview.targetId && pendingPreview.targetId.length > 0
-      ? pendingPreview.targetId
-      : pendingPreview.id;
-  return resolvePreview(feed, key, roll);
+  return resolvePreview(
+    feed,
+    getDungeonTablePreviewTargetKey(pendingPreview),
+    roll
+  );
 }
 
 function findPreview(
   nodes: DungeonRenderNode[],
   id: string
 ): TargetedDungeonTablePreview | undefined {
-  for (const node of nodes) {
-    if (node.kind !== 'table-preview') continue;
-    if (!node.targetId) continue;
-    if (node.id === id) return node as TargetedDungeonTablePreview;
-    if (node.targetId === id) return node as TargetedDungeonTablePreview;
-  }
-  return undefined;
+  return nodes.find(
+    (node): node is TargetedDungeonTablePreview =>
+      isTargetedDungeonTablePreview(node) &&
+      (node.id === id || node.targetId === id)
+  );
 }
 
 function getPendingPreviews(feed: FeedSnapshot): TargetedDungeonTablePreview[] {
   const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
   return renderDetail(feed)
-    .filter(
-      (n): n is TargetedDungeonTablePreview =>
-        n.kind === 'table-preview' &&
-        typeof n.targetId === 'string' &&
-        n.targetId.length > 0
-    )
-    .filter((preview) => {
-      return pendingTargets.has(preview.targetId);
-    });
+    .filter(isTargetedDungeonTablePreview)
+    .filter((preview) => pendingTargets.has(preview.targetId));
 }
 
 function collectPendingTargets(node: OutcomeEventNode): string[] {

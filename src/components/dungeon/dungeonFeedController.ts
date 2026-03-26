@@ -14,6 +14,10 @@ import type {
   RootDungeonTablePreview,
   TargetedDungeonTablePreview,
 } from '../../types/dungeon';
+import {
+  isDungeonTablePreview,
+  isTargetedDungeonTablePreview,
+} from '../../types/dungeon';
 import type { FeedItem, PreviewResolutionEntry } from './feedTypes';
 
 export function getRootPreviewNodes(
@@ -24,7 +28,8 @@ export function getRootPreviewNodes(
     const { messages } = doorBeyondMessages({ detailMode: true });
     return messages.filter(
       (message): message is RootDungeonTablePreview =>
-        message.kind === 'table-preview'
+        isDungeonTablePreview(message) &&
+        !isTargetedDungeonTablePreview(message)
     );
   }
   const { messages } = passageMessages({
@@ -33,7 +38,7 @@ export function getRootPreviewNodes(
   });
   return messages.filter(
     (message): message is RootDungeonTablePreview =>
-      message.kind === 'table-preview'
+      isDungeonTablePreview(message) && !isTargetedDungeonTablePreview(message)
   );
 }
 

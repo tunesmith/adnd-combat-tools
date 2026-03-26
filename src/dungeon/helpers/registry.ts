@@ -4,6 +4,10 @@ import type {
   TableContext,
   TargetedDungeonTablePreview,
 } from '../../types/dungeon';
+import {
+  getDungeonTablePreviewTargetKey,
+  isDungeonTablePreview,
+} from '../../types/dungeon';
 import type {
   DoorChainLaterality,
   DungeonOutcomeNode,
@@ -253,17 +257,17 @@ function updateResolvedBlock<T extends FeedLike>(
   const newMessages: DungeonRenderNode[] = [];
   let skippingOld = false;
   for (const node of fi.messages) {
-    const nodeTargetId =
-      node.kind === 'table-preview' ? node.targetId ?? node.id : undefined;
-    if (node.kind === 'table-preview' && nodeTargetId === targetId) {
+    const nodeTargetId = isDungeonTablePreview(node)
+      ? getDungeonTablePreviewTargetKey(node)
+      : undefined;
+    if (isDungeonTablePreview(node) && nodeTargetId === targetId) {
       newMessages.push(node);
       skippingOld = true;
       for (const m of messages) newMessages.push(m);
     } else {
       if (skippingOld) {
-        if (node.kind === 'table-preview') {
-          const compareId = node.targetId ?? node.id;
-          if (compareId !== targetId) {
+        if (isDungeonTablePreview(node)) {
+          if (getDungeonTablePreviewTargetKey(node) !== targetId) {
             skippingOld = false;
           }
         } else if (node.kind === 'heading' && node.text !== headingText) {
@@ -398,7 +402,7 @@ export function resolveViaRegistry<T extends FeedLike>(
   if (!isTableId(base)) return false;
 
   const heading = TABLE_HEADINGS[base] ?? base;
-  const targetKey = tp.targetId ?? tp.id;
+  const targetKey = tp.targetId;
 
   if (currentFeedItem) {
     const resolution = buildFeedResolution({
@@ -463,11 +467,9 @@ function collectPreviewTargetsForTable(
   if (!nodes) return [];
   const targets = new Set<string>();
   for (const node of nodes) {
-    if (node.kind !== 'table-preview') continue;
+    if (!isDungeonTablePreview(node)) continue;
     if (node.id !== tableId) continue;
-    const target =
-      node.targetId && node.targetId.length > 0 ? node.targetId : node.id;
-    targets.add(target);
+    targets.add(getDungeonTablePreviewTargetKey(node));
   }
   return Array.from(targets);
 }

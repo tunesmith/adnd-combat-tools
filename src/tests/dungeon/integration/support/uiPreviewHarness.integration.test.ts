@@ -3,6 +3,11 @@ import type {
   DungeonRenderNode,
   TargetedDungeonTablePreview,
 } from '../../../../types/dungeon';
+import {
+  getDungeonTablePreviewTargetKey,
+  isDungeonTablePreview,
+  isTargetedDungeonTablePreview,
+} from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
 import {
   createFeedSnapshot,
@@ -73,9 +78,7 @@ describe('uiPreviewHarness', () => {
     // Locate the door continuation preview after resolving door location.
     const preview = renderDetail(feed).find(
       (node): node is TargetedDungeonTablePreview =>
-        node.kind === 'table-preview' &&
-        typeof node.targetId === 'string' &&
-        node.targetId.length > 0 &&
+        isTargetedDungeonTablePreview(node) &&
         node.id.startsWith('periodicCheckDoorOnly')
     );
     expect(preview).toBeDefined();
@@ -155,7 +158,7 @@ describe('uiPreviewHarness', () => {
 
     expect(withCurrentFeedItem.result).toBe(true);
     expect(withoutCurrentFeedItem.result).toBe(true);
-    const keyBase = `${feed.id}:${preview.targetId ?? preview.id}`;
+    const keyBase = `${feed.id}:${getDungeonTablePreviewTargetKey(preview)}`;
     expect(withCurrentFeedItem.state).toEqual(withoutCurrentFeedItem.state);
     expect(withCurrentFeedItem.collapsed).toEqual(
       withoutCurrentFeedItem.collapsed
@@ -174,17 +177,10 @@ describe('uiPreviewHarness', () => {
       detailMode: true,
     });
 
-    const previews = renderDetail(feed).filter(
-      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
-    );
+    const previews = renderDetail(feed).filter(isDungeonTablePreview);
 
     expect(previews.length).toBeGreaterThan(0);
-    expect(
-      previews.every(
-        (preview) =>
-          typeof preview.targetId === 'string' && preview.targetId.length > 0
-      )
-    ).toBe(true);
+    expect(previews.every(isTargetedDungeonTablePreview)).toBe(true);
   });
 
   test('resolveViaRegistry rejects mismatched explicit preview targets', () => {
@@ -198,14 +194,12 @@ describe('uiPreviewHarness', () => {
 
     const preview = renderDetail(feed).find(
       (node): node is TargetedDungeonTablePreview =>
-        node.kind === 'table-preview' &&
-        typeof node.targetId === 'string' &&
-        node.targetId.length > 0 &&
+        isTargetedDungeonTablePreview(node) &&
         node.id.startsWith('periodicCheckDoorOnly')
     );
     expect(preview).toBeDefined();
 
-    if (!preview?.targetId) {
+    if (!preview) {
       throw new Error('Expected targeted periodicCheckDoorOnly preview');
     }
 
@@ -355,9 +349,7 @@ describe('uiPreviewHarness', () => {
     feed = resolvePendingPreview(feed, 'trickTrap', 19);
     feed = resolvePendingPreview(feed, 'illusionaryWallNature', 12);
 
-    const previewsBefore = renderDetail(feed).filter(
-      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
-    );
+    const previewsBefore = renderDetail(feed).filter(isDungeonTablePreview);
     const chamberPreviewBefore = previewsBefore.find(
       (node) => node.id.split(':')[0] === 'chamberDimensions'
     );
@@ -376,12 +368,10 @@ describe('uiPreviewHarness', () => {
     expect((contentsEvent?.event as any).autoResolved).toBe(true);
 
     const detail = renderDetail(feed);
-    const previews = detail.filter(
-      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
-    );
+    const previews = detail.filter(isDungeonTablePreview);
     const hasContentsPreview = previews.some((preview) => {
       const previewBase = preview.id.split(':')[0];
-      const targetBase = (preview.targetId ?? '')
+      const targetBase = getDungeonTablePreviewTargetKey(preview)
         .split('.')
         .pop()
         ?.split(':')[0];
@@ -553,7 +543,7 @@ describe('uiPreviewHarness', () => {
 
     feed = resolvePreview(
       feed,
-      contentsPreview.targetId ?? contentsPreview.id,
+      getDungeonTablePreviewTargetKey(contentsPreview),
       13
     );
 
@@ -596,7 +586,7 @@ describe('uiPreviewHarness', () => {
 
     feed = resolvePreview(
       feed,
-      chamberPreview.targetId ?? chamberPreview.id,
+      getDungeonTablePreviewTargetKey(chamberPreview),
       5
     );
 
@@ -616,9 +606,7 @@ describe('uiPreviewHarness', () => {
     expect(pendingTables).toContain('monsterLevel:4');
     expect(pendingTables).not.toContain('monsterLevel:1');
 
-    const previews = renderDetail(feed).filter(
-      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
-    );
+    const previews = renderDetail(feed).filter(isDungeonTablePreview);
     expect(
       previews.some((preview) => preview.id === 'chamberRoomContents')
     ).toBe(false);
@@ -648,7 +636,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected circular pool preview');
     }
 
-    feed = resolvePreview(feed, poolPreview.targetId ?? poolPreview.id, 11);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(poolPreview),
+      11
+    );
 
     const pendingTables = collectPendingTables(feed.outcome);
     expect(pendingTables).toContain('monsterLevel:4');
@@ -683,7 +675,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected treasure magic category preview');
     }
 
-    feed = resolvePreview(feed, magicPreview.targetId ?? magicPreview.id, 44);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(magicPreview),
+      44
+    );
 
     const magicEvent = findOutcomeEvent(feed.outcome, 'treasureMagicCategory');
     expect(magicEvent).toBeDefined();
@@ -726,7 +722,7 @@ describe('uiPreviewHarness', () => {
 
     feed = resolvePreview(
       feed,
-      treasurePreview.targetId ?? treasurePreview.id,
+      getDungeonTablePreviewTargetKey(treasurePreview),
       1
     );
 
@@ -771,7 +767,7 @@ describe('uiPreviewHarness', () => {
 
     feed = resolvePreview(
       feed,
-      protectionPreview.targetId ?? protectionPreview.id,
+      getDungeonTablePreviewTargetKey(protectionPreview),
       1
     );
 
@@ -806,7 +802,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected treasure potion preview');
     }
 
-    feed = resolvePreview(feed, potionPreview.targetId ?? potionPreview.id, 50);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(potionPreview),
+      50
+    );
 
     const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
     expect(potionEvent).toBeDefined();
@@ -845,7 +845,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected treasure scroll preview');
     }
 
-    feed = resolvePreview(feed, scrollPreview.targetId ?? scrollPreview.id, 72);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(scrollPreview),
+      72
+    );
 
     const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
     expect(scrollEvent).toBeDefined();
@@ -886,7 +890,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected treasure ring preview');
     }
 
-    feed = resolvePreview(feed, ringPreview.targetId ?? ringPreview.id, 1);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(ringPreview),
+      1
+    );
 
     const ringEvent = findOutcomeEvent(feed.outcome, 'treasureRing');
     expect(ringEvent).toBeDefined();
@@ -928,7 +936,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected treasure armor and shields preview');
     }
 
-    feed = resolvePreview(feed, armorPreview.targetId ?? armorPreview.id, 98);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(armorPreview),
+      98
+    );
 
     const armorEvent = findOutcomeEvent(feed.outcome, 'treasureArmorShields');
     expect(armorEvent).toBeDefined();
@@ -965,7 +977,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected treasure miscellaneous weapons preview');
     }
 
-    feed = resolvePreview(feed, miscPreview.targetId ?? miscPreview.id, 100);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(miscPreview),
+      100
+    );
 
     const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscWeapons');
     expect(miscEvent).toBeDefined();
@@ -1000,7 +1016,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected swords preview');
     }
 
-    feed = resolvePreview(feed, swordsPreview.targetId ?? swordsPreview.id, 80);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(swordsPreview),
+      80
+    );
 
     const swordEvent = findOutcomeEvent(feed.outcome, 'treasureSwords');
     expect(swordEvent).toBeDefined();
@@ -1048,7 +1068,7 @@ describe('uiPreviewHarness', () => {
 
     feed = resolvePreview(
       feed,
-      unusualPreview.targetId ?? unusualPreview.id,
+      getDungeonTablePreviewTargetKey(unusualPreview),
       80
     );
 
@@ -1101,7 +1121,7 @@ describe('uiPreviewHarness', () => {
 
     feed = resolvePreview(
       feed,
-      abilityPreview.targetId ?? abilityPreview.id,
+      getDungeonTablePreviewTargetKey(abilityPreview),
       93
     );
 
@@ -1143,7 +1163,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected rod staff wand preview');
     }
 
-    feed = resolvePreview(feed, rodPreview.targetId ?? rodPreview.id, 25);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(rodPreview),
+      25
+    );
 
     const rodEvent = findOutcomeEvent(feed.outcome, 'treasureRodStaffWand');
     expect(rodEvent).toBeDefined();
@@ -1181,7 +1205,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected miscellaneous magic preview');
     }
 
-    feed = resolvePreview(feed, miscPreview.targetId ?? miscPreview.id, 54);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(miscPreview),
+      54
+    );
 
     const pendingTables = collectPendingTables(feed.outcome);
     expect(pendingTables).toContain('treasureHornOfValhallaType');
@@ -1218,7 +1246,11 @@ describe('uiPreviewHarness', () => {
       throw new Error('Expected horn of valhalla preview');
     }
 
-    feed = resolvePreview(feed, hornPreview.targetId ?? hornPreview.id, 20);
+    feed = resolvePreview(
+      feed,
+      getDungeonTablePreviewTargetKey(hornPreview),
+      20
+    );
 
     const pendingTables = collectPendingTables(feed.outcome);
     expect(pendingTables).toContain('treasureHornOfValhallaAttunement');
@@ -1269,6 +1301,6 @@ function findPreview(
 ): AnyDungeonTablePreview | undefined {
   return nodes.find(
     (node): node is AnyDungeonTablePreview =>
-      node.kind === 'table-preview' && node.id === id
+      isDungeonTablePreview(node) && node.id === id
   );
 }

@@ -279,6 +279,43 @@ export type TableContext =
 
 export type DungeonRenderNode = DungeonRenderable | AnyDungeonTablePreview;
 
+export function isDungeonTablePreview(
+  node: DungeonRenderNode
+): node is AnyDungeonTablePreview {
+  return node.kind === 'table-preview';
+}
+
+export function isTargetedDungeonTablePreview(
+  preview: DungeonRenderNode
+): preview is TargetedDungeonTablePreview;
+export function isTargetedDungeonTablePreview(
+  preview: AnyDungeonTablePreview
+): preview is TargetedDungeonTablePreview;
+export function isTargetedDungeonTablePreview(
+  preview: DungeonRenderNode | AnyDungeonTablePreview
+): preview is TargetedDungeonTablePreview {
+  return (
+    preview.kind === 'table-preview' &&
+    typeof preview.targetId === 'string' &&
+    preview.targetId.length > 0
+  );
+}
+
+export function getDungeonTablePreviewTargetKey(
+  preview: AnyDungeonTablePreview
+): string {
+  return isTargetedDungeonTablePreview(preview) ? preview.targetId : preview.id;
+}
+
+export function ensureTargetedDungeonTablePreview(
+  preview: AnyDungeonTablePreview,
+  fallbackTargetId: string
+): TargetedDungeonTablePreview {
+  return isTargetedDungeonTablePreview(preview)
+    ? preview
+    : { ...preview, targetId: fallbackTargetId };
+}
+
 export type DungeonStep = {
   action: DungeonAction;
   roll?: number;

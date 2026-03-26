@@ -11,7 +11,10 @@ import {
 } from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
-import type { AnyDungeonTablePreview } from '../../../../../types/dungeon';
+import {
+  getDungeonTablePreviewTargetKey,
+  isDungeonTablePreview,
+} from '../../../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
@@ -40,27 +43,21 @@ describe('Room and chamber detail previews', () => {
   test('Room rectangular 20x30 -> Exits preview (room)', () => {
     const roll = pickRollForRoom(RoomDimensions.Rectangular20x30);
     const detailNodes = detailNodesFor(resolveRoomDimensions({ roll }));
-    const previews = detailNodes.filter(
-      (m) => m.kind === 'table-preview'
-    ) as AnyDungeonTablePreview[];
+    const previews = detailNodes.filter(isDungeonTablePreview);
     expect(previews.some((p) => p.id === 'numberOfExits')).toBe(true);
   });
 
   test('Chamber rectangular 30x50 -> Exits preview (chamber)', () => {
     const roll = pickRollForChamber(ChamberDimensions.Rectangular30x50);
     const detailNodes = detailNodesFor(resolveChamberDimensions({ roll }));
-    const previews = detailNodes.filter(
-      (m) => m.kind === 'table-preview'
-    ) as AnyDungeonTablePreview[];
+    const previews = detailNodes.filter(isDungeonTablePreview);
     expect(previews.some((p) => p.id === 'numberOfExits')).toBe(true);
   });
 
   test('Chamber Unusual -> Unusual shape/size previews', () => {
     const roll = pickRollForChamber(ChamberDimensions.Unusual);
     const detailNodes = detailNodesFor(resolveChamberDimensions({ roll }));
-    const previews = detailNodes.filter(
-      (m) => m.kind === 'table-preview'
-    ) as AnyDungeonTablePreview[];
+    const previews = detailNodes.filter(isDungeonTablePreview);
     const ids = previews.map((p) => p.id);
     expect(ids.includes('unusualShape')).toBe(true);
     expect(
@@ -106,12 +103,8 @@ describe('Room and chamber detail previews', () => {
     expect(monsterPending).toBeDefined();
 
     const detailNodes = renderDetailTree(normalized);
-    const previews = detailNodes.filter(
-      (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
-    );
-    const previewIds = previews.map(
-      (preview) => preview.targetId ?? preview.id
-    );
+    const previews = detailNodes.filter(isDungeonTablePreview);
+    const previewIds = previews.map(getDungeonTablePreviewTargetKey);
     expect(previewIds).not.toContain('chamberRoomContents');
   });
 });

@@ -6,12 +6,11 @@ import type {
   AnyDungeonTablePreview,
   DungeonRenderNode,
 } from '../../../../../types/dungeon';
+import { isDungeonTablePreview } from '../../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
 
 function extractPreviews(nodes: DungeonRenderNode[]): AnyDungeonTablePreview[] {
-  return nodes.filter(
-    (node): node is AnyDungeonTablePreview => node.kind === 'table-preview'
-  );
+  return nodes.filter(isDungeonTablePreview);
 }
 
 function asEvent(node: unknown): OutcomeEventNode {

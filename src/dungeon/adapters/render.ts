@@ -5,11 +5,14 @@ import type {
   PendingRoll,
 } from '../domain/outcome';
 import type {
-  AnyDungeonTablePreview,
   DungeonRenderNode,
   DungeonTablePreview,
   TableContext,
-  TargetedDungeonTablePreview,
+} from '../../types/dungeon';
+import {
+  ensureTargetedDungeonTablePreview,
+  getDungeonTablePreviewTargetKey,
+  isDungeonTablePreview,
 } from '../../types/dungeon';
 import { PASSAGE_CONTINUES_SUFFIX } from '../features/navigation/entry/entryRender';
 import {
@@ -89,20 +92,6 @@ const EVENT_PREVIEW_BUILDERS: Partial<
 
 Object.assign(EVENT_PREVIEW_BUILDERS, ALL_EVENT_PREVIEW_BUILDERS);
 
-function withTargetId(
-  preview: AnyDungeonTablePreview,
-  fallback: string
-): TargetedDungeonTablePreview {
-  if (preview.targetId && preview.targetId.length > 0) return preview;
-  return { ...preview, targetId: fallback };
-}
-
-function previewKey(preview: AnyDungeonTablePreview): string {
-  return preview.targetId && preview.targetId.length > 0
-    ? preview.targetId
-    : preview.id;
-}
-
 function extractTableVariant(result: unknown): 'standard' | 'restricted' {
   if (result && typeof result === 'object') {
     const tableVariant = (result as { tableVariant?: unknown }).tableVariant;
@@ -153,14 +142,17 @@ function appendPendingPreviews(
     if (child.type !== 'pending-roll') continue;
     const preview = previewForPending(child);
     if (!preview) continue;
-    const normalized = withTargetId(preview, child.id ?? child.table);
-    const key = previewKey(normalized);
+    const normalized = ensureTargetedDungeonTablePreview(
+      preview,
+      child.id ?? child.table
+    );
+    const key = getDungeonTablePreviewTargetKey(normalized);
     if (seenPreviews && seenPreviews.has(key)) continue;
-    const alreadyPresent = collector.some((node) => {
-      if (node.kind !== 'table-preview') return false;
-      const existingKey = previewKey(node);
-      return existingKey === key;
-    });
+    const alreadyPresent = collector.some(
+      (node) =>
+        isDungeonTablePreview(node) &&
+        getDungeonTablePreviewTargetKey(node) === key
+    );
     if (!alreadyPresent) {
       collector.push(normalized);
       if (seenPreviews) seenPreviews.add(key);
@@ -206,11 +198,13 @@ export function renderDetailTree(
       if (child.type !== 'pending-roll') continue;
       const pendingPreview = previewForPending(child);
       if (pendingPreview) {
-        const normalizedPending = withTargetId(
+        const normalizedPending = ensureTargetedDungeonTablePreview(
           pendingPreview,
           child.id ?? child.table
         );
-        pendingPreviewIds.add(previewKey(normalizedPending));
+        pendingPreviewIds.add(
+          getDungeonTablePreviewTargetKey(normalizedPending)
+        );
       }
     }
   }
@@ -222,8 +216,11 @@ export function renderDetailTree(
       )
     : false;
   if (preview && !hasChildEventSameKind) {
-    const normalizedPreview = withTargetId(preview, outcome.id ?? preview.id);
-    const key = previewKey(normalizedPreview);
+    const normalizedPreview = ensureTargetedDungeonTablePreview(
+      preview,
+      outcome.id ?? preview.id
+    );
+    const key = getDungeonTablePreviewTargetKey(normalizedPreview);
     if (!pendingPreviewIds.has(key) && !seenPreviews.has(key)) {
       nodes.push(normalizedPreview);
       seenPreviews.add(key);
@@ -233,9 +230,12 @@ export function renderDetailTree(
     ? toDetailRender(outcome)
     : toDetailRender(outcome).filter((n) => n.kind !== 'heading');
   for (const detailNode of detailNodes) {
-    if (detailNode.kind === 'table-preview') {
-      const normalized = withTargetId(detailNode, outcome.id ?? detailNode.id);
-      const key = previewKey(normalized);
+    if (isDungeonTablePreview(detailNode)) {
+      const normalized = ensureTargetedDungeonTablePreview(
+        detailNode,
+        outcome.id ?? detailNode.id
+      );
+      const key = getDungeonTablePreviewTargetKey(normalized);
       if (seenPreviews.has(key)) continue;
       nodes.push(normalized);
       seenPreviews.add(key);

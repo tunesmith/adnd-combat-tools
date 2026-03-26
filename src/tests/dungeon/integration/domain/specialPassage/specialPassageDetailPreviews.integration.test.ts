@@ -5,7 +5,7 @@ import {
 import { resolveSpecialPassage } from '../../../../../dungeon/features/navigation/specialPassage/specialPassageResolvers';
 import { normalizeOutcomeTree } from '../../../../../dungeon/helpers/outcomeTree';
 import { renderDetailTree } from '../../../../../dungeon/adapters/render';
-import type { AnyDungeonTablePreview } from '../../../../../types/dungeon';
+import { isDungeonTablePreview } from '../../../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
@@ -28,36 +28,28 @@ describe('Special passage detail previews', () => {
   test('FiftyFeetGalleries -> Gallery Stair Location preview', () => {
     const roll = pickRollForSpecialPassage(SpecialPassage.FiftyFeetGalleries);
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
-    const previews = detailNodes.filter(
-      (m) => m.kind === 'table-preview'
-    ) as AnyDungeonTablePreview[];
+    const previews = detailNodes.filter(isDungeonTablePreview);
     expect(previews.some((p) => p.id === 'galleryStairLocation')).toBe(true);
   });
 
   test('TenFootStream -> Stream Construction preview', () => {
     const roll = pickRollForSpecialPassage(SpecialPassage.TenFootStream);
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
-    const previews = detailNodes.filter(
-      (m) => m.kind === 'table-preview'
-    ) as AnyDungeonTablePreview[];
+    const previews = detailNodes.filter(isDungeonTablePreview);
     expect(previews.some((p) => p.id === 'streamConstruction')).toBe(true);
   });
 
   test('Twenty/Forty/Sixty Foot River -> River Construction preview', () => {
     const roll = pickRollForSpecialPassage(SpecialPassage.TwentyFootRiver);
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
-    const previews = detailNodes.filter(
-      (m) => m.kind === 'table-preview'
-    ) as AnyDungeonTablePreview[];
+    const previews = detailNodes.filter(isDungeonTablePreview);
     expect(previews.some((p) => p.id === 'riverConstruction')).toBe(true);
   });
 
   test('TwentyFootChasm -> Depth and Construction previews', () => {
     const roll = pickRollForSpecialPassage(SpecialPassage.TwentyFootChasm);
     const detailNodes = detailNodesFor(resolveSpecialPassage({ roll }));
-    const previews = detailNodes.filter(
-      (m) => m.kind === 'table-preview'
-    ) as AnyDungeonTablePreview[];
+    const previews = detailNodes.filter(isDungeonTablePreview);
     const ids = previews.map((p) => p.id);
     expect(ids.includes('chasmDepth')).toBe(true);
     expect(ids.includes('chasmConstruction')).toBe(true);

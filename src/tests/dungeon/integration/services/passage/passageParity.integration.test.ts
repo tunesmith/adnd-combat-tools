@@ -3,10 +3,8 @@ import {
   periodicCheck,
   PeriodicCheck,
 } from '../../../../../dungeon/features/navigation/entry/entryTable';
-import type {
-  DungeonMessage,
-  DungeonTablePreview,
-} from '../../../../../types/dungeon';
+import type { DungeonMessage } from '../../../../../types/dungeon';
+import { isDungeonTablePreview } from '../../../../../types/dungeon';
 import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
 
 function isParagraph(
@@ -54,9 +52,7 @@ describe('Passage compact text (adapter)', () => {
 describe('Phase 0 parity: Passage detail previews', () => {
   test('No roll => Periodic Check preview only', () => {
     const { messages } = passageMessages({ detailMode: true });
-    const previews = messages.filter(
-      (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    const previews = messages.filter(isDungeonTablePreview);
     expect(previews.length).toBeGreaterThanOrEqual(1);
     const first = previews[0];
     if (!first) throw new Error('Expected a preview');
@@ -66,9 +62,7 @@ describe('Phase 0 parity: Passage detail previews', () => {
   test('Chamber roll => includes Chamber Dimensions preview', () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.Chamber);
     const { messages } = passageMessages({ roll, detailMode: true, level: 1 });
-    const previews = messages.filter(
-      (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    const previews = messages.filter(isDungeonTablePreview);
     const hasChamber = previews.some((p) => p.id === 'chamberDimensions');
     expect(hasChamber).toBe(true);
   });
@@ -76,9 +70,7 @@ describe('Phase 0 parity: Passage detail previews', () => {
   test('Door roll => includes Door Location preview', () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.Door);
     const { messages } = passageMessages({ roll, detailMode: true, level: 1 });
-    const previews = messages.filter(
-      (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    const previews = messages.filter(isDungeonTablePreview);
     const hasDoorLoc = previews.some((p) => p.id.startsWith('doorLocation'));
     expect(hasDoorLoc).toBe(true);
   });
@@ -86,9 +78,7 @@ describe('Phase 0 parity: Passage detail previews', () => {
   test('Side Passage roll => includes Side Passages preview', () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.SidePassage);
     const { messages } = passageMessages({ roll, detailMode: true, level: 1 });
-    const previews = messages.filter(
-      (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    const previews = messages.filter(isDungeonTablePreview);
     const hasSide = previews.some((p) => p.id === 'sidePassages');
     expect(hasSide).toBe(true);
   });
@@ -96,9 +86,7 @@ describe('Phase 0 parity: Passage detail previews', () => {
   test('Passage Turn roll => includes Passage Turns preview', () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.PassageTurn);
     const { messages } = passageMessages({ roll, detailMode: true, level: 1 });
-    const previews = messages.filter(
-      (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    const previews = messages.filter(isDungeonTablePreview);
     const hasTurns = previews.some((p) => p.id === 'passageTurns');
     expect(hasTurns).toBe(true);
   });
@@ -106,9 +94,7 @@ describe('Phase 0 parity: Passage detail previews', () => {
   test('Stairs roll => includes Stairs preview', () => {
     const roll = pickRollForPeriodicCheck(PeriodicCheck.Stairs);
     const { messages } = passageMessages({ roll, detailMode: true, level: 1 });
-    const previews = messages.filter(
-      (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    const previews = messages.filter(isDungeonTablePreview);
     const hasStairs = previews.some((p) => p.id === 'stairs');
     expect(hasStairs).toBe(true);
   });
@@ -118,9 +104,7 @@ describe('Phase 0 parity: Passage detail previews', () => {
     const spy = jest.spyOn(dungeonLookup, 'rollDice');
     spy.mockImplementation(() => 19);
     const { messages } = passageMessages({ roll, detailMode: true, level: 1 });
-    const previews = messages.filter(
-      (m) => m.kind === 'table-preview'
-    ) as DungeonTablePreview[];
+    const previews = messages.filter(isDungeonTablePreview);
     const hasTrick = previews.some((p) => p.id === 'trickTrap');
     expect(hasTrick).toBe(true);
     spy.mockRestore();
