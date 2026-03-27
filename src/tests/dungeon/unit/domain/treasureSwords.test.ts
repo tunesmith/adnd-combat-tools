@@ -36,6 +36,7 @@ import {
   TreasureSwordAlignment,
   type TreasureSwordAlignmentResult,
 } from '../../../../dungeon/features/treasure/swords/swordsAlignmentTable';
+import { computeSwordEgo } from '../../../../dungeon/features/treasure/swords/swordEgo';
 import {
   collectPreviews,
   collectPreviewTargetKeys,
@@ -197,6 +198,32 @@ describe('resolveTreasureSwords', () => {
     expect(extraPending).toHaveLength(1);
   });
 
+  it('waits to display ego until the sword is fully resolved', () => {
+    const node = resolveTreasureSwords({
+      roll: 26,
+      kindRoll: 80,
+      unusualRoll: 90,
+      languageRolls: [41],
+      primaryAbilityRolls: [34, 67],
+    });
+
+    if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasureSwords event');
+    }
+
+    expect(computeSwordEgo(node)).toBeUndefined();
+
+    const compactText = toCompactRender(node)
+      .filter(
+        (child): child is { kind: 'paragraph'; text: string } =>
+          child.kind === 'paragraph'
+      )
+      .map((child) => child.text)
+      .join(' ');
+
+    expect(compactText).not.toContain(', E');
+  });
+
   it('assigns lawful good alignment to holy avenger swords', () => {
     const node = resolveTreasureSwords({ roll: 80, kindRoll: 50 });
     if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
@@ -343,6 +370,38 @@ describe('resolveTreasureSwords', () => {
     );
   });
 
+  it('computes and renders ego once an intelligent sword is fully resolved', () => {
+    const node = resolveTreasureSwords({
+      roll: 26,
+      kindRoll: 80,
+      unusualRoll: 90,
+      alignmentRoll: 31,
+      languageRolls: [41],
+      primaryAbilityRolls: [34, 67],
+    });
+
+    if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasureSwords event');
+    }
+
+    expect(computeSwordEgo(node)).toBe(7);
+
+    const detailText = renderDetailTree(node)
+      .filter(
+        (child): child is { kind: 'paragraph'; text: string } =>
+          child.kind === 'paragraph'
+      )
+      .map((child) => child.text)
+      .join(' ');
+    expect(detailText).toContain('(I14, 2 languages, E7).');
+
+    const detailBullet = renderDetailTree(node).find(
+      (child): child is { kind: 'bullet-list'; items: string[] } =>
+        child.kind === 'bullet-list'
+    );
+    expect(detailBullet?.items[0]).toContain('(I14, 2 languages, E7)');
+  });
+
   it('annotates luck blade wishes in detail and compact output', () => {
     const node = resolveTreasureSwords({
       roll: 50,
@@ -370,6 +429,29 @@ describe('resolveTreasureSwords', () => {
       .map((child) => child.text)
       .join(' ');
     expect(compactText).toContain('Luck Blade (4 wishes)');
+  });
+
+  it('uses the highest plus for flame tongue ego', () => {
+    const node = resolveTreasureSwords({
+      roll: 46,
+      kindRoll: 10,
+      unusualRoll: 20,
+    });
+
+    if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasureSwords event');
+    }
+
+    expect(computeSwordEgo(node)).toBe(5);
+
+    const compactText = toCompactRender(node)
+      .filter(
+        (child): child is { kind: 'paragraph'; text: string } =>
+          child.kind === 'paragraph'
+      )
+      .map((child) => child.text)
+      .join(' ');
+    expect(compactText).toContain('undead (E5).');
   });
 
   it('includes abilities in compact render after resolving pending rolls', () => {
@@ -1266,6 +1348,33 @@ describe('resolveTreasureSwords', () => {
     expect(extraordinary).toBeDefined();
     expect(extraordinary?.description).toBe('heal — 1 time/day');
     expect(extraordinary?.count).toBe(1);
+  });
+
+  it('counts telepathy, reading, languages, and extraordinary powers in ego', () => {
+    const node = resolveTreasureSwords({
+      roll: 20,
+      kindRoll: 12,
+      unusualRoll: 100,
+      alignmentRoll: 31,
+      languageRolls: [20],
+      primaryAbilityRolls: [34, 45, 67],
+      extraordinaryPowerRolls: [42],
+    });
+
+    if (node.type !== 'event' || node.event.kind !== 'treasureSwords') {
+      throw new Error('Expected treasureSwords event');
+    }
+
+    expect(computeSwordEgo(node)).toBe(12);
+
+    const compactText = toCompactRender(node)
+      .filter(
+        (child): child is { kind: 'paragraph'; text: string } =>
+          child.kind === 'paragraph'
+      )
+      .map((child) => child.text)
+      .join(' ');
+    expect(compactText).toContain('(I17, 1 language, E12)');
   });
 });
 

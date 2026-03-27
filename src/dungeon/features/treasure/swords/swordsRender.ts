@@ -58,6 +58,7 @@ import type {
   AppendPreviewFn,
   TablePreviewFactory,
 } from '../../../adapters/render/shared';
+import { computeSwordEgo } from './swordEgo';
 
 const SWORD_LABELS: Record<TreasureSword, string> = {
   [TreasureSword.SwordPlus1]: 'Sword +1',
@@ -116,11 +117,15 @@ function articleFor(label: string): 'a' | 'an' {
 
 function buildSwordParenthetical(
   intelligenceLabel?: string,
+  ego?: number,
   luckBladeWishes?: number
 ): string | undefined {
   const parts: string[] = [];
   if (intelligenceLabel && intelligenceLabel.trim().length > 0) {
     parts.push(intelligenceLabel.trim());
+  }
+  if (ego !== undefined) {
+    parts.push(`E${ego}`);
   }
   if (luckBladeWishes !== undefined) {
     const wishLabel = luckBladeWishes === 1 ? 'wish' : 'wishes';
@@ -149,6 +154,7 @@ export function swordSentence(
   sword: TreasureSword,
   kind?: TreasureSwordKind,
   alignment?: TreasureSwordAlignmentResult,
+  ego?: number,
   intelligenceLabel?: string,
   abilitySummaries: PrimaryAbilitySummary[] = [],
   luckBladeWishes?: number,
@@ -157,6 +163,7 @@ export function swordSentence(
   const baseLabel = swordLabel(sword, kind);
   const parenthetical = buildSwordParenthetical(
     intelligenceLabel,
+    ego,
     luckBladeWishes
   );
   const decoratedLabel = decorateSwordLabel(
@@ -216,8 +223,10 @@ export function renderTreasureSwordsDetail(
     dragonColorEvent.event.kind === 'treasureSwordDragonSlayerColor'
       ? dragonColorEvent.event.result.label
       : undefined;
+  const ego = computeSwordEgo(outcome);
   const parenthetical = buildSwordParenthetical(
     intelligenceLabel,
+    ego,
     luckBladeWishes
   );
   const decoratedSwordLabel = decorateSwordLabel(
@@ -253,6 +262,7 @@ export function renderTreasureSwordsDetail(
       outcome.event.result,
       kind,
       alignmentResult,
+      ego,
       intelligenceLabel,
       abilitySummaries,
       luckBladeWishes,
@@ -279,6 +289,7 @@ export function renderTreasureSwordsCompact(
     alignmentEvent && alignmentEvent.event.kind === 'treasureSwordAlignment'
       ? alignmentEvent.event.result
       : undefined;
+  const ego = computeSwordEgo(outcome);
   const unusualEvent = findChildEvent(outcome, 'treasureSwordUnusual');
   const intelligenceLabel =
     unusualEvent && unusualEvent.event.kind === 'treasureSwordUnusual'
@@ -306,6 +317,7 @@ export function renderTreasureSwordsCompact(
       outcome.event.result,
       kind,
       alignmentResult,
+      ego,
       intelligenceLabel,
       abilitySummaries,
       luckBladeWishes,

@@ -80,6 +80,7 @@ import {
   formatSwordIntelligence,
   summarizePrimaryAbilities,
 } from '../swords/swordsRender';
+import { computeSwordEgo } from '../swords/swordEgo';
 import { miscWeaponSentence } from '../miscWeapons/miscWeaponsRender';
 
 export function renderTreasureDetail(
@@ -278,10 +279,12 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
         ? dragonColorEvent.event.result.label
         : undefined;
     const luckBladeWishes = swordsEvent.event.luckBladeWishes;
+    const ego = computeSwordEgo(swordsEvent);
     return swordSentence(
       swordsEvent.event.result,
       kind,
       alignmentResult,
+      ego,
       intelligenceLabel,
       abilitySummaries,
       luckBladeWishes,
