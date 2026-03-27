@@ -251,6 +251,21 @@ type SpellStoringDetails = {
   spellLevels: number[];
 };
 
+export type TreasureBeakerPotionDetails = {
+  potion: TreasurePotion;
+  animalControl?: TreasurePotionAnimalControl;
+  dragonControl?: TreasurePotionDragonControl;
+  giantControl?: TreasurePotionGiantControl;
+  giantStrength?: TreasurePotionGiantStrength;
+  humanControl?: TreasurePotionHumanControl;
+  undeadControl?: TreasurePotionUndeadControl;
+};
+
+export type TreasureBeakerOfPlentifulPotionsDetails = {
+  potions: TreasureBeakerPotionDetails[];
+  cadence: 'threeTimesPerWeek' | 'twicePerWeek' | 'oncePerWeek';
+};
+
 type NavigationOutcomeEvent =
   | {
       kind: 'periodicCheck';
@@ -473,7 +488,12 @@ type TreasureOutcomeEvent =
       'treasureEyesOfPetrification',
       TreasureEyesOfPetrification
     >
-  | OptionalTreasureRollOutcomeEvent<'treasureMiscMagicE1', TreasureMiscMagicE1>
+  | (OptionalTreasureRollOutcomeEvent<
+      'treasureMiscMagicE1',
+      TreasureMiscMagicE1
+    > & {
+      beaker?: TreasureBeakerOfPlentifulPotionsDetails;
+    })
   | OptionalTreasureRollOutcomeEvent<'treasureMiscMagicE2', TreasureMiscMagicE2>
   | ResultOutcomeEvent<'treasureMiscMagicE3', TreasureMiscMagicE3>
   | ResultOutcomeEvent<'treasureMiscMagicE4', TreasureMiscMagicE4>

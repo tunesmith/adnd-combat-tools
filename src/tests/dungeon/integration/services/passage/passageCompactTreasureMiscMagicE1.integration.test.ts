@@ -12,6 +12,7 @@ import {
   TreasureBracersOfDefense,
   TreasureBucknardsEverfullPurse,
 } from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Subtables';
+import { TreasurePotion } from '../../../../../dungeon/features/treasure/potion/potionTables';
 import { TreasureMiscMagicE2 } from '../../../../../dungeon/features/treasure/miscMagicE2/miscMagicE2Table';
 import {
   TreasureCrystalBall,
@@ -150,6 +151,56 @@ describe('passage compact treasure misc magic E1 handling', () => {
       .map((text) => text.toLowerCase())
       .join(' ');
     expect(compactParagraphs).toContain('there is a bag of tricks, "jackal".');
+  });
+
+  it('resolves beaker of plentiful potions immediately in compact mode', () => {
+    const { result, unused } = withMockedDice([2, 42, 50, 11, 98], () =>
+      simulateCompactRunWithSequence({
+        action: 'passage',
+        rolls: [
+          14,
+          { tableId: 'chamberDimensions', roll: 1 },
+          { tableId: 'chamberRoomContents', roll: 20 },
+          { tableId: 'treasure', roll: 98 },
+          { tableId: 'treasureMagicCategory', roll: 46 },
+          { tableId: 'treasureMiscMagicE1', roll: 30 },
+        ],
+        dungeonLevel: 1,
+        allowUnusedRolls: true,
+        mode: DirectiveMode.ManualThenAuto,
+      })
+    );
+
+    expect(unused).toEqual([]);
+
+    const miscEvent = findEvent(result.outcome, 'treasureMiscMagicE1');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE1') {
+      throw new Error('treasureMiscMagicE1 event not found');
+    }
+    expect(miscEvent.event.result).toBe(
+      TreasureMiscMagicE1.BeakerOfPlentifulPotions
+    );
+    expect(miscEvent.event.beaker?.cadence).toBe('twicePerWeek');
+    expect(
+      miscEvent.event.beaker?.potions.map((potion) => potion.potion)
+    ).toEqual([
+      TreasurePotion.Healing,
+      TreasurePotion.HumanControl,
+      TreasurePotion.WaterBreathing,
+    ]);
+    expect(findEvent(result.outcome, 'treasurePotion')).toBeUndefined();
+
+    const compactParagraphs = result.compact
+      .paragraphs()
+      .map((text) => text.toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain(
+      'there is a beaker of plentiful potions containing 3 doses, in order: potion of healing, potion of human (not demi-human or humanoid) control, and potion of water breathing.'
+    );
+    expect(compactParagraphs).toContain(
+      'each potion type can be poured forth once per day, but no more than twice per week.'
+    );
   });
 
   it('resolves bracers of defense armor class in compact mode', () => {

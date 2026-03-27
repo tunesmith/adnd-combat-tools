@@ -2,7 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
-import type { OutcomeEventNode } from '../../../domain/outcome';
+import type {
+  OutcomeEventNode,
+  TreasureBeakerOfPlentifulPotionsDetails,
+} from '../../../domain/outcome';
 import { treasureMiscMagicE1, TreasureMiscMagicE1 } from './miscMagicE1Table';
 import {
   buildPreview,
@@ -26,6 +29,7 @@ import {
   labelForBucknardsEverfullPurse as purseLabel,
   purseSentence,
 } from './miscMagicE1SubtablesRender';
+import { labelForResolvedPotion } from '../potion/potionRender';
 
 const ITEM_NAMES: Record<TreasureMiscMagicE1, string> = {
   [TreasureMiscMagicE1.AlchemyJug]: 'alchemy jug',
@@ -108,6 +112,7 @@ export function renderTreasureMiscMagicE1Detail(
     kind: 'paragraph',
     text: resolvedSentence(
       outcome.event.result,
+      outcome.event.beaker,
       bagOfTricksChild,
       bracersChild,
       purseChild,
@@ -137,6 +142,7 @@ export function renderTreasureMiscMagicE1Compact(
     kind: 'paragraph',
     text: resolvedSentence(
       outcome.event.result,
+      outcome.event.beaker,
       bagOfTricksChild,
       bracersChild,
       purseChild,
@@ -216,14 +222,22 @@ function startCase(input: string): string {
 }
 
 export function treasureMiscMagicE1Sentence(
-  result: TreasureMiscMagicE1
+  result: TreasureMiscMagicE1,
+  beaker?: TreasureBeakerOfPlentifulPotionsDetails
 ): string {
+  if (
+    result === TreasureMiscMagicE1.BeakerOfPlentifulPotions &&
+    beaker !== undefined
+  ) {
+    return beakerSentence(beaker);
+  }
   const itemName = ITEM_NAMES[result];
   return `There is ${articleFor(itemName)} ${itemName}.`;
 }
 
 function resolvedSentence(
   result: TreasureMiscMagicE1,
+  beaker?: TreasureBeakerOfPlentifulPotionsDetails,
   bagOfTricksChild?: OutcomeEventNode,
   bracersChild?: OutcomeEventNode,
   purseChild?: OutcomeEventNode,
@@ -257,5 +271,43 @@ function resolvedSentence(
   ) {
     return artifactSentence(artifactChild.event.result);
   }
-  return treasureMiscMagicE1Sentence(result);
+  return treasureMiscMagicE1Sentence(result, beaker);
+}
+
+function beakerSentence(
+  beaker: TreasureBeakerOfPlentifulPotionsDetails
+): string {
+  const potionCount = beaker.potions.length;
+  const contents = formatPotionList(
+    beaker.potions.map((potion) => labelForResolvedPotion(potion))
+  );
+  return `There is a beaker of plentiful potions containing ${potionCount} ${
+    potionCount === 1 ? 'dose' : 'doses'
+  }, in order: ${contents}. ${beakerCadenceSentence(
+    beaker.cadence
+  )} Once opened, it loses one potion type per month.`;
+}
+
+function beakerCadenceSentence(
+  cadence: TreasureBeakerOfPlentifulPotionsDetails['cadence']
+): string {
+  switch (cadence) {
+    case 'threeTimesPerWeek':
+      return 'Each potion type can be poured forth once per day, but no more than three times per week.';
+    case 'twicePerWeek':
+      return 'Each potion type can be poured forth once per day, but no more than twice per week.';
+    default:
+      return 'Each potion type can be poured forth only once per week.';
+  }
+}
+
+function formatPotionList(potions: string[]): string {
+  if (potions.length === 0) return 'no potions';
+  if (potions.length === 1) return potions[0] ?? '';
+  if (potions.length === 2) {
+    return `${potions[0]} and ${potions[1]}`;
+  }
+  return `${potions.slice(0, -1).join(', ')}, and ${
+    potions[potions.length - 1]
+  }`;
 }

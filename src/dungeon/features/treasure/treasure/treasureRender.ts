@@ -319,7 +319,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     if (artifact && artifact.event.kind === 'treasureArtifactOrRelic') {
       return artifactSentence(artifact.event.result);
     }
-    return treasureMiscMagicE1Sentence(miscMagicE1.event.result);
+    return treasureMiscMagicE1Sentence(
+      miscMagicE1.event.result,
+      miscMagicE1.event.beaker
+    );
   }
   const miscMagicE2 = findChildEvent(magic, 'treasureMiscMagicE2');
   if (miscMagicE2 && miscMagicE2.event.kind === 'treasureMiscMagicE2') {

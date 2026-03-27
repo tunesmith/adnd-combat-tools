@@ -606,6 +606,95 @@ describe('passage contents', () => {
     );
   });
 
+  it('resolves beaker of plentiful potions without a follow-up potion preview', () => {
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
+    spy
+      .mockImplementationOnce(() => 2)
+      .mockImplementationOnce(() => 42)
+      .mockImplementationOnce(() => 50)
+      .mockImplementationOnce(() => 11)
+      .mockImplementationOnce(() => 98);
+
+    try {
+      let feed = createFeedSnapshot({
+        action: 'passage',
+        roll: 14,
+        detailMode: true,
+        dungeonLevel: 4,
+      });
+
+      feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+      feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+      feed = resolvePendingPreview(feed, 'treasure', 99);
+
+      const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+      );
+      expect(categoryTargets).toHaveLength(1);
+      const categoryTarget = categoryTargets[0];
+      if (!categoryTarget) throw new Error('missing magic category target');
+      feed = resolvePreview(feed, categoryTarget, 46);
+
+      const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+      );
+      expect(miscTargets).toHaveLength(1);
+      const miscTarget = miscTargets[0];
+      if (!miscTarget) throw new Error('missing misc magic target');
+      feed = resolvePreview(feed, miscTarget, 30);
+
+      const pendingBases = pendingTableBases(listPendingPreviewTargets(feed));
+      expect(pendingBases).not.toContain('treasurePotion');
+
+      const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE1');
+      expect(miscEvent).toBeDefined();
+      if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE1') {
+        throw new Error('treasureMiscMagicE1 event not found');
+      }
+      expect(miscEvent.event.result).toBe(
+        TreasureMiscMagicE1.BeakerOfPlentifulPotions
+      );
+      expect(miscEvent.event.beaker?.cadence).toBe('twicePerWeek');
+      expect(
+        miscEvent.event.beaker?.potions.map((potion) => potion.potion)
+      ).toEqual([
+        TreasurePotion.Healing,
+        TreasurePotion.HumanControl,
+        TreasurePotion.WaterBreathing,
+      ]);
+
+      const detailText = renderDetail(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(detailText).toContain(
+        'there is a beaker of plentiful potions containing 3 doses, in order: potion of healing, potion of human (not demi-human or humanoid) control, and potion of water breathing.'
+      );
+      expect(detailText).toContain(
+        'each potion type can be poured forth once per day, but no more than twice per week.'
+      );
+
+      const compactText = renderCompact(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(compactText).toContain(
+        'there is a beaker of plentiful potions containing 3 doses, in order: potion of healing, potion of human (not demi-human or humanoid) control, and potion of water breathing.'
+      );
+      expect(compactText).toContain(
+        'each potion type can be poured forth once per day, but no more than twice per week.'
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('resolves bag of tricks types from miscellaneous magic', () => {
     let feed = createFeedSnapshot({
       action: 'passage',

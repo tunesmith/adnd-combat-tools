@@ -2,7 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
-import type { OutcomeEventNode } from '../../../domain/outcome';
+import type {
+  OutcomeEventNode,
+  TreasureBeakerPotionDetails,
+} from '../../../domain/outcome';
 import {
   treasurePotion,
   TreasurePotion,
@@ -63,11 +66,6 @@ const POTION_LABELS: Record<TreasurePotion, string> = {
   [TreasurePotion.UndeadControl]: 'undead control',
   [TreasurePotion.WaterBreathing]: 'water breathing',
 };
-
-function potionSentence(result: TreasurePotion): string {
-  const label = POTION_LABELS[result];
-  return `There is a potion of ${label}.`;
-}
 
 export function renderTreasurePotionDetail(
   outcome: OutcomeEventNode,
@@ -548,38 +546,87 @@ function dragonControlLabel(result: TreasurePotionDragonControl): string {
 
 export function resolvedPotionSentence(node: OutcomeEventNode): string {
   if (node.event.kind !== 'treasurePotion') return '';
+  return `There is a ${labelForResolvedPotion(extractResolvedPotion(node))}.`;
+}
+
+export function labelForResolvedPotion(
+  details: TreasureBeakerPotionDetails
+): string {
+  switch (details.potion) {
+    case TreasurePotion.AnimalControl:
+      return details.animalControl !== undefined
+        ? `potion of ${animalControlLabel(details.animalControl)} control`
+        : `potion of ${POTION_LABELS[details.potion]}`;
+    case TreasurePotion.DragonControl:
+      return details.dragonControl !== undefined
+        ? `potion of ${dragonControlLabel(
+            details.dragonControl
+          )} dragon control`
+        : `potion of ${POTION_LABELS[details.potion]}`;
+    case TreasurePotion.GiantControl:
+      return details.giantControl !== undefined
+        ? `potion of ${giantControlLabel(details.giantControl)} giant control`
+        : `potion of ${POTION_LABELS[details.potion]}`;
+    case TreasurePotion.GiantStrength:
+      return details.giantStrength !== undefined
+        ? `potion of ${giantStrengthLabel(
+            details.giantStrength
+          )} giant strength`
+        : `potion of ${POTION_LABELS[details.potion]}`;
+    case TreasurePotion.HumanControl:
+      return details.humanControl !== undefined
+        ? `potion of ${humanControlLabel(details.humanControl)} control`
+        : `potion of ${POTION_LABELS[details.potion]}`;
+    case TreasurePotion.UndeadControl:
+      return details.undeadControl !== undefined
+        ? `potion of ${undeadControlLabel(details.undeadControl)} control`
+        : `potion of ${POTION_LABELS[details.potion]}`;
+    default:
+      return `potion of ${POTION_LABELS[details.potion]}`;
+  }
+}
+
+function extractResolvedPotion(
+  node: OutcomeEventNode
+): TreasureBeakerPotionDetails {
+  if (node.event.kind !== 'treasurePotion') {
+    return { potion: TreasurePotion.Healing };
+  }
+  const details: TreasureBeakerPotionDetails = {
+    potion: node.event.result,
+  };
   if (node.event.result === TreasurePotion.AnimalControl) {
     const child = findChildEvent(node, 'treasurePotionAnimalControl');
     if (child && child.event.kind === 'treasurePotionAnimalControl') {
-      return animalControlSentence(child.event.result);
-    }
-  } else if (node.event.result === TreasurePotion.GiantControl) {
-    const child = findChildEvent(node, 'treasurePotionGiantControl');
-    if (child && child.event.kind === 'treasurePotionGiantControl') {
-      return giantControlSentence(child.event.result);
-    }
-  } else if (node.event.result === TreasurePotion.GiantStrength) {
-    const child = findChildEvent(node, 'treasurePotionGiantStrength');
-    if (child && child.event.kind === 'treasurePotionGiantStrength') {
-      return giantStrengthSentence(child.event.result);
-    }
-  } else if (node.event.result === TreasurePotion.HumanControl) {
-    const child = findChildEvent(node, 'treasurePotionHumanControl');
-    if (child && child.event.kind === 'treasurePotionHumanControl') {
-      return humanControlSentence(child.event.result);
+      details.animalControl = child.event.result;
     }
   } else if (node.event.result === TreasurePotion.DragonControl) {
     const child = findChildEvent(node, 'treasurePotionDragonControl');
     if (child && child.event.kind === 'treasurePotionDragonControl') {
-      return dragonControlSentence(child.event.result);
+      details.dragonControl = child.event.result;
+    }
+  } else if (node.event.result === TreasurePotion.GiantControl) {
+    const child = findChildEvent(node, 'treasurePotionGiantControl');
+    if (child && child.event.kind === 'treasurePotionGiantControl') {
+      details.giantControl = child.event.result;
+    }
+  } else if (node.event.result === TreasurePotion.GiantStrength) {
+    const child = findChildEvent(node, 'treasurePotionGiantStrength');
+    if (child && child.event.kind === 'treasurePotionGiantStrength') {
+      details.giantStrength = child.event.result;
+    }
+  } else if (node.event.result === TreasurePotion.HumanControl) {
+    const child = findChildEvent(node, 'treasurePotionHumanControl');
+    if (child && child.event.kind === 'treasurePotionHumanControl') {
+      details.humanControl = child.event.result;
     }
   } else if (node.event.result === TreasurePotion.UndeadControl) {
     const child = findChildEvent(node, 'treasurePotionUndeadControl');
     if (child && child.event.kind === 'treasurePotionUndeadControl') {
-      return undeadControlSentence(child.event.result);
+      details.undeadControl = child.event.result;
     }
   }
-  return potionSentence(node.event.result);
+  return details;
 }
 
 function giantControlSentence(result: TreasurePotionGiantControl): string {
