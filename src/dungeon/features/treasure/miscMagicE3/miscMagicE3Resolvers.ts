@@ -52,6 +52,8 @@ export function resolveTreasureMiscMagicE3(
     usedRoll,
     options
   );
+  const ointmentJars =
+    command === TreasureMiscMagicE3.KeoghtomsOintment ? rollDice(3) : undefined;
   const rollIndex = event.rollIndex;
   const children: DungeonOutcomeNode[] = [];
   const context = {
@@ -105,7 +107,10 @@ export function resolveTreasureMiscMagicE3(
   return {
     type: 'event',
     roll: usedRoll,
-    event,
+    event: {
+      ...event,
+      ointmentJars,
+    } as OutcomeEvent,
     children: children.length ? children : undefined,
   };
 }

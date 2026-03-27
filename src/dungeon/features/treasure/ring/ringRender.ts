@@ -616,6 +616,11 @@ export function ringSentence(
     if (event.kind === 'treasureRing' && event.spellStoring) {
       return spellStoringRingSentence(event.spellStoring);
     }
+  } else if (result === TreasureRing.MultipleWishes && node) {
+    const { event } = node;
+    if (event.kind === 'treasureRing' && event.multipleWishesCount) {
+      return multipleWishesRingSentence(event.multipleWishesCount);
+    }
   } else if (result === TreasureRing.Regeneration && node) {
     const child = findChildEvent(node, 'treasureRingRegeneration');
     if (child && child.event.kind === 'treasureRingRegeneration') {
@@ -744,6 +749,10 @@ function spellStoringRingSentence({
     ? ` (${spellLevels.map(formatOrdinal).join(', ')})`
     : '';
   return `There is a ring of ${casterLabel}${levelText}.`;
+}
+
+function multipleWishesRingSentence(count: number): string {
+  return `There is a ring of multiple wishes (${count} wishes).`;
 }
 
 function telekinesisPreviewLabel(result: TreasureRingTelekinesis): string {

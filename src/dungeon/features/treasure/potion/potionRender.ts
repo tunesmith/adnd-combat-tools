@@ -546,6 +546,12 @@ function dragonControlLabel(result: TreasurePotionDragonControl): string {
 
 export function resolvedPotionSentence(node: OutcomeEventNode): string {
   if (node.event.kind !== 'treasurePotion') return '';
+  if (
+    node.event.result === TreasurePotion.WaterBreathing &&
+    node.event.waterBreathingDoses
+  ) {
+    return `There is a potion of water breathing (${node.event.waterBreathingDoses} doses).`;
+  }
   return `There is a ${labelForResolvedPotion(extractResolvedPotion(node))}.`;
 }
 

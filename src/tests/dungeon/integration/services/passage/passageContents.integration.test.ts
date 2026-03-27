@@ -19,6 +19,7 @@ import { resolveTreasureContainer } from '../../../../../dungeon/features/treasu
 import { TreasureMagicCategory } from '../../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
 import { TreasureWithoutMonster } from '../../../../../dungeon/features/treasure/treasure/treasureTable';
 import { TreasurePotion } from '../../../../../dungeon/features/treasure/potion/potionTables';
+import { TreasureRing } from '../../../../../dungeon/features/treasure/ring/ringTables';
 import { TreasureScroll } from '../../../../../dungeon/features/treasure/scroll/scrollTables';
 import { TreasureMiscMagicE1 } from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Table';
 import {
@@ -481,6 +482,75 @@ describe('passage contents', () => {
       .join(' ');
     expect(compactText).toContain(
       'there is a potion of mammal/marsupial control.'
+    );
+  });
+
+  it('resolves water breathing potion doses from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const potionCategoryTarget = magicTargets[0];
+    if (!potionCategoryTarget)
+      throw new Error('missing potion category target');
+    feed = resolvePreview(feed, potionCategoryTarget, 2);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+
+    const spy = jest
+      .spyOn(dungeonLookup, 'rollDice')
+      .mockImplementationOnce(() => 4);
+
+    try {
+      feed = resolvePreview(feed, potionTarget, 98);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (!potionEvent || potionEvent.event.kind !== 'treasurePotion') {
+      throw new Error('treasurePotion event not found');
+    }
+    expect(potionEvent.event.result).toBe(TreasurePotion.WaterBreathing);
+    expect(potionEvent.event.waterBreathingDoses).toBe(4);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a potion of water breathing (4 doses).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a potion of water breathing (4 doses).'
     );
   });
 
@@ -1077,6 +1147,68 @@ describe('passage contents', () => {
       .map((node) => node.text.trim().toLowerCase())
       .join(' ');
     expect(compactText).toContain('there is a helm of teleportation.');
+  });
+
+  it("resolves Keoghtom's Ointment jar count from miscellaneous magic E.3", () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+
+    const spy = jest
+      .spyOn(dungeonLookup, 'rollDice')
+      .mockImplementationOnce(() => 3);
+
+    try {
+      feed = resolvePreview(feed, miscTarget, 93);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE3');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE3') {
+      throw new Error('treasureMiscMagicE3 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE3.KeoghtomsOintment);
+    expect(miscEvent.event.ointmentJars).toBe(3);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain("there are 3 jars of keoghtom's ointment.");
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain("there are 3 jars of keoghtom's ointment.");
   });
 
   it('resolves miscellaneous magic E.4 items from magical treasure', () => {
@@ -3676,6 +3808,74 @@ describe('passage contents', () => {
       .join(' ');
     expect(compactText).toContain(
       'there is a ring of protection granting +4 to ac and +2 on saving throws.'
+    );
+  });
+
+  it('resolves multiple wishes rings with wish count', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing ring category target');
+    feed = resolvePreview(feed, categoryTarget, 36);
+
+    const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRing')
+    );
+    expect(ringTargets).toHaveLength(1);
+    const ringTarget = ringTargets[0];
+    if (!ringTarget) throw new Error('missing ring target');
+
+    const spy = jest
+      .spyOn(dungeonLookup, 'rollDice')
+      .mockImplementationOnce(() => 7);
+
+    try {
+      feed = resolvePreview(feed, ringTarget, 44);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const ringEvent = findOutcomeEvent(feed.outcome, 'treasureRing');
+    expect(ringEvent).toBeDefined();
+    if (!ringEvent || ringEvent.event.kind !== 'treasureRing') {
+      throw new Error('treasureRing event not found');
+    }
+    expect(ringEvent.event.result).toBe(TreasureRing.MultipleWishes);
+    expect(ringEvent.event.multipleWishesCount).toBe(7);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a ring of multiple wishes (7 wishes).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a ring of multiple wishes (7 wishes).'
     );
   });
 

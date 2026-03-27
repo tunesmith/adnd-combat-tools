@@ -89,6 +89,7 @@ export function renderTreasureMiscMagicE3Detail(
     kind: 'paragraph',
     text: resolvedSentence(
       outcome.event.result,
+      outcome.event.ointmentJars,
       figurineChild,
       girdleChild,
       hornTypeChild,
@@ -128,6 +129,7 @@ export function renderTreasureMiscMagicE3Compact(
     kind: 'paragraph',
     text: resolvedSentence(
       outcome.event.result,
+      outcome.event.ointmentJars,
       figurineChild,
       girdleChild,
       hornTypeChild,
@@ -162,7 +164,18 @@ export const buildTreasureMiscMagicE3Preview: TablePreviewFactory = (
     context,
   });
 
-export function miscMagicE3Sentence(result: TreasureMiscMagicE3): string {
+export function miscMagicE3Sentence(
+  result: TreasureMiscMagicE3,
+  ointmentJars?: number
+): string {
+  if (
+    result === TreasureMiscMagicE3.KeoghtomsOintment &&
+    typeof ointmentJars === 'number'
+  ) {
+    return `There ${
+      ointmentJars === 1 ? 'is 1 jar' : `are ${ointmentJars} jars`
+    } of Keoghtom's Ointment.`;
+  }
   const label = ITEM_LABELS[result];
   const normalized = stripUsageTag(label);
   if (normalized.toLowerCase() === 'ioun stones') {
@@ -173,6 +186,7 @@ export function miscMagicE3Sentence(result: TreasureMiscMagicE3): string {
 
 function resolvedSentence(
   result: TreasureMiscMagicE3,
+  ointmentJars?: number,
   figurineChild?: OutcomeEventNode,
   girdleChild?: OutcomeEventNode,
   hornTypeChild?: OutcomeEventNode,
@@ -254,7 +268,7 @@ function resolvedSentence(
           : undefined,
     });
   }
-  return miscMagicE3Sentence(result);
+  return miscMagicE3Sentence(result, ointmentJars);
 }
 
 function stripUsageTag(label: string): string {

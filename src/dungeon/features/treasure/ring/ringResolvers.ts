@@ -57,6 +57,7 @@ export function resolveTreasureRing(options?: {
         spellLevels: number[];
       }
     | undefined;
+  let multipleWishesCount: number | undefined;
   if (command === TreasureRing.Contrariness) {
     children.push({
       type: 'pending-roll',
@@ -77,6 +78,8 @@ export function resolveTreasureRing(options?: {
     const caster = rollCasterType();
     const spellLevels = rollSpellStoringLevels(spellCount, caster);
     spellStoring = { caster, spellLevels };
+  } else if (command === TreasureRing.MultipleWishes) {
+    multipleWishesCount = rollDice(4, 2);
   } else if (command === TreasureRing.Regeneration) {
     children.push({
       type: 'pending-roll',
@@ -104,6 +107,7 @@ export function resolveTreasureRing(options?: {
     event: {
       ...buildTreasureEvent('treasureRing', command, usedRoll, options),
       spellStoring,
+      multipleWishesCount,
     } as OutcomeEvent,
     children: children.length ? children : undefined,
   };

@@ -266,6 +266,8 @@ export type TreasureBeakerOfPlentifulPotionsDetails = {
   cadence: 'threeTimesPerWeek' | 'twicePerWeek' | 'oncePerWeek';
 };
 
+export type TreasurePotionWaterBreathingDoses = 2 | 4;
+
 type NavigationOutcomeEvent =
   | {
       kind: 'periodicCheck';
@@ -403,7 +405,9 @@ type TreasureOutcomeEvent =
     >
   | ResultOutcomeEvent<'treasureProtectionHiddenBy', TreasureProtectionHiddenBy>
   | TreasureRollOutcomeEvent<'treasureMagicCategory', TreasureMagicCategory>
-  | TreasureRollOutcomeEvent<'treasurePotion', TreasurePotion>
+  | (TreasureRollOutcomeEvent<'treasurePotion', TreasurePotion> & {
+      waterBreathingDoses?: TreasurePotionWaterBreathingDoses;
+    })
   | TreasureRollOutcomeEvent<
       'treasurePotionAnimalControl',
       TreasurePotionAnimalControl
@@ -441,6 +445,7 @@ type TreasureOutcomeEvent =
     >
   | (TreasureRollOutcomeEvent<'treasureRing', TreasureRing> & {
       spellStoring?: SpellStoringDetails;
+      multipleWishesCount?: number;
     })
   | ResultOutcomeEvent<'treasureRingContrariness', TreasureRingContrariness>
   | ResultOutcomeEvent<
@@ -495,7 +500,9 @@ type TreasureOutcomeEvent =
       beaker?: TreasureBeakerOfPlentifulPotionsDetails;
     })
   | OptionalTreasureRollOutcomeEvent<'treasureMiscMagicE2', TreasureMiscMagicE2>
-  | ResultOutcomeEvent<'treasureMiscMagicE3', TreasureMiscMagicE3>
+  | (ResultOutcomeEvent<'treasureMiscMagicE3', TreasureMiscMagicE3> & {
+      ointmentJars?: number;
+    })
   | ResultOutcomeEvent<'treasureMiscMagicE4', TreasureMiscMagicE4>
   | ResultOutcomeEvent<'treasureMiscMagicE5', TreasureMiscMagicE5>
   | ResultOutcomeEvent<

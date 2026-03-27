@@ -403,7 +403,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
             : undefined,
       });
     }
-    return miscMagicE3Sentence(miscMagicE3.event.result);
+    return miscMagicE3Sentence(
+      miscMagicE3.event.result,
+      miscMagicE3.event.ointmentJars
+    );
   }
   const miscMagicE4 = findChildEvent(magic, 'treasureMiscMagicE4');
   if (miscMagicE4 && miscMagicE4.event.kind === 'treasureMiscMagicE4') {

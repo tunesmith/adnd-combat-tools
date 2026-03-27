@@ -1,5 +1,8 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import type {
+  DungeonOutcomeNode,
+  TreasurePotionWaterBreathingDoses,
+} from '../../../domain/outcome';
 import type { Table } from '../../../../tables/dungeon/tableTypes';
 import {
   buildTreasureEvent,
@@ -37,6 +40,7 @@ export function resolveTreasurePotion(options?: {
     usedRoll,
     options
   );
+  let waterBreathingDoses: TreasurePotionWaterBreathingDoses | undefined;
   const children: DungeonOutcomeNode[] = [];
   if (command === TreasurePotion.AnimalControl) {
     children.push(buildPotionPending('treasurePotionAnimalControl', event));
@@ -50,11 +54,16 @@ export function resolveTreasurePotion(options?: {
     children.push(buildPotionPending('treasurePotionHumanControl', event));
   } else if (command === TreasurePotion.UndeadControl) {
     children.push(buildPotionPending('treasurePotionUndeadControl', event));
+  } else if (command === TreasurePotion.WaterBreathing) {
+    waterBreathingDoses = rollDice(4) === 4 ? 4 : 2;
   }
   return {
     type: 'event',
     roll: usedRoll,
-    event,
+    event: {
+      ...event,
+      waterBreathingDoses,
+    },
     children: children.length ? children : undefined,
   };
 }
