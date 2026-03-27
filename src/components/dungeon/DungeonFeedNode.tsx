@@ -21,6 +21,7 @@ import {
   getDungeonTablePreviewTargetKey,
   isTargetedDungeonTablePreview,
 } from '../../types/dungeon';
+import styles from '../../pages/dungeon/dungeon.module.css';
 
 export function renderNode(
   node: DungeonRenderNode,
@@ -43,9 +44,13 @@ export function renderNode(
       );
     case 'bullet-list':
       return (
-        <ul key={key} style={{ marginLeft: '1.25rem' }}>
+        <ul
+          key={key}
+          style={{ marginLeft: '1.25rem' }}
+          className={styles['messageList']}
+        >
           {node.items.map((item, index) => (
-            <li key={index}>{item}</li>
+            <li key={index}>{renderBulletItem(item)}</li>
           ))}
         </ul>
       );
@@ -189,5 +194,18 @@ function renderTraceList(trace: DungeonRollTrace) {
         {trace.items.map((item, index) => renderItem(item, index))}
       </ul>
     </div>
+  );
+}
+
+function renderBulletItem(item: string): JSX.Element | string {
+  const rollSummaryMatch = item.match(/^(roll:\s*\d+\s*—\s*)(.+)$/);
+  if (!rollSummaryMatch) return item;
+
+  const [, prefix, outcome] = rollSummaryMatch;
+  return (
+    <>
+      <span className={styles['rollSummaryPrefix']}>{prefix}</span>
+      <span className={styles['rollSummaryOutcome']}>{outcome}</span>
+    </>
   );
 }

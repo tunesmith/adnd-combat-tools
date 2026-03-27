@@ -302,12 +302,36 @@
 }
 
 .roll {
-  font-weight: 700;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
 }
 
 .messages p {
   margin: 0.35rem 0;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
   line-height: 1.5;
+}
+
+.messageList {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.messageList li {
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.rollSummaryPrefix {
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+}
+
+.rollSummaryOutcome {
+  font-family: 'Sura', serif;
+  font-weight: 700;
 }
 
 .feedModeDock {

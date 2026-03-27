@@ -174,4 +174,18 @@ describe('character party compact rendering', () => {
     expect(markup).toContain('Expand to review the full table.');
     expect(markup).not.toContain('1-6');
   });
+
+  test('roll summary bullet items keep the result label emphasized', () => {
+    const bulletList: DungeonRenderNode = {
+      kind: 'bullet-list',
+      items: ['roll: 12 — PassageTurn'],
+    };
+
+    const element = renderNode(bulletList, 0, 'roll-summary-test');
+    const markup = ReactDOMServer.renderToStaticMarkup(element);
+
+    expect(markup).toContain('rollSummaryPrefix');
+    expect(markup).toContain('rollSummaryOutcome');
+    expect(markup).toContain('PassageTurn');
+  });
 });
