@@ -12,6 +12,7 @@ type DungeonFeedProps = {
   feed: FeedItem[];
   setDetailMode: Dispatch<SetStateAction<boolean>>;
   previewController: PreviewInteractionController;
+  onRootPreviewSelect: (roll: number) => void;
 };
 
 const DungeonFeed = ({
@@ -20,11 +21,13 @@ const DungeonFeed = ({
   feed,
   setDetailMode,
   previewController,
+  onRootPreviewSelect,
 }: DungeonFeedProps) => {
   const rootPreviewStack = renderRootPreviewStack(
     detailMode,
     rootPreviewNodes,
-    feed.length === 0
+    feed.length === 0,
+    onRootPreviewSelect
   );
 
   if (feed.length === 0) {
@@ -32,7 +35,7 @@ const DungeonFeed = ({
       rootPreviewStack
     ) : (
       <div className={styles['placeholder']}>
-        Make a selection, enter 1–20 or click AutoRoll.
+        Click AutoRoll or enter a d20 value.
       </div>
     );
   }
@@ -56,7 +59,8 @@ const DungeonFeed = ({
 function renderRootPreviewStack(
   detailMode: boolean,
   rootPreviewNodes: RootDungeonTablePreview[],
-  isEmptyFeed: boolean
+  isEmptyFeed: boolean,
+  onRootPreviewSelect: (roll: number) => void
 ) {
   if (!detailMode) return null;
 
@@ -69,6 +73,7 @@ function renderRootPreviewStack(
           enablePreviewControls={false}
           statusLabelOverride={isEmptyFeed ? 'Start' : undefined}
           statusToneOverride={isEmptyFeed ? 'pending' : 'reference'}
+          onEntrySelect={onRootPreviewSelect}
         />
       ))}
     </div>

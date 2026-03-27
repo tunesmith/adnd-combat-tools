@@ -161,7 +161,7 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     expect(document.body.textContent ?? '').toContain('Start');
     expect(document.body.textContent ?? '').toContain('1–2');
     expect(document.body.textContent ?? '').not.toContain(
-      'Make a selection, enter 1–20 or click AutoRoll.'
+      'Click AutoRoll or enter a d20 value.'
     );
 
     const rollLabel = requireElement(findLabel('d20 Roll'), 'roll label');
@@ -296,6 +296,71 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     expect(entryLeft).toBe(false);
   });
 
+  it('lets the reference preview launch another root move from an entry row', async () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    await act(async () => {
+      ReactDOM.render(<DungeonIndexPage />, container as HTMLDivElement);
+    });
+
+    const detailLabel = requireElement(findLabel('Detail'), 'detail label');
+    const detailRadio = requireElement(
+      detailLabel.querySelector<HTMLInputElement>('input[type="radio"]'),
+      'detail radio'
+    );
+    await act(async () => {
+      detailRadio.click();
+    });
+
+    const startRowButton = requireElement(
+      document.querySelector<HTMLButtonElement>(
+        'button[aria-label="Use roll 3 for Door"]'
+      ),
+      'start preview row button'
+    );
+    await act(async () => {
+      startRowButton.click();
+    });
+
+    await waitFor(() =>
+      (document.querySelector('[role="status"]')?.textContent ?? '').includes(
+        'passage roll: 3'
+      )
+        ? true
+        : null
+    );
+    await waitFor(() =>
+      document.querySelectorAll('.feedItem').length === 1 ? true : null
+    );
+
+    const referenceRowButton = requireElement(
+      document.querySelector<HTMLButtonElement>(
+        'button[aria-label="Use roll 20 for WanderingMonster"]'
+      ),
+      'reference preview row button'
+    );
+    await act(async () => {
+      referenceRowButton.click();
+    });
+
+    await waitFor(() =>
+      (document.querySelector('[role="status"]')?.textContent ?? '').includes(
+        'passage roll: 20'
+      )
+        ? true
+        : null
+    );
+    expect(document.querySelectorAll('.feedItem')).toHaveLength(2);
+
+    const rollLabel = requireElement(findLabel('d20 Roll'), 'roll label');
+    const rollInput = requireElement(
+      rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'roll input'
+    );
+    expect(rollInput.value).toBe('20');
+  });
+
   it('keeps Door Continuation preview expanded after submitting override 3 (current bug reproduction)', async () => {
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -419,6 +484,76 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
       '3–5'
     );
     expect(entryDoor).toBe(false);
+  });
+
+  it('lets a pending table row resolve the preview using that row range', async () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    await act(async () => {
+      ReactDOM.render(<DungeonIndexPage />, container as HTMLDivElement);
+    });
+
+    const detailLabel = requireElement(findLabel('Detail'), 'detail label');
+    const detailRadio = requireElement(
+      detailLabel.querySelector<HTMLInputElement>('input[type="radio"]'),
+      'detail radio'
+    );
+    await act(async () => {
+      detailRadio.click();
+    });
+
+    const rollLabel = requireElement(findLabel('d20 Roll'), 'roll label');
+    const rollInput = requireElement(
+      rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'roll input'
+    );
+    await act(async () => {
+      (rollInput as any).value = '3';
+      ReactTestUtils.Simulate.change(rollInput, {
+        target: { value: '3' },
+      } as any);
+    });
+    await act(async () => {
+      ReactTestUtils.Simulate.keyDown(rollInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
+    });
+
+    const previewBlock = requireElement(
+      await waitFor(() => findPreviewCardByTitle('Door Location')),
+      'door location preview'
+    );
+    const useRowButton = requireElement(
+      previewBlock.querySelector<HTMLButtonElement>(
+        'button[aria-label="Use roll 13 for Ahead"]'
+      ),
+      'use preview row button'
+    );
+
+    await act(async () => {
+      useRowButton.click();
+    });
+
+    const previewBlockAfter = await waitFor(() =>
+      findPreviewCardByTitle('Door Location')
+    );
+
+    requireElement(
+      previewBlockAfter.querySelector<HTMLButtonElement>(
+        'button[aria-label="Expand table"]'
+      ),
+      'collapsed preview toggle'
+    );
+    expect(findLabel('Override roll', previewBlockAfter)).toBeNull();
+    expect(
+      previewBlockAfter.querySelector(
+        'button[aria-label="Use roll 13 for Ahead"]'
+      )
+    ).toBeNull();
   });
 
   it('copies replay info with the run seed and committed inputs', async () => {

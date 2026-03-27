@@ -64,6 +64,7 @@ export function resolveDungeonFeedPreview(options: {
   preview: TargetedDungeonTablePreview;
   feedItemId: string;
   shouldRoll: boolean;
+  explicitRoll?: number;
   feedSequence?: number;
   feedItem?: FeedItem;
   session: DungeonRandomSession;
@@ -77,7 +78,8 @@ export function resolveDungeonFeedPreview(options: {
   onResolved?: (entry: PreviewResolutionEntry) => void;
 }): boolean {
   const targetKey = options.preview.targetId;
-  let usedRoll: number | undefined = options.overrides[targetKey];
+  let usedRoll: number | undefined =
+    options.explicitRoll ?? options.overrides[targetKey];
   if (!options.shouldRoll && usedRoll === undefined) return false;
   if (options.shouldRoll && usedRoll === undefined) {
     usedRoll = withDungeonRandomSession(options.session, () =>

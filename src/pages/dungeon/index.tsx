@@ -19,6 +19,7 @@ const DungeonIndexPage = () => {
     liveRegionRef,
     isValid,
     handleRoll,
+    handleRootPreviewSelect,
     handleRollInputKeyDown,
     copyReplayInfo,
     replayStatus,
@@ -198,6 +199,7 @@ const DungeonIndexPage = () => {
             feed={feed}
             setDetailMode={setDetailMode}
             previewController={previewController}
+            onRootPreviewSelect={handleRootPreviewSelect}
           />
           <div className={styles['debugTools']}>
             {replayStatus && (

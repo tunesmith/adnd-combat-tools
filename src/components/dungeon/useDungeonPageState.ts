@@ -94,6 +94,11 @@ export function useDungeonPageState() {
     addToFeed(action, roll, 'auto');
   };
 
+  const handleRootPreviewSelect = (roll: number) => {
+    setRollInput(String(roll));
+    addToFeed(action, roll, 'manual');
+  };
+
   const handleRollInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
@@ -132,6 +137,7 @@ export function useDungeonPageState() {
     liveRegionRef,
     isValid,
     handleRoll,
+    handleRootPreviewSelect,
     handleRollInputKeyDown,
     copyReplayInfo,
     replayStatus,

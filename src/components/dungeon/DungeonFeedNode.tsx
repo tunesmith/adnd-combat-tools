@@ -112,6 +112,17 @@ export function renderNode(
               feedItem,
             });
           }}
+          onEntrySelect={(value) => {
+            if (!targetedPreview) return;
+            previewController?.onResolvePreview({
+              preview: targetedPreview,
+              feedItemId,
+              shouldRoll: false,
+              explicitRoll: value,
+              feedSequence,
+              feedItem,
+            });
+          }}
           isCollapsed={isCollapsed}
           hasResolved={hasResolved}
           onToggleCollapse={

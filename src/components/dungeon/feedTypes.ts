@@ -32,6 +32,7 @@ export type PreviewResolutionRequest = {
   preview: TargetedDungeonTablePreview;
   feedItemId: string;
   shouldRoll: boolean;
+  explicitRoll?: number;
   feedSequence?: number;
   feedItem?: FeedItem;
 };

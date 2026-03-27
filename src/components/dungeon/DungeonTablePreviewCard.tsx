@@ -10,6 +10,7 @@ type DungeonTablePreviewCardProps = {
   onOverrideChange?: (value: number | undefined) => void;
   onUseOverride?: () => void;
   onAutoRoll?: () => void;
+  onEntrySelect?: (value: number) => void;
   isCollapsed?: boolean;
   hasResolved?: boolean;
   onToggleCollapse?: () => void;
@@ -24,6 +25,7 @@ const DungeonTablePreviewCard = ({
   onOverrideChange,
   onUseOverride,
   onAutoRoll,
+  onEntrySelect,
   isCollapsed = false,
   hasResolved = false,
   onToggleCollapse,
@@ -52,15 +54,39 @@ const DungeonTablePreviewCard = ({
       : styles['statusPending'];
 
   const shouldShowEntriesInline = !isCollapsed;
+  const canSelectEntries = !isCollapsed && !hasResolved && !!onEntrySelect;
 
   const entries = (
     <div className={styles['entries']}>
-      {preview.entries.map((entry, index) => (
-        <div className={styles['entryRow']} key={`${entry.range}-${index}`}>
-          <code className={styles['range']}>{entry.range}</code>
-          <span>{entry.label}</span>
-        </div>
-      ))}
+      {preview.entries.map((entry, index) => {
+        const entryRoll = parsePreviewEntryRoll(entry.range);
+        const content = (
+          <>
+            <code className={styles['range']}>{entry.range}</code>
+            <span className={styles['entryLabel']}>{entry.label}</span>
+          </>
+        );
+
+        if (!canSelectEntries || entryRoll === undefined) {
+          return (
+            <div className={styles['entryRow']} key={`${entry.range}-${index}`}>
+              {content}
+            </div>
+          );
+        }
+
+        return (
+          <button
+            key={`${entry.range}-${index}`}
+            type="button"
+            className={`${styles['entryRow']} ${styles['entryButton']}`}
+            onClick={() => onEntrySelect(entryRoll)}
+            aria-label={`Use roll ${entryRoll} for ${entry.label}`}
+          >
+            {content}
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -153,5 +179,12 @@ const DungeonTablePreviewCard = ({
     </div>
   );
 };
+
+function parsePreviewEntryRoll(range: string): number | undefined {
+  const firstMatch = range.match(/\d+/);
+  if (!firstMatch) return undefined;
+  const value = Number(firstMatch[0]);
+  return Number.isInteger(value) ? value : undefined;
+}
 
 export { DungeonTablePreviewCard };

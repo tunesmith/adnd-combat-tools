@@ -1,6 +1,6 @@
 .card {
   border: 1px dashed var(--copper);
-  padding: 0.75rem;
+  padding: 0.9rem;
   margin: 0.75rem 0;
   background: rgba(0, 0, 0, 0.08);
 }
@@ -36,16 +36,19 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  align-items: center;
+  align-items: baseline;
 }
 
 .title {
+  font-size: 1.16rem;
   font-weight: 700;
+  line-height: 1.15;
 }
 
 .die {
-  opacity: 0.85;
-  font-size: 0.95rem;
+  opacity: 0.74;
+  font-size: 0.84rem;
+  letter-spacing: 0.05em;
 }
 
 .metaRow {
@@ -85,19 +88,81 @@
 }
 
 .entries {
-  margin-top: 0.6rem;
-  font-size: 0.95rem;
-  line-height: 1.4;
+  margin-top: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+  font-size: 0.96rem;
+  line-height: 1.45;
 }
 
 .entryRow {
-  display: flex;
-  gap: 0.45rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 0.7rem;
+  align-items: start;
+  width: 100%;
+  text-align: left;
 }
 
 .range {
-  opacity: 0.85;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.9rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid rgba(212, 141, 39, 0.3);
+  border-radius: 999px;
+  background: rgba(240, 239, 221, 0.06);
+  color: rgba(240, 239, 221, 0.78);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.entryLabel {
+  padding-top: 0.08rem;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-size: 0.98rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: rgba(240, 239, 221, 0.94);
+}
+
+.entryButton {
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  margin: 0;
+  padding: 0.2rem 0.28rem;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.entryButton:hover,
+.entryButton:focus-visible {
+  background: rgba(240, 239, 221, 0.06);
+  outline: none;
+}
+
+.entryButton:hover .range,
+.entryButton:focus-visible .range {
+  background: rgba(240, 239, 221, 0.12);
+  border-color: rgba(212, 141, 39, 0.55);
+  color: rgba(240, 239, 221, 0.92);
+}
+
+.entryButton:hover .entryLabel,
+.entryButton:focus-visible .entryLabel {
+  color: var(--eggshell);
+}
+
+.entryButton:active {
+  transform: translateY(1px);
 }
 
 .collapsedNote {
@@ -190,7 +255,15 @@
 
 @media (max-width: 720px) {
   .card {
-    padding: 0.7rem;
+    padding: 0.8rem;
+  }
+
+  .title {
+    font-size: 1.1rem;
+  }
+
+  .entryLabel {
+    font-size: 0.94rem;
   }
 
   .controls {
@@ -207,6 +280,11 @@
 }
 
 @media (max-width: 540px) {
+  .entryRow {
+    grid-template-columns: minmax(3.5rem, max-content) minmax(0, 1fr);
+    column-gap: 0.6rem;
+  }
+
   .controls {
     align-items: stretch;
   }

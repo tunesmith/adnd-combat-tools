@@ -45,6 +45,7 @@ export function useDungeonPreviewState(options: {
       preview: request.preview,
       feedItemId: request.feedItemId,
       shouldRoll: request.shouldRoll,
+      explicitRoll: request.explicitRoll,
       feedSequence: request.feedSequence,
       feedItem: request.feedItem,
       session: options.sessionRef.current,
