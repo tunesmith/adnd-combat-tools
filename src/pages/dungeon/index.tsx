@@ -16,10 +16,13 @@ const DungeonIndexPage = () => {
     setDungeonLevel,
     rootPreviewNodes,
     previewController,
+    previewScrollTarget,
     liveRegionRef,
     isValid,
     handleRoll,
     handleRootPreviewSelect,
+    handleOpenPendingDetail,
+    handlePreviewScrollComplete,
     handleRollInputKeyDown,
     copyReplayInfo,
     replayStatus,
@@ -200,6 +203,9 @@ const DungeonIndexPage = () => {
             setDetailMode={setDetailMode}
             previewController={previewController}
             onRootPreviewSelect={handleRootPreviewSelect}
+            scrollTarget={previewScrollTarget}
+            onOpenPendingDetail={handleOpenPendingDetail}
+            onPreviewScrollComplete={handlePreviewScrollComplete}
           />
           <div className={styles['debugTools']}>
             {replayStatus && (

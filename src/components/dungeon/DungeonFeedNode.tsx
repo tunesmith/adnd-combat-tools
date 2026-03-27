@@ -7,7 +7,11 @@ import { PrayerBeadsCompact } from './PrayerBeadsCompact';
 import { PrayerBeadsDetail } from './PrayerBeadsDetail';
 import { RobeOfUsefulItemsCompact } from './RobeOfUsefulItemsCompact';
 import { RobeOfUsefulItemsDetail } from './RobeOfUsefulItemsDetail';
-import type { FeedItem, PreviewInteractionController } from './feedTypes';
+import type {
+  FeedItem,
+  PreviewInteractionController,
+  PreviewScrollTarget,
+} from './feedTypes';
 import type {
   DungeonRenderNode,
   DungeonRollTrace,
@@ -26,7 +30,9 @@ export function renderNode(
   enablePreviewControls = true,
   pendingTargetIds?: ReadonlySet<string>,
   feedSequence?: number,
-  feedItem?: FeedItem
+  feedItem?: FeedItem,
+  scrollTarget?: PreviewScrollTarget | null,
+  onPreviewScrollComplete?: (target: PreviewScrollTarget) => void
 ): JSX.Element {
   switch (node.kind) {
     case 'heading':
@@ -125,6 +131,16 @@ export function renderNode(
           }}
           isCollapsed={isCollapsed}
           hasResolved={hasResolved}
+          shouldScrollIntoView={
+            scrollTarget?.feedItemId === feedItemId &&
+            scrollTarget.targetKey === targetKey
+          }
+          onScrollIntoView={
+            scrollTarget?.feedItemId === feedItemId &&
+            scrollTarget.targetKey === targetKey
+              ? () => onPreviewScrollComplete?.(scrollTarget)
+              : undefined
+          }
           onToggleCollapse={
             previewController?.onToggleCollapse && hasResolved
               ? () =>

@@ -2,7 +2,7 @@ import type { KeyboardEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { getRootPreviewNodes } from './dungeonFeedController';
 import { executeDungeonRootStep } from './dungeonStepController';
-import type { FeedItem } from './feedTypes';
+import type { FeedItem, PreviewScrollTarget } from './feedTypes';
 import { useDungeonPreviewState } from './useDungeonPreviewState';
 import { useDungeonReplayState } from './useDungeonReplayState';
 import { rollDice } from '../../dungeon/helpers/dungeonLookup';
@@ -20,6 +20,8 @@ export function useDungeonPageState() {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [detailMode, setDetailMode] = useState<boolean>(false);
   const [dungeonLevel, setDungeonLevel] = useState<number>(1);
+  const [previewScrollTarget, setPreviewScrollTarget] =
+    useState<PreviewScrollTarget | null>(null);
   const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
   const announce = (message: string) => {
@@ -99,6 +101,25 @@ export function useDungeonPageState() {
     addToFeed(action, roll, 'manual');
   };
 
+  const handleOpenPendingDetail = (
+    _item: FeedItem,
+    target: PreviewScrollTarget | null
+  ) => {
+    setPreviewScrollTarget(target);
+  };
+
+  const handlePreviewScrollComplete = (target: PreviewScrollTarget) => {
+    setPreviewScrollTarget((current) => {
+      if (
+        current?.feedItemId === target.feedItemId &&
+        current.targetKey === target.targetKey
+      ) {
+        return null;
+      }
+      return current;
+    });
+  };
+
   const handleRollInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
@@ -111,6 +132,7 @@ export function useDungeonPageState() {
     nextFeedSequenceRef.current = 1;
     setFeed([]);
     setRollInput('');
+    setPreviewScrollTarget(null);
     resetPreviewState();
     resetReplay(nextSession.seed);
     announce('Dungeon feed cleared.');
@@ -134,10 +156,13 @@ export function useDungeonPageState() {
     setDungeonLevel,
     rootPreviewNodes,
     previewController,
+    previewScrollTarget,
     liveRegionRef,
     isValid,
     handleRoll,
     handleRootPreviewSelect,
+    handleOpenPendingDetail,
+    handlePreviewScrollComplete,
     handleRollInputKeyDown,
     copyReplayInfo,
     replayStatus,

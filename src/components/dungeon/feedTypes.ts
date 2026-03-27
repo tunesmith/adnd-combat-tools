@@ -37,6 +37,11 @@ export type PreviewResolutionRequest = {
   feedItem?: FeedItem;
 };
 
+export type PreviewScrollTarget = {
+  feedItemId: string;
+  targetKey: string;
+};
+
 export type PreviewInteractionController = {
   overrides: Record<string, number | undefined>;
   collapsed: Record<string, boolean>;

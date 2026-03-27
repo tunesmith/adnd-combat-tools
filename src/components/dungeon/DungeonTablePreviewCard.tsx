@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { AnyDungeonTablePreview } from '../../types/dungeon';
 import styles from './DungeonTablePreviewCard.module.css';
 
@@ -14,6 +15,8 @@ type DungeonTablePreviewCardProps = {
   isCollapsed?: boolean;
   hasResolved?: boolean;
   onToggleCollapse?: () => void;
+  shouldScrollIntoView?: boolean;
+  onScrollIntoView?: () => void;
 };
 
 const DungeonTablePreviewCard = ({
@@ -29,7 +32,10 @@ const DungeonTablePreviewCard = ({
   isCollapsed = false,
   hasResolved = false,
   onToggleCollapse,
+  shouldScrollIntoView = false,
+  onScrollIntoView,
 }: DungeonTablePreviewCardProps) => {
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const statusTone =
     statusToneOverride ??
     (!enablePreviewControls
@@ -55,6 +61,16 @@ const DungeonTablePreviewCard = ({
 
   const shouldShowEntriesInline = !isCollapsed;
   const canSelectEntries = !isCollapsed && !hasResolved && !!onEntrySelect;
+
+  useEffect(() => {
+    if (!shouldScrollIntoView) return;
+    const card = cardRef.current;
+    if (!card) return;
+    if (typeof card.scrollIntoView === 'function') {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    onScrollIntoView?.();
+  }, [onScrollIntoView, shouldScrollIntoView]);
 
   const entries = (
     <div className={styles['entries']}>
@@ -122,7 +138,7 @@ const DungeonTablePreviewCard = ({
   );
 
   return (
-    <div className={styles['card']}>
+    <div className={styles['card']} ref={cardRef}>
       {onToggleCollapse ? (
         <button
           type="button"

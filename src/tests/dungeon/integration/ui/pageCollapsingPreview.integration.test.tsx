@@ -196,6 +196,69 @@ describe('Dungeon UI collapse (runDungeonStep mocked)', () => {
     expect(feedItemEl?.textContent ?? '').toContain('Door Location');
   });
 
+  it('opens detail mode and scrolls to the first pending preview from compact mode', async () => {
+    const scrolledElements: HTMLElement[] = [];
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: function scrollIntoViewMock() {
+        scrolledElements.push(this as HTMLElement);
+      },
+    });
+
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    await act(async () => {
+      ReactDOM.render(<DungeonIndexPage />, container as HTMLDivElement);
+    });
+
+    const rollLabel = requireElement(findLabel('d20 Roll'), 'roll label');
+    const rollInput = requireElement(
+      rollLabel.querySelector<HTMLInputElement>('input[type="number"]'),
+      'roll input'
+    );
+    await act(async () => {
+      (rollInput as any).value = '3';
+      ReactTestUtils.Simulate.change(rollInput, {
+        target: { value: '3' },
+      } as any);
+    });
+
+    await act(async () => {
+      ReactTestUtils.Simulate.keyDown(rollInput, {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+      } as any);
+    });
+
+    const openDetailButton = requireElement(
+      findButtonByText('Open detail mode'),
+      'open detail mode button'
+    );
+
+    await act(async () => {
+      openDetailButton.click();
+    });
+
+    const previewBlock = requireElement(
+      await waitFor(() => findPreviewCardByTitle('Door Location')),
+      'door location preview'
+    );
+
+    await waitFor(() => (scrolledElements.length > 0 ? true : null));
+
+    expect(
+      scrolledElements.some(
+        (element) =>
+          element === previewBlock ||
+          element.contains(previewBlock) ||
+          previewBlock.contains(element)
+      )
+    ).toBe(true);
+  });
+
   it('collapses Door Location preview after submitting override 13', async () => {
     container = document.createElement('div');
     document.body.appendChild(container);

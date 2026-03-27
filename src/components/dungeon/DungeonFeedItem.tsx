@@ -1,8 +1,16 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { collectPendingTargetIds } from './dungeonFeedController';
 import { renderNode } from './DungeonFeedNode';
-import type { FeedItem, PreviewInteractionController } from './feedTypes';
+import type {
+  FeedItem,
+  PreviewInteractionController,
+  PreviewScrollTarget,
+} from './feedTypes';
 import { selectMessagesForMode } from '../../dungeon/helpers/renderCache';
+import {
+  getDungeonTablePreviewTargetKey,
+  isTargetedDungeonTablePreview,
+} from '../../types/dungeon';
 import styles from '../../pages/dungeon/dungeon.module.css';
 
 type DungeonFeedItemProps = {
@@ -10,6 +18,12 @@ type DungeonFeedItemProps = {
   item: FeedItem;
   setDetailMode: Dispatch<SetStateAction<boolean>>;
   previewController: PreviewInteractionController;
+  scrollTarget?: PreviewScrollTarget | null;
+  onOpenPendingDetail: (
+    item: FeedItem,
+    target: PreviewScrollTarget | null
+  ) => void;
+  onPreviewScrollComplete: (target: PreviewScrollTarget) => void;
 };
 
 const DungeonFeedItem = ({
@@ -17,6 +31,9 @@ const DungeonFeedItem = ({
   item,
   setDetailMode,
   previewController,
+  scrollTarget,
+  onOpenPendingDetail,
+  onPreviewScrollComplete,
 }: DungeonFeedItemProps) => {
   const pendingTargetIds = collectPendingTargetIds(item.outcome);
   const renderedNodes = selectMessagesForMode(
@@ -25,6 +42,7 @@ const DungeonFeedItem = ({
     item.renderCache,
     item.messages
   );
+  const firstPendingPreviewTarget = findFirstPendingPreviewTarget(item);
 
   return (
     <div className={styles['feedItem']}>
@@ -61,7 +79,10 @@ const DungeonFeedItem = ({
           <button
             type="button"
             className={`${styles['button']} ${styles['compactPendingButton']}`}
-            onClick={() => setDetailMode(true)}
+            onClick={() => {
+              setDetailMode(true);
+              onOpenPendingDetail(item, firstPendingPreviewTarget);
+            }}
           >
             Open detail mode
           </button>
@@ -77,13 +98,45 @@ const DungeonFeedItem = ({
             true,
             pendingTargetIds,
             item.sequence,
-            item
+            item,
+            scrollTarget,
+            onPreviewScrollComplete
           )
         )}
       </div>
     </div>
   );
 };
+
+function findFirstPendingPreviewTarget(
+  item: FeedItem
+): PreviewScrollTarget | null {
+  const pendingTargetIds = collectPendingTargetIds(item.outcome);
+  if (pendingTargetIds.size === 0) return null;
+
+  const detailNodes = selectMessagesForMode(
+    item.action,
+    true,
+    item.renderCache,
+    item.messages
+  );
+
+  for (const node of detailNodes) {
+    if (node.kind !== 'table-preview' || !isTargetedDungeonTablePreview(node)) {
+      continue;
+    }
+
+    const targetKey = getDungeonTablePreviewTargetKey(node);
+    if (!pendingTargetIds.has(targetKey)) continue;
+
+    return {
+      feedItemId: item.id,
+      targetKey,
+    };
+  }
+
+  return null;
+}
 
 function formatPendingBadge(pendingCount: number): string {
   return `${pendingCount} pending ${pendingCount === 1 ? 'step' : 'steps'}`;

@@ -2,7 +2,11 @@ import type { Dispatch, SetStateAction } from 'react';
 import { DungeonFeedItem } from './DungeonFeedItem';
 import { renderNode } from './DungeonFeedNode';
 import { DungeonTablePreviewCard } from './DungeonTablePreviewCard';
-import type { FeedItem, PreviewInteractionController } from './feedTypes';
+import type {
+  FeedItem,
+  PreviewInteractionController,
+  PreviewScrollTarget,
+} from './feedTypes';
 import type { RootDungeonTablePreview } from '../../types/dungeon';
 import styles from '../../pages/dungeon/dungeon.module.css';
 
@@ -13,6 +17,12 @@ type DungeonFeedProps = {
   setDetailMode: Dispatch<SetStateAction<boolean>>;
   previewController: PreviewInteractionController;
   onRootPreviewSelect: (roll: number) => void;
+  scrollTarget?: PreviewScrollTarget | null;
+  onOpenPendingDetail: (
+    item: FeedItem,
+    target: PreviewScrollTarget | null
+  ) => void;
+  onPreviewScrollComplete: (target: PreviewScrollTarget) => void;
 };
 
 const DungeonFeed = ({
@@ -22,6 +32,9 @@ const DungeonFeed = ({
   setDetailMode,
   previewController,
   onRootPreviewSelect,
+  scrollTarget,
+  onOpenPendingDetail,
+  onPreviewScrollComplete,
 }: DungeonFeedProps) => {
   const rootPreviewStack = renderRootPreviewStack(
     detailMode,
@@ -50,6 +63,9 @@ const DungeonFeed = ({
           item={item}
           setDetailMode={setDetailMode}
           previewController={previewController}
+          scrollTarget={scrollTarget}
+          onOpenPendingDetail={onOpenPendingDetail}
+          onPreviewScrollComplete={onPreviewScrollComplete}
         />
       ))}
     </>
