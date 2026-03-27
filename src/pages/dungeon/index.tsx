@@ -94,7 +94,9 @@ const DungeonIndexPage = () => {
                     </button>
                   </div>
                   <div className={styles['rollDivider']}>-OR-</div>
-                  <label className={styles['fieldGroup']}>
+                  <label
+                    className={`${styles['fieldGroup']} ${styles['rollField']}`}
+                  >
                     <span className={styles['fieldLabel']}>d20 Roll</span>
                     <input
                       className={`${styles['fieldControl']} ${styles['rollInput']}`}

@@ -87,6 +87,7 @@
 .entries {
   margin-top: 0.6rem;
   font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .entryRow {
@@ -184,5 +185,45 @@
 
   .overrideCluster {
     width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .card {
+    padding: 0.7rem;
+  }
+
+  .controls {
+    gap: 0.75rem;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .overrideCluster {
+    width: 100%;
+  }
+}
+
+@media (max-width: 540px) {
+  .controls {
+    align-items: stretch;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .overrideField {
+    width: 100%;
+  }
+
+  .overrideInput {
+    width: min(8rem, 100%);
   }
 }

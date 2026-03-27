@@ -9,7 +9,8 @@
 
 .title {
   font-family: 'Sura', serif;
-  font-size: 32px;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.08;
   text-align: center;
   display: table;
   margin: 0 auto;
@@ -59,12 +60,14 @@
 
 .generateLayout {
   display: grid;
+  grid-template-areas: 'trigger roll level';
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 1rem 1.5rem;
   align-items: end;
 }
 
 .triggerGroup {
+  grid-area: trigger;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -74,11 +77,12 @@
 .actionSegmentedControl {
   display: inline-flex;
   width: fit-content;
-  min-height: var(--generate-control-height);
+  height: var(--generate-control-height);
   border: 2px solid rgba(212, 141, 39, 0.85);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.18);
-  padding: 0.18rem;
+  align-items: stretch;
+  padding: 0.14rem;
   gap: 0.25rem;
   box-sizing: border-box;
 }
@@ -89,9 +93,10 @@
   align-items: center;
   justify-content: center;
   min-width: 112px;
-  min-height: calc(var(--generate-control-height) - 0.36rem);
-  padding: 0.55rem 1rem;
+  min-height: 0;
+  padding: 0 1rem;
   border-radius: 999px;
+  box-sizing: border-box;
   cursor: pointer;
   color: rgba(240, 239, 221, 0.86);
   transition: background-color 120ms ease, color 120ms ease,
@@ -114,6 +119,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+}
+
+.rollField {
+  align-items: center;
+  text-align: center;
 }
 
 .fieldLabel {
@@ -141,6 +151,7 @@
 }
 
 .rollGroup {
+  grid-area: roll;
   display: flex;
   align-items: flex-end;
   gap: 0.85rem;
@@ -158,13 +169,15 @@
 
 .rollDivider {
   align-self: flex-end;
-  padding-bottom: 0.9rem;
+  margin-bottom: calc((var(--generate-control-height) - 0.8rem) / 2);
   font-size: 0.8rem;
+  line-height: 1;
   letter-spacing: 0.08em;
   opacity: 0.72;
 }
 
 .contextGroup {
+  grid-area: level;
   justify-self: end;
 }
 
@@ -182,6 +195,7 @@
   border: 2px solid var(--copper);
   padding: 6px 12px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .button:disabled {
@@ -291,6 +305,7 @@
 
 .messages p {
   margin: 0.35rem 0;
+  line-height: 1.5;
 }
 
 .feedModeDock {
@@ -387,13 +402,35 @@
   cursor: not-allowed;
 }
 
+@media (max-width: 920px) {
+  .outerContainer {
+    padding: 2rem;
+  }
+
+  .contentContainer {
+    padding: 0.9rem;
+  }
+
+  .generateLayout {
+    grid-template-areas:
+      'trigger level'
+      'roll roll';
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.9rem 1rem;
+  }
+
+  .rollGroup {
+    justify-self: center;
+    justify-content: center;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+}
+
 @media (max-width: 640px) {
   .outerContainer {
     padding: 1rem;
-  }
-
-  .title {
-    font-size: 28px;
   }
 
   .controlSection {
@@ -401,30 +438,97 @@
   }
 
   .generateLayout {
+    grid-template-areas:
+      'trigger'
+      'roll'
+      'level';
     grid-template-columns: 1fr;
-    gap: 0.9rem;
+    gap: 0.85rem;
   }
 
+  .triggerGroup,
+  .rollGroup,
   .contextGroup {
     justify-self: stretch;
   }
 
+  .contextGroup {
+    justify-self: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .actionSegmentedControl,
+  .segmentedControl {
+    width: 100%;
+    max-width: none;
+  }
+
   .rollGroup {
+    flex-direction: row;
+    align-items: flex-end;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.7rem;
   }
 
   .rollDivider {
-    width: 100%;
-    padding-bottom: 0;
+    align-self: flex-end;
+    width: auto;
     text-align: center;
   }
 
   .segmentOption {
+    flex: 1 1 0;
     min-width: 84px;
   }
 
   .actionOption {
     min-width: 0;
     flex: 1 1 0;
+  }
+
+  .rollActions {
+    width: auto;
+  }
+
+  .controlButton {
+    width: auto;
+  }
+
+  .rollInput {
+    width: min(7rem, 100%);
+  }
+
+  .levelInput {
+    width: min(8rem, 100%);
+  }
+
+  .feed {
+    padding: 0.45rem;
+  }
+
+  .debugTools {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .rollGroup {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .rollActions {
+    width: 100%;
+  }
+
+  .controlButton {
+    width: 100%;
+  }
+
+  .rollDivider {
+    width: 100%;
   }
 }
