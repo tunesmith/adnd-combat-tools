@@ -2,6 +2,7 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import { emphasizeInlineText } from '../../../helpers/inlineContent';
 import type {
   OutcomeEventNode,
   TreasureBeakerPotionDetails,
@@ -83,7 +84,10 @@ export function renderTreasurePotionDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedPotionSentence(outcome),
+    ...emphasizeInlineText(
+      resolvedPotionSentence(outcome),
+      resolvedPotionItemName(outcome)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -102,7 +106,10 @@ export function renderTreasurePotionCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedPotionSentence(outcome),
+    ...emphasizeInlineText(
+      resolvedPotionSentence(outcome),
+      resolvedPotionItemName(outcome)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -143,7 +150,10 @@ export function renderTreasurePotionAnimalControlDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: animalControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      animalControlSentence(outcome.event.result),
+      `potion of ${animalControlLabel(outcome.event.result)} control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -162,7 +172,10 @@ export function renderTreasurePotionAnimalControlCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: animalControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      animalControlSentence(outcome.event.result),
+      `potion of ${animalControlLabel(outcome.event.result)} control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -203,7 +216,10 @@ export function renderTreasurePotionDragonControlDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: dragonControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      dragonControlSentence(outcome.event.result),
+      `potion of ${dragonControlLabel(outcome.event.result)} dragon control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -222,7 +238,10 @@ export function renderTreasurePotionDragonControlCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: dragonControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      dragonControlSentence(outcome.event.result),
+      `potion of ${dragonControlLabel(outcome.event.result)} dragon control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -263,7 +282,10 @@ export function renderTreasurePotionGiantControlDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: giantControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      giantControlSentence(outcome.event.result),
+      `potion of ${giantControlLabel(outcome.event.result)} giant control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -282,7 +304,10 @@ export function renderTreasurePotionGiantControlCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: giantControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      giantControlSentence(outcome.event.result),
+      `potion of ${giantControlLabel(outcome.event.result)} giant control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -323,7 +348,10 @@ export function renderTreasurePotionGiantStrengthDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: giantStrengthSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      giantStrengthSentence(outcome.event.result),
+      `potion of ${giantStrengthLabel(outcome.event.result)} giant strength`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -342,7 +370,10 @@ export function renderTreasurePotionGiantStrengthCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: giantStrengthSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      giantStrengthSentence(outcome.event.result),
+      `potion of ${giantStrengthLabel(outcome.event.result)} giant strength`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -383,7 +414,10 @@ export function renderTreasurePotionHumanControlDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: humanControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      humanControlSentence(outcome.event.result),
+      `potion of ${humanControlLabel(outcome.event.result)} control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -402,7 +436,10 @@ export function renderTreasurePotionHumanControlCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: humanControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      humanControlSentence(outcome.event.result),
+      `potion of ${humanControlLabel(outcome.event.result)} control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -443,7 +480,10 @@ export function renderTreasurePotionUndeadControlDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: undeadControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      undeadControlSentence(outcome.event.result),
+      `potion of ${undeadControlLabel(outcome.event.result)} control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -462,7 +502,10 @@ export function renderTreasurePotionUndeadControlCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: undeadControlSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      undeadControlSentence(outcome.event.result),
+      `potion of ${undeadControlLabel(outcome.event.result)} control`
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -553,6 +596,16 @@ export function resolvedPotionSentence(node: OutcomeEventNode): string {
     return `There is a potion of water breathing (${node.event.waterBreathingDoses} doses).`;
   }
   return `There is a ${labelForResolvedPotion(extractResolvedPotion(node))}.`;
+}
+
+export function resolvedPotionItemName(
+  node: OutcomeEventNode
+): string | undefined {
+  if (node.event.kind !== 'treasurePotion') return undefined;
+  if (node.event.result === TreasurePotion.WaterBreathing) {
+    return 'potion of water breathing';
+  }
+  return labelForResolvedPotion(extractResolvedPotion(node));
 }
 
 export function labelForResolvedPotion(

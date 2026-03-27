@@ -2,6 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+} from '../../../helpers/inlineContent';
 import type {
   OutcomeEventNode,
   TreasureIounStonesResult,
@@ -34,6 +38,10 @@ import {
   treasureIronFlask,
   TreasureIronFlaskContent,
 } from './miscMagicE3Subtables';
+
+function emphasizedSentence(text: string) {
+  return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+}
 
 const FIGURINE_LABELS: Record<TreasureFigurineOfWondrousPower, string> = {
   [TreasureFigurineOfWondrousPower.EbonyFly]: 'an ebony fly',
@@ -111,7 +119,7 @@ function buildFigurineNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: figurineSentence(outcome.event.result, marbleChild),
+    ...emphasizedSentence(figurineSentence(outcome.event.result, marbleChild)),
   };
   return [heading, bullet, paragraph];
 }
@@ -160,7 +168,7 @@ export function renderTreasureFigurineMarbleElephantDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: marbleElephantSentence(outcome.event.result),
+    ...emphasizedSentence(marbleElephantSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -179,7 +187,7 @@ export function renderTreasureFigurineMarbleElephantCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: marbleElephantSentence(outcome.event.result),
+    ...emphasizedSentence(marbleElephantSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -251,7 +259,7 @@ export function renderTreasureGirdleOfGiantStrengthDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: girdleSentence(outcome.event.result),
+    ...emphasizedSentence(girdleSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -270,7 +278,7 @@ export function renderTreasureGirdleOfGiantStrengthCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: girdleSentence(outcome.event.result),
+    ...emphasizedSentence(girdleSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -323,7 +331,7 @@ export function renderTreasureInstrumentOfTheBardsDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: instrumentOfTheBardsSentence(outcome.event.result),
+    ...emphasizedSentence(instrumentOfTheBardsSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -342,7 +350,7 @@ export function renderTreasureInstrumentOfTheBardsCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: instrumentOfTheBardsSentence(outcome.event.result),
+    ...emphasizedSentence(instrumentOfTheBardsSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -407,7 +415,7 @@ export function renderTreasureIronFlaskDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: ironFlaskSentence(outcome.event.result),
+    ...emphasizedSentence(ironFlaskSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -426,7 +434,7 @@ export function renderTreasureIronFlaskCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: ironFlaskSentence(outcome.event.result),
+    ...emphasizedSentence(ironFlaskSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

@@ -2,6 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+} from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureCarpetOfFlying,
@@ -20,6 +24,10 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
+
+function emphasizedSentence(text: string) {
+  return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+}
 
 const CARPET_SIZE_LABELS: Record<TreasureCarpetOfFlying, string> = {
   [TreasureCarpetOfFlying.ThreeByFive]: "3' × 5'",
@@ -46,7 +54,7 @@ export function renderTreasureCarpetOfFlyingDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: carpetSentence(outcome.event.result),
+    ...emphasizedSentence(carpetSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -65,7 +73,7 @@ export function renderTreasureCarpetOfFlyingCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: carpetSentence(outcome.event.result),
+    ...emphasizedSentence(carpetSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -114,7 +122,7 @@ export function renderTreasureCloakOfProtectionDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: cloakSentence(outcome.event.result),
+    ...emphasizedSentence(cloakSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -133,7 +141,7 @@ export function renderTreasureCloakOfProtectionCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: cloakSentence(outcome.event.result),
+    ...emphasizedSentence(cloakSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -181,7 +189,7 @@ export function renderTreasureCrystalBallDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: crystalBallSentence(outcome.event.result),
+    ...emphasizedSentence(crystalBallSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -200,7 +208,7 @@ export function renderTreasureCrystalBallCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: crystalBallSentence(outcome.event.result),
+    ...emphasizedSentence(crystalBallSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -248,7 +256,7 @@ export function renderTreasureDeckOfManyThingsDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: deckSentence(outcome.event.result),
+    ...emphasizedSentence(deckSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -267,7 +275,7 @@ export function renderTreasureDeckOfManyThingsCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: deckSentence(outcome.event.result),
+    ...emphasizedSentence(deckSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -320,7 +328,7 @@ export function renderTreasureEyesOfPetrificationDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: eyesSentence(outcome.event.result),
+    ...emphasizedSentence(eyesSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -339,7 +347,7 @@ export function renderTreasureEyesOfPetrificationCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: eyesSentence(outcome.event.result),
+    ...emphasizedSentence(eyesSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

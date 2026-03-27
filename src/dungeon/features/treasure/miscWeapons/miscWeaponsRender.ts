@@ -2,6 +2,7 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import { emphasizeInlineText } from '../../../helpers/inlineContent';
 import type {
   OutcomeEventNode,
   TreasureMiscWeaponResult,
@@ -90,6 +91,21 @@ export function miscWeaponSentence(result: TreasureMiscWeaponResult): string {
   }
 }
 
+function miscWeaponPhrase(result: TreasureMiscWeaponResult): string {
+  switch (result.item) {
+    case TreasureMiscWeapon.ArrowPlus1:
+      return 'arrows +1';
+    case TreasureMiscWeapon.ArrowPlus2:
+      return 'arrows +2';
+    case TreasureMiscWeapon.ArrowPlus3:
+      return 'arrows +3';
+    case TreasureMiscWeapon.BoltPlus2:
+      return 'bolts +2';
+    default:
+      return miscWeaponLabel(result.item);
+  }
+}
+
 export function renderTreasureMiscWeaponsDetail(
   outcome: OutcomeEventNode,
   appendPendingPreviews: AppendPreviewFn
@@ -108,7 +124,10 @@ export function renderTreasureMiscWeaponsDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: miscWeaponSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      miscWeaponSentence(outcome.event.result),
+      miscWeaponPhrase(outcome.event.result)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -127,7 +146,10 @@ export function renderTreasureMiscWeaponsCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: miscWeaponSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      miscWeaponSentence(outcome.event.result),
+      miscWeaponPhrase(outcome.event.result)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

@@ -1,7 +1,12 @@
 import ReactDOMServer from 'react-dom/server';
 import { renderNode } from '../../../pages/dungeon';
 import { renderPeriodicCheckCompact } from '../../../dungeon/features/navigation/entry/entryRender';
+import { renderTreasurePotionCompact } from '../../../dungeon/features/treasure/potion/potionRender';
+import { renderTreasureCompactNodes } from '../../../dungeon/features/treasure/treasure/treasureRender';
 import { PeriodicCheck } from '../../../dungeon/features/navigation/entry/entryTable';
+import { TreasureWithoutMonster } from '../../../dungeon/features/treasure/treasure/treasureTable';
+import { TreasureMagicCategory } from '../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
+import { TreasurePotion } from '../../../dungeon/features/treasure/potion/potionTables';
 import { MonsterLevel } from '../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
 import { MonsterTwo } from '../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
 import { CharacterClass } from '../../../dungeon/models/characterClass';
@@ -187,5 +192,91 @@ describe('character party compact rendering', () => {
     expect(markup).toContain('rollSummaryPrefix');
     expect(markup).toContain('rollSummaryOutcome');
     expect(markup).toContain('PassageTurn');
+  });
+
+  test('resolved magical item paragraphs emphasize the item name', () => {
+    const potionNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 12,
+      event: {
+        kind: 'treasurePotion',
+        result: TreasurePotion.GaseousForm,
+        level: 1,
+        treasureRoll: 55,
+      },
+    };
+
+    const nodes = renderTreasurePotionCompact(potionNode, () => undefined);
+    const paragraph = nodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'paragraph' }> =>
+        node.kind === 'paragraph'
+    );
+
+    expect(paragraph?.text).toBe('There is a potion of gaseous form.');
+
+    if (!paragraph) {
+      throw new Error('potion paragraph not found');
+    }
+
+    const element = renderNode(paragraph, 0, 'potion-inline-test');
+    const markup = ReactDOMServer.renderToStaticMarkup(element);
+
+    expect(markup).toContain('messageStrong');
+    expect(markup).toContain('potion of gaseous form');
+  });
+
+  test('treasure compact summaries preserve inline emphasis for resolved magic', () => {
+    const potionNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 12,
+      event: {
+        kind: 'treasurePotion',
+        result: TreasurePotion.GaseousForm,
+        level: 1,
+        treasureRoll: 55,
+      },
+    };
+
+    const magicNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 55,
+      event: {
+        kind: 'treasureMagicCategory',
+        result: TreasureMagicCategory.Potions,
+        level: 1,
+        treasureRoll: 55,
+      },
+      children: [potionNode],
+    };
+
+    const treasureNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 55,
+      event: {
+        kind: 'treasure',
+        level: 1,
+        withMonster: false,
+        entries: [{ roll: 55, command: TreasureWithoutMonster.Magic }],
+      },
+      children: [magicNode],
+    };
+
+    const nodes = renderTreasureCompactNodes(treasureNode);
+    const paragraph = nodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'paragraph' }> =>
+        node.kind === 'paragraph'
+    );
+
+    expect(paragraph?.text).toBe('There is a potion of gaseous form.');
+
+    if (!paragraph) {
+      throw new Error('treasure summary paragraph not found');
+    }
+
+    const element = renderNode(paragraph, 0, 'treasure-inline-test');
+    const markup = ReactDOMServer.renderToStaticMarkup(element);
+
+    expect(markup).toContain('messageStrong');
+    expect(markup).toContain('potion of gaseous form');
   });
 });

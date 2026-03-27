@@ -2,6 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+} from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureMiscMagicE2, TreasureMiscMagicE2 } from './miscMagicE2Table';
 import {
@@ -74,14 +78,17 @@ export function renderTreasureMiscMagicE2Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      carpetChild,
-      cloakChild,
-      crystalChild,
-      deckChild,
-      eyesChild
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        carpetChild,
+        cloakChild,
+        crystalChild,
+        deckChild,
+        eyesChild
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -105,14 +112,17 @@ export function renderTreasureMiscMagicE2Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      carpetChild,
-      cloakChild,
-      crystalChild,
-      deckChild,
-      eyesChild
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        carpetChild,
+        cloakChild,
+        crystalChild,
+        deckChild,
+        eyesChild
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

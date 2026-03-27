@@ -2,6 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+} from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureMiscMagicE3, TreasureMiscMagicE3 } from './miscMagicE3Table';
 import {
@@ -87,16 +91,19 @@ export function renderTreasureMiscMagicE3Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      outcome.event.ointmentJars,
-      figurineChild,
-      girdleChild,
-      hornTypeChild,
-      instrumentChild,
-      ironFlaskChild,
-      iounChild
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        outcome.event.ointmentJars,
+        figurineChild,
+        girdleChild,
+        hornTypeChild,
+        instrumentChild,
+        ironFlaskChild,
+        iounChild
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -127,16 +134,19 @@ export function renderTreasureMiscMagicE3Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      outcome.event.ointmentJars,
-      figurineChild,
-      girdleChild,
-      hornTypeChild,
-      instrumentChild,
-      ironFlaskChild,
-      iounChild
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        outcome.event.ointmentJars,
+        figurineChild,
+        girdleChild,
+        hornTypeChild,
+        instrumentChild,
+        ironFlaskChild,
+        iounChild
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   if (iounChild && iounChild.event.kind === 'treasureIounStones') {

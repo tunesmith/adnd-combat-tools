@@ -2,6 +2,7 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import type { InlineText } from '../../../helpers/inlineContent';
 import type {
   OutcomeEventNode,
   TreasureEntry,
@@ -20,8 +21,12 @@ import { resolvedScrollSentence } from '../scroll/scrollRender';
 import { ringSentence } from '../ring/ringRender';
 import { resolveRodStaffWandLabel } from '../rodStaffWand/rodStaffWandRender';
 import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+  joinSentenceInlineTexts,
+} from '../../../helpers/inlineContent';
+import {
   buildPreview,
-  joinSegments,
   findChildEvent,
   type AppendPreviewFn,
   type TablePreviewFactory,
@@ -82,6 +87,8 @@ import {
 } from '../swords/swordsRender';
 import { computeSwordEgo } from '../swords/swordEgo';
 import { miscWeaponSentence } from '../miscWeapons/miscWeaponsRender';
+import { resolvedPotionItemName } from '../potion/potionRender';
+import { resolvedRingItemName } from '../ring/ringRender';
 
 export function renderTreasureDetail(
   outcome: OutcomeEventNode,
@@ -112,7 +119,7 @@ export function renderTreasureDetail(
   for (const entry of entries) {
     const description = describeTreasureEntry(entry);
     if (entry.command === TreasureWithoutMonster.Magic && resolvedMagicDetail) {
-      nodes.push({ kind: 'paragraph', text: resolvedMagicDetail });
+      nodes.push({ kind: 'paragraph', ...resolvedMagicDetail });
     } else {
       nodes.push({ kind: 'paragraph', text: description.detail });
     }
@@ -133,10 +140,10 @@ export function renderTreasureCompactNodes(
     level: 4,
     text: headingLabel(withMonster, rollIndex, totalRolls),
   };
-  const text = summarizeTreasureCompact(outcome);
+  const summary = summarizeTreasureCompact(outcome);
   const nodes: DungeonRenderNode[] = [heading];
-  if (text.trim().length > 0) {
-    nodes.push({ kind: 'paragraph', text });
+  if (summary.text.trim().length > 0) {
+    nodes.push({ kind: 'paragraph', ...summary });
   }
   const iounStones = findIounStonesEvent(outcome);
   if (iounStones && iounStones.event.kind === 'treasureIounStones') {
@@ -188,12 +195,12 @@ export const buildTreasurePreview: TablePreviewFactory = (tableId, context) => {
   });
 };
 
-function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
-  if (outcome.event.kind !== 'treasure') return '';
+function summarizeTreasureCompact(outcome: OutcomeEventNode): InlineText {
+  if (outcome.event.kind !== 'treasure') return { text: '' };
   const { entries } = outcome.event;
   const resolvedMagic = describeResolvedMagic(outcome);
   const robeSummaryTarget = findRobeOfUsefulItemsEvent(outcome);
-  const segments = entries.map((entry) => {
+  const segments: Array<string | InlineText> = entries.map((entry) => {
     if (entry.command === TreasureWithoutMonster.Magic) {
       if (
         robeSummaryTarget &&
@@ -216,28 +223,39 @@ function summarizeTreasureCompact(outcome: OutcomeEventNode): string {
   }
   const protection = describeTreasureProtection(outcome);
   if (protection) segments.push(protection);
-  return joinSegments(segments).trim();
+  return joinSentenceInlineTexts(segments);
 }
 
-function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
+function describeResolvedMagic(
+  outcome: OutcomeEventNode
+): InlineText | undefined {
   const magic = findChildEvent(outcome, 'treasureMagicCategory');
   if (!magic || magic.event.kind !== 'treasureMagicCategory') return undefined;
   const potion = findChildEvent(magic, 'treasurePotion');
   if (potion && potion.event.kind === 'treasurePotion') {
-    return resolvedPotionSentence(potion);
+    return emphasizeInlineText(
+      resolvedPotionSentence(potion),
+      resolvedPotionItemName(potion)
+    );
   }
   const scroll = findChildEvent(magic, 'treasureScroll');
   if (scroll && scroll.event.kind === 'treasureScroll') {
-    return resolvedScrollSentence(scroll);
+    const text = resolvedScrollSentence(scroll);
+    return emphasizeInlineText(text, extractLeadingItemPhrase(text));
   }
   const ring = findChildEvent(magic, 'treasureRing');
   if (ring && ring.event.kind === 'treasureRing') {
-    return ringSentence(ring.event.result, ring);
+    return emphasizeInlineText(
+      ringSentence(ring.event.result, ring),
+      resolvedRingItemName(ring.event.result, ring)
+    );
   }
   const rod = findChildEvent(magic, 'treasureRodStaffWand');
   if (rod && rod.event.kind === 'treasureRodStaffWand') {
     const label = resolveRodStaffWandLabel(rod);
-    return label.length > 0 ? `There is a ${label}.` : undefined;
+    return label.length > 0
+      ? emphasizeInlineText(`There is a ${label}.`, label)
+      : undefined;
   }
   const armorShieldsEvent = findArmorShieldsEvent(magic);
   if (
@@ -245,7 +263,8 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     armorShieldsEvent.event.kind === 'treasureArmorShields' &&
     magic.event.result === TreasureMagicCategory.ArmorShields
   ) {
-    return armorShieldSentence(armorShieldsEvent.event.result);
+    const text = armorShieldSentence(armorShieldsEvent.event.result);
+    return emphasizeInlineText(text, extractLeadingItemPhrase(text));
   }
   const swordsEvent = findSwordsEvent(magic);
   if (
@@ -280,7 +299,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
         : undefined;
     const luckBladeWishes = swordsEvent.event.luckBladeWishes;
     const ego = computeSwordEgo(swordsEvent);
-    return swordSentence(
+    const sentence = swordSentence(
       swordsEvent.event.result,
       kind,
       alignmentResult,
@@ -290,6 +309,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       luckBladeWishes,
       dragonSlayerColorLabel
     );
+    return emphasizeInlineText(sentence, extractLeadingItemPhrase(sentence));
   }
   const miscWeaponsEvent = findMiscWeaponsEvent(magic);
   if (
@@ -297,59 +317,75 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     miscWeaponsEvent.event.kind === 'treasureMiscWeapons' &&
     magic.event.result === TreasureMagicCategory.MiscWeapons
   ) {
-    return miscWeaponSentence(miscWeaponsEvent.event.result);
+    const text = miscWeaponSentence(miscWeaponsEvent.event.result);
+    return emphasizeInlineText(text, extractLeadingItemPhrase(text));
   }
   const miscMagicE1 = findChildEvent(magic, 'treasureMiscMagicE1');
   if (miscMagicE1 && miscMagicE1.event.kind === 'treasureMiscMagicE1') {
     const bag = findChildEvent(miscMagicE1, 'treasureBagOfHolding');
     if (bag && bag.event.kind === 'treasureBagOfHolding') {
       const stats = BAG_OF_HOLDING_STATS[bag.event.result];
-      return bagOfHoldingSentence(stats);
+      return emphasizeInlineText(bagOfHoldingSentence(stats), 'bag of holding');
     }
     const bagOfTricks = findChildEvent(miscMagicE1, 'treasureBagOfTricks');
     if (bagOfTricks && bagOfTricks.event.kind === 'treasureBagOfTricks') {
-      return bagOfTricksSentence(bagOfTricks.event.result);
+      return emphasizeInlineText(
+        bagOfTricksSentence(bagOfTricks.event.result),
+        'bag of tricks'
+      );
     }
     const bracers = findChildEvent(miscMagicE1, 'treasureBracersOfDefense');
     if (bracers && bracers.event.kind === 'treasureBracersOfDefense') {
-      return bracersSentence(bracers.event.result);
+      const text = bracersSentence(bracers.event.result);
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
     }
     const purse = findChildEvent(miscMagicE1, 'treasureBucknardsEverfullPurse');
     if (purse && purse.event.kind === 'treasureBucknardsEverfullPurse') {
-      return purseSentence(purse.event.result);
+      const text = purseSentence(purse.event.result);
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
     }
     const artifact = findChildEvent(miscMagicE1, 'treasureArtifactOrRelic');
     if (artifact && artifact.event.kind === 'treasureArtifactOrRelic') {
-      return artifactSentence(artifact.event.result);
+      const text = artifactSentence(artifact.event.result);
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
     }
-    return treasureMiscMagicE1Sentence(
+    const text = treasureMiscMagicE1Sentence(
       miscMagicE1.event.result,
       miscMagicE1.event.beaker
     );
+    return emphasizeInlineText(text, extractLeadingItemPhrase(text));
   }
   const miscMagicE2 = findChildEvent(magic, 'treasureMiscMagicE2');
   if (miscMagicE2 && miscMagicE2.event.kind === 'treasureMiscMagicE2') {
     const carpet = findChildEvent(miscMagicE2, 'treasureCarpetOfFlying');
     if (carpet && carpet.event.kind === 'treasureCarpetOfFlying') {
-      return `There is a carpet of flying (${carpet.event.result}).`;
+      return emphasizeInlineText(
+        `There is a carpet of flying (${carpet.event.result}).`,
+        'carpet of flying'
+      );
     }
     const cloak = findChildEvent(miscMagicE2, 'treasureCloakOfProtection');
     if (cloak && cloak.event.kind === 'treasureCloakOfProtection') {
-      return cloakSentence(cloak.event.result);
+      const text = cloakSentence(cloak.event.result);
+      return emphasizeInlineText(text, text.slice('There is a '.length, -1));
     }
     const crystal = findChildEvent(miscMagicE2, 'treasureCrystalBall');
     if (crystal && crystal.event.kind === 'treasureCrystalBall') {
-      return crystalBallSentence(crystal.event.result);
+      const text = crystalBallSentence(crystal.event.result);
+      return emphasizeInlineText(text, text.slice('There is a '.length, -1));
     }
     const deck = findChildEvent(miscMagicE2, 'treasureDeckOfManyThings');
     if (deck && deck.event.kind === 'treasureDeckOfManyThings') {
-      return deckSentence(deck.event.result);
+      const text = deckSentence(deck.event.result);
+      return emphasizeInlineText(text, text.slice('There is a '.length, -1));
     }
     const eyes = findChildEvent(miscMagicE2, 'treasureEyesOfPetrification');
     if (eyes && eyes.event.kind === 'treasureEyesOfPetrification') {
-      return eyesSentence(eyes.event.result);
+      const text = eyesSentence(eyes.event.result);
+      return emphasizeInlineText(text, text.slice('There is '.length, -1));
     }
-    return miscMagicE2Sentence(miscMagicE2.event.result);
+    const text = miscMagicE2Sentence(miscMagicE2.event.result);
+    return emphasizeInlineText(text, extractLeadingItemPhrase(text));
   }
   const miscMagicE3 = findChildEvent(magic, 'treasureMiscMagicE3');
   if (miscMagicE3 && miscMagicE3.event.kind === 'treasureMiscMagicE3') {
@@ -359,11 +395,15 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     );
     if (figurine && figurine.event.kind === 'treasureFigurineOfWondrousPower') {
       const marble = findChildEvent(figurine, 'treasureFigurineMarbleElephant');
-      return figurineSentence(figurine.event.result, marble);
+      return emphasizeInlineText(
+        figurineSentence(figurine.event.result, marble),
+        'Figurine of Wondrous Power'
+      );
     }
     const girdle = findChildEvent(miscMagicE3, 'treasureGirdleOfGiantStrength');
     if (girdle && girdle.event.kind === 'treasureGirdleOfGiantStrength') {
-      return girdleSentence(girdle.event.result);
+      const text = girdleSentence(girdle.event.result);
+      return emphasizeInlineText(text, text.slice('There is a '.length, -1));
     }
     const instrument = findChildEvent(
       miscMagicE3,
@@ -373,14 +413,18 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       instrument &&
       instrument.event.kind === 'treasureInstrumentOfTheBards'
     ) {
-      return instrumentOfTheBardsSentence(instrument.event.result);
+      const text = instrumentOfTheBardsSentence(instrument.event.result);
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
     }
     const ironFlask = findChildEvent(miscMagicE3, 'treasureIronFlask');
     if (ironFlask && ironFlask.event.kind === 'treasureIronFlask') {
-      return ironFlaskSentence(ironFlask.event.result);
+      return emphasizeInlineText(
+        ironFlaskSentence(ironFlask.event.result),
+        'Iron Flask'
+      );
     }
     const iounStones = findIounStonesEvent(outcome);
-    if (iounStones) return '';
+    if (iounStones) return { text: '' };
     const hornType = findChildEvent(miscMagicE3, 'treasureHornOfValhallaType');
     if (hornType && hornType.event.kind === 'treasureHornOfValhallaType') {
       const attunement = findChildEvent(
@@ -392,7 +436,7 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
         attunement.event.kind === 'treasureHornOfValhallaAttunement'
           ? findChildEvent(attunement, 'treasureHornOfValhallaAlignment')
           : undefined;
-      return hornSentence({
+      const text = hornSentence({
         type: hornType.event.result,
         attunement:
           attunement &&
@@ -405,17 +449,20 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
             ? alignment.event.result
             : undefined,
       });
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
     }
-    return miscMagicE3Sentence(
+    const text = miscMagicE3Sentence(
       miscMagicE3.event.result,
       miscMagicE3.event.ointmentJars
     );
+    return emphasizeInlineText(text, extractLeadingItemPhrase(text));
   }
   const miscMagicE4 = findChildEvent(magic, 'treasureMiscMagicE4');
   if (miscMagicE4 && miscMagicE4.event.kind === 'treasureMiscMagicE4') {
     const manual = findChildEvent(miscMagicE4, 'treasureManualOfGolems');
     if (manual && manual.event.kind === 'treasureManualOfGolems') {
-      return manualOfGolemsSentence(manual.event.result);
+      const text = manualOfGolemsSentence(manual.event.result);
+      return emphasizeInlineText(text, text.slice('There is a '.length, -1));
     }
     const medallion = findChildEvent(miscMagicE4, 'treasureMedallionRange');
     if (
@@ -427,7 +474,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     ) {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = medallionRangeParenthetical(medallion.event.result);
-      return `${base.slice(0, -1)} (${suffix}).`;
+      return emphasizeInlineText(
+        `${base.slice(0, -1)} (${suffix}).`,
+        extractLeadingItemPhrase(base)
+      );
     }
     const necklace = findChildEvent(miscMagicE4, 'treasureNecklaceOfMissiles');
     if (
@@ -437,7 +487,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     ) {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = necklaceOfMissilesParenthetical(necklace.event.result);
-      return `${base.slice(0, -1)} (${suffix}).`;
+      return emphasizeInlineText(
+        `${base.slice(0, -1)} (${suffix}).`,
+        extractLeadingItemPhrase(base)
+      );
     }
     const pearlEffect = findChildEvent(
       miscMagicE4,
@@ -458,7 +511,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
           : undefined;
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = pearlParenthetical(pearlEffect.event.result, recallResult);
-      return `${base.slice(0, -1)} (${suffix}).`;
+      return emphasizeInlineText(
+        `${base.slice(0, -1)} (${suffix}).`,
+        extractLeadingItemPhrase(base)
+      );
     }
     const pearlWisdom = findChildEvent(miscMagicE4, 'treasurePearlOfWisdom');
     if (
@@ -468,7 +524,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     ) {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = pearlOfWisdomParenthetical(pearlWisdom.event.result);
-      return `${base.slice(0, -1)} (${suffix}).`;
+      return emphasizeInlineText(
+        `${base.slice(0, -1)} (${suffix}).`,
+        extractLeadingItemPhrase(base)
+      );
     }
     const periaptPoison = findChildEvent(
       miscMagicE4,
@@ -482,7 +541,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     ) {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = periaptPoisonParenthetical(periaptPoison.event.result);
-      return `${base.slice(0, -1)} (${suffix}).`;
+      return emphasizeInlineText(
+        `${base.slice(0, -1)} (${suffix}).`,
+        extractLeadingItemPhrase(base)
+      );
     }
     const phylacteryLongYears = findChildEvent(
       miscMagicE4,
@@ -497,7 +559,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       const suffix = phylacteryLongYearsParenthetical(
         phylacteryLongYears.event.result
       );
-      return `${base.slice(0, -1)} (${suffix}).`;
+      return emphasizeInlineText(
+        `${base.slice(0, -1)} (${suffix}).`,
+        extractLeadingItemPhrase(base)
+      );
     }
     const quaalToken = findChildEvent(miscMagicE4, 'treasureQuaalFeatherToken');
     if (
@@ -507,7 +572,10 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
     ) {
       const base = miscMagicE4Sentence(miscMagicE4.event.result);
       const suffix = quaalFeatherTokenParenthetical(quaalToken.event.result);
-      return `${base.slice(0, -1)} (${suffix}).`;
+      return emphasizeInlineText(
+        `${base.slice(0, -1)} (${suffix}).`,
+        extractLeadingItemPhrase(base)
+      );
     }
     const prayerBeads = findChildEvent(
       miscMagicE4,
@@ -518,15 +586,19 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
       prayerBeads.event.kind === 'treasureNecklaceOfPrayerBeads' &&
       miscMagicE4.event.result === TreasureMiscMagicE4.NecklaceOfPrayerBeads
     ) {
-      return miscMagicE4Sentence(miscMagicE4.event.result);
+      return emphasizeInlineText(
+        miscMagicE4Sentence(miscMagicE4.event.result),
+        extractLeadingItemPhrase(miscMagicE4Sentence(miscMagicE4.event.result))
+      );
     }
-    return miscMagicE4Sentence(miscMagicE4.event.result);
+    const text = miscMagicE4Sentence(miscMagicE4.event.result);
+    return emphasizeInlineText(text, extractLeadingItemPhrase(text));
   }
   const miscMagicE5 = findChildEvent(magic, 'treasureMiscMagicE5');
   if (miscMagicE5 && miscMagicE5.event.kind === 'treasureMiscMagicE5') {
     if (miscMagicE5.event.result === TreasureMiscMagicE5.RobeOfUsefulItems) {
       const robeItems = findRobeOfUsefulItemsEvent(outcome);
-      if (robeItems) return '';
+      if (robeItems) return { text: '' };
     }
     const robeChild = findChildEvent(miscMagicE5, 'treasureRobeOfTheArchmagi');
     const robeAlignment =
@@ -551,12 +623,13 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
         'treasureScarabOfProtectionCurseResolution'
         ? scarabResolution.event.result
         : undefined;
-    return miscMagicE5Sentence(
+    const text = miscMagicE5Sentence(
       miscMagicE5.event.result,
       robeAlignment,
       scarabCurseResult,
       scarabResolutionResult
     );
+    return emphasizeInlineText(text, extractLeadingItemPhrase(text));
   }
   return undefined;
 }
@@ -564,14 +637,20 @@ function describeResolvedMagic(outcome: OutcomeEventNode): string | undefined {
 export function collectTreasureCompactSummaries(
   node: OutcomeEventNode
 ): string[] {
-  const summaries: string[] = [];
+  return collectTreasureCompactInlineTexts(node).map((summary) => summary.text);
+}
+
+export function collectTreasureCompactInlineTexts(
+  node: OutcomeEventNode
+): InlineText[] {
+  const summaries: InlineText[] = [];
   const visited = new Set<OutcomeEventNode>();
   const visit = (current: OutcomeEventNode): void => {
     if (visited.has(current)) return;
     visited.add(current);
     if (current.event.kind === 'treasure') {
       const summary = summarizeTreasureCompact(current);
-      if (summary.length > 0) summaries.push(summary);
+      if (summary.text.length > 0) summaries.push(summary);
     }
     current.children?.forEach((child) => {
       if (child.type === 'event') visit(child);

@@ -2,6 +2,7 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import { emphasizeInlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureScrolls,
@@ -73,7 +74,10 @@ export function renderTreasureScrollDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedScrollSentence(outcome),
+    ...emphasizeInlineText(
+      resolvedScrollSentence(outcome),
+      resolvedScrollItemName(outcome)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -92,7 +96,10 @@ export function renderTreasureScrollCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedScrollSentence(outcome),
+    ...emphasizeInlineText(
+      resolvedScrollSentence(outcome),
+      resolvedScrollItemName(outcome)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -247,6 +254,21 @@ export function resolvedScrollSentence(node: OutcomeEventNode): string {
     return `There is a protection scroll against ${protection}.`;
   }
   return 'There is a cursed scroll.';
+}
+
+function resolvedScrollItemName(node: OutcomeEventNode): string | undefined {
+  if (node.event.kind !== 'treasureScroll') return undefined;
+  const { scroll } = node.event;
+  if (scroll.type === 'spells') {
+    const count = scroll.spellLevels.length;
+    const countWord = NUMBER_WORDS[count] ?? String(count);
+    const spellNoun = count === 1 ? 'spell' : 'spells';
+    return `${scroll.caster} scroll of ${countWord} ${spellNoun}`;
+  }
+  if (scroll.type === 'protection') {
+    return `protection scroll against ${protectionText(node)}`;
+  }
+  return 'cursed scroll';
 }
 
 function needsAn(word: string): boolean {

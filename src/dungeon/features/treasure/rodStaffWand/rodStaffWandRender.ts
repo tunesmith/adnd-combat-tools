@@ -2,6 +2,7 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import { emphasizeInlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureRodsStavesWands,
@@ -72,7 +73,10 @@ export function renderTreasureRodStaffWandDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: `There is a ${resolveRodStaffWandLabel(outcome)}.`,
+    ...emphasizeInlineText(
+      `There is a ${resolveRodStaffWandLabel(outcome)}.`,
+      resolveRodStaffWandLabel(outcome)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -91,7 +95,10 @@ export function renderTreasureRodStaffWandCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: `There is a ${resolveRodStaffWandLabel(outcome)}.`,
+    ...emphasizeInlineText(
+      `There is a ${resolveRodStaffWandLabel(outcome)}.`,
+      resolveRodStaffWandLabel(outcome)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);

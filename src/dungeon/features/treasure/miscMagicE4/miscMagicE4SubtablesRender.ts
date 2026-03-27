@@ -4,6 +4,10 @@ import type {
   PrayerBeadsBreakdownEntry,
   PrayerBeadsSummary,
 } from '../../../../types/dungeon';
+import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+} from '../../../helpers/inlineContent';
 import type {
   OutcomeEventNode,
   TreasureNecklaceOfPrayerBeadsResult,
@@ -38,6 +42,10 @@ import {
   TreasureQuaalFeatherToken,
 } from './miscMagicE4Subtables';
 
+function emphasizedSentence(text: string) {
+  return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+}
+
 const MANUAL_LABELS: Record<TreasureManualOfGolems, string> = {
   [TreasureManualOfGolems.Clay]: 'Clay',
   [TreasureManualOfGolems.Flesh]: 'Flesh',
@@ -61,7 +69,7 @@ export function renderTreasureManualOfGolemsDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: manualOfGolemsSentence(outcome.event.result),
+    ...emphasizedSentence(manualOfGolemsSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -80,7 +88,7 @@ export function renderTreasureManualOfGolemsCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: manualOfGolemsSentence(outcome.event.result),
+    ...emphasizedSentence(manualOfGolemsSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -133,7 +141,7 @@ export function renderTreasureMedallionRangeDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: medallionRangeSentence(outcome.event.result),
+    ...emphasizedSentence(medallionRangeSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -152,7 +160,7 @@ export function renderTreasureMedallionRangeCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: medallionRangeSentence(outcome.event.result),
+    ...emphasizedSentence(medallionRangeSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -223,7 +231,7 @@ export function renderTreasureNecklaceOfMissilesDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: necklaceDetailSentence(outcome.event.result),
+    ...emphasizedSentence(necklaceDetailSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -242,7 +250,7 @@ export function renderTreasureNecklaceOfMissilesCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: necklaceDetailSentence(outcome.event.result),
+    ...emphasizedSentence(necklaceDetailSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -477,7 +485,7 @@ export function renderTreasurePearlOfPowerRecallDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: recallSentence(outcome.event.result),
+    ...emphasizedSentence(recallSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -496,7 +504,7 @@ export function renderTreasurePearlOfPowerRecallCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: recallSentence(outcome.event.result),
+    ...emphasizedSentence(recallSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -612,7 +620,7 @@ export function renderTreasurePearlOfWisdomDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: wisdomSentence(outcome.event.result),
+    ...emphasizedSentence(wisdomSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -631,7 +639,7 @@ export function renderTreasurePearlOfWisdomCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: wisdomSentence(outcome.event.result),
+    ...emphasizedSentence(wisdomSentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -741,7 +749,7 @@ export function renderTreasurePhylacteryLongYearsDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: phylacterySentence(outcome.event.result),
+    ...emphasizedSentence(phylacterySentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -760,7 +768,7 @@ export function renderTreasurePhylacteryLongYearsCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: phylacterySentence(outcome.event.result),
+    ...emphasizedSentence(phylacterySentence(outcome.event.result)),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

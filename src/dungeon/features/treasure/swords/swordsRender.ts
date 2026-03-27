@@ -3,6 +3,7 @@ import type {
   DungeonRenderNode,
   TableContext,
 } from '../../../../types/dungeon';
+import { emphasizeInlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { Table } from '../../../../tables/dungeon/tableTypes';
 import {
@@ -256,18 +257,19 @@ export function renderTreasureSwordsDetail(
     kind: 'bullet-list',
     items: bulletItems,
   };
+  const sentence = swordSentence(
+    outcome.event.result,
+    kind,
+    alignmentResult,
+    ego,
+    intelligenceLabel,
+    abilitySummaries,
+    luckBladeWishes,
+    dragonSlayerColorLabel
+  );
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: swordSentence(
-      outcome.event.result,
-      kind,
-      alignmentResult,
-      ego,
-      intelligenceLabel,
-      abilitySummaries,
-      luckBladeWishes,
-      dragonSlayerColorLabel
-    ),
+    ...emphasizeInlineText(sentence, decoratedSwordLabel),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -311,18 +313,24 @@ export function renderTreasureSwordsCompact(
     level: 4,
     text: 'Swords',
   };
+  const decoratedSwordLabel = decorateSwordLabel(
+    swordLabel(outcome.event.result, kind),
+    dragonSlayerColorLabel,
+    buildSwordParenthetical(intelligenceLabel, ego, luckBladeWishes)
+  );
+  const sentence = swordSentence(
+    outcome.event.result,
+    kind,
+    alignmentResult,
+    ego,
+    intelligenceLabel,
+    abilitySummaries,
+    luckBladeWishes,
+    dragonSlayerColorLabel
+  );
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: swordSentence(
-      outcome.event.result,
-      kind,
-      alignmentResult,
-      ego,
-      intelligenceLabel,
-      abilitySummaries,
-      luckBladeWishes,
-      dragonSlayerColorLabel
-    ),
+    ...emphasizeInlineText(sentence, decoratedSwordLabel),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

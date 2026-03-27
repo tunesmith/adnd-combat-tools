@@ -2,6 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+} from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureMiscMagicE5, TreasureMiscMagicE5 } from './miscMagicE5Table';
 import type { TreasureRobeOfTheArchmagi } from './miscMagicE5Subtables';
@@ -109,12 +113,15 @@ export function renderTreasureMiscMagicE5Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      robeAlignment,
-      scarabCurseResult,
-      scarabResolutionResult
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        robeAlignment,
+        scarabCurseResult,
+        scarabResolutionResult
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -154,12 +161,15 @@ export function renderTreasureMiscMagicE5Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      robeAlignment,
-      scarabCurseResult,
-      scarabResolutionResult
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        robeAlignment,
+        scarabCurseResult,
+        scarabResolutionResult
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

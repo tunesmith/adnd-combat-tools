@@ -2,6 +2,7 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import { emphasizeInlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureArmorShields, TreasureArmorShield } from './armorShieldsTable';
 import { buildPreview } from '../../../adapters/render/shared';
@@ -67,7 +68,10 @@ export function renderTreasureArmorShieldsDetail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: armorShieldSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      armorShieldSentence(outcome.event.result),
+      armorShieldLabel(outcome.event.result)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -86,7 +90,10 @@ export function renderTreasureArmorShieldsCompact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: armorShieldSentence(outcome.event.result),
+    ...emphasizeInlineText(
+      armorShieldSentence(outcome.event.result),
+      armorShieldLabel(outcome.event.result)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

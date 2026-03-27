@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { CharacterPartyCompact } from './CharacterPartyCompact';
 import { CharacterPartyDetail } from './CharacterPartyDetail';
 import { DungeonTablePreviewCard } from './DungeonTablePreviewCard';
@@ -13,6 +14,7 @@ import type {
   PreviewScrollTarget,
 } from './feedTypes';
 import type {
+  DungeonInlineContent,
   DungeonRenderNode,
   DungeonRollTrace,
   RollTraceItem,
@@ -167,7 +169,7 @@ export function renderNode(
       );
     case 'paragraph':
     default:
-      return <p key={key}>{node.text}</p>;
+      return <p key={key}>{renderParagraphText(node.text, node.inline)}</p>;
   }
 }
 
@@ -206,6 +208,30 @@ function renderBulletItem(item: string): JSX.Element | string {
     <>
       <span className={styles['rollSummaryPrefix']}>{prefix}</span>
       <span className={styles['rollSummaryOutcome']}>{outcome}</span>
+    </>
+  );
+}
+
+function renderParagraphText(
+  text: string,
+  inline?: DungeonInlineContent
+): JSX.Element | string {
+  if (!inline || inline.length === 0) return text;
+  return renderInlineContent(inline);
+}
+
+function renderInlineContent(content: DungeonInlineContent): JSX.Element {
+  return (
+    <>
+      {content.map((segment, index) =>
+        segment.kind === 'strong' ? (
+          <span key={index} className={styles['messageStrong']}>
+            {segment.text}
+          </span>
+        ) : (
+          <Fragment key={index}>{segment.text}</Fragment>
+        )
+      )}
     </>
   );
 }

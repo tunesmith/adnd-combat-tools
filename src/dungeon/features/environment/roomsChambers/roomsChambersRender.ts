@@ -2,22 +2,23 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import type { InlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   buildPreview,
   findChildEvent,
-  joinSegments,
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
 import { compactMessagesToText } from '../../../adapters/render/compactMessagesToText';
+import { joinSentenceInlineTexts } from '../../../helpers/inlineContent';
 import { renderNumberOfExitsCompact } from '../../navigation/exit/numberOfExitsRender';
 import {
   collectCharacterPartyMessages,
   describeMonsterOutcome,
 } from '../../monsters/render';
 import { renderTrickTrapCompact } from '../../hazards/trickTrap/trickTrapRender';
-import { collectTreasureCompactSummaries } from '../../treasure/treasure/treasureRender';
+import { collectTreasureCompactInlineTexts } from '../../treasure/treasure/treasureRender';
 import { renderCompactUnusualDetails } from '../unusualSpace/unusualSpaceRender';
 import {
   chamberDimensions,
@@ -58,8 +59,14 @@ export function renderRoomDimensionsDetail(
 }
 
 export function renderRoomDimensionsCompact(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'roomDimensions') return '';
-  const segments: string[] = [];
+  return renderRoomDimensionsCompactInline(node).text;
+}
+
+export function renderRoomDimensionsCompactInline(
+  node: OutcomeEventNode
+): InlineText {
+  if (node.event.kind !== 'roomDimensions') return { text: '' };
+  const segments: Array<string | InlineText> = [];
   const base = formatRoomDimensions(node.event.result).trim();
   if (base.length > 0) segments.push(base);
   if (node.event.result === RoomDimensions.Unusual) {
@@ -68,8 +75,8 @@ export function renderRoomDimensionsCompact(node: OutcomeEventNode): string {
   }
   const contents = findChildEvent(node, 'chamberRoomContents');
   if (contents && contents.event.kind === 'chamberRoomContents') {
-    const summary = describeChamberRoomContents(contents).trim();
-    if (summary.length > 0) segments.push(summary);
+    const summary = describeChamberRoomContentsInline(contents);
+    if (summary.text.trim().length > 0) segments.push(summary);
   }
   let exits = findChildEvent(node, 'numberOfExits');
   if (!exits) {
@@ -85,7 +92,7 @@ export function renderRoomDimensionsCompact(node: OutcomeEventNode): string {
       segments.push(paragraph.text.trim());
     }
   }
-  return joinSegments(segments);
+  return joinSentenceInlineTexts(segments);
 }
 
 export function renderRoomDimensionsCompactNodes(
@@ -103,11 +110,11 @@ export function renderRoomDimensionsCompactNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const text = renderRoomDimensionsCompact(outcome);
+  const text = renderRoomDimensionsCompactInline(outcome);
   const nodes: DungeonRenderNode[] = [
     heading,
     bullet,
-    { kind: 'paragraph', text },
+    { kind: 'paragraph', ...text },
   ];
   const seen = new Set<string>();
   const appendParties = (messages: DungeonMessage[]) => {
@@ -169,11 +176,11 @@ export function renderChamberDimensionsCompact(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const text = describeChamberDimensions(outcome);
+  const text = describeChamberDimensionsInline(outcome);
   const nodes: DungeonRenderNode[] = [
     heading,
     bullet,
-    { kind: 'paragraph', text },
+    { kind: 'paragraph', ...text },
   ];
   const seen = new Set<string>();
   const appendParties = (messages: DungeonMessage[]) => {
@@ -194,8 +201,14 @@ export function renderChamberDimensionsCompact(
 }
 
 export function describeChamberDimensions(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'chamberDimensions') return '';
-  const segments: string[] = [];
+  return describeChamberDimensionsInline(node).text;
+}
+
+export function describeChamberDimensionsInline(
+  node: OutcomeEventNode
+): InlineText {
+  if (node.event.kind !== 'chamberDimensions') return { text: '' };
+  const segments: Array<string | InlineText> = [];
   const base = formatChamberDimensions(node.event.result).trim();
   if (base.length > 0) segments.push(base);
   if (node.event.result === ChamberDimensions.Unusual) {
@@ -204,8 +217,8 @@ export function describeChamberDimensions(node: OutcomeEventNode): string {
   }
   const contents = findChildEvent(node, 'chamberRoomContents');
   if (contents && contents.event.kind === 'chamberRoomContents') {
-    const summary = describeChamberRoomContents(contents).trim();
-    if (summary.length > 0) segments.push(summary);
+    const summary = describeChamberRoomContentsInline(contents);
+    if (summary.text.trim().length > 0) segments.push(summary);
   }
   let exits = findChildEvent(node, 'numberOfExits');
   if (!exits) {
@@ -221,7 +234,7 @@ export function describeChamberDimensions(node: OutcomeEventNode): string {
       segments.push(paragraph.text.trim());
     }
   }
-  return joinSegments(segments);
+  return joinSentenceInlineTexts(segments);
 }
 
 export function renderChamberRoomContentsDetail(
@@ -245,7 +258,7 @@ export function renderChamberRoomContentsDetail(
   if (partyMessages.length === 0) {
     nodes.push({
       kind: 'paragraph',
-      text: `${describeChamberRoomContents(outcome, 'detail')} `,
+      ...describeChamberRoomContentsInline(outcome, 'detail'),
     });
   }
   appendPendingPreviews(outcome, nodes);
@@ -264,7 +277,7 @@ export function renderChamberRoomContentsCompact(
   };
   const nodes: DungeonRenderNode[] = [
     heading,
-    { kind: 'paragraph', text: `${describeChamberRoomContents(outcome)} ` },
+    { kind: 'paragraph', ...describeChamberRoomContentsInline(outcome) },
   ];
   const partyMessages = collectCharacterPartyMessages(outcome, 'compact');
   if (partyMessages.length > 0) {
@@ -278,8 +291,15 @@ export function describeChamberRoomContents(
   node: OutcomeEventNode,
   mode: 'compact' | 'detail' = 'compact'
 ): string {
-  if (node.event.kind !== 'chamberRoomContents') return '';
-  const segments: string[] = [];
+  return describeChamberRoomContentsInline(node, mode).text;
+}
+
+export function describeChamberRoomContentsInline(
+  node: OutcomeEventNode,
+  mode: 'compact' | 'detail' = 'compact'
+): InlineText {
+  if (node.event.kind !== 'chamberRoomContents') return { text: '' };
+  const segments: Array<string | InlineText> = [];
   switch (node.event.result) {
     case ChamberRoomContents.Empty:
       segments.push('The area is empty.');
@@ -312,7 +332,7 @@ export function describeChamberRoomContents(
     default:
       break;
   }
-  return joinSegments(segments).trim();
+  return joinSentenceInlineTexts(segments);
 }
 
 export function renderChamberRoomStairsDetail(
@@ -486,7 +506,7 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
 
 function addResolvedTrickTrapSummary(
   node: OutcomeEventNode,
-  segments: string[]
+  segments: Array<string | InlineText>
 ): void {
   const summaries = collectTrickTrapSummaries(node);
   for (const summary of summaries) {
@@ -496,15 +516,15 @@ function addResolvedTrickTrapSummary(
 
 function addResolvedTreasureSummary(
   node: OutcomeEventNode,
-  segments: string[],
+  segments: Array<string | InlineText>,
   mode: 'compact' | 'detail'
 ): void {
   if (mode === 'detail') {
     return;
   }
-  const summaries = collectTreasureCompactSummaries(node);
+  const summaries = collectTreasureCompactInlineTexts(node);
   for (const summary of summaries) {
-    if (summary.length > 0) segments.push(summary);
+    if (summary.text.length > 0) segments.push(summary);
   }
 }
 

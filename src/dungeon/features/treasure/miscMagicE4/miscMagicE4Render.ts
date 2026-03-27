@@ -2,6 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+} from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureMiscMagicE4, TreasureMiscMagicE4 } from './miscMagicE4Table';
 import {
@@ -108,19 +112,22 @@ export function renderTreasureMiscMagicE4Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      manualChild,
-      medallionChild,
-      necklaceChild,
-      pearlEffectChild,
-      pearlWisdomChild,
-      periaptPoisonChild,
-      phylacteryLongYearsChild,
-      quaalTokenChild,
-      prayerBeadsChild,
-      true
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        manualChild,
+        medallionChild,
+        necklaceChild,
+        pearlEffectChild,
+        pearlWisdomChild,
+        periaptPoisonChild,
+        phylacteryLongYearsChild,
+        quaalTokenChild,
+        prayerBeadsChild,
+        true
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -160,19 +167,22 @@ export function renderTreasureMiscMagicE4Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      manualChild,
-      medallionChild,
-      necklaceChild,
-      pearlEffectChild,
-      pearlWisdomChild,
-      periaptPoisonChild,
-      phylacteryLongYearsChild,
-      quaalTokenChild,
-      prayerBeadsChild,
-      false
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        manualChild,
+        medallionChild,
+        necklaceChild,
+        pearlEffectChild,
+        pearlWisdomChild,
+        periaptPoisonChild,
+        phylacteryLongYearsChild,
+        quaalTokenChild,
+        prayerBeadsChild,
+        false
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   if (

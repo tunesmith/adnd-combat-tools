@@ -324,6 +324,11 @@
   line-height: 1.45;
 }
 
+.messageStrong {
+  font-family: 'Sura', serif;
+  font-weight: 700;
+}
+
 .rollSummaryPrefix {
   font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
   font-weight: 400;

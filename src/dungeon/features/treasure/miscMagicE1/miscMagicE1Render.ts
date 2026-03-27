@@ -2,6 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import {
+  emphasizeInlineText,
+  extractLeadingItemPhrase,
+} from '../../../helpers/inlineContent';
 import type {
   OutcomeEventNode,
   TreasureBeakerOfPlentifulPotionsDetails,
@@ -110,14 +114,17 @@ export function renderTreasureMiscMagicE1Detail(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      outcome.event.beaker,
-      bagOfTricksChild,
-      bracersChild,
-      purseChild,
-      artifactChild
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        outcome.event.beaker,
+        bagOfTricksChild,
+        bracersChild,
+        purseChild,
+        artifactChild
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
   appendPendingPreviews(outcome, nodes);
@@ -140,14 +147,17 @@ export function renderTreasureMiscMagicE1Compact(
   };
   const paragraph: DungeonMessage = {
     kind: 'paragraph',
-    text: resolvedSentence(
-      outcome.event.result,
-      outcome.event.beaker,
-      bagOfTricksChild,
-      bracersChild,
-      purseChild,
-      artifactChild
-    ),
+    ...(() => {
+      const text = resolvedSentence(
+        outcome.event.result,
+        outcome.event.beaker,
+        bagOfTricksChild,
+        bracersChild,
+        purseChild,
+        artifactChild
+      );
+      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
+    })(),
   };
   const nodes: DungeonRenderNode[] = [heading, paragraph];
   appendPendingPreviews(outcome, nodes);

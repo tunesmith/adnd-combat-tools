@@ -38,9 +38,17 @@ export type DungeonReplayInfo = {
   items: DungeonReplayItem[];
 };
 
+export type DungeonInlineSegment = {
+  kind: 'text' | 'strong';
+  text: string;
+};
+
+export type DungeonInlineContent = DungeonInlineSegment[];
+
 type DungeonParagraph = {
   kind: 'paragraph';
   text: string;
+  inline?: DungeonInlineContent;
 };
 
 type DungeonHeading = {

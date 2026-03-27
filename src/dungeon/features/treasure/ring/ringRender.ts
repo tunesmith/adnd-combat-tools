@@ -2,6 +2,7 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import { emphasizeInlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   treasureRings,
@@ -131,7 +132,10 @@ export function renderTreasureRingDetail(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: ringSentence(outcome.event.result, outcome),
+    ...emphasizeInlineText(
+      ringSentence(outcome.event.result, outcome),
+      resolvedRingItemName(outcome.event.result, outcome)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, bullet, text];
   appendPendingPreviews(outcome, nodes);
@@ -150,7 +154,10 @@ export function renderTreasureRingCompact(
   };
   const text: DungeonMessage = {
     kind: 'paragraph',
-    text: ringSentence(outcome.event.result, outcome),
+    ...emphasizeInlineText(
+      ringSentence(outcome.event.result, outcome),
+      resolvedRingItemName(outcome.event.result, outcome)
+    ),
   };
   const nodes: DungeonRenderNode[] = [heading, text];
   appendPendingPreviews(outcome, nodes);
@@ -643,6 +650,76 @@ export function ringSentence(
     }
   }
   return `There is a ring of ${label}.`;
+}
+
+export function resolvedRingItemName(
+  result: TreasureRing,
+  node?: OutcomeEventNode
+): string {
+  if (result === TreasureRing.Contrariness) {
+    return 'ring of contrariness';
+  }
+  if (result === TreasureRing.ElementalCommand && node) {
+    const child = findChildEvent(node, 'treasureRingElementalCommand');
+    if (child && child.event.kind === 'treasureRingElementalCommand') {
+      const focus = elementalCommandPreviewLabel(
+        child.event.result
+      ).toLowerCase();
+      return `ring of ${focus} elemental command`;
+    }
+    return 'ring of elemental command';
+  }
+  if (result === TreasureRing.Protection && node) {
+    const child = findChildEvent(node, 'treasureRingProtection');
+    if (child && child.event.kind === 'treasureRingProtection') {
+      switch (child.event.result) {
+        case TreasureRingProtection.PlusOne:
+          return 'ring of protection +1';
+        case TreasureRingProtection.PlusTwo:
+          return 'ring of protection +2';
+        case TreasureRingProtection.PlusTwoRadius:
+          return 'ring of protection +2';
+        case TreasureRingProtection.PlusThree:
+          return 'ring of protection +3';
+        case TreasureRingProtection.PlusThreeRadius:
+          return 'ring of protection +3';
+        case TreasureRingProtection.PlusFourTwo:
+        case TreasureRingProtection.PlusSixOne:
+          return 'ring of protection';
+        default:
+          return 'ring of protection';
+      }
+    }
+    return 'ring of protection';
+  }
+  if (result === TreasureRing.SpellStoring && node) {
+    const { event } = node;
+    if (event.kind === 'treasureRing' && event.spellStoring) {
+      return `ring of ${event.spellStoring.caster} spell storing`;
+    }
+  }
+  if (result === TreasureRing.MultipleWishes) {
+    return 'ring of multiple wishes';
+  }
+  if (result === TreasureRing.Regeneration && node) {
+    const child = findChildEvent(node, 'treasureRingRegeneration');
+    if (child && child.event.kind === 'treasureRingRegeneration') {
+      return child.event.result === TreasureRingRegeneration.Vampiric
+        ? 'vampiric regeneration ring'
+        : 'ring of regeneration';
+    }
+    return 'ring of regeneration';
+  }
+  if (result === TreasureRing.Telekinesis) {
+    return 'ring of telekinesis';
+  }
+  if (result === TreasureRing.ThreeWishes) {
+    return 'ring of three wishes';
+  }
+  if (result === TreasureRing.Wizardry) {
+    return 'ring of wizardry';
+  }
+  return `ring of ${RING_LABELS[result]}`;
 }
 
 function contrarinessPreviewLabel(result: TreasureRingContrariness): string {

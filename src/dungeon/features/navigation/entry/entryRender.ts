@@ -1,4 +1,5 @@
 import type {
+  DungeonInlineContent,
   DungeonMessage,
   DungeonRenderNode,
   DungeonTablePreview,
@@ -20,7 +21,9 @@ import { describeSidePassage } from '../sidePassage/sidePassageRender';
 import { renderPassageTurnCompact } from '../passageTurn/passageTurnRender';
 import {
   describeChamberDimensions,
+  describeChamberDimensionsInline,
   renderChamberDimensionsCompact,
+  renderRoomDimensionsCompactInline,
   renderRoomDimensionsCompact,
 } from '../../environment/roomsChambers/roomsChambersRender';
 import { renderStairsCompact } from '../exit/stairsRender';
@@ -147,7 +150,7 @@ export function renderPeriodicCheckCompact(
   const nodes: DungeonRenderNode[] = [
     heading,
     bullet,
-    { kind: 'paragraph', text: summary.text },
+    { kind: 'paragraph', text: summary.text, inline: summary.inline },
   ];
   if (summary.nodes) {
     nodes.push(...summary.nodes);
@@ -176,7 +179,11 @@ export function renderWanderingWhereFromDetail(
   });
   const nodes: DungeonRenderNode[] = [heading, bullet];
   if (detailSummary.text.trim().length > 0) {
-    nodes.push({ kind: 'paragraph', text: detailSummary.text });
+    nodes.push({
+      kind: 'paragraph',
+      text: detailSummary.text,
+      inline: detailSummary.inline,
+    });
   }
   if (detailSummary.nodes) {
     nodes.push(...detailSummary.nodes);
@@ -205,7 +212,11 @@ export function renderWanderingWhereFromCompactNodes(
   });
   const nodes: DungeonRenderNode[] = [heading, bullet];
   if (summary.text.trim().length > 0) {
-    nodes.push({ kind: 'paragraph', text: summary.text });
+    nodes.push({
+      kind: 'paragraph',
+      text: summary.text,
+      inline: summary.inline,
+    });
   }
   if (summary.nodes) {
     nodes.push(...summary.nodes);
@@ -275,6 +286,7 @@ export function buildDoorStartMessages(): DungeonRenderNode[] {
 
 type PeriodicSummary = {
   text: string;
+  inline?: DungeonInlineContent;
   nodes?: DungeonRenderNode[];
 };
 
@@ -453,7 +465,9 @@ function summarizePeriodicResult(
     }
     case PeriodicCheck.Chamber: {
       const chamber = findChildEvent(node, 'chamberDimensions');
-      const detail = chamber ? describeChamberDimensions(chamber) : '';
+      const detail = chamber
+        ? describeChamberDimensionsInline(chamber)
+        : { text: '' };
       const partyMessages = chamber
         ? collectCharacterPartyMessages(chamber, 'compact')
         : [];
@@ -462,7 +476,8 @@ function summarizePeriodicResult(
         : [];
       const extraNodes = [...partyMessages, ...treasureMessages];
       return {
-        text: `${base.compact}${detail}`.trimEnd() + ' ',
+        text: `${base.compact}${detail.text}`.trimEnd() + ' ',
+        inline: detail.inline,
         nodes: extraNodes.length > 0 ? extraNodes : undefined,
       };
     }
