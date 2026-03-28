@@ -9,6 +9,7 @@ import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../../../../dungeon/domain/outcome';
+import type { DungeonRenderNode } from '../../../../../types/dungeon';
 
 describe('dungeon feed toggling confidence', () => {
   it('reduces pending count as registry resolutions complete a passage chain', () => {
@@ -87,14 +88,7 @@ describe('dungeon feed toggling confidence', () => {
       detailParagraphs.some((text) => text.includes('There is a jumping place'))
     ).toBe(false);
 
-    const compactParagraphs = renderCompact(feed)
-      .filter(
-        (node): node is { kind: 'paragraph'; text: string } =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text.trim());
-
-    const compactText = compactParagraphs.join(' ');
+    const compactText = collectCompactText(renderCompact(feed));
     expect(compactText).toContain("A chasm, 20' wide, bisects the passage.");
     expect(compactText).not.toContain('The chasm is');
     expect(compactText).not.toContain('There is a jumping place');
@@ -108,13 +102,7 @@ describe('dungeon feed toggling confidence', () => {
     expect(detailAfterToggle).toEqual(detailParagraphs);
     expect(listPendingPreviewTargets(feed)).toEqual(pendingBefore);
 
-    const compactAfterToggle = renderCompact(feed)
-      .filter(
-        (node): node is { kind: 'paragraph'; text: string } =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text.trim())
-      .join(' ');
+    const compactAfterToggle = collectCompactText(renderCompact(feed));
     expect(compactAfterToggle).toBe(compactText);
   });
 
@@ -150,13 +138,7 @@ describe('dungeon feed toggling confidence', () => {
     );
     expect(widthMentions).toHaveLength(1);
 
-    const compactText = renderCompact(feed)
-      .filter(
-        (node): node is { kind: 'paragraph'; text: string } =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text.trim())
-      .join(' ');
+    const compactText = collectCompactText(renderCompact(feed));
 
     const jumpingPlaceMatches = compactText.match(
       /There is a jumping place\./g
@@ -201,14 +183,7 @@ describe('dungeon feed toggling confidence', () => {
       detailParagraphs.some((text) => text.includes('There is a pool.'))
     ).toBe(false);
 
-    const compactParagraphs = renderCompact(feed)
-      .filter(
-        (node): node is { kind: 'paragraph'; text: string } =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text.trim());
-
-    const compactText = compactParagraphs.join(' ');
+    const compactText = collectCompactText(renderCompact(feed));
     expect(compactText).toContain('It is circular.');
     expect(compactText).not.toContain('There is a pool.');
 
@@ -221,13 +196,7 @@ describe('dungeon feed toggling confidence', () => {
     expect(detailAfterToggle).toEqual(detailParagraphs);
     expect(listPendingPreviewTargets(feed)).toEqual(pendingBefore);
 
-    const compactAfterToggle = renderCompact(feed)
-      .filter(
-        (node): node is { kind: 'paragraph'; text: string } =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text.trim())
-      .join(' ');
+    const compactAfterToggle = collectCompactText(renderCompact(feed));
     expect(compactAfterToggle).toBe(compactText);
   });
 
@@ -279,13 +248,7 @@ describe('dungeon feed toggling confidence', () => {
       )
     ).not.toHaveLength(0);
 
-    const compactParagraphs = renderCompact(feed)
-      .filter(
-        (node): node is { kind: 'paragraph'; text: string } =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text.trim());
-    const compactJoined = compactParagraphs.join(' ');
+    const compactJoined = collectCompactText(renderCompact(feed));
     const expectedSentences = [
       'It is circular.',
       'There is a pool.',
@@ -300,7 +263,7 @@ describe('dungeon feed toggling confidence', () => {
       expect(occurrences?.length ?? 0).toBe(1);
     }
     expect(compactJoined).toContain('There is 1 additional passage');
-    expect(compactJoined).toContain('Passage 1: opposite wall.');
+    expect(compactJoined).toContain('Opposite wall.');
   });
 
   it('keeps independent previews for multiple exit locations', () => {
@@ -380,17 +343,11 @@ describe('dungeon feed toggling confidence', () => {
     pendingTargets = listPendingPreviewTargets(feed);
     expect(pendingTargets).toEqual([]);
 
-    const compactParagraphs = renderCompact(feed)
-      .filter(
-        (node): node is { kind: 'paragraph'; text: string } =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text.trim());
-    const compactText = compactParagraphs.join(' ');
+    const compactText = collectCompactText(renderCompact(feed));
 
-    expect(compactText).toContain('Passage 1: opposite wall.');
+    expect(compactText).toContain('Opposite wall.');
     expect(compactText).toContain(
-      'The passage continues straight ahead (or secret door).'
+      'The passage continues straight ahead (or secret door*).'
     );
     expect(compactText).toContain(
       'If an exit abuts mapped space, use the option shown in parentheses.'
@@ -414,4 +371,21 @@ function findEvent(
     }
   }
   return undefined;
+}
+
+function collectCompactText(nodes: DungeonRenderNode[]): string {
+  return nodes
+    .map((node) => {
+      if (node.kind === 'paragraph') {
+        return node.text.trim();
+      }
+      if (node.kind === 'exit-list') {
+        return [node.intro, ...node.items, node.footnote]
+          .filter((text): text is string => !!text && text.trim().length > 0)
+          .join(' ');
+      }
+      return '';
+    })
+    .filter((text) => text.length > 0)
+    .join(' ');
 }

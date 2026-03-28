@@ -5,14 +5,14 @@ This document explains how the dungeon generator is wired, what lives in each la
 ## High-Level Flow
 
 ```
-Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ Render Adapters ──▶ Page UI
-                               │                          │
-                               │                          └──▶ Registry (staged preview resolution updates the tree)
+Tables (src/tables) ──▶ Feature Definitions ──▶ Outcome Tree ──▶ Render Adapters ──▶ Page UI
+                               │                           │
+                               │                           └──▶ Registry (staged preview resolution updates the tree)
                                └──▶ Render Cache (detail & compact reuse the same nodes)
 ```
 
 1. **Tables** describe the raw AD&D data: every `entries: [{ range, command }]` pair lives under `src/tables/dungeon/**`.
-2. **Domain resolvers** (`src/dungeon/domain/resolvers.ts`) consult those tables, roll as needed, and return a tree of `DungeonOutcomeNode`s.
+2. **Feature definitions** (`src/dungeon/features/**`) choose the resolver, preview builder, and renderers for each table.
 3. The **outcome tree** is a lightweight AST that records each roll and any follow-up tables that still need to be resolved.
 4. **Adapters** (`src/dungeon/adapters/render.ts`) translate outcome nodes into concrete UI messages for both detail and compact modes.
 5. The **registry** ties detail-mode previews back to the resolvers so the page can resolve staged tables without bespoke wiring.
@@ -38,6 +38,24 @@ Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ 
   4. Threads typed context when follow-up tables depend on prior results (door chains, exits, wandering monster level).
 - Resolvers must stay pure: no DOM access, no logging, no global mutation.
 
+### Features (`src/dungeon/features/**`)
+
+- Each feature folder owns one slice of dungeon behavior: manifest, resolvers, renderers, and any local table metadata.
+- `bundle.ts` is the aggregation point. It collects every `DungeonTableDefinition` and derives:
+  - render adapters
+  - preview factories
+  - event preview builders
+  - registry outcomes
+  - pending resolvers
+  - post-processors
+- The preferred authoring surface is now:
+  - `defineRollOnlyTable(...)` for simple “roll -> result -> preview/render” tables
+  - `defineTreasureMagicTable(...)` for treasure tables that need treasure context
+  - `defineTreasureFollowupTable(...)` for simple treasure follow-up leaves
+  - `defineMonsterTable(...)` for monster tables that need dungeon-level context
+  - `defineEnvironmentLevelTable(...)` for environment tables whose main rule is “derive dungeon level and pass it to the resolver”
+- Raw `DungeonTableDefinition` objects are still valid, but they should now be reserved for genuine exceptions such as door chains, swords, or tables with bespoke child post-processing.
+
 ### Adapters (`src/dungeon/adapters/render.ts`)
 
 - `toDetailRender(outcome)` renders headings, “roll: n — label” bullets, paragraphs, and staged previews.
@@ -51,6 +69,7 @@ Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ 
 - Maps preview ids (e.g., `monsterLevel`, `doorLocation:0`) to resolver functions.
 - Supplies human-readable headings for each table.
 - `resolveViaRegistry` updates the outcome tree inside the feed item, refreshes the render cache, and manages collapsed/resolved state when a preview is resolved.
+- The registry no longer hand-curates feature tables; it consumes the derived maps from `src/dungeon/features/bundle.ts`.
 - Both detail and compact modes consume the updated tree; detail mode shows staged previews while compact mode reflects the latest resolved prose.
 
 ### Services (`src/dungeon/services/**`)
@@ -88,14 +107,28 @@ Tables (src/tables) ──▶ Domain Resolvers ──▶ Outcome Tree ──▶ 
 ## How to Add a New Table
 
 1. **Model the table data**: create `src/tables/dungeon/yourTable.ts` with the enum and `Table` definition.
-2. **Add a resolver**: in `resolvers.ts`, implement `resolveYourThing(opts)` that returns a `DungeonOutcomeNode` and stages child previews when necessary.
+2. **Add or update the resolver**: implement `resolveYourThing(opts)` so it returns a `DungeonOutcomeNode` and stages child previews when necessary.
 3. **Extend the outcome union**: update `OutcomeEvent` to include the new `kind` if needed.
-4. **Render it**:
-   - Update `toDetailRender` and `toCompactRender` to handle `event.kind === 'yourThing'`.
-   - Write any helper functions required to compose the final sentences.
-5. **Wire previews (detail mode)**: add an entry to `TABLE_ID_LIST`, `TABLE_HEADINGS`, and `TABLE_RESOLVERS` in `registry.ts`.
-6. **Expose via service (optional)**: if existing code expects a service wrapper, create one that simply calls the resolver and adapters.
-7. **Test**: add Jest tests to lock compact text and detail preview behaviour.
+4. **Choose the narrowest feature helper that fits**:
+   - Use `defineRollOnlyTable(...)` if the table is just a roll with no ambient context.
+   - Use `defineTreasureMagicTable(...)` or `defineTreasureFollowupTable(...)` for treasure families.
+   - Use `defineMonsterTable(...)` for monster tables.
+   - Use `defineEnvironmentLevelTable(...)` if the table only needs derived dungeon level.
+   - Fall back to a raw `DungeonTableDefinition` only when the table is genuinely exceptional.
+5. **Add the table to the relevant manifest** and make sure that manifest is already included in `src/dungeon/features/bundle.ts`.
+6. **Write the renderers and preview factory** in the feature folder. The manifest feeds these into the global adapter/preview maps automatically.
+7. **Expose via service (optional)**: if older call sites need a service wrapper, keep it thin and delegate to the resolver/adapters.
+8. **Test**: add Jest tests to lock compact text and detail preview behaviour.
+
+## Feature Authoring Note
+
+When you are choosing between helpers, optimize for the clearest local manifest, not for maximum reuse:
+
+- Start with `defineRollOnlyTable(...)`.
+- Move to a family-specific helper only when the context is genuinely domain-shaped and reused across multiple tables.
+- Keep raw definitions for tables that would need a pile of options to fit a helper.
+
+That bias keeps the code readable to non-specialists: the manifest should read like a short catalog of what the table resolves, how it previews, and what follow-up tables it can trigger.
 
 ## Pattern Notes
 

@@ -1,11 +1,4 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../../types/dungeon';
-import {
-  emphasizeInlineText,
-  extractLeadingItemPhrase,
-} from '../../../helpers/inlineContent';
+import type { DungeonRenderNode } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureMiscMagicE3, TreasureMiscMagicE3 } from './miscMagicE3Table';
 import {
@@ -22,6 +15,10 @@ import {
   ironFlaskSentence,
   toIounStonesSummary,
 } from './miscMagicE3SubtablesRender';
+import {
+  renderTreasureParentCompact,
+  renderTreasureParentDetail,
+} from '../sharedRender';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE3, string> = {
   [TreasureMiscMagicE3.FigurineOfWondrousPower]: 'Figurine of Wondrous Power',
@@ -80,34 +77,23 @@ export function renderTreasureMiscMagicE3Detail(
   );
   const ironFlaskChild = findChildEvent(outcome, 'treasureIronFlask');
   const iounChild = findChildEvent(outcome, 'treasureIounStones');
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic (Table E.3)',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${ITEM_LABELS[outcome.event.result]}`],
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        outcome.event.ointmentJars,
-        figurineChild,
-        girdleChild,
-        hornTypeChild,
-        instrumentChild,
-        ironFlaskChild,
-        iounChild
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentDetail({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.3)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: ITEM_LABELS[outcome.event.result],
+    text: resolvedSentence(
+      outcome.event.result,
+      outcome.event.ointmentJars,
+      figurineChild,
+      girdleChild,
+      hornTypeChild,
+      instrumentChild,
+      ironFlaskChild,
+      iounChild
+    ),
+  });
 }
 
 export function renderTreasureMiscMagicE3Compact(
@@ -127,37 +113,33 @@ export function renderTreasureMiscMagicE3Compact(
   );
   const ironFlaskChild = findChildEvent(outcome, 'treasureIronFlask');
   const iounChild = findChildEvent(outcome, 'treasureIounStones');
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic',
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        outcome.event.ointmentJars,
-        figurineChild,
-        girdleChild,
-        hornTypeChild,
-        instrumentChild,
-        ironFlaskChild,
-        iounChild
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, paragraph];
-  if (iounChild && iounChild.event.kind === 'treasureIounStones') {
-    nodes.push({
-      kind: 'ioun-stones',
-      summary: toIounStonesSummary(iounChild.event.result),
-      display: 'compact',
-    });
-  }
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentCompact({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.3)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: '',
+    text: resolvedSentence(
+      outcome.event.result,
+      outcome.event.ointmentJars,
+      figurineChild,
+      girdleChild,
+      hornTypeChild,
+      instrumentChild,
+      ironFlaskChild,
+      iounChild
+    ),
+    compactExtras:
+      iounChild && iounChild.event.kind === 'treasureIounStones'
+        ? [
+            {
+              kind: 'ioun-stones',
+              summary: toIounStonesSummary(iounChild.event.result),
+              display: 'compact',
+            },
+          ]
+        : undefined,
+  });
 }
 
 export const buildTreasureMiscMagicE3Preview: TablePreviewFactory = (

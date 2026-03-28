@@ -74,7 +74,7 @@ function createMonsterDungeonLevelContextHandlers(
   };
 }
 
-export function createMonsterTableDefinition(options: {
+export function defineMonsterTable(options: {
   id: string;
   heading: string;
   resolver: (

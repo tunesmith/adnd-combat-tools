@@ -40,6 +40,7 @@ import {
 } from './numberOfExitsRender';
 import {
   buildEventPreviewFromFactory,
+  defineRollOnlyTable,
   markContextualResolution,
   withoutAppend,
   withDefaultResolverOptions,
@@ -67,21 +68,17 @@ const DEFAULT_NUMBER_OF_EXITS_OPTIONS: NumberOfExitsResolverOptions = {
 };
 
 export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineRollOnlyTable({
     id: 'stairs',
     heading: 'Stairs',
-    resolver: wrapResolver(resolveStairs),
-    renderers: {
-      renderDetail: renderStairsDetail,
-      renderCompact: withoutAppend((node) => renderStairsCompactNodes(node)),
+    event: 'stairs',
+    resolve: resolveStairs,
+    render: {
+      detail: renderStairsDetail,
+      compact: withoutAppend((node) => renderStairsCompactNodes(node)),
     },
-    buildPreview: buildStairsPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'stairs'
-        ? buildEventPreviewFromFactory(node, buildStairsPreview)
-        : undefined,
-    resolvePending: () => resolveStairs({}),
-  },
+    preview: buildStairsPreview,
+  }),
   markContextualResolution({
     id: 'egress',
     heading: 'Egress',
@@ -251,21 +248,17 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
         context: readExitAlternativeContext(pending.context),
       }),
   }),
-  {
+  defineRollOnlyTable({
     id: 'chute',
     heading: 'Chute',
-    resolver: wrapResolver(resolveChute),
-    renderers: {
-      renderDetail: renderChuteDetail,
-      renderCompact: withoutAppend(renderChuteCompact),
+    event: 'chute',
+    resolve: resolveChute,
+    render: {
+      detail: renderChuteDetail,
+      compact: withoutAppend(renderChuteCompact),
     },
-    buildPreview: buildChutePreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'chute'
-        ? buildEventPreviewFromFactory(node, buildChutePreview)
-        : undefined,
-    resolvePending: () => resolveChute({}),
-  },
+    preview: buildChutePreview,
+  }),
 ];
 
 function readExitsContext(

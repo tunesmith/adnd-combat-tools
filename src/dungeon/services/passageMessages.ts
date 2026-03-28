@@ -1,8 +1,8 @@
 import type { DungeonRenderNode } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
-import { createOutcomeRenderSnapshot } from '../helpers/outcomePipeline';
 import { resolvePeriodicCheck } from '../features/navigation/entry/entryResolvers';
 import { buildPassageStartMessages } from '../features/navigation/entry/entryRender';
+import { buildOutcomeMessages } from './renderMessages';
 
 /**
  * If we follow the Strategic Review mindset, then it means
@@ -46,42 +46,9 @@ export const passageMessages = (options?: {
   });
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   const detailMode = options?.detailMode ?? false;
-  const shouldAutoResolve = !detailMode;
-  if (shouldAutoResolve) {
-    const snapshot = createOutcomeRenderSnapshot(node, { autoResolve: true });
-    if (!snapshot) {
-      return { usedRoll, messages: [], outcome: undefined };
-    }
-    const detailMessages = snapshot.detailResolved;
-    const compactMessages = snapshot.compact;
-    const messages = detailMode ? detailMessages : compactMessages;
-    return {
-      usedRoll,
-      messages,
-      outcome: snapshot.compactOutcome,
-      renderCache: {
-        detail: detailMessages,
-        compact: compactMessages,
-      },
-      pendingCount: snapshot.resolvedPendingCount,
-    };
-  }
-
-  const snapshot = createOutcomeRenderSnapshot(node, { autoResolve: false });
-  if (!snapshot) {
-    return { usedRoll, messages: [], outcome: undefined };
-  }
-  const messages = detailMode ? snapshot.detail : snapshot.compact;
-  return {
+  return buildOutcomeMessages(node, {
     usedRoll,
-    messages,
-    outcome: detailMode ? snapshot.normalized : snapshot.compactOutcome,
-    renderCache: {
-      detail: snapshot.detail,
-      compact: snapshot.compact,
-    },
-    pendingCount: detailMode
-      ? snapshot.pendingCount
-      : snapshot.resolvedPendingCount,
-  };
+    detailMode,
+    autoResolve: !detailMode,
+  });
 };

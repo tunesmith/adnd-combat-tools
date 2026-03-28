@@ -1,11 +1,4 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../../types/dungeon';
-import {
-  emphasizeInlineText,
-  extractLeadingItemPhrase,
-} from '../../../helpers/inlineContent';
+import type { DungeonRenderNode } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureMiscMagicE5, TreasureMiscMagicE5 } from './miscMagicE5Table';
 import type { TreasureRobeOfTheArchmagi } from './miscMagicE5Subtables';
@@ -24,6 +17,10 @@ import {
   robeOfTheArchmagiParenthetical,
   scarabOfProtectionParenthetical,
 } from './miscMagicE5SubtablesRender';
+import {
+  renderTreasureParentCompact,
+  renderTreasureParentDetail,
+} from '../sharedRender';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE5, string> = {
   [TreasureMiscMagicE5.RobeOfTheArchmagi]: 'Robe of the Archmagi',
@@ -95,37 +92,24 @@ export function renderTreasureMiscMagicE5Detail(
     scarabResolution.event.kind === 'treasureScarabOfProtectionCurseResolution'
       ? scarabResolution.event.result
       : undefined;
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic (Table E.5)',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [
-      `roll: ${outcome.roll} — ${resolvedLabel(
-        outcome.event.result,
-        robeAlignment,
-        scarabCurseResult,
-        scarabResolutionResult
-      )}`,
-    ],
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        robeAlignment,
-        scarabCurseResult,
-        scarabResolutionResult
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentDetail({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.5)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: resolvedLabel(
+      outcome.event.result,
+      robeAlignment,
+      scarabCurseResult,
+      scarabResolutionResult
+    ),
+    text: resolvedSentence(
+      outcome.event.result,
+      robeAlignment,
+      scarabCurseResult,
+      scarabResolutionResult
+    ),
+  });
 }
 
 export function renderTreasureMiscMagicE5Compact(
@@ -154,26 +138,19 @@ export function renderTreasureMiscMagicE5Compact(
     scarabResolution.event.kind === 'treasureScarabOfProtectionCurseResolution'
       ? scarabResolution.event.result
       : undefined;
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic',
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        robeAlignment,
-        scarabCurseResult,
-        scarabResolutionResult
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, paragraph];
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentCompact({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.5)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: '',
+    text: resolvedSentence(
+      outcome.event.result,
+      robeAlignment,
+      scarabCurseResult,
+      scarabResolutionResult
+    ),
+  });
 }
 
 export const buildTreasureMiscMagicE5Preview: TablePreviewFactory = (

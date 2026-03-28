@@ -1,8 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import {
-  createMonsterPreviewFactory,
-  createMonsterTableDefinition,
-} from '../shared';
+import { createMonsterPreviewFactory, defineMonsterTable } from '../shared';
 import {
   DragonFourOlder,
   DragonFourYounger,
@@ -36,21 +33,21 @@ const buildDragonFourOlderPreview = createMonsterPreviewFactory({
 });
 
 export const monsterFourTables: ReadonlyArray<DungeonTableDefinition> = [
-  createMonsterTableDefinition({
+  defineMonsterTable({
     id: 'monsterFour',
     heading: 'Monster (Level 4)',
     resolver: resolveMonsterFour,
     fallbackDungeonLevel: 1,
     buildPreview: buildMonsterFourPreview,
   }),
-  createMonsterTableDefinition({
+  defineMonsterTable({
     id: 'dragonFourYounger',
     heading: 'Dragon (Level 4 Younger)',
     resolver: resolveDragonFourYounger,
     fallbackDungeonLevel: 4,
     buildPreview: buildDragonFourYoungerPreview,
   }),
-  createMonsterTableDefinition({
+  defineMonsterTable({
     id: 'dragonFourOlder',
     heading: 'Dragon (Level 4 Older)',
     resolver: resolveDragonFourOlder,

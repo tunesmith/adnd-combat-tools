@@ -1,11 +1,4 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../../types/dungeon';
-import {
-  emphasizeInlineText,
-  extractLeadingItemPhrase,
-} from '../../../helpers/inlineContent';
+import type { DungeonRenderNode } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureMiscMagicE4, TreasureMiscMagicE4 } from './miscMagicE4Table';
 import {
@@ -26,6 +19,10 @@ import {
   quaalFeatherTokenParenthetical,
   toPrayerBeadsSummary,
 } from './miscMagicE4SubtablesRender';
+import {
+  renderTreasureParentCompact,
+  renderTreasureParentDetail,
+} from '../sharedRender';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE4, string> = {
   [TreasureMiscMagicE4.LibramOfGainfulConjuration]:
@@ -101,37 +98,26 @@ export function renderTreasureMiscMagicE4Detail(
     outcome,
     'treasureNecklaceOfPrayerBeads'
   );
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic (Table E.4)',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${ITEM_LABELS[outcome.event.result]}`],
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        manualChild,
-        medallionChild,
-        necklaceChild,
-        pearlEffectChild,
-        pearlWisdomChild,
-        periaptPoisonChild,
-        phylacteryLongYearsChild,
-        quaalTokenChild,
-        prayerBeadsChild,
-        true
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentDetail({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.4)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: ITEM_LABELS[outcome.event.result],
+    text: resolvedSentence(
+      outcome.event.result,
+      manualChild,
+      medallionChild,
+      necklaceChild,
+      pearlEffectChild,
+      pearlWisdomChild,
+      periaptPoisonChild,
+      phylacteryLongYearsChild,
+      quaalTokenChild,
+      prayerBeadsChild,
+      true
+    ),
+  });
 }
 
 export function renderTreasureMiscMagicE4Compact(
@@ -160,43 +146,37 @@ export function renderTreasureMiscMagicE4Compact(
     outcome,
     'treasureNecklaceOfPrayerBeads'
   );
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic',
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        manualChild,
-        medallionChild,
-        necklaceChild,
-        pearlEffectChild,
-        pearlWisdomChild,
-        periaptPoisonChild,
-        phylacteryLongYearsChild,
-        quaalTokenChild,
-        prayerBeadsChild,
-        false
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, paragraph];
-  if (
-    prayerBeadsChild &&
-    prayerBeadsChild.event.kind === 'treasureNecklaceOfPrayerBeads'
-  ) {
-    nodes.push({
-      kind: 'prayer-beads',
-      summary: toPrayerBeadsSummary(prayerBeadsChild.event.result),
-      display: 'compact',
-    });
-  }
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentCompact({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.4)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: '',
+    text: resolvedSentence(
+      outcome.event.result,
+      manualChild,
+      medallionChild,
+      necklaceChild,
+      pearlEffectChild,
+      pearlWisdomChild,
+      periaptPoisonChild,
+      phylacteryLongYearsChild,
+      quaalTokenChild,
+      prayerBeadsChild,
+      false
+    ),
+    compactExtras:
+      prayerBeadsChild &&
+      prayerBeadsChild.event.kind === 'treasureNecklaceOfPrayerBeads'
+        ? [
+            {
+              kind: 'prayer-beads',
+              summary: toPrayerBeadsSummary(prayerBeadsChild.event.result),
+              display: 'compact',
+            },
+          ]
+        : undefined,
+  });
 }
 
 export const buildTreasureMiscMagicE4Preview: TablePreviewFactory = (

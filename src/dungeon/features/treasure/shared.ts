@@ -14,7 +14,7 @@ import type {
   PendingResolver,
   RegistryOutcomeBuilder,
 } from '../types';
-import { buildEventPreviewFromFactory } from '../shared';
+import { buildEventPreviewFromFactory, defineRollOnlyTable } from '../shared';
 import { readTableContextOfKind } from '../../helpers/tableContext';
 
 export function formatOrdinal(level: number): string {
@@ -137,7 +137,7 @@ type TreasureProtectionEventKind =
   | 'treasureProtectionGuardedBy'
   | 'treasureProtectionHiddenBy';
 
-export function createTreasureProtectionEventPreviewBuilder(
+function createTreasureProtectionEventPreviewBuilder(
   kind: TreasureProtectionEventKind,
   buildPreview: TablePreviewFactory
 ) {
@@ -193,21 +193,44 @@ export function defineTreasureFollowupTable<TResult = unknown>(options: {
   preview: TablePreviewFactory;
   followups?: ReadonlyArray<DungeonTableFollowup<TResult>>;
 }): DungeonTableDefinition {
+  return defineRollOnlyTable(options);
+}
+
+export function defineTreasureProtectionTable<TResult = unknown>(options: {
+  id: string;
+  heading: string;
+  event: TreasureProtectionEventKind;
+  resolve: ManualRollResolver;
+  render: TreasureRenderConfig;
+  preview: TablePreviewFactory;
+  followups?: ReadonlyArray<DungeonTableFollowup<TResult>>;
+}): DungeonTableDefinition {
   return {
-    id: options.id,
-    heading: options.heading,
-    resolver: options.resolve,
-    renderers: {
-      renderDetail: options.render.detail,
-      renderCompact: options.render.compact,
-    },
-    buildPreview: options.preview,
+    ...defineRollOnlyTable(options),
+    buildEventPreview: createTreasureProtectionEventPreviewBuilder(
+      options.event,
+      options.preview
+    ),
+  };
+}
+
+export function defineTreasureContainerTable<TResult = unknown>(options: {
+  id: string;
+  heading: string;
+  event: 'treasureContainer';
+  resolve: ManualRollResolver;
+  render: TreasureRenderConfig;
+  preview: TablePreviewFactory;
+  followups?: ReadonlyArray<DungeonTableFollowup<TResult>>;
+}): DungeonTableDefinition {
+  return {
+    ...defineRollOnlyTable(options),
     buildEventPreview: (node) =>
       node.event.kind === options.event
-        ? buildEventPreviewFromFactory(node, options.preview)
+        ? buildEventPreviewFromFactory(node, options.preview, {
+            context: { kind: 'treasureContainer' },
+          })
         : undefined,
-    resolvePending: () => options.resolve({}),
-    followups: options.followups,
   };
 }
 

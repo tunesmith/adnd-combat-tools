@@ -13,42 +13,32 @@ import {
   resolveJumpingPlaceWidth,
 } from './chasmResolvers';
 import { ChasmConstruction } from './chasmTable';
-import {
-  buildEventPreviewFromFactory,
-  NO_COMPACT_RENDER,
-  wrapResolver,
-} from '../../shared';
+import { defineRollOnlyTable, NO_COMPACT_RENDER } from '../../shared';
 
 export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineRollOnlyTable({
     id: 'chasmDepth',
     heading: 'Chasm Depth',
-    resolver: wrapResolver(resolveChasmDepth),
-    renderers: {
-      renderDetail: renderChasmDepthDetail,
-      renderCompact: NO_COMPACT_RENDER,
+    event: 'chasmDepth',
+    resolve: resolveChasmDepth,
+    render: {
+      detail: renderChasmDepthDetail,
+      compact: NO_COMPACT_RENDER,
     },
-    buildPreview: buildChasmDepthPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'chasmDepth'
-        ? buildEventPreviewFromFactory(node, buildChasmDepthPreview)
-        : undefined,
-    resolvePending: () => resolveChasmDepth({}),
-  },
+    preview: buildChasmDepthPreview,
+  }),
   {
-    id: 'chasmConstruction',
-    heading: 'Chasm Construction',
-    resolver: wrapResolver(resolveChasmConstruction),
-    renderers: {
-      renderDetail: renderChasmConstructionDetail,
-      renderCompact: NO_COMPACT_RENDER,
-    },
-    buildPreview: buildChasmConstructionPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'chasmConstruction'
-        ? buildEventPreviewFromFactory(node, buildChasmConstructionPreview)
-        : undefined,
-    resolvePending: () => resolveChasmConstruction({}),
+    ...defineRollOnlyTable({
+      id: 'chasmConstruction',
+      heading: 'Chasm Construction',
+      event: 'chasmConstruction',
+      resolve: resolveChasmConstruction,
+      render: {
+        detail: renderChasmConstructionDetail,
+        compact: NO_COMPACT_RENDER,
+      },
+      preview: buildChasmConstructionPreview,
+    }),
     postProcessChildren: (node, children, resolveNode) => {
       const result = (node.event as { result?: unknown }).result;
       if (
@@ -61,19 +51,15 @@ export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [
       return children;
     },
   },
-  {
+  defineRollOnlyTable({
     id: 'jumpingPlaceWidth',
     heading: 'Jumping Place Width',
-    resolver: wrapResolver(resolveJumpingPlaceWidth),
-    renderers: {
-      renderDetail: renderJumpingPlaceWidthDetail,
-      renderCompact: NO_COMPACT_RENDER,
+    event: 'jumpingPlaceWidth',
+    resolve: resolveJumpingPlaceWidth,
+    render: {
+      detail: renderJumpingPlaceWidthDetail,
+      compact: NO_COMPACT_RENDER,
     },
-    buildPreview: buildJumpingPlaceWidthPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'jumpingPlaceWidth'
-        ? buildEventPreviewFromFactory(node, buildJumpingPlaceWidthPreview)
-        : undefined,
-    resolvePending: () => resolveJumpingPlaceWidth({}),
-  },
+    preview: buildJumpingPlaceWidthPreview,
+  }),
 ];

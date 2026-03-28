@@ -5,20 +5,18 @@ import {
   buildGasTrapEffectPreview,
 } from './gasTrapRender';
 import { resolveGasTrapEffect } from './gasTrapResolvers';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import { defineRollOnlyTable } from '../../shared';
 
 export const gasTrapTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineRollOnlyTable({
     id: 'gasTrapEffect',
     heading: 'Gas Effect',
-    resolver: wrapResolver(resolveGasTrapEffect),
-    renderers: {
-      renderDetail: renderGasTrapEffectDetail,
-      renderCompact: renderGasTrapEffectCompact,
+    event: 'gasTrapEffect',
+    resolve: resolveGasTrapEffect,
+    render: {
+      detail: renderGasTrapEffectDetail,
+      compact: renderGasTrapEffectCompact,
     },
-    buildPreview: buildGasTrapEffectPreview,
-    buildEventPreview: (node) =>
-      buildEventPreviewFromFactory(node, buildGasTrapEffectPreview),
-    resolvePending: () => resolveGasTrapEffect({}),
-  },
+    preview: buildGasTrapEffectPreview,
+  }),
 ];

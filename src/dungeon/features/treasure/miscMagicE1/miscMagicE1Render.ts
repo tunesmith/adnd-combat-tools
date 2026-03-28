@@ -1,11 +1,4 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../../types/dungeon';
-import {
-  emphasizeInlineText,
-  extractLeadingItemPhrase,
-} from '../../../helpers/inlineContent';
+import type { DungeonRenderNode } from '../../../../types/dungeon';
 import type {
   OutcomeEventNode,
   TreasureBeakerOfPlentifulPotionsDetails,
@@ -23,6 +16,10 @@ import type {
   TreasureBracersOfDefense,
   TreasureBucknardsEverfullPurse,
 } from './miscMagicE1Subtables';
+import {
+  renderTreasureParentCompact,
+  renderTreasureParentDetail,
+} from '../sharedRender';
 import {
   artifactSentence,
   bagOfTricksSentence,
@@ -86,49 +83,35 @@ export function renderTreasureMiscMagicE1Detail(
   const bracersChild = findChildEvent(outcome, 'treasureBracersOfDefense');
   const purseChild = findChildEvent(outcome, 'treasureBucknardsEverfullPurse');
   const artifactChild = findChildEvent(outcome, 'treasureArtifactOrRelic');
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic (Table E.1)',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [
-      `roll: ${outcome.roll} — ${formatItemName(
-        outcome.event.result,
-        bagOfTricksChild &&
-          bagOfTricksChild.event.kind === 'treasureBagOfTricks'
-          ? bagOfTricksChild.event.result
-          : undefined,
-        bracersChild && bracersChild.event.kind === 'treasureBracersOfDefense'
-          ? bracersChild.event.result
-          : undefined,
-        purseChild && purseChild.event.kind === 'treasureBucknardsEverfullPurse'
-          ? purseChild.event.result
-          : undefined,
-        artifactChild && artifactChild.event.kind === 'treasureArtifactOrRelic'
-          ? artifactChild.event.result
-          : undefined
-      )}`,
-    ],
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        outcome.event.beaker,
-        bagOfTricksChild,
-        bracersChild,
-        purseChild,
-        artifactChild
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentDetail({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.1)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: formatItemName(
+      outcome.event.result,
+      bagOfTricksChild && bagOfTricksChild.event.kind === 'treasureBagOfTricks'
+        ? bagOfTricksChild.event.result
+        : undefined,
+      bracersChild && bracersChild.event.kind === 'treasureBracersOfDefense'
+        ? bracersChild.event.result
+        : undefined,
+      purseChild && purseChild.event.kind === 'treasureBucknardsEverfullPurse'
+        ? purseChild.event.result
+        : undefined,
+      artifactChild && artifactChild.event.kind === 'treasureArtifactOrRelic'
+        ? artifactChild.event.result
+        : undefined
+    ),
+    text: resolvedSentence(
+      outcome.event.result,
+      outcome.event.beaker,
+      bagOfTricksChild,
+      bracersChild,
+      purseChild,
+      artifactChild
+    ),
+  });
 }
 
 export function renderTreasureMiscMagicE1Compact(
@@ -140,28 +123,21 @@ export function renderTreasureMiscMagicE1Compact(
   const bracersChild = findChildEvent(outcome, 'treasureBracersOfDefense');
   const purseChild = findChildEvent(outcome, 'treasureBucknardsEverfullPurse');
   const artifactChild = findChildEvent(outcome, 'treasureArtifactOrRelic');
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic',
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        outcome.event.beaker,
-        bagOfTricksChild,
-        bracersChild,
-        purseChild,
-        artifactChild
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, paragraph];
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentCompact({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.1)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: '',
+    text: resolvedSentence(
+      outcome.event.result,
+      outcome.event.beaker,
+      bagOfTricksChild,
+      bracersChild,
+      purseChild,
+      artifactChild
+    ),
+  });
 }
 
 export const buildTreasureMiscMagicE1Preview: TablePreviewFactory = (

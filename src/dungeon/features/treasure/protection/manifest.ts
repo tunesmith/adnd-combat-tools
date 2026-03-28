@@ -1,6 +1,6 @@
 import type { DungeonTableDefinition } from '../../types';
-import { NO_COMPACT_RENDER, wrapResolver } from '../../shared';
-import { createTreasureProtectionEventPreviewBuilder } from '../shared';
+import { NO_COMPACT_RENDER } from '../../shared';
+import { defineTreasureProtectionTable } from '../shared';
 import {
   buildTreasureProtectionGuardedByPreview,
   buildTreasureProtectionHiddenByPreview,
@@ -17,49 +17,37 @@ import {
 } from './protectionResolvers';
 
 export const protectionTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureProtectionTable({
     id: 'treasureProtectionType',
     heading: 'Treasure Protection',
-    resolver: wrapResolver(resolveTreasureProtectionType),
-    renderers: {
-      renderDetail: renderTreasureProtectionTypeDetail,
-      renderCompact: renderTreasureProtectionTypeCompact,
+    event: 'treasureProtectionType',
+    resolve: resolveTreasureProtectionType,
+    render: {
+      detail: renderTreasureProtectionTypeDetail,
+      compact: renderTreasureProtectionTypeCompact,
     },
-    buildPreview: buildTreasureProtectionTypePreview,
-    buildEventPreview: createTreasureProtectionEventPreviewBuilder(
-      'treasureProtectionType',
-      buildTreasureProtectionTypePreview
-    ),
-    resolvePending: () => resolveTreasureProtectionType({}),
-  },
-  {
+    preview: buildTreasureProtectionTypePreview,
+  }),
+  defineTreasureProtectionTable({
     id: 'treasureProtectionGuardedBy',
     heading: 'Treasure Guarded By',
-    resolver: wrapResolver(resolveTreasureProtectionGuardedBy),
-    renderers: {
-      renderDetail: renderTreasureProtectionGuardedByDetail,
-      renderCompact: NO_COMPACT_RENDER,
+    event: 'treasureProtectionGuardedBy',
+    resolve: resolveTreasureProtectionGuardedBy,
+    render: {
+      detail: renderTreasureProtectionGuardedByDetail,
+      compact: NO_COMPACT_RENDER,
     },
-    buildPreview: buildTreasureProtectionGuardedByPreview,
-    buildEventPreview: createTreasureProtectionEventPreviewBuilder(
-      'treasureProtectionGuardedBy',
-      buildTreasureProtectionGuardedByPreview
-    ),
-    resolvePending: () => resolveTreasureProtectionGuardedBy({}),
-  },
-  {
+    preview: buildTreasureProtectionGuardedByPreview,
+  }),
+  defineTreasureProtectionTable({
     id: 'treasureProtectionHiddenBy',
     heading: 'Treasure Hidden By',
-    resolver: wrapResolver(resolveTreasureProtectionHiddenBy),
-    renderers: {
-      renderDetail: renderTreasureProtectionHiddenByDetail,
-      renderCompact: NO_COMPACT_RENDER,
+    event: 'treasureProtectionHiddenBy',
+    resolve: resolveTreasureProtectionHiddenBy,
+    render: {
+      detail: renderTreasureProtectionHiddenByDetail,
+      compact: NO_COMPACT_RENDER,
     },
-    buildPreview: buildTreasureProtectionHiddenByPreview,
-    buildEventPreview: createTreasureProtectionEventPreviewBuilder(
-      'treasureProtectionHiddenBy',
-      buildTreasureProtectionHiddenByPreview
-    ),
-    resolvePending: () => resolveTreasureProtectionHiddenBy({}),
-  },
+    preview: buildTreasureProtectionHiddenByPreview,
+  }),
 ];

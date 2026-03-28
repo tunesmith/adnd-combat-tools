@@ -1,6 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
 import {
   buildEventPreviewFromFactory,
+  defineRollOnlyTable,
   markContextualResolution,
   withoutAppend,
   wrapResolver,
@@ -8,7 +9,7 @@ import {
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { TableContext } from '../../../../types/dungeon';
 import {
-  createEnvironmentDungeonLevelContextHandlers,
+  defineEnvironmentLevelTable,
   deriveEnvironmentDungeonLevel,
   deriveEnvironmentDungeonLevelFromAncestors,
 } from '../shared';
@@ -34,11 +35,6 @@ import {
   renderRoomDimensionsCompactNodes,
   renderRoomDimensionsDetail,
 } from './roomsChambersRender';
-
-const roomDimensionsContextHandlers =
-  createEnvironmentDungeonLevelContextHandlers(resolveRoomDimensions, 1);
-const chamberRoomContentsContextHandlers =
-  createEnvironmentDungeonLevelContextHandlers(resolveChamberRoomContents, 1);
 
 function readChamberDimensionsContext(
   context: unknown
@@ -110,23 +106,19 @@ function buildChamberRoomContentsContext(
 }
 
 export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
-    ...roomDimensionsContextHandlers,
+  defineEnvironmentLevelTable({
     id: 'roomDimensions',
     heading: 'Room Dimensions',
-    resolver: wrapResolver(resolveRoomDimensions),
-    renderers: {
-      renderDetail: renderRoomDimensionsDetail,
-      renderCompact: withoutAppend(renderRoomDimensionsCompactNodes),
+    event: 'roomDimensions',
+    resolve: resolveRoomDimensions,
+    render: {
+      detail: renderRoomDimensionsDetail,
+      compact: withoutAppend(renderRoomDimensionsCompactNodes),
     },
-    buildPreview: buildRoomDimensionsPreview,
-    buildEventPreview: (node, ancestors) =>
-      node.event.kind === 'roomDimensions'
-        ? buildEventPreviewFromFactory(node, buildRoomDimensionsPreview, {
-            context: buildRoomDimensionsContext(node, ancestors),
-          })
-        : undefined,
-  },
+    preview: buildRoomDimensionsPreview,
+    fallbackLevel: 1,
+    buildEventContext: buildRoomDimensionsContext,
+  }),
   markContextualResolution({
     id: 'chamberDimensions',
     heading: 'Chamber Dimensions',
@@ -164,36 +156,30 @@ export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
       );
     },
   }),
-  {
-    ...chamberRoomContentsContextHandlers,
+  defineEnvironmentLevelTable({
     id: 'chamberRoomContents',
     heading: 'Contents',
-    resolver: wrapResolver(resolveChamberRoomContents),
-    renderers: {
-      renderDetail: renderChamberRoomContentsDetail,
-      renderCompact: renderChamberRoomContentsCompact,
+    event: 'chamberRoomContents',
+    resolve: resolveChamberRoomContents,
+    render: {
+      detail: renderChamberRoomContentsDetail,
+      compact: renderChamberRoomContentsCompact,
     },
-    buildPreview: buildChamberRoomContentsPreview,
-    buildEventPreview: (node, ancestors) =>
-      node.event.kind === 'chamberRoomContents' && !node.event.autoResolved
-        ? buildEventPreviewFromFactory(node, buildChamberRoomContentsPreview, {
-            context: buildChamberRoomContentsContext(node, ancestors),
-          })
-        : undefined,
-  },
-  {
+    preview: buildChamberRoomContentsPreview,
+    fallbackLevel: 1,
+    buildEventContext: buildChamberRoomContentsContext,
+    shouldBuildEventPreview: (node) =>
+      node.event.kind === 'chamberRoomContents' && !node.event.autoResolved,
+  }),
+  defineRollOnlyTable({
     id: 'chamberRoomStairs',
     heading: 'Stairway',
-    resolver: wrapResolver(resolveChamberRoomStairs),
-    renderers: {
-      renderDetail: renderChamberRoomStairsDetail,
-      renderCompact: withoutAppend(renderChamberRoomStairsCompact),
+    event: 'chamberRoomStairs',
+    resolve: resolveChamberRoomStairs,
+    render: {
+      detail: renderChamberRoomStairsDetail,
+      compact: withoutAppend(renderChamberRoomStairsCompact),
     },
-    buildPreview: buildChamberRoomStairsPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'chamberRoomStairs'
-        ? buildEventPreviewFromFactory(node, buildChamberRoomStairsPreview)
-        : undefined,
-    resolvePending: () => resolveChamberRoomStairs({}),
-  },
+    preview: buildChamberRoomStairsPreview,
+  }),
 ];

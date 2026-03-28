@@ -1,8 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import {
-  createMonsterPreviewFactory,
-  createMonsterTableDefinition,
-} from '../shared';
+import { createMonsterPreviewFactory, defineMonsterTable } from '../shared';
 import {
   DragonNine,
   dragonNine,
@@ -24,14 +21,14 @@ const buildDragonNinePreview = createMonsterPreviewFactory({
 });
 
 export const monsterNineTables: ReadonlyArray<DungeonTableDefinition> = [
-  createMonsterTableDefinition({
+  defineMonsterTable({
     id: 'monsterNine',
     heading: 'Monster (Level 9)',
     resolver: resolveMonsterNine,
     fallbackDungeonLevel: 1,
     buildPreview: buildMonsterNinePreview,
   }),
-  createMonsterTableDefinition({
+  defineMonsterTable({
     id: 'dragonNine',
     heading: 'Dragon (Level 9)',
     resolver: resolveDragonNine,

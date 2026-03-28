@@ -1,10 +1,10 @@
 import type { DungeonTableDefinition } from '../../types';
-import { createMonsterTableDefinition } from '../shared';
+import { defineMonsterTable } from '../shared';
 import { buildMonsterLevelPreview } from './monsterLevelRender';
 import { resolveMonsterLevel } from './monsterLevelResolvers';
 
 export const monsterLevelTables: ReadonlyArray<DungeonTableDefinition> = [
-  createMonsterTableDefinition({
+  defineMonsterTable({
     id: 'monsterLevel',
     heading: 'Monster Level',
     resolver: resolveMonsterLevel,

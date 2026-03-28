@@ -1,14 +1,27 @@
 import type { TableContext } from '../../../types/dungeon';
-import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
+import type {
+  CompactRenderer,
+  DetailRenderer,
+  DungeonTableDefinition,
+  PendingResolver,
+  RegistryOutcomeBuilder,
+} from '../types';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import type { TablePreviewFactory } from '../../adapters/render/shared';
 import { readTableContext } from '../../helpers/tableContext';
+import { buildEventPreviewFromFactory, wrapResolver } from '../shared';
 
 type EnvironmentDungeonLevelResolverOptions = {
   roll?: number;
   level?: number;
+};
+
+type EnvironmentRenderConfig = {
+  detail: DetailRenderer;
+  compact: CompactRenderer;
 };
 
 function readEnvironmentDungeonLevel(
@@ -99,7 +112,7 @@ export function buildEnvironmentWanderingLevelContext(
   return level === undefined ? undefined : { kind: 'wandering', level };
 }
 
-export function createEnvironmentDungeonLevelContextHandlers(
+function createEnvironmentDungeonLevelContextHandlers(
   resolver: (
     options?: EnvironmentDungeonLevelResolverOptions
   ) => DungeonOutcomeNode,
@@ -127,5 +140,46 @@ export function createEnvironmentDungeonLevelContextHandlers(
       );
       return resolver({ roll, level });
     },
+  };
+}
+
+export function defineEnvironmentLevelTable(options: {
+  id: string;
+  heading: string;
+  event: string;
+  resolve: (
+    options?: EnvironmentDungeonLevelResolverOptions
+  ) => DungeonOutcomeNode;
+  render: EnvironmentRenderConfig;
+  preview: TablePreviewFactory;
+  fallbackLevel: number;
+  buildEventContext: (
+    node: OutcomeEventNode,
+    ancestors?: OutcomeEventNode[]
+  ) => TableContext | undefined;
+  shouldBuildEventPreview?: (node: OutcomeEventNode) => boolean;
+}): DungeonTableDefinition<EnvironmentDungeonLevelResolverOptions> {
+  const contextHandlers = createEnvironmentDungeonLevelContextHandlers(
+    options.resolve,
+    options.fallbackLevel
+  );
+
+  return {
+    ...contextHandlers,
+    id: options.id,
+    heading: options.heading,
+    resolver: wrapResolver(options.resolve),
+    renderers: {
+      renderDetail: options.render.detail,
+      renderCompact: options.render.compact,
+    },
+    buildPreview: options.preview,
+    buildEventPreview: (node, ancestors) =>
+      node.event.kind === options.event &&
+      (options.shouldBuildEventPreview?.(node) ?? true)
+        ? buildEventPreviewFromFactory(node, options.preview, {
+            context: options.buildEventContext(node, ancestors),
+          })
+        : undefined,
   };
 }

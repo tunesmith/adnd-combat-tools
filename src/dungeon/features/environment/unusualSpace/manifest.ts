@@ -8,7 +8,7 @@ import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { TableContext } from '../../../../types/dungeon';
 import {
   buildEnvironmentWanderingLevelContext,
-  createEnvironmentDungeonLevelContextHandlers,
+  defineEnvironmentLevelTable,
 } from '../shared';
 import { readTableContextOfKind } from '../../../helpers/tableContext';
 import {
@@ -23,9 +23,6 @@ import {
   renderUnusualSizeCompact,
   renderUnusualSizeDetail,
 } from './unusualSpaceRender';
-
-const unusualShapeContextHandlers =
-  createEnvironmentDungeonLevelContextHandlers(resolveUnusualShape, 1);
 
 function readUnusualSizeContext(
   context: unknown
@@ -79,23 +76,19 @@ function buildUnusualSizeEventContext(
 }
 
 export const unusualSpaceTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
-    ...unusualShapeContextHandlers,
+  defineEnvironmentLevelTable({
     id: 'unusualShape',
     heading: 'Unusual Shape',
-    resolver: wrapResolver(resolveUnusualShape),
-    renderers: {
-      renderDetail: renderUnusualShapeDetail,
-      renderCompact: withoutAppend(renderUnusualShapeCompact),
+    event: 'unusualShape',
+    resolve: resolveUnusualShape,
+    render: {
+      detail: renderUnusualShapeDetail,
+      compact: withoutAppend(renderUnusualShapeCompact),
     },
-    buildPreview: buildUnusualShapePreview,
-    buildEventPreview: (node, ancestors) =>
-      node.event.kind === 'unusualShape'
-        ? buildEventPreviewFromFactory(node, buildUnusualShapePreview, {
-            context: buildEnvironmentWanderingLevelContext(node, ancestors),
-          })
-        : undefined,
-  },
+    preview: buildUnusualShapePreview,
+    fallbackLevel: 1,
+    buildEventContext: buildEnvironmentWanderingLevelContext,
+  }),
   {
     id: 'unusualSize',
     heading: 'Unusual Size',

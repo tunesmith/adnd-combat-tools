@@ -5,26 +5,18 @@ import {
   renderPassageWidthDetail,
 } from './passageWidthRender';
 import { resolvePassageWidth } from './passageWidthResolvers';
-import {
-  buildEventPreviewFromFactory,
-  withoutAppend,
-  wrapResolver,
-} from '../../shared';
+import { defineRollOnlyTable, withoutAppend } from '../../shared';
 
 export const passageWidthTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineRollOnlyTable({
     id: 'passageWidth',
     heading: 'Passage Width',
-    resolver: wrapResolver(resolvePassageWidth),
-    renderers: {
-      renderDetail: renderPassageWidthDetail,
-      renderCompact: withoutAppend(renderPassageWidthCompactNodes),
+    event: 'passageWidth',
+    resolve: resolvePassageWidth,
+    render: {
+      detail: renderPassageWidthDetail,
+      compact: withoutAppend(renderPassageWidthCompactNodes),
     },
-    buildPreview: buildPassageWidthPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'passageWidth'
-        ? buildEventPreviewFromFactory(node, buildPassageWidthPreview)
-        : undefined,
-    resolvePending: () => resolvePassageWidth({}),
-  },
+    preview: buildPassageWidthPreview,
+  }),
 ];

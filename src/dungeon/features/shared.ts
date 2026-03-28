@@ -5,6 +5,7 @@ import type {
   CompactRenderer,
   DetailRenderer,
   DungeonTableDefinition,
+  DungeonTableFollowup,
   ManualRollResolver,
   RollResolverOptions,
 } from './types';
@@ -51,6 +52,38 @@ export function buildEventPreviewFromFactory(
   );
   if (!preview) return undefined;
   return options?.autoCollapse ? { ...preview, autoCollapse: true } : preview;
+}
+
+type RollOnlyTableRenderConfig = {
+  detail: DetailRenderer;
+  compact: CompactRenderer;
+};
+
+export function defineRollOnlyTable<TResult = unknown>(options: {
+  id: string;
+  heading: string;
+  event: string;
+  resolve: ManualRollResolver;
+  render: RollOnlyTableRenderConfig;
+  preview: TablePreviewFactory;
+  followups?: ReadonlyArray<DungeonTableFollowup<TResult>>;
+}): DungeonTableDefinition {
+  return {
+    id: options.id,
+    heading: options.heading,
+    resolver: wrapResolver(options.resolve),
+    renderers: {
+      renderDetail: options.render.detail,
+      renderCompact: options.render.compact,
+    },
+    buildPreview: options.preview,
+    buildEventPreview: (node) =>
+      node.event.kind === options.event
+        ? buildEventPreviewFromFactory(node, options.preview)
+        : undefined,
+    resolvePending: () => options.resolve({}),
+    followups: options.followups,
+  };
 }
 
 export const NO_COMPACT_RENDER: CompactRenderer = (_node, _append) => [];

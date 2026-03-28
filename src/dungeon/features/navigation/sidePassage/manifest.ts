@@ -5,26 +5,18 @@ import {
   buildSidePassagePreview,
 } from './sidePassageRender';
 import { resolveSidePassages } from './sidePassageResolvers';
-import {
-  buildEventPreviewFromFactory,
-  withoutAppend,
-  wrapResolver,
-} from '../../shared';
+import { defineRollOnlyTable, withoutAppend } from '../../shared';
 
 export const sidePassageTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineRollOnlyTable({
     id: 'sidePassages',
     heading: 'Side Passages',
-    resolver: wrapResolver(resolveSidePassages),
-    renderers: {
-      renderDetail: renderSidePassagesDetail,
-      renderCompact: withoutAppend(renderSidePassagesCompactNodes),
+    event: 'sidePassages',
+    resolve: resolveSidePassages,
+    render: {
+      detail: renderSidePassagesDetail,
+      compact: withoutAppend(renderSidePassagesCompactNodes),
     },
-    buildPreview: buildSidePassagePreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'sidePassages'
-        ? buildEventPreviewFromFactory(node, buildSidePassagePreview)
-        : undefined,
-    resolvePending: () => resolveSidePassages({}),
-  },
+    preview: buildSidePassagePreview,
+  }),
 ];

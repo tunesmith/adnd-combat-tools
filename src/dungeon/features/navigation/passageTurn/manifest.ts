@@ -5,26 +5,18 @@ import {
   buildPassageTurnPreview,
 } from './passageTurnRender';
 import { resolvePassageTurns } from './passageTurnResolvers';
-import {
-  buildEventPreviewFromFactory,
-  withoutAppend,
-  wrapResolver,
-} from '../../shared';
+import { defineRollOnlyTable, withoutAppend } from '../../shared';
 
 export const passageTurnTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineRollOnlyTable({
     id: 'passageTurns',
     heading: 'Passage Turns',
-    resolver: wrapResolver(resolvePassageTurns),
-    renderers: {
-      renderDetail: renderPassageTurnsDetail,
-      renderCompact: withoutAppend(renderPassageTurnsCompactNodes),
+    event: 'passageTurns',
+    resolve: resolvePassageTurns,
+    render: {
+      detail: renderPassageTurnsDetail,
+      compact: withoutAppend(renderPassageTurnsCompactNodes),
     },
-    buildPreview: buildPassageTurnPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'passageTurns'
-        ? buildEventPreviewFromFactory(node, buildPassageTurnPreview)
-        : undefined,
-    resolvePending: () => resolvePassageTurns({}),
-  },
+    preview: buildPassageTurnPreview,
+  }),
 ];

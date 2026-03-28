@@ -1,8 +1,8 @@
 import type { DungeonRenderNode } from '../../types/dungeon';
 import type { DungeonOutcomeNode } from '../domain/outcome';
-import { createOutcomeRenderSnapshot } from '../helpers/outcomePipeline';
 import { resolveDoorBeyond } from '../features/navigation/entry/entryResolvers';
 import { buildDoorStartMessages } from '../features/navigation/entry/entryRender';
+import { buildOutcomeMessages } from './renderMessages';
 
 /**
  * Legacy string result (kept for compact mode parity and tests)
@@ -41,23 +41,9 @@ export const doorBeyondMessages = (options?: {
   });
   const usedRoll = node.type === 'event' ? node.roll : undefined;
   const detailMode = options?.detailMode ?? false;
-  const snapshot = createOutcomeRenderSnapshot(node, {
+  return buildOutcomeMessages(node, {
+    usedRoll,
+    detailMode,
     autoResolve: !detailMode,
   });
-  if (!snapshot) {
-    return { usedRoll, messages: [], outcome: undefined };
-  }
-  const messages = detailMode ? snapshot.detail : snapshot.compact;
-  return {
-    usedRoll,
-    messages,
-    outcome: detailMode ? snapshot.normalized : snapshot.compactOutcome,
-    renderCache: {
-      detail: detailMode ? snapshot.detail : snapshot.detailResolved,
-      compact: snapshot.compact,
-    },
-    pendingCount: detailMode
-      ? snapshot.pendingCount
-      : snapshot.resolvedPendingCount,
-  };
 };

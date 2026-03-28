@@ -1,11 +1,4 @@
-import type {
-  DungeonMessage,
-  DungeonRenderNode,
-} from '../../../../types/dungeon';
-import {
-  emphasizeInlineText,
-  extractLeadingItemPhrase,
-} from '../../../helpers/inlineContent';
+import type { DungeonRenderNode } from '../../../../types/dungeon';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { treasureMiscMagicE2, TreasureMiscMagicE2 } from './miscMagicE2Table';
 import {
@@ -20,6 +13,10 @@ import {
   deckSentence,
   eyesSentence,
 } from './miscMagicE2SubtablesRender';
+import {
+  renderTreasureParentCompact,
+  renderTreasureParentDetail,
+} from '../sharedRender';
 
 const ITEM_LABELS: Record<TreasureMiscMagicE2, string> = {
   [TreasureMiscMagicE2.CandleOfInvocation]: 'Candle of Invocation (C)',
@@ -67,32 +64,21 @@ export function renderTreasureMiscMagicE2Detail(
   const crystalChild = findChildEvent(outcome, 'treasureCrystalBall');
   const deckChild = findChildEvent(outcome, 'treasureDeckOfManyThings');
   const eyesChild = findChildEvent(outcome, 'treasureEyesOfPetrification');
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic (Table E.2)',
-  };
-  const bullet: DungeonMessage = {
-    kind: 'bullet-list',
-    items: [`roll: ${outcome.roll} — ${ITEM_LABELS[outcome.event.result]}`],
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        carpetChild,
-        cloakChild,
-        crystalChild,
-        deckChild,
-        eyesChild
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, bullet, paragraph];
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentDetail({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.2)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: ITEM_LABELS[outcome.event.result],
+    text: resolvedSentence(
+      outcome.event.result,
+      carpetChild,
+      cloakChild,
+      crystalChild,
+      deckChild,
+      eyesChild
+    ),
+  });
 }
 
 export function renderTreasureMiscMagicE2Compact(
@@ -105,28 +91,21 @@ export function renderTreasureMiscMagicE2Compact(
   const crystalChild = findChildEvent(outcome, 'treasureCrystalBall');
   const deckChild = findChildEvent(outcome, 'treasureDeckOfManyThings');
   const eyesChild = findChildEvent(outcome, 'treasureEyesOfPetrification');
-  const heading: DungeonMessage = {
-    kind: 'heading',
-    level: 4,
-    text: 'Miscellaneous Magic',
-  };
-  const paragraph: DungeonMessage = {
-    kind: 'paragraph',
-    ...(() => {
-      const text = resolvedSentence(
-        outcome.event.result,
-        carpetChild,
-        cloakChild,
-        crystalChild,
-        deckChild,
-        eyesChild
-      );
-      return emphasizeInlineText(text, extractLeadingItemPhrase(text));
-    })(),
-  };
-  const nodes: DungeonRenderNode[] = [heading, paragraph];
-  appendPendingPreviews(outcome, nodes);
-  return nodes;
+  return renderTreasureParentCompact({
+    outcome,
+    appendPendingPreviews,
+    detailHeading: 'Miscellaneous Magic (Table E.2)',
+    compactHeading: 'Miscellaneous Magic',
+    resultLabel: '',
+    text: resolvedSentence(
+      outcome.event.result,
+      carpetChild,
+      cloakChild,
+      crystalChild,
+      deckChild,
+      eyesChild
+    ),
+  });
 }
 
 export const buildTreasureMiscMagicE2Preview: TablePreviewFactory = (

@@ -1,5 +1,6 @@
 import { toCompactRender } from '../../../../../dungeon/adapters/render';
 import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
+import type { DungeonMessage } from '../../../../../types/dungeon';
 import {
   ExitLocation,
   ExitAlternative,
@@ -92,23 +93,32 @@ function buildDoorExitTree(): OutcomeEventNode {
   };
 }
 
+function collectCompactText(nodes: DungeonMessage[]): string {
+  return nodes
+    .map((node) => {
+      if (node.kind === 'paragraph') {
+        return node.text.trim();
+      }
+      if (node.kind === 'exit-list') {
+        return [node.intro, ...node.items, node.footnote]
+          .filter((text): text is string => !!text && text.trim().length > 0)
+          .join(' ');
+      }
+      return '';
+    })
+    .filter((text) => text.length > 0)
+    .join('\n');
+}
+
 describe('exit location compact rendering', () => {
   test('passage exits include location and direction sentences in compact mode', () => {
     const tree = buildPassageExitTree();
-    const nodes = toCompactRender(tree);
-    const text = nodes
-      .filter(
-        (
-          node
-        ): node is Extract<typeof node, { kind: 'paragraph'; text: string }> =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text)
-      .join('\n');
+    const text = collectCompactText(toCompactRender(tree) as DungeonMessage[]);
 
-    expect(text).toContain('Passage 1:');
+    expect(text).toContain('There is 1 additional passage:');
+    expect(text).toContain('Left wall.');
     expect(text).toContain(
-      'The passage angles 45° to the right (or opposite direction).'
+      'The passage angles 45° to the right (or opposite direction*).'
     );
     expect(text).toContain(
       'If an exit abuts mapped space, use the option shown in parentheses.'
@@ -117,18 +127,10 @@ describe('exit location compact rendering', () => {
 
   test('door exits include location sentence without direction', () => {
     const tree = buildDoorExitTree();
-    const nodes = toCompactRender(tree);
-    const text = nodes
-      .filter(
-        (
-          node
-        ): node is Extract<typeof node, { kind: 'paragraph'; text: string }> =>
-          node.kind === 'paragraph'
-      )
-      .map((node) => node.text)
-      .join('\n');
+    const text = collectCompactText(toCompactRender(tree) as DungeonMessage[]);
 
-    expect(text).toContain('Door 1:');
+    expect(text).toContain('There is 1 additional door:');
+    expect(text).toContain('Same wall (or secret passage*).');
     expect(text).toContain(
       'If an exit abuts mapped space, use the option shown in parentheses.'
     );
