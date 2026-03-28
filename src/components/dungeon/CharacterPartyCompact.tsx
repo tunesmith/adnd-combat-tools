@@ -106,7 +106,7 @@ export const CharacterPartyCompact: FC<CharacterPartyCompactProps> = ({
       {summary.main.length > 0 && (
         <div>
           <p style={{ margin: '0 0 0.25rem', fontWeight: 500 }}>
-            Main characters
+            There is a character party:
           </p>
           <ul style={{ ...listResetStyle, marginLeft: 14 }}>
             {summary.main.map(({ member, followers }, index) => (

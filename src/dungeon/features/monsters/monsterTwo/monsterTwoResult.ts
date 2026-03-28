@@ -28,7 +28,7 @@ const monsterTwoEntries: Partial<Record<MonsterTwo, MonsterTextEntry>> = {
   [MonsterTwo.Gnoll_4to10]: countTextEntry(2, 4, 'gnoll', 'gnolls', 2),
   [MonsterTwo.Piercer_1to4]: countTextEntry(1, 4, 'piercer', 'piercers'),
   [MonsterTwo.RatGiant_6to24]: countTextEntry(6, 4, 'giant rat', 'giant rats'),
-  [MonsterTwo.RotGrub_1to4]: countTextEntry(1, 4, 'rot grubs', 'rot grubs'),
+  [MonsterTwo.RotGrub_1to4]: countTextEntry(1, 4, 'rot grub', 'rot grubs'),
   [MonsterTwo.Shrieker_1to3]: countTextEntry(1, 3, 'shrieker', 'shriekers'),
   [MonsterTwo.Stirge_5to15]: countTextEntry(2, 6, 'stirge', 'stirges', 3),
   [MonsterTwo.ToadGiant_1to4]: countTextEntry(

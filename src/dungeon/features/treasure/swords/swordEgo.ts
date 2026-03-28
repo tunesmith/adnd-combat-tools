@@ -177,6 +177,7 @@ export function computeSwordEgo(node: OutcomeEventNode): number | undefined {
 
   const unusual = findSwordUnusualResult(node);
   if (!unusual) return undefined;
+  if (unusual.category !== 'intelligent') return undefined;
 
   const languageEgo = spokenLanguageEgo(unusual);
   if (languageEgo === undefined) return undefined;

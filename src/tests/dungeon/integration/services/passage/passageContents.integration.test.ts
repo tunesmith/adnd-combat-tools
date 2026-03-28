@@ -116,6 +116,14 @@ describe('passage contents', () => {
 
     feed = resolvePendingPreview(feed, 'chamberRoomContents', 13);
 
+    let compactParagraphs = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase());
+    expect(compactParagraphs.join(' ')).toContain('a monster is present');
+
     pendingTargets = listPendingPreviewTargets(feed);
     pendingBases = pendingTableBases(pendingTargets);
     expect(pendingBases).toContain('monsterLevel');
@@ -145,13 +153,13 @@ describe('passage contents', () => {
     }
 
     const compactNodes = renderCompact(feed);
-    const compactParagraphs = compactNodes
+    compactParagraphs = compactNodes
       .filter(
         (node): node is { kind: 'paragraph'; text: string } =>
           node.kind === 'paragraph'
       )
       .map((node) => node.text.trim().toLowerCase());
-    expect(compactParagraphs.join(' ')).toContain('a monster is present');
+    expect(compactParagraphs.join(' ')).not.toContain('a monster is present');
     expect(compactNodes.some((node) => node.kind === 'character-party')).toBe(
       true
     );
@@ -163,7 +171,9 @@ describe('passage contents', () => {
         'compact'
       );
       expect(partyMessages.length).toBeGreaterThan(0);
-      const detailText = describeChamberRoomContents(contentsEvent);
+      const compactText = describeChamberRoomContents(contentsEvent);
+      expect(compactText).not.toContain('A monster is present.');
+      const detailText = describeChamberRoomContents(contentsEvent, 'detail');
       expect(detailText).toContain('A monster is present.');
     }
   });
@@ -258,6 +268,16 @@ describe('passage contents', () => {
     feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
     feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
 
+    let compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ')
+      .toLowerCase();
+    expect(compactText).toContain('treasure is present.');
+
     const treasurePending = findPendingRoll(feed.outcome, 'treasure');
     expect(treasurePending).toBeDefined();
     expect(treasurePending?.context).toEqual(
@@ -311,7 +331,7 @@ describe('passage contents', () => {
       expect(treasureEvent.event.level).toBe(3);
     }
 
-    const compactText = renderCompact(feed)
+    compactText = renderCompact(feed)
       .filter(
         (node): node is { kind: 'paragraph'; text: string } =>
           node.kind === 'paragraph'
@@ -319,6 +339,7 @@ describe('passage contents', () => {
       .map((node) => node.text.trim())
       .join(' ')
       .toLowerCase();
+    expect(compactText).not.toContain('treasure is present.');
     expect(compactText).toContain('750 gold pieces');
     expect(compactText).toContain('contained in small coffers');
     expect(compactText).toContain(

@@ -310,18 +310,41 @@ function describeChamberRoomContentsInline(
 ): InlineText {
   if (node.event.kind !== 'chamberRoomContents') return { text: '' };
   const segments: Array<string | InlineText> = [];
+  const monsterContent =
+    mode === 'compact' ? readResolvedMonsterCompactContent(node) : undefined;
+  const treasureSummaries =
+    mode === 'compact' ? collectTreasureCompactInlineTexts(node) : [];
+  const hasResolvedTreasureContent = treasureSummaries.some(
+    (summary) => summary.text.length > 0
+  );
   switch (node.event.result) {
     case ChamberRoomContents.Empty:
       segments.push('The area is empty.');
       break;
     case ChamberRoomContents.MonsterOnly:
-      segments.push('A monster is present.');
-      addResolvedMonsterSummary(node, segments, mode);
+      if (mode === 'detail' || !monsterContent?.hasResolvedContent) {
+        segments.push('A monster is present.');
+      }
+      addResolvedMonsterSummary(segments, monsterContent?.summaries ?? []);
       break;
     case ChamberRoomContents.MonsterAndTreasure:
-      segments.push('A monster and treasure are present.');
-      addResolvedMonsterSummary(node, segments, mode);
-      addResolvedTreasureSummary(node, segments, mode);
+      if (mode === 'detail') {
+        segments.push('A monster and treasure are present.');
+      } else if (
+        !monsterContent?.hasResolvedContent &&
+        !hasResolvedTreasureContent
+      ) {
+        segments.push('A monster and treasure are present.');
+      } else {
+        if (!monsterContent?.hasResolvedContent) {
+          segments.push('A monster is present.');
+        }
+        if (!hasResolvedTreasureContent) {
+          segments.push('Treasure is present.');
+        }
+      }
+      addResolvedMonsterSummary(segments, monsterContent?.summaries ?? []);
+      addResolvedTreasureSummary(segments, treasureSummaries);
       break;
     case ChamberRoomContents.Special: {
       const stairs = findChildEvent(node, 'chamberRoomStairs');
@@ -336,8 +359,10 @@ function describeChamberRoomContentsInline(
       addResolvedTrickTrapSummary(node, segments);
       break;
     case ChamberRoomContents.Treasure:
-      segments.push('Treasure is present.');
-      addResolvedTreasureSummary(node, segments, mode);
+      if (mode === 'detail' || !hasResolvedTreasureContent) {
+        segments.push('Treasure is present.');
+      }
+      addResolvedTreasureSummary(segments, treasureSummaries);
       break;
     default:
       break;
@@ -456,21 +481,26 @@ export const buildChamberRoomStairsPreview: TablePreviewFactory = (tableId) =>
   });
 
 function addResolvedMonsterSummary(
-  node: OutcomeEventNode,
   segments: Array<string | InlineText>,
-  mode: 'compact' | 'detail'
+  summaries: InlineText[]
 ): void {
-  if (mode === 'detail') {
-    return;
-  }
-  const partyMessages = collectCharacterPartyMessages(node, 'compact');
-  if (partyMessages.length > 0) {
-    return;
-  }
-  const summaries = collectMonsterSummaries(node);
   for (const summary of summaries) {
     if (summary.text.length > 0) segments.push(summary);
   }
+}
+
+function readResolvedMonsterCompactContent(node: OutcomeEventNode): {
+  hasResolvedContent: boolean;
+  summaries: InlineText[];
+} {
+  const hasPartyMessages =
+    collectCharacterPartyMessages(node, 'compact').length > 0;
+  const summaries = hasPartyMessages ? [] : collectMonsterSummaries(node);
+  return {
+    hasResolvedContent:
+      hasPartyMessages || summaries.some((summary) => summary.text.length > 0),
+    summaries,
+  };
 }
 
 function collectMonsterSummaries(node: OutcomeEventNode): InlineText[] {
@@ -533,14 +563,9 @@ function addResolvedTrickTrapSummary(
 }
 
 function addResolvedTreasureSummary(
-  node: OutcomeEventNode,
   segments: Array<string | InlineText>,
-  mode: 'compact' | 'detail'
+  summaries: InlineText[]
 ): void {
-  if (mode === 'detail') {
-    return;
-  }
-  const summaries = collectTreasureCompactInlineTexts(node);
   for (const summary of summaries) {
     if (summary.text.length > 0) segments.push(summary);
   }

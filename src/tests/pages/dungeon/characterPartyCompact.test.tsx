@@ -156,6 +156,7 @@ describe('character party compact rendering', () => {
     const markup = ReactDOMServer.renderToStaticMarkup(element);
     expect(markup).toContain('<ul');
     expect(markup).toContain('<li');
+    expect(markup).toContain('There is a character party:');
   });
 
   test('table previews render as resolved when they are not pending in the outcome tree', () => {

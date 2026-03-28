@@ -156,7 +156,7 @@ export const CharacterPartyDetail: FC<CharacterPartyDetailProps> = ({
       {summary.main.length > 0 && (
         <div>
           <p style={{ margin: '0 0 0.5rem', fontWeight: 600 }}>
-            Main characters
+            There is a character party:
           </p>
           <ul style={{ ...listResetStyle, marginLeft: 18 }}>
             {summary.main.map(({ member, followers }, index) => (

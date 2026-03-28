@@ -15,7 +15,7 @@ function buildPartyCompactSummary(summary: PartySummary): string {
 
   const parts: string[] = [];
   if (mainDescriptions.length > 0) {
-    parts.push(`Main characters: ${mainDescriptions.join('; ')}`);
+    parts.push(`There is a character party: ${mainDescriptions.join('; ')}`);
   }
   if (summary.includesHenchmen) {
     parts.push('Includes henchmen ready to accompany them.');

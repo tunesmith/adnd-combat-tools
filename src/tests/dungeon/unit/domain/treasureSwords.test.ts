@@ -431,7 +431,7 @@ describe('resolveTreasureSwords', () => {
     expect(compactText).toContain('Luck Blade (4 wishes)');
   });
 
-  it('uses the highest plus for flame tongue ego', () => {
+  it('does not calculate or render ego for non-unusual swords', () => {
     const node = resolveTreasureSwords({
       roll: 46,
       kindRoll: 10,
@@ -442,7 +442,7 @@ describe('resolveTreasureSwords', () => {
       throw new Error('Expected treasureSwords event');
     }
 
-    expect(computeSwordEgo(node)).toBe(5);
+    expect(computeSwordEgo(node)).toBeUndefined();
 
     const compactText = toCompactRender(node)
       .filter(
@@ -451,7 +451,8 @@ describe('resolveTreasureSwords', () => {
       )
       .map((child) => child.text)
       .join(' ');
-    expect(compactText).toContain('undead (E5).');
+    expect(compactText).toContain('undead.');
+    expect(compactText).not.toContain('(E');
   });
 
   it('includes abilities in compact render after resolving pending rolls', () => {
