@@ -16,11 +16,7 @@ import { armorShieldsTables } from './armorShields/manifest';
 import { swordsTables } from './swords/manifest';
 import { miscWeaponsTables } from './miscWeapons/manifest';
 
-const defineTreasureTables = <T extends ReadonlyArray<DungeonTableDefinition>>(
-  defs: T
-): T => defs;
-
-const treasureDefinitions = defineTreasureTables([
+export const TREASURE_TABLE_DEFINITIONS = [
   ...treasureTables,
   ...magicCategoryTables,
   ...potionTables,
@@ -37,6 +33,4 @@ const treasureDefinitions = defineTreasureTables([
   ...miscWeaponsTables,
   ...protectionTables,
   ...containerTables,
-] as ReadonlyArray<DungeonTableDefinition>);
-
-export const TREASURE_TABLE_DEFINITIONS = treasureDefinitions;
+] as ReadonlyArray<DungeonTableDefinition>;

@@ -15,33 +15,28 @@ import { TREASURE_TABLE_DEFINITIONS } from './treasure';
 import { MONSTER_TABLE_DEFINITIONS } from './monsters';
 import { ENVIRONMENT_TABLE_DEFINITIONS } from './environment';
 
-const defineAllTables = <T extends ReadonlyArray<DungeonTableDefinition>>(
-  defs: T
-): T => defs;
-
-const featureDefinitions = defineAllTables([
+const ALL_TABLE_DEFINITIONS = [
   ...NAVIGATION_TABLE_DEFINITIONS,
   ...HAZARD_TABLE_DEFINITIONS,
   ...TREASURE_TABLE_DEFINITIONS,
   ...MONSTER_TABLE_DEFINITIONS,
   ...ENVIRONMENT_TABLE_DEFINITIONS,
-] as ReadonlyArray<DungeonTableDefinition>);
-
-const ALL_TABLE_DEFINITIONS = featureDefinitions;
-export const ALL_RENDER_ADAPTERS = createRenderAdapterMap(featureDefinitions);
+] as ReadonlyArray<DungeonTableDefinition>;
+export const ALL_RENDER_ADAPTERS =
+  createRenderAdapterMap(ALL_TABLE_DEFINITIONS);
 export const ALL_PREVIEW_FACTORIES =
-  createPreviewFactoryMap(featureDefinitions);
+  createPreviewFactoryMap(ALL_TABLE_DEFINITIONS);
 export const ALL_EVENT_PREVIEW_BUILDERS =
-  createEventPreviewMap(featureDefinitions);
+  createEventPreviewMap(ALL_TABLE_DEFINITIONS);
 export const ALL_REGISTRY_OUTCOMES =
-  createRegistryOutcomeMap(featureDefinitions);
+  createRegistryOutcomeMap(ALL_TABLE_DEFINITIONS);
 export const ALL_PENDING_RESOLVERS =
-  createPendingResolverMap(featureDefinitions);
+  createPendingResolverMap(ALL_TABLE_DEFINITIONS);
 export const ALL_CHILD_POST_PROCESSORS =
-  createChildPostProcessorMap(featureDefinitions);
+  createChildPostProcessorMap(ALL_TABLE_DEFINITIONS);
 
 const ALL_OUTCOME_POST_PROCESSORS =
-  createOutcomePostProcessorList(featureDefinitions);
+  createOutcomePostProcessorList(ALL_TABLE_DEFINITIONS);
 
 export function postProcessOutcomeTree(
   outcome: DungeonOutcomeNode

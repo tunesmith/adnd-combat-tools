@@ -3,14 +3,8 @@ import { gasTrapTables } from './gasTrap/manifest';
 import { trickTrapTables } from './trickTrap/manifest';
 import { illusionaryWallTables } from './illusionaryWall/manifest';
 
-const defineHazardTables = <T extends ReadonlyArray<DungeonTableDefinition>>(
-  defs: T
-): T => defs;
-
-const hazardDefinitions = defineHazardTables([
+export const HAZARD_TABLE_DEFINITIONS = [
   ...gasTrapTables,
   ...trickTrapTables,
   ...illusionaryWallTables,
-]);
-
-export const HAZARD_TABLE_DEFINITIONS = hazardDefinitions;
+] as ReadonlyArray<DungeonTableDefinition>;

@@ -12,11 +12,7 @@ import { monsterTenTables } from './monsterTen/manifest';
 import { monsterThreeTables } from './monsterThree/manifest';
 import { monsterTwoTables } from './monsterTwo/manifest';
 
-const defineMonsterTables = <T extends ReadonlyArray<DungeonTableDefinition>>(
-  defs: T
-): T => defs;
-
-const monsterDefinitions = defineMonsterTables([
+export const MONSTER_TABLE_DEFINITIONS = [
   ...monsterLevelTables,
   ...monsterOneTables,
   ...humanTables,
@@ -29,6 +25,4 @@ const monsterDefinitions = defineMonsterTables([
   ...monsterEightTables,
   ...monsterNineTables,
   ...monsterTenTables,
-] as ReadonlyArray<DungeonTableDefinition>);
-
-export const MONSTER_TABLE_DEFINITIONS = monsterDefinitions;
+] as ReadonlyArray<DungeonTableDefinition>;

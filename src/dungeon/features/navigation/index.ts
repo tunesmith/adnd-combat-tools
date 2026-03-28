@@ -8,13 +8,7 @@ import { exitTables } from './exit/manifest';
 import { chasmTables } from './chasm/manifest';
 import { doorChainTables } from './doorChain/manifest';
 
-const defineNavigationTables = <
-  T extends ReadonlyArray<DungeonTableDefinition>
->(
-  defs: T
-): T => defs;
-
-const navigationDefinitions = defineNavigationTables([
+export const NAVIGATION_TABLE_DEFINITIONS = [
   ...entryTables,
   ...doorChainTables,
   ...sidePassageTables,
@@ -23,6 +17,4 @@ const navigationDefinitions = defineNavigationTables([
   ...specialPassageTables,
   ...exitTables,
   ...chasmTables,
-]);
-
-export const NAVIGATION_TABLE_DEFINITIONS = navigationDefinitions;
+] as ReadonlyArray<DungeonTableDefinition>;
