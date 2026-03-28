@@ -2,18 +2,19 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import type { InlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   buildPreview,
-  joinSegments,
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
+import { joinSentenceInlineTexts } from '../../../helpers/inlineContent';
 import {
   collectCharacterPartyMessages,
   describeMonsterOutcome,
 } from '../../monsters/render';
-import { collectTreasureCompactSummaries } from '../../treasure/treasure/treasureRender';
+import { collectTreasureCompactInlineTexts } from '../../treasure/treasure/treasureRender';
 import {
   circularContents,
   CircularContents,
@@ -239,14 +240,18 @@ export function formatCircularContents(result: CircularContents): string {
 }
 
 export function describeCircularPool(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'circularPool') return '';
-  const { result } = node.event;
-  if (result === Pool.NoPool) return '';
+  return describeCircularPoolInline(node).text;
+}
 
-  const segments: string[] = ['There is a pool.'];
+function describeCircularPoolInline(node: OutcomeEventNode): InlineText {
+  if (node.event.kind !== 'circularPool') return { text: '' };
+  const { result } = node.event;
+  if (result === Pool.NoPool) return { text: '' };
+
+  const segments: Array<string | InlineText> = ['There is a pool.'];
 
   if (result === Pool.PoolNoMonster) {
-    return joinSegments(segments);
+    return joinSentenceInlineTexts(segments);
   }
 
   if (result === Pool.PoolMonster || result === Pool.PoolMonsterTreasure) {
@@ -258,18 +263,18 @@ export function describeCircularPool(node: OutcomeEventNode): string {
     }
     if (result === Pool.PoolMonsterTreasure) {
       segments.push('Treasure is present.');
-      const treasureSummaries = collectTreasureCompactSummaries(node);
+      const treasureSummaries = collectTreasureCompactInlineTexts(node);
       if (treasureSummaries.length > 0) {
         segments.push(...treasureSummaries);
       }
     }
-    return joinSegments(segments);
+    return joinSentenceInlineTexts(segments);
   }
 
   segments.push(
     'It is a magical pool. (In order to find out what it is, characters must enter the magic pool.)'
   );
-  return joinSegments(segments);
+  return joinSentenceInlineTexts(segments);
 }
 
 export function formatCircularMagicPool(result: MagicPool): string {
@@ -365,9 +370,9 @@ function buildCircularPoolNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${Pool[outcome.event.result]}`],
   };
-  const text = describeCircularPool(outcome);
+  const text = describeCircularPoolInline(outcome);
   const nodes: DungeonRenderNode[] = [heading, bullet];
-  if (text.length > 0) nodes.push({ kind: 'paragraph', text });
+  if (text.text.length > 0) nodes.push({ kind: 'paragraph', ...text });
   return nodes;
 }
 

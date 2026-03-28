@@ -634,12 +634,6 @@ function describeResolvedMagic(
   return undefined;
 }
 
-export function collectTreasureCompactSummaries(
-  node: OutcomeEventNode
-): string[] {
-  return collectTreasureCompactInlineTexts(node).map((summary) => summary.text);
-}
-
 export function collectTreasureCompactInlineTexts(
   node: OutcomeEventNode
 ): InlineText[] {

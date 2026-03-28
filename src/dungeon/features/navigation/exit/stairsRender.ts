@@ -2,7 +2,9 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
+import type { InlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
+import { joinSentenceInlineTexts } from '../../../helpers/inlineContent';
 import {
   stairs,
   Egress,
@@ -24,10 +26,12 @@ import {
 
 type StairsDeps = {
   renderChamberSummary?: (node: OutcomeEventNode) => string;
+  renderChamberSummaryInline?: (node: OutcomeEventNode) => InlineText;
 };
 
 const DEFAULT_DEPS: Required<StairsDeps> = {
   renderChamberSummary: () => '',
+  renderChamberSummaryInline: () => ({ text: '' }),
 };
 
 export function renderStairsDetail(
@@ -56,13 +60,16 @@ export function renderStairsDetail(
   return nodes;
 }
 
-export function renderStairsCompact(
+export function renderStairsCompactInline(
   node: OutcomeEventNode,
   deps?: StairsDeps
-): string {
-  if (node.event.kind !== 'stairs') return '';
+): InlineText {
+  if (node.event.kind !== 'stairs') return { text: '' };
   const summary = describeStairs(node, withDefaults(deps));
-  return summary.compactText;
+  return {
+    text: summary.compactText,
+    inline: summary.compactInline.inline,
+  };
 }
 
 export function renderStairsCompactNodes(
@@ -80,8 +87,8 @@ export function renderStairsCompactNodes(
     kind: 'bullet-list',
     items: [`roll: ${outcome.roll} — ${label}`],
   };
-  const text = renderStairsCompact(outcome, deps);
-  return [heading, bullet, { kind: 'paragraph', text }];
+  const text = renderStairsCompactInline(outcome, deps);
+  return [heading, bullet, { kind: 'paragraph', ...text }];
 }
 
 function describeStairs(
@@ -90,13 +97,19 @@ function describeStairs(
 ): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
+  compactInline: InlineText;
 } {
   if (node.event.kind !== 'stairs') {
-    return { detailParagraphs: [], compactText: '' };
+    return {
+      detailParagraphs: [],
+      compactText: '',
+      compactInline: { text: '' },
+    };
   }
   const resolved = withDefaults(deps);
   const detailParagraphs: DungeonMessage[] = [];
-  const compactSegments: string[] = [];
+  const compactTextSegments: string[] = [];
+  const compactInlineSegments: Array<string | InlineText> = [];
   const append = (
     raw: string,
     options?: { detail?: boolean; compact?: boolean }
@@ -111,7 +124,9 @@ function describeStairs(
       detailParagraphs.push({ kind: 'paragraph', text: detailText });
     }
     if (includeCompact) {
-      compactSegments.push(endsWithPunctuation ? trimmed : `${trimmed}.`);
+      const sentence = endsWithPunctuation ? trimmed : `${trimmed}.`;
+      compactTextSegments.push(sentence);
+      compactInlineSegments.push(sentence);
     }
   };
 
@@ -142,16 +157,18 @@ function describeStairs(
   if (node.event.result === Stairs.UpOneDownTwo) {
     const chamber = findChildEvent(node, 'chamberDimensions');
     if (chamber) {
-      const chamberSummary = resolved.renderChamberSummary(chamber).trim();
-      if (chamberSummary.length > 0) {
-        append(chamberSummary, { detail: false });
+      const chamberSummary = resolved.renderChamberSummaryInline(chamber);
+      if (chamberSummary.text.trim().length > 0) {
+        compactTextSegments.push(chamberSummary.text.trim());
+        compactInlineSegments.push(chamberSummary);
       }
     }
   }
 
   return {
     detailParagraphs,
-    compactText: joinCompactSegments(compactSegments),
+    compactText: joinCompactSegments(compactTextSegments),
+    compactInline: joinSentenceInlineTexts(compactInlineSegments),
   };
 }
 
@@ -160,6 +177,9 @@ function withDefaults(deps?: StairsDeps): Required<StairsDeps> {
   return {
     renderChamberSummary:
       deps.renderChamberSummary ?? DEFAULT_DEPS.renderChamberSummary,
+    renderChamberSummaryInline:
+      deps.renderChamberSummaryInline ??
+      DEFAULT_DEPS.renderChamberSummaryInline,
   };
 }
 

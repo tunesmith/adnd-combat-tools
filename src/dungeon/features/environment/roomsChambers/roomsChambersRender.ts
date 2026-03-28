@@ -58,10 +58,6 @@ export function renderRoomDimensionsDetail(
   return nodes;
 }
 
-export function renderRoomDimensionsCompact(node: OutcomeEventNode): string {
-  return renderRoomDimensionsCompactInline(node).text;
-}
-
 export function renderRoomDimensionsCompactInline(
   node: OutcomeEventNode
 ): InlineText {
@@ -294,7 +290,7 @@ export function describeChamberRoomContents(
   return describeChamberRoomContentsInline(node, mode).text;
 }
 
-export function describeChamberRoomContentsInline(
+function describeChamberRoomContentsInline(
   node: OutcomeEventNode,
   mode: 'compact' | 'detail' = 'compact'
 ): InlineText {
@@ -447,7 +443,7 @@ export const buildChamberRoomStairsPreview: TablePreviewFactory = (tableId) =>
 
 function addResolvedMonsterSummary(
   node: OutcomeEventNode,
-  segments: string[],
+  segments: Array<string | InlineText>,
   mode: 'compact' | 'detail'
 ): void {
   if (mode === 'detail') {

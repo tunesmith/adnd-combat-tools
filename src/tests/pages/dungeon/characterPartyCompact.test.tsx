@@ -1,11 +1,26 @@
 import ReactDOMServer from 'react-dom/server';
 import { renderNode } from '../../../pages/dungeon';
-import { renderPeriodicCheckCompact } from '../../../dungeon/features/navigation/entry/entryRender';
+import {
+  renderDoorBeyondCompact,
+  renderPeriodicCheckCompact,
+} from '../../../dungeon/features/navigation/entry/entryRender';
+import {
+  DoorBeyond,
+  PeriodicCheck,
+} from '../../../dungeon/features/navigation/entry/entryTable';
+import {
+  ChamberDimensions,
+  ChamberRoomContents,
+} from '../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
 import { renderTreasurePotionCompact } from '../../../dungeon/features/treasure/potion/potionRender';
 import { renderTreasureCompactNodes } from '../../../dungeon/features/treasure/treasure/treasureRender';
-import { PeriodicCheck } from '../../../dungeon/features/navigation/entry/entryTable';
 import { TreasureWithoutMonster } from '../../../dungeon/features/treasure/treasure/treasureTable';
 import { TreasureMagicCategory } from '../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
+import { TreasureMiscMagicE3 } from '../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Table';
+import {
+  TreasureFigurineMarbleElephant,
+  TreasureFigurineOfWondrousPower,
+} from '../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
 import { TreasurePotion } from '../../../dungeon/features/treasure/potion/potionTables';
 import { MonsterLevel } from '../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
 import { MonsterTwo } from '../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
@@ -278,5 +293,108 @@ describe('character party compact rendering', () => {
 
     expect(markup).toContain('messageStrong');
     expect(markup).toContain('potion of gaseous form');
+  });
+
+  test('door-to-chamber compact summaries preserve inline emphasis from treasure detail', () => {
+    const marbleNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 70,
+      event: {
+        kind: 'treasureFigurineMarbleElephant',
+        result: TreasureFigurineMarbleElephant.African,
+      },
+    };
+
+    const figurineNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 45,
+      event: {
+        kind: 'treasureFigurineOfWondrousPower',
+        result: TreasureFigurineOfWondrousPower.MarbleElephant,
+      },
+      children: [marbleNode],
+    };
+
+    const miscMagicNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 8,
+      event: {
+        kind: 'treasureMiscMagicE3',
+        result: TreasureMiscMagicE3.FigurineOfWondrousPower,
+      },
+      children: [figurineNode],
+    };
+
+    const magicCategoryNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 52,
+      event: {
+        kind: 'treasureMagicCategory',
+        result: TreasureMagicCategory.MiscMagicE3,
+        level: 1,
+        treasureRoll: 52,
+      },
+      children: [miscMagicNode],
+    };
+
+    const treasureNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 98,
+      event: {
+        kind: 'treasure',
+        level: 1,
+        withMonster: false,
+        entries: [{ roll: 98, command: TreasureWithoutMonster.Magic }],
+      },
+      children: [magicCategoryNode],
+    };
+
+    const contentsNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 20,
+      event: {
+        kind: 'chamberRoomContents',
+        result: ChamberRoomContents.Treasure,
+      },
+      children: [treasureNode],
+    };
+
+    const chamberNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 1,
+      event: {
+        kind: 'chamberDimensions',
+        result: ChamberDimensions.Square20x20,
+      },
+      children: [contentsNode],
+    };
+
+    const doorNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 19,
+      event: {
+        kind: 'doorBeyond',
+        result: DoorBeyond.Chamber,
+      },
+      children: [chamberNode],
+    };
+
+    const nodes = renderDoorBeyondCompact(doorNode);
+    const paragraph = nodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'paragraph' }> =>
+        node.kind === 'paragraph' &&
+        node.text.includes('Figurine of Wondrous Power')
+    );
+
+    if (!paragraph) {
+      throw new Error('door-to-chamber treasure paragraph not found');
+    }
+
+    const element = renderNode(paragraph, 0, 'door-chamber-inline-test');
+    const markup = ReactDOMServer.renderToStaticMarkup(element);
+
+    expect(markup).toContain('messageStrong');
+    expect(markup).toContain('Figurine of Wondrous Power');
+    expect(markup).toContain('African Loxodont');
   });
 });

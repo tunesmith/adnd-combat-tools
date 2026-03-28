@@ -1,10 +1,10 @@
 import type {
-  DungeonInlineContent,
   DungeonMessage,
   DungeonRenderNode,
   DungeonTablePreview,
   TableContext,
 } from '../../../../types/dungeon';
+import type { InlineText } from '../../../helpers/inlineContent';
 import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
 import {
   DoorBeyond,
@@ -24,9 +24,9 @@ import {
   describeChamberDimensionsInline,
   renderChamberDimensionsCompact,
   renderRoomDimensionsCompactInline,
-  renderRoomDimensionsCompact,
 } from '../../environment/roomsChambers/roomsChambersRender';
-import { renderStairsCompact } from '../exit/stairsRender';
+import { renderStairsCompactInline } from '../exit/stairsRender';
+import { joinSentenceInlineTexts } from '../../../helpers/inlineContent';
 import {
   describeMonsterOutcome,
   collectCharacterPartyMessages,
@@ -286,7 +286,7 @@ export function buildDoorStartMessages(): DungeonRenderNode[] {
 
 type PeriodicSummary = {
   text: string;
-  inline?: DungeonInlineContent;
+  inline?: InlineText['inline'];
   nodes?: DungeonRenderNode[];
 };
 
@@ -306,6 +306,7 @@ const MONSTER_LEVEL_KIND: Partial<Record<MonsterLevel, OutcomeEvent['kind']>> =
 
 type MonsterEncounterSummary = {
   text: string;
+  inline?: InlineText['inline'];
   nodes?: DungeonRenderNode[];
 };
 
@@ -475,17 +476,18 @@ function summarizePeriodicResult(
         ? collectTreasureCompactMessages(chamber)
         : [];
       const extraNodes = [...partyMessages, ...treasureMessages];
+      const combined = joinSentenceInlineTexts([base.compact, detail]);
       return {
-        text: `${base.compact}${detail.text}`.trimEnd() + ' ',
-        inline: detail.inline,
+        ...combined,
         nodes: extraNodes.length > 0 ? extraNodes : undefined,
       };
     }
     case PeriodicCheck.Stairs: {
       const stairs = findChildEvent(node, 'stairs');
       if (!stairs) return { text: base.compact };
-      const text = renderStairsCompact(stairs, {
+      const summary = renderStairsCompactInline(stairs, {
         renderChamberSummary: describeChamberDimensions,
+        renderChamberSummaryInline: describeChamberDimensionsInline,
       });
       // If stairs descend into a chamber, include any party/treasure compact messages
       // associated with that chamber so monster/treasure details are not lost.
@@ -498,7 +500,7 @@ function summarizePeriodicResult(
         : [];
       const extraNodes = [...partyMessages, ...treasureMessages];
       return {
-        text,
+        ...summary,
         nodes: extraNodes.length > 0 ? extraNodes : undefined,
       };
     }
@@ -569,13 +571,16 @@ function summarizePeriodicResult(
           ? monsterLevelNode
           : undefined
       );
-      const monsterText = formatWanderingMonsterText(encounter.text);
       const combinedNodes = [
         ...(prefixSummary.nodes ?? []),
         ...(encounter.nodes ?? []),
       ];
+      const combined = joinSentenceInlineTexts([
+        prefixSummary,
+        formatWanderingMonsterText(encounter.text),
+      ]);
       return {
-        text: `${prefixSummary.text}${monsterText}`,
+        ...combined,
         nodes: combinedNodes.length > 0 ? combinedNodes : undefined,
       };
     }
@@ -640,9 +645,11 @@ function buildDoorBeyondNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   }
   if (outcome.event.result === DoorBeyond.Room) {
     const room = findChildEvent(outcome, 'roomDimensions');
-    const detail = room ? renderRoomDimensionsCompact(room) : '';
-    if (detail.length > 0) {
-      paragraphs.push({ kind: 'paragraph', text: detail });
+    const detail = room
+      ? renderRoomDimensionsCompactInline(room)
+      : { text: '' };
+    if (detail.text.length > 0) {
+      paragraphs.push({ kind: 'paragraph', ...detail });
     }
     if (room) {
       const extra = [
@@ -656,9 +663,11 @@ function buildDoorBeyondNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   }
   if (outcome.event.result === DoorBeyond.Chamber) {
     const chamber = findChildEvent(outcome, 'chamberDimensions');
-    const detail = chamber ? describeChamberDimensions(chamber) : '';
-    if (detail.length > 0) {
-      paragraphs.push({ kind: 'paragraph', text: detail });
+    const detail = chamber
+      ? describeChamberDimensionsInline(chamber)
+      : { text: '' };
+    if (detail.text.length > 0) {
+      paragraphs.push({ kind: 'paragraph', ...detail });
     }
     if (chamber) {
       const extra = [
