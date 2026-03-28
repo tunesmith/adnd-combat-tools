@@ -12,13 +12,15 @@ import {
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
 import {
-  describeCircularPool,
+  describeCircularPoolInline,
   describeTransporterLocation,
   formatCircularContents,
   formatCircularMagicPool,
   formatPoolAlignment,
   formatTransmuteType,
 } from '../circularPools/circularPoolsRender';
+import type { InlineText } from '../../../helpers/inlineContent';
+import { joinSentenceInlineTexts } from '../../../helpers/inlineContent';
 import {
   unusualShape,
   UnusualShape,
@@ -75,24 +77,27 @@ export function renderUnusualShapeCompact(
   return nodes;
 }
 
-export function renderCompactUnusualDetails(node: OutcomeEventNode): string {
-  let text = '';
+export function renderCompactUnusualDetails(node: OutcomeEventNode): InlineText {
+  const segments: Array<string | InlineText> = [];
   const shape = findChildEvent(node, 'unusualShape');
   if (shape && shape.event.kind === 'unusualShape') {
-    text += formatUnusualShape(shape.event.result);
+    const shapeText = formatUnusualShape(shape.event.result).trim();
+    if (shapeText.length > 0) {
+      segments.push(shapeText);
+    }
     const extras = describeUnusualShapeExtras(shape);
-    if (extras.length > 0) {
-      text += extras;
+    if (extras.text.length > 0) {
+      segments.push(extras);
     }
   }
   const size = findChildEvent(node, 'unusualSize');
   if (size && size.event.kind === 'unusualSize') {
     const summary = describeUnusualSizeChain(size);
     if (summary.compactText.length > 0) {
-      text += `${summary.compactText} `;
+      segments.push(summary.compactText);
     }
   }
-  return text;
+  return joinSentenceInlineTexts(segments);
 }
 
 export function renderUnusualSizeDetail(
@@ -200,17 +205,10 @@ export const buildUnusualSizePreview: TablePreviewFactory = (
     context,
   });
 
-function describeUnusualShapeExtras(node: OutcomeEventNode): string {
-  if (node.event.kind !== 'unusualShape') return '';
+function describeUnusualShapeExtras(node: OutcomeEventNode): InlineText {
+  if (node.event.kind !== 'unusualShape') return { text: '' };
   const sentences = collectCircularChainSentences(node);
-  if (sentences.length === 0) return '';
-  return sentences
-    .map((sentence) =>
-      sentence.endsWith('.') || sentence.endsWith('!') || sentence.endsWith('?')
-        ? `${sentence} `
-        : `${sentence}. `
-    )
-    .join('');
+  return joinSentenceInlineTexts(sentences);
 }
 
 const CIRCULAR_CHAIN_KINDS = new Set<OutcomeEvent['kind']>([
@@ -222,8 +220,10 @@ const CIRCULAR_CHAIN_KINDS = new Set<OutcomeEvent['kind']>([
   'transporterLocation',
 ]);
 
-function collectCircularChainSentences(node: OutcomeEventNode): string[] {
-  const sentences: string[] = [];
+function collectCircularChainSentences(
+  node: OutcomeEventNode
+): Array<string | InlineText> {
+  const sentences: Array<string | InlineText> = [];
   const visited = new Set<string>();
   const queue: OutcomeEventNode[] = (node.children || []).filter(
     (child): child is OutcomeEventNode =>
@@ -236,7 +236,13 @@ function collectCircularChainSentences(node: OutcomeEventNode): string[] {
     if (visited.has(key)) continue;
     visited.add(key);
     const sentence = circularSentenceForEvent(current);
-    if (sentence && sentence.length > 0) {
+    if (typeof sentence === 'string' && sentence.length > 0) {
+      sentences.push(sentence);
+    } else if (
+      sentence &&
+      typeof sentence !== 'string' &&
+      sentence.text.length > 0
+    ) {
       sentences.push(sentence);
     }
     for (const child of current.children || []) {
@@ -251,12 +257,12 @@ function collectCircularChainSentences(node: OutcomeEventNode): string[] {
 
 function circularSentenceForEvent(
   eventNode: OutcomeEventNode
-): string | undefined {
+): string | InlineText | undefined {
   switch (eventNode.event.kind) {
     case 'circularContents':
       return formatCircularContents(eventNode.event.result).trim();
     case 'circularPool':
-      return describeCircularPool(eventNode).trim();
+      return describeCircularPoolInline(eventNode);
     case 'circularMagicPool':
       return formatCircularMagicPool(eventNode.event.result).trim();
     case 'transmuteType':

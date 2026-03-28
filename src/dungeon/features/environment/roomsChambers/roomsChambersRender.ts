@@ -69,8 +69,8 @@ export function renderRoomDimensionsCompactInline(
   const base = formatRoomDimensions(node.event.result).trim();
   if (base.length > 0) segments.push(base);
   if (node.event.result === RoomDimensions.Unusual) {
-    const unusual = renderCompactUnusualDetails(node).trim();
-    if (unusual.length > 0) segments.push(unusual);
+    const unusual = renderCompactUnusualDetails(node);
+    if (unusual.text.trim().length > 0) segments.push(unusual);
   }
   const contents = findChildEvent(node, 'chamberRoomContents');
   if (contents && contents.event.kind === 'chamberRoomContents') {
@@ -219,8 +219,8 @@ export function describeChamberDimensionsInline(
   const base = formatChamberDimensions(node.event.result).trim();
   if (base.length > 0) segments.push(base);
   if (node.event.result === ChamberDimensions.Unusual) {
-    const unusual = renderCompactUnusualDetails(node).trim();
-    if (unusual.length > 0) segments.push(unusual);
+    const unusual = renderCompactUnusualDetails(node);
+    if (unusual.text.trim().length > 0) segments.push(unusual);
   }
   const contents = findChildEvent(node, 'chamberRoomContents');
   if (contents && contents.event.kind === 'chamberRoomContents') {

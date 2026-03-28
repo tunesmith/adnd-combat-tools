@@ -239,11 +239,7 @@ export function formatCircularContents(result: CircularContents): string {
   }
 }
 
-export function describeCircularPool(node: OutcomeEventNode): string {
-  return describeCircularPoolInline(node).text;
-}
-
-function describeCircularPoolInline(node: OutcomeEventNode): InlineText {
+export function describeCircularPoolInline(node: OutcomeEventNode): InlineText {
   if (node.event.kind !== 'circularPool') return { text: '' };
   const { result } = node.event;
   if (result === Pool.NoPool) return { text: '' };
