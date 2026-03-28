@@ -8,6 +8,7 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
+import { buildPreview } from '../adapters/render/shared';
 import type {
   AppendPreviewFn,
   TablePreviewFactory,
@@ -120,7 +121,15 @@ export function createPreviewFactoryMap(
     } else if (def.table) {
       const table = def.table;
       map[def.id] = (tableId, context) =>
-        buildPreviewFromTable(tableId, def.heading, table, context);
+        buildPreview(tableId, {
+          title: def.heading,
+          sides: table.sides,
+          entries: table.entries.map((entry) => ({
+            range: entry.range,
+            label: String(entry.command),
+          })),
+          context,
+        });
     }
   }
   return map;
@@ -195,29 +204,4 @@ export function createOutcomePostProcessorList(
     }
   }
   return processors;
-}
-
-function buildPreviewFromTable(
-  tableId: string,
-  heading: string,
-  table: Table<unknown>,
-  context?: TableContext
-): DungeonTablePreview {
-  return {
-    kind: 'table-preview',
-    id: tableId,
-    title: heading,
-    sides: table.sides,
-    entries: table.entries.map((entry) => ({
-      range: formatRange(entry.range),
-      label: String(entry.command),
-    })),
-    context,
-  };
-}
-
-function formatRange(range: number[]): string {
-  return range.length === 1
-    ? `${range[0]}`
-    : `${range[0]}–${range[range.length - 1]}`;
 }
