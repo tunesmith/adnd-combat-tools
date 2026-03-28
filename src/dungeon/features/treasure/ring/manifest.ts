@@ -1,8 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
+  defineTreasureFollowupTable,
+  defineTreasureMagicTable,
 } from '../shared';
 import {
   buildTreasureRingContrarinessPreview,
@@ -40,141 +39,96 @@ import {
   resolveTreasureRingThreeWishes,
   resolveTreasureRingWizardry,
 } from './ringResolvers';
+import { ringFollowups } from './ringTables';
 
 export const ringTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureMagicTable({
     id: 'treasureRing',
     heading: 'Ring',
-    resolver: wrapResolver(resolveTreasureRing),
-    ...createTreasureMagicContextHandlers(resolveTreasureRing),
-    renderers: {
-      renderDetail: renderTreasureRingDetail,
-      renderCompact: renderTreasureRingCompact,
+    event: 'treasureRing',
+    resolve: resolveTreasureRing,
+    render: {
+      detail: renderTreasureRingDetail,
+      compact: renderTreasureRingCompact,
     },
-    buildPreview: buildTreasureRingPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureRing',
-      buildTreasureRingPreview
-    ),
-  },
-  {
+    preview: buildTreasureRingPreview,
+    followups: ringFollowups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureRingContrariness',
     heading: 'Contrariness Effect',
-    resolver: wrapResolver(resolveTreasureRingContrariness),
-    renderers: {
-      renderDetail: renderTreasureRingContrarinessDetail,
-      renderCompact: renderTreasureRingContrarinessCompact,
+    event: 'treasureRingContrariness',
+    resolve: resolveTreasureRingContrariness,
+    render: {
+      detail: renderTreasureRingContrarinessDetail,
+      compact: renderTreasureRingContrarinessCompact,
     },
-    buildPreview: buildTreasureRingContrarinessPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRingContrariness'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureRingContrarinessPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureRingContrariness({}),
-  },
-  {
+    preview: buildTreasureRingContrarinessPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureRingElementalCommand',
     heading: 'Elemental Focus',
-    resolver: wrapResolver(resolveTreasureRingElementalCommand),
-    renderers: {
-      renderDetail: renderTreasureRingElementalCommandDetail,
-      renderCompact: renderTreasureRingElementalCommandCompact,
+    event: 'treasureRingElementalCommand',
+    resolve: resolveTreasureRingElementalCommand,
+    render: {
+      detail: renderTreasureRingElementalCommandDetail,
+      compact: renderTreasureRingElementalCommandCompact,
     },
-    buildPreview: buildTreasureRingElementalCommandPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRingElementalCommand'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureRingElementalCommandPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureRingElementalCommand({}),
-  },
-  {
+    preview: buildTreasureRingElementalCommandPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureRingProtection',
     heading: 'Protection Bonus',
-    resolver: wrapResolver(resolveTreasureRingProtection),
-    renderers: {
-      renderDetail: renderTreasureRingProtectionDetail,
-      renderCompact: renderTreasureRingProtectionCompact,
+    event: 'treasureRingProtection',
+    resolve: resolveTreasureRingProtection,
+    render: {
+      detail: renderTreasureRingProtectionDetail,
+      compact: renderTreasureRingProtectionCompact,
     },
-    buildPreview: buildTreasureRingProtectionPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRingProtection'
-        ? buildEventPreviewFromFactory(node, buildTreasureRingProtectionPreview)
-        : undefined,
-    resolvePending: () => resolveTreasureRingProtection({}),
-  },
-  {
+    preview: buildTreasureRingProtectionPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureRingRegeneration',
     heading: 'Regeneration Type',
-    resolver: wrapResolver(resolveTreasureRingRegeneration),
-    renderers: {
-      renderDetail: renderTreasureRingRegenerationDetail,
-      renderCompact: renderTreasureRingRegenerationCompact,
+    event: 'treasureRingRegeneration',
+    resolve: resolveTreasureRingRegeneration,
+    render: {
+      detail: renderTreasureRingRegenerationDetail,
+      compact: renderTreasureRingRegenerationCompact,
     },
-    buildPreview: buildTreasureRingRegenerationPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRingRegeneration'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureRingRegenerationPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureRingRegeneration({}),
-  },
-  {
+    preview: buildTreasureRingRegenerationPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureRingTelekinesis',
     heading: 'Telekinetic Capacity',
-    resolver: wrapResolver(resolveTreasureRingTelekinesis),
-    renderers: {
-      renderDetail: renderTreasureRingTelekinesisDetail,
-      renderCompact: renderTreasureRingTelekinesisCompact,
+    event: 'treasureRingTelekinesis',
+    resolve: resolveTreasureRingTelekinesis,
+    render: {
+      detail: renderTreasureRingTelekinesisDetail,
+      compact: renderTreasureRingTelekinesisCompact,
     },
-    buildPreview: buildTreasureRingTelekinesisPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRingTelekinesis'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureRingTelekinesisPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureRingTelekinesis({}),
-  },
-  {
+    preview: buildTreasureRingTelekinesisPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureRingThreeWishes',
     heading: 'Wish Capacity',
-    resolver: wrapResolver(resolveTreasureRingThreeWishes),
-    renderers: {
-      renderDetail: renderTreasureRingThreeWishesDetail,
-      renderCompact: renderTreasureRingThreeWishesCompact,
+    event: 'treasureRingThreeWishes',
+    resolve: resolveTreasureRingThreeWishes,
+    render: {
+      detail: renderTreasureRingThreeWishesDetail,
+      compact: renderTreasureRingThreeWishesCompact,
     },
-    buildPreview: buildTreasureRingThreeWishesPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRingThreeWishes'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureRingThreeWishesPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureRingThreeWishes({}),
-  },
-  {
+    preview: buildTreasureRingThreeWishesPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureRingWizardry',
     heading: 'Spell Doubling',
-    resolver: wrapResolver(resolveTreasureRingWizardry),
-    renderers: {
-      renderDetail: renderTreasureRingWizardryDetail,
-      renderCompact: renderTreasureRingWizardryCompact,
+    event: 'treasureRingWizardry',
+    resolve: resolveTreasureRingWizardry,
+    render: {
+      detail: renderTreasureRingWizardryDetail,
+      compact: renderTreasureRingWizardryCompact,
     },
-    buildPreview: buildTreasureRingWizardryPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRingWizardry'
-        ? buildEventPreviewFromFactory(node, buildTreasureRingWizardryPreview)
-        : undefined,
-    resolvePending: () => resolveTreasureRingWizardry({}),
-  },
+    preview: buildTreasureRingWizardryPreview,
+  }),
 ];

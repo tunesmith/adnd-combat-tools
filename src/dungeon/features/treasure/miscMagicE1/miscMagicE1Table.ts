@@ -95,3 +95,26 @@ export const treasureMiscMagicE1: Table<TreasureMiscMagicE1> = {
     { range: [99, 100], command: TreasureMiscMagicE1.BucknardsEverfullPurse },
   ],
 };
+
+export const miscMagicE1Followups = [
+  {
+    result: TreasureMiscMagicE1.ArtifactOrRelic,
+    table: 'treasureArtifactOrRelic',
+  },
+  {
+    result: TreasureMiscMagicE1.BagOfHolding,
+    table: 'treasureBagOfHolding',
+  },
+  {
+    result: TreasureMiscMagicE1.BagOfTricks,
+    table: 'treasureBagOfTricks',
+  },
+  {
+    result: TreasureMiscMagicE1.BracersOfDefense,
+    table: 'treasureBracersOfDefense',
+  },
+  {
+    result: TreasureMiscMagicE1.BucknardsEverfullPurse,
+    table: 'treasureBucknardsEverfullPurse',
+  },
+] as const;

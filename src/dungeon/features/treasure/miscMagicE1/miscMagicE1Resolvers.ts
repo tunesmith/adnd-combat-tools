@@ -5,7 +5,11 @@ import type {
   TreasureBeakerOfPlentifulPotionsDetails,
   TreasureBeakerPotionDetails,
 } from '../../../domain/outcome';
-import { treasureMiscMagicE1, TreasureMiscMagicE1 } from './miscMagicE1Table';
+import {
+  miscMagicE1Followups,
+  treasureMiscMagicE1,
+  TreasureMiscMagicE1,
+} from './miscMagicE1Table';
 import { buildTreasureEvent } from '../shared';
 import {
   treasurePotion,
@@ -50,44 +54,15 @@ export function resolveTreasureMiscMagicE1(options?: {
     options
   );
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureMiscMagicE1.BagOfHolding) {
+  const followup = miscMagicE1Followups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasureBagOfHolding',
+      table: followup.table,
       id: options?.rollIndex
-        ? `treasureBagOfHolding:${options.rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE1.BagOfTricks) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureBagOfTricks',
-      id: options?.rollIndex
-        ? `treasureBagOfTricks:${options.rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE1.BracersOfDefense) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureBracersOfDefense',
-      id: options?.rollIndex
-        ? `treasureBracersOfDefense:${options.rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE1.BucknardsEverfullPurse) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureBucknardsEverfullPurse',
-      id: options?.rollIndex
-        ? `treasureBucknardsEverfullPurse:${options.rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE1.ArtifactOrRelic) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureArtifactOrRelic',
-      id: options?.rollIndex
-        ? `treasureArtifactOrRelic:${options.rollIndex}`
+        ? `${followup.table}:${options.rollIndex}`
         : undefined,
     });
   }

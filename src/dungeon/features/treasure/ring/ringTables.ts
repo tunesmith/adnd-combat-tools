@@ -57,6 +57,19 @@ export const treasureRings: Table<TreasureRing> = {
   ],
 };
 
+export const ringFollowups = [
+  { result: TreasureRing.Contrariness, table: 'treasureRingContrariness' },
+  {
+    result: TreasureRing.ElementalCommand,
+    table: 'treasureRingElementalCommand',
+  },
+  { result: TreasureRing.Protection, table: 'treasureRingProtection' },
+  { result: TreasureRing.Regeneration, table: 'treasureRingRegeneration' },
+  { result: TreasureRing.Telekinesis, table: 'treasureRingTelekinesis' },
+  { result: TreasureRing.ThreeWishes, table: 'treasureRingThreeWishes' },
+  { result: TreasureRing.Wizardry, table: 'treasureRingWizardry' },
+] as const;
+
 export enum TreasureRingContrariness {
   Flying,
   Invisibility,

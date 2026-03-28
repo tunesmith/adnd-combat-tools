@@ -1,8 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
+  defineTreasureFollowupTable,
+  defineTreasureMagicTable,
 } from '../shared';
 import {
   buildTreasureMiscMagicE1Preview,
@@ -34,105 +33,74 @@ import {
   resolveTreasureBucknardsEverfullPurse,
   resolveTreasureMiscMagicE1,
 } from './miscMagicE1Resolvers';
+import { miscMagicE1Followups } from './miscMagicE1Table';
 
 export const miscMagicE1Tables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureMagicTable({
     id: 'treasureMiscMagicE1',
     heading: 'Miscellaneous Magic (Table E.1)',
-    resolver: wrapResolver(resolveTreasureMiscMagicE1),
-    ...createTreasureMagicContextHandlers(resolveTreasureMiscMagicE1),
-    renderers: {
-      renderDetail: renderTreasureMiscMagicE1Detail,
-      renderCompact: renderTreasureMiscMagicE1Compact,
+    event: 'treasureMiscMagicE1',
+    resolve: resolveTreasureMiscMagicE1,
+    render: {
+      detail: renderTreasureMiscMagicE1Detail,
+      compact: renderTreasureMiscMagicE1Compact,
     },
-    buildPreview: buildTreasureMiscMagicE1Preview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureMiscMagicE1',
-      buildTreasureMiscMagicE1Preview
-    ),
-  },
-  {
+    preview: buildTreasureMiscMagicE1Preview,
+    followups: miscMagicE1Followups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureBagOfHolding',
     heading: 'Bag of Holding Capacity',
-    resolver: wrapResolver(resolveTreasureBagOfHolding),
-    resolvePending: () => resolveTreasureBagOfHolding({}),
-    renderers: {
-      renderDetail: renderTreasureBagOfHoldingDetail,
-      renderCompact: renderTreasureBagOfHoldingCompact,
+    event: 'treasureBagOfHolding',
+    resolve: resolveTreasureBagOfHolding,
+    render: {
+      detail: renderTreasureBagOfHoldingDetail,
+      compact: renderTreasureBagOfHoldingCompact,
     },
-    buildPreview: buildTreasureBagOfHoldingPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureBagOfHolding'
-        ? buildEventPreviewFromFactory(node, buildTreasureBagOfHoldingPreview)
-        : undefined,
-  },
-  {
+    preview: buildTreasureBagOfHoldingPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureBagOfTricks',
     heading: 'Bag of Tricks Type',
-    resolver: wrapResolver(resolveTreasureBagOfTricks),
-    resolvePending: () => resolveTreasureBagOfTricks({}),
-    renderers: {
-      renderDetail: renderTreasureBagOfTricksDetail,
-      renderCompact: renderTreasureBagOfTricksCompact,
+    event: 'treasureBagOfTricks',
+    resolve: resolveTreasureBagOfTricks,
+    render: {
+      detail: renderTreasureBagOfTricksDetail,
+      compact: renderTreasureBagOfTricksCompact,
     },
-    buildPreview: buildTreasureBagOfTricksPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureBagOfTricks'
-        ? buildEventPreviewFromFactory(node, buildTreasureBagOfTricksPreview)
-        : undefined,
-  },
-  {
+    preview: buildTreasureBagOfTricksPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureBracersOfDefense',
     heading: 'Bracers of Defense Armor Class',
-    resolver: wrapResolver(resolveTreasureBracersOfDefense),
-    resolvePending: () => resolveTreasureBracersOfDefense({}),
-    renderers: {
-      renderDetail: renderTreasureBracersOfDefenseDetail,
-      renderCompact: renderTreasureBracersOfDefenseCompact,
+    event: 'treasureBracersOfDefense',
+    resolve: resolveTreasureBracersOfDefense,
+    render: {
+      detail: renderTreasureBracersOfDefenseDetail,
+      compact: renderTreasureBracersOfDefenseCompact,
     },
-    buildPreview: buildTreasureBracersOfDefensePreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureBracersOfDefense'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureBracersOfDefensePreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasureBracersOfDefensePreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureBucknardsEverfullPurse',
     heading: "Bucknard's Everfull Purse Contents",
-    resolver: wrapResolver(resolveTreasureBucknardsEverfullPurse),
-    resolvePending: () => resolveTreasureBucknardsEverfullPurse({}),
-    renderers: {
-      renderDetail: renderTreasureBucknardsEverfullPurseDetail,
-      renderCompact: renderTreasureBucknardsEverfullPurseCompact,
+    event: 'treasureBucknardsEverfullPurse',
+    resolve: resolveTreasureBucknardsEverfullPurse,
+    render: {
+      detail: renderTreasureBucknardsEverfullPurseDetail,
+      compact: renderTreasureBucknardsEverfullPurseCompact,
     },
-    buildPreview: buildTreasureBucknardsEverfullPursePreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureBucknardsEverfullPurse'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureBucknardsEverfullPursePreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasureBucknardsEverfullPursePreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureArtifactOrRelic',
     heading: 'Artifact or Relic',
-    resolver: wrapResolver(resolveTreasureArtifactOrRelic),
-    resolvePending: () => resolveTreasureArtifactOrRelic({}),
-    renderers: {
-      renderDetail: renderTreasureArtifactOrRelicDetail,
-      renderCompact: renderTreasureArtifactOrRelicCompact,
+    event: 'treasureArtifactOrRelic',
+    resolve: resolveTreasureArtifactOrRelic,
+    render: {
+      detail: renderTreasureArtifactOrRelicDetail,
+      compact: renderTreasureArtifactOrRelicCompact,
     },
-    buildPreview: buildTreasureArtifactOrRelicPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureArtifactOrRelic'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureArtifactOrRelicPreview
-          )
-        : undefined,
-  },
+    preview: buildTreasureArtifactOrRelicPreview,
+  }),
 ];

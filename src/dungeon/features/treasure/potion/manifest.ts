@@ -1,8 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
-} from '../shared';
+import { defineTreasureMagicTable } from '../shared';
 import {
   buildTreasurePotionAnimalControlPreview,
   buildTreasurePotionDragonControlPreview,
@@ -35,120 +32,112 @@ import {
   resolveTreasurePotionHumanControl,
   resolveTreasurePotionUndeadControl,
 } from './potionResolvers';
+import { TreasurePotion } from './potionTables';
 
-type PotionResolverOptions = {
-  roll?: number;
-  level?: number;
-  treasureRoll?: number;
-  rollIndex?: number;
-};
-
-export const potionTables: ReadonlyArray<
-  DungeonTableDefinition<PotionResolverOptions>
-> = [
+const potionFollowups = [
   {
+    result: TreasurePotion.AnimalControl,
+    table: 'treasurePotionAnimalControl',
+  },
+  {
+    result: TreasurePotion.DragonControl,
+    table: 'treasurePotionDragonControl',
+  },
+  {
+    result: TreasurePotion.GiantControl,
+    table: 'treasurePotionGiantControl',
+  },
+  {
+    result: TreasurePotion.GiantStrength,
+    table: 'treasurePotionGiantStrength',
+  },
+  {
+    result: TreasurePotion.HumanControl,
+    table: 'treasurePotionHumanControl',
+  },
+  {
+    result: TreasurePotion.UndeadControl,
+    table: 'treasurePotionUndeadControl',
+  },
+] as const;
+
+export const potionTables: ReadonlyArray<DungeonTableDefinition> = [
+  defineTreasureMagicTable({
     id: 'treasurePotion',
     heading: 'Potion',
-    resolver: resolveTreasurePotion,
-    ...createTreasureMagicContextHandlers(resolveTreasurePotion),
-    renderers: {
-      renderDetail: renderTreasurePotionDetail,
-      renderCompact: renderTreasurePotionCompact,
+    event: 'treasurePotion',
+    resolve: resolveTreasurePotion,
+    render: {
+      detail: renderTreasurePotionDetail,
+      compact: renderTreasurePotionCompact,
     },
-    buildPreview: buildTreasurePotionPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasurePotion',
-      buildTreasurePotionPreview
-    ),
-  },
-  {
+    preview: buildTreasurePotionPreview,
+    followups: potionFollowups,
+  }),
+  defineTreasureMagicTable({
     id: 'treasurePotionAnimalControl',
     heading: 'Animal Control Target',
-    resolver: resolveTreasurePotionAnimalControl,
-    ...createTreasureMagicContextHandlers(resolveTreasurePotionAnimalControl),
-    renderers: {
-      renderDetail: renderTreasurePotionAnimalControlDetail,
-      renderCompact: renderTreasurePotionAnimalControlCompact,
+    event: 'treasurePotionAnimalControl',
+    resolve: resolveTreasurePotionAnimalControl,
+    render: {
+      detail: renderTreasurePotionAnimalControlDetail,
+      compact: renderTreasurePotionAnimalControlCompact,
     },
-    buildPreview: buildTreasurePotionAnimalControlPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasurePotionAnimalControl',
-      buildTreasurePotionAnimalControlPreview
-    ),
-  },
-  {
+    preview: buildTreasurePotionAnimalControlPreview,
+  }),
+  defineTreasureMagicTable({
     id: 'treasurePotionDragonControl',
     heading: 'Dragon Control Target',
-    resolver: resolveTreasurePotionDragonControl,
-    ...createTreasureMagicContextHandlers(resolveTreasurePotionDragonControl),
-    renderers: {
-      renderDetail: renderTreasurePotionDragonControlDetail,
-      renderCompact: renderTreasurePotionDragonControlCompact,
+    event: 'treasurePotionDragonControl',
+    resolve: resolveTreasurePotionDragonControl,
+    render: {
+      detail: renderTreasurePotionDragonControlDetail,
+      compact: renderTreasurePotionDragonControlCompact,
     },
-    buildPreview: buildTreasurePotionDragonControlPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasurePotionDragonControl',
-      buildTreasurePotionDragonControlPreview
-    ),
-  },
-  {
+    preview: buildTreasurePotionDragonControlPreview,
+  }),
+  defineTreasureMagicTable({
     id: 'treasurePotionGiantControl',
     heading: 'Giant Control Target',
-    resolver: resolveTreasurePotionGiantControl,
-    ...createTreasureMagicContextHandlers(resolveTreasurePotionGiantControl),
-    renderers: {
-      renderDetail: renderTreasurePotionGiantControlDetail,
-      renderCompact: renderTreasurePotionGiantControlCompact,
+    event: 'treasurePotionGiantControl',
+    resolve: resolveTreasurePotionGiantControl,
+    render: {
+      detail: renderTreasurePotionGiantControlDetail,
+      compact: renderTreasurePotionGiantControlCompact,
     },
-    buildPreview: buildTreasurePotionGiantControlPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasurePotionGiantControl',
-      buildTreasurePotionGiantControlPreview
-    ),
-  },
-  {
+    preview: buildTreasurePotionGiantControlPreview,
+  }),
+  defineTreasureMagicTable({
     id: 'treasurePotionGiantStrength',
     heading: 'Giant Strength Target',
-    resolver: resolveTreasurePotionGiantStrength,
-    ...createTreasureMagicContextHandlers(resolveTreasurePotionGiantStrength),
-    renderers: {
-      renderDetail: renderTreasurePotionGiantStrengthDetail,
-      renderCompact: renderTreasurePotionGiantStrengthCompact,
+    event: 'treasurePotionGiantStrength',
+    resolve: resolveTreasurePotionGiantStrength,
+    render: {
+      detail: renderTreasurePotionGiantStrengthDetail,
+      compact: renderTreasurePotionGiantStrengthCompact,
     },
-    buildPreview: buildTreasurePotionGiantStrengthPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasurePotionGiantStrength',
-      buildTreasurePotionGiantStrengthPreview
-    ),
-  },
-  {
+    preview: buildTreasurePotionGiantStrengthPreview,
+  }),
+  defineTreasureMagicTable({
     id: 'treasurePotionHumanControl',
     heading: 'Human Control Target',
-    resolver: resolveTreasurePotionHumanControl,
-    ...createTreasureMagicContextHandlers(resolveTreasurePotionHumanControl),
-    renderers: {
-      renderDetail: renderTreasurePotionHumanControlDetail,
-      renderCompact: renderTreasurePotionHumanControlCompact,
+    event: 'treasurePotionHumanControl',
+    resolve: resolveTreasurePotionHumanControl,
+    render: {
+      detail: renderTreasurePotionHumanControlDetail,
+      compact: renderTreasurePotionHumanControlCompact,
     },
-    buildPreview: buildTreasurePotionHumanControlPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasurePotionHumanControl',
-      buildTreasurePotionHumanControlPreview
-    ),
-  },
-  {
+    preview: buildTreasurePotionHumanControlPreview,
+  }),
+  defineTreasureMagicTable({
     id: 'treasurePotionUndeadControl',
     heading: 'Undead Control Target',
-    resolver: resolveTreasurePotionUndeadControl,
-    ...createTreasureMagicContextHandlers(resolveTreasurePotionUndeadControl),
-    renderers: {
-      renderDetail: renderTreasurePotionUndeadControlDetail,
-      renderCompact: renderTreasurePotionUndeadControlCompact,
+    event: 'treasurePotionUndeadControl',
+    resolve: resolveTreasurePotionUndeadControl,
+    render: {
+      detail: renderTreasurePotionUndeadControlDetail,
+      compact: renderTreasurePotionUndeadControlCompact,
     },
-    buildPreview: buildTreasurePotionUndeadControlPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasurePotionUndeadControl',
-      buildTreasurePotionUndeadControlPreview
-    ),
-  },
+    preview: buildTreasurePotionUndeadControlPreview,
+  }),
 ];

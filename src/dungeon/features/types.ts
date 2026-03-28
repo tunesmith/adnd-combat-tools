@@ -70,6 +70,11 @@ export type RegistryOutcomeBuilder = (opts: {
   };
 }) => DungeonOutcomeNode;
 
+export type DungeonTableFollowup<TResult = unknown> = {
+  result: TResult;
+  table: string;
+};
+
 type DungeonTableDefinitionBase = {
   id: string;
   heading: string;
@@ -78,6 +83,7 @@ type DungeonTableDefinitionBase = {
   buildPreview?: TablePreviewFactory;
   buildEventPreview?: EventPreviewBuilder;
   resolvePending?: PendingResolver;
+  followups?: ReadonlyArray<DungeonTableFollowup>;
   table?: Table<unknown>;
   postProcessChildren?: PostProcessChildren;
   postProcessOutcome?: OutcomePostProcessor;

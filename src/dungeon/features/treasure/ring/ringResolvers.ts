@@ -1,6 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import {
+  ringFollowups,
   treasureRings,
   TreasureRing,
   treasureRingContrariness,
@@ -58,48 +59,23 @@ export function resolveTreasureRing(options?: {
       }
     | undefined;
   let multipleWishesCount: number | undefined;
-  if (command === TreasureRing.Contrariness) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRingContrariness',
-    });
-  } else if (command === TreasureRing.ElementalCommand) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRingElementalCommand',
-    });
-  } else if (command === TreasureRing.Protection) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRingProtection',
-    });
-  } else if (command === TreasureRing.SpellStoring) {
+  if (command === TreasureRing.SpellStoring) {
     const spellCount = rollDice(4) + 1;
     const caster = rollCasterType();
     const spellLevels = rollSpellStoringLevels(spellCount, caster);
     spellStoring = { caster, spellLevels };
   } else if (command === TreasureRing.MultipleWishes) {
     multipleWishesCount = rollDice(4, 2);
-  } else if (command === TreasureRing.Regeneration) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRingRegeneration',
-    });
-  } else if (command === TreasureRing.Telekinesis) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRingTelekinesis',
-    });
-  } else if (command === TreasureRing.ThreeWishes) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRingThreeWishes',
-    });
-  } else if (command === TreasureRing.Wizardry) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRingWizardry',
-    });
+  } else {
+    const followup = ringFollowups.find(
+      (candidate) => candidate.result === command
+    );
+    if (followup) {
+      children.push({
+        type: 'pending-roll',
+        table: followup.table,
+      });
+    }
   }
   return {
     type: 'event',

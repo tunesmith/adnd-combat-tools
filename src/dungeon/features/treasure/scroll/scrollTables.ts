@@ -59,6 +59,17 @@ export const treasureScrolls: Table<TreasureScroll> = {
   ],
 };
 
+export const scrollFollowups = [
+  {
+    result: TreasureScroll.ProtectionElementals,
+    table: 'treasureScrollProtectionElementals',
+  },
+  {
+    result: TreasureScroll.ProtectionLycanthropes,
+    table: 'treasureScrollProtectionLycanthropes',
+  },
+] as const;
+
 export enum TreasureScrollProtectionElementals {
   Air,
   Earth,

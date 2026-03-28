@@ -1,8 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
+  defineTreasureFollowupTable,
+  defineTreasureMagicTable,
 } from '../shared';
 import {
   buildTreasureScrollPreview,
@@ -20,57 +19,41 @@ import {
   resolveTreasureScrollProtectionElementals,
   resolveTreasureScrollProtectionLycanthropes,
 } from './scrollResolvers';
+import { scrollFollowups } from './scrollTables';
 
 export const scrollTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureMagicTable({
     id: 'treasureScroll',
     heading: 'Scroll',
-    resolver: wrapResolver(resolveTreasureScroll),
-    ...createTreasureMagicContextHandlers(resolveTreasureScroll),
-    renderers: {
-      renderDetail: renderTreasureScrollDetail,
-      renderCompact: renderTreasureScrollCompact,
+    event: 'treasureScroll',
+    resolve: resolveTreasureScroll,
+    render: {
+      detail: renderTreasureScrollDetail,
+      compact: renderTreasureScrollCompact,
     },
-    buildPreview: buildTreasureScrollPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureScroll',
-      buildTreasureScrollPreview
-    ),
-  },
-  {
+    preview: buildTreasureScrollPreview,
+    followups: scrollFollowups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureScrollProtectionElementals',
     heading: 'Protection from Elementals',
-    resolver: wrapResolver(resolveTreasureScrollProtectionElementals),
-    renderers: {
-      renderDetail: renderTreasureScrollProtectionElementalsDetail,
-      renderCompact: renderTreasureScrollProtectionElementalsCompact,
+    event: 'treasureScrollProtectionElementals',
+    resolve: resolveTreasureScrollProtectionElementals,
+    render: {
+      detail: renderTreasureScrollProtectionElementalsDetail,
+      compact: renderTreasureScrollProtectionElementalsCompact,
     },
-    buildPreview: buildTreasureScrollProtectionElementalsPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureScrollProtectionElementals'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureScrollProtectionElementalsPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureScrollProtectionElementals({}),
-  },
-  {
+    preview: buildTreasureScrollProtectionElementalsPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureScrollProtectionLycanthropes',
     heading: 'Protection from Lycanthropes',
-    resolver: wrapResolver(resolveTreasureScrollProtectionLycanthropes),
-    renderers: {
-      renderDetail: renderTreasureScrollProtectionLycanthropesDetail,
-      renderCompact: renderTreasureScrollProtectionLycanthropesCompact,
+    event: 'treasureScrollProtectionLycanthropes',
+    resolve: resolveTreasureScrollProtectionLycanthropes,
+    render: {
+      detail: renderTreasureScrollProtectionLycanthropesDetail,
+      compact: renderTreasureScrollProtectionLycanthropesCompact,
     },
-    buildPreview: buildTreasureScrollProtectionLycanthropesPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureScrollProtectionLycanthropes'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureScrollProtectionLycanthropesPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureScrollProtectionLycanthropes({}),
-  },
+    preview: buildTreasureScrollProtectionLycanthropesPreview,
+  }),
 ];

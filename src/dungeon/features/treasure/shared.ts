@@ -5,7 +5,15 @@ import type {
 } from '../../domain/outcome';
 import type { TableContext } from '../../../types/dungeon';
 import type { TablePreviewFactory } from '../../adapters/render/shared';
-import type { PendingResolver, RegistryOutcomeBuilder } from '../types';
+import type {
+  CompactRenderer,
+  DetailRenderer,
+  DungeonTableDefinition,
+  DungeonTableFollowup,
+  ManualRollResolver,
+  PendingResolver,
+  RegistryOutcomeBuilder,
+} from '../types';
 import { buildEventPreviewFromFactory } from '../shared';
 import { readTableContextOfKind } from '../../helpers/tableContext';
 
@@ -33,6 +41,10 @@ type TreasureMagicContext = {
 type TreasureMagicResolverOptions = TreasureMagicContext & {
   roll?: number;
 };
+
+type TreasureMagicResolver = (
+  options?: TreasureMagicResolverOptions
+) => DungeonOutcomeNode;
 
 export type TreasureEvent<
   K extends OutcomeEventWithResultKind = OutcomeEventWithResultKind
@@ -70,7 +82,7 @@ export function buildTreasureEvent<K extends OutcomeEventWithResultKind>(
 }
 
 export function createTreasureMagicContextHandlers(
-  resolver: (options?: TreasureMagicResolverOptions) => DungeonOutcomeNode
+  resolver: TreasureMagicResolver
 ): {
   manualResolution: 'contextual';
   resolvePending: PendingResolver;
@@ -138,6 +150,65 @@ export function createTreasureProtectionEventPreviewBuilder(
           },
         })
       : undefined;
+}
+
+type TreasureRenderConfig = {
+  detail: DetailRenderer;
+  compact: CompactRenderer;
+};
+
+export function defineTreasureMagicTable<TResult = unknown>(options: {
+  id: string;
+  heading: string;
+  event: TreasureEventKind;
+  resolve: TreasureMagicResolver;
+  render: TreasureRenderConfig;
+  preview: TablePreviewFactory;
+  followups?: ReadonlyArray<DungeonTableFollowup<TResult>>;
+}): DungeonTableDefinition<TreasureMagicResolverOptions> {
+  return {
+    id: options.id,
+    heading: options.heading,
+    resolver: options.resolve,
+    ...createTreasureMagicContextHandlers(options.resolve),
+    renderers: {
+      renderDetail: options.render.detail,
+      renderCompact: options.render.compact,
+    },
+    buildPreview: options.preview,
+    buildEventPreview: createTreasureMagicEventPreviewBuilder(
+      options.event,
+      options.preview
+    ),
+    followups: options.followups,
+  };
+}
+
+export function defineTreasureFollowupTable<TResult = unknown>(options: {
+  id: string;
+  heading: string;
+  event: TreasureEventKind;
+  resolve: ManualRollResolver;
+  render: TreasureRenderConfig;
+  preview: TablePreviewFactory;
+  followups?: ReadonlyArray<DungeonTableFollowup<TResult>>;
+}): DungeonTableDefinition {
+  return {
+    id: options.id,
+    heading: options.heading,
+    resolver: options.resolve,
+    renderers: {
+      renderDetail: options.render.detail,
+      renderCompact: options.render.compact,
+    },
+    buildPreview: options.preview,
+    buildEventPreview: (node) =>
+      node.event.kind === options.event
+        ? buildEventPreviewFromFactory(node, options.preview)
+        : undefined,
+    resolvePending: () => options.resolve({}),
+    followups: options.followups,
+  };
 }
 
 function readTreasureMagicRegistryContext(

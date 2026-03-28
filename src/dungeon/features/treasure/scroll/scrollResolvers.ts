@@ -1,6 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import {
+  scrollFollowups,
   treasureScrolls,
   TreasureScroll,
   treasureScrollProtectionElementals,
@@ -176,21 +177,13 @@ export function resolveTreasureScroll(options?: {
       type: 'protection',
       protection: command,
     };
-    if (command === TreasureScroll.ProtectionElementals) {
+    const followup = scrollFollowups.find(
+      (candidate) => candidate.result === command
+    );
+    if (followup) {
       children.push({
         type: 'pending-roll',
-        table: 'treasureScrollProtectionElementals',
-        context: {
-          kind: 'treasureMagic',
-          level: event.level,
-          treasureRoll: usedRoll,
-          rollIndex: event.rollIndex,
-        },
-      });
-    } else if (command === TreasureScroll.ProtectionLycanthropes) {
-      children.push({
-        type: 'pending-roll',
-        table: 'treasureScrollProtectionLycanthropes',
+        table: followup.table,
         context: {
           kind: 'treasureMagic',
           level: event.level,
