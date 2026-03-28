@@ -31,6 +31,7 @@ import { TreasurePotion } from '../../../dungeon/features/treasure/potion/potion
 import { MonsterLevel } from '../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
 import { MonsterOne } from '../../../dungeon/features/monsters/monsterOne/monsterOneTables';
 import { MonsterTwo } from '../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
+import { Human } from '../../../dungeon/features/monsters/human/humanTable';
 import { CharacterClass } from '../../../dungeon/models/characterClass';
 import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
 import { Alignment } from '../../../dungeon/models/allowedAlignmentsByClass';
@@ -146,11 +147,14 @@ describe('character party compact rendering', () => {
     };
 
     const nodes = renderPeriodicCheckCompact(periodicNode);
-    const paragraph = nodes.find((n) => n.kind === 'paragraph');
-    expect(paragraph).toBeDefined();
-    expect(
-      paragraph && paragraph.kind === 'paragraph' ? paragraph.text : ''
-    ).not.toContain('followers:');
+    const paragraphText = nodes
+      .filter(
+        (node): node is Extract<DungeonRenderNode, { kind: 'paragraph' }> =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text)
+      .join(' ');
+    expect(paragraphText).not.toContain('followers:');
 
     const partyMessage = nodes.find(
       (n): n is Extract<DungeonRenderNode, { kind: 'character-party' }> =>
@@ -165,6 +169,69 @@ describe('character party compact rendering', () => {
     expect(markup).toContain('<ul');
     expect(markup).toContain('<li');
     expect(markup).toContain('There is a character party:');
+  });
+
+  test('wandering monster compact summaries omit the empty wrapper sentence for character parties', () => {
+    const party = createPartyResult();
+
+    const humanNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 77,
+      event: {
+        kind: 'human',
+        result: Human.Character,
+        party,
+        dungeonLevel: 1,
+      },
+    };
+
+    const monsterOneNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 34,
+      event: {
+        kind: 'monsterOne',
+        result: MonsterOne.Human,
+        dungeonLevel: 1,
+        party,
+      },
+      children: [humanNode],
+    };
+
+    const monsterLevelNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 1,
+      event: {
+        kind: 'monsterLevel',
+        result: MonsterLevel.One,
+        dungeonLevel: 1,
+      },
+      children: [monsterOneNode],
+    };
+
+    const periodicNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 20,
+      event: {
+        kind: 'periodicCheck',
+        result: PeriodicCheck.WanderingMonster,
+        level: 1,
+        avoidMonster: false,
+      },
+      children: [monsterLevelNode],
+    };
+
+    const nodes = renderPeriodicCheckCompact(periodicNode);
+    const paragraph = nodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'paragraph' }> =>
+        node.kind === 'paragraph'
+    );
+    const partyMessage = nodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'character-party' }> =>
+        node.kind === 'character-party' && node.display === 'compact'
+    );
+
+    expect(paragraph).toBeUndefined();
+    expect(partyMessage).toBeDefined();
   });
 
   test('table previews render as resolved when they are not pending in the outcome tree', () => {

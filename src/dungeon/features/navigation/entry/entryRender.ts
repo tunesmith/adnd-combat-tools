@@ -147,11 +147,14 @@ export function renderPeriodicCheckCompact(
     avoidMonster: outcome.event.avoidMonster,
     mode: 'compact',
   });
-  const nodes: DungeonRenderNode[] = [
-    heading,
-    bullet,
-    { kind: 'paragraph', text: summary.text, inline: summary.inline },
-  ];
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (summary.text.trim().length > 0) {
+    nodes.push({
+      kind: 'paragraph',
+      text: summary.text,
+      inline: summary.inline,
+    });
+  }
   if (summary.nodes) {
     nodes.push(...summary.nodes);
   }
@@ -322,6 +325,9 @@ function formatWanderingMonsterText(encounterText: string): string {
 function formatWanderingMonsterSummary(
   encounter: MonsterEncounterSummary
 ): InlineText {
+  if (encounter.text.trim().length === 0 && encounter.nodes?.length) {
+    return { text: '' };
+  }
   const text = formatWanderingMonsterText(encounter.text);
   if (!encounter.inline) {
     return { text };
