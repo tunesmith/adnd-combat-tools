@@ -125,6 +125,7 @@ describe('uiPreviewHarness', () => {
       { ...preview, targetId: `${preview.targetId}.missing` },
       feed.id,
       3,
+      initialFeedState,
       (updater) => {
         state = applyUpdater(
           state,
@@ -146,8 +147,7 @@ describe('uiPreviewHarness', () => {
             | Record<string, boolean>
             | ((prev: Record<string, boolean>) => Record<string, boolean>)
         );
-      },
-      initialFeedState
+      }
     );
 
     expect(result).toBe(false);

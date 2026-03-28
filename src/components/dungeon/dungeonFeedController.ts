@@ -94,10 +94,10 @@ export function resolveDungeonFeedPreview(options: {
     options.preview,
     options.feedItemId,
     usedRoll,
+    options.feedItem,
     options.setFeed,
     options.setCollapsed,
     options.setResolved,
-    options.feedItem,
     options.session
   );
   if (

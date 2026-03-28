@@ -393,10 +393,10 @@ export function resolveViaRegistry<T extends FeedLike>(
   tp: TargetedDungeonTablePreview,
   feedItemId: string,
   usedRoll: number | undefined,
+  currentFeedItem: T,
   setFeed?: React.Dispatch<React.SetStateAction<T[]>>,
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
-  currentFeedItem: T,
   session?: DungeonRandomSession
 ): boolean {
   const base = String(tp.id.split(':')[0] ?? '');

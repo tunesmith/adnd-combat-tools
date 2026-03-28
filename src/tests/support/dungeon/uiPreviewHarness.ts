@@ -81,6 +81,13 @@ export function resolvePreview(
     preview,
     feed.id,
     roll,
+    {
+      id: feed.id,
+      messages: feed.messages,
+      outcome: feed.outcome,
+      renderCache: feed.renderCache,
+      pendingCount: feed.pendingCount,
+    },
     (updater) => {
       const base = [
         {
@@ -106,18 +113,11 @@ export function resolvePreview(
         messages: next.messages,
         renderCache,
         pendingCount: next.pendingCount ?? countPendingNodes(next.outcome),
-      };
+        };
       return updated;
     },
     undefined,
-    undefined,
-    {
-      id: feed.id,
-      messages: feed.messages,
-      outcome: feed.outcome,
-      renderCache: feed.renderCache,
-      pendingCount: feed.pendingCount,
-    }
+    undefined
   );
   return nextFeed;
 }
