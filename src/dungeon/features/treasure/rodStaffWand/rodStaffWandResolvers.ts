@@ -1,8 +1,8 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import {
+  rodStaffWandFollowups,
   treasureRodsStavesWands,
-  TreasureRodStaffWand,
   treasureStaffSerpent,
 } from './rodStaffWandTables';
 
@@ -12,10 +12,13 @@ export function resolveTreasureRodStaffWand(options?: {
   const usedRoll = options?.roll ?? rollDice(treasureRodsStavesWands.sides);
   const command = getTableEntry(usedRoll, treasureRodsStavesWands);
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureRodStaffWand.StaffSerpent) {
+  const followup = rodStaffWandFollowups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasureStaffSerpent',
+      table: followup.table,
     });
   }
   return {

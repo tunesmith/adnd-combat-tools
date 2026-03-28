@@ -1,8 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
+  defineTreasureFollowupTable,
+  defineTreasureMagicTable,
 } from '../shared';
 import {
   buildTreasureMiscMagicE5Preview,
@@ -29,77 +28,56 @@ import {
   resolveTreasureScarabOfProtectionCurse,
   resolveTreasureScarabOfProtectionCurseResolution,
 } from './miscMagicE5Resolvers';
+import { scarabOfProtectionCurseFollowups } from './miscMagicE5Subtables';
+import { miscMagicE5Followups } from './miscMagicE5Table';
 
 export const miscMagicE5Tables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureMagicTable({
     id: 'treasureMiscMagicE5',
     heading: 'Miscellaneous Magic (Table E.5)',
-    resolver: wrapResolver(resolveTreasureMiscMagicE5),
-    ...createTreasureMagicContextHandlers(resolveTreasureMiscMagicE5),
-    renderers: {
-      renderDetail: renderTreasureMiscMagicE5Detail,
-      renderCompact: renderTreasureMiscMagicE5Compact,
+    event: 'treasureMiscMagicE5',
+    resolve: resolveTreasureMiscMagicE5,
+    render: {
+      detail: renderTreasureMiscMagicE5Detail,
+      compact: renderTreasureMiscMagicE5Compact,
     },
-    buildPreview: buildTreasureMiscMagicE5Preview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureMiscMagicE5',
-      buildTreasureMiscMagicE5Preview
-    ),
-  },
-  {
+    preview: buildTreasureMiscMagicE5Preview,
+    followups: miscMagicE5Followups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureRobeOfTheArchmagi',
     heading: 'Robe of the Archmagi Alignment',
-    resolver: wrapResolver(resolveTreasureRobeOfTheArchmagi),
-    resolvePending: () => resolveTreasureRobeOfTheArchmagi({}),
-    renderers: {
-      renderDetail: renderTreasureRobeOfTheArchmagiDetail,
-      renderCompact: renderTreasureRobeOfTheArchmagiCompact,
+    event: 'treasureRobeOfTheArchmagi',
+    resolve: resolveTreasureRobeOfTheArchmagi,
+    render: {
+      detail: renderTreasureRobeOfTheArchmagiDetail,
+      compact: renderTreasureRobeOfTheArchmagiCompact,
     },
-    buildPreview: buildTreasureRobeOfTheArchmagiPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRobeOfTheArchmagi'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureRobeOfTheArchmagiPreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasureRobeOfTheArchmagiPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureScarabOfProtectionCurse',
     heading: 'Scarab of Protection (curse check)',
-    resolver: wrapResolver(resolveTreasureScarabOfProtectionCurse),
-    resolvePending: () => resolveTreasureScarabOfProtectionCurse({}),
-    renderers: {
-      renderDetail: renderTreasureScarabOfProtectionCurseDetail,
-      renderCompact: renderTreasureScarabOfProtectionCurseCompact,
+    event: 'treasureScarabOfProtectionCurse',
+    resolve: resolveTreasureScarabOfProtectionCurse,
+    render: {
+      detail: renderTreasureScarabOfProtectionCurseDetail,
+      compact: renderTreasureScarabOfProtectionCurseCompact,
     },
-    buildPreview: buildTreasureScarabOfProtectionCursePreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureScarabOfProtectionCurse'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureScarabOfProtectionCursePreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasureScarabOfProtectionCursePreview,
+    followups: scarabOfProtectionCurseFollowups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureScarabOfProtectionCurseResolution',
     heading: 'Scarab of Protection (curse resolution)',
-    resolver: wrapResolver(resolveTreasureScarabOfProtectionCurseResolution),
-    resolvePending: () => resolveTreasureScarabOfProtectionCurseResolution({}),
-    renderers: {
-      renderDetail: renderTreasureScarabOfProtectionCurseResolutionDetail,
-      renderCompact: renderTreasureScarabOfProtectionCurseResolutionCompact,
+    event: 'treasureScarabOfProtectionCurseResolution',
+    resolve: resolveTreasureScarabOfProtectionCurseResolution,
+    render: {
+      detail: renderTreasureScarabOfProtectionCurseResolutionDetail,
+      compact: renderTreasureScarabOfProtectionCurseResolutionCompact,
     },
-    buildPreview: buildTreasureScarabOfProtectionCurseResolutionPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureScarabOfProtectionCurseResolution'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureScarabOfProtectionCurseResolutionPreview
-          )
-        : undefined,
-  },
+    preview: buildTreasureScarabOfProtectionCurseResolutionPreview,
+  }),
   {
     id: 'treasureRobeOfUsefulItems',
     heading: 'Robe of Useful Items',

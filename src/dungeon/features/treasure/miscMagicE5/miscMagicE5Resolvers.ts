@@ -4,7 +4,11 @@ import type {
   OutcomeEvent,
   RobeOfUsefulItemsResult,
 } from '../../../domain/outcome';
-import { treasureMiscMagicE5, TreasureMiscMagicE5 } from './miscMagicE5Table';
+import {
+  miscMagicE5Followups,
+  treasureMiscMagicE5,
+  TreasureMiscMagicE5,
+} from './miscMagicE5Table';
 import { buildTreasureEvent } from '../shared';
 import type {
   TreasureRobeOfTheArchmagi,
@@ -13,12 +17,13 @@ import type {
 import {
   RobeOfUsefulItemsExtraPatch,
   ROBE_OF_USEFUL_ITEMS_BASE_PATCHES,
-  TreasureScarabOfProtectionCurse,
+  scarabOfProtectionCurseFollowups,
   treasureRobeOfTheArchmagi,
   treasureRobeOfUsefulItems,
   treasureScarabOfProtectionCurse,
   treasureScarabOfProtectionCursedResolution,
 } from './miscMagicE5Subtables';
+import type { TreasureScarabOfProtectionCurse } from './miscMagicE5Subtables';
 
 type TreasureMiscMagicE5ResolverOptions = {
   roll?: number;
@@ -36,18 +41,16 @@ export function resolveTreasureMiscMagicE5(
     treasureMiscMagicE5
   );
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureMiscMagicE5.RobeOfTheArchmagi) {
+  const followup = miscMagicE5Followups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasureRobeOfTheArchmagi',
+      table: followup.table,
     });
   } else if (command === TreasureMiscMagicE5.RobeOfUsefulItems) {
     children.push(resolveTreasureRobeOfUsefulItems());
-  } else if (command === TreasureMiscMagicE5.ScarabOfProtection) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureScarabOfProtectionCurse',
-    });
   }
   return {
     type: 'event',
@@ -150,10 +153,13 @@ export function resolveTreasureScarabOfProtectionCurse(options?: {
     treasureScarabOfProtectionCurse
   );
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureScarabOfProtectionCurse.Cursed) {
+  const followup = scarabOfProtectionCurseFollowups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasureScarabOfProtectionCurseResolution',
+      table: followup.table,
     });
   }
   return {

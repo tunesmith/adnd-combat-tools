@@ -4,7 +4,11 @@ import type {
   OutcomeEvent,
   TreasureNecklaceOfPrayerBeadsResult,
 } from '../../../domain/outcome';
-import { treasureMiscMagicE4, TreasureMiscMagicE4 } from './miscMagicE4Table';
+import {
+  miscMagicE4Followups,
+  treasureMiscMagicE4,
+  TreasureMiscMagicE4,
+} from './miscMagicE4Table';
 import { buildTreasureEvent } from '../shared';
 import type {
   TreasureManualOfGolems,
@@ -19,6 +23,7 @@ import type {
 } from './miscMagicE4Subtables';
 import {
   resolvePearlRecallResult,
+  pearlOfPowerEffectFollowups,
   treasureManualOfGolems,
   treasureMedallionRange,
   treasureNecklaceOfMissiles,
@@ -29,8 +34,8 @@ import {
   treasurePeriaptPoisonBonus,
   treasurePhylacteryLongYears,
   treasureQuaalFeatherToken,
-  TreasurePearlOfPowerEffect,
 } from './miscMagicE4Subtables';
+import type { TreasurePearlOfPowerEffect } from './miscMagicE4Subtables';
 
 type TreasureMiscMagicE4ResolverOptions = {
   roll?: number;
@@ -49,64 +54,17 @@ export function resolveTreasureMiscMagicE4(
   );
   const rollIndex = options?.rollIndex;
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureMiscMagicE4.ManualOfGolems) {
+  const followup = miscMagicE4Followups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasureManualOfGolems',
-      id: rollIndex ? `treasureManualOfGolems:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE4.MedallionOfESP) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMedallionRange',
-      id: rollIndex ? `treasureMedallionRange:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE4.MedallionOfThoughtProjection) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMedallionRange',
-      id: rollIndex ? `treasureMedallionRange:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE4.NecklaceOfMissiles) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureNecklaceOfMissiles',
-      id: rollIndex ? `treasureNecklaceOfMissiles:${rollIndex}` : undefined,
+      table: followup.table,
+      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
     });
   } else if (command === TreasureMiscMagicE4.NecklaceOfPrayerBeads) {
     children.push(resolveTreasureNecklaceOfPrayerBeads());
-  } else if (command === TreasureMiscMagicE4.PearlOfPower) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePearlOfPowerEffect',
-      id: rollIndex ? `treasurePearlOfPowerEffect:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE4.PearlOfWisdom) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePearlOfWisdom',
-      id: rollIndex ? `treasurePearlOfWisdom:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE4.PhylacteryOfLongYears) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePhylacteryLongYears',
-      id: rollIndex ? `treasurePhylacteryLongYears:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE4.PeriaptOfProofAgainstPoison) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasurePeriaptProofAgainstPoison',
-      id: rollIndex
-        ? `treasurePeriaptProofAgainstPoison:${rollIndex}`
-        : undefined,
-    });
-  } else if (command === TreasureMiscMagicE4.QuaalsFeatherToken) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureQuaalFeatherToken',
-      id: rollIndex ? `treasureQuaalFeatherToken:${rollIndex}` : undefined,
-    });
   }
   return {
     type: 'event',
@@ -184,10 +142,13 @@ export function resolveTreasurePearlOfPowerEffect(options?: {
     treasurePearlOfPowerEffect
   );
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasurePearlOfPowerEffect.Recall) {
+  const followup = pearlOfPowerEffectFollowups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasurePearlOfPowerRecall',
+      table: followup.table,
     });
   }
   return {

@@ -1,8 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
+  defineTreasureFollowupTable,
+  defineTreasureMagicTable,
 } from '../shared';
 import {
   buildTreasureMiscMagicE4Preview,
@@ -54,71 +53,55 @@ import {
   resolveTreasurePhylacteryLongYears,
   resolveTreasureQuaalFeatherToken,
 } from './miscMagicE4Resolvers';
+import { miscMagicE4Followups } from './miscMagicE4Table';
+import { pearlOfPowerEffectFollowups } from './miscMagicE4Subtables';
 
 export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureMagicTable({
     id: 'treasureMiscMagicE4',
     heading: 'Miscellaneous Magic (Table E.4)',
-    resolver: wrapResolver(resolveTreasureMiscMagicE4),
-    ...createTreasureMagicContextHandlers(resolveTreasureMiscMagicE4),
-    renderers: {
-      renderDetail: renderTreasureMiscMagicE4Detail,
-      renderCompact: renderTreasureMiscMagicE4Compact,
+    event: 'treasureMiscMagicE4',
+    resolve: resolveTreasureMiscMagicE4,
+    render: {
+      detail: renderTreasureMiscMagicE4Detail,
+      compact: renderTreasureMiscMagicE4Compact,
     },
-    buildPreview: buildTreasureMiscMagicE4Preview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureMiscMagicE4',
-      buildTreasureMiscMagicE4Preview
-    ),
-  },
-  {
+    preview: buildTreasureMiscMagicE4Preview,
+    followups: miscMagicE4Followups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureManualOfGolems',
     heading: 'Manual of Golems',
-    resolver: wrapResolver(resolveTreasureManualOfGolems),
-    resolvePending: () => resolveTreasureManualOfGolems({}),
-    renderers: {
-      renderDetail: renderTreasureManualOfGolemsDetail,
-      renderCompact: renderTreasureManualOfGolemsCompact,
+    event: 'treasureManualOfGolems',
+    resolve: resolveTreasureManualOfGolems,
+    render: {
+      detail: renderTreasureManualOfGolemsDetail,
+      compact: renderTreasureManualOfGolemsCompact,
     },
-    buildPreview: buildTreasureManualOfGolemsPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureManualOfGolems'
-        ? buildEventPreviewFromFactory(node, buildTreasureManualOfGolemsPreview)
-        : undefined,
-  },
-  {
+    preview: buildTreasureManualOfGolemsPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureMedallionRange',
     heading: 'Medallion Details',
-    resolver: wrapResolver(resolveTreasureMedallionRange),
-    resolvePending: () => resolveTreasureMedallionRange({}),
-    renderers: {
-      renderDetail: renderTreasureMedallionRangeDetail,
-      renderCompact: renderTreasureMedallionRangeCompact,
+    event: 'treasureMedallionRange',
+    resolve: resolveTreasureMedallionRange,
+    render: {
+      detail: renderTreasureMedallionRangeDetail,
+      compact: renderTreasureMedallionRangeCompact,
     },
-    buildPreview: buildTreasureMedallionRangePreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureMedallionRange'
-        ? buildEventPreviewFromFactory(node, buildTreasureMedallionRangePreview)
-        : undefined,
-  },
-  {
+    preview: buildTreasureMedallionRangePreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureNecklaceOfMissiles',
     heading: 'Necklace of Missiles',
-    resolver: wrapResolver(resolveTreasureNecklaceOfMissiles),
-    resolvePending: () => resolveTreasureNecklaceOfMissiles({}),
-    renderers: {
-      renderDetail: renderTreasureNecklaceOfMissilesDetail,
-      renderCompact: renderTreasureNecklaceOfMissilesCompact,
+    event: 'treasureNecklaceOfMissiles',
+    resolve: resolveTreasureNecklaceOfMissiles,
+    render: {
+      detail: renderTreasureNecklaceOfMissilesDetail,
+      compact: renderTreasureNecklaceOfMissilesCompact,
     },
-    buildPreview: buildTreasureNecklaceOfMissilesPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureNecklaceOfMissiles'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureNecklaceOfMissilesPreview
-          )
-        : undefined,
-  },
+    preview: buildTreasureNecklaceOfMissilesPreview,
+  }),
   {
     id: 'treasureNecklaceOfPrayerBeads',
     heading: 'Necklace of Prayer Beads',
@@ -132,109 +115,71 @@ export const miscMagicE4Tables: ReadonlyArray<DungeonTableDefinition> = [
     },
     buildPreview: buildTreasureNecklaceOfPrayerBeadsPreview,
   },
-  {
+  defineTreasureFollowupTable({
     id: 'treasurePearlOfPowerEffect',
     heading: 'Pearl of Power Effect',
-    resolver: wrapResolver(resolveTreasurePearlOfPowerEffect),
-    resolvePending: () => resolveTreasurePearlOfPowerEffect({}),
-    renderers: {
-      renderDetail: renderTreasurePearlOfPowerEffectDetail,
-      renderCompact: renderTreasurePearlOfPowerEffectCompact,
+    event: 'treasurePearlOfPowerEffect',
+    resolve: resolveTreasurePearlOfPowerEffect,
+    render: {
+      detail: renderTreasurePearlOfPowerEffectDetail,
+      compact: renderTreasurePearlOfPowerEffectCompact,
     },
-    buildPreview: buildTreasurePearlOfPowerEffectPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasurePearlOfPowerEffect'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasurePearlOfPowerEffectPreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasurePearlOfPowerEffectPreview,
+    followups: pearlOfPowerEffectFollowups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasurePearlOfPowerRecall',
     heading: 'Pearl of Power Recall',
-    resolver: wrapResolver(resolveTreasurePearlOfPowerRecall),
-    resolvePending: () => resolveTreasurePearlOfPowerRecall({}),
-    renderers: {
-      renderDetail: renderTreasurePearlOfPowerRecallDetail,
-      renderCompact: renderTreasurePearlOfPowerRecallCompact,
+    event: 'treasurePearlOfPowerRecall',
+    resolve: resolveTreasurePearlOfPowerRecall,
+    render: {
+      detail: renderTreasurePearlOfPowerRecallDetail,
+      compact: renderTreasurePearlOfPowerRecallCompact,
     },
-    buildPreview: buildTreasurePearlOfPowerRecallPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasurePearlOfPowerRecall'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasurePearlOfPowerRecallPreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasurePearlOfPowerRecallPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasurePearlOfWisdom',
     heading: 'Pearl of Wisdom Outcome',
-    resolver: wrapResolver(resolveTreasurePearlOfWisdom),
-    resolvePending: () => resolveTreasurePearlOfWisdom({}),
-    renderers: {
-      renderDetail: renderTreasurePearlOfWisdomDetail,
-      renderCompact: renderTreasurePearlOfWisdomCompact,
+    event: 'treasurePearlOfWisdom',
+    resolve: resolveTreasurePearlOfWisdom,
+    render: {
+      detail: renderTreasurePearlOfWisdomDetail,
+      compact: renderTreasurePearlOfWisdomCompact,
     },
-    buildPreview: buildTreasurePearlOfWisdomPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasurePearlOfWisdom'
-        ? buildEventPreviewFromFactory(node, buildTreasurePearlOfWisdomPreview)
-        : undefined,
-  },
-  {
+    preview: buildTreasurePearlOfWisdomPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasurePeriaptProofAgainstPoison',
     heading: 'Periapt of Proof Against Poison',
-    resolver: wrapResolver(resolveTreasurePeriaptProofAgainstPoison),
-    resolvePending: () => resolveTreasurePeriaptProofAgainstPoison({}),
-    renderers: {
-      renderDetail: renderTreasurePeriaptProofAgainstPoisonDetail,
-      renderCompact: renderTreasurePeriaptProofAgainstPoisonCompact,
+    event: 'treasurePeriaptProofAgainstPoison',
+    resolve: resolveTreasurePeriaptProofAgainstPoison,
+    render: {
+      detail: renderTreasurePeriaptProofAgainstPoisonDetail,
+      compact: renderTreasurePeriaptProofAgainstPoisonCompact,
     },
-    buildPreview: buildTreasurePeriaptProofAgainstPoisonPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasurePeriaptProofAgainstPoison'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasurePeriaptProofAgainstPoisonPreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasurePeriaptProofAgainstPoisonPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasurePhylacteryLongYears',
     heading: 'Phylactery of Long Years',
-    resolver: wrapResolver(resolveTreasurePhylacteryLongYears),
-    resolvePending: () => resolveTreasurePhylacteryLongYears({}),
-    renderers: {
-      renderDetail: renderTreasurePhylacteryLongYearsDetail,
-      renderCompact: renderTreasurePhylacteryLongYearsCompact,
+    event: 'treasurePhylacteryLongYears',
+    resolve: resolveTreasurePhylacteryLongYears,
+    render: {
+      detail: renderTreasurePhylacteryLongYearsDetail,
+      compact: renderTreasurePhylacteryLongYearsCompact,
     },
-    buildPreview: buildTreasurePhylacteryLongYearsPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasurePhylacteryLongYears'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasurePhylacteryLongYearsPreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasurePhylacteryLongYearsPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureQuaalFeatherToken',
     heading: "Quaal's Feather Token",
-    resolver: wrapResolver(resolveTreasureQuaalFeatherToken),
-    resolvePending: () => resolveTreasureQuaalFeatherToken({}),
-    renderers: {
-      renderDetail: renderTreasureQuaalFeatherTokenDetail,
-      renderCompact: renderTreasureQuaalFeatherTokenCompact,
+    event: 'treasureQuaalFeatherToken',
+    resolve: resolveTreasureQuaalFeatherToken,
+    render: {
+      detail: renderTreasureQuaalFeatherTokenDetail,
+      compact: renderTreasureQuaalFeatherTokenCompact,
     },
-    buildPreview: buildTreasureQuaalFeatherTokenPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureQuaalFeatherToken'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureQuaalFeatherTokenPreview
-          )
-        : undefined,
-  },
+    preview: buildTreasureQuaalFeatherTokenPreview,
+  }),
 ];

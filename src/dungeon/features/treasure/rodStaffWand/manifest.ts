@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import { defineTreasureFollowupTable } from '../shared';
 import {
   buildTreasureRodStaffWandPreview,
   buildTreasureStaffSerpentPreview,
@@ -12,36 +12,30 @@ import {
   resolveTreasureRodStaffWand,
   resolveTreasureStaffSerpent,
 } from './rodStaffWandResolvers';
+import { rodStaffWandFollowups } from './rodStaffWandTables';
 
 export const rodStaffWandTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureFollowupTable({
     id: 'treasureRodStaffWand',
     heading: 'Rod, Staff, or Wand',
-    resolver: wrapResolver(resolveTreasureRodStaffWand),
-    resolvePending: () => resolveTreasureRodStaffWand({}),
-    renderers: {
-      renderDetail: renderTreasureRodStaffWandDetail,
-      renderCompact: renderTreasureRodStaffWandCompact,
+    event: 'treasureRodStaffWand',
+    resolve: resolveTreasureRodStaffWand,
+    render: {
+      detail: renderTreasureRodStaffWandDetail,
+      compact: renderTreasureRodStaffWandCompact,
     },
-    buildPreview: buildTreasureRodStaffWandPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureRodStaffWand'
-        ? buildEventPreviewFromFactory(node, buildTreasureRodStaffWandPreview)
-        : undefined,
-  },
-  {
+    preview: buildTreasureRodStaffWandPreview,
+    followups: rodStaffWandFollowups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureStaffSerpent',
     heading: 'Serpent Form',
-    resolver: wrapResolver(resolveTreasureStaffSerpent),
-    resolvePending: () => resolveTreasureStaffSerpent({}),
-    renderers: {
-      renderDetail: renderTreasureStaffSerpentDetail,
-      renderCompact: renderTreasureStaffSerpentCompact,
+    event: 'treasureStaffSerpent',
+    resolve: resolveTreasureStaffSerpent,
+    render: {
+      detail: renderTreasureStaffSerpentDetail,
+      compact: renderTreasureStaffSerpentCompact,
     },
-    buildPreview: buildTreasureStaffSerpentPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureStaffSerpent'
-        ? buildEventPreviewFromFactory(node, buildTreasureStaffSerpentPreview)
-        : undefined,
-  },
+    preview: buildTreasureStaffSerpentPreview,
+  }),
 ];

@@ -72,6 +72,13 @@ export const treasureRodsStavesWands: Table<TreasureRodStaffWand> = {
   ],
 };
 
+export const rodStaffWandFollowups = [
+  {
+    result: TreasureRodStaffWand.StaffSerpent,
+    table: 'treasureStaffSerpent',
+  },
+] as const;
+
 export enum TreasureStaffSerpent {
   Python,
   Adder,

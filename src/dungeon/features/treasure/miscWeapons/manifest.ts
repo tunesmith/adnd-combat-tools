@@ -1,34 +1,22 @@
 import type { DungeonTableDefinition } from '../../types';
-import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
-} from '../shared';
+import { defineTreasureMagicTable } from '../shared';
 import {
   buildTreasureMiscWeaponsPreview,
   renderTreasureMiscWeaponsCompact,
   renderTreasureMiscWeaponsDetail,
 } from './miscWeaponsRender';
-import {
-  resolveTreasureMiscWeapons,
-  type TreasureMiscWeaponsResolverOptions,
-} from './miscWeaponsResolvers';
+import { resolveTreasureMiscWeapons } from './miscWeaponsResolvers';
 
-export const miscWeaponsTables: ReadonlyArray<
-  DungeonTableDefinition<TreasureMiscWeaponsResolverOptions>
-> = [
-  {
+export const miscWeaponsTables: ReadonlyArray<DungeonTableDefinition> = [
+  defineTreasureMagicTable({
     id: 'treasureMiscWeapons',
     heading: 'Miscellaneous Weapons (Table H)',
-    resolver: resolveTreasureMiscWeapons,
-    ...createTreasureMagicContextHandlers(resolveTreasureMiscWeapons),
-    renderers: {
-      renderDetail: renderTreasureMiscWeaponsDetail,
-      renderCompact: renderTreasureMiscWeaponsCompact,
+    event: 'treasureMiscWeapons',
+    resolve: resolveTreasureMiscWeapons,
+    render: {
+      detail: renderTreasureMiscWeaponsDetail,
+      compact: renderTreasureMiscWeaponsCompact,
     },
-    buildPreview: buildTreasureMiscWeaponsPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureMiscWeapons',
-      buildTreasureMiscWeaponsPreview
-    ),
-  },
+    preview: buildTreasureMiscWeaponsPreview,
+  }),
 ];

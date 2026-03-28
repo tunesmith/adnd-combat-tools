@@ -93,3 +93,14 @@ export const treasureMiscMagicE5: Table<TreasureMiscMagicE5> = {
     { range: [91, 100], command: TreasureMiscMagicE5.WingsOfFlying },
   ],
 };
+
+export const miscMagicE5Followups = [
+  {
+    result: TreasureMiscMagicE5.RobeOfTheArchmagi,
+    table: 'treasureRobeOfTheArchmagi',
+  },
+  {
+    result: TreasureMiscMagicE5.ScarabOfProtection,
+    table: 'treasureScarabOfProtectionCurse',
+  },
+] as const;

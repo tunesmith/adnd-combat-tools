@@ -1,10 +1,21 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
 import {
+  magicCategoryFollowups,
   treasureMagicCategory,
-  TreasureMagicCategory,
 } from './magicCategoryTable';
 import { buildTreasureEvent } from '../shared';
+
+const indexedMagicCategoryTables = new Set([
+  'treasureMiscMagicE1',
+  'treasureMiscMagicE2',
+  'treasureMiscMagicE3',
+  'treasureMiscMagicE4',
+  'treasureMiscMagicE5',
+  'treasureArmorShields',
+  'treasureSwords',
+  'treasureMiscWeapons',
+]);
 
 type TreasureMagicCategoryResolverOptions = {
   roll?: number;
@@ -25,153 +36,17 @@ export function resolveTreasureMagicCategory(
     options
   );
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureMagicCategory.Potions) {
+  const followup = magicCategoryFollowups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasurePotion',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.Scrolls) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureScroll',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.Rings) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRing',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.RodsStavesWands) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureRodStaffWand',
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.MiscMagicE1) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMiscMagicE1',
-      id: event.rollIndex
-        ? `treasureMiscMagicE1:${event.rollIndex}`
-        : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.MiscMagicE2) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMiscMagicE2',
-      id: event.rollIndex
-        ? `treasureMiscMagicE2:${event.rollIndex}`
-        : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.MiscMagicE3) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMiscMagicE3',
-      id: event.rollIndex
-        ? `treasureMiscMagicE3:${event.rollIndex}`
-        : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.MiscMagicE4) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMiscMagicE4',
-      id: event.rollIndex
-        ? `treasureMiscMagicE4:${event.rollIndex}`
-        : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.MiscMagicE5) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMiscMagicE5',
-      id: event.rollIndex
-        ? `treasureMiscMagicE5:${event.rollIndex}`
-        : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.ArmorShields) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureArmorShields',
-      id: event.rollIndex
-        ? `treasureArmorShields:${event.rollIndex}`
-        : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.Swords) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureSwords',
-      id: event.rollIndex ? `treasureSwords:${event.rollIndex}` : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
-  } else if (command === TreasureMagicCategory.MiscWeapons) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMiscWeapons',
-      id: event.rollIndex
-        ? `treasureMiscWeapons:${event.rollIndex}`
-        : undefined,
+      table: followup.table,
+      id:
+        event.rollIndex && indexedMagicCategoryTables.has(followup.table)
+          ? `${followup.table}:${event.rollIndex}`
+          : undefined,
       context: {
         kind: 'treasureMagic',
         level: event.level,

@@ -77,3 +77,23 @@ export const treasureMiscMagicE2: Table<TreasureMiscMagicE2> = {
     { range: [100], command: TreasureMiscMagicE2.EyesOfPetrification },
   ],
 };
+
+export const miscMagicE2Followups = [
+  {
+    result: TreasureMiscMagicE2.CarpetOfFlying,
+    table: 'treasureCarpetOfFlying',
+  },
+  {
+    result: TreasureMiscMagicE2.CloakOfProtection,
+    table: 'treasureCloakOfProtection',
+  },
+  { result: TreasureMiscMagicE2.CrystalBall, table: 'treasureCrystalBall' },
+  {
+    result: TreasureMiscMagicE2.DeckOfManyThings,
+    table: 'treasureDeckOfManyThings',
+  },
+  {
+    result: TreasureMiscMagicE2.EyesOfPetrification,
+    table: 'treasureEyesOfPetrification',
+  },
+] as const;

@@ -1,8 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
+  defineTreasureFollowupTable,
+  defineTreasureMagicTable,
 } from '../shared';
 import {
   buildTreasureMiscMagicE2Preview,
@@ -34,105 +33,74 @@ import {
   resolveTreasureEyesOfPetrification,
   resolveTreasureMiscMagicE2,
 } from './miscMagicE2Resolvers';
+import { miscMagicE2Followups } from './miscMagicE2Table';
 
 export const miscMagicE2Tables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureMagicTable({
     id: 'treasureMiscMagicE2',
     heading: 'Miscellaneous Magic (Table E.2)',
-    resolver: wrapResolver(resolveTreasureMiscMagicE2),
-    ...createTreasureMagicContextHandlers(resolveTreasureMiscMagicE2),
-    renderers: {
-      renderDetail: renderTreasureMiscMagicE2Detail,
-      renderCompact: renderTreasureMiscMagicE2Compact,
+    event: 'treasureMiscMagicE2',
+    resolve: resolveTreasureMiscMagicE2,
+    render: {
+      detail: renderTreasureMiscMagicE2Detail,
+      compact: renderTreasureMiscMagicE2Compact,
     },
-    buildPreview: buildTreasureMiscMagicE2Preview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureMiscMagicE2',
-      buildTreasureMiscMagicE2Preview
-    ),
-  },
-  {
+    preview: buildTreasureMiscMagicE2Preview,
+    followups: miscMagicE2Followups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureCarpetOfFlying',
     heading: 'Carpet of Flying Size',
-    resolver: wrapResolver(resolveTreasureCarpetOfFlying),
-    resolvePending: () => resolveTreasureCarpetOfFlying({}),
-    renderers: {
-      renderDetail: renderTreasureCarpetOfFlyingDetail,
-      renderCompact: renderTreasureCarpetOfFlyingCompact,
+    event: 'treasureCarpetOfFlying',
+    resolve: resolveTreasureCarpetOfFlying,
+    render: {
+      detail: renderTreasureCarpetOfFlyingDetail,
+      compact: renderTreasureCarpetOfFlyingCompact,
     },
-    buildPreview: buildTreasureCarpetOfFlyingPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureCarpetOfFlying'
-        ? buildEventPreviewFromFactory(node, buildTreasureCarpetOfFlyingPreview)
-        : undefined,
-  },
-  {
+    preview: buildTreasureCarpetOfFlyingPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureCloakOfProtection',
     heading: 'Cloak of Protection Bonus',
-    resolver: wrapResolver(resolveTreasureCloakOfProtection),
-    resolvePending: () => resolveTreasureCloakOfProtection({}),
-    renderers: {
-      renderDetail: renderTreasureCloakOfProtectionDetail,
-      renderCompact: renderTreasureCloakOfProtectionCompact,
+    event: 'treasureCloakOfProtection',
+    resolve: resolveTreasureCloakOfProtection,
+    render: {
+      detail: renderTreasureCloakOfProtectionDetail,
+      compact: renderTreasureCloakOfProtectionCompact,
     },
-    buildPreview: buildTreasureCloakOfProtectionPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureCloakOfProtection'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureCloakOfProtectionPreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasureCloakOfProtectionPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureCrystalBall',
     heading: 'Crystal Ball Variant',
-    resolver: wrapResolver(resolveTreasureCrystalBall),
-    resolvePending: () => resolveTreasureCrystalBall({}),
-    renderers: {
-      renderDetail: renderTreasureCrystalBallDetail,
-      renderCompact: renderTreasureCrystalBallCompact,
+    event: 'treasureCrystalBall',
+    resolve: resolveTreasureCrystalBall,
+    render: {
+      detail: renderTreasureCrystalBallDetail,
+      compact: renderTreasureCrystalBallCompact,
     },
-    buildPreview: buildTreasureCrystalBallPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureCrystalBall'
-        ? buildEventPreviewFromFactory(node, buildTreasureCrystalBallPreview)
-        : undefined,
-  },
-  {
+    preview: buildTreasureCrystalBallPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureDeckOfManyThings',
     heading: 'Deck Composition',
-    resolver: wrapResolver(resolveTreasureDeckOfManyThings),
-    resolvePending: () => resolveTreasureDeckOfManyThings({}),
-    renderers: {
-      renderDetail: renderTreasureDeckOfManyThingsDetail,
-      renderCompact: renderTreasureDeckOfManyThingsCompact,
+    event: 'treasureDeckOfManyThings',
+    resolve: resolveTreasureDeckOfManyThings,
+    render: {
+      detail: renderTreasureDeckOfManyThingsDetail,
+      compact: renderTreasureDeckOfManyThingsCompact,
     },
-    buildPreview: buildTreasureDeckOfManyThingsPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureDeckOfManyThings'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureDeckOfManyThingsPreview
-          )
-        : undefined,
-  },
-  {
+    preview: buildTreasureDeckOfManyThingsPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureEyesOfPetrification',
     heading: 'Eyes of Petrification Type',
-    resolver: wrapResolver(resolveTreasureEyesOfPetrification),
-    resolvePending: () => resolveTreasureEyesOfPetrification({}),
-    renderers: {
-      renderDetail: renderTreasureEyesOfPetrificationDetail,
-      renderCompact: renderTreasureEyesOfPetrificationCompact,
+    event: 'treasureEyesOfPetrification',
+    resolve: resolveTreasureEyesOfPetrification,
+    render: {
+      detail: renderTreasureEyesOfPetrificationDetail,
+      compact: renderTreasureEyesOfPetrificationCompact,
     },
-    buildPreview: buildTreasureEyesOfPetrificationPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureEyesOfPetrification'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureEyesOfPetrificationPreview
-          )
-        : undefined,
-  },
+    preview: buildTreasureEyesOfPetrificationPreview,
+  }),
 ];

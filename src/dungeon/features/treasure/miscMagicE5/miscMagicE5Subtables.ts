@@ -170,3 +170,10 @@ export const treasureScarabOfProtectionCursedResolution: Table<TreasureScarabOfP
       },
     ],
   };
+
+export const scarabOfProtectionCurseFollowups = [
+  {
+    result: TreasureScarabOfProtectionCurse.Cursed,
+    table: 'treasureScarabOfProtectionCurseResolution',
+  },
+] as const;

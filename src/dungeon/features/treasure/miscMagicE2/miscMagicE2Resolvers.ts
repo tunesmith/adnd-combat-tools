@@ -1,6 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
-import { treasureMiscMagicE2, TreasureMiscMagicE2 } from './miscMagicE2Table';
+import { miscMagicE2Followups, treasureMiscMagicE2 } from './miscMagicE2Table';
 import { buildTreasureEvent } from '../shared';
 import {
   treasureCarpetOfFlying,
@@ -28,41 +28,17 @@ export function resolveTreasureMiscMagicE2(
   options?: TreasureMiscMagicE2ResolverOptions
 ): DungeonOutcomeNode {
   const usedRoll = options?.roll ?? rollDice(treasureMiscMagicE2.sides);
-  const command: TreasureMiscMagicE2 = getTableEntry(
-    usedRoll,
-    treasureMiscMagicE2
-  );
+  const command = getTableEntry(usedRoll, treasureMiscMagicE2);
   const rollIndex = options?.rollIndex;
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureMiscMagicE2.CarpetOfFlying) {
+  const followup = miscMagicE2Followups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasureCarpetOfFlying',
-      id: rollIndex ? `treasureCarpetOfFlying:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE2.CrystalBall) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureCrystalBall',
-      id: rollIndex ? `treasureCrystalBall:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE2.DeckOfManyThings) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureDeckOfManyThings',
-      id: rollIndex ? `treasureDeckOfManyThings:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE2.EyesOfPetrification) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureEyesOfPetrification',
-      id: rollIndex ? `treasureEyesOfPetrification:${rollIndex}` : undefined,
-    });
-  } else if (command === TreasureMiscMagicE2.CloakOfProtection) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureCloakOfProtection',
-      id: rollIndex ? `treasureCloakOfProtection:${rollIndex}` : undefined,
+      table: followup.table,
+      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
     });
   }
   return {

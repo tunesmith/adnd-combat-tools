@@ -1,34 +1,22 @@
 import type { DungeonTableDefinition } from '../../types';
-import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
-} from '../shared';
+import { defineTreasureMagicTable } from '../shared';
 import {
   buildTreasureArmorShieldsPreview,
   renderTreasureArmorShieldsCompact,
   renderTreasureArmorShieldsDetail,
 } from './armorShieldsRender';
-import {
-  resolveTreasureArmorShields,
-  type TreasureArmorShieldsResolverOptions,
-} from './armorShieldsResolvers';
+import { resolveTreasureArmorShields } from './armorShieldsResolvers';
 
-export const armorShieldsTables: ReadonlyArray<
-  DungeonTableDefinition<TreasureArmorShieldsResolverOptions>
-> = [
-  {
+export const armorShieldsTables: ReadonlyArray<DungeonTableDefinition> = [
+  defineTreasureMagicTable({
     id: 'treasureArmorShields',
     heading: 'Armor & Shields (Table F)',
-    resolver: resolveTreasureArmorShields,
-    ...createTreasureMagicContextHandlers(resolveTreasureArmorShields),
-    renderers: {
-      renderDetail: renderTreasureArmorShieldsDetail,
-      renderCompact: renderTreasureArmorShieldsCompact,
+    event: 'treasureArmorShields',
+    resolve: resolveTreasureArmorShields,
+    render: {
+      detail: renderTreasureArmorShieldsDetail,
+      compact: renderTreasureArmorShieldsCompact,
     },
-    buildPreview: buildTreasureArmorShieldsPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureArmorShields',
-      buildTreasureArmorShieldsPreview
-    ),
-  },
+    preview: buildTreasureArmorShieldsPreview,
+  }),
 ];

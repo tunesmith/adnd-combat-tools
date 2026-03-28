@@ -5,10 +5,17 @@ import type {
   TreasureIounStoneStatus,
   TreasureIounStonesResult,
 } from '../../../domain/outcome';
-import { treasureMiscMagicE3, TreasureMiscMagicE3 } from './miscMagicE3Table';
+import {
+  miscMagicE3Followups,
+  treasureMiscMagicE3,
+  TreasureMiscMagicE3,
+} from './miscMagicE3Table';
 import { buildTreasureEvent } from '../shared';
 import {
   IOUN_STONE_DEFINITIONS,
+  figurineOfWondrousPowerFollowups,
+  hornOfValhallaAttunementFollowups,
+  hornOfValhallaTypeFollowups,
   treasureFigurineMarbleElephant,
   treasureFigurineOfWondrousPower,
   treasureGirdleOfGiantStrength,
@@ -18,13 +25,13 @@ import {
   treasureInstrumentOfTheBards,
   treasureIounStones,
   treasureIronFlask,
-  TreasureFigurineOfWondrousPower,
-  TreasureHornOfValhallaAttunement,
   TreasureIounStoneType,
   type TreasureFigurineMarbleElephant,
 } from './miscMagicE3Subtables';
 import type {
+  TreasureFigurineOfWondrousPower,
   TreasureGirdleOfGiantStrength,
+  TreasureHornOfValhallaAttunement,
   TreasureHornOfValhallaAlignment,
   TreasureHornOfValhallaType,
   TreasureInstrumentOfTheBards,
@@ -63,45 +70,18 @@ export function resolveTreasureMiscMagicE3(
     rollIndex,
   };
 
-  if (command === TreasureMiscMagicE3.FigurineOfWondrousPower) {
+  const followup = miscMagicE3Followups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     children.push({
       type: 'pending-roll',
-      table: 'treasureFigurineOfWondrousPower',
-      id: rollIndex
-        ? `treasureFigurineOfWondrousPower:${rollIndex}`
-        : undefined,
-      context,
-    });
-  } else if (command === TreasureMiscMagicE3.GirdleOfGiantStrength) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureGirdleOfGiantStrength',
-      id: rollIndex ? `treasureGirdleOfGiantStrength:${rollIndex}` : undefined,
+      table: followup.table,
+      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
       context,
     });
   } else if (command === TreasureMiscMagicE3.IounStones) {
     children.push(resolveTreasureIounStones());
-  } else if (command === TreasureMiscMagicE3.InstrumentOfTheBards) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureInstrumentOfTheBards',
-      id: rollIndex ? `treasureInstrumentOfTheBards:${rollIndex}` : undefined,
-      context,
-    });
-  } else if (command === TreasureMiscMagicE3.IronFlask) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureIronFlask',
-      id: rollIndex ? `treasureIronFlask:${rollIndex}` : undefined,
-      context,
-    });
-  } else if (command === TreasureMiscMagicE3.HornOfValhalla) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureHornOfValhallaType',
-      id: rollIndex ? `treasureHornOfValhallaType:${rollIndex}` : undefined,
-      context,
-    });
   }
 
   return {
@@ -125,12 +105,15 @@ export function resolveTreasureFigurineOfWondrousPower(
     treasureFigurineOfWondrousPower
   );
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureFigurineOfWondrousPower.MarbleElephant) {
+  const followup = figurineOfWondrousPowerFollowups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     const rollIndex = options?.rollIndex;
     children.push({
       type: 'pending-roll',
-      table: 'treasureFigurineMarbleElephant',
-      id: rollIndex ? `treasureFigurineMarbleElephant:${rollIndex}` : undefined,
+      table: followup.table,
+      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
       context: {
         kind: 'treasureMagic',
         level: options?.level ?? 1,
@@ -290,21 +273,23 @@ export function resolveTreasureHornOfValhallaType(
     treasureHornOfValhallaType
   );
   const rollIndex = options?.rollIndex;
-  const children: DungeonOutcomeNode[] = [
-    {
+  const children: DungeonOutcomeNode[] = [];
+  const followup = hornOfValhallaTypeFollowups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
+    children.push({
       type: 'pending-roll',
-      table: 'treasureHornOfValhallaAttunement',
-      id: rollIndex
-        ? `treasureHornOfValhallaAttunement:${rollIndex}`
-        : undefined,
+      table: followup.table,
+      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
       context: {
         kind: 'treasureMagic',
         level: options?.level ?? 1,
         treasureRoll: options?.treasureRoll ?? usedRoll,
         rollIndex,
       },
-    },
-  ];
+    });
+  }
   return {
     type: 'event',
     roll: usedRoll,
@@ -326,14 +311,15 @@ export function resolveTreasureHornOfValhallaAttunement(
     treasureHornOfValhallaAttunement
   );
   const children: DungeonOutcomeNode[] = [];
-  if (command === TreasureHornOfValhallaAttunement.Aligned) {
+  const followup = hornOfValhallaAttunementFollowups.find(
+    (candidate) => candidate.result === command
+  );
+  if (followup) {
     const rollIndex = options?.rollIndex;
     children.push({
       type: 'pending-roll',
-      table: 'treasureHornOfValhallaAlignment',
-      id: rollIndex
-        ? `treasureHornOfValhallaAlignment:${rollIndex}`
-        : undefined,
+      table: followup.table,
+      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
       context: {
         kind: 'treasureMagic',
         level: options?.level ?? 1,

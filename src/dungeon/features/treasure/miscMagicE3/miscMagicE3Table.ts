@@ -83,3 +83,23 @@ export const treasureMiscMagicE3: Table<TreasureMiscMagicE3> = {
     { range: [93, 100], command: TreasureMiscMagicE3.KeoghtomsOintment },
   ],
 };
+
+export const miscMagicE3Followups = [
+  {
+    result: TreasureMiscMagicE3.FigurineOfWondrousPower,
+    table: 'treasureFigurineOfWondrousPower',
+  },
+  {
+    result: TreasureMiscMagicE3.GirdleOfGiantStrength,
+    table: 'treasureGirdleOfGiantStrength',
+  },
+  {
+    result: TreasureMiscMagicE3.InstrumentOfTheBards,
+    table: 'treasureInstrumentOfTheBards',
+  },
+  { result: TreasureMiscMagicE3.IronFlask, table: 'treasureIronFlask' },
+  {
+    result: TreasureMiscMagicE3.HornOfValhalla,
+    table: 'treasureHornOfValhallaType',
+  },
+] as const;

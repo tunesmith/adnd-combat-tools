@@ -181,6 +181,13 @@ export const treasurePearlOfPowerEffect: Table<TreasurePearlOfPowerEffect> = {
   ],
 };
 
+export const pearlOfPowerEffectFollowups = [
+  {
+    result: TreasurePearlOfPowerEffect.Recall,
+    table: 'treasurePearlOfPowerRecall',
+  },
+] as const;
+
 export const treasurePearlOfPowerRecall: Table<TreasurePearlOfPowerRecall> = {
   sides: 100,
   entries: [

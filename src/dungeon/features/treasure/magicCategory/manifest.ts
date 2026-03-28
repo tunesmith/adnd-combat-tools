@@ -1,30 +1,24 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
-import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
-} from '../shared';
+import { defineTreasureMagicTable } from '../shared';
 import {
   buildTreasureMagicCategoryPreview,
   renderTreasureMagicCategoryCompact,
   renderTreasureMagicCategoryDetail,
 } from './magicCategoryRender';
 import { resolveTreasureMagicCategory } from './magicCategoryResolvers';
+import { magicCategoryFollowups } from './magicCategoryTable';
 
 export const magicCategoryTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureMagicTable({
     id: 'treasureMagicCategory',
     heading: 'Magical Treasure',
-    resolver: wrapResolver(resolveTreasureMagicCategory),
-    ...createTreasureMagicContextHandlers(resolveTreasureMagicCategory),
-    renderers: {
-      renderDetail: renderTreasureMagicCategoryDetail,
-      renderCompact: renderTreasureMagicCategoryCompact,
+    event: 'treasureMagicCategory',
+    resolve: resolveTreasureMagicCategory,
+    render: {
+      detail: renderTreasureMagicCategoryDetail,
+      compact: renderTreasureMagicCategoryCompact,
     },
-    buildPreview: buildTreasureMagicCategoryPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureMagicCategory',
-      buildTreasureMagicCategoryPreview
-    ),
-  },
+    preview: buildTreasureMagicCategoryPreview,
+    followups: magicCategoryFollowups,
+  }),
 ];

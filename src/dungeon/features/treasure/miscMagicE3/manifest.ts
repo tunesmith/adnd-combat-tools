@@ -1,8 +1,7 @@
 import type { DungeonTableDefinition } from '../../types';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
 import {
-  createTreasureMagicContextHandlers,
-  createTreasureMagicEventPreviewBuilder,
+  defineTreasureFollowupTable,
+  defineTreasureMagicTable,
 } from '../shared';
 import {
   buildTreasureMiscMagicE3Preview,
@@ -49,113 +48,86 @@ import {
   resolveTreasureIronFlask,
   resolveTreasureMiscMagicE3,
 } from './miscMagicE3Resolvers';
+import { miscMagicE3Followups } from './miscMagicE3Table';
+import {
+  figurineOfWondrousPowerFollowups,
+  hornOfValhallaAttunementFollowups,
+  hornOfValhallaTypeFollowups,
+} from './miscMagicE3Subtables';
 
 export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineTreasureMagicTable({
     id: 'treasureMiscMagicE3',
     heading: 'Miscellaneous Magic (Table E.3)',
-    resolver: wrapResolver(resolveTreasureMiscMagicE3),
-    ...createTreasureMagicContextHandlers(resolveTreasureMiscMagicE3),
-    renderers: {
-      renderDetail: renderTreasureMiscMagicE3Detail,
-      renderCompact: renderTreasureMiscMagicE3Compact,
+    event: 'treasureMiscMagicE3',
+    resolve: resolveTreasureMiscMagicE3,
+    render: {
+      detail: renderTreasureMiscMagicE3Detail,
+      compact: renderTreasureMiscMagicE3Compact,
     },
-    buildPreview: buildTreasureMiscMagicE3Preview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureMiscMagicE3',
-      buildTreasureMiscMagicE3Preview
-    ),
-  },
-  {
+    preview: buildTreasureMiscMagicE3Preview,
+    followups: miscMagicE3Followups,
+  }),
+  defineTreasureMagicTable({
     id: 'treasureFigurineOfWondrousPower',
     heading: 'Figurine of Wondrous Power',
-    resolver: wrapResolver(resolveTreasureFigurineOfWondrousPower),
-    ...createTreasureMagicContextHandlers(
-      resolveTreasureFigurineOfWondrousPower
-    ),
-    renderers: {
-      renderDetail: renderTreasureFigurineOfWondrousPowerDetail,
-      renderCompact: renderTreasureFigurineOfWondrousPowerCompact,
+    event: 'treasureFigurineOfWondrousPower',
+    resolve: resolveTreasureFigurineOfWondrousPower,
+    render: {
+      detail: renderTreasureFigurineOfWondrousPowerDetail,
+      compact: renderTreasureFigurineOfWondrousPowerCompact,
     },
-    buildPreview: buildTreasureFigurineOfWondrousPowerPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureFigurineOfWondrousPower',
-      buildTreasureFigurineOfWondrousPowerPreview
-    ),
-  },
-  {
+    preview: buildTreasureFigurineOfWondrousPowerPreview,
+    followups: figurineOfWondrousPowerFollowups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureFigurineMarbleElephant',
     heading: 'Marble Elephant Form',
-    resolver: wrapResolver(resolveTreasureFigurineMarbleElephant),
-    renderers: {
-      renderDetail: renderTreasureFigurineMarbleElephantDetail,
-      renderCompact: renderTreasureFigurineMarbleElephantCompact,
+    event: 'treasureFigurineMarbleElephant',
+    resolve: resolveTreasureFigurineMarbleElephant,
+    render: {
+      detail: renderTreasureFigurineMarbleElephantDetail,
+      compact: renderTreasureFigurineMarbleElephantCompact,
     },
-    buildPreview: buildTreasureFigurineMarbleElephantPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureFigurineMarbleElephant'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureFigurineMarbleElephantPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureFigurineMarbleElephant({}),
-  },
-  {
+    preview: buildTreasureFigurineMarbleElephantPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureGirdleOfGiantStrength',
     heading: 'Giant Strength Type',
-    resolver: wrapResolver(resolveTreasureGirdleOfGiantStrength),
-    renderers: {
-      renderDetail: renderTreasureGirdleOfGiantStrengthDetail,
-      renderCompact: renderTreasureGirdleOfGiantStrengthCompact,
+    event: 'treasureGirdleOfGiantStrength',
+    resolve: resolveTreasureGirdleOfGiantStrength,
+    render: {
+      detail: renderTreasureGirdleOfGiantStrengthDetail,
+      compact: renderTreasureGirdleOfGiantStrengthCompact,
     },
-    buildPreview: buildTreasureGirdleOfGiantStrengthPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureGirdleOfGiantStrength'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureGirdleOfGiantStrengthPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureGirdleOfGiantStrength({}),
-  },
-  {
+    preview: buildTreasureGirdleOfGiantStrengthPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureInstrumentOfTheBards',
     heading: 'Instrument of the Bards',
-    resolver: wrapResolver(resolveTreasureInstrumentOfTheBards),
-    renderers: {
-      renderDetail: renderTreasureInstrumentOfTheBardsDetail,
-      renderCompact: renderTreasureInstrumentOfTheBardsCompact,
+    event: 'treasureInstrumentOfTheBards',
+    resolve: resolveTreasureInstrumentOfTheBards,
+    render: {
+      detail: renderTreasureInstrumentOfTheBardsDetail,
+      compact: renderTreasureInstrumentOfTheBardsCompact,
     },
-    buildPreview: buildTreasureInstrumentOfTheBardsPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureInstrumentOfTheBards'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureInstrumentOfTheBardsPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureInstrumentOfTheBards({}),
-  },
-  {
+    preview: buildTreasureInstrumentOfTheBardsPreview,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureIronFlask',
     heading: 'Iron Flask Contents',
-    resolver: wrapResolver(resolveTreasureIronFlask),
-    renderers: {
-      renderDetail: renderTreasureIronFlaskDetail,
-      renderCompact: renderTreasureIronFlaskCompact,
+    event: 'treasureIronFlask',
+    resolve: resolveTreasureIronFlask,
+    render: {
+      detail: renderTreasureIronFlaskDetail,
+      compact: renderTreasureIronFlaskCompact,
     },
-    buildPreview: buildTreasureIronFlaskPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureIronFlask'
-        ? buildEventPreviewFromFactory(node, buildTreasureIronFlaskPreview)
-        : undefined,
-    resolvePending: () => resolveTreasureIronFlask({}),
-  },
+    preview: buildTreasureIronFlaskPreview,
+  }),
   {
     id: 'treasureIounStones',
     heading: 'Ioun Stones',
-    resolver: wrapResolver(resolveTreasureIounStones),
+    resolver: resolveTreasureIounStones,
     renderers: {
       renderDetail: renderTreasureIounStonesDetail,
       renderCompact: renderTreasureIounStonesCompact,
@@ -163,54 +135,39 @@ export const miscMagicE3Tables: ReadonlyArray<DungeonTableDefinition> = [
     resolvePending: () => resolveTreasureIounStones({}),
     registry: ({ roll }) => resolveTreasureIounStones({ roll }),
   },
-  {
+  defineTreasureMagicTable({
     id: 'treasureHornOfValhallaType',
     heading: 'Horn Type',
-    resolver: wrapResolver(resolveTreasureHornOfValhallaType),
-    ...createTreasureMagicContextHandlers(resolveTreasureHornOfValhallaType),
-    renderers: {
-      renderDetail: renderTreasureHornOfValhallaTypeDetail,
-      renderCompact: renderTreasureHornOfValhallaTypeCompact,
+    event: 'treasureHornOfValhallaType',
+    resolve: resolveTreasureHornOfValhallaType,
+    render: {
+      detail: renderTreasureHornOfValhallaTypeDetail,
+      compact: renderTreasureHornOfValhallaTypeCompact,
     },
-    buildPreview: buildTreasureHornOfValhallaTypePreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureHornOfValhallaType',
-      buildTreasureHornOfValhallaTypePreview
-    ),
-  },
-  {
+    preview: buildTreasureHornOfValhallaTypePreview,
+    followups: hornOfValhallaTypeFollowups,
+  }),
+  defineTreasureMagicTable({
     id: 'treasureHornOfValhallaAttunement',
     heading: 'Attunement',
-    resolver: wrapResolver(resolveTreasureHornOfValhallaAttunement),
-    ...createTreasureMagicContextHandlers(
-      resolveTreasureHornOfValhallaAttunement
-    ),
-    renderers: {
-      renderDetail: renderTreasureHornOfValhallaAttunementDetail,
-      renderCompact: renderTreasureHornOfValhallaAttunementCompact,
+    event: 'treasureHornOfValhallaAttunement',
+    resolve: resolveTreasureHornOfValhallaAttunement,
+    render: {
+      detail: renderTreasureHornOfValhallaAttunementDetail,
+      compact: renderTreasureHornOfValhallaAttunementCompact,
     },
-    buildPreview: buildTreasureHornOfValhallaAttunementPreview,
-    buildEventPreview: createTreasureMagicEventPreviewBuilder(
-      'treasureHornOfValhallaAttunement',
-      buildTreasureHornOfValhallaAttunementPreview
-    ),
-  },
-  {
+    preview: buildTreasureHornOfValhallaAttunementPreview,
+    followups: hornOfValhallaAttunementFollowups,
+  }),
+  defineTreasureFollowupTable({
     id: 'treasureHornOfValhallaAlignment',
     heading: 'Alignment',
-    resolver: wrapResolver(resolveTreasureHornOfValhallaAlignment),
-    renderers: {
-      renderDetail: renderTreasureHornOfValhallaAlignmentDetail,
-      renderCompact: renderTreasureHornOfValhallaAlignmentCompact,
+    event: 'treasureHornOfValhallaAlignment',
+    resolve: resolveTreasureHornOfValhallaAlignment,
+    render: {
+      detail: renderTreasureHornOfValhallaAlignmentDetail,
+      compact: renderTreasureHornOfValhallaAlignmentCompact,
     },
-    buildPreview: buildTreasureHornOfValhallaAlignmentPreview,
-    buildEventPreview: (node) =>
-      node.event.kind === 'treasureHornOfValhallaAlignment'
-        ? buildEventPreviewFromFactory(
-            node,
-            buildTreasureHornOfValhallaAlignmentPreview
-          )
-        : undefined,
-    resolvePending: () => resolveTreasureHornOfValhallaAlignment({}),
-  },
+    preview: buildTreasureHornOfValhallaAlignmentPreview,
+  }),
 ];

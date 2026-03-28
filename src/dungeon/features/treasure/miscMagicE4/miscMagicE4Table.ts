@@ -104,3 +104,42 @@ export const treasureMiscMagicE4: Table<TreasureMiscMagicE4> = {
     { range: [86, 100], command: TreasureMiscMagicE4.QuaalsFeatherToken },
   ],
 };
+
+export const miscMagicE4Followups = [
+  {
+    result: TreasureMiscMagicE4.ManualOfGolems,
+    table: 'treasureManualOfGolems',
+  },
+  {
+    result: TreasureMiscMagicE4.MedallionOfESP,
+    table: 'treasureMedallionRange',
+  },
+  {
+    result: TreasureMiscMagicE4.MedallionOfThoughtProjection,
+    table: 'treasureMedallionRange',
+  },
+  {
+    result: TreasureMiscMagicE4.NecklaceOfMissiles,
+    table: 'treasureNecklaceOfMissiles',
+  },
+  {
+    result: TreasureMiscMagicE4.PearlOfPower,
+    table: 'treasurePearlOfPowerEffect',
+  },
+  {
+    result: TreasureMiscMagicE4.PearlOfWisdom,
+    table: 'treasurePearlOfWisdom',
+  },
+  {
+    result: TreasureMiscMagicE4.PeriaptOfProofAgainstPoison,
+    table: 'treasurePeriaptProofAgainstPoison',
+  },
+  {
+    result: TreasureMiscMagicE4.PhylacteryOfLongYears,
+    table: 'treasurePhylacteryLongYears',
+  },
+  {
+    result: TreasureMiscMagicE4.QuaalsFeatherToken,
+    table: 'treasureQuaalFeatherToken',
+  },
+] as const;

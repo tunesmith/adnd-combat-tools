@@ -33,6 +33,13 @@ export const treasureFigurineOfWondrousPower: Table<TreasureFigurineOfWondrousPo
     ],
   };
 
+export const figurineOfWondrousPowerFollowups = [
+  {
+    result: TreasureFigurineOfWondrousPower.MarbleElephant,
+    table: 'treasureFigurineMarbleElephant',
+  },
+] as const;
+
 export enum TreasureFigurineMarbleElephant {
   Asiatic,
   African,
@@ -176,6 +183,25 @@ export const treasureHornOfValhallaType: Table<TreasureHornOfValhallaType> = {
   ],
 };
 
+export const hornOfValhallaTypeFollowups = [
+  {
+    result: TreasureHornOfValhallaType.Silver,
+    table: 'treasureHornOfValhallaAttunement',
+  },
+  {
+    result: TreasureHornOfValhallaType.Brass,
+    table: 'treasureHornOfValhallaAttunement',
+  },
+  {
+    result: TreasureHornOfValhallaType.Bronze,
+    table: 'treasureHornOfValhallaAttunement',
+  },
+  {
+    result: TreasureHornOfValhallaType.Iron,
+    table: 'treasureHornOfValhallaAttunement',
+  },
+] as const;
+
 export enum TreasureHornOfValhallaAttunement {
   NonAligned,
   Aligned,
@@ -189,6 +215,13 @@ export const treasureHornOfValhallaAttunement: Table<TreasureHornOfValhallaAttun
       { range: [51, 100], command: TreasureHornOfValhallaAttunement.Aligned },
     ],
   };
+
+export const hornOfValhallaAttunementFollowups = [
+  {
+    result: TreasureHornOfValhallaAttunement.Aligned,
+    table: 'treasureHornOfValhallaAlignment',
+  },
+] as const;
 
 export enum TreasureHornOfValhallaAlignment {
   LawfulGood,
