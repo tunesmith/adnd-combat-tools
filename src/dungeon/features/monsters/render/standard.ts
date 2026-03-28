@@ -273,6 +273,7 @@ export function describeStandardMonster(
       String(event.result),
     detailParagraphs: suppressDetailParagraphs ? [] : textInfo.detailParagraphs,
     compactText: textInfo.compactText,
+    compactInline: textInfo.compactInline,
     appendPending: hasPendingChildren(node),
   };
 }
@@ -295,6 +296,7 @@ export function describeDragonMonster(
       String(event.result),
     detailParagraphs: textInfo.detailParagraphs,
     compactText: textInfo.compactText,
+    compactInline: textInfo.compactInline,
     appendPending: hasPendingChildren(node),
   };
 }

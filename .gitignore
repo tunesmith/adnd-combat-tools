@@ -43,3 +43,7 @@ tsconfig.tsbuildinfo
 # playwright-cli (Codex skill artifacts)
 .playwright-cli/
 output/playwright/
+
+# local reference PDFs / symlinks
+/Dungeon Masters Guide (Orange Spine).pdf
+/Player's Handbook (Orange Spine).pdf

@@ -10,7 +10,6 @@ import {
   type AppendPreviewFn,
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
-import { compactMessagesToText } from '../../../adapters/render/compactMessagesToText';
 import { joinSentenceInlineTexts } from '../../../helpers/inlineContent';
 import { renderNumberOfExitsCompact } from '../../navigation/exit/numberOfExitsRender';
 import {
@@ -455,12 +454,12 @@ function addResolvedMonsterSummary(
   }
   const summaries = collectMonsterSummaries(node);
   for (const summary of summaries) {
-    if (summary.length > 0) segments.push(summary);
+    if (summary.text.length > 0) segments.push(summary);
   }
 }
 
-function collectMonsterSummaries(node: OutcomeEventNode): string[] {
-  const summaries: string[] = [];
+function collectMonsterSummaries(node: OutcomeEventNode): InlineText[] {
+  const summaries: InlineText[] = [];
 
   const visit = (current: OutcomeEventNode): void => {
     const description = describeMonsterOutcome(current);
@@ -473,11 +472,19 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
           description.compactMessages &&
           description.compactMessages.length > 0
         ) {
-          const text = compactMessagesToText(description.compactMessages);
-          if (text.length > 0) summaries.push(text);
+          for (const message of description.compactMessages) {
+            if (message.kind !== 'paragraph') continue;
+            if (message.text.trim().length === 0) continue;
+            summaries.push({ text: message.text, inline: message.inline });
+          }
         }
         const text = description.compactText.trim();
-        if (text) summaries.push(text);
+        if (text) {
+          summaries.push({
+            text,
+            inline: description.compactInline,
+          });
+        }
       }
     }
     current.children?.forEach((child) => {
@@ -489,12 +496,12 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
     if (child.type === 'event') visit(child);
   });
 
-  const unique: string[] = [];
+  const unique: InlineText[] = [];
   const seen = new Set<string>();
   for (const summary of summaries) {
-    if (!seen.has(summary)) {
+    if (!seen.has(summary.text)) {
       unique.push(summary);
-      seen.add(summary);
+      seen.add(summary.text);
     }
   }
   return unique;

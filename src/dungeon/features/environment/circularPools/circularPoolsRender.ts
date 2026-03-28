@@ -464,8 +464,8 @@ function buildTransporterNodes(
   return extras.length > 0 ? [heading, bullet, ...extras] : [heading, bullet];
 }
 
-function collectMonsterSummaries(node: OutcomeEventNode): string[] {
-  const summaries: string[] = [];
+function collectMonsterSummaries(node: OutcomeEventNode): InlineText[] {
+  const summaries: InlineText[] = [];
 
   const visit = (current: OutcomeEventNode): void => {
     const description = describeMonsterOutcome(current);
@@ -480,13 +480,16 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
         ) {
           for (const message of description.compactMessages) {
             if (message.kind === 'paragraph') {
-              const text = message.text.trim();
-              if (text.length > 0) summaries.push(text);
+              if (message.text.trim().length > 0) {
+                summaries.push({ text: message.text, inline: message.inline });
+              }
             }
           }
         }
         const text = description.compactText.trim();
-        if (text.length > 0) summaries.push(text);
+        if (text.length > 0) {
+          summaries.push({ text, inline: description.compactInline });
+        }
       }
     }
     current.children?.forEach((child) => {
@@ -498,12 +501,12 @@ function collectMonsterSummaries(node: OutcomeEventNode): string[] {
     if (child.type === 'event') visit(child);
   });
 
-  const unique: string[] = [];
+  const unique: InlineText[] = [];
   const seen = new Set<string>();
   for (const summary of summaries) {
-    if (!seen.has(summary)) {
+    if (!seen.has(summary.text)) {
       unique.push(summary);
-      seen.add(summary);
+      seen.add(summary.text);
     }
   }
   return unique;

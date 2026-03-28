@@ -4,6 +4,7 @@ import {
   renderDoorBeyondCompact,
   renderPeriodicCheckCompact,
 } from '../../../dungeon/features/navigation/entry/entryRender';
+import { renderMonsterCompactNodes } from '../../../dungeon/features/monsters/render';
 import {
   DoorBeyond,
   PeriodicCheck,
@@ -23,6 +24,7 @@ import {
 } from '../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
 import { TreasurePotion } from '../../../dungeon/features/treasure/potion/potionTables';
 import { MonsterLevel } from '../../../dungeon/features/monsters/monsterLevel/monsterLevelTable';
+import { MonsterOne } from '../../../dungeon/features/monsters/monsterOne/monsterOneTables';
 import { MonsterTwo } from '../../../dungeon/features/monsters/monsterTwo/monsterTwoTable';
 import { CharacterClass } from '../../../dungeon/models/characterClass';
 import { CharacterRace } from '../../../tables/dungeon/monster/character/characterRace';
@@ -238,6 +240,88 @@ describe('character party compact rendering', () => {
 
     expect(markup).toContain('messageStrong');
     expect(markup).toContain('potion of gaseous form');
+  });
+
+  test('monster compact paragraphs emphasize the count and name', () => {
+    const monsterNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 7,
+      event: {
+        kind: 'monsterOne',
+        result: MonsterOne.Orc_7to12,
+        dungeonLevel: 1,
+        text: 'There are 6 orcs.',
+      },
+    };
+
+    const nodes = renderMonsterCompactNodes(monsterNode, () => undefined);
+    const paragraph = nodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'paragraph' }> =>
+        node.kind === 'paragraph'
+    );
+
+    if (!paragraph) {
+      throw new Error('monster compact paragraph not found');
+    }
+
+    const element = renderNode(paragraph, 0, 'monster-inline-test');
+    const markup = ReactDOMServer.renderToStaticMarkup(element);
+
+    expect(markup).toContain('messageStrong');
+    expect(markup).toContain('6 orcs');
+  });
+
+  test('wandering monster summaries preserve count and name emphasis', () => {
+    const monsterNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 7,
+      event: {
+        kind: 'monsterOne',
+        result: MonsterOne.Orc_7to12,
+        dungeonLevel: 1,
+        text: 'There are 6 orcs.',
+      },
+    };
+
+    const monsterLevelNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 17,
+      event: {
+        kind: 'monsterLevel',
+        result: MonsterLevel.One,
+        dungeonLevel: 1,
+      },
+      children: [monsterNode],
+    };
+
+    const periodicNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 20,
+      event: {
+        kind: 'periodicCheck',
+        result: PeriodicCheck.WanderingMonster,
+        level: 1,
+        avoidMonster: false,
+      },
+      children: [monsterLevelNode],
+    };
+
+    const nodes = renderPeriodicCheckCompact(periodicNode);
+    const paragraph = nodes.find(
+      (node): node is Extract<DungeonRenderNode, { kind: 'paragraph' }> =>
+        node.kind === 'paragraph' && node.text.includes('Wandering Monster:')
+    );
+
+    if (!paragraph) {
+      throw new Error('wandering monster paragraph not found');
+    }
+
+    const element = renderNode(paragraph, 0, 'wandering-monster-inline-test');
+    const markup = ReactDOMServer.renderToStaticMarkup(element);
+
+    expect(markup).toContain('messageStrong');
+    expect(markup).toContain('Wandering Monster:');
+    expect(markup).toContain('6 orcs');
   });
 
   test('treasure compact summaries preserve inline emphasis for resolved magic', () => {

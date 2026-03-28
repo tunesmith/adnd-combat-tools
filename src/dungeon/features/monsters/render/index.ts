@@ -103,16 +103,24 @@ export function renderMonsterCompactNodes(
   if (description.compactMessages && description.compactMessages.length > 0) {
     nodes.push(...description.compactMessages);
   } else if (compactText.length > 0) {
-    const segments = compactText
-      .split('\n')
-      .map((segment) => segment.trim())
-      .filter((segment) => segment.length > 0);
-    if (segments.length === 0) {
-      nodes.push({ kind: 'paragraph', text: `${compactText.trim()} ` });
-    } else {
-      segments.forEach((segment) => {
-        nodes.push({ kind: 'paragraph', text: `${segment} ` });
+    if (description.compactInline) {
+      nodes.push({
+        kind: 'paragraph',
+        text: `${compactText.trim()} `,
+        inline: description.compactInline,
       });
+    } else {
+      const segments = compactText
+        .split('\n')
+        .map((segment) => segment.trim())
+        .filter((segment) => segment.length > 0);
+      if (segments.length === 0) {
+        nodes.push({ kind: 'paragraph', text: `${compactText.trim()} ` });
+      } else {
+        segments.forEach((segment) => {
+          nodes.push({ kind: 'paragraph', text: `${segment} ` });
+        });
+      }
     }
   }
   if (description.appendPending) {

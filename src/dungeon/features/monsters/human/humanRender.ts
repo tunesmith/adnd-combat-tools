@@ -39,6 +39,7 @@ export function describeHumanMonster(
     label: humanLabel(event.result),
     detailParagraphs: textInfo.detailParagraphs,
     compactText: textInfo.compactText,
+    compactInline: textInfo.compactInline,
     appendPending: hasPendingChildren(node),
   };
 }

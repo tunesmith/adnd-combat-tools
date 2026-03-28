@@ -319,6 +319,22 @@ function formatWanderingMonsterText(encounterText: string): string {
     : `${rawText} `;
 }
 
+function formatWanderingMonsterSummary(
+  encounter: MonsterEncounterSummary
+): InlineText {
+  const text = formatWanderingMonsterText(encounter.text);
+  if (!encounter.inline) {
+    return { text };
+  }
+  return {
+    text,
+    inline: [
+      { kind: 'text', text: 'Wandering Monster: ' },
+      ...encounter.inline,
+    ],
+  };
+}
+
 function summarizeMonsterEncounterFromMonsterLevelNode(
   levelNode?: OutcomeEventNode
 ): MonsterEncounterSummary {
@@ -362,7 +378,7 @@ function summarizeMonsterEncounterFromMonsterNode(
     }
     const compact = description.compactText.trim();
     if (compact.length > 0) {
-      return { text: compact };
+      return { text: compact, inline: description.compactInline };
     }
   }
   switch (node.event.kind) {
@@ -577,7 +593,7 @@ function summarizePeriodicResult(
       ];
       const combined = joinSentenceInlineTexts([
         prefixSummary,
-        formatWanderingMonsterText(encounter.text),
+        formatWanderingMonsterSummary(encounter),
       ]);
       return {
         ...combined,
