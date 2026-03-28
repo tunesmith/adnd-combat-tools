@@ -396,7 +396,7 @@ export function resolveViaRegistry<T extends FeedLike>(
   setFeed?: React.Dispatch<React.SetStateAction<T[]>>,
   setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
-  currentFeedItem?: T,
+  currentFeedItem: T,
   session?: DungeonRandomSession
 ): boolean {
   const base = String(tp.id.split(':')[0] ?? '');
@@ -405,59 +405,27 @@ export function resolveViaRegistry<T extends FeedLike>(
   const heading = TABLE_HEADINGS[base] ?? base;
   const targetKey = tp.targetId;
 
-  if (currentFeedItem) {
-    const resolution = buildFeedResolution({
-      feedItem: currentFeedItem,
-      feedItemId,
-      preview: tp,
-      usedRoll,
-      targetKey,
-      heading,
-      session,
-    });
-    if (!resolution) return false;
-    if (setFeed) {
-      setFeed((prev) =>
-        prev.map((fi) => (fi.id === feedItemId ? resolution.nextFeedItem : fi))
-      );
-    }
-    markResolvedKeys(
-      feedItemId,
-      resolution.keyVariants,
-      setCollapsed,
-      setResolved
-    );
-    return true;
-  }
-
-  let resolved = false;
-
+  const resolution = buildFeedResolution({
+    feedItem: currentFeedItem,
+    feedItemId,
+    preview: tp,
+    usedRoll,
+    targetKey,
+    heading,
+    session,
+  });
+  if (!resolution) return false;
   if (setFeed) {
     setFeed((prev) =>
-      prev.map((fi) => {
-        if (fi.id !== feedItemId) return fi;
-        const resolution = buildFeedResolution({
-          feedItem: fi,
-          feedItemId,
-          preview: tp,
-          usedRoll,
-          targetKey,
-          heading,
-          session,
-        });
-        if (!resolution) return fi;
-        resolved = true;
-        markResolvedKeys(
-          feedItemId,
-          resolution.keyVariants,
-          setCollapsed,
-          setResolved
-        );
-        return resolution.nextFeedItem;
-      })
+      prev.map((fi) => (fi.id === feedItemId ? resolution.nextFeedItem : fi))
     );
   }
-  if (!resolved) return false;
+  markResolvedKeys(
+    feedItemId,
+    resolution.keyVariants,
+    setCollapsed,
+    setResolved
+  );
   return true;
 }
 

@@ -66,7 +66,7 @@ export function resolveDungeonFeedPreview(options: {
   shouldRoll: boolean;
   explicitRoll?: number;
   feedSequence?: number;
-  feedItem?: FeedItem;
+  feedItem: FeedItem;
   session: DungeonRandomSession;
   overrides: Record<string, number | undefined>;
   setOverrides: React.Dispatch<

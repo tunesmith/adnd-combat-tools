@@ -133,7 +133,7 @@ export function renderNode(
               : undefined
           }
           onUseOverride={() => {
-            if (!targetedPreview) return;
+            if (!targetedPreview || !feedItem) return;
             previewController?.onResolvePreview({
               preview: targetedPreview,
               feedItemId,
@@ -143,7 +143,7 @@ export function renderNode(
             });
           }}
           onAutoRoll={() => {
-            if (!targetedPreview) return;
+            if (!targetedPreview || !feedItem) return;
             previewController?.onResolvePreview({
               preview: targetedPreview,
               feedItemId,
@@ -153,7 +153,7 @@ export function renderNode(
             });
           }}
           onEntrySelect={(value) => {
-            if (!targetedPreview) return;
+            if (!targetedPreview || !feedItem) return;
             previewController?.onResolvePreview({
               preview: targetedPreview,
               feedItemId,

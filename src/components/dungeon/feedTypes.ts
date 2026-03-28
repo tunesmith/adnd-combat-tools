@@ -34,7 +34,7 @@ export type PreviewResolutionRequest = {
   shouldRoll: boolean;
   explicitRoll?: number;
   feedSequence?: number;
-  feedItem?: FeedItem;
+  feedItem: FeedItem;
 };
 
 export type PreviewScrollTarget = {
