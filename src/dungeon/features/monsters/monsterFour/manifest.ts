@@ -36,22 +36,22 @@ export const monsterFourTables: ReadonlyArray<DungeonTableDefinition> = [
   defineMonsterTable({
     id: 'monsterFour',
     heading: 'Monster (Level 4)',
-    resolver: resolveMonsterFour,
+    resolve: resolveMonsterFour,
     fallbackDungeonLevel: 1,
-    buildPreview: buildMonsterFourPreview,
+    preview: buildMonsterFourPreview,
   }),
   defineMonsterTable({
     id: 'dragonFourYounger',
     heading: 'Dragon (Level 4 Younger)',
-    resolver: resolveDragonFourYounger,
+    resolve: resolveDragonFourYounger,
     fallbackDungeonLevel: 4,
-    buildPreview: buildDragonFourYoungerPreview,
+    preview: buildDragonFourYoungerPreview,
   }),
   defineMonsterTable({
     id: 'dragonFourOlder',
     heading: 'Dragon (Level 4 Older)',
-    resolver: resolveDragonFourOlder,
+    resolve: resolveDragonFourOlder,
     fallbackDungeonLevel: 4,
-    buildPreview: buildDragonFourOlderPreview,
+    preview: buildDragonFourOlderPreview,
   }),
 ];

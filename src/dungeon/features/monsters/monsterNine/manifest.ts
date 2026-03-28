@@ -24,15 +24,15 @@ export const monsterNineTables: ReadonlyArray<DungeonTableDefinition> = [
   defineMonsterTable({
     id: 'monsterNine',
     heading: 'Monster (Level 9)',
-    resolver: resolveMonsterNine,
+    resolve: resolveMonsterNine,
     fallbackDungeonLevel: 1,
-    buildPreview: buildMonsterNinePreview,
+    preview: buildMonsterNinePreview,
   }),
   defineMonsterTable({
     id: 'dragonNine',
     heading: 'Dragon (Level 9)',
-    resolver: resolveDragonNine,
+    resolve: resolveDragonNine,
     fallbackDungeonLevel: 9,
-    buildPreview: buildDragonNinePreview,
+    preview: buildDragonNinePreview,
   }),
 ];

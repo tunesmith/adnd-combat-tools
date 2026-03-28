@@ -7,9 +7,9 @@ export const monsterLevelTables: ReadonlyArray<DungeonTableDefinition> = [
   defineMonsterTable({
     id: 'monsterLevel',
     heading: 'Monster Level',
-    resolver: resolveMonsterLevel,
+    resolve: resolveMonsterLevel,
     fallbackDungeonLevel: 1,
-    buildPreview: buildMonsterLevelPreview,
+    preview: buildMonsterLevelPreview,
     levelScopedEventPreview: true,
   }),
 ];

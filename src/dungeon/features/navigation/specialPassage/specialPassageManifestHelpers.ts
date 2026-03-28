@@ -1,13 +1,11 @@
-import { buildEventPreviewFromFactory } from '../../shared';
-import type { DungeonTableDefinition } from '../../types';
-import {
-  buildGalleryStairLocationPreview,
-  buildGalleryStairOccurrencePreview,
-  buildRiverBoatBankPreview,
-  buildRiverConstructionPreview,
-  buildSpecialPassagePreview,
-  buildStreamConstructionPreview,
-} from './specialPassagePreview';
+import type { TablePreviewFactory } from '../../../adapters/render/shared';
+import { defineRollOnlyTable } from '../../shared';
+import type {
+  CompactRenderer,
+  DetailRenderer,
+  DungeonTableDefinition,
+  ManualRollResolver,
+} from '../../types';
 import {
   resolveGalleryStairOccurrence,
   resolveRiverBoatBank,
@@ -18,47 +16,32 @@ type PostProcessChildren = NonNullable<
   DungeonTableDefinition['postProcessChildren']
 >;
 
-export const buildSpecialPassageEventPreview = (
-  node: Parameters<NonNullable<DungeonTableDefinition['buildEventPreview']>>[0]
-) =>
-  node.event.kind === 'specialPassage'
-    ? buildEventPreviewFromFactory(node, buildSpecialPassagePreview)
-    : undefined;
+type SpecialPassageRenderConfig = {
+  detail: DetailRenderer;
+  compact: CompactRenderer;
+};
 
-export const buildGalleryStairLocationEventPreview = (
-  node: Parameters<NonNullable<DungeonTableDefinition['buildEventPreview']>>[0]
-) =>
-  node.event.kind === 'galleryStairLocation'
-    ? buildEventPreviewFromFactory(node, buildGalleryStairLocationPreview)
-    : undefined;
-
-export const buildGalleryStairOccurrenceEventPreview = (
-  node: Parameters<NonNullable<DungeonTableDefinition['buildEventPreview']>>[0]
-) =>
-  node.event.kind === 'galleryStairOccurrence'
-    ? buildEventPreviewFromFactory(node, buildGalleryStairOccurrencePreview)
-    : undefined;
-
-export const buildStreamConstructionEventPreview = (
-  node: Parameters<NonNullable<DungeonTableDefinition['buildEventPreview']>>[0]
-) =>
-  node.event.kind === 'streamConstruction'
-    ? buildEventPreviewFromFactory(node, buildStreamConstructionPreview)
-    : undefined;
-
-export const buildRiverConstructionEventPreview = (
-  node: Parameters<NonNullable<DungeonTableDefinition['buildEventPreview']>>[0]
-) =>
-  node.event.kind === 'riverConstruction'
-    ? buildEventPreviewFromFactory(node, buildRiverConstructionPreview)
-    : undefined;
-
-export const buildRiverBoatBankEventPreview = (
-  node: Parameters<NonNullable<DungeonTableDefinition['buildEventPreview']>>[0]
-) =>
-  node.event.kind === 'riverBoatBank'
-    ? buildEventPreviewFromFactory(node, buildRiverBoatBankPreview)
-    : undefined;
+export function defineSpecialPassageTable(options: {
+  id: string;
+  heading: string;
+  event: string;
+  resolve: ManualRollResolver;
+  render: SpecialPassageRenderConfig;
+  preview: TablePreviewFactory;
+  postProcessChildren?: PostProcessChildren;
+}): DungeonTableDefinition {
+  return {
+    ...defineRollOnlyTable({
+      id: options.id,
+      heading: options.heading,
+      event: options.event,
+      resolve: options.resolve,
+      render: options.render,
+      preview: options.preview,
+    }),
+    postProcessChildren: options.postProcessChildren,
+  };
+}
 
 export const postProcessGalleryStairLocationChildren: PostProcessChildren = (
   node,

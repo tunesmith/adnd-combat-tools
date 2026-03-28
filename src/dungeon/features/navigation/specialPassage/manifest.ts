@@ -29,90 +29,79 @@ import {
   resolveStreamConstruction,
 } from './specialPassageResolvers';
 import {
-  buildGalleryStairLocationEventPreview,
-  buildGalleryStairOccurrenceEventPreview,
-  buildRiverBoatBankEventPreview,
-  buildRiverConstructionEventPreview,
-  buildSpecialPassageEventPreview,
-  buildStreamConstructionEventPreview,
+  defineSpecialPassageTable,
   postProcessGalleryStairLocationChildren,
   postProcessRiverConstructionChildren,
 } from './specialPassageManifestHelpers';
-import { NO_COMPACT_RENDER, withoutAppend, wrapResolver } from '../../shared';
+import { NO_COMPACT_RENDER, withoutAppend } from '../../shared';
 
 export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
-  {
+  defineSpecialPassageTable({
     id: 'specialPassage',
     heading: 'Special Passage',
-    resolver: wrapResolver(resolveSpecialPassage),
-    renderers: {
-      renderDetail: renderSpecialPassageDetail,
-      renderCompact: withoutAppend(renderSpecialPassageCompactNodes),
+    event: 'specialPassage',
+    resolve: resolveSpecialPassage,
+    render: {
+      detail: renderSpecialPassageDetail,
+      compact: withoutAppend(renderSpecialPassageCompactNodes),
     },
-    buildPreview: buildSpecialPassagePreview,
-    buildEventPreview: buildSpecialPassageEventPreview,
-    resolvePending: () => resolveSpecialPassage({}),
-  },
-  {
+    preview: buildSpecialPassagePreview,
+  }),
+  defineSpecialPassageTable({
     id: 'galleryStairLocation',
     heading: 'Gallery Stair Location',
-    resolver: wrapResolver(resolveGalleryStairLocation),
-    renderers: {
-      renderDetail: renderGalleryStairLocationDetail,
-      renderCompact: renderGalleryStairLocationCompact,
+    event: 'galleryStairLocation',
+    resolve: resolveGalleryStairLocation,
+    render: {
+      detail: renderGalleryStairLocationDetail,
+      compact: renderGalleryStairLocationCompact,
     },
-    buildPreview: buildGalleryStairLocationPreview,
-    buildEventPreview: buildGalleryStairLocationEventPreview,
-    resolvePending: () => resolveGalleryStairLocation({}),
+    preview: buildGalleryStairLocationPreview,
     postProcessChildren: postProcessGalleryStairLocationChildren,
-  },
-  {
+  }),
+  defineSpecialPassageTable({
     id: 'galleryStairOccurrence',
     heading: 'Gallery Stair Occurrence',
-    resolver: wrapResolver(resolveGalleryStairOccurrence),
-    renderers: {
-      renderDetail: renderGalleryStairOccurrenceDetail,
-      renderCompact: withoutAppend(renderGalleryStairOccurrenceCompact),
+    event: 'galleryStairOccurrence',
+    resolve: resolveGalleryStairOccurrence,
+    render: {
+      detail: renderGalleryStairOccurrenceDetail,
+      compact: withoutAppend(renderGalleryStairOccurrenceCompact),
     },
-    buildPreview: buildGalleryStairOccurrencePreview,
-    buildEventPreview: buildGalleryStairOccurrenceEventPreview,
-    resolvePending: () => resolveGalleryStairOccurrence({}),
-  },
-  {
+    preview: buildGalleryStairOccurrencePreview,
+  }),
+  defineSpecialPassageTable({
     id: 'streamConstruction',
     heading: 'Stream Construction',
-    resolver: wrapResolver(resolveStreamConstruction),
-    renderers: {
-      renderDetail: renderStreamConstructionDetail,
-      renderCompact: NO_COMPACT_RENDER,
+    event: 'streamConstruction',
+    resolve: resolveStreamConstruction,
+    render: {
+      detail: renderStreamConstructionDetail,
+      compact: NO_COMPACT_RENDER,
     },
-    buildPreview: buildStreamConstructionPreview,
-    buildEventPreview: buildStreamConstructionEventPreview,
-    resolvePending: () => resolveStreamConstruction({}),
-  },
-  {
+    preview: buildStreamConstructionPreview,
+  }),
+  defineSpecialPassageTable({
     id: 'riverConstruction',
     heading: 'River Construction',
-    resolver: wrapResolver(resolveRiverConstruction),
-    renderers: {
-      renderDetail: renderRiverConstructionDetail,
-      renderCompact: renderRiverConstructionCompact,
+    event: 'riverConstruction',
+    resolve: resolveRiverConstruction,
+    render: {
+      detail: renderRiverConstructionDetail,
+      compact: renderRiverConstructionCompact,
     },
-    buildPreview: buildRiverConstructionPreview,
-    buildEventPreview: buildRiverConstructionEventPreview,
-    resolvePending: () => resolveRiverConstruction({}),
+    preview: buildRiverConstructionPreview,
     postProcessChildren: postProcessRiverConstructionChildren,
-  },
-  {
+  }),
+  defineSpecialPassageTable({
     id: 'riverBoatBank',
     heading: 'Boat Bank',
-    resolver: wrapResolver(resolveRiverBoatBank),
-    renderers: {
-      renderDetail: (_node, _append) => [],
-      renderCompact: NO_COMPACT_RENDER,
+    event: 'riverBoatBank',
+    resolve: resolveRiverBoatBank,
+    render: {
+      detail: (_node, _append) => [],
+      compact: NO_COMPACT_RENDER,
     },
-    buildPreview: buildRiverBoatBankPreview,
-    buildEventPreview: buildRiverBoatBankEventPreview,
-    resolvePending: () => resolveRiverBoatBank({}),
-  },
+    preview: buildRiverBoatBankPreview,
+  }),
 ];

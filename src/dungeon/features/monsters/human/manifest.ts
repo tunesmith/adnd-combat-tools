@@ -7,8 +7,8 @@ export const humanTables: ReadonlyArray<DungeonTableDefinition> = [
   defineMonsterTable({
     id: 'human',
     heading: 'Human Subtable',
-    resolver: resolveHuman,
+    resolve: resolveHuman,
     fallbackDungeonLevel: 1,
-    buildPreview: buildHumanPreview,
+    preview: buildHumanPreview,
   }),
 ];

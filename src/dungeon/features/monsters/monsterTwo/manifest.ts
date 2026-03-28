@@ -13,8 +13,8 @@ export const monsterTwoTables: ReadonlyArray<DungeonTableDefinition> = [
   defineMonsterTable({
     id: 'monsterTwo',
     heading: 'Monster (Level 2)',
-    resolver: resolveMonsterTwo,
+    resolve: resolveMonsterTwo,
     fallbackDungeonLevel: 1,
-    buildPreview: buildMonsterTwoPreview,
+    preview: buildMonsterTwoPreview,
   }),
 ];

@@ -77,28 +77,26 @@ function createMonsterDungeonLevelContextHandlers(
 export function defineMonsterTable(options: {
   id: string;
   heading: string;
-  resolver: (
-    options?: MonsterDungeonLevelResolverOptions
-  ) => DungeonOutcomeNode;
+  resolve: (options?: MonsterDungeonLevelResolverOptions) => DungeonOutcomeNode;
   fallbackDungeonLevel: number;
-  buildPreview: TablePreviewFactory;
+  preview: TablePreviewFactory;
   levelScopedEventPreview?: boolean;
 }): DungeonTableDefinition {
   const { resolvePending, registry } = createMonsterDungeonLevelContextHandlers(
-    options.resolver,
+    options.resolve,
     options.fallbackDungeonLevel
   );
 
   return {
     id: options.id,
     heading: options.heading,
-    resolver: wrapResolver(options.resolver),
+    resolver: wrapResolver(options.resolve),
     renderers: {
       renderDetail: renderMonsterDetailNodes,
       renderCompact: renderMonsterCompactNodes,
     },
-    buildPreview: options.buildPreview,
-    buildEventPreview: createMonsterEventPreviewBuilder(options.buildPreview, {
+    buildPreview: options.preview,
+    buildEventPreview: createMonsterEventPreviewBuilder(options.preview, {
       levelScopedTableId: options.levelScopedEventPreview,
     }),
     resolvePending,
