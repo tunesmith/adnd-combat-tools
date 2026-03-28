@@ -30,6 +30,32 @@ function findParagraph(
   return messages.find(isParagraph);
 }
 
+function findExitList(
+  messages: DungeonMessage[]
+): Extract<DungeonMessage, { kind: 'exit-list' }> | undefined {
+  return messages.find(
+    (node): node is Extract<DungeonMessage, { kind: 'exit-list' }> =>
+      node.kind === 'exit-list'
+  );
+}
+
+function collectCompactText(messages: DungeonMessage[]): string {
+  return messages
+    .map((node) => {
+      if (node.kind === 'paragraph') {
+        return node.text.trim();
+      }
+      if (node.kind === 'exit-list') {
+        return [node.intro, ...node.items, node.footnote]
+          .filter((text): text is string => !!text && text.trim().length > 0)
+          .join(' ');
+      }
+      return '';
+    })
+    .filter((text) => text.length > 0)
+    .join(' ');
+}
+
 function assertEvent(node: DungeonOutcomeNode): OutcomeEventNode {
   if (node.type !== 'event') {
     throw new Error('Expected event outcome');
@@ -54,10 +80,12 @@ describe('Compact rendering for exits', () => {
       .spyOn(dungeonLookup, 'rollDice')
       .mockImplementationOnce(() => 1);
     const messages = compactNodesFor(resolveRoomDimensions({ roll: 1 }));
-    const para = findParagraph(messages);
-    expect(para).toBeTruthy();
-    expect(para?.text.trim()).toContain('There is 1 additional door');
-    expect(para?.text).not.toContain('See the exit location rolls below');
+    const exitList = findExitList(messages);
+    expect(exitList).toBeTruthy();
+    expect(exitList?.intro).toContain('There is 1 additional door');
+    expect(exitList?.footnote).toBe(
+      'If an exit abuts mapped space, use the option shown in parentheses.'
+    );
     spy.mockRestore();
 
     const detail = resolveNumberOfExits({
@@ -83,9 +111,9 @@ describe('Compact rendering for exits', () => {
       .mockImplementationOnce(() => 17) // selects OneToFour bucket
       .mockImplementationOnce(() => 3); // yields count = 3
     const messages = compactNodesFor(resolveRoomDimensions({ roll: 3 }));
-    const para = findParagraph(messages);
-    expect(para?.text).toContain('(1d4 result: 3)');
-    expect(para?.text).toContain('There are 3 additional doors');
+    const exitList = findExitList(messages);
+    expect(exitList?.intro).toContain('There are 3 additional doors');
+    expect(exitList?.intro).not.toContain('1d4 result');
     spy.mockRestore();
   });
 
@@ -94,9 +122,8 @@ describe('Compact rendering for exits', () => {
       .spyOn(dungeonLookup, 'rollDice')
       .mockImplementationOnce(() => 4); // TwoThree600 -> 3 passages when area > 600
     const messages = compactNodesFor(resolveChamberDimensions({ roll: 14 }));
-    const para = findParagraph(messages);
-    expect(para?.text).toContain('There are 3 additional passages');
-    expect(para?.text).not.toContain('location and direction rolls below');
+    const exitList = findExitList(messages);
+    expect(exitList?.intro).toContain('There are 3 additional passages');
     spy.mockRestore();
   });
 
@@ -105,9 +132,9 @@ describe('Compact rendering for exits', () => {
       .spyOn(dungeonLookup, 'rollDice')
       .mockImplementationOnce(() => 19);
     const messages = compactNodesFor(resolveRoomDimensions({ roll: 2 }));
-    const para = findParagraph(messages);
-    expect(para?.text).toContain('There is a passage leaving this room');
-    expect(para?.text).not.toContain(
+    const compactText = collectCompactText(messages);
+    expect(compactText).toContain('There is a passage leaving this room');
+    expect(compactText).not.toContain(
       'See the exit location and direction rolls below'
     );
     spy.mockRestore();

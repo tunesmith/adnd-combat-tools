@@ -491,7 +491,11 @@ function summarizePeriodicResult(
       const treasureMessages = chamber
         ? collectTreasureCompactMessages(chamber)
         : [];
-      const extraNodes = [...partyMessages, ...treasureMessages];
+      const extraNodes = [
+        ...(detail.nodes ?? []),
+        ...partyMessages,
+        ...treasureMessages,
+      ];
       const combined = joinSentenceInlineTexts([base.compact, detail]);
       return {
         ...combined,
@@ -514,7 +518,11 @@ function summarizePeriodicResult(
       const treasureMessages = chamber
         ? collectTreasureCompactMessages(chamber)
         : [];
-      const extraNodes = [...partyMessages, ...treasureMessages];
+      const extraNodes = [
+        ...(summary.nodes ?? []),
+        ...partyMessages,
+        ...treasureMessages,
+      ];
       return {
         ...summary,
         nodes: extraNodes.length > 0 ? extraNodes : undefined,
@@ -634,7 +642,7 @@ function buildDoorBeyondNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
   const description = formatDoorBeyond(outcome.event.result, {
     doorAhead: outcome.event.doorAhead ?? false,
   });
-  const paragraphs: DungeonMessage[] = [];
+  const paragraphs: DungeonRenderNode[] = [];
   if (description.trim().length > 0) {
     paragraphs.push({ kind: 'paragraph', text: description });
   }
@@ -667,6 +675,9 @@ function buildDoorBeyondNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
     if (detail.text.length > 0) {
       paragraphs.push({ kind: 'paragraph', ...detail });
     }
+    if (detail.nodes && detail.nodes.length > 0) {
+      paragraphs.push(...detail.nodes);
+    }
     if (room) {
       const extra = [
         ...collectCharacterPartyMessages(room, 'compact'),
@@ -684,6 +695,9 @@ function buildDoorBeyondNodes(outcome: OutcomeEventNode): DungeonRenderNode[] {
       : { text: '' };
     if (detail.text.length > 0) {
       paragraphs.push({ kind: 'paragraph', ...detail });
+    }
+    if (detail.nodes && detail.nodes.length > 0) {
+      paragraphs.push(...detail.nodes);
     }
     if (chamber) {
       const extra = [

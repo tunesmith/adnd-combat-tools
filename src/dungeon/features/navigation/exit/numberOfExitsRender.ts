@@ -63,18 +63,42 @@ export function renderNumberOfExitsCompact(
     kind: 'bullet-list',
     items: [`roll: ${node.roll} — ${label}`],
   };
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  const summary = describeNumberOfExitsCompactSummary(node);
+  if (summary.text.length > 0) {
+    nodes.push({ kind: 'paragraph', text: summary.text });
+  }
+  if (summary.nodes && summary.nodes.length > 0) {
+    nodes.push(...summary.nodes);
+  }
+  return nodes;
+}
+
+export function describeNumberOfExitsCompactSummary(node: OutcomeEventNode): {
+  text: string;
+  nodes?: DungeonMessage[];
+} {
+  if (node.event.kind !== 'numberOfExits') return { text: '' };
   const summary = describeNumberOfExits(node, { includeInstructions: false });
   const exitMeta = collectExitSummariesWithMeta(node);
+  if ((node.event.count ?? 0) > 0 && exitMeta.items.length > 0) {
+    return {
+      text: '',
+      nodes: [
+        {
+          kind: 'exit-list',
+          intro: `${summary.compactText.trim()}:`,
+          items: exitMeta.items,
+          footnote: exitMeta.hasAlternative ? EXIT_ALTERNATIVE_NOTE : undefined,
+        },
+      ],
+    };
+  }
   const combinedParts = [summary.compactText, ...exitMeta.sentences];
   if (exitMeta.hasAlternative) {
     combinedParts.push(EXIT_ALTERNATIVE_NOTE);
   }
-  const combined = joinSegments(combinedParts);
-  const nodes: DungeonRenderNode[] = [heading, bullet];
-  if (combined.length > 0) {
-    nodes.push({ kind: 'paragraph', text: combined });
-  }
-  return nodes;
+  return { text: joinSegments(combinedParts) };
 }
 
 export function buildNumberOfExitsPreview(
@@ -138,11 +162,13 @@ function hasExitAlternative(node: OutcomeEventNode | undefined): boolean {
 
 function collectExitSummariesWithMeta(node: OutcomeEventNode): {
   sentences: string[];
+  items: string[];
   hasAlternative: boolean;
 } {
   if (node.event.kind !== 'numberOfExits')
-    return { sentences: [], hasAlternative: false };
+    return { sentences: [], items: [], hasAlternative: false };
   const sentences: string[] = [];
+  const items: string[] = [];
   let hasAlternative = false;
   for (const child of node.children ?? []) {
     if (child.type !== 'event') continue;
@@ -169,6 +195,15 @@ function collectExitSummariesWithMeta(node: OutcomeEventNode): {
           altResult
         );
         if (dirText.length > 0) sentences.push(dirText);
+        const item = formatPassageExitListItem(
+          event.result,
+          (direction.event as { result?: unknown }).result as ExitDirection,
+          altResult
+        );
+        if (item.length > 0) items.push(item);
+      } else {
+        const item = formatExitListLocation(event.result);
+        if (item.length > 0) items.push(item);
       }
     } else if (event.kind === 'doorExitLocation') {
       const alternative = findChildEvent(child, 'exitAlternative');
@@ -194,10 +229,14 @@ function collectExitSummariesWithMeta(node: OutcomeEventNode): {
             ? ` (${inline})`
             : ` ${inline}`;
           sentences.push(`${trimmedSummary}${suffix}.`);
+          const item = formatDoorExitListItem(event.result, altResult);
+          if (item.length > 0) items.push(item);
           continue;
         }
       }
       if (summary.length > 0) sentences.push(summary);
+      const item = formatDoorExitListItem(event.result, altResult);
+      if (item.length > 0) items.push(item);
       const direction = findChildEvent(child, 'exitDirection');
       if (direction && direction.type === 'event') {
         const dirText = formatDirectionSentence(
@@ -208,7 +247,7 @@ function collectExitSummariesWithMeta(node: OutcomeEventNode): {
       }
     }
   }
-  return { sentences, hasAlternative };
+  return { sentences, items, hasAlternative };
 }
 
 function formatNumberOfExits(
@@ -243,10 +282,9 @@ function formatNumberOfExits(
   }
 
   if (result === NumberOfExits.OneToFour) {
-    const rollNote = `(1d4 result: ${count || 1})`;
     const prefix = count === 1 ? 'There is' : 'There are';
     const nounChoice = count === 1 ? nounSingular : nounPlural;
-    return `${prefix} ${count || 1} additional ${nounChoice} ${rollNote}`;
+    return `${prefix} ${count || 1} additional ${nounChoice}`;
   }
 
   const prefix = count === 1 ? 'There is' : 'There are';
@@ -272,11 +310,12 @@ function formatExit(
 
 function formatDirectionSentence(
   result: ExitDirection,
-  alternative?: ExitAlternative
+  alternative?: ExitAlternative,
+  noteMarker = ''
 ): string {
   const altText =
     alternative !== undefined
-      ? formatInlineAlternative('passage', alternative)
+      ? `${formatInlineAlternative('passage', alternative)}${noteMarker}`
       : '';
   const suffix = altText.length > 0 ? ` (${altText})` : '';
   switch (result) {
@@ -287,6 +326,35 @@ function formatDirectionSentence(
     default:
       return `The passage continues straight ahead${suffix}.`;
   }
+}
+
+function formatPassageExitListItem(
+  result: ExitLocation,
+  direction: ExitDirection,
+  alternative?: ExitAlternative
+): string {
+  return joinSegments([
+    formatExitListLocation(result),
+    formatDirectionSentence(direction, alternative, '*'),
+  ]);
+}
+
+function formatDoorExitListItem(
+  result: ExitLocation,
+  alternative?: ExitAlternative
+): string {
+  const position = capitalizePhrase(formatExitLocation(result));
+  const altText =
+    alternative !== undefined
+      ? formatInlineAlternative('door', alternative)
+      : '';
+  const suffix = altText.length > 0 ? ` (${altText}*)` : '';
+  return `${position}${suffix}.`;
+}
+
+function formatExitListLocation(result: ExitLocation): string {
+  const position = capitalizePhrase(formatExitLocation(result));
+  return position.length > 0 ? `${position}.` : '';
 }
 
 function formatExitLocation(result: ExitLocation): string {
@@ -302,6 +370,11 @@ function formatExitLocation(result: ExitLocation): string {
     default:
       return '';
   }
+}
+
+function capitalizePhrase(text: string): string {
+  if (text.length === 0) return text;
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 }
 
 function formatRange(range: number[]): string {

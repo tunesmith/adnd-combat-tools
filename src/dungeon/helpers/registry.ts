@@ -271,7 +271,11 @@ function updateResolvedBlock<T extends FeedLike>(
           skippingOld = false;
         } else if (node.kind === 'heading' && node.text === headingText) {
           // keep skipping
-        } else if (node.kind === 'bullet-list' || node.kind === 'paragraph') {
+        } else if (
+          node.kind === 'bullet-list' ||
+          node.kind === 'paragraph' ||
+          node.kind === 'exit-list'
+        ) {
           // skip
         } else {
           skippingOld = false;

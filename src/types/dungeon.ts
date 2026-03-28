@@ -62,6 +62,13 @@ type DungeonBulletList = {
   items: string[];
 };
 
+type DungeonExitList = {
+  kind: 'exit-list';
+  intro: string;
+  items: string[];
+  footnote?: string;
+};
+
 type DungeonCharacterPartyMessage = {
   kind: 'character-party';
   summary: PartySummary;
@@ -132,6 +139,7 @@ export type DungeonMessage =
   | DungeonParagraph
   | DungeonHeading
   | DungeonBulletList
+  | DungeonExitList
   | DungeonCharacterPartyMessage
   | DungeonIounStonesMessage
   | DungeonPrayerBeadsMessage

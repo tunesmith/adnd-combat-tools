@@ -2,7 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
-import type { InlineText } from '../../../helpers/inlineContent';
+import type {
+  InlineText,
+  InlineTextWithNodes,
+} from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { joinSentenceInlineTexts } from '../../../helpers/inlineContent';
 import {
@@ -26,7 +29,7 @@ import {
 
 type StairsDeps = {
   renderChamberSummary?: (node: OutcomeEventNode) => string;
-  renderChamberSummaryInline?: (node: OutcomeEventNode) => InlineText;
+  renderChamberSummaryInline?: (node: OutcomeEventNode) => InlineTextWithNodes;
 };
 
 const DEFAULT_DEPS: Required<StairsDeps> = {
@@ -63,13 +66,10 @@ export function renderStairsDetail(
 export function renderStairsCompactInline(
   node: OutcomeEventNode,
   deps?: StairsDeps
-): InlineText {
+): InlineTextWithNodes {
   if (node.event.kind !== 'stairs') return { text: '' };
   const summary = describeStairs(node, withDefaults(deps));
-  return {
-    text: summary.compactText,
-    inline: summary.compactInline.inline,
-  };
+  return summary.compactInline;
 }
 
 export function renderStairsCompactNodes(
@@ -88,7 +88,14 @@ export function renderStairsCompactNodes(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const text = renderStairsCompactInline(outcome, deps);
-  return [heading, bullet, { kind: 'paragraph', ...text }];
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (text.text.length > 0) {
+    nodes.push({ kind: 'paragraph', ...text });
+  }
+  if (text.nodes && text.nodes.length > 0) {
+    nodes.push(...text.nodes);
+  }
+  return nodes;
 }
 
 function describeStairs(
@@ -97,7 +104,7 @@ function describeStairs(
 ): {
   detailParagraphs: DungeonMessage[];
   compactText: string;
-  compactInline: InlineText;
+  compactInline: InlineTextWithNodes;
 } {
   if (node.event.kind !== 'stairs') {
     return {
@@ -110,6 +117,7 @@ function describeStairs(
   const detailParagraphs: DungeonMessage[] = [];
   const compactTextSegments: string[] = [];
   const compactInlineSegments: Array<string | InlineText> = [];
+  const compactNodes: DungeonRenderNode[] = [];
   const append = (
     raw: string,
     options?: { detail?: boolean; compact?: boolean }
@@ -162,13 +170,20 @@ function describeStairs(
         compactTextSegments.push(chamberSummary.text.trim());
         compactInlineSegments.push(chamberSummary);
       }
+      if (chamberSummary.nodes && chamberSummary.nodes.length > 0) {
+        compactNodes.push(...chamberSummary.nodes);
+      }
     }
   }
 
+  const compactInline = joinSentenceInlineTexts(compactInlineSegments);
   return {
     detailParagraphs,
     compactText: joinCompactSegments(compactTextSegments),
-    compactInline: joinSentenceInlineTexts(compactInlineSegments),
+    compactInline:
+      compactNodes.length > 0
+        ? { ...compactInline, nodes: compactNodes }
+        : compactInline,
   };
 }
 

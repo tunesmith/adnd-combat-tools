@@ -1,11 +1,16 @@
 import type {
   DungeonInlineContent,
   DungeonInlineSegment,
+  DungeonRenderNode,
 } from '../../types/dungeon';
 
 export type InlineText = {
   text: string;
   inline?: DungeonInlineContent;
+};
+
+export type InlineTextWithNodes = InlineText & {
+  nodes?: DungeonRenderNode[];
 };
 
 type InlinePart = string | DungeonInlineContent | InlineText;

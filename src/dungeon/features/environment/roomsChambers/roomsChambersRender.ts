@@ -2,7 +2,10 @@ import type {
   DungeonMessage,
   DungeonRenderNode,
 } from '../../../../types/dungeon';
-import type { InlineText } from '../../../helpers/inlineContent';
+import type {
+  InlineText,
+  InlineTextWithNodes,
+} from '../../../helpers/inlineContent';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import {
   buildPreview,
@@ -11,7 +14,7 @@ import {
   type TablePreviewFactory,
 } from '../../../adapters/render/shared';
 import { joinSentenceInlineTexts } from '../../../helpers/inlineContent';
-import { renderNumberOfExitsCompact } from '../../navigation/exit/numberOfExitsRender';
+import { describeNumberOfExitsCompactSummary } from '../../navigation/exit/numberOfExitsRender';
 import {
   collectCharacterPartyMessages,
   describeMonsterOutcome,
@@ -59,9 +62,10 @@ export function renderRoomDimensionsDetail(
 
 export function renderRoomDimensionsCompactInline(
   node: OutcomeEventNode
-): InlineText {
+): InlineTextWithNodes {
   if (node.event.kind !== 'roomDimensions') return { text: '' };
   const segments: Array<string | InlineText> = [];
+  const nodes: DungeonRenderNode[] = [];
   const base = formatRoomDimensions(node.event.result).trim();
   if (base.length > 0) segments.push(base);
   if (node.event.result === RoomDimensions.Unusual) {
@@ -81,13 +85,16 @@ export function renderRoomDimensionsCompactInline(
     }
   }
   if (exits && exits.event.kind === 'numberOfExits') {
-    const exitNodes = renderNumberOfExitsCompact(exits);
-    const paragraph = exitNodes.find((n) => n.kind === 'paragraph');
-    if (paragraph && paragraph.kind === 'paragraph') {
-      segments.push(paragraph.text.trim());
+    const exitSummary = describeNumberOfExitsCompactSummary(exits);
+    if (exitSummary.text.trim().length > 0) {
+      segments.push(exitSummary.text.trim());
+    }
+    if (exitSummary.nodes && exitSummary.nodes.length > 0) {
+      nodes.push(...exitSummary.nodes);
     }
   }
-  return joinSentenceInlineTexts(segments);
+  const combined = joinSentenceInlineTexts(segments);
+  return nodes.length > 0 ? { ...combined, nodes } : combined;
 }
 
 export function renderRoomDimensionsCompactNodes(
@@ -106,11 +113,13 @@ export function renderRoomDimensionsCompactNodes(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const text = renderRoomDimensionsCompactInline(outcome);
-  const nodes: DungeonRenderNode[] = [
-    heading,
-    bullet,
-    { kind: 'paragraph', ...text },
-  ];
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (text.text.length > 0) {
+    nodes.push({ kind: 'paragraph', ...text });
+  }
+  if (text.nodes && text.nodes.length > 0) {
+    nodes.push(...text.nodes);
+  }
   const seen = new Set<string>();
   const appendParties = (messages: DungeonMessage[]) => {
     for (const message of messages) {
@@ -172,11 +181,13 @@ export function renderChamberDimensionsCompact(
     items: [`roll: ${outcome.roll} — ${label}`],
   };
   const text = describeChamberDimensionsInline(outcome);
-  const nodes: DungeonRenderNode[] = [
-    heading,
-    bullet,
-    { kind: 'paragraph', ...text },
-  ];
+  const nodes: DungeonRenderNode[] = [heading, bullet];
+  if (text.text.length > 0) {
+    nodes.push({ kind: 'paragraph', ...text });
+  }
+  if (text.nodes && text.nodes.length > 0) {
+    nodes.push(...text.nodes);
+  }
   const seen = new Set<string>();
   const appendParties = (messages: DungeonMessage[]) => {
     for (const message of messages) {
@@ -201,9 +212,10 @@ export function describeChamberDimensions(node: OutcomeEventNode): string {
 
 export function describeChamberDimensionsInline(
   node: OutcomeEventNode
-): InlineText {
+): InlineTextWithNodes {
   if (node.event.kind !== 'chamberDimensions') return { text: '' };
   const segments: Array<string | InlineText> = [];
+  const nodes: DungeonRenderNode[] = [];
   const base = formatChamberDimensions(node.event.result).trim();
   if (base.length > 0) segments.push(base);
   if (node.event.result === ChamberDimensions.Unusual) {
@@ -223,13 +235,16 @@ export function describeChamberDimensionsInline(
     }
   }
   if (exits && exits.event.kind === 'numberOfExits') {
-    const exitNodes = renderNumberOfExitsCompact(exits);
-    const paragraph = exitNodes.find((n) => n.kind === 'paragraph');
-    if (paragraph && paragraph.kind === 'paragraph') {
-      segments.push(paragraph.text.trim());
+    const exitSummary = describeNumberOfExitsCompactSummary(exits);
+    if (exitSummary.text.trim().length > 0) {
+      segments.push(exitSummary.text.trim());
+    }
+    if (exitSummary.nodes && exitSummary.nodes.length > 0) {
+      nodes.push(...exitSummary.nodes);
     }
   }
-  return joinSentenceInlineTexts(segments);
+  const combined = joinSentenceInlineTexts(segments);
+  return nodes.length > 0 ? { ...combined, nodes } : combined;
 }
 
 export function renderChamberRoomContentsDetail(

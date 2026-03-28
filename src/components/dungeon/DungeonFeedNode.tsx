@@ -56,6 +56,20 @@ export function renderNode(
           ))}
         </ul>
       );
+    case 'exit-list':
+      return (
+        <div key={key} className={styles['messageExitList']}>
+          <p className={styles['exitListIntro']}>{node.intro}</p>
+          <ol className={styles['exitListItems']}>
+            {node.items.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ol>
+          {node.footnote ? (
+            <p className={styles['exitListFootnote']}>* {node.footnote}</p>
+          ) : null}
+        </div>
+      );
     case 'character-party':
       return node.display === 'compact' ? (
         <CharacterPartyCompact key={key} summary={node.summary} />

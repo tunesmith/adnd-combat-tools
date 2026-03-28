@@ -4,13 +4,18 @@ import type { DungeonRenderNode } from '../../../../../types/dungeon';
 
 function collectParagraphText(messages: DungeonRenderNode[]): string {
   return messages
-    .filter(
-      (
-        node
-      ): node is Extract<typeof node, { kind: 'paragraph'; text: string }> =>
-        node.kind === 'paragraph'
-    )
-    .map((node) => node.text.trim())
+    .map((node) => {
+      if (node.kind === 'paragraph') {
+        return node.text.trim();
+      }
+      if (node.kind === 'exit-list') {
+        return [node.intro, ...node.items, node.footnote]
+          .filter((text): text is string => !!text && text.trim().length > 0)
+          .join(' ');
+      }
+      return '';
+    })
+    .filter((text) => text.length > 0)
     .join(' ');
 }
 
@@ -53,13 +58,11 @@ describe('Compact passage rendering for unusual chambers', () => {
     expect(compactText).toContain('It is triangular.');
     expect(compactText).toContain('It is about 2,700 sq. ft.');
     expect(compactText).toContain('There are 2 additional passages');
-    expect(compactText).toContain('Passage 1 of 2: opposite wall.');
     expect(compactText).toContain(
-      'The passage continues straight ahead (or secret door).'
+      'Opposite wall. The passage continues straight ahead (or secret door*).'
     );
-    expect(compactText).toContain('Passage 2 of 2: right wall.');
     expect(compactText).toContain(
-      'The passage angles 45° to the left (or one-way door).'
+      'Right wall. The passage angles 45° to the left (or one-way door*).'
     );
     expect(compactText).toContain(
       'If an exit abuts mapped space, use the option shown in parentheses.'

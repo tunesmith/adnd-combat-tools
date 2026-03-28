@@ -99,6 +99,11 @@ interface RenderSnapshot {
   headings(): string[];
   paragraphs(): string[];
   bulletLists(): string[][];
+  exitLists(): Array<{
+    intro: string;
+    items: string[];
+    footnote?: string;
+  }>;
   previewIds(): string[];
   previewTitles(): string[];
   previews(): AnyDungeonTablePreview[];
@@ -566,6 +571,16 @@ function createSnapshot(nodes: DungeonRenderNode[]): RenderSnapshot {
         n.kind === 'bullet-list'
     )
     .map((n) => [...n.items]);
+  const exitLists = cloned
+    .filter(
+      (n): n is Extract<DungeonRenderNode, { kind: 'exit-list' }> =>
+        n.kind === 'exit-list'
+    )
+    .map((n) => ({
+      intro: n.intro,
+      items: [...n.items],
+      footnote: n.footnote,
+    }));
   const previews = cloned.filter(isDungeonTablePreview);
   const previewMap = new Map(previews.map((p) => [p.id, p]));
   const trace = cloned.find(
@@ -577,6 +592,8 @@ function createSnapshot(nodes: DungeonRenderNode[]): RenderSnapshot {
     headings: () => [...headings],
     paragraphs: () => [...paragraphs],
     bulletLists: () => bulletLists.map((items) => [...items]),
+    exitLists: () =>
+      exitLists.map((list) => ({ ...list, items: [...list.items] })),
     previewIds: () => previews.map((p) => p.id),
     previewTitles: () => previews.map((p) => p.title),
     previews: () => previews.map(clonePreview),
@@ -596,6 +613,13 @@ function cloneRenderNode(node: DungeonRenderNode): DungeonRenderNode {
       return { kind: 'paragraph', text: node.text };
     case 'bullet-list':
       return { kind: 'bullet-list', items: [...node.items] };
+    case 'exit-list':
+      return {
+        kind: 'exit-list',
+        intro: node.intro,
+        items: [...node.items],
+        footnote: node.footnote,
+      };
     case 'roll-trace':
       return cloneRollTrace(node);
     case 'character-party':
@@ -663,6 +687,9 @@ function cloneRenderNode(node: DungeonRenderNode): DungeonRenderNode {
 
 function freezeRenderNode<T extends DungeonRenderNode>(node: T): T {
   if (node.kind === 'bullet-list') {
+    Object.freeze(node.items);
+  }
+  if (node.kind === 'exit-list') {
     Object.freeze(node.items);
   }
   if (node.kind === 'table-preview') {

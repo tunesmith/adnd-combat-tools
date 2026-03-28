@@ -45,7 +45,7 @@ describe('Compact: PeriodicCheck Stairs (adapter)', () => {
     });
     const paragraph = (messages as DungeonMessage[]).find(isParagraph);
     expect(paragraph?.text).toBe(
-      'There are stairs here that descend one level. After descending, an unnoticed door will close egress for the day. '
+      'There are stairs here that descend one level. After descending, an unnoticed door will close egress for the day.'
     );
     expect(spy).toHaveBeenCalledTimes(2);
     spy.mockRestore();
