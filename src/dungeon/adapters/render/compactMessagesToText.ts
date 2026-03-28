@@ -38,6 +38,10 @@ function messageToText(message: DungeonMessage): string {
       return message.text.trim();
     case 'bullet-list':
       return message.items.join(' ');
+    case 'inline-bullet-list':
+      return [message.intro, ...message.items.map((item) => item.text)]
+        .filter((text): text is string => !!text && text.trim().length > 0)
+        .join(' ');
     case 'exit-list':
       return [message.intro, ...message.items, message.footnote]
         .filter((text): text is string => !!text && text.trim().length > 0)

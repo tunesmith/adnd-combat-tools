@@ -145,36 +145,14 @@ export function renderTreasureCompactNodes(
     text: headingLabel(withMonster, rollIndex, totalRolls),
   };
   const summary = summarizeTreasureCompact(outcome);
+  const compactMessages = collectTreasureCompactMessages(outcome);
+  const hasInlineBulletList = hasInlineBulletListMessage(compactMessages);
   const nodes: DungeonRenderNode[] = [heading];
-  if (summary.text.trim().length > 0) {
+  if (!hasInlineBulletList && summary.text.trim().length > 0) {
     nodes.push({ kind: 'paragraph', ...summary });
   }
-  const iounStones = findIounStonesEvent(outcome);
-  if (iounStones && iounStones.event.kind === 'treasureIounStones') {
-    nodes.push({
-      kind: 'ioun-stones',
-      summary: toIounStonesSummary(iounStones.event.result),
-      display: 'compact',
-    });
-  }
-  const prayerBeads = findPrayerBeadsEvent(outcome);
-  if (
-    prayerBeads &&
-    prayerBeads.event.kind === 'treasureNecklaceOfPrayerBeads'
-  ) {
-    nodes.push({
-      kind: 'prayer-beads',
-      summary: toPrayerBeadsSummary(prayerBeads.event.result),
-      display: 'compact',
-    });
-  }
-  const robeItems = findRobeOfUsefulItemsEvent(outcome);
-  if (robeItems && robeItems.event.kind === 'treasureRobeOfUsefulItems') {
-    nodes.push({
-      kind: 'robe-of-useful-items',
-      summary: toRobeOfUsefulItemsSummary(robeItems.event.result),
-      display: 'compact',
-    });
+  if (compactMessages.length > 0) {
+    nodes.push(...compactMessages);
   }
   return nodes;
 }
@@ -651,8 +629,11 @@ export function collectTreasureCompactInlineTexts(
     if (visited.has(current)) return;
     visited.add(current);
     if (current.event.kind === 'treasure') {
-      const summary = summarizeTreasureCompact(current);
-      if (summary.text.length > 0) summaries.push(summary);
+      const compactMessages = collectStructuredTreasureCompactMessages(current);
+      if (!hasInlineBulletListMessage(compactMessages)) {
+        const summary = summarizeTreasureCompact(current);
+        if (summary.text.length > 0) summaries.push(summary);
+      }
     }
     current.children?.forEach((child) => {
       if (child.type === 'event') visit(child);
@@ -671,32 +652,14 @@ export function collectTreasureCompactMessages(
     if (visited.has(current)) return;
     visited.add(current);
     if (current.event.kind === 'treasure') {
-      const iounStones = findIounStonesEvent(current);
-      if (iounStones && iounStones.event.kind === 'treasureIounStones') {
-        messages.push({
-          kind: 'ioun-stones',
-          summary: toIounStonesSummary(iounStones.event.result),
-          display: 'compact',
-        });
-      }
-      const prayerBeads = findPrayerBeadsEvent(current);
-      if (
-        prayerBeads &&
-        prayerBeads.event.kind === 'treasureNecklaceOfPrayerBeads'
-      ) {
-        messages.push({
-          kind: 'prayer-beads',
-          summary: toPrayerBeadsSummary(prayerBeads.event.result),
-          display: 'compact',
-        });
-      }
-      const robeItems = findRobeOfUsefulItemsEvent(current);
-      if (robeItems && robeItems.event.kind === 'treasureRobeOfUsefulItems') {
-        messages.push({
-          kind: 'robe-of-useful-items',
-          summary: toRobeOfUsefulItemsSummary(robeItems.event.result),
-          display: 'compact',
-        });
+      const structuredMessages =
+        collectStructuredTreasureCompactMessages(current);
+      messages.push(...structuredMessages);
+      if (hasInlineBulletListMessage(structuredMessages)) {
+        const summary = summarizeTreasureCompact(current);
+        if (summary.text.trim().length > 0) {
+          messages.push({ kind: 'paragraph', ...summary });
+        }
       }
     }
     current.children?.forEach((child) => {
@@ -705,6 +668,51 @@ export function collectTreasureCompactMessages(
   };
   visit(node);
   return messages;
+}
+
+function collectStructuredTreasureCompactMessages(
+  node: OutcomeEventNode
+): DungeonMessage[] {
+  if (node.event.kind !== 'treasure') return [];
+  const messages: DungeonMessage[] = [];
+  for (const entry of node.event.entries) {
+    const description = describeTreasureEntry(entry);
+    if (description.compactMessages && description.compactMessages.length) {
+      messages.push(...description.compactMessages);
+    }
+  }
+  const iounStones = findIounStonesEvent(node);
+  if (iounStones && iounStones.event.kind === 'treasureIounStones') {
+    messages.push({
+      kind: 'ioun-stones',
+      summary: toIounStonesSummary(iounStones.event.result),
+      display: 'compact',
+    });
+  }
+  const prayerBeads = findPrayerBeadsEvent(node);
+  if (
+    prayerBeads &&
+    prayerBeads.event.kind === 'treasureNecklaceOfPrayerBeads'
+  ) {
+    messages.push({
+      kind: 'prayer-beads',
+      summary: toPrayerBeadsSummary(prayerBeads.event.result),
+      display: 'compact',
+    });
+  }
+  const robeItems = findRobeOfUsefulItemsEvent(node);
+  if (robeItems && robeItems.event.kind === 'treasureRobeOfUsefulItems') {
+    messages.push({
+      kind: 'robe-of-useful-items',
+      summary: toRobeOfUsefulItemsSummary(robeItems.event.result),
+      display: 'compact',
+    });
+  }
+  return messages;
+}
+
+function hasInlineBulletListMessage(messages: DungeonMessage[]): boolean {
+  return messages.some((message) => message.kind === 'inline-bullet-list');
 }
 
 function findIounStonesEvent(
@@ -831,6 +839,7 @@ type TreasureDescription = {
   detailInline?: InlineText['inline'];
   compact: string;
   compactInline?: InlineText['inline'];
+  compactMessages?: DungeonMessage[];
 };
 
 function describeTreasureEntry(entry: TreasureEntry): TreasureDescription {
@@ -876,15 +885,19 @@ function gemDescription(entry: TreasureEntry): TreasureDescription {
     return quantifiedDescription(entry);
   }
   const heading = entry.display?.trim() ?? 'Gems';
-  const detail = lots.map((lot) => gemLotSentence(lot)).join(' ');
+  const detail = lots.map((lot) => gemLotSentence(lot, true)).join(' ');
   return {
     label: heading,
     detail,
-    compact: detail,
+    compact: '',
+    compactMessages: [buildGemLotCompactMessage(entry, lots)],
   };
 }
 
-function gemLotSentence(lot: TreasureGemLot): string {
+function gemLotSentence(
+  lot: TreasureGemLot,
+  includeAdjustmentNote: boolean
+): string {
   const typeLabel = formatGemLotType(lot);
   const countText = `${lot.count.toLocaleString()} ${typeLabel}`;
   const extraDetails = gemLotDetail(lot);
@@ -895,10 +908,49 @@ function gemLotSentence(lot: TreasureGemLot): string {
   const parts = [
     `There ${verb} ${countText}${extraDetails} worth ${valueText}${eachSuffix}`,
   ];
-  if (adjustmentText) {
+  if (includeAdjustmentNote && adjustmentText) {
     parts.push(`(${adjustmentText})`);
   }
   return `${parts.join(' ')}.`;
+}
+
+function buildGemLotCompactMessage(
+  entry: TreasureEntry,
+  lots: TreasureGemLot[]
+): DungeonMessage {
+  const quantity =
+    entry.quantity ?? lots.reduce((total, lot) => total + lot.count, 0);
+  return {
+    kind: 'inline-bullet-list',
+    intro: quantity === 1 ? 'There is a gem:' : 'There are gems:',
+    items: lots.map((lot) => gemLotCompactItem(lot)),
+  };
+}
+
+function gemLotCompactItem(lot: TreasureGemLot): {
+  text: string;
+  inline: NonNullable<InlineText['inline']>;
+} {
+  const lead = `${lot.count.toLocaleString()} ${formatGemLotType(lot)}`;
+  const extraDetails = gemLotDetail(lot);
+  const valueText = formatGemValue(lot.value);
+  const eachSuffix = lot.count === 1 ? '' : ' each';
+  const inline: NonNullable<InlineText['inline']> = [
+    { kind: 'strong', text: lead },
+    ...(extraDetails.length > 0
+      ? ([{ kind: 'text', text: extraDetails }] as const)
+      : []),
+    { kind: 'text', text: ' worth ' },
+    { kind: 'strong', text: valueText },
+    ...(eachSuffix.length > 0
+      ? ([{ kind: 'text', text: eachSuffix }] as const)
+      : []),
+    { kind: 'text', text: '.' },
+  ];
+  return {
+    text: `${lead}${extraDetails} worth ${valueText}${eachSuffix}.`,
+    inline,
+  };
 }
 
 function gemLotDetail(lot: TreasureGemLot): string {

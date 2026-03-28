@@ -1,4 +1,7 @@
-import { renderTreasureCompactNodes } from '../../../../dungeon/features/treasure/treasure/treasureRender';
+import {
+  renderTreasureCompactNodes,
+  renderTreasureDetail,
+} from '../../../../dungeon/features/treasure/treasure/treasureRender';
 import type {
   OutcomeEventNode,
   TreasureEntry,
@@ -7,7 +10,7 @@ import type {
 import { TreasureWithoutMonster } from '../../../../dungeon/features/treasure/treasure/treasureTable';
 
 describe('gem rendering', () => {
-  it('lists detailed gem lot descriptions', () => {
+  it('omits gem value-adjustment notes in compact output but keeps them in detail', () => {
     const lots: TreasureGemLot[] = [
       {
         count: 10,
@@ -64,7 +67,20 @@ describe('gem rendering', () => {
     };
 
     const nodes = renderTreasureCompactNodes(outcome);
-    const text = nodes
+    const compactList = nodes.find(
+      (
+        node
+      ): node is Extract<typeof node, { kind: 'inline-bullet-list' }> =>
+        node.kind === 'inline-bullet-list'
+    );
+
+    expect(compactList?.intro).toBe('There are gems:');
+    expect(compactList?.items.map((item) => item.text)).toEqual([
+      '10 ornamental stones (very small; translucent banded agate — striped brown and blue and white and reddish) worth 10 gp each.',
+      '1 gem stone (very large) worth 1,100 gp.',
+    ]);
+
+    const detailText = renderTreasureDetail(outcome, () => undefined)
       .filter(
         (node): node is { kind: 'paragraph'; text: string } =>
           node.kind === 'paragraph'
@@ -72,10 +88,7 @@ describe('gem rendering', () => {
       .map((node) => node.text)
       .join(' ');
 
-    expect(text).toContain(
-      'There are 10 ornamental stones (very small; translucent banded agate — striped brown and blue and white and reddish) worth 10 gp each.'
-    );
-    expect(text).toContain(
+    expect(detailText).toContain(
       'There is 1 gem stone (very large) worth 1,100 gp (+10%).'
     );
   });

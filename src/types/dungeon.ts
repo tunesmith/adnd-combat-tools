@@ -62,6 +62,17 @@ type DungeonBulletList = {
   items: string[];
 };
 
+type DungeonInlineListItem = {
+  text: string;
+  inline?: DungeonInlineContent;
+};
+
+type DungeonInlineBulletList = {
+  kind: 'inline-bullet-list';
+  intro?: string;
+  items: DungeonInlineListItem[];
+};
+
 type DungeonExitList = {
   kind: 'exit-list';
   intro: string;
@@ -139,6 +150,7 @@ export type DungeonMessage =
   | DungeonParagraph
   | DungeonHeading
   | DungeonBulletList
+  | DungeonInlineBulletList
   | DungeonExitList
   | DungeonCharacterPartyMessage
   | DungeonIounStonesMessage

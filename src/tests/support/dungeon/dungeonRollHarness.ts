@@ -613,6 +613,15 @@ function cloneRenderNode(node: DungeonRenderNode): DungeonRenderNode {
       return { kind: 'paragraph', text: node.text };
     case 'bullet-list':
       return { kind: 'bullet-list', items: [...node.items] };
+    case 'inline-bullet-list':
+      return {
+        kind: 'inline-bullet-list',
+        intro: node.intro,
+        items: node.items.map((item) => ({
+          text: item.text,
+          inline: item.inline?.map((segment) => ({ ...segment })),
+        })),
+      };
     case 'exit-list':
       return {
         kind: 'exit-list',
@@ -687,6 +696,16 @@ function cloneRenderNode(node: DungeonRenderNode): DungeonRenderNode {
 
 function freezeRenderNode<T extends DungeonRenderNode>(node: T): T {
   if (node.kind === 'bullet-list') {
+    Object.freeze(node.items);
+  }
+  if (node.kind === 'inline-bullet-list') {
+    node.items.forEach((item) => {
+      if (item.inline) {
+        item.inline.forEach(Object.freeze);
+        Object.freeze(item.inline);
+      }
+      Object.freeze(item);
+    });
     Object.freeze(node.items);
   }
   if (node.kind === 'exit-list') {

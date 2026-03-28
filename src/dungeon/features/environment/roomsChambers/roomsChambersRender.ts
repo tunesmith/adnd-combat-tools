@@ -6,7 +6,7 @@ import type {
   InlineText,
   InlineTextWithNodes,
 } from '../../../helpers/inlineContent';
-import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { OutcomeEventNode, PendingRoll } from '../../../domain/outcome';
 import {
   buildPreview,
   findChildEvent,
@@ -20,7 +20,10 @@ import {
   describeMonsterOutcome,
 } from '../../monsters/render';
 import { renderTrickTrapCompact } from '../../hazards/trickTrap/trickTrapRender';
-import { collectTreasureCompactInlineTexts } from '../../treasure/treasure/treasureRender';
+import {
+  collectTreasureCompactInlineTexts,
+  collectTreasureCompactMessages,
+} from '../../treasure/treasure/treasureRender';
 import { renderCompactUnusualDetails } from '../unusualSpace/unusualSpaceRender';
 import {
   chamberDimensions,
@@ -314,9 +317,13 @@ function describeChamberRoomContentsInline(
     mode === 'compact' ? readResolvedMonsterCompactContent(node) : undefined;
   const treasureSummaries =
     mode === 'compact' ? collectTreasureCompactInlineTexts(node) : [];
-  const hasResolvedTreasureContent = treasureSummaries.some(
-    (summary) => summary.text.length > 0
-  );
+  const treasureMessages =
+    mode === 'compact' ? collectTreasureCompactMessages(node) : [];
+  const hasResolvedTreasureContent =
+    treasureSummaries.some((summary) => summary.text.length > 0) ||
+    treasureMessages.length > 0;
+  const treasureHasPendingRolls =
+    mode === 'compact' ? hasPendingTreasureRolls(node) : false;
   switch (node.event.result) {
     case ChamberRoomContents.Empty:
       segments.push('The area is empty.');
@@ -330,16 +337,15 @@ function describeChamberRoomContentsInline(
     case ChamberRoomContents.MonsterAndTreasure:
       if (mode === 'detail') {
         segments.push('A monster and treasure are present.');
-      } else if (
-        !monsterContent?.hasResolvedContent &&
-        !hasResolvedTreasureContent
-      ) {
-        segments.push('A monster and treasure are present.');
       } else {
-        if (!monsterContent?.hasResolvedContent) {
+        const showMonsterPresence = !monsterContent?.hasResolvedContent;
+        const showTreasurePresence =
+          !hasResolvedTreasureContent || treasureHasPendingRolls;
+        if (showMonsterPresence && showTreasurePresence) {
+          segments.push('A monster and treasure are present.');
+        } else if (showMonsterPresence) {
           segments.push('A monster is present.');
-        }
-        if (!hasResolvedTreasureContent) {
+        } else if (showTreasurePresence) {
           segments.push('Treasure is present.');
         }
       }
@@ -359,7 +365,11 @@ function describeChamberRoomContentsInline(
       addResolvedTrickTrapSummary(node, segments);
       break;
     case ChamberRoomContents.Treasure:
-      if (mode === 'detail' || !hasResolvedTreasureContent) {
+      if (
+        mode === 'detail' ||
+        !hasResolvedTreasureContent ||
+        treasureHasPendingRolls
+      ) {
         segments.push('Treasure is present.');
       }
       addResolvedTreasureSummary(segments, treasureSummaries);
@@ -569,6 +579,36 @@ function addResolvedTreasureSummary(
   for (const summary of summaries) {
     if (summary.text.length > 0) segments.push(summary);
   }
+}
+
+function hasPendingTreasureRolls(node: OutcomeEventNode): boolean {
+  const visit = (
+    current: OutcomeEventNode | PendingRoll,
+    insideTreasure = false
+  ): boolean => {
+    if (current.type === 'pending-roll') {
+      const contextKind =
+        current.context && 'kind' in current.context
+          ? current.context.kind
+          : undefined;
+      const pendingIdBase = current.id?.split('.').pop();
+      return (
+        insideTreasure ||
+        current.table.startsWith('treasure') ||
+        (typeof contextKind === 'string' &&
+          contextKind.startsWith('treasure')) ||
+        (pendingIdBase?.startsWith('treasure') ?? false)
+      );
+    }
+    const nextInsideTreasure =
+      insideTreasure || current.event.kind.startsWith('treasure');
+    return (
+      current.children?.some((child) => visit(child, nextInsideTreasure)) ??
+      false
+    );
+  };
+
+  return node.children?.some((child) => visit(child)) ?? false;
 }
 
 function collectTrickTrapSummaries(node: OutcomeEventNode): string[] {

@@ -56,6 +56,19 @@ export function renderNode(
           ))}
         </ul>
       );
+    case 'inline-bullet-list':
+      return (
+        <div key={key} className={styles['messageInlineList']}>
+          {node.intro ? (
+            <p className={styles['inlineListIntro']}>{node.intro}</p>
+          ) : null}
+          <ul className={styles['inlineListItems']}>
+            {node.items.map((item, index) => (
+              <li key={index}>{renderParagraphText(item.text, item.inline)}</li>
+            ))}
+          </ul>
+        </div>
+      );
     case 'exit-list':
       return (
         <div key={key} className={styles['messageExitList']}>

@@ -318,6 +318,27 @@
   margin-bottom: 0.35rem;
 }
 
+.messageInlineList {
+  margin: 0.35rem 0 0.35rem 0.6rem;
+}
+
+.inlineListIntro {
+  margin: 0 0 0.18rem;
+}
+
+.inlineListItems {
+  margin: 0.1rem 0 0.35rem 1.5rem;
+  padding-left: 0.85rem;
+  list-style-position: outside;
+}
+
+.inlineListItems li {
+  margin: 0.18rem 0;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
 .messageList li {
   font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
   font-weight: 400;

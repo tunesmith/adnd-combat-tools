@@ -16,6 +16,11 @@ import {
 import { renderTreasurePotionCompact } from '../../../dungeon/features/treasure/potion/potionRender';
 import { renderTreasureCompactNodes } from '../../../dungeon/features/treasure/treasure/treasureRender';
 import { TreasureWithoutMonster } from '../../../dungeon/features/treasure/treasure/treasureTable';
+import { TreasureContainer } from '../../../dungeon/features/treasure/container/containerTable';
+import {
+  TreasureProtectionHiddenBy,
+  TreasureProtectionType,
+} from '../../../dungeon/features/treasure/protection/protectionTables';
 import { TreasureMagicCategory } from '../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
 import { TreasureMiscMagicE3 } from '../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Table';
 import {
@@ -36,7 +41,10 @@ import type {
   PartyResult,
   CharacterSheet,
 } from '../../../dungeon/models/character/characterSheet';
-import type { OutcomeEventNode } from '../../../dungeon/domain/outcome';
+import type {
+  OutcomeEventNode,
+  TreasureGemLot,
+} from '../../../dungeon/domain/outcome';
 import type {
   DungeonRenderNode,
   TargetedDungeonTablePreview,
@@ -416,6 +424,159 @@ describe('character party compact rendering', () => {
     expect(markup).toContain('1,000 copper pieces');
   });
 
+  test('compact gem lists emphasize the lot phrase and gp value', () => {
+    const lots: TreasureGemLot[] = [
+      {
+        count: 1,
+        category: {
+          id: 'semiPrecious',
+          description: 'Semi-Precious Stones',
+          typicalSize: 'very small',
+        },
+        baseValue: 5,
+        baseValueStep: 3,
+        finalBaseStep: 3,
+        size: 'very small',
+        value: 6,
+        adjustment: { type: 'increasePercent', percent: 20 },
+        kind: {
+          name: 'Rock Crystal',
+          description: 'clear',
+          property: 'transparent',
+        },
+      },
+    ];
+
+    const treasureNode: OutcomeEventNode = {
+      type: 'event',
+      roll: 81,
+      event: {
+        kind: 'treasure',
+        level: 1,
+        withMonster: false,
+        entries: [
+          {
+            roll: 81,
+            command: TreasureWithoutMonster.GemsPerLevel,
+            quantity: 1,
+            display: '1 gem',
+            gems: lots,
+          },
+        ],
+      },
+    };
+
+    const nodes = renderTreasureCompactNodes(treasureNode);
+    const gemList = nodes.find(
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'inline-bullet-list' }> =>
+        node.kind === 'inline-bullet-list'
+    );
+
+    if (!gemList) {
+      throw new Error('compact gem list not found');
+    }
+
+    const element = renderNode(gemList, 0, 'gem-inline-list-test');
+    const markup = ReactDOMServer.renderToStaticMarkup(element);
+
+    expect(markup).toContain('There is a gem:');
+    expect(markup).toContain('messageStrong');
+    expect(markup).toContain('1 semi-precious stone');
+    expect(markup).toContain('6 gp');
+    expect(markup).not.toContain('(+20%)');
+  });
+
+  test('compact chamber summaries keep generic treasure text while gem follow-ups are pending', () => {
+    const nodes = renderDoorBeyondCompact(
+      buildDoorBeyondChamberWithGemTreasure([
+        {
+          type: 'pending-roll',
+          table: 'treasureContainer',
+        },
+      ])
+    );
+
+    const chamberParagraph = nodes.find(
+      (
+        node
+      ): node is Extract<
+        DungeonRenderNode,
+        { kind: 'paragraph'; text: string }
+      > =>
+        node.kind === 'paragraph' && node.text.includes('The chamber is square')
+    );
+    const gemList = nodes.find(
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'inline-bullet-list' }> =>
+        node.kind === 'inline-bullet-list'
+    );
+
+    expect(chamberParagraph?.text).toContain('Treasure is present.');
+    expect(gemList?.intro).toBe('There is a gem:');
+  });
+
+  test('compact chamber summaries place resolved gem follow-ups after the gem list', () => {
+    const nodes = renderDoorBeyondCompact(
+      buildDoorBeyondChamberWithGemTreasure([
+        {
+          type: 'event',
+          roll: 1,
+          event: {
+            kind: 'treasureContainer',
+            result: TreasureContainer.Bags,
+          },
+        },
+        {
+          type: 'event',
+          roll: 12,
+          event: {
+            kind: 'treasureProtectionType',
+            result: TreasureProtectionType.Hidden,
+          },
+          children: [
+            {
+              type: 'event',
+              roll: 1,
+              event: {
+                kind: 'treasureProtectionHiddenBy',
+                result: TreasureProtectionHiddenBy.Invisibility,
+              },
+            },
+          ],
+        },
+      ])
+    );
+
+    const chamberParagraph = nodes.find(
+      (
+        node
+      ): node is Extract<
+        DungeonRenderNode,
+        { kind: 'paragraph'; text: string }
+      > =>
+        node.kind === 'paragraph' && node.text.includes('The chamber is square')
+    );
+    const gemListIndex = nodes.findIndex(
+      (node) => node.kind === 'inline-bullet-list'
+    );
+    const followUpIndex = nodes.findIndex(
+      (node, index) =>
+        index > gemListIndex &&
+        node.kind === 'paragraph' &&
+        node.text.includes('The treasure is contained in bags.')
+    );
+
+    expect(chamberParagraph?.text).not.toContain('Treasure is present.');
+    expect(chamberParagraph?.text).not.toContain(
+      'The treasure is contained in bags.'
+    );
+    expect(gemListIndex).toBeGreaterThan(-1);
+    expect(followUpIndex).toBeGreaterThan(gemListIndex);
+  });
+
   test('door-to-chamber compact summaries preserve inline emphasis from treasure detail', () => {
     const marbleNode: OutcomeEventNode = {
       type: 'event',
@@ -585,3 +746,80 @@ describe('character party compact rendering', () => {
     expect(markup).toContain('1,000 copper pieces');
   });
 });
+
+function buildDoorBeyondChamberWithGemTreasure(
+  treasureChildren: NonNullable<OutcomeEventNode['children']>
+): OutcomeEventNode {
+  const gemLots: TreasureGemLot[] = [
+    {
+      count: 1,
+      category: {
+        id: 'semiPrecious',
+        description: 'Semi-Precious Stones',
+        typicalSize: 'very small',
+      },
+      baseValue: 5,
+      baseValueStep: 3,
+      finalBaseStep: 3,
+      size: 'very small',
+      value: 6,
+      adjustment: { type: 'increasePercent', percent: 20 },
+      kind: {
+        name: 'Rock Crystal',
+        description: 'clear',
+        property: 'transparent',
+      },
+    },
+  ];
+
+  return {
+    type: 'event',
+    roll: 15,
+    event: {
+      kind: 'doorBeyond',
+      result: DoorBeyond.Chamber,
+      doorAhead: false,
+    },
+    children: [
+      {
+        type: 'event',
+        roll: 5,
+        event: {
+          kind: 'chamberDimensions',
+          result: ChamberDimensions.Square20x20,
+        },
+        children: [
+          {
+            type: 'event',
+            roll: 20,
+            event: {
+              kind: 'chamberRoomContents',
+              result: ChamberRoomContents.Treasure,
+            },
+            children: [
+              {
+                type: 'event',
+                roll: 91,
+                event: {
+                  kind: 'treasure',
+                  level: 3,
+                  withMonster: false,
+                  entries: [
+                    {
+                      roll: 91,
+                      command: TreasureWithoutMonster.GemsPerLevel,
+                      quantity: 1,
+                      display: '1 gem',
+                      gems: gemLots,
+                    },
+                  ],
+                },
+                children: treasureChildren,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
