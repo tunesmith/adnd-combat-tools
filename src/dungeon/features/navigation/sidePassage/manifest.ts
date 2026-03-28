@@ -5,8 +5,11 @@ import {
   buildSidePassagePreview,
 } from './sidePassageRender';
 import { resolveSidePassages } from './sidePassageResolvers';
-import { withoutAppend } from '../shared';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  buildEventPreviewFromFactory,
+  withoutAppend,
+  wrapResolver,
+} from '../../shared';
 
 export const sidePassageTables: ReadonlyArray<DungeonTableDefinition> = [
   {

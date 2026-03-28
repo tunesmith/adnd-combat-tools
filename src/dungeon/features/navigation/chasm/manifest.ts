@@ -13,8 +13,11 @@ import {
   resolveJumpingPlaceWidth,
 } from './chasmResolvers';
 import { ChasmConstruction } from './chasmTable';
-import { NO_COMPACT_RENDER } from '../shared';
-import { buildEventPreviewFromFactory, wrapResolver } from '../../shared';
+import {
+  buildEventPreviewFromFactory,
+  NO_COMPACT_RENDER,
+  wrapResolver,
+} from '../../shared';
 
 export const chasmTables: ReadonlyArray<DungeonTableDefinition> = [
   {

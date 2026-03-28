@@ -38,10 +38,10 @@ import {
   renderNumberOfExitsDetail,
   buildNumberOfExitsPreview,
 } from './numberOfExitsRender';
-import { withoutAppend } from '../shared';
 import {
   buildEventPreviewFromFactory,
   markContextualResolution,
+  withoutAppend,
   withDefaultResolverOptions,
   wrapResolver,
 } from '../../shared';

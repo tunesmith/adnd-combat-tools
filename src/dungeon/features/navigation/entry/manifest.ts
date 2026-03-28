@@ -22,10 +22,10 @@ import {
   resolvePeriodicCheck,
   resolveWanderingWhereFrom,
 } from './entryResolvers';
-import { withoutAppend } from '../shared';
 import {
   buildEventPreviewFromFactory,
   markContextualResolution,
+  withoutAppend,
   wrapResolver,
 } from '../../shared';
 

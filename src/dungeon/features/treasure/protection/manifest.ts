@@ -1,5 +1,5 @@
 import type { DungeonTableDefinition } from '../../types';
-import { wrapResolver } from '../../shared';
+import { NO_COMPACT_RENDER, wrapResolver } from '../../shared';
 import { createTreasureProtectionEventPreviewBuilder } from '../shared';
 import {
   buildTreasureProtectionGuardedByPreview,
@@ -15,9 +15,6 @@ import {
   resolveTreasureProtectionHiddenBy,
   resolveTreasureProtectionType,
 } from './protectionResolvers';
-
-const NO_COMPACT_RENDER: DungeonTableDefinition['renderers']['renderCompact'] =
-  () => [];
 
 export const protectionTables: ReadonlyArray<DungeonTableDefinition> = [
   {

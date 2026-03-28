@@ -2,6 +2,7 @@ import type { DungeonTablePreview, TableContext } from '../../types/dungeon';
 import type { DungeonOutcomeNode, OutcomeEventNode } from '../domain/outcome';
 import type { TablePreviewFactory } from '../adapters/render/shared';
 import type {
+  CompactRenderer,
   DetailRenderer,
   DungeonTableDefinition,
   ManualRollResolver,
@@ -51,6 +52,8 @@ export function buildEventPreviewFromFactory(
   if (!preview) return undefined;
   return options?.autoCollapse ? { ...preview, autoCollapse: true } : preview;
 }
+
+export const NO_COMPACT_RENDER: CompactRenderer = (_node, _append) => [];
 
 export const withoutAppend =
   (

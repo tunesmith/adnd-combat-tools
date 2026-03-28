@@ -1,9 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
 import type { DoorChainLaterality } from '../../../domain/outcome';
-import { NO_COMPACT_RENDER } from '../shared';
 import {
   buildEventPreviewFromFactory,
   markContextualResolution,
+  NO_COMPACT_RENDER,
   wrapResolver,
 } from '../../shared';
 import {

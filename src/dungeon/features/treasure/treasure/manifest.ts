@@ -1,5 +1,9 @@
-import type { DungeonTableDefinition, DetailRenderer } from '../../types';
-import { markContextualResolution, wrapResolver } from '../../shared';
+import type { DungeonTableDefinition } from '../../types';
+import {
+  markContextualResolution,
+  withoutAppend,
+  wrapResolver,
+} from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { readTableContextOfKind } from '../../../helpers/tableContext';
 import { createTreasureEventPreviewBuilder } from '../shared';
@@ -9,18 +13,6 @@ import {
   renderTreasureCompactNodes,
   renderTreasureDetail,
 } from './treasureRender';
-
-const withoutAppend =
-  (
-    renderer: (
-      node: Parameters<DetailRenderer>[0]
-    ) => ReturnType<DetailRenderer>
-  ) =>
-  (
-    node: Parameters<DetailRenderer>[0],
-    _append: Parameters<DetailRenderer>[1]
-  ) =>
-    renderer(node);
 
 function deriveDungeonLevelFromAncestors(
   ancestors: OutcomeEventNode[]

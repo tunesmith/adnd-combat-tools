@@ -38,8 +38,7 @@ import {
   postProcessGalleryStairLocationChildren,
   postProcessRiverConstructionChildren,
 } from './specialPassageManifestHelpers';
-import { NO_COMPACT_RENDER, withoutAppend } from '../shared';
-import { wrapResolver } from '../../shared';
+import { NO_COMPACT_RENDER, withoutAppend, wrapResolver } from '../../shared';
 
 export const specialPassageTables: ReadonlyArray<DungeonTableDefinition> = [
   {
