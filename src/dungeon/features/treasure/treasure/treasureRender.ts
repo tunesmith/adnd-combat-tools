@@ -1041,7 +1041,8 @@ function jewelryDescription(entry: TreasureEntry): TreasureDescription {
   return {
     label: heading,
     detail,
-    compact: detail,
+    compact: '',
+    compactMessages: [buildJewelryCompactMessage(pieces)],
   };
 }
 
@@ -1057,6 +1058,48 @@ function jewelrySentence(piece: TreasureJewelryPiece): string {
   }
   const valueText = `${piece.value.toLocaleString()} gp`;
   return `There is ${phrase} (${valueText}).`;
+}
+
+function buildJewelryCompactMessage(
+  pieces: TreasureJewelryPiece[]
+): DungeonMessage {
+  return {
+    kind: 'inline-bullet-list',
+    intro: 'There is jewelry:',
+    items: pieces.map((piece) => jewelryCompactItem(piece)),
+  };
+}
+
+function jewelryCompactItem(piece: TreasureJewelryPiece): {
+  text: string;
+  inline: NonNullable<InlineText['inline']>;
+} {
+  const lead = `1 ${piece.type}`;
+  const qualifiers: string[] = [];
+  if (piece.exceptionalQuality) {
+    qualifiers.push('of exceptional workmanship');
+  }
+  qualifiers.push(`made of ${piece.material}`);
+  if (piece.exceptionalStone) {
+    qualifiers.push('set with an exceptional stone');
+  }
+  const valueText = `${piece.value.toLocaleString()} gp`;
+  const qualifierText =
+    qualifiers.length > 0 ? ` ${qualifiers.join(', ')}` : '';
+  const text = `${lead}${qualifierText}, worth ${valueText}.`;
+
+  return {
+    text,
+    inline: [
+      { kind: 'strong', text: lead },
+      ...(qualifierText.length > 0
+        ? ([{ kind: 'text', text: qualifierText }] as const)
+        : []),
+      { kind: 'text', text: ', worth ' },
+      { kind: 'strong', text: valueText },
+      { kind: 'text', text: '.' },
+    ],
+  };
 }
 
 function isVowelSound(word: string): boolean {
