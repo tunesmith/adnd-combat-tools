@@ -121,7 +121,11 @@ export function renderTreasureDetail(
     if (entry.command === TreasureWithoutMonster.Magic && resolvedMagicDetail) {
       nodes.push({ kind: 'paragraph', ...resolvedMagicDetail });
     } else {
-      nodes.push({ kind: 'paragraph', text: description.detail });
+      nodes.push({
+        kind: 'paragraph',
+        text: description.detail,
+        inline: description.detailInline,
+      });
     }
   }
 
@@ -212,7 +216,11 @@ function summarizeTreasureCompact(outcome: OutcomeEventNode): InlineText {
         return resolvedMagic;
       }
     }
-    return describeTreasureEntry(entry).compact;
+    const description = describeTreasureEntry(entry);
+    return {
+      text: description.compact,
+      inline: description.compactInline,
+    };
   });
   const container = findChildEvent(outcome, 'treasureContainer');
   if (container && container.event.kind === 'treasureContainer') {
@@ -820,7 +828,9 @@ function findMiscWeaponsEvent(
 type TreasureDescription = {
   label: string;
   detail: string;
+  detailInline?: InlineText['inline'];
   compact: string;
+  compactInline?: InlineText['inline'];
 };
 
 function describeTreasureEntry(entry: TreasureEntry): TreasureDescription {
@@ -849,10 +859,14 @@ function quantifiedDescription(entry: TreasureEntry): TreasureDescription {
   const detail = quantity
     ? `There ${verb} ${trimmed} here.`
     : `There is ${trimmed}.`;
+  const normalized = detail.endsWith('.') ? detail : `${detail}.`;
+  const emphasized = emphasizeInlineText(normalized, trimmed);
   return {
     label: trimmed,
-    detail: detail.endsWith('.') ? detail : `${detail}.`,
-    compact: detail.endsWith('.') ? detail : `${detail}.`,
+    detail: normalized,
+    detailInline: emphasized.inline,
+    compact: normalized,
+    compactInline: emphasized.inline,
   };
 }
 
