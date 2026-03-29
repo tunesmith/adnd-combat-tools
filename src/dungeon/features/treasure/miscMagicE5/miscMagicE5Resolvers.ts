@@ -1,6 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { RobeOfUsefulItemsResult } from '../../../domain/treasureValueTypes';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   miscMagicE5Followups,
   treasureMiscMagicE5,
@@ -42,10 +43,7 @@ export function resolveTreasureMiscMagicE5(
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-    });
+    children.push(createPendingRoll({ kind: followup.table }));
   } else if (command === TreasureMiscMagicE5.RobeOfUsefulItems) {
     children.push(resolveTreasureRobeOfUsefulItems());
   }
@@ -154,10 +152,7 @@ export function resolveTreasureScarabOfProtectionCurse(options?: {
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-    });
+    children.push(createPendingRoll({ kind: followup.table }));
   }
   return {
     type: 'event',

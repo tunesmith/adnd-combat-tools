@@ -4,6 +4,7 @@ import type {
   TreasureBeakerPotionDetails,
 } from '../../../domain/treasureValueTypes';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   miscMagicE1Followups,
   treasureMiscMagicE1,
@@ -57,13 +58,14 @@ export function resolveTreasureMiscMagicE1(options?: {
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-      id: options?.rollIndex
-        ? `${followup.table}:${options.rollIndex}`
-        : undefined,
-    });
+    children.push(
+      createPendingRoll({
+        kind: followup.table,
+        id: options?.rollIndex
+          ? `${followup.table}:${options.rollIndex}`
+          : undefined,
+      })
+    );
   }
   return {
     type: 'event',

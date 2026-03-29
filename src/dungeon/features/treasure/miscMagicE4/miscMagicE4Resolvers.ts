@@ -1,6 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { TreasureNecklaceOfPrayerBeadsResult } from '../../../domain/treasureValueTypes';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   miscMagicE4Followups,
   treasureMiscMagicE4,
@@ -55,11 +56,12 @@ export function resolveTreasureMiscMagicE4(
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
-    });
+    children.push(
+      createPendingRoll({
+        kind: followup.table,
+        id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
+      })
+    );
   } else if (command === TreasureMiscMagicE4.NecklaceOfPrayerBeads) {
     children.push(resolveTreasureNecklaceOfPrayerBeads());
   }
@@ -143,10 +145,7 @@ export function resolveTreasurePearlOfPowerEffect(options?: {
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-    });
+    children.push(createPendingRoll({ kind: followup.table }));
   }
   return {
     type: 'event',

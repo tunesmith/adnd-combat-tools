@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { miscMagicE2Followups, treasureMiscMagicE2 } from './miscMagicE2Table';
 import { buildTreasureEvent } from '../shared';
 import {
@@ -35,11 +36,12 @@ export function resolveTreasureMiscMagicE2(
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
-    });
+    children.push(
+      createPendingRoll({
+        kind: followup.table,
+        id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
+      })
+    );
   }
   return {
     type: 'event',

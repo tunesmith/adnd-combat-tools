@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   magicCategoryFollowups,
   treasureMagicCategory,
@@ -40,20 +41,21 @@ export function resolveTreasureMagicCategory(
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-      id:
-        event.rollIndex && indexedMagicCategoryTables.has(followup.table)
-          ? `${followup.table}:${event.rollIndex}`
-          : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: event.level,
-        treasureRoll: usedRoll,
-        rollIndex: event.rollIndex,
-      },
-    });
+    children.push(
+      createPendingRoll({
+        kind: followup.table,
+        id:
+          event.rollIndex && indexedMagicCategoryTables.has(followup.table)
+            ? `${followup.table}:${event.rollIndex}`
+            : undefined,
+        args: {
+          kind: 'treasureMagic',
+          level: event.level,
+          treasureRoll: usedRoll,
+          rollIndex: event.rollIndex,
+        },
+      })
+    );
   }
   return {
     type: 'event',

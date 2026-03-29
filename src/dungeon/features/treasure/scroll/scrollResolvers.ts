@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   scrollFollowups,
   treasureScrolls,
@@ -181,16 +182,17 @@ export function resolveTreasureScroll(options?: {
       (candidate) => candidate.result === command
     );
     if (followup) {
-      children.push({
-        type: 'pending-roll',
-        table: followup.table,
-        context: {
-          kind: 'treasureMagic',
-          level: event.level,
-          treasureRoll: usedRoll,
-          rollIndex: event.rollIndex,
-        },
-      });
+      children.push(
+        createPendingRoll({
+          kind: followup.table,
+          args: {
+            kind: 'treasureMagic',
+            level: event.level,
+            treasureRoll: usedRoll,
+            rollIndex: event.rollIndex,
+          },
+        })
+      );
     }
   } else {
     event.scroll = { type: 'curse' };

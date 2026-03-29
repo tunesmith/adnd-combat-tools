@@ -9,6 +9,7 @@ import type {
   OutcomeEvent,
   OutcomeEventNode,
 } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import type {
   TreasureEntry,
   TreasureGemCategory,
@@ -47,37 +48,36 @@ export function resolveTreasure(options?: {
 
   const children: DungeonOutcomeNode[] = [];
   if (entry.command === TreasureWithoutMonster.Magic) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureMagicCategory',
-      id: options?.rollIndex
-        ? `treasureMagicCategory:${options.rollIndex}`
-        : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level,
-        treasureRoll: usedRoll,
-        rollIndex: options?.rollIndex,
-      },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'treasureMagicCategory',
+        id: options?.rollIndex
+          ? `treasureMagicCategory:${options.rollIndex}`
+          : undefined,
+        args: {
+          kind: 'treasureMagic',
+          level,
+          treasureRoll: usedRoll,
+          rollIndex: options?.rollIndex,
+        },
+      })
+    );
   }
 
   children.push(
-    {
-      type: 'pending-roll',
-      table: 'treasureContainer',
-      context: {
+    createPendingRoll({
+      kind: 'treasureContainer',
+      args: {
         kind: 'treasureContainer',
       },
-    },
-    {
-      type: 'pending-roll',
-      table: 'treasureProtectionType',
-      context: {
+    }),
+    createPendingRoll({
+      kind: 'treasureProtectionType',
+      args: {
         kind: 'treasureProtection',
         treasureRoll: usedRoll,
       },
-    }
+    })
   );
 
   const node: OutcomeEventNode = {

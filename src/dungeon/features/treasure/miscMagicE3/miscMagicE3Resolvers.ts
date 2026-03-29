@@ -4,6 +4,7 @@ import type {
   TreasureIounStonesResult,
 } from '../../../domain/treasureValueTypes';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   miscMagicE3Followups,
   treasureMiscMagicE3,
@@ -73,12 +74,13 @@ export function resolveTreasureMiscMagicE3(
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
-      context,
-    });
+    children.push(
+      createPendingRoll({
+        kind: followup.table,
+        id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
+        args: context,
+      })
+    );
   } else if (command === TreasureMiscMagicE3.IounStones) {
     children.push(resolveTreasureIounStones());
   }
@@ -109,17 +111,18 @@ export function resolveTreasureFigurineOfWondrousPower(
   );
   if (followup) {
     const rollIndex = options?.rollIndex;
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: options?.level ?? 1,
-        treasureRoll: options?.treasureRoll ?? usedRoll,
-        rollIndex,
-      },
-    });
+    children.push(
+      createPendingRoll({
+        kind: followup.table,
+        id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
+        args: {
+          kind: 'treasureMagic',
+          level: options?.level ?? 1,
+          treasureRoll: options?.treasureRoll ?? usedRoll,
+          rollIndex,
+        },
+      })
+    );
   }
   return {
     type: 'event',
@@ -277,17 +280,18 @@ export function resolveTreasureHornOfValhallaType(
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: options?.level ?? 1,
-        treasureRoll: options?.treasureRoll ?? usedRoll,
-        rollIndex,
-      },
-    });
+    children.push(
+      createPendingRoll({
+        kind: followup.table,
+        id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
+        args: {
+          kind: 'treasureMagic',
+          level: options?.level ?? 1,
+          treasureRoll: options?.treasureRoll ?? usedRoll,
+          rollIndex,
+        },
+      })
+    );
   }
   return {
     type: 'event',
@@ -315,17 +319,18 @@ export function resolveTreasureHornOfValhallaAttunement(
   );
   if (followup) {
     const rollIndex = options?.rollIndex;
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-      id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
-      context: {
-        kind: 'treasureMagic',
-        level: options?.level ?? 1,
-        treasureRoll: options?.treasureRoll ?? usedRoll,
-        rollIndex,
-      },
-    });
+    children.push(
+      createPendingRoll({
+        kind: followup.table,
+        id: rollIndex ? `${followup.table}:${rollIndex}` : undefined,
+        args: {
+          kind: 'treasureMagic',
+          level: options?.level ?? 1,
+          treasureRoll: options?.treasureRoll ?? usedRoll,
+          rollIndex,
+        },
+      })
+    );
   }
   return {
     type: 'event',

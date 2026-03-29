@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   treasureProtectionType,
   TreasureProtectionType,
@@ -18,15 +19,9 @@ export function resolveTreasureProtectionType(
   const command = getTableEntry(usedRoll, treasureProtectionType);
   const children: DungeonOutcomeNode[] = [];
   if (command === TreasureProtectionType.Guarded) {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureProtectionGuardedBy',
-    });
+    children.push(createPendingRoll({ kind: 'treasureProtectionGuardedBy' }));
   } else {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureProtectionHiddenBy',
-    });
+    children.push(createPendingRoll({ kind: 'treasureProtectionHiddenBy' }));
   }
   const event: OutcomeEvent = {
     kind: 'treasureProtectionType',

@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   rodStaffWandFollowups,
   treasureRodsStavesWands,
@@ -16,10 +17,7 @@ export function resolveTreasureRodStaffWand(options?: {
     (candidate) => candidate.result === command
   );
   if (followup) {
-    children.push({
-      type: 'pending-roll',
-      table: followup.table,
-    });
+    children.push(createPendingRoll({ kind: followup.table }));
   }
   return {
     type: 'event',

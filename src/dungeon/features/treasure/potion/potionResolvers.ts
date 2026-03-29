@@ -1,6 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { TreasurePotionWaterBreathingDoses } from '../../../domain/treasureValueTypes';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import type { Table } from '../../../../tables/dungeon/tableTypes';
 import {
   buildTreasureEvent,
@@ -176,14 +177,13 @@ function buildPotionPending(
   table: string,
   event: TreasureEvent
 ): DungeonOutcomeNode {
-  return {
-    type: 'pending-roll',
-    table,
-    context: {
+  return createPendingRoll({
+    kind: table,
+    args: {
       kind: 'treasureMagic',
       level: event.level,
       treasureRoll: event.treasureRoll,
       rollIndex: event.rollIndex,
     },
-  };
+  });
 }
