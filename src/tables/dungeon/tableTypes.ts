@@ -1,4 +1,4 @@
-export type Range = [number, ...number[]];
+type Range = [number, ...number[]];
 
 export type Entry<T> = {
   range: Range;

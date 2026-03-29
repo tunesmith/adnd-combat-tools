@@ -69,7 +69,7 @@ export const formatPartyResult = (result: PartyResult): string => {
   return lines.join('\n');
 };
 
-export function formatCharacterSummary(
+function formatCharacterSummary(
   character: PartyCharacterSummary
 ): string {
   const alignmentCode = alignmentToCode(character.alignment);
