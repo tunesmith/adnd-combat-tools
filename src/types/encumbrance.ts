@@ -59,6 +59,8 @@ export type LegacyEncumbranceInventoryItem = EncumbranceInventoryItemBase;
 
 export interface EncumbranceInventoryItem extends EncumbranceInventoryItemBase {
   notes: string;
+  nameOverride?: string;
+  encumbranceGpOverride?: number;
 }
 
 interface EncumbranceCharacter {
@@ -97,13 +99,18 @@ export interface EncumbranceDocumentV3 extends EncumbranceDocumentBase {
   version: 3;
 }
 
+export interface EncumbranceDocumentV4 extends EncumbranceDocumentBase {
+  version: 4;
+}
+
 type LegacyEncumbranceDocument = EncumbranceDocumentV1 | EncumbranceDocumentV2;
 
 export type AnyEncumbranceDocument =
   | LegacyEncumbranceDocument
-  | EncumbranceDocumentV3;
+  | EncumbranceDocumentV3
+  | EncumbranceDocumentV4;
 
-export type EncumbranceDocument = EncumbranceDocumentV3;
+export type EncumbranceDocument = EncumbranceDocumentV4;
 
 type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered';
 

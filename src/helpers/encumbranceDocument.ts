@@ -9,6 +9,7 @@ import type {
   EncumbranceDocumentV1,
   EncumbranceDocumentV2,
   EncumbranceDocumentV3,
+  EncumbranceDocumentV4,
   EncumbranceInventoryItem,
   EquipmentCategory,
   ExceptionalStrengthTier,
@@ -16,7 +17,7 @@ import type {
   StrengthScore,
 } from '../types/encumbrance';
 
-const DOCUMENT_VERSION = 3;
+const DOCUMENT_VERSION = 4;
 
 const exceptionalStrengthTiers = new Set<ExceptionalStrengthTier>([
   'none',
@@ -86,9 +87,15 @@ const isInventoryItem = (value: unknown): value is EncumbranceInventoryItem => {
     return false;
   }
 
+  const candidate = value as Partial<EncumbranceInventoryItem>;
+
   return (
     isLegacyInventoryItem(value) &&
-    typeof (value as { notes?: unknown }).notes === 'string'
+    typeof candidate.notes === 'string' &&
+    (candidate.nameOverride === undefined ||
+      typeof candidate.nameOverride === 'string') &&
+    (candidate.encumbranceGpOverride === undefined ||
+      isNonNegativeNumber(candidate.encumbranceGpOverride))
   );
 };
 
@@ -100,8 +107,9 @@ const isSupportedDocumentVersion = (
 ): value is
   | EncumbranceDocumentV1['version']
   | EncumbranceDocumentV2['version']
-  | EncumbranceDocumentV3['version'] =>
-  value === 1 || value === 2 || value === 3;
+  | EncumbranceDocumentV3['version']
+  | EncumbranceDocumentV4['version'] =>
+  value === 1 || value === 2 || value === 3 || value === 4;
 
 const isAmmoCapacityRule = (value: unknown): value is AmmoCapacityRule => {
   if (!value || typeof value !== 'object') {
@@ -185,11 +193,24 @@ const sanitizeInventoryItem = (
     typeof (item as Partial<EncumbranceInventoryItem>).notes === 'string'
       ? (item as EncumbranceInventoryItem).notes
       : '',
+  ...(typeof (item as Partial<EncumbranceInventoryItem>).nameOverride ===
+  'string'
+    ? {
+        nameOverride: (item as EncumbranceInventoryItem).nameOverride,
+      }
+    : {}),
+  ...(typeof (item as Partial<EncumbranceInventoryItem>)
+    .encumbranceGpOverride === 'number'
+    ? {
+        encumbranceGpOverride: (item as EncumbranceInventoryItem)
+          .encumbranceGpOverride,
+      }
+    : {}),
 });
 
 const sanitizeDocument = (
   candidate: AnyEncumbranceDocument
-): EncumbranceDocumentV3 => ({
+): EncumbranceDocumentV4 => ({
   kind: candidate.kind,
   version: DOCUMENT_VERSION,
   character: {
@@ -212,7 +233,7 @@ const sanitizeDocument = (
 
 export const createEmptyEncumbranceDocument = (
   kind: EncumbranceDocumentKind = 'adnd-encumbrance-dm'
-): EncumbranceDocumentV3 => ({
+): EncumbranceDocumentV4 => ({
   kind,
   version: DOCUMENT_VERSION,
   character: {
@@ -235,7 +256,7 @@ export const createEmptyEncumbranceDocument = (
 
 export const redactEncumbranceDocument = (
   document: EncumbranceDocument
-): EncumbranceDocumentV3 => ({
+): EncumbranceDocumentV4 => ({
   kind: 'adnd-encumbrance-player',
   version: DOCUMENT_VERSION,
   character: {
@@ -251,7 +272,7 @@ export const redactEncumbranceDocument = (
 
 export const parseEncumbranceDocument = (
   text: string
-): EncumbranceDocumentV3 => {
+): EncumbranceDocumentV4 => {
   const rawValue = JSON.parse(text) as Partial<AnyEncumbranceDocument>;
 
   if (
@@ -262,7 +283,7 @@ export const parseEncumbranceDocument = (
     !isStrengthScore(rawValue.character.strength) ||
     !Array.isArray(rawValue.inventory) ||
     !rawValue.inventory.every((item) =>
-      rawValue.version === 3
+      rawValue.version === 3 || rawValue.version === 4
         ? isInventoryItem(item)
         : isLegacyInventoryItem(item)
     )
@@ -280,7 +301,7 @@ export const parseEncumbranceDocument = (
   }
 
   if (
-    rawValue.version === 3 &&
+    (rawValue.version === 3 || rawValue.version === 4) &&
     rawValue.customItems !== undefined &&
     (!Array.isArray(rawValue.customItems) ||
       !rawValue.customItems.every((item) => isCatalogItem(item)))

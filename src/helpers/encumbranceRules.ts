@@ -70,7 +70,9 @@ const getOwnEncumbrance = (
   item: EncumbranceInventoryItem,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
-  (catalogById.get(item.catalogId)?.encumbranceGp || 0) * item.quantity;
+  (typeof item.encumbranceGpOverride === 'number'
+    ? item.encumbranceGpOverride
+    : catalogById.get(item.catalogId)?.encumbranceGp || 0) * item.quantity;
 
 const getOwnValueGp = (
   item: EncumbranceInventoryItem,

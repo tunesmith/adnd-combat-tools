@@ -80,6 +80,23 @@ describe('encumbrance rules', () => {
     expect(getTotalEncumbranceGp(document, encumbranceCatalogById)).toBe(120);
   });
 
+  test('uses per-item encumbrance overrides when totaling carried load', () => {
+    const document = createEmptyEncumbranceDocument();
+    document.inventory = [
+      {
+        id: 'rations-1',
+        catalogId: 'rations-iron',
+        quantity: 1,
+        containerId: null,
+        notes: '',
+        nameOverride: 'Iron rations (half eaten)',
+        encumbranceGpOverride: 37.5,
+      },
+    ];
+
+    expect(getTotalEncumbranceGp(document, encumbranceCatalogById)).toBe(37.5);
+  });
+
   test('tracks container load and over-capacity warnings', () => {
     const document = createEmptyEncumbranceDocument();
     document.inventory = [

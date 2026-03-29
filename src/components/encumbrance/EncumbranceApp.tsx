@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './encumbrance.module.css';
 import type {
   EncumbranceCatalogItem,
@@ -47,6 +48,15 @@ interface CustomItemDraft {
   encumbranceGp: number;
   valueGp: number;
   capacityGp: number;
+}
+
+interface InventoryEditDraft {
+  itemId: string;
+  nameOverride: string;
+  quantity: number;
+  containerId: string;
+  notes: string;
+  encumbranceGp: number;
 }
 
 const categoryLabels: Record<EquipmentCategory, string> = {
@@ -146,6 +156,24 @@ const formatGpValue = (value: number): string =>
     maximumFractionDigits: 2,
   });
 
+const getInventoryItemDisplayName = (
+  item: EncumbranceInventoryItem,
+  itemInfo: EncumbranceCatalogItem
+): string => item.nameOverride?.trim() || itemInfo.name;
+
+const getInventoryItemOwnEncumbranceGp = (
+  item: EncumbranceInventoryItem,
+  itemInfo: EncumbranceCatalogItem
+): number =>
+  typeof item.encumbranceGpOverride === 'number'
+    ? item.encumbranceGpOverride
+    : itemInfo.encumbranceGp;
+
+const getInventoryItemOwnValueGp = (
+  item: EncumbranceInventoryItem,
+  itemInfo: EncumbranceCatalogItem
+): number => itemInfo.valueGp * item.quantity;
+
 const getTextareaMinHeight = (textarea: HTMLTextAreaElement): number => {
   const computedStyle = window.getComputedStyle(textarea);
   const lineHeight = Number.parseFloat(computedStyle.lineHeight) || 0;
@@ -153,9 +181,13 @@ const getTextareaMinHeight = (textarea: HTMLTextAreaElement): number => {
   const paddingBottom = Number.parseFloat(computedStyle.paddingBottom) || 0;
   const borderTop = Number.parseFloat(computedStyle.borderTopWidth) || 0;
   const borderBottom = Number.parseFloat(computedStyle.borderBottomWidth) || 0;
+  const explicitMinHeight = Number.parseFloat(computedStyle.minHeight) || 0;
 
   return Math.ceil(
-    lineHeight + paddingTop + paddingBottom + borderTop + borderBottom
+    Math.max(
+      explicitMinHeight,
+      lineHeight + paddingTop + paddingBottom + borderTop + borderBottom
+    )
   );
 };
 
@@ -184,6 +216,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const [customItemDraft, setCustomItemDraft] = useState<CustomItemDraft>(
     defaultCustomItemDraft()
   );
+  const [editingItemDraft, setEditingItemDraft] =
+    useState<InventoryEditDraft | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -277,21 +311,85 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const pendingRemovalDescendantCount = pendingRemovalItem
     ? getDescendantIds(visibleDocument.inventory, pendingRemovalItem.id).length
     : 0;
+  const editingItem = editingItemDraft
+    ? visibleDocument.inventory.find(
+        (item) => item.id === editingItemDraft.itemId
+      )
+    : undefined;
+  const editingItemInfo = editingItem
+    ? catalogById.get(editingItem.catalogId)
+    : undefined;
+  const editingItemDescendantIds =
+    editingItem && editingItemInfo
+      ? getDescendantIds(visibleDocument.inventory, editingItem.id)
+      : [];
+  const editingContainerSummary =
+    editingItem && editingItemInfo?.isContainer
+      ? getContainerLoadSummary(
+          editingItem.id,
+          visibleDocument.inventory,
+          catalogById
+        )
+      : undefined;
+  const editingItemTotalEncumbranceGp =
+    editingItem && editingItemInfo
+      ? getInventoryItemTotalGp(
+          editingItem.id,
+          visibleDocument.inventory,
+          catalogById
+        )
+      : 0;
+  const editingItemTotalValueGp =
+    editingItem && editingItemInfo
+      ? getInventoryItemTotalValueGp(
+          editingItem.id,
+          visibleDocument.inventory,
+          catalogById
+        )
+      : 0;
+  const editingParentOptions =
+    editingItem && editingItemInfo
+      ? containerItems.filter((containerItem) => {
+          if (
+            containerItem.id === editingItem.id ||
+            editingItemDescendantIds.includes(containerItem.id)
+          ) {
+            return false;
+          }
+
+          const containerInfo = catalogById.get(containerItem.catalogId);
+          return Boolean(
+            containerInfo &&
+              canStoreItemInContainer(editingItemInfo, containerInfo)
+          );
+        })
+      : [];
 
   useEffect(() => {
-    if (!pendingRemovalId) {
+    if (!pendingRemovalId && !editingItemDraft) {
       return;
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setPendingRemovalId(null);
+        if (pendingRemovalId) {
+          setPendingRemovalId(null);
+          return;
+        }
+
+        setEditingItemDraft(null);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pendingRemovalId]);
+  }, [editingItemDraft, pendingRemovalId]);
+
+  useEffect(() => {
+    if (editingItemDraft && !editingItem) {
+      setEditingItemDraft(null);
+    }
+  }, [editingItem, editingItemDraft]);
 
   const setCharacterName = (name: string) => {
     setDocument((currentDocument) => ({
@@ -347,6 +445,70 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     }));
   };
 
+  const openEditItem = (itemId: string) => {
+    const item = visibleDocument.inventory.find(
+      (candidate) => candidate.id === itemId
+    );
+    if (!item) {
+      return;
+    }
+
+    const itemInfo = catalogById.get(item.catalogId);
+    if (!itemInfo) {
+      return;
+    }
+
+    setEditingItemDraft({
+      itemId: item.id,
+      nameOverride: item.nameOverride || '',
+      quantity: item.quantity,
+      containerId: item.containerId || '',
+      notes: item.notes,
+      encumbranceGp: getInventoryItemOwnEncumbranceGp(item, itemInfo),
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditingItemDraft(null);
+  };
+
+  const saveEditingItem = () => {
+    if (!editingItemDraft || !editingItem || !editingItemInfo) {
+      setEditingItemDraft(null);
+      return;
+    }
+
+    const normalizedNameOverride = editingItemDraft.nameOverride.trim();
+    const normalizedLoad = Math.max(
+      0,
+      Math.floor(Number(editingItemDraft.encumbranceGp) || 0)
+    );
+
+    updateInventoryItem(editingItem.id, (currentItem) => ({
+      ...currentItem,
+      quantity: editingItemInfo.isContainer
+        ? 1
+        : Math.max(1, Math.floor(Number(editingItemDraft.quantity) || 1)),
+      containerId: editingItemDraft.containerId || null,
+      notes: editingItemDraft.notes,
+      nameOverride:
+        normalizedNameOverride &&
+        normalizedNameOverride !== editingItemInfo.name
+          ? normalizedNameOverride
+          : undefined,
+      encumbranceGpOverride:
+        normalizedLoad !== editingItemInfo.encumbranceGp
+          ? normalizedLoad
+          : undefined,
+    }));
+
+    setEditingItemDraft(null);
+    setStatusMessage(
+      `Updated ${getInventoryItemDisplayName(editingItem, editingItemInfo)}.`
+    );
+    setErrorMessage('');
+  };
+
   const removeInventoryItem = (itemId: string) => {
     setDocument((currentDocument) => {
       const descendantIds = getDescendantIds(currentDocument.inventory, itemId);
@@ -392,8 +554,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       return;
     }
 
-    const removedItemName = pendingRemovalItemInfo.name;
+    const removedItemName = getInventoryItemDisplayName(
+      pendingRemovalItem,
+      pendingRemovalItemInfo
+    );
     removeInventoryItem(pendingRemovalItem.id);
+    setEditingItemDraft(null);
     setPendingRemovalId(null);
     setStatusMessage(
       pendingRemovalDescendantCount > 0
@@ -526,6 +692,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       const text = await file.text();
       const parsed = parseEncumbranceDocument(text);
       setDocument(parsed);
+      setEditingItemDraft(null);
       setPendingRemovalId(null);
       setSelectedContainerId('');
       setSelectedQuantity(1);
@@ -576,6 +743,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
   const resetDocument = () => {
     setDocument(createEmptyEncumbranceDocument(getDocumentKindForMode(mode)));
+    setEditingItemDraft(null);
     setPendingRemovalId(null);
     setCustomItemDraft(defaultCustomItemDraft());
     setSelectedContainerId('');
@@ -596,10 +764,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           return <div key={item.id} />;
         }
 
-        const descendantIds = getDescendantIds(
-          visibleDocument.inventory,
-          item.id
-        );
         const containerSummary = itemInfo.isContainer
           ? getContainerLoadSummary(
               item.id,
@@ -608,38 +772,41 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             )
           : undefined;
         const containerUsage = formatContainerUsage(containerSummary);
-        const itemTotalEncumbranceGp = getInventoryItemTotalGp(
-          item.id,
-          visibleDocument.inventory,
-          catalogById
+        const itemOwnEncumbranceGp = getInventoryItemOwnEncumbranceGp(
+          item,
+          itemInfo
         );
-        const itemTotalValueGp = getInventoryItemTotalValueGp(
-          item.id,
-          visibleDocument.inventory,
-          catalogById
-        );
-        const parentOptions = containerItems.filter((containerItem) => {
-          if (
-            containerItem.id === item.id ||
-            descendantIds.includes(containerItem.id)
-          ) {
-            return false;
-          }
+        const itemOwnLoadGp = itemOwnEncumbranceGp * item.quantity;
+        const itemOwnValueGp = getInventoryItemOwnValueGp(item, itemInfo);
+        const displayName = getInventoryItemDisplayName(item, itemInfo);
+        const notePreview = item.notes.trim();
+        let containerStatusLabel: string | undefined;
 
-          const containerInfo = catalogById.get(containerItem.catalogId);
-          return Boolean(
-            containerInfo && canStoreItemInContainer(itemInfo, containerInfo)
-          );
-        });
+        if (containerSummary) {
+          if (containerSummary.mismatchedItemIds.length > 0) {
+            containerStatusLabel = 'Check';
+          } else if (containerSummary.isOverCapacity) {
+            containerStatusLabel = 'Overfull';
+          } else if (
+            containerSummary.capacity > 0 &&
+            containerSummary.used >= containerSummary.capacity
+          ) {
+            containerStatusLabel = 'Full';
+          }
+        }
 
         return (
-          <div key={item.id}>
-            <div
-              className={`${styles['inventoryRow']} ${
+          <div key={item.id} className={styles['inventoryRowShell']}>
+            <button
+              type="button"
+              className={`${styles['inventoryRowButton']} ${
                 containerSummary?.isOverCapacity
                   ? styles['inventoryRowWarning']
                   : ''
               }`}
+              onClick={() => openEditItem(item.id)}
+              aria-label={`Edit ${displayName}`}
+              aria-haspopup="dialog"
             >
               <div
                 className={styles['inventoryCellPrimary']}
@@ -647,115 +814,101 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
               >
                 <span className={styles['inventoryLabel']}>Item</span>
                 <div className={styles['inventoryNameRow']}>
-                  <span>{itemInfo.name}</span>
+                  <span className={styles['inventoryName']}>{displayName}</span>
                   {itemInfo.isContainer && (
                     <span className={styles['inventoryBadge']}>Container</span>
                   )}
-                  {itemInfo.ammoKind && (
-                    <span className={styles['inventoryBadge']}>
-                      {itemInfo.ammoKind}
+                  {containerStatusLabel && (
+                    <span
+                      className={`${styles['inventoryBadge']} ${
+                        containerSummary?.isOverCapacity
+                          ? styles['inventoryBadgeWarning']
+                          : ''
+                      }`}
+                    >
+                      {containerStatusLabel}
                     </span>
                   )}
-                  {customCatalogIds.has(item.catalogId) && (
-                    <span className={styles['inventoryBadge']}>Custom</span>
-                  )}
                 </div>
-                <div className={styles['inventoryMeta']}>
-                  Own {itemInfo.encumbranceGp} gp
-                  {' | '}
-                  Worth {formatGpValue(itemInfo.valueGp)} gp
-                  {itemInfo.isContainer && containerUsage
-                    ? ` | Load ${containerUsage}`
-                    : ` | Total ${itemTotalEncumbranceGp} gp`}
-                </div>
+                {containerSummary && containerStatusLabel && containerUsage && (
+                  <div className={styles['inventoryStatusText']}>
+                    {containerStatusLabel === 'Full'
+                      ? `At capacity: ${containerUsage}`
+                      : `Container status: ${containerUsage}`}
+                  </div>
+                )}
               </div>
-              <label className={styles['inventoryCell']}>
+              <div className={styles['inventoryCellSummary']}>
                 <span className={styles['inventoryLabel']}>Qty</span>
-                <input
-                  className={`${styles['fieldControl']} ${styles['fieldControlDense']}`}
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={item.quantity}
-                  disabled={itemInfo.isContainer}
-                  onChange={(event) =>
-                    updateInventoryItem(item.id, (currentItem) => ({
-                      ...currentItem,
-                      quantity: Math.max(
-                        1,
-                        Math.floor(Number(event.target.value) || 1)
-                      ),
-                    }))
-                  }
-                />
-              </label>
-              <label className={styles['inventoryCell']}>
-                <span className={styles['inventoryLabel']}>Stored in</span>
-                <select
-                  className={`${styles['fieldControl']} ${styles['fieldControlDense']}`}
-                  value={item.containerId || ''}
-                  onChange={(event) =>
-                    updateInventoryItem(item.id, (currentItem) => ({
-                      ...currentItem,
-                      containerId: event.target.value || null,
-                    }))
-                  }
-                >
-                  <option value="">On person</option>
-                  {parentOptions.map((containerItem) => {
-                    const containerInfo = catalogById.get(
-                      containerItem.catalogId
-                    );
-
-                    return (
-                      <option key={containerItem.id} value={containerItem.id}>
-                        {containerInfo?.name || 'Container'}
-                      </option>
-                    );
-                  })}
-                </select>
-              </label>
-              <div className={styles['inventoryCell']}>
+                <span className={styles['inventorySummaryValue']}>
+                  {item.quantity}
+                </span>
+              </div>
+              <div className={styles['inventoryCellSummary']}>
                 <span className={styles['inventoryLabel']}>Load</span>
-                <strong>{itemTotalEncumbranceGp} gp</strong>
+                <span className={styles['inventorySummaryValue']}>
+                  {itemOwnLoadGp} gp
+                </span>
               </div>
-              <div className={styles['inventoryCell']}>
+              <div className={styles['inventoryCellSummary']}>
                 <span className={styles['inventoryLabel']}>Value</span>
-                <strong>{formatGpValue(itemTotalValueGp)} gp</strong>
+                <span className={styles['inventorySummaryValue']}>
+                  {formatGpValue(itemOwnValueGp)} gp
+                </span>
               </div>
-              <label className={styles['inventoryCell']}>
+              <div
+                className={`${styles['inventoryCellSummary']} ${styles['inventoryNotesCell']}`}
+              >
                 <span className={styles['inventoryLabel']}>Notes</span>
-                <textarea
-                  className={`${styles['fieldControl']} ${styles['fieldControlDense']} ${styles['inventoryNotes']}`}
-                  rows={1}
-                  value={item.notes}
-                  ref={(element) => resizeTextarea(element)}
-                  onChange={(event) =>
-                    updateInventoryItem(item.id, (currentItem) => ({
-                      ...currentItem,
-                      notes: event.target.value,
-                    }))
-                  }
-                  onInput={(event) => resizeTextarea(event.currentTarget)}
-                  placeholder="Short note"
-                />
-              </label>
-              <div className={styles['inventoryCellAction']}>
-                <button
-                  type="button"
-                  className={`${styles['button']} ${styles['buttonQuiet']} ${styles['buttonCompact']} ${styles['inventoryActionButton']}`}
-                  onClick={() => requestRemoveInventoryItem(item.id)}
-                >
-                  Remove
-                </button>
+                <span className={styles['inventoryNotesPreview']}>
+                  {notePreview}
+                </span>
               </div>
-            </div>
+            </button>
             {renderInventoryRows(item.id, depth + 1)}
           </div>
         );
       });
 
   const rootItemRows = renderInventoryRows(null);
+  const editingItemDisplayName =
+    editingItem && editingItemInfo
+      ? getInventoryItemDisplayName(editingItem, editingItemInfo)
+      : '';
+  const editingDraftQuantity = editingItemInfo?.isContainer
+    ? 1
+    : Math.max(1, Math.floor(Number(editingItemDraft?.quantity) || 1));
+  const editingDraftLoadPerItemGp = Math.max(
+    0,
+    Math.floor(Number(editingItemDraft?.encumbranceGp) || 0)
+  );
+  const editingDraftOwnLoadGp =
+    editingDraftLoadPerItemGp * editingDraftQuantity;
+  const editingDraftOwnValueGp =
+    editingItemInfo?.valueGp !== undefined
+      ? editingItemInfo.valueGp * editingDraftQuantity
+      : 0;
+  const editingSavedOwnLoadGp =
+    editingItem && editingItemInfo
+      ? getInventoryItemOwnEncumbranceGp(editingItem, editingItemInfo) *
+        editingItem.quantity
+      : 0;
+  const editingSavedOwnValueGp =
+    editingItem && editingItemInfo
+      ? getInventoryItemOwnValueGp(editingItem, editingItemInfo)
+      : 0;
+  const editingContainedLoadGp = Math.max(
+    0,
+    editingItemTotalEncumbranceGp - editingSavedOwnLoadGp
+  );
+  const editingContainedValueGp = Math.max(
+    0,
+    editingItemTotalValueGp - editingSavedOwnValueGp
+  );
+  const modalRoot =
+    typeof window !== 'undefined'
+      ? window.document.getElementById('app-modal')
+      : null;
 
   return (
     <div className={styles['outerContainer']}>
@@ -1219,11 +1372,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           <div className={styles['inventoryHeader']}>
             <span>Item</span>
             <span>Qty</span>
-            <span>Stored in</span>
             <span>Load</span>
             <span>Value</span>
             <span>Notes</span>
-            <span>Action</span>
           </div>
           <div className={styles['inventoryList']}>
             {rootItemRows.length > 0 ? (
@@ -1237,59 +1388,363 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           </div>
         </section>
       </div>
-      {pendingRemovalItem && pendingRemovalItemInfo && (
-        <>
-          <div className={styles['modalShadow']} onClick={closeRemoveModal} />
-          <div
-            className={styles['modal']}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="encumbrance-remove-title"
-            aria-describedby="encumbrance-remove-description"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div id="encumbrance-remove-title" className={styles['modalTitle']}>
-              Remove Item
-            </div>
-            <div className={styles['modalBody']}>
-              <p
-                id="encumbrance-remove-description"
-                className={styles['modalText']}
-              >
-                Remove{' '}
-                <span className={styles['modalItemName']}>
-                  {pendingRemovalItemInfo.name}
-                </span>
-                ? This cannot be undone from the sheet.
-              </p>
-              {pendingRemovalDescendantCount > 0 && (
-                <p className={styles['modalText']}>
-                  It also contains {pendingRemovalDescendantCount} nested item
-                  {pendingRemovalDescendantCount === 1 ? '' : 's'}, and those
-                  will be removed too.
-                </p>
-              )}
-            </div>
-            <div className={styles['modalActions']}>
-              <button
-                type="button"
-                className={`${styles['button']} ${styles['buttonCompact']}`}
-                onClick={closeRemoveModal}
-                autoFocus
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonDanger']}`}
-                onClick={confirmRemoveInventoryItem}
-              >
-                Remove Item
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <div id={'app-modal'} />
+      {modalRoot &&
+        createPortal(
+          <>
+            {editingItemDraft && editingItem && editingItemInfo && (
+              <>
+                <div
+                  className={styles['modalShadow']}
+                  onClick={closeEditModal}
+                />
+                <div
+                  className={`${styles['modal']} ${styles['editModal']}`}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="encumbrance-edit-title"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div
+                    id="encumbrance-edit-title"
+                    className={styles['modalTitle']}
+                  >
+                    Edit {editingItemDisplayName}
+                  </div>
+                  <div className={styles['modalBody']}>
+                    <div className={styles['modalFields']}>
+                      <label className={styles['modalFieldWide']}>
+                        <span className={styles['fieldLabel']}>Name</span>
+                        <input
+                          className={styles['fieldControl']}
+                          type="text"
+                          value={editingItemDraft.nameOverride}
+                          onChange={(event) =>
+                            setEditingItemDraft((currentDraft) =>
+                              currentDraft
+                                ? {
+                                    ...currentDraft,
+                                    nameOverride: event.target.value,
+                                  }
+                                : currentDraft
+                            )
+                          }
+                          placeholder={editingItemInfo.name}
+                          autoFocus
+                        />
+                      </label>
+                      <label className={styles['fieldGroup']}>
+                        <span className={styles['fieldLabel']}>Quantity</span>
+                        <input
+                          className={styles['fieldControl']}
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={editingDraftQuantity}
+                          disabled={editingItemInfo.isContainer}
+                          onChange={(event) =>
+                            setEditingItemDraft((currentDraft) =>
+                              currentDraft
+                                ? {
+                                    ...currentDraft,
+                                    quantity: Math.max(
+                                      1,
+                                      Math.floor(
+                                        Number(event.target.value) || 1
+                                      )
+                                    ),
+                                  }
+                                : currentDraft
+                            )
+                          }
+                        />
+                      </label>
+                      <label className={styles['fieldGroup']}>
+                        <span className={styles['fieldLabel']}>Stored in</span>
+                        <select
+                          className={styles['fieldControl']}
+                          value={editingItemDraft.containerId}
+                          onChange={(event) =>
+                            setEditingItemDraft((currentDraft) =>
+                              currentDraft
+                                ? {
+                                    ...currentDraft,
+                                    containerId: event.target.value,
+                                  }
+                                : currentDraft
+                            )
+                          }
+                        >
+                          <option value="">On person</option>
+                          {editingParentOptions.map((containerItem) => {
+                            const containerInfo = catalogById.get(
+                              containerItem.catalogId
+                            );
+
+                            return (
+                              <option
+                                key={containerItem.id}
+                                value={containerItem.id}
+                              >
+                                {containerInfo
+                                  ? getInventoryItemDisplayName(
+                                      containerItem,
+                                      containerInfo
+                                    )
+                                  : 'Container'}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </label>
+                      <label className={styles['fieldGroup']}>
+                        <span className={styles['fieldLabel']}>
+                          Load per item
+                        </span>
+                        <input
+                          className={styles['fieldControl']}
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={editingDraftLoadPerItemGp}
+                          onChange={(event) =>
+                            setEditingItemDraft((currentDraft) =>
+                              currentDraft
+                                ? {
+                                    ...currentDraft,
+                                    encumbranceGp: Math.max(
+                                      0,
+                                      Math.floor(
+                                        Number(event.target.value) || 0
+                                      )
+                                    ),
+                                  }
+                                : currentDraft
+                            )
+                          }
+                        />
+                      </label>
+                      <label className={styles['modalFieldWide']}>
+                        <span className={styles['fieldLabel']}>Notes</span>
+                        <textarea
+                          className={`${styles['fieldControl']} ${styles['modalNotes']}`}
+                          rows={3}
+                          value={editingItemDraft.notes}
+                          ref={(element) => resizeTextarea(element)}
+                          onChange={(event) =>
+                            setEditingItemDraft((currentDraft) =>
+                              currentDraft
+                                ? {
+                                    ...currentDraft,
+                                    notes: event.target.value,
+                                  }
+                                : currentDraft
+                            )
+                          }
+                          onInput={(event) =>
+                            resizeTextarea(event.currentTarget)
+                          }
+                          placeholder="Short note"
+                        />
+                      </label>
+                    </div>
+
+                    <div className={styles['modalMetaGrid']}>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>Type</span>
+                        <span className={styles['modalMetaValue']}>
+                          {categoryLabels[editingItemInfo.category]}
+                          {customCatalogIds.has(editingItem.catalogId)
+                            ? ' / Custom'
+                            : ''}
+                        </span>
+                      </div>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>
+                          Value per item
+                        </span>
+                        <span className={styles['modalMetaValue']}>
+                          {formatGpValue(editingItemInfo.valueGp)} gp
+                        </span>
+                      </div>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>
+                          Row load
+                        </span>
+                        <span className={styles['modalMetaValue']}>
+                          {editingDraftOwnLoadGp} gp
+                        </span>
+                      </div>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>
+                          Row value
+                        </span>
+                        <span className={styles['modalMetaValue']}>
+                          {formatGpValue(editingDraftOwnValueGp)} gp
+                        </span>
+                      </div>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>
+                          Catalog load
+                        </span>
+                        <span className={styles['modalMetaValue']}>
+                          {editingItemInfo.encumbranceGp} gp
+                        </span>
+                      </div>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>
+                          Catalog name
+                        </span>
+                        <span className={styles['modalMetaValue']}>
+                          {editingItemInfo.name}
+                        </span>
+                      </div>
+                      {editingContainerSummary && (
+                        <>
+                          <div className={styles['modalMetaItem']}>
+                            <span className={styles['modalMetaLabel']}>
+                              Container usage
+                            </span>
+                            <span className={styles['modalMetaValue']}>
+                              {formatContainerUsage(editingContainerSummary)}
+                            </span>
+                          </div>
+                          <div className={styles['modalMetaItem']}>
+                            <span className={styles['modalMetaLabel']}>
+                              Contained load
+                            </span>
+                            <span className={styles['modalMetaValue']}>
+                              {editingContainedLoadGp} gp
+                            </span>
+                          </div>
+                          <div className={styles['modalMetaItem']}>
+                            <span className={styles['modalMetaLabel']}>
+                              Contained value
+                            </span>
+                            <span className={styles['modalMetaValue']}>
+                              {formatGpValue(editingContainedValueGp)} gp
+                            </span>
+                          </div>
+                          <div className={styles['modalMetaItem']}>
+                            <span className={styles['modalMetaLabel']}>
+                              Container state
+                            </span>
+                            <span className={styles['modalMetaValue']}>
+                              {editingContainerSummary.mismatchedItemIds
+                                .length > 0
+                                ? 'Check contents'
+                                : editingContainerSummary.isOverCapacity
+                                ? 'Overfull'
+                                : editingContainerSummary.capacity > 0 &&
+                                  editingContainerSummary.used >=
+                                    editingContainerSummary.capacity
+                                ? 'Full'
+                                : 'Available'}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className={styles['modalDangerRow']}>
+                      <div className={styles['modalDangerText']}>
+                        Remove this item from the sheet.
+                      </div>
+                      <button
+                        type="button"
+                        className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonDanger']}`}
+                        onClick={() =>
+                          requestRemoveInventoryItem(editingItem.id)
+                        }
+                      >
+                        Remove Item
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles['modalActions']}>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']}`}
+                      onClick={closeEditModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonPrimary']}`}
+                      onClick={saveEditingItem}
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+            {pendingRemovalItem && pendingRemovalItemInfo && (
+              <>
+                <div
+                  className={styles['modalShadow']}
+                  onClick={closeRemoveModal}
+                />
+                <div
+                  className={styles['modal']}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="encumbrance-remove-title"
+                  aria-describedby="encumbrance-remove-description"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div
+                    id="encumbrance-remove-title"
+                    className={styles['modalTitle']}
+                  >
+                    Remove Item
+                  </div>
+                  <div className={styles['modalBody']}>
+                    <p
+                      id="encumbrance-remove-description"
+                      className={styles['modalText']}
+                    >
+                      Remove{' '}
+                      <span className={styles['modalItemName']}>
+                        {getInventoryItemDisplayName(
+                          pendingRemovalItem,
+                          pendingRemovalItemInfo
+                        )}
+                      </span>
+                      ? This cannot be undone from the sheet.
+                    </p>
+                    {pendingRemovalDescendantCount > 0 && (
+                      <p className={styles['modalText']}>
+                        It also contains {pendingRemovalDescendantCount} nested
+                        item{pendingRemovalDescendantCount === 1 ? '' : 's'},
+                        and those will be removed too.
+                      </p>
+                    )}
+                  </div>
+                  <div className={styles['modalActions']}>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']}`}
+                      onClick={closeRemoveModal}
+                      autoFocus
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonDanger']}`}
+                      onClick={confirmRemoveInventoryItem}
+                    >
+                      Remove Item
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </>,
+          modalRoot
+        )}
     </div>
   );
 };
