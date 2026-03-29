@@ -1,10 +1,13 @@
 import { createEmptyEncumbranceDocument } from '../helpers/encumbranceDocument';
 import {
   getContainerLoadSummary,
+  getStrengthCarryingCapacityGp,
   getEffectiveLoadGp,
+  getInventoryItemTotalValueGp,
   getLoadBand,
   getStrengthWeightAllowanceGp,
   getTotalEncumbranceGp,
+  getTotalValueGp,
 } from '../helpers/encumbranceRules';
 import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
 
@@ -22,7 +25,7 @@ describe('encumbrance rules', () => {
         score: 17,
         exceptional: 'none',
       })
-    ).toBe(750);
+    ).toBe(500);
 
     expect(
       getStrengthWeightAllowanceGp({
@@ -30,6 +33,22 @@ describe('encumbrance rules', () => {
         exceptional: '00',
       })
     ).toBe(3000);
+  });
+
+  test('returns carrying capacity from the base 350 gp plus strength modifier', () => {
+    expect(
+      getStrengthCarryingCapacityGp({
+        score: 8,
+        exceptional: 'none',
+      })
+    ).toBe(350);
+
+    expect(
+      getStrengthCarryingCapacityGp({
+        score: 18,
+        exceptional: '01-50',
+      })
+    ).toBe(1350);
   });
 
   test('sums inventory encumbrance including nested contents', () => {
@@ -40,18 +59,21 @@ describe('encumbrance rules', () => {
         catalogId: 'backpack',
         quantity: 1,
         containerId: null,
+        notes: '',
       },
       {
         id: 'torch-1',
         catalogId: 'torch',
         quantity: 2,
         containerId: 'backpack-1',
+        notes: '',
       },
       {
         id: 'coin-1',
         catalogId: 'coin-gold',
         quantity: 50,
         containerId: null,
+        notes: '',
       },
     ];
 
@@ -66,12 +88,14 @@ describe('encumbrance rules', () => {
         catalogId: 'sack-large',
         quantity: 1,
         containerId: null,
+        notes: '',
       },
       {
         id: 'coin-1',
         catalogId: 'coin-gold',
         quantity: 450,
         containerId: 'sack-1',
+        notes: '',
       },
     ];
 
@@ -96,11 +120,56 @@ describe('encumbrance rules', () => {
       exceptional: 'none',
     });
 
-    expect(effectiveLoad).toBe(550);
+    expect(effectiveLoad).toBe(350);
     expect(getLoadBand(effectiveLoad)).toEqual({
-      id: 'heavy',
-      label: 'Heavy gear',
-      movement: '9"',
+      id: 'normal',
+      label: 'Unencumbered',
+      movement: '12"',
     });
+  });
+
+  test('sums inventory value including nested contents', () => {
+    const document = createEmptyEncumbranceDocument();
+    document.inventory = [
+      {
+        id: 'backpack-1',
+        catalogId: 'backpack',
+        quantity: 1,
+        containerId: null,
+        notes: '',
+      },
+      {
+        id: 'diamond-1',
+        catalogId: 'diamond',
+        quantity: 1,
+        containerId: 'backpack-1',
+        notes: '',
+      },
+      {
+        id: 'coin-1',
+        catalogId: 'coin-gold',
+        quantity: 12,
+        containerId: null,
+        notes: '',
+      },
+      {
+        id: 'torch-1',
+        catalogId: 'torch',
+        quantity: 2,
+        containerId: 'backpack-1',
+        notes: '',
+      },
+    ];
+
+    expect(
+      getInventoryItemTotalValueGp(
+        'backpack-1',
+        document.inventory,
+        encumbranceCatalogById
+      )
+    ).toBeCloseTo(102.02);
+    expect(getTotalValueGp(document, encumbranceCatalogById)).toBeCloseTo(
+      114.02
+    );
   });
 });

@@ -10,9 +10,9 @@ import type {
 const defaultWeightAllowanceByScore = new Map<number, number>([
   [3, -350],
   [4, -250],
-  [5, -150],
-  [6, 0],
-  [7, 0],
+  [5, -250],
+  [6, -150],
+  [7, -150],
   [8, 0],
   [9, 0],
   [10, 0],
@@ -20,23 +20,25 @@ const defaultWeightAllowanceByScore = new Map<number, number>([
   [12, 100],
   [13, 100],
   [14, 200],
-  [15, 350],
-  [16, 500],
-  [17, 750],
-  [18, 1000],
+  [15, 200],
+  [16, 350],
+  [17, 500],
+  [18, 750],
 ]);
 
 const exceptionalWeightAllowance = new Map<string, number>([
-  ['01-50', 1250],
-  ['51-75', 1500],
-  ['76-90', 1750],
+  ['01-50', 1000],
+  ['51-75', 1250],
+  ['76-90', 1500],
   ['91-99', 2000],
   ['00', 3000],
 ]);
 
+const unencumberedBaseCapacityGp = 350;
+
 const normalLoadBand: LoadBand = {
   id: 'normal',
-  label: 'Normal gear',
+  label: 'Unencumbered',
   movement: '12"',
 };
 
@@ -67,7 +69,13 @@ const getChildItems = (
 const getOwnEncumbrance = (
   item: EncumbranceInventoryItem,
   catalogById: Map<string, EncumbranceCatalogItem>
-): number => (catalogById.get(item.catalogId)?.encumbranceGp || 0) * item.quantity;
+): number =>
+  (catalogById.get(item.catalogId)?.encumbranceGp || 0) * item.quantity;
+
+const getOwnValueGp = (
+  item: EncumbranceInventoryItem,
+  catalogById: Map<string, EncumbranceCatalogItem>
+): number => (catalogById.get(item.catalogId)?.valueGp || 0) * item.quantity;
 
 export const getStrengthWeightAllowanceGp = (
   strength: StrengthScore
@@ -79,11 +87,16 @@ export const getStrengthWeightAllowanceGp = (
   return defaultWeightAllowanceByScore.get(strength.score) || 0;
 };
 
+export const getStrengthCarryingCapacityGp = (
+  strength: StrengthScore
+): number =>
+  unencumberedBaseCapacityGp + getStrengthWeightAllowanceGp(strength);
+
 export const getEffectiveLoadGp = (
   totalEncumbranceGp: number,
   strength: StrengthScore
 ): number =>
-  Math.max(0, totalEncumbranceGp - getStrengthWeightAllowanceGp(strength));
+  Math.max(0, totalEncumbranceGp - getStrengthCarryingCapacityGp(strength));
 
 export const getLoadBand = (effectiveLoadGp: number): LoadBand => {
   if (effectiveLoadGp <= 350) {
@@ -115,7 +128,8 @@ export const getInventoryItemTotalGp = (
   return (
     getOwnEncumbrance(item, catalogById) +
     children.reduce(
-      (total, child) => total + getInventoryItemTotalGp(child.id, inventory, catalogById),
+      (total, child) =>
+        total + getInventoryItemTotalGp(child.id, inventory, catalogById),
       0
     )
   );
@@ -128,6 +142,38 @@ export const getTotalEncumbranceGp = (
   getChildItems(document.inventory, null).reduce(
     (total, item) =>
       total + getInventoryItemTotalGp(item.id, document.inventory, catalogById),
+    0
+  );
+
+export const getInventoryItemTotalValueGp = (
+  itemId: string,
+  inventory: EncumbranceInventoryItem[],
+  catalogById: Map<string, EncumbranceCatalogItem>
+): number => {
+  const item = inventory.find((candidate) => candidate.id === itemId);
+  if (!item) {
+    return 0;
+  }
+
+  const children = getChildItems(inventory, itemId);
+  return (
+    getOwnValueGp(item, catalogById) +
+    children.reduce(
+      (total, child) =>
+        total + getInventoryItemTotalValueGp(child.id, inventory, catalogById),
+      0
+    )
+  );
+};
+
+export const getTotalValueGp = (
+  document: EncumbranceDocument,
+  catalogById: Map<string, EncumbranceCatalogItem>
+): number =>
+  getChildItems(document.inventory, null).reduce(
+    (total, item) =>
+      total +
+      getInventoryItemTotalValueGp(item.id, document.inventory, catalogById),
     0
   );
 
@@ -161,18 +207,24 @@ export const getContainerLoadSummary = (
       })
       .map((child) => child.id);
 
-    const used = matchingChildren.reduce((total, child) => total + child.quantity, 0);
+    const used = matchingChildren.reduce(
+      (total, child) => total + child.quantity,
+      0
+    );
     return {
       used,
       capacity: containerInfo.ammoCapacity.quantity,
       unitLabel: 'items',
-      isOverCapacity: used > containerInfo.ammoCapacity.quantity || mismatchedItemIds.length > 0,
+      isOverCapacity:
+        used > containerInfo.ammoCapacity.quantity ||
+        mismatchedItemIds.length > 0,
       mismatchedItemIds,
     };
   }
 
   const used = children.reduce(
-    (total, child) => total + getInventoryItemTotalGp(child.id, inventory, catalogById),
+    (total, child) =>
+      total + getInventoryItemTotalGp(child.id, inventory, catalogById),
     0
   );
 
@@ -181,7 +233,8 @@ export const getContainerLoadSummary = (
     capacity: containerInfo.capacityGp || 0,
     unitLabel: 'gp',
     isOverCapacity:
-      typeof containerInfo.capacityGp === 'number' && used > containerInfo.capacityGp,
+      typeof containerInfo.capacityGp === 'number' &&
+      used > containerInfo.capacityGp,
     mismatchedItemIds: [],
   };
 };
