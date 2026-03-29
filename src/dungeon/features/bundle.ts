@@ -80,7 +80,3 @@ export type FeatureTableId = typeof ALL_TABLE_DEFINITIONS[number]['id'];
 
 export const ALL_TABLE_ID_LIST: ReadonlyArray<FeatureTableId> =
   ALL_TABLE_DEFINITIONS.map((def) => def.id);
-
-export const ALL_TABLE_HEADINGS = Object.fromEntries(
-  ALL_TABLE_DEFINITIONS.map((def) => [def.id, def.heading])
-) as Record<FeatureTableId, string>;

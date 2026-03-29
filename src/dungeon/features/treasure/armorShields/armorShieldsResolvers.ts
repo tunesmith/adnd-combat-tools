@@ -3,7 +3,7 @@ import { resolveSubtable } from '../../../domain/resolveSubtable';
 import { treasureArmorShields } from './armorShieldsTable';
 import { buildTreasureEvent } from '../shared';
 
-export type TreasureArmorShieldsResolverOptions = {
+type TreasureArmorShieldsResolverOptions = {
   roll?: number;
   level?: number;
   treasureRoll?: number;
