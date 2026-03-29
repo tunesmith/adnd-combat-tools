@@ -59,6 +59,13 @@ interface InventoryEditDraft {
   encumbranceGp: number;
 }
 
+interface CharacterEditDraft {
+  name: string;
+  strengthScore: number;
+  exceptional: ExceptionalStrengthTier;
+  dmNotes: string;
+}
+
 const categoryLabels: Record<EquipmentCategory, string> = {
   containers: 'Containers',
   armor: 'Armor',
@@ -156,6 +163,12 @@ const formatGpValue = (value: number): string =>
     maximumFractionDigits: 2,
   });
 
+const formatStrengthSummary = (
+  score: number,
+  exceptional: ExceptionalStrengthTier
+): string =>
+  score === 18 && exceptional !== 'none' ? `18/${exceptional}` : `${score}`;
+
 const getInventoryItemDisplayName = (
   item: EncumbranceInventoryItem,
   itemInfo: EncumbranceCatalogItem
@@ -216,6 +229,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const [customItemDraft, setCustomItemDraft] = useState<CustomItemDraft>(
     defaultCustomItemDraft()
   );
+  const [characterEditDraft, setCharacterEditDraft] =
+    useState<CharacterEditDraft | null>(null);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingItemDraft, setEditingItemDraft] =
     useState<InventoryEditDraft | null>(null);
@@ -377,7 +392,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       : [];
 
   useEffect(() => {
-    if (!pendingRemovalId && !editingItemDraft && !showAddModal) {
+    if (
+      !pendingRemovalId &&
+      !editingItemDraft &&
+      !showAddModal &&
+      !characterEditDraft
+    ) {
       return;
     }
 
@@ -397,12 +417,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           setShowAddModal(false);
           return;
         }
+
+        if (characterEditDraft) {
+          setCharacterEditDraft(null);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [editingItemDraft, pendingRemovalId, showAddModal]);
+  }, [characterEditDraft, editingItemDraft, pendingRemovalId, showAddModal]);
 
   useEffect(() => {
     if (editingItemDraft && !editingItem) {
@@ -410,46 +434,48 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     }
   }, [editingItem, editingItemDraft]);
 
-  const setCharacterName = (name: string) => {
-    setDocument((currentDocument) => ({
-      ...currentDocument,
-      character: {
-        ...currentDocument.character,
-        name,
-      },
-    }));
+  const openCharacterModal = () => {
+    setCharacterEditDraft({
+      name: visibleDocument.character.name,
+      strengthScore: visibleDocument.character.strength.score,
+      exceptional: visibleDocument.character.strength.exceptional,
+      dmNotes: document.dm?.privateNotes || '',
+    });
   };
 
-  const setStrengthScore = (score: number) => {
+  const closeCharacterModal = () => {
+    setCharacterEditDraft(null);
+  };
+
+  const saveCharacterModal = () => {
+    if (!characterEditDraft) {
+      return;
+    }
+
     setDocument((currentDocument) => ({
       ...currentDocument,
       character: {
-        ...currentDocument.character,
+        name: characterEditDraft.name,
         strength: {
-          score,
+          score: characterEditDraft.strengthScore,
           exceptional:
-            score === 18
-              ? currentDocument.character.strength.exceptional
+            characterEditDraft.strengthScore === 18
+              ? characterEditDraft.exceptional
               : 'none',
         },
       },
+      ...(mode === 'dm'
+        ? {
+            dm: {
+              privateNotes: characterEditDraft.dmNotes,
+            },
+          }
+        : {}),
     }));
-  };
 
-  const setExceptionalStrength = (exceptional: ExceptionalStrengthTier) => {
-    setDocument((currentDocument) => ({
-      ...currentDocument,
-      character: {
-        ...currentDocument.character,
-        strength: {
-          ...currentDocument.character.strength,
-          exceptional:
-            currentDocument.character.strength.score === 18
-              ? exceptional
-              : 'none',
-        },
-      },
-    }));
+    setCharacterEditDraft(null);
+    setStatusMessage('Updated character details.');
+    setErrorMessage('');
   };
 
   const updateInventoryItem = (
@@ -721,6 +747,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       const text = await file.text();
       const parsed = parseEncumbranceDocument(text);
       setDocument(parsed);
+      setCharacterEditDraft(null);
       setShowAddModal(false);
       setEditingItemDraft(null);
       setPendingRemovalId(null);
@@ -773,6 +800,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
   const resetDocument = () => {
     setDocument(createEmptyEncumbranceDocument(getDocumentKindForMode(mode)));
+    setCharacterEditDraft(null);
     setShowAddModal(false);
     setEditingItemDraft(null);
     setPendingRemovalId(null);
@@ -940,6 +968,30 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     typeof window !== 'undefined'
       ? window.document.getElementById('app-modal')
       : null;
+  const activeCharacterSummary = characterEditDraft
+    ? {
+        name: characterEditDraft.name,
+        strength: {
+          score: characterEditDraft.strengthScore,
+          exceptional:
+            characterEditDraft.strengthScore === 18
+              ? characterEditDraft.exceptional
+              : 'none',
+        },
+        dmNotes: characterEditDraft.dmNotes,
+      }
+    : {
+        name: visibleDocument.character.name,
+        strength: visibleDocument.character.strength,
+        dmNotes: document.dm?.privateNotes || '',
+      };
+  const characterSummaryName =
+    activeCharacterSummary.name.trim() || 'Unnamed adventurer';
+  const characterSummaryStrength = formatStrengthSummary(
+    activeCharacterSummary.strength.score,
+    activeCharacterSummary.strength.exceptional
+  );
+  const hasDmNotes = Boolean(activeCharacterSummary.dmNotes.trim());
 
   return (
     <div className={styles['outerContainer']}>
@@ -1012,74 +1064,29 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         <div className={styles['gridLayout']}>
           <section className={styles['card']}>
             <div className={styles['cardTitle']}>Character</div>
-            <div className={styles['formGridCompact']}>
-              <label className={styles['fieldGroupWide']}>
-                <span className={styles['fieldLabel']}>Name</span>
-                <input
-                  className={styles['fieldControl']}
-                  type="text"
-                  value={visibleDocument.character.name}
-                  onChange={(event) => setCharacterName(event.target.value)}
-                  placeholder="Unnamed adventurer"
-                />
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Strength</span>
-                <select
-                  className={styles['fieldControl']}
-                  value={visibleDocument.character.strength.score}
-                  onChange={(event) =>
-                    setStrengthScore(Number(event.target.value) || 8)
-                  }
-                >
-                  {Array.from({ length: 16 }, (_, index) => index + 3).map(
-                    (score) => (
-                      <option key={score} value={score}>
-                        {score}
-                      </option>
-                    )
+            <button
+              type="button"
+              className={styles['characterSummaryButton']}
+              onClick={openCharacterModal}
+              aria-label={`Edit ${characterSummaryName}`}
+              aria-haspopup="dialog"
+            >
+              <div className={styles['characterSummary']}>
+                <div className={styles['characterSummaryName']}>
+                  {characterSummaryName}
+                </div>
+                <div className={styles['characterSummaryRow']}>
+                  <span className={styles['characterSummaryChip']}>
+                    STR {characterSummaryStrength}
+                  </span>
+                  {mode === 'dm' && hasDmNotes && (
+                    <span className={styles['characterSummaryText']}>
+                      Private notes saved
+                    </span>
                   )}
-                </select>
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Exceptional</span>
-                <select
-                  className={styles['fieldControl']}
-                  value={visibleDocument.character.strength.exceptional}
-                  disabled={visibleDocument.character.strength.score !== 18}
-                  onChange={(event) =>
-                    setExceptionalStrength(
-                      event.target.value as ExceptionalStrengthTier
-                    )
-                  }
-                >
-                  <option value="none">None</option>
-                  <option value="01-50">18/01-50</option>
-                  <option value="51-75">18/51-75</option>
-                  <option value="76-90">18/76-90</option>
-                  <option value="91-99">18/91-99</option>
-                  <option value="00">18/00</option>
-                </select>
-              </label>
-            </div>
-            {mode === 'dm' && (
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>DM Notes</span>
-                <textarea
-                  className={`${styles['fieldControl']} ${styles['textareaControlCompact']}`}
-                  value={document.dm?.privateNotes || ''}
-                  onChange={(event) =>
-                    setDocument((currentDocument) => ({
-                      ...currentDocument,
-                      dm: {
-                        privateNotes: event.target.value,
-                      },
-                    }))
-                  }
-                  placeholder="Private note stripped from player exports."
-                />
-              </label>
-            )}
+                </div>
+              </div>
+            </button>
           </section>
 
           <section className={styles['card']}>
@@ -1148,6 +1155,153 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       {modalRoot &&
         createPortal(
           <>
+            {characterEditDraft && (
+              <>
+                <div
+                  className={styles['modalShadow']}
+                  onClick={closeCharacterModal}
+                />
+                <div
+                  className={`${styles['modal']} ${styles['editModal']}`}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="encumbrance-character-title"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div
+                    id="encumbrance-character-title"
+                    className={styles['modalTitle']}
+                  >
+                    Edit Character
+                  </div>
+                  <div className={styles['modalBody']}>
+                    <div className={styles['modalFields']}>
+                      <label className={styles['modalFieldWide']}>
+                        <span className={styles['fieldLabel']}>Name</span>
+                        <input
+                          className={styles['fieldControl']}
+                          type="text"
+                          value={characterEditDraft.name}
+                          onChange={(event) =>
+                            setCharacterEditDraft((currentDraft) =>
+                              currentDraft
+                                ? {
+                                    ...currentDraft,
+                                    name: event.target.value,
+                                  }
+                                : currentDraft
+                            )
+                          }
+                          placeholder="Unnamed adventurer"
+                          autoFocus
+                        />
+                      </label>
+                      <label className={styles['fieldGroup']}>
+                        <span className={styles['fieldLabel']}>Strength</span>
+                        <select
+                          className={styles['fieldControl']}
+                          value={characterEditDraft.strengthScore}
+                          onChange={(event) =>
+                            setCharacterEditDraft((currentDraft) =>
+                              currentDraft
+                                ? {
+                                    ...currentDraft,
+                                    strengthScore:
+                                      Number(event.target.value) || 8,
+                                    exceptional:
+                                      Number(event.target.value) === 18
+                                        ? currentDraft.exceptional
+                                        : 'none',
+                                  }
+                                : currentDraft
+                            )
+                          }
+                        >
+                          {Array.from(
+                            { length: 16 },
+                            (_, index) => index + 3
+                          ).map((score) => (
+                            <option key={score} value={score}>
+                              {score}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {characterEditDraft.strengthScore === 18 && (
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>
+                            Exceptional
+                          </span>
+                          <select
+                            className={styles['fieldControl']}
+                            value={characterEditDraft.exceptional}
+                            onChange={(event) =>
+                              setCharacterEditDraft((currentDraft) =>
+                                currentDraft
+                                  ? {
+                                      ...currentDraft,
+                                      exceptional: event.target
+                                        .value as ExceptionalStrengthTier,
+                                    }
+                                  : currentDraft
+                              )
+                            }
+                          >
+                            <option value="none">None</option>
+                            <option value="01-50">18/01-50</option>
+                            <option value="51-75">18/51-75</option>
+                            <option value="76-90">18/76-90</option>
+                            <option value="91-99">18/91-99</option>
+                            <option value="00">18/00</option>
+                          </select>
+                        </label>
+                      )}
+                      {mode === 'dm' && (
+                        <label className={styles['modalFieldWide']}>
+                          <span className={styles['fieldLabel']}>DM Notes</span>
+                          <textarea
+                            className={`${styles['fieldControl']} ${styles['modalNotes']}`}
+                            rows={4}
+                            value={characterEditDraft.dmNotes}
+                            ref={(element) => resizeTextarea(element)}
+                            onChange={(event) =>
+                              setCharacterEditDraft((currentDraft) =>
+                                currentDraft
+                                  ? {
+                                      ...currentDraft,
+                                      dmNotes: event.target.value,
+                                    }
+                                  : currentDraft
+                              )
+                            }
+                            onInput={(event) =>
+                              resizeTextarea(event.currentTarget)
+                            }
+                            placeholder="Private note stripped from player exports."
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                  <div className={styles['modalActions']}>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']}`}
+                      onClick={closeCharacterModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonPrimary']}`}
+                      onClick={saveCharacterModal}
+                    >
+                      Save Character
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
             {showAddModal && (
               <>
                 <div
