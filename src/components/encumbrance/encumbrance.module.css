@@ -144,25 +144,29 @@
   margin-bottom: 0.7rem;
 }
 
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
+}
+
+.cardHeader .cardTitle {
+  margin-bottom: 0;
+}
+
+.cardHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .formGridCompact {
   display: grid;
   grid-template-columns: minmax(0, 2.2fr) repeat(2, minmax(130px, 0.85fr));
   gap: 0.7rem;
   margin-bottom: 0.7rem;
-  align-items: end;
-}
-
-.addModeRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-bottom: 0.7rem;
-}
-
-.addGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 2.15fr) repeat(4, minmax(118px, 0.95fr)) auto;
-  gap: 0.65rem;
   align-items: end;
 }
 
@@ -445,6 +449,20 @@
   margin-bottom: 0.95rem;
 }
 
+.modalToggleRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.8rem;
+}
+
+.modalAddGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 0.2rem;
+}
+
 .modalFieldWide {
   display: flex;
   flex-direction: column;
@@ -516,14 +534,6 @@
 }
 
 @media screen and (max-width: 1240px) {
-  .addGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .fieldGroupWide {
-    grid-column: span 3;
-  }
-
   .inventoryHeader,
   .inventoryRowButton {
     grid-template-columns:
@@ -546,10 +556,6 @@
 
   .fieldGroupWide {
     grid-column: span 2;
-  }
-
-  .addGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .inventoryHeader {
@@ -591,7 +597,8 @@
   }
 
   .modalFields,
-  .modalMetaGrid {
+  .modalMetaGrid,
+  .modalAddGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -606,7 +613,6 @@
   }
 
   .formGridCompact,
-  .addGrid,
   .inventoryRowButton {
     grid-template-columns: 1fr;
   }
@@ -624,6 +630,11 @@
   }
 
   .modalDangerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cardHeader {
     flex-direction: column;
     align-items: stretch;
   }

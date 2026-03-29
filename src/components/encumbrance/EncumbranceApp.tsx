@@ -216,6 +216,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const [customItemDraft, setCustomItemDraft] = useState<CustomItemDraft>(
     defaultCustomItemDraft()
   );
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingItemDraft, setEditingItemDraft] =
     useState<InventoryEditDraft | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
@@ -285,6 +286,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         }
       : {}),
   };
+  const addPreviewItem =
+    addMode === 'catalog' ? selectedCatalogItem : customPreviewItem;
+  const addPreviewQuantity =
+    addMode === 'catalog'
+      ? selectedCatalogItem?.isContainer
+        ? 1
+        : selectedQuantity
+      : customItemDraft.category === 'containers'
+      ? 1
+      : selectedQuantity;
   const totalEncumbranceGp = getTotalEncumbranceGp(
     visibleDocument,
     catalogById
@@ -366,7 +377,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       : [];
 
   useEffect(() => {
-    if (!pendingRemovalId && !editingItemDraft) {
+    if (!pendingRemovalId && !editingItemDraft && !showAddModal) {
       return;
     }
 
@@ -377,13 +388,21 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           return;
         }
 
-        setEditingItemDraft(null);
+        if (editingItemDraft) {
+          setEditingItemDraft(null);
+          return;
+        }
+
+        if (showAddModal) {
+          setShowAddModal(false);
+          return;
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [editingItemDraft, pendingRemovalId]);
+  }, [editingItemDraft, pendingRemovalId, showAddModal]);
 
   useEffect(() => {
     if (editingItemDraft && !editingItem) {
@@ -470,6 +489,14 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
   const closeEditModal = () => {
     setEditingItemDraft(null);
+  };
+
+  const openAddModal = () => {
+    setShowAddModal(true);
+  };
+
+  const closeAddModal = () => {
+    setShowAddModal(false);
   };
 
   const saveEditingItem = () => {
@@ -640,6 +667,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       setStatusMessage(`Added ${selectedCatalogItem.name}.`);
       setErrorMessage('');
       setSelectedQuantity(1);
+      setShowAddModal(false);
       return;
     }
 
@@ -676,6 +704,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     setErrorMessage('');
     setSelectedQuantity(1);
     setCustomItemDraft(defaultCustomItemDraft());
+    setShowAddModal(false);
   };
 
   const triggerImport = () => {
@@ -692,6 +721,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       const text = await file.text();
       const parsed = parseEncumbranceDocument(text);
       setDocument(parsed);
+      setShowAddModal(false);
       setEditingItemDraft(null);
       setPendingRemovalId(null);
       setSelectedContainerId('');
@@ -743,6 +773,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
   const resetDocument = () => {
     setDocument(createEmptyEncumbranceDocument(getDocumentKindForMode(mode)));
+    setShowAddModal(false);
     setEditingItemDraft(null);
     setPendingRemovalId(null);
     setCustomItemDraft(defaultCustomItemDraft());
@@ -1083,292 +1114,18 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         </div>
 
         <section className={styles['card']}>
-          <div className={styles['cardTitle']}>Add Possession</div>
-          <div className={styles['addModeRow']}>
-            <button
-              type="button"
-              className={`${styles['button']} ${styles['buttonCompact']} ${
-                addMode === 'catalog' ? styles['buttonSelected'] : ''
-              }`}
-              onClick={() => setAddMode('catalog')}
-            >
-              Catalog Item
-            </button>
-            <button
-              type="button"
-              className={`${styles['button']} ${styles['buttonCompact']} ${
-                addMode === 'custom' ? styles['buttonSelected'] : ''
-              }`}
-              onClick={() => setAddMode('custom')}
-            >
-              Custom Item
-            </button>
+          <div className={styles['cardHeader']}>
+            <div className={styles['cardTitle']}>Inventory</div>
+            <div className={styles['cardHeaderActions']}>
+              <button
+                type="button"
+                className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
+                onClick={openAddModal}
+              >
+                Add Item
+              </button>
+            </div>
           </div>
-
-          {addMode === 'catalog' ? (
-            <div className={styles['addGrid']}>
-              <label className={styles['fieldGroupWide']}>
-                <span className={styles['fieldLabel']}>Item</span>
-                <select
-                  className={styles['fieldControl']}
-                  value={selectedCatalogId}
-                  onChange={(event) => {
-                    const nextCatalogId = event.target.value;
-                    setSelectedCatalogId(nextCatalogId);
-                    const nextItem = catalogById.get(nextCatalogId);
-                    if (nextItem?.isContainer) {
-                      setSelectedQuantity(1);
-                    }
-                  }}
-                >
-                  {(Object.keys(categoryLabels) as EquipmentCategory[]).map(
-                    (category) => (
-                      <optgroup key={category} label={categoryLabels[category]}>
-                        {catalogGroups[category].map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )
-                  )}
-                </select>
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Quantity</span>
-                <input
-                  className={styles['fieldControl']}
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={
-                    selectedCatalogItem?.isContainer ? 1 : selectedQuantity
-                  }
-                  disabled={selectedCatalogItem?.isContainer}
-                  onChange={(event) =>
-                    setSelectedQuantity(
-                      Math.max(1, Math.floor(Number(event.target.value) || 1))
-                    )
-                  }
-                />
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Store in</span>
-                <select
-                  className={styles['fieldControl']}
-                  value={selectedContainerId}
-                  onChange={(event) =>
-                    setSelectedContainerId(event.target.value)
-                  }
-                >
-                  <option value="">On person</option>
-                  {containerItems.map((containerItem) => {
-                    const containerInfo = catalogById.get(
-                      containerItem.catalogId
-                    );
-                    const isAllowed =
-                      selectedCatalogItem && containerInfo
-                        ? canStoreItemInContainer(
-                            selectedCatalogItem,
-                            containerInfo
-                          )
-                        : true;
-
-                    return (
-                      <option
-                        key={containerItem.id}
-                        value={containerItem.id}
-                        disabled={!isAllowed}
-                      >
-                        {containerInfo?.name || 'Container'}
-                      </option>
-                    );
-                  })}
-                </select>
-              </label>
-              <div className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Load</span>
-                <div className={styles['fieldReadonly']}>
-                  {selectedCatalogItem?.encumbranceGp || 0} gp
-                </div>
-              </div>
-              <div className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Value</span>
-                <div className={styles['fieldReadonly']}>
-                  {formatGpValue(selectedCatalogItem?.valueGp || 0)} gp
-                </div>
-              </div>
-              <div className={styles['fieldGroupAction']}>
-                <button
-                  type="button"
-                  className={`${styles['button']} ${styles['buttonPrimary']}`}
-                  onClick={handleAddItem}
-                  disabled={!selectedCatalogItem}
-                >
-                  Add Item
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className={styles['addGrid']}>
-              <label className={styles['fieldGroupWide']}>
-                <span className={styles['fieldLabel']}>Name</span>
-                <input
-                  className={styles['fieldControl']}
-                  type="text"
-                  value={customItemDraft.name}
-                  onChange={(event) =>
-                    updateCustomItemDraft('name', event.target.value)
-                  }
-                  placeholder="Custom item"
-                />
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Category</span>
-                <select
-                  className={styles['fieldControl']}
-                  value={customItemDraft.category}
-                  onChange={(event) =>
-                    updateCustomItemDraft(
-                      'category',
-                      event.target.value as CustomCategory
-                    )
-                  }
-                >
-                  {customCategoryOptions.map((category) => (
-                    <option key={category} value={category}>
-                      {categoryLabels[category]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Quantity</span>
-                <input
-                  className={styles['fieldControl']}
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={
-                    customItemDraft.category === 'containers'
-                      ? 1
-                      : selectedQuantity
-                  }
-                  disabled={customItemDraft.category === 'containers'}
-                  onChange={(event) =>
-                    setSelectedQuantity(
-                      Math.max(1, Math.floor(Number(event.target.value) || 1))
-                    )
-                  }
-                />
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Store in</span>
-                <select
-                  className={styles['fieldControl']}
-                  value={selectedContainerId}
-                  onChange={(event) =>
-                    setSelectedContainerId(event.target.value)
-                  }
-                >
-                  <option value="">On person</option>
-                  {containerItems.map((containerItem) => {
-                    const containerInfo = catalogById.get(
-                      containerItem.catalogId
-                    );
-                    const isAllowed = containerInfo
-                      ? canStoreItemInContainer(
-                          customPreviewItem,
-                          containerInfo
-                        )
-                      : true;
-
-                    return (
-                      <option
-                        key={containerItem.id}
-                        value={containerItem.id}
-                        disabled={!isAllowed}
-                      >
-                        {containerInfo?.name || 'Container'}
-                      </option>
-                    );
-                  })}
-                </select>
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Load</span>
-                <input
-                  className={styles['fieldControl']}
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={customItemDraft.encumbranceGp}
-                  onChange={(event) =>
-                    updateCustomItemDraft(
-                      'encumbranceGp',
-                      Math.max(0, Math.floor(Number(event.target.value) || 0))
-                    )
-                  }
-                />
-              </label>
-              <label className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Value</span>
-                <input
-                  className={styles['fieldControl']}
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={customItemDraft.valueGp}
-                  onChange={(event) =>
-                    updateCustomItemDraft(
-                      'valueGp',
-                      Math.max(0, Number(event.target.value) || 0)
-                    )
-                  }
-                />
-              </label>
-              {customItemDraft.category === 'containers' && (
-                <label className={styles['fieldGroup']}>
-                  <span className={styles['fieldLabel']}>Capacity</span>
-                  <input
-                    className={styles['fieldControl']}
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={customItemDraft.capacityGp}
-                    onChange={(event) =>
-                      updateCustomItemDraft(
-                        'capacityGp',
-                        Math.max(1, Math.floor(Number(event.target.value) || 1))
-                      )
-                    }
-                  />
-                </label>
-              )}
-              <div className={styles['fieldGroup']}>
-                <span className={styles['fieldLabel']}>Preview</span>
-                <div className={styles['fieldReadonly']}>
-                  {customPreviewItem.encumbranceGp} gp /{' '}
-                  {formatGpValue(customPreviewItem.valueGp)} gp
-                  {customPreviewItem.isContainer &&
-                    ` / ${customPreviewItem.capacityGp} gp cap.`}
-                </div>
-              </div>
-              <div className={styles['fieldGroupAction']}>
-                <button
-                  type="button"
-                  className={`${styles['button']} ${styles['buttonPrimary']}`}
-                  onClick={handleAddItem}
-                >
-                  Add Custom Item
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section className={styles['card']}>
-          <div className={styles['cardTitle']}>Inventory</div>
           <div className={styles['inventoryHeader']}>
             <span>Item</span>
             <span>Qty</span>
@@ -1381,8 +1138,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
               rootItemRows
             ) : (
               <div className={styles['placeholder']}>
-                Add a character name, choose gear, and start building the
-                loadout.
+                Use Add Item to start building the loadout.
               </div>
             )}
           </div>
@@ -1392,6 +1148,339 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       {modalRoot &&
         createPortal(
           <>
+            {showAddModal && (
+              <>
+                <div
+                  className={styles['modalShadow']}
+                  onClick={closeAddModal}
+                />
+                <div
+                  className={`${styles['modal']} ${styles['editModal']}`}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="encumbrance-add-title"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div
+                    id="encumbrance-add-title"
+                    className={styles['modalTitle']}
+                  >
+                    Add Item
+                  </div>
+                  <div className={styles['modalBody']}>
+                    <div className={styles['modalToggleRow']}>
+                      <button
+                        type="button"
+                        className={`${styles['button']} ${
+                          styles['buttonCompact']
+                        } ${
+                          addMode === 'catalog' ? styles['buttonSelected'] : ''
+                        }`}
+                        onClick={() => setAddMode('catalog')}
+                      >
+                        Catalog Item
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles['button']} ${
+                          styles['buttonCompact']
+                        } ${
+                          addMode === 'custom' ? styles['buttonSelected'] : ''
+                        }`}
+                        onClick={() => setAddMode('custom')}
+                      >
+                        Custom Item
+                      </button>
+                    </div>
+
+                    {addMode === 'catalog' ? (
+                      <div className={styles['modalAddGrid']}>
+                        <label className={styles['modalFieldWide']}>
+                          <span className={styles['fieldLabel']}>Item</span>
+                          <select
+                            className={styles['fieldControl']}
+                            value={selectedCatalogId}
+                            onChange={(event) => {
+                              const nextCatalogId = event.target.value;
+                              setSelectedCatalogId(nextCatalogId);
+                              const nextItem = catalogById.get(nextCatalogId);
+                              if (nextItem?.isContainer) {
+                                setSelectedQuantity(1);
+                              }
+                            }}
+                          >
+                            {(
+                              Object.keys(categoryLabels) as EquipmentCategory[]
+                            ).map((category) => (
+                              <optgroup
+                                key={category}
+                                label={categoryLabels[category]}
+                              >
+                                {catalogGroups[category].map((item) => (
+                                  <option key={item.id} value={item.id}>
+                                    {item.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ))}
+                          </select>
+                        </label>
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Quantity</span>
+                          <input
+                            className={styles['fieldControl']}
+                            type="number"
+                            min={1}
+                            step={1}
+                            value={addPreviewQuantity}
+                            disabled={selectedCatalogItem?.isContainer}
+                            onChange={(event) =>
+                              setSelectedQuantity(
+                                Math.max(
+                                  1,
+                                  Math.floor(Number(event.target.value) || 1)
+                                )
+                              )
+                            }
+                          />
+                        </label>
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Store in</span>
+                          <select
+                            className={styles['fieldControl']}
+                            value={selectedContainerId}
+                            onChange={(event) =>
+                              setSelectedContainerId(event.target.value)
+                            }
+                          >
+                            <option value="">On person</option>
+                            {containerItems.map((containerItem) => {
+                              const containerInfo = catalogById.get(
+                                containerItem.catalogId
+                              );
+                              const isAllowed =
+                                addPreviewItem && containerInfo
+                                  ? canStoreItemInContainer(
+                                      addPreviewItem,
+                                      containerInfo
+                                    )
+                                  : true;
+
+                              return (
+                                <option
+                                  key={containerItem.id}
+                                  value={containerItem.id}
+                                  disabled={!isAllowed}
+                                >
+                                  {containerInfo
+                                    ? getInventoryItemDisplayName(
+                                        containerItem,
+                                        containerInfo
+                                      )
+                                    : 'Container'}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </label>
+                        <div className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Load</span>
+                          <div className={styles['fieldReadonly']}>
+                            {selectedCatalogItem?.encumbranceGp || 0} gp
+                          </div>
+                        </div>
+                        <div className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Value</span>
+                          <div className={styles['fieldReadonly']}>
+                            {formatGpValue(selectedCatalogItem?.valueGp || 0)}{' '}
+                            gp
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles['modalAddGrid']}>
+                        <label className={styles['modalFieldWide']}>
+                          <span className={styles['fieldLabel']}>Name</span>
+                          <input
+                            className={styles['fieldControl']}
+                            type="text"
+                            value={customItemDraft.name}
+                            onChange={(event) =>
+                              updateCustomItemDraft('name', event.target.value)
+                            }
+                            placeholder="Custom item"
+                          />
+                        </label>
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Category</span>
+                          <select
+                            className={styles['fieldControl']}
+                            value={customItemDraft.category}
+                            onChange={(event) =>
+                              updateCustomItemDraft(
+                                'category',
+                                event.target.value as CustomCategory
+                              )
+                            }
+                          >
+                            {customCategoryOptions.map((category) => (
+                              <option key={category} value={category}>
+                                {categoryLabels[category]}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Quantity</span>
+                          <input
+                            className={styles['fieldControl']}
+                            type="number"
+                            min={1}
+                            step={1}
+                            value={addPreviewQuantity}
+                            disabled={customItemDraft.category === 'containers'}
+                            onChange={(event) =>
+                              setSelectedQuantity(
+                                Math.max(
+                                  1,
+                                  Math.floor(Number(event.target.value) || 1)
+                                )
+                              )
+                            }
+                          />
+                        </label>
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Store in</span>
+                          <select
+                            className={styles['fieldControl']}
+                            value={selectedContainerId}
+                            onChange={(event) =>
+                              setSelectedContainerId(event.target.value)
+                            }
+                          >
+                            <option value="">On person</option>
+                            {containerItems.map((containerItem) => {
+                              const containerInfo = catalogById.get(
+                                containerItem.catalogId
+                              );
+                              const isAllowed = containerInfo
+                                ? canStoreItemInContainer(
+                                    customPreviewItem,
+                                    containerInfo
+                                  )
+                                : true;
+
+                              return (
+                                <option
+                                  key={containerItem.id}
+                                  value={containerItem.id}
+                                  disabled={!isAllowed}
+                                >
+                                  {containerInfo
+                                    ? getInventoryItemDisplayName(
+                                        containerItem,
+                                        containerInfo
+                                      )
+                                    : 'Container'}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </label>
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Load</span>
+                          <input
+                            className={styles['fieldControl']}
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={customItemDraft.encumbranceGp}
+                            onChange={(event) =>
+                              updateCustomItemDraft(
+                                'encumbranceGp',
+                                Math.max(
+                                  0,
+                                  Math.floor(Number(event.target.value) || 0)
+                                )
+                              )
+                            }
+                          />
+                        </label>
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>Value</span>
+                          <input
+                            className={styles['fieldControl']}
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            value={customItemDraft.valueGp}
+                            onChange={(event) =>
+                              updateCustomItemDraft(
+                                'valueGp',
+                                Math.max(0, Number(event.target.value) || 0)
+                              )
+                            }
+                          />
+                        </label>
+                        {customItemDraft.category === 'containers' && (
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
+                              Capacity
+                            </span>
+                            <input
+                              className={styles['fieldControl']}
+                              type="number"
+                              min={1}
+                              step={1}
+                              value={customItemDraft.capacityGp}
+                              onChange={(event) =>
+                                updateCustomItemDraft(
+                                  'capacityGp',
+                                  Math.max(
+                                    1,
+                                    Math.floor(Number(event.target.value) || 1)
+                                  )
+                                )
+                              }
+                            />
+                          </label>
+                        )}
+                        <div className={styles['modalFieldWide']}>
+                          <span className={styles['fieldLabel']}>Preview</span>
+                          <div className={styles['fieldReadonly']}>
+                            {customPreviewItem.encumbranceGp} gp /{' '}
+                            {formatGpValue(customPreviewItem.valueGp)} gp
+                            {customPreviewItem.isContainer &&
+                              ` / ${customPreviewItem.capacityGp} gp cap.`}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles['modalActions']}>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']}`}
+                      onClick={closeAddModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonPrimary']}`}
+                      onClick={handleAddItem}
+                      disabled={
+                        addMode === 'catalog'
+                          ? !selectedCatalogItem
+                          : !customItemDraft.name.trim()
+                      }
+                    >
+                      {addMode === 'catalog' ? 'Add Item' : 'Add Custom Item'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
             {editingItemDraft && editingItem && editingItemInfo && (
               <>
                 <div
