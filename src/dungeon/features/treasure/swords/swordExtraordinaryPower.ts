@@ -6,6 +6,7 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import type { TreasureSwordAlignment } from './swordsAlignmentTable';
 import { extraordinaryPowerNodeId } from './swordNodeIds';
 import { resolveBoundedRoll } from './swordResolverShared';
@@ -141,16 +142,15 @@ export function buildSwordExtraordinaryPowerPending(options: {
     variant === 'restricted'
       ? 'treasureSwordExtraordinaryPowerRestricted'
       : 'treasureSwordExtraordinaryPower';
-  return {
-    type: 'pending-roll',
-    table: tableName,
+  return createPendingRoll({
+    kind: tableName,
     id: extraordinaryPowerNodeId(slotKey, rollIndex),
-    context: {
+    args: {
       kind: 'treasureSwordExtraordinaryPower',
       slotKey,
       rollIndex,
       tableVariant: variant,
       alignment,
     },
-  };
+  });
 }

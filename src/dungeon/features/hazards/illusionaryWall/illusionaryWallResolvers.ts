@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { ChamberRoomContents } from '../../environment/roomsChambers/roomsChambersTable';
 import {
   illusionaryWallNature,
@@ -17,15 +18,16 @@ export function resolveIllusionaryWallNature(options?: {
   const command = getTableEntry(usedRoll, illusionaryWallNature);
   const children: DungeonOutcomeNode[] = [];
   if (command === IllusionaryWallNature.Chamber) {
-    children.push({
-      type: 'pending-roll',
-      table: 'chamberDimensions',
-      context: {
+    children.push(
+      createPendingRoll({
         kind: 'chamberDimensions',
-        forcedContents: ChamberRoomContents.MonsterAndTreasure,
-        level: options?.level,
-      },
-    });
+        args: {
+          kind: 'chamberDimensions',
+          forcedContents: ChamberRoomContents.MonsterAndTreasure,
+          level: options?.level,
+        },
+      })
+    );
   }
   return {
     type: 'event',

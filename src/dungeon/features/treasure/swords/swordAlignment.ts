@@ -4,6 +4,7 @@ import type {
   OutcomeEvent,
   PendingRoll,
 } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { TreasureSword, type TreasureSwordUnusualResult } from './swordsTables';
 import {
   SWORD_ALIGNMENT_DETAILS as SWORD_ALIGNMENT,
@@ -123,16 +124,15 @@ export function buildPendingSwordAlignmentNode(
       : variant === 'lawful'
       ? 'treasureSwordAlignmentLawful'
       : 'treasureSwordAlignment';
-  return {
-    type: 'pending-roll',
-    table: tableId,
+  return createPendingRoll({
+    kind: tableId,
     id: rollIndex ? `${tableId}:${rollIndex}` : undefined,
-    context: {
+    args: {
       kind: 'treasureSwordAlignment',
       variant,
       sword,
     },
-  };
+  });
 }
 
 function determineSwordAlignmentInstruction(

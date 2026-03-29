@@ -4,6 +4,7 @@ import type {
   OutcomeEvent,
   OutcomeEventNode,
 } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { TreasureSwordAlignment } from './swordsAlignmentTable';
 import {
   appendSwordAlignmentForUnusual,
@@ -79,13 +80,14 @@ export function resolveTreasureSwords(options?: {
   if (options?.kindRoll !== undefined) {
     children.push(resolveTreasureSwordKind({ roll: options.kindRoll }));
   } else {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureSwordKind',
-      id: options?.rollIndex
-        ? `treasureSwordKind:${options.rollIndex}`
-        : undefined,
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'treasureSwordKind',
+        id: options?.rollIndex
+          ? `treasureSwordKind:${options.rollIndex}`
+          : undefined,
+      })
+    );
   }
   if (options?.unusualRoll !== undefined) {
     children.push(
@@ -101,29 +103,30 @@ export function resolveTreasureSwords(options?: {
       })
     );
   } else {
-    children.push({
-      type: 'pending-roll',
-      table: 'treasureSwordUnusual',
-      id: options?.rollIndex
-        ? `treasureSwordUnusual:${options.rollIndex}`
-        : undefined,
-      context: {
-        kind: 'treasureSword',
-        sword: command,
-        rollIndex: options?.rollIndex,
-        languageRolls: options?.languageRolls
-          ? [...options.languageRolls]
+    children.push(
+      createPendingRoll({
+        kind: 'treasureSwordUnusual',
+        id: options?.rollIndex
+          ? `treasureSwordUnusual:${options.rollIndex}`
           : undefined,
-        primaryAbilityRolls: options?.primaryAbilityRolls
-          ? [...options.primaryAbilityRolls]
-          : undefined,
-        extraordinaryPowerRolls: options?.extraordinaryPowerRolls
-          ? [...options.extraordinaryPowerRolls]
-          : undefined,
-        luckBladeWishes,
-        dragonSlayerColorRoll: options?.dragonSlayerColorRoll,
-      },
-    });
+        args: {
+          kind: 'treasureSword',
+          sword: command,
+          rollIndex: options?.rollIndex,
+          languageRolls: options?.languageRolls
+            ? [...options.languageRolls]
+            : undefined,
+          primaryAbilityRolls: options?.primaryAbilityRolls
+            ? [...options.primaryAbilityRolls]
+            : undefined,
+          extraordinaryPowerRolls: options?.extraordinaryPowerRolls
+            ? [...options.extraordinaryPowerRolls]
+            : undefined,
+          luckBladeWishes,
+          dragonSlayerColorRoll: options?.dragonSlayerColorRoll,
+        },
+      })
+    );
   }
   switch (command) {
     case TreasureSword.SwordPlus5HolyAvenger: {

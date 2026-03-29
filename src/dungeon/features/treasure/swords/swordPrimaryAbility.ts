@@ -6,6 +6,7 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { primaryAbilityNodeId } from './swordNodeIds';
 import { resolveBoundedRoll } from './swordResolverShared';
 import { buildSwordExtraordinaryPowerPending } from './swordExtraordinaryPower';
@@ -130,15 +131,14 @@ export function buildSwordPrimaryAbilityPending(options: {
     variant === 'restricted'
       ? 'treasureSwordPrimaryAbilityRestricted'
       : 'treasureSwordPrimaryAbility';
-  return {
-    type: 'pending-roll',
-    table: tableName,
+  return createPendingRoll({
+    kind: tableName,
     id: primaryAbilityNodeId(slotKey, rollIndex),
-    context: {
+    args: {
       kind: 'treasureSwordPrimaryAbility',
       slotKey,
       rollIndex,
       tableVariant: variant,
     },
-  };
+  });
 }

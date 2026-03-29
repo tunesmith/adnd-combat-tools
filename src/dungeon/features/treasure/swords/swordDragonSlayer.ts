@@ -5,6 +5,7 @@ import type {
   OutcomeEvent,
   PendingRoll,
 } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import type { TreasureSwordAlignment } from './swordsAlignmentTable';
 import { dragonSlayerColorNodeId } from './swordNodeIds';
 import { resolveBoundedRoll } from './swordResolverShared';
@@ -54,16 +55,15 @@ export function buildSwordDragonSlayerColorPending(options: {
   alignmentReady?: boolean;
 }): PendingRoll {
   const { slotKey, rollIndex, alignment, alignmentReady } = options;
-  return {
-    type: 'pending-roll',
-    table: 'treasureSwordDragonSlayerColor',
+  return createPendingRoll({
+    kind: 'treasureSwordDragonSlayerColor',
     id: dragonSlayerColorNodeId(slotKey, rollIndex),
-    context: {
+    args: {
       kind: 'treasureSwordDragonSlayerColor',
       slotKey,
       rollIndex,
       alignment,
       alignmentReady: alignmentReady ?? alignment !== undefined,
     },
-  };
+  });
 }

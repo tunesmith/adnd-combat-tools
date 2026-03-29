@@ -6,6 +6,7 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import type { TreasureSwordAlignment } from './swordsAlignmentTable';
 import {
   type TreasureSwordSpecialPurposePowerResult,
@@ -113,11 +114,10 @@ export function buildSwordSpecialPurposePending(options: {
 }): PendingRoll {
   const { slotKey, rollIndex, parentSlotKey, alignment } = options;
   const alignmentReady = alignment !== undefined;
-  return {
-    type: 'pending-roll',
-    table: 'treasureSwordSpecialPurpose',
+  return createPendingRoll({
+    kind: 'treasureSwordSpecialPurpose',
     id: specialPurposeNodeId(slotKey, rollIndex),
-    context: {
+    args: {
       kind: 'treasureSwordSpecialPurpose',
       slotKey,
       rollIndex,
@@ -125,7 +125,7 @@ export function buildSwordSpecialPurposePending(options: {
       alignment,
       alignmentReady,
     },
-  };
+  });
 }
 
 export function buildSwordSpecialPurposePowerPending(options: {
@@ -135,16 +135,15 @@ export function buildSwordSpecialPurposePowerPending(options: {
   alignment?: TreasureSwordAlignment;
 }): PendingRoll {
   const { slotKey, rollIndex, parentSlotKey, alignment } = options;
-  return {
-    type: 'pending-roll',
-    table: 'treasureSwordSpecialPurposePower',
+  return createPendingRoll({
+    kind: 'treasureSwordSpecialPurposePower',
     id: specialPurposePowerNodeId(slotKey, rollIndex),
-    context: {
+    args: {
       kind: 'treasureSwordSpecialPurposePower',
       slotKey,
       rollIndex,
       parentSlotKey,
       alignment,
     },
-  };
+  });
 }
