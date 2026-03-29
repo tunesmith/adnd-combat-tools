@@ -8,6 +8,8 @@ import type {
   DungeonOutcomeNode,
   OutcomeEvent,
   OutcomeEventNode,
+} from '../../../domain/outcome';
+import type {
   TreasureEntry,
   TreasureGemCategory,
   TreasureGemCategoryId,
@@ -15,7 +17,7 @@ import type {
   TreasureGemLot,
   TreasureGemValueAdjustment,
   TreasureJewelryPiece,
-} from '../../../domain/outcome';
+} from '../../../domain/treasureValueTypes';
 
 export function resolveTreasure(options?: {
   roll?: number;

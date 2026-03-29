@@ -77,7 +77,9 @@ export function renderUnusualShapeCompact(
   return nodes;
 }
 
-export function renderCompactUnusualDetails(node: OutcomeEventNode): InlineText {
+export function renderCompactUnusualDetails(
+  node: OutcomeEventNode
+): InlineText {
   const segments: Array<string | InlineText> = [];
   const shape = findChildEvent(node, 'unusualShape');
   if (shape && shape.event.kind === 'unusualShape') {

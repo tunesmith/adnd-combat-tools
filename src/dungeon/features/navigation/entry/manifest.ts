@@ -3,7 +3,12 @@ import type { TableContext } from '../../../../types/dungeon';
 import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
+  PendingRoll,
 } from '../../../domain/outcome';
+import {
+  getPendingRollArgs,
+  getPendingRollKind,
+} from '../../../domain/pendingRoll';
 import {
   buildDoorBeyondPreview,
   buildPeriodicCheckPreview,
@@ -30,11 +35,11 @@ import {
 } from '../../shared';
 
 const resolvePendingNavigationEntry = (
-  pending: string,
-  context: TableContext | undefined,
+  pending: PendingRoll,
   ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined => {
-  const base = pending.split(':')[0] ?? pending;
+  const base = getPendingRollKind(pending);
+  const context = getPendingRollArgs(pending);
   switch (base) {
     case 'roomDimensions': {
       const level =
@@ -81,6 +86,10 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
         roll,
         level: readTableContextOfKind(context, 'wandering')?.level ?? 1,
       }),
+    resolvePending: (pending, ancestors) =>
+      resolvePeriodicCheck({
+        level: readWanderingLevel(getPendingRollArgs(pending), ancestors),
+      }),
   }),
   {
     id: 'doorBeyond',
@@ -111,6 +120,6 @@ export const entryTables: ReadonlyArray<DungeonTableDefinition> = [
         level: readTableContextOfKind(context, 'wandering')?.level ?? 1,
       }),
     resolvePending: (pending, ancestors) =>
-      resolvePendingNavigationEntry(pending.table, pending.context, ancestors),
+      resolvePendingNavigationEntry(pending, ancestors),
   }),
 ];

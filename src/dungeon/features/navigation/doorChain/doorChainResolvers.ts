@@ -1,9 +1,7 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import type {
-  DoorChainLaterality,
-  DungeonOutcomeNode,
-  OutcomeEvent,
-} from '../../../domain/outcome';
+import type { DoorChainLaterality } from '../../../domain/navigationOutcome';
+import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   doorLocation,
   DoorLocation,
@@ -33,10 +31,12 @@ export function resolveDoorLocation(options?: {
     options?.sequence !== undefined ? options.sequence : existing.length;
   const children: DungeonOutcomeNode[] = [];
   if (lateral && !repeated) {
-    children.push({
-      type: 'pending-roll',
-      table: `periodicCheckDoorOnly:${sequence}`,
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'periodicCheckDoorOnly',
+        tableId: `periodicCheckDoorOnly:${sequence}`,
+      })
+    );
   }
   const updatedExisting =
     lateral && !repeated ? [...existing, lateral] : existing;
@@ -69,10 +69,12 @@ export function resolvePeriodicDoorOnly(options?: {
     options?.sequence !== undefined ? options.sequence : existing.length;
   const children: DungeonOutcomeNode[] = [];
   if (command === PeriodicCheckDoorOnly.Door) {
-    children.push({
-      type: 'pending-roll',
-      table: `doorLocation:${sequence + 1}`,
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'doorLocation',
+        tableId: `doorLocation:${sequence + 1}`,
+      })
+    );
   }
   return {
     type: 'event',

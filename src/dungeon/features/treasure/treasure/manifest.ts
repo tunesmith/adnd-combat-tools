@@ -5,6 +5,7 @@ import {
   wrapResolver,
 } from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
+import { getPendingRollArgs } from '../../../domain/pendingRoll';
 import { readTableContextOfKind } from '../../../helpers/tableContext';
 import { createTreasureEventPreviewBuilder } from '../shared';
 import { resolveTreasure } from './treasureResolvers';
@@ -55,7 +56,10 @@ export const treasureTables: ReadonlyArray<DungeonTableDefinition> = [
       });
     },
     resolvePending: (pending, ancestors) => {
-      const ctx = readTableContextOfKind(pending.context, 'treasure');
+      const ctx = readTableContextOfKind(
+        getPendingRollArgs(pending),
+        'treasure'
+      );
       const level =
         ctx?.level ?? deriveDungeonLevelFromAncestors(ancestors) ?? 1;
       const withMonster = ctx?.withMonster ?? false;

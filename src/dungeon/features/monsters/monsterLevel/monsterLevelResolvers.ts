@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { getMonsterLevelTable, MonsterLevel } from './monsterLevelTable';
 
 export function resolveMonsterLevel(options?: {
@@ -14,34 +15,34 @@ export function resolveMonsterLevel(options?: {
   const context = { kind: 'wandering', level: dungeonLevel } as const;
   switch (result) {
     case MonsterLevel.One:
-      children.push({ type: 'pending-roll', table: 'monsterOne', context });
+      children.push(createPendingRoll({ kind: 'monsterOne', args: context }));
       break;
     case MonsterLevel.Two:
-      children.push({ type: 'pending-roll', table: 'monsterTwo', context });
+      children.push(createPendingRoll({ kind: 'monsterTwo', args: context }));
       break;
     case MonsterLevel.Three:
-      children.push({ type: 'pending-roll', table: 'monsterThree', context });
+      children.push(createPendingRoll({ kind: 'monsterThree', args: context }));
       break;
     case MonsterLevel.Four:
-      children.push({ type: 'pending-roll', table: 'monsterFour', context });
+      children.push(createPendingRoll({ kind: 'monsterFour', args: context }));
       break;
     case MonsterLevel.Five:
-      children.push({ type: 'pending-roll', table: 'monsterFive', context });
+      children.push(createPendingRoll({ kind: 'monsterFive', args: context }));
       break;
     case MonsterLevel.Six:
-      children.push({ type: 'pending-roll', table: 'monsterSix', context });
+      children.push(createPendingRoll({ kind: 'monsterSix', args: context }));
       break;
     case MonsterLevel.Seven:
-      children.push({ type: 'pending-roll', table: 'monsterSeven', context });
+      children.push(createPendingRoll({ kind: 'monsterSeven', args: context }));
       break;
     case MonsterLevel.Eight:
-      children.push({ type: 'pending-roll', table: 'monsterEight', context });
+      children.push(createPendingRoll({ kind: 'monsterEight', args: context }));
       break;
     case MonsterLevel.Nine:
-      children.push({ type: 'pending-roll', table: 'monsterNine', context });
+      children.push(createPendingRoll({ kind: 'monsterNine', args: context }));
       break;
     case MonsterLevel.Ten:
-      children.push({ type: 'pending-roll', table: 'monsterTen', context });
+      children.push(createPendingRoll({ kind: 'monsterTen', args: context }));
       break;
     default:
       break;

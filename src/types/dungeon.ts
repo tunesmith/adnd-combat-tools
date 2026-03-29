@@ -1,7 +1,5 @@
-import type {
-  DoorChainLaterality,
-  DungeonOutcomeNode,
-} from '../dungeon/domain/outcome';
+import type { DoorChainLaterality } from '../dungeon/domain/navigationOutcome';
+import type { DungeonOutcomeNode } from '../dungeon/domain/outcome';
 import type { ChamberRoomContents } from '../dungeon/features/environment/roomsChambers/roomsChambersTable';
 import type { TreasureSword } from '../dungeon/features/treasure/swords/swordsTables';
 import type { TreasureSwordAlignment } from '../dungeon/features/treasure/swords/swordsAlignmentTable';

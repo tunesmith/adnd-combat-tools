@@ -1,6 +1,6 @@
 import type React from 'react';
 import { rollDice } from '../../dungeon/helpers/dungeonLookup';
-import { resolveViaRegistry } from '../../dungeon/helpers/registry';
+import { resolvePendingOutcome } from '../../dungeon/helpers/registry';
 import {
   withDungeonRandomSession,
   type DungeonRandomSession,
@@ -8,6 +8,7 @@ import {
 import { doorBeyondMessages } from '../../dungeon/services/doorBeyondMessages';
 import { passageMessages } from '../../dungeon/services/passageMessages';
 import type { DungeonOutcomeNode } from '../../dungeon/domain/outcome';
+import { getPendingRollTargetId } from '../../dungeon/domain/pendingRoll';
 import type {
   DungeonAction,
   DungeonRollSource,
@@ -18,6 +19,7 @@ import {
   isDungeonTablePreview,
   isTargetedDungeonTablePreview,
 } from '../../types/dungeon';
+import type { RenderCache } from '../../dungeon/helpers/renderCache';
 import type { FeedItem, PreviewResolutionEntry } from './feedTypes';
 
 export function getRootPreviewNodes(
@@ -50,7 +52,7 @@ export function collectPendingTargetIds(
   const walk = (current?: DungeonOutcomeNode) => {
     if (!current) return;
     if (current.type === 'pending-roll') {
-      targets.add(current.id ?? current.table);
+      targets.add(getPendingRollTargetId(current));
       return;
     }
     current.children?.forEach((child) => walk(child));
@@ -58,6 +60,69 @@ export function collectPendingTargetIds(
 
   walk(node);
   return targets;
+}
+
+type FeedLike = {
+  id: string;
+  messages: RootDungeonTablePreview[] | FeedItem['messages'];
+  outcome?: DungeonOutcomeNode;
+  renderCache?: RenderCache;
+  pendingCount?: number;
+};
+
+type FeedPreviewResolution<T extends FeedLike> = {
+  nextFeedItem: T;
+  resolvedIds: string[];
+};
+
+export function resolveFeedPreview<T extends FeedLike>(options: {
+  preview: TargetedDungeonTablePreview;
+  feedItem: T;
+  usedRoll: number | undefined;
+  session?: DungeonRandomSession;
+}): FeedPreviewResolution<T> | undefined {
+  if (!options.feedItem.outcome) return undefined;
+  const resolution = resolvePendingOutcome({
+    outcome: options.feedItem.outcome,
+    tableId: options.preview.id,
+    targetId: options.preview.targetId,
+    roll: options.usedRoll,
+    context: options.preview.context,
+    session: options.session,
+  });
+  if (!resolution) return undefined;
+  return {
+    nextFeedItem: {
+      ...options.feedItem,
+      outcome: resolution.outcome,
+      pendingCount: resolution.snapshot.pendingCount,
+      messages: resolution.snapshot.detail,
+      renderCache: {
+        ...options.feedItem.renderCache,
+        detail: resolution.snapshot.detail,
+        compact: resolution.snapshot.compact,
+      },
+    },
+    resolvedIds: resolution.resolvedIds,
+  };
+}
+
+function markResolvedKeys(
+  feedItemId: string,
+  resolvedIds: string[],
+  setCollapsed: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  setResolved: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+): void {
+  setCollapsed((prev) => {
+    const next = { ...prev };
+    for (const key of resolvedIds) next[`${feedItemId}:${key}`] = true;
+    return next;
+  });
+  setResolved((prev) => {
+    const next = { ...prev };
+    for (const key of resolvedIds) next[`${feedItemId}:${key}`] = true;
+    return next;
+  });
 }
 
 export function resolveDungeonFeedPreview(options: {
@@ -90,16 +155,26 @@ export function resolveDungeonFeedPreview(options: {
   if (options.overrides[targetKey] !== undefined) {
     options.setOverrides((prev) => ({ ...prev, [targetKey]: undefined }));
   }
-  const didResolve = resolveViaRegistry(
-    options.preview,
-    options.feedItemId,
+  const resolution = resolveFeedPreview({
+    preview: options.preview,
+    feedItem: options.feedItem,
     usedRoll,
-    options.feedItem,
-    options.setFeed,
-    options.setCollapsed,
-    options.setResolved,
-    options.session
-  );
+    session: options.session,
+  });
+  const didResolve = resolution !== undefined;
+  if (resolution) {
+    options.setFeed((prev) =>
+      prev.map((fi) =>
+        fi.id === options.feedItemId ? resolution.nextFeedItem : fi
+      )
+    );
+    markResolvedKeys(
+      options.feedItemId,
+      resolution.resolvedIds,
+      options.setCollapsed,
+      options.setResolved
+    );
+  }
   if (
     !didResolve ||
     !options.onResolved ||

@@ -3,14 +3,14 @@ import type {
   DungeonRenderNode,
 } from '../../../../types/dungeon';
 import type { InlineText } from '../../../helpers/inlineContent';
+import type { OutcomeEventNode } from '../../../domain/outcome';
 import type {
-  OutcomeEventNode,
   TreasureEntry,
   TreasureJewelryPiece,
   TreasureGemLot,
   TreasureGemValueAdjustment,
   TreasureGemKind,
-} from '../../../domain/outcome';
+} from '../../../domain/treasureValueTypes';
 import {
   treasureWithMonster,
   treasureWithoutMonster,

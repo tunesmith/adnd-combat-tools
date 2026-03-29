@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   chute,
   egressOne,
@@ -28,15 +29,17 @@ export function resolveStairs(options?: { roll?: number }): DungeonOutcomeNode {
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
   if (command === Stairs.DownOne) {
-    children.push({ type: 'pending-roll', table: 'egress:one' });
+    children.push(createPendingRoll({ kind: 'egress', tableId: 'egress:one' }));
   } else if (command === Stairs.DownTwo) {
-    children.push({ type: 'pending-roll', table: 'egress:two' });
+    children.push(createPendingRoll({ kind: 'egress', tableId: 'egress:two' }));
   } else if (command === Stairs.DownThree) {
-    children.push({ type: 'pending-roll', table: 'egress:three' });
+    children.push(
+      createPendingRoll({ kind: 'egress', tableId: 'egress:three' })
+    );
   } else if (command === Stairs.UpDead || command === Stairs.DownDead) {
-    children.push({ type: 'pending-roll', table: 'chute' });
+    children.push(createPendingRoll({ kind: 'chute' }));
   } else if (command === Stairs.UpOneDownTwo) {
-    children.push({ type: 'pending-roll', table: 'chamberDimensions' });
+    children.push(createPendingRoll({ kind: 'chamberDimensions' }));
   }
   return {
     type: 'event',

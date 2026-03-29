@@ -3,11 +3,12 @@ import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import { getPendingRollArgs } from '../../domain/pendingRoll';
 import type { TablePreviewFactory } from '../../adapters/render/shared';
 import type {
   CompactRenderer,
+  ContextualDungeonTableDefinition,
   DetailRenderer,
-  DungeonTableDefinition,
 } from '../types';
 import { readTableContextOfKind } from '../../helpers/tableContext';
 import {
@@ -50,7 +51,7 @@ export function defineHazardLevelTable(options: {
   resolve: (options?: { roll?: number; level?: number }) => DungeonOutcomeNode;
   render: HazardRenderConfig;
   preview: TablePreviewFactory;
-}): DungeonTableDefinition {
+}): ContextualDungeonTableDefinition {
   return markContextualResolution({
     id: options.id,
     heading: options.heading,
@@ -76,7 +77,7 @@ export function defineHazardLevelTable(options: {
       }),
     resolvePending: (pending, ancestors) =>
       options.resolve({
-        level: readHazardDungeonLevel(pending.context, ancestors),
+        level: readHazardDungeonLevel(getPendingRollArgs(pending), ancestors),
       }),
   });
 }

@@ -1,12 +1,10 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import type {
-  DungeonOutcomeNode,
-  TreasureMiscWeaponResult,
-} from '../../../domain/outcome';
+import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import type { TreasureMiscWeaponResult } from '../../../domain/treasureValueTypes';
 import { buildTreasureEvent } from '../shared';
 import { treasureMiscWeapons, TreasureMiscWeapon } from './miscWeaponsTable';
 
-export type TreasureMiscWeaponsResolverOptions = {
+type TreasureMiscWeaponsResolverOptions = {
   roll?: number;
   level?: number;
   treasureRoll?: number;

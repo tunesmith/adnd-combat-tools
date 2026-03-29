@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   exitAlternative,
   exitDirection,
@@ -23,20 +24,18 @@ export function resolvePassageExitLocation(options?: {
   const baseId =
     options?.context?.id ?? `exit:${options?.context?.index ?? index}`;
   const children: DungeonOutcomeNode[] = [
-    {
-      type: 'pending-roll',
-      table: 'exitDirection',
+    createPendingRoll({
+      kind: 'exitDirection',
       id: baseId ? `${baseId}.0.exitDirection` : `exit:direction:${index}`,
-      context: { kind: 'exitDirection', index, total, origin },
-    },
-    {
-      type: 'pending-roll',
-      table: 'exitAlternative',
+      args: { kind: 'exitDirection', index, total, origin },
+    }),
+    createPendingRoll({
+      kind: 'exitAlternative',
       id: baseId
         ? `${baseId}.1.exitAlternative`
         : `exitAlternative:passage:${index}`,
-      context: { kind: 'exitAlternative', exitType: 'passage' },
-    },
+      args: { kind: 'exitAlternative', exitType: 'passage' },
+    }),
   ];
   return {
     type: 'event',
@@ -81,14 +80,13 @@ export function resolveDoorExitLocation(options?: {
       origin,
     } as OutcomeEvent,
     children: [
-      {
-        type: 'pending-roll',
-        table: 'exitAlternative',
+      createPendingRoll({
+        kind: 'exitAlternative',
         id: baseId
           ? `${baseId}.1.exitAlternative`
           : `exitAlternative:door:${index}`,
-        context: { kind: 'exitAlternative', exitType: 'door' },
-      },
+        args: { kind: 'exitAlternative', exitType: 'door' },
+      }),
     ],
   };
 }

@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   chasmConstruction,
   ChasmConstruction,
@@ -26,7 +27,7 @@ export function resolveChasmConstruction(options?: {
   const command = getTableEntry(usedRoll, chasmConstruction);
   const children: DungeonOutcomeNode[] = [];
   if (command === ChasmConstruction.JumpingPlace) {
-    children.push({ type: 'pending-roll', table: 'jumpingPlaceWidth' });
+    children.push(createPendingRoll({ kind: 'jumpingPlaceWidth' }));
   }
   return {
     type: 'event',

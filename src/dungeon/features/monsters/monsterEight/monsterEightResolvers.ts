@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { dragonEight, MonsterEight, monsterEight } from './monsterEightTables';
 import {
   dragonEightTextForCommand,
@@ -18,11 +19,12 @@ export function resolveMonsterEight(options?: {
   const party = resolved.party;
   const text = party ? undefined : resolved.text;
   if (result === MonsterEight.Dragon) {
-    children.push({
-      type: 'pending-roll',
-      table: 'dragonEight',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'dragonEight',
+        args: { kind: 'wandering', level: dungeonLevel },
+      })
+    );
   }
   return {
     type: 'event',

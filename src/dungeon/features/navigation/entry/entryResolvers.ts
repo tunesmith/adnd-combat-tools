@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   DoorBeyond,
   doorBeyond,
@@ -18,45 +19,49 @@ export function resolvePeriodicCheck(options?: {
   const children: DungeonOutcomeNode[] = [];
   switch (command) {
     case PeriodicCheck.Door:
-      children.push({
-        type: 'pending-roll',
-        table: 'doorLocation:0',
-      });
+      children.push(
+        createPendingRoll({ kind: 'doorLocation', tableId: 'doorLocation:0' })
+      );
       break;
     case PeriodicCheck.SidePassage:
-      children.push({ type: 'pending-roll', table: 'sidePassages' });
+      children.push(createPendingRoll({ kind: 'sidePassages' }));
       break;
     case PeriodicCheck.PassageTurn:
-      children.push({ type: 'pending-roll', table: 'passageTurns' });
+      children.push(createPendingRoll({ kind: 'passageTurns' }));
       break;
     case PeriodicCheck.Chamber:
-      children.push({
-        type: 'pending-roll',
-        table: 'chamberDimensions',
-        context: { kind: 'chamberDimensions', level },
-      });
+      children.push(
+        createPendingRoll({
+          kind: 'chamberDimensions',
+          args: { kind: 'chamberDimensions', level },
+        })
+      );
       break;
     case PeriodicCheck.Stairs:
-      children.push({ type: 'pending-roll', table: 'stairs' });
+      children.push(createPendingRoll({ kind: 'stairs' }));
       break;
     case PeriodicCheck.TrickTrap:
-      children.push({
-        type: 'pending-roll',
-        table: 'trickTrap',
-        context: { kind: 'wandering', level },
-      });
+      children.push(
+        createPendingRoll({
+          kind: 'trickTrap',
+          args: { kind: 'wandering', level },
+        })
+      );
       break;
     case PeriodicCheck.WanderingMonster:
-      children.push({
-        type: 'pending-roll',
-        table: 'wanderingWhereFrom',
-        context: { kind: 'wandering', level },
-      });
-      children.push({
-        type: 'pending-roll',
-        table: `monsterLevel:${level}`,
-        context: { kind: 'wandering', level },
-      });
+      children.push(
+        createPendingRoll({
+          kind: 'wanderingWhereFrom',
+          args: { kind: 'wandering', level },
+        })
+      );
+      children.push(
+        createPendingRoll({
+          kind: 'monsterLevel',
+          tableId: `monsterLevel:${level}`,
+          args: { kind: 'wandering', level },
+        })
+      );
       break;
   }
   return {
@@ -82,24 +87,26 @@ export function resolveDoorBeyond(options?: {
   const command = getTableEntry(usedRoll, doorBeyond);
   const children: DungeonOutcomeNode[] = [];
   if (command === DoorBeyond.Room) {
-    children.push({
-      type: 'pending-roll',
-      table: 'roomDimensions',
-      context: { kind: 'chamberDimensions', level },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'roomDimensions',
+        args: { kind: 'chamberDimensions', level },
+      })
+    );
   } else if (command === DoorBeyond.Chamber) {
-    children.push({
-      type: 'pending-roll',
-      table: 'chamberDimensions',
-      context: { kind: 'chamberDimensions', level },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'chamberDimensions',
+        args: { kind: 'chamberDimensions', level },
+      })
+    );
   } else if (
     command === DoorBeyond.PassageStraightAhead ||
     command === DoorBeyond.Passage45AheadBehind ||
     command === DoorBeyond.Passage45BehindAhead ||
     (command === DoorBeyond.ParallelPassageOrCloset && !options?.doorAhead)
   ) {
-    children.push({ type: 'pending-roll', table: 'passageWidth' });
+    children.push(createPendingRoll({ kind: 'passageWidth' }));
   }
   return {
     type: 'event',
@@ -127,36 +134,37 @@ export function resolveWanderingWhereFrom(options?: {
   const children: DungeonOutcomeNode[] = [];
   switch (command) {
     case PeriodicCheck.Door:
-      children.push({
-        type: 'pending-roll',
-        table: 'doorLocation:0',
-      });
+      children.push(
+        createPendingRoll({ kind: 'doorLocation', tableId: 'doorLocation:0' })
+      );
       break;
     case PeriodicCheck.SidePassage:
-      children.push({ type: 'pending-roll', table: 'sidePassages' });
+      children.push(createPendingRoll({ kind: 'sidePassages' }));
       break;
     case PeriodicCheck.PassageTurn:
-      children.push({ type: 'pending-roll', table: 'passageTurns' });
+      children.push(createPendingRoll({ kind: 'passageTurns' }));
       break;
     case PeriodicCheck.Chamber:
-      children.push({
-        type: 'pending-roll',
-        table: 'chamberDimensions',
-        context: {
+      children.push(
+        createPendingRoll({
           kind: 'chamberDimensions',
-          level: options?.level ?? 1,
-        },
-      });
+          args: {
+            kind: 'chamberDimensions',
+            level: options?.level ?? 1,
+          },
+        })
+      );
       break;
     case PeriodicCheck.Stairs:
-      children.push({ type: 'pending-roll', table: 'stairs' });
+      children.push(createPendingRoll({ kind: 'stairs' }));
       break;
     case PeriodicCheck.TrickTrap:
-      children.push({
-        type: 'pending-roll',
-        table: 'trickTrap',
-        context: { kind: 'wandering', level: options?.level ?? 1 },
-      });
+      children.push(
+        createPendingRoll({
+          kind: 'trickTrap',
+          args: { kind: 'wandering', level: options?.level ?? 1 },
+        })
+      );
       break;
     default:
       break;

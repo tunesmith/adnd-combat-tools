@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { passageWidth, PassageWidth } from './passageWidthTable';
 
 export function resolvePassageWidth(options?: {
@@ -13,7 +14,7 @@ export function resolvePassageWidth(options?: {
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
   if (command === PassageWidth.SpecialPassage) {
-    children.push({ type: 'pending-roll', table: 'specialPassage' });
+    children.push(createPendingRoll({ kind: 'specialPassage' }));
   }
   return {
     type: 'event',

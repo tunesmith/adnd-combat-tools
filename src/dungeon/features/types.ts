@@ -80,6 +80,7 @@ type DungeonTableDefinitionBase = {
   heading: string;
   resolver: ManualRollResolver;
   renderers: RenderAdapter;
+  registry?: RegistryOutcomeBuilder;
   buildPreview?: TablePreviewFactory;
   buildEventPreview?: EventPreviewBuilder;
   resolvePending?: PendingResolver;
@@ -89,23 +90,26 @@ type DungeonTableDefinitionBase = {
   postProcessOutcome?: OutcomePostProcessor;
 };
 
-type RollOnlyTableDefinition = DungeonTableDefinitionBase & {
-  manualResolution?: 'roll-only';
-  registry?: RegistryOutcomeBuilder;
-};
-
-type ContextualTableDefinition = DungeonTableDefinitionBase & {
-  manualResolution: 'contextual';
-  registry: RegistryOutcomeBuilder;
-};
-
 export type DungeonTableDefinition<TOptions = unknown> =
-  | (RollOnlyTableDefinition & {
-      readonly __optionShape?: TOptions;
-    })
-  | (ContextualTableDefinition & {
-      readonly __optionShape?: TOptions;
-    });
+  DungeonTableDefinitionBase & {
+    readonly __optionShape?: TOptions;
+  };
+
+export type ContextualDungeonTableDefinition<TOptions = unknown> =
+  DungeonTableDefinition<TOptions> & {
+    registry: RegistryOutcomeBuilder;
+    resolvePending: PendingResolver;
+  };
+
+function assertPendingResolutionContract(
+  definition: DungeonTableDefinition
+): void {
+  if (definition.registry && !definition.resolvePending) {
+    throw new Error(
+      `Dungeon table "${definition.id}" provides a registry handler but no resolvePending handler.`
+    );
+  }
+}
 
 export function createRenderAdapterMap(
   defs: ReadonlyArray<DungeonTableDefinition>
@@ -158,11 +162,7 @@ export function createRegistryOutcomeMap(
 ): Record<string, RegistryOutcomeBuilder> {
   const map: Record<string, RegistryOutcomeBuilder> = {};
   for (const def of defs) {
-    if (def.manualResolution === 'contextual' && !def.registry) {
-      throw new Error(
-        `Dungeon table "${def.id}" requires an explicit registry handler.`
-      );
-    }
+    assertPendingResolutionContract(def);
     map[def.id] =
       def.registry ??
       ((opts) =>
@@ -178,6 +178,7 @@ export function createPendingResolverMap(
 ): Record<string, PendingResolver> {
   const map: Record<string, PendingResolver> = {};
   for (const def of defs) {
+    assertPendingResolutionContract(def);
     if (def.resolvePending) {
       map[def.id] = def.resolvePending;
     }

@@ -1,155 +1,200 @@
 # Dungeon Architecture
 
-This document explains how the dungeon generator is wired, what lives in each layer, and how information flows from a dice roll to what a player sees. Read it when you need to change behaviour or to add a new table.
+This is the current map of the dungeon generator after the simplification pass. The goal is not “generic rules engine”; the goal is “readable AD&D table flow with a small reusable kernel.”
+
+If you are a DM or a developer trying to understand what a table can lead to next, start in the relevant feature folder and only drop into the kernel if you need to understand how pending rolls are normalized or rendered.
+
+## Design Rules
+
+- Keep the engine small and pure.
+- Keep table flow local to the feature that owns it.
+- Prefer explicit TypeScript tables and resolver code over framework-style indirection.
+- Prefer direct imports from the module that owns a type or helper; do not add barrel-only files.
+- Treat compact mode and detail mode as two renderings of the same outcome tree.
+- Keep preview resolution deterministic and replayable by threading the same outcome tree forward.
 
 ## High-Level Flow
 
+```text
+feature table data/resolvers
+  -> outcome tree with pending rolls
+  -> pure pending resolution + normalization
+  -> detail/compact render snapshot
+  -> page/feed controller applies UI state
 ```
-Tables (src/tables) ──▶ Feature Definitions ──▶ Outcome Tree ──▶ Render Adapters ──▶ Page UI
-                               │                           │
-                               │                           └──▶ Registry (staged preview resolution updates the tree)
-                               └──▶ Render Cache (detail & compact reuse the same nodes)
-```
 
-1. **Tables** describe the raw AD&D data: every `entries: [{ range, command }]` pair lives under `src/tables/dungeon/**`.
-2. **Feature definitions** (`src/dungeon/features/**`) choose the resolver, preview builder, and renderers for each table.
-3. The **outcome tree** is a lightweight AST that records each roll and any follow-up tables that still need to be resolved.
-4. **Adapters** (`src/dungeon/adapters/render.ts`) translate outcome nodes into concrete UI messages for both detail and compact modes.
-5. The **registry** ties detail-mode previews back to the resolvers so the page can resolve staged tables without bespoke wiring.
-6. The **page UI** (`src/pages/dungeon/index.tsx`) is a thin orchestrator that renders previews, manages the feed, and delegates all logic to the layers above.
+The important boundary is:
 
-## Files and Their Responsibilities
+- `src/dungeon/**` owns pure dungeon behavior.
+- `src/components/dungeon/**` owns feed mutation, collapse state, and React wiring.
 
-### Tables (`src/tables/dungeon/**`)
+That means preview resolution now happens in two steps:
 
-- Enumerations for each table (e.g., `PeriodicCheck`, `Stairs`, `MonsterOne`).
-- `Table<T>` definitions with `sides` and `entries` arrays.
-- No logic lives here—only data.
+1. The pure engine resolves one pending node and returns `{ outcome, snapshot, resolvedIds }`.
+2. The UI/controller decides how to merge that result into the feed.
 
-### Domain (`src/dungeon/domain`)
+## Read This First
 
-- `outcome.ts` defines the types that flow through the system:
-  - `DungeonOutcomeNode` is either an `event` (resolved roll) or a `pending-roll` (preview still awaiting a roll).
-  - `OutcomeEvent` is a discriminated union capturing every table the generator understands. Events can carry extra structured data (e.g., exit count, wandering level).
-- `resolvers.ts` is the only place randomness happens. A resolver:
-  1. Chooses or accepts a roll.
-  2. Looks up the command in the relevant table.
-  3. Emits a `DungeonOutcomeNode` with optional `children` for additional rolls.
-  4. Threads typed context when follow-up tables depend on prior results (door chains, exits, wandering monster level).
-- Resolvers must stay pure: no DOM access, no logging, no global mutation.
+If you want to understand a feature, read files in this order:
 
-### Features (`src/dungeon/features/**`)
+1. `table.ts` or `*Table.ts`: the raw DMG/appendix table data.
+2. `*Resolvers.ts`: the actual roll flow and the pending children it stages next.
+3. `manifest.ts`: how the table plugs into preview/detail/compact behavior.
+4. `*Render.ts`: how the resolved event becomes DM-facing text.
+5. `*Flow.ts`: only when the feature needs special post-processing that should stay local to that feature.
 
-- Each feature folder owns one slice of dungeon behavior: manifest, resolvers, renderers, and any local table metadata.
-- `bundle.ts` is the aggregation point. It collects every `DungeonTableDefinition` and derives:
-  - render adapters
-  - preview factories
-  - event preview builders
-  - registry outcomes
-  - pending resolvers
-  - post-processors
-- The preferred authoring surface is now:
-  - `defineRollOnlyTable(...)` for simple “roll -> result -> preview/render” tables
-  - `defineTreasureMagicTable(...)` for treasure tables that need treasure context
-  - `defineTreasureFollowupTable(...)` for simple treasure follow-up leaves
-  - `defineMonsterTable(...)` for monster tables that need dungeon-level context
-  - `defineEnvironmentLevelTable(...)` for environment tables whose main rule is “derive dungeon level and pass it to the resolver”
-- Raw `DungeonTableDefinition` objects are still valid, but they should now be reserved for genuine exceptions such as door chains, swords, or tables with bespoke child post-processing.
+For most work, that is enough.
 
-### Adapters (`src/dungeon/adapters/render.ts`)
+## Kernel
 
-- `toDetailRender(outcome)` renders headings, “roll: n — label” bullets, paragraphs, and staged previews.
-- `toCompactRender(outcome)` produces the compact prose that historically appeared in the tool.
-- Both helpers work directly from the stored outcome tree; detail mode adds preview nodes while compact mode filters them out.
-- Each helper is pure and composes sentences in TypeScript so there is one source of truth for dungeon prose.
-- Shared helpers live alongside the render functions (door-chain formatting, exit text, wandering monster composition, and so on).
+These files are the reusable core and should stay generic:
 
-### Registry (`src/dungeon/helpers/registry.ts`)
+- `src/dungeon/domain/outcome.ts`
+- `src/dungeon/domain/*Outcome.ts`
+- `src/dungeon/domain/treasureValueTypes.ts`
+- `src/dungeon/domain/pendingRoll.ts`
+- `src/dungeon/helpers/outcomeTree.ts`
+- `src/dungeon/helpers/outcomePipeline.ts`
+- `src/dungeon/helpers/registry.ts`
+- `src/dungeon/helpers/dungeonRandom.ts`
 
-- Maps preview ids (e.g., `monsterLevel`, `doorLocation:0`) to resolver functions.
-- Supplies human-readable headings for each table.
-- `resolveViaRegistry` updates the outcome tree inside the feed item, refreshes the render cache, and manages collapsed/resolved state when a preview is resolved.
-- The registry no longer hand-curates feature tables; it consumes the derived maps from `src/dungeon/features/bundle.ts`.
-- Both detail and compact modes consume the updated tree; detail mode shows staged previews while compact mode reflects the latest resolved prose.
+The kernel is responsible for:
 
-### Services (`src/dungeon/services/**`)
+- node ids
+- pending-roll normalization
+- tree traversal
+- replacing one pending node with one resolved subtree
+- building detail/compact snapshots
+- seeded random-session support
 
-- Thin wrappers that keep older call sites convenient.
-- Build or reuse the render cache and delegate to the resolvers; no additional rolling happens here.
-- Remain for historical reasons—new code can call resolvers/adapters directly when appropriate.
+The kernel should not know dungeon content rules like “rooms/chambers need exit injection” or “swords need special preview suppression.”
 
-### Page (`src/pages/dungeon/index.tsx`)
+## UI Boundary
 
-- Houses the React state and layout (feed, controls, accessibility live region).
-- Chooses the root action (Passage or Door), collects overrides, and hands them to `runDungeonStep` (which delegates directly to the services/adapters).
-- Delegates preview resolution to the registry; when you add a new table you rarely need to touch the page.
+These files are the React-side orchestration layer:
 
-### Types (`src/types/dungeon.ts`)
+- `src/components/dungeon/dungeonFeedController.ts`
+- `src/components/dungeon/useDungeonPageState.ts`
+- `src/pages/dungeon/index.tsx`
 
-- Shared view types such as `DungeonRenderNode`, `DungeonMessage`, and `DungeonTablePreview`.
-- `TableContext` union for stateful preview chains (`doorChain`, `wandering`, `exits`).
+They are responsible for:
 
-### Tests (`src/tests/dungeon/**`)
+- feed item replacement
+- resolved preview bookkeeping
+- collapsed/expanded state
+- user interactions
+- replay/session wiring
 
-- Focused Jest tests pin key behaviours: compact text, preview staging, helper utilities.
-- Use `jest.spyOn(dungeonLookup, 'rollDice')` to make random output deterministic.
+They should not contain dungeon table logic.
 
-## Detail vs. Compact Mode
+## Feature Map
 
-| Concern            | Detail Mode                                            | Compact Mode                                              |
-| ------------------ | ------------------------------------------------------ | --------------------------------------------------------- |
-| Audience           | Ref + manual flow control (DM stepping through tables) | Quick prose output akin to the original booklet           |
-| Output             | Headings, bullet lists, paragraphs, table previews     | Paragraphs only                                           |
-| Interaction        | User resolves each `pending-roll` via the registry     | Shares the same tree; prose updates after each resolution |
-| Data source        | Outcome tree + render cache (previews included)        | Outcome tree + render cache (previews filtered)           |
-| Where to change it | `toDetailRender` + registry                            | `toCompactRender` helpers                                 |
+### Navigation
 
-## How to Add a New Table
+- Entry and periodic checks: `src/dungeon/features/navigation/entry`
+- Door chains: `src/dungeon/features/navigation/doorChain`
+- Side passages: `src/dungeon/features/navigation/sidePassage`
+- Passage turns and width: `src/dungeon/features/navigation/passageTurn`, `src/dungeon/features/navigation/passageWidth`
+- Special passages, streams, rivers, galleries: `src/dungeon/features/navigation/specialPassage`
+- Exits, stairs, egress, chute: `src/dungeon/features/navigation/exit`
+- Chasms: `src/dungeon/features/navigation/chasm`
 
-1. **Model the table data**: create `src/tables/dungeon/yourTable.ts` with the enum and `Table` definition.
-2. **Add or update the resolver**: implement `resolveYourThing(opts)` so it returns a `DungeonOutcomeNode` and stages child previews when necessary.
-3. **Extend the outcome union**: update `OutcomeEvent` to include the new `kind` if needed.
-4. **Choose the narrowest feature helper that fits**:
-   - Use `defineRollOnlyTable(...)` if the table is just a roll with no ambient context.
-   - Use `defineTreasureMagicTable(...)` or `defineTreasureFollowupTable(...)` for treasure families.
-   - Use `defineMonsterTable(...)` for monster tables.
-   - Use `defineEnvironmentLevelTable(...)` if the table only needs derived dungeon level.
-   - Fall back to a raw `DungeonTableDefinition` only when the table is genuinely exceptional.
-5. **Add the table to the relevant manifest** and make sure that manifest is already included in `src/dungeon/features/bundle.ts`.
-6. **Write the renderers and preview factory** in the feature folder. The manifest feeds these into the global adapter/preview maps automatically.
-7. **Expose via service (optional)**: if older call sites need a service wrapper, keep it thin and delegate to the resolver/adapters.
-8. **Test**: add Jest tests to lock compact text and detail preview behaviour.
+### Environment
 
-## Feature Authoring Note
+- Rooms, chambers, contents, stairs: `src/dungeon/features/environment/roomsChambers`
+- Unusual shape/size: `src/dungeon/features/environment/unusualSpace`
+- Circular pools: `src/dungeon/features/environment/circularPools`
 
-When you are choosing between helpers, optimize for the clearest local manifest, not for maximum reuse:
+### Hazards
 
-- Start with `defineRollOnlyTable(...)`.
-- Move to a family-specific helper only when the context is genuinely domain-shaped and reused across multiple tables.
-- Keep raw definitions for tables that would need a pile of options to fit a helper.
+- Trick/trap: `src/dungeon/features/hazards/trickTrap`
+- Gas traps: `src/dungeon/features/hazards/gasTrap`
+- Illusionary walls: `src/dungeon/features/hazards/illusionaryWall`
 
-That bias keeps the code readable to non-specialists: the manifest should read like a short catalog of what the table resolves, how it previews, and what follow-up tables it can trigger.
+### Monsters
 
-## Pattern Notes
+- Monster level selection: `src/dungeon/features/monsters/monsterLevel`
+- Human subtable: `src/dungeon/features/monsters/human`
+- Monster I-X tables and dragon follow-ups: `src/dungeon/features/monsters/monster*`
 
-- **Door Chains**: The door chain flow keeps track of previously-seen lateral directions via `TableContext`. Resolvers use this to terminate properly; adapters read the same context for compact prose.
-- **Exit Counts**: `resolveNumberOfExits` now records the resolved count (including the 1d4 roll). Compact/detail renderers reuse the stored value so we do not re-roll.
-- **Wandering Monsters**: The wandering monster flow stages both the “where from” check and the monster level table. Compact mode reads the resolved outcome tree, so it never re-rolls level or monster subtables.
-- **Unusual Rooms/Chambers**: When `unusualShape`/`unusualSize` resolve, the adapters append explanatory text and remind the DM to determine exits/contents/treasure.
+### Treasure
 
-## Conventions and Guardrails
+- Core treasure roll: `src/dungeon/features/treasure/treasure`
+- Containers and protection: `src/dungeon/features/treasure/container`, `src/dungeon/features/treasure/protection`
+- Magic category fan-out: `src/dungeon/features/treasure/magicCategory`
+- Item families: potion, scroll, ring, rod/staff/wand, misc magic E1-E5, armor/shields, misc weapons, swords
 
-- Keep resolvers free of presentation logic. They should produce structured data that can be rendered in multiple formats.
-- Compact mode must not pull in `services/**`. If you find yourself reaching for one, add a helper in the adapter instead.
-- When adding `pending-roll` children, include just enough context for the next resolver to do its job.
-- Prefer discriminated unions to `any`. If you need to inspect `context`, add a small type guard rather than casting blindly.
-- Avoid console logging inside core code; use tests to assert behaviour.
+## What a Pending Roll Means
 
-## Debugging the Flow
+Pending rolls are explicit nodes in the tree:
 
-1. Run the app in detail mode. Each staged preview corresponds to a `pending-roll` node.
-2. Inspect the feed item in React dev tools to see the generated `DungeonRenderNode[]`.
-3. If the wrong preview appears, check the resolver’s children first, then the registry wiring.
-4. If compact text looks off, set a deterministic sequence in a Jest test and debug the helper in `render.ts`.
+- old compatibility shape: `table` + `context`
+- new preferred shape: `kind` + `args` + stable `id`
 
-With these abstractions you can change one layer without surprising the others: tables stay pure data, resolvers stay pure functions, adapters own presentation, and the UI keeps its job of showing and resolving previews. Follow that layering and the dungeon generator remains easy to extend.
+`src/dungeon/domain/pendingRoll.ts` is the compatibility boundary. Shared code should use the helpers there instead of parsing `table` strings or reaching into `context` directly.
+
+That gives us two benefits:
+
+- features can become more explicit without breaking replay/preview behavior
+- the remaining legacy parsing is isolated to one place
+
+## How to Follow a Table Chain
+
+Example: room/chamber flow
+
+1. `roomsChambersTable.ts` defines the raw dimensions/content tables.
+2. `roomsChambersResolvers.ts` stages `numberOfExits`, `unusualShape`, `unusualSize`, and `chamberRoomContents`.
+3. `roomsChambersFlow.ts` owns the feature-specific “unusual size may need exit follow-up” behavior.
+4. `manifest.ts` wires previews/renderers without pushing those special cases back into the kernel.
+
+Example: periodic check flow
+
+1. `entryTable.ts` defines the periodic check and door-beyond tables.
+2. `entryResolvers.ts` stages the next table explicitly.
+3. Navigation manifests wire the previews.
+4. The controller resolves previews one node at a time through the pure engine.
+
+## Registration Rules
+
+Feature registration is intentionally plain:
+
+- `id`
+- `heading`
+- `resolver`
+- `renderers`
+- optional `registry`
+- optional `resolvePending`
+- optional preview builders
+- optional feature-local post-processing hooks
+
+There is no extra contextual metadata layer. A table either uses the default resolver path or supplies an explicit `registry` + `resolvePending` pair when it truly needs one. Bundle construction fails if only one of those two handlers is present.
+
+## Guardrails
+
+- No React imports under `src/dungeon`.
+- No scoped table-id parsing outside `src/dungeon/domain/pendingRoll.ts`.
+- Keep feature-specific behavior out of `src/dungeon/helpers/outcomeTree.ts`.
+- Prefer adding a small feature-local helper over expanding the kernel.
+- Do not introduce a DSL or more generic rule engine.
+
+## When to Add a New Helper
+
+Add a shared helper only if the pattern is genuinely generic and reused across multiple feature families.
+
+Good shared helpers:
+
+- normalize a pending node
+- derive a render snapshot
+- build a plain preview from a table
+
+Bad shared helpers:
+
+- feature-specific table sequencing
+- exception handling for one table family
+- abstractions that obscure how the DMG table flows
+
+## Maintenance Heuristic
+
+If a DM asks “what can this table roll into next?”, they should be able to answer it by reading one feature folder and this document, without opening the kernel.
+
+If that stops being true, the code is drifting back toward over-abstraction.

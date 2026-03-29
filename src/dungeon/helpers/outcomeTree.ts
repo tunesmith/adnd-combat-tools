@@ -1,10 +1,16 @@
+import type { DoorChainLaterality } from '../domain/navigationOutcome';
 import type {
-  DoorChainLaterality,
   DungeonOutcomeNode,
   OutcomeEvent,
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
+import {
+  getPendingRollTargetId,
+  getPendingRollKind,
+  getPendingRollTableId,
+  getScopedTableSuffix,
+} from '../domain/pendingRoll';
 import {
   ALL_CHILD_POST_PROCESSORS,
   ALL_PENDING_RESOLVERS,
@@ -19,7 +25,9 @@ export function normalizeOutcomeTree(
 ): DungeonOutcomeNode {
   if (node.type === 'pending-roll') {
     const pendingId =
-      rootId ?? node.id ?? `root.pending.${sanitizeId(node.table)}`;
+      rootId ??
+      node.id ??
+      `root.pending.${sanitizeId(getPendingRollTableId(node))}`;
     if (node.id === pendingId) return node;
     return { ...node, id: pendingId };
   }
@@ -97,7 +105,7 @@ export function applyResolvedOutcome(
   if (node.type === 'pending-roll') {
     if (
       matchesTarget(node.id, targetId) ||
-      (!node.id && node.table === targetId)
+      (!node.id && getPendingRollTableId(node) === targetId)
     ) {
       return resolved;
     }
@@ -177,7 +185,8 @@ export function deriveDoorChainContext(
   const match = findPendingWithAncestors(
     node,
     (pending) =>
-      matchesTarget(pending.id, targetId) || pending.table === targetId
+      matchesTarget(getPendingRollTargetId(pending), targetId) ||
+      getPendingRollTableId(pending) === targetId
   );
   if (!match) return undefined;
   const existing = collectDoorChainExisting(match.ancestors);
@@ -207,69 +216,6 @@ function enrichEventNode(
   let children = [...resolvedChildren];
   const resolveNested = (outcome: DungeonOutcomeNode) =>
     resolveOutcomeNode(outcome, depth + 1, []);
-  switch (node.event.kind) {
-    case 'roomDimensions':
-    case 'chamberDimensions': {
-      const unusualSizeIndex = children.findIndex(
-        (child) => child.event.kind === 'unusualSize'
-      );
-      const unusualSizeNode =
-        unusualSizeIndex >= 0 ? children[unusualSizeIndex] : undefined;
-      const area = unusualSizeNode
-        ? totalAreaFromUnusualSize(unusualSizeNode)
-        : undefined;
-
-      let promotedExit: OutcomeEventNode | undefined;
-      if (unusualSizeNode && Array.isArray(unusualSizeNode.children)) {
-        const remainingNested: DungeonOutcomeNode[] = [];
-        for (const nestedChild of unusualSizeNode.children) {
-          if (
-            !promotedExit &&
-            nestedChild.type === 'event' &&
-            nestedChild.event.kind === 'numberOfExits'
-          ) {
-            promotedExit = nestedChild;
-            continue;
-          }
-          remainingNested.push(nestedChild);
-        }
-        if (promotedExit) {
-          const nextChildren = [...children];
-          nextChildren[unusualSizeIndex] = {
-            ...unusualSizeNode,
-            children: remainingNested.length > 0 ? remainingNested : undefined,
-          } as OutcomeEventNode;
-          children = nextChildren;
-        }
-      }
-      if (promotedExit) {
-        children = [...children, promotedExit];
-      }
-
-      const hasNumberOfExits = children.some(
-        (child) => child.event.kind === 'numberOfExits'
-      );
-      if (!hasNumberOfExits && area !== undefined && area > 0) {
-        const pending: PendingRoll = {
-          type: 'pending-roll',
-          table: 'numberOfExits',
-          context: {
-            kind: 'exits',
-            length: area,
-            width: 1,
-            isRoom: node.event.kind === 'roomDimensions',
-          },
-        };
-        const resolved = resolveOutcomeNode(pending, depth + 1, []);
-        if (resolved) {
-          children.push(resolved);
-        }
-      }
-      break;
-    }
-    default:
-      break;
-  }
   const postProcess = ALL_CHILD_POST_PROCESSORS[node.event.kind];
   if (postProcess) {
     children = postProcess(node, children, resolveNested);
@@ -311,7 +257,7 @@ function resolvePendingNode(
   pending: PendingRoll,
   ancestors: OutcomeEventNode[]
 ): DungeonOutcomeNode | undefined {
-  const base = pending.table.split(':')[0] ?? '';
+  const base = getPendingRollKind(pending);
   const featureResolve = ALL_PENDING_RESOLVERS[base];
   return featureResolve ? featureResolve(pending, ancestors) : undefined;
 }
@@ -324,7 +270,7 @@ function buildChildId(
   const suffix =
     child.type === 'event'
       ? sanitizeId(child.event.kind)
-      : sanitizeId(child.table);
+      : sanitizeId(getPendingRollTableId(child));
   return `${parentId}.${index}.${suffix}`;
 }
 
@@ -337,25 +283,9 @@ function matchesTarget(nodeId: string | undefined, targetId: string): boolean {
 }
 
 function parseDoorChainSequence(table: string, fallback: number): number {
-  const parts = table.split(':');
-  if (parts.length >= 2) {
-    const seq = Number(parts[1]);
-    if (Number.isInteger(seq)) return seq;
-  }
+  const seq = Number(getScopedTableSuffix(table));
+  if (Number.isInteger(seq)) return seq;
   return fallback;
-}
-
-function totalAreaFromUnusualSize(node: OutcomeEventNode): number | undefined {
-  if (node.event.kind !== 'unusualSize') return undefined;
-  const area = (node.event as { area?: number }).area;
-  if (area !== undefined) return area;
-  if (!node.children) return undefined;
-  for (const child of node.children) {
-    if (child.type !== 'event') continue;
-    const childArea = totalAreaFromUnusualSize(child);
-    if (childArea !== undefined) return childArea;
-  }
-  return undefined;
 }
 
 export function countPendingNodes(

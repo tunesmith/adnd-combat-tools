@@ -42,10 +42,8 @@ import type {
   PartyResult,
   CharacterSheet,
 } from '../../../dungeon/models/character/characterSheet';
-import type {
-  OutcomeEventNode,
-  TreasureGemLot,
-} from '../../../dungeon/domain/outcome';
+import type { OutcomeEventNode } from '../../../dungeon/domain/outcome';
+import type { TreasureGemLot } from '../../../dungeon/domain/treasureValueTypes';
 import type {
   DungeonRenderNode,
   TargetedDungeonTablePreview,

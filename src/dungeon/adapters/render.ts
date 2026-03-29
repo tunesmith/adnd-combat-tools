@@ -4,6 +4,12 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../domain/outcome';
+import {
+  getPendingRollArgs,
+  getPendingRollKind,
+  getPendingRollTableId,
+  getPendingRollTargetId,
+} from '../domain/pendingRoll';
 import type {
   DungeonRenderNode,
   DungeonTablePreview,
@@ -143,7 +149,7 @@ function appendPendingPreviews(
     if (!preview) continue;
     const normalized = ensureTargetedDungeonTablePreview(
       preview,
-      child.id ?? child.table
+      getPendingRollTargetId(child)
     );
     const key = getDungeonTablePreviewTargetKey(normalized);
     if (seenPreviews && seenPreviews.has(key)) continue;
@@ -199,7 +205,7 @@ export function renderDetailTree(
       if (pendingPreview) {
         const normalizedPending = ensureTargetedDungeonTablePreview(
           pendingPreview,
-          child.id ?? child.table
+          getPendingRollTargetId(child)
         );
         pendingPreviewIds.add(
           getDungeonTablePreviewTargetKey(normalizedPending)
@@ -266,10 +272,10 @@ export function renderDetailTree(
 }
 
 function previewForPending(p: PendingRoll): DungeonTablePreview | undefined {
-  const base = String(p.table.split(':')[0]);
+  const base = getPendingRollKind(p);
   const factory = PENDING_PREVIEW_FACTORIES[base];
   if (!factory) return undefined;
-  return factory(p.table, p.context);
+  return factory(getPendingRollTableId(p), getPendingRollArgs(p));
 }
 
 // COMPACT MODE: outcome -> render nodes with auto-resolved text (no previews)

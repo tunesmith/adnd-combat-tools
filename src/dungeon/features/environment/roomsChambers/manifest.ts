@@ -13,6 +13,7 @@ import {
   deriveEnvironmentDungeonLevel,
   deriveEnvironmentDungeonLevelFromAncestors,
 } from '../shared';
+import { getPendingRollArgs } from '../../../domain/pendingRoll';
 import { readTableContextOfKind } from '../../../helpers/tableContext';
 import { ChamberRoomContents } from './roomsChambersTable';
 import {
@@ -21,6 +22,7 @@ import {
   resolveChamberRoomStairs,
   resolveRoomDimensions,
 } from './roomsChambersResolvers';
+import { postProcessRoomOrChamberChildren } from './roomsChambersFlow';
 import {
   buildChamberDimensionsPreview,
   buildChamberRoomContentsPreview,
@@ -118,6 +120,7 @@ export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
     preview: buildRoomDimensionsPreview,
     fallbackLevel: 1,
     buildEventContext: buildRoomDimensionsContext,
+    postProcessChildren: postProcessRoomOrChamberChildren,
   }),
   markContextualResolution({
     id: 'chamberDimensions',
@@ -145,7 +148,7 @@ export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
       });
     },
     resolvePending: (pending, ancestors) => {
-      const parsed = readChamberDimensionsContext(pending.context);
+      const parsed = readChamberDimensionsContext(getPendingRollArgs(pending));
       const derivedLevel =
         deriveEnvironmentDungeonLevelFromAncestors(ancestors);
       const level = parsed?.level !== undefined ? parsed.level : derivedLevel;
@@ -155,6 +158,7 @@ export const roomsChambersTables: ReadonlyArray<DungeonTableDefinition> = [
         hasContext ? { context: { forcedContents, level } } : undefined
       );
     },
+    postProcessChildren: postProcessRoomOrChamberChildren,
   }),
   defineEnvironmentLevelTable({
     id: 'chamberRoomContents',

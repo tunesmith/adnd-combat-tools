@@ -5,7 +5,6 @@ import {
   selectMessagesForMode,
   type RenderCache,
 } from '../../../dungeon/helpers/renderCache';
-import { resolveViaRegistry } from '../../../dungeon/helpers/registry';
 import type {
   DungeonAction,
   DungeonRenderNode,
@@ -16,6 +15,8 @@ import type {
   OutcomeEventNode,
   PendingRoll,
 } from '../../../dungeon/domain/outcome';
+import { getPendingRollTargetId } from '../../../dungeon/domain/pendingRoll';
+import { resolveFeedPreview } from '../../../components/dungeon/dungeonFeedController';
 import {
   collectPreviews,
   collectTargetedPreviews,
@@ -76,50 +77,35 @@ export function resolvePreview(
   if (!preview) {
     throw new Error(`Preview ${previewId} not found in feed messages.`);
   }
-  let nextFeed = feed;
-  resolveViaRegistry(
+  const resolution = resolveFeedPreview({
     preview,
-    feed.id,
-    roll,
-    {
+    usedRoll: roll,
+    feedItem: {
       id: feed.id,
       messages: feed.messages,
       outcome: feed.outcome,
       renderCache: feed.renderCache,
       pendingCount: feed.pendingCount,
     },
-    (updater) => {
-      const base = [
-        {
-          id: feed.id,
-          messages: feed.messages,
-          outcome: feed.outcome,
-          renderCache: feed.renderCache,
-          pendingCount: feed.pendingCount,
-        },
-      ];
-      const updated = typeof updater === 'function' ? updater(base) : updater;
-      const next = updated[0];
-      if (!next || !next.outcome || next.outcome.type !== 'event') {
-        throw new Error('Registry update did not return an event outcome.');
-      }
-      const renderCache: RenderCache =
-        next.renderCache ?? buildRenderCache(next.outcome);
-      nextFeed = {
-        id: next.id,
-        action: feed.action,
-        roll: feed.roll,
-        outcome: next.outcome,
-        messages: next.messages,
-        renderCache,
-        pendingCount: next.pendingCount ?? countPendingNodes(next.outcome),
-        };
-      return updated;
-    },
-    undefined,
-    undefined
-  );
-  return nextFeed;
+  });
+  if (!resolution) {
+    throw new Error('Preview resolution returned no outcome.');
+  }
+  const next = resolution.nextFeedItem;
+  if (!next.outcome || next.outcome.type !== 'event') {
+    throw new Error('Preview resolution did not return an event outcome.');
+  }
+  const renderCache: RenderCache =
+    next.renderCache ?? buildRenderCache(next.outcome);
+  return {
+    id: next.id,
+    action: feed.action,
+    roll: feed.roll,
+    outcome: next.outcome,
+    messages: next.messages,
+    renderCache,
+    pendingCount: next.pendingCount ?? countPendingNodes(next.outcome),
+  };
 }
 
 export function renderCompact(feed: FeedSnapshot): DungeonRenderNode[] {
@@ -184,7 +170,7 @@ function collectPendingTargets(node: OutcomeEventNode): string[] {
   const acc: string[] = [];
   const walk = (current: OutcomeEventNode | PendingRoll) => {
     if (current.type === 'pending-roll') {
-      acc.push(current.id ?? current.table);
+      acc.push(getPendingRollTargetId(current));
       return;
     }
     current.children?.forEach((child) => walk(child));

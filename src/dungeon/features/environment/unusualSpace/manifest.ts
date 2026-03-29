@@ -6,6 +6,7 @@ import {
 } from '../../shared';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import type { TableContext } from '../../../../types/dungeon';
+import { getPendingRollArgs } from '../../../domain/pendingRoll';
 import {
   buildEnvironmentWanderingLevelContext,
   defineEnvironmentLevelTable,
@@ -38,7 +39,10 @@ function readIsRoomFromNode(node: OutcomeEventNode): boolean | undefined {
   if (node.event.kind === 'numberOfExits') return node.event.context.isRoom;
   for (const child of node.children ?? []) {
     if (child.type === 'pending-roll') {
-      const exitsContext = readTableContextOfKind(child.context, 'exits');
+      const exitsContext = readTableContextOfKind(
+        getPendingRollArgs(child),
+        'exits'
+      );
       if (exitsContext) return exitsContext.isRoom;
       continue;
     }
@@ -111,7 +115,7 @@ export const unusualSpaceTables: ReadonlyArray<DungeonTableDefinition> = [
       return resolveUnusualSize({ roll, extra, isRoom });
     },
     resolvePending: (pending) => {
-      const parsed = readUnusualSizeContext(pending.context);
+      const parsed = readUnusualSizeContext(getPendingRollArgs(pending));
       return resolveUnusualSize({
         extra: parsed?.extra,
         isRoom: parsed?.isRoom,

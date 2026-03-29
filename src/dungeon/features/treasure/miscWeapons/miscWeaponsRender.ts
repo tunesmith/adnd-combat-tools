@@ -3,10 +3,8 @@ import type {
   DungeonRenderNode,
 } from '../../../../types/dungeon';
 import { emphasizeInlineText } from '../../../helpers/inlineContent';
-import type {
-  OutcomeEventNode,
-  TreasureMiscWeaponResult,
-} from '../../../domain/outcome';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { TreasureMiscWeaponResult } from '../../../domain/treasureValueTypes';
 import { treasureMiscWeapons, TreasureMiscWeapon } from './miscWeaponsTable';
 import { buildPreview } from '../../../adapters/render/shared';
 import type {

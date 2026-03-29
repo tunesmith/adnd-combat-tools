@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { passageTurns } from './passageTurnTable';
 
 export function resolvePassageTurns(options?: {
@@ -10,7 +11,7 @@ export function resolvePassageTurns(options?: {
   const usedRoll = options?.roll ?? rollDice(passageTurns.sides);
   const command = getTableEntry(usedRoll, passageTurns);
   const children: DungeonOutcomeNode[] = [
-    { type: 'pending-roll', table: 'passageWidth' },
+    createPendingRoll({ kind: 'passageWidth' }),
   ];
   return {
     type: 'event',

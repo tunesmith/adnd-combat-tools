@@ -13,7 +13,7 @@ import {
   renderDetail,
   listPendingPreviewTargets,
 } from '../../../support/dungeon/uiPreviewHarness';
-import { resolveViaRegistry } from '../../../../dungeon/helpers/registry';
+import { resolveFeedPreview } from '../../../../components/dungeon/dungeonFeedController';
 import type { OutcomeEvent } from '../../../../dungeon/domain/outcome';
 import {
   DoorBeyond,
@@ -36,12 +36,6 @@ import {
   collectTargetedPreviews,
   findPreviewById,
 } from '../../../support/dungeon/previewUtils';
-
-function applyUpdater<T>(current: T, updater: T | ((prev: T) => T)): T {
-  return typeof updater === 'function'
-    ? (updater as (prev: T) => T)(current)
-    : updater;
-}
 
 describe('uiPreviewHarness', () => {
   test('resolves door continuation chain without residual pending nodes', () => {
@@ -117,40 +111,17 @@ describe('uiPreviewHarness', () => {
       pendingCount: feed.pendingCount,
     };
 
-    let state: FeedState[] = [initialFeedState];
-    let collapsed: Record<string, boolean> = {};
-    let resolvedMap: Record<string, boolean> = {};
+    const state: FeedState[] = [initialFeedState];
+    const collapsed: Record<string, boolean> = {};
+    const resolvedMap: Record<string, boolean> = {};
 
-    const result = resolveViaRegistry(
-      { ...preview, targetId: `${preview.targetId}.missing` },
-      feed.id,
-      3,
-      initialFeedState,
-      (updater) => {
-        state = applyUpdater(
-          state,
-          updater as FeedState[] | ((prev: FeedState[]) => FeedState[])
-        );
-      },
-      (updater) => {
-        collapsed = applyUpdater(
-          collapsed,
-          updater as
-            | Record<string, boolean>
-            | ((prev: Record<string, boolean>) => Record<string, boolean>)
-        );
-      },
-      (updater) => {
-        resolvedMap = applyUpdater(
-          resolvedMap,
-          updater as
-            | Record<string, boolean>
-            | ((prev: Record<string, boolean>) => Record<string, boolean>)
-        );
-      }
-    );
+    const result = resolveFeedPreview({
+      preview: { ...preview, targetId: `${preview.targetId}.missing` },
+      usedRoll: 3,
+      feedItem: initialFeedState,
+    });
 
-    expect(result).toBe(false);
+    expect(result).toBeUndefined();
     expect(state).toEqual([initialFeedState]);
     expect(collapsed).toEqual({});
     expect(resolvedMap).toEqual({});

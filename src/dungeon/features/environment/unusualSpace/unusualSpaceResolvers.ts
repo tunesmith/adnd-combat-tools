@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   unusualShape,
   UnusualShape,
@@ -15,14 +16,15 @@ export function resolveUnusualShape(options?: {
   const command = getTableEntry(usedRoll, unusualShape);
   const children: DungeonOutcomeNode[] = [];
   if (command === UnusualShape.Circular) {
-    children.push({
-      type: 'pending-roll',
-      table: 'circularContents',
-      context:
-        options?.level !== undefined
-          ? { kind: 'wandering', level: options.level }
-          : undefined,
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'circularContents',
+        args:
+          options?.level !== undefined
+            ? { kind: 'wandering', level: options.level }
+            : undefined,
+      })
+    );
   }
   return {
     type: 'event',
@@ -43,11 +45,12 @@ export function resolveUnusualSize(options?: {
   const isRoom = options?.isRoom ?? false;
   const children: DungeonOutcomeNode[] = [];
   if (command === UnusualSize.RollAgain) {
-    children.push({
-      type: 'pending-roll',
-      table: 'unusualSize',
-      context: { kind: 'unusualSize', extra: extra + 2000, isRoom },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'unusualSize',
+        args: { kind: 'unusualSize', extra: extra + 2000, isRoom },
+      })
+    );
   }
   const baseArea =
     command === UnusualSize.RollAgain
@@ -55,16 +58,17 @@ export function resolveUnusualSize(options?: {
       : unusualSizeBaseArea(command);
   const area = baseArea !== undefined ? baseArea + extra : undefined;
   if (area !== undefined && command !== UnusualSize.RollAgain) {
-    children.push({
-      type: 'pending-roll',
-      table: 'numberOfExits',
-      context: {
-        kind: 'exits',
-        length: area,
-        width: 1,
-        isRoom,
-      },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'numberOfExits',
+        args: {
+          kind: 'exits',
+          length: area,
+          width: 1,
+          isRoom,
+        },
+      })
+    );
   }
   return {
     type: 'event',

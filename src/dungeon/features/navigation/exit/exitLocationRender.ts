@@ -3,6 +3,7 @@ import type {
   DungeonRenderNode,
 } from '../../../../types/dungeon';
 import type { OutcomeEvent, OutcomeEventNode } from '../../../domain/outcome';
+import { getPendingRollKind } from '../../../domain/pendingRoll';
 import {
   exitLocation,
   ExitLocation,
@@ -86,7 +87,8 @@ function buildDetailNodes(
     exitType === 'passage' &&
     outcome.children?.some(
       (child) =>
-        child.type === 'pending-roll' && child.table === 'exitDirection'
+        child.type === 'pending-roll' &&
+        getPendingRollKind(child) === 'exitDirection'
     )
   ) {
     nodes.push({

@@ -2,10 +2,8 @@ import {
   renderTreasureCompactNodes,
   renderTreasureDetail,
 } from '../../../../dungeon/features/treasure/treasure/treasureRender';
-import type {
-  OutcomeEventNode,
-  TreasureEntry,
-} from '../../../../dungeon/domain/outcome';
+import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
+import type { TreasureEntry } from '../../../../dungeon/domain/treasureValueTypes';
 import { TreasureWithoutMonster } from '../../../../dungeon/features/treasure/treasure/treasureTable';
 
 describe('jewelry rendering', () => {

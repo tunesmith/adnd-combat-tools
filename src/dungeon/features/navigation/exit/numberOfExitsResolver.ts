@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   numberOfExits,
   NumberOfExits,
@@ -63,19 +64,21 @@ export function resolveNumberOfExits(options: {
   if (count > 0) {
     for (let index = 1; index <= count; index += 1) {
       const baseId = `numberOfExits.${index - 1}.${exitType}ExitLocation`;
-      children.push({
-        type: 'pending-roll',
-        table: exitType === 'door' ? 'doorExitLocation' : 'passageExitLocation',
-        id: baseId,
-        context: {
-          kind: 'exit',
-          exitType,
-          index,
-          total: count,
-          origin,
+      children.push(
+        createPendingRoll({
+          kind:
+            exitType === 'door' ? 'doorExitLocation' : 'passageExitLocation',
           id: baseId,
-        },
-      });
+          args: {
+            kind: 'exit',
+            exitType,
+            index,
+            total: count,
+            origin,
+            id: baseId,
+          },
+        })
+      );
     }
   }
 

@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   circularContents,
   CircularContents,
@@ -20,14 +21,15 @@ export function resolveCircularContents(options?: {
   const command = getTableEntry(usedRoll, circularContents);
   const children: DungeonOutcomeNode[] = [];
   if (command === CircularContents.Pool) {
-    children.push({
-      type: 'pending-roll',
-      table: 'circularPool',
-      context:
-        options?.level !== undefined
-          ? { kind: 'wandering', level: options.level }
-          : undefined,
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'circularPool',
+        args:
+          options?.level !== undefined
+            ? { kind: 'wandering', level: options.level }
+            : undefined,
+      })
+    );
   }
   return {
     type: 'event',
@@ -46,30 +48,33 @@ export function resolveCircularPool(options?: {
   const children: DungeonOutcomeNode[] = [];
   const level = options?.level ?? 1;
   if (command === Pool.PoolMonster || command === Pool.PoolMonsterTreasure) {
-    children.push({
-      type: 'pending-roll',
-      table: `monsterLevel:${level}`,
-      context: { kind: 'wandering', level },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'monsterLevel',
+        tableId: `monsterLevel:${level}`,
+        args: { kind: 'wandering', level },
+      })
+    );
   }
   if (command === Pool.PoolMonsterTreasure) {
     for (let index = 1; index <= 2; index += 1) {
-      children.push({
-        type: 'pending-roll',
-        table: 'treasure',
-        id: `treasure:${index}`,
-        context: {
+      children.push(
+        createPendingRoll({
           kind: 'treasure',
-          level,
-          withMonster: true,
-          rollIndex: index,
-          totalRolls: 2,
-        },
-      });
+          id: `treasure:${index}`,
+          args: {
+            kind: 'treasure',
+            level,
+            withMonster: true,
+            rollIndex: index,
+            totalRolls: 2,
+          },
+        })
+      );
     }
   }
   if (command === Pool.MagicPool) {
-    children.push({ type: 'pending-roll', table: 'circularMagicPool' });
+    children.push(createPendingRoll({ kind: 'circularMagicPool' }));
   }
   return {
     type: 'event',
@@ -86,11 +91,11 @@ export function resolveCircularMagicPool(options?: {
   const command = getTableEntry(usedRoll, magicPool);
   const children: DungeonOutcomeNode[] = [];
   if (command === MagicPool.TransmuteGold) {
-    children.push({ type: 'pending-roll', table: 'transmuteType' });
+    children.push(createPendingRoll({ kind: 'transmuteType' }));
   } else if (command === MagicPool.WishOrDamage) {
-    children.push({ type: 'pending-roll', table: 'poolAlignment' });
+    children.push(createPendingRoll({ kind: 'poolAlignment' }));
   } else if (command === MagicPool.Transporter) {
-    children.push({ type: 'pending-roll', table: 'transporterLocation' });
+    children.push(createPendingRoll({ kind: 'transporterLocation' }));
   }
   return {
     type: 'event',

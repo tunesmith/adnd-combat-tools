@@ -3,6 +3,7 @@ import type { DungeonOutcomeNode, OutcomeEventNode } from '../domain/outcome';
 import type { TablePreviewFactory } from '../adapters/render/shared';
 import type {
   CompactRenderer,
+  ContextualDungeonTableDefinition,
   DetailRenderer,
   DungeonTableDefinition,
   DungeonTableFollowup,
@@ -27,14 +28,14 @@ export const withDefaultResolverOptions =
     });
 
 export function markContextualResolution<TOptions>(
-  definition: DungeonTableDefinition<TOptions> & {
-    registry: NonNullable<DungeonTableDefinition<TOptions>['registry']>;
+  definition: ContextualDungeonTableDefinition<TOptions>
+): ContextualDungeonTableDefinition<TOptions> {
+  if (!definition.registry || !definition.resolvePending) {
+    throw new Error(
+      `Dungeon table "${definition.id}" requires both registry and resolvePending handlers.`
+    );
   }
-): DungeonTableDefinition<TOptions> {
-  return {
-    ...definition,
-    manualResolution: 'contextual',
-  };
+  return definition;
 }
 
 export function buildEventPreviewFromFactory(

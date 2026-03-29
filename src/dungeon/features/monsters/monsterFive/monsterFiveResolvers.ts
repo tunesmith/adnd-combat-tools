@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   dragonFiveOlder,
   dragonFiveYounger,
@@ -24,17 +25,19 @@ export function resolveMonsterFive(options?: {
   const party = resolved.party;
   const text = party ? undefined : resolved.text;
   if (result === MonsterFive.DragonYounger) {
-    children.push({
-      type: 'pending-roll',
-      table: 'dragonFiveYounger',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'dragonFiveYounger',
+        args: { kind: 'wandering', level: dungeonLevel },
+      })
+    );
   } else if (result === MonsterFive.DragonOlder) {
-    children.push({
-      type: 'pending-roll',
-      table: 'dragonFiveOlder',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'dragonFiveOlder',
+        args: { kind: 'wandering', level: dungeonLevel },
+      })
+    );
   }
   return {
     type: 'event',

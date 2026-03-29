@@ -3,10 +3,8 @@ import type {
   DungeonRenderNode,
 } from '../../../../types/dungeon';
 import { emphasizeInlineText } from '../../../helpers/inlineContent';
-import type {
-  OutcomeEventNode,
-  TreasureBeakerPotionDetails,
-} from '../../../domain/outcome';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { TreasureBeakerPotionDetails } from '../../../domain/treasureValueTypes';
 import {
   treasurePotion,
   TreasurePotion,

@@ -2,6 +2,7 @@ import type {
   DungeonTablePreview,
   TableContext,
 } from '../../../../types/dungeon';
+import { getScopedTableSuffix } from '../../../domain/pendingRoll';
 import type { OutcomeEventNode } from '../../../domain/outcome';
 import { getMonsterLevelTable, MonsterLevel } from './monsterLevelTable';
 import { buildPreview } from '../../../adapters/render/shared';
@@ -25,8 +26,7 @@ export function buildMonsterLevelPreview(
   tableId: string,
   context?: TableContext
 ): DungeonTablePreview {
-  const parts = tableId.split(':');
-  const lvl = Number(parts[1] ?? 1) || 1;
+  const lvl = Number(getScopedTableSuffix(tableId) ?? 1) || 1;
   const table = getMonsterLevelTable(lvl);
   return buildPreview(tableId, {
     title: 'Monster Level',

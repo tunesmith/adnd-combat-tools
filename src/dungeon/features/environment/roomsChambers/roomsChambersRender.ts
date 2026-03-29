@@ -8,6 +8,10 @@ import type {
 } from '../../../helpers/inlineContent';
 import type { OutcomeEventNode, PendingRoll } from '../../../domain/outcome';
 import {
+  getPendingRollArgs,
+  getPendingRollKind,
+} from '../../../domain/pendingRoll';
+import {
   buildPreview,
   findChildEvent,
   type AppendPreviewFn,
@@ -587,14 +591,13 @@ function hasPendingTreasureRolls(node: OutcomeEventNode): boolean {
     insideTreasure = false
   ): boolean => {
     if (current.type === 'pending-roll') {
+      const context = getPendingRollArgs(current);
       const contextKind =
-        current.context && 'kind' in current.context
-          ? current.context.kind
-          : undefined;
+        context && 'kind' in context ? context.kind : undefined;
       const pendingIdBase = current.id?.split('.').pop();
       return (
         insideTreasure ||
-        current.table.startsWith('treasure') ||
+        getPendingRollKind(current).startsWith('treasure') ||
         (typeof contextKind === 'string' &&
           contextKind.startsWith('treasure')) ||
         (pendingIdBase?.startsWith('treasure') ?? false)

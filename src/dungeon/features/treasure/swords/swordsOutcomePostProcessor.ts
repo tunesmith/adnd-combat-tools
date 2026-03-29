@@ -3,6 +3,11 @@ import type {
   OutcomeEventNode,
 } from '../../../domain/outcome';
 import {
+  getPendingRollArgs,
+  getPendingRollKind,
+  withPendingRollArgs,
+} from '../../../domain/pendingRoll';
+import {
   describeSwordSpecialPurpose,
   type TreasureSwordExtraordinaryPowerResult,
   type TreasureSwordSpecialPurposeResult,
@@ -73,12 +78,13 @@ function propagateAlignment(
 
   if (
     node.type === 'pending-roll' &&
-    node.table === 'treasureSwordSpecialPurpose' &&
+    getPendingRollKind(node) === 'treasureSwordSpecialPurpose' &&
     currentAlignment !== undefined
   ) {
+    const pendingArgs = getPendingRollArgs(node);
     const existing =
-      node.context && typeof node.context === 'object'
-        ? (node.context as SpecialPurposeContext)
+      pendingArgs && typeof pendingArgs === 'object'
+        ? (pendingArgs as SpecialPurposeContext)
         : undefined;
     const alreadyAligned =
       existing?.alignment === currentAlignment &&
@@ -90,19 +96,17 @@ function propagateAlignment(
       alignment: currentAlignment,
       alignmentReady: true,
     };
-    return {
-      ...node,
-      context: nextContext,
-    };
+    return withPendingRollArgs(node, nextContext);
   }
   if (
     node.type === 'pending-roll' &&
-    node.table === 'treasureSwordSpecialPurposePower' &&
+    getPendingRollKind(node) === 'treasureSwordSpecialPurposePower' &&
     currentAlignment !== undefined
   ) {
+    const pendingArgs = getPendingRollArgs(node);
     const existing =
-      node.context && typeof node.context === 'object'
-        ? (node.context as {
+      pendingArgs && typeof pendingArgs === 'object'
+        ? (pendingArgs as {
             slotKey?: string;
             rollIndex?: number;
             parentSlotKey?: string;
@@ -116,18 +120,16 @@ function propagateAlignment(
       ...existing,
       alignment: currentAlignment,
     };
-    return {
-      ...node,
-      context: nextContext,
-    };
+    return withPendingRollArgs(node, nextContext);
   }
   if (
     node.type === 'pending-roll' &&
-    node.table === 'treasureSwordDragonSlayerColor'
+    getPendingRollKind(node) === 'treasureSwordDragonSlayerColor'
   ) {
+    const pendingArgs = getPendingRollArgs(node);
     const existing =
-      node.context && typeof node.context === 'object'
-        ? (node.context as {
+      pendingArgs && typeof pendingArgs === 'object'
+        ? (pendingArgs as {
             slotKey?: string;
             rollIndex?: number;
             alignment?: TreasureSwordAlignment;
@@ -145,10 +147,7 @@ function propagateAlignment(
       alignment: currentAlignment,
       alignmentReady: true,
     };
-    return {
-      ...node,
-      context: nextContext,
-    };
+    return withPendingRollArgs(node, nextContext);
   }
   return node;
 }

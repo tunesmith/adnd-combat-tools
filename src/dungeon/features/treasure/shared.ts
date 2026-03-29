@@ -3,10 +3,12 @@ import type {
   OutcomeEvent,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import { getPendingRollArgs } from '../../domain/pendingRoll';
 import type { TableContext } from '../../../types/dungeon';
 import type { TablePreviewFactory } from '../../adapters/render/shared';
 import type {
   CompactRenderer,
+  ContextualDungeonTableDefinition,
   DetailRenderer,
   DungeonTableDefinition,
   DungeonTableFollowup,
@@ -84,14 +86,15 @@ export function buildTreasureEvent<K extends OutcomeEventWithResultKind>(
 export function createTreasureMagicContextHandlers(
   resolver: TreasureMagicResolver
 ): {
-  manualResolution: 'contextual';
   resolvePending: PendingResolver;
   registry: RegistryOutcomeBuilder;
 } {
   return {
-    manualResolution: 'contextual',
     resolvePending: (pending, ancestors) => {
-      const options = readTreasureMagicContext(pending.context, ancestors);
+      const options = readTreasureMagicContext(
+        getPendingRollArgs(pending),
+        ancestors
+      );
       return resolver(options);
     },
     registry: ({ roll, context }) => {
@@ -165,7 +168,7 @@ export function defineTreasureMagicTable<TResult = unknown>(options: {
   render: TreasureRenderConfig;
   preview: TablePreviewFactory;
   followups?: ReadonlyArray<DungeonTableFollowup<TResult>>;
-}): DungeonTableDefinition<TreasureMagicResolverOptions> {
+}): ContextualDungeonTableDefinition<TreasureMagicResolverOptions> {
   return {
     id: options.id,
     heading: options.heading,

@@ -1,5 +1,5 @@
 import type {
-  DungeonTableDefinition,
+  ContextualDungeonTableDefinition,
   PendingResolver,
   RegistryOutcomeBuilder,
 } from '../types';
@@ -8,6 +8,11 @@ import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import {
+  getPendingRollArgs,
+  getPendingRollTableId,
+  getScopedTableSuffix,
+} from '../../domain/pendingRoll';
 import type { Table } from '../../../tables/dungeon/tableTypes';
 import { readTableContextOfKind } from '../../helpers/tableContext';
 import {
@@ -48,16 +53,14 @@ function createMonsterDungeonLevelContextHandlers(
   ) => DungeonOutcomeNode,
   fallbackDungeonLevel: number
 ): {
-  manualResolution: 'contextual';
   resolvePending: PendingResolver;
   registry: RegistryOutcomeBuilder;
 } {
   return {
-    manualResolution: 'contextual',
     resolvePending: (pending, ancestors) => {
       const dungeonLevel = readDungeonLevelFromPending(
-        pending.table,
-        pending.context,
+        getPendingRollTableId(pending),
+        getPendingRollArgs(pending),
         ancestors,
         fallbackDungeonLevel
       );
@@ -81,7 +84,7 @@ export function defineMonsterTable(options: {
   fallbackDungeonLevel: number;
   preview: TablePreviewFactory;
   levelScopedEventPreview?: boolean;
-}): DungeonTableDefinition {
+}): ContextualDungeonTableDefinition {
   const { resolvePending, registry } = createMonsterDungeonLevelContextHandlers(
     options.resolve,
     options.fallbackDungeonLevel
@@ -162,11 +165,8 @@ function readDungeonLevelFromContextOrId(
   const wanderingContext = readTableContextOfKind(context, 'wandering');
   if (wanderingContext) return wanderingContext.level;
 
-  const parts = id.split(':');
-  if (parts.length >= 2) {
-    const parsed = Number(parts[1]);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  }
+  const parsed = Number(getScopedTableSuffix(id));
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
 
   return fallback;
 }

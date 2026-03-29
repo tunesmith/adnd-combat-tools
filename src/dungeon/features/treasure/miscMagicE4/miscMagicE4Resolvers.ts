@@ -1,9 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import type {
-  DungeonOutcomeNode,
-  OutcomeEvent,
-  TreasureNecklaceOfPrayerBeadsResult,
-} from '../../../domain/outcome';
+import type { TreasureNecklaceOfPrayerBeadsResult } from '../../../domain/treasureValueTypes';
+import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import {
   miscMagicE4Followups,
   treasureMiscMagicE4,

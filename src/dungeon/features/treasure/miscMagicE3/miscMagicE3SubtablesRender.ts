@@ -6,10 +6,8 @@ import {
   emphasizeInlineText,
   extractLeadingItemPhrase,
 } from '../../../helpers/inlineContent';
-import type {
-  OutcomeEventNode,
-  TreasureIounStonesResult,
-} from '../../../domain/outcome';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { TreasureIounStonesResult } from '../../../domain/treasureValueTypes';
 import type {
   IounStonesSummary,
   IounStoneListEntry,

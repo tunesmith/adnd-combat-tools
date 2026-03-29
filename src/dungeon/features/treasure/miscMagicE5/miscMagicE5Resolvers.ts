@@ -1,9 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import type {
-  DungeonOutcomeNode,
-  OutcomeEvent,
-  RobeOfUsefulItemsResult,
-} from '../../../domain/outcome';
+import type { RobeOfUsefulItemsResult } from '../../../domain/treasureValueTypes';
+import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import {
   miscMagicE5Followups,
   treasureMiscMagicE5,

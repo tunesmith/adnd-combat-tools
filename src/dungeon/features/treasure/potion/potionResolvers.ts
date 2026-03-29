@@ -1,8 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
-import type {
-  DungeonOutcomeNode,
-  TreasurePotionWaterBreathingDoses,
-} from '../../../domain/outcome';
+import type { TreasurePotionWaterBreathingDoses } from '../../../domain/treasureValueTypes';
+import type { DungeonOutcomeNode } from '../../../domain/outcome';
 import type { Table } from '../../../../tables/dungeon/tableTypes';
 import {
   buildTreasureEvent,

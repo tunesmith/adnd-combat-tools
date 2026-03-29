@@ -1,17 +1,10 @@
-import type React from 'react';
-import type {
-  DungeonRenderNode,
-  TableContext,
-  TargetedDungeonTablePreview,
-} from '../../types/dungeon';
+import type { DungeonRenderNode, TableContext } from '../../types/dungeon';
 import {
   getDungeonTablePreviewTargetKey,
   isDungeonTablePreview,
 } from '../../types/dungeon';
-import type {
-  DoorChainLaterality,
-  DungeonOutcomeNode,
-} from '../domain/outcome';
+import type { DoorChainLaterality } from '../domain/navigationOutcome';
+import type { DungeonOutcomeNode } from '../domain/outcome';
 import { renderDetailTree } from '../adapters/render';
 import {
   applyResolvedOutcome,
@@ -19,6 +12,13 @@ import {
   findPendingWithAncestors,
   normalizeOutcomeTree,
 } from './outcomeTree';
+import {
+  getScopedTableBase,
+  getPendingRollArgs,
+  getPendingRollKind,
+  getPendingRollTableId,
+  getPendingRollTargetId,
+} from '../domain/pendingRoll';
 import {
   createOutcomeRenderSnapshot,
   type OutcomeRenderSnapshot,
@@ -29,7 +29,6 @@ import {
 } from './dungeonRandom';
 import {
   ALL_REGISTRY_OUTCOMES,
-  ALL_TABLE_HEADINGS,
   ALL_TABLE_ID_LIST,
   postProcessOutcomeTree,
   type FeatureTableId,
@@ -59,8 +58,6 @@ function isTableId(x: string): x is TableId {
   return TABLE_ID_LIST.some((tableId) => tableId === x);
 }
 
-const TABLE_HEADINGS: Record<TableId, string> = ALL_TABLE_HEADINGS;
-
 function fromOutcome(outcome: DungeonOutcomeNode): RegistryResolution {
   const normalized = normalizeOutcomeTree(outcome);
   const postProcessed = postProcessOutcomeTree(normalized);
@@ -89,7 +86,7 @@ function resolveRegistryTable(opts: {
   outcome?: DungeonOutcomeNode;
   targetId?: string;
 }): RegistryResolution | undefined {
-  const base = String(opts.tableId.split(':')[0] ?? '');
+  const base = getScopedTableBase(opts.tableId);
   if (!isTableId(base)) return undefined;
   const doorChain =
     (base === 'doorLocation' || base === 'periodicCheckDoorOnly') &&
@@ -110,6 +107,7 @@ function resolveRegistryTable(opts: {
 type OutcomeRollApplication = {
   outcome: DungeonOutcomeNode;
   snapshot: OutcomeRenderSnapshot;
+  targetId: string;
 };
 
 export function applyOutcomeRoll(opts: {
@@ -153,8 +151,52 @@ export function applyOutcomeRoll(opts: {
       autoResolve: false,
     });
     if (!snapshot) return undefined;
-    return { outcome: normalizedApplied, snapshot };
+    return { outcome: normalizedApplied, snapshot, targetId };
   });
+}
+
+type PendingOutcomeResolution = {
+  outcome: DungeonOutcomeNode;
+  snapshot: OutcomeRenderSnapshot;
+  resolvedIds: string[];
+  targetId: string;
+};
+
+export function resolvePendingOutcome(opts: {
+  outcome: DungeonOutcomeNode;
+  tableId: string;
+  targetId?: string;
+  roll?: number;
+  context?: TableContext;
+  session?: DungeonRandomSession;
+}): PendingOutcomeResolution | undefined {
+  const applied = applyOutcomeRoll({
+    outcome: opts.outcome,
+    tableId: opts.tableId,
+    targetId: opts.targetId,
+    roll: opts.roll,
+    context: opts.context,
+    session: opts.session,
+  });
+  if (!applied) return undefined;
+
+  const resolvedIds = new Set(
+    collectKeyVariants(applied.targetId, opts.tableId)
+  );
+  const previewTargets = collectPreviewTargetsForTable(
+    applied.snapshot.detail,
+    opts.tableId
+  ).filter((key) => key === applied.targetId);
+  for (const key of previewTargets) {
+    resolvedIds.add(key);
+  }
+
+  return {
+    outcome: applied.outcome,
+    snapshot: applied.snapshot,
+    resolvedIds: Array.from(resolvedIds),
+    targetId: applied.targetId,
+  };
 }
 
 function findExplicitTargetId(
@@ -179,36 +221,35 @@ function resolvePendingTargetId(
   tableId: string,
   context?: TableContext
 ): string | undefined {
-  const base = String(tableId.split(':')[0] ?? '');
+  const base = getScopedTableBase(tableId);
   const slotKey = readSlotKeyHint(context);
   if (slotKey) {
     const slotMatch = findPendingWithAncestors(existing, (pending) => {
-      const pendingBase = String(pending.table.split(':')[0] ?? '');
+      const pendingBase = getPendingRollKind(pending);
       if (pendingBase !== base) return false;
-      return readSlotKeyHint(pending.context) === slotKey;
+      return readSlotKeyHint(getPendingRollArgs(pending)) === slotKey;
     });
     if (slotMatch) {
-      return slotMatch.pending.id ?? slotMatch.pending.table;
+      return getPendingRollTargetId(slotMatch.pending);
     }
   }
 
   const tableMatch = findPendingWithAncestors(
     existing,
-    (pending) => pending.table === tableId
+    (pending) => getPendingRollTableId(pending) === tableId
   );
   if (tableMatch) {
-    return tableMatch.pending.id ?? tableMatch.pending.table;
+    return getPendingRollTargetId(tableMatch.pending);
   }
 
   const firstByBase = findPendingWithAncestors(existing, (pending) => {
-    const pendingBase = String(pending.table.split(':')[0] ?? '');
-    return pendingBase === base;
+    return getPendingRollKind(pending) === base;
   });
   if (!firstByBase) return undefined;
-  const firstTarget = firstByBase.pending.id ?? firstByBase.pending.table;
+  const firstTarget = getPendingRollTargetId(firstByBase.pending);
   const secondByBase = findPendingWithAncestors(existing, (pending) => {
-    const pendingBase = String(pending.table.split(':')[0] ?? '');
-    const target = pending.id ?? pending.table;
+    const pendingBase = getPendingRollKind(pending);
+    const target = getPendingRollTargetId(pending);
     return pendingBase === base && target !== firstTarget;
   });
   return secondByBase ? undefined : firstTarget;
@@ -225,208 +266,6 @@ function readSlotKeyHint(context?: TableContext): string | undefined {
     default:
       return undefined;
   }
-}
-
-type FeedLike = {
-  id: string;
-  messages: DungeonRenderNode[];
-  outcome?: DungeonOutcomeNode;
-  renderCache?: {
-    detail?: DungeonRenderNode[];
-    compact?: DungeonRenderNode[];
-  };
-  pendingCount?: number;
-};
-
-type FeedResolution<T extends FeedLike> = {
-  nextFeedItem: T;
-  keyVariants: string[];
-};
-
-function updateResolvedBlock<T extends FeedLike>(
-  fi: T,
-  feedItemId: string,
-  targetId: string,
-  messages: DungeonRenderNode[],
-  headingText: string
-): T {
-  if (fi.id !== feedItemId) return fi;
-  const newMessages: DungeonRenderNode[] = [];
-  let skippingOld = false;
-  for (const node of fi.messages) {
-    const nodeTargetId = isDungeonTablePreview(node)
-      ? getDungeonTablePreviewTargetKey(node)
-      : undefined;
-    if (isDungeonTablePreview(node) && nodeTargetId === targetId) {
-      newMessages.push(node);
-      skippingOld = true;
-      for (const m of messages) newMessages.push(m);
-    } else {
-      if (skippingOld) {
-        if (isDungeonTablePreview(node)) {
-          if (getDungeonTablePreviewTargetKey(node) !== targetId) {
-            skippingOld = false;
-          }
-        } else if (node.kind === 'heading' && node.text !== headingText) {
-          skippingOld = false;
-        } else if (node.kind === 'heading' && node.text === headingText) {
-          // keep skipping
-        } else if (
-          node.kind === 'bullet-list' ||
-          node.kind === 'paragraph' ||
-          node.kind === 'exit-list'
-        ) {
-          // skip
-        } else {
-          skippingOld = false;
-        }
-        if (!skippingOld) newMessages.push(node);
-      } else {
-        newMessages.push(node);
-      }
-    }
-  }
-  return { ...fi, messages: newMessages };
-}
-
-function buildFeedResolution<T extends FeedLike>(opts: {
-  feedItem: T;
-  feedItemId: string;
-  preview: TargetedDungeonTablePreview;
-  usedRoll: number | undefined;
-  targetKey: string;
-  heading: string;
-  session?: DungeonRandomSession;
-}): FeedResolution<T> | undefined {
-  const keyVariants = collectKeyVariants(opts.targetKey, opts.preview.id);
-  const extraKeyVariants = new Set<string>();
-
-  if (opts.feedItem.outcome) {
-    const applied = applyOutcomeRoll({
-      outcome: opts.feedItem.outcome,
-      tableId: opts.preview.id,
-      targetId: opts.targetKey,
-      roll: opts.usedRoll,
-      context: opts.preview.context,
-      session: opts.session,
-    });
-    if (applied) {
-      const { outcome, snapshot } = applied;
-      const previewTargets = collectPreviewTargetsForTable(
-        snapshot.detail,
-        opts.preview.id
-      ).filter((key) => key === opts.targetKey);
-      for (const key of previewTargets) extraKeyVariants.add(key);
-      return {
-        nextFeedItem: {
-          ...opts.feedItem,
-          outcome,
-          pendingCount: snapshot.pendingCount,
-          messages: snapshot.detail,
-          renderCache: {
-            ...opts.feedItem.renderCache,
-            detail: snapshot.detail,
-            compact: snapshot.compact,
-          },
-        },
-        keyVariants: Array.from(
-          new Set([...keyVariants, ...Array.from(extraKeyVariants)])
-        ),
-      };
-    }
-    return undefined;
-  }
-
-  const tableResult = withDungeonRandomSession(opts.session, () =>
-    resolveRegistryTable({
-      tableId: opts.preview.id,
-      roll: opts.usedRoll,
-      context: opts.preview.context,
-      outcome: opts.feedItem.outcome,
-      targetId: opts.targetKey,
-    })
-  );
-  if (!tableResult) return undefined;
-
-  const previewTargets = collectPreviewTargetsForTable(
-    tableResult.messages,
-    opts.preview.id
-  ).filter((key) => key === opts.targetKey);
-  for (const key of previewTargets) extraKeyVariants.add(key);
-  return {
-    nextFeedItem: updateResolvedBlock(
-      opts.feedItem,
-      opts.feedItemId,
-      opts.targetKey,
-      tableResult.messages,
-      opts.heading
-    ),
-    keyVariants: Array.from(
-      new Set([...keyVariants, ...Array.from(extraKeyVariants)])
-    ),
-  };
-}
-
-function markResolvedKeys(
-  feedItemId: string,
-  keyVariants: string[],
-  setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
-  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
-): void {
-  if (setCollapsed) {
-    setCollapsed((prev) => {
-      const next = { ...prev };
-      for (const key of keyVariants) next[`${feedItemId}:${key}`] = true;
-      return next;
-    });
-  }
-  if (setResolved) {
-    setResolved((prev) => {
-      const next = { ...prev };
-      for (const key of keyVariants) next[`${feedItemId}:${key}`] = true;
-      return next;
-    });
-  }
-}
-
-export function resolveViaRegistry<T extends FeedLike>(
-  tp: TargetedDungeonTablePreview,
-  feedItemId: string,
-  usedRoll: number | undefined,
-  currentFeedItem: T,
-  setFeed?: React.Dispatch<React.SetStateAction<T[]>>,
-  setCollapsed?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
-  setResolved?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
-  session?: DungeonRandomSession
-): boolean {
-  const base = String(tp.id.split(':')[0] ?? '');
-  if (!isTableId(base)) return false;
-
-  const heading = TABLE_HEADINGS[base] ?? base;
-  const targetKey = tp.targetId;
-
-  const resolution = buildFeedResolution({
-    feedItem: currentFeedItem,
-    feedItemId,
-    preview: tp,
-    usedRoll,
-    targetKey,
-    heading,
-    session,
-  });
-  if (!resolution) return false;
-  if (setFeed) {
-    setFeed((prev) =>
-      prev.map((fi) => (fi.id === feedItemId ? resolution.nextFeedItem : fi))
-    );
-  }
-  markResolvedKeys(
-    feedItemId,
-    resolution.keyVariants,
-    setCollapsed,
-    setResolved
-  );
-  return true;
 }
 
 function collectPreviewTargetsForTable(

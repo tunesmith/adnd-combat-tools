@@ -1,10 +1,9 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type {
-  DungeonOutcomeNode,
-  OutcomeEvent,
   TreasureIounStoneStatus,
   TreasureIounStonesResult,
-} from '../../../domain/outcome';
+} from '../../../domain/treasureValueTypes';
+import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
 import {
   miscMagicE3Followups,
   treasureMiscMagicE3,

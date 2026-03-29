@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode, OutcomeEvent } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import {
   galleryStairLocation,
   GalleryStairLocation,
@@ -23,18 +24,18 @@ export function resolveSpecialPassage(options?: {
   } as OutcomeEvent;
   const children: DungeonOutcomeNode[] = [];
   if (command === SpecialPassage.FiftyFeetGalleries) {
-    children.push({ type: 'pending-roll', table: 'galleryStairLocation' });
+    children.push(createPendingRoll({ kind: 'galleryStairLocation' }));
   } else if (command === SpecialPassage.TenFootStream) {
-    children.push({ type: 'pending-roll', table: 'streamConstruction' });
+    children.push(createPendingRoll({ kind: 'streamConstruction' }));
   } else if (
     command === SpecialPassage.TwentyFootRiver ||
     command === SpecialPassage.FortyFootRiver ||
     command === SpecialPassage.SixtyFootRiver
   ) {
-    children.push({ type: 'pending-roll', table: 'riverConstruction' });
+    children.push(createPendingRoll({ kind: 'riverConstruction' }));
   } else if (command === SpecialPassage.TwentyFootChasm) {
-    children.push({ type: 'pending-roll', table: 'chasmDepth' });
-    children.push({ type: 'pending-roll', table: 'chasmConstruction' });
+    children.push(createPendingRoll({ kind: 'chasmDepth' }));
+    children.push(createPendingRoll({ kind: 'chasmConstruction' }));
   }
   return {
     type: 'event',
@@ -51,7 +52,7 @@ export function resolveGalleryStairLocation(options?: {
   const command = getTableEntry(usedRoll, galleryStairLocation);
   const children: DungeonOutcomeNode[] = [];
   if (command === GalleryStairLocation.PassageEnd) {
-    children.push({ type: 'pending-roll', table: 'galleryStairOccurrence' });
+    children.push(createPendingRoll({ kind: 'galleryStairOccurrence' }));
   }
   return {
     type: 'event',
@@ -92,7 +93,7 @@ export function resolveRiverConstruction(options?: {
   const command = getTableEntry(usedRoll, riverConstruction);
   const children: DungeonOutcomeNode[] = [];
   if (command === RiverConstruction.Boat) {
-    children.push({ type: 'pending-roll', table: 'riverBoatBank' });
+    children.push(createPendingRoll({ kind: 'riverBoatBank' }));
   }
   return {
     type: 'event',

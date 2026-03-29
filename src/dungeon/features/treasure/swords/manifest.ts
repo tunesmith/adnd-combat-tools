@@ -20,6 +20,7 @@ import {
   createTreasureMagicContextHandlers,
   createTreasureMagicEventPreviewBuilder,
 } from '../shared';
+import { getPendingRollArgs } from '../../../domain/pendingRoll';
 import {
   buildTreasureSwordsPreview,
   renderTreasureSwordsCompact,
@@ -167,7 +168,10 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       });
     },
     resolvePending: (pending, ancestors) => {
-      const options = readTreasureSwordContext(pending.context, ancestors);
+      const options = readTreasureSwordContext(
+        getPendingRollArgs(pending),
+        ancestors
+      );
       return resolveTreasureSwordUnusual(options);
     },
   }),
@@ -191,7 +195,9 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       });
     },
     resolvePending: (pending) => {
-      const parsed = readSwordPrimaryAbilityContext(pending.context);
+      const parsed = readSwordPrimaryAbilityContext(
+        getPendingRollArgs(pending)
+      );
       return resolveTreasureSwordPrimaryAbility({
         slotKey: parsed.slotKey,
         rollIndex: parsed.rollIndex,
@@ -218,7 +224,9 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       });
     },
     resolvePending: (pending) => {
-      const parsed = readSwordPrimaryAbilityContext(pending.context);
+      const parsed = readSwordPrimaryAbilityContext(
+        getPendingRollArgs(pending)
+      );
       return resolveTreasureSwordPrimaryAbility({
         slotKey: parsed.slotKey,
         rollIndex: parsed.rollIndex,
@@ -246,6 +254,17 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         alignment: parsed.alignment,
       });
     },
+    resolvePending: (pending) => {
+      const parsed = readSwordExtraordinaryPowerContext(
+        getPendingRollArgs(pending)
+      );
+      return resolveTreasureSwordExtraordinaryPower({
+        slotKey: parsed.slotKey,
+        rollIndex: parsed.rollIndex,
+        tableVariant: parsed.tableVariant ?? 'standard',
+        alignment: parsed.alignment,
+      });
+    },
   }),
   markContextualResolution({
     id: 'treasureSwordExtraordinaryPowerRestricted',
@@ -260,6 +279,17 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       const parsed = readSwordExtraordinaryPowerContext(context);
       return resolveTreasureSwordExtraordinaryPower({
         roll,
+        slotKey: parsed.slotKey,
+        rollIndex: parsed.rollIndex,
+        tableVariant: 'restricted',
+        alignment: parsed.alignment,
+      });
+    },
+    resolvePending: (pending) => {
+      const parsed = readSwordExtraordinaryPowerContext(
+        getPendingRollArgs(pending)
+      );
+      return resolveTreasureSwordExtraordinaryPower({
         slotKey: parsed.slotKey,
         rollIndex: parsed.rollIndex,
         tableVariant: 'restricted',
@@ -283,6 +313,17 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       );
       return resolveTreasureSwordDragonSlayerColor({
         roll,
+        slotKey: parsed?.slotKey,
+        rollIndex: parsed?.rollIndex,
+        alignment: parsed?.alignment,
+      });
+    },
+    resolvePending: (pending) => {
+      const parsed = readTableContextOfKind(
+        getPendingRollArgs(pending),
+        'treasureSwordDragonSlayerColor'
+      );
+      return resolveTreasureSwordDragonSlayerColor({
         slotKey: parsed?.slotKey,
         rollIndex: parsed?.rollIndex,
         alignment: parsed?.alignment,
@@ -312,6 +353,18 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
         alignment: parsed?.alignment,
       });
     },
+    resolvePending: (pending) => {
+      const parsed = readTableContextOfKind(
+        getPendingRollArgs(pending),
+        'treasureSwordSpecialPurpose'
+      );
+      return resolveTreasureSwordSpecialPurpose({
+        slotKey: parsed?.slotKey,
+        rollIndex: parsed?.rollIndex,
+        parentSlotKey: parsed?.parentSlotKey,
+        alignment: parsed?.alignment,
+      });
+    },
   }),
   markContextualResolution({
     id: 'treasureSwordSpecialPurposePower',
@@ -330,6 +383,18 @@ export const swordsTables: ReadonlyArray<DungeonTableDefinition> = [
       );
       return resolveTreasureSwordSpecialPurposePower({
         roll,
+        slotKey: parsed?.slotKey,
+        rollIndex: parsed?.rollIndex,
+        parentSlotKey: parsed?.parentSlotKey,
+        alignment: parsed?.alignment,
+      });
+    },
+    resolvePending: (pending) => {
+      const parsed = readTableContextOfKind(
+        getPendingRollArgs(pending),
+        'treasureSwordSpecialPurposePower'
+      );
+      return resolveTreasureSwordSpecialPurposePower({
         slotKey: parsed?.slotKey,
         rollIndex: parsed?.rollIndex,
         parentSlotKey: parsed?.parentSlotKey,

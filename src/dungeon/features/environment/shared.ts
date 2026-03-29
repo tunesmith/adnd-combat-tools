@@ -1,6 +1,7 @@
 import type { TableContext } from '../../../types/dungeon';
 import type {
   CompactRenderer,
+  ContextualDungeonTableDefinition,
   DetailRenderer,
   DungeonTableDefinition,
   PendingResolver,
@@ -10,6 +11,11 @@ import type {
   DungeonOutcomeNode,
   OutcomeEventNode,
 } from '../../domain/outcome';
+import {
+  getPendingRollArgs,
+  getPendingRollTableId,
+  getScopedTableSuffix,
+} from '../../domain/pendingRoll';
 import type { TablePreviewFactory } from '../../adapters/render/shared';
 import { readTableContext } from '../../helpers/tableContext';
 import { buildEventPreviewFromFactory, wrapResolver } from '../shared';
@@ -49,12 +55,9 @@ function readEnvironmentDungeonLevelFromId(
 ): number {
   const contextLevel = readEnvironmentDungeonLevel(context);
   if (contextLevel !== undefined) return contextLevel;
-  const parts = id.split(':');
-  if (parts.length >= 2) {
-    const parsed = Number(parts[1]);
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return parsed;
-    }
+  const parsed = Number(getScopedTableSuffix(id));
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
   }
   return fallback;
 }
@@ -72,7 +75,9 @@ function readEnvironmentDungeonLevelFromNode(
   }
   for (const child of node.children ?? []) {
     if (child.type === 'pending-roll') {
-      const pendingLevel = readEnvironmentDungeonLevel(child.context);
+      const pendingLevel = readEnvironmentDungeonLevel(
+        getPendingRollArgs(child)
+      );
       if (pendingLevel !== undefined) return pendingLevel;
       continue;
     }
@@ -118,16 +123,14 @@ function createEnvironmentDungeonLevelContextHandlers(
   ) => DungeonOutcomeNode,
   fallbackLevel: number
 ): {
-  manualResolution: 'contextual';
   resolvePending: PendingResolver;
   registry: RegistryOutcomeBuilder;
 } {
   return {
-    manualResolution: 'contextual',
     resolvePending: (pending, ancestors) => {
       const level = readEnvironmentDungeonLevelFromId(
-        pending.context,
-        pending.id ?? pending.table,
+        getPendingRollArgs(pending),
+        getPendingRollTableId(pending),
         deriveEnvironmentDungeonLevelFromAncestors(ancestors) ?? fallbackLevel
       );
       return resolver({ level });
@@ -158,7 +161,8 @@ export function defineEnvironmentLevelTable(options: {
     ancestors?: OutcomeEventNode[]
   ) => TableContext | undefined;
   shouldBuildEventPreview?: (node: OutcomeEventNode) => boolean;
-}): DungeonTableDefinition<EnvironmentDungeonLevelResolverOptions> {
+  postProcessChildren?: DungeonTableDefinition['postProcessChildren'];
+}): ContextualDungeonTableDefinition<EnvironmentDungeonLevelResolverOptions> {
   const contextHandlers = createEnvironmentDungeonLevelContextHandlers(
     options.resolve,
     options.fallbackLevel
@@ -181,5 +185,6 @@ export function defineEnvironmentLevelTable(options: {
             context: options.buildEventContext(node, ancestors),
           })
         : undefined,
+    postProcessChildren: options.postProcessChildren,
   };
 }

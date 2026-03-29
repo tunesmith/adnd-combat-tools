@@ -2,11 +2,11 @@ import {
   renderTreasureCompactNodes,
   renderTreasureDetail,
 } from '../../../../dungeon/features/treasure/treasure/treasureRender';
+import type { OutcomeEventNode } from '../../../../dungeon/domain/outcome';
 import type {
-  OutcomeEventNode,
   TreasureEntry,
   TreasureGemLot,
-} from '../../../../dungeon/domain/outcome';
+} from '../../../../dungeon/domain/treasureValueTypes';
 import { TreasureWithoutMonster } from '../../../../dungeon/features/treasure/treasure/treasureTable';
 
 describe('gem rendering', () => {
@@ -68,9 +68,7 @@ describe('gem rendering', () => {
 
     const nodes = renderTreasureCompactNodes(outcome);
     const compactList = nodes.find(
-      (
-        node
-      ): node is Extract<typeof node, { kind: 'inline-bullet-list' }> =>
+      (node): node is Extract<typeof node, { kind: 'inline-bullet-list' }> =>
         node.kind === 'inline-bullet-list'
     );
 

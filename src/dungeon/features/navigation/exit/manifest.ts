@@ -47,6 +47,11 @@ import {
   wrapResolver,
 } from '../../shared';
 import { readTableContextOfKind } from '../../../helpers/tableContext';
+import {
+  getPendingRollArgs,
+  getPendingRollTableId,
+  getScopedTableSuffix,
+} from '../../../domain/pendingRoll';
 
 type EgressResolverOptions = Parameters<typeof resolveEgress>[0];
 type NumberOfExitsResolverOptions = Parameters<typeof resolveNumberOfExits>[0];
@@ -95,11 +100,13 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
           })
         : undefined,
     registry: ({ roll, id }) => {
-      const key = (id.split(':')[1] as 'one' | 'two' | 'three') || 'one';
+      const key =
+        (getScopedTableSuffix(id) as 'one' | 'two' | 'three' | undefined) ||
+        'one';
       return resolveEgress({ roll, which: key });
     },
     resolvePending: (pending) => {
-      const suffix = pending.table.split(':')[1];
+      const suffix = getScopedTableSuffix(getPendingRollTableId(pending));
       const which =
         suffix === 'two' ? 'two' : suffix === 'three' ? 'three' : 'one';
       return resolveEgress({ which });
@@ -135,7 +142,9 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       );
     },
     resolvePending: (pending) =>
-      resolveNumberOfExits(buildNumberOfExitsResolverOptions(pending.context)),
+      resolveNumberOfExits(
+        buildNumberOfExitsResolverOptions(getPendingRollArgs(pending))
+      ),
   }),
   markContextualResolution({
     id: 'passageExitLocation',
@@ -159,7 +168,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending) =>
       resolvePassageExitLocation({
-        context: readExitContext(pending.context),
+        context: readExitContext(getPendingRollArgs(pending)),
       }),
   }),
   markContextualResolution({
@@ -184,7 +193,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending) =>
       resolveDoorExitLocation({
-        context: readExitContext(pending.context),
+        context: readExitContext(getPendingRollArgs(pending)),
       }),
   }),
   markContextualResolution({
@@ -214,7 +223,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending) =>
       resolveExitDirection({
-        context: readExitDirectionContext(pending.context),
+        context: readExitDirectionContext(getPendingRollArgs(pending)),
       }),
   }),
   markContextualResolution({
@@ -245,7 +254,7 @@ export const exitTables: ReadonlyArray<DungeonTableDefinition> = [
       }),
     resolvePending: (pending) =>
       resolveExitAlternative({
-        context: readExitAlternativeContext(pending.context),
+        context: readExitAlternativeContext(getPendingRollArgs(pending)),
       }),
   }),
   defineRollOnlyTable({

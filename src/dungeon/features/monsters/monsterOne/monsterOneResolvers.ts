@@ -1,5 +1,6 @@
 import { getTableEntry, rollDice } from '../../../helpers/dungeonLookup';
 import type { DungeonOutcomeNode } from '../../../domain/outcome';
+import { createPendingRoll } from '../../../domain/pendingRoll';
 import { monsterOne, MonsterOne } from './monsterOneTables';
 import { monsterOneTextForCommand } from './monsterOneResult';
 
@@ -13,11 +14,12 @@ export function resolveMonsterOne(options?: {
   const children: DungeonOutcomeNode[] = [];
   let text: string | undefined;
   if (result === MonsterOne.Human) {
-    children.push({
-      type: 'pending-roll',
-      table: 'human',
-      context: { kind: 'wandering', level: dungeonLevel },
-    });
+    children.push(
+      createPendingRoll({
+        kind: 'human',
+        args: { kind: 'wandering', level: dungeonLevel },
+      })
+    );
   } else {
     text = monsterOneTextForCommand(dungeonLevel, result);
   }

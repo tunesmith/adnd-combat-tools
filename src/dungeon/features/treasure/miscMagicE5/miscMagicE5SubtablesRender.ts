@@ -4,10 +4,8 @@ import type {
   RobeOfUsefulItemsSummary,
   RobeOfUsefulItemsSummaryEntry,
 } from '../../../../types/dungeon';
-import type {
-  OutcomeEventNode,
-  RobeOfUsefulItemsResult,
-} from '../../../domain/outcome';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { RobeOfUsefulItemsResult } from '../../../domain/treasureValueTypes';
 import {
   TreasureRobeOfTheArchmagi,
   TreasureScarabOfProtectionCurse,

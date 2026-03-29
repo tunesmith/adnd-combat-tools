@@ -1,5 +1,9 @@
 import type { DungeonTableDefinition } from '../../types';
-import type { DoorChainLaterality } from '../../../domain/outcome';
+import type { DoorChainLaterality } from '../../../domain/navigationOutcome';
+import {
+  getPendingRollTableId,
+  getScopedTableSuffix,
+} from '../../../domain/pendingRoll';
 import {
   buildEventPreviewFromFactory,
   markContextualResolution,
@@ -43,7 +47,10 @@ export const doorChainTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     resolvePending: (pending, ancestors) => {
       const existing = collectDoorChainExisting(ancestors);
-      const sequence = parseDoorChainSequence(pending.table, existing.length);
+      const sequence = parseDoorChainSequence(
+        getPendingRollTableId(pending),
+        existing.length
+      );
       return resolvePeriodicDoorOnly({ existing, sequence });
     },
   }),
@@ -70,7 +77,10 @@ export const doorChainTables: ReadonlyArray<DungeonTableDefinition> = [
     },
     resolvePending: (pending, ancestors) => {
       const existing = collectDoorChainExisting(ancestors);
-      const sequence = parseDoorChainSequence(pending.table, existing.length);
+      const sequence = parseDoorChainSequence(
+        getPendingRollTableId(pending),
+        existing.length
+      );
       return resolveDoorLocation({ existing, sequence });
     },
   }),
@@ -98,7 +108,6 @@ function collectDoorChainExisting(
 }
 
 function parseDoorChainSequence(table: string, fallback: number): number {
-  const parts = table.split(':');
-  const seq = Number(parts[1]);
+  const seq = Number(getScopedTableSuffix(table));
   return Number.isFinite(seq) ? seq : fallback;
 }

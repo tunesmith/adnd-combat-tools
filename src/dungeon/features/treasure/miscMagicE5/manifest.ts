@@ -83,6 +83,7 @@ export const miscMagicE5Tables: ReadonlyArray<DungeonTableDefinition> = [
     heading: 'Robe of Useful Items',
     resolver: () => resolveTreasureRobeOfUsefulItems({}),
     registry: () => resolveTreasureRobeOfUsefulItems({}),
+    resolvePending: () => resolveTreasureRobeOfUsefulItems({}),
     renderers: {
       renderDetail: renderTreasureRobeOfUsefulItemsDetail,
       renderCompact: renderTreasureRobeOfUsefulItemsCompact,

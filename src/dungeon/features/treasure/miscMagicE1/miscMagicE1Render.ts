@@ -1,8 +1,6 @@
 import type { DungeonRenderNode } from '../../../../types/dungeon';
-import type {
-  OutcomeEventNode,
-  TreasureBeakerOfPlentifulPotionsDetails,
-} from '../../../domain/outcome';
+import type { OutcomeEventNode } from '../../../domain/outcome';
+import type { TreasureBeakerOfPlentifulPotionsDetails } from '../../../domain/treasureValueTypes';
 import { treasureMiscMagicE1, TreasureMiscMagicE1 } from './miscMagicE1Table';
 import {
   buildPreview,
