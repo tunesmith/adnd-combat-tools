@@ -522,6 +522,7 @@
 }
 
 .liveEditModalBody {
+  padding-top: 0.95rem;
   padding-bottom: 1.2rem;
 }
 
