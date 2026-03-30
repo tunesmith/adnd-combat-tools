@@ -61,6 +61,7 @@ interface CustomItemDraft {
   encumbranceGp: number;
   valueGp: number;
   capacityGp: number;
+  ignoresContentsWeightForEncumbrance: boolean;
 }
 
 interface InventoryEditDraft {
@@ -121,6 +122,7 @@ const defaultCustomItemDraft = (): CustomItemDraft => ({
   encumbranceGp: 1,
   valueGp: 0,
   capacityGp: 100,
+  ignoresContentsWeightForEncumbrance: false,
 });
 
 interface AddItemDetailsDraft {
@@ -148,6 +150,11 @@ const magicKnowledgeLabels: Record<MagicKnowledge, string> = {
   'known-mundane': 'Known mundane',
   'known-magical': 'Known magical',
 };
+
+const carriedWeightRuleOptions = {
+  count: 'Count contents',
+  own: 'Own weight only',
+} as const;
 
 const createInventoryItemId = (): string => {
   if (
@@ -507,6 +514,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       ? {
           isContainer: true,
           capacityGp: Math.max(1, customItemDraft.capacityGp),
+          ...(customItemDraft.ignoresContentsWeightForEncumbrance
+            ? {
+                ignoresContentsWeightForEncumbrance: true,
+              }
+            : {}),
         }
       : {}),
   };
@@ -614,6 +626,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           );
         })
       : [];
+  const editingCustomItemInfo = editingItemInfo
+    ? document.customItems.find((item) => item.id === editingItemInfo.id)
+    : undefined;
 
   const openCharacterModal = () => {
     setCharacterEditDraft({
@@ -883,6 +898,18 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     }));
   };
 
+  const updateCustomCatalogItem = (
+    itemId: string,
+    updater: (item: EncumbranceCustomItem) => EncumbranceCustomItem
+  ) => {
+    setDocument((currentDocument) => ({
+      ...currentDocument,
+      customItems: currentDocument.customItems.map((item) =>
+        item.id === itemId ? updater(item) : item
+      ),
+    }));
+  };
+
   const selectActiveCharacter = (characterId: string) => {
     if (!isDmDocument(document) || characterId === document.activeCharacterId) {
       return;
@@ -1079,6 +1106,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         ? {
             isContainer: true,
             capacityGp: Math.max(1, customItemDraft.capacityGp),
+            ...(customItemDraft.ignoresContentsWeightForEncumbrance
+              ? {
+                  ignoresContentsWeightForEncumbrance: true,
+                }
+              : {}),
           }
         : {}),
     };
@@ -1959,29 +1991,57 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                         )}
                         {addMode === 'custom' &&
                           customItemDraft.category === 'containers' && (
-                            <label className={styles['fieldGroup']}>
-                              <span className={styles['fieldLabel']}>
-                                Capacity
-                              </span>
-                              <input
-                                className={styles['fieldControl']}
-                                type="number"
-                                min={1}
-                                step={1}
-                                value={customItemDraft.capacityGp}
-                                onChange={(event) =>
-                                  updateCustomItemDraft(
-                                    'capacityGp',
-                                    Math.max(
-                                      1,
-                                      Math.floor(
-                                        Number(event.target.value) || 1
+                            <>
+                              <label className={styles['fieldGroup']}>
+                                <span className={styles['fieldLabel']}>
+                                  Capacity
+                                </span>
+                                <input
+                                  className={styles['fieldControl']}
+                                  type="number"
+                                  min={1}
+                                  step={1}
+                                  value={customItemDraft.capacityGp}
+                                  onChange={(event) =>
+                                    updateCustomItemDraft(
+                                      'capacityGp',
+                                      Math.max(
+                                        1,
+                                        Math.floor(
+                                          Number(event.target.value) || 1
+                                        )
                                       )
                                     )
-                                  )
-                                }
-                              />
-                            </label>
+                                  }
+                                />
+                              </label>
+                              <label className={styles['fieldGroup']}>
+                                <span className={styles['fieldLabel']}>
+                                  Carried weight
+                                </span>
+                                <select
+                                  className={styles['fieldControl']}
+                                  value={
+                                    customItemDraft.ignoresContentsWeightForEncumbrance
+                                      ? 'ignore'
+                                      : 'count'
+                                  }
+                                  onChange={(event) =>
+                                    updateCustomItemDraft(
+                                      'ignoresContentsWeightForEncumbrance',
+                                      event.target.value === 'own'
+                                    )
+                                  }
+                                >
+                                  <option value="count">
+                                    {carriedWeightRuleOptions.count}
+                                  </option>
+                                  <option value="own">
+                                    {carriedWeightRuleOptions.own}
+                                  </option>
+                                </select>
+                              </label>
+                            </>
                           )}
                         <label className={styles['modalFieldWide']}>
                           <span className={styles['fieldLabel']}>
@@ -2200,6 +2260,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                             </span>
                           </div>
                         )}
+                      {addPreviewItem?.ignoresContentsWeightForEncumbrance && (
+                        <div className={styles['modalMetaItem']}>
+                          <span className={styles['modalMetaLabel']}>
+                            Carried weight
+                          </span>
+                          <span className={styles['modalMetaValue']}>
+                            {carriedWeightRuleOptions.own}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className={styles['modalActions']}>
@@ -2448,6 +2518,38 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                               <option value="no">Unknown</option>
                             </select>
                           </label>
+                          {editingCustomItemInfo?.isContainer && (
+                            <label className={styles['fieldGroup']}>
+                              <span className={styles['fieldLabel']}>
+                                Carried weight
+                              </span>
+                              <select
+                                className={styles['fieldControl']}
+                                value={
+                                  editingCustomItemInfo.ignoresContentsWeightForEncumbrance
+                                    ? 'own'
+                                    : 'count'
+                                }
+                                onChange={(event) =>
+                                  updateCustomCatalogItem(
+                                    editingCustomItemInfo.id,
+                                    (currentItem) => ({
+                                      ...currentItem,
+                                      ignoresContentsWeightForEncumbrance:
+                                        event.target.value === 'own',
+                                    })
+                                  )
+                                }
+                              >
+                                <option value="count">
+                                  {carriedWeightRuleOptions.count}
+                                </option>
+                                <option value="own">
+                                  {carriedWeightRuleOptions.own}
+                                </option>
+                              </select>
+                            </label>
+                          )}
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
                               Magical truth
@@ -2573,6 +2675,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                           {editingItemInfo.name}
                         </span>
                       </div>
+                      {editingItemInfo.ignoresContentsWeightForEncumbrance && (
+                        <div className={styles['modalMetaItem']}>
+                          <span className={styles['modalMetaLabel']}>
+                            Carried weight
+                          </span>
+                          <span className={styles['modalMetaValue']}>
+                            {carriedWeightRuleOptions.own}
+                          </span>
+                        </div>
+                      )}
                       {editingContainerSummary && (
                         <>
                           <div className={styles['modalMetaItem']}>

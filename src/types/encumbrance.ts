@@ -45,6 +45,7 @@ export interface EncumbranceCatalogItem {
   valueGp: number;
   isContainer?: boolean;
   capacityGp?: number;
+  ignoresContentsWeightForEncumbrance?: boolean;
   ammoKind?: AmmoKind;
   ammoCapacity?: AmmoCapacityRule;
 }

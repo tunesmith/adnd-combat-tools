@@ -132,6 +132,11 @@ export const getInventoryItemTotalGp = (
   }
 
   const children = getChildItems(inventory, itemId);
+  const itemInfo = catalogById.get(item.catalogId);
+  if (itemInfo?.ignoresContentsWeightForEncumbrance) {
+    return getOwnEncumbrance(item, catalogById);
+  }
+
   return (
     getOwnEncumbrance(item, catalogById) +
     children.reduce(

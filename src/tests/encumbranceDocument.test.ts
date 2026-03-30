@@ -67,6 +67,16 @@ describe('encumbrance document helpers', () => {
       encumbranceGp: 5,
       valueGp: 12,
     });
+    document.customItems.push({
+      id: 'custom-bag-of-holding',
+      name: 'Backpack of Holding',
+      category: 'containers',
+      encumbranceGp: 150,
+      valueGp: 25000,
+      isContainer: true,
+      capacityGp: 5000,
+      ignoresContentsWeightForEncumbrance: true,
+    });
 
     const redacted = redactEncumbranceDocument(document, primaryCharacter.id);
 
@@ -88,6 +98,10 @@ describe('encumbrance document helpers', () => {
     expect(redacted.character.inventory[0]?.fullyIdentified).toBeUndefined();
     expect(redacted.character.inventory[0]?.encumbranceGpOverride).toBe(18);
     expect(redacted.customItems).toEqual(document.customItems);
+    expect(
+      redacted.customItems.find((item) => item.id === 'custom-bag-of-holding')
+        ?.ignoresContentsWeightForEncumbrance
+    ).toBe(true);
   });
 
   test('parses and migrates a legacy player document', () => {
@@ -239,6 +253,41 @@ describe('encumbrance document helpers', () => {
 
     expect(parsed.customItems[0]?.category).toBe('arms');
     expect(parsed.customItems[1]?.category).toBe('adventuring-gear');
+  });
+
+  test('preserves special encumbrance rules on custom containers', () => {
+    const parsed = parseEncumbranceDocument(
+      JSON.stringify({
+        kind: 'adnd-encumbrance-player',
+        version: 7,
+        character: {
+          id: 'character-1',
+          name: 'Alya',
+          strength: {
+            score: 12,
+            exceptional: 'none',
+          },
+          inventory: [],
+        },
+        customItems: [
+          {
+            id: 'custom-bag-of-holding',
+            name: 'Backpack of Holding',
+            category: 'containers',
+            encumbranceGp: 150,
+            valueGp: 25000,
+            isContainer: true,
+            capacityGp: 5000,
+            ignoresContentsWeightForEncumbrance: true,
+          },
+        ],
+      })
+    );
+
+    expect(
+      parsed.customItems.find((item) => item.id === 'custom-bag-of-holding')
+        ?.ignoresContentsWeightForEncumbrance
+    ).toBe(true);
   });
 
   test('rejects malformed files', () => {

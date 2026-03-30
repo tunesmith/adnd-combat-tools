@@ -251,6 +251,8 @@ const isCatalogItem = (value: unknown): value is EncumbranceCatalogItem => {
       typeof candidate.isContainer === 'boolean') &&
     (candidate.capacityGp === undefined ||
       isNonNegativeNumber(candidate.capacityGp)) &&
+    (candidate.ignoresContentsWeightForEncumbrance === undefined ||
+      typeof candidate.ignoresContentsWeightForEncumbrance === 'boolean') &&
     (candidate.ammoKind === undefined ||
       (typeof candidate.ammoKind === 'string' &&
         ammoKinds.has(candidate.ammoKind))) &&
@@ -272,6 +274,11 @@ const sanitizeCatalogItem = (
   ...(typeof candidate.capacityGp === 'number'
     ? {
         capacityGp: candidate.capacityGp,
+      }
+    : {}),
+  ...(candidate.ignoresContentsWeightForEncumbrance
+    ? {
+        ignoresContentsWeightForEncumbrance: true,
       }
     : {}),
   ...(candidate.ammoKind ? { ammoKind: candidate.ammoKind } : {}),

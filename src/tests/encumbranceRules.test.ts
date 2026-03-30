@@ -161,6 +161,55 @@ describe('encumbrance rules', () => {
     });
   });
 
+  test('supports containers whose contents do not add to carried weight', () => {
+    const catalogById = new Map(encumbranceCatalogById);
+    catalogById.set('custom-backpack-of-holding', {
+      id: 'custom-backpack-of-holding',
+      name: 'Backpack of Holding',
+      category: 'containers',
+      encumbranceGp: 150,
+      valueGp: 25000,
+      isContainer: true,
+      capacityGp: 5000,
+      ignoresContentsWeightForEncumbrance: true,
+    });
+
+    const character = createPlayerCharacter();
+    character.inventory = [
+      {
+        id: 'bag-1',
+        catalogId: 'custom-backpack-of-holding',
+        quantity: 1,
+        containerId: null,
+        day: 64,
+        playerNotes: '',
+        playerKnowsValue: false,
+        playerMagicKnowledge: 'known-magical',
+      },
+      {
+        id: 'coin-1',
+        catalogId: 'coin-gold',
+        quantity: 4000,
+        containerId: 'bag-1',
+        day: 64,
+        playerNotes: '',
+        playerKnowsValue: true,
+        playerMagicKnowledge: 'unknown',
+      },
+    ];
+
+    expect(getTotalEncumbranceGp(character, catalogById)).toBe(150);
+    expect(
+      getContainerLoadSummary('bag-1', character.inventory, catalogById)
+    ).toEqual({
+      used: 4000,
+      capacity: 5000,
+      unitLabel: 'gp',
+      isOverCapacity: false,
+      mismatchedItemIds: [],
+    });
+  });
+
   test('derives an encumbrance band from effective load', () => {
     const effectiveLoad = getEffectiveLoadGp(900, {
       score: 15,

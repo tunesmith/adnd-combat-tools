@@ -529,6 +529,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: min(30rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
   border: 3px solid var(--copper);
   background: linear-gradient(
     180deg,
@@ -536,6 +538,9 @@
     rgba(62, 81, 40, 0.99) 100%
   );
   box-shadow: 0 1.2rem 2.4rem rgba(0, 0, 0, 0.35);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 .editModal {
