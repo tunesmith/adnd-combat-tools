@@ -1,5 +1,7 @@
+import { resolveOpenMeleeExchange, type OpenMeleeCombatant } from './openMelee';
 import { getWeaponInfo } from '../../tables/weapon';
 import type {
+  DirectMeleeEngagement,
   DirectMeleePair,
   InitiativeScenario,
   InitiativeScenarioCombatant,
@@ -72,6 +74,16 @@ const getInitiativeWeaponType = (
   weaponType: InitiativeWeaponType | undefined
 ): InitiativeWeaponType => weaponType || 'natural';
 
+const toOpenMeleeCombatant = (
+  combatant: InitiativeScenarioCombatant
+): OpenMeleeCombatant => ({
+  id: combatant.id,
+  initiative: combatant.initiative,
+  weaponKind: combatant.weaponType === 'melee' ? 'weapon' : 'natural',
+  weaponSpeedFactor:
+    combatant.weaponType === 'melee' ? combatant.weaponSpeedFactor : undefined,
+});
+
 export const buildInitiativeScenarioFromTrackerRound = (
   round: TrackerRound
 ): InitiativeScenario => {
@@ -134,6 +146,9 @@ export const buildInitiativeScenarioFromTrackerRound = (
     }
   );
 
+  const partyById = new Map(
+    party.map((combatant) => [combatant.id, combatant])
+  );
   const enemyById = new Map(
     enemies.map((combatant) => [combatant.id, combatant])
   );
@@ -184,6 +199,27 @@ export const buildInitiativeScenarioFromTrackerRound = (
       candidateCountByCombatantId.get(pair.enemyCombatantId) === 1
   );
 
+  const directMeleeEngagements: DirectMeleeEngagement[] = directMeleePairs.map(
+    (pair) => {
+      const partyCombatant = partyById.get(pair.partyCombatantId);
+      const enemyCombatant = enemyById.get(pair.enemyCombatantId);
+
+      if (!partyCombatant || !enemyCombatant) {
+        throw new Error(
+          `Missing combatant while resolving direct melee pair ${pair.partyCombatantId}/${pair.enemyCombatantId}`
+        );
+      }
+
+      return {
+        ...pair,
+        resolution: resolveOpenMeleeExchange(
+          toOpenMeleeCombatant(partyCombatant),
+          toOpenMeleeCombatant(enemyCombatant)
+        ),
+      };
+    }
+  );
+
   const directPairCombatantIds = new Set(
     directMeleePairs.flatMap((pair) => [
       pair.partyCombatantId,
@@ -206,6 +242,7 @@ export const buildInitiativeScenarioFromTrackerRound = (
     party,
     enemies,
     directMeleePairs,
+    directMeleeEngagements,
     unresolvedMeleeCandidateIds,
   };
 };

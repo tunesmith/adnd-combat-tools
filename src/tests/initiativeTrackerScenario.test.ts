@@ -1,5 +1,6 @@
 import { buildInitiativeScenarioFromTrackerRound } from '../helpers/initiative/trackerScenario';
 import { createInitialTrackerState } from '../helpers/trackerState';
+import type { DirectMeleeEngagement } from '../types/initiative';
 import type { TrackerRound } from '../types/tracker';
 
 const requireRound = (): TrackerRound => {
@@ -36,6 +37,21 @@ const setMutualTarget = (
     enemyToParty: 'x',
     partyToEnemy: 'x',
   };
+};
+
+const getStepSignatures = (engagement: DirectMeleeEngagement): string[][] =>
+  engagement.resolution.steps.map((step) =>
+    step.attacks.map((attack) => `${attack.combatantId}${attack.attackNumber}`)
+  );
+
+const requireEngagement = (
+  engagement: DirectMeleeEngagement | undefined
+): DirectMeleeEngagement => {
+  if (!engagement) {
+    throw new Error('Missing direct melee engagement');
+  }
+
+  return engagement;
 };
 
 describe('tracker initiative scenario builder', () => {
@@ -108,9 +124,21 @@ describe('tracker initiative scenario builder', () => {
       intention: 'claw',
       targetIds: ['party-1'],
     });
+    expect(scenario.directMeleePairs).toEqual([
+      {
+        partyCombatantId: 'party-1',
+        enemyCombatantId: 'enemy-4',
+        inference: 'mutual-targeting-non-missile-weapons',
+      },
+    ]);
+    const engagement = requireEngagement(scenario.directMeleeEngagements[0]);
+
+    expect(scenario.directMeleeEngagements).toHaveLength(1);
+    expect(engagement.resolution.reason).toBe('initiative');
+    expect(getStepSignatures(engagement)).toEqual([['party-11'], ['enemy-41']]);
   });
 
-  test('infers direct melee pairs only from mutual non-missile targeting', () => {
+  test('resolves tied direct melee with natural weapons as simultaneous', () => {
     const round = requireRound();
 
     round.partyInitiative = '3';
@@ -143,7 +171,47 @@ describe('tracker initiative scenario builder', () => {
         inference: 'mutual-targeting-non-missile-weapons',
       },
     ]);
+    const engagement = requireEngagement(scenario.directMeleeEngagements[0]);
+
+    expect(scenario.directMeleeEngagements).toHaveLength(1);
+    expect(engagement.resolution.reason).toBe('simultaneous');
+    expect(getStepSignatures(engagement)).toEqual([['party-11', 'enemy-41']]);
     expect(scenario.unresolvedMeleeCandidateIds).toEqual([]);
+  });
+
+  test('applies the open melee weapon speed resolver to tied direct weapon pairs', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '4';
+    round.enemyInitiative = '4';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].weapon = 17;
+    round.enemies[0].weapon = 2;
+
+    setMutualTarget(round, 0, 0);
+
+    const scenario = buildInitiativeScenarioFromTrackerRound(round);
+
+    expect(scenario.directMeleePairs).toEqual([
+      {
+        partyCombatantId: 'party-1',
+        enemyCombatantId: 'enemy-4',
+        inference: 'mutual-targeting-non-missile-weapons',
+      },
+    ]);
+    const engagement = requireEngagement(scenario.directMeleeEngagements[0]);
+
+    expect(scenario.directMeleeEngagements).toHaveLength(1);
+    expect(engagement.resolution.reason).toBe('weapon-speed-double');
+    expect(getStepSignatures(engagement)).toEqual([
+      ['party-11'],
+      ['party-12'],
+      ['enemy-41'],
+    ]);
   });
 
   test('leaves ambiguous mutual melee contact unresolved instead of inventing pairs', () => {
@@ -163,6 +231,7 @@ describe('tracker initiative scenario builder', () => {
     const scenario = buildInitiativeScenarioFromTrackerRound(round);
 
     expect(scenario.directMeleePairs).toEqual([]);
+    expect(scenario.directMeleeEngagements).toEqual([]);
     expect(scenario.unresolvedMeleeCandidateIds).toEqual(
       expect.arrayContaining(['party-1', 'party-2', 'enemy-4'])
     );

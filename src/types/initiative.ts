@@ -27,6 +27,31 @@ export interface DirectMeleePair {
   inference: 'mutual-targeting-non-missile-weapons';
 }
 
+interface DirectMeleeAttack {
+  combatantId: string;
+  attackNumber: number;
+}
+
+interface DirectMeleeAttackStep {
+  attacks: DirectMeleeAttack[];
+}
+
+type DirectMeleeResolutionReason =
+  | 'initiative'
+  | 'simultaneous'
+  | 'weapon-speed'
+  | 'weapon-speed-double'
+  | 'weapon-speed-triple';
+
+interface DirectMeleeResolution {
+  reason: DirectMeleeResolutionReason;
+  steps: DirectMeleeAttackStep[];
+}
+
+export interface DirectMeleeEngagement extends DirectMeleePair {
+  resolution: DirectMeleeResolution;
+}
+
 export interface InitiativeScenario {
   label: string;
   partyInitiative: number;
@@ -35,5 +60,6 @@ export interface InitiativeScenario {
   party: InitiativeScenarioCombatant[];
   enemies: InitiativeScenarioCombatant[];
   directMeleePairs: DirectMeleePair[];
+  directMeleeEngagements: DirectMeleeEngagement[];
   unresolvedMeleeCandidateIds: string[];
 }
