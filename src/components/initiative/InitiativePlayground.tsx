@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { SingleValue } from 'react-select';
@@ -33,6 +34,11 @@ interface InitiativePlaytestState {
   nextCombatantKey: number;
   party: InitiativePlaytestCombatant[];
   enemies: InitiativePlaytestCombatant[];
+}
+
+interface InitiativePlaytestEditorTarget {
+  side: InitiativePlaytestSide;
+  combatantKey: number;
 }
 
 const ALL_WEAPON_OPTIONS = getWeaponOptions(MONSTER);
@@ -135,9 +141,26 @@ const getCombatantDisplayName = (
   index: number
 ): string => combatant.name.trim() || getNextCombatantName(side, index);
 
+const getWeaponSummary = (weaponId: number): string => {
+  const weaponInfo = getWeaponInfo(weaponId);
+
+  if (weaponInfo?.weaponType === 'melee') {
+    return `WSF ${weaponInfo.speedFactor}`;
+  }
+
+  if (weaponInfo?.weaponType === 'missile') {
+    return `FR ${weaponInfo.fireRate}`;
+  }
+
+  return weaponInfo?.weaponType || 'natural';
+};
+
 const InitiativePlayground = () => {
   const [state, setState] =
     useState<InitiativePlaytestState>(createMixedPreset);
+  const [editorTarget, setEditorTarget] = useState<
+    InitiativePlaytestEditorTarget | undefined
+  >(undefined);
   const scenario = useMemo(
     () => buildInitiativeScenario(buildDraftFromState(state)),
     [state]
@@ -156,6 +179,7 @@ const InitiativePlayground = () => {
   );
   const menuPortalTarget =
     typeof document !== 'undefined' ? document.body : undefined;
+  const modalRoot = typeof document !== 'undefined' ? document.body : null;
 
   const updateLabel = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
@@ -234,6 +258,13 @@ const InitiativePlayground = () => {
           : combatant
       ),
     }));
+    setEditorTarget((previous) =>
+      previous &&
+      previous.side === side &&
+      previous.combatantKey === combatantKey
+        ? undefined
+        : previous
+    );
   };
 
   const loadPreset = (presetFactory: () => InitiativePlaytestState) => {
@@ -278,94 +309,26 @@ const InitiativePlayground = () => {
       ),
     [attackGraph.nodes, viewModel.combatantNameById]
   );
-
-  const renderCombatantCard = (
-    side: InitiativePlaytestSide,
-    combatant: InitiativePlaytestCombatant,
-    index: number
-  ) => {
-    const weaponInfo = getWeaponInfo(combatant.weaponId);
-    const targetNames = (
-      side === 'party' ? state.enemies : state.party
-    ).flatMap((opponent, opponentIndex) =>
-      combatant.targetCombatantKeys.includes(opponent.key)
-        ? [
-            getCombatantDisplayName(
-              side === 'party' ? 'enemy' : 'party',
-              opponent,
-              opponentIndex
-            ),
-          ]
-        : []
-    );
-
-    return (
-      <div key={combatant.key} className={styles['combatantCard']}>
-        <div className={styles['combatantCardHeader']}>
-          <span className={styles['combatantOrdinal']}>
-            {side === 'party' ? 'Party' : 'Enemy'} {index + 1}
-          </span>
-          <button
-            type={'button'}
-            className={styles['removeButton']}
-            onClick={() => removeCombatant(side, combatant.key)}
-          >
-            Remove
-          </button>
-        </div>
-        <label className={styles['fieldLabel']}>
-          Name
-          <input
-            className={styles['textInput']}
-            value={combatant.name}
-            onChange={(event) =>
-              updateCombatant(side, combatant.key, { name: event.target.value })
-            }
-          />
-        </label>
-        <label className={styles['fieldLabel']}>
-          Weapon
-          <Select
-            instanceId={`${side}-weapon-${combatant.key}`}
-            styles={customStyles}
-            menuPortalTarget={menuPortalTarget}
-            value={
-              ALL_WEAPON_OPTIONS.find(
-                (option) => option.value === combatant.weaponId
-              ) || null
-            }
-            options={ALL_WEAPON_OPTIONS}
-            onChange={(option: SingleValue<WeaponOption>) => {
-              if (!option) {
-                return;
-              }
-
-              updateCombatant(side, combatant.key, {
-                weaponId: option.value,
-              });
-            }}
-          />
-        </label>
-        <div className={styles['weaponMeta']}>
-          <span>{weaponInfo?.weaponType || 'natural'}</span>
-          {weaponInfo?.weaponType === 'melee' && (
-            <span>WSF {weaponInfo.speedFactor}</span>
-          )}
-          {weaponInfo?.weaponType === 'missile' && (
-            <span>FR {weaponInfo.fireRate}</span>
-          )}
-        </div>
-        <div className={styles['targetSummary']}>
-          <span className={styles['targetSummaryLabel']}>
-            Targets from grid
-          </span>
-          <span className={styles['targetSummaryValue']}>
-            {targetNames.length > 0 ? targetNames.join(', ') : 'None selected'}
-          </span>
-        </div>
-      </div>
-    );
-  };
+  const editedCombatant =
+    editorTarget !== undefined
+      ? state[getStateSide(editorTarget.side)].find(
+          (combatant) => combatant.key === editorTarget.combatantKey
+        )
+      : undefined;
+  const editedCombatantIndex =
+    editorTarget !== undefined
+      ? state[getStateSide(editorTarget.side)].findIndex(
+          (combatant) => combatant.key === editorTarget.combatantKey
+        )
+      : -1;
+  const editedCombatantDisplayName =
+    editedCombatant && editorTarget && editedCombatantIndex >= 0
+      ? getCombatantDisplayName(
+          editorTarget.side,
+          editedCombatant,
+          editedCombatantIndex
+        )
+      : undefined;
 
   return (
     <div className={styles['page']}>
@@ -454,7 +417,8 @@ const InitiativePlayground = () => {
               <p className={styles['matrixCopy']}>
                 Party combatants run across the top, enemies run down the side.
                 Toggle `P→E` when the party column attacks the enemy row, `E→P`
-                for the reverse, and mutual cells light up as duels.
+                for the reverse, and mutual cells light up as duels. Click a row
+                or column header to edit that combatant.
               </p>
             </div>
 
@@ -470,16 +434,37 @@ const InitiativePlayground = () => {
                         <span className={styles['matrixLegendMeta']}>
                           `P→E` and `E→P` are the declared attacks.
                         </span>
+                        <div className={styles['matrixLegendActions']}>
+                          <button
+                            type={'button'}
+                            className={styles['addButton']}
+                            onClick={() => addCombatant('party')}
+                          >
+                            Add party
+                          </button>
+                          <button
+                            type={'button'}
+                            className={styles['addButton']}
+                            onClick={() => addCombatant('enemy')}
+                          >
+                            Add enemy
+                          </button>
+                        </div>
                       </th>
-                      {state.party.map((partyCombatant, partyIndex) => {
-                        const weaponInfo = getWeaponInfo(
-                          partyCombatant.weaponId
-                        );
-
-                        return (
-                          <th
-                            key={`party-header-${partyCombatant.key}`}
-                            className={styles['matrixColumnHeader']}
+                      {state.party.map((partyCombatant, partyIndex) => (
+                        <th
+                          key={`party-header-${partyCombatant.key}`}
+                          className={styles['matrixColumnHeader']}
+                        >
+                          <button
+                            type={'button'}
+                            className={styles['matrixCombatantButton']}
+                            onClick={() =>
+                              setEditorTarget({
+                                side: 'party',
+                                combatantKey: partyCombatant.key,
+                              })
+                            }
                           >
                             <span className={styles['matrixCombatantName']}>
                               {getCombatantDisplayName(
@@ -489,40 +474,39 @@ const InitiativePlayground = () => {
                               )}
                             </span>
                             <span className={styles['matrixCombatantMeta']}>
-                              {weaponInfo?.weaponType === 'melee'
-                                ? `WSF ${weaponInfo.speedFactor}`
-                                : weaponInfo?.weaponType === 'missile'
-                                ? `FR ${weaponInfo.fireRate}`
-                                : 'natural'}
+                              {getWeaponSummary(partyCombatant.weaponId)}
                             </span>
-                          </th>
-                        );
-                      })}
+                          </button>
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {state.enemies.map((enemyCombatant, enemyIndex) => {
-                      const enemyWeaponInfo = getWeaponInfo(
-                        enemyCombatant.weaponId
-                      );
-
                       return (
                         <tr key={`enemy-row-${enemyCombatant.key}`}>
                           <th className={styles['matrixRowHeader']}>
-                            <span className={styles['matrixCombatantName']}>
-                              {getCombatantDisplayName(
-                                'enemy',
-                                enemyCombatant,
-                                enemyIndex
-                              )}
-                            </span>
-                            <span className={styles['matrixCombatantMeta']}>
-                              {enemyWeaponInfo?.weaponType === 'melee'
-                                ? `WSF ${enemyWeaponInfo.speedFactor}`
-                                : enemyWeaponInfo?.weaponType === 'missile'
-                                ? `FR ${enemyWeaponInfo.fireRate}`
-                                : 'natural'}
-                            </span>
+                            <button
+                              type={'button'}
+                              className={styles['matrixCombatantButton']}
+                              onClick={() =>
+                                setEditorTarget({
+                                  side: 'enemy',
+                                  combatantKey: enemyCombatant.key,
+                                })
+                              }
+                            >
+                              <span className={styles['matrixCombatantName']}>
+                                {getCombatantDisplayName(
+                                  'enemy',
+                                  enemyCombatant,
+                                  enemyIndex
+                                )}
+                              </span>
+                              <span className={styles['matrixCombatantMeta']}>
+                                {getWeaponSummary(enemyCombatant.weaponId)}
+                              </span>
+                            </button>
                           </th>
                           {state.party.map((partyCombatant) => {
                             const partyTargetsEnemy =
@@ -604,48 +588,28 @@ const InitiativePlayground = () => {
               </div>
             ) : (
               <div className={styles['matrixEmpty']}>
-                Add at least one party combatant and one enemy combatant to use
-                the engagement matrix.
+                <div>
+                  Add at least one party combatant and one enemy combatant to
+                  use the engagement matrix.
+                </div>
+                <div className={styles['matrixLegendActions']}>
+                  <button
+                    type={'button'}
+                    className={styles['addButton']}
+                    onClick={() => addCombatant('party')}
+                  >
+                    Add party
+                  </button>
+                  <button
+                    type={'button'}
+                    className={styles['addButton']}
+                    onClick={() => addCombatant('enemy')}
+                  >
+                    Add enemy
+                  </button>
+                </div>
               </div>
             )}
-          </div>
-
-          <div className={styles['rosterGrid']}>
-            <section className={styles['sidePanel']}>
-              <div className={styles['sideHeader']}>
-                <h3>Party</h3>
-                <button
-                  type={'button'}
-                  className={styles['addButton']}
-                  onClick={() => addCombatant('party')}
-                >
-                  Add party
-                </button>
-              </div>
-              <div className={styles['combatantList']}>
-                {state.party.map((combatant, index) =>
-                  renderCombatantCard('party', combatant, index)
-                )}
-              </div>
-            </section>
-
-            <section className={styles['sidePanel']}>
-              <div className={styles['sideHeader']}>
-                <h3>Enemy</h3>
-                <button
-                  type={'button'}
-                  className={styles['addButton']}
-                  onClick={() => addCombatant('enemy')}
-                >
-                  Add enemy
-                </button>
-              </div>
-              <div className={styles['combatantList']}>
-                {state.enemies.map((combatant, index) =>
-                  renderCombatantCard('enemy', combatant, index)
-                )}
-              </div>
-            </section>
           </div>
         </section>
 
@@ -779,6 +743,104 @@ const InitiativePlayground = () => {
           </div>
         </section>
       </div>
+      {editedCombatant && editorTarget && modalRoot
+        ? createPortal(
+            <>
+              <div
+                className={styles['modalShadow']}
+                onClick={() => setEditorTarget(undefined)}
+              />
+              <div
+                className={styles['modal']}
+                role={'dialog'}
+                aria-modal={'true'}
+                aria-labelledby={'initiative-editor-title'}
+              >
+                <div
+                  id={'initiative-editor-title'}
+                  className={styles['modalTitle']}
+                >
+                  {editorTarget.side === 'party'
+                    ? 'Edit Party Combatant'
+                    : 'Edit Enemy Combatant'}
+                </div>
+                <p className={styles['modalText']}>
+                  Target declarations are edited in the engagement matrix. Use
+                  this modal to change the combatant label or weapon.
+                </p>
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={`initiative-name-${editedCombatant.key}`}
+                >
+                  Name
+                </label>
+                <input
+                  id={`initiative-name-${editedCombatant.key}`}
+                  className={styles['textInput']}
+                  type={'text'}
+                  value={editedCombatant.name}
+                  onChange={(event) =>
+                    updateCombatant(editorTarget.side, editedCombatant.key, {
+                      name: event.target.value,
+                    })
+                  }
+                />
+                <label className={styles['modalLabel']}>Weapon</label>
+                <Select
+                  instanceId={`initiative-weapon-${editedCombatant.key}`}
+                  styles={customStyles}
+                  menuPortalTarget={menuPortalTarget}
+                  menuPosition={'fixed'}
+                  value={
+                    ALL_WEAPON_OPTIONS.find(
+                      (option) => option.value === editedCombatant.weaponId
+                    ) || null
+                  }
+                  options={ALL_WEAPON_OPTIONS}
+                  onChange={(option: SingleValue<WeaponOption>) => {
+                    if (!option) {
+                      return;
+                    }
+
+                    updateCombatant(editorTarget.side, editedCombatant.key, {
+                      weaponId: option.value,
+                    });
+                  }}
+                />
+                <div className={styles['modalMeta']}>
+                  <span className={styles['modalMetaLabel']}>
+                    Current display
+                  </span>
+                  <span className={styles['modalMetaValue']}>
+                    {editedCombatantDisplayName}
+                  </span>
+                  <span className={styles['modalMetaValue']}>
+                    {getWeaponSummary(editedCombatant.weaponId)}
+                  </span>
+                </div>
+                <div className={styles['modalActions']}>
+                  <button
+                    type={'button'}
+                    className={styles['modalButtonDanger']}
+                    onClick={() =>
+                      removeCombatant(editorTarget.side, editedCombatant.key)
+                    }
+                  >
+                    Remove combatant
+                  </button>
+                  <button
+                    type={'button'}
+                    className={styles['modalButton']}
+                    onClick={() => setEditorTarget(undefined)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </>,
+            modalRoot
+          )
+        : null}
     </div>
   );
 };
