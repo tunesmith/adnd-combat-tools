@@ -239,9 +239,9 @@ const InitiativePlayground = () => {
       Object.fromEntries(
         attackGraph.nodes.map((node) => [
           node.id,
-          `${
-            viewModel.combatantNameById[node.combatantId] || node.combatantId
-          } attack ${node.attackNumber}`,
+          `${viewModel.combatantNameById[node.combatantId] || node.combatantId} ${
+            node.label
+          }`,
         ])
       ),
     [attackGraph.nodes, viewModel.combatantNameById]
@@ -346,8 +346,9 @@ const InitiativePlayground = () => {
           <h1 className={styles['title']}>Initiative Playground</h1>
           <p className={styles['lede']}>
             This page is for playtesting the current rules slice: simple side
-            initiative, conservative direct melee pairing, and open-melee weapon
-            speed factor resolution.
+            initiative, conservative direct melee pairing, open-melee weapon
+            speed factor resolution, and generic attack routines with named
+            components.
           </p>
         </div>
         <div className={styles['presetBar']}>
@@ -462,7 +463,8 @@ const InitiativePlayground = () => {
             <h2 className={styles['panelTitle']}>Suggested Order</h2>
             <p className={styles['panelCopy']}>
               The output stays partial on purpose. Anything still ambiguous
-              remains explicitly unresolved.
+              remains explicitly unresolved, and the graph now tracks attack
+              routine components rather than only raw attack numbers.
             </p>
           </div>
 

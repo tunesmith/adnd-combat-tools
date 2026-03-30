@@ -1,3 +1,8 @@
+import type {
+  InitiativeAttackEntry,
+  InitiativeAttackRoutine,
+} from '../../types/initiative';
+
 type OpenMeleeWeaponKind = 'weapon' | 'natural';
 
 export interface OpenMeleeCombatant {
@@ -5,15 +10,11 @@ export interface OpenMeleeCombatant {
   initiative: number;
   weaponKind: OpenMeleeWeaponKind;
   weaponSpeedFactor?: number;
-}
-
-interface OpenMeleeAttack {
-  combatantId: string;
-  attackNumber: number;
+  attackRoutine: InitiativeAttackRoutine;
 }
 
 interface OpenMeleeStep {
-  attacks: OpenMeleeAttack[];
+  attacks: InitiativeAttackEntry[];
 }
 
 type OpenMeleeReason =
@@ -29,23 +30,50 @@ export interface OpenMeleeResolution {
 }
 
 const createAttack = (
-  combatantId: string,
+  combatant: OpenMeleeCombatant,
   attackNumber: number
-): OpenMeleeAttack => ({
-  combatantId,
-  attackNumber,
-});
+): InitiativeAttackEntry => {
+  const timingBasisComponent =
+    combatant.attackRoutine.components.find(
+      (component) =>
+        component.id === combatant.attackRoutine.timingBasisComponentId
+    ) || combatant.attackRoutine.components[0];
+
+  if (!timingBasisComponent) {
+    throw new Error(`Combatant ${combatant.id} has no attack routine component`);
+  }
+
+  if (attackNumber === 1) {
+    return {
+      combatantId: combatant.id,
+      routineId: combatant.attackRoutine.id,
+      componentId: timingBasisComponent.id,
+      attackNumber,
+      label: timingBasisComponent.label,
+      source: 'routine-component',
+    };
+  }
+
+  return {
+    combatantId: combatant.id,
+    routineId: combatant.attackRoutine.id,
+    componentId: `generated-attack-${attackNumber}`,
+    attackNumber,
+    label: `attack ${attackNumber}`,
+    source: 'timing-bonus',
+  };
+};
 
 const createSingleAttackStep = (
-  combatantId: string,
+  combatant: OpenMeleeCombatant,
   attackNumber: number
 ): OpenMeleeStep => ({
-  attacks: [createAttack(combatantId, attackNumber)],
+  attacks: [createAttack(combatant, attackNumber)],
 });
 
 const createSimultaneousStep = (
-  left: OpenMeleeAttack,
-  right: OpenMeleeAttack
+  left: InitiativeAttackEntry,
+  right: InitiativeAttackEntry
 ): OpenMeleeStep => ({
   attacks: [left, right],
 });
@@ -89,8 +117,8 @@ export const resolveOpenMeleeExchange = (
     return {
       reason: 'initiative',
       steps: [
-        createSingleAttackStep(left.id, 1),
-        createSingleAttackStep(right.id, 1),
+        createSingleAttackStep(left, 1),
+        createSingleAttackStep(right, 1),
       ],
     };
   }
@@ -99,8 +127,8 @@ export const resolveOpenMeleeExchange = (
     return {
       reason: 'initiative',
       steps: [
-        createSingleAttackStep(right.id, 1),
-        createSingleAttackStep(left.id, 1),
+        createSingleAttackStep(right, 1),
+        createSingleAttackStep(left, 1),
       ],
     };
   }
@@ -110,8 +138,8 @@ export const resolveOpenMeleeExchange = (
       reason: 'simultaneous',
       steps: [
         createSimultaneousStep(
-          createAttack(left.id, 1),
-          createAttack(right.id, 1)
+          createAttack(left, 1),
+          createAttack(right, 1)
         ),
       ],
     };
@@ -125,8 +153,8 @@ export const resolveOpenMeleeExchange = (
       reason: 'simultaneous',
       steps: [
         createSimultaneousStep(
-          createAttack(left.id, 1),
-          createAttack(right.id, 1)
+          createAttack(left, 1),
+          createAttack(right, 1)
         ),
       ],
     };
@@ -147,11 +175,11 @@ export const resolveOpenMeleeExchange = (
     return {
       reason: 'weapon-speed-triple',
       steps: [
-        createSingleAttackStep(faster.combatant.id, 1),
-        createSingleAttackStep(faster.combatant.id, 2),
+        createSingleAttackStep(faster.combatant, 1),
+        createSingleAttackStep(faster.combatant, 2),
         createSimultaneousStep(
-          createAttack(faster.combatant.id, 3),
-          createAttack(slower.combatant.id, 1)
+          createAttack(faster.combatant, 3),
+          createAttack(slower.combatant, 1)
         ),
       ],
     };
@@ -161,9 +189,9 @@ export const resolveOpenMeleeExchange = (
     return {
       reason: 'weapon-speed-double',
       steps: [
-        createSingleAttackStep(faster.combatant.id, 1),
-        createSingleAttackStep(faster.combatant.id, 2),
-        createSingleAttackStep(slower.combatant.id, 1),
+        createSingleAttackStep(faster.combatant, 1),
+        createSingleAttackStep(faster.combatant, 2),
+        createSingleAttackStep(slower.combatant, 1),
       ],
     };
   }
@@ -171,8 +199,8 @@ export const resolveOpenMeleeExchange = (
   return {
     reason: 'weapon-speed',
     steps: [
-      createSingleAttackStep(faster.combatant.id, 1),
-      createSingleAttackStep(slower.combatant.id, 1),
+      createSingleAttackStep(faster.combatant, 1),
+      createSingleAttackStep(slower.combatant, 1),
     ],
   };
 };

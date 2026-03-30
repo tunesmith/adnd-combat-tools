@@ -5,6 +5,20 @@ export type InitiativeScenarioOrder =
   | 'simultaneous';
 export type InitiativeWeaponType = 'melee' | 'missile' | 'natural';
 
+export interface InitiativeAttackRoutineComponent {
+  id: string;
+  order: number;
+  label: string;
+}
+
+export interface InitiativeAttackRoutine {
+  id: string;
+  label: string;
+  combatantId: string;
+  components: InitiativeAttackRoutineComponent[];
+  timingBasisComponentId?: string;
+}
+
 export interface InitiativeScenarioCombatant {
   id: string;
   side: InitiativeScenarioSide;
@@ -19,6 +33,7 @@ export interface InitiativeScenarioCombatant {
   intention: string;
   result: string;
   targetIds: string[];
+  attackRoutine: InitiativeAttackRoutine;
 }
 
 export interface InitiativeScenarioDraftCombatant {
@@ -44,13 +59,19 @@ export interface DirectMeleePair {
   inference: 'mutual-targeting-non-missile-weapons';
 }
 
-interface DirectMeleeAttack {
+export type InitiativeAttackSource = 'routine-component' | 'timing-bonus';
+
+export interface InitiativeAttackEntry {
   combatantId: string;
+  routineId: string;
+  componentId: string;
   attackNumber: number;
+  label: string;
+  source: InitiativeAttackSource;
 }
 
 interface DirectMeleeAttackStep {
-  attacks: DirectMeleeAttack[];
+  attacks: InitiativeAttackEntry[];
 }
 
 type DirectMeleeResolutionReason =
@@ -99,8 +120,12 @@ export interface InitiativeRoundResolution {
 export interface InitiativeAttackNode {
   id: string;
   combatantId: string;
+  routineId: string;
+  componentId: string;
   side: InitiativeScenarioSide;
   attackNumber: number;
+  label: string;
+  source: InitiativeAttackSource;
 }
 
 export type InitiativeAttackEdgeReason = 'simple-initiative' | 'direct-melee';

@@ -104,6 +104,10 @@ describe('tracker initiative scenario builder', () => {
       weaponSpeedFactor: 7,
       intention: 'close and strike',
       targetIds: ['enemy-4'],
+      attackRoutine: {
+        id: 'routine:party-1:1',
+        timingBasisComponentId: 'attack-1',
+      },
     });
     expect(scenario.party[1]).toMatchObject({
       id: 'party-2',

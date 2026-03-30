@@ -46,6 +46,17 @@ describe('generic initiative scenario builder', () => {
       weaponType: 'melee',
       weaponSpeedFactor: 2,
       targetIds: ['enemy-3'],
+      attackRoutine: {
+        id: 'routine:party-1:1',
+        timingBasisComponentId: 'attack-1',
+        components: [
+          {
+            id: 'attack-1',
+            order: 1,
+            label: 'attack 1',
+          },
+        ],
+      },
     });
     expect(scenario.directMeleePairs).toEqual([
       {

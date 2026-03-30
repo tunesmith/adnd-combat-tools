@@ -14,6 +14,19 @@ const createWeaponCombatant = (
   initiative,
   weaponKind: 'weapon',
   weaponSpeedFactor,
+  attackRoutine: {
+    id: `routine:${id}:1`,
+    label: 'Attack routine',
+    combatantId: id,
+    components: [
+      {
+        id: 'attack-1',
+        order: 1,
+        label: 'attack 1',
+      },
+    ],
+    timingBasisComponentId: 'attack-1',
+  },
 });
 
 const createNaturalCombatant = (
@@ -23,6 +36,19 @@ const createNaturalCombatant = (
   id,
   initiative,
   weaponKind: 'natural',
+  attackRoutine: {
+    id: `routine:${id}:1`,
+    label: 'Attack routine',
+    combatantId: id,
+    components: [
+      {
+        id: 'attack-1',
+        order: 1,
+        label: 'attack 1',
+      },
+    ],
+    timingBasisComponentId: 'attack-1',
+  },
 });
 
 const stepIds = (resolution: OpenMeleeResolution): string[][] =>
@@ -108,6 +134,26 @@ describe('open melee initiative helper', () => {
 
     expect(resolution.reason).toBe('weapon-speed-triple');
     expect(stepSignatures(resolution)).toEqual([['A1'], ['A2'], ['A3', 'B1']]);
+  });
+
+  test('marks the first attack as a routine component and later generated attacks as timing bonuses', () => {
+    const resolution = resolveOpenMeleeExchange(
+      createWeaponCombatant('A', 4, 2),
+      createWeaponCombatant('B', 4, 6)
+    );
+
+    expect(resolution.steps[0]?.attacks[0]).toMatchObject({
+      combatantId: 'A',
+      componentId: 'attack-1',
+      label: 'attack 1',
+      source: 'routine-component',
+    });
+    expect(resolution.steps[1]?.attacks[0]).toMatchObject({
+      combatantId: 'A',
+      componentId: 'generated-attack-2',
+      label: 'attack 2',
+      source: 'timing-bonus',
+    });
   });
 
   test('does not allow the slower weapon to attack before the faster one in any tied weapon matchup', () => {

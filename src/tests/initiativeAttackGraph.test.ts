@@ -49,6 +49,15 @@ describe('initiative attack graph', () => {
         'attack:enemy-4:1',
       ])
     );
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:enemy-4:1',
+          label: 'attack 1',
+          source: 'routine-component',
+        }),
+      ])
+    );
     expect(graph.layers).toEqual([
       ['attack:enemy-3:1', 'attack:enemy-4:1'],
       ['attack:party-1:1', 'attack:party-2:1'],

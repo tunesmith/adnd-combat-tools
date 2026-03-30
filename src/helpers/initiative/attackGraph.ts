@@ -3,6 +3,7 @@ import type {
   InitiativeAttackEdgeReason,
   InitiativeAttackGraph,
   InitiativeAttackNode,
+  InitiativeAttackSource,
   InitiativeRoundResolution,
   InitiativeScenario,
   InitiativeScenarioCombatant,
@@ -45,12 +46,19 @@ const getCombatantById = (
 
 const createNode = (
   combatant: InitiativeScenarioCombatant,
-  attackNumber: number
+  componentId: string,
+  attackNumber: number,
+  label: string,
+  source: InitiativeAttackSource
 ): InitiativeAttackNode => ({
   id: getAttackNodeId(combatant.id, attackNumber),
   combatantId: combatant.id,
+  routineId: combatant.attackRoutine.id,
+  componentId,
   side: combatant.side,
   attackNumber,
+  label,
+  source,
 });
 
 const getLayers = (
@@ -121,7 +129,13 @@ export const buildInitiativeAttackGraph = (
           return [];
         }
 
-        const node = createNode(combatant, attack.attackNumber);
+        const node = createNode(
+          combatant,
+          attack.componentId,
+          attack.attackNumber,
+          attack.label,
+          attack.source
+        );
         nodes.push(node);
         return [node.id];
       });
@@ -151,7 +165,17 @@ export const buildInitiativeAttackGraph = (
       return;
     }
 
-    nodes.push(createNode(combatant, 1));
+    combatant.attackRoutine.components.forEach((component) => {
+      nodes.push(
+        createNode(
+          combatant,
+          component.id,
+          component.order,
+          component.label,
+          'routine-component'
+        )
+      );
+    });
   });
 
   if (resolution.simpleOrder === 'party-first') {

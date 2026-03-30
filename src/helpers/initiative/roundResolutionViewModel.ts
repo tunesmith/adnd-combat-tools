@@ -232,7 +232,7 @@ const buildDirectMeleeCards = (
           .map((attack) => {
             const combatantName =
               combatantNameById[attack.combatantId] || attack.combatantId;
-            return `${combatantName} attack ${attack.attackNumber}`;
+            return `${combatantName} ${attack.label}`;
           })
           .join(step.attacks.length > 1 ? ' and ' : ''),
         combatantIds: step.attacks.map((attack) => attack.combatantId),

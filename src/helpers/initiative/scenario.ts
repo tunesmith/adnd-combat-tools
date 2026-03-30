@@ -1,8 +1,10 @@
 import { resolveOpenMeleeExchange, type OpenMeleeCombatant } from './openMelee';
 import { getWeaponInfo } from '../../tables/weapon';
 import type {
+  InitiativeAttackRoutineComponent,
   DirectMeleeEngagement,
   DirectMeleePair,
+  InitiativeAttackRoutine,
   InitiativeScenario,
   InitiativeScenarioCombatant,
   InitiativeScenarioDraft,
@@ -22,6 +24,26 @@ const getCombatantName = (
   side: InitiativeScenarioSide,
   index: number
 ): string => name || `${side === 'party' ? 'Party' : 'Enemy'} ${index + 1}`;
+
+const buildDefaultAttackRoutine = (
+  combatantId: string
+): InitiativeAttackRoutine => {
+  const components: InitiativeAttackRoutineComponent[] = [
+    {
+      id: 'attack-1',
+      order: 1,
+      label: 'attack 1',
+    },
+  ];
+
+  return {
+    id: `routine:${combatantId}:1`,
+    label: 'Attack routine',
+    combatantId,
+    components,
+    timingBasisComponentId: 'attack-1',
+  };
+};
 
 const getSimpleOrder = (
   partyInitiative: number,
@@ -54,6 +76,7 @@ const toOpenMeleeCombatant = (
   weaponKind: combatant.weaponType === 'melee' ? 'weapon' : 'natural',
   weaponSpeedFactor:
     combatant.weaponType === 'melee' ? combatant.weaponSpeedFactor : undefined,
+  attackRoutine: combatant.attackRoutine,
 });
 
 const buildScenarioCombatants = (
@@ -65,9 +88,10 @@ const buildScenarioCombatants = (
 ): InitiativeScenarioCombatant[] =>
   combatants.map((combatant, index) => {
     const weaponInfo = getWeaponInfo(combatant.weaponId);
+    const combatantId = getCombatantId(side, combatant.combatantKey);
 
     return {
-      id: getCombatantId(side, combatant.combatantKey),
+      id: combatantId,
       side,
       index,
       combatantKey: combatant.combatantKey,
@@ -85,6 +109,7 @@ const buildScenarioCombatants = (
         .map((targetCombatantKey) =>
           getCombatantId(opposingSide, targetCombatantKey)
         ),
+      attackRoutine: buildDefaultAttackRoutine(combatantId),
     };
   });
 
