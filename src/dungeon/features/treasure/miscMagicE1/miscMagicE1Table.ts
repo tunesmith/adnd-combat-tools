@@ -1,0 +1,120 @@
+import type { Table } from '../../../../tables/dungeon/tableTypes';
+
+export enum TreasureMiscMagicE1 {
+  AlchemyJug = 1,
+  AmuletOfInescapableLocation,
+  AmuletOfLifeProtection,
+  AmuletOfThePlanes,
+  AmuletOfProofAgainstDetectionAndLocation,
+  ApparatusOfKwalish,
+  ArrowOfDirection,
+  ArtifactOrRelic,
+  BagOfBeans,
+  BagOfDevouring,
+  BagOfHolding,
+  BagOfTransmuting,
+  BagOfTricks,
+  BeakerOfPlentifulPotions,
+  FoldingBoat,
+  BookOfExaltedDeeds,
+  BookOfInfiniteSpells,
+  BookOfVileDarkness,
+  BootsOfDancing,
+  BootsOfElvenkind,
+  BootsOfLevitation,
+  BootsOfSpeed,
+  BootsOfStridingAndSpringing,
+  BowlCommandingWaterElementals,
+  BowlOfWateryDeath,
+  BracersOfDefense,
+  BracersOfDefenselessness,
+  BrazierCommandingFireElementals,
+  BrazierOfSleepSmoke,
+  BroochOfShielding,
+  BroomOfAnimatedAttack,
+  BroomOfFlying,
+  BucknardsEverfullPurse,
+}
+
+export const treasureMiscMagicE1: Table<TreasureMiscMagicE1> = {
+  sides: 100,
+  entries: [
+    { range: [1, 2], command: TreasureMiscMagicE1.AlchemyJug },
+    {
+      range: [3, 4],
+      command: TreasureMiscMagicE1.AmuletOfInescapableLocation,
+    },
+    { range: [5], command: TreasureMiscMagicE1.AmuletOfLifeProtection },
+    { range: [6, 7], command: TreasureMiscMagicE1.AmuletOfThePlanes },
+    {
+      range: [8, 11],
+      command: TreasureMiscMagicE1.AmuletOfProofAgainstDetectionAndLocation,
+    },
+    { range: [12, 13], command: TreasureMiscMagicE1.ApparatusOfKwalish },
+    { range: [14, 16], command: TreasureMiscMagicE1.ArrowOfDirection },
+    { range: [17], command: TreasureMiscMagicE1.ArtifactOrRelic },
+    { range: [18, 20], command: TreasureMiscMagicE1.BagOfBeans },
+    { range: [21], command: TreasureMiscMagicE1.BagOfDevouring },
+    { range: [22, 26], command: TreasureMiscMagicE1.BagOfHolding },
+    { range: [27], command: TreasureMiscMagicE1.BagOfTransmuting },
+    { range: [28, 29], command: TreasureMiscMagicE1.BagOfTricks },
+    {
+      range: [30, 31],
+      command: TreasureMiscMagicE1.BeakerOfPlentifulPotions,
+    },
+    { range: [32], command: TreasureMiscMagicE1.FoldingBoat },
+    { range: [33], command: TreasureMiscMagicE1.BookOfExaltedDeeds },
+    { range: [34], command: TreasureMiscMagicE1.BookOfInfiniteSpells },
+    { range: [35], command: TreasureMiscMagicE1.BookOfVileDarkness },
+    { range: [36], command: TreasureMiscMagicE1.BootsOfDancing },
+    { range: [37, 42], command: TreasureMiscMagicE1.BootsOfElvenkind },
+    { range: [43, 47], command: TreasureMiscMagicE1.BootsOfLevitation },
+    { range: [48, 51], command: TreasureMiscMagicE1.BootsOfSpeed },
+    {
+      range: [52, 55],
+      command: TreasureMiscMagicE1.BootsOfStridingAndSpringing,
+    },
+    {
+      range: [56, 58],
+      command: TreasureMiscMagicE1.BowlCommandingWaterElementals,
+    },
+    { range: [59], command: TreasureMiscMagicE1.BowlOfWateryDeath },
+    { range: [60, 79], command: TreasureMiscMagicE1.BracersOfDefense },
+    {
+      range: [80, 81],
+      command: TreasureMiscMagicE1.BracersOfDefenselessness,
+    },
+    {
+      range: [82, 84],
+      command: TreasureMiscMagicE1.BrazierCommandingFireElementals,
+    },
+    { range: [85], command: TreasureMiscMagicE1.BrazierOfSleepSmoke },
+    { range: [86, 92], command: TreasureMiscMagicE1.BroochOfShielding },
+    { range: [93], command: TreasureMiscMagicE1.BroomOfAnimatedAttack },
+    { range: [94, 98], command: TreasureMiscMagicE1.BroomOfFlying },
+    { range: [99, 100], command: TreasureMiscMagicE1.BucknardsEverfullPurse },
+  ],
+};
+
+export const miscMagicE1Followups = [
+  {
+    result: TreasureMiscMagicE1.ArtifactOrRelic,
+    table: 'treasureArtifactOrRelic',
+  },
+  {
+    result: TreasureMiscMagicE1.BagOfHolding,
+    table: 'treasureBagOfHolding',
+  },
+  {
+    result: TreasureMiscMagicE1.BagOfTricks,
+    table: 'treasureBagOfTricks',
+  },
+  {
+    result: TreasureMiscMagicE1.BracersOfDefense,
+    table: 'treasureBracersOfDefense',
+  },
+  {
+    result: TreasureMiscMagicE1.BucknardsEverfullPurse,
+    table: 'treasureBucknardsEverfullPurse',
+  },
+] as const;

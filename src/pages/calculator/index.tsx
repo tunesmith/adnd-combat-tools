@@ -1,34 +1,41 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
-import Select, { SingleValue } from "react-select";
+import type { FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { SingleValue } from 'react-select';
+import Select from 'react-select';
 import {
   attackerClassOptions,
   getGeneralClass,
   MONSTER,
-} from "../../tables/attackerClass";
-import { getLevelOptionsByCombatClass } from "../../tables/combatLevel";
-import { getWeaponOptions } from "../../tables/weapon";
-import { getArmorOptions } from "../../tables/armorType";
-import styles from "./calculator.module.css";
-import customStyles from "../../helpers/selectCustomStyles";
-import getToHit from "../../helpers/getToHit";
-import {
+} from '../../tables/attackerClass';
+import { getLevelOptionsByCombatClass } from '../../tables/combatLevel';
+import { getWeaponOptions } from '../../tables/weapon';
+import { getArmorOptions } from '../../tables/armorType';
+import styles from './calculator.module.css';
+import customStyles from '../../helpers/selectCustomStyles';
+import getToHit from '../../helpers/getToHit';
+import type {
   ArmorTypeOption,
   CreatureOption,
   LevelOption,
   WeaponOption,
-} from "../../types/option";
+} from '../../types/option';
 
 const Calculator = () => {
+  const initialAttackerLevelOptions = getLevelOptionsByCombatClass(MONSTER);
+  const initialWeaponOptions = getWeaponOptions(MONSTER);
+  const initialArmorTypeOptions = getArmorOptions;
   const [targetArmorClass, setTargetArmorClass] = useState<number>(10);
   const [attackerClass, setAttackerClass] = useState<number>(MONSTER);
   const prevAttackerClass = useRef<number>(MONSTER);
   const [attackerLevelOptions, setAttackerLevelOptions] = useState(
-    getLevelOptionsByCombatClass(MONSTER)
+    initialAttackerLevelOptions
   );
-  const [weaponOptions, setWeaponOptions] = useState(getWeaponOptions(MONSTER));
-  const [armorTypeOptions, setArmorTypeOptions] = useState(getArmorOptions);
+  const [weaponOptions, setWeaponOptions] = useState(initialWeaponOptions);
+  const [armorTypeOptions, setArmorTypeOptions] = useState(
+    initialArmorTypeOptions
+  );
   const [targetArmorType, setTargetArmorType] = useState<string>(
-    armorTypeOptions[0]!.value
+    initialArmorTypeOptions[0]?.value ?? ''
   );
 
   const armorClassOptions = useRef(
@@ -38,7 +45,7 @@ const Calculator = () => {
   );
   const [attackerLevel, setAttackerLevel] = useState<number>(3);
   const [attackerWeapon, setAttackerWeapon] = useState<number>(
-    weaponOptions[0]!.value
+    initialWeaponOptions[0]?.value ?? 0
   );
 
   const [toHit, setToHit] = useState<number | undefined>(undefined);
@@ -67,14 +74,14 @@ const Calculator = () => {
       if (newWeaponOptions[0]) {
         setAttackerWeapon(newWeaponOptions[0]?.value);
       } else {
-        console.error("Unable to set new weapon, retaining old weapon");
+        console.error('Unable to set new weapon, retaining old weapon');
       }
       const newArmorTypeOptions = getArmorOptions;
       setArmorTypeOptions(newArmorTypeOptions);
       if (newArmorTypeOptions[0]) {
         setTargetArmorType(newArmorTypeOptions[0].value);
       } else {
-        console.error("Unable to set new armor type, retaining old armor type");
+        console.error('Unable to set new armor type, retaining old armor type');
       }
       prevAttackerClass.current = newAttackerClass;
     }
@@ -94,7 +101,7 @@ const Calculator = () => {
     if (newLevel || newLevel === 0) {
       setAttackerLevel(newLevel);
     } else {
-      console.error("Could not set new level.");
+      console.error('Could not set new level.');
     }
   };
 
@@ -103,7 +110,7 @@ const Calculator = () => {
     if (newWeapon) {
       setAttackerWeapon(newWeapon);
     } else {
-      console.error("Could not set new weapon.");
+      console.error('Could not set new weapon.');
     }
   };
 
@@ -130,16 +137,16 @@ const Calculator = () => {
   };
 
   return (
-    <div className={styles["outerContainer"]}>
-      <div className={styles["title"]}>AD&D Combat Calculator</div>
-      <div className={styles["calcContainer"]}>
-        <div className={styles["formContainer"]}>
+    <div className={styles['outerContainer']}>
+      <div className={styles['title']}>AD&D Combat Calculator</div>
+      <div className={styles['calcContainer']}>
+        <div className={styles['formContainer']}>
           <form onSubmit={handleSubmit}>
             <label>
               Class of Attacker:
               <Select
                 isSearchable={false}
-                instanceId={"attackerClass"}
+                instanceId={'attackerClass'}
                 styles={customStyles}
                 value={attackerClassOptions.filter(
                   (option) => option.value === attackerClass
@@ -150,10 +157,10 @@ const Calculator = () => {
             </label>
             <br />
             <label>
-              Attacker {attackerClass === MONSTER ? "Hit Dice" : "Level"}:
+              Attacker {attackerClass === MONSTER ? 'Hit Dice' : 'Level'}:
               <Select
                 isSearchable={false}
-                instanceId={"attackerLevel"}
+                instanceId={'attackerLevel'}
                 styles={customStyles}
                 value={attackerLevelOptions.filter(
                   (option) => option.value === attackerLevel
@@ -167,7 +174,7 @@ const Calculator = () => {
               Attacker Weapon:
               <Select
                 isSearchable={false}
-                instanceId={"attackerWeapon"}
+                instanceId={'attackerWeapon'}
                 styles={customStyles}
                 value={weaponOptions.filter(
                   (option) => option.value === attackerWeapon
@@ -181,7 +188,7 @@ const Calculator = () => {
               Target Armor Type:
               <Select
                 isSearchable={false}
-                instanceId={"targetArmorType"}
+                instanceId={'targetArmorType'}
                 styles={customStyles}
                 value={armorTypeOptions.filter(
                   (option) => option.value === targetArmorType
@@ -195,7 +202,7 @@ const Calculator = () => {
               Target AC:
               <Select
                 isSearchable={false}
-                instanceId={"targetArmorClass"}
+                instanceId={'targetArmorClass'}
                 styles={customStyles}
                 value={armorClassOptions.current.filter(
                   (option) => option.value === targetArmorClass
@@ -206,11 +213,11 @@ const Calculator = () => {
             </label>
           </form>
         </div>
-        <div className={styles["toHitContainer"]}>
+        <div className={styles['toHitContainer']}>
           {(toHit || toHit === 0) && (
-            <div className={styles["toHitBox"]}>
+            <div className={styles['toHitBox']}>
               <div>To Hit:</div>
-              <div className={styles["toHit"]}>{toHit}</div>
+              <div className={styles['toHit']}>{toHit}</div>
             </div>
           )}
         </div>

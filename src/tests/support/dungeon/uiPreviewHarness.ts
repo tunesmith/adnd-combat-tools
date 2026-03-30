@@ -1,0 +1,180 @@
+import { runDungeonStep } from '../../../dungeon/services/adapters';
+import { countPendingNodes } from '../../../dungeon/helpers/outcomeTree';
+import {
+  buildRenderCache,
+  selectMessagesForMode,
+  type RenderCache,
+} from '../../../dungeon/helpers/renderCache';
+import type {
+  DungeonAction,
+  DungeonRenderNode,
+  TargetedDungeonTablePreview,
+} from '../../../types/dungeon';
+import { getDungeonTablePreviewTargetKey } from '../../../types/dungeon';
+import type {
+  OutcomeEventNode,
+  PendingRoll,
+} from '../../../dungeon/domain/outcome';
+import { getPendingRollTargetId } from '../../../dungeon/domain/pendingRoll';
+import { resolveFeedPreview } from '../../../components/dungeon/dungeonFeedController';
+import {
+  collectPreviews,
+  collectTargetedPreviews,
+  findTargetedPreviewByRef,
+} from './previewUtils';
+
+type FeedSnapshot = {
+  id: string;
+  action: DungeonAction;
+  roll: number;
+  outcome: OutcomeEventNode;
+  messages: DungeonRenderNode[];
+  renderCache: RenderCache;
+  pendingCount: number;
+};
+
+export function createFeedSnapshot(options: {
+  action: DungeonAction;
+  roll: number;
+  detailMode?: boolean;
+  dungeonLevel?: number;
+}): FeedSnapshot {
+  const step = runDungeonStep(options.action, {
+    roll: options.roll,
+    detailMode: options.detailMode ?? true,
+    level: options.dungeonLevel,
+  });
+  if (!step.outcome || step.outcome.type !== 'event') {
+    throw new Error('Expected an event outcome from runDungeonStep.');
+  }
+  const outcome = step.outcome;
+  const renderCache: RenderCache =
+    step.renderCache ?? buildRenderCache(outcome);
+  const detailMode = options.detailMode ?? true;
+  const messages = selectMessagesForMode(
+    options.action,
+    detailMode,
+    renderCache,
+    step.messages
+  );
+  return {
+    id: 'feed',
+    action: options.action,
+    roll: options.roll,
+    outcome,
+    messages,
+    renderCache,
+    pendingCount: step.pendingCount ?? countPendingNodes(outcome),
+  };
+}
+
+export function resolvePreview(
+  feed: FeedSnapshot,
+  previewId: string,
+  roll: number
+): FeedSnapshot {
+  const preview = findPreview(feed.messages, previewId);
+  if (!preview) {
+    throw new Error(`Preview ${previewId} not found in feed messages.`);
+  }
+  const resolution = resolveFeedPreview({
+    preview,
+    usedRoll: roll,
+    feedItem: {
+      id: feed.id,
+      messages: feed.messages,
+      outcome: feed.outcome,
+      renderCache: feed.renderCache,
+      pendingCount: feed.pendingCount,
+    },
+  });
+  if (!resolution) {
+    throw new Error('Preview resolution returned no outcome.');
+  }
+  const next = resolution.nextFeedItem;
+  if (!next.outcome || next.outcome.type !== 'event') {
+    throw new Error('Preview resolution did not return an event outcome.');
+  }
+  const renderCache: RenderCache =
+    next.renderCache ?? buildRenderCache(next.outcome);
+  return {
+    id: next.id,
+    action: feed.action,
+    roll: feed.roll,
+    outcome: next.outcome,
+    messages: next.messages,
+    renderCache,
+    pendingCount: next.pendingCount ?? countPendingNodes(next.outcome),
+  };
+}
+
+export function renderCompact(feed: FeedSnapshot): DungeonRenderNode[] {
+  return selectMessagesForMode(
+    feed.action,
+    false,
+    feed.renderCache,
+    feed.messages
+  );
+}
+
+export function renderDetail(feed: FeedSnapshot): DungeonRenderNode[] {
+  return selectMessagesForMode(
+    feed.action,
+    true,
+    feed.renderCache,
+    feed.messages
+  );
+}
+
+export function listPendingPreviewTargets(feed: FeedSnapshot): string[] {
+  const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
+  return collectPreviews(renderDetail(feed))
+    .map(getDungeonTablePreviewTargetKey)
+    .filter((id) => pendingTargets.has(id));
+}
+
+export function resolvePendingPreview(
+  feed: FeedSnapshot,
+  tableBase: string,
+  roll: number
+): FeedSnapshot {
+  const pendingPreview = getPendingPreviews(feed).find((preview) => {
+    const base = preview.id.split(':')[0];
+    return base === tableBase;
+  });
+  if (!pendingPreview) {
+    throw new Error(`No pending preview found for table ${tableBase}.`);
+  }
+  return resolvePreview(
+    feed,
+    getDungeonTablePreviewTargetKey(pendingPreview),
+    roll
+  );
+}
+
+function findPreview(
+  nodes: DungeonRenderNode[],
+  id: string
+): TargetedDungeonTablePreview | undefined {
+  return findTargetedPreviewByRef(nodes, id);
+}
+
+function getPendingPreviews(feed: FeedSnapshot): TargetedDungeonTablePreview[] {
+  const pendingTargets = new Set<string>(collectPendingTargets(feed.outcome));
+  return collectTargetedPreviews(renderDetail(feed)).filter((preview) =>
+    pendingTargets.has(preview.targetId)
+  );
+}
+
+function collectPendingTargets(node: OutcomeEventNode): string[] {
+  const acc: string[] = [];
+  const walk = (current: OutcomeEventNode | PendingRoll) => {
+    if (current.type === 'pending-roll') {
+      acc.push(getPendingRollTargetId(current));
+      return;
+    }
+    current.children?.forEach((child) => walk(child));
+  };
+  walk(node);
+  return acc;
+}

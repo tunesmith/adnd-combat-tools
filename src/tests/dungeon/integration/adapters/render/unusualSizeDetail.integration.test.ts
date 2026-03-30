@@ -1,0 +1,92 @@
+import {
+  renderDetailTree,
+  toCompactRender,
+  toDetailRender,
+} from '../../../../../dungeon/adapters/render';
+import {
+  resolveSequenceWithRolls,
+  findEventByKind,
+  isParagraphNode,
+} from '../../../../support/dungeon/detail-utils';
+import {
+  collectPreviews,
+  hasPreviewId,
+} from '../../../../support/dungeon/previewUtils';
+
+describe('detail rendering for chamber unusual size rerolls', () => {
+  it('keeps unusual size pending when a reroll is indicated', () => {
+    const resolvedTree = resolveSequenceWithRolls([14, 18, 5, 15], 1);
+    const detailNodes = renderDetailTree(resolvedTree);
+    const unusualSizePreviews = collectPreviews(detailNodes).filter(
+      (node) => node.id === 'unusualSize'
+    );
+    expect(unusualSizePreviews).toHaveLength(1);
+  });
+
+  it('surfaces circular chamber follow-up tables', () => {
+    const resolvedTree = resolveSequenceWithRolls([14, 18, 1], 1);
+    const detailNodes = renderDetailTree(resolvedTree);
+    expect(hasPreviewId(detailNodes, 'circularContents')).toBe(true);
+  });
+
+  it('accumulates unusual size rerolls before finalizing the size', () => {
+    const resolvedTree = resolveSequenceWithRolls(
+      [14, 18, 5, 15, 16, 15, 1],
+      1
+    );
+    const detailNodes = renderDetailTree(resolvedTree);
+    expect(
+      collectPreviews(detailNodes).filter((node) => node.id === 'unusualSize')
+    ).toHaveLength(1);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.trim() === 'It is about 4,500 sq. ft.'
+      )
+    ).toBe(true);
+  });
+
+  it('resolves circular pool chains including transporter details', () => {
+    const resolvedTree = resolveSequenceWithRolls(
+      [14, 18, 1, 1, 19, 20, 1, 6],
+      1
+    );
+    const detailNodes = renderDetailTree(resolvedTree);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.trim().startsWith('It is a transporter.')
+      )
+    ).toBe(true);
+    expect(
+      detailNodes.some(
+        (node) =>
+          node.kind === 'paragraph' &&
+          node.text.trim() === 'It transports characters back to the surface.'
+      )
+    ).toBe(true);
+  });
+
+  it('includes resolved monster summaries for circular pools', () => {
+    const resolvedTree = resolveSequenceWithRolls([14, 18, 1, 1, 11, 1, 1], 1);
+    const poolEvent = findEventByKind(resolvedTree, 'circularPool');
+    expect(poolEvent).toBeDefined();
+    if (!poolEvent) return;
+
+    const detailNodes = toDetailRender(poolEvent);
+    expect(
+      detailNodes
+        .filter(isParagraphNode)
+        .some((node) => node.text.toLowerCase().includes('giant ant'))
+    ).toBe(true);
+
+    const compactNodes = toCompactRender(poolEvent);
+    expect(
+      compactNodes
+        .filter(isParagraphNode)
+        .some((node) => node.text.toLowerCase().includes('giant ant'))
+    ).toBe(true);
+  });
+});

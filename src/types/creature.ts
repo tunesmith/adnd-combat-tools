@@ -4,7 +4,7 @@
  * Each "Cell" can contain either a creature or an empty object.
  * The empty object *has* to be empty, so we define it as such here.
  */
-export type EmptyObject = Record<any, never>;
+export type EmptyObject = Record<string, never>;
 
 /**
  * The initial version of the Creature was inefficient. We were
@@ -58,7 +58,7 @@ export type StateV3 = (EmptyObject | CreatureV3)[][];
  * For version 4, we transitioned to a numerical row id for each class,
  * and (soon) a numerical row id for each combat level.
  */
-export type CreatureV4 = {
+type CreatureV4 = {
   key: number;
   name?: string;
   class: number;

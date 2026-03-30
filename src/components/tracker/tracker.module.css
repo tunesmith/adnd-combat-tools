@@ -1,0 +1,1428 @@
+@import url('https://fonts.googleapis.com/css2?family=Sura:wght@400;700&display=swap');
+
+.page {
+  min-height: 100vh;
+  padding: 1.5rem;
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 34rem;
+}
+
+.pageTitle {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.pageHint {
+  max-width: 52rem;
+  font-size: 1rem;
+}
+
+.toolbarButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.toolbarControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+
+.toolbarSubrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.toolbarSubgroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.toolbarStatus {
+  align-self: center;
+  color: rgba(240, 239, 221, 0.86);
+  font-size: 0.95rem;
+  line-height: 1.2;
+  max-width: 19rem;
+}
+
+.toolbarButton,
+.toolbarButtonPrimary,
+.toolbarButtonDanger,
+.roundTab,
+.roundTabActive {
+  border: 2px solid var(--copper);
+  background: var(--eggshell);
+  color: var(--caput-martuum);
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+.toolbarButtonPrimary,
+.roundTabActive {
+  background: var(--goldenrod);
+  color: var(--caput-martuum);
+}
+
+.toolbarButtonDanger {
+  background: rgba(140, 33, 33, 0.14);
+  color: #111;
+}
+
+.toolbarButton:disabled,
+.toolbarButtonPrimary:disabled,
+.toolbarButtonDanger:disabled,
+.roundTab:disabled,
+.roundTabActive:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toolbarMenuWrap {
+  position: relative;
+}
+
+.toolbarMenu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 8;
+  min-width: 13.5rem;
+  border: 2px solid var(--copper);
+  background: var(--eggshell);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+  padding: 0.25rem 0;
+}
+
+.toolbarMenuItem {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--caput-martuum);
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  line-height: 1.2;
+  text-align: left;
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+}
+
+.toolbarMenuItem:hover,
+.toolbarMenuItem:focus-visible {
+  background: rgba(175, 127, 0, 0.12);
+}
+
+.toolbarMenuItemDanger {
+  color: #6f1717;
+}
+
+.toolbarMenuItem:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toolbarMenuDivider {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: rgba(172, 114, 35, 0.36);
+}
+
+.roundTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tableWrap {
+  display: inline-block;
+  overflow: auto;
+  position: relative;
+  width: max-content;
+  max-width: 100%;
+  max-height: calc(100vh - 11rem);
+  border: 4px solid var(--copper);
+  background: rgba(240, 239, 221, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  vertical-align: top;
+}
+
+.roundHeading {
+  padding: 1rem 1rem 0;
+  text-align: center;
+}
+
+.roundHeadingRoundButton {
+  display: block;
+  border: 0;
+  background: transparent;
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  font-size: 2rem;
+  line-height: 1.1;
+  margin: 0 auto;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roundHeadingRoundButton:hover,
+.roundHeadingRoundButton:focus-visible {
+  text-decoration: underline;
+}
+
+.roundHeadingLabelInput {
+  display: block;
+  width: min(20rem, calc(100% - 2rem));
+  border: 2px solid var(--copper);
+  background: rgba(240, 239, 221, 0.08);
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0.1rem auto 0;
+  padding: 0.25rem 0.55rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.roundHeadingTitleButton,
+.roundHeadingTitlePlaceholder {
+  display: inline-block;
+  border: 0;
+  background: transparent;
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  line-height: 1.15;
+  margin-bottom: 0.2rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.roundHeadingTitleButton {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.roundHeadingTitleButton:hover,
+.roundHeadingTitleButton:focus-visible,
+.roundHeadingTitlePlaceholder:hover,
+.roundHeadingTitlePlaceholder:focus-visible {
+  text-decoration: underline;
+}
+
+.roundHeadingTitlePlaceholder {
+  font-size: 1rem;
+  color: rgba(240, 239, 221, 0.84);
+}
+
+.roundHeadingTitleInput {
+  display: block;
+  width: min(32rem, calc(100% - 2rem));
+  border: 2px solid var(--copper);
+  background: rgba(240, 239, 221, 0.08);
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 auto 0.25rem;
+  padding: 0.35rem 0.55rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.trackerTable {
+  width: max-content;
+  border-collapse: collapse;
+  color: var(--eggshell);
+}
+
+.trackerTable th,
+.trackerTable td {
+  border-right: 2px solid var(--copper);
+  border-bottom: 2px solid var(--copper);
+  vertical-align: top;
+}
+
+.trackerTable > thead > tr:first-child > th {
+  border-top: 2px solid var(--copper);
+}
+
+.trackerTable > tfoot > tr:last-child td,
+.trackerTable > tfoot > tr:last-child th {
+  border-bottom: 0;
+}
+
+.trackerTable th:last-child,
+.trackerTable td:last-child {
+  border-right: 0;
+}
+
+.cornerHeader {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 7;
+  min-width: 7.5rem;
+  padding: 0.65rem;
+  background: linear-gradient(
+    135deg,
+    var(--caput-martuum),
+    var(--dark-olive-green)
+  );
+  text-align: center;
+  box-shadow: 2px 0 0 0 var(--copper), 0 2px 0 0 var(--copper);
+}
+
+.cornerLabel {
+  font-size: 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.initiativeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.initiativeField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.initiativeLabel {
+  display: inline-block;
+  min-width: 0.85rem;
+  text-align: center;
+}
+
+.partyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  min-width: 7rem;
+  padding: 0;
+  background: var(--dark-olive-green);
+  box-shadow: 0 2px 0 0 var(--copper);
+}
+
+.enemyHeader {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  min-width: 7.8125rem;
+  max-width: 17.1875rem;
+  padding: 0;
+  background: var(--caput-martuum);
+  box-shadow: 2px 0 0 0 var(--copper);
+}
+
+.enemyFieldHeader {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  min-width: 7rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--caput-martuum);
+  color: var(--eggshell);
+  font-size: 1rem;
+  box-shadow: 0 2px 0 0 var(--copper);
+}
+
+.enemyHpHeader {
+  width: 5.75rem;
+  min-width: 5.75rem;
+  max-width: 5.75rem;
+}
+
+.interactionCell {
+  position: relative;
+  padding: 0;
+  background: #663837;
+}
+
+.cellShell {
+  display: flex;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+  min-width: 7rem;
+  min-height: 4.15rem;
+}
+
+.cellShellSingle {
+  display: block;
+}
+
+.cellHalfEnemyInline,
+.cellHalfPartyInline {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0.15rem;
+  min-width: 0;
+}
+
+.cellHalfSingle {
+  width: 100%;
+  height: 100%;
+}
+
+.cellHalfEnemyInline {
+  background: rgba(90, 40, 41, 0.96);
+}
+
+.cellHalfPartyInline {
+  background: rgba(84, 111, 58, 0.96);
+}
+
+.cellHalfEnemyInline,
+.cellHalfPartyInline {
+  justify-content: center;
+}
+
+.cellHalfToggleable {
+  cursor: pointer;
+}
+
+.cellHalfToggleable:focus-visible {
+  outline: 2px solid rgba(240, 239, 221, 0.72);
+  outline-offset: -2px;
+}
+
+.cellHalfCollapsed {
+  gap: 0;
+  background: transparent;
+}
+
+.cellEntryLabel {
+  font-size: 0.76rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: rgba(240, 239, 221, 0.72);
+  white-space: nowrap;
+}
+
+.cellEntryInputInline {
+  width: 100%;
+  min-width: 0;
+  min-height: 1.65rem;
+  border: 1px solid rgba(240, 239, 221, 0.36);
+  background: rgba(240, 239, 221, 0.12);
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.05;
+  padding: 0.12rem 0.15rem;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 0 1px rgba(240, 239, 221, 0.06);
+}
+
+.enemyMetaCell {
+  min-width: 7rem;
+  background: var(--caput-martuum);
+}
+
+.enemyHpCell {
+  width: 5.75rem;
+  min-width: 5.75rem;
+  max-width: 5.75rem;
+}
+
+.partyFieldLabel {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  min-width: 7.8125rem;
+  max-width: 17.1875rem;
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  background: var(--dark-olive-green);
+  color: var(--eggshell);
+  font-size: 1rem;
+  box-shadow: 2px 0 0 0 var(--copper);
+}
+
+.partyMetaCell {
+  min-width: 7rem;
+  background: var(--dark-olive-green);
+}
+
+.metaTextarea {
+  width: 100%;
+  min-height: 3.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  line-height: 1.35;
+  padding: 0.45rem;
+  resize: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.metaInput {
+  width: 100%;
+  min-height: 2rem;
+  border: 0;
+  background: transparent;
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  padding: 0.45rem;
+}
+
+.hpEditorParty,
+.hpEditorEnemy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  width: 100%;
+  min-height: 2.6rem;
+}
+
+.hpMaxValue {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-width: 2.2rem;
+  padding: 0.3rem 0.4rem;
+  border-right: 1px solid rgba(240, 239, 221, 0.22);
+  color: rgba(240, 239, 221, 0.95);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.hpCurrentInput {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  font-size: 0.95rem;
+  line-height: 1.1;
+  padding: 0.3rem 0.4rem;
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.summaryCell {
+  min-width: 32rem;
+  background: rgba(240, 239, 221, 0.92);
+  color: #111;
+}
+
+.summaryLabel,
+.modalLabel {
+  display: block;
+  padding: 0.75rem 0.75rem 0 0.75rem;
+  color: #111;
+  font-size: 0.95rem;
+}
+
+.summaryTextarea {
+  width: 100%;
+  min-height: 17rem;
+  border: 0;
+  background: transparent;
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  line-height: 1.35;
+  padding: 0.45rem;
+  resize: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.combatantShell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.combatantShell:hover .removeCombatant,
+.combatantShell:focus-within .removeCombatant {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.combatantShell:hover .combatantContent,
+.combatantShell:focus-within .combatantContent {
+  text-decoration: underline;
+}
+
+.combatantSizer,
+.combatantButtonParty,
+.combatantButtonEnemy {
+  box-sizing: border-box;
+  text-align: center;
+  font-family: 'Sura', serif;
+}
+
+.combatantSizer {
+  width: auto;
+}
+
+.combatantSizerParty,
+.combatantButtonParty {
+  padding: 0.64rem 0.04rem 0.14rem;
+}
+
+.combatantSizerEnemy,
+.combatantButtonEnemy {
+  padding: 0.5rem 0.3rem 0.18rem;
+}
+
+.combatantButtonParty,
+.combatantButtonEnemy {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  cursor: pointer;
+}
+
+.combatantButtonParty {
+  background: var(--dark-olive-green);
+  color: var(--eggshell);
+}
+
+.combatantButtonEnemy {
+  background: var(--caput-martuum);
+  color: var(--eggshell);
+}
+
+.combatantContent {
+  display: block;
+  width: auto;
+}
+
+.combatantContentHidden {
+  visibility: hidden;
+}
+
+.combatantName {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  margin-bottom: 0.12rem;
+}
+
+.combatantDetail {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.12;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.combatantDetail + .combatantDetail {
+  margin-top: 0.08rem;
+}
+
+.removeCombatant {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  border-style: solid;
+  border-color: var(--copper);
+  border-width: 0 0 2px 2px;
+  background: rgba(240, 239, 221, 0.85);
+  color: #111;
+  width: 1.15rem;
+  height: 1.15rem;
+  font-family: 'Sura', serif;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: none;
+  transition-duration: 0.2s;
+}
+
+.removeCombatant:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.modalShadow {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 10;
+}
+
+.modal {
+  position: fixed;
+  z-index: 11;
+  top: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 6rem);
+  overflow: auto;
+  border: 4px solid var(--goldenrod);
+  background: var(--eggshell);
+  color: #111;
+  padding: 0 0 0.75rem;
+}
+
+.modalTitle {
+  position: sticky;
+  top: 0;
+  background: var(--goldenrod);
+  color: #111;
+  padding: 0.85rem 0.75rem;
+  font-size: 1.25rem;
+  z-index: 1;
+}
+
+.urlWarningModal {
+  width: min(34rem, calc(100vw - 2rem));
+}
+
+.recoverModal {
+  width: min(40rem, calc(100vw - 2rem));
+}
+
+.shareModal {
+  width: min(40rem, calc(100vw - 2rem));
+}
+
+.confirmModal {
+  width: min(28rem, calc(100vw - 2rem));
+}
+
+.intentionsModal {
+  top: 1.5rem;
+  width: min(50rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+}
+
+.combatModal {
+  top: 1.5rem;
+  width: min(52rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+}
+
+.modalBody {
+  padding: 0.9rem 0.9rem 0.2rem;
+}
+
+.urlWarningCount {
+  display: inline-block;
+  margin-bottom: 0.85rem;
+  border: 1px solid var(--copper);
+  background: rgba(175, 127, 0, 0.14);
+  color: #111;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  padding: 0.45rem 0.6rem;
+}
+
+.modalText {
+  margin: 0 0 0.9rem;
+  color: #111;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.recoverError {
+  margin: 0 0 0.9rem;
+  border: 1px solid rgba(140, 33, 33, 0.35);
+  background: rgba(140, 33, 33, 0.08);
+  color: #111;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  padding: 0.65rem 0.75rem;
+}
+
+.draftList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.draftCard {
+  border: 1px solid var(--copper);
+  background: rgba(175, 127, 0, 0.08);
+  padding: 0.75rem;
+}
+
+.draftCardCurrent {
+  background: rgba(175, 127, 0, 0.16);
+}
+
+.draftCardHeader {
+  margin-bottom: 0.6rem;
+}
+
+.draftCardTitle {
+  color: #111;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.draftCardMeta {
+  margin-top: 0.2rem;
+  color: rgba(17, 17, 17, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.draftCardSummary {
+  margin-top: 0.28rem;
+  color: rgba(17, 17, 17, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.draftCardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0 0.9rem;
+}
+
+.shareUrlTextarea {
+  width: 100%;
+  min-height: 9rem;
+  border: 1px solid var(--copper);
+  background: rgba(175, 127, 0, 0.08);
+  color: #111;
+  font-family: monospace;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  padding: 0.65rem 0.75rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.intentionsWizardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.intentionsWizardNav {
+  display: flex;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
+.intentionsWizardBadge {
+  display: inline-block;
+  border: 1px solid var(--copper);
+  background: rgba(175, 127, 0, 0.08);
+  color: #111;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.1;
+  padding: 0.35rem 0.55rem;
+}
+
+.intentionsWizardProgress {
+  color: rgba(17, 17, 17, 0.78);
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.intentionsWizardResolvedBadge {
+  display: inline-block;
+  border: 1px solid var(--copper);
+  background: rgba(84, 111, 58, 0.14);
+  color: #111;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.1;
+  padding: 0.35rem 0.55rem;
+}
+
+.intentionsWizardName {
+  color: #111;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 0.45rem;
+}
+
+.intentionsWizardBodyResolved {
+  opacity: 0.82;
+}
+
+.intentionsWizardTextarea {
+  width: calc(100% - 1.5rem);
+  min-height: 6rem;
+  border: 1px solid var(--copper);
+  background: var(--eggshell);
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  line-height: 1.35;
+  padding: 0.45rem;
+  margin: 0 0.75rem;
+  resize: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.combatWizardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.combatWizardNav {
+  display: flex;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
+.combatWizardBadge,
+.combatWizardResolvedBadge {
+  display: inline-block;
+  border: 1px solid var(--copper);
+  color: #111;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.1;
+  padding: 0.35rem 0.55rem;
+}
+
+.combatWizardBadge {
+  background: rgba(175, 127, 0, 0.08);
+}
+
+.combatWizardResolvedBadge {
+  background: rgba(84, 111, 58, 0.14);
+}
+
+.combatWizardProgress {
+  color: rgba(17, 17, 17, 0.78);
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.combatWizardName {
+  color: #111;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 0.45rem;
+}
+
+.combatWizardBodyResolved {
+  opacity: 0.82;
+}
+
+.combatWizardReadOnlyValue {
+  margin: 0 0.75rem 0.75rem;
+  border: 1px solid var(--copper);
+  background: rgba(175, 127, 0, 0.08);
+  color: #111;
+  font-size: 1rem;
+  line-height: 1.35;
+  padding: 0.55rem 0.65rem;
+}
+
+.combatWizardTextarea {
+  width: calc(100% - 1.5rem);
+  min-height: 4.8rem;
+  border: 1px solid var(--copper);
+  background: var(--eggshell);
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  line-height: 1.35;
+  padding: 0.45rem;
+  margin: 0 0.75rem;
+  resize: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.combatWizardEmptyTargets {
+  margin: 0 0.75rem;
+  border: 1px solid rgba(172, 114, 35, 0.36);
+  background: rgba(175, 127, 0, 0.08);
+  color: #111;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  padding: 0.75rem 0.8rem;
+}
+
+.combatWizardGridWrap {
+  margin: 0 0.75rem;
+  max-height: min(58vh, 34rem);
+  overflow: auto;
+  border: 1px solid rgba(172, 114, 35, 0.36);
+  background: #ece8d6;
+}
+
+.combatWizardGridTable,
+.combatWizardListTable {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  color: #111;
+}
+
+.combatWizardGridTable th,
+.combatWizardGridTable td,
+.combatWizardListTable th,
+.combatWizardListTable td {
+  border-right: 1px solid rgba(172, 114, 35, 0.36);
+  border-bottom: 1px solid rgba(172, 114, 35, 0.36);
+  vertical-align: top;
+}
+
+.combatWizardGridTable tr:last-child th,
+.combatWizardGridTable tr:last-child td,
+.combatWizardListTable tr:last-child th,
+.combatWizardListTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.combatWizardGridTable th:last-child,
+.combatWizardGridTable td:last-child,
+.combatWizardListTable th:last-child,
+.combatWizardListTable td:last-child {
+  border-right: 0;
+}
+
+.combatWizardGridTable tbody tr:first-child {
+  height: 4.2rem;
+}
+
+.combatWizardCorner,
+.combatWizardColumnHeader,
+.combatWizardRowHeader,
+.combatWizardHpLabel {
+  color: var(--eggshell);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.combatWizardCorner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  min-width: 6.8rem;
+  padding: 0.6rem 0.7rem;
+  background: linear-gradient(
+    135deg,
+    var(--caput-martuum),
+    var(--dark-olive-green)
+  );
+  box-shadow: inset 0 -2px 0 var(--copper);
+  text-align: left;
+}
+
+.combatWizardColumnHeader {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  min-width: 7.5rem;
+  padding: 0.6rem 0.45rem;
+  background: var(--dark-olive-green);
+  box-shadow: inset 0 -2px 0 var(--copper);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.combatWizardRowHeader,
+.combatWizardHpLabel {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 6.8rem;
+  max-width: 11rem;
+  padding: 0.7rem 0.65rem;
+  background: var(--caput-martuum);
+  text-align: left;
+}
+
+.combatWizardHpLabelEnemy {
+  background: var(--dark-olive-green);
+}
+
+.combatWizardHpLabelParty {
+  background: var(--caput-martuum);
+}
+
+.combatWizardGridTable .interactionCell,
+.combatWizardListTable .interactionCell {
+  min-width: 7.5rem;
+  height: 4.2rem;
+  background: #663837;
+}
+
+.combatWizardGridTable .cellShell,
+.combatWizardListTable .cellShell {
+  min-width: 7.5rem;
+  min-height: 4.2rem;
+}
+
+.combatWizardGridTable .cellHalfEnemyInline,
+.combatWizardGridTable .cellHalfPartyInline,
+.combatWizardListTable .cellHalfEnemyInline,
+.combatWizardListTable .cellHalfPartyInline {
+  gap: 0.14rem;
+  padding: 0.16rem 0.18rem;
+}
+
+.combatWizardGridTable .cellEntryLabel,
+.combatWizardListTable .cellEntryLabel {
+  font-size: 0.76rem;
+}
+
+.combatWizardGridTable .cellEntryInputInline,
+.combatWizardListTable .cellEntryInputInline {
+  min-height: 1.65rem;
+  font-size: 1rem;
+  padding: 0.12rem 0.15rem;
+}
+
+.combatWizardHpCell {
+  min-width: 7.2rem;
+  background: rgba(175, 127, 0, 0.08);
+}
+
+.combatWizardEffectCell {
+  min-width: 8.5rem;
+  background: rgba(175, 127, 0, 0.08);
+}
+
+.combatWizardHpCellEnemy {
+  background: rgba(84, 111, 58, 0.96);
+}
+
+.combatWizardHpCellParty {
+  background: rgba(90, 40, 41, 0.96);
+}
+
+.combatWizardEffectCellEnemy {
+  background: rgba(84, 111, 58, 0.96);
+}
+
+.combatWizardEffectCellParty {
+  background: rgba(90, 40, 41, 0.96);
+}
+
+.combatWizardHpEditor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  width: 100%;
+  min-height: 2.5rem;
+}
+
+.combatWizardHpEditorEnemy,
+.combatWizardHpEditorParty {
+  color: var(--eggshell);
+}
+
+.combatWizardHpMaxValue {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-width: 2rem;
+  padding: 0.35rem 0.45rem;
+  border-right: 1px solid rgba(17, 17, 17, 0.18);
+  color: #111;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.combatWizardHpMaxValueEnemy,
+.combatWizardHpMaxValueParty {
+  color: var(--eggshell);
+  border-right: 1px solid rgba(240, 239, 221, 0.22);
+}
+
+.combatWizardHpInput {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  border: 0;
+  background: transparent;
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 0.95rem;
+  line-height: 1.15;
+  padding: 0.35rem 0.4rem;
+  resize: none;
+}
+
+.combatWizardHpInputEnemy,
+.combatWizardHpInputParty {
+  color: var(--eggshell);
+}
+
+.combatWizardEffectInput {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  border: 0;
+  background: transparent;
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 0.95rem;
+  line-height: 1.15;
+  padding: 0.35rem 0.4rem;
+  resize: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.combatWizardEffectInputEnemy,
+.combatWizardEffectInputParty {
+  color: var(--eggshell);
+}
+
+.intentionsWizardGridWrap {
+  margin: 0 0.75rem;
+  max-height: min(62vh, 34rem);
+  overflow: auto;
+  border: 1px solid rgba(172, 114, 35, 0.36);
+  background: #ece8d6;
+}
+
+.intentionsWizardGridTable {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  color: #111;
+}
+
+.intentionsWizardGridTable th,
+.intentionsWizardGridTable td {
+  border-right: 1px solid rgba(172, 114, 35, 0.36);
+  border-bottom: 1px solid rgba(172, 114, 35, 0.36);
+  vertical-align: top;
+}
+
+.intentionsWizardGridTable tbody tr {
+  height: 4.2rem;
+}
+
+.intentionsWizardGridTable tr:last-child th,
+.intentionsWizardGridTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.intentionsWizardGridTable th:last-child,
+.intentionsWizardGridTable td:last-child {
+  border-right: 0;
+}
+
+.intentionsWizardCorner,
+.intentionsWizardColumnHeader,
+.intentionsWizardRowHeader {
+  color: var(--eggshell);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.intentionsWizardCorner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  min-width: 6.8rem;
+  padding: 0.6rem 0.7rem;
+  background: linear-gradient(
+    135deg,
+    var(--caput-martuum),
+    var(--dark-olive-green)
+  );
+  box-shadow: inset 0 -2px 0 var(--copper);
+  text-align: left;
+}
+
+.intentionsWizardColumnHeader {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  min-width: 7.5rem;
+  padding: 0.6rem 0.45rem;
+  background: var(--dark-olive-green);
+  box-shadow: inset 0 -2px 0 var(--copper);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.intentionsWizardRowHeader {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 6.8rem;
+  max-width: 11rem;
+  padding: 0.7rem 0.65rem;
+  background: var(--caput-martuum);
+  text-align: left;
+}
+
+.intentionsWizardGridTable .interactionCell {
+  min-width: 7.5rem;
+  height: 4.2rem;
+  background: #663837;
+}
+
+.intentionsWizardGridTable .cellShell {
+  min-width: 7.5rem;
+  min-height: 4.2rem;
+}
+
+.intentionsWizardGridTable .cellHalfEnemyInline,
+.intentionsWizardGridTable .cellHalfPartyInline {
+  gap: 0.14rem;
+  padding: 0.16rem 0.18rem;
+}
+
+.intentionsWizardGridTable .cellEntryLabel {
+  font-size: 0.76rem;
+}
+
+.intentionsWizardGridTable .cellEntryInputInline {
+  min-height: 1.65rem;
+  font-size: 1rem;
+  padding: 0.12rem 0.15rem;
+}
+
+.textInput {
+  width: calc(100% - 1.5rem);
+  border: 1px solid var(--copper);
+  background: var(--eggshell);
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  padding: 0.35rem 0.45rem;
+  margin: 0 0.75rem;
+}
+
+.initiativeInput {
+  width: 2.4rem;
+  border: 1px solid var(--copper);
+  background: var(--eggshell);
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  padding: 0.25rem 0;
+  text-align: center;
+}
+
+.modal :global(.css-b62m3t-container) {
+  display: block;
+  margin: 0.2rem 0.75rem 0;
+}
+
+.metaTextarea::placeholder,
+.metaInput::placeholder,
+.cellEntryInputInline::placeholder,
+.hpCurrentInput::placeholder {
+  color: rgba(240, 239, 221, 0.55);
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .pageTitle {
+    font-size: 2rem;
+  }
+
+  .toolbarButtons {
+    justify-content: flex-start;
+  }
+
+  .toolbarControls {
+    align-items: flex-start;
+  }
+
+  .toolbarSubrow {
+    justify-content: flex-start;
+  }
+
+  .toolbarStatus {
+    max-width: 100%;
+  }
+
+  .summaryCell {
+    min-width: 18rem;
+  }
+
+  .tableWrap {
+    max-height: calc(100vh - 9rem);
+  }
+}

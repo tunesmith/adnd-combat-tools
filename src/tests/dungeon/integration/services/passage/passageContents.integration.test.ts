@@ -1,0 +1,4336 @@
+import {
+  createFeedSnapshot,
+  resolvePendingPreview,
+  renderCompact,
+  renderDetail,
+  listPendingPreviewTargets,
+  resolvePreview,
+} from '../../../../support/dungeon/uiPreviewHarness';
+import type {
+  OutcomeEvent,
+  OutcomeEventNode,
+  PendingRoll,
+} from '../../../../../dungeon/domain/outcome';
+import { describeChamberRoomContents } from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersRender';
+import { collectCharacterPartyMessages } from '../../../../../dungeon/features/monsters/render';
+import { collectTreasureCompactMessages } from '../../../../../dungeon/features/treasure/treasure/treasureRender';
+import { renderTreasureContainerCompact } from '../../../../../dungeon/features/treasure/container/containerRender';
+import { resolveTreasureContainer } from '../../../../../dungeon/features/treasure/container/containerResolvers';
+import { TreasureMagicCategory } from '../../../../../dungeon/features/treasure/magicCategory/magicCategoryTable';
+import { TreasureWithoutMonster } from '../../../../../dungeon/features/treasure/treasure/treasureTable';
+import { TreasurePotion } from '../../../../../dungeon/features/treasure/potion/potionTables';
+import { TreasureRing } from '../../../../../dungeon/features/treasure/ring/ringTables';
+import { TreasureScroll } from '../../../../../dungeon/features/treasure/scroll/scrollTables';
+import { TreasureMiscMagicE1 } from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Table';
+import {
+  TreasureArtifactOrRelic,
+  TreasureBagOfHolding,
+  TreasureBracersOfDefense,
+  TreasureBucknardsEverfullPurse,
+} from '../../../../../dungeon/features/treasure/miscMagicE1/miscMagicE1Subtables';
+import {
+  TreasureCrystalBall,
+  TreasureDeckOfManyThings,
+  TreasureEyesOfPetrification,
+} from '../../../../../dungeon/features/treasure/miscMagicE2/miscMagicE2Subtables';
+import { TreasureMiscMagicE3 } from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Table';
+import {
+  TreasureFigurineOfWondrousPower,
+  TreasureFigurineMarbleElephant,
+  TreasureGirdleOfGiantStrength,
+  TreasureInstrumentOfTheBards,
+  TreasureIronFlaskContent,
+  TreasureHornOfValhallaType,
+  TreasureHornOfValhallaAttunement,
+  TreasureHornOfValhallaAlignment,
+} from '../../../../../dungeon/features/treasure/miscMagicE3/miscMagicE3Subtables';
+import { TreasureMiscMagicE4 } from '../../../../../dungeon/features/treasure/miscMagicE4/miscMagicE4Table';
+import { TreasureMiscMagicE5 } from '../../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Table';
+import { TreasureRobeOfTheArchmagi } from '../../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Subtables';
+import {
+  TreasureManualOfGolems,
+  TreasureMedallionRange,
+} from '../../../../../dungeon/features/treasure/miscMagicE4/miscMagicE4Subtables';
+import {
+  TreasureScarabOfProtectionCurse,
+  TreasureScarabOfProtectionCurseResolution,
+} from '../../../../../dungeon/features/treasure/miscMagicE5/miscMagicE5Subtables';
+import { TreasureMiscWeapon } from '../../../../../dungeon/features/treasure/miscWeapons/miscWeaponsTable';
+import {
+  TreasureSword,
+  TreasureSwordKind,
+  TreasureSwordUnusual,
+} from '../../../../../dungeon/features/treasure/swords/swordsTables';
+import type { DungeonRenderNode } from '../../../../../types/dungeon';
+import * as dungeonLookup from '../../../../../dungeon/helpers/dungeonLookup';
+import {
+  collectPreviews,
+  hasPreviewId,
+} from '../../../../support/dungeon/previewUtils';
+
+describe('passage contents', () => {
+  it('shows empty chamber contents once resolved', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    const pendingTargets = listPendingPreviewTargets(feed);
+    const pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('chamberRoomContents');
+
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 1);
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent).toBeDefined();
+    if (contentsEvent) {
+      expect(describeChamberRoomContents(contentsEvent)).toContain(
+        'The area is empty.'
+      );
+    }
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain('The area is empty.');
+  });
+
+  it('wires monsters into chamber contents', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    let pendingTargets = listPendingPreviewTargets(feed);
+    let pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('chamberRoomContents');
+
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 13);
+
+    let compactParagraphs = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase());
+    expect(compactParagraphs.join(' ')).toContain('a monster is present');
+
+    pendingTargets = listPendingPreviewTargets(feed);
+    pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('monsterLevel');
+
+    feed = resolvePendingPreview(feed, 'monsterLevel', 3);
+
+    pendingTargets = listPendingPreviewTargets(feed);
+    pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).not.toContain('monsterLevel');
+    const monsterTableBase = pendingBases.find(
+      (base) => base.startsWith('monster') && base !== 'monsterLevel'
+    );
+    expect(monsterTableBase).toBeDefined();
+
+    if (monsterTableBase) {
+      feed = resolvePendingPreview(feed, monsterTableBase, 40);
+    }
+
+    const humanTargets = listPendingPreviewTargets(feed).filter((target) =>
+      target.includes('human')
+    );
+    if (humanTargets.length > 0) {
+      const humanTarget = humanTargets[0];
+      if (humanTarget) {
+        feed = resolvePreview(feed, humanTarget, 90);
+      }
+    }
+
+    const compactNodes = renderCompact(feed);
+    compactParagraphs = compactNodes
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase());
+    expect(compactParagraphs.join(' ')).not.toContain('a monster is present');
+    expect(compactNodes.some((node) => node.kind === 'character-party')).toBe(
+      true
+    );
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent).toBeDefined();
+    if (contentsEvent) {
+      const partyMessages = collectCharacterPartyMessages(
+        contentsEvent,
+        'compact'
+      );
+      expect(partyMessages.length).toBeGreaterThan(0);
+      const compactText = describeChamberRoomContents(contentsEvent);
+      expect(compactText).not.toContain('A monster is present.');
+      const detailText = describeChamberRoomContents(contentsEvent, 'detail');
+      expect(detailText).toContain('A monster is present.');
+    }
+  });
+
+  it('describes special stair results in contents summary', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    let pendingTargets = listPendingPreviewTargets(feed);
+    let pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('chamberRoomContents');
+
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 18);
+
+    pendingTargets = listPendingPreviewTargets(feed);
+    pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('chamberRoomStairs');
+
+    feed = resolvePendingPreview(feed, 'chamberRoomStairs', 20);
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain(
+      'Special, or Stairway leading down three levels — two flights of stairs and a slanting passageway.'
+    );
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent).toBeDefined();
+    if (contentsEvent) {
+      expect(describeChamberRoomContents(contentsEvent)).toContain(
+        'Stairway leading down three levels'
+      );
+    }
+  });
+
+  it('describes trick or trap results in contents summary', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 1,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    let pendingTargets = listPendingPreviewTargets(feed);
+    let pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('chamberRoomContents');
+
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 19);
+
+    pendingTargets = listPendingPreviewTargets(feed);
+    pendingBases = pendingTableBases(pendingTargets);
+    expect(pendingBases).toContain('trickTrap');
+
+    feed = resolvePendingPreview(feed, 'trickTrap', 6);
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ')
+      .toLowerCase();
+    expect(compactText).toContain("pit, 10' deep");
+
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent).toBeDefined();
+    if (contentsEvent) {
+      const detail = describeChamberRoomContents(contentsEvent).toLowerCase();
+      expect(detail).toContain("pit, 10' deep");
+    }
+  });
+
+  it('wires treasure-only results into contents', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    let compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ')
+      .toLowerCase();
+    expect(compactText).toContain('treasure is present.');
+
+    const treasurePending = findPendingRoll(feed.outcome, 'treasure');
+    expect(treasurePending).toBeDefined();
+    expect(treasurePending?.context).toEqual(
+      expect.objectContaining({
+        kind: 'treasure',
+        level: 3,
+        withMonster: false,
+        rollIndex: 1,
+        totalRolls: 1,
+      })
+    );
+
+    const pendingBases = pendingTableBases(listPendingPreviewTargets(feed));
+    expect(pendingBases).toContain('treasure');
+
+    feed = resolvePendingPreview(feed, 'treasure', 80);
+
+    const containerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureContainer')
+    );
+    expect(containerTargets).toHaveLength(1);
+    const firstContainerTarget = containerTargets[0];
+    if (!firstContainerTarget) throw new Error('missing container target');
+
+    feed = resolvePreview(feed, firstContainerTarget, 6);
+
+    const protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionType')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const protectionTarget = protectionTargets[0];
+    if (!protectionTarget) throw new Error('missing protection target');
+
+    feed = resolvePreview(feed, protectionTarget, 12);
+
+    const hiddenTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionHiddenBy')
+    );
+    expect(hiddenTargets).toHaveLength(1);
+    const hiddenTarget = hiddenTargets[0];
+    if (!hiddenTarget) throw new Error('missing hidden protection target');
+    feed = resolvePreview(feed, hiddenTarget, 11);
+
+    const treasureEvent = findOutcomeEvent(feed.outcome, 'treasure');
+    expect(treasureEvent).toBeDefined();
+    if (treasureEvent && treasureEvent.event.kind === 'treasure') {
+      expect(treasureEvent.event.entries).toHaveLength(1);
+      expect(treasureEvent.event.entries[0]?.command).toBe(
+        TreasureWithoutMonster.GoldPerLevel
+      );
+      expect(treasureEvent.event.level).toBe(3);
+    }
+
+    compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ')
+      .toLowerCase();
+    expect(compactText).not.toContain('treasure is present.');
+    expect(compactText).toContain('750 gold pieces');
+    expect(compactText).toContain('contained in small coffers');
+    expect(compactText).toContain(
+      'if desired, the treasure is hidden under a heap of trash or dung.'
+    );
+  });
+
+  it('queues magical treasure category rolls', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const pendingAfterMagic = pendingTableBases(
+      listPendingPreviewTargets(feed)
+    );
+    expect(pendingAfterMagic).toContain('treasureMagicCategory');
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const magicTarget = magicTargets[0];
+    if (!magicTarget) throw new Error('missing treasure magic target');
+
+    feed = resolvePreview(feed, magicTarget, 44);
+
+    const treasureEvent = findOutcomeEvent(feed.outcome, 'treasure');
+    expect(treasureEvent).toBeDefined();
+    if (treasureEvent && treasureEvent.event.kind === 'treasure') {
+      expect(treasureEvent.event.entries[0]?.command).toBe(
+        TreasureWithoutMonster.Magic
+      );
+    }
+
+    const magicEvent = findOutcomeEvent(feed.outcome, 'treasureMagicCategory');
+    expect(magicEvent).toBeDefined();
+    if (magicEvent && magicEvent.event.kind === 'treasureMagicCategory') {
+      expect(magicEvent.event.result).toBe(
+        TreasureMagicCategory.RodsStavesWands
+      );
+    }
+
+    const containerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureContainer')
+    );
+    expect(containerTargets).toHaveLength(1);
+    const containerTarget = containerTargets[0];
+    if (!containerTarget) throw new Error('missing container target');
+    feed = resolvePreview(feed, containerTarget, 7);
+
+    const protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionType')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const protectionTarget = protectionTargets[0];
+    if (!protectionTarget) throw new Error('missing protection target');
+    feed = resolvePreview(feed, protectionTarget, 18);
+
+    const guardedTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionHiddenBy')
+    );
+    expect(guardedTargets).toHaveLength(1);
+    const hiddenTarget = guardedTargets[0];
+    if (!hiddenTarget) throw new Error('missing hidden protection target');
+    feed = resolvePreview(feed, hiddenTarget, 14);
+
+    const contentsEvent = findOutcomeEvent(feed.outcome, 'chamberRoomContents');
+    expect(contentsEvent).toBeDefined();
+    if (contentsEvent) {
+      const detail = describeChamberRoomContents(contentsEvent).toLowerCase();
+      expect(detail).toContain('there is magical treasure');
+    }
+
+    const compactParagraphs = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactParagraphs).toContain('there is magical treasure');
+    const detailNodes = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase());
+    expect(detailNodes).toContain(
+      'roll on table d to determine the rod, staff, or wand.'
+    );
+  });
+
+  it('resolves potions from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const potionCategoryTarget = magicTargets[0];
+    if (!potionCategoryTarget)
+      throw new Error('missing potion category target');
+    feed = resolvePreview(feed, potionCategoryTarget, 2);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+    feed = resolvePreview(feed, potionTarget, 2);
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (potionEvent && potionEvent.event.kind === 'treasurePotion') {
+      expect(potionEvent.event.result).toBe(TreasurePotion.AnimalControl);
+    }
+
+    const animalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotionAnimalControl')
+    );
+    expect(animalTargets).toHaveLength(1);
+    const animalTarget = animalTargets[0];
+    if (!animalTarget) throw new Error('missing animal control target');
+    feed = resolvePreview(feed, animalTarget, 3);
+
+    const detailNodes = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase());
+    expect(detailNodes).toContain(
+      'there is a potion of mammal/marsupial control.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a potion of mammal/marsupial control.'
+    );
+  });
+
+  it('resolves water breathing potion doses from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const potionCategoryTarget = magicTargets[0];
+    if (!potionCategoryTarget)
+      throw new Error('missing potion category target');
+    feed = resolvePreview(feed, potionCategoryTarget, 2);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+
+    const spy = jest
+      .spyOn(dungeonLookup, 'rollDice')
+      .mockImplementationOnce(() => 4);
+
+    try {
+      feed = resolvePreview(feed, potionTarget, 98);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (!potionEvent || potionEvent.event.kind !== 'treasurePotion') {
+      throw new Error('treasurePotion event not found');
+    }
+    expect(potionEvent.event.result).toBe(TreasurePotion.WaterBreathing);
+    expect(potionEvent.event.waterBreathingDoses).toBe(4);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a potion of water breathing (4 doses).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a potion of water breathing (4 doses).'
+    );
+  });
+
+  it('resolves miscellaneous magic (E.1) items from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const miscCategoryTarget = magicTargets[0];
+    if (!miscCategoryTarget)
+      throw new Error('missing miscellaneous magic category target');
+    feed = resolvePreview(feed, miscCategoryTarget, 47);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    expect(miscTargets).toHaveLength(1);
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing miscellaneous magic target');
+    feed = resolvePreview(feed, miscTarget, 36);
+
+    const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE1');
+    expect(miscEvent).toBeDefined();
+    if (miscEvent && miscEvent.event.kind === 'treasureMiscMagicE1') {
+      expect(miscEvent.event.result).toBe(TreasureMiscMagicE1.BootsOfDancing);
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a pair of boots of dancing.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a pair of boots of dancing.');
+  });
+
+  it('resolves bag of holding capacities from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const miscCategoryTarget = magicTargets[0];
+    if (!miscCategoryTarget)
+      throw new Error('missing miscellaneous magic category target');
+    feed = resolvePreview(feed, miscCategoryTarget, 46);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    expect(miscTargets).toHaveLength(1);
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing miscellaneous magic target');
+    feed = resolvePreview(feed, miscTarget, 24);
+
+    const bagTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureBagOfHolding')
+    );
+    expect(bagTargets).toHaveLength(1);
+    const bagTarget = bagTargets[0];
+    if (!bagTarget) throw new Error('missing bag of holding target');
+    feed = resolvePreview(feed, bagTarget, 95);
+
+    const bagEvent = findOutcomeEvent(feed.outcome, 'treasureBagOfHolding');
+    expect(bagEvent).toBeDefined();
+    if (bagEvent && bagEvent.event.kind === 'treasureBagOfHolding') {
+      expect(bagEvent.event.result).toBe(TreasureBagOfHolding.TypeIV);
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a bag of holding (250 cu. ft., 1,500 lb capacity; bag weight 60 lb).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a bag of holding (250 cu. ft., 1,500 lb capacity; bag weight 60 lb).'
+    );
+  });
+
+  it('resolves beaker of plentiful potions without a follow-up potion preview', () => {
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
+    spy
+      .mockImplementationOnce(() => 2)
+      .mockImplementationOnce(() => 42)
+      .mockImplementationOnce(() => 50)
+      .mockImplementationOnce(() => 11)
+      .mockImplementationOnce(() => 98);
+
+    try {
+      let feed = createFeedSnapshot({
+        action: 'passage',
+        roll: 14,
+        detailMode: true,
+        dungeonLevel: 4,
+      });
+
+      feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+      feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+      feed = resolvePendingPreview(feed, 'treasure', 99);
+
+      const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+      );
+      expect(categoryTargets).toHaveLength(1);
+      const categoryTarget = categoryTargets[0];
+      if (!categoryTarget) throw new Error('missing magic category target');
+      feed = resolvePreview(feed, categoryTarget, 46);
+
+      const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+      );
+      expect(miscTargets).toHaveLength(1);
+      const miscTarget = miscTargets[0];
+      if (!miscTarget) throw new Error('missing misc magic target');
+      feed = resolvePreview(feed, miscTarget, 30);
+
+      const pendingBases = pendingTableBases(listPendingPreviewTargets(feed));
+      expect(pendingBases).not.toContain('treasurePotion');
+
+      const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE1');
+      expect(miscEvent).toBeDefined();
+      if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE1') {
+        throw new Error('treasureMiscMagicE1 event not found');
+      }
+      expect(miscEvent.event.result).toBe(
+        TreasureMiscMagicE1.BeakerOfPlentifulPotions
+      );
+      expect(miscEvent.event.beaker?.cadence).toBe('twicePerWeek');
+      expect(
+        miscEvent.event.beaker?.potions.map((potion) => potion.potion)
+      ).toEqual([
+        TreasurePotion.Healing,
+        TreasurePotion.HumanControl,
+        TreasurePotion.WaterBreathing,
+      ]);
+
+      const detailText = renderDetail(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(detailText).toContain(
+        'there is a beaker of plentiful potions containing 3 doses, in order: potion of healing, potion of human (not demi-human or humanoid) control, and potion of water breathing.'
+      );
+      expect(detailText).toContain(
+        'each potion type can be poured forth once per day, but no more than twice per week.'
+      );
+
+      const compactText = renderCompact(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(compactText).toContain(
+        'there is a beaker of plentiful potions containing 3 doses, in order: potion of healing, potion of human (not demi-human or humanoid) control, and potion of water breathing.'
+      );
+      expect(compactText).toContain(
+        'each potion type can be poured forth once per day, but no more than twice per week.'
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('resolves bag of tricks types from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const miscCategoryTarget = magicTargets[0];
+    if (!miscCategoryTarget)
+      throw new Error('missing miscellaneous magic category target');
+    feed = resolvePreview(feed, miscCategoryTarget, 46);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    expect(miscTargets).toHaveLength(1);
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing miscellaneous magic target');
+    feed = resolvePreview(feed, miscTarget, 28);
+
+    const bagTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureBagOfTricks')
+    );
+    expect(bagTargets).toHaveLength(1);
+    const bagTarget = bagTargets[0];
+    if (!bagTarget) throw new Error('missing bag of tricks target');
+    feed = resolvePreview(feed, bagTarget, 9);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a bag of tricks, "jackal".');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a bag of tricks, "jackal".');
+  });
+
+  it('resolves bracers of defense from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(categoryTargets).toHaveLength(1);
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 46);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    expect(miscTargets).toHaveLength(1);
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 60);
+
+    const bracerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureBracersOfDefense')
+    );
+    expect(bracerTargets).toHaveLength(1);
+    const bracerTarget = bracerTargets[0];
+    if (!bracerTarget) throw new Error('missing bracers target');
+    feed = resolvePreview(feed, bracerTarget, 60);
+
+    const bracersEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureBracersOfDefense'
+    );
+    expect(bracersEvent).toBeDefined();
+    if (
+      !bracersEvent ||
+      bracersEvent.event.kind !== 'treasureBracersOfDefense'
+    ) {
+      throw new Error('bracers event not found');
+    }
+    expect(bracersEvent.event.result).toBe(TreasureBracersOfDefense.AC4);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('pair of bracers of defense ac4.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('pair of bracers of defense ac4.');
+  });
+
+  it("resolves Bucknard's everfull purse from miscellaneous magic", () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(categoryTargets).toHaveLength(1);
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 46);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    expect(miscTargets).toHaveLength(1);
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 99);
+
+    const purseTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureBucknardsEverfullPurse'
+      )
+    );
+    expect(purseTargets).toHaveLength(1);
+    const purseTarget = purseTargets[0];
+    if (!purseTarget) throw new Error('missing purse target');
+    feed = resolvePreview(feed, purseTarget, 55);
+
+    const purseEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureBucknardsEverfullPurse'
+    );
+    expect(purseEvent).toBeDefined();
+    if (
+      !purseEvent ||
+      purseEvent.event.kind !== 'treasureBucknardsEverfullPurse'
+    ) {
+      throw new Error('purse event not found');
+    }
+    expect(purseEvent.event.result).toBe(
+      TreasureBucknardsEverfullPurse.Platinum
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      "bucknard's everfull purse of platinum is here."
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      "bucknard's everfull purse of platinum is here."
+    );
+  });
+
+  it('resolves artifacts or relics from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 46);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE1')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 17);
+
+    const artifactTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureArtifactOrRelic')
+    );
+    const artifactTarget = artifactTargets[0];
+    if (!artifactTarget) throw new Error('missing artifact target');
+    feed = resolvePreview(feed, artifactTarget, 25);
+
+    const artifactEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureArtifactOrRelic'
+    );
+    expect(artifactEvent).toBeDefined();
+    if (
+      !artifactEvent ||
+      artifactEvent.event.kind !== 'treasureArtifactOrRelic'
+    ) {
+      throw new Error('artifact event not found');
+    }
+    expect(artifactEvent.event.result).toBe(
+      TreasureArtifactOrRelic.HandOfVecna
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a hand of vecna.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a hand of vecna.');
+  });
+
+  it('resolves carpet of flying sizes from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 50);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE2')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 7);
+
+    const carpetTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureCarpetOfFlying')
+    );
+    const carpetTarget = carpetTargets[0];
+    if (!carpetTarget) throw new Error('missing carpet size target');
+    feed = resolvePreview(feed, carpetTarget, 55);
+
+    const carpetEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureCarpetOfFlying'
+    );
+    expect(carpetEvent).toBeDefined();
+    if (!carpetEvent || carpetEvent.event.kind !== 'treasureCarpetOfFlying') {
+      throw new Error('carpet event not found');
+    }
+    expect(carpetEvent.event.result).toBe("4' × 6'");
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain("there is a carpet of flying (4' × 6').");
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain("there is a carpet of flying (4' × 6').");
+  });
+
+  it('resolves miscellaneous magic E.3 items from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 40);
+
+    const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE3');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE3') {
+      throw new Error('treasureMiscMagicE3 event not found');
+    }
+    expect(miscEvent.event.result).toBe(
+      TreasureMiscMagicE3.HelmOfTeleportation
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a helm of teleportation.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a helm of teleportation.');
+  });
+
+  it("resolves Keoghtom's Ointment jar count from miscellaneous magic E.3", () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+
+    const spy = jest
+      .spyOn(dungeonLookup, 'rollDice')
+      .mockImplementationOnce(() => 3);
+
+    try {
+      feed = resolvePreview(feed, miscTarget, 93);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE3');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE3') {
+      throw new Error('treasureMiscMagicE3 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE3.KeoghtomsOintment);
+    expect(miscEvent.event.ointmentJars).toBe(3);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain("there are 3 jars of keoghtom's ointment.");
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain("there are 3 jars of keoghtom's ointment.");
+  });
+
+  it('resolves miscellaneous magic E.4 items from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 20);
+
+    const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE4');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE4') {
+      throw new Error('treasureMiscMagicE4 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE4.MirrorOfOpposition);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a mirror of opposition.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a mirror of opposition.');
+  });
+
+  it('resolves miscellaneous magic E.5 items from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 58);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE5')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E5 target');
+    feed = resolvePreview(feed, miscTarget, 1);
+
+    const robeTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRobeOfTheArchmagi')
+    );
+    const robeTarget = robeTargets[0];
+    if (!robeTarget) throw new Error('missing robe of the archmagi target');
+    feed = resolvePreview(feed, robeTarget, 60);
+
+    const miscEvent = findOutcomeEvent(feed.outcome, 'treasureMiscMagicE5');
+    expect(miscEvent).toBeDefined();
+    if (!miscEvent || miscEvent.event.kind !== 'treasureMiscMagicE5') {
+      throw new Error('treasureMiscMagicE5 event not found');
+    }
+    expect(miscEvent.event.result).toBe(TreasureMiscMagicE5.RobeOfTheArchmagi);
+
+    const robeEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureRobeOfTheArchmagi'
+    );
+    expect(robeEvent).toBeDefined();
+    if (!robeEvent || robeEvent.event.kind !== 'treasureRobeOfTheArchmagi') {
+      throw new Error('treasureRobeOfTheArchmagi event not found');
+    }
+    expect(robeEvent.event.result).toBe(TreasureRobeOfTheArchmagi.Neutral);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a robe of the archmagi (neutral).');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a robe of the archmagi (neutral).');
+  });
+
+  it('summarizes robe of useful items patches from miscellaneous magic E.5', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 58);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE5')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E5 target');
+    feed = resolvePreview(feed, miscTarget, 12);
+
+    const robeItemsEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureRobeOfUsefulItems'
+    );
+    expect(robeItemsEvent).toBeDefined();
+    if (
+      !robeItemsEvent ||
+      robeItemsEvent.event.kind !== 'treasureRobeOfUsefulItems'
+    ) {
+      throw new Error('treasureRobeOfUsefulItems event not found');
+    }
+
+    const detailNodes = renderDetail(feed);
+    const robeDetailNode = detailNodes.find(
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        node.kind === 'robe-of-useful-items'
+    );
+    expect(robeDetailNode).toBeDefined();
+    if (!robeDetailNode) {
+      throw new Error('robe-of-useful-items detail node not found');
+    }
+    const detailOccurrences = detailNodes.filter(
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        node.kind === 'robe-of-useful-items'
+    );
+    expect(detailOccurrences).toHaveLength(1);
+    expect(robeDetailNode.summary.basePatchCount).toBe(12);
+    expect(robeDetailNode.summary.entries.length).toBeGreaterThan(0);
+
+    const compactNodes = renderCompact(feed);
+    const robeCompactNode = compactNodes.find(
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        node.kind === 'robe-of-useful-items'
+    );
+    expect(robeCompactNode).toBeDefined();
+    if (!robeCompactNode) {
+      throw new Error('robe-of-useful-items compact node not found');
+    }
+    const compactOccurrences = compactNodes.filter(
+      (
+        node
+      ): node is Extract<DungeonRenderNode, { kind: 'robe-of-useful-items' }> =>
+        node.kind === 'robe-of-useful-items'
+    );
+    expect(compactOccurrences).toHaveLength(1);
+    const compactParagraph = compactNodes
+      .filter(
+        (
+          node
+        ): node is Extract<
+          DungeonRenderNode,
+          { kind: 'paragraph'; text: string }
+        > => node.kind === 'paragraph'
+      )
+      .map((node) => node.text)
+      .join(' ');
+    expect(compactParagraph).toContain('There is a Robe of Useful Items:');
+    expect(compactParagraph).not.toContain('There is magical treasure.');
+    expect(robeCompactNode.summary.entries.length).toBeGreaterThan(0);
+    expect(robeCompactNode.summary.basePatchCount).toBe(12);
+    const treasureMessages = collectTreasureCompactMessages(feed.outcome);
+    const aggregatedRobeMessage = treasureMessages.find(
+      (
+        message
+      ): message is Extract<
+        DungeonRenderNode,
+        { kind: 'robe-of-useful-items' }
+      > => message.kind === 'robe-of-useful-items'
+    );
+    expect(aggregatedRobeMessage).toBeDefined();
+    if (!aggregatedRobeMessage) {
+      throw new Error('robe-of-useful-items aggregated message not found');
+    }
+    expect(aggregatedRobeMessage.summary.entries.length).toBeGreaterThan(0);
+  });
+
+  it('annotates cursed scarab of protection with removable parenthetical', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 58);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE5')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E5 target');
+    feed = resolvePreview(feed, miscTarget, 45);
+
+    const curseTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScarabOfProtectionCurse'
+      )
+    );
+    const curseTarget = curseTargets[0];
+    if (!curseTarget) throw new Error('missing scarab curse target');
+    feed = resolvePreview(feed, curseTarget, 1);
+
+    const resolutionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScarabOfProtectionCurseResolution'
+      )
+    );
+    const resolutionTarget = resolutionTargets[0];
+    if (!resolutionTarget)
+      throw new Error('missing scarab curse resolution target');
+    feed = resolvePreview(feed, resolutionTarget, 1);
+
+    const scarabCurseEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureScarabOfProtectionCurse'
+    );
+    expect(scarabCurseEvent).toBeDefined();
+    if (
+      !scarabCurseEvent ||
+      scarabCurseEvent.event.kind !== 'treasureScarabOfProtectionCurse'
+    ) {
+      throw new Error('treasureScarabOfProtectionCurse event not found');
+    }
+    expect(scarabCurseEvent.event.result).toBe(
+      TreasureScarabOfProtectionCurse.Cursed
+    );
+    const scarabResolutionEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureScarabOfProtectionCurseResolution'
+    );
+    expect(scarabResolutionEvent).toBeDefined();
+    if (
+      !scarabResolutionEvent ||
+      scarabResolutionEvent.event.kind !==
+        'treasureScarabOfProtectionCurseResolution'
+    ) {
+      throw new Error('treasureScarabOfProtectionCurseResolution not found');
+    }
+    expect(scarabResolutionEvent.event.result).toBe(
+      TreasureScarabOfProtectionCurseResolution.Removable
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(detailText).toContain(
+      'There is a Scarab of Protection (-2, cursed, removable).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain(
+      'There is a Scarab of Protection (-2, cursed, removable).'
+    );
+  });
+
+  it('annotates normal scarab of protection as +1', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 58);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE5')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E5 target');
+    feed = resolvePreview(feed, miscTarget, 45);
+
+    const curseTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScarabOfProtectionCurse'
+      )
+    );
+    const curseTarget = curseTargets[0];
+    if (!curseTarget) throw new Error('missing scarab curse target');
+    feed = resolvePreview(feed, curseTarget, 12);
+
+    const scarabCurseEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureScarabOfProtectionCurse'
+    );
+    expect(scarabCurseEvent).toBeDefined();
+    if (
+      !scarabCurseEvent ||
+      scarabCurseEvent.event.kind !== 'treasureScarabOfProtectionCurse'
+    ) {
+      throw new Error('treasureScarabOfProtectionCurse event not found');
+    }
+    expect(scarabCurseEvent.event.result).toBe(
+      TreasureScarabOfProtectionCurse.Normal
+    );
+    const scarabResolutionEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureScarabOfProtectionCurseResolution'
+    );
+    expect(scarabResolutionEvent).toBeUndefined();
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(detailText).toContain('There is a Scarab of Protection (+1).');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain('There is a Scarab of Protection (+1).');
+  });
+
+  it('resolves swords from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 80);
+
+    const swordTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureSwords')
+    );
+    const swordTarget = swordTargets[0];
+    if (!swordTarget) throw new Error('missing swords target');
+
+    feed = resolvePreview(feed, swordTarget, 1);
+
+    const kindTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureSwordKind')
+    );
+    const kindTarget = kindTargets[0];
+    if (!kindTarget) throw new Error('missing swords kind target');
+    feed = resolvePreview(feed, kindTarget, 80);
+
+    const unusualTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureSwordUnusual')
+    );
+    const unusualTarget = unusualTargets[0];
+    if (!unusualTarget) throw new Error('missing swords unusual target');
+    feed = resolvePreview(feed, unusualTarget, 80);
+
+    const alignmentTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureSwordAlignment')
+    );
+    const alignmentTarget = alignmentTargets[0];
+    expect(alignmentTarget).toBeDefined();
+    if (!alignmentTarget) throw new Error('missing sword alignment target');
+    feed = resolvePreview(feed, alignmentTarget, 70);
+
+    const swordEvent = findOutcomeEvent(feed.outcome, 'treasureSwords');
+    expect(swordEvent).toBeDefined();
+    if (!swordEvent || swordEvent.event.kind !== 'treasureSwords') {
+      throw new Error('treasureSwords event not found');
+    }
+    expect(swordEvent.event.result).toBe(TreasureSword.SwordPlus1);
+
+    const swordKindEvent = findOutcomeEvent(feed.outcome, 'treasureSwordKind');
+    expect(swordKindEvent).toBeDefined();
+    if (!swordKindEvent || swordKindEvent.event.kind !== 'treasureSwordKind') {
+      throw new Error('treasureSwordKind event not found');
+    }
+    expect(swordKindEvent.event.result).toBe(TreasureSwordKind.Broadsword);
+
+    const swordUnusualEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureSwordUnusual'
+    );
+    expect(swordUnusualEvent).toBeDefined();
+    if (
+      !swordUnusualEvent ||
+      swordUnusualEvent.event.kind !== 'treasureSwordUnusual'
+    ) {
+      throw new Error('treasureSwordUnusual event not found');
+    }
+    expect(swordUnusualEvent.event.result.variant).toBe(
+      TreasureSwordUnusual.Intelligence12
+    );
+    expect(swordUnusualEvent.event.result.intelligence).toBe(12);
+    expect(swordUnusualEvent.event.result.primaryAbilityCount).toBe(1);
+    expect(swordUnusualEvent.event.result.communication).toBe('semi-empathy');
+
+    const detailNodes = renderDetail(feed);
+    const swordPreview = collectPreviews(detailNodes).find((node) =>
+      node.id.startsWith('treasureSwords')
+    );
+    expect(swordPreview).toBeDefined();
+
+    const detailText = detailNodes
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(detailText).toContain('There is a Broadsword +1 (I12).');
+    expect(detailText.toLowerCase()).toContain('intelligence 12');
+    expect(detailText.toLowerCase()).toContain('semi-empathy');
+    expect(detailText).toContain('The sword is True Neutral.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain('There is a Broadsword +1 (I12).');
+    expect(compactText).toContain('The sword is True Neutral.');
+  });
+
+  it('resolves miscellaneous weapons from magical treasure', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 90);
+
+    const miscWeaponTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscWeapons')
+    );
+    const miscWeaponTarget = miscWeaponTargets[0];
+    if (!miscWeaponTarget) throw new Error('missing misc weapons target');
+
+    const randomSpy = jest.spyOn(Math, 'random');
+    randomSpy.mockReturnValueOnce(0); // first d12 -> 1
+    randomSpy.mockReturnValueOnce(0); // second d12 -> 1 (total 2 arrows)
+    feed = resolvePreview(feed, miscWeaponTarget, 1);
+    randomSpy.mockRestore();
+
+    const miscWeaponEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureMiscWeapons'
+    );
+    expect(miscWeaponEvent).toBeDefined();
+    if (
+      !miscWeaponEvent ||
+      miscWeaponEvent.event.kind !== 'treasureMiscWeapons'
+    ) {
+      throw new Error('treasureMiscWeapons event not found');
+    }
+    expect(miscWeaponEvent.event.result.item).toBe(
+      TreasureMiscWeapon.ArrowPlus1
+    );
+    expect(miscWeaponEvent.event.result.quantity).toBe(2);
+
+    const detailNodes = renderDetail(feed);
+    const miscPreview = collectPreviews(detailNodes).find((node) =>
+      node.id.startsWith('treasureMiscWeapons')
+    );
+    expect(miscPreview).toBeDefined();
+
+    const detailText = detailNodes
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(detailText).toContain('There are 2 arrows +1.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim())
+      .join(' ');
+    expect(compactText).toContain('There are 2 arrows +1.');
+  });
+
+  it('resolves manual of golems variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 7);
+
+    const manualTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureManualOfGolems')
+    );
+    const manualTarget = manualTargets[0];
+    if (!manualTarget) throw new Error('missing manual of golems target');
+    feed = resolvePreview(feed, manualTarget, 18);
+
+    const manualEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureManualOfGolems'
+    );
+    expect(manualEvent).toBeDefined();
+    if (!manualEvent || manualEvent.event.kind !== 'treasureManualOfGolems') {
+      throw new Error('treasureManualOfGolems event not found');
+    }
+    expect(manualEvent.event.result).toBe(TreasureManualOfGolems.Iron);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a manual of iron golems.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a manual of iron golems.');
+  });
+
+  it('resolves medallion of ESP variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 14);
+
+    const medallionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMedallionRange')
+    );
+    const medallionTarget = medallionTargets[0];
+    if (!medallionTarget) throw new Error('missing medallion target');
+    feed = resolvePreview(feed, medallionTarget, 17);
+
+    const medallionEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureMedallionRange'
+    );
+    expect(medallionEvent).toBeDefined();
+    if (
+      !medallionEvent ||
+      medallionEvent.event.kind !== 'treasureMedallionRange'
+    ) {
+      throw new Error('treasureMedallionRange event not found');
+    }
+    expect(medallionEvent.event.result).toBe(
+      TreasureMedallionRange.ThirtyFeetWithEmpathy
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain("there is a medallion of esp (30', empathy).");
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      "there is a medallion of esp (30', empathy)."
+    );
+  });
+
+  it('resolves medallion of thought projection variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 17);
+
+    const medallionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMedallionRange')
+    );
+    const medallionTarget = medallionTargets[0];
+    if (!medallionTarget) throw new Error('missing medallion target');
+    feed = resolvePreview(feed, medallionTarget, 19);
+
+    const medallionEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureMedallionRange'
+    );
+    expect(medallionEvent).toBeDefined();
+    if (
+      !medallionEvent ||
+      medallionEvent.event.kind !== 'treasureMedallionRange'
+    ) {
+      throw new Error('treasureMedallionRange event not found');
+    }
+    expect(medallionEvent.event.result).toBe(TreasureMedallionRange.SixtyFeet);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      "there is a medallion of thought projection (60')."
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      "there is a medallion of thought projection (60')."
+    );
+  });
+
+  it('resolves necklace of missiles variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 26);
+
+    const necklaceTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureNecklaceOfMissiles')
+    );
+    const necklaceTarget = necklaceTargets[0];
+    if (!necklaceTarget) throw new Error('missing necklace target');
+    feed = resolvePreview(feed, necklaceTarget, 14);
+
+    const necklaceEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureNecklaceOfMissiles'
+    );
+    expect(necklaceEvent).toBeDefined();
+    if (
+      !necklaceEvent ||
+      necklaceEvent.event.kind !== 'treasureNecklaceOfMissiles'
+    ) {
+      throw new Error('treasureNecklaceOfMissiles event not found');
+    }
+    expect(necklaceEvent.event.result.missiles).toEqual([
+      { dice: 8, count: 1 },
+      { dice: 6, count: 2 },
+      { dice: 4, count: 2 },
+      { dice: 2, count: 4 },
+    ]);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a necklace of missiles (1x8, 2x6, 2x4, 4x2).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a necklace of missiles (1x8, 2x6, 2x4, 4x2).'
+    );
+  });
+
+  it('handles pearl of power forgetting from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 45);
+
+    const effectTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePearlOfPowerEffect')
+    );
+    const effectTarget = effectTargets[0];
+    if (!effectTarget) throw new Error('missing pearl effect target');
+    feed = resolvePreview(feed, effectTarget, 1);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('pearl of power (forgetting)');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('pearl of power (forgetting)');
+  });
+
+  it('resolves pearl of power recall from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 46);
+
+    const effectTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePearlOfPowerEffect')
+    );
+    const effectTarget = effectTargets[0];
+    if (!effectTarget) throw new Error('missing pearl effect target');
+    feed = resolvePreview(feed, effectTarget, 5);
+
+    const recallTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePearlOfPowerRecall')
+    );
+    const recallTarget = recallTargets[0];
+    if (!recallTarget) throw new Error('missing pearl recall target');
+    feed = resolvePreview(feed, recallTarget, 70);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('pearl of power (recalls 4th level)');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('pearl of power (recalls 4th level)');
+  });
+
+  it('handles pearl of wisdom loss from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 47);
+
+    const wisdomTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePearlOfWisdom')
+    );
+    const wisdomTarget = wisdomTargets[0];
+    if (!wisdomTarget) throw new Error('missing pearl wisdom target');
+    feed = resolvePreview(feed, wisdomTarget, 1);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('pearl of wisdom (-1)');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('pearl of wisdom (-1)');
+  });
+
+  it('resolves pearl of wisdom gain from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 48);
+
+    const wisdomTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePearlOfWisdom')
+    );
+    const wisdomTarget = wisdomTargets[0];
+    if (!wisdomTarget) throw new Error('missing pearl wisdom target');
+    feed = resolvePreview(feed, wisdomTarget, 10);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('pearl of wisdom (+1)');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('pearl of wisdom (+1)');
+  });
+
+  it('resolves periapt of proof against poison from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 54);
+
+    const periaptTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasurePeriaptProofAgainstPoison'
+      )
+    );
+    const periaptTarget = periaptTargets[0];
+    if (!periaptTarget) throw new Error('missing periapt target');
+    feed = resolvePreview(feed, periaptTarget, 18);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('proof against poison (+3)');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('proof against poison (+3)');
+  });
+
+  it('resolves phylactery of long years from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 73);
+
+    const phylacteryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePhylacteryLongYears')
+    );
+    const phylacteryTarget = phylacteryTargets[0];
+    if (!phylacteryTarget) throw new Error('missing phylactery target');
+    feed = resolvePreview(feed, phylacteryTarget, 10);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('phylactery of long years (slow aging)');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('phylactery of long years (slow aging)');
+  });
+
+  it("resolves Quaal's feather token from miscellaneous magic", () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 90);
+
+    const tokenTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureQuaalFeatherToken')
+    );
+    const tokenTarget = tokenTargets[0];
+    if (!tokenTarget) throw new Error("missing quaal's feather token target");
+    feed = resolvePreview(feed, tokenTarget, 19);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('feather token (whip)');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('feather token (whip)');
+  });
+
+  it('resolves necklace of prayer beads from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 55);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE4')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E4 target');
+    feed = resolvePreview(feed, miscTarget, 30);
+
+    const detailNodes = renderDetail(feed);
+    expect(hasPreviewId(detailNodes, 'treasureNecklaceOfPrayerBeads')).toBe(
+      false
+    );
+
+    const detailText = detailNodes
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('necklace of prayer beads');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('necklace of prayer beads');
+  });
+
+  it('resolves figurine of wondrous power variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 10);
+
+    const figurineTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureFigurineOfWondrousPower'
+      )
+    );
+    const figurineTarget = figurineTargets[0];
+    if (!figurineTarget) throw new Error('missing figurine target');
+    feed = resolvePreview(feed, figurineTarget, 44);
+
+    const marbleTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureFigurineMarbleElephant'
+      )
+    );
+    const marbleTarget = marbleTargets[0];
+    if (!marbleTarget) throw new Error('missing marble elephant target');
+    feed = resolvePreview(feed, marbleTarget, 92);
+
+    const figurineEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureFigurineOfWondrousPower'
+    );
+    expect(figurineEvent).toBeDefined();
+    if (
+      !figurineEvent ||
+      figurineEvent.event.kind !== 'treasureFigurineOfWondrousPower'
+    ) {
+      throw new Error('figurine event not found');
+    }
+    expect(figurineEvent.event.result).toBe(
+      TreasureFigurineOfWondrousPower.MarbleElephant
+    );
+
+    const marbleEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureFigurineMarbleElephant'
+    );
+    expect(marbleEvent).toBeDefined();
+    if (
+      !marbleEvent ||
+      marbleEvent.event.kind !== 'treasureFigurineMarbleElephant'
+    ) {
+      throw new Error('marble elephant event not found');
+    }
+    expect(marbleEvent.event.result).toBe(
+      TreasureFigurineMarbleElephant.PrehistoricMammoth
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a figurine of wondrous power. the figurine is a marble elephant (prehistoric (mammoth)).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a figurine of wondrous power. the figurine is a marble elephant (prehistoric (mammoth)).'
+    );
+  });
+
+  it('resolves girdle of giant strength variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 29);
+
+    const girdleTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureGirdleOfGiantStrength'
+      )
+    );
+    const girdleTarget = girdleTargets[0];
+    if (!girdleTarget) throw new Error('missing girdle target');
+    feed = resolvePreview(feed, girdleTarget, 40);
+
+    const girdleEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureGirdleOfGiantStrength'
+    );
+    expect(girdleEvent).toBeDefined();
+    if (
+      !girdleEvent ||
+      girdleEvent.event.kind !== 'treasureGirdleOfGiantStrength'
+    ) {
+      throw new Error('girdle event not found');
+    }
+    expect(girdleEvent.event.result).toBe(TreasureGirdleOfGiantStrength.Stone);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a girdle of stone giant strength (c, f, t).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a girdle of stone giant strength (c, f, t).'
+    );
+  });
+
+  it('renders ioun stones with structured output', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 72);
+
+    const detailText = renderDetail(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(detailText).toContain('ioun stones');
+
+    const stonesEvent = findOutcomeEvent(feed.outcome, 'treasureIounStones');
+    expect(stonesEvent).toBeDefined();
+    if (stonesEvent && stonesEvent.event.kind === 'treasureIounStones') {
+      expect(stonesEvent.event.result.stones.length).toBeGreaterThan(0);
+    }
+
+    const compactNodes = renderCompact(feed);
+    expect(
+      compactNodes.some(
+        (node): node is Extract<DungeonRenderNode, { kind: 'ioun-stones' }> =>
+          node.kind === 'ioun-stones'
+      )
+    ).toBe(true);
+  });
+
+  it('renders instrument of the bards with structured output', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 75);
+
+    const instrumentTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureInstrumentOfTheBards')
+    );
+    const instrumentTarget = instrumentTargets[0];
+    if (!instrumentTarget)
+      throw new Error('missing instrument of the bards target');
+    feed = resolvePreview(feed, instrumentTarget, 6);
+
+    const instrumentEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureInstrumentOfTheBards'
+    );
+    expect(instrumentEvent).toBeDefined();
+    if (
+      !instrumentEvent ||
+      instrumentEvent.event.kind !== 'treasureInstrumentOfTheBards'
+    ) {
+      throw new Error('instrument of the bards event not found');
+    }
+    expect(instrumentEvent.event.result).toBe(
+      TreasureInstrumentOfTheBards.MacFuirmidhCittern
+    );
+
+    const detailText = renderDetail(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(detailText).toContain(
+      'there is an instrument of the bards: mac-fuirmidh cittern.'
+    );
+
+    const compactText = renderCompact(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(compactText).toContain(
+      'there is an instrument of the bards: mac-fuirmidh cittern.'
+    );
+  });
+
+  it('renders iron flask contents with structured output', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 79);
+
+    const ironTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureIronFlask')
+    );
+    const ironTarget = ironTargets[0];
+    if (!ironTarget) throw new Error('missing iron flask target');
+    feed = resolvePreview(feed, ironTarget, 52);
+
+    const ironFlaskEvent = findOutcomeEvent(feed.outcome, 'treasureIronFlask');
+    expect(ironFlaskEvent).toBeDefined();
+    if (!ironFlaskEvent || ironFlaskEvent.event.kind !== 'treasureIronFlask') {
+      throw new Error('iron flask event not found');
+    }
+    expect(ironFlaskEvent.event.result).toBe(
+      TreasureIronFlaskContent.AirElemental
+    );
+
+    const detailText = renderDetail(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(detailText).toContain(
+      'there is an iron flask. it contains an air elemental.'
+    );
+
+    const compactText = renderCompact(feed)
+      .map((node) => {
+        if (node.kind === 'paragraph' || node.kind === 'heading') {
+          return node.text.toLowerCase();
+        }
+        if (node.kind === 'bullet-list') {
+          return node.items.join(' ').toLowerCase();
+        }
+        return '';
+      })
+      .join(' ');
+    expect(compactText).toContain(
+      'there is an iron flask. it contains an air elemental.'
+    );
+  });
+
+  it('resolves horn of valhalla alignment from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 52);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE3')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic E3 target');
+    feed = resolvePreview(feed, miscTarget, 58);
+
+    const typeTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureHornOfValhallaType')
+    );
+    const typeTarget = typeTargets[0];
+    if (!typeTarget) throw new Error('missing horn type target');
+    feed = resolvePreview(feed, typeTarget, 12);
+
+    const attunementTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureHornOfValhallaAttunement'
+      )
+    );
+    const attunementTarget = attunementTargets[0];
+    if (!attunementTarget) throw new Error('missing horn attunement target');
+    feed = resolvePreview(feed, attunementTarget, 82);
+
+    const alignmentTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureHornOfValhallaAlignment'
+      )
+    );
+    const alignmentTarget = alignmentTargets[0];
+    if (!alignmentTarget) throw new Error('missing horn alignment target');
+    feed = resolvePreview(feed, alignmentTarget, 7);
+
+    const hornTypeEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureHornOfValhallaType'
+    );
+    expect(hornTypeEvent).toBeDefined();
+    if (
+      !hornTypeEvent ||
+      hornTypeEvent.event.kind !== 'treasureHornOfValhallaType'
+    ) {
+      throw new Error('horn type event not found');
+    }
+    expect(hornTypeEvent.event.result).toBe(TreasureHornOfValhallaType.Brass);
+
+    const attunementEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureHornOfValhallaAttunement'
+    );
+    expect(attunementEvent).toBeDefined();
+    if (
+      !attunementEvent ||
+      attunementEvent.event.kind !== 'treasureHornOfValhallaAttunement'
+    ) {
+      throw new Error('horn attunement event not found');
+    }
+    expect(attunementEvent.event.result).toBe(
+      TreasureHornOfValhallaAttunement.Aligned
+    );
+
+    const alignmentEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureHornOfValhallaAlignment'
+    );
+    expect(alignmentEvent).toBeDefined();
+    if (
+      !alignmentEvent ||
+      alignmentEvent.event.kind !== 'treasureHornOfValhallaAlignment'
+    ) {
+      throw new Error('horn alignment event not found');
+    }
+    expect(alignmentEvent.event.result).toBe(
+      TreasureHornOfValhallaAlignment.ChaoticGood
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a brass horn of valhalla (chaotic good).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a brass horn of valhalla (chaotic good).'
+    );
+  });
+
+  it('resolves crystal ball variants from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 50);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE2')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 60);
+
+    const crystalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureCrystalBall')
+    );
+    const crystalTarget = crystalTargets[0];
+    if (!crystalTarget) throw new Error('missing crystal ball target');
+    feed = resolvePreview(feed, crystalTarget, 77);
+
+    const crystalEvent = findOutcomeEvent(feed.outcome, 'treasureCrystalBall');
+    expect(crystalEvent).toBeDefined();
+    if (!crystalEvent || crystalEvent.event.kind !== 'treasureCrystalBall') {
+      throw new Error('crystal event not found');
+    }
+    expect(crystalEvent.event.result).toBe(TreasureCrystalBall.Esp);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a crystal ball with esp.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a crystal ball with esp.');
+  });
+
+  it('resolves deck of many things composition from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 50);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE2')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 74);
+
+    const deckTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureDeckOfManyThings')
+    );
+    const deckTarget = deckTargets[0];
+    if (!deckTarget) throw new Error('missing deck target');
+    feed = resolvePreview(feed, deckTarget, 90);
+
+    const deckEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureDeckOfManyThings'
+    );
+    expect(deckEvent).toBeDefined();
+    if (!deckEvent || deckEvent.event.kind !== 'treasureDeckOfManyThings') {
+      throw new Error('deck event not found');
+    }
+    expect(deckEvent.event.result).toBe(
+      TreasureDeckOfManyThings.TwentyTwoPlaques
+    );
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a deck of many things containing 22 plaques.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a deck of many things containing 22 plaques.'
+    );
+  });
+
+  it('resolves eyes of petrification variant from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 50);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE2')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 100);
+
+    const eyesTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureEyesOfPetrification')
+    );
+    const eyesTarget = eyesTargets[0];
+    if (!eyesTarget) throw new Error('missing eyes target');
+    feed = resolvePreview(feed, eyesTarget, 12);
+
+    const eyesEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureEyesOfPetrification'
+    );
+    expect(eyesEvent).toBeDefined();
+    if (!eyesEvent || eyesEvent.event.kind !== 'treasureEyesOfPetrification') {
+      throw new Error('eyes event not found');
+    }
+    expect(eyesEvent.event.result).toBe(TreasureEyesOfPetrification.Basilisk);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there are eyes of petrification (basilisk).');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there are eyes of petrification (basilisk).'
+    );
+  });
+
+  it('resolves cloak of protection bonus from miscellaneous magic', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 98);
+
+    const categoryTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    const categoryTarget = categoryTargets[0];
+    if (!categoryTarget) throw new Error('missing magic category target');
+    feed = resolvePreview(feed, categoryTarget, 50);
+
+    const miscTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMiscMagicE2')
+    );
+    const miscTarget = miscTargets[0];
+    if (!miscTarget) throw new Error('missing misc magic target');
+    feed = resolvePreview(feed, miscTarget, 33);
+
+    const cloakTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureCloakOfProtection')
+    );
+    const cloakTarget = cloakTargets[0];
+    if (!cloakTarget) throw new Error('missing cloak target');
+    feed = resolvePreview(feed, cloakTarget, 99);
+
+    const cloakEvent = findOutcomeEvent(
+      feed.outcome,
+      'treasureCloakOfProtection'
+    );
+    expect(cloakEvent).toBeDefined();
+    if (!cloakEvent || cloakEvent.event.kind !== 'treasureCloakOfProtection') {
+      throw new Error('cloak event not found');
+    }
+    expect(cloakEvent.event.result).toBe('+5');
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a cloak of protection +5.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a cloak of protection +5.');
+  });
+
+  it('resolves dragon control potions with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 5,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing potion category target');
+    feed = resolvePreview(feed, categoryTarget, 5);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+    feed = resolvePreview(feed, potionTarget, 19);
+
+    const dragonTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotionDragonControl')
+    );
+    expect(dragonTargets).toHaveLength(1);
+    const dragonTarget = dragonTargets[0];
+    if (!dragonTarget) throw new Error('missing dragon control target');
+    feed = resolvePreview(feed, dragonTarget, 9);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a potion of blue dragon control.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a potion of blue dragon control.');
+  });
+
+  it('resolves giant control potions with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 5,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing potion category target');
+    feed = resolvePreview(feed, categoryTarget, 5);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+    feed = resolvePreview(feed, potionTarget, 38);
+
+    const giantTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotionGiantStrength')
+    );
+    expect(giantTargets).toHaveLength(1);
+    const giantTarget = giantTargets[0];
+    if (!giantTarget) throw new Error('missing giant control target');
+    feed = resolvePreview(feed, giantTarget, 8);
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (potionEvent && potionEvent.event.kind === 'treasurePotion') {
+      expect(potionEvent.event.result).toBe(TreasurePotion.GiantStrength);
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a potion of stone giant strength.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a potion of stone giant strength.');
+  });
+
+  it('resolves human control potions with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing potion category target');
+    feed = resolvePreview(feed, categoryTarget, 5);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+    feed = resolvePreview(feed, potionTarget, 50);
+
+    const humanTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotionHumanControl')
+    );
+    expect(humanTargets).toHaveLength(1);
+    const humanTarget = humanTargets[0];
+    if (!humanTarget) throw new Error('missing human control target');
+    feed = resolvePreview(feed, humanTarget, 5);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a potion of gnome control.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a potion of gnome control.');
+  });
+
+  it('resolves undead control potions with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 5,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing potion category target');
+    feed = resolvePreview(feed, categoryTarget, 5);
+
+    const potionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotion')
+    );
+    expect(potionTargets).toHaveLength(1);
+    const potionTarget = potionTargets[0];
+    if (!potionTarget) throw new Error('missing potion target');
+    feed = resolvePreview(feed, potionTarget, 97);
+
+    const undeadTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasurePotionUndeadControl')
+    );
+    expect(undeadTargets).toHaveLength(1);
+    const undeadTarget = undeadTargets[0];
+    if (!undeadTarget) throw new Error('missing undead control target');
+    feed = resolvePreview(feed, undeadTarget, 8);
+
+    const potionEvent = findOutcomeEvent(feed.outcome, 'treasurePotion');
+    expect(potionEvent).toBeDefined();
+    if (potionEvent && potionEvent.event.kind === 'treasurePotion') {
+      expect(potionEvent.event.result).toBe(TreasurePotion.UndeadControl);
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a potion of wraith control.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a potion of wraith control.');
+  });
+
+  it('resolves spell scrolls with caster and spell levels', () => {
+    const randomSpy = jest.spyOn(Math, 'random');
+    randomSpy
+      .mockReturnValueOnce(0.845) // cleric/druid roll -> clerical
+      .mockReturnValueOnce(0.2) // druid selection
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.3)
+      .mockReturnValueOnce(0.6)
+      .mockReturnValueOnce(0.05)
+      .mockReturnValueOnce(0.8)
+      .mockReturnValueOnce(0.4)
+      .mockReturnValueOnce(0.6);
+
+    try {
+      let feed = createFeedSnapshot({
+        action: 'passage',
+        roll: 14,
+        detailMode: true,
+        dungeonLevel: 5,
+      });
+
+      feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+      feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+      feed = resolvePendingPreview(feed, 'treasure', 99);
+
+      const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+      );
+      expect(magicTargets).toHaveLength(1);
+      const categoryTarget = magicTargets[0];
+      if (!categoryTarget) throw new Error('missing scroll category target');
+      feed = resolvePreview(feed, categoryTarget, 25);
+
+      const scrollTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureScroll')
+      );
+      expect(scrollTargets).toHaveLength(1);
+      const scrollTarget = scrollTargets[0];
+      if (!scrollTarget) throw new Error('missing scroll target');
+      feed = resolvePreview(feed, scrollTarget, 60);
+
+      const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
+      expect(scrollEvent).toBeDefined();
+      if (!scrollEvent || scrollEvent.event.kind !== 'treasureScroll') {
+        throw new Error('scroll event missing');
+      }
+      expect(scrollEvent.event.result).toBe(TreasureScroll.SpellSevenLevel4to9);
+      expect(scrollEvent.event.scroll.type).toBe('spells');
+      if (scrollEvent.event.scroll.type === 'spells') {
+        expect(scrollEvent.event.scroll.caster).toBe('druid');
+        expect(scrollEvent.event.scroll.spellLevels).toEqual([
+          4, 5, 6, 4, 7, 5, 6,
+        ]);
+      }
+
+      const detailText = renderDetail(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(detailText).toContain(
+        'there is a druid scroll of seven spells (4th, 5th, 6th, 4th, 7th, 5th, 6th).'
+      );
+
+      const compactText = renderCompact(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(compactText).toContain(
+        'there is a druid scroll of seven spells (4th, 5th, 6th, 4th, 7th, 5th, 6th).'
+      );
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
+  it('resolves protection scrolls with xp detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing scroll category target');
+    feed = resolvePreview(feed, categoryTarget, 30);
+
+    const scrollTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureScroll')
+    );
+    expect(scrollTargets).toHaveLength(1);
+    const scrollTarget = scrollTargets[0];
+    if (!scrollTarget) throw new Error('missing scroll target');
+    feed = resolvePreview(feed, scrollTarget, 61);
+
+    const elementalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScrollProtectionElementals'
+      )
+    );
+    expect(elementalTargets).toHaveLength(0);
+
+    const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
+    expect(scrollEvent).toBeDefined();
+    if (!scrollEvent || scrollEvent.event.kind !== 'treasureScroll') {
+      throw new Error('scroll event missing');
+    }
+    expect(scrollEvent.event.scroll.type).toBe('protection');
+    if (scrollEvent.event.scroll.type === 'protection') {
+      expect(scrollEvent.event.scroll.protection).toBe(
+        TreasureScroll.ProtectionDemons
+      );
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a protection scroll against demons.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a protection scroll against demons.'
+    );
+  });
+
+  it('resolves elemental protection scrolls with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing scroll category target');
+    feed = resolvePreview(feed, categoryTarget, 30);
+
+    const scrollTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureScroll')
+    );
+    expect(scrollTargets).toHaveLength(1);
+    const scrollTarget = scrollTargets[0];
+    if (!scrollTarget) throw new Error('missing scroll target');
+    feed = resolvePreview(feed, scrollTarget, 65);
+
+    const elementalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScrollProtectionElementals'
+      )
+    );
+    expect(elementalTargets).toHaveLength(1);
+    const elementalTarget = elementalTargets[0];
+    if (!elementalTarget)
+      throw new Error('missing elemental protection target');
+    feed = resolvePreview(feed, elementalTarget, 20);
+
+    const scrollEvent = findOutcomeEvent(feed.outcome, 'treasureScroll');
+    expect(scrollEvent).toBeDefined();
+    if (!scrollEvent || scrollEvent.event.kind !== 'treasureScroll') {
+      throw new Error('scroll event missing');
+    }
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a protection scroll against earth elementals.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a protection scroll against earth elementals.'
+    );
+  });
+
+  it('resolves lycanthrope protection scrolls with subtype detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing scroll category target');
+    feed = resolvePreview(feed, categoryTarget, 30);
+
+    const scrollTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureScroll')
+    );
+    expect(scrollTargets).toHaveLength(1);
+    const scrollTarget = scrollTargets[0];
+    if (!scrollTarget) throw new Error('missing scroll target');
+    feed = resolvePreview(feed, scrollTarget, 72);
+
+    const lycanTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith(
+        'treasureScrollProtectionLycanthropes'
+      )
+    );
+    expect(lycanTargets).toHaveLength(1);
+    const lycanTarget = lycanTargets[0];
+    if (!lycanTarget) throw new Error('missing lycanthrope protection target');
+    feed = resolvePreview(feed, lycanTarget, 45);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a protection scroll against all lycanthropes.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a protection scroll against all lycanthropes.'
+    );
+  });
+
+  it('resolves rings with detail copy', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing ring category target');
+    feed = resolvePreview(feed, categoryTarget, 36);
+
+    const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRing')
+    );
+    expect(ringTargets).toHaveLength(1);
+    const ringTarget = ringTargets[0];
+    if (!ringTarget) throw new Error('missing ring target');
+    feed = resolvePreview(feed, ringTarget, 45);
+
+    const protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      target.includes('treasureRingProtection')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const protectionTarget = protectionTargets[0];
+    if (!protectionTarget) throw new Error('missing ring protection target');
+    feed = resolvePreview(feed, protectionTarget, 92);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a ring of protection granting +4 to ac and +2 on saving throws.'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a ring of protection granting +4 to ac and +2 on saving throws.'
+    );
+  });
+
+  it('resolves multiple wishes rings with wish count', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing ring category target');
+    feed = resolvePreview(feed, categoryTarget, 36);
+
+    const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRing')
+    );
+    expect(ringTargets).toHaveLength(1);
+    const ringTarget = ringTargets[0];
+    if (!ringTarget) throw new Error('missing ring target');
+
+    const spy = jest
+      .spyOn(dungeonLookup, 'rollDice')
+      .mockImplementationOnce(() => 7);
+
+    try {
+      feed = resolvePreview(feed, ringTarget, 44);
+    } finally {
+      spy.mockRestore();
+    }
+
+    const ringEvent = findOutcomeEvent(feed.outcome, 'treasureRing');
+    expect(ringEvent).toBeDefined();
+    if (!ringEvent || ringEvent.event.kind !== 'treasureRing') {
+      throw new Error('treasureRing event not found');
+    }
+    expect(ringEvent.event.result).toBe(TreasureRing.MultipleWishes);
+    expect(ringEvent.event.multipleWishesCount).toBe(7);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a ring of multiple wishes (7 wishes).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a ring of multiple wishes (7 wishes).'
+    );
+  });
+
+  it('resolves regeneration rings with detail copy', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 4,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing ring category target');
+    feed = resolvePreview(feed, categoryTarget, 36);
+
+    const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRing')
+    );
+    expect(ringTargets).toHaveLength(1);
+    const ringTarget = ringTargets[0];
+    if (!ringTarget) throw new Error('missing ring target');
+    feed = resolvePreview(feed, ringTarget, 61); // Regeneration
+
+    const regenTargets = listPendingPreviewTargets(feed).filter((target) =>
+      target.includes('treasureRingRegeneration')
+    );
+    expect(regenTargets).toHaveLength(1);
+    const regenTarget = regenTargets[0];
+    if (!regenTarget) throw new Error('missing regeneration target');
+    feed = resolvePreview(feed, regenTarget, 95);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a vampiric regeneration ring.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a vampiric regeneration ring.');
+  });
+
+  it('resolves spell storing rings with detail copy', () => {
+    const spy = jest.spyOn(dungeonLookup, 'rollDice');
+    spy
+      .mockImplementationOnce(() => 2) // spell count d4 => 3 spells
+      .mockImplementationOnce(() => 50) // cleric roll -> magic-user branch
+      .mockImplementationOnce(() => 20) // illusionist roll -> magic-user
+      .mockImplementationOnce(() => 2)
+      .mockImplementationOnce(() => 4)
+      .mockImplementationOnce(() => 5);
+
+    try {
+      let feed = createFeedSnapshot({
+        action: 'passage',
+        roll: 14,
+        detailMode: true,
+        dungeonLevel: 4,
+      });
+
+      feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+      feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+      feed = resolvePendingPreview(feed, 'treasure', 99);
+
+      const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+      );
+      expect(magicTargets).toHaveLength(1);
+      const categoryTarget = magicTargets[0];
+      if (!categoryTarget) throw new Error('missing ring category target');
+      feed = resolvePreview(feed, categoryTarget, 36);
+
+      const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+        (target.split('.').pop() ?? '').startsWith('treasureRing')
+      );
+      expect(ringTargets).toHaveLength(1);
+      const ringTarget = ringTargets[0];
+      if (!ringTarget) throw new Error('missing ring target');
+      feed = resolvePreview(feed, ringTarget, 64);
+
+      const detailText = renderDetail(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(detailText).toContain(
+        'there is a ring of magic-user spell storing (2nd, 4th, 5th).'
+      );
+
+      const compactText = renderCompact(feed)
+        .filter(
+          (node): node is { kind: 'paragraph'; text: string } =>
+            node.kind === 'paragraph'
+        )
+        .map((node) => node.text.trim().toLowerCase())
+        .join(' ');
+      expect(compactText).toContain(
+        'there is a ring of magic-user spell storing (2nd, 4th, 5th).'
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('resolves contrariness rings with effect detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 3,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing ring category target');
+    feed = resolvePreview(feed, categoryTarget, 36);
+
+    const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRing')
+    );
+    expect(ringTargets).toHaveLength(1);
+    const ringTarget = ringTargets[0];
+    if (!ringTarget) throw new Error('missing ring target');
+    feed = resolvePreview(feed, ringTarget, 4);
+
+    const contrarinessTargets = listPendingPreviewTargets(feed).filter(
+      (target) => target.includes('treasureRingContrariness')
+    );
+    expect(contrarinessTargets).toHaveLength(1);
+    const contrarinessTarget = contrarinessTargets[0];
+    if (!contrarinessTarget)
+      throw new Error('missing contrariness effect target');
+    feed = resolvePreview(feed, contrarinessTarget, 75);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain(
+      'there is a ring of contrariness (spell turning).'
+    );
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain(
+      'there is a ring of contrariness (spell turning).'
+    );
+  });
+
+  it('resolves elemental command rings with focus detail', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 5,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 20);
+    feed = resolvePendingPreview(feed, 'treasure', 99);
+
+    const magicTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureMagicCategory')
+    );
+    expect(magicTargets).toHaveLength(1);
+    const categoryTarget = magicTargets[0];
+    if (!categoryTarget) throw new Error('missing ring category target');
+    feed = resolvePreview(feed, categoryTarget, 36);
+
+    const ringTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureRing')
+    );
+    expect(ringTargets).toHaveLength(1);
+    const ringTarget = ringTargets[0];
+    if (!ringTarget) throw new Error('missing ring target');
+    feed = resolvePreview(feed, ringTarget, 15);
+
+    const elementalTargets = listPendingPreviewTargets(feed).filter((target) =>
+      target.includes('treasureRingElementalCommand')
+    );
+    expect(elementalTargets).toHaveLength(1);
+    const elementalTarget = elementalTargets[0];
+    if (!elementalTarget) throw new Error('missing elemental focus target');
+    feed = resolvePreview(feed, elementalTarget, 3);
+
+    const detailText = renderDetail(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(detailText).toContain('there is a ring of fire elemental command.');
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('there is a ring of fire elemental command.');
+  });
+
+  it('rolls treasure twice when monsters guard it', () => {
+    let feed = createFeedSnapshot({
+      action: 'passage',
+      roll: 14,
+      detailMode: true,
+      dungeonLevel: 2,
+    });
+
+    feed = resolvePendingPreview(feed, 'chamberDimensions', 5);
+    feed = resolvePendingPreview(feed, 'chamberRoomContents', 15);
+
+    const treasurePending = findPendingRoll(feed.outcome, 'treasure');
+    expect(treasurePending).toBeDefined();
+    expect(treasurePending?.context).toEqual(
+      expect.objectContaining({
+        kind: 'treasure',
+        withMonster: true,
+        rollIndex: 1,
+        totalRolls: 2,
+      })
+    );
+
+    const pendingTargets = listPendingPreviewTargets(feed);
+    const treasureTargets = pendingTargets.filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasure')
+    );
+    expect(treasureTargets).toHaveLength(2);
+
+    feed = resolvePendingPreview(feed, 'treasure', 30);
+
+    let containerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureContainer')
+    );
+    expect(containerTargets).toHaveLength(1);
+    const firstMonsterContainer = containerTargets[0];
+    if (!firstMonsterContainer) throw new Error('missing monster container');
+    feed = resolvePreview(feed, firstMonsterContainer, 19);
+
+    let protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionType')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const firstProtectionTarget = protectionTargets[0];
+    if (!firstProtectionTarget)
+      throw new Error('missing first treasure protection target');
+    feed = resolvePreview(feed, firstProtectionTarget, 4);
+
+    let guardedTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionGuardedBy')
+    );
+    expect(guardedTargets).toHaveLength(1);
+    const guardedTarget = guardedTargets[0];
+    if (!guardedTarget) throw new Error('missing guarded protection target');
+    feed = resolvePreview(feed, guardedTarget, 18);
+
+    feed = resolvePendingPreview(feed, 'treasure', 97);
+
+    containerTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureContainer')
+    );
+    expect(containerTargets).toHaveLength(1);
+    const secondMonsterContainer = containerTargets[0];
+    if (!secondMonsterContainer)
+      throw new Error('missing second monster container');
+    feed = resolvePreview(feed, secondMonsterContainer, 4);
+
+    protectionTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionType')
+    );
+    expect(protectionTargets).toHaveLength(1);
+    const secondProtectionTarget = protectionTargets[0];
+    if (!secondProtectionTarget)
+      throw new Error('missing second treasure protection target');
+    feed = resolvePreview(feed, secondProtectionTarget, 15);
+
+    guardedTargets = listPendingPreviewTargets(feed).filter((target) =>
+      (target.split('.').pop() ?? '').startsWith('treasureProtectionHiddenBy')
+    );
+    expect(guardedTargets).toHaveLength(1);
+    const hiddenProtectionTarget = guardedTargets[0];
+    if (!hiddenProtectionTarget)
+      throw new Error('missing hidden protection target');
+    feed = resolvePreview(feed, hiddenProtectionTarget, 14);
+
+    const treasureEvents = findOutcomeEvents(feed.outcome, 'treasure');
+    const treasureNodes = treasureEvents.filter(
+      (
+        event
+      ): event is OutcomeEventNode & {
+        event: Extract<OutcomeEvent, { kind: 'treasure' }>;
+      } => event.event.kind === 'treasure'
+    );
+    const treasureWithMonster = treasureNodes.filter(
+      (event) => event.event.withMonster
+    );
+    expect(treasureWithMonster).toHaveLength(2);
+    const [first, second] = treasureWithMonster;
+    expect(first?.event.entries).toHaveLength(1);
+    expect(second?.event.entries).toHaveLength(1);
+    expect(first?.event.entries[0]?.command).toBe(
+      TreasureWithoutMonster.SilverPerLevel
+    );
+    expect(second?.event.entries[0]?.command).toBe(
+      TreasureWithoutMonster.Magic
+    );
+    expect(first?.event.rollIndex).toBe(1);
+    expect(second?.event.rollIndex).toBe(2);
+
+    const compactText = renderCompact(feed)
+      .filter(
+        (node): node is { kind: 'paragraph'; text: string } =>
+          node.kind === 'paragraph'
+      )
+      .map((node) => node.text.trim().toLowerCase())
+      .join(' ');
+    expect(compactText).toContain('2,000 silver pieces');
+    expect(compactText).toContain('there is magical treasure.');
+    expect(compactText).toContain('contained in sacks');
+    expect(compactText).toContain(
+      'if desired, the treasure is guarded by spears released from the walls when the container is opened.'
+    );
+    expect(compactText).toContain(
+      'if desired, the treasure is hidden behind a loose stone in the wall.'
+    );
+    expect(compactText).not.toContain('contained in loose');
+  });
+
+  it('omits container text when treasure is loose', () => {
+    const node = resolveTreasureContainer({ roll: 19 }) as OutcomeEventNode;
+    const compactNodes = renderTreasureContainerCompact(
+      node,
+      (_outcome, _nodes) => undefined
+    );
+    expect(compactNodes).toHaveLength(0);
+  });
+});
+
+function findOutcomeEvent(
+  node: OutcomeEventNode | undefined,
+  kind: OutcomeEventNode['event']['kind']
+): OutcomeEventNode | undefined {
+  if (!node || node.type !== 'event') return undefined;
+  if (node.event.kind === kind) return node;
+  if (node.children) {
+    for (const child of node.children) {
+      if (child.type === 'event') {
+        const candidate = findOutcomeEvent(child, kind);
+        if (candidate) return candidate;
+      }
+    }
+  }
+  return undefined;
+}
+
+function findOutcomeEvents(
+  node: OutcomeEventNode | undefined,
+  kind: OutcomeEventNode['event']['kind']
+): OutcomeEventNode[] {
+  if (!node || node.type !== 'event') return [];
+  const results: OutcomeEventNode[] = [];
+  const visit = (current: OutcomeEventNode | undefined): void => {
+    if (!current || current.type !== 'event') return;
+    if (current.event.kind === kind) {
+      results.push(current);
+    }
+    current.children?.forEach((child) => {
+      if (child.type === 'event') visit(child);
+    });
+  };
+  visit(node);
+  return results;
+}
+
+function pendingTableBases(targets: string[]): string[] {
+  return targets.map((id) => {
+    const lastSegment = id.split('.').pop() ?? id;
+    const [base] = lastSegment.split(':');
+    return base ?? '';
+  });
+}
+
+function findPendingRoll(
+  node: OutcomeEventNode | PendingRoll | undefined,
+  table: string
+): PendingRoll | undefined {
+  if (!node) return undefined;
+  if (node.type === 'pending-roll') {
+    return node.table.split(':')[0] === table ? node : undefined;
+  }
+  if (!node.children) return undefined;
+  for (const child of node.children) {
+    if (child.type === 'pending-roll') {
+      if (child.table.split(':')[0] === table) return child;
+    } else {
+      const found = findPendingRoll(child, table);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}

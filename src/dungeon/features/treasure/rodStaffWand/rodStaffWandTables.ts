@@ -1,0 +1,93 @@
+import type { Table } from '../../../../tables/dungeon/tableTypes';
+
+export enum TreasureRodStaffWand {
+  RodAbsorption,
+  RodBeguilling,
+  RodCancellation,
+  RodLordlyMight,
+  RodResurrection,
+  RodRulership,
+  RodSmiting,
+  StaffCommand,
+  StaffCuring,
+  StaffMagi,
+  StaffPower,
+  StaffSerpent,
+  StaffStriking,
+  StaffWithering,
+  WandConjuration,
+  WandEnemyDetection,
+  WandFear,
+  WandFire,
+  WandFrost,
+  WandIllumination,
+  WandIllusion,
+  WandLightning,
+  WandMagicDetection,
+  WandMetalMineralDetection,
+  WandMagicMissiles,
+  WandNegation,
+  WandParalyzation,
+  WandPolymorphing,
+  WandSecretDoorTrap,
+  WandWonder,
+}
+
+export const treasureRodsStavesWands: Table<TreasureRodStaffWand> = {
+  sides: 100,
+  entries: [
+    { range: [1, 3], command: TreasureRodStaffWand.RodAbsorption },
+    { range: [4], command: TreasureRodStaffWand.RodBeguilling },
+    { range: [5, 14], command: TreasureRodStaffWand.RodCancellation },
+    { range: [15, 16], command: TreasureRodStaffWand.RodLordlyMight },
+    { range: [17], command: TreasureRodStaffWand.RodResurrection },
+    { range: [18], command: TreasureRodStaffWand.RodRulership },
+    { range: [19], command: TreasureRodStaffWand.RodSmiting },
+    { range: [20], command: TreasureRodStaffWand.StaffCommand },
+    { range: [21, 22], command: TreasureRodStaffWand.StaffCuring },
+    { range: [23], command: TreasureRodStaffWand.StaffMagi },
+    { range: [24], command: TreasureRodStaffWand.StaffPower },
+    { range: [25, 27], command: TreasureRodStaffWand.StaffSerpent },
+    { range: [28, 31], command: TreasureRodStaffWand.StaffStriking },
+    { range: [32, 33], command: TreasureRodStaffWand.StaffWithering },
+    { range: [34], command: TreasureRodStaffWand.WandConjuration },
+    { range: [35, 38], command: TreasureRodStaffWand.WandEnemyDetection },
+    { range: [39, 41], command: TreasureRodStaffWand.WandFear },
+    { range: [42, 44], command: TreasureRodStaffWand.WandFire },
+    { range: [45, 47], command: TreasureRodStaffWand.WandFrost },
+    { range: [48, 52], command: TreasureRodStaffWand.WandIllumination },
+    { range: [53, 56], command: TreasureRodStaffWand.WandIllusion },
+    { range: [57, 59], command: TreasureRodStaffWand.WandLightning },
+    { range: [60, 68], command: TreasureRodStaffWand.WandMagicDetection },
+    {
+      range: [69, 73],
+      command: TreasureRodStaffWand.WandMetalMineralDetection,
+    },
+    { range: [74, 78], command: TreasureRodStaffWand.WandMagicMissiles },
+    { range: [79, 86], command: TreasureRodStaffWand.WandNegation },
+    { range: [87, 89], command: TreasureRodStaffWand.WandParalyzation },
+    { range: [90, 92], command: TreasureRodStaffWand.WandPolymorphing },
+    { range: [93, 94], command: TreasureRodStaffWand.WandSecretDoorTrap },
+    { range: [95, 100], command: TreasureRodStaffWand.WandWonder },
+  ],
+};
+
+export const rodStaffWandFollowups = [
+  {
+    result: TreasureRodStaffWand.StaffSerpent,
+    table: 'treasureStaffSerpent',
+  },
+] as const;
+
+export enum TreasureStaffSerpent {
+  Python,
+  Adder,
+}
+
+export const treasureStaffSerpent: Table<TreasureStaffSerpent> = {
+  sides: 100,
+  entries: [
+    { range: [1, 60], command: TreasureStaffSerpent.Python },
+    { range: [61, 100], command: TreasureStaffSerpent.Adder },
+  ],
+};

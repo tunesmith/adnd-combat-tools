@@ -1,0 +1,82 @@
+import {
+  renderDetailTree,
+  toDetailRender,
+} from '../../../../../dungeon/adapters/render';
+import { resolveTrickTrap } from '../../../../../dungeon/features/hazards/trickTrap/trickTrapResolvers';
+import { resolveIllusionaryWallNature } from '../../../../../dungeon/features/hazards/illusionaryWall/illusionaryWallResolvers';
+import { resolvePeriodicDoorOnly } from '../../../../../dungeon/features/navigation/doorChain/doorChainResolvers';
+import { resolveGasTrapEffect } from '../../../../../dungeon/features/hazards/gasTrap/gasTrapResolvers';
+import type { OutcomeEventNode } from '../../../../../dungeon/domain/outcome';
+import type { DungeonRenderNode } from '../../../../../types/dungeon';
+import { ChamberRoomContents } from '../../../../../dungeon/features/environment/roomsChambers/roomsChambersTable';
+import { collectPreviewIds } from '../../../../support/dungeon/previewUtils';
+
+function isParagraph(
+  node: DungeonRenderNode
+): node is Extract<DungeonRenderNode, { kind: 'paragraph'; text: string }> {
+  return node.kind === 'paragraph';
+}
+
+describe('Detail helpers for door chains and traps', () => {
+  test('periodic door only Ignore uses describe helper output', () => {
+    const outcome = resolvePeriodicDoorOnly({
+      roll: 1,
+      existing: ['Left'],
+      sequence: 1,
+    }) as OutcomeEventNode;
+    const paragraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(paragraphs.map((p) => p.text)).toEqual([
+      "There are no other doors. The main passage extends -- check again in 30'. ",
+    ]);
+  });
+
+  test('trick trap describes placeholder text with roll', () => {
+    const outcome = resolveTrickTrap({ roll: 12 }) as OutcomeEventNode;
+    const paragraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(paragraphs.map((p) => p.text)).toEqual([
+      "A wall 10' behind slides across the passage, blocking it for 40–60 turns. ",
+    ]);
+  });
+
+  test('illusionary wall detail tree includes preview and resolved description', () => {
+    const trap = resolveTrickTrap({ roll: 19 }) as OutcomeEventNode;
+    const nature = resolveIllusionaryWallNature({
+      roll: 12,
+    }) as OutcomeEventNode;
+    const chamberPending = nature.children?.find(
+      (child) =>
+        child.type === 'pending-roll' && child.table === 'chamberDimensions'
+    );
+    expect(chamberPending).toBeDefined();
+    if (!chamberPending || chamberPending.type !== 'pending-roll') {
+      throw new Error('Expected chamber dimensions pending roll');
+    }
+    expect(chamberPending.context).toEqual(
+      expect.objectContaining({
+        kind: 'chamberDimensions',
+        forcedContents: ChamberRoomContents.MonsterAndTreasure,
+      })
+    );
+    const resolved: OutcomeEventNode = { ...trap, children: [nature] };
+    const nodes = renderDetailTree(resolved);
+    const paragraphs = nodes.filter(isParagraph).map((p) => p.text);
+    expect(paragraphs).toContain('There is an illusionary wall. ');
+    expect(paragraphs).toContain('It conceals a chamber. ');
+    expect(collectPreviewIds(nodes)).toContain('illusionaryWallNature');
+  });
+
+  test('gas trap detail tree includes preview and resolved description', () => {
+    const trap = resolveTrickTrap({ roll: 17 }) as OutcomeEventNode;
+    const gas = resolveGasTrapEffect({ roll: 20 }) as OutcomeEventNode;
+    const resolved: OutcomeEventNode = { ...trap, children: [gas] };
+    const nodes = renderDetailTree(resolved);
+    const paragraphs = nodes.filter(isParagraph).map((p) => p.text);
+    expect(paragraphs).toContain(
+      "Gas is here. The party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. "
+    );
+    expect(paragraphs).toContain(
+      'Poison: killed unless saving throw versus poison is made. '
+    );
+    expect(collectPreviewIds(nodes)).toContain('gasTrapEffect');
+  });
+});

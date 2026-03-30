@@ -1,20 +1,21 @@
-const customStyles: {
-  control: (provided: any) => any;
-  option: (provided: any) => any;
-} = {
-  control: (provided) => ({
+import type { CSSObjectWithLabel } from 'react-select';
+
+const customStyles = {
+  control: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
     ...provided,
-    backgroundColor: "#F0EFDD",
+    backgroundColor: '#F0EFDD',
   }),
 
-  option: (provided) => {
-    // console.log(provided);
-    return {
-      ...provided,
-      backgroundColor: "#F0EFDD",
-      color: "black",
-    };
-  },
+  option: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    backgroundColor: '#F0EFDD',
+    color: 'black',
+  }),
+
+  menuPortal: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    zIndex: 20,
+  }),
 };
 
 export default customStyles;

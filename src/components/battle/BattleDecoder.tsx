@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { unzip } from "zlib";
-import Battle from "./Battle";
-import { expandedArmorTypes } from "../../tables/armorType";
-import { WeaponInfo, weapons } from "../../tables/weapon";
-import {
+import { useEffect, useState } from 'react';
+import { unzip } from 'zlib';
+import Battle from './Battle';
+import { expandedArmorTypes } from '../../tables/armorType';
+import type { WeaponInfo } from '../../tables/weapon';
+import { weapons } from '../../tables/weapon';
+import type {
   CreatureV1,
   CreatureV2,
   CreatureV3,
@@ -12,7 +13,7 @@ import {
   StateV2,
   StateV3,
   StateV4,
-} from "../../types/creature";
+} from '../../types/creature';
 import {
   ASSASSIN,
   BARD,
@@ -26,8 +27,8 @@ import {
   PALADIN,
   RANGER,
   THIEF,
-} from "../../tables/attackerClass";
-import { monsterLevels } from "../../tables/combatLevel";
+} from '../../tables/attackerClass';
+import { monsterLevels } from '../../tables/combatLevel';
 
 interface BattleDecoderProps {
   encodedState: string;
@@ -54,29 +55,29 @@ const transformArmorType = (oldArmorType: string): number | null => {
 
 const transformClass = (creatureClass: string): number => {
   switch (creatureClass) {
-    case "monster":
+    case 'monster':
       return MONSTER;
-    case "cleric":
+    case 'cleric':
       return CLERIC;
-    case "druid":
+    case 'druid':
       return DRUID;
-    case "fighter":
+    case 'fighter':
       return FIGHTER;
-    case "ranger":
+    case 'ranger':
       return RANGER;
-    case "paladin":
+    case 'paladin':
       return PALADIN;
-    case "magicuser":
+    case 'magicuser':
       return MAGIC_USER;
-    case "illusionist":
+    case 'illusionist':
       return ILLUSIONIST;
-    case "thief":
+    case 'thief':
       return THIEF;
-    case "assassin":
+    case 'assassin':
       return ASSASSIN;
-    case "monk":
+    case 'monk':
       return MONK;
-    case "bard":
+    case 'bard':
       return BARD;
     default:
       console.error(`Unrecognized class ${creatureClass}, returning MONSTER`);
@@ -99,7 +100,7 @@ const transformLevel = (level: string, creatureClass: number): number => {
   } else {
     const numberLevel = parseInt(level, 10);
     if (isNaN(numberLevel)) {
-      console.error("Could not parse level for ${level}, returning 1");
+      console.error('Could not parse level for ${level}, returning 1');
       return 1;
     } else {
       return numberLevel;
@@ -185,10 +186,10 @@ const BattleDecoder = ({ encodedState }: BattleDecoderProps) => {
     async function load() {
       setResult(undefined); // this is optional
 
-      const buffer = Buffer.from(decodeURI(encodedState), "base64");
+      const buffer = Buffer.from(decodeURI(encodedState), 'base64');
       unzip(buffer, (err, buffer) => {
         if (err) {
-          console.error("An error occurred:", err);
+          console.error('An error occurred:', err);
           // return emptyState;
           process.exitCode = 1;
         }

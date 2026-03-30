@@ -1,0 +1,612 @@
+@import url('https://fonts.googleapis.com/css2?family=Sura:wght@700&display=swap');
+
+.outerContainer {
+  font-family: 'Sura', serif;
+  font-size: 16px;
+  color: var(--eggshell);
+  padding: 3rem;
+}
+
+.title {
+  font-family: 'Sura', serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.08;
+  text-align: center;
+  display: table;
+  margin: 0 auto;
+  padding-bottom: 20px;
+}
+
+.contentContainer {
+  background-color: var(--dark-olive-green);
+  padding: 1rem;
+  border-style: solid;
+  border-color: var(--copper);
+  border-width: thick;
+}
+
+.placeholder {
+  color: var(--eggshell);
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px dashed rgba(240, 239, 221, 0.2);
+}
+
+.initialPreviewStack {
+  padding: 0.25rem 0;
+}
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.controlSections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: stretch;
+}
+
+.controlSection {
+  --generate-control-height: 3.3rem;
+  flex: 1 1 100%;
+  min-width: 0;
+  padding: 0.72rem 0.9rem;
+  border: 1px solid rgba(240, 239, 221, 0.18);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.generateLayout {
+  display: grid;
+  grid-template-areas: 'trigger roll level';
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.85rem 1.35rem;
+  align-items: end;
+}
+
+.triggerGroup {
+  grid-area: trigger;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  justify-self: start;
+}
+
+.actionSegmentedControl {
+  display: inline-flex;
+  width: fit-content;
+  height: var(--generate-control-height);
+  border: 2px solid rgba(212, 141, 39, 0.85);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  align-items: stretch;
+  padding: 0.14rem;
+  gap: 0.25rem;
+  box-sizing: border-box;
+}
+
+.actionOption {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  min-height: 0;
+  padding: 0 1rem;
+  border-radius: 999px;
+  box-sizing: border-box;
+  cursor: pointer;
+  color: rgba(240, 239, 221, 0.86);
+  transition: background-color 120ms ease, color 120ms ease,
+    transform 120ms ease;
+}
+
+.actionOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.actionOptionActive {
+  background: var(--eggshell);
+  color: var(--dark-olive-green);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.rollField {
+  align-items: center;
+  text-align: center;
+}
+
+.fieldLabel {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.82;
+}
+
+.fieldControl {
+  font: inherit;
+  color: var(--caput-martuum);
+  background: rgba(240, 239, 221, 0.97);
+  border: 2px solid rgba(212, 141, 39, 0.85);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  height: var(--generate-control-height);
+  min-height: var(--generate-control-height);
+  box-sizing: border-box;
+}
+
+.fieldControl:focus {
+  outline: 2px solid rgba(240, 239, 221, 0.45);
+  outline-offset: 1px;
+}
+
+.rollGroup {
+  grid-area: roll;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.85rem;
+  justify-self: center;
+}
+
+.rollInput {
+  width: 6rem;
+}
+
+.rollActions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.rollDivider {
+  align-self: flex-end;
+  margin-bottom: calc((var(--generate-control-height) - 0.8rem) / 2);
+  font-size: 0.8rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+}
+
+.contextGroup {
+  grid-area: level;
+  justify-self: end;
+}
+
+.levelInput {
+  width: 7rem;
+}
+
+.errorText {
+  color: var(--goldenrod);
+}
+
+.button {
+  background-color: var(--eggshell);
+  color: var(--caput-martuum);
+  border: 2px solid var(--copper);
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonPrimary {
+  background-color: rgba(240, 239, 221, 0.98);
+  color: var(--dark-olive-green);
+}
+
+.controlButton {
+  font: inherit;
+  height: var(--generate-control-height);
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.2rem;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.feed {
+  margin-top: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  min-height: 3rem;
+}
+
+.feedHeader {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.35rem;
+}
+
+.feedItem {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-left: 6px solid var(--copper);
+}
+
+.itemHeader {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--eggshell);
+  color: var(--caput-martuum);
+  font-weight: 700;
+}
+
+.chipPassage {
+  color: var(--dark-olive-green);
+}
+.chipDoor {
+  color: var(--caput-martuum);
+}
+
+.pendingBadge {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--eggshell);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+.compactPendingNotice {
+  margin: 0.6rem 0 0.9rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(215, 165, 45, 0.35);
+  background: rgba(215, 165, 45, 0.12);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.compactPendingCopy {
+  flex: 1 1 260px;
+}
+
+.compactPendingTitle {
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.compactPendingText {
+  font-size: 0.92rem;
+}
+
+.compactPendingButton {
+  white-space: nowrap;
+}
+
+.roll {
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+}
+
+.messages p {
+  margin: 0.35rem 0;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.messageList {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.messageInlineList {
+  margin: 0.35rem 0;
+}
+
+.inlineListIntro {
+  margin: 0 0 0.18rem;
+}
+
+.inlineListItems {
+  margin: 0.1rem 0 0.35rem 1.5rem;
+  padding-left: 0.85rem;
+  list-style-position: outside;
+}
+
+.inlineListItems li {
+  margin: 0.18rem 0;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.messageList li {
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.messageExitList {
+  margin: 0.35rem 0;
+}
+
+.exitListIntro {
+  margin: 0;
+}
+
+.exitListItems {
+  margin: 0.3rem 0 0.3rem 1.65rem;
+  padding-left: 0.6rem;
+}
+
+.exitListItems li {
+  margin: 0.18rem 0;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.exitListFootnote {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.messageStrong {
+  font-family: 'Sura', serif;
+  font-weight: 700;
+}
+
+.rollSummaryPrefix {
+  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-weight: 400;
+}
+
+.rollSummaryOutcome {
+  font-family: 'Sura', serif;
+  font-weight: 700;
+}
+
+.feedModeDock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.segmentedControl {
+  display: inline-flex;
+  border: 2px solid var(--copper);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.segmentOption {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--eggshell);
+}
+
+.segmentOption + .segmentOption {
+  border-left: 1px solid rgba(240, 239, 221, 0.16);
+}
+
+.segmentOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmentOptionActive {
+  background: var(--eggshell);
+  color: var(--caput-martuum);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 0.55rem;
+}
+
+.toolbarGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.debugTools {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+  min-height: 1.5rem;
+}
+
+.debugStatus {
+  font-size: 0.78rem;
+  color: rgba(240, 239, 221, 0.6);
+}
+
+.debugButton {
+  font: inherit;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(240, 239, 221, 0.18);
+  background: transparent;
+  color: rgba(240, 239, 221, 0.48);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.debugButton:hover:not(:disabled),
+.debugButton:focus-visible:not(:disabled) {
+  color: rgba(240, 239, 221, 0.78);
+  border-color: rgba(240, 239, 221, 0.34);
+  background: rgba(240, 239, 221, 0.05);
+}
+
+.debugButton:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+@media (max-width: 920px) {
+  .outerContainer {
+    padding: 2rem;
+  }
+
+  .contentContainer {
+    padding: 0.9rem;
+  }
+
+  .generateLayout {
+    grid-template-areas:
+      'trigger level'
+      'roll roll';
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.9rem 1rem;
+  }
+
+  .rollGroup {
+    justify-self: center;
+    justify-content: center;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .outerContainer {
+    padding: 1rem;
+  }
+
+  .controlSection {
+    min-width: 0;
+  }
+
+  .generateLayout {
+    grid-template-areas:
+      'trigger'
+      'roll'
+      'level';
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .triggerGroup,
+  .rollGroup,
+  .contextGroup {
+    justify-self: stretch;
+  }
+
+  .contextGroup {
+    justify-self: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .actionSegmentedControl,
+  .segmentedControl {
+    width: 100%;
+    max-width: none;
+  }
+
+  .rollGroup {
+    flex-direction: row;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.7rem;
+  }
+
+  .rollDivider {
+    align-self: flex-end;
+    width: auto;
+    text-align: center;
+  }
+
+  .segmentOption {
+    flex: 1 1 0;
+    min-width: 84px;
+  }
+
+  .actionOption {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  .rollActions {
+    width: auto;
+  }
+
+  .controlButton {
+    width: auto;
+  }
+
+  .rollInput {
+    width: min(7rem, 100%);
+  }
+
+  .levelInput {
+    width: min(8rem, 100%);
+  }
+
+  .feed {
+    padding: 0.45rem;
+  }
+
+  .debugTools {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .rollGroup {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .rollActions {
+    width: 100%;
+  }
+
+  .controlButton {
+    width: 100%;
+  }
+
+  .rollDivider {
+    width: 100%;
+  }
+}
