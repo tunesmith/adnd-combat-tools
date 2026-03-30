@@ -4,6 +4,7 @@ import type { ChangeEvent } from 'react';
 import type { SingleValue } from 'react-select';
 import Select from 'react-select';
 import { buildInitiativeAttackGraph } from '../../helpers/initiative/attackGraph';
+import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
 import { buildInitiativeRoundResolutionViewModel } from '../../helpers/initiative/roundResolutionViewModel';
 import { resolveInitiativeRound } from '../../helpers/initiative/roundResolution';
 import { buildInitiativeScenario } from '../../helpers/initiative/scenario';
@@ -11,6 +12,8 @@ import customStyles from '../../helpers/selectCustomStyles';
 import { MONSTER } from '../../tables/attackerClass';
 import { getWeaponInfo, getWeaponOptions } from '../../tables/weapon';
 import type {
+  InitiativeAttackEdgeReason,
+  InitiativeAttackNode,
   InitiativeScenarioDraft,
   InitiativeScenarioDraftCombatant,
 } from '../../types/initiative';
@@ -155,11 +158,34 @@ const getWeaponSummary = (weaponId: number): string => {
   return weaponInfo?.weaponType || 'natural';
 };
 
+const getGraphNodeSourceLabel = (
+  source: InitiativeAttackNode['source']
+): string =>
+  source === 'routine-component' ? 'Routine component' : 'Timing bonus';
+
+const getGraphEdgeReasonLabel = (reason: InitiativeAttackEdgeReason): string =>
+  reason === 'simple-initiative'
+    ? 'baseline side initiative'
+    : 'duel timing rule';
+
+const formatGraphEdgeReasons = (
+  reasons: InitiativeAttackEdgeReason[]
+): string => reasons.map(getGraphEdgeReasonLabel).join(', ');
+
+const getGraphLayerIndex = (layers: string[][], nodeId: string): number =>
+  layers.findIndex((layer) => layer.includes(nodeId)) + 1;
+
+const truncateGraphText = (text: string, maxLength: number): string =>
+  text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+
 const InitiativePlayground = () => {
   const [state, setState] =
     useState<InitiativePlaytestState>(createMixedPreset);
   const [editorTarget, setEditorTarget] = useState<
     InitiativePlaytestEditorTarget | undefined
+  >(undefined);
+  const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<
+    string | undefined
   >(undefined);
   const scenario = useMemo(
     () => buildInitiativeScenario(buildDraftFromState(state)),
@@ -173,9 +199,17 @@ const InitiativePlayground = () => {
     () => buildInitiativeAttackGraph(scenario, resolution),
     [resolution, scenario]
   );
+  const graphLayout = useMemo(
+    () => buildInitiativeAttackGraphLayout(attackGraph),
+    [attackGraph]
+  );
   const viewModel = useMemo(
     () => buildInitiativeRoundResolutionViewModel(scenario, resolution),
     [resolution, scenario]
+  );
+  const attackNodeById = useMemo(
+    () => new Map(attackGraph.nodes.map((node) => [node.id, node] as const)),
+    [attackGraph.nodes]
   );
   const menuPortalTarget =
     typeof document !== 'undefined' ? document.body : undefined;
@@ -309,6 +343,20 @@ const InitiativePlayground = () => {
       ),
     [attackGraph.nodes, viewModel.combatantNameById]
   );
+  const selectedGraphNode =
+    attackGraph.nodes.find((node) => node.id === selectedGraphNodeId) ||
+    attackGraph.nodes[0];
+  const selectedGraphNodeLayer = selectedGraphNode
+    ? getGraphLayerIndex(attackGraph.layers, selectedGraphNode.id)
+    : 0;
+  const selectedGraphIncomingEdges = selectedGraphNode
+    ? attackGraph.edges.filter((edge) => edge.toNodeId === selectedGraphNode.id)
+    : [];
+  const selectedGraphOutgoingEdges = selectedGraphNode
+    ? attackGraph.edges.filter(
+        (edge) => edge.fromNodeId === selectedGraphNode.id
+      )
+    : [];
   const editedCombatant =
     editorTarget !== undefined
       ? state[getStateSide(editorTarget.side)].find(
@@ -686,56 +734,200 @@ const InitiativePlayground = () => {
               </p>
             </div>
 
-            <div className={styles['graphGrid']}>
-              <div className={styles['graphColumn']}>
-                <h4 className={styles['graphSubhead']}>Layers</h4>
-                <ol className={styles['graphList']}>
-                  {attackGraph.layers.map((layer, index) => (
-                    <li
-                      key={`layer-${index + 1}`}
-                      className={styles['graphItem']}
-                    >
-                      <span className={styles['stepLabel']}>
-                        Layer {index + 1}
-                      </span>
-                      <span className={styles['stepDetail']}>
-                        {layer
-                          .map(
-                            (nodeId) => attackNodeLabelById[nodeId] || nodeId
-                          )
-                          .join(', ')}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
-              <div className={styles['graphColumn']}>
-                <h4 className={styles['graphSubhead']}>Known Before</h4>
-                {attackGraph.edges.length > 0 ? (
-                  <ol className={styles['graphList']}>
-                    {attackGraph.edges.map((edge) => (
-                      <li
-                        key={`${edge.fromNodeId}-${edge.toNodeId}`}
-                        className={styles['graphItem']}
+            <div className={styles['graphLayoutShell']}>
+              <div className={styles['graphViewport']}>
+                {attackGraph.nodes.length > 0 ? (
+                  <svg
+                    className={styles['graphSvg']}
+                    viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
+                    width={graphLayout.width}
+                    height={graphLayout.height}
+                    aria-label={'Initiative precedence graph'}
+                  >
+                    <defs>
+                      <marker
+                        id={'initiative-dag-arrowhead'}
+                        viewBox={'0 0 12 12'}
+                        refX={'10'}
+                        refY={'6'}
+                        markerWidth={'10'}
+                        markerHeight={'10'}
+                        orient={'auto-start-reverse'}
                       >
-                        <span className={styles['stepLabel']}>
-                          {attackNodeLabelById[edge.fromNodeId] ||
-                            edge.fromNodeId}
-                        </span>
-                        <span className={styles['stepDetail']}>
-                          before{' '}
-                          {attackNodeLabelById[edge.toNodeId] || edge.toNodeId}
-                          {' · '}
-                          {edge.reasons.join(', ')}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
+                        <path
+                          d={'M 0 0 L 12 6 L 0 12 z'}
+                          className={styles['graphArrowhead']}
+                        />
+                      </marker>
+                    </defs>
+
+                    {graphLayout.edges.map((edge) => {
+                      const isSelected =
+                        selectedGraphNode !== undefined &&
+                        (edge.fromNodeId === selectedGraphNode.id ||
+                          edge.toNodeId === selectedGraphNode.id);
+
+                      return (
+                        <path
+                          key={`${edge.fromNodeId}-${edge.toNodeId}`}
+                          d={edge.path}
+                          className={[
+                            styles['graphEdge'],
+                            isSelected ? styles['graphEdgeSelected'] : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          markerEnd={'url(#initiative-dag-arrowhead)'}
+                        />
+                      );
+                    })}
+
+                    {graphLayout.nodes.map((layoutNode) => {
+                      const node = attackNodeById.get(layoutNode.nodeId);
+                      if (!node) {
+                        return null;
+                      }
+
+                      const combatantName =
+                        viewModel.combatantNameById[node.combatantId] ||
+                        node.combatantId;
+                      const isSelected = selectedGraphNode?.id === node.id;
+
+                      return (
+                        <g
+                          key={layoutNode.nodeId}
+                          transform={`translate(${layoutNode.x} ${layoutNode.y})`}
+                          role={'button'}
+                          tabIndex={0}
+                          aria-label={`${combatantName} ${node.label}`}
+                          onClick={() => setSelectedGraphNodeId(node.id)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setSelectedGraphNodeId(node.id);
+                            }
+                          }}
+                        >
+                          <rect
+                            x={0}
+                            y={0}
+                            width={layoutNode.width}
+                            height={layoutNode.height}
+                            rx={16}
+                            className={[
+                              styles['graphNodeCard'],
+                              node.side === 'party'
+                                ? styles['graphNodeParty']
+                                : styles['graphNodeEnemy'],
+                              isSelected ? styles['graphNodeSelected'] : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                          />
+                          <text
+                            x={layoutNode.width / 2}
+                            y={28}
+                            textAnchor={'middle'}
+                            className={styles['graphNodeName']}
+                          >
+                            {truncateGraphText(combatantName, 18)}
+                          </text>
+                          <text
+                            x={layoutNode.width / 2}
+                            y={48}
+                            textAnchor={'middle'}
+                            className={styles['graphNodeLabel']}
+                          >
+                            {truncateGraphText(node.label, 22)}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
                 ) : (
                   <div className={styles['graphEmpty']}>
-                    No explicit precedence edges. The current scenario is fully
-                    simultaneous at this rules slice.
+                    Add combatants to generate a precedence graph.
+                  </div>
+                )}
+              </div>
+
+              <div className={styles['graphInspector']}>
+                {selectedGraphNode ? (
+                  <>
+                    <div className={styles['graphInspectorTitle']}>
+                      {attackNodeLabelById[selectedGraphNode.id] ||
+                        selectedGraphNode.id}
+                    </div>
+                    <div className={styles['graphInspectorMeta']}>
+                      <span>
+                        Side:{' '}
+                        {selectedGraphNode.side === 'party' ? 'Party' : 'Enemy'}
+                      </span>
+                      <span>Layer: {selectedGraphNodeLayer}</span>
+                      <span>
+                        Source:{' '}
+                        {getGraphNodeSourceLabel(selectedGraphNode.source)}
+                      </span>
+                    </div>
+
+                    <div className={styles['graphInspectorSection']}>
+                      <h4 className={styles['graphSubhead']}>Blocked By</h4>
+                      {selectedGraphIncomingEdges.length > 0 ? (
+                        <ol className={styles['graphInspectorList']}>
+                          {selectedGraphIncomingEdges.map((edge) => (
+                            <li
+                              key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
+                              className={styles['graphInspectorItem']}
+                            >
+                              <span className={styles['stepLabel']}>
+                                {attackNodeLabelById[edge.fromNodeId] ||
+                                  edge.fromNodeId}
+                              </span>
+                              <span className={styles['stepDetail']}>
+                                {formatGraphEdgeReasons(edge.reasons)}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <div className={styles['graphInspectorEmpty']}>
+                          No explicit blockers. This attack is currently enabled
+                          at the left edge of the graph.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={styles['graphInspectorSection']}>
+                      <h4 className={styles['graphSubhead']}>Blocks</h4>
+                      {selectedGraphOutgoingEdges.length > 0 ? (
+                        <ol className={styles['graphInspectorList']}>
+                          {selectedGraphOutgoingEdges.map((edge) => (
+                            <li
+                              key={`outgoing-${edge.fromNodeId}-${edge.toNodeId}`}
+                              className={styles['graphInspectorItem']}
+                            >
+                              <span className={styles['stepLabel']}>
+                                {attackNodeLabelById[edge.toNodeId] ||
+                                  edge.toNodeId}
+                              </span>
+                              <span className={styles['stepDetail']}>
+                                {formatGraphEdgeReasons(edge.reasons)}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <div className={styles['graphInspectorEmpty']}>
+                          This node adds no further precedence. Any remaining
+                          relative order is underdetermined at this rules slice.
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles['graphInspectorEmpty']}>
+                    No attacks are available yet. Add combatants to inspect the
+                    graph.
                   </div>
                 )}
               </div>

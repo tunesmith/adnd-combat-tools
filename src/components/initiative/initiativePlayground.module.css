@@ -443,16 +443,80 @@
   line-height: 1.45;
 }
 
-.graphGrid {
+.graphLayoutShell {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 0.9fr);
   gap: 1rem;
 }
 
-.graphColumn {
+.graphViewport,
+.graphInspector {
   background: rgba(240, 239, 221, 0.08);
   border: 1px solid rgba(172, 114, 35, 0.5);
   padding: 0.9rem;
+}
+
+.graphViewport {
+  overflow: auto;
+}
+
+.graphSvg {
+  display: block;
+}
+
+.graphArrowhead {
+  fill: rgba(240, 239, 221, 0.75);
+}
+
+.graphEdge {
+  fill: none;
+  stroke: rgba(240, 239, 221, 0.42);
+  stroke-width: 2.5px;
+}
+
+.graphEdgeSelected {
+  stroke: rgba(215, 165, 45, 0.98);
+  stroke-width: 3px;
+}
+
+.graphNodeCard {
+  cursor: pointer;
+  stroke-width: 2px;
+  transition: fill 140ms ease, stroke 140ms ease, filter 140ms ease;
+}
+
+.graphNodeParty {
+  fill: rgba(104, 141, 75, 0.32);
+  stroke: rgba(202, 222, 166, 0.62);
+}
+
+.graphNodeEnemy {
+  fill: rgba(143, 74, 63, 0.35);
+  stroke: rgba(255, 207, 198, 0.48);
+}
+
+.graphNodeSelected {
+  stroke: var(--goldenrod);
+  fill: rgba(215, 165, 45, 0.18);
+  filter: drop-shadow(0 0 0.6rem rgba(215, 165, 45, 0.24));
+}
+
+.graphNodeName,
+.graphNodeLabel {
+  fill: var(--eggshell);
+  pointer-events: none;
+}
+
+.graphNodeName {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.graphNodeLabel {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  fill: rgba(240, 239, 221, 0.86);
 }
 
 .graphSubhead {
@@ -461,19 +525,39 @@
   margin-bottom: 0.6rem;
 }
 
-.graphList {
+.graphInspectorTitle {
+  font-family: 'Sura', serif;
+  font-size: 1.55rem;
+  margin-bottom: 0.55rem;
+}
+
+.graphInspectorMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.98rem;
+  color: rgba(240, 239, 221, 0.85);
+}
+
+.graphInspectorSection + .graphInspectorSection {
+  margin-top: 1rem;
+}
+
+.graphInspectorList {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
   list-style: none;
 }
 
-.graphItem {
+.graphInspectorItem {
   background: rgba(0, 0, 0, 0.12);
   border: 1px solid rgba(172, 114, 35, 0.4);
   padding: 0.7rem 0.8rem;
 }
 
+.graphInspectorEmpty,
 .graphEmpty {
   background: rgba(0, 0, 0, 0.12);
   border: 1px solid rgba(172, 114, 35, 0.4);
@@ -555,7 +639,7 @@
 @media (max-width: 860px) {
   .roundControls,
   .summaryStrip,
-  .graphGrid {
+  .graphLayoutShell {
     grid-template-columns: 1fr;
   }
 
