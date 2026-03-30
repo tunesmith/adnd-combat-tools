@@ -129,6 +129,160 @@
   gap: 1rem;
 }
 
+.matrixSection {
+  margin-bottom: 1.5rem;
+}
+
+.matrixHeader {
+  margin-bottom: 0.8rem;
+}
+
+.matrixTitle {
+  font-family: 'Sura', serif;
+  font-size: 1.55rem;
+  margin-bottom: 0.25rem;
+}
+
+.matrixCopy {
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.matrixWrap {
+  overflow-x: auto;
+  border: 2px solid rgba(172, 114, 35, 0.7);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.matrixTable {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+}
+
+.matrixCorner,
+.matrixColumnHeader,
+.matrixRowHeader,
+.matrixCell {
+  border: 1px solid rgba(172, 114, 35, 0.38);
+  vertical-align: top;
+}
+
+.matrixCorner,
+.matrixColumnHeader,
+.matrixRowHeader {
+  background: rgba(240, 239, 221, 0.1);
+}
+
+.matrixCorner {
+  min-width: 12rem;
+  padding: 0.8rem;
+  text-align: left;
+}
+
+.matrixLegendLabel,
+.matrixLegendMeta,
+.matrixCombatantName,
+.matrixCombatantMeta {
+  display: block;
+}
+
+.matrixLegendLabel {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.matrixLegendMeta,
+.matrixCombatantMeta {
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: rgba(240, 239, 221, 0.82);
+}
+
+.matrixColumnHeader,
+.matrixRowHeader {
+  padding: 0.75rem;
+}
+
+.matrixColumnHeader {
+  min-width: 8.75rem;
+  text-align: center;
+}
+
+.matrixRowHeader {
+  min-width: 12rem;
+  text-align: left;
+}
+
+.matrixCombatantName {
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.matrixCell {
+  min-width: 8.75rem;
+  padding: 0.55rem;
+  background: rgba(240, 239, 221, 0.04);
+}
+
+.matrixCellDuel {
+  background: rgba(215, 165, 45, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(215, 165, 45, 0.5);
+}
+
+.matrixToggle {
+  display: block;
+  width: 100%;
+  border: 1px solid rgba(172, 114, 35, 0.55);
+  background: rgba(240, 239, 221, 0.08);
+  color: var(--eggshell);
+  padding: 0.45rem 0.55rem;
+  font-size: 0.95rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.matrixToggle + .matrixToggle {
+  margin-top: 0.45rem;
+}
+
+.matrixToggleParty:hover,
+.matrixToggleParty:focus-visible {
+  background: rgba(104, 141, 75, 0.28);
+}
+
+.matrixToggleEnemy:hover,
+.matrixToggleEnemy:focus-visible {
+  background: rgba(140, 45, 45, 0.28);
+}
+
+.matrixToggleActiveParty {
+  background: linear-gradient(180deg, #6c8d4b 0%, var(--dark-olive-green) 100%);
+}
+
+.matrixToggleActiveEnemy {
+  background: linear-gradient(180deg, #8f4a3f 0%, #6a2928 100%);
+}
+
+.matrixBadge {
+  display: inline-block;
+  margin-top: 0.55rem;
+  padding: 0.18rem 0.45rem;
+  border: 1px solid rgba(215, 165, 45, 0.6);
+  background: rgba(215, 165, 45, 0.18);
+  color: var(--goldenrod);
+  font-size: 0.88rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.matrixEmpty {
+  border: 1px solid rgba(172, 114, 35, 0.55);
+  background: rgba(240, 239, 221, 0.08);
+  padding: 1rem;
+  line-height: 1.45;
+}
+
 .sidePanel {
   background: rgba(90, 40, 41, 0.28);
   border: 1px solid rgba(172, 114, 35, 0.75);
@@ -185,6 +339,23 @@
   border: 1px solid rgba(172, 114, 35, 0.65);
   padding: 0.2rem 0.5rem;
   font-size: 0.95rem;
+}
+
+.targetSummary {
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(172, 114, 35, 0.45);
+  padding: 0.65rem 0.75rem;
+}
+
+.targetSummaryLabel {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.targetSummaryValue {
+  display: block;
+  line-height: 1.4;
 }
 
 .summaryStrip {

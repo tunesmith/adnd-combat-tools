@@ -129,6 +129,12 @@ const getNextCombatantName = (
   count: number
 ): string => `${side === 'party' ? 'Party' : 'Enemy'} ${count + 1}`;
 
+const getCombatantDisplayName = (
+  side: InitiativePlaytestSide,
+  combatant: InitiativePlaytestCombatant,
+  index: number
+): string => combatant.name.trim() || getNextCombatantName(side, index);
+
 const InitiativePlayground = () => {
   const [state, setState] =
     useState<InitiativePlaytestState>(createMixedPreset);
@@ -234,14 +240,40 @@ const InitiativePlayground = () => {
     setState(presetFactory());
   };
 
+  const toggleCombatantTarget = (
+    attackingSide: InitiativePlaytestSide,
+    attackerKey: number,
+    targetKey: number
+  ) => {
+    const stateSide = getStateSide(attackingSide);
+
+    setState((previous) => ({
+      ...previous,
+      [stateSide]: previous[stateSide].map((combatant) => {
+        if (combatant.key !== attackerKey) {
+          return combatant;
+        }
+
+        return {
+          ...combatant,
+          targetCombatantKeys: combatant.targetCombatantKeys.includes(targetKey)
+            ? combatant.targetCombatantKeys.filter(
+                (existingTargetKey) => existingTargetKey !== targetKey
+              )
+            : combatant.targetCombatantKeys.concat(targetKey),
+        };
+      }),
+    }));
+  };
+
   const attackNodeLabelById = useMemo(
     () =>
       Object.fromEntries(
         attackGraph.nodes.map((node) => [
           node.id,
-          `${viewModel.combatantNameById[node.combatantId] || node.combatantId} ${
-            node.label
-          }`,
+          `${
+            viewModel.combatantNameById[node.combatantId] || node.combatantId
+          } ${node.label}`,
         ])
       ),
     [attackGraph.nodes, viewModel.combatantNameById]
@@ -252,9 +284,20 @@ const InitiativePlayground = () => {
     combatant: InitiativePlaytestCombatant,
     index: number
   ) => {
-    const opposingCombatants = side === 'party' ? state.enemies : state.party;
-    const targetSelectId = `${side}-target-${combatant.key}`;
     const weaponInfo = getWeaponInfo(combatant.weaponId);
+    const targetNames = (
+      side === 'party' ? state.enemies : state.party
+    ).flatMap((opponent, opponentIndex) =>
+      combatant.targetCombatantKeys.includes(opponent.key)
+        ? [
+            getCombatantDisplayName(
+              side === 'party' ? 'enemy' : 'party',
+              opponent,
+              opponentIndex
+            ),
+          ]
+        : []
+    );
 
     return (
       <div key={combatant.key} className={styles['combatantCard']}>
@@ -312,28 +355,14 @@ const InitiativePlayground = () => {
             <span>FR {weaponInfo.fireRate}</span>
           )}
         </div>
-        <label className={styles['fieldLabel']} htmlFor={targetSelectId}>
-          Targets
-        </label>
-        <select
-          id={targetSelectId}
-          className={styles['selectInput']}
-          multiple={true}
-          value={combatant.targetCombatantKeys.map(String)}
-          onChange={(event) =>
-            updateCombatant(side, combatant.key, {
-              targetCombatantKeys: Array.from(event.target.selectedOptions).map(
-                (option) => parseInt(option.value, 10)
-              ),
-            })
-          }
-        >
-          {opposingCombatants.map((opponent) => (
-            <option key={opponent.key} value={opponent.key}>
-              {opponent.name || opponent.key}
-            </option>
-          ))}
-        </select>
+        <div className={styles['targetSummary']}>
+          <span className={styles['targetSummaryLabel']}>
+            Targets from grid
+          </span>
+          <span className={styles['targetSummaryValue']}>
+            {targetNames.length > 0 ? targetNames.join(', ') : 'None selected'}
+          </span>
+        </div>
       </div>
     );
   };
@@ -417,6 +446,168 @@ const InitiativePlayground = () => {
                 }
               />
             </label>
+          </div>
+
+          <div className={styles['matrixSection']}>
+            <div className={styles['matrixHeader']}>
+              <h3 className={styles['matrixTitle']}>Engagement Matrix</h3>
+              <p className={styles['matrixCopy']}>
+                Party combatants run across the top, enemies run down the side.
+                Toggle `P→E` when the party column attacks the enemy row, `E→P`
+                for the reverse, and mutual cells light up as duels.
+              </p>
+            </div>
+
+            {state.party.length > 0 && state.enemies.length > 0 ? (
+              <div className={styles['matrixWrap']}>
+                <table className={styles['matrixTable']}>
+                  <thead>
+                    <tr>
+                      <th className={styles['matrixCorner']}>
+                        <span className={styles['matrixLegendLabel']}>
+                          Party vs Enemy
+                        </span>
+                        <span className={styles['matrixLegendMeta']}>
+                          `P→E` and `E→P` are the declared attacks.
+                        </span>
+                      </th>
+                      {state.party.map((partyCombatant, partyIndex) => {
+                        const weaponInfo = getWeaponInfo(
+                          partyCombatant.weaponId
+                        );
+
+                        return (
+                          <th
+                            key={`party-header-${partyCombatant.key}`}
+                            className={styles['matrixColumnHeader']}
+                          >
+                            <span className={styles['matrixCombatantName']}>
+                              {getCombatantDisplayName(
+                                'party',
+                                partyCombatant,
+                                partyIndex
+                              )}
+                            </span>
+                            <span className={styles['matrixCombatantMeta']}>
+                              {weaponInfo?.weaponType === 'melee'
+                                ? `WSF ${weaponInfo.speedFactor}`
+                                : weaponInfo?.weaponType === 'missile'
+                                ? `FR ${weaponInfo.fireRate}`
+                                : 'natural'}
+                            </span>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {state.enemies.map((enemyCombatant, enemyIndex) => {
+                      const enemyWeaponInfo = getWeaponInfo(
+                        enemyCombatant.weaponId
+                      );
+
+                      return (
+                        <tr key={`enemy-row-${enemyCombatant.key}`}>
+                          <th className={styles['matrixRowHeader']}>
+                            <span className={styles['matrixCombatantName']}>
+                              {getCombatantDisplayName(
+                                'enemy',
+                                enemyCombatant,
+                                enemyIndex
+                              )}
+                            </span>
+                            <span className={styles['matrixCombatantMeta']}>
+                              {enemyWeaponInfo?.weaponType === 'melee'
+                                ? `WSF ${enemyWeaponInfo.speedFactor}`
+                                : enemyWeaponInfo?.weaponType === 'missile'
+                                ? `FR ${enemyWeaponInfo.fireRate}`
+                                : 'natural'}
+                            </span>
+                          </th>
+                          {state.party.map((partyCombatant) => {
+                            const partyTargetsEnemy =
+                              partyCombatant.targetCombatantKeys.includes(
+                                enemyCombatant.key
+                              );
+                            const enemyTargetsParty =
+                              enemyCombatant.targetCombatantKeys.includes(
+                                partyCombatant.key
+                              );
+                            const isDuel =
+                              partyTargetsEnemy && enemyTargetsParty;
+
+                            return (
+                              <td
+                                key={`matrix-${enemyCombatant.key}-${partyCombatant.key}`}
+                                className={[
+                                  styles['matrixCell'],
+                                  isDuel ? styles['matrixCellDuel'] : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                              >
+                                <button
+                                  type={'button'}
+                                  className={[
+                                    styles['matrixToggle'],
+                                    styles['matrixToggleParty'],
+                                    partyTargetsEnemy
+                                      ? styles['matrixToggleActiveParty']
+                                      : '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                  onClick={() =>
+                                    toggleCombatantTarget(
+                                      'party',
+                                      partyCombatant.key,
+                                      enemyCombatant.key
+                                    )
+                                  }
+                                >
+                                  P&rarr;E
+                                </button>
+                                <button
+                                  type={'button'}
+                                  className={[
+                                    styles['matrixToggle'],
+                                    styles['matrixToggleEnemy'],
+                                    enemyTargetsParty
+                                      ? styles['matrixToggleActiveEnemy']
+                                      : '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                  onClick={() =>
+                                    toggleCombatantTarget(
+                                      'enemy',
+                                      enemyCombatant.key,
+                                      partyCombatant.key
+                                    )
+                                  }
+                                >
+                                  E&rarr;P
+                                </button>
+                                {isDuel ? (
+                                  <span className={styles['matrixBadge']}>
+                                    Duel
+                                  </span>
+                                ) : null}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className={styles['matrixEmpty']}>
+                Add at least one party combatant and one enemy combatant to use
+                the engagement matrix.
+              </div>
+            )}
           </div>
 
           <div className={styles['rosterGrid']}>

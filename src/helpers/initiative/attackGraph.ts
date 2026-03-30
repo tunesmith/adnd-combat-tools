@@ -3,7 +3,6 @@ import type {
   InitiativeAttackEdgeReason,
   InitiativeAttackGraph,
   InitiativeAttackNode,
-  InitiativeAttackSource,
   InitiativeRoundResolution,
   InitiativeScenario,
   InitiativeScenarioCombatant,
@@ -49,7 +48,7 @@ const createNode = (
   componentId: string,
   attackNumber: number,
   label: string,
-  source: InitiativeAttackSource
+  source: InitiativeAttackNode['source']
 ): InitiativeAttackNode => ({
   id: getAttackNodeId(combatant.id, attackNumber),
   combatantId: combatant.id,

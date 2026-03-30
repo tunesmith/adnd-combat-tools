@@ -5,7 +5,7 @@ export type InitiativeScenarioOrder =
   | 'simultaneous';
 export type InitiativeWeaponType = 'melee' | 'missile' | 'natural';
 
-export interface InitiativeAttackRoutineComponent {
+interface InitiativeAttackRoutineComponent {
   id: string;
   order: number;
   label: string;
@@ -59,7 +59,7 @@ export interface DirectMeleePair {
   inference: 'mutual-targeting-non-missile-weapons';
 }
 
-export type InitiativeAttackSource = 'routine-component' | 'timing-bonus';
+type InitiativeAttackSource = 'routine-component' | 'timing-bonus';
 
 export interface InitiativeAttackEntry {
   combatantId: string;

@@ -1,7 +1,6 @@
 import { resolveOpenMeleeExchange, type OpenMeleeCombatant } from './openMelee';
 import { getWeaponInfo } from '../../tables/weapon';
 import type {
-  InitiativeAttackRoutineComponent,
   DirectMeleeEngagement,
   DirectMeleePair,
   InitiativeAttackRoutine,
@@ -28,7 +27,7 @@ const getCombatantName = (
 const buildDefaultAttackRoutine = (
   combatantId: string
 ): InitiativeAttackRoutine => {
-  const components: InitiativeAttackRoutineComponent[] = [
+  const components = [
     {
       id: 'attack-1',
       order: 1,
