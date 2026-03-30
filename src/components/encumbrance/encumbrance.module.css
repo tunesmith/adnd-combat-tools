@@ -203,8 +203,8 @@
 }
 
 .characterSummaryName {
-  font-size: 1.35rem;
-  line-height: 1.14;
+  font-size: 1.7rem;
+  line-height: 1.08;
 }
 
 .characterSummaryRow {
@@ -217,11 +217,11 @@
 .characterSummaryChip {
   display: inline-flex;
   align-items: center;
-  padding: 0.12rem 0.5rem;
+  padding: 0.22rem 0.72rem;
   border-radius: 999px;
   background: rgba(240, 239, 221, 0.95);
   color: var(--dark-olive-green);
-  font-size: 0.75rem;
+  font-size: 0.94rem;
   line-height: 1.1;
 }
 
@@ -266,9 +266,12 @@
 
 .fieldControl {
   width: 100%;
+  box-sizing: border-box;
+  height: 2.45rem;
   min-height: 2.45rem;
   padding: 0.42rem 0.65rem;
   font: inherit;
+  line-height: 1.15;
   color: var(--caput-martuum);
   background: rgba(240, 239, 221, 0.97);
   border: 2px solid rgba(212, 141, 39, 0.85);
@@ -283,6 +286,8 @@
 }
 
 .fieldReadonly {
+  box-sizing: border-box;
+  height: 2.45rem;
   min-height: 2.45rem;
   display: flex;
   align-items: center;
@@ -566,6 +571,7 @@
 }
 
 .modalNotes {
+  height: auto;
   min-height: 5.4rem;
   resize: none;
 }

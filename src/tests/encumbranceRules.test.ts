@@ -3,10 +3,12 @@ import {
   getContainerLoadSummary,
   getStrengthCarryingCapacityGp,
   getEffectiveLoadGp,
+  getInventoryItemTotalKnownValueGp,
   getInventoryItemTotalValueGp,
   getLoadBand,
   getStrengthWeightAllowanceGp,
   getTotalEncumbranceGp,
+  getTotalKnownValueGp,
   getTotalValueGp,
 } from '../helpers/encumbranceRules';
 import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
@@ -61,6 +63,7 @@ describe('encumbrance rules', () => {
         containerId: null,
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
       },
       {
@@ -70,6 +73,7 @@ describe('encumbrance rules', () => {
         containerId: 'backpack-1',
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
       },
       {
@@ -79,6 +83,7 @@ describe('encumbrance rules', () => {
         containerId: null,
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
       },
     ];
@@ -96,6 +101,7 @@ describe('encumbrance rules', () => {
         containerId: null,
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
         name: 'Iron rations (half eaten)',
         encumbranceGpOverride: 37.5,
@@ -115,6 +121,7 @@ describe('encumbrance rules', () => {
         containerId: null,
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
       },
       {
@@ -124,6 +131,7 @@ describe('encumbrance rules', () => {
         containerId: 'sack-1',
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
       },
     ];
@@ -167,6 +175,7 @@ describe('encumbrance rules', () => {
         containerId: null,
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
       },
       {
@@ -176,6 +185,7 @@ describe('encumbrance rules', () => {
         containerId: 'backpack-1',
         day: 0,
         playerNotes: '',
+        playerKnowsValue: false,
         playerMagicKnowledge: 'unknown',
       },
       {
@@ -185,6 +195,7 @@ describe('encumbrance rules', () => {
         containerId: null,
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
       },
       {
@@ -194,6 +205,7 @@ describe('encumbrance rules', () => {
         containerId: 'backpack-1',
         day: 0,
         playerNotes: '',
+        playerKnowsValue: true,
         playerMagicKnowledge: 'unknown',
       },
     ];
@@ -207,6 +219,16 @@ describe('encumbrance rules', () => {
     ).toBeCloseTo(102.02);
     expect(getTotalValueGp(document, encumbranceCatalogById)).toBeCloseTo(
       114.02
+    );
+    expect(
+      getInventoryItemTotalKnownValueGp(
+        'backpack-1',
+        document.inventory,
+        encumbranceCatalogById
+      )
+    ).toBeCloseTo(2.02);
+    expect(getTotalKnownValueGp(document, encumbranceCatalogById)).toBeCloseTo(
+      14.02
     );
   });
 });

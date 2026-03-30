@@ -79,6 +79,11 @@ const getOwnValueGp = (
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number => (catalogById.get(item.catalogId)?.valueGp || 0) * item.quantity;
 
+const getOwnKnownValueGp = (
+  item: EncumbranceInventoryItem,
+  catalogById: Map<string, EncumbranceCatalogItem>
+): number => (item.playerKnowsValue ? getOwnValueGp(item, catalogById) : 0);
+
 export const getStrengthWeightAllowanceGp = (
   strength: StrengthScore
 ): number => {
@@ -168,6 +173,28 @@ export const getInventoryItemTotalValueGp = (
   );
 };
 
+export const getInventoryItemTotalKnownValueGp = (
+  itemId: string,
+  inventory: EncumbranceInventoryItem[],
+  catalogById: Map<string, EncumbranceCatalogItem>
+): number => {
+  const item = inventory.find((candidate) => candidate.id === itemId);
+  if (!item) {
+    return 0;
+  }
+
+  const children = getChildItems(inventory, itemId);
+  return (
+    getOwnKnownValueGp(item, catalogById) +
+    children.reduce(
+      (total, child) =>
+        total +
+        getInventoryItemTotalKnownValueGp(child.id, inventory, catalogById),
+      0
+    )
+  );
+};
+
 export const getTotalValueGp = (
   document: EncumbranceDocument,
   catalogById: Map<string, EncumbranceCatalogItem>
@@ -176,6 +203,21 @@ export const getTotalValueGp = (
     (total, item) =>
       total +
       getInventoryItemTotalValueGp(item.id, document.inventory, catalogById),
+    0
+  );
+
+export const getTotalKnownValueGp = (
+  document: EncumbranceDocument,
+  catalogById: Map<string, EncumbranceCatalogItem>
+): number =>
+  getChildItems(document.inventory, null).reduce(
+    (total, item) =>
+      total +
+      getInventoryItemTotalKnownValueGp(
+        item.id,
+        document.inventory,
+        catalogById
+      ),
     0
   );
 

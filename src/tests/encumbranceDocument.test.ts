@@ -9,7 +9,7 @@ describe('encumbrance document helpers', () => {
     const document = createEmptyEncumbranceDocument();
 
     expect(document.kind).toBe('adnd-encumbrance-dm');
-    expect(document.version).toBe(5);
+    expect(document.version).toBe(6);
     expect(document.character.name).toBe('');
     expect(document.character.strength.score).toBe(8);
     expect(document.customItems).toEqual([]);
@@ -26,6 +26,7 @@ describe('encumbrance document helpers', () => {
       containerId: null,
       day: 84,
       playerNotes: 'Worn and patched.',
+      playerKnowsValue: false,
       name: 'Field pack',
       dmNotes: 'Actually an extradimensional satchel.',
       playerMagicKnowledge: 'known-magical',
@@ -51,6 +52,7 @@ describe('encumbrance document helpers', () => {
     expect(redacted.inventory).toHaveLength(1);
     expect(redacted.inventory[0]?.day).toBe(84);
     expect(redacted.inventory[0]?.playerNotes).toBe('Worn and patched.');
+    expect(redacted.inventory[0]?.playerKnowsValue).toBe(false);
     expect(redacted.inventory[0]?.name).toBe('Field pack');
     expect(redacted.inventory[0]?.playerMagicKnowledge).toBe('known-magical');
     expect(redacted.inventory[0]?.dmNotes).toBeUndefined();
@@ -85,11 +87,12 @@ describe('encumbrance document helpers', () => {
     );
 
     expect(parsed.kind).toBe('adnd-encumbrance-player');
-    expect(parsed.version).toBe(5);
+    expect(parsed.version).toBe(6);
     expect(parsed.character.strength.exceptional).toBe('51-75');
     expect(parsed.inventory[0]?.quantity).toBe(87);
     expect(parsed.inventory[0]?.day).toBe(0);
     expect(parsed.inventory[0]?.playerNotes).toBe('');
+    expect(parsed.inventory[0]?.playerKnowsValue).toBe(true);
     expect(parsed.inventory[0]?.playerMagicKnowledge).toBe('unknown');
     expect(parsed.customItems).toEqual([]);
   });
@@ -98,7 +101,7 @@ describe('encumbrance document helpers', () => {
     const parsed = parseEncumbranceDocument(
       JSON.stringify({
         kind: 'adnd-encumbrance-dm',
-        version: 5,
+        version: 6,
         character: {
           name: 'Marda',
           strength: {
@@ -114,6 +117,7 @@ describe('encumbrance document helpers', () => {
             containerId: null,
             day: 23,
             playerNotes: 'Packed for travel.',
+            playerKnowsValue: false,
             name: 'Travel pack',
             dmNotes: 'False-bottom compartment.',
             playerMagicKnowledge: 'unknown',
@@ -138,9 +142,10 @@ describe('encumbrance document helpers', () => {
     );
 
     expect(parsed.kind).toBe('adnd-encumbrance-dm');
-    expect(parsed.version).toBe(5);
+    expect(parsed.version).toBe(6);
     expect(parsed.inventory[0]?.day).toBe(23);
     expect(parsed.inventory[0]?.playerNotes).toBe('Packed for travel.');
+    expect(parsed.inventory[0]?.playerKnowsValue).toBe(false);
     expect(parsed.inventory[0]?.name).toBe('Travel pack');
     expect(parsed.inventory[0]?.dmNotes).toBe('False-bottom compartment.');
     expect(parsed.inventory[0]?.playerMagicKnowledge).toBe('unknown');

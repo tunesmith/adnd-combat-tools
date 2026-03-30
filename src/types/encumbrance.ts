@@ -65,7 +65,8 @@ export interface EncumbranceInventoryItemV4
   encumbranceGpOverride?: number;
 }
 
-export interface EncumbranceInventoryItem extends EncumbranceInventoryItemBase {
+export interface EncumbranceInventoryItemV5
+  extends EncumbranceInventoryItemBase {
   day: number;
   playerNotes: string;
   playerMagicKnowledge: MagicKnowledge;
@@ -74,6 +75,10 @@ export interface EncumbranceInventoryItem extends EncumbranceInventoryItemBase {
   isMagical?: boolean;
   fullyIdentified?: boolean;
   encumbranceGpOverride?: number;
+}
+
+export interface EncumbranceInventoryItem extends EncumbranceInventoryItemV5 {
+  playerKnowsValue: boolean;
 }
 
 interface EncumbranceCharacter {
@@ -128,15 +133,20 @@ export interface EncumbranceDocumentV5 extends EncumbranceDocumentBase {
   version: 5;
 }
 
+export interface EncumbranceDocumentV6 extends EncumbranceDocumentBase {
+  version: 6;
+}
+
 type LegacyEncumbranceDocument = EncumbranceDocumentV1 | EncumbranceDocumentV2;
 
 export type AnyEncumbranceDocument =
   | LegacyEncumbranceDocument
   | EncumbranceDocumentV3
   | EncumbranceDocumentV4
-  | EncumbranceDocumentV5;
+  | EncumbranceDocumentV5
+  | EncumbranceDocumentV6;
 
-export type EncumbranceDocument = EncumbranceDocumentV5;
+export type EncumbranceDocument = EncumbranceDocumentV6;
 
 type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered';
 

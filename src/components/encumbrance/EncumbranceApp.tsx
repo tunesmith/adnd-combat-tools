@@ -22,10 +22,12 @@ import {
   getDescendantIds,
   getEffectiveLoadGp,
   getInventoryItemTotalGp,
+  getInventoryItemTotalKnownValueGp,
   getInventoryItemTotalValueGp,
   getLoadBand,
   getStrengthCarryingCapacityGp,
   getTotalEncumbranceGp,
+  getTotalKnownValueGp,
   getTotalValueGp,
 } from '../../helpers/encumbranceRules';
 import {
@@ -59,6 +61,7 @@ interface InventoryEditDraft {
   containerId: string;
   playerNotes: string;
   dmNotes: string;
+  playerKnowsValue: boolean;
   playerMagicKnowledge: MagicKnowledge;
   isMagical: boolean;
   fullyIdentified: boolean;
@@ -104,6 +107,7 @@ interface AddItemDetailsDraft {
   day: number;
   playerNotes: string;
   dmNotes: string;
+  playerKnowsValue: boolean;
   playerMagicKnowledge: MagicKnowledge;
   isMagical: boolean;
   fullyIdentified: boolean;
@@ -113,6 +117,7 @@ const defaultAddItemDetailsDraft = (): AddItemDetailsDraft => ({
   day: 0,
   playerNotes: '',
   dmNotes: '',
+  playerKnowsValue: true,
   playerMagicKnowledge: 'unknown',
   isMagical: false,
   fullyIdentified: false,
@@ -217,6 +222,15 @@ const getInventoryItemOwnValueGp = (
   itemInfo: EncumbranceCatalogItem
 ): number => itemInfo.valueGp * item.quantity;
 
+const getPlayerVisibleItemValueGp = (
+  item: EncumbranceInventoryItem,
+  itemInfo: EncumbranceCatalogItem
+): number | null =>
+  item.playerKnowsValue ? getInventoryItemOwnValueGp(item, itemInfo) : null;
+
+const formatOptionalGpValue = (value: number | null): string =>
+  value === null ? 'Unknown' : `${formatGpValue(value)} gp`;
+
 interface RowNoteLine {
   text: string;
   tone: 'public' | 'dm';
@@ -297,12 +311,61 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const [editingItemDraft, setEditingItemDraft] =
     useState<InventoryEditDraft | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string>('');
-  const [errorMessage, setErrorMessage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const visibleDocument =
     mode === 'player' ? redactEncumbranceDocument(document) : document;
+
+  useEffect(() => {
+    if (
+      !pendingRemovalId &&
+      !editingItemDraft &&
+      !showAddModal &&
+      !characterEditDraft
+    ) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (pendingRemovalId) {
+          setPendingRemovalId(null);
+          return;
+        }
+
+        if (editingItemDraft) {
+          setEditingItemDraft(null);
+          return;
+        }
+
+        if (showAddModal) {
+          setShowAddModal(false);
+          return;
+        }
+
+        if (characterEditDraft) {
+          setCharacterEditDraft(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [characterEditDraft, editingItemDraft, pendingRemovalId, showAddModal]);
+
+  useEffect(() => {
+    if (!editingItemDraft) {
+      return;
+    }
+
+    const stillExists = visibleDocument.inventory.some(
+      (item) => item.id === editingItemDraft.itemId
+    );
+
+    if (!stillExists) {
+      setEditingItemDraft(null);
+    }
+  }, [editingItemDraft, visibleDocument.inventory]);
 
   const catalogItems = useMemo(
     () => [...encumbranceCatalog, ...visibleDocument.customItems],
@@ -372,7 +435,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     visibleDocument,
     catalogById
   );
-  const totalValueGp = getTotalValueGp(visibleDocument, catalogById);
+  const totalValueGp =
+    mode === 'dm'
+      ? getTotalValueGp(visibleDocument, catalogById)
+      : getTotalKnownValueGp(visibleDocument, catalogById);
   const carryingCapacityGp = getStrengthCarryingCapacityGp(
     visibleDocument.character.strength
   );
@@ -424,11 +490,17 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       : 0;
   const editingItemTotalValueGp =
     editingItem && editingItemInfo
-      ? getInventoryItemTotalValueGp(
-          editingItem.id,
-          visibleDocument.inventory,
-          catalogById
-        )
+      ? mode === 'dm'
+        ? getInventoryItemTotalValueGp(
+            editingItem.id,
+            visibleDocument.inventory,
+            catalogById
+          )
+        : getInventoryItemTotalKnownValueGp(
+            editingItem.id,
+            visibleDocument.inventory,
+            catalogById
+          )
       : 0;
   const editingParentOptions =
     editingItem && editingItemInfo
@@ -447,49 +519,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           );
         })
       : [];
-
-  useEffect(() => {
-    if (
-      !pendingRemovalId &&
-      !editingItemDraft &&
-      !showAddModal &&
-      !characterEditDraft
-    ) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (pendingRemovalId) {
-          setPendingRemovalId(null);
-          return;
-        }
-
-        if (editingItemDraft) {
-          setEditingItemDraft(null);
-          return;
-        }
-
-        if (showAddModal) {
-          setShowAddModal(false);
-          return;
-        }
-
-        if (characterEditDraft) {
-          setCharacterEditDraft(null);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [characterEditDraft, editingItemDraft, pendingRemovalId, showAddModal]);
-
-  useEffect(() => {
-    if (editingItemDraft && !editingItem) {
-      setEditingItemDraft(null);
-    }
-  }, [editingItem, editingItemDraft]);
 
   const openCharacterModal = () => {
     setCharacterEditDraft({
@@ -572,6 +601,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       containerId: item.containerId || '',
       playerNotes: item.playerNotes,
       dmNotes: item.dmNotes || '',
+      playerKnowsValue: item.playerKnowsValue,
       playerMagicKnowledge: item.playerMagicKnowledge,
       isMagical: item.isMagical === true,
       fullyIdentified: item.fullyIdentified === true,
@@ -613,6 +643,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       day: normalizedDay,
       containerId: draft.containerId || null,
       playerNotes: draft.playerNotes,
+      playerKnowsValue:
+        mode === 'dm' ? draft.playerKnowsValue : currentItem.playerKnowsValue,
       ...(mode === 'dm'
         ? {
             dmNotes: draft.dmNotes,
@@ -701,21 +733,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       return;
     }
 
-    const removedItemName = getInventoryItemDisplayName(
-      pendingRemovalItem,
-      pendingRemovalItemInfo
-    );
     removeInventoryItem(pendingRemovalItem.id);
     setEditingItemDraft(null);
     setPendingRemovalId(null);
-    setStatusMessage(
-      pendingRemovalDescendantCount > 0
-        ? `Removed ${removedItemName} and ${pendingRemovalDescendantCount} contained item${
-            pendingRemovalDescendantCount === 1 ? '' : 's'
-          }.`
-        : `Removed ${removedItemName}.`
-    );
-    setErrorMessage('');
   };
 
   const addInventoryEntry = (
@@ -764,6 +784,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           containerId: nextContainerId || null,
           day: addItemDetailsDraft.day,
           playerNotes: addItemDetailsDraft.playerNotes,
+          playerKnowsValue:
+            mode === 'dm' ? addItemDetailsDraft.playerKnowsValue : true,
           playerMagicKnowledge:
             mode === 'dm'
               ? addItemDetailsDraft.playerMagicKnowledge
@@ -801,8 +823,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         )
       );
       setSelectedContainerId('');
-      setStatusMessage(`Added ${selectedCatalogItem.name}.`);
-      setErrorMessage('');
       setSelectedQuantity(1);
       setAddItemDetailsDraft(defaultAddItemDetailsDraft());
       setShowAddModal(false);
@@ -810,8 +830,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     }
 
     if (!customItemDraft.name.trim()) {
-      setErrorMessage('Custom items need a name.');
-      setStatusMessage('');
       return;
     }
 
@@ -838,8 +856,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       )
     );
     setSelectedContainerId('');
-    setStatusMessage(`Added custom item ${customItem.name}.`);
-    setErrorMessage('');
     setSelectedQuantity(1);
     setCustomItemDraft(defaultCustomItemDraft());
     setAddItemDetailsDraft(defaultAddItemDetailsDraft());
@@ -859,6 +875,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     try {
       const text = await file.text();
       const parsed = parseEncumbranceDocument(text);
+      const expectedKind = getDocumentKindForMode(mode);
+
+      if (parsed.kind !== expectedKind) {
+        throw new Error(
+          mode === 'dm'
+            ? 'Dungeon Master View can only load DM files.'
+            : 'Player View can only load player files.'
+        );
+      }
+
       setDocument(parsed);
       setCharacterEditDraft(null);
       setShowAddModal(false);
@@ -867,13 +893,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       setSelectedContainerId('');
       setSelectedQuantity(1);
       setAddItemDetailsDraft(defaultAddItemDetailsDraft());
-      setStatusMessage(`Loaded ${file.name}.`);
-      setErrorMessage('');
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to load the file.'
-      );
-      setStatusMessage('');
+      const message =
+        error instanceof Error ? error.message : 'Unable to load the file.';
+
+      console.error(message);
+      window.alert(message);
     } finally {
       event.target.value = '';
     }
@@ -900,16 +925,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     downloadDocument(
       mode === 'dm' ? document : redactEncumbranceDocument(document)
     );
-    setStatusMessage(
-      mode === 'dm' ? 'Exported DM document.' : 'Exported player document.'
-    );
-    setErrorMessage('');
   };
 
   const exportPlayerCopy = () => {
     downloadDocument(redactEncumbranceDocument(document));
-    setStatusMessage('Exported player copy.');
-    setErrorMessage('');
   };
 
   const resetDocument = () => {
@@ -922,8 +941,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     setAddItemDetailsDraft(defaultAddItemDetailsDraft());
     setSelectedContainerId('');
     setSelectedQuantity(1);
-    setStatusMessage('Started a new document.');
-    setErrorMessage('');
   };
 
   const renderInventoryRows = (
@@ -952,6 +969,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         );
         const itemOwnLoadGp = itemOwnEncumbranceGp * item.quantity;
         const itemOwnValueGp = getInventoryItemOwnValueGp(item, itemInfo);
+        const itemVisibleValueGp =
+          mode === 'dm'
+            ? itemOwnValueGp
+            : getPlayerVisibleItemValueGp(item, itemInfo);
         const displayName = getInventoryItemDisplayName(item, itemInfo);
         const noteLines = getRowNoteLines(item, mode);
         let containerStatusLabel: string | undefined;
@@ -1033,7 +1054,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
               <div className={styles['inventoryCellSummary']}>
                 <span className={styles['inventoryLabel']}>Value</span>
                 <span className={styles['inventorySummaryValue']}>
-                  {formatGpValue(itemOwnValueGp)} gp
+                  {formatOptionalGpValue(itemVisibleValueGp)}
                 </span>
               </div>
               <div
@@ -1083,6 +1104,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     editingItemInfo?.valueGp !== undefined
       ? editingItemInfo.valueGp * editingDraftQuantity
       : 0;
+  const editingDraftVisibleOwnValueGp =
+    mode === 'dm'
+      ? editingDraftOwnValueGp
+      : editingItemDraft?.playerKnowsValue
+      ? editingDraftOwnValueGp
+      : null;
   const editingSavedOwnLoadGp =
     editingItem && editingItemInfo
       ? getInventoryItemOwnEncumbranceGp(editingItem, editingItemInfo) *
@@ -1092,13 +1119,19 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     editingItem && editingItemInfo
       ? getInventoryItemOwnValueGp(editingItem, editingItemInfo)
       : 0;
+  const editingSavedVisibleOwnValueGp =
+    mode === 'dm'
+      ? editingSavedOwnValueGp
+      : editingItem?.playerKnowsValue
+      ? editingSavedOwnValueGp
+      : 0;
   const editingContainedLoadGp = Math.max(
     0,
     editingItemTotalEncumbranceGp - editingSavedOwnLoadGp
   );
   const editingContainedValueGp = Math.max(
     0,
-    editingItemTotalValueGp - editingSavedOwnValueGp
+    editingItemTotalValueGp - editingSavedVisibleOwnValueGp
   );
   const modalRoot =
     typeof window !== 'undefined'
@@ -1138,12 +1171,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             <span className={styles['modeBadge']}>
               {mode === 'dm' ? 'Dungeon Master View' : 'Player View'}
             </span>
-            {mode === 'player' && document.kind === 'adnd-encumbrance-dm' && (
-              <span className={styles['toolbarHint']}>
-                Master document loaded in player view; export a player copy
-                before sharing.
-              </span>
-            )}
           </div>
           <div className={styles['toolbarGroup']}>
             <button
@@ -1187,16 +1214,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           style={{ display: 'none' }}
         />
 
-        {(statusMessage || errorMessage) && (
-          <div
-            className={`${styles['message']} ${
-              errorMessage ? styles['messageError'] : styles['messageInfo']
-            }`}
-          >
-            {errorMessage || statusMessage}
-          </div>
-        )}
-
         <div className={styles['gridLayout']}>
           <section className={`${styles['card']} ${styles['characterCard']}`}>
             <div className={styles['cardTitle']}>Character</div>
@@ -1233,11 +1250,15 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 <strong>{totalEncumbranceGp} gp</strong>
               </div>
               <div className={styles['summaryValue']}>
-                <span className={styles['summaryLabel']}>Capacity</span>
+                <span className={styles['summaryLabel']}>
+                  12&quot; Capacity
+                </span>
                 <strong>{carryingCapacityGp} gp</strong>
               </div>
               <div className={styles['summaryValue']}>
-                <span className={styles['summaryLabel']}>Value</span>
+                <span className={styles['summaryLabel']}>
+                  {mode === 'dm' ? 'Value' : 'Known value'}
+                </span>
                 <strong>{formatGpValue(totalValueGp)} gp</strong>
               </div>
               <div className={styles['summaryValue']}>
@@ -1274,7 +1295,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             <span>Day</span>
             <span>Qty</span>
             <span>Load</span>
-            <span>Value</span>
+            <span>{mode === 'dm' ? 'Value' : 'Known value'}</span>
             <span>Notes</span>
           </div>
           <div className={styles['inventoryList']}>
@@ -1741,7 +1762,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                       {mode === 'dm' && (
                         <label className={styles['fieldGroup']}>
                           <span className={styles['fieldLabel']}>
-                            Player sees
+                            Magic known to player
                           </span>
                           <select
                             className={styles['fieldControl']}
@@ -1770,6 +1791,30 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                 {magicKnowledgeLabels[knowledge]}
                               </option>
                             ))}
+                          </select>
+                        </label>
+                      )}
+                      {mode === 'dm' && (
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>
+                            Value known to player
+                          </span>
+                          <select
+                            className={styles['fieldControl']}
+                            value={
+                              addItemDetailsDraft.playerKnowsValue
+                                ? 'yes'
+                                : 'no'
+                            }
+                            onChange={(event) =>
+                              setAddItemDetailsDraft((currentDraft) => ({
+                                ...currentDraft,
+                                playerKnowsValue: event.target.value === 'yes',
+                              }))
+                            }
+                          >
+                            <option value="yes">Known</option>
+                            <option value="no">Unknown</option>
                           </select>
                         </label>
                       )}
@@ -1945,6 +1990,27 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                             }
                           />
                         </label>
+                        <label className={styles['fieldGroup']}>
+                          <span className={styles['fieldLabel']}>
+                            Weight per item
+                          </span>
+                          <input
+                            className={styles['fieldControl']}
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={editingDraftLoadPerItemGp}
+                            onChange={(event) =>
+                              updateEditingItemDraft((currentDraft) => ({
+                                ...currentDraft,
+                                encumbranceGp: Math.max(
+                                  0,
+                                  Math.floor(Number(event.target.value) || 0)
+                                ),
+                              }))
+                            }
+                          />
+                        </label>
                         {mode === 'dm' ? (
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>Day</span>
@@ -2009,27 +2075,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                             })}
                           </select>
                         </label>
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>
-                            Weight per item
-                          </span>
-                          <input
-                            className={styles['fieldControl']}
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={editingDraftLoadPerItemGp}
-                            onChange={(event) =>
-                              updateEditingItemDraft((currentDraft) => ({
-                                ...currentDraft,
-                                encumbranceGp: Math.max(
-                                  0,
-                                  Math.floor(Number(event.target.value) || 0)
-                                ),
-                              }))
-                            }
-                          />
-                        </label>
                         <label className={styles['modalFieldWide']}>
                           <span className={styles['fieldLabel']}>
                             Player Notes
@@ -2060,7 +2105,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                         <div className={styles['modalFields']}>
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
-                              Player sees
+                              Magic known to player
                             </span>
                             <select
                               className={styles['fieldControl']}
@@ -2090,6 +2135,27 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                   {magicKnowledgeLabels[knowledge]}
                                 </option>
                               ))}
+                            </select>
+                          </label>
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
+                              Value known to player
+                            </span>
+                            <select
+                              className={styles['fieldControl']}
+                              value={
+                                editingItemDraft.playerKnowsValue ? 'yes' : 'no'
+                              }
+                              onChange={(event) =>
+                                updateEditingItemDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  playerKnowsValue:
+                                    event.target.value === 'yes',
+                                }))
+                              }
+                            >
+                              <option value="yes">Known</option>
+                              <option value="no">Unknown</option>
                             </select>
                           </label>
                           <label className={styles['fieldGroup']}>
@@ -2171,15 +2237,23 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                     <div className={styles['modalMetaGrid']}>
                       <div className={styles['modalMetaItem']}>
                         <span className={styles['modalMetaLabel']}>
-                          Value per item
+                          {mode === 'dm'
+                            ? 'Value per item'
+                            : 'Known value per item'}
                         </span>
                         <span className={styles['modalMetaValue']}>
-                          {formatGpValue(editingItemInfo.valueGp)} gp
+                          {formatOptionalGpValue(
+                            mode === 'dm'
+                              ? editingItemInfo.valueGp
+                              : editingItemDraft.playerKnowsValue
+                              ? editingItemInfo.valueGp
+                              : null
+                          )}
                         </span>
                       </div>
                       <div className={styles['modalMetaItem']}>
                         <span className={styles['modalMetaLabel']}>
-                          Row weight
+                          Current weight
                         </span>
                         <span className={styles['modalMetaValue']}>
                           {editingDraftOwnLoadGp} gp
@@ -2187,10 +2261,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                       </div>
                       <div className={styles['modalMetaItem']}>
                         <span className={styles['modalMetaLabel']}>
-                          Row value
+                          {mode === 'dm' ? 'Row value' : 'Known value'}
                         </span>
                         <span className={styles['modalMetaValue']}>
-                          {formatGpValue(editingDraftOwnValueGp)} gp
+                          {formatOptionalGpValue(editingDraftVisibleOwnValueGp)}
                         </span>
                       </div>
                       <div className={styles['modalMetaItem']}>
@@ -2229,7 +2303,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                           </div>
                           <div className={styles['modalMetaItem']}>
                             <span className={styles['modalMetaLabel']}>
-                              Contained value
+                              {mode === 'dm'
+                                ? 'Contained value'
+                                : 'Known contained value'}
                             </span>
                             <span className={styles['modalMetaValue']}>
                               {formatGpValue(editingContainedValueGp)} gp
