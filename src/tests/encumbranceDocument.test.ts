@@ -9,7 +9,7 @@ describe('encumbrance document helpers', () => {
     const document = createEmptyEncumbranceDocument();
 
     expect(document.kind).toBe('adnd-encumbrance-dm');
-    expect(document.version).toBe(4);
+    expect(document.version).toBe(5);
     expect(document.character.name).toBe('');
     expect(document.character.strength.score).toBe(8);
     expect(document.customItems).toEqual([]);
@@ -24,8 +24,13 @@ describe('encumbrance document helpers', () => {
       catalogId: 'backpack',
       quantity: 1,
       containerId: null,
-      notes: 'Worn and patched.',
-      nameOverride: 'Field pack',
+      day: 84,
+      playerNotes: 'Worn and patched.',
+      name: 'Field pack',
+      dmNotes: 'Actually an extradimensional satchel.',
+      playerMagicKnowledge: 'known-magical',
+      isMagical: true,
+      fullyIdentified: true,
       encumbranceGpOverride: 18,
     });
     document.customItems.push({
@@ -44,8 +49,13 @@ describe('encumbrance document helpers', () => {
     expect(redacted.kind).toBe('adnd-encumbrance-player');
     expect(redacted.character.name).toBe('Falstaff');
     expect(redacted.inventory).toHaveLength(1);
-    expect(redacted.inventory[0]?.notes).toBe('Worn and patched.');
-    expect(redacted.inventory[0]?.nameOverride).toBe('Field pack');
+    expect(redacted.inventory[0]?.day).toBe(84);
+    expect(redacted.inventory[0]?.playerNotes).toBe('Worn and patched.');
+    expect(redacted.inventory[0]?.name).toBe('Field pack');
+    expect(redacted.inventory[0]?.playerMagicKnowledge).toBe('known-magical');
+    expect(redacted.inventory[0]?.dmNotes).toBeUndefined();
+    expect(redacted.inventory[0]?.isMagical).toBeUndefined();
+    expect(redacted.inventory[0]?.fullyIdentified).toBeUndefined();
     expect(redacted.inventory[0]?.encumbranceGpOverride).toBe(18);
     expect(redacted.customItems).toEqual(document.customItems);
     expect(redacted.dm).toBeUndefined();
@@ -75,10 +85,12 @@ describe('encumbrance document helpers', () => {
     );
 
     expect(parsed.kind).toBe('adnd-encumbrance-player');
-    expect(parsed.version).toBe(4);
+    expect(parsed.version).toBe(5);
     expect(parsed.character.strength.exceptional).toBe('51-75');
     expect(parsed.inventory[0]?.quantity).toBe(87);
-    expect(parsed.inventory[0]?.notes).toBe('');
+    expect(parsed.inventory[0]?.day).toBe(0);
+    expect(parsed.inventory[0]?.playerNotes).toBe('');
+    expect(parsed.inventory[0]?.playerMagicKnowledge).toBe('unknown');
     expect(parsed.customItems).toEqual([]);
   });
 
@@ -86,7 +98,7 @@ describe('encumbrance document helpers', () => {
     const parsed = parseEncumbranceDocument(
       JSON.stringify({
         kind: 'adnd-encumbrance-dm',
-        version: 4,
+        version: 5,
         character: {
           name: 'Marda',
           strength: {
@@ -100,8 +112,13 @@ describe('encumbrance document helpers', () => {
             catalogId: 'backpack',
             quantity: 1,
             containerId: null,
-            notes: 'Packed for travel.',
-            nameOverride: 'Travel pack',
+            day: 23,
+            playerNotes: 'Packed for travel.',
+            name: 'Travel pack',
+            dmNotes: 'False-bottom compartment.',
+            playerMagicKnowledge: 'unknown',
+            isMagical: true,
+            fullyIdentified: true,
             encumbranceGpOverride: 17.5,
           },
         ],
@@ -121,9 +138,14 @@ describe('encumbrance document helpers', () => {
     );
 
     expect(parsed.kind).toBe('adnd-encumbrance-dm');
-    expect(parsed.version).toBe(4);
-    expect(parsed.inventory[0]?.notes).toBe('Packed for travel.');
-    expect(parsed.inventory[0]?.nameOverride).toBe('Travel pack');
+    expect(parsed.version).toBe(5);
+    expect(parsed.inventory[0]?.day).toBe(23);
+    expect(parsed.inventory[0]?.playerNotes).toBe('Packed for travel.');
+    expect(parsed.inventory[0]?.name).toBe('Travel pack');
+    expect(parsed.inventory[0]?.dmNotes).toBe('False-bottom compartment.');
+    expect(parsed.inventory[0]?.playerMagicKnowledge).toBe('unknown');
+    expect(parsed.inventory[0]?.isMagical).toBe(true);
+    expect(parsed.inventory[0]?.fullyIdentified).toBe(true);
     expect(parsed.inventory[0]?.encumbranceGpOverride).toBe(17.5);
     expect(parsed.customItems[0]?.name).toBe('Charm');
     expect(parsed.dm?.privateNotes).toBe('Secret note.');

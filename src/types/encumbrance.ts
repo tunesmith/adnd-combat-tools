@@ -28,6 +28,7 @@ export type EquipmentCategory =
   | 'coins';
 
 export type AmmoKind = 'arrow' | 'bolt';
+export type MagicKnowledge = 'unknown' | 'known-mundane' | 'known-magical';
 
 export interface AmmoCapacityRule {
   ammoKind: AmmoKind;
@@ -57,9 +58,21 @@ interface EncumbranceInventoryItemBase {
 
 export type LegacyEncumbranceInventoryItem = EncumbranceInventoryItemBase;
 
-export interface EncumbranceInventoryItem extends EncumbranceInventoryItemBase {
+export interface EncumbranceInventoryItemV4
+  extends EncumbranceInventoryItemBase {
   notes: string;
   nameOverride?: string;
+  encumbranceGpOverride?: number;
+}
+
+export interface EncumbranceInventoryItem extends EncumbranceInventoryItemBase {
+  day: number;
+  playerNotes: string;
+  playerMagicKnowledge: MagicKnowledge;
+  name?: string;
+  dmNotes?: string;
+  isMagical?: boolean;
+  fullyIdentified?: boolean;
   encumbranceGpOverride?: number;
 }
 
@@ -79,6 +92,14 @@ interface LegacyEncumbranceDocumentBase {
   dm?: EncumbranceDmData;
 }
 
+interface EncumbranceDocumentBaseV4 {
+  kind: EncumbranceDocumentKind;
+  character: EncumbranceCharacter;
+  inventory: EncumbranceInventoryItemV4[];
+  customItems: EncumbranceCustomItem[];
+  dm?: EncumbranceDmData;
+}
+
 interface EncumbranceDocumentBase {
   kind: EncumbranceDocumentKind;
   character: EncumbranceCharacter;
@@ -95,12 +116,16 @@ export interface EncumbranceDocumentV2 extends LegacyEncumbranceDocumentBase {
   version: 2;
 }
 
-export interface EncumbranceDocumentV3 extends EncumbranceDocumentBase {
+export interface EncumbranceDocumentV3 extends EncumbranceDocumentBaseV4 {
   version: 3;
 }
 
-export interface EncumbranceDocumentV4 extends EncumbranceDocumentBase {
+export interface EncumbranceDocumentV4 extends EncumbranceDocumentBaseV4 {
   version: 4;
+}
+
+export interface EncumbranceDocumentV5 extends EncumbranceDocumentBase {
+  version: 5;
 }
 
 type LegacyEncumbranceDocument = EncumbranceDocumentV1 | EncumbranceDocumentV2;
@@ -108,9 +133,10 @@ type LegacyEncumbranceDocument = EncumbranceDocumentV1 | EncumbranceDocumentV2;
 export type AnyEncumbranceDocument =
   | LegacyEncumbranceDocument
   | EncumbranceDocumentV3
-  | EncumbranceDocumentV4;
+  | EncumbranceDocumentV4
+  | EncumbranceDocumentV5;
 
-export type EncumbranceDocument = EncumbranceDocumentV4;
+export type EncumbranceDocument = EncumbranceDocumentV5;
 
 type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered';
 

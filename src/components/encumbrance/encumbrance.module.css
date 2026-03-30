@@ -162,17 +162,27 @@
   gap: 0.5rem;
 }
 
-.characterSummary {
+.characterCard {
   display: flex;
   flex-direction: column;
+}
+
+.characterSummary {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-start;
   gap: 0.45rem;
   padding: 0.8rem 0.85rem;
   background: rgba(0, 0, 0, 0.16);
   border-left: 4px solid var(--copper);
+  font-family: 'Sura', serif;
 }
 
 .characterSummaryButton {
   width: 100%;
+  flex: 1;
+  display: flex;
   border: 0;
   padding: 0;
   background: transparent;
@@ -180,6 +190,7 @@
   cursor: pointer;
   text-align: left;
   appearance: none;
+  font: inherit;
 }
 
 .characterSummaryButton:hover .characterSummary {
@@ -310,14 +321,17 @@
 .inventoryHeader {
   display: grid;
   grid-template-columns:
-    minmax(0, 2.65fr)
+    minmax(0, 2.45fr)
+    56px
     68px
     92px
     110px
-    minmax(0, 1.55fr);
+    minmax(0, 1.45fr);
   gap: 0.55rem;
   padding: 0 0.35rem 0.45rem;
   font-size: 0.74rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   opacity: 0.8;
@@ -327,6 +341,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  font-family: 'Poppins', sans-serif;
 }
 
 .inventoryRowShell {
@@ -339,11 +354,12 @@
   width: 100%;
   display: grid;
   grid-template-columns:
-    minmax(0, 2.65fr)
+    minmax(0, 2.45fr)
+    56px
     68px
     92px
     110px
-    minmax(0, 1.55fr);
+    minmax(0, 1.45fr);
   gap: 0.55rem;
   align-items: start;
   padding: 0.55rem 0.65rem 0.5rem;
@@ -354,7 +370,7 @@
   cursor: pointer;
   text-align: left;
   appearance: none;
-  font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-family: inherit;
   font-weight: 400;
   transition: background-color 120ms ease, border-left-color 120ms ease;
 }
@@ -411,6 +427,7 @@
 .inventoryName {
   font-size: 1.18rem;
   line-height: 1.18;
+  font-weight: 500;
 }
 
 .inventoryBadge {
@@ -421,6 +438,7 @@
   background: rgba(240, 239, 221, 0.95);
   color: var(--caput-martuum);
   font-size: 0.68rem;
+  font-weight: 500;
 }
 
 .inventoryBadgeWarning {
@@ -437,6 +455,7 @@
 .inventorySummaryValue {
   font-size: 1.02rem;
   line-height: 1.2;
+  font-weight: 500;
 }
 
 .inventoryNotesCell {
@@ -445,11 +464,24 @@
 
 .inventoryNotesPreview {
   min-height: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
   font-size: 0.84rem;
   line-height: 1.35;
   opacity: 0.86;
   overflow: hidden;
   white-space: pre-wrap;
+  font-weight: 400;
+}
+
+.inventoryNoteLine {
+  display: block;
+}
+
+.inventoryNoteLineDm {
+  opacity: 0.72;
+  font-style: italic;
 }
 
 .modalShadow {
@@ -487,6 +519,10 @@
 
 .modalBody {
   padding: 0 0.9rem;
+}
+
+.liveEditModalBody {
+  padding-bottom: 1.2rem;
 }
 
 .modalText {
@@ -533,6 +569,15 @@
   resize: none;
 }
 
+.modalSection {
+  margin-bottom: 1rem;
+}
+
+.modalSectionDm {
+  padding-top: 0.95rem;
+  border-top: 1px solid rgba(240, 239, 221, 0.14);
+}
+
 .modalMetaGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -567,6 +612,7 @@
   align-items: center;
   gap: 0.7rem;
   padding-top: 0.85rem;
+  padding-bottom: 0.2rem;
   border-top: 1px solid rgba(240, 239, 221, 0.14);
 }
 
@@ -595,11 +641,12 @@
   .inventoryHeader,
   .inventoryRowButton {
     grid-template-columns:
-      minmax(0, 2.3fr)
+      minmax(0, 2.15fr)
+      52px
       64px
       88px
       102px
-      minmax(0, 1.35fr);
+      minmax(0, 1.25fr);
   }
 }
 

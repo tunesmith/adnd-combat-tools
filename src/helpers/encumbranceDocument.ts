@@ -10,14 +10,17 @@ import type {
   EncumbranceDocumentV2,
   EncumbranceDocumentV3,
   EncumbranceDocumentV4,
+  EncumbranceDocumentV5,
   EncumbranceInventoryItem,
+  EncumbranceInventoryItemV4,
   EquipmentCategory,
   ExceptionalStrengthTier,
   LegacyEncumbranceInventoryItem,
+  MagicKnowledge,
   StrengthScore,
 } from '../types/encumbrance';
 
-const DOCUMENT_VERSION = 4;
+const DOCUMENT_VERSION = 5;
 
 const exceptionalStrengthTiers = new Set<ExceptionalStrengthTier>([
   'none',
@@ -40,6 +43,11 @@ const equipmentCategories = new Set<EquipmentCategory>([
 ]);
 
 const ammoKinds = new Set<AmmoKind>(['arrow', 'bolt']);
+const magicKnowledgeStates = new Set<MagicKnowledge>([
+  'unknown',
+  'known-mundane',
+  'known-magical',
+]);
 
 const isStrengthScore = (value: unknown): value is StrengthScore => {
   if (!value || typeof value !== 'object') {
@@ -82,6 +90,25 @@ const isLegacyInventoryItem = (
   );
 };
 
+const isInventoryItemV4 = (
+  value: unknown
+): value is EncumbranceInventoryItemV4 => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<EncumbranceInventoryItemV4>;
+
+  return (
+    isLegacyInventoryItem(value) &&
+    typeof candidate.notes === 'string' &&
+    (candidate.nameOverride === undefined ||
+      typeof candidate.nameOverride === 'string') &&
+    (candidate.encumbranceGpOverride === undefined ||
+      isNonNegativeNumber(candidate.encumbranceGpOverride))
+  );
+};
+
 const isInventoryItem = (value: unknown): value is EncumbranceInventoryItem => {
   if (!value || typeof value !== 'object') {
     return false;
@@ -91,9 +118,19 @@ const isInventoryItem = (value: unknown): value is EncumbranceInventoryItem => {
 
   return (
     isLegacyInventoryItem(value) &&
-    typeof candidate.notes === 'string' &&
-    (candidate.nameOverride === undefined ||
-      typeof candidate.nameOverride === 'string') &&
+    typeof candidate.day === 'number' &&
+    Number.isInteger(candidate.day) &&
+    candidate.day >= 0 &&
+    typeof candidate.playerNotes === 'string' &&
+    typeof candidate.playerMagicKnowledge === 'string' &&
+    magicKnowledgeStates.has(candidate.playerMagicKnowledge) &&
+    (candidate.name === undefined || typeof candidate.name === 'string') &&
+    (candidate.dmNotes === undefined ||
+      typeof candidate.dmNotes === 'string') &&
+    (candidate.isMagical === undefined ||
+      typeof candidate.isMagical === 'boolean') &&
+    (candidate.fullyIdentified === undefined ||
+      typeof candidate.fullyIdentified === 'boolean') &&
     (candidate.encumbranceGpOverride === undefined ||
       isNonNegativeNumber(candidate.encumbranceGpOverride))
   );
@@ -108,8 +145,9 @@ const isSupportedDocumentVersion = (
   | EncumbranceDocumentV1['version']
   | EncumbranceDocumentV2['version']
   | EncumbranceDocumentV3['version']
-  | EncumbranceDocumentV4['version'] =>
-  value === 1 || value === 2 || value === 3 || value === 4;
+  | EncumbranceDocumentV4['version']
+  | EncumbranceDocumentV5['version'] =>
+  value === 1 || value === 2 || value === 3 || value === 4 || value === 5;
 
 const isAmmoCapacityRule = (value: unknown): value is AmmoCapacityRule => {
   if (!value || typeof value !== 'object') {
@@ -182,42 +220,120 @@ const sanitizeCatalogItem = (
     : {}),
 });
 
+const sanitizeLegacyInventoryItem = (
+  item: LegacyEncumbranceInventoryItem | EncumbranceInventoryItemV4,
+  kind: EncumbranceDocumentKind
+): EncumbranceInventoryItem => {
+  const legacyItem = item as Partial<EncumbranceInventoryItemV4>;
+  const migratedName =
+    typeof legacyItem.nameOverride === 'string' &&
+    legacyItem.nameOverride.trim()
+      ? legacyItem.nameOverride.trim()
+      : undefined;
+
+  return {
+    id: item.id,
+    catalogId: item.catalogId,
+    quantity: item.quantity,
+    containerId: item.containerId,
+    day: 0,
+    playerNotes: typeof legacyItem.notes === 'string' ? legacyItem.notes : '',
+    playerMagicKnowledge: 'unknown',
+    ...(migratedName
+      ? {
+          name: migratedName,
+        }
+      : {}),
+    ...(typeof legacyItem.encumbranceGpOverride === 'number'
+      ? {
+          encumbranceGpOverride: legacyItem.encumbranceGpOverride,
+        }
+      : {}),
+    ...(kind === 'adnd-encumbrance-dm'
+      ? {
+          dmNotes: '',
+        }
+      : {}),
+  };
+};
+
 const sanitizeInventoryItem = (
-  item: LegacyEncumbranceInventoryItem | EncumbranceInventoryItem
-): EncumbranceInventoryItem => ({
-  id: item.id,
-  catalogId: item.catalogId,
-  quantity: item.quantity,
-  containerId: item.containerId,
-  notes:
-    typeof (item as Partial<EncumbranceInventoryItem>).notes === 'string'
-      ? (item as EncumbranceInventoryItem).notes
-      : '',
-  ...(typeof (item as Partial<EncumbranceInventoryItem>).nameOverride ===
-  'string'
-    ? {
-        nameOverride: (item as EncumbranceInventoryItem).nameOverride,
-      }
-    : {}),
-  ...(typeof (item as Partial<EncumbranceInventoryItem>)
-    .encumbranceGpOverride === 'number'
-    ? {
-        encumbranceGpOverride: (item as EncumbranceInventoryItem)
-          .encumbranceGpOverride,
-      }
-    : {}),
-});
+  item: EncumbranceInventoryItem,
+  kind: EncumbranceDocumentKind
+): EncumbranceInventoryItem => {
+  const sanitizedName =
+    typeof item.name === 'string' && item.name.trim()
+      ? item.name.trim()
+      : undefined;
+  const sanitizedPlayerNotes = item.playerNotes;
+  const sanitizedDmNotes =
+    kind === 'adnd-encumbrance-dm' && typeof item.dmNotes === 'string'
+      ? item.dmNotes
+      : undefined;
+  const sanitizedIsMagical =
+    kind === 'adnd-encumbrance-dm' && typeof item.isMagical === 'boolean'
+      ? item.isMagical
+      : undefined;
+  const sanitizedFullyIdentified =
+    kind === 'adnd-encumbrance-dm' &&
+    sanitizedIsMagical &&
+    item.fullyIdentified === true
+      ? true
+      : undefined;
+
+  return {
+    id: item.id,
+    catalogId: item.catalogId,
+    quantity: item.quantity,
+    containerId: item.containerId,
+    day: item.day,
+    playerNotes: sanitizedPlayerNotes,
+    playerMagicKnowledge: item.playerMagicKnowledge,
+    ...(sanitizedName
+      ? {
+          name: sanitizedName,
+        }
+      : {}),
+    ...(typeof item.encumbranceGpOverride === 'number'
+      ? {
+          encumbranceGpOverride: item.encumbranceGpOverride,
+        }
+      : {}),
+    ...(sanitizedDmNotes !== undefined
+      ? {
+          dmNotes: sanitizedDmNotes,
+        }
+      : {}),
+    ...(sanitizedIsMagical !== undefined
+      ? {
+          isMagical: sanitizedIsMagical,
+        }
+      : {}),
+    ...(sanitizedFullyIdentified
+      ? {
+          fullyIdentified: true,
+        }
+      : {}),
+  };
+};
 
 const sanitizeDocument = (
   candidate: AnyEncumbranceDocument
-): EncumbranceDocumentV4 => ({
+): EncumbranceDocumentV5 => ({
   kind: candidate.kind,
   version: DOCUMENT_VERSION,
   character: {
     name: candidate.character.name,
     strength: candidate.character.strength,
   },
-  inventory: candidate.inventory.map((item) => sanitizeInventoryItem(item)),
+  inventory: candidate.inventory.map((item) =>
+    candidate.version === 5
+      ? sanitizeInventoryItem(item as EncumbranceInventoryItem, candidate.kind)
+      : sanitizeLegacyInventoryItem(
+          item as LegacyEncumbranceInventoryItem | EncumbranceInventoryItemV4,
+          candidate.kind
+        )
+  ),
   customItems:
     'customItems' in candidate && Array.isArray(candidate.customItems)
       ? candidate.customItems.map((item) => sanitizeCatalogItem(item))
@@ -233,7 +349,7 @@ const sanitizeDocument = (
 
 export const createEmptyEncumbranceDocument = (
   kind: EncumbranceDocumentKind = 'adnd-encumbrance-dm'
-): EncumbranceDocumentV4 => ({
+): EncumbranceDocumentV5 => ({
   kind,
   version: DOCUMENT_VERSION,
   character: {
@@ -256,14 +372,16 @@ export const createEmptyEncumbranceDocument = (
 
 export const redactEncumbranceDocument = (
   document: EncumbranceDocument
-): EncumbranceDocumentV4 => ({
+): EncumbranceDocumentV5 => ({
   kind: 'adnd-encumbrance-player',
   version: DOCUMENT_VERSION,
   character: {
     name: document.character.name,
     strength: document.character.strength,
   },
-  inventory: document.inventory.map((item) => sanitizeInventoryItem(item)),
+  inventory: document.inventory.map((item) =>
+    sanitizeInventoryItem(item, 'adnd-encumbrance-player')
+  ),
   customItems:
     'customItems' in document && Array.isArray(document.customItems)
       ? document.customItems.map((item) => sanitizeCatalogItem(item))
@@ -272,7 +390,7 @@ export const redactEncumbranceDocument = (
 
 export const parseEncumbranceDocument = (
   text: string
-): EncumbranceDocumentV4 => {
+): EncumbranceDocumentV5 => {
   const rawValue = JSON.parse(text) as Partial<AnyEncumbranceDocument>;
 
   if (
@@ -283,8 +401,10 @@ export const parseEncumbranceDocument = (
     !isStrengthScore(rawValue.character.strength) ||
     !Array.isArray(rawValue.inventory) ||
     !rawValue.inventory.every((item) =>
-      rawValue.version === 3 || rawValue.version === 4
+      rawValue.version === 5
         ? isInventoryItem(item)
+        : rawValue.version === 3 || rawValue.version === 4
+        ? isInventoryItemV4(item)
         : isLegacyInventoryItem(item)
     )
   ) {
@@ -301,7 +421,9 @@ export const parseEncumbranceDocument = (
   }
 
   if (
-    (rawValue.version === 3 || rawValue.version === 4) &&
+    (rawValue.version === 3 ||
+      rawValue.version === 4 ||
+      rawValue.version === 5) &&
     rawValue.customItems !== undefined &&
     (!Array.isArray(rawValue.customItems) ||
       !rawValue.customItems.every((item) => isCatalogItem(item)))
