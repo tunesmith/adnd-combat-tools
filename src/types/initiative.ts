@@ -63,3 +63,18 @@ export interface InitiativeScenario {
   directMeleeEngagements: DirectMeleeEngagement[];
   unresolvedMeleeCandidateIds: string[];
 }
+
+export interface InitiativeSimpleOrderStep {
+  combatantIds: string[];
+  sides: InitiativeScenarioSide[];
+}
+
+export interface InitiativeRoundResolution {
+  label: string;
+  simpleOrder: InitiativeScenarioOrder;
+  simpleOrderCombatantIds: string[];
+  simpleOrderSteps: InitiativeSimpleOrderStep[];
+  overriddenCombatantIds: string[];
+  directMeleeEngagements: DirectMeleeEngagement[];
+  unresolvedMeleeCandidateIds: string[];
+}
