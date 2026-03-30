@@ -5,21 +5,46 @@ import {
 } from '../helpers/encumbranceDocument';
 
 describe('encumbrance document helpers', () => {
-  test('creates an empty DM document by default', () => {
+  test('creates an empty DM party document by default', () => {
     const document = createEmptyEncumbranceDocument();
 
     expect(document.kind).toBe('adnd-encumbrance-dm');
-    expect(document.version).toBe(6);
-    expect(document.character.name).toBe('');
-    expect(document.character.strength.score).toBe(8);
+    expect(document.version).toBe(7);
+
+    if (document.kind !== 'adnd-encumbrance-dm') {
+      throw new Error('Expected a DM document.');
+    }
+
+    expect(document.characters).toHaveLength(1);
+    expect(document.activeCharacterId).toBe(document.characters[0]?.id);
+    expect(document.characters[0]?.name).toBe('');
+    expect(document.characters[0]?.strength.score).toBe(8);
+    expect(document.characters[0]?.dmNotes).toBe('');
     expect(document.customItems).toEqual([]);
-    expect(document.dm?.privateNotes).toBe('');
   });
 
-  test('redacts DM-only fields for player export', () => {
+  test('redacts DM-only fields for the active player export', () => {
     const document = createEmptyEncumbranceDocument();
-    document.character.name = 'Falstaff';
-    document.inventory.push({
+
+    if (document.kind !== 'adnd-encumbrance-dm') {
+      throw new Error('Expected a DM document.');
+    }
+
+    const primaryCharacter = document.characters[0];
+    if (!primaryCharacter) {
+      throw new Error('Expected a primary character.');
+    }
+    const otherCharacter = {
+      ...primaryCharacter,
+      id: 'character-2',
+      name: 'Mira',
+      inventory: [],
+      dmNotes: 'Ignore me.',
+    };
+
+    primaryCharacter.name = 'Falstaff';
+    primaryCharacter.dmNotes = 'The ring is cursed.';
+    primaryCharacter.inventory.push({
       id: 'item-1',
       catalogId: 'backpack',
       quantity: 1,
@@ -34,6 +59,7 @@ describe('encumbrance document helpers', () => {
       fullyIdentified: true,
       encumbranceGpOverride: 18,
     });
+    document.characters.push(otherCharacter);
     document.customItems.push({
       id: 'custom-ledger',
       name: 'Ledger',
@@ -41,26 +67,27 @@ describe('encumbrance document helpers', () => {
       encumbranceGp: 5,
       valueGp: 12,
     });
-    if (document.dm) {
-      document.dm.privateNotes = 'The ring is cursed.';
-    }
 
-    const redacted = redactEncumbranceDocument(document);
+    const redacted = redactEncumbranceDocument(document, primaryCharacter.id);
 
     expect(redacted.kind).toBe('adnd-encumbrance-player');
+    expect(redacted.character.id).toBe(primaryCharacter.id);
     expect(redacted.character.name).toBe('Falstaff');
-    expect(redacted.inventory).toHaveLength(1);
-    expect(redacted.inventory[0]?.day).toBe(84);
-    expect(redacted.inventory[0]?.playerNotes).toBe('Worn and patched.');
-    expect(redacted.inventory[0]?.playerKnowsValue).toBe(false);
-    expect(redacted.inventory[0]?.name).toBe('Field pack');
-    expect(redacted.inventory[0]?.playerMagicKnowledge).toBe('known-magical');
-    expect(redacted.inventory[0]?.dmNotes).toBeUndefined();
-    expect(redacted.inventory[0]?.isMagical).toBeUndefined();
-    expect(redacted.inventory[0]?.fullyIdentified).toBeUndefined();
-    expect(redacted.inventory[0]?.encumbranceGpOverride).toBe(18);
+    expect(redacted.character.inventory).toHaveLength(1);
+    expect(redacted.character.inventory[0]?.day).toBe(84);
+    expect(redacted.character.inventory[0]?.playerNotes).toBe(
+      'Worn and patched.'
+    );
+    expect(redacted.character.inventory[0]?.playerKnowsValue).toBe(false);
+    expect(redacted.character.inventory[0]?.name).toBe('Field pack');
+    expect(redacted.character.inventory[0]?.playerMagicKnowledge).toBe(
+      'known-magical'
+    );
+    expect(redacted.character.inventory[0]?.dmNotes).toBeUndefined();
+    expect(redacted.character.inventory[0]?.isMagical).toBeUndefined();
+    expect(redacted.character.inventory[0]?.fullyIdentified).toBeUndefined();
+    expect(redacted.character.inventory[0]?.encumbranceGpOverride).toBe(18);
     expect(redacted.customItems).toEqual(document.customItems);
-    expect(redacted.dm).toBeUndefined();
   });
 
   test('parses and migrates a legacy player document', () => {
@@ -87,17 +114,23 @@ describe('encumbrance document helpers', () => {
     );
 
     expect(parsed.kind).toBe('adnd-encumbrance-player');
-    expect(parsed.version).toBe(6);
+    expect(parsed.version).toBe(7);
+
+    if (parsed.kind !== 'adnd-encumbrance-player') {
+      throw new Error('Expected a player document.');
+    }
+
+    expect(parsed.character.name).toBe('Alya');
     expect(parsed.character.strength.exceptional).toBe('51-75');
-    expect(parsed.inventory[0]?.quantity).toBe(87);
-    expect(parsed.inventory[0]?.day).toBe(0);
-    expect(parsed.inventory[0]?.playerNotes).toBe('');
-    expect(parsed.inventory[0]?.playerKnowsValue).toBe(true);
-    expect(parsed.inventory[0]?.playerMagicKnowledge).toBe('unknown');
+    expect(parsed.character.inventory[0]?.quantity).toBe(87);
+    expect(parsed.character.inventory[0]?.day).toBe(0);
+    expect(parsed.character.inventory[0]?.playerNotes).toBe('');
+    expect(parsed.character.inventory[0]?.playerKnowsValue).toBe(true);
+    expect(parsed.character.inventory[0]?.playerMagicKnowledge).toBe('unknown');
     expect(parsed.customItems).toEqual([]);
   });
 
-  test('parses a current DM document', () => {
+  test('parses and migrates a legacy DM document into a party file', () => {
     const parsed = parseEncumbranceDocument(
       JSON.stringify({
         kind: 'adnd-encumbrance-dm',
@@ -142,18 +175,34 @@ describe('encumbrance document helpers', () => {
     );
 
     expect(parsed.kind).toBe('adnd-encumbrance-dm');
-    expect(parsed.version).toBe(6);
-    expect(parsed.inventory[0]?.day).toBe(23);
-    expect(parsed.inventory[0]?.playerNotes).toBe('Packed for travel.');
-    expect(parsed.inventory[0]?.playerKnowsValue).toBe(false);
-    expect(parsed.inventory[0]?.name).toBe('Travel pack');
-    expect(parsed.inventory[0]?.dmNotes).toBe('False-bottom compartment.');
-    expect(parsed.inventory[0]?.playerMagicKnowledge).toBe('unknown');
-    expect(parsed.inventory[0]?.isMagical).toBe(true);
-    expect(parsed.inventory[0]?.fullyIdentified).toBe(true);
-    expect(parsed.inventory[0]?.encumbranceGpOverride).toBe(17.5);
+    expect(parsed.version).toBe(7);
+
+    if (parsed.kind !== 'adnd-encumbrance-dm') {
+      throw new Error('Expected a DM document.');
+    }
+
+    expect(parsed.characters).toHaveLength(1);
+    expect(parsed.activeCharacterId).toBe(parsed.characters[0]?.id);
+    expect(parsed.characters[0]?.name).toBe('Marda');
+    expect(parsed.characters[0]?.inventory[0]?.day).toBe(23);
+    expect(parsed.characters[0]?.inventory[0]?.playerNotes).toBe(
+      'Packed for travel.'
+    );
+    expect(parsed.characters[0]?.inventory[0]?.playerKnowsValue).toBe(false);
+    expect(parsed.characters[0]?.inventory[0]?.name).toBe('Travel pack');
+    expect(parsed.characters[0]?.inventory[0]?.dmNotes).toBe(
+      'False-bottom compartment.'
+    );
+    expect(parsed.characters[0]?.inventory[0]?.playerMagicKnowledge).toBe(
+      'unknown'
+    );
+    expect(parsed.characters[0]?.inventory[0]?.isMagical).toBe(true);
+    expect(parsed.characters[0]?.inventory[0]?.fullyIdentified).toBe(true);
+    expect(parsed.characters[0]?.inventory[0]?.encumbranceGpOverride).toBe(
+      17.5
+    );
+    expect(parsed.characters[0]?.dmNotes).toBe('Secret note.');
     expect(parsed.customItems[0]?.name).toBe('Charm');
-    expect(parsed.dm?.privateNotes).toBe('Secret note.');
   });
 
   test('rejects malformed files', () => {

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import styles from './encumbrance.module.css';
 import type {
   EncumbranceCatalogItem,
+  EncumbranceCharacterSheet,
   EncumbranceCustomItem,
   EncumbranceDocument,
   EncumbranceInventoryItem,
@@ -12,6 +13,7 @@ import type {
   MagicKnowledge,
 } from '../../types/encumbrance';
 import {
+  createEmptyEncumbranceDmCharacter,
   createEmptyEncumbranceDocument,
   parseEncumbranceDocument,
   redactEncumbranceDocument,
@@ -69,9 +71,14 @@ interface InventoryEditDraft {
 }
 
 interface CharacterEditDraft {
+  characterId: string;
   name: string;
   strengthScore: number;
   exceptional: ExceptionalStrengthTier;
+  dmNotes: string;
+}
+
+interface ActiveCharacterState extends EncumbranceCharacterSheet {
   dmNotes: string;
 }
 
@@ -166,6 +173,42 @@ const getDocumentKindForMode = (
   mode: EncumbranceMode
 ): EncumbranceDocument['kind'] =>
   mode === 'dm' ? 'adnd-encumbrance-dm' : 'adnd-encumbrance-player';
+
+const isDmDocument = (
+  document: EncumbranceDocument
+): document is Extract<EncumbranceDocument, { kind: 'adnd-encumbrance-dm' }> =>
+  document.kind === 'adnd-encumbrance-dm';
+
+const getActiveCharacterState = (
+  document: EncumbranceDocument
+): ActiveCharacterState => {
+  if (document.kind === 'adnd-encumbrance-dm') {
+    const activeCharacter =
+      document.characters.find(
+        (character) => character.id === document.activeCharacterId
+      ) || document.characters[0];
+
+    if (activeCharacter) {
+      return activeCharacter;
+    }
+
+    return {
+      id: '',
+      name: '',
+      strength: {
+        score: 8,
+        exceptional: 'none',
+      },
+      inventory: [],
+      dmNotes: '',
+    };
+  }
+
+  return {
+    ...document.character,
+    dmNotes: '',
+  };
+};
 
 const canStoreItemInContainer = (
   itemInfo: EncumbranceCatalogItem,
@@ -312,9 +355,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     useState<InventoryEditDraft | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const visibleDocument =
-    mode === 'player' ? redactEncumbranceDocument(document) : document;
+  const activeCharacter = useMemo(
+    () => getActiveCharacterState(document),
+    [document]
+  );
+  const dmCharacters = isDmDocument(document) ? document.characters : [];
 
   useEffect(() => {
     if (
@@ -358,18 +403,18 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       return;
     }
 
-    const stillExists = visibleDocument.inventory.some(
+    const stillExists = activeCharacter.inventory.some(
       (item) => item.id === editingItemDraft.itemId
     );
 
     if (!stillExists) {
       setEditingItemDraft(null);
     }
-  }, [editingItemDraft, visibleDocument.inventory]);
+  }, [activeCharacter.inventory, editingItemDraft]);
 
   const catalogItems = useMemo(
-    () => [...encumbranceCatalog, ...visibleDocument.customItems],
-    [visibleDocument.customItems]
+    () => [...encumbranceCatalog, ...document.customItems],
+    [document.customItems]
   );
 
   const catalogById = useMemo(
@@ -377,9 +422,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     [catalogItems]
   );
 
-  const catalogGroups = useMemo(
+  const selectableCatalogGroups = useMemo(
     () =>
-      catalogItems.reduce<Record<EquipmentCategory, EncumbranceCatalogItem[]>>(
+      encumbranceCatalog.reduce<
+        Record<EquipmentCategory, EncumbranceCatalogItem[]>
+      >(
         (groups, item) => {
           groups[item.category].push(item);
           return groups;
@@ -395,16 +442,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           coins: [],
         }
       ),
-    [catalogItems]
+    []
   );
 
   const containerItems = useMemo(
     () =>
-      visibleDocument.inventory.filter((item) => {
+      activeCharacter.inventory.filter((item) => {
         const itemInfo = catalogById.get(item.catalogId);
         return Boolean(itemInfo?.isContainer);
       }),
-    [catalogById, visibleDocument.inventory]
+    [activeCharacter.inventory, catalogById]
   );
 
   const selectedCatalogItem = catalogById.get(selectedCatalogId);
@@ -431,37 +478,43 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       : customItemDraft.category === 'containers'
       ? 1
       : selectedQuantity;
+  const addPreviewWeightPerItemGp = addPreviewItem?.encumbranceGp || 0;
+  const addPreviewCurrentWeightGp =
+    addPreviewWeightPerItemGp * addPreviewQuantity;
+  const addPreviewValuePerItemGp = addPreviewItem?.valueGp || 0;
+  const addPreviewCurrentValueGp =
+    addPreviewValuePerItemGp * addPreviewQuantity;
   const totalEncumbranceGp = getTotalEncumbranceGp(
-    visibleDocument,
+    activeCharacter,
     catalogById
   );
   const totalValueGp =
     mode === 'dm'
-      ? getTotalValueGp(visibleDocument, catalogById)
-      : getTotalKnownValueGp(visibleDocument, catalogById);
+      ? getTotalValueGp(activeCharacter, catalogById)
+      : getTotalKnownValueGp(activeCharacter, catalogById);
   const carryingCapacityGp = getStrengthCarryingCapacityGp(
-    visibleDocument.character.strength
+    activeCharacter.strength
   );
   const effectiveLoadGp = getEffectiveLoadGp(
     totalEncumbranceGp,
-    visibleDocument.character.strength
+    activeCharacter.strength
   );
   const loadBand = getLoadBand(effectiveLoadGp);
   const containerWarningCount = getContainerWarningCount(
-    visibleDocument.inventory,
+    activeCharacter.inventory,
     catalogById
   );
   const pendingRemovalItem = pendingRemovalId
-    ? visibleDocument.inventory.find((item) => item.id === pendingRemovalId)
+    ? activeCharacter.inventory.find((item) => item.id === pendingRemovalId)
     : undefined;
   const pendingRemovalItemInfo = pendingRemovalItem
     ? catalogById.get(pendingRemovalItem.catalogId)
     : undefined;
   const pendingRemovalDescendantCount = pendingRemovalItem
-    ? getDescendantIds(visibleDocument.inventory, pendingRemovalItem.id).length
+    ? getDescendantIds(activeCharacter.inventory, pendingRemovalItem.id).length
     : 0;
   const editingItem = editingItemDraft
-    ? visibleDocument.inventory.find(
+    ? activeCharacter.inventory.find(
         (item) => item.id === editingItemDraft.itemId
       )
     : undefined;
@@ -470,13 +523,13 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     : undefined;
   const editingItemDescendantIds =
     editingItem && editingItemInfo
-      ? getDescendantIds(visibleDocument.inventory, editingItem.id)
+      ? getDescendantIds(activeCharacter.inventory, editingItem.id)
       : [];
   const editingContainerSummary =
     editingItem && editingItemInfo?.isContainer
       ? getContainerLoadSummary(
           editingItem.id,
-          visibleDocument.inventory,
+          activeCharacter.inventory,
           catalogById
         )
       : undefined;
@@ -484,7 +537,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     editingItem && editingItemInfo
       ? getInventoryItemTotalGp(
           editingItem.id,
-          visibleDocument.inventory,
+          activeCharacter.inventory,
           catalogById
         )
       : 0;
@@ -493,12 +546,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       ? mode === 'dm'
         ? getInventoryItemTotalValueGp(
             editingItem.id,
-            visibleDocument.inventory,
+            activeCharacter.inventory,
             catalogById
           )
         : getInventoryItemTotalKnownValueGp(
             editingItem.id,
-            visibleDocument.inventory,
+            activeCharacter.inventory,
             catalogById
           )
       : 0;
@@ -522,10 +575,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
   const openCharacterModal = () => {
     setCharacterEditDraft({
-      name: visibleDocument.character.name,
-      strengthScore: visibleDocument.character.strength.score,
-      exceptional: visibleDocument.character.strength.exceptional,
-      dmNotes: document.dm?.privateNotes || '',
+      characterId: activeCharacter.id,
+      name: activeCharacter.name,
+      strengthScore: activeCharacter.strength.score,
+      exceptional: activeCharacter.strength.exceptional,
+      dmNotes: activeCharacter.dmNotes,
     });
   };
 
@@ -534,24 +588,42 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   };
 
   const applyCharacterDraft = (nextDraft: CharacterEditDraft) => {
-    setDocument((currentDocument) => ({
-      ...currentDocument,
-      character: {
-        name: nextDraft.name,
-        strength: {
-          score: nextDraft.strengthScore,
-          exceptional:
-            nextDraft.strengthScore === 18 ? nextDraft.exceptional : 'none',
+    setDocument((currentDocument) => {
+      if (currentDocument.kind === 'adnd-encumbrance-dm') {
+        return {
+          ...currentDocument,
+          characters: currentDocument.characters.map((character) =>
+            character.id === nextDraft.characterId
+              ? {
+                  ...character,
+                  name: nextDraft.name,
+                  strength: {
+                    score: nextDraft.strengthScore,
+                    exceptional:
+                      nextDraft.strengthScore === 18
+                        ? nextDraft.exceptional
+                        : 'none',
+                  },
+                  dmNotes: nextDraft.dmNotes,
+                }
+              : character
+          ),
+        };
+      }
+
+      return {
+        ...currentDocument,
+        character: {
+          ...currentDocument.character,
+          name: nextDraft.name,
+          strength: {
+            score: nextDraft.strengthScore,
+            exceptional:
+              nextDraft.strengthScore === 18 ? nextDraft.exceptional : 'none',
+          },
         },
-      },
-      ...(mode === 'dm'
-        ? {
-            dm: {
-              privateNotes: nextDraft.dmNotes,
-            },
-          }
-        : {}),
-    }));
+      };
+    });
   };
 
   const updateCharacterEditDraft = (
@@ -572,16 +644,37 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     itemId: string,
     updater: (item: EncumbranceInventoryItem) => EncumbranceInventoryItem
   ) => {
-    setDocument((currentDocument) => ({
-      ...currentDocument,
-      inventory: currentDocument.inventory.map((item) =>
-        item.id === itemId ? updater(item) : item
-      ),
-    }));
+    setDocument((currentDocument) => {
+      if (currentDocument.kind === 'adnd-encumbrance-dm') {
+        return {
+          ...currentDocument,
+          characters: currentDocument.characters.map((character) =>
+            character.id === currentDocument.activeCharacterId
+              ? {
+                  ...character,
+                  inventory: character.inventory.map((item) =>
+                    item.id === itemId ? updater(item) : item
+                  ),
+                }
+              : character
+          ),
+        };
+      }
+
+      return {
+        ...currentDocument,
+        character: {
+          ...currentDocument.character,
+          inventory: currentDocument.character.inventory.map((item) =>
+            item.id === itemId ? updater(item) : item
+          ),
+        },
+      };
+    });
   };
 
   const openEditItem = (itemId: string) => {
-    const item = visibleDocument.inventory.find(
+    const item = activeCharacter.inventory.find(
       (candidate) => candidate.id === itemId
     );
     if (!item) {
@@ -690,18 +783,47 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
   const removeInventoryItem = (itemId: string) => {
     setDocument((currentDocument) => {
-      const descendantIds = getDescendantIds(currentDocument.inventory, itemId);
+      const inventory =
+        currentDocument.kind === 'adnd-encumbrance-dm'
+          ? (
+              currentDocument.characters.find(
+                (character) =>
+                  character.id === currentDocument.activeCharacterId
+              ) || currentDocument.characters[0]
+            )?.inventory || []
+          : currentDocument.character.inventory;
+      const descendantIds = getDescendantIds(inventory, itemId);
       const blockedIds = new Set([itemId, ...descendantIds]);
-      const inventory = currentDocument.inventory.filter(
+      const nextInventory = inventory.filter(
         (item) => !blockedIds.has(item.id)
       );
       const referencedCatalogIds = new Set(
-        inventory.map((item) => item.catalogId)
+        nextInventory.map((item) => item.catalogId)
       );
+
+      if (currentDocument.kind === 'adnd-encumbrance-dm') {
+        return {
+          ...currentDocument,
+          characters: currentDocument.characters.map((character) =>
+            character.id === currentDocument.activeCharacterId
+              ? {
+                  ...character,
+                  inventory: nextInventory,
+                }
+              : character
+          ),
+          customItems: currentDocument.customItems.filter((item) =>
+            referencedCatalogIds.has(item.id)
+          ),
+        };
+      }
 
       return {
         ...currentDocument,
-        inventory,
+        character: {
+          ...currentDocument.character,
+          inventory: nextInventory,
+        },
         customItems: currentDocument.customItems.filter((item) =>
           referencedCatalogIds.has(item.id)
         ),
@@ -717,6 +839,57 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       ...currentDraft,
       [key]: value,
     }));
+  };
+
+  const selectActiveCharacter = (characterId: string) => {
+    if (!isDmDocument(document) || characterId === document.activeCharacterId) {
+      return;
+    }
+
+    setDocument((currentDocument) =>
+      currentDocument.kind === 'adnd-encumbrance-dm'
+        ? {
+            ...currentDocument,
+            activeCharacterId: characterId,
+          }
+        : currentDocument
+    );
+    setCharacterEditDraft(null);
+    setEditingItemDraft(null);
+    setPendingRemovalId(null);
+    setSelectedContainerId('');
+    setShowAddModal(false);
+  };
+
+  const addCharacter = () => {
+    if (!isDmDocument(document)) {
+      return;
+    }
+
+    const nextCharacter = createEmptyEncumbranceDmCharacter(
+      `Character ${document.characters.length + 1}`
+    );
+
+    setDocument((currentDocument) =>
+      currentDocument.kind === 'adnd-encumbrance-dm'
+        ? {
+            ...currentDocument,
+            activeCharacterId: nextCharacter.id,
+            characters: [...currentDocument.characters, nextCharacter],
+          }
+        : currentDocument
+    );
+    setSelectedContainerId('');
+    setShowAddModal(false);
+    setEditingItemDraft(null);
+    setPendingRemovalId(null);
+    setCharacterEditDraft({
+      characterId: nextCharacter.id,
+      name: nextCharacter.name,
+      strengthScore: nextCharacter.strength.score,
+      exceptional: nextCharacter.strength.exceptional,
+      dmNotes: nextCharacter.dmNotes,
+    });
   };
 
   const requestRemoveInventoryItem = (itemId: string) => {
@@ -756,10 +929,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           ][])
         : []),
     ]);
+    const currentInventory =
+      currentDocument.kind === 'adnd-encumbrance-dm'
+        ? (
+            currentDocument.characters.find(
+              (character) => character.id === currentDocument.activeCharacterId
+            ) || currentDocument.characters[0]
+          )?.inventory || []
+        : currentDocument.character.inventory;
     const targetContainer = selectedContainerId
-      ? currentDocument.inventory.find(
-          (item) => item.id === selectedContainerId
-        )
+      ? currentInventory.find((item) => item.id === selectedContainerId)
       : undefined;
     const targetContainerInfo = targetContainer
       ? effectiveCatalogById.get(targetContainer.catalogId)
@@ -769,41 +948,56 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       canStoreItemInContainer(itemInfo, targetContainerInfo)
         ? selectedContainerId
         : '';
+    const nextItem: EncumbranceInventoryItem = {
+      id: createInventoryItemId(),
+      catalogId: itemInfo.id,
+      quantity: itemInfo.isContainer ? 1 : quantity,
+      containerId: nextContainerId || null,
+      day: addItemDetailsDraft.day,
+      playerNotes: addItemDetailsDraft.playerNotes,
+      playerKnowsValue:
+        mode === 'dm' ? addItemDetailsDraft.playerKnowsValue : true,
+      playerMagicKnowledge:
+        mode === 'dm' ? addItemDetailsDraft.playerMagicKnowledge : 'unknown',
+      ...(mode === 'dm'
+        ? {
+            dmNotes: addItemDetailsDraft.dmNotes,
+            isMagical: addItemDetailsDraft.isMagical,
+            fullyIdentified:
+              addItemDetailsDraft.isMagical &&
+              addItemDetailsDraft.fullyIdentified &&
+              addItemDetailsDraft.playerMagicKnowledge === 'known-magical'
+                ? true
+                : undefined,
+          }
+        : {}),
+    };
+    const nextCustomItems = customItemToPersist
+      ? [...currentDocument.customItems, customItemToPersist]
+      : currentDocument.customItems;
+
+    if (currentDocument.kind === 'adnd-encumbrance-dm') {
+      return {
+        ...currentDocument,
+        customItems: nextCustomItems,
+        characters: currentDocument.characters.map((character) =>
+          character.id === currentDocument.activeCharacterId
+            ? {
+                ...character,
+                inventory: [...character.inventory, nextItem],
+              }
+            : character
+        ),
+      };
+    }
 
     return {
       ...currentDocument,
-      customItems: customItemToPersist
-        ? [...currentDocument.customItems, customItemToPersist]
-        : currentDocument.customItems,
-      inventory: [
-        ...currentDocument.inventory,
-        {
-          id: createInventoryItemId(),
-          catalogId: itemInfo.id,
-          quantity: itemInfo.isContainer ? 1 : quantity,
-          containerId: nextContainerId || null,
-          day: addItemDetailsDraft.day,
-          playerNotes: addItemDetailsDraft.playerNotes,
-          playerKnowsValue:
-            mode === 'dm' ? addItemDetailsDraft.playerKnowsValue : true,
-          playerMagicKnowledge:
-            mode === 'dm'
-              ? addItemDetailsDraft.playerMagicKnowledge
-              : 'unknown',
-          ...(mode === 'dm'
-            ? {
-                dmNotes: addItemDetailsDraft.dmNotes,
-                isMagical: addItemDetailsDraft.isMagical,
-                fullyIdentified:
-                  addItemDetailsDraft.isMagical &&
-                  addItemDetailsDraft.fullyIdentified &&
-                  addItemDetailsDraft.playerMagicKnowledge === 'known-magical'
-                    ? true
-                    : undefined,
-              }
-            : {}),
-        },
-      ],
+      customItems: nextCustomItems,
+      character: {
+        ...currentDocument.character,
+        inventory: [...currentDocument.character.inventory, nextItem],
+      },
     };
   };
 
@@ -912,23 +1106,25 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     const anchor = window.document.createElement('a');
     const kindLabel =
       nextDocument.kind === 'adnd-encumbrance-dm' ? 'dm' : 'player';
+    const baseName =
+      nextDocument.kind === 'adnd-encumbrance-dm'
+        ? nextDocument.characters.length > 1
+          ? 'party'
+          : nextDocument.characters[0]?.name || 'character'
+        : nextDocument.character.name || 'character';
 
     anchor.href = url;
-    anchor.download = `${slugify(
-      nextDocument.character.name || 'character'
-    )}-encumbrance-${kindLabel}.json`;
+    anchor.download = `${slugify(baseName)}-encumbrance-${kindLabel}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
 
   const exportCurrentDocument = () => {
-    downloadDocument(
-      mode === 'dm' ? document : redactEncumbranceDocument(document)
-    );
+    downloadDocument(document);
   };
 
   const exportPlayerCopy = () => {
-    downloadDocument(redactEncumbranceDocument(document));
+    downloadDocument(redactEncumbranceDocument(document, activeCharacter.id));
   };
 
   const resetDocument = () => {
@@ -947,7 +1143,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     containerId: string | null,
     depth = 0
   ): JSX.Element[] =>
-    visibleDocument.inventory
+    activeCharacter.inventory
       .filter((item) => item.containerId === containerId)
       .map((item) => {
         const itemInfo = catalogById.get(item.catalogId);
@@ -958,7 +1154,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         const containerSummary = itemInfo.isContainer
           ? getContainerLoadSummary(
               item.id,
-              visibleDocument.inventory,
+              activeCharacter.inventory,
               catalogById
             )
           : undefined;
@@ -1150,9 +1346,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         dmNotes: characterEditDraft.dmNotes,
       }
     : {
-        name: visibleDocument.character.name,
-        strength: visibleDocument.character.strength,
-        dmNotes: document.dm?.privateNotes || '',
+        name: activeCharacter.name,
+        strength: activeCharacter.strength,
+        dmNotes: activeCharacter.dmNotes,
       };
   const characterSummaryName =
     activeCharacterSummary.name.trim() || 'Unnamed adventurer';
@@ -1216,7 +1412,42 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
         <div className={styles['gridLayout']}>
           <section className={`${styles['card']} ${styles['characterCard']}`}>
-            <div className={styles['cardTitle']}>Character</div>
+            <div className={styles['cardHeader']}>
+              <div className={styles['cardTitle']}>Character</div>
+              {mode === 'dm' && (
+                <div className={styles['cardHeaderActions']}>
+                  <button
+                    type="button"
+                    className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
+                    onClick={addCharacter}
+                  >
+                    Add Character
+                  </button>
+                </div>
+              )}
+            </div>
+            {mode === 'dm' && (
+              <div className={styles['characterTabs']}>
+                {dmCharacters.map((character) => {
+                  const tabLabel =
+                    character.name.trim() || 'Unnamed adventurer';
+                  return (
+                    <button
+                      key={character.id}
+                      type="button"
+                      className={`${styles['characterTab']} ${
+                        character.id === activeCharacter.id
+                          ? styles['characterTabActive']
+                          : ''
+                      }`}
+                      onClick={() => selectActiveCharacter(character.id)}
+                    >
+                      {tabLabel}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <button
               type="button"
               className={styles['characterSummaryButton']}
@@ -1448,7 +1679,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                   >
                     Add Item
                   </div>
-                  <div className={styles['modalBody']}>
+                  <div
+                    className={`${styles['modalBody']} ${styles['liveEditModalBody']}`}
+                  >
                     <div className={styles['modalToggleRow']}>
                       <button
                         type="button"
@@ -1473,39 +1706,84 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                         Custom Item
                       </button>
                     </div>
-
-                    {addMode === 'catalog' ? (
-                      <div className={styles['modalAddGrid']}>
-                        <label className={styles['modalFieldWide']}>
-                          <span className={styles['fieldLabel']}>Item</span>
-                          <select
-                            className={styles['fieldControl']}
-                            value={selectedCatalogId}
-                            onChange={(event) => {
-                              const nextCatalogId = event.target.value;
-                              setSelectedCatalogId(nextCatalogId);
-                              const nextItem = catalogById.get(nextCatalogId);
-                              if (nextItem?.isContainer) {
-                                setSelectedQuantity(1);
-                              }
-                            }}
-                          >
-                            {(
-                              Object.keys(categoryLabels) as EquipmentCategory[]
-                            ).map((category) => (
-                              <optgroup
-                                key={category}
-                                label={categoryLabels[category]}
+                    <div className={styles['modalSection']}>
+                      <div className={styles['modalFields']}>
+                        {addMode === 'catalog' ? (
+                          <label className={styles['modalFieldWide']}>
+                            <span className={styles['fieldLabel']}>Item</span>
+                            <select
+                              className={styles['fieldControl']}
+                              value={selectedCatalogId}
+                              onChange={(event) => {
+                                const nextCatalogId = event.target.value;
+                                setSelectedCatalogId(nextCatalogId);
+                                const nextItem = catalogById.get(nextCatalogId);
+                                if (nextItem?.isContainer) {
+                                  setSelectedQuantity(1);
+                                }
+                              }}
+                            >
+                              {(
+                                Object.keys(
+                                  categoryLabels
+                                ) as EquipmentCategory[]
+                              ).map((category) => (
+                                <optgroup
+                                  key={category}
+                                  label={categoryLabels[category]}
+                                >
+                                  {selectableCatalogGroups[category].map(
+                                    (item) => (
+                                      <option key={item.id} value={item.id}>
+                                        {item.name}
+                                      </option>
+                                    )
+                                  )}
+                                </optgroup>
+                              ))}
+                            </select>
+                          </label>
+                        ) : (
+                          <>
+                            <label className={styles['modalFieldWide']}>
+                              <span className={styles['fieldLabel']}>Name</span>
+                              <input
+                                className={styles['fieldControl']}
+                                type="text"
+                                value={customItemDraft.name}
+                                onChange={(event) =>
+                                  updateCustomItemDraft(
+                                    'name',
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Custom item"
+                                autoFocus
+                              />
+                            </label>
+                            <label className={styles['fieldGroup']}>
+                              <span className={styles['fieldLabel']}>
+                                Category
+                              </span>
+                              <select
+                                className={styles['fieldControl']}
+                                value={customItemDraft.category}
+                                onChange={(event) =>
+                                  updateCustomItemDraft(
+                                    'category',
+                                    event.target.value as CustomCategory
+                                  )
+                                }
                               >
-                                {catalogGroups[category].map((item) => (
-                                  <option key={item.id} value={item.id}>
-                                    {item.name}
+                                {customCategoryOptions.map((category) => (
+                                  <option key={category} value={category}>
+                                    {categoryLabels[category]}
                                   </option>
                                 ))}
-                              </optgroup>
-                            ))}
-                          </select>
-                        </label>
+                              </select>
+                            </label>
+                          </>
+                        )}
                         <label className={styles['fieldGroup']}>
                           <span className={styles['fieldLabel']}>Quantity</span>
                           <input
@@ -1514,7 +1792,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                             min={1}
                             step={1}
                             value={addPreviewQuantity}
-                            disabled={selectedCatalogItem?.isContainer}
+                            disabled={
+                              addMode === 'catalog'
+                                ? selectedCatalogItem?.isContainer
+                                : customItemDraft.category === 'containers'
+                            }
                             onChange={(event) =>
                               setSelectedQuantity(
                                 Math.max(
@@ -1525,113 +1807,31 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                             }
                           />
                         </label>
+                        {mode === 'dm' && (
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>Day</span>
+                            <input
+                              className={styles['fieldControl']}
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={addItemDetailsDraft.day}
+                              onChange={(event) =>
+                                setAddItemDetailsDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  day: Math.max(
+                                    0,
+                                    Math.floor(Number(event.target.value) || 0)
+                                  ),
+                                }))
+                              }
+                            />
+                          </label>
+                        )}
                         <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Store in</span>
-                          <select
-                            className={styles['fieldControl']}
-                            value={selectedContainerId}
-                            onChange={(event) =>
-                              setSelectedContainerId(event.target.value)
-                            }
-                          >
-                            <option value="">On person</option>
-                            {containerItems.map((containerItem) => {
-                              const containerInfo = catalogById.get(
-                                containerItem.catalogId
-                              );
-                              const isAllowed =
-                                addPreviewItem && containerInfo
-                                  ? canStoreItemInContainer(
-                                      addPreviewItem,
-                                      containerInfo
-                                    )
-                                  : true;
-
-                              return (
-                                <option
-                                  key={containerItem.id}
-                                  value={containerItem.id}
-                                  disabled={!isAllowed}
-                                >
-                                  {containerInfo
-                                    ? getInventoryItemDisplayName(
-                                        containerItem,
-                                        containerInfo
-                                      )
-                                    : 'Container'}
-                                </option>
-                              );
-                            })}
-                          </select>
-                        </label>
-                        <div className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Weight</span>
-                          <div className={styles['fieldReadonly']}>
-                            {selectedCatalogItem?.encumbranceGp || 0} gp
-                          </div>
-                        </div>
-                        <div className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Value</span>
-                          <div className={styles['fieldReadonly']}>
-                            {formatGpValue(selectedCatalogItem?.valueGp || 0)}{' '}
-                            gp
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={styles['modalAddGrid']}>
-                        <label className={styles['modalFieldWide']}>
-                          <span className={styles['fieldLabel']}>Name</span>
-                          <input
-                            className={styles['fieldControl']}
-                            type="text"
-                            value={customItemDraft.name}
-                            onChange={(event) =>
-                              updateCustomItemDraft('name', event.target.value)
-                            }
-                            placeholder="Custom item"
-                          />
-                        </label>
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Category</span>
-                          <select
-                            className={styles['fieldControl']}
-                            value={customItemDraft.category}
-                            onChange={(event) =>
-                              updateCustomItemDraft(
-                                'category',
-                                event.target.value as CustomCategory
-                              )
-                            }
-                          >
-                            {customCategoryOptions.map((category) => (
-                              <option key={category} value={category}>
-                                {categoryLabels[category]}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Quantity</span>
-                          <input
-                            className={styles['fieldControl']}
-                            type="number"
-                            min={1}
-                            step={1}
-                            value={addPreviewQuantity}
-                            disabled={customItemDraft.category === 'containers'}
-                            onChange={(event) =>
-                              setSelectedQuantity(
-                                Math.max(
-                                  1,
-                                  Math.floor(Number(event.target.value) || 1)
-                                )
-                              )
-                            }
-                          />
-                        </label>
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Store in</span>
+                          <span className={styles['fieldLabel']}>
+                            Stored in
+                          </span>
                           <select
                             className={styles['fieldControl']}
                             value={selectedContainerId}
@@ -1646,7 +1846,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                               );
                               const isAllowed = containerInfo
                                 ? canStoreItemInContainer(
-                                    customPreviewItem,
+                                    addPreviewItem || customPreviewItem,
                                     containerInfo
                                   )
                                 : true;
@@ -1669,247 +1869,295 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                           </select>
                         </label>
                         <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Weight</span>
-                          <input
-                            className={styles['fieldControl']}
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={customItemDraft.encumbranceGp}
-                            onChange={(event) =>
-                              updateCustomItemDraft(
-                                'encumbranceGp',
-                                Math.max(
-                                  0,
-                                  Math.floor(Number(event.target.value) || 0)
+                          <span className={styles['fieldLabel']}>
+                            Weight per item
+                          </span>
+                          {addMode === 'catalog' ? (
+                            <div className={styles['fieldReadonly']}>
+                              {addPreviewWeightPerItemGp} gp
+                            </div>
+                          ) : (
+                            <input
+                              className={styles['fieldControl']}
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={customItemDraft.encumbranceGp}
+                              onChange={(event) =>
+                                updateCustomItemDraft(
+                                  'encumbranceGp',
+                                  Math.max(
+                                    0,
+                                    Math.floor(Number(event.target.value) || 0)
+                                  )
                                 )
-                              )
-                            }
-                          />
+                              }
+                            />
+                          )}
                         </label>
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Value</span>
-                          <input
-                            className={styles['fieldControl']}
-                            type="number"
-                            min={0}
-                            step={0.01}
-                            value={customItemDraft.valueGp}
-                            onChange={(event) =>
-                              updateCustomItemDraft(
-                                'valueGp',
-                                Math.max(0, Number(event.target.value) || 0)
-                              )
-                            }
-                          />
-                        </label>
-                        {customItemDraft.category === 'containers' && (
+                        {addMode === 'custom' && (
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
-                              Capacity
+                              Value per item
                             </span>
                             <input
                               className={styles['fieldControl']}
                               type="number"
-                              min={1}
-                              step={1}
-                              value={customItemDraft.capacityGp}
+                              min={0}
+                              step={0.01}
+                              value={customItemDraft.valueGp}
                               onChange={(event) =>
                                 updateCustomItemDraft(
-                                  'capacityGp',
-                                  Math.max(
-                                    1,
-                                    Math.floor(Number(event.target.value) || 1)
-                                  )
+                                  'valueGp',
+                                  Math.max(0, Number(event.target.value) || 0)
                                 )
                               }
                             />
                           </label>
                         )}
-                        <div className={styles['modalFieldWide']}>
-                          <span className={styles['fieldLabel']}>Preview</span>
-                          <div className={styles['fieldReadonly']}>
-                            {customPreviewItem.encumbranceGp} gp /{' '}
-                            {formatGpValue(customPreviewItem.valueGp)} gp
-                            {customPreviewItem.isContainer &&
-                              ` / ${customPreviewItem.capacityGp} gp cap.`}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div className={styles['modalFields']}>
-                      {mode === 'dm' && (
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>Day</span>
-                          <input
-                            className={styles['fieldControl']}
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={addItemDetailsDraft.day}
-                            onChange={(event) =>
-                              setAddItemDetailsDraft((currentDraft) => ({
-                                ...currentDraft,
-                                day: Math.max(
-                                  0,
-                                  Math.floor(Number(event.target.value) || 0)
-                                ),
-                              }))
-                            }
-                          />
-                        </label>
-                      )}
-                      {mode === 'dm' && (
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>
-                            Magic known to player
-                          </span>
-                          <select
-                            className={styles['fieldControl']}
-                            value={addItemDetailsDraft.playerMagicKnowledge}
-                            onChange={(event) =>
-                              setAddItemDetailsDraft((currentDraft) => {
-                                const nextKnowledge = event.target
-                                  .value as MagicKnowledge;
-                                return {
-                                  ...currentDraft,
-                                  playerMagicKnowledge: nextKnowledge,
-                                  fullyIdentified:
-                                    nextKnowledge === 'known-magical'
-                                      ? currentDraft.fullyIdentified
-                                      : false,
-                                };
-                              })
-                            }
-                          >
-                            {(
-                              Object.keys(
-                                magicKnowledgeLabels
-                              ) as MagicKnowledge[]
-                            ).map((knowledge) => (
-                              <option key={knowledge} value={knowledge}>
-                                {magicKnowledgeLabels[knowledge]}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
-                      {mode === 'dm' && (
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>
-                            Value known to player
-                          </span>
-                          <select
-                            className={styles['fieldControl']}
-                            value={
-                              addItemDetailsDraft.playerKnowsValue
-                                ? 'yes'
-                                : 'no'
-                            }
-                            onChange={(event) =>
-                              setAddItemDetailsDraft((currentDraft) => ({
-                                ...currentDraft,
-                                playerKnowsValue: event.target.value === 'yes',
-                              }))
-                            }
-                          >
-                            <option value="yes">Known</option>
-                            <option value="no">Unknown</option>
-                          </select>
-                        </label>
-                      )}
-                      {mode === 'dm' && (
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>
-                            Magical truth
-                          </span>
-                          <select
-                            className={styles['fieldControl']}
-                            value={addItemDetailsDraft.isMagical ? 'yes' : 'no'}
-                            onChange={(event) =>
-                              setAddItemDetailsDraft((currentDraft) => ({
-                                ...currentDraft,
-                                isMagical: event.target.value === 'yes',
-                                fullyIdentified:
-                                  event.target.value === 'yes'
-                                    ? currentDraft.fullyIdentified
-                                    : false,
-                              }))
-                            }
-                          >
-                            <option value="no">Mundane</option>
-                            <option value="yes">Magical</option>
-                          </select>
-                        </label>
-                      )}
-                      {mode === 'dm' && addItemDetailsDraft.isMagical && (
-                        <label className={styles['fieldGroup']}>
-                          <span className={styles['fieldLabel']}>
-                            Fully identified
-                          </span>
-                          <select
-                            className={styles['fieldControl']}
-                            value={
-                              addItemDetailsDraft.fullyIdentified ? 'yes' : 'no'
-                            }
-                            onChange={(event) =>
-                              setAddItemDetailsDraft((currentDraft) => ({
-                                ...currentDraft,
-                                fullyIdentified: event.target.value === 'yes',
-                                playerMagicKnowledge:
-                                  event.target.value === 'yes'
-                                    ? 'known-magical'
-                                    : currentDraft.playerMagicKnowledge,
-                              }))
-                            }
-                          >
-                            <option value="no">Not fully identified</option>
-                            <option value="yes">Fully identified</option>
-                          </select>
-                        </label>
-                      )}
-                      <label className={styles['modalFieldWide']}>
-                        <span className={styles['fieldLabel']}>
-                          Player Notes
-                        </span>
-                        <textarea
-                          className={`${styles['fieldControl']} ${styles['modalNotes']}`}
-                          rows={3}
-                          value={addItemDetailsDraft.playerNotes}
-                          ref={(element) => resizeTextarea(element)}
-                          onChange={(event) =>
-                            setAddItemDetailsDraft((currentDraft) => ({
-                              ...currentDraft,
-                              playerNotes: event.target.value,
-                            }))
-                          }
-                          onInput={(event) =>
-                            resizeTextarea(event.currentTarget)
-                          }
-                          placeholder="Visible in player copies."
-                        />
-                      </label>
-                      {mode === 'dm' && (
+                        {addMode === 'custom' &&
+                          customItemDraft.category === 'containers' && (
+                            <label className={styles['fieldGroup']}>
+                              <span className={styles['fieldLabel']}>
+                                Capacity
+                              </span>
+                              <input
+                                className={styles['fieldControl']}
+                                type="number"
+                                min={1}
+                                step={1}
+                                value={customItemDraft.capacityGp}
+                                onChange={(event) =>
+                                  updateCustomItemDraft(
+                                    'capacityGp',
+                                    Math.max(
+                                      1,
+                                      Math.floor(
+                                        Number(event.target.value) || 1
+                                      )
+                                    )
+                                  )
+                                }
+                              />
+                            </label>
+                          )}
                         <label className={styles['modalFieldWide']}>
-                          <span className={styles['fieldLabel']}>DM Notes</span>
+                          <span className={styles['fieldLabel']}>
+                            Player Notes
+                          </span>
                           <textarea
                             className={`${styles['fieldControl']} ${styles['modalNotes']}`}
                             rows={3}
-                            value={addItemDetailsDraft.dmNotes}
+                            value={addItemDetailsDraft.playerNotes}
                             ref={(element) => resizeTextarea(element)}
                             onChange={(event) =>
                               setAddItemDetailsDraft((currentDraft) => ({
                                 ...currentDraft,
-                                dmNotes: event.target.value,
+                                playerNotes: event.target.value,
                               }))
                             }
                             onInput={(event) =>
                               resizeTextarea(event.currentTarget)
                             }
-                            placeholder="Private note stripped from player exports."
+                            placeholder="Visible in player copies."
                           />
                         </label>
+                      </div>
+                    </div>
+                    {mode === 'dm' && (
+                      <div
+                        className={`${styles['modalSection']} ${styles['modalSectionDm']}`}
+                      >
+                        <div className={styles['modalFields']}>
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
+                              Magic known to player
+                            </span>
+                            <select
+                              className={styles['fieldControl']}
+                              value={addItemDetailsDraft.playerMagicKnowledge}
+                              onChange={(event) =>
+                                setAddItemDetailsDraft((currentDraft) => {
+                                  const nextKnowledge = event.target
+                                    .value as MagicKnowledge;
+                                  return {
+                                    ...currentDraft,
+                                    playerMagicKnowledge: nextKnowledge,
+                                    fullyIdentified:
+                                      nextKnowledge === 'known-magical'
+                                        ? currentDraft.fullyIdentified
+                                        : false,
+                                  };
+                                })
+                              }
+                            >
+                              {(
+                                Object.keys(
+                                  magicKnowledgeLabels
+                                ) as MagicKnowledge[]
+                              ).map((knowledge) => (
+                                <option key={knowledge} value={knowledge}>
+                                  {magicKnowledgeLabels[knowledge]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
+                              Value known to player
+                            </span>
+                            <select
+                              className={styles['fieldControl']}
+                              value={
+                                addItemDetailsDraft.playerKnowsValue
+                                  ? 'yes'
+                                  : 'no'
+                              }
+                              onChange={(event) =>
+                                setAddItemDetailsDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  playerKnowsValue:
+                                    event.target.value === 'yes',
+                                }))
+                              }
+                            >
+                              <option value="yes">Known</option>
+                              <option value="no">Unknown</option>
+                            </select>
+                          </label>
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
+                              Magical truth
+                            </span>
+                            <select
+                              className={styles['fieldControl']}
+                              value={
+                                addItemDetailsDraft.isMagical ? 'yes' : 'no'
+                              }
+                              onChange={(event) =>
+                                setAddItemDetailsDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  isMagical: event.target.value === 'yes',
+                                  fullyIdentified:
+                                    event.target.value === 'yes'
+                                      ? currentDraft.fullyIdentified
+                                      : false,
+                                }))
+                              }
+                            >
+                              <option value="no">Mundane</option>
+                              <option value="yes">Magical</option>
+                            </select>
+                          </label>
+                          {addItemDetailsDraft.isMagical && (
+                            <label className={styles['fieldGroup']}>
+                              <span className={styles['fieldLabel']}>
+                                Fully identified
+                              </span>
+                              <select
+                                className={styles['fieldControl']}
+                                value={
+                                  addItemDetailsDraft.fullyIdentified
+                                    ? 'yes'
+                                    : 'no'
+                                }
+                                onChange={(event) =>
+                                  setAddItemDetailsDraft((currentDraft) => ({
+                                    ...currentDraft,
+                                    fullyIdentified:
+                                      event.target.value === 'yes',
+                                    playerMagicKnowledge:
+                                      event.target.value === 'yes'
+                                        ? 'known-magical'
+                                        : currentDraft.playerMagicKnowledge,
+                                  }))
+                                }
+                              >
+                                <option value="no">Not fully identified</option>
+                                <option value="yes">Fully identified</option>
+                              </select>
+                            </label>
+                          )}
+                          <label className={styles['modalFieldWide']}>
+                            <span className={styles['fieldLabel']}>
+                              DM Notes
+                            </span>
+                            <textarea
+                              className={`${styles['fieldControl']} ${styles['modalNotes']}`}
+                              rows={3}
+                              value={addItemDetailsDraft.dmNotes}
+                              ref={(element) => resizeTextarea(element)}
+                              onChange={(event) =>
+                                setAddItemDetailsDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  dmNotes: event.target.value,
+                                }))
+                              }
+                              onInput={(event) =>
+                                resizeTextarea(event.currentTarget)
+                              }
+                              placeholder="Private note stripped from player exports."
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                    <div className={styles['modalMetaGrid']}>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>
+                          Value per item
+                        </span>
+                        <span className={styles['modalMetaValue']}>
+                          {formatGpValue(addPreviewValuePerItemGp)} gp
+                        </span>
+                      </div>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>
+                          Current weight
+                        </span>
+                        <span className={styles['modalMetaValue']}>
+                          {addPreviewCurrentWeightGp} gp
+                        </span>
+                      </div>
+                      <div className={styles['modalMetaItem']}>
+                        <span className={styles['modalMetaLabel']}>
+                          Current value
+                        </span>
+                        <span className={styles['modalMetaValue']}>
+                          {formatGpValue(addPreviewCurrentValueGp)} gp
+                        </span>
+                      </div>
+                      {addMode === 'catalog' && selectedCatalogItem && (
+                        <div className={styles['modalMetaItem']}>
+                          <span className={styles['modalMetaLabel']}>
+                            Catalog item
+                          </span>
+                          <span className={styles['modalMetaValue']}>
+                            {selectedCatalogItem.name}
+                          </span>
+                        </div>
                       )}
+                      {addMode === 'custom' && (
+                        <div className={styles['modalMetaItem']}>
+                          <span className={styles['modalMetaLabel']}>
+                            Category
+                          </span>
+                          <span className={styles['modalMetaValue']}>
+                            {categoryLabels[customItemDraft.category]}
+                          </span>
+                        </div>
+                      )}
+                      {addPreviewItem?.isContainer &&
+                        typeof addPreviewItem.capacityGp === 'number' && (
+                          <div className={styles['modalMetaItem']}>
+                            <span className={styles['modalMetaLabel']}>
+                              Capacity
+                            </span>
+                            <span className={styles['modalMetaValue']}>
+                              {addPreviewItem.capacityGp} gp
+                            </span>
+                          </div>
+                        )}
                     </div>
                   </div>
                   <div className={styles['modalActions']}>
@@ -2316,9 +2564,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                     </div>
 
                     <div className={styles['modalDangerRow']}>
-                      <div className={styles['modalDangerText']}>
-                        Remove this item from the sheet.
-                      </div>
                       <button
                         type="button"
                         className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonDanger']}`}

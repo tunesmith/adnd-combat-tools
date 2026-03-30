@@ -81,36 +81,51 @@ export interface EncumbranceInventoryItem extends EncumbranceInventoryItemV5 {
   playerKnowsValue: boolean;
 }
 
-interface EncumbranceCharacter {
+interface LegacyEncumbranceCharacter {
   name: string;
   strength: StrengthScore;
 }
 
-interface EncumbranceDmData {
-  privateNotes: string;
+export interface EncumbranceCharacterSheet {
+  id: string;
+  name: string;
+  strength: StrengthScore;
+  inventory: EncumbranceInventoryItem[];
+}
+
+export type EncumbrancePlayerCharacter = EncumbranceCharacterSheet;
+
+export interface EncumbranceDmCharacter extends EncumbranceCharacterSheet {
+  dmNotes: string;
 }
 
 interface LegacyEncumbranceDocumentBase {
   kind: EncumbranceDocumentKind;
-  character: EncumbranceCharacter;
+  character: LegacyEncumbranceCharacter;
   inventory: LegacyEncumbranceInventoryItem[];
-  dm?: EncumbranceDmData;
+  dm?: {
+    privateNotes: string;
+  };
 }
 
 interface EncumbranceDocumentBaseV4 {
   kind: EncumbranceDocumentKind;
-  character: EncumbranceCharacter;
+  character: LegacyEncumbranceCharacter;
   inventory: EncumbranceInventoryItemV4[];
   customItems: EncumbranceCustomItem[];
-  dm?: EncumbranceDmData;
+  dm?: {
+    privateNotes: string;
+  };
 }
 
 interface EncumbranceDocumentBase {
   kind: EncumbranceDocumentKind;
-  character: EncumbranceCharacter;
+  character: LegacyEncumbranceCharacter;
   inventory: EncumbranceInventoryItem[];
   customItems: EncumbranceCustomItem[];
-  dm?: EncumbranceDmData;
+  dm?: {
+    privateNotes: string;
+  };
 }
 
 export interface EncumbranceDocumentV1 extends LegacyEncumbranceDocumentBase {
@@ -137,6 +152,21 @@ export interface EncumbranceDocumentV6 extends EncumbranceDocumentBase {
   version: 6;
 }
 
+export interface EncumbrancePlayerDocumentV7 {
+  kind: 'adnd-encumbrance-player';
+  version: 7;
+  character: EncumbrancePlayerCharacter;
+  customItems: EncumbranceCustomItem[];
+}
+
+export interface EncumbranceDmDocumentV7 {
+  kind: 'adnd-encumbrance-dm';
+  version: 7;
+  activeCharacterId: string;
+  characters: EncumbranceDmCharacter[];
+  customItems: EncumbranceCustomItem[];
+}
+
 type LegacyEncumbranceDocument = EncumbranceDocumentV1 | EncumbranceDocumentV2;
 
 export type AnyEncumbranceDocument =
@@ -144,9 +174,13 @@ export type AnyEncumbranceDocument =
   | EncumbranceDocumentV3
   | EncumbranceDocumentV4
   | EncumbranceDocumentV5
-  | EncumbranceDocumentV6;
+  | EncumbranceDocumentV6
+  | EncumbrancePlayerDocumentV7
+  | EncumbranceDmDocumentV7;
 
-export type EncumbranceDocument = EncumbranceDocumentV6;
+export type EncumbranceDocument =
+  | EncumbrancePlayerDocumentV7
+  | EncumbranceDmDocumentV7;
 
 type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered';
 

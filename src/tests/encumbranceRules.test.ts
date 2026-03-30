@@ -1,17 +1,27 @@
 import { createEmptyEncumbranceDocument } from '../helpers/encumbranceDocument';
 import {
   getContainerLoadSummary,
-  getStrengthCarryingCapacityGp,
   getEffectiveLoadGp,
   getInventoryItemTotalKnownValueGp,
   getInventoryItemTotalValueGp,
   getLoadBand,
+  getStrengthCarryingCapacityGp,
   getStrengthWeightAllowanceGp,
   getTotalEncumbranceGp,
   getTotalKnownValueGp,
   getTotalValueGp,
 } from '../helpers/encumbranceRules';
 import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
+
+const createPlayerCharacter = () => {
+  const document = createEmptyEncumbranceDocument('adnd-encumbrance-player');
+
+  if (document.kind !== 'adnd-encumbrance-player') {
+    throw new Error('Expected a player document.');
+  }
+
+  return document.character;
+};
 
 describe('encumbrance rules', () => {
   test('returns strength weight allowance for normal and exceptional strength', () => {
@@ -54,8 +64,8 @@ describe('encumbrance rules', () => {
   });
 
   test('sums inventory encumbrance including nested contents', () => {
-    const document = createEmptyEncumbranceDocument();
-    document.inventory = [
+    const character = createPlayerCharacter();
+    character.inventory = [
       {
         id: 'backpack-1',
         catalogId: 'backpack',
@@ -88,12 +98,12 @@ describe('encumbrance rules', () => {
       },
     ];
 
-    expect(getTotalEncumbranceGp(document, encumbranceCatalogById)).toBe(120);
+    expect(getTotalEncumbranceGp(character, encumbranceCatalogById)).toBe(120);
   });
 
   test('uses per-item encumbrance overrides when totaling carried load', () => {
-    const document = createEmptyEncumbranceDocument();
-    document.inventory = [
+    const character = createPlayerCharacter();
+    character.inventory = [
       {
         id: 'rations-1',
         catalogId: 'rations-iron',
@@ -108,12 +118,12 @@ describe('encumbrance rules', () => {
       },
     ];
 
-    expect(getTotalEncumbranceGp(document, encumbranceCatalogById)).toBe(37.5);
+    expect(getTotalEncumbranceGp(character, encumbranceCatalogById)).toBe(37.5);
   });
 
   test('tracks container load and over-capacity warnings', () => {
-    const document = createEmptyEncumbranceDocument();
-    document.inventory = [
+    const character = createPlayerCharacter();
+    character.inventory = [
       {
         id: 'sack-1',
         catalogId: 'sack-large',
@@ -138,7 +148,7 @@ describe('encumbrance rules', () => {
 
     const summary = getContainerLoadSummary(
       'sack-1',
-      document.inventory,
+      character.inventory,
       encumbranceCatalogById
     );
 
@@ -166,8 +176,8 @@ describe('encumbrance rules', () => {
   });
 
   test('sums inventory value including nested contents', () => {
-    const document = createEmptyEncumbranceDocument();
-    document.inventory = [
+    const character = createPlayerCharacter();
+    character.inventory = [
       {
         id: 'backpack-1',
         catalogId: 'backpack',
@@ -213,21 +223,21 @@ describe('encumbrance rules', () => {
     expect(
       getInventoryItemTotalValueGp(
         'backpack-1',
-        document.inventory,
+        character.inventory,
         encumbranceCatalogById
       )
     ).toBeCloseTo(102.02);
-    expect(getTotalValueGp(document, encumbranceCatalogById)).toBeCloseTo(
+    expect(getTotalValueGp(character, encumbranceCatalogById)).toBeCloseTo(
       114.02
     );
     expect(
       getInventoryItemTotalKnownValueGp(
         'backpack-1',
-        document.inventory,
+        character.inventory,
         encumbranceCatalogById
       )
     ).toBeCloseTo(2.02);
-    expect(getTotalKnownValueGp(document, encumbranceCatalogById)).toBeCloseTo(
+    expect(getTotalKnownValueGp(character, encumbranceCatalogById)).toBeCloseTo(
       14.02
     );
   });

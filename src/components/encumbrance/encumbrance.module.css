@@ -167,6 +167,32 @@
   flex-direction: column;
 }
 
+.characterTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.characterTab {
+  padding: 0.34rem 0.72rem;
+  border: 1px solid rgba(240, 239, 221, 0.16);
+  background: rgba(0, 0, 0, 0.14);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.1;
+}
+
+.characterTab:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.characterTabActive {
+  border-color: rgba(212, 141, 39, 0.72);
+  background: rgba(0, 0, 0, 0.24);
+}
+
 .characterSummary {
   display: flex;
   flex: 1;
@@ -556,13 +582,6 @@
   margin-bottom: 0.8rem;
 }
 
-.modalAddGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem;
-  margin-bottom: 0.2rem;
-}
-
 .modalFieldWide {
   display: flex;
   flex-direction: column;
@@ -615,18 +634,12 @@
 
 .modalDangerRow {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   gap: 0.7rem;
   padding-top: 0.85rem;
   padding-bottom: 0.2rem;
   border-top: 1px solid rgba(240, 239, 221, 0.14);
-}
-
-.modalDangerText {
-  font-size: 0.82rem;
-  line-height: 1.4;
-  opacity: 0.78;
 }
 
 .modalActions {
@@ -709,8 +722,7 @@
   }
 
   .modalFields,
-  .modalMetaGrid,
-  .modalAddGrid {
+  .modalMetaGrid {
     grid-template-columns: 1fr;
   }
 }

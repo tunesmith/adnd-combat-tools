@@ -1,7 +1,7 @@
 import type {
   ContainerLoadSummary,
   EncumbranceCatalogItem,
-  EncumbranceDocument,
+  EncumbranceCharacterSheet,
   EncumbranceInventoryItem,
   LoadBand,
   StrengthScore,
@@ -143,12 +143,13 @@ export const getInventoryItemTotalGp = (
 };
 
 export const getTotalEncumbranceGp = (
-  document: EncumbranceDocument,
+  character: EncumbranceCharacterSheet,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
-  getChildItems(document.inventory, null).reduce(
+  getChildItems(character.inventory, null).reduce(
     (total, item) =>
-      total + getInventoryItemTotalGp(item.id, document.inventory, catalogById),
+      total +
+      getInventoryItemTotalGp(item.id, character.inventory, catalogById),
     0
   );
 
@@ -196,26 +197,26 @@ export const getInventoryItemTotalKnownValueGp = (
 };
 
 export const getTotalValueGp = (
-  document: EncumbranceDocument,
+  character: EncumbranceCharacterSheet,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
-  getChildItems(document.inventory, null).reduce(
+  getChildItems(character.inventory, null).reduce(
     (total, item) =>
       total +
-      getInventoryItemTotalValueGp(item.id, document.inventory, catalogById),
+      getInventoryItemTotalValueGp(item.id, character.inventory, catalogById),
     0
   );
 
 export const getTotalKnownValueGp = (
-  document: EncumbranceDocument,
+  character: EncumbranceCharacterSheet,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
-  getChildItems(document.inventory, null).reduce(
+  getChildItems(character.inventory, null).reduce(
     (total, item) =>
       total +
       getInventoryItemTotalKnownValueGp(
         item.id,
-        document.inventory,
+        character.inventory,
         catalogById
       ),
     0
