@@ -21,6 +21,23 @@ export interface InitiativeScenarioCombatant {
   targetIds: string[];
 }
 
+export interface InitiativeScenarioDraftCombatant {
+  combatantKey: number;
+  name?: string;
+  weaponId: number;
+  intention?: string;
+  result?: string;
+  targetCombatantKeys: number[];
+}
+
+export interface InitiativeScenarioDraft {
+  label: string;
+  partyInitiative: number;
+  enemyInitiative: number;
+  party: InitiativeScenarioDraftCombatant[];
+  enemies: InitiativeScenarioDraftCombatant[];
+}
+
 export interface DirectMeleePair {
   partyCombatantId: string;
   enemyCombatantId: string;

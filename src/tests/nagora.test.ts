@@ -1,7 +1,6 @@
-import Player from "../types/player";
-import { MELEE_WEAPON, SPELL } from "../types/action";
-import sequencePlayers from "../helpers/initiative/sequence";
-import { expect } from "@jest/globals";
+import type Player from '../types/player';
+import { MELEE_WEAPON, SPELL } from '../types/action';
+import sequencePlayers from '../helpers/initiative/sequence';
 
 /**
  * If the rolls are 5-5, and we drop one cleric but now one fighter is attacking the remaining cleric -
@@ -11,8 +10,8 @@ import { expect } from "@jest/globals";
  * FA attacks the cleric; FB attacking FA. Everyone's directly involved and the players need to know
  * what the sequence is. What is your answer? Because at this point I can't guess where you'll go with this.
  */
-describe("nagora tests", () => {
-  test("fighters and cleric", () => {
+describe('nagora tests', () => {
+  test('fighters and cleric', () => {
     const fighterA: Player = {
       id: 1,
       initDie: 5,
