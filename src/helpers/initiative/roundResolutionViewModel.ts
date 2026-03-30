@@ -61,14 +61,14 @@ const getSimpleOrderSummary = (
   resolution: InitiativeRoundResolution
 ): string => {
   if (resolution.simpleOrder === 'party-first') {
-    return `Party side won initiative ${scenario.partyInitiative} to ${scenario.enemyInitiative}. These combatants remain on the simple side-order track because they are not part of a clean direct melee override.`;
+    return `Party side won initiative ${scenario.partyInitiative} to ${scenario.enemyInitiative}. This is the baseline side-order for the round; narrower melee timing rules can still refine specific exchanges.`;
   }
 
   if (resolution.simpleOrder === 'enemy-first') {
-    return `Enemy side won initiative ${scenario.enemyInitiative} to ${scenario.partyInitiative}. These combatants remain on the simple side-order track because they are not part of a clean direct melee override.`;
+    return `Enemy side won initiative ${scenario.enemyInitiative} to ${scenario.partyInitiative}. This is the baseline side-order for the round; narrower melee timing rules can still refine specific exchanges.`;
   }
 
-  return `Both sides tied initiative at ${scenario.partyInitiative}. These combatants stay grouped on the simple initiative track because no narrower override applies to them yet.`;
+  return `Both sides tied initiative at ${scenario.partyInitiative}. This leaves the baseline order simultaneous unless narrower melee timing rules create local precedence.`;
 };
 
 const getSimpleOrderStepLabel = (
@@ -261,7 +261,7 @@ const buildUnresolvedCard = (
     kind: 'unresolved',
     title: 'Unresolved Melee Contact',
     summary:
-      'These combatants are in mutual melee contact, but not in a clean one-to-one pairing. The current rules slice leaves them unresolved instead of inventing an order.',
+      'These combatants are in mutual melee contact, but not in a clean one-to-one pairing. The current rules slice does not infer extra local precedence for them beyond the baseline initiative order.',
     combatantIds: resolution.unresolvedMeleeCandidateIds,
     steps: [
       {

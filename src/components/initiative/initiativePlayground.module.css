@@ -189,7 +189,7 @@
 
 .summaryStrip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.9rem;
   margin-bottom: 1.2rem;
 }
@@ -219,6 +219,65 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.graphPanel {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(172, 114, 35, 0.5);
+}
+
+.graphHeader {
+  margin-bottom: 0.8rem;
+}
+
+.graphTitle {
+  font-family: 'Sura', serif;
+  font-size: 1.7rem;
+  margin-bottom: 0.25rem;
+}
+
+.graphCopy {
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.graphGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.graphColumn {
+  background: rgba(240, 239, 221, 0.08);
+  border: 1px solid rgba(172, 114, 35, 0.5);
+  padding: 0.9rem;
+}
+
+.graphSubhead {
+  font-family: 'Sura', serif;
+  font-size: 1.35rem;
+  margin-bottom: 0.6rem;
+}
+
+.graphList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  list-style: none;
+}
+
+.graphItem {
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(172, 114, 35, 0.4);
+  padding: 0.7rem 0.8rem;
+}
+
+.graphEmpty {
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(172, 114, 35, 0.4);
+  padding: 0.8rem;
+  line-height: 1.45;
 }
 
 .resultCard {
@@ -295,7 +354,8 @@
 @media (max-width: 860px) {
   .roundControls,
   .rosterGrid,
-  .summaryStrip {
+  .summaryStrip,
+  .graphGrid {
     grid-template-columns: 1fr;
   }
 

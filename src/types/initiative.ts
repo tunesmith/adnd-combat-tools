@@ -95,3 +95,24 @@ export interface InitiativeRoundResolution {
   directMeleeEngagements: DirectMeleeEngagement[];
   unresolvedMeleeCandidateIds: string[];
 }
+
+export interface InitiativeAttackNode {
+  id: string;
+  combatantId: string;
+  side: InitiativeScenarioSide;
+  attackNumber: number;
+}
+
+export type InitiativeAttackEdgeReason = 'simple-initiative' | 'direct-melee';
+
+export interface InitiativeAttackEdge {
+  fromNodeId: string;
+  toNodeId: string;
+  reasons: InitiativeAttackEdgeReason[];
+}
+
+export interface InitiativeAttackGraph {
+  nodes: InitiativeAttackNode[];
+  edges: InitiativeAttackEdge[];
+  layers: string[][];
+}

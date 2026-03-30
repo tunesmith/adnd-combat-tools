@@ -40,7 +40,7 @@ const setMutualTarget = (
 };
 
 describe('initiative round resolution', () => {
-  test('keeps only non-overridden combatants in simple side order steps', () => {
+  test('keeps all combatants on the baseline side initiative track', () => {
     const round = requireRound();
 
     round.partyInitiative = '2';
@@ -64,16 +64,18 @@ describe('initiative round resolution', () => {
     expect(resolution.simpleOrderSteps).toEqual([
       {
         sides: ['enemy'],
-        combatantIds: ['enemy-5', 'enemy-6'],
+        combatantIds: ['enemy-4', 'enemy-5', 'enemy-6'],
       },
       {
         sides: ['party'],
-        combatantIds: ['party-2', 'party-3'],
+        combatantIds: ['party-1', 'party-2', 'party-3'],
       },
     ]);
     expect(resolution.simpleOrderCombatantIds).toEqual([
+      'enemy-4',
       'enemy-5',
       'enemy-6',
+      'party-1',
       'party-2',
       'party-3',
     ]);
@@ -109,7 +111,7 @@ describe('initiative round resolution', () => {
     expect(resolution.unresolvedMeleeCandidateIds).toEqual([]);
   });
 
-  test('keeps unresolved melee candidates out of simple side order', () => {
+  test('leaves unresolved melee candidates on baseline side initiative', () => {
     const round = requireRound();
 
     round.partyInitiative = '6';
@@ -137,15 +139,18 @@ describe('initiative round resolution', () => {
     expect(resolution.simpleOrderSteps).toEqual([
       {
         sides: ['party'],
-        combatantIds: ['party-3'],
+        combatantIds: ['party-1', 'party-2', 'party-3'],
       },
       {
         sides: ['enemy'],
-        combatantIds: ['enemy-5', 'enemy-6'],
+        combatantIds: ['enemy-4', 'enemy-5', 'enemy-6'],
       },
     ]);
     expect(resolution.simpleOrderCombatantIds).toEqual([
+      'party-1',
+      'party-2',
       'party-3',
+      'enemy-4',
       'enemy-5',
       'enemy-6',
     ]);

@@ -27,25 +27,12 @@ export const resolveInitiativeRound = (
       ])
     )
   );
-  const overriddenCombatantIdSet = new Set(overriddenCombatantIds);
-  const unresolvedCombatantIdSet = new Set(
-    scenario.unresolvedMeleeCandidateIds
+  const simpleOrderPartyCombatantIds = scenario.party.map(
+    (combatant) => combatant.id
   );
-
-  const simpleOrderPartyCombatantIds = scenario.party
-    .map((combatant) => combatant.id)
-    .filter(
-      (combatantId) =>
-        !overriddenCombatantIdSet.has(combatantId) &&
-        !unresolvedCombatantIdSet.has(combatantId)
-    );
-  const simpleOrderEnemyCombatantIds = scenario.enemies
-    .map((combatant) => combatant.id)
-    .filter(
-      (combatantId) =>
-        !overriddenCombatantIdSet.has(combatantId) &&
-        !unresolvedCombatantIdSet.has(combatantId)
-    );
+  const simpleOrderEnemyCombatantIds = scenario.enemies.map(
+    (combatant) => combatant.id
+  );
 
   const simpleOrderSteps = (() => {
     if (scenario.simpleOrder === 'party-first') {

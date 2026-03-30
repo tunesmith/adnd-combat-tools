@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { SingleValue } from 'react-select';
 import Select from 'react-select';
+import { buildInitiativeAttackGraph } from '../../helpers/initiative/attackGraph';
 import { buildInitiativeRoundResolutionViewModel } from '../../helpers/initiative/roundResolutionViewModel';
 import { resolveInitiativeRound } from '../../helpers/initiative/roundResolution';
 import { buildInitiativeScenario } from '../../helpers/initiative/scenario';
@@ -139,6 +140,10 @@ const InitiativePlayground = () => {
     () => resolveInitiativeRound(scenario),
     [scenario]
   );
+  const attackGraph = useMemo(
+    () => buildInitiativeAttackGraph(scenario, resolution),
+    [resolution, scenario]
+  );
   const viewModel = useMemo(
     () => buildInitiativeRoundResolutionViewModel(scenario, resolution),
     [resolution, scenario]
@@ -228,6 +233,19 @@ const InitiativePlayground = () => {
   const loadPreset = (presetFactory: () => InitiativePlaytestState) => {
     setState(presetFactory());
   };
+
+  const attackNodeLabelById = useMemo(
+    () =>
+      Object.fromEntries(
+        attackGraph.nodes.map((node) => [
+          node.id,
+          `${
+            viewModel.combatantNameById[node.combatantId] || node.combatantId
+          } attack ${node.attackNumber}`,
+        ])
+      ),
+    [attackGraph.nodes, viewModel.combatantNameById]
+  );
 
   const renderCombatantCard = (
     side: InitiativePlaytestSide,
@@ -469,6 +487,12 @@ const InitiativePlayground = () => {
                 {resolution.unresolvedMeleeCandidateIds.length}
               </span>
             </div>
+            <div className={styles['summaryCell']}>
+              <span className={styles['summaryLabel']}>Known precedence</span>
+              <span className={styles['summaryValue']}>
+                {attackGraph.edges.length}
+              </span>
+            </div>
           </div>
 
           <div className={styles['cardStack']}>
@@ -494,6 +518,71 @@ const InitiativePlayground = () => {
                 </ol>
               </article>
             ))}
+          </div>
+
+          <div className={styles['graphPanel']}>
+            <div className={styles['graphHeader']}>
+              <h3 className={styles['graphTitle']}>Precedence DAG</h3>
+              <p className={styles['graphCopy']}>
+                The graph only contains relations justified by baseline
+                initiative or a narrower melee timing rule.
+              </p>
+            </div>
+
+            <div className={styles['graphGrid']}>
+              <div className={styles['graphColumn']}>
+                <h4 className={styles['graphSubhead']}>Layers</h4>
+                <ol className={styles['graphList']}>
+                  {attackGraph.layers.map((layer, index) => (
+                    <li
+                      key={`layer-${index + 1}`}
+                      className={styles['graphItem']}
+                    >
+                      <span className={styles['stepLabel']}>
+                        Layer {index + 1}
+                      </span>
+                      <span className={styles['stepDetail']}>
+                        {layer
+                          .map(
+                            (nodeId) => attackNodeLabelById[nodeId] || nodeId
+                          )
+                          .join(', ')}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className={styles['graphColumn']}>
+                <h4 className={styles['graphSubhead']}>Known Before</h4>
+                {attackGraph.edges.length > 0 ? (
+                  <ol className={styles['graphList']}>
+                    {attackGraph.edges.map((edge) => (
+                      <li
+                        key={`${edge.fromNodeId}-${edge.toNodeId}`}
+                        className={styles['graphItem']}
+                      >
+                        <span className={styles['stepLabel']}>
+                          {attackNodeLabelById[edge.fromNodeId] ||
+                            edge.fromNodeId}
+                        </span>
+                        <span className={styles['stepDetail']}>
+                          before{' '}
+                          {attackNodeLabelById[edge.toNodeId] || edge.toNodeId}
+                          {' · '}
+                          {edge.reasons.join(', ')}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <div className={styles['graphEmpty']}>
+                    No explicit precedence edges. The current scenario is fully
+                    simultaneous at this rules slice.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
       </div>
