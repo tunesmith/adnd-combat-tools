@@ -40,13 +40,17 @@ const exceptionalStrengthTiers = new Set<ExceptionalStrengthTier>([
 const equipmentCategories = new Set<EquipmentCategory>([
   'containers',
   'armor',
-  'weapons',
-  'ammunition',
-  'gear',
+  'arms',
+  'clothing',
+  'herbs',
+  'adventuring-gear',
   'provisions',
+  'religious-items',
   'treasure',
   'coins',
 ]);
+
+const legacyEquipmentCategories = new Set(['weapons', 'ammunition', 'gear']);
 
 const ammoKinds = new Set<AmmoKind>(['arrow', 'bolt']);
 const magicKnowledgeStates = new Set<MagicKnowledge>([
@@ -209,6 +213,28 @@ const isAmmoCapacityRule = (value: unknown): value is AmmoCapacityRule => {
   );
 };
 
+const normalizeEquipmentCategory = (
+  category: unknown
+): EquipmentCategory | null => {
+  if (typeof category !== 'string') {
+    return null;
+  }
+
+  if (equipmentCategories.has(category as EquipmentCategory)) {
+    return category as EquipmentCategory;
+  }
+
+  if (!legacyEquipmentCategories.has(category)) {
+    return null;
+  }
+
+  if (category === 'weapons' || category === 'ammunition') {
+    return 'arms';
+  }
+
+  return 'adventuring-gear';
+};
+
 const isCatalogItem = (value: unknown): value is EncumbranceCatalogItem => {
   if (!value || typeof value !== 'object') {
     return false;
@@ -218,8 +244,7 @@ const isCatalogItem = (value: unknown): value is EncumbranceCatalogItem => {
   return (
     typeof candidate.id === 'string' &&
     typeof candidate.name === 'string' &&
-    typeof candidate.category === 'string' &&
-    equipmentCategories.has(candidate.category) &&
+    normalizeEquipmentCategory(candidate.category) !== null &&
     isNonNegativeNumber(candidate.encumbranceGp) &&
     isNonNegativeNumber(candidate.valueGp) &&
     (candidate.isContainer === undefined ||
@@ -239,7 +264,8 @@ const sanitizeCatalogItem = (
 ): EncumbranceCustomItem => ({
   id: candidate.id,
   name: candidate.name,
-  category: candidate.category,
+  category:
+    normalizeEquipmentCategory(candidate.category) || 'adventuring-gear',
   encumbranceGp: candidate.encumbranceGp,
   valueGp: candidate.valueGp,
   ...(candidate.isContainer ? { isContainer: true } : {}),

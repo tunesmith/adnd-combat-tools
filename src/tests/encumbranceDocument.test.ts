@@ -63,7 +63,7 @@ describe('encumbrance document helpers', () => {
     document.customItems.push({
       id: 'custom-ledger',
       name: 'Ledger',
-      category: 'gear',
+      category: 'adventuring-gear',
       encumbranceGp: 5,
       valueGp: 12,
     });
@@ -203,6 +203,42 @@ describe('encumbrance document helpers', () => {
     );
     expect(parsed.characters[0]?.dmNotes).toBe('Secret note.');
     expect(parsed.customItems[0]?.name).toBe('Charm');
+  });
+
+  test('normalizes legacy custom item categories on load', () => {
+    const parsed = parseEncumbranceDocument(
+      JSON.stringify({
+        kind: 'adnd-encumbrance-player',
+        version: 6,
+        character: {
+          name: 'Alya',
+          strength: {
+            score: 12,
+            exceptional: 'none',
+          },
+        },
+        inventory: [],
+        customItems: [
+          {
+            id: 'custom-weapon',
+            name: 'Odd blade',
+            category: 'weapons',
+            encumbranceGp: 10,
+            valueGp: 5,
+          },
+          {
+            id: 'custom-kit',
+            name: 'Odd kit',
+            category: 'gear',
+            encumbranceGp: 3,
+            valueGp: 2,
+          },
+        ],
+      })
+    );
+
+    expect(parsed.customItems[0]?.category).toBe('arms');
+    expect(parsed.customItems[1]?.category).toBe('adventuring-gear');
   });
 
   test('rejects malformed files', () => {

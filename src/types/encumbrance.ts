@@ -20,10 +20,12 @@ export interface StrengthScore {
 export type EquipmentCategory =
   | 'containers'
   | 'armor'
-  | 'weapons'
-  | 'ammunition'
-  | 'gear'
+  | 'arms'
+  | 'clothing'
+  | 'herbs'
+  | 'adventuring-gear'
   | 'provisions'
+  | 'religious-items'
   | 'treasure'
   | 'coins';
 

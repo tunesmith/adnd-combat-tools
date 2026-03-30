@@ -44,7 +44,15 @@ interface EncumbranceAppProps {
 type AddMode = 'catalog' | 'custom';
 type CustomCategory = Extract<
   EquipmentCategory,
-  'containers' | 'armor' | 'weapons' | 'gear' | 'provisions' | 'treasure'
+  | 'containers'
+  | 'armor'
+  | 'arms'
+  | 'clothing'
+  | 'herbs'
+  | 'adventuring-gear'
+  | 'provisions'
+  | 'religious-items'
+  | 'treasure'
 >;
 
 interface CustomItemDraft {
@@ -85,26 +93,31 @@ interface ActiveCharacterState extends EncumbranceCharacterSheet {
 const categoryLabels: Record<EquipmentCategory, string> = {
   containers: 'Containers',
   armor: 'Armor',
-  weapons: 'Weapons',
-  ammunition: 'Ammunition',
-  gear: 'Adventuring Gear',
+  arms: 'Arms',
+  clothing: 'Clothing',
+  herbs: 'Herbs',
+  'adventuring-gear': 'Adventuring Gear',
   provisions: 'Provisions',
+  'religious-items': 'Religious Items',
   treasure: 'Treasure',
   coins: 'Coins',
 };
 
 const customCategoryOptions: CustomCategory[] = [
-  'gear',
   'containers',
-  'weapons',
   'armor',
+  'arms',
+  'clothing',
+  'herbs',
+  'adventuring-gear',
   'provisions',
+  'religious-items',
   'treasure',
 ];
 
 const defaultCustomItemDraft = (): CustomItemDraft => ({
   name: '',
-  category: 'gear',
+  category: 'adventuring-gear',
   encumbranceGp: 1,
   valueGp: 0,
   capacityGp: 100,
@@ -422,28 +435,57 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     [catalogItems]
   );
 
-  const selectableCatalogGroups = useMemo(
-    () =>
-      encumbranceCatalog.reduce<
-        Record<EquipmentCategory, EncumbranceCatalogItem[]>
-      >(
-        (groups, item) => {
-          groups[item.category].push(item);
-          return groups;
-        },
-        {
-          containers: [],
-          armor: [],
-          weapons: [],
-          ammunition: [],
-          gear: [],
-          provisions: [],
-          treasure: [],
-          coins: [],
+  const selectableCatalogGroups = useMemo(() => {
+    const coinSortOrder = new Map<string, number>([
+      ['Copper piece', 0],
+      ['Silver piece', 1],
+      ['Electrum piece', 2],
+      ['Gold piece', 3],
+      ['Platinum piece', 4],
+    ]);
+
+    const groups = encumbranceCatalog.reduce<
+      Record<EquipmentCategory, EncumbranceCatalogItem[]>
+    >(
+      (groups, item) => {
+        groups[item.category].push(item);
+        return groups;
+      },
+      {
+        containers: [],
+        armor: [],
+        arms: [],
+        clothing: [],
+        herbs: [],
+        'adventuring-gear': [],
+        provisions: [],
+        'religious-items': [],
+        treasure: [],
+        coins: [],
+      }
+    );
+
+    (Object.keys(groups) as EquipmentCategory[]).forEach((category) => {
+      groups[category].sort((left, right) => {
+        if (category === 'coins') {
+          const leftOrder =
+            coinSortOrder.get(left.name) ?? Number.MAX_SAFE_INTEGER;
+          const rightOrder =
+            coinSortOrder.get(right.name) ?? Number.MAX_SAFE_INTEGER;
+
+          if (leftOrder !== rightOrder) {
+            return leftOrder - rightOrder;
+          }
         }
-      ),
-    []
-  );
+
+        return left.name.localeCompare(right.name, undefined, {
+          sensitivity: 'base',
+        });
+      });
+    });
+
+    return groups;
+  }, []);
 
   const containerItems = useMemo(
     () =>
