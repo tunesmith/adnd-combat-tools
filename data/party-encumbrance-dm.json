@@ -475,6 +475,7 @@
           "playerNotes": "+1 Dex",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
+          "valueGpOverride": 5000,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
@@ -484,8 +485,7 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          },
-          "valueGpOverride": 5000
+          }
         },
         {
           "id": "bd8110f0-e79f-440f-b0fe-0b1178be26b9",
@@ -511,6 +511,7 @@
           "playerKnowsValue": false,
           "name": "Longsword +1",
           "encumbranceGpOverride": 60,
+          "valueGpOverride": 5000,
           "dmNotes": "Luck Blade - wishes are exhausted, though",
           "isMagical": true,
           "customItem": {
@@ -519,8 +520,7 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          },
-          "valueGpOverride": 5000
+          }
         },
         {
           "id": "cfb939ab-7525-4b6b-9bbd-20cd4f8db333",
@@ -533,6 +533,7 @@
           "playerKnowsValue": false,
           "name": "Mirror, Hand, Silver gilt, cracked",
           "encumbranceGpOverride": 5,
+          "valueGpOverride": 10,
           "dmNotes": "",
           "isMagical": false,
           "customItem": {
@@ -541,8 +542,7 @@
             "category": "adventuring-gear",
             "encumbranceGp": 0,
             "valueGp": 0
-          },
-          "valueGpOverride": 10
+          }
         },
         {
           "id": "bb51575b-3963-4b94-a242-6644412af8d3",
@@ -554,6 +554,7 @@
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
           "name": "Plate Mail +1",
+          "valueGpOverride": 5000,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
@@ -563,8 +564,7 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          },
-          "valueGpOverride": 5000
+          }
         },
         {
           "id": "6f166493-20e4-451d-887d-69dd74be3521",
@@ -575,6 +575,8 @@
           "playerNotes": "",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
+          "encumbranceGpOverride": 1,
+          "valueGpOverride": 5000,
           "dmNotes": "Move freely under web, hold, slow - even under water",
           "isMagical": true,
           "fullyIdentified": true,
@@ -585,8 +587,7 @@
             "encumbranceGp": 0,
             "valueGp": 0
           },
-          "encumbranceGpOverride": 1,
-          "valueGpOverride": 5000
+          "name": "Ring of Free Action"
         },
         {
           "id": "97bb38fc-9d23-44f2-a81e-37683f302af8",
@@ -597,6 +598,8 @@
           "playerNotes": "Stockade treasure room",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
+          "encumbranceGpOverride": 1,
+          "valueGpOverride": 5000,
           "dmNotes": "Ring of Water Walking",
           "isMagical": true,
           "customItem": {
@@ -605,9 +608,7 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          },
-          "encumbranceGpOverride": 1,
-          "valueGpOverride": 5000
+          }
         },
         {
           "id": "9bbf6a0b-3643-4c74-b835-3c0e683acbda",
@@ -619,6 +620,8 @@
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
           "name": "Shield +1",
+          "encumbranceGpOverride": 100,
+          "valueGpOverride": 2500,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
@@ -628,9 +631,7 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          },
-          "encumbranceGpOverride": 100,
-          "valueGpOverride": 2500
+          }
         },
         {
           "id": "cfb80006-089f-4008-85ec-9669fbfa54c8",
@@ -641,6 +642,7 @@
           "playerNotes": "On belt",
           "playerMagicKnowledge": "known-mundane",
           "playerKnowsValue": false,
+          "encumbranceGpOverride": 5,
           "dmNotes": "",
           "isMagical": false,
           "customItem": {
@@ -649,8 +651,7 @@
             "category": "adventuring-gear",
             "encumbranceGp": 0,
             "valueGp": 0
-          },
-          "encumbranceGpOverride": 5
+          }
         }
       ],
       "dmNotes": ""
@@ -874,7 +875,7 @@
           "playerNotes": "In backpack, red and pulsing",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
-          "name": "\"Love potion?\"",
+          "name": "Love potion?",
           "dmNotes": "Philter of Love",
           "isMagical": true,
           "customItem": {
