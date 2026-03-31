@@ -186,4 +186,46 @@ describe('initiative attack graph', () => {
       },
     ]);
   });
+
+  test('does not graph charge attacks until movement timing is promoted into the DAG', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Contact',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Garran',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distance: 40,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Hobgoblin',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 57,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes.map((node) => node.id)).not.toContain(
+      'attack:party-1:1'
+    );
+    expect(graph.nodes.map((node) => node.id)).toEqual(['attack:enemy-3:1']);
+    expect(graph.edges).toEqual([]);
+    expect(graph.layers).toEqual([['attack:enemy-3:1']]);
+  });
 });

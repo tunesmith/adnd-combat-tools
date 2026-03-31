@@ -14,6 +14,7 @@ import { getWeaponInfo, getWeaponOptions } from '../../tables/weapon';
 import type {
   InitiativeAttackEdgeReason,
   InitiativeAttackNode,
+  InitiativeDeclaredAction,
   InitiativeScenarioDraft,
   InitiativeScenarioDraftCombatant,
 } from '../../types/initiative';
@@ -26,6 +27,8 @@ type InitiativePlaytestStateSide = 'party' | 'enemies';
 interface InitiativePlaytestCombatant {
   key: number;
   name: string;
+  declaredAction: InitiativeDeclaredAction;
+  movementRate: string;
   weaponId: number;
   targetCombatantKeys: number[];
 }
@@ -37,6 +40,7 @@ interface InitiativePlaytestState {
   nextCombatantKey: number;
   party: InitiativePlaytestCombatant[];
   enemies: InitiativePlaytestCombatant[];
+  pairDistances: Record<string, string>;
 }
 
 interface InitiativePlaytestEditorTarget {
@@ -45,20 +49,67 @@ interface InitiativePlaytestEditorTarget {
 }
 
 const ALL_WEAPON_OPTIONS = getWeaponOptions(MONSTER);
+const ACTION_OPTIONS: Array<{
+  value: InitiativeDeclaredAction;
+  label: string;
+}> = [
+  { value: 'open-melee', label: 'Open melee' },
+  { value: 'close', label: 'Close' },
+  { value: 'charge', label: 'Charge' },
+  { value: 'missile', label: 'Missile' },
+  { value: 'hold', label: 'Hold' },
+];
 
 const parseInitiative = (value: string): number => {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const parseOptionalNumber = (value: string): number | undefined => {
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const isSingleTargetMovementAction = (
+  declaredAction: InitiativeDeclaredAction
+): boolean => declaredAction === 'close' || declaredAction === 'charge';
+
+const getPairDistanceKey = (
+  partyCombatantKey: number,
+  enemyCombatantKey: number
+): string => `${partyCombatantKey}:${enemyCombatantKey}`;
+
+const getDefaultDeclaredActionForWeaponId = (
+  weaponId: number
+): InitiativeDeclaredAction =>
+  getWeaponInfo(weaponId)?.weaponType === 'missile' ? 'missile' : 'open-melee';
+
+const formatDeclaredAction = (
+  declaredAction: InitiativeDeclaredAction
+): string =>
+  ACTION_OPTIONS.find((option) => option.value === declaredAction)?.label ||
+  declaredAction;
+
 const createCombatant = (
   key: number,
   name: string,
   weaponId: number,
-  targetCombatantKeys: number[] = []
+  targetCombatantKeys: number[] = [],
+  declaredAction: InitiativeDeclaredAction = getDefaultDeclaredActionForWeaponId(
+    weaponId
+  ),
+  movementRate = '12'
 ): InitiativePlaytestCombatant => ({
   key,
   name,
+  declaredAction,
+  movementRate,
   weaponId,
   targetCombatantKeys,
 });
@@ -76,6 +127,7 @@ const createMixedPreset = (): InitiativePlaytestState => ({
     createCombatant(3, 'Gnoll', 2, [1]),
     createCombatant(4, 'Ghoul', 1),
   ],
+  pairDistances: {},
 });
 
 const createEnemyEdgePreset = (): InitiativePlaytestState => ({
@@ -88,6 +140,7 @@ const createEnemyEdgePreset = (): InitiativePlaytestState => ({
     createCombatant(3, 'Orc', 1, [1]),
     createCombatant(4, 'Orc Archer', 16),
   ],
+  pairDistances: {},
 });
 
 const createScrumPreset = (): InitiativePlaytestState => ({
@@ -104,16 +157,50 @@ const createScrumPreset = (): InitiativePlaytestState => ({
     createCombatant(4, 'Bugbear', 1, [1, 2]),
     createCombatant(5, 'Kobold', 1),
   ],
+  pairDistances: {},
+});
+
+const createChargePreset = (): InitiativePlaytestState => ({
+  label: 'Charge Contact',
+  partyInitiative: '3',
+  enemyInitiative: '5',
+  nextCombatantKey: 5,
+  party: [
+    createCombatant(1, 'Garran', 56, [3], 'charge', '12'),
+    createCombatant(2, 'Ysra', 49, [], 'missile', '12'),
+  ],
+  enemies: [
+    createCombatant(3, 'Hobgoblin', 57, [1], 'open-melee', '9'),
+    createCombatant(4, 'Goblin Archer', 16, [], 'missile', '6'),
+  ],
+  pairDistances: {
+    [getPairDistanceKey(1, 3)]: '40',
+  },
 });
 
 const buildDraftCombatants = (
-  combatants: InitiativePlaytestCombatant[]
+  side: InitiativePlaytestSide,
+  combatants: InitiativePlaytestCombatant[],
+  pairDistances: Record<string, string>
 ): InitiativeScenarioDraftCombatant[] =>
   combatants.map((combatant) => ({
     combatantKey: combatant.key,
     name: combatant.name.trim() || undefined,
+    declaredAction: combatant.declaredAction,
+    movementRate: parseOptionalNumber(combatant.movementRate),
     weaponId: combatant.weaponId,
-    targetCombatantKeys: combatant.targetCombatantKeys,
+    targetDeclarations: combatant.targetCombatantKeys.map(
+      (targetCombatantKey) => ({
+        targetCombatantKey,
+        distance: parseOptionalNumber(
+          pairDistances[
+            side === 'party'
+              ? getPairDistanceKey(combatant.key, targetCombatantKey)
+              : getPairDistanceKey(targetCombatantKey, combatant.key)
+          ] || ''
+        ),
+      })
+    ),
   }));
 
 const buildDraftFromState = (
@@ -122,8 +209,8 @@ const buildDraftFromState = (
   label: state.label.trim() || 'Initiative Playtest',
   partyInitiative: parseInitiative(state.partyInitiative),
   enemyInitiative: parseInitiative(state.enemyInitiative),
-  party: buildDraftCombatants(state.party),
-  enemies: buildDraftCombatants(state.enemies),
+  party: buildDraftCombatants('party', state.party, state.pairDistances),
+  enemies: buildDraftCombatants('enemy', state.enemies, state.pairDistances),
 });
 
 const getDefaultWeaponIdForSide = (side: InitiativePlaytestSide): number =>
@@ -157,6 +244,14 @@ const getWeaponSummary = (weaponId: number): string => {
 
   return weaponInfo?.weaponType || 'natural';
 };
+
+const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
+  `${formatDeclaredAction(combatant.declaredAction)} · MV ${
+    combatant.movementRate.trim() || '12'
+  }" · ${getWeaponSummary(combatant.weaponId)}`;
+
+const isNonMissileWeaponId = (weaponId: number): boolean =>
+  getWeaponInfo(weaponId)?.weaponType !== 'missile';
 
 const getGraphNodeSourceLabel = (
   source: InitiativeAttackNode['source']
@@ -244,7 +339,20 @@ const InitiativePlayground = () => {
       ...previous,
       [stateSide]: previous[stateSide].map((combatant) =>
         combatant.key === combatantKey
-          ? { ...combatant, ...changes }
+          ? (() => {
+              const updatedCombatant = { ...combatant, ...changes };
+
+              if (
+                changes.declaredAction &&
+                isSingleTargetMovementAction(changes.declaredAction) &&
+                updatedCombatant.targetCombatantKeys.length > 1
+              ) {
+                updatedCombatant.targetCombatantKeys =
+                  updatedCombatant.targetCombatantKeys.slice(0, 1);
+              }
+
+              return updatedCombatant;
+            })()
           : combatant
       ),
     }));
@@ -278,6 +386,19 @@ const InitiativePlayground = () => {
 
     setState((previous) => ({
       ...previous,
+      pairDistances: Object.fromEntries(
+        Object.entries(previous.pairDistances).filter(([pairKey]) => {
+          const [partyCombatantKey, enemyCombatantKey] = pairKey
+            .split(':')
+            .map((value) => parseInt(value, 10));
+
+          if (side === 'party') {
+            return partyCombatantKey !== combatantKey;
+          }
+
+          return enemyCombatantKey !== combatantKey;
+        })
+      ),
       [stateSide]: previous[stateSide].filter(
         (combatant) => combatant.key !== combatantKey
       ),
@@ -319,15 +440,37 @@ const InitiativePlayground = () => {
           return combatant;
         }
 
+        const nextTargetCombatantKeys = combatant.targetCombatantKeys.includes(
+          targetKey
+        )
+          ? combatant.targetCombatantKeys.filter(
+              (existingTargetKey) => existingTargetKey !== targetKey
+            )
+          : isSingleTargetMovementAction(combatant.declaredAction)
+          ? [targetKey]
+          : combatant.targetCombatantKeys.concat(targetKey);
+
         return {
           ...combatant,
-          targetCombatantKeys: combatant.targetCombatantKeys.includes(targetKey)
-            ? combatant.targetCombatantKeys.filter(
-                (existingTargetKey) => existingTargetKey !== targetKey
-              )
-            : combatant.targetCombatantKeys.concat(targetKey),
+          targetCombatantKeys: nextTargetCombatantKeys,
         };
       }),
+    }));
+  };
+
+  const updatePairDistance = (
+    partyCombatantKey: number,
+    enemyCombatantKey: number,
+    value: string
+  ) => {
+    const pairKey = getPairDistanceKey(partyCombatantKey, enemyCombatantKey);
+
+    setState((previous) => ({
+      ...previous,
+      pairDistances: {
+        ...previous.pairDistances,
+        [pairKey]: value,
+      },
     }));
   };
 
@@ -413,6 +556,13 @@ const InitiativePlayground = () => {
           >
             Ambiguous Scrum
           </button>
+          <button
+            type={'button'}
+            className={styles['presetButton']}
+            onClick={() => loadPreset(createChargePreset)}
+          >
+            Charge Contact
+          </button>
         </div>
       </div>
 
@@ -422,7 +572,8 @@ const InitiativePlayground = () => {
             <h2 className={styles['panelTitle']}>Scenario Input</h2>
             <p className={styles['panelCopy']}>
               Enter only what the current machinery needs: side initiative,
-              weapon, and declared target.
+              declared action, movement rate, weapon, declared target, and
+              effective pair distance.
             </p>
           </div>
 
@@ -465,8 +616,10 @@ const InitiativePlayground = () => {
               <p className={styles['matrixCopy']}>
                 Party combatants run across the top, enemies run down the side.
                 Toggle `P→E` when the party column attacks the enemy row, `E→P`
-                for the reverse, and mutual cells light up as duels. Click a row
-                or column header to edit that combatant.
+                for the reverse, and clean open-melee mutual targets light up as
+                duels. Click a row or column header to edit that combatant. The
+                distance field is the current effective range between that pair
+                in feet.
               </p>
             </div>
 
@@ -522,7 +675,7 @@ const InitiativePlayground = () => {
                               )}
                             </span>
                             <span className={styles['matrixCombatantMeta']}>
-                              {getWeaponSummary(partyCombatant.weaponId)}
+                              {getCombatantMeta(partyCombatant)}
                             </span>
                           </button>
                         </th>
@@ -552,7 +705,7 @@ const InitiativePlayground = () => {
                                 )}
                               </span>
                               <span className={styles['matrixCombatantMeta']}>
-                                {getWeaponSummary(enemyCombatant.weaponId)}
+                                {getCombatantMeta(enemyCombatant)}
                               </span>
                             </button>
                           </th>
@@ -565,8 +718,21 @@ const InitiativePlayground = () => {
                               enemyCombatant.targetCombatantKeys.includes(
                                 partyCombatant.key
                               );
-                            const isDuel =
+                            const isMutualTarget =
                               partyTargetsEnemy && enemyTargetsParty;
+                            const isDuel =
+                              isMutualTarget &&
+                              partyCombatant.declaredAction === 'open-melee' &&
+                              enemyCombatant.declaredAction === 'open-melee' &&
+                              isNonMissileWeaponId(partyCombatant.weaponId) &&
+                              isNonMissileWeaponId(enemyCombatant.weaponId);
+                            const pairDistance =
+                              state.pairDistances[
+                                getPairDistanceKey(
+                                  partyCombatant.key,
+                                  enemyCombatant.key
+                                )
+                              ] || '';
 
                             return (
                               <td
@@ -624,7 +790,31 @@ const InitiativePlayground = () => {
                                   <span className={styles['matrixBadge']}>
                                     Duel
                                   </span>
+                                ) : isMutualTarget ? (
+                                  <span className={styles['matrixBadge']}>
+                                    Mutual target
+                                  </span>
                                 ) : null}
+                                <label
+                                  className={styles['matrixDistanceLabel']}
+                                  htmlFor={`distance-${partyCombatant.key}-${enemyCombatant.key}`}
+                                >
+                                  Distance (ft)
+                                </label>
+                                <input
+                                  id={`distance-${partyCombatant.key}-${enemyCombatant.key}`}
+                                  className={styles['matrixDistanceInput']}
+                                  inputMode={'decimal'}
+                                  placeholder={'e.g. 40'}
+                                  value={pairDistance}
+                                  onChange={(event) =>
+                                    updatePairDistance(
+                                      partyCombatant.key,
+                                      enemyCombatant.key,
+                                      event.target.value
+                                    )
+                                  }
+                                />
                               </td>
                             );
                           })}
@@ -693,6 +883,12 @@ const InitiativePlayground = () => {
               </span>
             </div>
             <div className={styles['summaryCell']}>
+              <span className={styles['summaryLabel']}>Movement calls</span>
+              <span className={styles['summaryValue']}>
+                {resolution.movementResolutions.length}
+              </span>
+            </div>
+            <div className={styles['summaryCell']}>
               <span className={styles['summaryLabel']}>Known precedence</span>
               <span className={styles['summaryValue']}>
                 {attackGraph.edges.length}
@@ -729,8 +925,9 @@ const InitiativePlayground = () => {
             <div className={styles['graphHeader']}>
               <h3 className={styles['graphTitle']}>Precedence DAG</h3>
               <p className={styles['graphCopy']}>
-                The graph only contains relations justified by baseline
-                initiative or a narrower melee timing rule.
+                The graph only contains attack relations justified by baseline
+                initiative or a narrower melee timing rule. Movement outcomes
+                are explained in the cards above and do not enter the DAG yet.
               </p>
             </div>
 
@@ -958,7 +1155,8 @@ const InitiativePlayground = () => {
                 </div>
                 <p className={styles['modalText']}>
                   Target declarations are edited in the engagement matrix. Use
-                  this modal to change the combatant label or weapon.
+                  this modal to change the combatant label, action, movement, or
+                  weapon.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -999,6 +1197,47 @@ const InitiativePlayground = () => {
                     });
                   }}
                 />
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={`initiative-action-${editedCombatant.key}`}
+                >
+                  Declared action
+                </label>
+                <select
+                  id={`initiative-action-${editedCombatant.key}`}
+                  className={styles['selectInput']}
+                  value={editedCombatant.declaredAction}
+                  onChange={(event) =>
+                    updateCombatant(editorTarget.side, editedCombatant.key, {
+                      declaredAction: event.target
+                        .value as InitiativeDeclaredAction,
+                    })
+                  }
+                >
+                  {ACTION_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={`initiative-move-${editedCombatant.key}`}
+                >
+                  Movement rate
+                </label>
+                <input
+                  id={`initiative-move-${editedCombatant.key}`}
+                  className={styles['textInput']}
+                  inputMode={'decimal'}
+                  type={'text'}
+                  value={editedCombatant.movementRate}
+                  onChange={(event) =>
+                    updateCombatant(editorTarget.side, editedCombatant.key, {
+                      movementRate: event.target.value,
+                    })
+                  }
+                />
                 <div className={styles['modalMeta']}>
                   <span className={styles['modalMetaLabel']}>
                     Current display
@@ -1007,7 +1246,7 @@ const InitiativePlayground = () => {
                     {editedCombatantDisplayName}
                   </span>
                   <span className={styles['modalMetaValue']}>
-                    {getWeaponSummary(editedCombatant.weaponId)}
+                    {getCombatantMeta(editedCombatant)}
                   </span>
                 </div>
                 <div className={styles['modalActions']}>

@@ -4,6 +4,12 @@ export type InitiativeScenarioOrder =
   | 'enemy-first'
   | 'simultaneous';
 export type InitiativeWeaponType = 'melee' | 'missile' | 'natural';
+export type InitiativeDeclaredAction =
+  | 'open-melee'
+  | 'close'
+  | 'charge'
+  | 'missile'
+  | 'hold';
 
 interface InitiativeAttackRoutineComponent {
   id: string;
@@ -19,6 +25,11 @@ export interface InitiativeAttackRoutine {
   timingBasisComponentId?: string;
 }
 
+interface InitiativeTargetDeclaration {
+  targetId: string;
+  distance?: number;
+}
+
 export interface InitiativeScenarioCombatant {
   id: string;
   side: InitiativeScenarioSide;
@@ -26,23 +37,35 @@ export interface InitiativeScenarioCombatant {
   combatantKey: number;
   name: string;
   initiative: number;
+  declaredAction: InitiativeDeclaredAction;
+  movementRate: number;
   weaponId: number;
   weaponName: string;
   weaponType: InitiativeWeaponType;
+  weaponLength?: number;
   weaponSpeedFactor?: number;
   intention: string;
   result: string;
+  targetDeclarations: InitiativeTargetDeclaration[];
   targetIds: string[];
   attackRoutine: InitiativeAttackRoutine;
+}
+
+export interface InitiativeScenarioDraftTargetDeclaration {
+  targetCombatantKey: number;
+  distance?: number;
 }
 
 export interface InitiativeScenarioDraftCombatant {
   combatantKey: number;
   name?: string;
+  declaredAction?: InitiativeDeclaredAction;
+  movementRate?: number;
   weaponId: number;
   intention?: string;
   result?: string;
-  targetCombatantKeys: number[];
+  targetCombatantKeys?: number[];
+  targetDeclarations?: InitiativeScenarioDraftTargetDeclaration[];
 }
 
 export interface InitiativeScenarioDraft {
@@ -90,6 +113,33 @@ export interface DirectMeleeEngagement extends DirectMeleePair {
   resolution: DirectMeleeResolution;
 }
 
+type InitiativeMovementResolutionReason =
+  | 'contact'
+  | 'no-contact'
+  | 'missing-target'
+  | 'missing-distance'
+  | 'multiple-targets'
+  | 'target-moving-elsewhere';
+
+export type InitiativeChargeFirstStrike =
+  | 'attacker'
+  | 'target'
+  | 'simultaneous'
+  | 'undetermined';
+
+export interface InitiativeMovementResolution {
+  combatantId: string;
+  targetId?: string;
+  action: InitiativeDeclaredAction;
+  reason: InitiativeMovementResolutionReason;
+  distance?: number;
+  closingFeetPerSegment?: number;
+  contactSegment?: number;
+  remainingDistance?: number;
+  sameRoundAttack: boolean;
+  firstStrike?: InitiativeChargeFirstStrike;
+}
+
 export interface InitiativeScenario {
   label: string;
   partyInitiative: number;
@@ -97,6 +147,7 @@ export interface InitiativeScenario {
   simpleOrder: InitiativeScenarioOrder;
   party: InitiativeScenarioCombatant[];
   enemies: InitiativeScenarioCombatant[];
+  movementResolutions: InitiativeMovementResolution[];
   directMeleePairs: DirectMeleePair[];
   directMeleeEngagements: DirectMeleeEngagement[];
   unresolvedMeleeCandidateIds: string[];
@@ -113,6 +164,7 @@ export interface InitiativeRoundResolution {
   simpleOrderCombatantIds: string[];
   simpleOrderSteps: InitiativeSimpleOrderStep[];
   overriddenCombatantIds: string[];
+  movementResolutions: InitiativeMovementResolution[];
   directMeleeEngagements: DirectMeleeEngagement[];
   unresolvedMeleeCandidateIds: string[];
 }

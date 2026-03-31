@@ -294,6 +294,26 @@
   text-transform: uppercase;
 }
 
+.matrixDistanceLabel {
+  display: block;
+  margin-top: 0.7rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(240, 239, 221, 0.72);
+}
+
+.matrixDistanceInput {
+  width: 100%;
+  border: 1px solid rgba(172, 114, 35, 0.55);
+  background: rgba(240, 239, 221, 0.94);
+  color: #1f1d18;
+  padding: 0.38rem 0.45rem;
+  border-radius: 0.35rem;
+  font-size: 0.92rem;
+}
+
 .matrixEmpty {
   border: 1px solid rgba(172, 114, 35, 0.55);
   background: rgba(240, 239, 221, 0.08);
@@ -390,7 +410,7 @@
 
 .summaryStrip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 0.9rem;
   margin-bottom: 1.2rem;
 }

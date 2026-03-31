@@ -164,6 +164,13 @@ export const buildInitiativeAttackGraph = (
       return;
     }
 
+    if (
+      combatant.declaredAction === 'close' ||
+      combatant.declaredAction === 'charge'
+    ) {
+      return;
+    }
+
     combatant.attackRoutine.components.forEach((component) => {
       nodes.push(
         createNode(

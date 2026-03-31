@@ -1,6 +1,7 @@
 import { getMultipleAttackThreshold } from './openMelee';
 import type {
   DirectMeleeEngagement,
+  InitiativeMovementResolution,
   InitiativeRoundResolution,
   InitiativeScenario,
   InitiativeScenarioCombatant,
@@ -15,7 +16,7 @@ interface InitiativeResolutionStepViewModel {
 
 interface InitiativeResolutionCardViewModel {
   id: string;
-  kind: 'simple-order' | 'direct-melee' | 'unresolved';
+  kind: 'simple-order' | 'movement' | 'direct-melee' | 'unresolved';
   title: string;
   summary: string;
   combatantIds: string[];
@@ -240,6 +241,129 @@ const buildDirectMeleeCards = (
     };
   });
 
+const getMovementSummary = (
+  movementResolution: InitiativeMovementResolution,
+  combatantNameById: Record<string, string>
+): string => {
+  const combatantName =
+    combatantNameById[movementResolution.combatantId] ||
+    movementResolution.combatantId;
+  const targetName = movementResolution.targetId
+    ? combatantNameById[movementResolution.targetId] ||
+      movementResolution.targetId
+    : 'the declared target';
+  const actionLabel =
+    movementResolution.action === 'open-melee'
+      ? 'open melee'
+      : movementResolution.action;
+
+  if (movementResolution.reason === 'missing-target') {
+    return `${combatantName} declared ${actionLabel}, but no single target was available to resolve.`;
+  }
+
+  if (movementResolution.reason === 'multiple-targets') {
+    return `${combatantName} declared ${actionLabel} against multiple targets. The current scalar-distance model only resolves one moving target at a time.`;
+  }
+
+  if (movementResolution.reason === 'missing-distance') {
+    return `${combatantName} declared ${actionLabel} toward ${targetName}, but no effective starting distance was supplied.`;
+  }
+
+  if (movementResolution.reason === 'target-moving-elsewhere') {
+    return `${combatantName} declared ${actionLabel} toward ${targetName}, but ${targetName} is also moving on a different line. This is where the tool deliberately falls back to table adjudication.`;
+  }
+
+  if (movementResolution.reason === 'no-contact') {
+    return `${combatantName} cannot reach ${targetName} this round. The tool estimates that ${combatantName} ends ${
+      movementResolution.remainingDistance || 0
+    }' short of striking range.`;
+  }
+
+  if (movementResolution.action === 'charge') {
+    if (movementResolution.firstStrike === 'attacker') {
+      return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment} and can strike on the charge. The charging attacker currently has the longer reach, so ${combatantName} attacks first at contact.`;
+    }
+
+    if (movementResolution.firstStrike === 'target') {
+      return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment} and can strike on the charge. ${targetName} currently has the longer reach, so ${targetName} attacks first at contact.`;
+    }
+
+    if (movementResolution.firstStrike === 'simultaneous') {
+      return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment} and can strike on the charge. Reach is equal, so contact remains simultaneous in this slice.`;
+    }
+
+    return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment} and can strike on the charge, but reach does not currently settle who attacks first at contact.`;
+  }
+
+  return `${combatantName} reaches striking range of ${targetName} on segment ${movementResolution.contactSegment}. The current engine does not yet resolve the ensuing blows from a close action in the same round.`;
+};
+
+const buildMovementCards = (
+  resolution: InitiativeRoundResolution,
+  combatantNameById: Record<string, string>
+): InitiativeResolutionCardViewModel[] =>
+  resolution.movementResolutions.map((movementResolution) => {
+    const combatantName =
+      combatantNameById[movementResolution.combatantId] ||
+      movementResolution.combatantId;
+    const targetName = movementResolution.targetId
+      ? combatantNameById[movementResolution.targetId] ||
+        movementResolution.targetId
+      : 'No target';
+
+    return {
+      id: `movement-${movementResolution.combatantId}`,
+      kind: 'movement',
+      title: `${combatantName} ${movementResolution.action}`,
+      summary: getMovementSummary(movementResolution, combatantNameById),
+      combatantIds: [
+        movementResolution.combatantId,
+        ...(movementResolution.targetId ? [movementResolution.targetId] : []),
+      ],
+      steps: [
+        {
+          label: 'Target',
+          detail: targetName,
+          combatantIds: movementResolution.targetId
+            ? [movementResolution.combatantId, movementResolution.targetId]
+            : [movementResolution.combatantId],
+        },
+        {
+          label: 'Distance',
+          detail:
+            movementResolution.distance !== undefined
+              ? `${movementResolution.distance}' effective start range`
+              : 'Distance not supplied',
+          combatantIds: movementResolution.targetId
+            ? [movementResolution.combatantId, movementResolution.targetId]
+            : [movementResolution.combatantId],
+        },
+        {
+          label: 'Outcome',
+          detail:
+            movementResolution.reason === 'contact'
+              ? movementResolution.action === 'charge'
+                ? `Contact on segment ${movementResolution.contactSegment} at ${
+                    movementResolution.closingFeetPerSegment || 0
+                  }' per segment; same-round charge attack applies.`
+                : `Striking range reached on segment ${
+                    movementResolution.contactSegment
+                  } at ${
+                    movementResolution.closingFeetPerSegment || 0
+                  }' per segment.`
+              : movementResolution.reason === 'no-contact'
+              ? `No contact this round; approximately ${
+                  movementResolution.remainingDistance || 0
+                }' remain.`
+              : 'Needs table input or adjudication.',
+          combatantIds: movementResolution.targetId
+            ? [movementResolution.combatantId, movementResolution.targetId]
+            : [movementResolution.combatantId],
+        },
+      ],
+    };
+  });
+
 const buildUnresolvedCard = (
   scenario: InitiativeScenario,
   resolution: InitiativeRoundResolution,
@@ -281,6 +405,7 @@ export const buildInitiativeRoundResolutionViewModel = (
   const combatantById = buildCombatantById(scenario);
   const cards = [
     buildSimpleOrderCard(scenario, resolution, combatantNameById),
+    ...buildMovementCards(resolution, combatantNameById),
     ...buildDirectMeleeCards(resolution, combatantNameById, combatantById),
     buildUnresolvedCard(scenario, resolution, combatantNameById),
   ].filter((card): card is InitiativeResolutionCardViewModel => Boolean(card));

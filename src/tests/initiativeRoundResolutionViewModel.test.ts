@@ -123,4 +123,58 @@ describe('initiative round resolution view model', () => {
       combatantIds: ['party-1', 'party-2', 'enemy-4'],
     });
   });
+
+  test('adds movement cards for close and charge outcomes', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Contact',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Garran',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distance: 40,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 17,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.kind === 'movement'
+    );
+
+    expect(movementCard).toMatchObject({
+      kind: 'movement',
+      title: 'Garran charge',
+    });
+    expect(movementCard?.summary).toContain('segment 2');
+    expect(movementCard?.summary).toContain('attacks first at contact');
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail:
+        "Contact on segment 2 at 24' per segment; same-round charge attack applies.",
+      combatantIds: ['party-1', 'enemy-3'],
+    });
+  });
 });

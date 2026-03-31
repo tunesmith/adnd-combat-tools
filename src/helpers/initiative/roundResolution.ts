@@ -73,6 +73,7 @@ export const resolveInitiativeRound = (
     simpleOrderCombatantIds,
     simpleOrderSteps,
     overriddenCombatantIds,
+    movementResolutions: scenario.movementResolutions,
     directMeleeEngagements: scenario.directMeleeEngagements,
     unresolvedMeleeCandidateIds: scenario.unresolvedMeleeCandidateIds,
   };
