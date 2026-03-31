@@ -1,7 +1,7 @@
 {
   "kind": "adnd-encumbrance-dm",
   "version": 8,
-  "activeCharacterId": "d1ca496b-b5ba-4312-9d0c-7e8214f51bdb",
+  "activeCharacterId": "9677889d-9914-4470-9006-5aae6be970d2",
   "characters": [
     {
       "id": "9677889d-9914-4470-9006-5aae6be970d2",
@@ -484,7 +484,8 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          }
+          },
+          "valueGpOverride": 5000
         },
         {
           "id": "bd8110f0-e79f-440f-b0fe-0b1178be26b9",
@@ -518,7 +519,8 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          }
+          },
+          "valueGpOverride": 5000
         },
         {
           "id": "cfb939ab-7525-4b6b-9bbd-20cd4f8db333",
@@ -539,7 +541,8 @@
             "category": "adventuring-gear",
             "encumbranceGp": 0,
             "valueGp": 0
-          }
+          },
+          "valueGpOverride": 10
         },
         {
           "id": "bb51575b-3963-4b94-a242-6644412af8d3",
@@ -560,7 +563,8 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          }
+          },
+          "valueGpOverride": 5000
         },
         {
           "id": "6f166493-20e4-451d-887d-69dd74be3521",
@@ -580,7 +584,9 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          }
+          },
+          "encumbranceGpOverride": 1,
+          "valueGpOverride": 5000
         },
         {
           "id": "97bb38fc-9d23-44f2-a81e-37683f302af8",
@@ -588,7 +594,7 @@
           "quantity": 1,
           "containerId": null,
           "day": 81,
-          "playerNotes": "",
+          "playerNotes": "Stockade treasure room",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
           "dmNotes": "Ring of Water Walking",
@@ -599,7 +605,9 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          }
+          },
+          "encumbranceGpOverride": 1,
+          "valueGpOverride": 5000
         },
         {
           "id": "9bbf6a0b-3643-4c74-b835-3c0e683acbda",
@@ -620,7 +628,9 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          }
+          },
+          "encumbranceGpOverride": 100,
+          "valueGpOverride": 2500
         },
         {
           "id": "cfb80006-089f-4008-85ec-9669fbfa54c8",
@@ -639,7 +649,8 @@
             "category": "adventuring-gear",
             "encumbranceGp": 0,
             "valueGp": 0
-          }
+          },
+          "encumbranceGpOverride": 5
         }
       ],
       "dmNotes": ""
