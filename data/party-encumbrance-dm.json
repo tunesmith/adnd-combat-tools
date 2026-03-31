@@ -1,7 +1,7 @@
 {
   "kind": "adnd-encumbrance-dm",
   "version": 7,
-  "activeCharacterId": "3e593c26-92f5-4b00-9a80-f0597aa3bb02",
+  "activeCharacterId": "d1ca496b-b5ba-4312-9d0c-7e8214f51bdb",
   "characters": [
     {
       "id": "9677889d-9914-4470-9006-5aae6be970d2",
@@ -83,9 +83,9 @@
           "playerNotes": "In large belt pouch",
           "playerMagicKnowledge": "known-mundane",
           "playerKnowsValue": true,
+          "name": "25 bullets",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "25 bullets"
+          "isMagical": false
         },
         {
           "id": "f8d3576e-f388-4268-a852-8b5d49c9f233",
@@ -94,11 +94,11 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "Daggers, Sling, Sword",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
+          "name": "Belts (2)",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "Belts (2)"
+          "isMagical": false
         },
         {
           "id": "9c49441f-608c-4559-94d1-8520bd9035f0",
@@ -107,8 +107,8 @@
           "containerId": null,
           "day": 25,
           "playerNotes": "Silent 100%, 95% in worst conditions",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
@@ -120,8 +120,8 @@
           "containerId": null,
           "day": 64,
           "playerNotes": "",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
@@ -133,8 +133,8 @@
           "containerId": null,
           "day": 45,
           "playerNotes": "+2 AC, +2 Saving throw",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "Can be combined with leather armor",
           "isMagical": true,
           "fullyIdentified": true
@@ -146,8 +146,8 @@
           "containerId": null,
           "day": 34,
           "playerNotes": "+2 against small creatures, on belt",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
@@ -159,8 +159,8 @@
           "containerId": null,
           "day": 33,
           "playerNotes": "20% chance of failure (halfling magic resistance)",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
@@ -172,8 +172,8 @@
           "containerId": null,
           "day": 33,
           "playerNotes": "+1 Saving throw and AC",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
@@ -185,8 +185,8 @@
           "containerId": "b1a810ba-3025-4f90-96f1-7e9d194f95f0",
           "day": 0,
           "playerNotes": "In backpack",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -197,8 +197,8 @@
           "containerId": null,
           "day": 25,
           "playerNotes": "ScaleSlayer",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
@@ -210,8 +210,8 @@
           "containerId": null,
           "day": 64,
           "playerNotes": "On belt with daggers",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
@@ -223,8 +223,8 @@
           "containerId": "b1a810ba-3025-4f90-96f1-7e9d194f95f0",
           "day": 80,
           "playerNotes": "Bought from Fyndax (no xp), in backpack",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "TODO: add magical  effects",
           "isMagical": true,
           "fullyIdentified": true
@@ -236,8 +236,8 @@
           "containerId": null,
           "day": 82,
           "playerNotes": "Markessa - they know it’s very fast",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "init bonus... recheck",
           "isMagical": true
         },
@@ -248,8 +248,8 @@
           "containerId": "b1a810ba-3025-4f90-96f1-7e9d194f95f0",
           "day": 34,
           "playerNotes": "+5% thieves tools! (ivory)",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": false
         },
@@ -260,8 +260,8 @@
           "containerId": "b1a810ba-3025-4f90-96f1-7e9d194f95f0",
           "day": 0,
           "playerNotes": "In backpack",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -272,8 +272,8 @@
           "containerId": "b1a810ba-3025-4f90-96f1-7e9d194f95f0",
           "day": 75,
           "playerNotes": "In backpack",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "6 charges left",
           "isMagical": true,
           "fullyIdentified": true
@@ -296,8 +296,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -308,8 +308,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -320,10 +320,11 @@
           "containerId": "32c06b61-fef4-45b1-9f76-a0972bef4c15",
           "day": 85,
           "playerNotes": "In backpack",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
-          "isMagical": false
+          "isMagical": false,
+          "name": "$ - 10 platinum"
         },
         {
           "id": "e84b465c-74a1-40c2-a5e5-ddb18e742fe2",
@@ -332,8 +333,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -343,12 +344,12 @@
           "quantity": 20,
           "containerId": "e84b465c-74a1-40c2-a5e5-ddb18e742fe2",
           "day": 0,
-          "playerNotes": "",
-          "playerKnowsValue": true,
+          "playerNotes": "In quiver",
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
+          "name": "20 arrows",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "20 arrows"
+          "isMagical": false
         },
         {
           "id": "8dd9dbdb-f262-4495-85e2-7774e62ddd9b",
@@ -357,8 +358,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "Sword, belt pouch, whip",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -369,8 +370,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "Steve, are they high or low? I assumed high.",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -381,8 +382,8 @@
           "containerId": null,
           "day": 27,
           "playerNotes": "+1 Dex",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
@@ -394,10 +395,11 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
-          "isMagical": false
+          "isMagical": false,
+          "name": "Longbow"
         },
         {
           "id": "18e848b4-825f-4dbf-ae71-8e03737211e8",
@@ -406,10 +408,12 @@
           "containerId": null,
           "day": 33,
           "playerNotes": "+1 Saving Throws",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "Luck Blade - wishes are exhausted, though",
-          "isMagical": true
+          "isMagical": true,
+          "name": "Longsword +1",
+          "encumbranceGpOverride": 60
         },
         {
           "id": "cfb939ab-7525-4b6b-9bbd-20cd4f8db333",
@@ -418,10 +422,12 @@
           "containerId": "32c06b61-fef4-45b1-9f76-a0972bef4c15",
           "day": 73,
           "playerNotes": "From Madman’s Lair. Helped defeat a Medusa.",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": false,
           "dmNotes": "",
-          "isMagical": false
+          "isMagical": false,
+          "name": "Mirror, Hand, Silver gilt, cracked",
+          "encumbranceGpOverride": 5
         },
         {
           "id": "bb51575b-3963-4b94-a242-6644412af8d3",
@@ -430,11 +436,12 @@
           "containerId": null,
           "day": 11,
           "playerNotes": "Bugbears",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "name": "Plate Mail +1"
         },
         {
           "id": "6f166493-20e4-451d-887d-69dd74be3521",
@@ -443,8 +450,8 @@
           "containerId": null,
           "day": 33,
           "playerNotes": "",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "Move freely under web, hold, slow - even under water",
           "isMagical": true,
           "fullyIdentified": true
@@ -456,8 +463,8 @@
           "containerId": null,
           "day": 81,
           "playerNotes": "",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "Ring of Water Walking",
           "isMagical": true
         },
@@ -468,11 +475,12 @@
           "containerId": null,
           "day": 33,
           "playerNotes": "",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "name": "Shield +1"
         },
         {
           "id": "cfb80006-089f-4008-85ec-9669fbfa54c8",
@@ -481,8 +489,8 @@
           "containerId": null,
           "day": 64,
           "playerNotes": "On belt",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": false
         }
@@ -764,8 +772,8 @@
           "containerId": null,
           "day": 64,
           "playerNotes": "",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true
