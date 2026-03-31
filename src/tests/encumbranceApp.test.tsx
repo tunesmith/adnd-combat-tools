@@ -3,6 +3,78 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import EncumbranceApp from '../components/encumbrance/EncumbranceApp';
+import { encumbranceCatalog } from '../tables/encumbranceCatalog';
+
+const getCatalogIdByName = (name: string): string => {
+  const item = encumbranceCatalog.find((candidate) => candidate.name === name);
+
+  if (!item) {
+    throw new Error(`Unable to find catalog item named "${name}".`);
+  }
+
+  return item.id;
+};
+
+const closeTopModal = () => {
+  fireEvent.keyDown(window, { key: 'Escape' });
+};
+
+const renameCharacterInOpenModal = (nextName: string) => {
+  const dialog = screen.getByRole('dialog', { name: 'Edit Character' });
+  fireEvent.change(within(dialog).getByLabelText('Name'), {
+    target: { value: nextName },
+  });
+  closeTopModal();
+};
+
+const addCatalogItem = ({
+  name,
+  day = 0,
+  quantity,
+  storedIn,
+}: {
+  name: string;
+  day?: number;
+  quantity?: number;
+  storedIn?: string;
+}) => {
+  fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
+
+  const dialog = screen.getByRole('dialog', { name: 'Add Item' });
+  const itemSelect = within(dialog).getByLabelText('Item');
+  fireEvent.change(itemSelect, {
+    target: { value: getCatalogIdByName(name) },
+  });
+
+  if (typeof quantity === 'number') {
+    fireEvent.change(within(dialog).getByLabelText('Quantity'), {
+      target: { value: String(quantity) },
+    });
+  }
+
+  fireEvent.change(within(dialog).getByLabelText('Day'), {
+    target: { value: String(day) },
+  });
+
+  if (storedIn) {
+    const storedInSelect = within(dialog).getByLabelText('Stored in');
+    const storedInOption = within(storedInSelect).getByRole('option', {
+      name: storedIn,
+    }) as HTMLOptionElement;
+
+    fireEvent.change(storedInSelect, {
+      target: { value: storedInOption.value },
+    });
+  }
+
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Add Item' }));
+};
+
+const expectBefore = (left: HTMLElement, right: HTMLElement) => {
+  expect(
+    left.compareDocumentPosition(right) & Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+};
 
 const addCustomItem = ({
   name,
@@ -119,5 +191,116 @@ describe('encumbrance app regressions', () => {
     ).toBeInTheDocument();
     expect(within(remainingDialog).getAllByText('15 gp')).not.toHaveLength(0);
     expect(within(remainingDialog).getByText('Row value')).toBeInTheDocument();
+  });
+
+  test('sorting by item flattens container hierarchy and clearing sort restores it', () => {
+    render(<EncumbranceApp mode="dm" />);
+
+    addCatalogItem({
+      name: 'Backpack',
+      day: 0,
+    });
+    addCatalogItem({
+      name: 'Diamond',
+      day: 65,
+      storedIn: 'Backpack',
+    });
+    addCatalogItem({
+      name: 'Dagger and scabbard',
+      day: 0,
+      quantity: 1,
+    });
+
+    expectBefore(
+      screen.getByRole('button', { name: 'Edit Backpack' }),
+      screen.getByRole('button', { name: 'Edit Diamond' })
+    );
+    expectBefore(
+      screen.getByRole('button', { name: 'Edit Diamond' }),
+      screen.getByRole('button', {
+        name: 'Edit Dagger and scabbard',
+      })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by Item' }));
+
+    expectBefore(
+      screen.getByRole('button', { name: 'Edit Backpack' }),
+      screen.getByRole('button', {
+        name: 'Edit Dagger and scabbard',
+      })
+    );
+    expectBefore(
+      screen.getByRole('button', {
+        name: 'Edit Dagger and scabbard',
+      }),
+      screen.getByRole('button', { name: 'Edit Diamond' })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by Item' }));
+
+    expectBefore(
+      screen.getByRole('button', { name: 'Edit Backpack' }),
+      screen.getByRole('button', { name: 'Edit Diamond' })
+    );
+    expectBefore(
+      screen.getByRole('button', { name: 'Edit Diamond' }),
+      screen.getByRole('button', {
+        name: 'Edit Dagger and scabbard',
+      })
+    );
+  });
+
+  test('all-characters sorting supports owner and stacked day then item ordering', () => {
+    render(<EncumbranceApp mode="dm" />);
+
+    addCatalogItem({
+      name: 'Diamond',
+      day: 69,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
+    renameCharacterInOpenModal('Azalia Larkspur');
+    addCatalogItem({
+      name: 'Boots, high, soft',
+      day: 0,
+    });
+    addCatalogItem({
+      name: 'Diamond',
+      day: 65,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'All Characters' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by Owner' }));
+
+    expectBefore(
+      screen.getByRole('button', {
+        name: 'Edit Boots, high, soft for Character 2',
+      }),
+      screen.getByRole('button', {
+        name: 'Edit Diamond for Unnamed adventurer',
+      })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by Owner' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by Day' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by Item' }));
+
+    expectBefore(
+      screen.getByRole('button', {
+        name: 'Edit Boots, high, soft for Character 2',
+      }),
+      screen.getByRole('button', {
+        name: 'Edit Diamond for Unnamed adventurer',
+      })
+    );
+    expectBefore(
+      screen.getByRole('button', {
+        name: 'Edit Diamond for Unnamed adventurer',
+      }),
+      screen.getByRole('button', {
+        name: 'Edit Diamond for Character 2',
+      })
+    );
   });
 });

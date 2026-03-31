@@ -379,6 +379,48 @@
     minmax(0, 1.25fr);
 }
 
+.inventoryHeaderSortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  justify-self: start;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.inventoryHeaderSortButton:hover,
+.inventoryHeaderSortButtonActive {
+  opacity: 1;
+}
+
+.inventoryHeaderSortButton:focus-visible {
+  outline: 2px solid rgba(240, 239, 221, 0.85);
+  outline-offset: 2px;
+}
+
+.inventorySortPriority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.18rem;
+  border-radius: 999px;
+  background: rgba(212, 141, 39, 0.92);
+  color: #fff9ec;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
 .inventoryList {
   display: flex;
   flex-direction: column;

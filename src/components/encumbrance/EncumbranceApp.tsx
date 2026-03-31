@@ -43,6 +43,7 @@ interface EncumbranceAppProps {
 }
 
 type AddMode = 'catalog' | 'custom';
+type InventorySortKey = 'owner' | 'item' | 'day';
 type CustomCategory = Extract<
   EquipmentCategory,
   | 'containers'
@@ -318,6 +319,22 @@ interface RowNoteLine {
   tone: 'public' | 'dm';
 }
 
+interface InventoryRowRecord {
+  character: EncumbranceCharacterSheet;
+  item: EncumbranceInventoryItem;
+  itemInfo: EncumbranceCatalogItem;
+  displayName: string;
+  itemOwnLoadGp: number;
+  itemVisibleValueGp: number | null;
+  noteLines: RowNoteLine[];
+  depth: number;
+  sequence: number;
+  ownerLabel: string;
+  containerStatusLabel?: string;
+  containerUsage?: string;
+  containerSummary?: ReturnType<typeof getContainerLoadSummary>;
+}
+
 const getRowNoteLines = (
   item: EncumbranceInventoryItem,
   mode: EncumbranceMode
@@ -341,6 +358,38 @@ const getRowNoteLines = (
   }
 
   return lines;
+};
+
+const compareInventoryRowRecords = (
+  left: InventoryRowRecord,
+  right: InventoryRowRecord,
+  activeSorts: InventorySortKey[]
+): number => {
+  for (let index = activeSorts.length - 1; index >= 0; index -= 1) {
+    const sortKey = activeSorts[index];
+
+    if (sortKey === 'day') {
+      const dayDifference = left.item.day - right.item.day;
+      if (dayDifference !== 0) {
+        return dayDifference;
+      }
+
+      continue;
+    }
+
+    const leftValue = sortKey === 'owner' ? left.ownerLabel : left.displayName;
+    const rightValue =
+      sortKey === 'owner' ? right.ownerLabel : right.displayName;
+    const valueDifference = leftValue.localeCompare(rightValue, undefined, {
+      sensitivity: 'base',
+    });
+
+    if (valueDifference !== 0) {
+      return valueDifference;
+    }
+  }
+
+  return left.sequence - right.sequence;
 };
 
 const getTextareaMinHeight = (textarea: HTMLTextAreaElement): number => {
@@ -390,6 +439,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const [characterEditDraft, setCharacterEditDraft] =
     useState<CharacterEditDraft | null>(null);
   const [showAllCharacters, setShowAllCharacters] = useState<boolean>(false);
+  const [inventorySorts, setInventorySorts] = useState<InventorySortKey[]>([]);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingItemDraft, setEditingItemDraft] =
     useState<InventoryEditDraft | null>(null);
@@ -409,6 +459,14 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     ? dmCharacters
     : [activeCharacter];
   const visibleCharacterCount = visibleCharacters.length;
+  const activeInventorySorts = useMemo(
+    () =>
+      inventorySorts.filter(
+        (sortKey) => sortKey !== 'owner' || isAllCharactersView
+      ),
+    [inventorySorts, isAllCharactersView]
+  );
+  const hasActiveInventorySorts = activeInventorySorts.length > 0;
 
   useEffect(() => {
     if (
@@ -446,6 +504,14 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [characterEditDraft, editingItemDraft, pendingRemovalState, showAddModal]);
+
+  useEffect(() => {
+    if (!isAllCharactersView) {
+      setInventorySorts((currentSorts) =>
+        currentSorts.filter((sortKey) => sortKey !== 'owner')
+      );
+    }
+  }, [isAllCharactersView]);
 
   useEffect(() => {
     if (!editingItemDraft) {
@@ -1029,6 +1095,14 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     setShowAddModal(false);
   };
 
+  const toggleInventorySort = (sortKey: InventorySortKey) => {
+    setInventorySorts((currentSorts) =>
+      currentSorts.includes(sortKey)
+        ? currentSorts.filter((currentSortKey) => currentSortKey !== sortKey)
+        : [...currentSorts, sortKey]
+    );
+  };
+
   const addCharacter = () => {
     if (!isDmDocument(document)) {
       return;
@@ -1344,6 +1418,208 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     0
   );
 
+  const buildInventoryRowRecord = (
+    character: EncumbranceCharacterSheet,
+    item: EncumbranceInventoryItem,
+    depth: number,
+    sequence: number
+  ): InventoryRowRecord | null => {
+    const itemInfo = getInventoryItemInfo(item, catalogById);
+    if (!itemInfo) {
+      return null;
+    }
+
+    const containerSummary = itemInfo.isContainer
+      ? getContainerLoadSummary(item.id, character.inventory, catalogById)
+      : undefined;
+    const containerUsage = formatContainerUsage(containerSummary);
+    const itemOwnEncumbranceGp = getInventoryItemOwnEncumbranceGp(
+      item,
+      itemInfo
+    );
+    const itemOwnLoadGp = itemOwnEncumbranceGp * item.quantity;
+    const itemOwnValueGp = getInventoryItemOwnValueGp(item, itemInfo);
+    const itemVisibleValueGp =
+      mode === 'dm'
+        ? itemOwnValueGp
+        : getPlayerVisibleItemValueGp(item, itemInfo);
+    const displayName = getInventoryItemDisplayName(item, itemInfo);
+    const noteLines = getRowNoteLines(item, mode);
+    let containerStatusLabel: string | undefined;
+
+    if (containerSummary) {
+      if (containerSummary.mismatchedItemIds.length > 0) {
+        containerStatusLabel = 'Check';
+      } else if (containerSummary.isOverCapacity) {
+        containerStatusLabel = 'Overfull';
+      } else if (
+        containerSummary.capacity > 0 &&
+        containerSummary.used >= containerSummary.capacity
+      ) {
+        containerStatusLabel = 'Full';
+      }
+    }
+
+    return {
+      character,
+      item,
+      itemInfo,
+      displayName,
+      itemOwnLoadGp,
+      itemVisibleValueGp,
+      noteLines,
+      depth,
+      sequence,
+      ownerLabel: getCharacterOwnerLabel(character.name),
+      containerStatusLabel,
+      containerUsage,
+      containerSummary,
+    };
+  };
+
+  const renderInventoryRow = (
+    rowRecord: InventoryRowRecord,
+    flattened = false
+  ) => (
+    <button
+      type="button"
+      className={`${styles['inventoryRowButton']} ${
+        isAllCharactersView ? styles['inventoryRowButtonParty'] : ''
+      } ${
+        rowRecord.containerSummary?.isOverCapacity
+          ? styles['inventoryRowWarning']
+          : ''
+      }`}
+      onClick={() => openEditItem(rowRecord.item.id, rowRecord.character.id)}
+      aria-label={`Edit ${rowRecord.displayName}${
+        isAllCharactersView
+          ? ` for ${getCharacterDisplayName(rowRecord.character.name)}`
+          : ''
+      }`}
+      aria-haspopup="dialog"
+    >
+      {isAllCharactersView && (
+        <div className={styles['inventoryCellSummary']}>
+          <span className={styles['inventoryLabel']}>Owner</span>
+          <span className={styles['inventorySummaryValue']}>
+            {rowRecord.ownerLabel}
+          </span>
+        </div>
+      )}
+      <div
+        className={styles['inventoryCellPrimary']}
+        style={
+          flattened
+            ? undefined
+            : {
+                paddingLeft: `calc(0.3rem + ${rowRecord.depth * 0.9}rem)`,
+              }
+        }
+      >
+        <span className={styles['inventoryLabel']}>Item</span>
+        <div className={styles['inventoryNameRow']}>
+          <span className={styles['inventoryName']}>
+            {rowRecord.displayName}
+          </span>
+          {rowRecord.itemInfo.isContainer && (
+            <span className={styles['inventoryBadge']}>Container</span>
+          )}
+          {rowRecord.containerStatusLabel && (
+            <span
+              className={`${styles['inventoryBadge']} ${
+                rowRecord.containerSummary?.isOverCapacity
+                  ? styles['inventoryBadgeWarning']
+                  : ''
+              }`}
+            >
+              {rowRecord.containerStatusLabel}
+            </span>
+          )}
+        </div>
+        {rowRecord.containerSummary &&
+          rowRecord.containerStatusLabel &&
+          rowRecord.containerUsage && (
+            <div className={styles['inventoryStatusText']}>
+              {rowRecord.containerStatusLabel === 'Full'
+                ? `At capacity: ${rowRecord.containerUsage}`
+                : `Container status: ${rowRecord.containerUsage}`}
+            </div>
+          )}
+      </div>
+      <div className={styles['inventoryCellSummary']}>
+        <span className={styles['inventoryLabel']}>Day</span>
+        <span className={styles['inventorySummaryValue']}>
+          {rowRecord.item.day}
+        </span>
+      </div>
+      <div className={styles['inventoryCellSummary']}>
+        <span className={styles['inventoryLabel']}>Qty</span>
+        <span className={styles['inventorySummaryValue']}>
+          {rowRecord.item.quantity}
+        </span>
+      </div>
+      <div className={styles['inventoryCellSummary']}>
+        <span className={styles['inventoryLabel']}>Load</span>
+        <span className={styles['inventorySummaryValue']}>
+          {rowRecord.itemOwnLoadGp} gp
+        </span>
+      </div>
+      <div className={styles['inventoryCellSummary']}>
+        <span className={styles['inventoryLabel']}>Value</span>
+        <span className={styles['inventorySummaryValue']}>
+          {formatOptionalGpValue(rowRecord.itemVisibleValueGp)}
+        </span>
+      </div>
+      <div
+        className={`${styles['inventoryCellSummary']} ${styles['inventoryNotesCell']}`}
+      >
+        <span className={styles['inventoryLabel']}>Notes</span>
+        {rowRecord.noteLines.length > 0 ? (
+          <span className={styles['inventoryNotesPreview']}>
+            {rowRecord.noteLines.map((noteLine, index) => (
+              <span
+                key={`${rowRecord.item.id}-note-${index}`}
+                className={`${styles['inventoryNoteLine']} ${
+                  noteLine.tone === 'dm' ? styles['inventoryNoteLineDm'] : ''
+                }`}
+              >
+                {noteLine.text}
+              </span>
+            ))}
+          </span>
+        ) : (
+          <span className={styles['inventoryNotesPreview']} />
+        )}
+      </div>
+    </button>
+  );
+
+  const collectInventoryRowRecords = (
+    character: EncumbranceCharacterSheet,
+    containerId: string | null,
+    depth = 0,
+    sequenceRef = { value: 0 }
+  ): InventoryRowRecord[] =>
+    character.inventory
+      .filter((item) => item.containerId === containerId)
+      .flatMap((item) => {
+        const rowRecord = buildInventoryRowRecord(
+          character,
+          item,
+          depth,
+          sequenceRef.value
+        );
+        sequenceRef.value += 1;
+        const childRecords = collectInventoryRowRecords(
+          character,
+          item.id,
+          depth + 1,
+          sequenceRef
+        );
+
+        return rowRecord ? [rowRecord, ...childRecords] : childRecords;
+      });
+
   const renderInventoryRows = (
     character: EncumbranceCharacterSheet,
     containerId: string | null,
@@ -1351,159 +1627,56 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   ): JSX.Element[] =>
     character.inventory
       .filter((item) => item.containerId === containerId)
-      .map((item) => {
-        const itemInfo = getInventoryItemInfo(item, catalogById);
-        if (!itemInfo) {
-          return <div key={item.id} />;
+      .flatMap((item) => {
+        const rowRecord = buildInventoryRowRecord(character, item, depth, 0);
+        const childRows = renderInventoryRows(character, item.id, depth + 1);
+
+        if (!rowRecord) {
+          return childRows;
         }
 
-        const containerSummary = itemInfo.isContainer
-          ? getContainerLoadSummary(item.id, character.inventory, catalogById)
-          : undefined;
-        const containerUsage = formatContainerUsage(containerSummary);
-        const itemOwnEncumbranceGp = getInventoryItemOwnEncumbranceGp(
-          item,
-          itemInfo
-        );
-        const itemOwnLoadGp = itemOwnEncumbranceGp * item.quantity;
-        const itemOwnValueGp = getInventoryItemOwnValueGp(item, itemInfo);
-        const itemVisibleValueGp =
-          mode === 'dm'
-            ? itemOwnValueGp
-            : getPlayerVisibleItemValueGp(item, itemInfo);
-        const displayName = getInventoryItemDisplayName(item, itemInfo);
-        const noteLines = getRowNoteLines(item, mode);
-        let containerStatusLabel: string | undefined;
-
-        if (containerSummary) {
-          if (containerSummary.mismatchedItemIds.length > 0) {
-            containerStatusLabel = 'Check';
-          } else if (containerSummary.isOverCapacity) {
-            containerStatusLabel = 'Overfull';
-          } else if (
-            containerSummary.capacity > 0 &&
-            containerSummary.used >= containerSummary.capacity
-          ) {
-            containerStatusLabel = 'Full';
-          }
-        }
-
-        return (
+        return [
           <div
             key={`${character.id}-${item.id}`}
             className={styles['inventoryRowShell']}
           >
-            <button
-              type="button"
-              className={`${styles['inventoryRowButton']} ${
-                isAllCharactersView ? styles['inventoryRowButtonParty'] : ''
-              } ${
-                containerSummary?.isOverCapacity
-                  ? styles['inventoryRowWarning']
-                  : ''
-              }`}
-              onClick={() => openEditItem(item.id, character.id)}
-              aria-label={`Edit ${displayName}${
-                isAllCharactersView
-                  ? ` for ${getCharacterDisplayName(character.name)}`
-                  : ''
-              }`}
-              aria-haspopup="dialog"
-            >
-              {isAllCharactersView && (
-                <div className={styles['inventoryCellSummary']}>
-                  <span className={styles['inventoryLabel']}>Owner</span>
-                  <span className={styles['inventorySummaryValue']}>
-                    {getCharacterOwnerLabel(character.name)}
-                  </span>
-                </div>
-              )}
-              <div
-                className={styles['inventoryCellPrimary']}
-                style={{ paddingLeft: `calc(0.3rem + ${depth * 0.9}rem)` }}
-              >
-                <span className={styles['inventoryLabel']}>Item</span>
-                <div className={styles['inventoryNameRow']}>
-                  <span className={styles['inventoryName']}>{displayName}</span>
-                  {itemInfo.isContainer && (
-                    <span className={styles['inventoryBadge']}>Container</span>
-                  )}
-                  {containerStatusLabel && (
-                    <span
-                      className={`${styles['inventoryBadge']} ${
-                        containerSummary?.isOverCapacity
-                          ? styles['inventoryBadgeWarning']
-                          : ''
-                      }`}
-                    >
-                      {containerStatusLabel}
-                    </span>
-                  )}
-                </div>
-                {containerSummary && containerStatusLabel && containerUsage && (
-                  <div className={styles['inventoryStatusText']}>
-                    {containerStatusLabel === 'Full'
-                      ? `At capacity: ${containerUsage}`
-                      : `Container status: ${containerUsage}`}
-                  </div>
-                )}
-              </div>
-              <div className={styles['inventoryCellSummary']}>
-                <span className={styles['inventoryLabel']}>Day</span>
-                <span className={styles['inventorySummaryValue']}>
-                  {item.day}
-                </span>
-              </div>
-              <div className={styles['inventoryCellSummary']}>
-                <span className={styles['inventoryLabel']}>Qty</span>
-                <span className={styles['inventorySummaryValue']}>
-                  {item.quantity}
-                </span>
-              </div>
-              <div className={styles['inventoryCellSummary']}>
-                <span className={styles['inventoryLabel']}>Load</span>
-                <span className={styles['inventorySummaryValue']}>
-                  {itemOwnLoadGp} gp
-                </span>
-              </div>
-              <div className={styles['inventoryCellSummary']}>
-                <span className={styles['inventoryLabel']}>Value</span>
-                <span className={styles['inventorySummaryValue']}>
-                  {formatOptionalGpValue(itemVisibleValueGp)}
-                </span>
-              </div>
-              <div
-                className={`${styles['inventoryCellSummary']} ${styles['inventoryNotesCell']}`}
-              >
-                <span className={styles['inventoryLabel']}>Notes</span>
-                {noteLines.length > 0 ? (
-                  <span className={styles['inventoryNotesPreview']}>
-                    {noteLines.map((noteLine, index) => (
-                      <span
-                        key={`${item.id}-note-${index}`}
-                        className={`${styles['inventoryNoteLine']} ${
-                          noteLine.tone === 'dm'
-                            ? styles['inventoryNoteLineDm']
-                            : ''
-                        }`}
-                      >
-                        {noteLine.text}
-                      </span>
-                    ))}
-                  </span>
-                ) : (
-                  <span className={styles['inventoryNotesPreview']} />
-                )}
-              </div>
-            </button>
-            {renderInventoryRows(character, item.id, depth + 1)}
-          </div>
-        );
+            {renderInventoryRow(rowRecord)}
+          </div>,
+          ...childRows,
+        ];
       });
 
-  const rootItemRows = visibleCharacters.flatMap((character) =>
-    renderInventoryRows(character, null)
-  );
+  const flatInventoryRows = (() => {
+    const sequenceRef = { value: 0 };
+
+    return visibleCharacters.flatMap((character) =>
+      collectInventoryRowRecords(character, null, 0, sequenceRef)
+    );
+  })();
+
+  const displayedInventoryRows = hasActiveInventorySorts
+    ? [...flatInventoryRows]
+        .sort((left, right) =>
+          compareInventoryRowRecords(left, right, activeInventorySorts)
+        )
+        .map((rowRecord) => (
+          <div
+            key={`${rowRecord.character.id}-${rowRecord.item.id}`}
+            className={styles['inventoryRowShell']}
+          >
+            {renderInventoryRow(rowRecord, true)}
+          </div>
+        ))
+    : visibleCharacters.flatMap((character) =>
+        renderInventoryRows(character, null)
+      );
+  const getInventorySortPriority = (
+    sortKey: InventorySortKey
+  ): number | null => {
+    const sortIndex = activeInventorySorts.indexOf(sortKey);
+
+    return sortIndex === -1 ? null : activeInventorySorts.length - sortIndex;
+  };
   const editingItemDisplayName =
     editingItem && editingItemInfo
       ? getInventoryItemDisplayName(editingItem, editingItemInfo)
@@ -1817,17 +1990,70 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
               isAllCharactersView ? styles['inventoryHeaderParty'] : ''
             }`}
           >
-            {isAllCharactersView && <span>Owner</span>}
-            <span>Item</span>
-            <span>Day</span>
+            {isAllCharactersView && (
+              <button
+                type="button"
+                className={`${styles['inventoryHeaderSortButton']} ${
+                  getInventorySortPriority('owner') !== null
+                    ? styles['inventoryHeaderSortButtonActive']
+                    : ''
+                }`}
+                onClick={() => toggleInventorySort('owner')}
+                aria-label="Sort by Owner"
+                aria-pressed={getInventorySortPriority('owner') !== null}
+              >
+                <span>Owner</span>
+                {getInventorySortPriority('owner') !== null && (
+                  <span className={styles['inventorySortPriority']}>
+                    {getInventorySortPriority('owner')}
+                  </span>
+                )}
+              </button>
+            )}
+            <button
+              type="button"
+              className={`${styles['inventoryHeaderSortButton']} ${
+                getInventorySortPriority('item') !== null
+                  ? styles['inventoryHeaderSortButtonActive']
+                  : ''
+              }`}
+              onClick={() => toggleInventorySort('item')}
+              aria-label="Sort by Item"
+              aria-pressed={getInventorySortPriority('item') !== null}
+            >
+              <span>Item</span>
+              {getInventorySortPriority('item') !== null && (
+                <span className={styles['inventorySortPriority']}>
+                  {getInventorySortPriority('item')}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              className={`${styles['inventoryHeaderSortButton']} ${
+                getInventorySortPriority('day') !== null
+                  ? styles['inventoryHeaderSortButtonActive']
+                  : ''
+              }`}
+              onClick={() => toggleInventorySort('day')}
+              aria-label="Sort by Day"
+              aria-pressed={getInventorySortPriority('day') !== null}
+            >
+              <span>Day</span>
+              {getInventorySortPriority('day') !== null && (
+                <span className={styles['inventorySortPriority']}>
+                  {getInventorySortPriority('day')}
+                </span>
+              )}
+            </button>
             <span>Qty</span>
             <span>Load</span>
             <span>{mode === 'dm' ? 'Value' : 'Known value'}</span>
             <span>Notes</span>
           </div>
           <div className={styles['inventoryList']}>
-            {rootItemRows.length > 0 ? (
-              rootItemRows
+            {displayedInventoryRows.length > 0 ? (
+              displayedInventoryRows
             ) : (
               <div className={styles['placeholder']}>
                 {isAllCharactersView
