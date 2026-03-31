@@ -264,12 +264,18 @@ const isNonMissileWeaponId = (weaponId: number): boolean =>
 const getGraphNodeSourceLabel = (
   source: InitiativeAttackNode['source']
 ): string =>
-  source === 'routine-component' ? 'Routine component' : 'Timing bonus';
+  source === 'routine-component'
+    ? 'Routine component'
+    : source === 'timing-bonus'
+    ? 'Timing bonus'
+    : 'Movement contact';
 
 const getGraphEdgeReasonLabel = (reason: InitiativeAttackEdgeReason): string =>
   reason === 'simple-initiative'
     ? 'baseline side initiative'
-    : 'duel timing rule';
+    : reason === 'direct-melee'
+    ? 'duel timing rule'
+    : 'movement contact rule';
 
 const formatGraphEdgeReasons = (
   reasons: InitiativeAttackEdgeReason[]
@@ -1102,10 +1108,10 @@ const InitiativePlayground = () => {
               <p className={styles['graphCopy']}>
                 The graph only contains attack relations justified by baseline
                 initiative or a narrower melee timing rule. Movement outcomes
-                are explained in the cards above and do not enter the DAG yet.
+                now enter as explicit contact events when the current rules
+                actually determine them.
               </p>
             </div>
-
             <div className={styles['graphLayoutShell']}>
               <div className={styles['graphViewport']}>
                 {attackGraph.nodes.length > 0 ? (
@@ -1132,6 +1138,38 @@ const InitiativePlayground = () => {
                         />
                       </marker>
                     </defs>
+
+                    <line
+                      x1={graphLayout.segmentColumns[0]?.x || 0}
+                      y1={graphLayout.headerLineY}
+                      x2={
+                        (graphLayout.segmentColumns[
+                          graphLayout.segmentColumns.length - 1
+                        ]?.x || 0) + (graphLayout.nodes[0]?.width || 0)
+                      }
+                      y2={graphLayout.headerLineY}
+                      className={styles['graphSegmentHeaderLine']}
+                    />
+
+                    {graphLayout.segmentColumns.map((segmentColumn) => (
+                      <g key={`segment-column-${segmentColumn.segment}`}>
+                        <text
+                          x={segmentColumn.centerX}
+                          y={graphLayout.headerLabelY}
+                          textAnchor={'middle'}
+                          className={styles['graphSegmentColumnLabel']}
+                        >
+                          {segmentColumn.segment}
+                        </text>
+                        <line
+                          x1={segmentColumn.centerX}
+                          y1={graphLayout.headerLineY}
+                          x2={segmentColumn.centerX}
+                          y2={graphLayout.guideBottomY}
+                          className={styles['graphSegmentGuide']}
+                        />
+                      </g>
+                    ))}
 
                     {graphLayout.edges.map((edge) => {
                       const isSelected =
@@ -1208,6 +1246,26 @@ const InitiativePlayground = () => {
                           >
                             {truncateGraphText(combatantName, 20)}
                           </text>
+                          {node.segment !== undefined ? (
+                            <>
+                              <rect
+                                x={layoutNode.width - 62}
+                                y={10}
+                                width={48}
+                                height={20}
+                                rx={10}
+                                className={styles['graphSegmentBadge']}
+                              />
+                              <text
+                                x={layoutNode.width - 38}
+                                y={24}
+                                textAnchor={'middle'}
+                                className={styles['graphSegmentBadgeLabel']}
+                              >
+                                S{node.segment}
+                              </text>
+                            </>
+                          ) : null}
                           <text
                             x={layoutNode.width / 2}
                             y={48}
@@ -1248,6 +1306,9 @@ const InitiativePlayground = () => {
                         {selectedGraphNode.side === 'party' ? 'Party' : 'Enemy'}
                       </span>
                       <span>Layer: {selectedGraphNodeLayer}</span>
+                      {selectedGraphNode.segment !== undefined ? (
+                        <span>Segment: {selectedGraphNode.segment}</span>
+                      ) : null}
                       <span>
                         Source:{' '}
                         {getGraphNodeSourceLabel(selectedGraphNode.source)}

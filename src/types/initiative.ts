@@ -82,7 +82,10 @@ export interface DirectMeleePair {
   inference: 'mutual-targeting-non-missile-weapons';
 }
 
-type InitiativeAttackSource = 'routine-component' | 'timing-bonus';
+type InitiativeAttackSource =
+  | 'routine-component'
+  | 'timing-bonus'
+  | 'movement-contact';
 
 export interface InitiativeAttackEntry {
   combatantId: string;
@@ -178,9 +181,14 @@ export interface InitiativeAttackNode {
   attackNumber: number;
   label: string;
   source: InitiativeAttackSource;
+  kind: 'attack' | 'contact';
+  segment?: number;
 }
 
-export type InitiativeAttackEdgeReason = 'simple-initiative' | 'direct-melee';
+export type InitiativeAttackEdgeReason =
+  | 'simple-initiative'
+  | 'direct-melee'
+  | 'movement';
 
 export interface InitiativeAttackEdge {
   fromNodeId: string;

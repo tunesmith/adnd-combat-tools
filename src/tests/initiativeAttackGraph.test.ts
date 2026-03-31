@@ -67,10 +67,7 @@ describe('initiative attack graph', () => {
         {
           fromNodeId: 'attack:enemy-3:1',
           toNodeId: 'attack:party-1:1',
-          reasons: expect.arrayContaining([
-            'simple-initiative',
-            'direct-melee',
-          ]),
+          reasons: ['direct-melee'],
         },
         {
           fromNodeId: 'attack:enemy-4:1',
@@ -187,7 +184,7 @@ describe('initiative attack graph', () => {
     ]);
   });
 
-  test('does not graph charge attacks until movement timing is promoted into the DAG', () => {
+  test('graphs charge contact and local first-strike precedence', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge Contact',
       partyInitiative: 3,
@@ -221,11 +218,96 @@ describe('initiative attack graph', () => {
     const resolution = resolveInitiativeRound(scenario);
     const graph = buildInitiativeAttackGraph(scenario, resolution);
 
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'contact:party-1',
+          label: 'contact',
+          kind: 'contact',
+          source: 'movement-contact',
+          segment: 2,
+        }),
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          kind: 'attack',
+          segment: 2,
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          kind: 'attack',
+          segment: 2,
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual([
+      {
+        fromNodeId: 'contact:party-1',
+        toNodeId: 'attack:party-1:1',
+        reasons: ['movement'],
+      },
+      {
+        fromNodeId: 'attack:party-1:1',
+        toNodeId: 'attack:enemy-3:1',
+        reasons: ['movement'],
+      },
+    ]);
+    expect(graph.layers).toEqual([
+      ['contact:party-1'],
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+    ]);
+  });
+
+  test('graphs close contact as a segment call without inventing ensuing blows', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Close to Contact',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Ronan',
+          declaredAction: 'close',
+          movementRate: 12,
+          weaponId: 2,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 3.5,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Orc',
+          declaredAction: 'hold',
+          movementRate: 9,
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'contact:party-1',
+          kind: 'contact',
+          segment: 3,
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          kind: 'attack',
+        }),
+      ])
+    );
     expect(graph.nodes.map((node) => node.id)).not.toContain(
       'attack:party-1:1'
     );
-    expect(graph.nodes.map((node) => node.id)).toEqual(['attack:enemy-3:1']);
     expect(graph.edges).toEqual([]);
-    expect(graph.layers).toEqual([['attack:enemy-3:1']]);
   });
 });

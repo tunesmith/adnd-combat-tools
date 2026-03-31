@@ -11,6 +11,9 @@ import type {
 const getAttackNodeId = (combatantId: string, attackNumber: number): string =>
   `attack:${combatantId}:${attackNumber}`;
 
+const getContactNodeId = (combatantId: string): string =>
+  `contact:${combatantId}`;
+
 const mergeEdgeReason = (
   edgesByKey: Map<string, InitiativeAttackEdge>,
   fromNodeId: string,
@@ -48,9 +51,14 @@ const createNode = (
   componentId: string,
   attackNumber: number,
   label: string,
-  source: InitiativeAttackNode['source']
+  source: InitiativeAttackNode['source'],
+  kind: InitiativeAttackNode['kind'],
+  segment?: number
 ): InitiativeAttackNode => ({
-  id: getAttackNodeId(combatant.id, attackNumber),
+  id:
+    kind === 'contact'
+      ? getContactNodeId(combatant.id)
+      : getAttackNodeId(combatant.id, attackNumber),
   combatantId: combatant.id,
   routineId: combatant.attackRoutine.id,
   componentId,
@@ -58,7 +66,64 @@ const createNode = (
   attackNumber,
   label,
   source,
+  kind,
+  segment,
 });
+
+const createRoutineAttackNode = (
+  combatant: InitiativeScenarioCombatant,
+  segment?: number
+): InitiativeAttackNode => {
+  const timingBasisComponent =
+    combatant.attackRoutine.components.find(
+      (component) =>
+        component.id === combatant.attackRoutine.timingBasisComponentId
+    ) || combatant.attackRoutine.components[0];
+
+  if (!timingBasisComponent) {
+    throw new Error(`Missing timing basis component for ${combatant.id}`);
+  }
+
+  return createNode(
+    combatant,
+    timingBasisComponent.id,
+    timingBasisComponent.order,
+    timingBasisComponent.label,
+    'routine-component',
+    'attack',
+    segment
+  );
+};
+
+const createContactNode = (
+  combatant: InitiativeScenarioCombatant,
+  segment: number
+): InitiativeAttackNode =>
+  createNode(
+    combatant,
+    'contact',
+    0,
+    'contact',
+    'movement-contact',
+    'contact',
+    segment
+  );
+
+const addNode = (
+  nodesById: Map<string, InitiativeAttackNode>,
+  node: InitiativeAttackNode
+) => {
+  const existing = nodesById.get(node.id);
+
+  if (!existing) {
+    nodesById.set(node.id, node);
+    return;
+  }
+
+  if (existing.segment === undefined && node.segment !== undefined) {
+    existing.segment = node.segment;
+  }
+};
 
 const getLayers = (
   nodes: InitiativeAttackNode[],
@@ -117,8 +182,15 @@ export const buildInitiativeAttackGraph = (
 ): InitiativeAttackGraph => {
   const combatantById = getCombatantById(scenario);
   const directMeleeCombatantIdSet = new Set(resolution.overriddenCombatantIds);
-  const nodes: InitiativeAttackNode[] = [];
+  const nodesById = new Map<string, InitiativeAttackNode>();
   const edgesByKey = new Map<string, InitiativeAttackEdge>();
+  const movementResolutionByCombatantId = new Map(
+    resolution.movementResolutions.map((movementResolution) => [
+      movementResolution.combatantId,
+      movementResolution,
+    ])
+  );
+  const movementHandledCombatantIdSet = new Set<string>();
 
   resolution.directMeleeEngagements.forEach((engagement) => {
     engagement.resolution.steps.forEach((step, stepIndex) => {
@@ -133,9 +205,10 @@ export const buildInitiativeAttackGraph = (
           attack.componentId,
           attack.attackNumber,
           attack.label,
-          attack.source
+          attack.source,
+          'attack'
         );
-        nodes.push(node);
+        addNode(nodesById, node);
         return [node.id];
       });
 
@@ -159,36 +232,132 @@ export const buildInitiativeAttackGraph = (
     });
   });
 
-  scenario.party.concat(scenario.enemies).forEach((combatant) => {
-    if (directMeleeCombatantIdSet.has(combatant.id)) {
+  resolution.movementResolutions.forEach((movementResolution) => {
+    if (
+      movementResolution.reason !== 'contact' ||
+      movementResolution.targetId === undefined ||
+      movementResolution.contactSegment === undefined
+    ) {
       return;
     }
 
+    const attacker = combatantById.get(movementResolution.combatantId);
+    const target = combatantById.get(movementResolution.targetId);
+
+    if (!attacker || !target) {
+      return;
+    }
+
+    const contactNode = createContactNode(
+      attacker,
+      movementResolution.contactSegment
+    );
+    addNode(nodesById, contactNode);
+    movementHandledCombatantIdSet.add(attacker.id);
+
+    if (!movementResolution.sameRoundAttack) {
+      return;
+    }
+
+    const attackerAttackNode = createRoutineAttackNode(
+      attacker,
+      movementResolution.contactSegment
+    );
+    addNode(nodesById, attackerAttackNode);
+    movementHandledCombatantIdSet.add(attacker.id);
+    mergeEdgeReason(
+      edgesByKey,
+      contactNode.id,
+      attackerAttackNode.id,
+      'movement'
+    );
+
+    const targetMovementResolution = movementResolutionByCombatantId.get(
+      target.id
+    );
+    const targetCanRespond =
+      (target.declaredAction === 'open-melee' &&
+        target.targetIds.includes(attacker.id)) ||
+      Boolean(
+        targetMovementResolution?.reason === 'contact' &&
+          targetMovementResolution.sameRoundAttack &&
+          targetMovementResolution.targetId === attacker.id
+      );
+
+    if (!targetCanRespond) {
+      return;
+    }
+
+    const targetAttackNode = createRoutineAttackNode(
+      target,
+      targetMovementResolution?.contactSegment ||
+        movementResolution.contactSegment
+    );
+    addNode(nodesById, targetAttackNode);
+    movementHandledCombatantIdSet.add(target.id);
+
+    if (movementResolution.firstStrike === 'attacker') {
+      mergeEdgeReason(
+        edgesByKey,
+        attackerAttackNode.id,
+        targetAttackNode.id,
+        'movement'
+      );
+      return;
+    }
+
+    mergeEdgeReason(
+      edgesByKey,
+      contactNode.id,
+      targetAttackNode.id,
+      'movement'
+    );
+
+    if (movementResolution.firstStrike === 'target') {
+      mergeEdgeReason(
+        edgesByKey,
+        targetAttackNode.id,
+        attackerAttackNode.id,
+        'movement'
+      );
+    }
+  });
+
+  scenario.party.concat(scenario.enemies).forEach((combatant) => {
     if (
-      combatant.declaredAction === 'close' ||
-      combatant.declaredAction === 'charge'
+      directMeleeCombatantIdSet.has(combatant.id) ||
+      movementHandledCombatantIdSet.has(combatant.id)
     ) {
       return;
     }
 
     combatant.attackRoutine.components.forEach((component) => {
-      nodes.push(
+      addNode(
+        nodesById,
         createNode(
           combatant,
           component.id,
           component.order,
           component.label,
-          'routine-component'
+          'routine-component',
+          'attack'
         )
       );
     });
   });
 
+  const nodes = Array.from(nodesById.values());
+  const simpleInitiativeNodes = nodes.filter(
+    (node) =>
+      !directMeleeCombatantIdSet.has(node.combatantId) &&
+      !movementHandledCombatantIdSet.has(node.combatantId)
+  );
+
   if (resolution.simpleOrder === 'party-first') {
-    const partyNodeIds = nodes
+    const partyNodeIds = simpleInitiativeNodes
       .filter((node) => node.side === 'party')
       .map((node) => node.id);
-    const enemyNodeIds = nodes
+    const enemyNodeIds = simpleInitiativeNodes
       .filter((node) => node.side === 'enemy')
       .map((node) => node.id);
 
@@ -200,10 +369,10 @@ export const buildInitiativeAttackGraph = (
   }
 
   if (resolution.simpleOrder === 'enemy-first') {
-    const partyNodeIds = nodes
+    const partyNodeIds = simpleInitiativeNodes
       .filter((node) => node.side === 'party')
       .map((node) => node.id);
-    const enemyNodeIds = nodes
+    const enemyNodeIds = simpleInitiativeNodes
       .filter((node) => node.side === 'enemy')
       .map((node) => node.id);
 
