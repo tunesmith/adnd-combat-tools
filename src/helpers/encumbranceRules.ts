@@ -66,18 +66,26 @@ const getChildItems = (
 ): EncumbranceInventoryItem[] =>
   inventory.filter((item) => item.containerId === containerId);
 
+export const getInventoryItemInfo = (
+  item: EncumbranceInventoryItem,
+  catalogById: Map<string, EncumbranceCatalogItem>
+): EncumbranceCatalogItem | undefined =>
+  item.customItem || catalogById.get(item.catalogId);
+
 const getOwnEncumbrance = (
   item: EncumbranceInventoryItem,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
   (typeof item.encumbranceGpOverride === 'number'
     ? item.encumbranceGpOverride
-    : catalogById.get(item.catalogId)?.encumbranceGp || 0) * item.quantity;
+    : getInventoryItemInfo(item, catalogById)?.encumbranceGp || 0) *
+  item.quantity;
 
 const getOwnValueGp = (
   item: EncumbranceInventoryItem,
   catalogById: Map<string, EncumbranceCatalogItem>
-): number => (catalogById.get(item.catalogId)?.valueGp || 0) * item.quantity;
+): number =>
+  (getInventoryItemInfo(item, catalogById)?.valueGp || 0) * item.quantity;
 
 const getOwnKnownValueGp = (
   item: EncumbranceInventoryItem,
@@ -132,7 +140,7 @@ export const getInventoryItemTotalGp = (
   }
 
   const children = getChildItems(inventory, itemId);
-  const itemInfo = catalogById.get(item.catalogId);
+  const itemInfo = getInventoryItemInfo(item, catalogById);
   if (itemInfo?.ignoresContentsWeightForEncumbrance) {
     return getOwnEncumbrance(item, catalogById);
   }
@@ -237,7 +245,7 @@ export const getContainerLoadSummary = (
     return undefined;
   }
 
-  const containerInfo = catalogById.get(containerItem.catalogId);
+  const containerInfo = getInventoryItemInfo(containerItem, catalogById);
   if (!containerInfo?.isContainer) {
     return undefined;
   }
@@ -246,13 +254,13 @@ export const getContainerLoadSummary = (
 
   if (containerInfo.ammoCapacity) {
     const matchingChildren = children.filter((child) => {
-      const childInfo = catalogById.get(child.catalogId);
+      const childInfo = getInventoryItemInfo(child, catalogById);
       return childInfo?.ammoKind === containerInfo.ammoCapacity?.ammoKind;
     });
 
     const mismatchedItemIds = children
       .filter((child) => {
-        const childInfo = catalogById.get(child.catalogId);
+        const childInfo = getInventoryItemInfo(child, catalogById);
         return childInfo?.ammoKind !== containerInfo.ammoCapacity?.ammoKind;
       })
       .map((child) => child.id);
@@ -305,7 +313,7 @@ export const getContainerWarningCount = (
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
   inventory.reduce((count, item) => {
-    const info = catalogById.get(item.catalogId);
+    const info = getInventoryItemInfo(item, catalogById);
     if (!info?.isContainer) {
       return count;
     }

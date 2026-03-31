@@ -368,17 +368,28 @@
   opacity: 0.8;
 }
 
+.inventoryHeaderParty {
+  grid-template-columns:
+    88px
+    minmax(0, 2.2fr)
+    56px
+    68px
+    92px
+    110px
+    minmax(0, 1.25fr);
+}
+
 .inventoryList {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0;
   font-family: 'Poppins', sans-serif;
 }
 
 .inventoryRowShell {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0;
 }
 
 .inventoryRowButton {
@@ -396,6 +407,7 @@
   padding: 0.55rem 0.65rem 0.5rem;
   border: 0;
   border-left: 4px solid rgba(240, 239, 221, 0.14);
+  border-top: 1px solid rgba(240, 239, 221, 0.06);
   background: rgba(0, 0, 0, 0.16);
   color: inherit;
   cursor: pointer;
@@ -404,6 +416,17 @@
   font-family: inherit;
   font-weight: 400;
   transition: background-color 120ms ease, border-left-color 120ms ease;
+}
+
+.inventoryRowButtonParty {
+  grid-template-columns:
+    88px
+    minmax(0, 2.2fr)
+    56px
+    68px
+    92px
+    110px
+    minmax(0, 1.25fr);
 }
 
 .inventoryRowButton:hover {
@@ -673,6 +696,18 @@
       102px
       minmax(0, 1.25fr);
   }
+
+  .inventoryHeaderParty,
+  .inventoryRowButtonParty {
+    grid-template-columns:
+      76px
+      minmax(0, 1.95fr)
+      50px
+      60px
+      78px
+      98px
+      minmax(0, 1.05fr);
+  }
 }
 
 @media screen and (max-width: 980px) {
@@ -692,7 +727,8 @@
     display: none;
   }
 
-  .inventoryRowButton {
+  .inventoryRowButton,
+  .inventoryRowButtonParty {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -742,7 +778,8 @@
   }
 
   .formGridCompact,
-  .inventoryRowButton {
+  .inventoryRowButton,
+  .inventoryRowButtonParty {
     grid-template-columns: 1fr;
   }
 

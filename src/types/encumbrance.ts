@@ -82,6 +82,7 @@ export interface EncumbranceInventoryItemV5
 
 export interface EncumbranceInventoryItem extends EncumbranceInventoryItemV5 {
   playerKnowsValue: boolean;
+  customItem?: EncumbranceCustomItem;
 }
 
 interface LegacyEncumbranceCharacter {
@@ -170,6 +171,19 @@ export interface EncumbranceDmDocumentV7 {
   customItems: EncumbranceCustomItem[];
 }
 
+export interface EncumbrancePlayerDocumentV8 {
+  kind: 'adnd-encumbrance-player';
+  version: 8;
+  character: EncumbrancePlayerCharacter;
+}
+
+export interface EncumbranceDmDocumentV8 {
+  kind: 'adnd-encumbrance-dm';
+  version: 8;
+  activeCharacterId: string;
+  characters: EncumbranceDmCharacter[];
+}
+
 type LegacyEncumbranceDocument = EncumbranceDocumentV1 | EncumbranceDocumentV2;
 
 export type AnyEncumbranceDocument =
@@ -179,11 +193,13 @@ export type AnyEncumbranceDocument =
   | EncumbranceDocumentV5
   | EncumbranceDocumentV6
   | EncumbrancePlayerDocumentV7
-  | EncumbranceDmDocumentV7;
+  | EncumbranceDmDocumentV7
+  | EncumbrancePlayerDocumentV8
+  | EncumbranceDmDocumentV8;
 
 export type EncumbranceDocument =
-  | EncumbrancePlayerDocumentV7
-  | EncumbranceDmDocumentV7;
+  | EncumbrancePlayerDocumentV8
+  | EncumbranceDmDocumentV8;
 
 type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered';
 

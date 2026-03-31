@@ -6,6 +6,7 @@ import type {
   EncumbranceCustomItem,
   EncumbranceDmCharacter,
   EncumbranceDmDocumentV7,
+  EncumbranceDmDocumentV8,
   EncumbranceDocument,
   EncumbranceDocumentKind,
   EncumbranceDocumentV1,
@@ -19,6 +20,7 @@ import type {
   EncumbranceInventoryItemV5,
   EncumbrancePlayerCharacter,
   EncumbrancePlayerDocumentV7,
+  EncumbrancePlayerDocumentV8,
   EquipmentCategory,
   ExceptionalStrengthTier,
   LegacyEncumbranceInventoryItem,
@@ -26,7 +28,7 @@ import type {
   StrengthScore,
 } from '../types/encumbrance';
 
-const DOCUMENT_VERSION = 7;
+const DOCUMENT_VERSION = 8;
 
 const exceptionalStrengthTiers = new Set<ExceptionalStrengthTier>([
   'none',
@@ -175,7 +177,10 @@ const isInventoryItem = (value: unknown): value is EncumbranceInventoryItem => {
   }
 
   const candidate = value as Partial<EncumbranceInventoryItem>;
-  return typeof candidate.playerKnowsValue === 'boolean';
+  return (
+    typeof candidate.playerKnowsValue === 'boolean' &&
+    (candidate.customItem === undefined || isCatalogItem(candidate.customItem))
+  );
 };
 
 const isDocumentKind = (value: unknown): value is EncumbranceDocumentKind =>
@@ -191,14 +196,17 @@ const isSupportedDocumentVersion = (
   | EncumbranceDocumentV5['version']
   | EncumbranceDocumentV6['version']
   | EncumbrancePlayerDocumentV7['version']
-  | EncumbranceDmDocumentV7['version'] =>
+  | EncumbranceDmDocumentV7['version']
+  | EncumbrancePlayerDocumentV8['version']
+  | EncumbranceDmDocumentV8['version'] =>
   value === 1 ||
   value === 2 ||
   value === 3 ||
   value === 4 ||
   value === 5 ||
   value === 6 ||
-  value === 7;
+  value === 7 ||
+  value === 8;
 
 const isAmmoCapacityRule = (value: unknown): value is AmmoCapacityRule => {
   if (!value || typeof value !== 'object') {
@@ -353,6 +361,12 @@ const sanitizeInventoryItem = (
     item.fullyIdentified === true
       ? true
       : undefined;
+  const sanitizedCustomItem = isCatalogItem(candidate.customItem)
+    ? {
+        ...sanitizeCatalogItem(candidate.customItem),
+        id: item.catalogId,
+      }
+    : undefined;
 
   return {
     id: item.id,
@@ -377,6 +391,7 @@ const sanitizeInventoryItem = (
       ? { isMagical: sanitizedIsMagical }
       : {}),
     ...(sanitizedFullyIdentified ? { fullyIdentified: true } : {}),
+    ...(sanitizedCustomItem ? { customItem: sanitizedCustomItem } : {}),
   };
 };
 
@@ -431,6 +446,114 @@ const sanitizeDmCharacter = (
   dmNotes: candidate.dmNotes,
 });
 
+const getAllInventoryItems = (
+  document: EncumbranceDocument
+): EncumbranceInventoryItem[] =>
+  document.kind === 'adnd-encumbrance-dm'
+    ? document.characters.flatMap((character) => character.inventory)
+    : document.character.inventory;
+
+const toFallbackCustomItemName = (catalogId: string): string => {
+  const strippedId = catalogId
+    .replace(/^custom-/, '')
+    .replace(
+      /-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      ''
+    )
+    .replace(/-/g, ' ')
+    .trim();
+
+  if (!strippedId) {
+    return 'Missing custom item';
+  }
+
+  return strippedId.replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const createPlaceholderCustomItem = (
+  item: EncumbranceInventoryItem,
+  allInventory: EncumbranceInventoryItem[]
+): EncumbranceCustomItem => {
+  const hasChildren = allInventory.some(
+    (candidate) => candidate.containerId === item.id
+  );
+  const inferredName =
+    item.name?.trim() || toFallbackCustomItemName(item.catalogId);
+
+  return {
+    id: item.catalogId,
+    name: inferredName,
+    category: hasChildren
+      ? 'containers'
+      : item.playerMagicKnowledge === 'known-magical'
+      ? 'treasure'
+      : 'adventuring-gear',
+    encumbranceGp:
+      typeof item.encumbranceGpOverride === 'number'
+        ? item.encumbranceGpOverride
+        : 0,
+    valueGp: 0,
+    ...(hasChildren ? { isContainer: true } : {}),
+  };
+};
+
+const mapInventoryItems = (
+  document: EncumbranceDocument,
+  mapper: (item: EncumbranceInventoryItem) => EncumbranceInventoryItem
+): EncumbranceDocument =>
+  document.kind === 'adnd-encumbrance-dm'
+    ? {
+        ...document,
+        characters: document.characters.map((character) => ({
+          ...character,
+          inventory: character.inventory.map(mapper),
+        })),
+      }
+    : {
+        ...document,
+        character: {
+          ...document.character,
+          inventory: document.character.inventory.map(mapper),
+        },
+      };
+
+const inlineLegacyCustomItems = (
+  document: EncumbranceDocument,
+  customItems: EncumbranceCustomItem[]
+): EncumbranceDocument => {
+  const allInventory = getAllInventoryItems(document);
+  const customItemById = new Map(
+    customItems.map((item) => [item.id, sanitizeCatalogItem(item)])
+  );
+
+  return mapInventoryItems(document, (item) => {
+    if (!item.catalogId.startsWith('custom-')) {
+      return item.customItem
+        ? {
+            ...item,
+            customItem: {
+              ...sanitizeCatalogItem(item.customItem),
+              id: item.catalogId,
+            },
+          }
+        : item;
+    }
+
+    const inlineCustomItem = item.customItem
+      ? {
+          ...sanitizeCatalogItem(item.customItem),
+          id: item.catalogId,
+        }
+      : customItemById.get(item.catalogId) ||
+        createPlaceholderCustomItem(item, allInventory);
+
+    return {
+      ...item,
+      customItem: inlineCustomItem,
+    };
+  });
+};
+
 const isPlayerCharacter = (
   value: unknown
 ): value is EncumbrancePlayerCharacter => {
@@ -460,14 +583,18 @@ const isDmCharacter = (value: unknown): value is EncumbranceDmCharacter => {
 const sanitizeDocument = (
   candidate: AnyEncumbranceDocument
 ): EncumbranceDocument => {
-  if (candidate.version === 7) {
+  const legacyCustomItems = sanitizeCustomItems(candidate);
+
+  if (candidate.version === 7 || candidate.version === 8) {
     if (candidate.kind === 'adnd-encumbrance-player') {
-      return {
-        kind: 'adnd-encumbrance-player',
-        version: DOCUMENT_VERSION,
-        character: sanitizePlayerCharacter(candidate.character),
-        customItems: sanitizeCustomItems(candidate),
-      };
+      return inlineLegacyCustomItems(
+        {
+          kind: 'adnd-encumbrance-player',
+          version: DOCUMENT_VERSION,
+          character: sanitizePlayerCharacter(candidate.character),
+        },
+        legacyCustomItems
+      );
     }
 
     const sanitizedCharacters = candidate.characters.map((character) =>
@@ -479,13 +606,15 @@ const sanitizeDocument = (
       ? candidate.activeCharacterId
       : sanitizedCharacters[0]?.id || createCharacterId();
 
-    return {
-      kind: 'adnd-encumbrance-dm',
-      version: DOCUMENT_VERSION,
-      activeCharacterId,
-      characters: sanitizedCharacters,
-      customItems: sanitizeCustomItems(candidate),
-    };
+    return inlineLegacyCustomItems(
+      {
+        kind: 'adnd-encumbrance-dm',
+        version: DOCUMENT_VERSION,
+        activeCharacterId,
+        characters: sanitizedCharacters,
+      },
+      legacyCustomItems
+    );
   }
 
   const migratedCharacterId = createCharacterId();
@@ -501,34 +630,38 @@ const sanitizeDocument = (
   };
 
   if (candidate.kind === 'adnd-encumbrance-player') {
-    return {
-      kind: 'adnd-encumbrance-player',
-      version: DOCUMENT_VERSION,
-      character: {
-        ...migratedCharacterBase,
-        inventory: migratedInventory.map((item) =>
-          sanitizeInventoryItem(item, 'adnd-encumbrance-player')
-        ),
+    return inlineLegacyCustomItems(
+      {
+        kind: 'adnd-encumbrance-player',
+        version: DOCUMENT_VERSION,
+        character: {
+          ...migratedCharacterBase,
+          inventory: migratedInventory.map((item) =>
+            sanitizeInventoryItem(item, 'adnd-encumbrance-player')
+          ),
+        },
       },
-      customItems: sanitizeCustomItems(candidate),
-    };
+      legacyCustomItems
+    );
   }
 
-  return {
-    kind: 'adnd-encumbrance-dm',
-    version: DOCUMENT_VERSION,
-    activeCharacterId: migratedCharacterId,
-    characters: [
-      {
-        ...migratedCharacterBase,
-        inventory: migratedInventory.map((item) =>
-          sanitizeInventoryItem(item, 'adnd-encumbrance-dm')
-        ),
-        dmNotes: candidate.dm?.privateNotes || '',
-      },
-    ],
-    customItems: sanitizeCustomItems(candidate),
-  };
+  return inlineLegacyCustomItems(
+    {
+      kind: 'adnd-encumbrance-dm',
+      version: DOCUMENT_VERSION,
+      activeCharacterId: migratedCharacterId,
+      characters: [
+        {
+          ...migratedCharacterBase,
+          inventory: migratedInventory.map((item) =>
+            sanitizeInventoryItem(item, 'adnd-encumbrance-dm')
+          ),
+          dmNotes: candidate.dm?.privateNotes || '',
+        },
+      ],
+    },
+    legacyCustomItems
+  );
 };
 
 export const createEmptyEncumbranceDmCharacter = (
@@ -559,7 +692,6 @@ export const createEmptyEncumbranceDocument = (
       version: DOCUMENT_VERSION,
       activeCharacterId: character.id,
       characters: [character],
-      customItems: [],
     };
   }
 
@@ -567,22 +699,18 @@ export const createEmptyEncumbranceDocument = (
     kind,
     version: DOCUMENT_VERSION,
     character: createEmptyEncumbrancePlayerCharacter(),
-    customItems: [],
   };
 };
 
 export const redactEncumbranceDocument = (
   document: EncumbranceDocument,
   characterId?: string
-): EncumbrancePlayerDocumentV7 => {
+): EncumbrancePlayerDocumentV8 => {
   if (document.kind === 'adnd-encumbrance-player') {
     return {
       kind: 'adnd-encumbrance-player',
       version: DOCUMENT_VERSION,
       character: sanitizePlayerCharacter(document.character),
-      customItems: document.customItems.map((item) =>
-        sanitizeCatalogItem(item)
-      ),
     };
   }
 
@@ -598,9 +726,6 @@ export const redactEncumbranceDocument = (
       kind: 'adnd-encumbrance-player',
       version: DOCUMENT_VERSION,
       character: createEmptyEncumbrancePlayerCharacter(),
-      customItems: document.customItems.map((item) =>
-        sanitizeCatalogItem(item)
-      ),
     };
   }
 
@@ -615,7 +740,6 @@ export const redactEncumbranceDocument = (
         sanitizeInventoryItem(item, 'adnd-encumbrance-player')
       ),
     },
-    customItems: document.customItems.map((item) => sanitizeCatalogItem(item)),
   };
 };
 
@@ -638,18 +762,24 @@ export const parseEncumbranceDocument = (text: string): EncumbranceDocument => {
     throw new Error('Custom items are not valid.');
   }
 
-  if (rawValue.version === 7) {
+  if (rawValue.version === 7 || rawValue.version === 8) {
     if (rawValue.kind === 'adnd-encumbrance-player') {
-      const playerValue = rawValue as Partial<EncumbrancePlayerDocumentV7>;
+      const playerValue = rawValue as Partial<
+        EncumbrancePlayerDocumentV7 | EncumbrancePlayerDocumentV8
+      >;
 
       if (!isPlayerCharacter(playerValue.character)) {
         throw new Error('File is not a supported encumbrance document.');
       }
 
-      return sanitizeDocument(playerValue as EncumbrancePlayerDocumentV7);
+      return sanitizeDocument(
+        playerValue as EncumbrancePlayerDocumentV7 | EncumbrancePlayerDocumentV8
+      );
     }
 
-    const dmValue = rawValue as Partial<EncumbranceDmDocumentV7>;
+    const dmValue = rawValue as Partial<
+      EncumbranceDmDocumentV7 | EncumbranceDmDocumentV8
+    >;
 
     if (
       !Array.isArray(dmValue.characters) ||
@@ -666,7 +796,9 @@ export const parseEncumbranceDocument = (text: string): EncumbranceDocument => {
       throw new Error('File is not a supported encumbrance document.');
     }
 
-    return sanitizeDocument(dmValue as EncumbranceDmDocumentV7);
+    return sanitizeDocument(
+      dmValue as EncumbranceDmDocumentV7 | EncumbranceDmDocumentV8
+    );
   }
 
   const legacyValue = rawValue as Partial<

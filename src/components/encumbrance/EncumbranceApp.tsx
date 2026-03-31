@@ -23,6 +23,7 @@ import {
   getContainerWarningCount,
   getDescendantIds,
   getEffectiveLoadGp,
+  getInventoryItemInfo,
   getInventoryItemTotalGp,
   getInventoryItemTotalKnownValueGp,
   getInventoryItemTotalValueGp,
@@ -65,6 +66,7 @@ interface CustomItemDraft {
 }
 
 interface InventoryEditDraft {
+  characterId: string;
   itemId: string;
   name: string;
   day: number;
@@ -89,6 +91,11 @@ interface CharacterEditDraft {
 
 interface ActiveCharacterState extends EncumbranceCharacterSheet {
   dmNotes: string;
+}
+
+interface PendingRemovalState {
+  characterId: string;
+  itemId: string;
 }
 
 const categoryLabels: Record<EquipmentCategory, string> = {
@@ -261,6 +268,14 @@ const formatGpValue = (value: number): string =>
     maximumFractionDigits: 2,
   });
 
+const getCharacterDisplayName = (name: string): string =>
+  name.trim() || 'Unnamed adventurer';
+
+const getCharacterOwnerLabel = (name: string): string => {
+  const displayName = getCharacterDisplayName(name);
+  return displayName.split(/\s+/)[0] || displayName;
+};
+
 const formatStrengthSummary = (
   score: number,
   exceptional: ExceptionalStrengthTier
@@ -370,20 +385,30 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   );
   const [characterEditDraft, setCharacterEditDraft] =
     useState<CharacterEditDraft | null>(null);
+  const [showAllCharacters, setShowAllCharacters] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingItemDraft, setEditingItemDraft] =
     useState<InventoryEditDraft | null>(null);
-  const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
+  const [pendingRemovalState, setPendingRemovalState] =
+    useState<PendingRemovalState | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const activeCharacter = useMemo(
     () => getActiveCharacterState(document),
     [document]
   );
-  const dmCharacters = isDmDocument(document) ? document.characters : [];
+  const dmCharacters = useMemo(
+    () => (isDmDocument(document) ? document.characters : []),
+    [document]
+  );
+  const isAllCharactersView = mode === 'dm' && showAllCharacters;
+  const visibleCharacters = isAllCharactersView
+    ? dmCharacters
+    : [activeCharacter];
+  const visibleCharacterCount = visibleCharacters.length;
 
   useEffect(() => {
     if (
-      !pendingRemovalId &&
+      !pendingRemovalState &&
       !editingItemDraft &&
       !showAddModal &&
       !characterEditDraft
@@ -393,8 +418,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (pendingRemovalId) {
-          setPendingRemovalId(null);
+        if (pendingRemovalState) {
+          setPendingRemovalState(null);
           return;
         }
 
@@ -416,31 +441,45 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [characterEditDraft, editingItemDraft, pendingRemovalId, showAddModal]);
+  }, [characterEditDraft, editingItemDraft, pendingRemovalState, showAddModal]);
 
   useEffect(() => {
     if (!editingItemDraft) {
       return;
     }
 
-    const stillExists = activeCharacter.inventory.some(
+    const ownerInventory =
+      mode === 'dm'
+        ? (
+            dmCharacters.find(
+              (character) => character.id === editingItemDraft.characterId
+            ) || activeCharacter
+          ).inventory
+        : activeCharacter.inventory;
+    const stillExists = ownerInventory.some(
       (item) => item.id === editingItemDraft.itemId
     );
 
     if (!stillExists) {
       setEditingItemDraft(null);
     }
-  }, [activeCharacter.inventory, editingItemDraft]);
+  }, [activeCharacter, dmCharacters, editingItemDraft, mode]);
 
-  const catalogItems = useMemo(
-    () => [...encumbranceCatalog, ...document.customItems],
-    [document.customItems]
-  );
+  const catalogById = useMemo(() => {
+    const nextCatalogById = new Map(encumbranceCatalogById);
+    const allInventory =
+      document.kind === 'adnd-encumbrance-dm'
+        ? document.characters.flatMap((character) => character.inventory)
+        : document.character.inventory;
 
-  const catalogById = useMemo(
-    () => new Map(catalogItems.map((item) => [item.id, item])),
-    [catalogItems]
-  );
+    allInventory.forEach((item) => {
+      if (item.customItem) {
+        nextCatalogById.set(item.catalogId, item.customItem);
+      }
+    });
+
+    return nextCatalogById;
+  }, [document]);
 
   const selectableCatalogGroups = useMemo(() => {
     const coinSortOrder = new Map<string, number>([
@@ -497,13 +536,13 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const containerItems = useMemo(
     () =>
       activeCharacter.inventory.filter((item) => {
-        const itemInfo = catalogById.get(item.catalogId);
+        const itemInfo = getInventoryItemInfo(item, catalogById);
         return Boolean(itemInfo?.isContainer);
       }),
     [activeCharacter.inventory, catalogById]
   );
 
-  const selectedCatalogItem = catalogById.get(selectedCatalogId);
+  const selectedCatalogItem = encumbranceCatalogById.get(selectedCatalogId);
   const customPreviewItem: EncumbranceCatalogItem = {
     id: '__custom-preview__',
     name: customItemDraft.name.trim() || 'Custom item',
@@ -558,32 +597,54 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     activeCharacter.inventory,
     catalogById
   );
-  const pendingRemovalItem = pendingRemovalId
-    ? activeCharacter.inventory.find((item) => item.id === pendingRemovalId)
+  const pendingRemovalOwner =
+    mode === 'dm' && pendingRemovalState
+      ? dmCharacters.find(
+          (character) => character.id === pendingRemovalState.characterId
+        )
+      : activeCharacter;
+  const pendingRemovalItem = pendingRemovalState
+    ? pendingRemovalOwner?.inventory.find(
+        (item) => item.id === pendingRemovalState.itemId
+      )
     : undefined;
   const pendingRemovalItemInfo = pendingRemovalItem
-    ? catalogById.get(pendingRemovalItem.catalogId)
+    ? getInventoryItemInfo(pendingRemovalItem, catalogById)
     : undefined;
   const pendingRemovalDescendantCount = pendingRemovalItem
-    ? getDescendantIds(activeCharacter.inventory, pendingRemovalItem.id).length
+    ? getDescendantIds(
+        pendingRemovalOwner?.inventory || [],
+        pendingRemovalItem.id
+      ).length
     : 0;
+  const editingItemOwner =
+    mode === 'dm' && editingItemDraft
+      ? dmCharacters.find(
+          (character) => character.id === editingItemDraft.characterId
+        )
+      : activeCharacter;
+  const editingOwnerContainerItems =
+    editingItemOwner?.inventory.filter((item) => {
+      const itemInfo = getInventoryItemInfo(item, catalogById);
+      return Boolean(itemInfo?.isContainer);
+    }) || [];
   const editingItem = editingItemDraft
-    ? activeCharacter.inventory.find(
+    ? editingItemOwner?.inventory.find(
         (item) => item.id === editingItemDraft.itemId
       )
     : undefined;
   const editingItemInfo = editingItem
-    ? catalogById.get(editingItem.catalogId)
+    ? getInventoryItemInfo(editingItem, catalogById)
     : undefined;
   const editingItemDescendantIds =
     editingItem && editingItemInfo
-      ? getDescendantIds(activeCharacter.inventory, editingItem.id)
+      ? getDescendantIds(editingItemOwner?.inventory || [], editingItem.id)
       : [];
   const editingContainerSummary =
     editingItem && editingItemInfo?.isContainer
       ? getContainerLoadSummary(
           editingItem.id,
-          activeCharacter.inventory,
+          editingItemOwner?.inventory || [],
           catalogById
         )
       : undefined;
@@ -591,7 +652,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     editingItem && editingItemInfo
       ? getInventoryItemTotalGp(
           editingItem.id,
-          activeCharacter.inventory,
+          editingItemOwner?.inventory || [],
           catalogById
         )
       : 0;
@@ -600,18 +661,18 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       ? mode === 'dm'
         ? getInventoryItemTotalValueGp(
             editingItem.id,
-            activeCharacter.inventory,
+            editingItemOwner?.inventory || [],
             catalogById
           )
         : getInventoryItemTotalKnownValueGp(
             editingItem.id,
-            activeCharacter.inventory,
+            editingItemOwner?.inventory || [],
             catalogById
           )
       : 0;
   const editingParentOptions =
     editingItem && editingItemInfo
-      ? containerItems.filter((containerItem) => {
+      ? editingOwnerContainerItems.filter((containerItem) => {
           if (
             containerItem.id === editingItem.id ||
             editingItemDescendantIds.includes(containerItem.id)
@@ -619,16 +680,17 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             return false;
           }
 
-          const containerInfo = catalogById.get(containerItem.catalogId);
+          const containerInfo = getInventoryItemInfo(
+            containerItem,
+            catalogById
+          );
           return Boolean(
             containerInfo &&
               canStoreItemInContainer(editingItemInfo, containerInfo)
           );
         })
       : [];
-  const editingCustomItemInfo = editingItemInfo
-    ? document.customItems.find((item) => item.id === editingItemInfo.id)
-    : undefined;
+  const editingCustomItemInfo = editingItem?.customItem;
 
   const openCharacterModal = () => {
     setCharacterEditDraft({
@@ -698,6 +760,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   };
 
   const updateInventoryItem = (
+    characterId: string,
     itemId: string,
     updater: (item: EncumbranceInventoryItem) => EncumbranceInventoryItem
   ) => {
@@ -706,7 +769,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         return {
           ...currentDocument,
           characters: currentDocument.characters.map((character) =>
-            character.id === currentDocument.activeCharacterId
+            character.id === characterId
               ? {
                   ...character,
                   inventory: character.inventory.map((item) =>
@@ -730,20 +793,25 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     });
   };
 
-  const openEditItem = (itemId: string) => {
-    const item = activeCharacter.inventory.find(
+  const openEditItem = (itemId: string, characterId = activeCharacter.id) => {
+    const ownerCharacter =
+      mode === 'dm'
+        ? dmCharacters.find((character) => character.id === characterId)
+        : activeCharacter;
+    const item = ownerCharacter?.inventory.find(
       (candidate) => candidate.id === itemId
     );
     if (!item) {
       return;
     }
 
-    const itemInfo = catalogById.get(item.catalogId);
+    const itemInfo = getInventoryItemInfo(item, catalogById);
     if (!itemInfo) {
       return;
     }
 
     setEditingItemDraft({
+      characterId,
       itemId: item.id,
       name: item.name || '',
       day: item.day,
@@ -774,6 +842,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   };
 
   const applyEditingItemDraft = (
+    characterId: string,
     itemId: string,
     itemInfo: EncumbranceCatalogItem,
     draft: InventoryEditDraft
@@ -785,7 +854,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     const normalizedDay = Math.max(0, Math.floor(Number(draft.day) || 0));
     const normalizedName = draft.name.trim();
 
-    updateInventoryItem(itemId, (currentItem) => ({
+    updateInventoryItem(characterId, itemId, (currentItem) => ({
       ...currentItem,
       quantity: itemInfo.isContainer
         ? 1
@@ -831,21 +900,28 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       const nextDraft = updater(currentDraft);
 
       if (editingItemInfo) {
-        applyEditingItemDraft(nextDraft.itemId, editingItemInfo, nextDraft);
+        applyEditingItemDraft(
+          nextDraft.characterId,
+          nextDraft.itemId,
+          editingItemInfo,
+          nextDraft
+        );
       }
 
       return nextDraft;
     });
   };
 
-  const removeInventoryItem = (itemId: string) => {
+  const removeInventoryItem = (
+    itemId: string,
+    characterId = activeCharacter.id
+  ) => {
     setDocument((currentDocument) => {
       const inventory =
         currentDocument.kind === 'adnd-encumbrance-dm'
           ? (
               currentDocument.characters.find(
-                (character) =>
-                  character.id === currentDocument.activeCharacterId
+                (character) => character.id === characterId
               ) || currentDocument.characters[0]
             )?.inventory || []
           : currentDocument.character.inventory;
@@ -854,23 +930,17 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       const nextInventory = inventory.filter(
         (item) => !blockedIds.has(item.id)
       );
-      const referencedCatalogIds = new Set(
-        nextInventory.map((item) => item.catalogId)
-      );
 
       if (currentDocument.kind === 'adnd-encumbrance-dm') {
         return {
           ...currentDocument,
           characters: currentDocument.characters.map((character) =>
-            character.id === currentDocument.activeCharacterId
+            character.id === characterId
               ? {
                   ...character,
                   inventory: nextInventory,
                 }
               : character
-          ),
-          customItems: currentDocument.customItems.filter((item) =>
-            referencedCatalogIds.has(item.id)
           ),
         };
       }
@@ -881,9 +951,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           ...currentDocument.character,
           inventory: nextInventory,
         },
-        customItems: currentDocument.customItems.filter((item) =>
-          referencedCatalogIds.has(item.id)
-        ),
       };
     });
   };
@@ -898,20 +965,27 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     }));
   };
 
-  const updateCustomCatalogItem = (
+  const updateCustomInventoryItem = (
+    characterId: string,
     itemId: string,
     updater: (item: EncumbranceCustomItem) => EncumbranceCustomItem
   ) => {
-    setDocument((currentDocument) => ({
-      ...currentDocument,
-      customItems: currentDocument.customItems.map((item) =>
-        item.id === itemId ? updater(item) : item
-      ),
-    }));
+    updateInventoryItem(characterId, itemId, (currentItem) =>
+      currentItem.customItem
+        ? {
+            ...currentItem,
+            customItem: {
+              ...updater(currentItem.customItem),
+              id: currentItem.catalogId,
+            },
+          }
+        : currentItem
+    );
   };
 
   const selectActiveCharacter = (characterId: string) => {
     if (!isDmDocument(document) || characterId === document.activeCharacterId) {
+      setShowAllCharacters(false);
       return;
     }
 
@@ -923,9 +997,23 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           }
         : currentDocument
     );
+    setShowAllCharacters(false);
     setCharacterEditDraft(null);
     setEditingItemDraft(null);
-    setPendingRemovalId(null);
+    setPendingRemovalState(null);
+    setSelectedContainerId('');
+    setShowAddModal(false);
+  };
+
+  const selectAllCharacters = () => {
+    if (mode !== 'dm') {
+      return;
+    }
+
+    setShowAllCharacters(true);
+    setCharacterEditDraft(null);
+    setEditingItemDraft(null);
+    setPendingRemovalState(null);
     setSelectedContainerId('');
     setShowAddModal(false);
   };
@@ -948,10 +1036,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           }
         : currentDocument
     );
+    setShowAllCharacters(false);
     setSelectedContainerId('');
     setShowAddModal(false);
     setEditingItemDraft(null);
-    setPendingRemovalId(null);
+    setPendingRemovalState(null);
     setCharacterEditDraft({
       characterId: nextCharacter.id,
       name: nextCharacter.name,
@@ -962,22 +1051,28 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   };
 
   const requestRemoveInventoryItem = (itemId: string) => {
-    setPendingRemovalId(itemId);
+    setPendingRemovalState({
+      itemId,
+      characterId: editingItemDraft?.characterId || activeCharacter.id,
+    });
   };
 
   const closeRemoveModal = () => {
-    setPendingRemovalId(null);
+    setPendingRemovalState(null);
   };
 
   const confirmRemoveInventoryItem = () => {
     if (!pendingRemovalItem || !pendingRemovalItemInfo) {
-      setPendingRemovalId(null);
+      setPendingRemovalState(null);
       return;
     }
 
-    removeInventoryItem(pendingRemovalItem.id);
+    removeInventoryItem(
+      pendingRemovalItem.id,
+      pendingRemovalState?.characterId || activeCharacter.id
+    );
     setEditingItemDraft(null);
-    setPendingRemovalId(null);
+    setPendingRemovalState(null);
   };
 
   const addInventoryEntry = (
@@ -986,18 +1081,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     quantity: number,
     customItemToPersist?: EncumbranceCustomItem
   ): EncumbranceDocument => {
-    const effectiveCatalogById = new Map<string, EncumbranceCatalogItem>([
-      ...Array.from(encumbranceCatalogById.entries()),
-      ...currentDocument.customItems.map(
-        (item): [string, EncumbranceCatalogItem] => [item.id, item]
-      ),
-      ...(customItemToPersist
-        ? ([[customItemToPersist.id, customItemToPersist]] as [
-            string,
-            EncumbranceCatalogItem
-          ][])
-        : []),
-    ]);
     const currentInventory =
       currentDocument.kind === 'adnd-encumbrance-dm'
         ? (
@@ -1006,11 +1089,20 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             ) || currentDocument.characters[0]
           )?.inventory || []
         : currentDocument.character.inventory;
+    const effectiveCatalogById = new Map(encumbranceCatalogById);
+    currentInventory.forEach((item) => {
+      if (item.customItem) {
+        effectiveCatalogById.set(item.catalogId, item.customItem);
+      }
+    });
+    if (customItemToPersist) {
+      effectiveCatalogById.set(customItemToPersist.id, customItemToPersist);
+    }
     const targetContainer = selectedContainerId
       ? currentInventory.find((item) => item.id === selectedContainerId)
       : undefined;
     const targetContainerInfo = targetContainer
-      ? effectiveCatalogById.get(targetContainer.catalogId)
+      ? getInventoryItemInfo(targetContainer, effectiveCatalogById)
       : undefined;
     const nextContainerId =
       targetContainerInfo &&
@@ -1040,15 +1132,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 : undefined,
           }
         : {}),
+      ...(customItemToPersist ? { customItem: customItemToPersist } : {}),
     };
-    const nextCustomItems = customItemToPersist
-      ? [...currentDocument.customItems, customItemToPersist]
-      : currentDocument.customItems;
 
     if (currentDocument.kind === 'adnd-encumbrance-dm') {
       return {
         ...currentDocument,
-        customItems: nextCustomItems,
         characters: currentDocument.characters.map((character) =>
           character.id === currentDocument.activeCharacterId
             ? {
@@ -1062,7 +1151,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
     return {
       ...currentDocument,
-      customItems: nextCustomItems,
       character: {
         ...currentDocument.character,
         inventory: [...currentDocument.character.inventory, nextItem],
@@ -1154,10 +1242,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       }
 
       setDocument(parsed);
+      setShowAllCharacters(false);
       setCharacterEditDraft(null);
       setShowAddModal(false);
       setEditingItemDraft(null);
-      setPendingRemovalId(null);
+      setPendingRemovalState(null);
       setSelectedContainerId('');
       setSelectedQuantity(1);
       setAddItemDetailsDraft(defaultAddItemDetailsDraft());
@@ -1203,34 +1292,62 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
   const resetDocument = () => {
     setDocument(createEmptyEncumbranceDocument(getDocumentKindForMode(mode)));
+    setShowAllCharacters(false);
     setCharacterEditDraft(null);
     setShowAddModal(false);
     setEditingItemDraft(null);
-    setPendingRemovalId(null);
+    setPendingRemovalState(null);
     setCustomItemDraft(defaultCustomItemDraft());
     setAddItemDetailsDraft(defaultAddItemDetailsDraft());
     setSelectedContainerId('');
     setSelectedQuantity(1);
   };
 
+  const visibleTotalEncumbranceGp = visibleCharacters.reduce(
+    (total, character) => total + getTotalEncumbranceGp(character, catalogById),
+    0
+  );
+  const visibleTotalValueGp = visibleCharacters.reduce(
+    (total, character) =>
+      total +
+      (mode === 'dm'
+        ? getTotalValueGp(character, catalogById)
+        : getTotalKnownValueGp(character, catalogById)),
+    0
+  );
+  const visibleContainerWarningCount = visibleCharacters.reduce(
+    (count, character) =>
+      count + getContainerWarningCount(character.inventory, catalogById),
+    0
+  );
+  const visibleItemCount = visibleCharacters.reduce(
+    (count, character) => count + character.inventory.length,
+    0
+  );
+  const visibleContainerCount = visibleCharacters.reduce(
+    (count, character) =>
+      count +
+      character.inventory.filter((item) =>
+        Boolean(getInventoryItemInfo(item, catalogById)?.isContainer)
+      ).length,
+    0
+  );
+
   const renderInventoryRows = (
+    character: EncumbranceCharacterSheet,
     containerId: string | null,
     depth = 0
   ): JSX.Element[] =>
-    activeCharacter.inventory
+    character.inventory
       .filter((item) => item.containerId === containerId)
       .map((item) => {
-        const itemInfo = catalogById.get(item.catalogId);
+        const itemInfo = getInventoryItemInfo(item, catalogById);
         if (!itemInfo) {
           return <div key={item.id} />;
         }
 
         const containerSummary = itemInfo.isContainer
-          ? getContainerLoadSummary(
-              item.id,
-              activeCharacter.inventory,
-              catalogById
-            )
+          ? getContainerLoadSummary(item.id, character.inventory, catalogById)
           : undefined;
         const containerUsage = formatContainerUsage(containerSummary);
         const itemOwnEncumbranceGp = getInventoryItemOwnEncumbranceGp(
@@ -1261,18 +1378,35 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         }
 
         return (
-          <div key={item.id} className={styles['inventoryRowShell']}>
+          <div
+            key={`${character.id}-${item.id}`}
+            className={styles['inventoryRowShell']}
+          >
             <button
               type="button"
               className={`${styles['inventoryRowButton']} ${
+                isAllCharactersView ? styles['inventoryRowButtonParty'] : ''
+              } ${
                 containerSummary?.isOverCapacity
                   ? styles['inventoryRowWarning']
                   : ''
               }`}
-              onClick={() => openEditItem(item.id)}
-              aria-label={`Edit ${displayName}`}
+              onClick={() => openEditItem(item.id, character.id)}
+              aria-label={`Edit ${displayName}${
+                isAllCharactersView
+                  ? ` for ${getCharacterDisplayName(character.name)}`
+                  : ''
+              }`}
               aria-haspopup="dialog"
             >
+              {isAllCharactersView && (
+                <div className={styles['inventoryCellSummary']}>
+                  <span className={styles['inventoryLabel']}>Owner</span>
+                  <span className={styles['inventorySummaryValue']}>
+                    {getCharacterOwnerLabel(character.name)}
+                  </span>
+                </div>
+              )}
               <div
                 className={styles['inventoryCellPrimary']}
                 style={{ paddingLeft: `calc(0.3rem + ${depth * 0.9}rem)` }}
@@ -1351,12 +1485,14 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 )}
               </div>
             </button>
-            {renderInventoryRows(item.id, depth + 1)}
+            {renderInventoryRows(character, item.id, depth + 1)}
           </div>
         );
       });
 
-  const rootItemRows = renderInventoryRows(null);
+  const rootItemRows = visibleCharacters.flatMap((character) =>
+    renderInventoryRows(character, null)
+  );
   const editingItemDisplayName =
     editingItem && editingItemInfo
       ? getInventoryItemDisplayName(editingItem, editingItemInfo)
@@ -1424,13 +1560,15 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         strength: activeCharacter.strength,
         dmNotes: activeCharacter.dmNotes,
       };
-  const characterSummaryName =
-    activeCharacterSummary.name.trim() || 'Unnamed adventurer';
+  const characterSummaryName = isAllCharactersView
+    ? 'Party View'
+    : getCharacterDisplayName(activeCharacterSummary.name);
   const characterSummaryStrength = formatStrengthSummary(
     activeCharacterSummary.strength.score,
     activeCharacterSummary.strength.exceptional
   );
-  const hasDmNotes = Boolean(activeCharacterSummary.dmNotes.trim());
+  const hasDmNotes =
+    !isAllCharactersView && Boolean(activeCharacterSummary.dmNotes.trim());
 
   return (
     <div className={styles['outerContainer']}>
@@ -1469,6 +1607,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 type="button"
                 className={`${styles['button']} ${styles['buttonCompact']}`}
                 onClick={exportPlayerCopy}
+                disabled={isAllCharactersView}
+                title={
+                  isAllCharactersView
+                    ? 'Select a character to export a player copy.'
+                    : undefined
+                }
               >
                 Export Player Copy
               </button>
@@ -1502,14 +1646,23 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             </div>
             {mode === 'dm' && (
               <div className={styles['characterTabs']}>
+                <button
+                  type="button"
+                  className={`${styles['characterTab']} ${
+                    isAllCharactersView ? styles['characterTabActive'] : ''
+                  }`}
+                  onClick={selectAllCharacters}
+                >
+                  All Characters
+                </button>
                 {dmCharacters.map((character) => {
-                  const tabLabel =
-                    character.name.trim() || 'Unnamed adventurer';
+                  const tabLabel = getCharacterDisplayName(character.name);
                   return (
                     <button
                       key={character.id}
                       type="button"
                       className={`${styles['characterTab']} ${
+                        !isAllCharactersView &&
                         character.id === activeCharacter.id
                           ? styles['characterTabActive']
                           : ''
@@ -1522,63 +1675,110 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 })}
               </div>
             )}
-            <button
-              type="button"
-              className={styles['characterSummaryButton']}
-              onClick={openCharacterModal}
-              aria-label={`Edit ${characterSummaryName}`}
-              aria-haspopup="dialog"
-            >
+            {isAllCharactersView ? (
               <div className={styles['characterSummary']}>
                 <div className={styles['characterSummaryName']}>
                   {characterSummaryName}
                 </div>
                 <div className={styles['characterSummaryRow']}>
                   <span className={styles['characterSummaryChip']}>
-                    STR {characterSummaryStrength}
+                    {visibleCharacterCount} characters
                   </span>
-                  {mode === 'dm' && hasDmNotes && (
-                    <span className={styles['characterSummaryText']}>
-                      Private notes saved
-                    </span>
-                  )}
+                  <span className={styles['characterSummaryText']}>
+                    Select a character tab to edit details.
+                  </span>
                 </div>
               </div>
-            </button>
+            ) : (
+              <button
+                type="button"
+                className={styles['characterSummaryButton']}
+                onClick={openCharacterModal}
+                aria-label={`Edit ${characterSummaryName}`}
+                aria-haspopup="dialog"
+              >
+                <div className={styles['characterSummary']}>
+                  <div className={styles['characterSummaryName']}>
+                    {characterSummaryName}
+                  </div>
+                  <div className={styles['characterSummaryRow']}>
+                    <span className={styles['characterSummaryChip']}>
+                      STR {characterSummaryStrength}
+                    </span>
+                    {mode === 'dm' && hasDmNotes && (
+                      <span className={styles['characterSummaryText']}>
+                        Private notes saved
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            )}
           </section>
 
           <section className={styles['card']}>
             <div className={styles['cardTitle']}>Encumbrance</div>
-            <div className={styles['summaryGrid']}>
-              <div className={styles['summaryValue']}>
-                <span className={styles['summaryLabel']}>Total</span>
-                <strong>{totalEncumbranceGp} gp</strong>
+            {isAllCharactersView ? (
+              <div className={styles['summaryGrid']}>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Characters</span>
+                  <strong>{visibleCharacterCount}</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Items</span>
+                  <strong>{visibleItemCount}</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Containers</span>
+                  <strong>{visibleContainerCount}</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Total</span>
+                  <strong>{visibleTotalEncumbranceGp} gp</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>
+                    {mode === 'dm' ? 'Value' : 'Known value'}
+                  </span>
+                  <strong>{formatGpValue(visibleTotalValueGp)} gp</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Warnings</span>
+                  <strong>{visibleContainerWarningCount}</strong>
+                </div>
               </div>
-              <div className={styles['summaryValue']}>
-                <span className={styles['summaryLabel']}>
-                  12&quot; Capacity
-                </span>
-                <strong>{carryingCapacityGp} gp</strong>
+            ) : (
+              <div className={styles['summaryGrid']}>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Total</span>
+                  <strong>{totalEncumbranceGp} gp</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>
+                    12&quot; Capacity
+                  </span>
+                  <strong>{carryingCapacityGp} gp</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>
+                    {mode === 'dm' ? 'Value' : 'Known value'}
+                  </span>
+                  <strong>{formatGpValue(totalValueGp)} gp</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Band</span>
+                  <strong>{loadBand.label}</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Move</span>
+                  <strong>{loadBand.movement}</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Warnings</span>
+                  <strong>{containerWarningCount}</strong>
+                </div>
               </div>
-              <div className={styles['summaryValue']}>
-                <span className={styles['summaryLabel']}>
-                  {mode === 'dm' ? 'Value' : 'Known value'}
-                </span>
-                <strong>{formatGpValue(totalValueGp)} gp</strong>
-              </div>
-              <div className={styles['summaryValue']}>
-                <span className={styles['summaryLabel']}>Band</span>
-                <strong>{loadBand.label}</strong>
-              </div>
-              <div className={styles['summaryValue']}>
-                <span className={styles['summaryLabel']}>Move</span>
-                <strong>{loadBand.movement}</strong>
-              </div>
-              <div className={styles['summaryValue']}>
-                <span className={styles['summaryLabel']}>Warnings</span>
-                <strong>{containerWarningCount}</strong>
-              </div>
-            </div>
+            )}
           </section>
         </div>
 
@@ -1590,12 +1790,23 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 type="button"
                 className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
                 onClick={openAddModal}
+                disabled={isAllCharactersView}
+                title={
+                  isAllCharactersView
+                    ? 'Select a character to add items.'
+                    : undefined
+                }
               >
                 Add Item
               </button>
             </div>
           </div>
-          <div className={styles['inventoryHeader']}>
+          <div
+            className={`${styles['inventoryHeader']} ${
+              isAllCharactersView ? styles['inventoryHeaderParty'] : ''
+            }`}
+          >
+            {isAllCharactersView && <span>Owner</span>}
             <span>Item</span>
             <span>Day</span>
             <span>Qty</span>
@@ -1608,7 +1819,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
               rootItemRows
             ) : (
               <div className={styles['placeholder']}>
-                Use Add Item to start building the loadout.
+                {isAllCharactersView
+                  ? 'Select a character to add items, or switch back to a single character view.'
+                  : 'Use Add Item to start building the loadout.'}
               </div>
             )}
           </div>
@@ -1791,7 +2004,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                               onChange={(event) => {
                                 const nextCatalogId = event.target.value;
                                 setSelectedCatalogId(nextCatalogId);
-                                const nextItem = catalogById.get(nextCatalogId);
+                                const nextItem =
+                                  encumbranceCatalogById.get(nextCatalogId);
                                 if (nextItem?.isContainer) {
                                   setSelectedQuantity(1);
                                 }
@@ -1915,8 +2129,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                           >
                             <option value="">On person</option>
                             {containerItems.map((containerItem) => {
-                              const containerInfo = catalogById.get(
-                                containerItem.catalogId
+                              const containerInfo = getInventoryItemInfo(
+                                containerItem,
+                                catalogById
                               );
                               const isAllowed = containerInfo
                                 ? canStoreItemInContainer(
@@ -2023,7 +2238,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                   className={styles['fieldControl']}
                                   value={
                                     customItemDraft.ignoresContentsWeightForEncumbrance
-                                      ? 'ignore'
+                                      ? 'own'
                                       : 'count'
                                   }
                                   onChange={(event) =>
@@ -2415,8 +2630,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                           >
                             <option value="">On person</option>
                             {editingParentOptions.map((containerItem) => {
-                              const containerInfo = catalogById.get(
-                                containerItem.catalogId
+                              const containerInfo = getInventoryItemInfo(
+                                containerItem,
+                                catalogById
                               );
 
                               return (
@@ -2531,8 +2747,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                     : 'count'
                                 }
                                 onChange={(event) =>
-                                  updateCustomCatalogItem(
-                                    editingCustomItemInfo.id,
+                                  updateCustomInventoryItem(
+                                    editingItemDraft.characterId,
+                                    editingItemDraft.itemId,
                                     (currentItem) => ({
                                       ...currentItem,
                                       ignoresContentsWeightForEncumbrance:
