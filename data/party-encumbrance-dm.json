@@ -1,6 +1,6 @@
 {
   "kind": "adnd-encumbrance-dm",
-  "version": 7,
+  "version": 8,
   "activeCharacterId": "d1ca496b-b5ba-4312-9d0c-7e8214f51bdb",
   "characters": [
     {
@@ -85,7 +85,14 @@
           "playerKnowsValue": true,
           "name": "25 bullets",
           "dmNotes": "",
-          "isMagical": false
+          "isMagical": false,
+          "customItem": {
+            "id": "custom-40-bullets-a9806104-b246-47cb-b642-5a53e86ea4f8",
+            "name": "40 bullets",
+            "category": "adventuring-gear",
+            "encumbranceGp": 2,
+            "valueGp": 0
+          }
         },
         {
           "id": "f8d3576e-f388-4268-a852-8b5d49c9f233",
@@ -111,7 +118,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-boots-of-elvenkind-sneaky-boots-517a03b0-e9b4-46ce-b702-5e858c25012b",
+            "name": "Boots of Elvenkind (sneaky boots)",
+            "category": "clothing",
+            "encumbranceGp": 30,
+            "valueGp": 5000
+          }
         },
         {
           "id": "58ef6423-d5f8-4080-a407-8a207b53bdbb",
@@ -124,7 +138,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-bracers-of-defense-ac6-788b0aad-2a2f-4bff-a7f5-43d2434ef565",
+            "name": "Bracers of Defense AC6",
+            "category": "adventuring-gear",
+            "encumbranceGp": 10,
+            "valueGp": 12000
+          }
         },
         {
           "id": "5a188770-f2d5-4d26-9e7a-7e2429cd994c",
@@ -137,7 +158,14 @@
           "playerKnowsValue": false,
           "dmNotes": "Can be combined with leather armor",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-cape-of-protection-2-cc1eca81-6ade-4a2a-ad7d-4e5ed9f10c3f",
+            "name": "Cape of Protection +2",
+            "category": "clothing",
+            "encumbranceGp": 25,
+            "valueGp": 20000
+          }
         },
         {
           "id": "43f841e9-e972-4ef1-a6b6-92e77b505ed0",
@@ -150,7 +178,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-dagger-1-2-against-small-creatures-b9db1706-b03e-4b49-8348-3e1c11181ac0",
+            "name": "Dagger +1/+2 against small creatures",
+            "category": "arms",
+            "encumbranceGp": 10,
+            "valueGp": 750
+          }
         },
         {
           "id": "00f9f532-a8d0-48ca-82c7-37e17299b71f",
@@ -163,7 +198,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ring-of-invisibility-bbe6c508-693c-4dea-af70-3352dcd59a84",
+            "name": "Ring of Invisibility",
+            "category": "clothing",
+            "encumbranceGp": 1,
+            "valueGp": 7500
+          }
         },
         {
           "id": "8d9f9bef-f47c-4bc2-8d37-ee042d337a73",
@@ -176,7 +218,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ring-of-protection-1-1cc75e61-97f4-4e0d-9640-0cd611c195d2",
+            "name": "Ring of Protection +1",
+            "category": "clothing",
+            "encumbranceGp": 1,
+            "valueGp": 10000
+          }
         },
         {
           "id": "742f48ff-1347-480b-9f64-cea696d1d421",
@@ -201,7 +250,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-shortsword-1-2-against-scaly-creatures-0d441467-b649-4be2-9860-283f02343e5b",
+            "name": "Shortsword +1, +2 against scaly creatures",
+            "category": "arms",
+            "encumbranceGp": 35,
+            "valueGp": 3000
+          }
         },
         {
           "id": "5bffc2d9-5598-4de8-8537-c3539573b4e1",
@@ -214,7 +270,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-sling-of-seeking-2-5ad48a47-ae7a-407f-abee-6d6bd6ffe514",
+            "name": "Sling of Seeking +2",
+            "category": "arms",
+            "encumbranceGp": 5,
+            "valueGp": 7000
+          }
         },
         {
           "id": "717c4675-ca44-4c6d-b849-397ecc66b996",
@@ -227,7 +290,14 @@
           "playerKnowsValue": false,
           "dmNotes": "TODO: add magical  effects",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-smoke-pellet-272fd02d-322c-4ffa-b717-f806cde06341",
+            "name": "Smoke Pellet",
+            "category": "adventuring-gear",
+            "encumbranceGp": 1,
+            "valueGp": 80
+          }
         },
         {
           "id": "712aa9c7-520f-4474-9d73-367de9bed730",
@@ -239,7 +309,14 @@
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
           "dmNotes": "init bonus... recheck",
-          "isMagical": true
+          "isMagical": true,
+          "customItem": {
+            "id": "custom-sword-of-speed-1-shortsword-d1845290-c8ce-4e2f-ac7a-a92a5294246c",
+            "name": "Sword of Speed +1 - shortsword",
+            "category": "arms",
+            "encumbranceGp": 35,
+            "valueGp": 5000
+          }
         },
         {
           "id": "38a8a520-9631-4998-8212-535d0db7f69b",
@@ -251,7 +328,14 @@
           "playerMagicKnowledge": "known-mundane",
           "playerKnowsValue": false,
           "dmNotes": "",
-          "isMagical": false
+          "isMagical": false,
+          "customItem": {
+            "id": "custom-thieves-tools-fine-75facec5-7c01-4166-b576-159f88659572",
+            "name": "Thieves tools - fine",
+            "category": "adventuring-gear",
+            "encumbranceGp": 0,
+            "valueGp": 350
+          }
         },
         {
           "id": "31e72be4-a2cc-4d3b-85c1-921a19f942d6",
@@ -276,7 +360,14 @@
           "playerKnowsValue": false,
           "dmNotes": "6 charges left",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-wand-of-opening-4bbfe5bc-07e9-4a12-af5e-6e54e3a12cac",
+            "name": "Wand of Opening",
+            "category": "adventuring-gear",
+            "encumbranceGp": 30,
+            "valueGp": 1000
+          }
         }
       ],
       "dmNotes": ""
@@ -322,9 +413,9 @@
           "playerNotes": "In backpack",
           "playerMagicKnowledge": "known-mundane",
           "playerKnowsValue": true,
+          "name": "$ - 10 platinum",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "$ - 10 platinum"
+          "isMagical": false
         },
         {
           "id": "e84b465c-74a1-40c2-a5e5-ddb18e742fe2",
@@ -386,7 +477,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ioun-stone-deep-red-sphere-e7536597-cece-4d37-a9af-4abfd5848675",
+            "name": "Ioun Stone Deep Red Sphere",
+            "category": "treasure",
+            "encumbranceGp": 0,
+            "valueGp": 0
+          }
         },
         {
           "id": "bd8110f0-e79f-440f-b0fe-0b1178be26b9",
@@ -397,9 +495,9 @@
           "playerNotes": "",
           "playerMagicKnowledge": "known-mundane",
           "playerKnowsValue": true,
+          "name": "Longbow",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "Longbow"
+          "isMagical": false
         },
         {
           "id": "18e848b4-825f-4dbf-ae71-8e03737211e8",
@@ -410,10 +508,17 @@
           "playerNotes": "+1 Saving Throws",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
+          "name": "Longsword +1",
+          "encumbranceGpOverride": 60,
           "dmNotes": "Luck Blade - wishes are exhausted, though",
           "isMagical": true,
-          "name": "Longsword +1",
-          "encumbranceGpOverride": 60
+          "customItem": {
+            "id": "custom-longsword-1-0127db44-bae7-44fc-aa78-6ff593984228",
+            "name": "Longsword 1",
+            "category": "treasure",
+            "encumbranceGp": 0,
+            "valueGp": 0
+          }
         },
         {
           "id": "cfb939ab-7525-4b6b-9bbd-20cd4f8db333",
@@ -424,10 +529,17 @@
           "playerNotes": "From Madman’s Lair. Helped defeat a Medusa.",
           "playerMagicKnowledge": "known-mundane",
           "playerKnowsValue": false,
+          "name": "Mirror, Hand, Silver gilt, cracked",
+          "encumbranceGpOverride": 5,
           "dmNotes": "",
           "isMagical": false,
-          "name": "Mirror, Hand, Silver gilt, cracked",
-          "encumbranceGpOverride": 5
+          "customItem": {
+            "id": "custom-mirror-hand-silver-gilt-cracked-983e805e-6ed4-4d47-be65-e0975a48922d",
+            "name": "Mirror Hand Silver Gilt Cracked",
+            "category": "adventuring-gear",
+            "encumbranceGp": 0,
+            "valueGp": 0
+          }
         },
         {
           "id": "bb51575b-3963-4b94-a242-6644412af8d3",
@@ -438,10 +550,17 @@
           "playerNotes": "Bugbears",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
+          "name": "Plate Mail +1",
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
-          "name": "Plate Mail +1"
+          "customItem": {
+            "id": "custom-plate-mail-1-33e24e4b-382b-438a-a925-fe8b3df21afd",
+            "name": "Plate Mail 1",
+            "category": "treasure",
+            "encumbranceGp": 0,
+            "valueGp": 0
+          }
         },
         {
           "id": "6f166493-20e4-451d-887d-69dd74be3521",
@@ -454,7 +573,14 @@
           "playerKnowsValue": false,
           "dmNotes": "Move freely under web, hold, slow - even under water",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ring-of-free-action-25ba5aac-75ef-436e-86c9-4ac505186e99",
+            "name": "Ring Of Free Action",
+            "category": "treasure",
+            "encumbranceGp": 0,
+            "valueGp": 0
+          }
         },
         {
           "id": "97bb38fc-9d23-44f2-a81e-37683f302af8",
@@ -466,7 +592,14 @@
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
           "dmNotes": "Ring of Water Walking",
-          "isMagical": true
+          "isMagical": true,
+          "customItem": {
+            "id": "custom-magic-ring-d2e1ce72-804e-4618-891f-eb6293e89a57",
+            "name": "Magic Ring",
+            "category": "treasure",
+            "encumbranceGp": 0,
+            "valueGp": 0
+          }
         },
         {
           "id": "9bbf6a0b-3643-4c74-b835-3c0e683acbda",
@@ -477,10 +610,17 @@
           "playerNotes": "",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
+          "name": "Shield +1",
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
-          "name": "Shield +1"
+          "customItem": {
+            "id": "custom-shield-1-046499ff-f3fe-40f0-a153-9bf5fbea3b5a",
+            "name": "Shield 1",
+            "category": "treasure",
+            "encumbranceGp": 0,
+            "valueGp": 0
+          }
         },
         {
           "id": "cfb80006-089f-4008-85ec-9669fbfa54c8",
@@ -492,7 +632,14 @@
           "playerMagicKnowledge": "known-mundane",
           "playerKnowsValue": false,
           "dmNotes": "",
-          "isMagical": false
+          "isMagical": false,
+          "customItem": {
+            "id": "custom-whip-9fff35db-6df1-46eb-aa9b-fc599d5c2a96",
+            "name": "Whip",
+            "category": "adventuring-gear",
+            "encumbranceGp": 0,
+            "valueGp": 0
+          }
         }
       ],
       "dmNotes": ""
@@ -603,7 +750,14 @@
           "playerKnowsValue": false,
           "dmNotes": "todo: add magical effect. known to player.",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-smoke-pellet-4699a5c9-f01f-4849-8a4a-7f7bae90f30a",
+            "name": "Smoke Pellet",
+            "category": "adventuring-gear",
+            "encumbranceGp": 1,
+            "valueGp": 80
+          }
         },
         {
           "id": "30b668e1-5dcd-4ecd-bd76-5f73859fe1db",
@@ -641,7 +795,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-luckstone-addc74cb-2484-40fb-9c09-f9b64136e3cd",
+            "name": "Luckstone",
+            "category": "adventuring-gear",
+            "encumbranceGp": 1,
+            "valueGp": 25000
+          }
         },
         {
           "id": "1afa660c-1ea8-4db7-addf-8251c3edf7f7",
@@ -653,7 +814,14 @@
           "playerMagicKnowledge": "unknown",
           "playerKnowsValue": true,
           "dmNotes": "",
-          "isMagical": false
+          "isMagical": false,
+          "customItem": {
+            "id": "custom-monkey-s-paw-d3405bb1-f5f6-4141-948e-c0bd01824ae4",
+            "name": "Monkey's Paw",
+            "category": "adventuring-gear",
+            "encumbranceGp": 20,
+            "valueGp": 0
+          }
         },
         {
           "id": "0dd7f0da-f98a-400d-aed9-55d34e06e70a",
@@ -665,7 +833,14 @@
           "playerMagicKnowledge": "known-mundane",
           "playerKnowsValue": true,
           "dmNotes": "",
-          "isMagical": false
+          "isMagical": false,
+          "customItem": {
+            "id": "custom-lute-3893cf9d-13f0-4bb0-a2f3-6d352bf940d6",
+            "name": "Lute",
+            "category": "adventuring-gear",
+            "encumbranceGp": 50,
+            "valueGp": 0
+          }
         },
         {
           "id": "1176543e-39e0-4917-9dda-d65b8c37fecf",
@@ -690,7 +865,14 @@
           "playerKnowsValue": false,
           "name": "\"Love potion?\"",
           "dmNotes": "Philter of Love",
-          "isMagical": true
+          "isMagical": true,
+          "customItem": {
+            "id": "custom-philter-of-love-aa0e63a8-24fa-4240-a1e5-f876baaf7d56",
+            "name": "Philter of Love",
+            "category": "adventuring-gear",
+            "encumbranceGp": 25,
+            "valueGp": 300
+          }
         },
         {
           "id": "b835b9f4-7df2-41ef-94a2-e5185a57a7a3",
@@ -703,7 +885,14 @@
           "playerKnowsValue": false,
           "dmNotes": "effects unclear to player, never done before",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-potion-of-levitation-aaa3513b-9c76-49b9-877a-1594b7d96e66",
+            "name": "Potion of Levitation",
+            "category": "adventuring-gear",
+            "encumbranceGp": 25,
+            "valueGp": 400
+          }
         },
         {
           "id": "2df96b33-fb87-4ada-bc65-62e48dc55183",
@@ -716,7 +905,14 @@
           "playerKnowsValue": false,
           "dmNotes": "Move freely under web, hold, slow - even under water",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ring-of-free-action-d12da4d3-84fc-477c-8278-36f983731252",
+            "name": "Ring of Free Action",
+            "category": "adventuring-gear",
+            "encumbranceGp": 1,
+            "valueGp": 5000
+          }
         },
         {
           "id": "68dc4813-4e1d-4213-ba46-df52ed86fe60",
@@ -729,7 +925,14 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ring-of-protection-1-21ee33bd-ab11-42d6-840b-3a9682c5acda",
+            "name": "Ring of Protection +1",
+            "category": "adventuring-gear",
+            "encumbranceGp": 1,
+            "valueGp": 10000
+          }
         },
         {
           "id": "42c787e9-57bb-414b-8b55-a1a68daf674e",
@@ -741,7 +944,14 @@
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
           "dmNotes": "(flammable (purple), light). +1, +2 vs regenerating creatures (blue), +3 (orange) vs cold, inflammable, or avian, +4 (white) vs undead",
-          "isMagical": true
+          "isMagical": true,
+          "customItem": {
+            "id": "custom-flametongue-longsword-1-f836fc3c-d79c-4bba-8e60-bde3c6457b79",
+            "name": "Flametongue (Longsword +1)",
+            "category": "arms",
+            "encumbranceGp": 60,
+            "valueGp": 4500
+          }
         },
         {
           "id": "d0b1ce9d-ca48-43ad-b285-7f48a844f3ce",
@@ -776,7 +986,17 @@
           "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-backpack-of-holding-8398b043-627e-425c-b400-d6fab784cebb",
+            "name": "Backpack of Holding",
+            "category": "containers",
+            "encumbranceGp": 150,
+            "valueGp": 25000,
+            "isContainer": true,
+            "capacityGp": 5000,
+            "ignoresContentsWeightForEncumbrance": true
+          }
         }
       ],
       "dmNotes": ""
@@ -790,228 +1010,6 @@
       },
       "inventory": [],
       "dmNotes": ""
-    }
-  ],
-  "customItems": [
-    {
-      "id": "custom-backpack-of-holding-8398b043-627e-425c-b400-d6fab784cebb",
-      "name": "Backpack of Holding",
-      "category": "containers",
-      "encumbranceGp": 150,
-      "valueGp": 25000,
-      "isContainer": true,
-      "capacityGp": 5000,
-      "ignoresContentsWeightForEncumbrance": true
-    },
-    {
-      "id": "custom-40-bullets-a9806104-b246-47cb-b642-5a53e86ea4f8",
-      "name": "40 bullets",
-      "category": "adventuring-gear",
-      "encumbranceGp": 2,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-boots-of-elvenkind-sneaky-boots-517a03b0-e9b4-46ce-b702-5e858c25012b",
-      "name": "Boots of Elvenkind (sneaky boots)",
-      "category": "clothing",
-      "encumbranceGp": 30,
-      "valueGp": 5000
-    },
-    {
-      "id": "custom-bracers-of-defense-ac6-788b0aad-2a2f-4bff-a7f5-43d2434ef565",
-      "name": "Bracers of Defense AC6",
-      "category": "adventuring-gear",
-      "encumbranceGp": 10,
-      "valueGp": 12000
-    },
-    {
-      "id": "custom-cape-of-protection-2-cc1eca81-6ade-4a2a-ad7d-4e5ed9f10c3f",
-      "name": "Cape of Protection +2",
-      "category": "clothing",
-      "encumbranceGp": 25,
-      "valueGp": 20000
-    },
-    {
-      "id": "custom-dagger-1-2-against-small-creatures-b9db1706-b03e-4b49-8348-3e1c11181ac0",
-      "name": "Dagger +1/+2 against small creatures",
-      "category": "arms",
-      "encumbranceGp": 10,
-      "valueGp": 750
-    },
-    {
-      "id": "custom-ring-of-invisibility-bbe6c508-693c-4dea-af70-3352dcd59a84",
-      "name": "Ring of Invisibility",
-      "category": "clothing",
-      "encumbranceGp": 1,
-      "valueGp": 7500
-    },
-    {
-      "id": "custom-ring-of-protection-1-1cc75e61-97f4-4e0d-9640-0cd611c195d2",
-      "name": "Ring of Protection +1",
-      "category": "clothing",
-      "encumbranceGp": 1,
-      "valueGp": 10000
-    },
-    {
-      "id": "custom-shortsword-1-2-against-scaly-creatures-0d441467-b649-4be2-9860-283f02343e5b",
-      "name": "Shortsword +1, +2 against scaly creatures",
-      "category": "arms",
-      "encumbranceGp": 35,
-      "valueGp": 3000
-    },
-    {
-      "id": "custom-sling-of-seeking-2-5ad48a47-ae7a-407f-abee-6d6bd6ffe514",
-      "name": "Sling of Seeking +2",
-      "category": "arms",
-      "encumbranceGp": 5,
-      "valueGp": 7000
-    },
-    {
-      "id": "custom-smoke-pellet-272fd02d-322c-4ffa-b717-f806cde06341",
-      "name": "Smoke Pellet",
-      "category": "adventuring-gear",
-      "encumbranceGp": 1,
-      "valueGp": 80
-    },
-    {
-      "id": "custom-sword-of-speed-1-shortsword-d1845290-c8ce-4e2f-ac7a-a92a5294246c",
-      "name": "Sword of Speed +1 - shortsword",
-      "category": "arms",
-      "encumbranceGp": 35,
-      "valueGp": 5000
-    },
-    {
-      "id": "custom-thieves-tools-fine-75facec5-7c01-4166-b576-159f88659572",
-      "name": "Thieves tools - fine",
-      "category": "adventuring-gear",
-      "encumbranceGp": 0,
-      "valueGp": 350
-    },
-    {
-      "id": "custom-wand-of-opening-4bbfe5bc-07e9-4a12-af5e-6e54e3a12cac",
-      "name": "Wand of Opening",
-      "category": "adventuring-gear",
-      "encumbranceGp": 30,
-      "valueGp": 1000
-    },
-    {
-      "id": "custom-ioun-stone-deep-red-sphere-e7536597-cece-4d37-a9af-4abfd5848675",
-      "name": "Ioun Stone Deep Red Sphere",
-      "category": "treasure",
-      "encumbranceGp": 0,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-longsword-1-0127db44-bae7-44fc-aa78-6ff593984228",
-      "name": "Longsword 1",
-      "category": "treasure",
-      "encumbranceGp": 0,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-mirror-hand-silver-gilt-cracked-983e805e-6ed4-4d47-be65-e0975a48922d",
-      "name": "Mirror Hand Silver Gilt Cracked",
-      "category": "adventuring-gear",
-      "encumbranceGp": 0,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-plate-mail-1-33e24e4b-382b-438a-a925-fe8b3df21afd",
-      "name": "Plate Mail 1",
-      "category": "treasure",
-      "encumbranceGp": 0,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-ring-of-free-action-25ba5aac-75ef-436e-86c9-4ac505186e99",
-      "name": "Ring Of Free Action",
-      "category": "treasure",
-      "encumbranceGp": 0,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-magic-ring-d2e1ce72-804e-4618-891f-eb6293e89a57",
-      "name": "Magic Ring",
-      "category": "treasure",
-      "encumbranceGp": 0,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-shield-1-046499ff-f3fe-40f0-a153-9bf5fbea3b5a",
-      "name": "Shield 1",
-      "category": "treasure",
-      "encumbranceGp": 0,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-whip-9fff35db-6df1-46eb-aa9b-fc599d5c2a96",
-      "name": "Whip",
-      "category": "adventuring-gear",
-      "encumbranceGp": 0,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-smoke-pellet-4699a5c9-f01f-4849-8a4a-7f7bae90f30a",
-      "name": "Smoke Pellet",
-      "category": "adventuring-gear",
-      "encumbranceGp": 1,
-      "valueGp": 80
-    },
-    {
-      "id": "custom-luckstone-addc74cb-2484-40fb-9c09-f9b64136e3cd",
-      "name": "Luckstone",
-      "category": "adventuring-gear",
-      "encumbranceGp": 1,
-      "valueGp": 25000
-    },
-    {
-      "id": "custom-monkey-s-paw-d3405bb1-f5f6-4141-948e-c0bd01824ae4",
-      "name": "Monkey's Paw",
-      "category": "adventuring-gear",
-      "encumbranceGp": 20,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-lute-3893cf9d-13f0-4bb0-a2f3-6d352bf940d6",
-      "name": "Lute",
-      "category": "adventuring-gear",
-      "encumbranceGp": 50,
-      "valueGp": 0
-    },
-    {
-      "id": "custom-philter-of-love-aa0e63a8-24fa-4240-a1e5-f876baaf7d56",
-      "name": "Philter of Love",
-      "category": "adventuring-gear",
-      "encumbranceGp": 25,
-      "valueGp": 300
-    },
-    {
-      "id": "custom-potion-of-levitation-aaa3513b-9c76-49b9-877a-1594b7d96e66",
-      "name": "Potion of Levitation",
-      "category": "adventuring-gear",
-      "encumbranceGp": 25,
-      "valueGp": 400
-    },
-    {
-      "id": "custom-ring-of-free-action-d12da4d3-84fc-477c-8278-36f983731252",
-      "name": "Ring of Free Action",
-      "category": "adventuring-gear",
-      "encumbranceGp": 1,
-      "valueGp": 5000
-    },
-    {
-      "id": "custom-ring-of-protection-1-21ee33bd-ab11-42d6-840b-3a9682c5acda",
-      "name": "Ring of Protection +1",
-      "category": "adventuring-gear",
-      "encumbranceGp": 1,
-      "valueGp": 10000
-    },
-    {
-      "id": "custom-flametongue-longsword-1-f836fc3c-d79c-4bba-8e60-bde3c6457b79",
-      "name": "Flametongue (Longsword +1)",
-      "category": "arms",
-      "encumbranceGp": 60,
-      "valueGp": 4500
     }
   ]
 }
