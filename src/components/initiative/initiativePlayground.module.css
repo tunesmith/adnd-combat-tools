@@ -522,7 +522,8 @@
 }
 
 .graphNodeName,
-.graphNodeLabel {
+.graphNodeTarget,
+.graphNodeAction {
   fill: var(--eggshell);
   pointer-events: none;
 }
@@ -532,8 +533,13 @@
   font-weight: 700;
 }
 
-.graphNodeLabel {
+.graphNodeTarget {
   font-size: 0.82rem;
+  fill: rgba(240, 239, 221, 0.9);
+}
+
+.graphNodeAction {
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   fill: rgba(240, 239, 221, 0.86);

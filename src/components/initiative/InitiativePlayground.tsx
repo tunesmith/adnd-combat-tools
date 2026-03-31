@@ -253,6 +253,15 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
 const isNonMissileWeaponId = (weaponId: number): boolean =>
   getWeaponInfo(weaponId)?.weaponType !== 'missile';
 
+const isDistanceRelevantForPair = (
+  attackerTargetsDefender: boolean,
+  attackerAction: InitiativeDeclaredAction,
+  defenderTargetsAttacker: boolean,
+  defenderAction: InitiativeDeclaredAction
+): boolean =>
+  (attackerTargetsDefender && isSingleTargetMovementAction(attackerAction)) ||
+  (defenderTargetsAttacker && isSingleTargetMovementAction(defenderAction));
+
 const getGraphNodeSourceLabel = (
   source: InitiativeAttackNode['source']
 ): string =>
@@ -305,6 +314,15 @@ const InitiativePlayground = () => {
   const attackNodeById = useMemo(
     () => new Map(attackGraph.nodes.map((node) => [node.id, node] as const)),
     [attackGraph.nodes]
+  );
+  const combatantById = useMemo(
+    () =>
+      new Map(
+        scenario.party
+          .concat(scenario.enemies)
+          .map((combatant) => [combatant.id, combatant] as const)
+      ),
+    [scenario.enemies, scenario.party]
   );
   const menuPortalTarget =
     typeof document !== 'undefined' ? document.body : undefined;
@@ -486,6 +504,47 @@ const InitiativePlayground = () => {
       ),
     [attackGraph.nodes, viewModel.combatantNameById]
   );
+  const graphNodeTargetLabelById = useMemo(
+    () =>
+      Object.fromEntries(
+        attackGraph.nodes.map((node) => {
+          const combatant = combatantById.get(node.combatantId);
+
+          if (!combatant || combatant.targetIds.length === 0) {
+            return [node.id, 'No target'];
+          }
+
+          if (combatant.targetIds.length > 1) {
+            return [node.id, 'Multiple targets'];
+          }
+
+          const targetId = combatant.targetIds[0];
+          if (!targetId) {
+            return [node.id, 'No target'];
+          }
+
+          return [node.id, viewModel.combatantNameById[targetId] || targetId];
+        })
+      ),
+    [attackGraph.nodes, combatantById, viewModel.combatantNameById]
+  );
+  const graphNodeActionLabelById = useMemo(
+    () =>
+      Object.fromEntries(
+        attackGraph.nodes.map((node) => {
+          const combatant = combatantById.get(node.combatantId);
+          return [
+            node.id,
+            combatant
+              ? `${formatDeclaredAction(combatant.declaredAction)} · ${
+                  node.label
+                }`
+              : 'Unknown action',
+          ];
+        })
+      ),
+    [attackGraph.nodes, combatantById]
+  );
   const selectedGraphNode =
     attackGraph.nodes.find((node) => node.id === selectedGraphNodeId) ||
     attackGraph.nodes[0];
@@ -573,7 +632,7 @@ const InitiativePlayground = () => {
             <p className={styles['panelCopy']}>
               Enter only what the current machinery needs: side initiative,
               declared action, movement rate, weapon, declared target, and
-              effective pair distance.
+              effective pair distance where a close or charge call needs one.
             </p>
           </div>
 
@@ -617,9 +676,9 @@ const InitiativePlayground = () => {
                 Party combatants run across the top, enemies run down the side.
                 Toggle `P→E` when the party column attacks the enemy row, `E→P`
                 for the reverse, and clean open-melee mutual targets light up as
-                duels. Click a row or column header to edit that combatant. The
-                distance field is the current effective range between that pair
-                in feet.
+                duels. Click a row or column header to edit that combatant.
+                Distance only appears for pairs where a close or charge call
+                makes the current range relevant.
               </p>
             </div>
 
@@ -733,6 +792,12 @@ const InitiativePlayground = () => {
                                   enemyCombatant.key
                                 )
                               ] || '';
+                            const showDistanceInput = isDistanceRelevantForPair(
+                              partyTargetsEnemy,
+                              partyCombatant.declaredAction,
+                              enemyTargetsParty,
+                              enemyCombatant.declaredAction
+                            );
 
                             return (
                               <td
@@ -795,26 +860,30 @@ const InitiativePlayground = () => {
                                     Mutual target
                                   </span>
                                 ) : null}
-                                <label
-                                  className={styles['matrixDistanceLabel']}
-                                  htmlFor={`distance-${partyCombatant.key}-${enemyCombatant.key}`}
-                                >
-                                  Distance (ft)
-                                </label>
-                                <input
-                                  id={`distance-${partyCombatant.key}-${enemyCombatant.key}`}
-                                  className={styles['matrixDistanceInput']}
-                                  inputMode={'decimal'}
-                                  placeholder={'e.g. 40'}
-                                  value={pairDistance}
-                                  onChange={(event) =>
-                                    updatePairDistance(
-                                      partyCombatant.key,
-                                      enemyCombatant.key,
-                                      event.target.value
-                                    )
-                                  }
-                                />
+                                {showDistanceInput ? (
+                                  <>
+                                    <label
+                                      className={styles['matrixDistanceLabel']}
+                                      htmlFor={`distance-${partyCombatant.key}-${enemyCombatant.key}`}
+                                    >
+                                      Distance (ft)
+                                    </label>
+                                    <input
+                                      id={`distance-${partyCombatant.key}-${enemyCombatant.key}`}
+                                      className={styles['matrixDistanceInput']}
+                                      inputMode={'decimal'}
+                                      placeholder={'e.g. 40'}
+                                      value={pairDistance}
+                                      onChange={(event) =>
+                                        updatePairDistance(
+                                          partyCombatant.key,
+                                          enemyCombatant.key,
+                                          event.target.value
+                                        )
+                                      }
+                                    />
+                                  </>
+                                ) : null}
                               </td>
                             );
                           })}
@@ -988,6 +1057,10 @@ const InitiativePlayground = () => {
                       const combatantName =
                         viewModel.combatantNameById[node.combatantId] ||
                         node.combatantId;
+                      const targetLabel =
+                        graphNodeTargetLabelById[node.id] || 'No target';
+                      const actionLabel =
+                        graphNodeActionLabelById[node.id] || 'Unknown action';
                       const isSelected = selectedGraphNode?.id === node.id;
 
                       return (
@@ -996,7 +1069,7 @@ const InitiativePlayground = () => {
                           transform={`translate(${layoutNode.x} ${layoutNode.y})`}
                           role={'button'}
                           tabIndex={0}
-                          aria-label={`${combatantName} ${node.label}`}
+                          aria-label={`${combatantName}, target ${targetLabel}, ${actionLabel}`}
                           onClick={() => setSelectedGraphNodeId(node.id)}
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
@@ -1023,19 +1096,27 @@ const InitiativePlayground = () => {
                           />
                           <text
                             x={layoutNode.width / 2}
-                            y={28}
+                            y={26}
                             textAnchor={'middle'}
                             className={styles['graphNodeName']}
                           >
-                            {truncateGraphText(combatantName, 18)}
+                            {truncateGraphText(combatantName, 20)}
                           </text>
                           <text
                             x={layoutNode.width / 2}
                             y={48}
                             textAnchor={'middle'}
-                            className={styles['graphNodeLabel']}
+                            className={styles['graphNodeTarget']}
                           >
-                            {truncateGraphText(node.label, 22)}
+                            {truncateGraphText(`-> ${targetLabel}`, 24)}
+                          </text>
+                          <text
+                            x={layoutNode.width / 2}
+                            y={70}
+                            textAnchor={'middle'}
+                            className={styles['graphNodeAction']}
+                          >
+                            {truncateGraphText(actionLabel, 24)}
                           </text>
                         </g>
                       );

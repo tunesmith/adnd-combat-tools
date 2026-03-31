@@ -23,8 +23,8 @@ interface InitiativeAttackGraphLayout {
 
 const HORIZONTAL_PADDING = 32;
 const VERTICAL_PADDING = 24;
-const NODE_WIDTH = 184;
-const NODE_HEIGHT = 68;
+const NODE_WIDTH = 216;
+const NODE_HEIGHT = 92;
 const LAYER_GAP = 120;
 const ROW_GAP = 22;
 
