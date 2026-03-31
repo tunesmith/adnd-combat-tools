@@ -202,7 +202,7 @@ describe('initiative attack graph', () => {
           targetDeclarations: [
             {
               targetCombatantKey: 3,
-              distance: 40,
+              distanceInches: 4,
             },
           ],
         },

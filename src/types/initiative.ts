@@ -27,7 +27,7 @@ export interface InitiativeAttackRoutine {
 
 interface InitiativeTargetDeclaration {
   targetId: string;
-  distance?: number;
+  distanceInches?: number;
 }
 
 export interface InitiativeScenarioCombatant {
@@ -53,7 +53,7 @@ export interface InitiativeScenarioCombatant {
 
 export interface InitiativeScenarioDraftTargetDeclaration {
   targetCombatantKey: number;
-  distance?: number;
+  distanceInches?: number;
 }
 
 export interface InitiativeScenarioDraftCombatant {
@@ -132,10 +132,10 @@ export interface InitiativeMovementResolution {
   targetId?: string;
   action: InitiativeDeclaredAction;
   reason: InitiativeMovementResolutionReason;
-  distance?: number;
-  closingFeetPerSegment?: number;
+  distanceInches?: number;
+  closingInchesPerSegment?: number;
   contactSegment?: number;
-  remainingDistance?: number;
+  remainingDistanceInches?: number;
   sameRoundAttack: boolean;
   firstStrike?: InitiativeChargeFirstStrike;
 }

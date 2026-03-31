@@ -264,6 +264,15 @@
   margin-top: 0.45rem;
 }
 
+.matrixDeclarationMeta {
+  display: block;
+  margin-top: 0.32rem;
+  margin-bottom: 0.1rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: rgba(240, 239, 221, 0.82);
+}
+
 .matrixToggleParty:hover,
 .matrixToggleParty:focus-visible {
   background: rgba(104, 141, 75, 0.28);
@@ -292,26 +301,6 @@
   font-size: 0.88rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.matrixDistanceLabel {
-  display: block;
-  margin-top: 0.7rem;
-  margin-bottom: 0.25rem;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: rgba(240, 239, 221, 0.72);
-}
-
-.matrixDistanceInput {
-  width: 100%;
-  border: 1px solid rgba(172, 114, 35, 0.55);
-  background: rgba(240, 239, 221, 0.94);
-  color: #1f1d18;
-  padding: 0.38rem 0.45rem;
-  border-radius: 0.35rem;
-  font-size: 0.92rem;
 }
 
 .matrixEmpty {
@@ -358,6 +347,12 @@
   margin-bottom: 0.9rem;
 }
 
+.modalHint {
+  line-height: 1.45;
+  margin-top: 0.55rem;
+  color: rgba(240, 239, 221, 0.82);
+}
+
 .modalLabel {
   display: block;
   font-weight: 700;
@@ -390,6 +385,12 @@
   justify-content: space-between;
   gap: 0.8rem;
   margin-top: 1rem;
+}
+
+.modalActionGroup {
+  display: flex;
+  gap: 0.8rem;
+  margin-left: auto;
 }
 
 .modalButton,
@@ -678,6 +679,11 @@
   }
 
   .modalActions {
+    flex-direction: column;
+  }
+
+  .modalActionGroup {
+    margin-left: 0;
     flex-direction: column;
   }
 }

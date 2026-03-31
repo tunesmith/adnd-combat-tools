@@ -113,7 +113,7 @@ const buildScenarioCombatants = (
           opposingSide,
           targetDeclaration.targetCombatantKey
         ),
-        distance: targetDeclaration.distance,
+        distanceInches: targetDeclaration.distanceInches,
       }));
 
     return {

@@ -28,6 +28,9 @@ interface InitiativeRoundResolutionViewModel {
   combatantNameById: Record<string, string>;
 }
 
+const formatInches = (value: number): string =>
+  `${Number.isInteger(value) ? value : value.toFixed(1).replace(/\.0$/, '')}"`;
+
 const formatNames = (
   combatantIds: string[],
   combatantNameById: Record<string, string>
@@ -266,7 +269,7 @@ const getMovementSummary = (
   }
 
   if (movementResolution.reason === 'missing-distance') {
-    return `${combatantName} declared ${actionLabel} toward ${targetName}, but no effective starting distance was supplied.`;
+    return `${combatantName} declared ${actionLabel} toward ${targetName}, but no effective starting distance in inches was supplied.`;
   }
 
   if (movementResolution.reason === 'target-moving-elsewhere') {
@@ -274,9 +277,9 @@ const getMovementSummary = (
   }
 
   if (movementResolution.reason === 'no-contact') {
-    return `${combatantName} cannot reach ${targetName} this round. The tool estimates that ${combatantName} ends ${
-      movementResolution.remainingDistance || 0
-    }' short of striking range.`;
+    return `${combatantName} cannot reach ${targetName} this round. The tool estimates that ${combatantName} ends ${formatInches(
+      movementResolution.remainingDistanceInches || 0
+    )} short of striking range.`;
   }
 
   if (movementResolution.action === 'charge') {
@@ -331,8 +334,10 @@ const buildMovementCards = (
         {
           label: 'Distance',
           detail:
-            movementResolution.distance !== undefined
-              ? `${movementResolution.distance}' effective start range`
+            movementResolution.distanceInches !== undefined
+              ? `${formatInches(
+                  movementResolution.distanceInches
+                )} effective start range`
               : 'Distance not supplied',
           combatantIds: movementResolution.targetId
             ? [movementResolution.combatantId, movementResolution.targetId]
@@ -343,18 +348,20 @@ const buildMovementCards = (
           detail:
             movementResolution.reason === 'contact'
               ? movementResolution.action === 'charge'
-                ? `Contact on segment ${movementResolution.contactSegment} at ${
-                    movementResolution.closingFeetPerSegment || 0
-                  }' per segment; same-round charge attack applies.`
+                ? `Contact on segment ${
+                    movementResolution.contactSegment
+                  } at ${formatInches(
+                    movementResolution.closingInchesPerSegment || 0
+                  )} per segment; same-round charge attack applies.`
                 : `Striking range reached on segment ${
                     movementResolution.contactSegment
-                  } at ${
-                    movementResolution.closingFeetPerSegment || 0
-                  }' per segment.`
+                  } at ${formatInches(
+                    movementResolution.closingInchesPerSegment || 0
+                  )} per segment.`
               : movementResolution.reason === 'no-contact'
-              ? `No contact this round; approximately ${
-                  movementResolution.remainingDistance || 0
-                }' remain.`
+              ? `No contact this round; approximately ${formatInches(
+                  movementResolution.remainingDistanceInches || 0
+                )} remain.`
               : 'Needs table input or adjudication.',
           combatantIds: movementResolution.targetId
             ? [movementResolution.combatantId, movementResolution.targetId]

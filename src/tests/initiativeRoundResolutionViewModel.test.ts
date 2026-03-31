@@ -139,7 +139,7 @@ describe('initiative round resolution view model', () => {
           targetDeclarations: [
             {
               targetCombatantKey: 3,
-              distance: 40,
+              distanceInches: 4,
             },
           ],
         },
@@ -173,7 +173,7 @@ describe('initiative round resolution view model', () => {
     expect(movementCard?.steps[2]).toEqual({
       label: 'Outcome',
       detail:
-        "Contact on segment 2 at 24' per segment; same-round charge attack applies.",
+        'Contact on segment 2 at 2.4" per segment; same-round charge attack applies.',
       combatantIds: ['party-1', 'enemy-3'],
     });
   });

@@ -4,16 +4,18 @@ import type {
   InitiativeScenarioCombatant,
 } from '../../types/initiative';
 
-const STRIKING_DISTANCE_FEET = 10;
+const STRIKING_DISTANCE_INCHES = 1;
 const SEGMENTS_PER_ROUND = 10;
 
-const getFeetPerSegment = (combatant: InitiativeScenarioCombatant): number => {
+const getInchesPerSegment = (
+  combatant: InitiativeScenarioCombatant
+): number => {
   if (combatant.declaredAction === 'charge') {
-    return combatant.movementRate * 2;
+    return (combatant.movementRate * 2) / SEGMENTS_PER_ROUND;
   }
 
   if (combatant.declaredAction === 'close') {
-    return combatant.movementRate;
+    return combatant.movementRate / SEGMENTS_PER_ROUND;
   }
 
   return 0;
@@ -43,13 +45,13 @@ const getChargeFirstStrike = (
   return 'simultaneous';
 };
 
-const getRelativeClosingFeetPerSegment = (
+const getRelativeClosingInchesPerSegment = (
   attacker: InitiativeScenarioCombatant,
   target: InitiativeScenarioCombatant
 ): number | undefined => {
-  const attackerFeetPerSegment = getFeetPerSegment(attacker);
+  const attackerInchesPerSegment = getInchesPerSegment(attacker);
 
-  if (attackerFeetPerSegment <= 0) {
+  if (attackerInchesPerSegment <= 0) {
     return undefined;
   }
 
@@ -59,14 +61,14 @@ const getRelativeClosingFeetPerSegment = (
     target.targetDeclarations[0]?.targetId === attacker.id;
 
   if (targetIsMovingTowardAttacker) {
-    return attackerFeetPerSegment + getFeetPerSegment(target);
+    return attackerInchesPerSegment + getInchesPerSegment(target);
   }
 
   if (target.declaredAction === 'close' || target.declaredAction === 'charge') {
     return undefined;
   }
 
-  return attackerFeetPerSegment;
+  return attackerInchesPerSegment;
 };
 
 export const resolveMovementAgainstTarget = (
@@ -109,7 +111,7 @@ export const resolveMovementAgainstTarget = (
     };
   }
 
-  if (targetDeclaration.distance === undefined) {
+  if (targetDeclaration.distanceInches === undefined) {
     return {
       combatantId: attacker.id,
       targetId,
@@ -126,45 +128,46 @@ export const resolveMovementAgainstTarget = (
       targetId,
       action: attacker.declaredAction,
       reason: 'missing-target',
-      distance: targetDeclaration.distance,
+      distanceInches: targetDeclaration.distanceInches,
       sameRoundAttack: false,
     };
   }
 
-  const closingFeetPerSegment = getRelativeClosingFeetPerSegment(
+  const closingInchesPerSegment = getRelativeClosingInchesPerSegment(
     attacker,
     target
   );
-  if (closingFeetPerSegment === undefined) {
+  if (closingInchesPerSegment === undefined) {
     return {
       combatantId: attacker.id,
       targetId,
       action: attacker.declaredAction,
       reason: 'target-moving-elsewhere',
-      distance: targetDeclaration.distance,
+      distanceInches: targetDeclaration.distanceInches,
       sameRoundAttack: false,
     };
   }
 
-  const distance = targetDeclaration.distance;
+  const distanceInches = targetDeclaration.distanceInches;
   const contactSegment = Math.max(
     1,
     Math.ceil(
-      Math.max(distance - STRIKING_DISTANCE_FEET, 0) / closingFeetPerSegment
+      Math.max(distanceInches - STRIKING_DISTANCE_INCHES, 0) /
+        closingInchesPerSegment
     )
   );
-  const maximumDistanceCovered = closingFeetPerSegment * SEGMENTS_PER_ROUND;
+  const maximumDistanceCovered = closingInchesPerSegment * SEGMENTS_PER_ROUND;
 
-  if (distance > STRIKING_DISTANCE_FEET + maximumDistanceCovered) {
+  if (distanceInches > STRIKING_DISTANCE_INCHES + maximumDistanceCovered) {
     return {
       combatantId: attacker.id,
       targetId,
       action: attacker.declaredAction,
       reason: 'no-contact',
-      distance,
-      closingFeetPerSegment,
-      remainingDistance:
-        distance - STRIKING_DISTANCE_FEET - maximumDistanceCovered,
+      distanceInches,
+      closingInchesPerSegment,
+      remainingDistanceInches:
+        distanceInches - STRIKING_DISTANCE_INCHES - maximumDistanceCovered,
       sameRoundAttack: false,
     };
   }
@@ -174,10 +177,10 @@ export const resolveMovementAgainstTarget = (
     targetId,
     action: attacker.declaredAction,
     reason: 'contact',
-    distance,
-    closingFeetPerSegment,
+    distanceInches,
+    closingInchesPerSegment,
     contactSegment,
-    remainingDistance: 0,
+    remainingDistanceInches: 0,
     sameRoundAttack: attacker.declaredAction === 'charge',
     firstStrike:
       attacker.declaredAction === 'charge'

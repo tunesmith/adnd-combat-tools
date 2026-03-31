@@ -16,7 +16,7 @@ describe('initiative movement resolution', () => {
           targetDeclarations: [
             {
               targetCombatantKey: 3,
-              distance: 35,
+              distanceInches: 3.5,
             },
           ],
         },
@@ -40,7 +40,7 @@ describe('initiative movement resolution', () => {
         action: 'close',
         reason: 'contact',
         contactSegment: 3,
-        closingFeetPerSegment: 12,
+        closingInchesPerSegment: 1.2,
         sameRoundAttack: false,
       }),
     ]);
@@ -61,7 +61,7 @@ describe('initiative movement resolution', () => {
           targetDeclarations: [
             {
               targetCombatantKey: 3,
-              distance: 40,
+              distanceInches: 4,
             },
           ],
         },
@@ -85,7 +85,7 @@ describe('initiative movement resolution', () => {
         action: 'charge',
         reason: 'contact',
         contactSegment: 2,
-        closingFeetPerSegment: 24,
+        closingInchesPerSegment: 2.4,
         sameRoundAttack: true,
         firstStrike: 'attacker',
       }),
@@ -107,7 +107,7 @@ describe('initiative movement resolution', () => {
           targetDeclarations: [
             {
               targetCombatantKey: 3,
-              distance: 40,
+              distanceInches: 4,
             },
           ],
         },
@@ -130,7 +130,7 @@ describe('initiative movement resolution', () => {
           targetDeclarations: [
             {
               targetCombatantKey: 2,
-              distance: 20,
+              distanceInches: 2,
             },
           ],
         },

@@ -48,6 +48,14 @@ interface InitiativePlaytestEditorTarget {
   combatantKey: number;
 }
 
+interface InitiativePlaytestAttackEditorTarget {
+  attackingSide: InitiativePlaytestSide;
+  attackerKey: number;
+  targetKey: number;
+  action: InitiativeDeclaredAction;
+  distanceInches: string;
+}
+
 const ALL_WEAPON_OPTIONS = getWeaponOptions(MONSTER);
 const ACTION_OPTIONS: Array<{
   value: InitiativeDeclaredAction;
@@ -174,7 +182,7 @@ const createChargePreset = (): InitiativePlaytestState => ({
     createCombatant(4, 'Goblin Archer', 16, [], 'missile', '6'),
   ],
   pairDistances: {
-    [getPairDistanceKey(1, 3)]: '40',
+    [getPairDistanceKey(1, 3)]: '4',
   },
 });
 
@@ -192,7 +200,7 @@ const buildDraftCombatants = (
     targetDeclarations: combatant.targetCombatantKeys.map(
       (targetCombatantKey) => ({
         targetCombatantKey,
-        distance: parseOptionalNumber(
+        distanceInches: parseOptionalNumber(
           pairDistances[
             side === 'party'
               ? getPairDistanceKey(combatant.key, targetCombatantKey)
@@ -246,21 +254,12 @@ const getWeaponSummary = (weaponId: number): string => {
 };
 
 const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
-  `${formatDeclaredAction(combatant.declaredAction)} · MV ${
-    combatant.movementRate.trim() || '12'
-  }" · ${getWeaponSummary(combatant.weaponId)}`;
+  `MV ${combatant.movementRate.trim() || '12'}" · ${getWeaponSummary(
+    combatant.weaponId
+  )}`;
 
 const isNonMissileWeaponId = (weaponId: number): boolean =>
   getWeaponInfo(weaponId)?.weaponType !== 'missile';
-
-const isDistanceRelevantForPair = (
-  attackerTargetsDefender: boolean,
-  attackerAction: InitiativeDeclaredAction,
-  defenderTargetsAttacker: boolean,
-  defenderAction: InitiativeDeclaredAction
-): boolean =>
-  (attackerTargetsDefender && isSingleTargetMovementAction(attackerAction)) ||
-  (defenderTargetsAttacker && isSingleTargetMovementAction(defenderAction));
 
 const getGraphNodeSourceLabel = (
   source: InitiativeAttackNode['source']
@@ -287,6 +286,9 @@ const InitiativePlayground = () => {
     useState<InitiativePlaytestState>(createMixedPreset);
   const [editorTarget, setEditorTarget] = useState<
     InitiativePlaytestEditorTarget | undefined
+  >(undefined);
+  const [attackEditorTarget, setAttackEditorTarget] = useState<
+    InitiativePlaytestAttackEditorTarget | undefined
   >(undefined);
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<
     string | undefined
@@ -376,6 +378,33 @@ const InitiativePlayground = () => {
     }));
   };
 
+  const openAttackEditor = (
+    attackingSide: InitiativePlaytestSide,
+    attackerKey: number,
+    targetKey: number
+  ) => {
+    const attackingCombatant = state[getStateSide(attackingSide)].find(
+      (combatant) => combatant.key === attackerKey
+    );
+
+    if (!attackingCombatant) {
+      return;
+    }
+
+    const pairKey =
+      attackingSide === 'party'
+        ? getPairDistanceKey(attackerKey, targetKey)
+        : getPairDistanceKey(targetKey, attackerKey);
+
+    setAttackEditorTarget({
+      attackingSide,
+      attackerKey,
+      targetKey,
+      action: attackingCombatant.declaredAction,
+      distanceInches: state.pairDistances[pairKey] || '',
+    });
+  };
+
   const addCombatant = (side: InitiativePlaytestSide) => {
     const stateSide = getStateSide(side);
 
@@ -444,15 +473,25 @@ const InitiativePlayground = () => {
     setState(presetFactory());
   };
 
-  const toggleCombatantTarget = (
-    attackingSide: InitiativePlaytestSide,
-    attackerKey: number,
-    targetKey: number
-  ) => {
+  const saveAttackDeclaration = () => {
+    if (!attackEditorTarget) {
+      return;
+    }
+
+    const { attackingSide, attackerKey, targetKey, action, distanceInches } =
+      attackEditorTarget;
     const stateSide = getStateSide(attackingSide);
+    const pairKey =
+      attackingSide === 'party'
+        ? getPairDistanceKey(attackerKey, targetKey)
+        : getPairDistanceKey(targetKey, attackerKey);
 
     setState((previous) => ({
       ...previous,
+      pairDistances: {
+        ...previous.pairDistances,
+        [pairKey]: distanceInches,
+      },
       [stateSide]: previous[stateSide].map((combatant) => {
         if (combatant.key !== attackerKey) {
           return combatant;
@@ -461,35 +500,56 @@ const InitiativePlayground = () => {
         const nextTargetCombatantKeys = combatant.targetCombatantKeys.includes(
           targetKey
         )
-          ? combatant.targetCombatantKeys.filter(
-              (existingTargetKey) => existingTargetKey !== targetKey
-            )
-          : isSingleTargetMovementAction(combatant.declaredAction)
+          ? isSingleTargetMovementAction(action)
+            ? [targetKey]
+            : combatant.targetCombatantKeys
+          : isSingleTargetMovementAction(action)
           ? [targetKey]
           : combatant.targetCombatantKeys.concat(targetKey);
 
         return {
           ...combatant,
+          declaredAction: action,
           targetCombatantKeys: nextTargetCombatantKeys,
         };
       }),
     }));
+
+    setAttackEditorTarget(undefined);
   };
 
-  const updatePairDistance = (
-    partyCombatantKey: number,
-    enemyCombatantKey: number,
-    value: string
-  ) => {
-    const pairKey = getPairDistanceKey(partyCombatantKey, enemyCombatantKey);
+  const clearAttackDeclaration = () => {
+    if (!attackEditorTarget) {
+      return;
+    }
+
+    const { attackingSide, attackerKey, targetKey } = attackEditorTarget;
+    const stateSide = getStateSide(attackingSide);
+    const pairKey =
+      attackingSide === 'party'
+        ? getPairDistanceKey(attackerKey, targetKey)
+        : getPairDistanceKey(targetKey, attackerKey);
 
     setState((previous) => ({
       ...previous,
-      pairDistances: {
-        ...previous.pairDistances,
-        [pairKey]: value,
-      },
+      pairDistances: Object.fromEntries(
+        Object.entries(previous.pairDistances).filter(
+          ([existingPairKey]) => existingPairKey !== pairKey
+        )
+      ),
+      [stateSide]: previous[stateSide].map((combatant) =>
+        combatant.key === attackerKey
+          ? {
+              ...combatant,
+              targetCombatantKeys: combatant.targetCombatantKeys.filter(
+                (existingTargetKey) => existingTargetKey !== targetKey
+              ),
+            }
+          : combatant
+      ),
     }));
+
+    setAttackEditorTarget(undefined);
   };
 
   const attackNodeLabelById = useMemo(
@@ -579,6 +639,54 @@ const InitiativePlayground = () => {
           editedCombatantIndex
         )
       : undefined;
+  const attackEditedAttacker =
+    attackEditorTarget !== undefined
+      ? state[getStateSide(attackEditorTarget.attackingSide)].find(
+          (combatant) => combatant.key === attackEditorTarget.attackerKey
+        )
+      : undefined;
+  const attackEditedTargetSide: InitiativePlaytestSide | undefined =
+    attackEditorTarget
+      ? attackEditorTarget.attackingSide === 'party'
+        ? 'enemy'
+        : 'party'
+      : undefined;
+  const attackEditedTargetCombatants =
+    attackEditedTargetSide !== undefined
+      ? state[getStateSide(attackEditedTargetSide)]
+      : [];
+  const attackEditedTargetIndex =
+    attackEditorTarget !== undefined
+      ? attackEditedTargetCombatants.findIndex(
+          (combatant) => combatant.key === attackEditorTarget.targetKey
+        )
+      : -1;
+  const attackEditedTargetCombatant =
+    attackEditedTargetIndex >= 0
+      ? attackEditedTargetCombatants[attackEditedTargetIndex]
+      : undefined;
+  const attackEditedAttackerIndex =
+    attackEditorTarget !== undefined
+      ? state[getStateSide(attackEditorTarget.attackingSide)].findIndex(
+          (combatant) => combatant.key === attackEditorTarget.attackerKey
+        )
+      : -1;
+  const attackEditedAttackerName =
+    attackEditedAttacker && attackEditorTarget && attackEditedAttackerIndex >= 0
+      ? getCombatantDisplayName(
+          attackEditorTarget.attackingSide,
+          attackEditedAttacker,
+          attackEditedAttackerIndex
+        )
+      : undefined;
+  const attackEditedTargetName =
+    attackEditedTargetCombatant && attackEditedTargetSide !== undefined
+      ? getCombatantDisplayName(
+          attackEditedTargetSide,
+          attackEditedTargetCombatant,
+          attackEditedTargetIndex
+        )
+      : undefined;
 
   return (
     <div className={styles['page']}>
@@ -631,8 +739,8 @@ const InitiativePlayground = () => {
             <h2 className={styles['panelTitle']}>Scenario Input</h2>
             <p className={styles['panelCopy']}>
               Enter only what the current machinery needs: side initiative,
-              declared action, movement rate, weapon, declared target, and
-              effective pair distance where a close or charge call needs one.
+              movement rate, weapon, declared attacks, and any inch distance
+              needed by close or charge.
             </p>
           </div>
 
@@ -674,11 +782,11 @@ const InitiativePlayground = () => {
               <h3 className={styles['matrixTitle']}>Engagement Matrix</h3>
               <p className={styles['matrixCopy']}>
                 Party combatants run across the top, enemies run down the side.
-                Toggle `P→E` when the party column attacks the enemy row, `E→P`
-                for the reverse, and clean open-melee mutual targets light up as
-                duels. Click a row or column header to edit that combatant.
-                Distance only appears for pairs where a close or charge call
-                makes the current range relevant.
+                Click `P→E` when the party column attacks the enemy row, `E→P`
+                for the reverse, and use the declaration modal to set the action
+                plus any inch distance for that directed attack. Clean
+                open-melee mutual targets light up as duels. Click a row or
+                column header to edit persistent combatant metadata.
               </p>
             </div>
 
@@ -792,12 +900,6 @@ const InitiativePlayground = () => {
                                   enemyCombatant.key
                                 )
                               ] || '';
-                            const showDistanceInput = isDistanceRelevantForPair(
-                              partyTargetsEnemy,
-                              partyCombatant.declaredAction,
-                              enemyTargetsParty,
-                              enemyCombatant.declaredAction
-                            );
 
                             return (
                               <td
@@ -821,7 +923,7 @@ const InitiativePlayground = () => {
                                     .filter(Boolean)
                                     .join(' ')}
                                   onClick={() =>
-                                    toggleCombatantTarget(
+                                    openAttackEditor(
                                       'party',
                                       partyCombatant.key,
                                       enemyCombatant.key
@@ -830,6 +932,20 @@ const InitiativePlayground = () => {
                                 >
                                   P&rarr;E
                                 </button>
+                                {partyTargetsEnemy ? (
+                                  <span
+                                    className={styles['matrixDeclarationMeta']}
+                                  >
+                                    {formatDeclaredAction(
+                                      partyCombatant.declaredAction
+                                    )}
+                                    {isSingleTargetMovementAction(
+                                      partyCombatant.declaredAction
+                                    ) && pairDistance
+                                      ? ` · ${pairDistance}"`
+                                      : ''}
+                                  </span>
+                                ) : null}
                                 <button
                                   type={'button'}
                                   className={[
@@ -842,7 +958,7 @@ const InitiativePlayground = () => {
                                     .filter(Boolean)
                                     .join(' ')}
                                   onClick={() =>
-                                    toggleCombatantTarget(
+                                    openAttackEditor(
                                       'enemy',
                                       enemyCombatant.key,
                                       partyCombatant.key
@@ -851,6 +967,20 @@ const InitiativePlayground = () => {
                                 >
                                   E&rarr;P
                                 </button>
+                                {enemyTargetsParty ? (
+                                  <span
+                                    className={styles['matrixDeclarationMeta']}
+                                  >
+                                    {formatDeclaredAction(
+                                      enemyCombatant.declaredAction
+                                    )}
+                                    {isSingleTargetMovementAction(
+                                      enemyCombatant.declaredAction
+                                    ) && pairDistance
+                                      ? ` · ${pairDistance}"`
+                                      : ''}
+                                  </span>
+                                ) : null}
                                 {isDuel ? (
                                   <span className={styles['matrixBadge']}>
                                     Duel
@@ -859,30 +989,6 @@ const InitiativePlayground = () => {
                                   <span className={styles['matrixBadge']}>
                                     Mutual target
                                   </span>
-                                ) : null}
-                                {showDistanceInput ? (
-                                  <>
-                                    <label
-                                      className={styles['matrixDistanceLabel']}
-                                      htmlFor={`distance-${partyCombatant.key}-${enemyCombatant.key}`}
-                                    >
-                                      Distance (ft)
-                                    </label>
-                                    <input
-                                      id={`distance-${partyCombatant.key}-${enemyCombatant.key}`}
-                                      className={styles['matrixDistanceInput']}
-                                      inputMode={'decimal'}
-                                      placeholder={'e.g. 40'}
-                                      value={pairDistance}
-                                      onChange={(event) =>
-                                        updatePairDistance(
-                                          partyCombatant.key,
-                                          enemyCombatant.key,
-                                          event.target.value
-                                        )
-                                      }
-                                    />
-                                  </>
                                 ) : null}
                               </td>
                             );
@@ -1235,9 +1341,8 @@ const InitiativePlayground = () => {
                     : 'Edit Enemy Combatant'}
                 </div>
                 <p className={styles['modalText']}>
-                  Target declarations are edited in the engagement matrix. Use
-                  this modal to change the combatant label, action, movement, or
-                  weapon.
+                  Target declarations are edited from the engagement matrix. Use
+                  this modal to change the combatant label, movement, or weapon.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -1278,29 +1383,6 @@ const InitiativePlayground = () => {
                     });
                   }}
                 />
-                <label
-                  className={styles['modalLabel']}
-                  htmlFor={`initiative-action-${editedCombatant.key}`}
-                >
-                  Declared action
-                </label>
-                <select
-                  id={`initiative-action-${editedCombatant.key}`}
-                  className={styles['selectInput']}
-                  value={editedCombatant.declaredAction}
-                  onChange={(event) =>
-                    updateCombatant(editorTarget.side, editedCombatant.key, {
-                      declaredAction: event.target
-                        .value as InitiativeDeclaredAction,
-                    })
-                  }
-                >
-                  {ACTION_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
                 <label
                   className={styles['modalLabel']}
                   htmlFor={`initiative-move-${editedCombatant.key}`}
@@ -1347,6 +1429,140 @@ const InitiativePlayground = () => {
                   >
                     Close
                   </button>
+                </div>
+              </div>
+            </>,
+            modalRoot
+          )
+        : null}
+      {attackEditorTarget &&
+      attackEditedAttacker &&
+      attackEditedTargetName &&
+      modalRoot
+        ? createPortal(
+            <>
+              <div
+                className={styles['modalShadow']}
+                onClick={() => setAttackEditorTarget(undefined)}
+              />
+              <div
+                className={styles['modal']}
+                role={'dialog'}
+                aria-modal={'true'}
+                aria-labelledby={'initiative-attack-editor-title'}
+              >
+                <div
+                  id={'initiative-attack-editor-title'}
+                  className={styles['modalTitle']}
+                >
+                  Edit Attack Declaration
+                </div>
+                <p className={styles['modalText']}>
+                  Set the action for <strong>{attackEditedAttackerName}</strong>{' '}
+                  against <strong>{attackEditedTargetName}</strong>. In this
+                  rules slice, the chosen action applies to that
+                  combatant&apos;s current round, while any inch distance is
+                  stored for this specific target.
+                </p>
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={'initiative-attack-action'}
+                >
+                  Action
+                </label>
+                <select
+                  id={'initiative-attack-action'}
+                  className={styles['selectInput']}
+                  value={attackEditorTarget.action}
+                  onChange={(event) =>
+                    setAttackEditorTarget((previous) =>
+                      previous
+                        ? {
+                            ...previous,
+                            action: event.target
+                              .value as InitiativeDeclaredAction,
+                          }
+                        : previous
+                    )
+                  }
+                >
+                  {ACTION_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {isSingleTargetMovementAction(attackEditorTarget.action) ? (
+                  <>
+                    <label
+                      className={styles['modalLabel']}
+                      htmlFor={'initiative-attack-distance'}
+                    >
+                      Distance to {attackEditedTargetName} (inches)
+                    </label>
+                    <input
+                      id={'initiative-attack-distance'}
+                      className={styles['textInput']}
+                      inputMode={'decimal'}
+                      type={'text'}
+                      placeholder={'e.g. 4'}
+                      value={attackEditorTarget.distanceInches}
+                      onChange={(event) =>
+                        setAttackEditorTarget((previous) =>
+                          previous
+                            ? {
+                                ...previous,
+                                distanceInches: event.target.value,
+                              }
+                            : previous
+                        )
+                      }
+                    />
+                    <p className={styles['modalHint']}>
+                      Enter the current effective range in tabletop inches. The
+                      DM can translate from the actual battlefield during play.
+                    </p>
+                  </>
+                ) : null}
+                <div className={styles['modalMeta']}>
+                  <span className={styles['modalMetaLabel']}>
+                    Current declaration
+                  </span>
+                  <span className={styles['modalMetaValue']}>
+                    {attackEditedAttackerName} → {attackEditedTargetName}
+                  </span>
+                  <span className={styles['modalMetaValue']}>
+                    {formatDeclaredAction(attackEditorTarget.action)}
+                    {isSingleTargetMovementAction(attackEditorTarget.action) &&
+                    attackEditorTarget.distanceInches.trim().length > 0
+                      ? ` · ${attackEditorTarget.distanceInches}"`
+                      : ''}
+                  </span>
+                </div>
+                <div className={styles['modalActions']}>
+                  <button
+                    type={'button'}
+                    className={styles['modalButtonDanger']}
+                    onClick={clearAttackDeclaration}
+                  >
+                    Clear attack
+                  </button>
+                  <div className={styles['modalActionGroup']}>
+                    <button
+                      type={'button'}
+                      className={styles['modalButton']}
+                      onClick={() => setAttackEditorTarget(undefined)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type={'button'}
+                      className={styles['modalButton']}
+                      onClick={saveAttackDeclaration}
+                    >
+                      Save attack
+                    </button>
+                  </div>
                 </div>
               </div>
             </>,
