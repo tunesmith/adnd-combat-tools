@@ -73,6 +73,7 @@ describe('encumbrance app regressions', () => {
     expect(
       within(dialog).getByLabelText('Value known to player')
     ).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Monetary value')).toBeInTheDocument();
     expect(within(dialog).getByLabelText('Carried weight')).toBeInTheDocument();
     expect(within(dialog).getByText('Value per item')).toBeInTheDocument();
     expect(within(dialog).getAllByText('25,000 gp')).not.toHaveLength(0);

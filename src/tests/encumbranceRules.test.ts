@@ -290,4 +290,32 @@ describe('encumbrance rules', () => {
       14.02
     );
   });
+
+  test('uses per-item value overrides when totaling item and character value', () => {
+    const character = createPlayerCharacter();
+    character.inventory = [
+      {
+        id: 'luckstone-1',
+        catalogId: 'diamond',
+        quantity: 1,
+        containerId: null,
+        day: 64,
+        playerNotes: '',
+        playerKnowsValue: true,
+        playerMagicKnowledge: 'known-magical',
+        name: 'Luckstone',
+        valueGpOverride: 25000,
+      },
+    ];
+
+    expect(
+      getInventoryItemTotalValueGp(
+        'luckstone-1',
+        character.inventory,
+        encumbranceCatalogById
+      )
+    ).toBe(25000);
+    expect(getTotalValueGp(character, encumbranceCatalogById)).toBe(25000);
+    expect(getTotalKnownValueGp(character, encumbranceCatalogById)).toBe(25000);
+  });
 });

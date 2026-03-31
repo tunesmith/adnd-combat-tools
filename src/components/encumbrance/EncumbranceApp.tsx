@@ -79,6 +79,7 @@ interface InventoryEditDraft {
   isMagical: boolean;
   fullyIdentified: boolean;
   encumbranceGp: number;
+  valueGp: number;
 }
 
 interface CharacterEditDraft {
@@ -298,7 +299,10 @@ const getInventoryItemOwnEncumbranceGp = (
 const getInventoryItemOwnValueGp = (
   item: EncumbranceInventoryItem,
   itemInfo: EncumbranceCatalogItem
-): number => itemInfo.valueGp * item.quantity;
+): number =>
+  (typeof item.valueGpOverride === 'number'
+    ? item.valueGpOverride
+    : itemInfo.valueGp) * item.quantity;
 
 const getPlayerVisibleItemValueGp = (
   item: EncumbranceInventoryItem,
@@ -824,6 +828,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       isMagical: item.isMagical === true,
       fullyIdentified: item.fullyIdentified === true,
       encumbranceGp: getInventoryItemOwnEncumbranceGp(item, itemInfo),
+      valueGp:
+        typeof item.valueGpOverride === 'number'
+          ? item.valueGpOverride
+          : itemInfo.valueGp,
     });
   };
 
@@ -851,6 +859,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       0,
       Math.floor(Number(draft.encumbranceGp) || 0)
     );
+    const normalizedValue = Math.max(0, Number(draft.valueGp) || 0);
     const normalizedDay = Math.max(0, Math.floor(Number(draft.day) || 0));
     const normalizedName = draft.name.trim();
 
@@ -886,6 +895,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           : undefined,
       encumbranceGpOverride:
         normalizedLoad !== itemInfo.encumbranceGp ? normalizedLoad : undefined,
+      valueGpOverride:
+        normalizedValue !== itemInfo.valueGp ? normalizedValue : undefined,
     }));
   };
 
@@ -1507,8 +1518,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const editingDraftOwnLoadGp =
     editingDraftLoadPerItemGp * editingDraftQuantity;
   const editingDraftOwnValueGp =
-    editingItemInfo?.valueGp !== undefined
-      ? editingItemInfo.valueGp * editingDraftQuantity
+    editingItemDraft?.valueGp !== undefined
+      ? editingItemDraft.valueGp * editingDraftQuantity
       : 0;
   const editingDraftVisibleOwnValueGp =
     mode === 'dm'
@@ -2681,6 +2692,70 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                         <div className={styles['modalFields']}>
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
+                              Monetary value
+                            </span>
+                            <input
+                              className={styles['fieldControl']}
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              value={editingItemDraft.valueGp}
+                              onChange={(event) =>
+                                updateEditingItemDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  valueGp: Math.max(
+                                    0,
+                                    Number(event.target.value) || 0
+                                  ),
+                                }))
+                              }
+                            />
+                          </label>
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
+                              Value known to player
+                            </span>
+                            <select
+                              className={styles['fieldControl']}
+                              value={
+                                editingItemDraft.playerKnowsValue ? 'yes' : 'no'
+                              }
+                              onChange={(event) =>
+                                updateEditingItemDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  playerKnowsValue:
+                                    event.target.value === 'yes',
+                                }))
+                              }
+                            >
+                              <option value="yes">Known</option>
+                              <option value="no">Unknown</option>
+                            </select>
+                          </label>
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
+                              Magical truth
+                            </span>
+                            <select
+                              className={styles['fieldControl']}
+                              value={editingItemDraft.isMagical ? 'yes' : 'no'}
+                              onChange={(event) =>
+                                updateEditingItemDraft((currentDraft) => ({
+                                  ...currentDraft,
+                                  isMagical: event.target.value === 'yes',
+                                  fullyIdentified:
+                                    event.target.value === 'yes'
+                                      ? currentDraft.fullyIdentified
+                                      : false,
+                                }))
+                              }
+                            >
+                              <option value="no">Mundane</option>
+                              <option value="yes">Magical</option>
+                            </select>
+                          </label>
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
                               Magic known to player
                             </span>
                             <select
@@ -2711,27 +2786,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                   {magicKnowledgeLabels[knowledge]}
                                 </option>
                               ))}
-                            </select>
-                          </label>
-                          <label className={styles['fieldGroup']}>
-                            <span className={styles['fieldLabel']}>
-                              Value known to player
-                            </span>
-                            <select
-                              className={styles['fieldControl']}
-                              value={
-                                editingItemDraft.playerKnowsValue ? 'yes' : 'no'
-                              }
-                              onChange={(event) =>
-                                updateEditingItemDraft((currentDraft) => ({
-                                  ...currentDraft,
-                                  playerKnowsValue:
-                                    event.target.value === 'yes',
-                                }))
-                              }
-                            >
-                              <option value="yes">Known</option>
-                              <option value="no">Unknown</option>
                             </select>
                           </label>
                           {editingCustomItemInfo?.isContainer && (
@@ -2767,28 +2821,6 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                               </select>
                             </label>
                           )}
-                          <label className={styles['fieldGroup']}>
-                            <span className={styles['fieldLabel']}>
-                              Magical truth
-                            </span>
-                            <select
-                              className={styles['fieldControl']}
-                              value={editingItemDraft.isMagical ? 'yes' : 'no'}
-                              onChange={(event) =>
-                                updateEditingItemDraft((currentDraft) => ({
-                                  ...currentDraft,
-                                  isMagical: event.target.value === 'yes',
-                                  fullyIdentified:
-                                    event.target.value === 'yes'
-                                      ? currentDraft.fullyIdentified
-                                      : false,
-                                }))
-                              }
-                            >
-                              <option value="no">Mundane</option>
-                              <option value="yes">Magical</option>
-                            </select>
-                          </label>
                           {editingItemDraft.isMagical && (
                             <label className={styles['fieldGroup']}>
                               <span className={styles['fieldLabel']}>
@@ -2853,9 +2885,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                         <span className={styles['modalMetaValue']}>
                           {formatOptionalGpValue(
                             mode === 'dm'
-                              ? editingItemInfo.valueGp
+                              ? editingItemDraft.valueGp
                               : editingItemDraft.playerKnowsValue
-                              ? editingItemInfo.valueGp
+                              ? editingItemDraft.valueGp
                               : null
                           )}
                         </span>

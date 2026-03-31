@@ -167,7 +167,9 @@ const isInventoryItemV5 = (
     (candidate.fullyIdentified === undefined ||
       typeof candidate.fullyIdentified === 'boolean') &&
     (candidate.encumbranceGpOverride === undefined ||
-      isNonNegativeNumber(candidate.encumbranceGpOverride))
+      isNonNegativeNumber(candidate.encumbranceGpOverride)) &&
+    (candidate.valueGpOverride === undefined ||
+      isNonNegativeNumber(candidate.valueGpOverride))
   );
 };
 
@@ -384,6 +386,11 @@ const sanitizeInventoryItem = (
     ...(typeof item.encumbranceGpOverride === 'number'
       ? {
           encumbranceGpOverride: item.encumbranceGpOverride,
+        }
+      : {}),
+    ...(typeof item.valueGpOverride === 'number'
+      ? {
+          valueGpOverride: item.valueGpOverride,
         }
       : {}),
     ...(sanitizedDmNotes !== undefined ? { dmNotes: sanitizedDmNotes } : {}),

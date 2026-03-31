@@ -78,6 +78,7 @@ export interface EncumbranceInventoryItemV5
   isMagical?: boolean;
   fullyIdentified?: boolean;
   encumbranceGpOverride?: number;
+  valueGpOverride?: number;
 }
 
 export interface EncumbranceInventoryItem extends EncumbranceInventoryItemV5 {

@@ -85,7 +85,9 @@ const getOwnValueGp = (
   item: EncumbranceInventoryItem,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
-  (getInventoryItemInfo(item, catalogById)?.valueGp || 0) * item.quantity;
+  (typeof item.valueGpOverride === 'number'
+    ? item.valueGpOverride
+    : getInventoryItemInfo(item, catalogById)?.valueGp || 0) * item.quantity;
 
 const getOwnKnownValueGp = (
   item: EncumbranceInventoryItem,

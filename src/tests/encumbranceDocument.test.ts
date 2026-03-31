@@ -373,6 +373,46 @@ describe('encumbrance document helpers', () => {
     expect(recoveredSatchel?.isContainer).toBe(true);
   });
 
+  test('parses current documents with row-level value overrides', () => {
+    const parsed = parseEncumbranceDocument(
+      JSON.stringify({
+        kind: 'adnd-encumbrance-dm',
+        version: 8,
+        activeCharacterId: 'character-1',
+        characters: [
+          {
+            id: 'character-1',
+            name: 'Alya',
+            strength: {
+              score: 12,
+              exceptional: 'none',
+            },
+            dmNotes: '',
+            inventory: [
+              {
+                id: 'item-1',
+                catalogId: 'coin-gold',
+                quantity: 10,
+                containerId: null,
+                day: 40,
+                playerNotes: '',
+                playerKnowsValue: true,
+                valueGpOverride: 2,
+                playerMagicKnowledge: 'unknown',
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    if (parsed.kind !== 'adnd-encumbrance-dm') {
+      throw new Error('Expected a DM document.');
+    }
+
+    expect(parsed.characters[0]?.inventory[0]?.valueGpOverride).toBe(2);
+  });
+
   test('rejects malformed files', () => {
     expect(() =>
       parseEncumbranceDocument(
