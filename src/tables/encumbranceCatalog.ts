@@ -809,7 +809,7 @@ export const encumbranceCatalog: EncumbranceCatalogItem[] = [
     id: 'holy-symbol-wood',
     name: 'Symbol, Holy, wooden',
     category: 'religious-items',
-    encumbranceGp: 1,
+    encumbranceGp: 20,
     valueGp: toGp({ sp: 7 }),
   },
   // Inferred as a small worn religious item.
@@ -817,7 +817,7 @@ export const encumbranceCatalog: EncumbranceCatalogItem[] = [
     id: 'holy-symbol-iron',
     name: 'Symbol, Holy, iron',
     category: 'religious-items',
-    encumbranceGp: 3,
+    encumbranceGp: 20,
     valueGp: toGp({ gp: 2 }),
   },
   // Inferred as a small worn religious item.
@@ -825,7 +825,7 @@ export const encumbranceCatalog: EncumbranceCatalogItem[] = [
     id: 'holy-symbol-silver',
     name: 'Symbol, Holy, silver',
     category: 'religious-items',
-    encumbranceGp: 5,
+    encumbranceGp: 20,
     valueGp: toGp({ gp: 50 }),
   },
   // Inferred from a filled flask-sized liquid container.
