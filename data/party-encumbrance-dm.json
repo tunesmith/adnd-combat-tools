@@ -1,7 +1,7 @@
 {
   "kind": "adnd-encumbrance-dm",
   "version": 8,
-  "activeCharacterId": "9677889d-9914-4470-9006-5aae6be970d2",
+  "activeCharacterId": "986203d0-5ff3-4a8f-8d86-2e651aaf03ca",
   "characters": [
     {
       "id": "9677889d-9914-4470-9006-5aae6be970d2",
@@ -575,6 +575,7 @@
           "playerNotes": "",
           "playerMagicKnowledge": "known-magical",
           "playerKnowsValue": false,
+          "name": "Ring of Free Action",
           "encumbranceGpOverride": 1,
           "valueGpOverride": 5000,
           "dmNotes": "Move freely under web, hold, slow - even under water",
@@ -586,8 +587,7 @@
             "category": "treasure",
             "encumbranceGp": 0,
             "valueGp": 0
-          },
-          "name": "Ring of Free Action"
+          }
         },
         {
           "id": "97bb38fc-9d23-44f2-a81e-37683f302af8",
@@ -1020,7 +1020,292 @@
         "score": 11,
         "exceptional": "none"
       },
-      "inventory": [],
+      "inventory": [
+        {
+          "id": "e944935f-cb3e-4a8d-b9ce-fb84bd9e346d",
+          "catalogId": "backpack",
+          "quantity": 1,
+          "containerId": null,
+          "day": 0,
+          "playerNotes": "",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false
+        },
+        {
+          "id": "3dc3f1c0-f063-46e0-a65f-038d8fbb44a9",
+          "catalogId": "belt-pouch-large",
+          "quantity": 1,
+          "containerId": null,
+          "day": 0,
+          "playerNotes": "On belt, for waterskin",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false
+        },
+        {
+          "id": "d26df856-8f75-41f8-acb4-b5e601922bb2",
+          "catalogId": "belt-pouch-small",
+          "quantity": 1,
+          "containerId": null,
+          "day": 0,
+          "playerNotes": "For spell materials",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false
+        },
+        {
+          "id": "d19764ab-7a89-4877-b84b-468955a72e8e",
+          "catalogId": "coin-platinum",
+          "quantity": 10,
+          "containerId": "e944935f-cb3e-4a8d-b9ce-fb84bd9e346d",
+          "day": 85,
+          "playerNotes": "In backpack",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false,
+          "name": "$ - 10 platinum"
+        },
+        {
+          "id": "43a917f9-2b99-481a-bdbe-642c81c13aa8",
+          "catalogId": "belt",
+          "quantity": 1,
+          "containerId": null,
+          "day": 0,
+          "playerNotes": "daggers",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false
+        },
+        {
+          "id": "d884a151-4359-416c-9b33-37eeecf1c5a1",
+          "catalogId": "dagger",
+          "quantity": 2,
+          "containerId": null,
+          "day": 0,
+          "playerNotes": "On belt",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false,
+          "name": "2 daggers"
+        },
+        {
+          "id": "be910dc5-c544-49b5-8c62-73de38b25896",
+          "catalogId": "custom-leather-scroll-case-ade9145f-1a38-473e-902e-d75510d0816b",
+          "quantity": 1,
+          "containerId": "e944935f-cb3e-4a8d-b9ce-fb84bd9e346d",
+          "day": 25,
+          "playerNotes": "Contains MU scroll",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false,
+          "customItem": {
+            "id": "custom-leather-scroll-case-ade9145f-1a38-473e-902e-d75510d0816b",
+            "name": "Leather Scroll Case",
+            "category": "containers",
+            "encumbranceGp": 25,
+            "valueGp": 0.75,
+            "isContainer": true,
+            "capacityGp": 1,
+            "ignoresContentsWeightForEncumbrance": true
+          },
+          "name": "MU Scroll Case"
+        },
+        {
+          "id": "f64a8bf3-88bd-4995-8103-02ac60fa2e5f",
+          "catalogId": "custom-mu-scroll-ice-storm-47b0189b-4239-4f4a-a898-ca664956e7ea",
+          "quantity": 1,
+          "containerId": "be910dc5-c544-49b5-8c62-73de38b25896",
+          "day": 33,
+          "playerNotes": "Cast at 7th; 4th level spell, in scroll case in backpack",
+          "playerKnowsValue": false,
+          "playerMagicKnowledge": "known-magical",
+          "dmNotes": "",
+          "isMagical": true,
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-mu-scroll-ice-storm-47b0189b-4239-4f4a-a898-ca664956e7ea",
+            "name": "MU Scroll - ice storm",
+            "category": "adventuring-gear",
+            "encumbranceGp": 0,
+            "valueGp": 1200
+          }
+        },
+        {
+          "id": "bae8901d-00d0-4516-8606-f7942d1570be",
+          "catalogId": "custom-demon-scroll-case-e5c719f6-fc60-4409-a271-5ddc14486a9d",
+          "quantity": 1,
+          "containerId": "e944935f-cb3e-4a8d-b9ce-fb84bd9e346d",
+          "day": 25,
+          "playerNotes": "Contains Demon scroll",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false,
+          "customItem": {
+            "id": "custom-demon-scroll-case-e5c719f6-fc60-4409-a271-5ddc14486a9d",
+            "name": "Demon Scroll Case",
+            "category": "containers",
+            "encumbranceGp": 25,
+            "valueGp": 0.75,
+            "isContainer": true,
+            "capacityGp": 1,
+            "ignoresContentsWeightForEncumbrance": true
+          }
+        },
+        {
+          "id": "e65f8178-f61c-471e-8a78-22f034363eb6",
+          "catalogId": "custom-scroll-of-protection-from-demons-17465c28-1152-4665-8461-a57cb9063d4b",
+          "quantity": 1,
+          "containerId": "bae8901d-00d0-4516-8606-f7942d1570be",
+          "day": 50,
+          "playerNotes": "In Demon Scroll Case in Backpack",
+          "playerKnowsValue": false,
+          "playerMagicKnowledge": "known-magical",
+          "dmNotes": "",
+          "isMagical": true,
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-scroll-of-protection-from-demons-17465c28-1152-4665-8461-a57cb9063d4b",
+            "name": "Scroll of Protection from Demons",
+            "category": "adventuring-gear",
+            "encumbranceGp": 0,
+            "valueGp": 12500
+          }
+        },
+        {
+          "id": "5ace7334-a373-4ae4-954c-81b1eec42b8d",
+          "catalogId": "custom-bracers-of-defense-ac4-23bbe7dd-f0a8-44c1-8c26-36c21deca35f",
+          "quantity": 1,
+          "containerId": null,
+          "day": 51,
+          "playerNotes": "",
+          "playerKnowsValue": false,
+          "playerMagicKnowledge": "known-magical",
+          "dmNotes": "",
+          "isMagical": true,
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-bracers-of-defense-ac4-23bbe7dd-f0a8-44c1-8c26-36c21deca35f",
+            "name": "Bracers of Defense AC4",
+            "category": "adventuring-gear",
+            "encumbranceGp": 10,
+            "valueGp": 18000
+          }
+        },
+        {
+          "id": "1eb266f5-fa51-4bcd-97e5-7de825467d16",
+          "catalogId": "custom-elmo-s-traveling-spell-book-l3-7acca822-db25-4638-a469-2104689cf7ae",
+          "quantity": 1,
+          "containerId": "e944935f-cb3e-4a8d-b9ce-fb84bd9e346d",
+          "day": 33,
+          "playerNotes": "Fireball, Water Breathing - in backpack",
+          "playerKnowsValue": false,
+          "playerMagicKnowledge": "known-magical",
+          "dmNotes": "",
+          "isMagical": true,
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-elmo-s-traveling-spell-book-l3-7acca822-db25-4638-a469-2104689cf7ae",
+            "name": "Elmo's Traveling Spell Book - L3",
+            "category": "adventuring-gear",
+            "encumbranceGp": 100,
+            "valueGp": 6000
+          }
+        },
+        {
+          "id": "8f7a3a2c-6f84-454d-894a-0245d30f4290",
+          "catalogId": "custom-ring-of-free-action-ef3e6cac-af26-4832-be62-0e9c9a547fa7",
+          "quantity": 1,
+          "containerId": null,
+          "day": 87,
+          "playerNotes": "",
+          "playerKnowsValue": false,
+          "playerMagicKnowledge": "known-magical",
+          "dmNotes": "",
+          "isMagical": true,
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ring-of-free-action-ef3e6cac-af26-4832-be62-0e9c9a547fa7",
+            "name": "Ring of Free Action",
+            "category": "adventuring-gear",
+            "encumbranceGp": 1,
+            "valueGp": 5000
+          }
+        },
+        {
+          "id": "5c559561-ddc8-445d-b816-590336bb6b1a",
+          "catalogId": "custom-ring-of-protection-1-4510c98d-edfe-4043-b06a-efbecd4b1d00",
+          "quantity": 1,
+          "containerId": null,
+          "day": 1,
+          "playerNotes": "(from box) +1 AC and Saving Throws",
+          "playerKnowsValue": false,
+          "playerMagicKnowledge": "known-magical",
+          "dmNotes": "",
+          "isMagical": true,
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ring-of-protection-1-4510c98d-edfe-4043-b06a-efbecd4b1d00",
+            "name": "Ring of Protection +1",
+            "category": "adventuring-gear",
+            "encumbranceGp": 1,
+            "valueGp": 10000
+          }
+        },
+        {
+          "id": "bbd1b5a0-504f-403b-bca2-f0c9f01e035e",
+          "catalogId": "boots-high-soft",
+          "quantity": 1,
+          "containerId": null,
+          "day": 0,
+          "playerNotes": "",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false
+        },
+        {
+          "id": "b30cc4c3-c57f-40c5-8c15-eef9a4335d6b",
+          "catalogId": "custom-wand-of-polymorphing-a62f89c3-c4b6-4d75-8bf1-307663eaa9fa",
+          "quantity": 1,
+          "containerId": "e944935f-cb3e-4a8d-b9ce-fb84bd9e346d",
+          "day": 33,
+          "playerNotes": "(with leather case). In backpack. \"Metamorph!\"",
+          "playerKnowsValue": false,
+          "playerMagicKnowledge": "known-magical",
+          "dmNotes": "20 charges left",
+          "isMagical": true,
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-wand-of-polymorphing-a62f89c3-c4b6-4d75-8bf1-307663eaa9fa",
+            "name": "Wand of Polymorphing",
+            "category": "adventuring-gear",
+            "encumbranceGp": 30,
+            "valueGp": 25000
+          }
+        },
+        {
+          "id": "be681ef0-bdec-4b9a-baf1-a7be3606e1c0",
+          "catalogId": "waterskin-full",
+          "quantity": 1,
+          "containerId": "3dc3f1c0-f063-46e0-a65f-038d8fbb44a9",
+          "day": 0,
+          "playerNotes": "",
+          "playerKnowsValue": true,
+          "playerMagicKnowledge": "known-mundane",
+          "dmNotes": "",
+          "isMagical": false,
+          "name": "Water skin"
+        }
+      ],
       "dmNotes": ""
     }
   ]
