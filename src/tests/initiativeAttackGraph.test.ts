@@ -4,7 +4,7 @@ import { buildInitiativeScenario } from '../helpers/initiative/scenario';
 import type { InitiativeScenarioDraft } from '../types/initiative';
 
 describe('initiative attack graph', () => {
-  test('applies baseline simple initiative to all attacks in a non-tied round', () => {
+  test('omits untargeted combatants from the graph in a non-tied round', () => {
     const scenario = buildInitiativeScenario({
       label: 'Enemy Initiative Edge',
       partyInitiative: 2,
@@ -41,41 +41,18 @@ describe('initiative attack graph', () => {
     const resolution = resolveInitiativeRound(scenario);
     const graph = buildInitiativeAttackGraph(scenario, resolution);
 
-    expect(graph.nodes.map((node) => node.id)).toEqual(
-      expect.arrayContaining([
-        'attack:party-1:1',
-        'attack:enemy-3:1',
-        'attack:party-2:1',
-        'attack:enemy-4:1',
-      ])
-    );
-    expect(graph.nodes).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'attack:enemy-4:1',
-          label: 'attack 1',
-          source: 'routine-component',
-        }),
-      ])
-    );
-    expect(graph.layers).toEqual([
-      ['attack:enemy-3:1', 'attack:enemy-4:1'],
-      ['attack:party-1:1', 'attack:party-2:1'],
+    expect(graph.nodes.map((node) => node.id)).toEqual([
+      'attack:enemy-3:1',
+      'attack:party-1:1',
     ]);
-    expect(graph.edges).toEqual(
-      expect.arrayContaining([
-        {
-          fromNodeId: 'attack:enemy-3:1',
-          toNodeId: 'attack:party-1:1',
-          reasons: ['direct-melee'],
-        },
-        {
-          fromNodeId: 'attack:enemy-4:1',
-          toNodeId: 'attack:party-2:1',
-          reasons: ['simple-initiative'],
-        },
-      ])
-    );
+    expect(graph.layers).toEqual([['attack:enemy-3:1'], ['attack:party-1:1']]);
+    expect(graph.edges).toEqual([
+      {
+        fromNodeId: 'attack:enemy-3:1',
+        toNodeId: 'attack:party-1:1',
+        reasons: ['direct-melee'],
+      },
+    ]);
   });
 
   test('adds only local direct-melee precedence in a tied round', () => {
@@ -117,7 +94,7 @@ describe('initiative attack graph', () => {
     const graph = buildInitiativeAttackGraph(scenario, resolution);
 
     expect(graph.layers).toEqual([
-      ['attack:party-1:1', 'attack:party-2:1', 'attack:enemy-4:1'],
+      ['attack:party-1:1'],
       ['attack:party-1:2'],
       ['attack:enemy-3:1'],
     ]);
@@ -135,7 +112,7 @@ describe('initiative attack graph', () => {
     ]);
   });
 
-  test('keeps ambiguous melee on baseline initiative without inventing local precedence', () => {
+  test('keeps an extra attacker on baseline initiative while only the duel gets local precedence', () => {
     const scenario = buildInitiativeScenario({
       label: 'Ambiguous Scrum',
       partyInitiative: 6,
@@ -159,7 +136,7 @@ describe('initiative attack graph', () => {
           combatantKey: 4,
           name: 'Bugbear',
           weaponId: 1,
-          targetCombatantKeys: [1, 2],
+          targetCombatantKeys: [1],
         },
       ],
     });
@@ -174,12 +151,7 @@ describe('initiative attack graph', () => {
       {
         fromNodeId: 'attack:party-1:1',
         toNodeId: 'attack:enemy-4:1',
-        reasons: ['simple-initiative'],
-      },
-      {
-        fromNodeId: 'attack:party-2:1',
-        toNodeId: 'attack:enemy-4:1',
-        reasons: ['simple-initiative'],
+        reasons: ['direct-melee'],
       },
     ]);
   });
@@ -299,14 +271,14 @@ describe('initiative attack graph', () => {
           kind: 'contact',
           segment: 3,
         }),
-        expect.objectContaining({
-          id: 'attack:enemy-3:1',
-          kind: 'attack',
-        }),
       ])
     );
+    expect(graph.nodes).toHaveLength(1);
     expect(graph.nodes.map((node) => node.id)).not.toContain(
       'attack:party-1:1'
+    );
+    expect(graph.nodes.map((node) => node.id)).not.toContain(
+      'attack:enemy-3:1'
     );
     expect(graph.edges).toEqual([]);
   });

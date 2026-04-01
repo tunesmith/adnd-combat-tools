@@ -95,6 +95,10 @@ const createRoutineAttackNode = (
   );
 };
 
+const hasRegisteredCombatAction = (
+  combatant: InitiativeScenarioCombatant
+): boolean => combatant.targetIds.length > 0;
+
 const createContactNode = (
   combatant: InitiativeScenarioCombatant,
   segment: number
@@ -326,7 +330,8 @@ export const buildInitiativeAttackGraph = (
   scenario.party.concat(scenario.enemies).forEach((combatant) => {
     if (
       directMeleeCombatantIdSet.has(combatant.id) ||
-      movementHandledCombatantIdSet.has(combatant.id)
+      movementHandledCombatantIdSet.has(combatant.id) ||
+      !hasRegisteredCombatAction(combatant)
     ) {
       return;
     }

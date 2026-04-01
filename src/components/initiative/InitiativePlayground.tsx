@@ -162,7 +162,7 @@ const createScrumPreset = (): InitiativePlaytestState => ({
     createCombatant(3, 'Tarn', 16),
   ],
   enemies: [
-    createCombatant(4, 'Bugbear', 1, [1, 2]),
+    createCombatant(4, 'Bugbear', 1, [1]),
     createCombatant(5, 'Kobold', 1),
   ],
   pairDistances: {},
