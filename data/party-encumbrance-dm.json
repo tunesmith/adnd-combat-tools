@@ -1,7 +1,7 @@
 {
   "kind": "adnd-encumbrance-dm",
   "version": 8,
-  "activeCharacterId": "f1ca2dd5-39e0-4d15-a106-501cc66c0a93",
+  "activeCharacterId": "3e593c26-92f5-4b00-9a80-f0597aa3bb02",
   "characters": [
     {
       "id": "9677889d-9914-4470-9006-5aae6be970d2",
@@ -671,8 +671,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -683,8 +683,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -695,11 +695,11 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 85,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
+          "name": "$ - 10 platinum",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "$ - 10 platinum"
+          "isMagical": false
         },
         {
           "id": "0f2e7762-ee7b-453d-84c2-671cd93d4473",
@@ -708,11 +708,11 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 69,
           "playerNotes": "In backpack",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
+          "name": "$ - 20 emeralds",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "$ - 20 emeralds"
+          "isMagical": false
         },
         {
           "id": "e41f4e51-9df1-4362-b2ad-a77cff26d969",
@@ -721,11 +721,11 @@
           "containerId": "aa7085b6-e520-4ea1-9763-99eb9250a262",
           "day": 0,
           "playerNotes": "In small pouch",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
+          "name": "$ - 8 diamonds",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "$ - 8 diamonds"
+          "isMagical": false
         },
         {
           "id": "c288b1da-752a-4692-9110-f4c9b10cc7ed",
@@ -734,8 +734,8 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 74,
           "playerNotes": "Under ticking of bed in hobgoblin barracks after mirror corridor",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "unknown",
+          "playerKnowsValue": false,
           "dmNotes": "25% chance each is spoiled",
           "isMagical": false,
           "customItem": {
@@ -753,8 +753,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -765,8 +765,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -777,8 +777,8 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 0,
           "playerNotes": "In backpack",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -789,8 +789,8 @@
           "containerId": "aa7085b6-e520-4ea1-9763-99eb9250a262",
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -801,8 +801,8 @@
           "containerId": "aa7085b6-e520-4ea1-9763-99eb9250a262",
           "day": 27,
           "playerNotes": " (no air) - in small pouch",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
@@ -821,8 +821,9 @@
           "containerId": null,
           "day": 27,
           "playerNotes": "+1 xp level",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
+          "encumbranceGpOverride": 0,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
@@ -832,8 +833,7 @@
             "category": "adventuring-gear",
             "encumbranceGp": 1,
             "valueGp": 5000
-          },
-          "encumbranceGpOverride": 0
+          }
         },
         {
           "id": "5620c36e-2dcd-4681-8a30-798c2ff8250a",
@@ -842,12 +842,12 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 0,
           "playerNotes": "(75 full) - in backpack",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
-          "dmNotes": "",
-          "isMagical": false,
+          "playerKnowsValue": true,
           "name": "Iron Rations - Astrid",
-          "encumbranceGpOverride": 65
+          "encumbranceGpOverride": 65,
+          "dmNotes": "",
+          "isMagical": false
         },
         {
           "id": "190b9675-600b-49f6-88ef-71af2dd67a69",
@@ -856,12 +856,12 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 0,
           "playerNotes": "(75 full) - in backpack",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
-          "dmNotes": "",
-          "isMagical": false,
+          "playerKnowsValue": true,
           "name": "Iron Rations - Sot",
-          "encumbranceGpOverride": 65
+          "encumbranceGpOverride": 65,
+          "dmNotes": "",
+          "isMagical": false
         },
         {
           "id": "82edef09-89f0-4506-90d4-10b64056d7fd",
@@ -870,8 +870,8 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -882,13 +882,13 @@
           "containerId": null,
           "day": 60,
           "playerNotes": "",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
+          "name": "Mace +1",
+          "valueGpOverride": 3000,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true,
-          "name": "Mace +1",
-          "valueGpOverride": 3000
+          "fullyIdentified": true
         },
         {
           "id": "b94c7876-c228-4ba3-95a5-4e3ea83940ee",
@@ -897,13 +897,13 @@
           "containerId": null,
           "day": 6,
           "playerNotes": "large, round, bronze, fish. lighting: 40’ radius torch, or 80’ 5” bullseye, in hand",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
+          "name": "Mipp's Shield +1",
+          "valueGpOverride": 2500,
           "dmNotes": "",
           "isMagical": true,
-          "fullyIdentified": true,
-          "name": "Mipp's Shield +1",
-          "valueGpOverride": 2500
+          "fullyIdentified": true
         },
         {
           "id": "1448c62c-2aa6-4352-b476-55a46015b556",
@@ -912,8 +912,8 @@
           "containerId": null,
           "day": 63,
           "playerNotes": "+1 wisdom (goes away if brooch is lost)",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
@@ -932,14 +932,14 @@
           "containerId": null,
           "day": 33,
           "playerNotes": "",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
-          "dmNotes": "",
-          "isMagical": true,
-          "fullyIdentified": true,
+          "playerKnowsValue": false,
           "name": "Plate mail +2",
           "encumbranceGpOverride": 0,
-          "valueGpOverride": 10500
+          "valueGpOverride": 10500,
+          "dmNotes": "",
+          "isMagical": true,
+          "fullyIdentified": true
         },
         {
           "id": "4fe41050-d872-457f-8c6a-38f6cfa20317",
@@ -948,8 +948,8 @@
           "containerId": "aa7085b6-e520-4ea1-9763-99eb9250a262",
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -960,8 +960,8 @@
           "containerId": null,
           "day": 77,
           "playerNotes": "from Icar",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
@@ -980,8 +980,8 @@
           "containerId": null,
           "day": 13,
           "playerNotes": "(Punketah) +1 Saving Throw, +1 AC if wearing non-magical armor",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": true,
           "fullyIdentified": true,
@@ -1000,11 +1000,11 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
+          "name": "Robes",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "Robes"
+          "isMagical": false
         },
         {
           "id": "76551d6a-55ec-4b25-9ff2-c2b0471251c4",
@@ -1013,8 +1013,8 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 62,
           "playerNotes": "From witch-doctor, contains Prayer scroll",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": false,
           "customItem": {
@@ -1035,8 +1035,8 @@
           "containerId": "76551d6a-55ec-4b25-9ff2-c2b0471251c4",
           "day": 62,
           "playerNotes": "From witch-doctor",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "Cast at 6th  level ability",
           "isMagical": true,
           "fullyIdentified": true,
@@ -1055,8 +1055,10 @@
           "containerId": "343301d7-5dad-439c-a4a3-fea5513543c3",
           "day": 77,
           "playerNotes": "wind walk (7), feign death (3), cure serious wounds (4), purify food and drink (1) (medusa scroll)",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
+          "encumbranceGpOverride": 0,
+          "valueGpOverride": 4500,
           "dmNotes": "cure light wounds (1) and resurrection (7) already cast",
           "isMagical": true,
           "fullyIdentified": true,
@@ -1066,9 +1068,7 @@
             "category": "adventuring-gear",
             "encumbranceGp": 1,
             "valueGp": 0
-          },
-          "encumbranceGpOverride": 0,
-          "valueGpOverride": 4500
+          }
         },
         {
           "id": "343301d7-5dad-439c-a4a3-fea5513543c3",
@@ -1077,8 +1077,9 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 77,
           "playerNotes": "Contains scroll of medusa spells",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": false,
+          "name": "Leather Scroll Case for Medusa Spells",
           "dmNotes": "",
           "isMagical": false,
           "customItem": {
@@ -1090,8 +1091,7 @@
             "isContainer": true,
             "capacityGp": 1,
             "ignoresContentsWeightForEncumbrance": true
-          },
-          "name": "Leather Scroll Case for Medusa Spells"
+          }
         },
         {
           "id": "fdb7b7c5-8892-4bf8-9509-0a259c42e287",
@@ -1100,8 +1100,8 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 25,
           "playerNotes": "Contains Cure Disease scroll",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": false,
           "dmNotes": "",
           "isMagical": false,
           "customItem": {
@@ -1122,8 +1122,8 @@
           "containerId": "fdb7b7c5-8892-4bf8-9509-0a259c42e287",
           "day": 25,
           "playerNotes": "In backpack",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "Cast at 6th level ability",
           "isMagical": true,
           "fullyIdentified": true,
@@ -1142,8 +1142,8 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -1154,8 +1154,8 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -1166,8 +1166,8 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 80,
           "playerNotes": "Bought from Fyndax, in backpack",
-          "playerKnowsValue": false,
           "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
           "dmNotes": "no xp awarded since it was bought",
           "isMagical": true,
           "fullyIdentified": true,
@@ -1186,8 +1186,8 @@
           "containerId": "aa7085b6-e520-4ea1-9763-99eb9250a262",
           "day": 0,
           "playerNotes": "In small pouch",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         },
@@ -1198,11 +1198,11 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
+          "name": "Waterskin - Astrid",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "Waterskin - Astrid"
+          "isMagical": false
         },
         {
           "id": "3a72ff7f-68e1-4209-b597-e805c4fb2beb",
@@ -1211,11 +1211,11 @@
           "containerId": "33f9ba87-4c26-46b2-9a63-da3df9c15b74",
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
+          "name": "Waterskin - Lodi",
           "dmNotes": "",
-          "isMagical": false,
-          "name": "Waterskin - Lodi"
+          "isMagical": false
         },
         {
           "id": "18e44dbb-1e2f-4b27-8731-24a94736dfcf",
@@ -1224,8 +1224,8 @@
           "containerId": null,
           "day": 0,
           "playerNotes": "",
-          "playerKnowsValue": true,
           "playerMagicKnowledge": "known-mundane",
+          "playerKnowsValue": true,
           "dmNotes": "",
           "isMagical": false
         }

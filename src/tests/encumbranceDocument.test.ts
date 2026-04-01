@@ -2,6 +2,7 @@ import {
   createEmptyEncumbranceDocument,
   parseEncumbranceDocument,
   redactEncumbranceDocument,
+  stringifyEncumbranceDocument,
 } from '../helpers/encumbranceDocument';
 
 describe('encumbrance document helpers', () => {
@@ -411,6 +412,86 @@ describe('encumbrance document helpers', () => {
     }
 
     expect(parsed.characters[0]?.inventory[0]?.valueGpOverride).toBe(2);
+  });
+
+  test('stringifies current documents with a stable canonical field order', () => {
+    const document = {
+      version: 8,
+      kind: 'adnd-encumbrance-dm',
+      characters: [
+        {
+          strength: {
+            exceptional: 'none',
+            score: 12,
+          },
+          inventory: [
+            {
+              playerKnowsValue: false,
+              playerMagicKnowledge: 'known-magical',
+              day: 25,
+              containerId: null,
+              quantity: 1,
+              catalogId: 'custom-ring-of-free-action',
+              id: 'item-1',
+              playerNotes: 'Worn on right hand.',
+              dmNotes: 'Actually cursed.',
+              name: 'Magic Ring',
+              fullyIdentified: true,
+              isMagical: true,
+              valueGpOverride: 5000,
+              encumbranceGpOverride: 1,
+              customItem: {
+                valueGp: 5000,
+                encumbranceGp: 1,
+                name: 'Ring of Free Action',
+                id: 'custom-ring-of-free-action',
+                category: 'treasure',
+              },
+            },
+          ],
+          id: 'character-1',
+          name: 'Alya',
+          dmNotes: 'Party treasurer.',
+        },
+      ],
+      activeCharacterId: 'character-1',
+    } as const;
+
+    const stringified = stringifyEncumbranceDocument(
+      document as unknown as ReturnType<typeof createEmptyEncumbranceDocument>
+    );
+
+    expect(stringified).toContain(`{
+  "kind": "adnd-encumbrance-dm",
+  "version": 8,
+  "activeCharacterId": "character-1",
+  "characters": [
+    {
+      "id": "character-1",
+      "name": "Alya"`);
+    expect(stringified).toContain(`{
+          "id": "item-1",
+          "catalogId": "custom-ring-of-free-action",
+          "quantity": 1,
+          "containerId": null,
+          "day": 25,
+          "playerNotes": "Worn on right hand.",
+          "playerMagicKnowledge": "known-magical",
+          "playerKnowsValue": false,
+          "name": "Magic Ring",
+          "encumbranceGpOverride": 1,
+          "valueGpOverride": 5000,
+          "dmNotes": "Actually cursed.",
+          "isMagical": true,
+          "fullyIdentified": true,
+          "customItem": {
+            "id": "custom-ring-of-free-action",
+            "name": "Ring of Free Action",
+            "category": "treasure",
+            "encumbranceGp": 1,
+            "valueGp": 5000
+          }
+        }`);
   });
 
   test('rejects malformed files', () => {

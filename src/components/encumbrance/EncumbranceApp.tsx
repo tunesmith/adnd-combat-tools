@@ -17,6 +17,7 @@ import {
   createEmptyEncumbranceDocument,
   parseEncumbranceDocument,
   redactEncumbranceDocument,
+  stringifyEncumbranceDocument,
 } from '../../helpers/encumbranceDocument';
 import {
   getContainerLoadSummary,
@@ -1441,7 +1442,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   };
 
   const downloadDocument = (nextDocument: EncumbranceDocument) => {
-    const blob = new Blob([JSON.stringify(nextDocument, null, 2)], {
+    const blob = new Blob([stringifyEncumbranceDocument(nextDocument)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);

@@ -750,6 +750,10 @@ export const redactEncumbranceDocument = (
   };
 };
 
+export const stringifyEncumbranceDocument = (
+  document: EncumbranceDocument
+): string => JSON.stringify(sanitizeDocument(document), null, 2);
+
 export const parseEncumbranceDocument = (text: string): EncumbranceDocument => {
   const rawValue = JSON.parse(text) as Partial<AnyEncumbranceDocument>;
   const rawCustomItems = (rawValue as { customItems?: unknown }).customItems;
