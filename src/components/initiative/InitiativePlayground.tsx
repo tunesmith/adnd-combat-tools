@@ -741,48 +741,6 @@ const InitiativePlayground = () => {
 
       <div className={styles['layout']}>
         <section className={styles['panel']}>
-          <div className={styles['panelHeader']}>
-            <h2 className={styles['panelTitle']}>Scenario Input</h2>
-            <p className={styles['panelCopy']}>
-              Enter only what the current machinery needs: side initiative,
-              movement rate, weapon, declared attacks, and any inch distance
-              needed by close or charge.
-            </p>
-          </div>
-
-          <div className={styles['roundControls']}>
-            <label className={styles['fieldLabel']}>
-              Scenario label
-              <input
-                className={styles['textInput']}
-                value={state.label}
-                onChange={updateLabel}
-              />
-            </label>
-            <label className={styles['fieldLabel']}>
-              Party initiative
-              <input
-                className={styles['textInput']}
-                inputMode={'numeric'}
-                value={state.partyInitiative}
-                onChange={(event) =>
-                  updateInitiative('partyInitiative', event.target.value)
-                }
-              />
-            </label>
-            <label className={styles['fieldLabel']}>
-              Enemy initiative
-              <input
-                className={styles['textInput']}
-                inputMode={'numeric'}
-                value={state.enemyInitiative}
-                onChange={(event) =>
-                  updateInitiative('enemyInitiative', event.target.value)
-                }
-              />
-            </label>
-          </div>
-
           <div className={styles['matrixSection']}>
             <div className={styles['matrixHeader']}>
               <h3 className={styles['matrixTitle']}>Engagement Matrix</h3>
@@ -799,26 +757,132 @@ const InitiativePlayground = () => {
             {state.party.length > 0 && state.enemies.length > 0 ? (
               <div className={styles['matrixWrap']}>
                 <table className={styles['matrixTable']}>
+                  <colgroup>
+                    <col className={styles['matrixLabelColumn']} />
+                    {state.party.map((partyCombatant) => (
+                      <col
+                        key={`party-column-${partyCombatant.key}`}
+                        className={styles['matrixCombatantColumn']}
+                      />
+                    ))}
+                  </colgroup>
                   <thead>
                     <tr>
                       <th className={styles['matrixCorner']}>
-                        <span className={styles['matrixLegendLabel']}>
-                          Party vs Enemy
-                        </span>
-                        <span className={styles['matrixLegendMeta']}>
-                          `P→E` and `E→P` are the declared attacks.
-                        </span>
-                        <div className={styles['matrixLegendActions']}>
+                        <div className={styles['matrixCornerTop']}>
+                          <div className={styles['matrixCornerHeading']}>
+                            <span className={styles['matrixLegendLabel']}>
+                              Party vs Enemy
+                            </span>
+                            <span className={styles['matrixLegendMeta']}>
+                              `P→E` and `E→P` are the declared attacks.
+                            </span>
+                          </div>
                           <button
                             type={'button'}
-                            className={styles['addButton']}
+                            className={[
+                              styles['addButton'],
+                              styles['matrixCornerActionParty'],
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
                             onClick={() => addCombatant('party')}
                           >
                             Add party
                           </button>
+                        </div>
+                        <div className={styles['matrixSetupGrid']}>
+                          <label
+                            className={[
+                              styles['fieldLabel'],
+                              styles['matrixSetupField'],
+                              styles['matrixSetupFieldWide'],
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                          >
+                            <span className={styles['matrixSetupLabel']}>
+                              Scenario
+                            </span>
+                            <input
+                              className={[
+                                styles['textInput'],
+                                styles['matrixSetupInput'],
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                              value={state.label}
+                              onChange={updateLabel}
+                            />
+                          </label>
+                          <div className={styles['matrixSetupPair']}>
+                            <label
+                              className={[
+                                styles['fieldLabel'],
+                                styles['matrixSetupField'],
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                            >
+                              <span className={styles['matrixSetupLabel']}>
+                                Party init
+                              </span>
+                              <input
+                                className={[
+                                  styles['textInput'],
+                                  styles['matrixSetupInput'],
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                inputMode={'numeric'}
+                                value={state.partyInitiative}
+                                onChange={(event) =>
+                                  updateInitiative(
+                                    'partyInitiative',
+                                    event.target.value
+                                  )
+                                }
+                              />
+                            </label>
+                            <label
+                              className={[
+                                styles['fieldLabel'],
+                                styles['matrixSetupField'],
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                            >
+                              <span className={styles['matrixSetupLabel']}>
+                                Enemy init
+                              </span>
+                              <input
+                                className={[
+                                  styles['textInput'],
+                                  styles['matrixSetupInput'],
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                inputMode={'numeric'}
+                                value={state.enemyInitiative}
+                                onChange={(event) =>
+                                  updateInitiative(
+                                    'enemyInitiative',
+                                    event.target.value
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        <div className={styles['matrixCornerBottom']}>
                           <button
                             type={'button'}
-                            className={styles['addButton']}
+                            className={[
+                              styles['addButton'],
+                              styles['matrixCornerActionEnemy'],
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
                             onClick={() => addCombatant('enemy')}
                           >
                             Add enemy

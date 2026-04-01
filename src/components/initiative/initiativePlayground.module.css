@@ -97,13 +97,6 @@
   line-height: 1.45;
 }
 
-.roundControls {
-  display: grid;
-  grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
 .fieldLabel {
   display: flex;
   flex-direction: column;
@@ -151,6 +144,15 @@
   width: 100%;
   min-width: 42rem;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.matrixLabelColumn {
+  width: 18rem;
+}
+
+.matrixCombatantColumn {
+  width: 12rem;
 }
 
 .matrixCorner,
@@ -168,8 +170,10 @@
 }
 
 .matrixCorner {
-  min-width: 12rem;
-  padding: 0.8rem;
+  position: relative;
+  width: 18rem;
+  min-width: 18rem;
+  padding: 0.8rem 0.8rem 4.75rem;
   text-align: left;
 }
 
@@ -199,18 +203,75 @@
   margin-top: 0.8rem;
 }
 
+.matrixCornerTop {
+  padding-right: 9rem;
+}
+
+.matrixCornerHeading {
+  min-width: 0;
+}
+
+.matrixSetupGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.matrixSetupField {
+  font-size: 0.92rem;
+}
+
+.matrixSetupFieldWide {
+  width: 100%;
+}
+
+.matrixSetupLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: var(--goldenrod);
+}
+
+.matrixSetupInput {
+  padding: 0.55rem 0.65rem;
+  font-size: 0.95rem;
+}
+
+.matrixSetupPair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.matrixCornerBottom {
+  margin-top: 0.8rem;
+}
+
+.matrixCornerActionParty {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+}
+
+.matrixCornerActionEnemy {
+  position: absolute;
+  bottom: 0.8rem;
+  left: 0.8rem;
+}
+
 .matrixColumnHeader,
 .matrixRowHeader {
   padding: 0.75rem;
 }
 
 .matrixColumnHeader {
-  min-width: 8.75rem;
+  min-width: 11rem;
   text-align: center;
 }
 
 .matrixRowHeader {
-  min-width: 12rem;
+  min-width: 18rem;
   text-align: left;
 }
 
@@ -683,9 +744,13 @@
 }
 
 @media (max-width: 860px) {
-  .roundControls,
   .summaryStrip,
-  .graphLayoutShell {
+  .graphLayoutShell,
+  .matrixSetupGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .matrixSetupPair {
     grid-template-columns: 1fr;
   }
 
