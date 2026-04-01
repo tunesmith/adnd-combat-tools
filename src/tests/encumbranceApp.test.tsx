@@ -303,4 +303,98 @@ describe('encumbrance app regressions', () => {
       })
     );
   });
+
+  test('transferring a container moves its contained items to the new character', () => {
+    render(<EncumbranceApp mode="dm" />);
+
+    addCatalogItem({
+      name: 'Backpack',
+      day: 0,
+    });
+    addCatalogItem({
+      name: 'Diamond',
+      day: 65,
+      storedIn: 'Backpack',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
+    renameCharacterInOpenModal('Azalia Larkspur');
+    fireEvent.click(screen.getByRole('button', { name: 'Unnamed adventurer' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Backpack' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Backpack' });
+    const heldBySelect = within(dialog).getByLabelText(
+      'Held by'
+    ) as HTMLSelectElement;
+    const targetOption = within(heldBySelect).getByRole('option', {
+      name: 'Character 2',
+    }) as HTMLOptionElement;
+    fireEvent.change(heldBySelect, {
+      target: { value: targetOption.value },
+    });
+    closeTopModal();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Character 2' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Edit Backpack' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Edit Diamond' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unnamed adventurer' }));
+
+    expect(
+      screen.queryByRole('button', { name: 'Edit Backpack' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Edit Diamond' })
+    ).not.toBeInTheDocument();
+  });
+
+  test('transferring a contained item alone clears its old container reference', () => {
+    render(<EncumbranceApp mode="dm" />);
+
+    addCatalogItem({
+      name: 'Backpack',
+      day: 0,
+    });
+    addCatalogItem({
+      name: 'Diamond',
+      day: 65,
+      storedIn: 'Backpack',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
+    renameCharacterInOpenModal('Azalia Larkspur');
+    fireEvent.click(screen.getByRole('button', { name: 'Unnamed adventurer' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Diamond' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Diamond' });
+    const heldBySelect = within(dialog).getByLabelText(
+      'Held by'
+    ) as HTMLSelectElement;
+    const targetOption = within(heldBySelect).getByRole('option', {
+      name: 'Character 2',
+    }) as HTMLOptionElement;
+    fireEvent.change(heldBySelect, {
+      target: { value: targetOption.value },
+    });
+
+    expect(within(dialog).getByLabelText('Stored in')).toHaveDisplayValue(
+      'On person'
+    );
+
+    closeTopModal();
+    fireEvent.click(screen.getByRole('button', { name: 'Character 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Diamond' }));
+
+    const transferredDialog = screen.getByRole('dialog', { name: 'Diamond' });
+    expect(
+      within(transferredDialog).getByLabelText('Stored in')
+    ).toHaveDisplayValue('On person');
+  });
 });

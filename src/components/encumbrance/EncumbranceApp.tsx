@@ -693,6 +693,13 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           (character) => character.id === editingItemDraft.characterId
         )
       : activeCharacter;
+  const editingTransferOptions =
+    mode === 'dm' && editingItemDraft && dmCharacters.length > 1
+      ? dmCharacters.map((character) => ({
+          id: character.id,
+          label: getCharacterDisplayName(character.name),
+        }))
+      : [];
   const editingOwnerContainerItems =
     editingItemOwner?.inventory.filter((item) => {
       const itemInfo = getInventoryItemInfo(item, catalogById);
@@ -989,6 +996,31 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     });
   };
 
+  const transferEditingItem = (nextCharacterId: string) => {
+    if (
+      !editingItemDraft ||
+      !editingItem ||
+      nextCharacterId === editingItemDraft.characterId
+    ) {
+      return;
+    }
+
+    transferInventoryItem(
+      editingItemDraft.itemId,
+      editingItemDraft.characterId,
+      nextCharacterId
+    );
+    setEditingItemDraft((currentDraft) =>
+      currentDraft
+        ? {
+            ...currentDraft,
+            characterId: nextCharacterId,
+            containerId: '',
+          }
+        : currentDraft
+    );
+  };
+
   const removeInventoryItem = (
     itemId: string,
     characterId = activeCharacter.id
@@ -1028,6 +1060,68 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           ...currentDocument.character,
           inventory: nextInventory,
         },
+      };
+    });
+  };
+
+  const transferInventoryItem = (
+    itemId: string,
+    sourceCharacterId: string,
+    targetCharacterId: string
+  ) => {
+    if (sourceCharacterId === targetCharacterId) {
+      return;
+    }
+
+    setDocument((currentDocument) => {
+      if (currentDocument.kind !== 'adnd-encumbrance-dm') {
+        return currentDocument;
+      }
+
+      const sourceCharacter = currentDocument.characters.find(
+        (character) => character.id === sourceCharacterId
+      );
+      const targetCharacter = currentDocument.characters.find(
+        (character) => character.id === targetCharacterId
+      );
+
+      if (!sourceCharacter || !targetCharacter) {
+        return currentDocument;
+      }
+
+      const descendantIds = getDescendantIds(sourceCharacter.inventory, itemId);
+      const movedIds = new Set([itemId, ...descendantIds]);
+      const movedItems = sourceCharacter.inventory
+        .filter((item) => movedIds.has(item.id))
+        .map((item) => ({
+          ...item,
+          containerId:
+            item.containerId && movedIds.has(item.containerId)
+              ? item.containerId
+              : null,
+        }));
+
+      return {
+        ...currentDocument,
+        characters: currentDocument.characters.map((character) => {
+          if (character.id === sourceCharacterId) {
+            return {
+              ...character,
+              inventory: character.inventory.filter(
+                (item) => !movedIds.has(item.id)
+              ),
+            };
+          }
+
+          if (character.id === targetCharacterId) {
+            return {
+              ...character,
+              inventory: [...character.inventory, ...movedItems],
+            };
+          }
+
+          return character;
+        }),
       };
     });
   };
@@ -2850,6 +2944,26 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                               {editingItem.day}
                             </div>
                           </div>
+                        )}
+                        {editingTransferOptions.length > 0 && (
+                          <label className={styles['fieldGroup']}>
+                            <span className={styles['fieldLabel']}>
+                              Held by
+                            </span>
+                            <select
+                              className={styles['fieldControl']}
+                              value={editingItemDraft.characterId}
+                              onChange={(event) =>
+                                transferEditingItem(event.target.value)
+                              }
+                            >
+                              {editingTransferOptions.map((character) => (
+                                <option key={character.id} value={character.id}>
+                                  {character.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
                         )}
                         <label className={styles['fieldGroup']}>
                           <span className={styles['fieldLabel']}>
