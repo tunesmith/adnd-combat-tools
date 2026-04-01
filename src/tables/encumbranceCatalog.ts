@@ -793,7 +793,7 @@ export const encumbranceCatalog: EncumbranceCatalogItem[] = [
     id: 'beads-prayer',
     name: 'Beads, Prayer',
     category: 'religious-items',
-    encumbranceGp: 1,
+    encumbranceGp: 10,
     valueGp: toGp({ gp: 1 }),
   },
   // Inferred as a very small carried devotional item.
