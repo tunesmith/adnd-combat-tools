@@ -946,7 +946,7 @@ const InitiativePlayground = () => {
                               </span>
                             </button>
                           </th>
-                          {state.party.map((partyCombatant) => {
+                          {state.party.map((partyCombatant, partyIndex) => {
                             const partyTargetsEnemy =
                               partyCombatant.targetCombatantKeys.includes(
                                 enemyCombatant.key
@@ -970,6 +970,28 @@ const InitiativePlayground = () => {
                                   enemyCombatant.key
                                 )
                               ] || '';
+                            const partyDeclarationLabel = partyTargetsEnemy
+                              ? `${formatDeclaredAction(
+                                  partyCombatant.declaredAction
+                                )}${
+                                  isSingleTargetMovementAction(
+                                    partyCombatant.declaredAction
+                                  ) && pairDistance
+                                    ? ` · ${pairDistance}"`
+                                    : ''
+                                }`
+                              : '';
+                            const enemyDeclarationLabel = enemyTargetsParty
+                              ? `${formatDeclaredAction(
+                                  enemyCombatant.declaredAction
+                                )}${
+                                  isSingleTargetMovementAction(
+                                    enemyCombatant.declaredAction
+                                  ) && pairDistance
+                                    ? ` · ${pairDistance}"`
+                                    : ''
+                                }`
+                              : '';
 
                             return (
                               <td
@@ -981,85 +1003,113 @@ const InitiativePlayground = () => {
                                   .filter(Boolean)
                                   .join(' ')}
                               >
-                                <button
-                                  type={'button'}
-                                  className={[
-                                    styles['matrixToggle'],
-                                    styles['matrixToggleParty'],
-                                    partyTargetsEnemy
-                                      ? styles['matrixToggleActiveParty']
-                                      : '',
-                                  ]
-                                    .filter(Boolean)
-                                    .join(' ')}
-                                  onClick={() =>
-                                    openAttackEditor(
-                                      'party',
-                                      partyCombatant.key,
-                                      enemyCombatant.key
-                                    )
-                                  }
-                                >
-                                  P&rarr;E
-                                </button>
-                                {partyTargetsEnemy ? (
-                                  <span
-                                    className={styles['matrixDeclarationMeta']}
-                                  >
-                                    {formatDeclaredAction(
-                                      partyCombatant.declaredAction
-                                    )}
-                                    {isSingleTargetMovementAction(
-                                      partyCombatant.declaredAction
-                                    ) && pairDistance
-                                      ? ` · ${pairDistance}"`
-                                      : ''}
-                                  </span>
-                                ) : null}
-                                <button
-                                  type={'button'}
-                                  className={[
-                                    styles['matrixToggle'],
-                                    styles['matrixToggleEnemy'],
-                                    enemyTargetsParty
-                                      ? styles['matrixToggleActiveEnemy']
-                                      : '',
-                                  ]
-                                    .filter(Boolean)
-                                    .join(' ')}
-                                  onClick={() =>
-                                    openAttackEditor(
-                                      'enemy',
-                                      enemyCombatant.key,
-                                      partyCombatant.key
-                                    )
-                                  }
-                                >
-                                  E&rarr;P
-                                </button>
-                                {enemyTargetsParty ? (
-                                  <span
-                                    className={styles['matrixDeclarationMeta']}
-                                  >
-                                    {formatDeclaredAction(
-                                      enemyCombatant.declaredAction
-                                    )}
-                                    {isSingleTargetMovementAction(
-                                      enemyCombatant.declaredAction
-                                    ) && pairDistance
-                                      ? ` · ${pairDistance}"`
-                                      : ''}
-                                  </span>
-                                ) : null}
-                                {isDuel ? (
-                                  <span className={styles['matrixBadge']}>
-                                    Duel
-                                  </span>
-                                ) : isMutualTarget ? (
-                                  <span className={styles['matrixBadge']}>
-                                    Mutual target
-                                  </span>
-                                ) : null}
+                                <div className={styles['matrixCellBody']}>
+                                  <div className={styles['matrixCellActions']}>
+                                    <button
+                                      type={'button'}
+                                      className={[
+                                        styles['matrixToggle'],
+                                        styles['matrixToggleEnemy'],
+                                        enemyTargetsParty
+                                          ? styles['matrixToggleActiveEnemy']
+                                          : styles['matrixToggleIdle'],
+                                      ]
+                                        .filter(Boolean)
+                                        .join(' ')}
+                                      aria-label={`Declare enemy attack from ${getCombatantDisplayName(
+                                        'enemy',
+                                        enemyCombatant,
+                                        enemyIndex
+                                      )} to ${getCombatantDisplayName(
+                                        'party',
+                                        partyCombatant,
+                                        partyIndex
+                                      )}`}
+                                      onClick={() =>
+                                        openAttackEditor(
+                                          'enemy',
+                                          enemyCombatant.key,
+                                          partyCombatant.key
+                                        )
+                                      }
+                                    >
+                                      {enemyTargetsParty ? (
+                                        <>
+                                          <span
+                                            className={
+                                              styles['matrixToggleLabel']
+                                            }
+                                          >
+                                            E&rarr;P
+                                          </span>
+                                          <span
+                                            className={
+                                              styles['matrixToggleMeta']
+                                            }
+                                          >
+                                            {enemyDeclarationLabel}
+                                          </span>
+                                        </>
+                                      ) : null}
+                                    </button>
+                                    <button
+                                      type={'button'}
+                                      className={[
+                                        styles['matrixToggle'],
+                                        styles['matrixToggleParty'],
+                                        partyTargetsEnemy
+                                          ? styles['matrixToggleActiveParty']
+                                          : styles['matrixToggleIdle'],
+                                      ]
+                                        .filter(Boolean)
+                                        .join(' ')}
+                                      aria-label={`Declare party attack from ${getCombatantDisplayName(
+                                        'party',
+                                        partyCombatant,
+                                        partyIndex
+                                      )} to ${getCombatantDisplayName(
+                                        'enemy',
+                                        enemyCombatant,
+                                        enemyIndex
+                                      )}`}
+                                      onClick={() =>
+                                        openAttackEditor(
+                                          'party',
+                                          partyCombatant.key,
+                                          enemyCombatant.key
+                                        )
+                                      }
+                                    >
+                                      {partyTargetsEnemy ? (
+                                        <>
+                                          <span
+                                            className={
+                                              styles['matrixToggleLabel']
+                                            }
+                                          >
+                                            P&rarr;E
+                                          </span>
+                                          <span
+                                            className={
+                                              styles['matrixToggleMeta']
+                                            }
+                                          >
+                                            {partyDeclarationLabel}
+                                          </span>
+                                        </>
+                                      ) : null}
+                                    </button>
+                                  </div>
+                                  {isDuel ? (
+                                    <span className={styles['matrixBadge']}>
+                                      Duel
+                                    </span>
+                                  ) : isMutualTarget ? (
+                                    <span className={styles['matrixBadge']}>
+                                      Mutual target
+                                    </span>
+                                  ) : null}
+                                </div>
                               </td>
                             );
                           })}
