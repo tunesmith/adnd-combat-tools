@@ -177,4 +177,111 @@ describe('initiative round resolution view model', () => {
       combatantIds: ['party-1', 'enemy-3'],
     });
   });
+
+  test('explains a closer striking a charging opponent on contact', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge vs Close',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Ronan',
+          declaredAction: 'close',
+          movementRate: 12,
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 6,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Lancer',
+          declaredAction: 'charge',
+          movementRate: 9,
+          weaponId: 50,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 6,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.id === 'movement-party-1'
+    );
+
+    expect(movementCard?.summary).toContain(
+      'this closer can also strike in the same round'
+    );
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail:
+        'Striking range reached on segment 2 at 3" per segment; same-round return attack applies against the charger.',
+      combatantIds: ['party-1', 'enemy-3'],
+    });
+  });
+
+  test('explains invalid open melee versus close declarations', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Invalid Open Melee vs Close',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Ronan',
+          declaredAction: 'close',
+          movementRate: 12,
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 3.5,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Orc',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.id === 'movement-party-1'
+    );
+
+    expect(movementCard?.summary).toContain(
+      'open melee versus close is treated as an invalid declaration'
+    );
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail:
+        'Invalid direct pairing: open melee cannot oppose a close declaration in the same exchange.',
+      combatantIds: ['party-1', 'enemy-3'],
+    });
+  });
 });

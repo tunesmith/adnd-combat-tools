@@ -65,7 +65,6 @@ const ACTION_OPTIONS: Array<{
   { value: 'close', label: 'Close' },
   { value: 'charge', label: 'Charge' },
   { value: 'missile', label: 'Missile' },
-  { value: 'hold', label: 'Hold' },
 ];
 
 const parseInitiative = (value: string): number => {

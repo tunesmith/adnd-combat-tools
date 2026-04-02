@@ -1,6 +1,6 @@
-import Option from "../types/util";
-import { PlayerEdge, PlayerMove, RoundDag } from "../types/sequence";
-import Player from "../types/player";
+import type Option from "../types/util";
+import type { PlayerEdge, PlayerMove, RoundDag } from "../types/sequence";
+import type Player from "../types/player";
 import { getSequential, getSimultaneous } from "./move";
 
 /**

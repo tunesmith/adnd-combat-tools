@@ -8,8 +8,7 @@ export type InitiativeDeclaredAction =
   | 'open-melee'
   | 'close'
   | 'charge'
-  | 'missile'
-  | 'hold';
+  | 'missile';
 
 interface InitiativeAttackRoutineComponent {
   id: string;
@@ -122,6 +121,7 @@ type InitiativeMovementResolutionReason =
   | 'missing-target'
   | 'missing-distance'
   | 'multiple-targets'
+  | 'invalid-open-melee-target'
   | 'target-moving-elsewhere';
 
 export type InitiativeChargeFirstStrike =

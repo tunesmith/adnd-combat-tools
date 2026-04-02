@@ -272,6 +272,10 @@ const getMovementSummary = (
     return `${combatantName} declared ${actionLabel} toward ${targetName}, but no effective starting distance in inches was supplied.`;
   }
 
+  if (movementResolution.reason === 'invalid-open-melee-target') {
+    return `${combatantName} declared ${actionLabel} toward ${targetName}, but ${targetName} is already treating this as open melee against the same opponent. In this rules slice, open melee versus close is treated as an invalid declaration rather than reconciled automatically.`;
+  }
+
   if (movementResolution.reason === 'target-moving-elsewhere') {
     return `${combatantName} declared ${actionLabel} toward ${targetName}, but ${targetName} is also moving on a different line. This is where the tool deliberately falls back to table adjudication.`;
   }
@@ -296,6 +300,10 @@ const getMovementSummary = (
     }
 
     return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment} and can strike on the charge, but reach does not currently settle who attacks first at contact.`;
+  }
+
+  if (movementResolution.sameRoundAttack) {
+    return `${combatantName} reaches striking range of ${targetName} on segment ${movementResolution.contactSegment}. Because ${targetName} is charging into contact, this closer can also strike in the same round. The exact order is settled by the charge-end reach comparison.`;
   }
 
   return `${combatantName} reaches striking range of ${targetName} on segment ${movementResolution.contactSegment}. The current engine does not yet resolve the ensuing blows from a close action in the same round.`;
@@ -353,6 +361,12 @@ const buildMovementCards = (
                   } at ${formatInches(
                     movementResolution.closingInchesPerSegment || 0
                   )} per segment; same-round charge attack applies.`
+                : movementResolution.sameRoundAttack
+                ? `Striking range reached on segment ${
+                    movementResolution.contactSegment
+                  } at ${formatInches(
+                    movementResolution.closingInchesPerSegment || 0
+                  )} per segment; same-round return attack applies against the charger.`
                 : `Striking range reached on segment ${
                     movementResolution.contactSegment
                   } at ${formatInches(
@@ -362,6 +376,8 @@ const buildMovementCards = (
               ? `No contact this round; approximately ${formatInches(
                   movementResolution.remainingDistanceInches || 0
                 )} remain.`
+              : movementResolution.reason === 'invalid-open-melee-target'
+              ? 'Invalid direct pairing: open melee cannot oppose a close declaration in the same exchange.'
               : 'Needs table input or adjudication.',
           combatantIds: movementResolution.targetId
             ? [movementResolution.combatantId, movementResolution.targetId]

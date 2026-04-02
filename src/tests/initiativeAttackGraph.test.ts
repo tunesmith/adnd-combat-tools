@@ -254,7 +254,7 @@ describe('initiative attack graph', () => {
         {
           combatantKey: 3,
           name: 'Orc',
-          declaredAction: 'hold',
+          declaredAction: 'open-melee',
           movementRate: 9,
           weaponId: 1,
           targetCombatantKeys: [],
@@ -281,5 +281,206 @@ describe('initiative attack graph', () => {
       'attack:enemy-3:1'
     );
     expect(graph.edges).toEqual([]);
+  });
+
+  test('graphs charge against close with a same-round response from the closer', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge vs Close',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Ronan',
+          declaredAction: 'close',
+          movementRate: 12,
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 6,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Lancer',
+          declaredAction: 'charge',
+          movementRate: 9,
+          weaponId: 50,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 6,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'contact:party-1',
+          kind: 'contact',
+          segment: 2,
+        }),
+        expect.objectContaining({
+          id: 'contact:enemy-3',
+          kind: 'contact',
+          segment: 2,
+        }),
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          kind: 'attack',
+          segment: 2,
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          kind: 'attack',
+          segment: 2,
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'contact:party-1',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'contact:enemy-3',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'contact:party-1',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['movement'],
+        },
+      ])
+    );
+  });
+
+  test('graphs mutual charge using relative closing speed and reach rather than initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Mutual Charge',
+      partyInitiative: 1,
+      enemyInitiative: 6,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Garran',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 9,
+          weaponId: 57,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'contact:party-1', segment: 1 }),
+        expect.objectContaining({ id: 'contact:enemy-3', segment: 1 }),
+        expect.objectContaining({ id: 'attack:party-1:1', segment: 1 }),
+        expect.objectContaining({ id: 'attack:enemy-3:1', segment: 1 }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'contact:party-1',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'contact:enemy-3',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'contact:enemy-3',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['movement'],
+        },
+      ])
+    );
+  });
+
+  test('omits invalid open melee versus close from the graph', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Invalid Open Melee vs Close',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Ronan',
+          declaredAction: 'close',
+          movementRate: 12,
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 3.5,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Orc',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual([]);
+    expect(graph.edges).toEqual([]);
+    expect(graph.layers).toEqual([]);
   });
 });

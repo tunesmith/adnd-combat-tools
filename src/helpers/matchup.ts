@@ -1,5 +1,5 @@
-import Player from "../types/player";
-import { RoundDag } from "../types/sequence";
+import type Player from "../types/player";
+import type { RoundDag } from "../types/sequence";
 import {
   CHARGE,
   MELEE_MULTI,

@@ -1,6 +1,6 @@
-import Player from "../types/player";
+import type Player from "../types/player";
 import { MISSILE, SPELL } from "../types/action";
-import { RoundDag } from "../types/sequence";
+import type { RoundDag } from "../types/sequence";
 import sequencePlayers from "../helpers/initiative/sequence";
 
 /**

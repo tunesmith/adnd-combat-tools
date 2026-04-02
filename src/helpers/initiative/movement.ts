@@ -71,6 +71,22 @@ const getRelativeClosingInchesPerSegment = (
   return attackerInchesPerSegment;
 };
 
+const isTargetMovingTowardAttacker = (
+  attacker: InitiativeScenarioCombatant,
+  target: InitiativeScenarioCombatant
+): boolean =>
+  (target.declaredAction === 'close' || target.declaredAction === 'charge') &&
+  target.targetDeclarations.length === 1 &&
+  target.targetDeclarations[0]?.targetId === attacker.id;
+
+const isInvalidOpenMeleeOpposition = (
+  attacker: InitiativeScenarioCombatant,
+  target: InitiativeScenarioCombatant
+): boolean =>
+  attacker.declaredAction === 'close' &&
+  target.declaredAction === 'open-melee' &&
+  target.targetIds.includes(attacker.id);
+
 export const resolveMovementAgainstTarget = (
   attacker: InitiativeScenarioCombatant,
   targetById: Map<string, InitiativeScenarioCombatant>
@@ -133,6 +149,17 @@ export const resolveMovementAgainstTarget = (
     };
   }
 
+  if (isInvalidOpenMeleeOpposition(attacker, target)) {
+    return {
+      combatantId: attacker.id,
+      targetId,
+      action: attacker.declaredAction,
+      reason: 'invalid-open-melee-target',
+      distanceInches: targetDeclaration.distanceInches,
+      sameRoundAttack: false,
+    };
+  }
+
   const closingInchesPerSegment = getRelativeClosingInchesPerSegment(
     attacker,
     target
@@ -181,7 +208,11 @@ export const resolveMovementAgainstTarget = (
     closingInchesPerSegment,
     contactSegment,
     remainingDistanceInches: 0,
-    sameRoundAttack: attacker.declaredAction === 'charge',
+    sameRoundAttack:
+      attacker.declaredAction === 'charge' ||
+      (attacker.declaredAction === 'close' &&
+        target.declaredAction === 'charge' &&
+        isTargetMovingTowardAttacker(attacker, target)),
     firstStrike:
       attacker.declaredAction === 'charge'
         ? getChargeFirstStrike(attacker, target)

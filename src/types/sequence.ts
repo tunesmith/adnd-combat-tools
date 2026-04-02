@@ -1,5 +1,5 @@
-import Player from "./player";
-import Option from "./util";
+import type Player from "./player";
+import type Option from "./util";
 
 interface MoveSequence {}
 export interface InitOrder extends MoveSequence {}

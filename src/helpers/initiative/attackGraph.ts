@@ -2,6 +2,7 @@ import type {
   InitiativeAttackEdge,
   InitiativeAttackEdgeReason,
   InitiativeAttackGraph,
+  InitiativeMovementResolution,
   InitiativeAttackNode,
   InitiativeRoundResolution,
   InitiativeScenario,
@@ -99,6 +100,20 @@ const hasRegisteredCombatAction = (
   combatant: InitiativeScenarioCombatant
 ): boolean => combatant.targetIds.length > 0;
 
+const hasInvalidOpenMeleeOpposition = (
+  combatant: InitiativeScenarioCombatant,
+  movementResolutionByCombatantId: Map<string, InitiativeMovementResolution>
+): boolean =>
+  combatant.declaredAction === 'open-melee' &&
+  combatant.targetIds.some((targetId) => {
+    const targetMovementResolution =
+      movementResolutionByCombatantId.get(targetId);
+    return (
+      targetMovementResolution?.reason === 'invalid-open-melee-target' &&
+      targetMovementResolution.targetId === combatant.id
+    );
+  });
+
 const createContactNode = (
   combatant: InitiativeScenarioCombatant,
   segment: number
@@ -193,6 +208,11 @@ export const buildInitiativeAttackGraph = (
       movementResolution.combatantId,
       movementResolution,
     ])
+  );
+  const movementResolutionCombatantIdSet = new Set(
+    resolution.movementResolutions.map(
+      (movementResolution) => movementResolution.combatantId
+    )
   );
   const movementHandledCombatantIdSet = new Set<string>();
 
@@ -330,8 +350,10 @@ export const buildInitiativeAttackGraph = (
   scenario.party.concat(scenario.enemies).forEach((combatant) => {
     if (
       directMeleeCombatantIdSet.has(combatant.id) ||
+      movementResolutionCombatantIdSet.has(combatant.id) ||
       movementHandledCombatantIdSet.has(combatant.id) ||
-      !hasRegisteredCombatAction(combatant)
+      !hasRegisteredCombatAction(combatant) ||
+      hasInvalidOpenMeleeOpposition(combatant, movementResolutionByCombatantId)
     ) {
       return;
     }
