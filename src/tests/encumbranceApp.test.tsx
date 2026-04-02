@@ -251,12 +251,10 @@ describe('encumbrance app regressions', () => {
         throw new Error('Expected generated character and item ids.');
       }
 
-      fireEvent.click(
-        screen.getByRole('button', { name: 'Import Player Changes' })
-      );
+      fireEvent.click(screen.getByRole('button', { name: 'Import Player' }));
 
       const mergeInput = container.querySelector(
-        'input[aria-label="Import Player Changes File"]'
+        'input[aria-label="Import Player File"]'
       ) as HTMLInputElement | null;
 
       if (!mergeInput) {
@@ -469,9 +467,29 @@ describe('encumbrance app regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'All Characters' }));
 
     expect(
-      screen.getByRole('button', { name: 'Export Player Copy' })
+      screen.getByRole('button', { name: 'Export Player' })
     ).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Add Item' })).toBeDisabled();
+  });
+
+  test('player view only exposes load and save for the current player file', () => {
+    render(<EncumbranceApp mode="player" />);
+
+    expect(
+      screen.queryByRole('button', { name: 'New File' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Import Player' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Export Player' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Load File' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Save File' })
+    ).toBeInTheDocument();
   });
 
   test('transferring a container moves its contained items to the new character', () => {

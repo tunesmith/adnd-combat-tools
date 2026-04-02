@@ -1639,9 +1639,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       const parsed = parseEncumbranceDocument(text);
 
       if (parsed.kind !== 'adnd-encumbrance-player') {
-        throw new Error(
-          'Import Player Changes can only use exported player files.'
-        );
+        throw new Error('Import Player can only use exported player files.');
       }
 
       const mergePlan = buildPlayerMergePlan(document, parsed);
@@ -2287,13 +2285,15 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             </span>
           </div>
           <div className={styles['toolbarGroup']}>
-            <button
-              type="button"
-              className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
-              onClick={resetDocument}
-            >
-              New File
-            </button>
+            {mode === 'dm' && (
+              <button
+                type="button"
+                className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
+                onClick={resetDocument}
+              >
+                New File
+              </button>
+            )}
             <button
               type="button"
               className={`${styles['button']} ${styles['buttonCompact']}`}
@@ -2307,7 +2307,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 className={`${styles['button']} ${styles['buttonCompact']}`}
                 onClick={triggerMergeImport}
               >
-                Import Player Changes
+                Import Player
               </button>
             )}
             <button
@@ -2315,7 +2315,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
               className={`${styles['button']} ${styles['buttonCompact']}`}
               onClick={exportCurrentDocument}
             >
-              Export {mode === 'dm' ? 'DM File' : 'Player File'}
+              {mode === 'dm' ? 'Export DM File' : 'Save File'}
             </button>
             {mode === 'dm' && (
               <button
@@ -2325,11 +2325,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 disabled={isAllCharactersView}
                 title={
                   isAllCharactersView
-                    ? 'Select a character to export a player copy.'
+                    ? 'Select a character to export a player file.'
                     : undefined
                 }
               >
-                Export Player Copy
+                Export Player
               </button>
             )}
           </div>
@@ -2346,7 +2346,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         <input
           ref={mergeFileInputRef}
           type="file"
-          aria-label="Import Player Changes File"
+          aria-label="Import Player File"
           accept=".json,application/json"
           onChange={handleMergeImport}
           style={{ display: 'none' }}
