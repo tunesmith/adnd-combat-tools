@@ -731,6 +731,203 @@
   padding: 0 0.9rem 0.9rem;
 }
 
+.mergeReviewModal {
+  width: min(56rem, calc(100vw - 2rem));
+}
+
+.mergeSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.mergeSummaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(240, 239, 221, 0.14);
+}
+
+.mergeSummaryLabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.72;
+}
+
+.mergeSummaryValue {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.mergeSection {
+  margin-bottom: 1rem;
+}
+
+.mergeSectionTitle {
+  margin-bottom: 0.55rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.82;
+}
+
+.mergeReviewList,
+.mergeFieldList,
+.mergeNotesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.mergeReviewCard {
+  padding: 0.8rem 0.85rem;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(240, 239, 221, 0.14);
+}
+
+.mergeReviewCardIssue {
+  border-left: 4px solid var(--goldenrod);
+}
+
+.mergeReviewCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 0.65rem;
+}
+
+.mergeReviewCardTitle {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.mergeReviewCardSubtitle {
+  margin-top: 0.14rem;
+  font-size: 0.82rem;
+  opacity: 0.72;
+}
+
+.mergeReviewBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.18rem 0.45rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  white-space: nowrap;
+  background: rgba(240, 239, 221, 0.14);
+}
+
+.mergeReviewBadgeApplied {
+  background: rgba(89, 125, 49, 0.65);
+}
+
+.mergeReviewBadgeConflict {
+  background: rgba(124, 56, 44, 0.78);
+}
+
+.mergeReviewBadgeRemoval,
+.mergeReviewBadgeIssue {
+  background: rgba(212, 141, 39, 0.22);
+}
+
+.mergeReviewBadgeAdded {
+  background: rgba(57, 93, 118, 0.78);
+}
+
+.mergeReviewMessage,
+.mergeNote {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+.mergeFieldReview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mergeFieldHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.mergeFieldLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.78;
+}
+
+.mergeFieldStatus {
+  font-size: 0.74rem;
+  opacity: 0.72;
+}
+
+.mergeFieldStatusApplied {
+  color: rgba(240, 239, 221, 0.92);
+}
+
+.mergeFieldStatusConflict {
+  color: #fff0cf;
+}
+
+.mergeValueGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.mergeValueCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid rgba(240, 239, 221, 0.14);
+  background: rgba(0, 0, 0, 0.14);
+  color: inherit;
+  text-align: left;
+}
+
+.mergeValueCardSelectable {
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+  font: inherit;
+}
+
+.mergeValueCardSelectable:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.mergeValueCardSelected {
+  border-color: var(--copper);
+  background: rgba(212, 141, 39, 0.14);
+}
+
+.mergeValueLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
+.mergeValueText {
+  font-size: 0.92rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .placeholder {
   color: var(--eggshell);
   padding: 0.9rem;
@@ -760,6 +957,10 @@
       78px
       98px
       minmax(0, 1.05fr);
+  }
+
+  .mergeSummaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -817,6 +1018,11 @@
 
   .modalFields,
   .modalMetaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mergeSummaryGrid,
+  .mergeValueGrid {
     grid-template-columns: 1fr;
   }
 }

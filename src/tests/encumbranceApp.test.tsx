@@ -217,6 +217,139 @@ describe('encumbrance app regressions', () => {
     expect(within(remainingDialog).getByText('Row value')).toBeInTheDocument();
   });
 
+  test('importing player changes opens a review modal before applying anything', async () => {
+    const originalCrypto = globalThis.crypto;
+    let nextId = 1;
+    const randomUUID = jest.fn(() => `test-id-${nextId++}`);
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: {
+        ...originalCrypto,
+        randomUUID,
+      },
+    });
+
+    const alertSpy = jest
+      .spyOn(window, 'alert')
+      .mockImplementation(() => undefined);
+
+    try {
+      const { container } = render(<EncumbranceApp mode="dm" />);
+
+      addCatalogItem({
+        name: 'Dagger and scabbard',
+        day: 0,
+      });
+
+      const generatedIds = randomUUID.mock.results
+        .map((result) => result.value)
+        .filter((value): value is string => typeof value === 'string');
+      const characterId = generatedIds[0];
+      const itemId = generatedIds.at(-1);
+
+      if (!characterId || !itemId) {
+        throw new Error('Expected generated character and item ids.');
+      }
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Import Player Changes' })
+      );
+
+      const mergeInput = container.querySelector(
+        'input[aria-label="Import Player Changes File"]'
+      ) as HTMLInputElement | null;
+
+      if (!mergeInput) {
+        throw new Error('Expected merge import input.');
+      }
+
+      const playerFile = {
+        name: 'player-copy.json',
+        text: async () =>
+          JSON.stringify({
+            kind: 'adnd-encumbrance-player',
+            version: 9,
+            character: {
+              id: characterId,
+              name: '',
+              strength: {
+                score: 8,
+                exceptional: 'none',
+              },
+              inventory: [
+                {
+                  id: itemId,
+                  catalogId: getCatalogIdByName('Dagger and scabbard'),
+                  quantity: 1,
+                  containerId: null,
+                  day: 0,
+                  playerNotes: '',
+                  playerKnowsValue: true,
+                  playerMagicKnowledge: 'known-mundane',
+                  name: 'Player Dagger',
+                },
+              ],
+            },
+            mergeBaseCharacter: {
+              id: characterId,
+              name: '',
+              strength: {
+                score: 8,
+                exceptional: 'none',
+              },
+              inventory: [
+                {
+                  id: itemId,
+                  catalogId: getCatalogIdByName('Dagger and scabbard'),
+                  quantity: 1,
+                  containerId: null,
+                  day: 0,
+                  playerNotes: '',
+                  playerKnowsValue: true,
+                  playerMagicKnowledge: 'known-mundane',
+                  name: 'Shared Dagger',
+                },
+              ],
+            },
+          }),
+      } as File;
+
+      fireEvent.change(mergeInput, {
+        target: { files: [playerFile] },
+      });
+
+      const reviewDialog = await screen.findByRole('dialog', {
+        name: 'Review Player Changes',
+      });
+
+      expect(
+        within(reviewDialog).getByText('player-copy.json')
+      ).toBeInTheDocument();
+      expect(
+        within(reviewDialog).getByText('Shared Dagger')
+      ).toBeInTheDocument();
+      expect(
+        within(reviewDialog).getByText('Player Dagger')
+      ).toBeInTheDocument();
+      expect(
+        within(reviewDialog).getByText('Catalog name')
+      ).toBeInTheDocument();
+      expect(
+        within(reviewDialog).getByRole('button', { name: 'Apply Import' })
+      ).toBeInTheDocument();
+      expect(alertSpy).not.toHaveBeenCalled();
+      expect(
+        screen.getByRole('button', { name: 'Edit Dagger and scabbard' })
+      ).toBeInTheDocument();
+    } finally {
+      alertSpy.mockRestore();
+      Object.defineProperty(globalThis, 'crypto', {
+        configurable: true,
+        value: originalCrypto,
+      });
+    }
+  });
+
   test('sorting by item flattens container hierarchy and clearing sort restores it', () => {
     render(<EncumbranceApp mode="dm" />);
 

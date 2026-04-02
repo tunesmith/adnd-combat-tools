@@ -13,11 +13,20 @@ import type {
   MagicKnowledge,
 } from '../../types/encumbrance';
 import {
+  applyPlayerMergePlan,
+  buildPlayerMergePlan,
   createEmptyEncumbranceDmCharacter,
   createEmptyEncumbranceDocument,
   parseEncumbranceDocument,
   redactEncumbranceDocument,
   stringifyEncumbranceDocument,
+} from '../../helpers/encumbranceDocument';
+import type {
+  PlayerMergeChoiceSource,
+  PlayerMergeFieldReview,
+  PlayerMergeItemReview,
+  PlayerMergePlan,
+  PlayerMergeRemovalChoice,
 } from '../../helpers/encumbranceDocument';
 import {
   getContainerLoadSummary,
@@ -99,6 +108,11 @@ interface ActiveCharacterState extends EncumbranceCharacterSheet {
 interface PendingRemovalState {
   characterId: string;
   itemId: string;
+}
+
+interface PendingMergeReviewState {
+  fileName: string;
+  plan: PlayerMergePlan;
 }
 
 const categoryLabels: Record<EquipmentCategory, string> = {
@@ -395,6 +409,30 @@ const compareInventoryRowRecords = (
   return left.sequence - right.sequence;
 };
 
+const countResolvedCharacterFields = (plan: PlayerMergePlan): number =>
+  plan.characterFields.filter((field) => field.selectedSource === 'player')
+    .length;
+
+const countResolvedItemUpdates = (plan: PlayerMergePlan): number =>
+  plan.items.filter(
+    (item) =>
+      item.kind === 'updated' &&
+      item.fields.some((field) => field.selectedSource === 'player')
+  ).length;
+
+const countRemovalReviews = (plan: PlayerMergePlan): number =>
+  plan.items.filter((item) => item.kind === 'removed').length;
+
+const countMergeConflicts = (plan: PlayerMergePlan): number =>
+  plan.characterFields.filter((field) => field.isConflict).length +
+  plan.items.reduce((count, item) => {
+    if (item.kind === 'issue') {
+      return count + 1;
+    }
+
+    return count + item.fields.filter((field) => field.isConflict).length;
+  }, 0);
+
 const getTextareaMinHeight = (textarea: HTMLTextAreaElement): number => {
   const computedStyle = window.getComputedStyle(textarea);
   const lineHeight = Number.parseFloat(computedStyle.lineHeight) || 0;
@@ -448,7 +486,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     useState<InventoryEditDraft | null>(null);
   const [pendingRemovalState, setPendingRemovalState] =
     useState<PendingRemovalState | null>(null);
+  const [pendingMergeReview, setPendingMergeReview] =
+    useState<PendingMergeReviewState | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const mergeFileInputRef = useRef<HTMLInputElement | null>(null);
   const activeCharacter = useMemo(
     () => getActiveCharacterState(document),
     [document]
@@ -476,13 +517,19 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       !pendingRemovalState &&
       !editingItemDraft &&
       !showAddModal &&
-      !characterEditDraft
+      !characterEditDraft &&
+      !pendingMergeReview
     ) {
       return;
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (pendingMergeReview) {
+          setPendingMergeReview(null);
+          return;
+        }
+
         if (pendingRemovalState) {
           setPendingRemovalState(null);
           return;
@@ -506,7 +553,13 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [characterEditDraft, editingItemDraft, pendingRemovalState, showAddModal]);
+  }, [
+    characterEditDraft,
+    editingItemDraft,
+    pendingMergeReview,
+    pendingRemovalState,
+    showAddModal,
+  ]);
 
   useEffect(() => {
     if (!isAllCharactersView) {
@@ -771,6 +824,22 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         })
       : [];
   const editingCustomItemInfo = editingItem?.customItem;
+  const mergeReviewPlan = pendingMergeReview?.plan;
+  const mergeAppliedCharacterFieldCount = mergeReviewPlan
+    ? countResolvedCharacterFields(mergeReviewPlan)
+    : 0;
+  const mergeAppliedItemUpdateCount = mergeReviewPlan
+    ? countResolvedItemUpdates(mergeReviewPlan)
+    : 0;
+  const mergeAddedItemCount = mergeReviewPlan
+    ? mergeReviewPlan.items.filter((item) => item.kind === 'added').length
+    : 0;
+  const mergeRemovalReviewCount = mergeReviewPlan
+    ? countRemovalReviews(mergeReviewPlan)
+    : 0;
+  const mergeConflictCount = mergeReviewPlan
+    ? countMergeConflicts(mergeReviewPlan)
+    : 0;
 
   const openCharacterModal = () => {
     setCharacterEditDraft({
@@ -925,6 +994,113 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     setAddMode('catalog');
     setAddItemDetailsDraft(defaultAddItemDetailsDraft('catalog'));
     setShowAddModal(false);
+  };
+
+  const closeMergeReviewModal = () => {
+    setPendingMergeReview(null);
+  };
+
+  const updateMergeReviewFieldSelection = (
+    itemId: string | null,
+    fieldKey: string,
+    selectedSource: PlayerMergeChoiceSource
+  ) => {
+    setPendingMergeReview((currentReview) => {
+      if (!currentReview) {
+        return currentReview;
+      }
+
+      if (itemId === null) {
+        return {
+          ...currentReview,
+          plan: {
+            ...currentReview.plan,
+            characterFields: currentReview.plan.characterFields.map((field) =>
+              field.key === fieldKey
+                ? {
+                    ...field,
+                    selectedSource,
+                  }
+                : field
+            ),
+          },
+        };
+      }
+
+      return {
+        ...currentReview,
+        plan: {
+          ...currentReview.plan,
+          items: currentReview.plan.items.map((item) => {
+            if (
+              item.kind === 'issue' ||
+              item.kind === 'removed' ||
+              item.itemId !== itemId
+            ) {
+              return item;
+            }
+
+            return {
+              ...item,
+              fields: item.fields.map((field) =>
+                field.key === fieldKey
+                  ? {
+                      ...field,
+                      selectedSource,
+                    }
+                  : field
+              ),
+            };
+          }),
+        },
+      };
+    });
+  };
+
+  const updateMergeRemovalSelection = (
+    itemId: string,
+    selectedAction: PlayerMergeRemovalChoice
+  ) => {
+    setPendingMergeReview((currentReview) => {
+      if (!currentReview) {
+        return currentReview;
+      }
+
+      return {
+        ...currentReview,
+        plan: {
+          ...currentReview.plan,
+          items: currentReview.plan.items.map((item) =>
+            item.kind === 'removed' && item.itemId === itemId
+              ? {
+                  ...item,
+                  selectedAction,
+                }
+              : item
+          ),
+        },
+      };
+    });
+  };
+
+  const applyPendingMergeReview = () => {
+    if (!pendingMergeReview || document.kind !== 'adnd-encumbrance-dm') {
+      return;
+    }
+
+    const mergedDocument = applyPlayerMergePlan(
+      document,
+      pendingMergeReview.plan
+    );
+    setDocument(mergedDocument);
+    setPendingMergeReview(null);
+    setCharacterEditDraft(null);
+    setShowAddModal(false);
+    setEditingItemDraft(null);
+    setPendingRemovalState(null);
+    setSelectedContainerId('');
+    setSelectedQuantity(1);
+    setAddItemDetailsDraft(defaultAddItemDetailsDraft());
   };
 
   const applyEditingItemDraft = (
@@ -1406,6 +1582,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     fileInputRef.current?.click();
   };
 
+  const triggerMergeImport = () => {
+    mergeFileInputRef.current?.click();
+  };
+
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -1431,12 +1611,56 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       setShowAddModal(false);
       setEditingItemDraft(null);
       setPendingRemovalState(null);
+      setPendingMergeReview(null);
       setSelectedContainerId('');
       setSelectedQuantity(1);
       setAddItemDetailsDraft(defaultAddItemDetailsDraft());
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unable to load the file.';
+
+      console.error(message);
+      window.alert(message);
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleMergeImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file || document.kind !== 'adnd-encumbrance-dm') {
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsed = parseEncumbranceDocument(text);
+
+      if (parsed.kind !== 'adnd-encumbrance-player') {
+        throw new Error(
+          'Import Player Changes can only use exported player files.'
+        );
+      }
+
+      const mergePlan = buildPlayerMergePlan(document, parsed);
+      setCharacterEditDraft(null);
+      setShowAddModal(false);
+      setEditingItemDraft(null);
+      setPendingRemovalState(null);
+      setSelectedContainerId('');
+      setSelectedQuantity(1);
+      setAddItemDetailsDraft(defaultAddItemDetailsDraft());
+      setPendingMergeReview({
+        fileName: file.name,
+        plan: mergePlan,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to import player changes.';
 
       console.error(message);
       window.alert(message);
@@ -1826,6 +2050,205 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     typeof window !== 'undefined'
       ? window.document.getElementById('app-modal')
       : null;
+  const renderMergeFieldReview = (
+    field: PlayerMergeFieldReview,
+    itemId: string | null = null
+  ) => {
+    const canChoose = field.isConflict;
+
+    const renderValueCard = (
+      source: PlayerMergeChoiceSource,
+      label: string,
+      value: string
+    ) => {
+      const isSelected = field.selectedSource === source;
+      const className = `${styles['mergeValueCard']} ${
+        isSelected ? styles['mergeValueCardSelected'] : ''
+      } ${canChoose ? styles['mergeValueCardSelectable'] : ''}`;
+
+      if (canChoose) {
+        return (
+          <button
+            key={source}
+            type="button"
+            className={className}
+            onClick={() =>
+              updateMergeReviewFieldSelection(itemId, field.key, source)
+            }
+          >
+            <span className={styles['mergeValueLabel']}>{label}</span>
+            <span className={styles['mergeValueText']}>{value}</span>
+          </button>
+        );
+      }
+
+      return (
+        <div key={source} className={className}>
+          <span className={styles['mergeValueLabel']}>{label}</span>
+          <span className={styles['mergeValueText']}>{value}</span>
+        </div>
+      );
+    };
+
+    return (
+      <div key={field.key} className={styles['mergeFieldReview']}>
+        <div className={styles['mergeFieldHeader']}>
+          <span className={styles['mergeFieldLabel']}>{field.label}</span>
+          <span
+            className={`${styles['mergeFieldStatus']} ${
+              field.isConflict
+                ? styles['mergeFieldStatusConflict']
+                : styles['mergeFieldStatusApplied']
+            }`}
+          >
+            {field.isConflict
+              ? 'Conflict'
+              : field.selectedSource === 'player'
+              ? 'Will import'
+              : 'Keep DM'}
+          </span>
+        </div>
+        <div className={styles['mergeValueGrid']}>
+          {renderValueCard('player', 'Player', field.playerDisplay)}
+          {renderValueCard('dm', 'DM', field.dmDisplay)}
+        </div>
+      </div>
+    );
+  };
+
+  const renderMergeItemReview = (item: PlayerMergeItemReview) => {
+    if (item.kind === 'issue') {
+      return (
+        <section
+          key={`merge-issue-${item.itemId}`}
+          className={`${styles['mergeReviewCard']} ${styles['mergeReviewCardIssue']}`}
+        >
+          <div className={styles['mergeReviewCardHeader']}>
+            <div>
+              <div className={styles['mergeReviewCardTitle']}>
+                {item.itemName}
+              </div>
+              <div className={styles['mergeReviewCardSubtitle']}>
+                {item.ownerName}
+              </div>
+            </div>
+            <span
+              className={`${styles['mergeReviewBadge']} ${styles['mergeReviewBadgeIssue']}`}
+            >
+              Needs review
+            </span>
+          </div>
+          <p className={styles['mergeReviewMessage']}>{item.message}</p>
+        </section>
+      );
+    }
+
+    if (item.kind === 'removed') {
+      const renderRemovalCard = (
+        choice: PlayerMergeRemovalChoice,
+        label: string,
+        value: string
+      ) => {
+        const isSelected = item.selectedAction === choice;
+        return (
+          <button
+            key={choice}
+            type="button"
+            className={`${styles['mergeValueCard']} ${
+              styles['mergeValueCardSelectable']
+            } ${isSelected ? styles['mergeValueCardSelected'] : ''}`}
+            onClick={() => updateMergeRemovalSelection(item.itemId, choice)}
+          >
+            <span className={styles['mergeValueLabel']}>{label}</span>
+            <span className={styles['mergeValueText']}>{value}</span>
+          </button>
+        );
+      };
+
+      return (
+        <section key={item.itemId} className={styles['mergeReviewCard']}>
+          <div className={styles['mergeReviewCardHeader']}>
+            <div>
+              <div className={styles['mergeReviewCardTitle']}>
+                {item.itemName}
+              </div>
+              <div className={styles['mergeReviewCardSubtitle']}>
+                {item.ownerName}
+              </div>
+            </div>
+            <span
+              className={`${styles['mergeReviewBadge']} ${styles['mergeReviewBadgeRemoval']}`}
+            >
+              Removal request
+            </span>
+          </div>
+          <div className={styles['mergeFieldReview']}>
+            <div className={styles['mergeFieldHeader']}>
+              <span className={styles['mergeFieldLabel']}>Status</span>
+              <span className={styles['mergeFieldStatus']}>Choose one</span>
+            </div>
+            <div className={styles['mergeValueGrid']}>
+              {renderRemovalCard('remove', 'Player', 'Remove from party file')}
+              {renderRemovalCard('keep', 'DM', 'Keep in party file')}
+            </div>
+          </div>
+          {item.fields.length > 0 && (
+            <div className={styles['mergeFieldList']}>
+              {item.fields.map((field) =>
+                renderMergeFieldReview(field, item.itemId)
+              )}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    const badgeLabel =
+      item.kind === 'added'
+        ? 'New item'
+        : item.fields.some((field) => field.isConflict)
+        ? 'Conflict'
+        : 'Will import';
+
+    const badgeClass =
+      item.kind === 'added'
+        ? styles['mergeReviewBadgeAdded']
+        : item.fields.some((field) => field.isConflict)
+        ? styles['mergeReviewBadgeConflict']
+        : styles['mergeReviewBadgeApplied'];
+
+    return (
+      <section key={item.itemId} className={styles['mergeReviewCard']}>
+        <div className={styles['mergeReviewCardHeader']}>
+          <div>
+            <div className={styles['mergeReviewCardTitle']}>
+              {item.itemName}
+            </div>
+            <div className={styles['mergeReviewCardSubtitle']}>
+              {item.ownerName}
+            </div>
+          </div>
+          <span className={`${styles['mergeReviewBadge']} ${badgeClass}`}>
+            {badgeLabel}
+          </span>
+        </div>
+        <div className={styles['mergeFieldList']}>
+          {item.fields.map((field) =>
+            renderMergeFieldReview(field, item.itemId)
+          )}
+        </div>
+        {item.notes.length > 0 && (
+          <div className={styles['mergeNotesList']}>
+            {item.notes.map((note) => (
+              <div key={note} className={styles['mergeNote']}>
+                {note}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  };
   const activeCharacterSummary = characterEditDraft
     ? {
         name: characterEditDraft.name,
@@ -1878,6 +2301,15 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             >
               Load File
             </button>
+            {mode === 'dm' && (
+              <button
+                type="button"
+                className={`${styles['button']} ${styles['buttonCompact']}`}
+                onClick={triggerMergeImport}
+              >
+                Import Player Changes
+              </button>
+            )}
             <button
               type="button"
               className={`${styles['button']} ${styles['buttonCompact']}`}
@@ -1906,8 +2338,17 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         <input
           ref={fileInputRef}
           type="file"
+          aria-label="Load File"
           accept=".json,application/json"
           onChange={handleImport}
+          style={{ display: 'none' }}
+        />
+        <input
+          ref={mergeFileInputRef}
+          type="file"
+          aria-label="Import Player Changes File"
+          accept=".json,application/json"
+          onChange={handleMergeImport}
           style={{ display: 'none' }}
         />
 
@@ -2167,6 +2608,131 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       {modalRoot &&
         createPortal(
           <>
+            {pendingMergeReview && mergeReviewPlan && (
+              <>
+                <div
+                  className={styles['modalShadow']}
+                  onClick={closeMergeReviewModal}
+                />
+                <div
+                  className={`${styles['modal']} ${styles['mergeReviewModal']}`}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="encumbrance-merge-title"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div
+                    id="encumbrance-merge-title"
+                    className={styles['modalTitle']}
+                  >
+                    Review Player Changes
+                  </div>
+                  <div
+                    className={`${styles['modalBody']} ${styles['liveEditModalBody']}`}
+                  >
+                    <p className={styles['modalText']}>
+                      Review{' '}
+                      <span className={styles['modalItemName']}>
+                        {pendingMergeReview.fileName}
+                      </span>{' '}
+                      against the current DM record for{' '}
+                      <span className={styles['modalItemName']}>
+                        {mergeReviewPlan.characterName}
+                      </span>
+                      .
+                    </p>
+                    <div className={styles['mergeSummaryGrid']}>
+                      <div className={styles['mergeSummaryItem']}>
+                        <span className={styles['mergeSummaryLabel']}>
+                          Character fields
+                        </span>
+                        <span className={styles['mergeSummaryValue']}>
+                          {mergeAppliedCharacterFieldCount}
+                        </span>
+                      </div>
+                      <div className={styles['mergeSummaryItem']}>
+                        <span className={styles['mergeSummaryLabel']}>
+                          Item updates
+                        </span>
+                        <span className={styles['mergeSummaryValue']}>
+                          {mergeAppliedItemUpdateCount}
+                        </span>
+                      </div>
+                      <div className={styles['mergeSummaryItem']}>
+                        <span className={styles['mergeSummaryLabel']}>
+                          Items added
+                        </span>
+                        <span className={styles['mergeSummaryValue']}>
+                          {mergeAddedItemCount}
+                        </span>
+                      </div>
+                      <div className={styles['mergeSummaryItem']}>
+                        <span className={styles['mergeSummaryLabel']}>
+                          Removal requests
+                        </span>
+                        <span className={styles['mergeSummaryValue']}>
+                          {mergeRemovalReviewCount}
+                        </span>
+                      </div>
+                      <div className={styles['mergeSummaryItem']}>
+                        <span className={styles['mergeSummaryLabel']}>
+                          Conflicts
+                        </span>
+                        <span className={styles['mergeSummaryValue']}>
+                          {mergeConflictCount}
+                        </span>
+                      </div>
+                    </div>
+                    {mergeReviewPlan.characterFields.length > 0 && (
+                      <section className={styles['mergeSection']}>
+                        <div className={styles['mergeSectionTitle']}>
+                          Character
+                        </div>
+                        <div className={styles['mergeFieldList']}>
+                          {mergeReviewPlan.characterFields.map((field) =>
+                            renderMergeFieldReview(field)
+                          )}
+                        </div>
+                      </section>
+                    )}
+                    {mergeReviewPlan.items.length > 0 && (
+                      <section className={styles['mergeSection']}>
+                        <div className={styles['mergeSectionTitle']}>
+                          Item Changes
+                        </div>
+                        <div className={styles['mergeReviewList']}>
+                          {mergeReviewPlan.items.map((item) =>
+                            renderMergeItemReview(item)
+                          )}
+                        </div>
+                      </section>
+                    )}
+                    {mergeReviewPlan.characterFields.length === 0 &&
+                      mergeReviewPlan.items.length === 0 && (
+                        <p className={styles['modalText']}>
+                          No player-visible changes were found in this file.
+                        </p>
+                      )}
+                  </div>
+                  <div className={styles['modalActions']}>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']}`}
+                      onClick={closeMergeReviewModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonPrimary']}`}
+                      onClick={applyPendingMergeReview}
+                    >
+                      Apply Import
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
             {characterEditDraft && (
               <>
                 <div

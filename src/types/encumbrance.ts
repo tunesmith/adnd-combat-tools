@@ -185,6 +185,20 @@ export interface EncumbranceDmDocumentV8 {
   characters: EncumbranceDmCharacter[];
 }
 
+export interface EncumbrancePlayerDocumentV9 {
+  kind: 'adnd-encumbrance-player';
+  version: 9;
+  character: EncumbrancePlayerCharacter;
+  mergeBaseCharacter?: EncumbrancePlayerCharacter;
+}
+
+export interface EncumbranceDmDocumentV9 {
+  kind: 'adnd-encumbrance-dm';
+  version: 9;
+  activeCharacterId: string;
+  characters: EncumbranceDmCharacter[];
+}
+
 type LegacyEncumbranceDocument = EncumbranceDocumentV1 | EncumbranceDocumentV2;
 
 export type AnyEncumbranceDocument =
@@ -196,11 +210,13 @@ export type AnyEncumbranceDocument =
   | EncumbrancePlayerDocumentV7
   | EncumbranceDmDocumentV7
   | EncumbrancePlayerDocumentV8
-  | EncumbranceDmDocumentV8;
+  | EncumbranceDmDocumentV8
+  | EncumbrancePlayerDocumentV9
+  | EncumbranceDmDocumentV9;
 
 export type EncumbranceDocument =
-  | EncumbrancePlayerDocumentV8
-  | EncumbranceDmDocumentV8;
+  | EncumbrancePlayerDocumentV9
+  | EncumbranceDmDocumentV9;
 
 type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered';
 
