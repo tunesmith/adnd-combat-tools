@@ -31,6 +31,15 @@ interface InitiativeRoundResolutionViewModel {
 const formatInches = (value: number): string =>
   `${Number.isInteger(value) ? value : value.toFixed(1).replace(/\.0$/, '')}"`;
 
+const formatMovementActionLabel = (
+  action: InitiativeMovementResolution['action']
+): string =>
+  action === 'open-melee'
+    ? 'open melee'
+    : action === 'set-vs-charge'
+    ? 'set vs charge'
+    : action;
+
 const formatNames = (
   combatantIds: string[],
   combatantNameById: Record<string, string>
@@ -255,10 +264,7 @@ const getMovementSummary = (
     ? combatantNameById[movementResolution.targetId] ||
       movementResolution.targetId
     : 'the declared target';
-  const actionLabel =
-    movementResolution.action === 'open-melee'
-      ? 'open melee'
-      : movementResolution.action;
+  const actionLabel = formatMovementActionLabel(movementResolution.action);
 
   if (movementResolution.reason === 'missing-target') {
     return `${combatantName} declared ${actionLabel}, but no single target was available to resolve.`;
@@ -274,6 +280,10 @@ const getMovementSummary = (
 
   if (movementResolution.reason === 'invalid-open-melee-target') {
     return `${combatantName} declared ${actionLabel} toward ${targetName}, but ${targetName} is already treating this as open melee against the same opponent. In this rules slice, open melee versus close is treated as an invalid declaration rather than reconciled automatically.`;
+  }
+
+  if (movementResolution.reason === 'set-not-triggered') {
+    return `${combatantName} declared ${actionLabel} against ${targetName}, but ${targetName} did not charge into contact this round. The set weapon never triggers.`;
   }
 
   if (movementResolution.reason === 'target-moving-elsewhere') {
@@ -302,6 +312,10 @@ const getMovementSummary = (
     return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment} and can strike on the charge, but reach does not currently settle who attacks first at contact.`;
   }
 
+  if (movementResolution.action === 'set-vs-charge') {
+    return `${combatantName} sets against ${targetName}'s charge. Because the target reaches contact on segment ${movementResolution.contactSegment}, the set weapon takes effect first and deals double normal damage if it hits.`;
+  }
+
   if (movementResolution.sameRoundAttack) {
     return `${combatantName} reaches striking range of ${targetName} on segment ${movementResolution.contactSegment}. Because ${targetName} is charging into contact, this closer can also strike in the same round. The exact order is settled by the charge-end reach comparison.`;
   }
@@ -325,7 +339,9 @@ const buildMovementCards = (
     return {
       id: `movement-${movementResolution.combatantId}`,
       kind: 'movement',
-      title: `${combatantName} ${movementResolution.action}`,
+      title: `${combatantName} ${formatMovementActionLabel(
+        movementResolution.action
+      )}`,
       summary: getMovementSummary(movementResolution, combatantNameById),
       combatantIds: [
         movementResolution.combatantId,
@@ -361,6 +377,12 @@ const buildMovementCards = (
                   } at ${formatInches(
                     movementResolution.closingInchesPerSegment || 0
                   )} per segment; same-round charge attack applies.`
+                : movementResolution.action === 'set-vs-charge'
+                ? `Charge contact on segment ${
+                    movementResolution.contactSegment
+                  }; the set weapon strikes first and deals ${
+                    movementResolution.damageMultiplier || 2
+                  }x normal damage on a hit.`
                 : movementResolution.sameRoundAttack
                 ? `Striking range reached on segment ${
                     movementResolution.contactSegment
@@ -376,6 +398,8 @@ const buildMovementCards = (
               ? `No contact this round; approximately ${formatInches(
                   movementResolution.remainingDistanceInches || 0
                 )} remain.`
+              : movementResolution.reason === 'set-not-triggered'
+              ? 'No charging contact occurred against the set weapon this round.'
               : movementResolution.reason === 'invalid-open-melee-target'
               ? 'Invalid direct pairing: open melee cannot oppose a close declaration in the same exchange.'
               : 'Needs table input or adjudication.',

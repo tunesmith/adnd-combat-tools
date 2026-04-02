@@ -1,5 +1,8 @@
 import { resolveOpenMeleeExchange, type OpenMeleeCombatant } from './openMelee';
-import { resolveMovementAgainstTarget } from './movement';
+import {
+  resolveMovementAgainstTarget,
+  resolveSetAgainstChargeResponse,
+} from './movement';
 import { getWeaponInfo } from '../../tables/weapon';
 import type {
   DirectMeleeEngagement,
@@ -258,10 +261,31 @@ export const buildInitiativeScenario = (
         .filter((combatantId) => !directPairCombatantIds.has(combatantId))
     )
   );
-  const movementResolutions = party.concat(enemies).flatMap((combatant) => {
-    const resolution = resolveMovementAgainstTarget(combatant, combatantById);
-    return resolution ? [resolution] : [];
-  });
+  const initialMovementResolutions = party
+    .concat(enemies)
+    .flatMap((combatant) => {
+      const resolution = resolveMovementAgainstTarget(combatant, combatantById);
+      return resolution ? [resolution] : [];
+    });
+  const initialMovementResolutionByCombatantId = new Map(
+    initialMovementResolutions.map((movementResolution) => [
+      movementResolution.combatantId,
+      movementResolution,
+    ])
+  );
+  const setAgainstChargeResolutions = party
+    .concat(enemies)
+    .flatMap((combatant) => {
+      const resolution = resolveSetAgainstChargeResponse(
+        combatant,
+        combatantById,
+        initialMovementResolutionByCombatantId
+      );
+      return resolution ? [resolution] : [];
+    });
+  const movementResolutions = initialMovementResolutions.concat(
+    setAgainstChargeResolutions
+  );
 
   return {
     label: draft.label,

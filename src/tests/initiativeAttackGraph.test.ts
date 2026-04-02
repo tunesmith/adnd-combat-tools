@@ -230,6 +230,74 @@ describe('initiative attack graph', () => {
     ]);
   });
 
+  test('graphs set versus charge as an automatic preemption of the charger', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Set vs Charge',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Doran',
+          declaredAction: 'set-vs-charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'contact:enemy-3', segment: 2 }),
+        expect.objectContaining({ id: 'contact:party-1', segment: 2 }),
+        expect.objectContaining({ id: 'attack:party-1:1', segment: 2 }),
+        expect.objectContaining({ id: 'attack:enemy-3:1', segment: 2 }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'contact:enemy-3',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'contact:enemy-3',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'contact:party-1',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['movement'],
+        },
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['movement'],
+        },
+      ])
+    );
+  });
+
   test('graphs close contact as a segment call without inventing ensuing blows', () => {
     const scenario = buildInitiativeScenario({
       label: 'Close to Contact',
@@ -281,6 +349,40 @@ describe('initiative attack graph', () => {
       'attack:enemy-3:1'
     );
     expect(graph.edges).toEqual([]);
+  });
+
+  test('omits an untriggered set weapon from the graph while leaving the opponent on baseline order', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Set Not Triggered',
+      partyInitiative: 6,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Doran',
+          declaredAction: 'set-vs-charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 56,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes.map((node) => node.id)).toEqual(['attack:enemy-3:1']);
+    expect(graph.edges).toEqual([]);
+    expect(graph.layers).toEqual([['attack:enemy-3:1']]);
   });
 
   test('graphs charge against close with a same-round response from the closer', () => {

@@ -10,7 +10,11 @@ import { resolveInitiativeRound } from '../../helpers/initiative/roundResolution
 import { buildInitiativeScenario } from '../../helpers/initiative/scenario';
 import customStyles from '../../helpers/selectCustomStyles';
 import { MONSTER } from '../../tables/attackerClass';
-import { getWeaponInfo, getWeaponOptions } from '../../tables/weapon';
+import {
+  canSetAgainstCharge,
+  getWeaponInfo,
+  getWeaponOptions,
+} from '../../tables/weapon';
 import type {
   InitiativeAttackEdgeReason,
   InitiativeAttackNode,
@@ -64,6 +68,7 @@ const ACTION_OPTIONS: Array<{
   { value: 'open-melee', label: 'Open melee' },
   { value: 'close', label: 'Close' },
   { value: 'charge', label: 'Charge' },
+  { value: 'set-vs-charge', label: 'Set vs charge' },
   { value: 'missile', label: 'Missile' },
 ];
 
@@ -83,7 +88,14 @@ const parseOptionalNumber = (value: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-const isSingleTargetMovementAction = (
+const isSingleTargetDeclarationAction = (
+  declaredAction: InitiativeDeclaredAction
+): boolean =>
+  declaredAction === 'close' ||
+  declaredAction === 'charge' ||
+  declaredAction === 'set-vs-charge';
+
+const requiresDistanceInput = (
   declaredAction: InitiativeDeclaredAction
 ): boolean => declaredAction === 'close' || declaredAction === 'charge';
 
@@ -102,6 +114,25 @@ const formatDeclaredAction = (
 ): string =>
   ACTION_OPTIONS.find((option) => option.value === declaredAction)?.label ||
   declaredAction;
+
+const getAvailableActionOptions = (
+  weaponId: number
+): Array<{
+  value: InitiativeDeclaredAction;
+  label: string;
+}> =>
+  ACTION_OPTIONS.filter(
+    (option) =>
+      option.value !== 'set-vs-charge' || canSetAgainstCharge(weaponId)
+  );
+
+const normalizeDeclaredActionForWeapon = (
+  declaredAction: InitiativeDeclaredAction,
+  weaponId: number
+): InitiativeDeclaredAction =>
+  declaredAction === 'set-vs-charge' && !canSetAgainstCharge(weaponId)
+    ? getDefaultDeclaredActionForWeaponId(weaponId)
+    : declaredAction;
 
 const createCombatant = (
   key: number,
@@ -180,6 +211,18 @@ const createChargePreset = (): InitiativePlaytestState => ({
     createCombatant(3, 'Hobgoblin', 57, [1], 'open-melee', '9'),
     createCombatant(4, 'Goblin Archer', 16, [], 'missile', '6'),
   ],
+  pairDistances: {
+    [getPairDistanceKey(1, 3)]: '4',
+  },
+});
+
+const createSetVsChargePreset = (): InitiativePlaytestState => ({
+  label: 'Set vs Charge',
+  partyInitiative: '2',
+  enemyInitiative: '5',
+  nextCombatantKey: 4,
+  party: [createCombatant(1, 'Doran', 50, [3], 'set-vs-charge', '12')],
+  enemies: [createCombatant(3, 'Raider', 56, [1], 'charge', '12')],
   pairDistances: {
     [getPairDistanceKey(1, 3)]: '4',
   },
@@ -369,11 +412,19 @@ const InitiativePlayground = () => {
 
               if (
                 changes.declaredAction &&
-                isSingleTargetMovementAction(changes.declaredAction) &&
+                isSingleTargetDeclarationAction(changes.declaredAction) &&
                 updatedCombatant.targetCombatantKeys.length > 1
               ) {
                 updatedCombatant.targetCombatantKeys =
                   updatedCombatant.targetCombatantKeys.slice(0, 1);
+              }
+
+              if (changes.weaponId !== undefined) {
+                updatedCombatant.declaredAction =
+                  normalizeDeclaredActionForWeapon(
+                    updatedCombatant.declaredAction,
+                    changes.weaponId
+                  );
               }
 
               return updatedCombatant;
@@ -505,10 +556,10 @@ const InitiativePlayground = () => {
         const nextTargetCombatantKeys = combatant.targetCombatantKeys.includes(
           targetKey
         )
-          ? isSingleTargetMovementAction(action)
+          ? isSingleTargetDeclarationAction(action)
             ? [targetKey]
             : combatant.targetCombatantKeys
-          : isSingleTargetMovementAction(action)
+          : isSingleTargetDeclarationAction(action)
           ? [targetKey]
           : combatant.targetCombatantKeys.concat(targetKey);
 
@@ -702,8 +753,8 @@ const InitiativePlayground = () => {
           <p className={styles['lede']}>
             This page is for playtesting the current rules slice: simple side
             initiative, conservative direct melee pairing, open-melee weapon
-            speed factor resolution, and generic attack routines with named
-            components.
+            speed factor resolution, charge/close contact handling, set versus
+            charge, and generic attack routines with named components.
           </p>
         </div>
         <div className={styles['presetBar']}>
@@ -734,6 +785,13 @@ const InitiativePlayground = () => {
             onClick={() => loadPreset(createChargePreset)}
           >
             Charge Contact
+          </button>
+          <button
+            type={'button'}
+            className={styles['presetButton']}
+            onClick={() => loadPreset(createSetVsChargePreset)}
+          >
+            Set vs Charge
           </button>
         </div>
       </div>
@@ -973,7 +1031,7 @@ const InitiativePlayground = () => {
                               ? `${formatDeclaredAction(
                                   partyCombatant.declaredAction
                                 )}${
-                                  isSingleTargetMovementAction(
+                                  requiresDistanceInput(
                                     partyCombatant.declaredAction
                                   ) && pairDistance
                                     ? ` · ${pairDistance}"`
@@ -984,7 +1042,7 @@ const InitiativePlayground = () => {
                               ? `${formatDeclaredAction(
                                   enemyCombatant.declaredAction
                                 )}${
-                                  isSingleTargetMovementAction(
+                                  requiresDistanceInput(
                                     enemyCombatant.declaredAction
                                   ) && pairDistance
                                     ? ` · ${pairDistance}"`
@@ -1660,13 +1718,15 @@ const InitiativePlayground = () => {
                     )
                   }
                 >
-                  {ACTION_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  {getAvailableActionOptions(attackEditedAttacker.weaponId).map(
+                    (option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    )
+                  )}
                 </select>
-                {isSingleTargetMovementAction(attackEditorTarget.action) ? (
+                {requiresDistanceInput(attackEditorTarget.action) ? (
                   <>
                     <label
                       className={styles['modalLabel']}
@@ -1707,7 +1767,7 @@ const InitiativePlayground = () => {
                   </span>
                   <span className={styles['modalMetaValue']}>
                     {formatDeclaredAction(attackEditorTarget.action)}
-                    {isSingleTargetMovementAction(attackEditorTarget.action) &&
+                    {requiresDistanceInput(attackEditorTarget.action) &&
                     attackEditorTarget.distanceInches.trim().length > 0
                       ? ` · ${attackEditorTarget.distanceInches}"`
                       : ''}

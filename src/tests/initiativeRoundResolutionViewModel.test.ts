@@ -178,6 +178,99 @@ describe('initiative round resolution view model', () => {
     });
   });
 
+  test('explains set versus charge as an automatic first strike with double damage', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Set vs Charge',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Doran',
+          declaredAction: 'set-vs-charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.id === 'movement-party-1'
+    );
+
+    expect(movementCard?.summary).toContain('set weapon takes effect first');
+    expect(movementCard?.summary).toContain('double normal damage');
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail:
+        'Charge contact on segment 2; the set weapon strikes first and deals 2x normal damage on a hit.',
+      combatantIds: ['party-1', 'enemy-3'],
+    });
+  });
+
+  test('explains when a set weapon never triggers', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Set Not Triggered',
+      partyInitiative: 6,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Doran',
+          declaredAction: 'set-vs-charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 56,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.id === 'movement-party-1'
+    );
+
+    expect(movementCard?.summary).toContain('did not charge into contact');
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail: 'No charging contact occurred against the set weapon this round.',
+      combatantIds: ['party-1', 'enemy-3'],
+    });
+  });
+
   test('explains a closer striking a charging opponent on contact', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge vs Close',

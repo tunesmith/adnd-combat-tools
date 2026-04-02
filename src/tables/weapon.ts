@@ -979,8 +979,41 @@ const uaWeapons = new Map<number, WeaponInfo>([
 
 void uaWeapons;
 
+const setAgainstChargeWeaponNames = new Set([
+  'Bec de Corbin',
+  'Bill-Guisarme',
+  'Fauchard',
+  'Fauchard-Fork',
+  'Fork, Military',
+  'Glaive',
+  'Glaive-Guisarme',
+  'Guisarme',
+  'Guisarme-Voulge',
+  'Halberd',
+  'Hammer, Lucern',
+  'Lance (heavy horse)',
+  'Lance (light horse)',
+  'Lance (medium horse)',
+  'Partisan',
+  'Pike, awl',
+  'Ranseur',
+  'Spear (held)',
+  'Spetum',
+  'Trident',
+  'Voulge',
+]);
+
 export const getWeaponInfo = (weapon: number): WeaponInfo | undefined =>
   weapons.get(weapon);
+
+export const canSetAgainstCharge = (weapon: number): boolean => {
+  const weaponInfo = getWeaponInfo(weapon);
+
+  return (
+    weaponInfo?.weaponType === 'melee' &&
+    setAgainstChargeWeaponNames.has(weaponInfo.name)
+  );
+};
 
 export const getWeaponAdjustment = (
   weapon: number,

@@ -8,6 +8,7 @@ export type InitiativeDeclaredAction =
   | 'open-melee'
   | 'close'
   | 'charge'
+  | 'set-vs-charge'
   | 'missile';
 
 interface InitiativeAttackRoutineComponent {
@@ -122,6 +123,7 @@ type InitiativeMovementResolutionReason =
   | 'missing-distance'
   | 'multiple-targets'
   | 'invalid-open-melee-target'
+  | 'set-not-triggered'
   | 'target-moving-elsewhere';
 
 export type InitiativeChargeFirstStrike =
@@ -141,6 +143,7 @@ export interface InitiativeMovementResolution {
   remainingDistanceInches?: number;
   sameRoundAttack: boolean;
   firstStrike?: InitiativeChargeFirstStrike;
+  damageMultiplier?: number;
 }
 
 export interface InitiativeScenario {

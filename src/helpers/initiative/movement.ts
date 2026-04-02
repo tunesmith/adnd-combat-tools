@@ -26,6 +26,14 @@ const getChargeFirstStrike = (
   target: InitiativeScenarioCombatant
 ): InitiativeChargeFirstStrike => {
   if (
+    target.declaredAction === 'set-vs-charge' &&
+    target.targetDeclarations.length === 1 &&
+    target.targetDeclarations[0]?.targetId === attacker.id
+  ) {
+    return 'target';
+  }
+
+  if (
     attacker.weaponLength === undefined ||
     target.weaponLength === undefined ||
     attacker.weaponType === 'missile' ||
@@ -217,5 +225,81 @@ export const resolveMovementAgainstTarget = (
       attacker.declaredAction === 'charge'
         ? getChargeFirstStrike(attacker, target)
         : undefined,
+  };
+};
+
+export const resolveSetAgainstChargeResponse = (
+  attacker: InitiativeScenarioCombatant,
+  targetById: Map<string, InitiativeScenarioCombatant>,
+  movementResolutionByCombatantId: Map<string, InitiativeMovementResolution>
+): InitiativeMovementResolution | undefined => {
+  if (attacker.declaredAction !== 'set-vs-charge') {
+    return undefined;
+  }
+
+  if (attacker.targetDeclarations.length === 0) {
+    return {
+      combatantId: attacker.id,
+      action: attacker.declaredAction,
+      reason: 'missing-target',
+      sameRoundAttack: false,
+    };
+  }
+
+  if (attacker.targetDeclarations.length > 1) {
+    return {
+      combatantId: attacker.id,
+      action: attacker.declaredAction,
+      reason: 'multiple-targets',
+      sameRoundAttack: false,
+    };
+  }
+
+  const targetDeclaration = attacker.targetDeclarations[0];
+  const targetId = targetDeclaration?.targetId;
+  if (!targetId) {
+    return {
+      combatantId: attacker.id,
+      action: attacker.declaredAction,
+      reason: 'missing-target',
+      sameRoundAttack: false,
+    };
+  }
+
+  const target = targetById.get(targetId);
+  const targetMovementResolution =
+    movementResolutionByCombatantId.get(targetId);
+
+  if (
+    !target ||
+    target.declaredAction !== 'charge' ||
+    target.targetDeclarations.length !== 1 ||
+    target.targetDeclarations[0]?.targetId !== attacker.id ||
+    targetMovementResolution?.reason !== 'contact' ||
+    !targetMovementResolution.sameRoundAttack ||
+    targetMovementResolution.targetId !== attacker.id ||
+    targetMovementResolution.contactSegment === undefined
+  ) {
+    return {
+      combatantId: attacker.id,
+      targetId,
+      action: attacker.declaredAction,
+      reason: 'set-not-triggered',
+      sameRoundAttack: false,
+    };
+  }
+
+  return {
+    combatantId: attacker.id,
+    targetId,
+    action: attacker.declaredAction,
+    reason: 'contact',
+    distanceInches: targetMovementResolution.distanceInches,
+    closingInchesPerSegment: targetMovementResolution.closingInchesPerSegment,
+    contactSegment: targetMovementResolution.contactSegment,
+    remainingDistanceInches: 0,
+    sameRoundAttack: true,
+    firstStrike: 'attacker',
+    damageMultiplier: 2,
   };
 };

@@ -92,6 +92,101 @@ describe('initiative movement resolution', () => {
     ]);
   });
 
+  test('gives automatic initiative to a set weapon against a charging target', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Set vs Charge',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Doran',
+          declaredAction: 'set-vs-charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(scenario.movementResolutions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          combatantId: 'enemy-3',
+          targetId: 'party-1',
+          action: 'charge',
+          reason: 'contact',
+          contactSegment: 2,
+          sameRoundAttack: true,
+          firstStrike: 'target',
+        }),
+        expect.objectContaining({
+          combatantId: 'party-1',
+          targetId: 'enemy-3',
+          action: 'set-vs-charge',
+          reason: 'contact',
+          contactSegment: 2,
+          sameRoundAttack: true,
+          firstStrike: 'attacker',
+          damageMultiplier: 2,
+        }),
+      ])
+    );
+  });
+
+  test('leaves a set weapon untriggered when the target does not charge into contact', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Set Not Triggered',
+      partyInitiative: 6,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Doran',
+          declaredAction: 'set-vs-charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 56,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+
+    expect(scenario.movementResolutions).toEqual([
+      expect.objectContaining({
+        combatantId: 'party-1',
+        targetId: 'enemy-3',
+        action: 'set-vs-charge',
+        reason: 'set-not-triggered',
+        sameRoundAttack: false,
+      }),
+    ]);
+  });
+
   test('lets a closer strike when a charger reaches contact', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge vs Close',
