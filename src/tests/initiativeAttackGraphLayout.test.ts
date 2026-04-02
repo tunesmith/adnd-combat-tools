@@ -44,6 +44,7 @@ describe('initiative attack graph layout', () => {
 
     expect(layout.width).toBeGreaterThan(0);
     expect(layout.height).toBeGreaterThan(0);
+    expect(layout.hasSegmentBand).toBe(false);
     expect(layout.nodes).toHaveLength(graph.nodes.length);
     expect(layout.edges).toHaveLength(graph.edges.length);
     expect(layout.segmentColumns).toHaveLength(10);
@@ -123,6 +124,7 @@ describe('initiative attack graph layout', () => {
     );
 
     expect(segmentTwoColumn).toBeDefined();
+    expect(layout.hasSegmentBand).toBe(true);
     expect(attackerNode?.x).toBe(segmentTwoColumn?.x);
     expect(defenderNode?.x).toBe(segmentTwoColumn?.x);
     expect(attackerNode?.y).toBeLessThan(defenderNode?.y || 0);
@@ -136,5 +138,76 @@ describe('initiative attack graph layout', () => {
         }),
       ])
     );
+  });
+
+  test('keeps segment guides in the upper band and pushes dependency-only nodes below it', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Large Mixed Battle',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Doran',
+          declaredAction: 'set-vs-charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 2,
+          name: 'Ysra',
+          declaredAction: 'missile',
+          movementRate: 12,
+          weaponId: 49,
+          targetCombatantKeys: [4],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 4,
+          name: 'Goblin Archer',
+          declaredAction: 'missile',
+          movementRate: 6,
+          weaponId: 16,
+          targetCombatantKeys: [2],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+    const layout = buildInitiativeAttackGraphLayout(graph);
+
+    const segmentedNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-1:1'
+    );
+    const dependencyNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-2:1'
+    );
+
+    expect(layout.hasSegmentBand).toBe(true);
+    expect(segmentedNode).toBeDefined();
+    expect(dependencyNode).toBeDefined();
+    expect(segmentedNode?.y).toBeLessThan(layout.segmentBandBottomY);
+    expect(dependencyNode?.y).toBeGreaterThanOrEqual(layout.dependencyBandTopY);
+    expect(layout.segmentBandBottomY).toBeLessThan(layout.dependencyBandTopY);
   });
 });

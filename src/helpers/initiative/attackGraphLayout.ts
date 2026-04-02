@@ -18,14 +18,20 @@ interface InitiativeAttackGraphLayoutSegmentColumn {
   segment: number;
   x: number;
   centerX: number;
+  startX: number;
+  endX: number;
 }
 
 interface InitiativeAttackGraphLayout {
   width: number;
   height: number;
+  hasSegmentBand: boolean;
   headerLabelY: number;
   headerLineY: number;
-  guideBottomY: number;
+  segmentBandTopY: number;
+  segmentBandBottomY: number;
+  dependencyBandTopY: number;
+  segmentBoundaryXs: number[];
   segmentColumns: InitiativeAttackGraphLayoutSegmentColumn[];
   nodes: InitiativeAttackGraphLayoutNode[];
   edges: InitiativeAttackGraphLayoutEdge[];
@@ -34,25 +40,32 @@ interface InitiativeAttackGraphLayout {
 const HORIZONTAL_PADDING = 32;
 const TOP_PADDING = 24;
 const BOTTOM_PADDING = 24;
-const SEGMENT_HEADER_HEIGHT = 48;
-const CONTENT_TOP_GAP = 20;
-const NODE_WIDTH = 216;
-const NODE_HEIGHT = 92;
-const COLUMN_GAP = 28;
-const ROW_GAP = 22;
+const SEGMENT_HEADER_HEIGHT = 42;
+const CONTENT_TOP_GAP = 14;
+const NODE_WIDTH = 190;
+const NODE_HEIGHT = 72;
+const DEPENDENCY_COLUMN_GAP = 28;
+const SEGMENT_LANE_GAP = 18;
+const ROW_GAP = 18;
 const BAND_GAP = 28;
 const SEGMENT_COUNT = 10;
 
 const getContentHeight = (nodeCount: number): number =>
   nodeCount > 0 ? nodeCount * NODE_HEIGHT + (nodeCount - 1) * ROW_GAP : 0;
 
-const getColumnPitch = (): number => NODE_WIDTH + COLUMN_GAP;
+const getDependencyColumnPitch = (): number =>
+  NODE_WIDTH + DEPENDENCY_COLUMN_GAP;
 
-const getSegmentColumnX = (segment: number): number =>
-  HORIZONTAL_PADDING + (segment - 1) * getColumnPitch();
+const getSegmentLaneWidth = (): number => NODE_WIDTH + SEGMENT_LANE_GAP;
+
+const getSegmentLaneStartX = (segment: number): number =>
+  HORIZONTAL_PADDING + (segment - 1) * getSegmentLaneWidth();
+
+const getSegmentNodeX = (segment: number): number =>
+  getSegmentLaneStartX(segment) + (getSegmentLaneWidth() - NODE_WIDTH) / 2;
 
 const getDependencyColumnX = (layerIndex: number): number =>
-  HORIZONTAL_PADDING + (layerIndex + 0.5) * getColumnPitch();
+  HORIZONTAL_PADDING + layerIndex * getDependencyColumnPitch();
 
 const getEdgePath = (
   fromNode: InitiativeAttackGraphLayoutNode,
@@ -117,7 +130,7 @@ export const buildInitiativeAttackGraphLayout = (
         segmentStackCountByKey.set(columnKey, stackIndex + 1);
         segmentedPositionedNodes.push({
           nodeId,
-          x: getSegmentColumnX(node.segment),
+          x: getSegmentNodeX(node.segment),
           stackIndex,
         });
         return;
@@ -144,22 +157,33 @@ export const buildInitiativeAttackGraphLayout = (
   );
   const dependencyContentHeight = getContentHeight(maxDependencyStackSize);
   const segmentContentHeight = getContentHeight(maxSegmentStackSize);
-  const contentTopY = TOP_PADDING + SEGMENT_HEADER_HEIGHT + CONTENT_TOP_GAP;
+  const hasSegmentBand = segmentContentHeight > 0;
+  const segmentHeaderHeight = hasSegmentBand ? SEGMENT_HEADER_HEIGHT : 0;
   const segmentTopY =
-    contentTopY +
-    dependencyContentHeight +
-    (dependencyContentHeight > 0 && segmentContentHeight > 0 ? BAND_GAP : 0);
-  const maxContentBottomY =
-    (dependencyContentHeight > 0 ? contentTopY + dependencyContentHeight : 0) >
-    (segmentContentHeight > 0 ? segmentTopY + segmentContentHeight : 0)
-      ? contentTopY + dependencyContentHeight
-      : segmentTopY + segmentContentHeight;
+    TOP_PADDING + segmentHeaderHeight + (hasSegmentBand ? CONTENT_TOP_GAP : 0);
+  const segmentBandTopY = hasSegmentBand
+    ? TOP_PADDING + SEGMENT_HEADER_HEIGHT
+    : 0;
+  const segmentBandBottomY = hasSegmentBand
+    ? segmentTopY + segmentContentHeight
+    : segmentBandTopY;
+  const dependencyTopY =
+    hasSegmentBand && dependencyContentHeight > 0
+      ? segmentBandBottomY + BAND_GAP
+      : TOP_PADDING + 12;
+  const dependencyBandTopY = dependencyTopY;
+  const maxContentBottomY = Math.max(
+    hasSegmentBand ? segmentBandBottomY : 0,
+    dependencyContentHeight > 0
+      ? dependencyTopY + dependencyContentHeight
+      : dependencyTopY
+  );
 
   dependencyPositionedNodes.forEach((positionedNode) => {
     nodeLayoutById.set(positionedNode.nodeId, {
       nodeId: positionedNode.nodeId,
       x: positionedNode.x,
-      y: contentTopY + positionedNode.stackIndex * (NODE_HEIGHT + ROW_GAP),
+      y: dependencyTopY + positionedNode.stackIndex * (NODE_HEIGHT + ROW_GAP),
       width: NODE_WIDTH,
       height: NODE_HEIGHT,
     });
@@ -203,29 +227,41 @@ export const buildInitiativeAttackGraphLayout = (
   );
   const segmentColumns = Array.from({ length: SEGMENT_COUNT }, (_, index) => {
     const segment = index + 1;
-    const x = getSegmentColumnX(segment);
+    const startX = getSegmentLaneStartX(segment);
+    const endX = startX + getSegmentLaneWidth();
+    const x = getSegmentNodeX(segment);
 
     return {
       segment,
       x,
-      centerX: x + NODE_WIDTH / 2,
+      centerX: startX + getSegmentLaneWidth() / 2,
+      startX,
+      endX,
     };
   });
-  const headerLineY = TOP_PADDING + SEGMENT_HEADER_HEIGHT;
+  const segmentBoundaryXs = hasSegmentBand
+    ? [
+        ...segmentColumns.map((column) => column.startX),
+        segmentColumns[segmentColumns.length - 1]?.endX || HORIZONTAL_PADDING,
+      ]
+    : [];
+  const headerLineY = segmentBandTopY;
 
   return {
     width:
       Math.max(
-        getSegmentColumnX(SEGMENT_COUNT),
-        rightmostNodeX,
+        segmentColumns[segmentColumns.length - 1]?.endX || HORIZONTAL_PADDING,
+        rightmostNodeX + NODE_WIDTH,
         HORIZONTAL_PADDING
-      ) +
-      NODE_WIDTH +
-      HORIZONTAL_PADDING,
+      ) + HORIZONTAL_PADDING,
     height: maxContentBottomY + BOTTOM_PADDING,
+    hasSegmentBand,
     headerLabelY: TOP_PADDING + 20,
     headerLineY,
-    guideBottomY: maxContentBottomY,
+    segmentBandTopY,
+    segmentBandBottomY,
+    dependencyBandTopY,
+    segmentBoundaryXs,
     segmentColumns,
     nodes,
     edges,

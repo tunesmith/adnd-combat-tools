@@ -228,6 +228,32 @@ const createSetVsChargePreset = (): InitiativePlaytestState => ({
   },
 });
 
+const createLargeBattlePreset = (): InitiativePlaytestState => ({
+  label: 'Large Mixed Battle',
+  partyInitiative: '4',
+  enemyInitiative: '4',
+  nextCombatantKey: 11,
+  party: [
+    createCombatant(1, 'Aldred', 56, [6], 'open-melee', '12'),
+    createCombatant(2, 'Doran', 50, [7], 'set-vs-charge', '12'),
+    createCombatant(3, 'Ysra', 49, [9], 'missile', '12'),
+    createCombatant(4, 'Mave', 55, [8], 'close', '9'),
+    createCombatant(5, 'Garran', 56, [10], 'charge', '12'),
+  ],
+  enemies: [
+    createCombatant(6, 'Gnoll Captain', 2, [1], 'open-melee', '12'),
+    createCombatant(7, 'Raider', 56, [2], 'charge', '12'),
+    createCombatant(8, 'Orc Skirmisher', 41, [4], 'close', '9'),
+    createCombatant(9, 'Goblin Archer', 16, [3], 'missile', '6'),
+    createCombatant(10, 'Hobgoblin Guard', 59, [5], 'open-melee', '9'),
+  ],
+  pairDistances: {
+    [getPairDistanceKey(2, 7)]: '4',
+    [getPairDistanceKey(4, 8)]: '6',
+    [getPairDistanceKey(5, 10)]: '4',
+  },
+});
+
 const buildDraftCombatants = (
   side: InitiativePlaytestSide,
   combatants: InitiativePlaytestCombatant[],
@@ -363,15 +389,6 @@ const InitiativePlayground = () => {
   );
   const simpleOrderCard = viewModel.cards.find(
     (card) => card.kind === 'simple-order'
-  );
-  const directMeleeCards = viewModel.cards.filter(
-    (card) => card.kind === 'direct-melee'
-  );
-  const movementCards = viewModel.cards.filter(
-    (card) => card.kind === 'movement'
-  );
-  const unresolvedCard = viewModel.cards.find(
-    (card) => card.kind === 'unresolved'
   );
   const attackNodeById = useMemo(
     () => new Map(attackGraph.nodes.map((node) => [node.id, node] as const)),
@@ -673,6 +690,11 @@ const InitiativePlayground = () => {
       ),
     [attackGraph.nodes, combatantById]
   );
+  const toggleSelectedGraphNode = (nodeId: string) => {
+    setSelectedGraphNodeId((previous) =>
+      previous === nodeId ? undefined : nodeId
+    );
+  };
   const selectedGraphNode = attackGraph.nodes.find(
     (node) => node.id === selectedGraphNodeId
   );
@@ -685,6 +707,13 @@ const InitiativePlayground = () => {
   const selectedGraphOutgoingEdges = selectedGraphNode
     ? attackGraph.edges.filter(
         (edge) => edge.fromNodeId === selectedGraphNode.id
+      )
+    : [];
+  const selectedGraphRelatedCards = selectedGraphNode
+    ? viewModel.cards.filter(
+        (card) =>
+          card.kind !== 'simple-order' &&
+          card.combatantIds.includes(selectedGraphNode.combatantId)
       )
     : [];
   const editedCombatant =
@@ -804,6 +833,13 @@ const InitiativePlayground = () => {
             onClick={() => loadPreset(createSetVsChargePreset)}
           >
             Set vs Charge
+          </button>
+          <button
+            type={'button'}
+            className={styles['presetButton']}
+            onClick={() => loadPreset(createLargeBattlePreset)}
+          >
+            Large Mixed
           </button>
         </div>
       </div>
@@ -1221,17 +1257,31 @@ const InitiativePlayground = () => {
               <h2 className={styles['graphTitle']}>Precedence DAG</h2>
               <p className={styles['graphCopy']}>
                 The graph only contains attack relations justified by baseline
-                initiative or a narrower melee timing rule. Movement outcomes
-                now enter as explicit contact events when the current rules
-                actually determine them. With no node selected, the inspector
-                shows round context and unresolved calls.
+                initiative or a narrower melee timing rule. Segment-aware
+                actions occupy the upper swim-lane band; unsegmented attacks
+                stay in the freeform precedence band below. Click a node to
+                toggle its local rule detail panel.
               </p>
             </div>
             <div className={styles['summaryStrip']}>
-              <div className={styles['summaryCell']}>
+              <div
+                className={[
+                  styles['summaryCell'],
+                  styles['summaryCellBaseline'],
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 <span className={styles['summaryLabel']}>Baseline</span>
-                <span className={styles['summaryValue']}>
-                  {resolution.simpleOrder}
+                <span
+                  className={[
+                    styles['summaryValue'],
+                    styles['summaryValueLong'],
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  {simpleOrderCard?.summary || resolution.simpleOrder}
                 </span>
               </div>
               <div className={styles['summaryCell']}>
@@ -1253,359 +1303,320 @@ const InitiativePlayground = () => {
                 </span>
               </div>
             </div>
-            <div className={styles['graphLayoutShell']}>
+            <div className={styles['graphViewportShell']}>
               <div className={styles['graphViewport']}>
                 {attackGraph.nodes.length > 0 ? (
-                  <svg
-                    className={styles['graphSvg']}
-                    viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
-                    width={graphLayout.width}
-                    height={graphLayout.height}
-                    aria-label={'Initiative precedence graph'}
-                  >
-                    <defs>
-                      <marker
-                        id={'initiative-dag-arrowhead'}
-                        viewBox={'0 0 12 12'}
-                        refX={'10'}
-                        refY={'6'}
-                        markerWidth={'10'}
-                        markerHeight={'10'}
-                        orient={'auto-start-reverse'}
-                      >
-                        <path
-                          d={'M 0 0 L 12 6 L 0 12 z'}
-                          className={styles['graphArrowhead']}
-                        />
-                      </marker>
-                    </defs>
-
-                    <line
-                      x1={graphLayout.segmentColumns[0]?.x || 0}
-                      y1={graphLayout.headerLineY}
-                      x2={
-                        (graphLayout.segmentColumns[
-                          graphLayout.segmentColumns.length - 1
-                        ]?.x || 0) + (graphLayout.nodes[0]?.width || 0)
-                      }
-                      y2={graphLayout.headerLineY}
-                      className={styles['graphSegmentHeaderLine']}
-                    />
-
-                    {graphLayout.segmentColumns.map((segmentColumn) => (
-                      <g key={`segment-column-${segmentColumn.segment}`}>
-                        <text
-                          x={segmentColumn.centerX}
-                          y={graphLayout.headerLabelY}
-                          textAnchor={'middle'}
-                          className={styles['graphSegmentColumnLabel']}
+                  <>
+                    <svg
+                      className={styles['graphSvg']}
+                      viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
+                      width={graphLayout.width}
+                      height={graphLayout.height}
+                      aria-label={'Initiative precedence graph'}
+                    >
+                      <defs>
+                        <marker
+                          id={'initiative-dag-arrowhead'}
+                          viewBox={'0 0 12 12'}
+                          refX={'10'}
+                          refY={'6'}
+                          markerWidth={'10'}
+                          markerHeight={'10'}
+                          orient={'auto-start-reverse'}
                         >
-                          {segmentColumn.segment}
-                        </text>
-                        <line
-                          x1={segmentColumn.centerX}
-                          y1={graphLayout.headerLineY}
-                          x2={segmentColumn.centerX}
-                          y2={graphLayout.guideBottomY}
-                          className={styles['graphSegmentGuide']}
-                        />
-                      </g>
-                    ))}
+                          <path
+                            d={'M 0 0 L 12 6 L 0 12 z'}
+                            className={styles['graphArrowhead']}
+                          />
+                        </marker>
+                      </defs>
 
-                    {graphLayout.edges.map((edge) => {
-                      const isSelected =
-                        selectedGraphNode !== undefined &&
-                        (edge.fromNodeId === selectedGraphNode.id ||
-                          edge.toNodeId === selectedGraphNode.id);
-
-                      return (
-                        <path
-                          key={`${edge.fromNodeId}-${edge.toNodeId}`}
-                          d={edge.path}
-                          className={[
-                            styles['graphEdge'],
-                            isSelected ? styles['graphEdgeSelected'] : '',
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                          markerEnd={'url(#initiative-dag-arrowhead)'}
-                        />
-                      );
-                    })}
-
-                    {graphLayout.nodes.map((layoutNode) => {
-                      const node = attackNodeById.get(layoutNode.nodeId);
-                      if (!node) {
-                        return null;
-                      }
-
-                      const combatantName =
-                        viewModel.combatantNameById[node.combatantId] ||
-                        node.combatantId;
-                      const targetLabel =
-                        graphNodeTargetLabelById[node.id] || 'No target';
-                      const actionLabel =
-                        graphNodeActionLabelById[node.id] || 'Unknown action';
-                      const isSelected = selectedGraphNode?.id === node.id;
-
-                      return (
-                        <g
-                          key={layoutNode.nodeId}
-                          transform={`translate(${layoutNode.x} ${layoutNode.y})`}
-                          role={'button'}
-                          tabIndex={0}
-                          aria-label={`${combatantName}, target ${targetLabel}, ${actionLabel}`}
-                          onClick={() => setSelectedGraphNodeId(node.id)}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                              event.preventDefault();
-                              setSelectedGraphNodeId(node.id);
+                      {graphLayout.hasSegmentBand ? (
+                        <>
+                          <line
+                            x1={graphLayout.segmentBoundaryXs[0] || 0}
+                            y1={graphLayout.headerLineY}
+                            x2={
+                              graphLayout.segmentBoundaryXs[
+                                graphLayout.segmentBoundaryXs.length - 1
+                              ] || 0
                             }
-                          }}
-                        >
-                          <rect
-                            x={0}
-                            y={0}
-                            width={layoutNode.width}
-                            height={layoutNode.height}
-                            rx={16}
+                            y2={graphLayout.headerLineY}
+                            className={styles['graphSegmentHeaderLine']}
+                          />
+                          <line
+                            x1={graphLayout.segmentBoundaryXs[0] || 0}
+                            y1={graphLayout.segmentBandBottomY}
+                            x2={
+                              graphLayout.segmentBoundaryXs[
+                                graphLayout.segmentBoundaryXs.length - 1
+                              ] || 0
+                            }
+                            y2={graphLayout.segmentBandBottomY}
+                            className={styles['graphSegmentBandLine']}
+                          />
+                          {graphLayout.segmentColumns.map((segmentColumn) => (
+                            <g key={`segment-column-${segmentColumn.segment}`}>
+                              <text
+                                x={segmentColumn.centerX}
+                                y={graphLayout.headerLabelY}
+                                textAnchor={'middle'}
+                                className={styles['graphSegmentColumnLabel']}
+                              >
+                                {segmentColumn.segment}
+                              </text>
+                            </g>
+                          ))}
+                          {graphLayout.segmentBoundaryXs.map((boundaryX) => (
+                            <line
+                              key={`segment-boundary-${boundaryX}`}
+                              x1={boundaryX}
+                              y1={graphLayout.headerLineY}
+                              x2={boundaryX}
+                              y2={graphLayout.segmentBandBottomY}
+                              className={styles['graphSegmentGuide']}
+                            />
+                          ))}
+                        </>
+                      ) : null}
+
+                      {graphLayout.edges.map((edge) => {
+                        const isSelected =
+                          selectedGraphNode !== undefined &&
+                          (edge.fromNodeId === selectedGraphNode.id ||
+                            edge.toNodeId === selectedGraphNode.id);
+
+                        return (
+                          <path
+                            key={`${edge.fromNodeId}-${edge.toNodeId}`}
+                            d={edge.path}
                             className={[
-                              styles['graphNodeCard'],
-                              node.side === 'party'
-                                ? styles['graphNodeParty']
-                                : styles['graphNodeEnemy'],
-                              isSelected ? styles['graphNodeSelected'] : '',
+                              styles['graphEdge'],
+                              isSelected ? styles['graphEdgeSelected'] : '',
                             ]
                               .filter(Boolean)
                               .join(' ')}
+                            markerEnd={'url(#initiative-dag-arrowhead)'}
                           />
-                          <text
-                            x={layoutNode.width / 2}
-                            y={26}
-                            textAnchor={'middle'}
-                            className={styles['graphNodeName']}
+                        );
+                      })}
+
+                      {graphLayout.nodes.map((layoutNode) => {
+                        const node = attackNodeById.get(layoutNode.nodeId);
+                        if (!node) {
+                          return null;
+                        }
+
+                        const combatantName =
+                          viewModel.combatantNameById[node.combatantId] ||
+                          node.combatantId;
+                        const targetLabel =
+                          graphNodeTargetLabelById[node.id] || 'No target';
+                        const actionLabel =
+                          graphNodeActionLabelById[node.id] || 'Unknown action';
+                        const isSelected = selectedGraphNode?.id === node.id;
+
+                        return (
+                          <g
+                            key={layoutNode.nodeId}
+                            transform={`translate(${layoutNode.x} ${layoutNode.y})`}
+                            role={'button'}
+                            tabIndex={0}
+                            aria-label={`${combatantName}, target ${targetLabel}, ${actionLabel}`}
+                            onClick={() => toggleSelectedGraphNode(node.id)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                toggleSelectedGraphNode(node.id);
+                              }
+                            }}
                           >
-                            {truncateGraphText(combatantName, 20)}
-                          </text>
-                          {node.segment !== undefined ? (
-                            <>
-                              <rect
-                                x={layoutNode.width - 62}
-                                y={10}
-                                width={48}
-                                height={20}
-                                rx={10}
-                                className={styles['graphSegmentBadge']}
-                              />
-                              <text
-                                x={layoutNode.width - 38}
-                                y={24}
-                                textAnchor={'middle'}
-                                className={styles['graphSegmentBadgeLabel']}
-                              >
-                                S{node.segment}
-                              </text>
-                            </>
+                            <rect
+                              x={0}
+                              y={0}
+                              width={layoutNode.width}
+                              height={layoutNode.height}
+                              rx={16}
+                              className={[
+                                styles['graphNodeCard'],
+                                node.side === 'party'
+                                  ? styles['graphNodeParty']
+                                  : styles['graphNodeEnemy'],
+                                isSelected ? styles['graphNodeSelected'] : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                            />
+                            <text
+                              x={layoutNode.width / 2}
+                              y={23}
+                              textAnchor={'middle'}
+                              className={styles['graphNodeName']}
+                            >
+                              {truncateGraphText(combatantName, 18)}
+                            </text>
+                            {node.segment !== undefined ? (
+                              <>
+                                <rect
+                                  x={layoutNode.width - 52}
+                                  y={8}
+                                  width={40}
+                                  height={18}
+                                  rx={9}
+                                  className={styles['graphSegmentBadge']}
+                                />
+                                <text
+                                  x={layoutNode.width - 32}
+                                  y={21}
+                                  textAnchor={'middle'}
+                                  className={styles['graphSegmentBadgeLabel']}
+                                >
+                                  S{node.segment}
+                                </text>
+                              </>
+                            ) : null}
+                            <text
+                              x={layoutNode.width / 2}
+                              y={43}
+                              textAnchor={'middle'}
+                              className={styles['graphNodeTarget']}
+                            >
+                              {truncateGraphText(`-> ${targetLabel}`, 20)}
+                            </text>
+                            <text
+                              x={layoutNode.width / 2}
+                              y={61}
+                              textAnchor={'middle'}
+                              className={styles['graphNodeAction']}
+                            >
+                              {truncateGraphText(actionLabel, 20)}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                    {selectedGraphNode ? (
+                      <aside className={styles['graphInspectorOverlay']}>
+                        <div className={styles['graphInspector']}>
+                          <div className={styles['graphInspectorHeader']}>
+                            <div className={styles['graphInspectorTitle']}>
+                              {attackNodeLabelById[selectedGraphNode.id] ||
+                                selectedGraphNode.id}
+                            </div>
+                            <button
+                              type={'button'}
+                              className={styles['graphInspectorButton']}
+                              onClick={() => setSelectedGraphNodeId(undefined)}
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                          <div className={styles['graphInspectorMeta']}>
+                            <span>
+                              Side:{' '}
+                              {selectedGraphNode.side === 'party'
+                                ? 'Party'
+                                : 'Enemy'}
+                            </span>
+                            <span>Layer: {selectedGraphNodeLayer}</span>
+                            {selectedGraphNode.segment !== undefined ? (
+                              <span>Segment: {selectedGraphNode.segment}</span>
+                            ) : null}
+                            <span>
+                              Source:{' '}
+                              {getGraphNodeSourceLabel(
+                                selectedGraphNode.source
+                              )}
+                            </span>
+                          </div>
+
+                          <div className={styles['graphInspectorSection']}>
+                            <h4 className={styles['graphSubhead']}>
+                              Blocked By
+                            </h4>
+                            {selectedGraphIncomingEdges.length > 0 ? (
+                              <ol className={styles['graphInspectorList']}>
+                                {selectedGraphIncomingEdges.map((edge) => (
+                                  <li
+                                    key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
+                                    className={styles['graphInspectorItem']}
+                                  >
+                                    <span className={styles['stepLabel']}>
+                                      {attackNodeLabelById[edge.fromNodeId] ||
+                                        edge.fromNodeId}
+                                    </span>
+                                    <span className={styles['stepDetail']}>
+                                      {formatGraphEdgeReasons(edge.reasons)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ol>
+                            ) : (
+                              <div className={styles['graphInspectorEmpty']}>
+                                No explicit blockers. This attack is currently
+                                enabled at the left edge of the graph.
+                              </div>
+                            )}
+                          </div>
+
+                          <div className={styles['graphInspectorSection']}>
+                            <h4 className={styles['graphSubhead']}>Blocks</h4>
+                            {selectedGraphOutgoingEdges.length > 0 ? (
+                              <ol className={styles['graphInspectorList']}>
+                                {selectedGraphOutgoingEdges.map((edge) => (
+                                  <li
+                                    key={`outgoing-${edge.fromNodeId}-${edge.toNodeId}`}
+                                    className={styles['graphInspectorItem']}
+                                  >
+                                    <span className={styles['stepLabel']}>
+                                      {attackNodeLabelById[edge.toNodeId] ||
+                                        edge.toNodeId}
+                                    </span>
+                                    <span className={styles['stepDetail']}>
+                                      {formatGraphEdgeReasons(edge.reasons)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ol>
+                            ) : (
+                              <div className={styles['graphInspectorEmpty']}>
+                                This node adds no further precedence. Any
+                                remaining relative order is underdetermined at
+                                this rules slice.
+                              </div>
+                            )}
+                          </div>
+
+                          {selectedGraphRelatedCards.length > 0 ? (
+                            <div className={styles['graphInspectorSection']}>
+                              <h4 className={styles['graphSubhead']}>
+                                Related Calls
+                              </h4>
+                              <ol className={styles['graphInspectorList']}>
+                                {selectedGraphRelatedCards.map((card) => (
+                                  <li
+                                    key={`related-${card.id}`}
+                                    className={styles['graphInspectorItem']}
+                                  >
+                                    <span className={styles['stepLabel']}>
+                                      {card.title}
+                                    </span>
+                                    <span className={styles['stepDetail']}>
+                                      {card.summary}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
                           ) : null}
-                          <text
-                            x={layoutNode.width / 2}
-                            y={48}
-                            textAnchor={'middle'}
-                            className={styles['graphNodeTarget']}
-                          >
-                            {truncateGraphText(`-> ${targetLabel}`, 24)}
-                          </text>
-                          <text
-                            x={layoutNode.width / 2}
-                            y={70}
-                            textAnchor={'middle'}
-                            className={styles['graphNodeAction']}
-                          >
-                            {truncateGraphText(actionLabel, 24)}
-                          </text>
-                        </g>
-                      );
-                    })}
-                  </svg>
+                        </div>
+                      </aside>
+                    ) : null}
+                  </>
                 ) : (
                   <div className={styles['graphEmpty']}>
                     Add combatants to generate a precedence graph.
                   </div>
-                )}
-              </div>
-
-              <div className={styles['graphInspector']}>
-                {selectedGraphNode ? (
-                  <>
-                    <div className={styles['graphInspectorHeader']}>
-                      <div className={styles['graphInspectorTitle']}>
-                        {attackNodeLabelById[selectedGraphNode.id] ||
-                          selectedGraphNode.id}
-                      </div>
-                      <button
-                        type={'button'}
-                        className={styles['graphInspectorButton']}
-                        onClick={() => setSelectedGraphNodeId(undefined)}
-                      >
-                        Round overview
-                      </button>
-                    </div>
-                    <div className={styles['graphInspectorMeta']}>
-                      <span>
-                        Side:{' '}
-                        {selectedGraphNode.side === 'party' ? 'Party' : 'Enemy'}
-                      </span>
-                      <span>Layer: {selectedGraphNodeLayer}</span>
-                      {selectedGraphNode.segment !== undefined ? (
-                        <span>Segment: {selectedGraphNode.segment}</span>
-                      ) : null}
-                      <span>
-                        Source:{' '}
-                        {getGraphNodeSourceLabel(selectedGraphNode.source)}
-                      </span>
-                    </div>
-
-                    <div className={styles['graphInspectorSection']}>
-                      <h4 className={styles['graphSubhead']}>Blocked By</h4>
-                      {selectedGraphIncomingEdges.length > 0 ? (
-                        <ol className={styles['graphInspectorList']}>
-                          {selectedGraphIncomingEdges.map((edge) => (
-                            <li
-                              key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
-                              className={styles['graphInspectorItem']}
-                            >
-                              <span className={styles['stepLabel']}>
-                                {attackNodeLabelById[edge.fromNodeId] ||
-                                  edge.fromNodeId}
-                              </span>
-                              <span className={styles['stepDetail']}>
-                                {formatGraphEdgeReasons(edge.reasons)}
-                              </span>
-                            </li>
-                          ))}
-                        </ol>
-                      ) : (
-                        <div className={styles['graphInspectorEmpty']}>
-                          No explicit blockers. This attack is currently enabled
-                          at the left edge of the graph.
-                        </div>
-                      )}
-                    </div>
-
-                    <div className={styles['graphInspectorSection']}>
-                      <h4 className={styles['graphSubhead']}>Blocks</h4>
-                      {selectedGraphOutgoingEdges.length > 0 ? (
-                        <ol className={styles['graphInspectorList']}>
-                          {selectedGraphOutgoingEdges.map((edge) => (
-                            <li
-                              key={`outgoing-${edge.fromNodeId}-${edge.toNodeId}`}
-                              className={styles['graphInspectorItem']}
-                            >
-                              <span className={styles['stepLabel']}>
-                                {attackNodeLabelById[edge.toNodeId] ||
-                                  edge.toNodeId}
-                              </span>
-                              <span className={styles['stepDetail']}>
-                                {formatGraphEdgeReasons(edge.reasons)}
-                              </span>
-                            </li>
-                          ))}
-                        </ol>
-                      ) : (
-                        <div className={styles['graphInspectorEmpty']}>
-                          This node adds no further precedence. Any remaining
-                          relative order is underdetermined at this rules slice.
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className={styles['graphInspectorTitle']}>
-                      Round Overview
-                    </div>
-                    <div className={styles['graphInspectorMeta']}>
-                      <span>
-                        Baseline: <strong>{resolution.simpleOrder}</strong>
-                      </span>
-                      <span>{attackGraph.nodes.length} graph nodes</span>
-                      <span>{attackGraph.edges.length} precedence edges</span>
-                    </div>
-
-                    {simpleOrderCard ? (
-                      <div className={styles['graphInspectorSection']}>
-                        <h4 className={styles['graphSubhead']}>Baseline</h4>
-                        <div className={styles['graphInspectorEmpty']}>
-                          {simpleOrderCard.summary}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {directMeleeCards.length > 0 ? (
-                      <div className={styles['graphInspectorSection']}>
-                        <h4 className={styles['graphSubhead']}>Duel Timing</h4>
-                        <div className={styles['graphInspectorList']}>
-                          {directMeleeCards.map((card) => (
-                            <div
-                              key={card.id}
-                              className={styles['graphInspectorItem']}
-                            >
-                              <span className={styles['stepLabel']}>
-                                {card.title}
-                              </span>
-                              <span className={styles['stepDetail']}>
-                                {card.summary}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {movementCards.length > 0 ? (
-                      <div className={styles['graphInspectorSection']}>
-                        <h4 className={styles['graphSubhead']}>
-                          Movement Calls
-                        </h4>
-                        <div className={styles['graphInspectorList']}>
-                          {movementCards.map((card) => (
-                            <div
-                              key={card.id}
-                              className={styles['graphInspectorItem']}
-                            >
-                              <span className={styles['stepLabel']}>
-                                {card.title}
-                              </span>
-                              <span className={styles['stepDetail']}>
-                                {card.steps[2]?.detail || card.summary}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {unresolvedCard ? (
-                      <div className={styles['graphInspectorSection']}>
-                        <h4 className={styles['graphSubhead']}>Unresolved</h4>
-                        <div className={styles['graphInspectorItem']}>
-                          <span className={styles['stepLabel']}>
-                            {unresolvedCard.title}
-                          </span>
-                          <span className={styles['stepDetail']}>
-                            {unresolvedCard.summary}
-                          </span>
-                        </div>
-                      </div>
-                    ) : attackGraph.nodes.length === 0 ? (
-                      <div className={styles['graphInspectorSection']}>
-                        <div className={styles['graphInspectorEmpty']}>
-                          No attacks are available yet. Add combatants to
-                          inspect the graph.
-                        </div>
-                      </div>
-                    ) : null}
-                  </>
                 )}
               </div>
             </div>
