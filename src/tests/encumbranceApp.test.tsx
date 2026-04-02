@@ -105,6 +105,30 @@ const addCustomItem = ({
 };
 
 describe('encumbrance app regressions', () => {
+  test('add item defaults differ between catalog and custom items', () => {
+    render(<EncumbranceApp mode="dm" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
+
+    let dialog = screen.getByRole('dialog', { name: 'Add Item' });
+    expect(
+      within(dialog).getByLabelText('Magic known to player')
+    ).toHaveDisplayValue('Known mundane');
+    expect(
+      within(dialog).getByLabelText('Value known to player')
+    ).toHaveDisplayValue('Known');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Custom Item' }));
+
+    dialog = screen.getByRole('dialog', { name: 'Add Item' });
+    expect(
+      within(dialog).getByLabelText('Magic known to player')
+    ).toHaveDisplayValue('Unknown');
+    expect(
+      within(dialog).getByLabelText('Value known to player')
+    ).toHaveDisplayValue('Unknown');
+  });
+
   test('custom container flow keeps the established add fields and edit metadata', () => {
     render(<EncumbranceApp mode="dm" />);
 
@@ -302,6 +326,19 @@ describe('encumbrance app regressions', () => {
         name: 'Edit Diamond for Character 2',
       })
     );
+  });
+
+  test('all-characters view disables actions that require a selected character', () => {
+    render(<EncumbranceApp mode="dm" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
+    closeTopModal();
+    fireEvent.click(screen.getByRole('button', { name: 'All Characters' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Export Player Copy' })
+    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add Item' })).toBeDisabled();
   });
 
   test('transferring a container moves its contained items to the new character', () => {

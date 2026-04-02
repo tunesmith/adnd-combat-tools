@@ -73,6 +73,17 @@
   background-color: #f7f5e8;
 }
 
+.button:disabled {
+  background-color: rgba(240, 239, 221, 0.42);
+  border-color: rgba(185, 127, 49, 0.45);
+  color: rgba(93, 45, 46, 0.48);
+  cursor: not-allowed;
+}
+
+.button:disabled:hover {
+  background-color: rgba(240, 239, 221, 0.42);
+}
+
 .buttonPrimary {
   color: var(--dark-olive-green);
 }

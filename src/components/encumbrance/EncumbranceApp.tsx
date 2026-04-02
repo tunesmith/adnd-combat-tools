@@ -145,12 +145,14 @@ interface AddItemDetailsDraft {
   fullyIdentified: boolean;
 }
 
-const defaultAddItemDetailsDraft = (): AddItemDetailsDraft => ({
+const defaultAddItemDetailsDraft = (
+  addMode: AddMode = 'catalog'
+): AddItemDetailsDraft => ({
   day: 0,
   playerNotes: '',
   dmNotes: '',
-  playerKnowsValue: true,
-  playerMagicKnowledge: 'unknown',
+  playerKnowsValue: addMode === 'custom' ? false : true,
+  playerMagicKnowledge: addMode === 'catalog' ? 'known-mundane' : 'unknown',
   isMagical: false,
   fullyIdentified: false,
 });
@@ -914,12 +916,14 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   };
 
   const openAddModal = () => {
-    setAddItemDetailsDraft(defaultAddItemDetailsDraft());
+    setAddMode('catalog');
+    setAddItemDetailsDraft(defaultAddItemDetailsDraft('catalog'));
     setShowAddModal(true);
   };
 
   const closeAddModal = () => {
-    setAddItemDetailsDraft(defaultAddItemDetailsDraft());
+    setAddMode('catalog');
+    setAddItemDetailsDraft(defaultAddItemDetailsDraft('catalog'));
     setShowAddModal(false);
   };
 
@@ -2309,7 +2313,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                         } ${
                           addMode === 'catalog' ? styles['buttonSelected'] : ''
                         }`}
-                        onClick={() => setAddMode('catalog')}
+                        onClick={() => {
+                          setAddMode('catalog');
+                          setAddItemDetailsDraft(
+                            defaultAddItemDetailsDraft('catalog')
+                          );
+                        }}
                       >
                         Catalog Item
                       </button>
@@ -2320,7 +2329,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                         } ${
                           addMode === 'custom' ? styles['buttonSelected'] : ''
                         }`}
-                        onClick={() => setAddMode('custom')}
+                        onClick={() => {
+                          setAddMode('custom');
+                          setAddItemDetailsDraft(
+                            defaultAddItemDetailsDraft('custom')
+                          );
+                        }}
                       >
                         Custom Item
                       </button>
