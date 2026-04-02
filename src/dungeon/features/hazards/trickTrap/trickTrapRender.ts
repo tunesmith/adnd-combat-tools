@@ -129,7 +129,7 @@ const TRICK_TRAP_DETAILS: Record<TrickTrap, string> = {
   [TrickTrap.ArrowTrap]:
     'There is an arrow trap of 1–3 arrows. 1 in 20 is poisoned. ',
   [TrickTrap.SpearTrap]:
-    'There is a pear trap of 1–3 spears. 1 in 20 is poisoned. ',
+    'There is a spear trap of 1–3 spears. 1 in 20 is poisoned. ',
   [TrickTrap.GasCorridor]:
     "Gas is here. The party has detected it, but must breathe it to continue along corridor, as it covers 60' ahead. Mark map accordingly regardless of turning back or not. ",
   [TrickTrap.FallingDoorOrStone]:

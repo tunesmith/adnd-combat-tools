@@ -38,6 +38,14 @@ describe('Detail helpers for door chains and traps', () => {
     ]);
   });
 
+  test('spear trap detail uses spear wording', () => {
+    const outcome = resolveTrickTrap({ roll: 16 }) as OutcomeEventNode;
+    const paragraphs = toDetailRender(outcome).filter(isParagraph);
+    expect(paragraphs.map((p) => p.text)).toEqual([
+      'There is a spear trap of 1–3 spears. 1 in 20 is poisoned. ',
+    ]);
+  });
+
   test('illusionary wall detail tree includes preview and resolved description', () => {
     const trap = resolveTrickTrap({ roll: 19 }) as OutcomeEventNode;
     const nature = resolveIllusionaryWallNature({
