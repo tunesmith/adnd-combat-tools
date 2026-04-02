@@ -272,14 +272,14 @@ export const buildInitiativeAttackGraph = (
       return;
     }
 
-    const contactNode = createContactNode(
-      attacker,
-      movementResolution.contactSegment
-    );
-    addNode(nodesById, contactNode);
     movementHandledCombatantIdSet.add(attacker.id);
 
     if (!movementResolution.sameRoundAttack) {
+      const contactNode = createContactNode(
+        attacker,
+        movementResolution.contactSegment
+      );
+      addNode(nodesById, contactNode);
       return;
     }
 
@@ -289,12 +289,6 @@ export const buildInitiativeAttackGraph = (
     );
     addNode(nodesById, attackerAttackNode);
     movementHandledCombatantIdSet.add(attacker.id);
-    mergeEdgeReason(
-      edgesByKey,
-      contactNode.id,
-      attackerAttackNode.id,
-      'movement'
-    );
 
     const targetMovementResolution = movementResolutionByCombatantId.get(
       target.id
@@ -329,13 +323,6 @@ export const buildInitiativeAttackGraph = (
       );
       return;
     }
-
-    mergeEdgeReason(
-      edgesByKey,
-      contactNode.id,
-      targetAttackNode.id,
-      'movement'
-    );
 
     if (movementResolution.firstStrike === 'target') {
       mergeEdgeReason(

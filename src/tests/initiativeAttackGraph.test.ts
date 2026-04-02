@@ -193,13 +193,6 @@ describe('initiative attack graph', () => {
     expect(graph.nodes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'contact:party-1',
-          label: 'contact',
-          kind: 'contact',
-          source: 'movement-contact',
-          segment: 2,
-        }),
-        expect.objectContaining({
           id: 'attack:party-1:1',
           kind: 'attack',
           segment: 2,
@@ -213,21 +206,12 @@ describe('initiative attack graph', () => {
     );
     expect(graph.edges).toEqual([
       {
-        fromNodeId: 'contact:party-1',
-        toNodeId: 'attack:party-1:1',
-        reasons: ['movement'],
-      },
-      {
         fromNodeId: 'attack:party-1:1',
         toNodeId: 'attack:enemy-3:1',
         reasons: ['movement'],
       },
     ]);
-    expect(graph.layers).toEqual([
-      ['contact:party-1'],
-      ['attack:party-1:1'],
-      ['attack:enemy-3:1'],
-    ]);
+    expect(graph.layers).toEqual([['attack:party-1:1'], ['attack:enemy-3:1']]);
   });
 
   test('graphs set versus charge as an automatic preemption of the charger', () => {
@@ -266,29 +250,12 @@ describe('initiative attack graph', () => {
 
     expect(graph.nodes).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'contact:enemy-3', segment: 2 }),
-        expect.objectContaining({ id: 'contact:party-1', segment: 2 }),
         expect.objectContaining({ id: 'attack:party-1:1', segment: 2 }),
         expect.objectContaining({ id: 'attack:enemy-3:1', segment: 2 }),
       ])
     );
     expect(graph.edges).toEqual(
       expect.arrayContaining([
-        {
-          fromNodeId: 'contact:enemy-3',
-          toNodeId: 'attack:enemy-3:1',
-          reasons: ['movement'],
-        },
-        {
-          fromNodeId: 'contact:enemy-3',
-          toNodeId: 'attack:party-1:1',
-          reasons: ['movement'],
-        },
-        {
-          fromNodeId: 'contact:party-1',
-          toNodeId: 'attack:party-1:1',
-          reasons: ['movement'],
-        },
         {
           fromNodeId: 'attack:party-1:1',
           toNodeId: 'attack:enemy-3:1',
@@ -427,16 +394,6 @@ describe('initiative attack graph', () => {
     expect(graph.nodes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'contact:party-1',
-          kind: 'contact',
-          segment: 2,
-        }),
-        expect.objectContaining({
-          id: 'contact:enemy-3',
-          kind: 'contact',
-          segment: 2,
-        }),
-        expect.objectContaining({
           id: 'attack:party-1:1',
           kind: 'attack',
           segment: 2,
@@ -450,21 +407,6 @@ describe('initiative attack graph', () => {
     );
     expect(graph.edges).toEqual(
       expect.arrayContaining([
-        {
-          fromNodeId: 'contact:party-1',
-          toNodeId: 'attack:party-1:1',
-          reasons: ['movement'],
-        },
-        {
-          fromNodeId: 'contact:enemy-3',
-          toNodeId: 'attack:enemy-3:1',
-          reasons: ['movement'],
-        },
-        {
-          fromNodeId: 'contact:party-1',
-          toNodeId: 'attack:party-1:1',
-          reasons: ['movement'],
-        },
         {
           fromNodeId: 'attack:enemy-3:1',
           toNodeId: 'attack:party-1:1',
@@ -515,29 +457,12 @@ describe('initiative attack graph', () => {
 
     expect(graph.nodes).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'contact:party-1', segment: 1 }),
-        expect.objectContaining({ id: 'contact:enemy-3', segment: 1 }),
         expect.objectContaining({ id: 'attack:party-1:1', segment: 1 }),
         expect.objectContaining({ id: 'attack:enemy-3:1', segment: 1 }),
       ])
     );
     expect(graph.edges).toEqual(
       expect.arrayContaining([
-        {
-          fromNodeId: 'contact:party-1',
-          toNodeId: 'attack:party-1:1',
-          reasons: ['movement'],
-        },
-        {
-          fromNodeId: 'contact:enemy-3',
-          toNodeId: 'attack:enemy-3:1',
-          reasons: ['movement'],
-        },
-        {
-          fromNodeId: 'contact:enemy-3',
-          toNodeId: 'attack:party-1:1',
-          reasons: ['movement'],
-        },
         {
           fromNodeId: 'attack:party-1:1',
           toNodeId: 'attack:enemy-3:1',

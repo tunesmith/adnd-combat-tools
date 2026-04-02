@@ -11,7 +11,6 @@ const ATTACKER_ID = 'party-1';
 const DEFENDER_ID = 'enemy-3';
 const ATTACKER_ATTACK_NODE_ID = `attack:${ATTACKER_ID}:1`;
 const DEFENDER_ATTACK_NODE_ID = `attack:${DEFENDER_ID}:1`;
-const ATTACKER_CONTACT_NODE_ID = `contact:${ATTACKER_ID}`;
 
 const DMG_P66_JUSTIFICATION =
   'DMG p. 66: "Initiative is NOT checked..." and "longer weapon/reach attacks first."';
@@ -171,11 +170,6 @@ describe('initiative charge first-strike matrix', () => {
       expect(graph.nodes).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            id: ATTACKER_CONTACT_NODE_ID,
-            kind: 'contact',
-            segment: 2,
-          }),
-          expect.objectContaining({
             id: ATTACKER_ATTACK_NODE_ID,
             kind: 'attack',
             segment: 2,
@@ -198,11 +192,6 @@ describe('initiative charge first-strike matrix', () => {
         expect(graph.edges).toEqual(
           expect.arrayContaining([
             {
-              fromNodeId: ATTACKER_CONTACT_NODE_ID,
-              toNodeId: ATTACKER_ATTACK_NODE_ID,
-              reasons: ['movement'],
-            },
-            {
               fromNodeId: ATTACKER_ATTACK_NODE_ID,
               toNodeId: DEFENDER_ATTACK_NODE_ID,
               reasons: ['movement'],
@@ -217,16 +206,6 @@ describe('initiative charge first-strike matrix', () => {
         expect(graph.edges).toEqual(
           expect.arrayContaining([
             {
-              fromNodeId: ATTACKER_CONTACT_NODE_ID,
-              toNodeId: ATTACKER_ATTACK_NODE_ID,
-              reasons: ['movement'],
-            },
-            {
-              fromNodeId: ATTACKER_CONTACT_NODE_ID,
-              toNodeId: DEFENDER_ATTACK_NODE_ID,
-              reasons: ['movement'],
-            },
-            {
               fromNodeId: DEFENDER_ATTACK_NODE_ID,
               toNodeId: ATTACKER_ATTACK_NODE_ID,
               reasons: ['movement'],
@@ -237,20 +216,6 @@ describe('initiative charge first-strike matrix', () => {
         return;
       }
 
-      expect(graph.edges).toEqual(
-        expect.arrayContaining([
-          {
-            fromNodeId: ATTACKER_CONTACT_NODE_ID,
-            toNodeId: ATTACKER_ATTACK_NODE_ID,
-            reasons: ['movement'],
-          },
-          {
-            fromNodeId: ATTACKER_CONTACT_NODE_ID,
-            toNodeId: DEFENDER_ATTACK_NODE_ID,
-            reasons: ['movement'],
-          },
-        ])
-      );
       expect(graph.edges).not.toEqual(
         expect.arrayContaining([
           expect.objectContaining({

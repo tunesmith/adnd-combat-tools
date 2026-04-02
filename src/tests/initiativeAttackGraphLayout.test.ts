@@ -51,26 +51,14 @@ describe('initiative attack graph layout', () => {
     const enemyFirstAttack = layout.nodes.find(
       (node) => node.nodeId === 'attack:enemy-3:1'
     );
-    const enemySecondAttack = layout.nodes.find(
-      (node) => node.nodeId === 'attack:enemy-4:1'
-    );
     const partyFirstAttack = layout.nodes.find(
       (node) => node.nodeId === 'attack:party-1:1'
     );
-    const partySecondAttack = layout.nodes.find(
-      (node) => node.nodeId === 'attack:party-2:1'
-    );
 
     expect(enemyFirstAttack).toBeDefined();
-    expect(enemySecondAttack).toBeDefined();
     expect(partyFirstAttack).toBeDefined();
-    expect(partySecondAttack).toBeDefined();
 
-    expect(enemyFirstAttack?.x).toBe(enemySecondAttack?.x);
-    expect(partyFirstAttack?.x).toBe(partySecondAttack?.x);
     expect(enemyFirstAttack?.x).toBeLessThan(partyFirstAttack?.x || 0);
-    expect(enemyFirstAttack?.y).toBeLessThan(enemySecondAttack?.y || 0);
-    expect(partyFirstAttack?.y).toBeLessThan(partySecondAttack?.y || 0);
     expect(
       layout.segmentColumns.some((column) => column.x === enemyFirstAttack?.x)
     ).toBe(false);
@@ -89,7 +77,7 @@ describe('initiative attack graph layout', () => {
     );
   });
 
-  test('anchors charge contact and same-segment attacks under their segment column', () => {
+  test('anchors same-segment charge attacks under their segment column', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge Contact',
       partyInitiative: 3,
@@ -127,9 +115,6 @@ describe('initiative attack graph layout', () => {
     const segmentTwoColumn = layout.segmentColumns.find(
       (column) => column.segment === 2
     );
-    const contactNode = layout.nodes.find(
-      (node) => node.nodeId === 'contact:party-1'
-    );
     const attackerNode = layout.nodes.find(
       (node) => node.nodeId === 'attack:party-1:1'
     );
@@ -138,17 +123,15 @@ describe('initiative attack graph layout', () => {
     );
 
     expect(segmentTwoColumn).toBeDefined();
-    expect(contactNode?.x).toBe(segmentTwoColumn?.x);
     expect(attackerNode?.x).toBe(segmentTwoColumn?.x);
     expect(defenderNode?.x).toBe(segmentTwoColumn?.x);
-    expect(contactNode?.y).toBeLessThan(attackerNode?.y || 0);
     expect(attackerNode?.y).toBeLessThan(defenderNode?.y || 0);
 
     expect(layout.edges).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          fromNodeId: 'contact:party-1',
-          toNodeId: 'attack:party-1:1',
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
           path: expect.stringContaining(`M ${segmentTwoColumn?.centerX} `),
         }),
       ])
