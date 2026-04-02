@@ -547,9 +547,7 @@
 }
 
 .graphPanel {
-  margin-top: 1.2rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(172, 114, 35, 0.5);
+  margin-top: 0;
 }
 
 .graphHeader {
@@ -691,6 +689,22 @@
   margin-bottom: 0.55rem;
 }
 
+.graphInspectorHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.graphInspectorButton {
+  border: 1px solid rgba(172, 114, 35, 0.75);
+  background: rgba(240, 239, 221, 0.08);
+  color: var(--eggshell);
+  cursor: pointer;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.92rem;
+}
+
 .graphInspectorMeta {
   display: flex;
   flex-direction: column;
@@ -723,37 +737,6 @@
   border: 1px solid rgba(172, 114, 35, 0.4);
   padding: 0.8rem;
   line-height: 1.45;
-}
-
-.resultCard {
-  background: rgba(240, 239, 221, 0.08);
-  border-left: 5px solid var(--goldenrod);
-  padding: 1rem 1rem 1rem 1.1rem;
-}
-
-.resultHeader {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin-bottom: 0.7rem;
-}
-
-.resultKind {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.9rem;
-  color: var(--goldenrod);
-}
-
-.resultTitle {
-  font-family: 'Sura', serif;
-  font-size: 1.55rem;
-}
-
-.resultSummary {
-  font-size: 1.08rem;
-  line-height: 1.5;
-  margin-bottom: 0.9rem;
 }
 
 .stepList {

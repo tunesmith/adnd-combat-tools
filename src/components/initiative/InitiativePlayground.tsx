@@ -361,6 +361,18 @@ const InitiativePlayground = () => {
     () => buildInitiativeRoundResolutionViewModel(scenario, resolution),
     [resolution, scenario]
   );
+  const simpleOrderCard = viewModel.cards.find(
+    (card) => card.kind === 'simple-order'
+  );
+  const directMeleeCards = viewModel.cards.filter(
+    (card) => card.kind === 'direct-melee'
+  );
+  const movementCards = viewModel.cards.filter(
+    (card) => card.kind === 'movement'
+  );
+  const unresolvedCard = viewModel.cards.find(
+    (card) => card.kind === 'unresolved'
+  );
   const attackNodeById = useMemo(
     () => new Map(attackGraph.nodes.map((node) => [node.id, node] as const)),
     [attackGraph.nodes]
@@ -661,9 +673,9 @@ const InitiativePlayground = () => {
       ),
     [attackGraph.nodes, combatantById]
   );
-  const selectedGraphNode =
-    attackGraph.nodes.find((node) => node.id === selectedGraphNodeId) ||
-    attackGraph.nodes[0];
+  const selectedGraphNode = attackGraph.nodes.find(
+    (node) => node.id === selectedGraphNodeId
+  );
   const selectedGraphNodeLayer = selectedGraphNode
     ? getGraphLayerIndex(attackGraph.layers, selectedGraphNode.id)
     : 0;
@@ -1204,84 +1216,42 @@ const InitiativePlayground = () => {
         </section>
 
         <section className={styles['panel']}>
-          <div className={styles['panelHeader']}>
-            <h2 className={styles['panelTitle']}>Suggested Order</h2>
-            <p className={styles['panelCopy']}>
-              The output stays partial on purpose. Anything still ambiguous
-              remains explicitly unresolved, and the graph now tracks attack
-              routine components rather than only raw attack numbers.
-            </p>
-          </div>
-
-          <div className={styles['summaryStrip']}>
-            <div className={styles['summaryCell']}>
-              <span className={styles['summaryLabel']}>Simple order</span>
-              <span className={styles['summaryValue']}>
-                {resolution.simpleOrder}
-              </span>
-            </div>
-            <div className={styles['summaryCell']}>
-              <span className={styles['summaryLabel']}>
-                Direct melee overrides
-              </span>
-              <span className={styles['summaryValue']}>
-                {resolution.directMeleeEngagements.length}
-              </span>
-            </div>
-            <div className={styles['summaryCell']}>
-              <span className={styles['summaryLabel']}>Unresolved</span>
-              <span className={styles['summaryValue']}>
-                {resolution.unresolvedMeleeCandidateIds.length}
-              </span>
-            </div>
-            <div className={styles['summaryCell']}>
-              <span className={styles['summaryLabel']}>Movement calls</span>
-              <span className={styles['summaryValue']}>
-                {resolution.movementResolutions.length}
-              </span>
-            </div>
-            <div className={styles['summaryCell']}>
-              <span className={styles['summaryLabel']}>Known precedence</span>
-              <span className={styles['summaryValue']}>
-                {attackGraph.edges.length}
-              </span>
-            </div>
-          </div>
-
-          <div className={styles['cardStack']}>
-            {viewModel.cards.map((card) => (
-              <article key={card.id} className={styles['resultCard']}>
-                <div className={styles['resultHeader']}>
-                  <span className={styles['resultKind']}>{card.kind}</span>
-                  <h3 className={styles['resultTitle']}>{card.title}</h3>
-                </div>
-                <p className={styles['resultSummary']}>{card.summary}</p>
-                <ol className={styles['stepList']}>
-                  {card.steps.map((step) => (
-                    <li
-                      key={`${card.id}-${step.label}`}
-                      className={styles['stepItem']}
-                    >
-                      <span className={styles['stepLabel']}>{step.label}</span>
-                      <span className={styles['stepDetail']}>
-                        {step.detail}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </article>
-            ))}
-          </div>
-
           <div className={styles['graphPanel']}>
             <div className={styles['graphHeader']}>
-              <h3 className={styles['graphTitle']}>Precedence DAG</h3>
+              <h2 className={styles['graphTitle']}>Precedence DAG</h2>
               <p className={styles['graphCopy']}>
                 The graph only contains attack relations justified by baseline
                 initiative or a narrower melee timing rule. Movement outcomes
                 now enter as explicit contact events when the current rules
-                actually determine them.
+                actually determine them. With no node selected, the inspector
+                shows round context and unresolved calls.
               </p>
+            </div>
+            <div className={styles['summaryStrip']}>
+              <div className={styles['summaryCell']}>
+                <span className={styles['summaryLabel']}>Baseline</span>
+                <span className={styles['summaryValue']}>
+                  {resolution.simpleOrder}
+                </span>
+              </div>
+              <div className={styles['summaryCell']}>
+                <span className={styles['summaryLabel']}>Duels</span>
+                <span className={styles['summaryValue']}>
+                  {resolution.directMeleeEngagements.length}
+                </span>
+              </div>
+              <div className={styles['summaryCell']}>
+                <span className={styles['summaryLabel']}>Movement</span>
+                <span className={styles['summaryValue']}>
+                  {resolution.movementResolutions.length}
+                </span>
+              </div>
+              <div className={styles['summaryCell']}>
+                <span className={styles['summaryLabel']}>Unresolved</span>
+                <span className={styles['summaryValue']}>
+                  {resolution.unresolvedMeleeCandidateIds.length}
+                </span>
+              </div>
             </div>
             <div className={styles['graphLayoutShell']}>
               <div className={styles['graphViewport']}>
@@ -1467,9 +1437,18 @@ const InitiativePlayground = () => {
               <div className={styles['graphInspector']}>
                 {selectedGraphNode ? (
                   <>
-                    <div className={styles['graphInspectorTitle']}>
-                      {attackNodeLabelById[selectedGraphNode.id] ||
-                        selectedGraphNode.id}
+                    <div className={styles['graphInspectorHeader']}>
+                      <div className={styles['graphInspectorTitle']}>
+                        {attackNodeLabelById[selectedGraphNode.id] ||
+                          selectedGraphNode.id}
+                      </div>
+                      <button
+                        type={'button'}
+                        className={styles['graphInspectorButton']}
+                        onClick={() => setSelectedGraphNodeId(undefined)}
+                      >
+                        Round overview
+                      </button>
                     </div>
                     <div className={styles['graphInspectorMeta']}>
                       <span>
@@ -1541,10 +1520,92 @@ const InitiativePlayground = () => {
                     </div>
                   </>
                 ) : (
-                  <div className={styles['graphInspectorEmpty']}>
-                    No attacks are available yet. Add combatants to inspect the
-                    graph.
-                  </div>
+                  <>
+                    <div className={styles['graphInspectorTitle']}>
+                      Round Overview
+                    </div>
+                    <div className={styles['graphInspectorMeta']}>
+                      <span>
+                        Baseline: <strong>{resolution.simpleOrder}</strong>
+                      </span>
+                      <span>{attackGraph.nodes.length} graph nodes</span>
+                      <span>{attackGraph.edges.length} precedence edges</span>
+                    </div>
+
+                    {simpleOrderCard ? (
+                      <div className={styles['graphInspectorSection']}>
+                        <h4 className={styles['graphSubhead']}>Baseline</h4>
+                        <div className={styles['graphInspectorEmpty']}>
+                          {simpleOrderCard.summary}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {directMeleeCards.length > 0 ? (
+                      <div className={styles['graphInspectorSection']}>
+                        <h4 className={styles['graphSubhead']}>Duel Timing</h4>
+                        <div className={styles['graphInspectorList']}>
+                          {directMeleeCards.map((card) => (
+                            <div
+                              key={card.id}
+                              className={styles['graphInspectorItem']}
+                            >
+                              <span className={styles['stepLabel']}>
+                                {card.title}
+                              </span>
+                              <span className={styles['stepDetail']}>
+                                {card.summary}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {movementCards.length > 0 ? (
+                      <div className={styles['graphInspectorSection']}>
+                        <h4 className={styles['graphSubhead']}>
+                          Movement Calls
+                        </h4>
+                        <div className={styles['graphInspectorList']}>
+                          {movementCards.map((card) => (
+                            <div
+                              key={card.id}
+                              className={styles['graphInspectorItem']}
+                            >
+                              <span className={styles['stepLabel']}>
+                                {card.title}
+                              </span>
+                              <span className={styles['stepDetail']}>
+                                {card.steps[2]?.detail || card.summary}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {unresolvedCard ? (
+                      <div className={styles['graphInspectorSection']}>
+                        <h4 className={styles['graphSubhead']}>Unresolved</h4>
+                        <div className={styles['graphInspectorItem']}>
+                          <span className={styles['stepLabel']}>
+                            {unresolvedCard.title}
+                          </span>
+                          <span className={styles['stepDetail']}>
+                            {unresolvedCard.summary}
+                          </span>
+                        </div>
+                      </div>
+                    ) : attackGraph.nodes.length === 0 ? (
+                      <div className={styles['graphInspectorSection']}>
+                        <div className={styles['graphInspectorEmpty']}>
+                          No attacks are available yet. Add combatants to
+                          inspect the graph.
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
                 )}
               </div>
             </div>
