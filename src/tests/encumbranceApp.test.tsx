@@ -1,9 +1,20 @@
 /** @jest-environment jsdom */
 
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import EncumbranceApp from '../components/encumbrance/EncumbranceApp';
+import {
+  redactEncumbranceDocument,
+  stringifyEncumbranceDocument,
+} from '../helpers/encumbranceDocument';
 import { encumbranceCatalog } from '../tables/encumbranceCatalog';
+import type { EncumbranceDocument } from '../types/encumbrance';
 
 const getCatalogIdByName = (name: string): string => {
   const item = encumbranceCatalog.find((candidate) => candidate.name === name);
@@ -17,6 +28,10 @@ const getCatalogIdByName = (name: string): string => {
 
 const closeTopModal = () => {
   fireEvent.keyDown(window, { key: 'Escape' });
+};
+
+const openFileMenu = () => {
+  fireEvent.click(screen.getByRole('button', { name: 'File' }));
 };
 
 const renameCharacterInOpenModal = (nextName: string) => {
@@ -251,7 +266,8 @@ describe('encumbrance app regressions', () => {
         throw new Error('Expected generated character and item ids.');
       }
 
-      fireEvent.click(screen.getByRole('button', { name: 'Import Player' }));
+      openFileMenu();
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Import Player' }));
 
       const mergeInput = container.querySelector(
         'input[aria-label="Import Player File"]'
@@ -460,36 +476,528 @@ describe('encumbrance app regressions', () => {
   });
 
   test('all-characters view disables actions that require a selected character', () => {
+    const originalShowOpenFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showOpenFilePicker;
+    const originalShowSaveFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showSaveFilePicker;
+
+    Object.defineProperty(window, 'showOpenFilePicker', {
+      configurable: true,
+      value: jest.fn(),
+    });
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: jest.fn(),
+    });
+
     render(<EncumbranceApp mode="dm" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
     closeTopModal();
     fireEvent.click(screen.getByRole('button', { name: 'All Characters' }));
+    openFileMenu();
 
-    expect(
-      screen.getByRole('button', { name: 'Export Player' })
-    ).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Add Item' })).toBeDisabled();
+    try {
+      expect(
+        screen.getByRole('menuitem', { name: 'Export Player' })
+      ).toBeDisabled();
+      expect(
+        screen.getByRole('menuitem', { name: 'Save Player' })
+      ).toBeDisabled();
+      expect(
+        screen.getByRole('menuitem', { name: 'Save Player As...' })
+      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Add Item' })).toBeDisabled();
+    } finally {
+      Object.defineProperty(window, 'showOpenFilePicker', {
+        configurable: true,
+        value: originalShowOpenFilePicker,
+      });
+      Object.defineProperty(window, 'showSaveFilePicker', {
+        configurable: true,
+        value: originalShowSaveFilePicker,
+      });
+    }
   });
 
-  test('player view only exposes load and save for the current player file', () => {
+  test('player view defaults to load and export when native file handles are unavailable', () => {
     render(<EncumbranceApp mode="player" />);
+    openFileMenu();
 
     expect(
-      screen.queryByRole('button', { name: 'New File' })
+      screen.queryByRole('menuitem', { name: 'New File' })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Import Player' })
+      screen.queryByRole('menuitem', { name: 'Import Player' })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Export Player' })
+      screen.queryByRole('menuitem', { name: 'Save Player' })
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Load File' })
+      screen.queryByRole('menuitem', { name: 'Save Player As...' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitem', { name: 'Export Player' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: 'Load File' })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Save File' })
+      screen.getByRole('menuitem', { name: 'Export File' })
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitem', { name: 'Save' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitem', { name: 'Save As...' })
+    ).not.toBeInTheDocument();
+  });
+
+  test('player view shows save actions in Chrome mode and saves back to the same file handle', async () => {
+    const originalShowOpenFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showOpenFilePicker;
+    const originalShowSaveFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showSaveFilePicker;
+    const writable = {
+      write: jest.fn(async () => undefined),
+      close: jest.fn(async () => undefined),
+    };
+    const fileHandle = {
+      name: 'bemis-encumbrance-player.json',
+      getFile: jest.fn(
+        async (): Promise<File> =>
+          ({
+            text: async () =>
+              JSON.stringify({
+                kind: 'adnd-encumbrance-player',
+                version: 9,
+                character: {
+                  id: 'char-player-1',
+                  name: 'Bemis Taletreader',
+                  strength: {
+                    score: 8,
+                    exceptional: 'none',
+                  },
+                  inventory: [
+                    {
+                      id: 'item-player-1',
+                      catalogId: getCatalogIdByName('Dagger and scabbard'),
+                      quantity: 1,
+                      containerId: null,
+                      day: 0,
+                      playerNotes: '',
+                      playerKnowsValue: true,
+                      playerMagicKnowledge: 'known-mundane',
+                    },
+                  ],
+                },
+              }),
+          } as File)
+      ),
+      createWritable: jest.fn(async () => writable),
+      queryPermission: jest.fn(async () => 'granted' as PermissionState),
+      requestPermission: jest.fn(async () => 'granted' as PermissionState),
+    };
+    const showOpenFilePicker = jest.fn(async () => [fileHandle]);
+    const showSaveFilePicker = jest.fn(async () => fileHandle);
+
+    Object.defineProperty(window, 'showOpenFilePicker', {
+      configurable: true,
+      value: showOpenFilePicker,
+    });
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: showSaveFilePicker,
+    });
+
+    try {
+      render(<EncumbranceApp mode="player" />);
+      openFileMenu();
+
+      expect(
+        screen.getByRole('menuitem', { name: 'Save' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('menuitem', { name: 'Save As...' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('menuitem', { name: 'Export File' })
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Load File' }));
+
+      await screen.findByRole('button', { name: 'Edit Dagger and scabbard' });
+      openFileMenu();
+
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Save' }));
+
+      await waitFor(() => {
+        expect(fileHandle.createWritable).toHaveBeenCalled();
+      });
+
+      expect(showOpenFilePicker).toHaveBeenCalledTimes(1);
+      expect(showSaveFilePicker).not.toHaveBeenCalled();
+      expect(writable.write).toHaveBeenCalledWith(
+        expect.stringContaining('"kind": "adnd-encumbrance-player"')
+      );
+    } finally {
+      Object.defineProperty(window, 'showOpenFilePicker', {
+        configurable: true,
+        value: originalShowOpenFilePicker,
+      });
+      Object.defineProperty(window, 'showSaveFilePicker', {
+        configurable: true,
+        value: originalShowSaveFilePicker,
+      });
+    }
+  });
+
+  test('export stays download-style even in Chrome mode', async () => {
+    const originalShowOpenFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showOpenFilePicker;
+    const originalShowSaveFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showSaveFilePicker;
+    const writable = {
+      write: jest.fn(async () => undefined),
+      close: jest.fn(async () => undefined),
+    };
+    const fileHandle = {
+      name: 'bemis-encumbrance-player.json',
+      getFile: jest.fn(
+        async (): Promise<File> => ({ text: async () => '' } as File)
+      ),
+      createWritable: jest.fn(async () => writable),
+      queryPermission: jest.fn(async () => 'granted' as PermissionState),
+      requestPermission: jest.fn(async () => 'granted' as PermissionState),
+    };
+    const showOpenFilePicker = jest.fn(async () => [fileHandle]);
+    const showSaveFilePicker = jest.fn(async () => fileHandle);
+    const clickSpy = jest
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    const createObjectURLMock = jest.fn(() => 'blob:test');
+    const revokeObjectURLMock = jest.fn();
+
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: createObjectURLMock,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: revokeObjectURLMock,
+    });
+
+    Object.defineProperty(window, 'showOpenFilePicker', {
+      configurable: true,
+      value: showOpenFilePicker,
+    });
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: showSaveFilePicker,
+    });
+
+    try {
+      render(<EncumbranceApp mode="player" />);
+      openFileMenu();
+
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Export File' }));
+
+      expect(showSaveFilePicker).not.toHaveBeenCalled();
+      expect(fileHandle.createWritable).not.toHaveBeenCalled();
+      expect(createObjectURLMock).toHaveBeenCalledTimes(1);
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+      expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:test');
+    } finally {
+      clickSpy.mockRestore();
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        value: originalCreateObjectURL,
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        value: originalRevokeObjectURL,
+      });
+      Object.defineProperty(window, 'showOpenFilePicker', {
+        configurable: true,
+        value: originalShowOpenFilePicker,
+      });
+      Object.defineProperty(window, 'showSaveFilePicker', {
+        configurable: true,
+        value: originalShowSaveFilePicker,
+      });
+    }
+  });
+
+  test('dm import player remembers the selected player file handle and reuses it in Chrome mode', async () => {
+    const originalShowOpenFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showOpenFilePicker;
+    const originalShowSaveFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showSaveFilePicker;
+
+    const dmDocument: EncumbranceDocument = {
+      kind: 'adnd-encumbrance-dm',
+      version: 9,
+      activeCharacterId: 'character-1',
+      characters: [
+        {
+          id: 'character-1',
+          name: 'Azalia Larkspur',
+          strength: {
+            score: 8,
+            exceptional: 'none',
+          },
+          dmNotes: '',
+          inventory: [
+            {
+              id: 'item-1',
+              catalogId: getCatalogIdByName('Dagger and scabbard'),
+              quantity: 1,
+              containerId: null,
+              day: 0,
+              playerNotes: '',
+              dmNotes: '',
+              playerKnowsValue: true,
+              playerMagicKnowledge: 'known-mundane',
+              isMagical: false,
+              fullyIdentified: false,
+            },
+          ],
+        },
+      ],
+    };
+    const playerDocument = redactEncumbranceDocument(dmDocument, 'character-1');
+    const existingPlayerItem = playerDocument.character.inventory[0];
+
+    if (!existingPlayerItem) {
+      throw new Error('Expected imported player item.');
+    }
+
+    playerDocument.character.inventory[0] = {
+      ...existingPlayerItem,
+      playerNotes: 'Updated by player.',
+    };
+
+    const dmFileHandle = {
+      name: 'party-encumbrance-dm.json',
+      getFile: jest.fn(
+        async (): Promise<File> =>
+          ({
+            text: async () => stringifyEncumbranceDocument(dmDocument),
+          } as File)
+      ),
+      createWritable: jest.fn(async () => ({
+        write: async () => undefined,
+        close: async () => undefined,
+      })),
+      queryPermission: jest.fn(async () => 'granted' as PermissionState),
+      requestPermission: jest.fn(async () => 'granted' as PermissionState),
+    };
+    const playerFileHandle = {
+      name: 'azalia-encumbrance-player.json',
+      getFile: jest.fn(
+        async (): Promise<File> =>
+          ({
+            text: async () => stringifyEncumbranceDocument(playerDocument),
+          } as File)
+      ),
+      createWritable: jest.fn(async () => ({
+        write: async () => undefined,
+        close: async () => undefined,
+      })),
+      queryPermission: jest.fn(async () => 'granted' as PermissionState),
+      requestPermission: jest.fn(async () => 'granted' as PermissionState),
+    };
+    const showOpenFilePicker = jest
+      .fn()
+      .mockImplementationOnce(async () => [dmFileHandle])
+      .mockImplementationOnce(async () => [playerFileHandle]);
+    const showSaveFilePicker = jest.fn(async () => dmFileHandle);
+
+    Object.defineProperty(window, 'showOpenFilePicker', {
+      configurable: true,
+      value: showOpenFilePicker,
+    });
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: showSaveFilePicker,
+    });
+
+    try {
+      render(<EncumbranceApp mode="dm" />);
+      openFileMenu();
+
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Load File' }));
+
+      await screen.findByRole('button', {
+        name: 'Edit Dagger and scabbard',
+      });
+      openFileMenu();
+
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Import Player' }));
+
+      let reviewDialog = await screen.findByRole('dialog', {
+        name: 'Review Player Changes',
+      });
+
+      expect(showOpenFilePicker).toHaveBeenCalledTimes(2);
+      expect(playerFileHandle.getFile).toHaveBeenCalledTimes(1);
+      expect(
+        within(reviewDialog).getByText('Updated by player.')
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        within(reviewDialog).getByRole('button', { name: 'Cancel' })
+      );
+      openFileMenu();
+
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Import Player' }));
+
+      reviewDialog = await screen.findByRole('dialog', {
+        name: 'Review Player Changes',
+      });
+
+      expect(showOpenFilePicker).toHaveBeenCalledTimes(2);
+      expect(playerFileHandle.getFile).toHaveBeenCalledTimes(2);
+      expect(
+        within(reviewDialog).getByText('Updated by player.')
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, 'showOpenFilePicker', {
+        configurable: true,
+        value: originalShowOpenFilePicker,
+      });
+      Object.defineProperty(window, 'showSaveFilePicker', {
+        configurable: true,
+        value: originalShowSaveFilePicker,
+      });
+    }
+  });
+
+  test('dm save player and save player as use the selected character player file handle in Chrome mode', async () => {
+    const originalShowOpenFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showOpenFilePicker;
+    const originalShowSaveFilePicker = (
+      window as Window & {
+        showOpenFilePicker?: unknown;
+        showSaveFilePicker?: unknown;
+      }
+    ).showSaveFilePicker;
+    let savedPlayerFileText = '';
+    const writable = {
+      write: jest.fn(async (nextText: string | Blob) => {
+        if (typeof nextText === 'string') {
+          savedPlayerFileText = nextText;
+        }
+      }),
+      close: jest.fn(async () => undefined),
+    };
+    const playerFileHandle = {
+      name: 'blah-encumbrance-player.json',
+      getFile: jest.fn(
+        async (): Promise<File> => ({ text: async () => '' } as File)
+      ),
+      createWritable: jest.fn(async () => writable),
+      queryPermission: jest.fn(async () => 'granted' as PermissionState),
+      requestPermission: jest.fn(async () => 'granted' as PermissionState),
+    };
+    const showOpenFilePicker = jest.fn(async () => [playerFileHandle]);
+    const showSaveFilePicker = jest.fn(async () => playerFileHandle);
+
+    Object.defineProperty(window, 'showOpenFilePicker', {
+      configurable: true,
+      value: showOpenFilePicker,
+    });
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: showSaveFilePicker,
+    });
+
+    try {
+      render(<EncumbranceApp mode="dm" />);
+
+      addCatalogItem({
+        name: 'Dagger and scabbard',
+        day: 0,
+      });
+
+      openFileMenu();
+      expect(
+        screen.getByRole('menuitem', { name: 'Save Player' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('menuitem', { name: 'Save Player As...' })
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByRole('menuitem', { name: 'Save Player As...' })
+      );
+
+      await waitFor(() => {
+        expect(showSaveFilePicker).toHaveBeenCalledTimes(1);
+        expect(playerFileHandle.createWritable).toHaveBeenCalledTimes(1);
+      });
+
+      expect(savedPlayerFileText).toContain(
+        '"kind": "adnd-encumbrance-player"'
+      );
+
+      openFileMenu();
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Save Player' }));
+
+      await waitFor(() => {
+        expect(playerFileHandle.createWritable).toHaveBeenCalledTimes(2);
+      });
+
+      expect(showSaveFilePicker).toHaveBeenCalledTimes(1);
+      expect(showOpenFilePicker).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, 'showOpenFilePicker', {
+        configurable: true,
+        value: originalShowOpenFilePicker,
+      });
+      Object.defineProperty(window, 'showSaveFilePicker', {
+        configurable: true,
+        value: originalShowSaveFilePicker,
+      });
+    }
   });
 
   test('transferring a container moves its contained items to the new character', () => {

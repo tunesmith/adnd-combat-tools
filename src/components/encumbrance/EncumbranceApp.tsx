@@ -115,6 +115,55 @@ interface PendingMergeReviewState {
   plan: PlayerMergePlan;
 }
 
+interface BrowserFilePermissionDescriptor {
+  mode?: 'read' | 'readwrite';
+}
+
+interface BrowserWritableFileStream {
+  write: (data: string | Blob) => Promise<void>;
+  close: () => Promise<void>;
+}
+
+interface BrowserFileHandle {
+  kind?: 'file' | 'directory';
+  name: string;
+  getFile: () => Promise<File>;
+  createWritable: () => Promise<BrowserWritableFileStream>;
+  queryPermission?: (
+    descriptor?: BrowserFilePermissionDescriptor
+  ) => Promise<PermissionState>;
+  requestPermission?: (
+    descriptor?: BrowserFilePermissionDescriptor
+  ) => Promise<PermissionState>;
+}
+
+interface BrowserFilePickerAcceptType {
+  description?: string;
+  accept: Record<string, string[]>;
+}
+
+interface BrowserOpenFilePickerOptions {
+  excludeAcceptAllOption?: boolean;
+  multiple?: boolean;
+  types?: BrowserFilePickerAcceptType[];
+}
+
+interface BrowserSaveFilePickerOptions {
+  excludeAcceptAllOption?: boolean;
+  suggestedName?: string;
+  types?: BrowserFilePickerAcceptType[];
+  id?: string;
+}
+
+interface BrowserFilePickerWindow extends Window {
+  showOpenFilePicker?: (
+    options?: BrowserOpenFilePickerOptions
+  ) => Promise<BrowserFileHandle[]>;
+  showSaveFilePicker?: (
+    options?: BrowserSaveFilePickerOptions
+  ) => Promise<BrowserFileHandle>;
+}
+
 const categoryLabels: Record<EquipmentCategory, string> = {
   containers: 'Containers',
   armor: 'Armor',
@@ -182,6 +231,31 @@ const carriedWeightRuleOptions = {
   own: 'Own weight only',
 } as const;
 
+const documentFilePickerTypes: BrowserFilePickerAcceptType[] = [
+  {
+    description: 'AD&D Encumbrance Files',
+    accept: {
+      'application/json': ['.json'],
+    },
+  },
+];
+
+const getBrowserFilePickerWindow = (): BrowserFilePickerWindow | null =>
+  typeof window === 'undefined' ? null : (window as BrowserFilePickerWindow);
+
+const supportsBrowserFileSystemAccess = (): boolean => {
+  const browserWindow = getBrowserFilePickerWindow();
+
+  return Boolean(
+    browserWindow &&
+      typeof browserWindow.showOpenFilePicker === 'function' &&
+      typeof browserWindow.showSaveFilePicker === 'function'
+  );
+};
+
+const isFilePickerAbortError = (error: unknown): boolean =>
+  error instanceof DOMException && error.name === 'AbortError';
+
 const createInventoryItemId = (): string => {
   if (
     typeof crypto !== 'undefined' &&
@@ -219,6 +293,21 @@ const getDocumentKindForMode = (
   mode: EncumbranceMode
 ): EncumbranceDocument['kind'] =>
   mode === 'dm' ? 'adnd-encumbrance-dm' : 'adnd-encumbrance-player';
+
+const getSuggestedDocumentFileName = (
+  nextDocument: EncumbranceDocument
+): string => {
+  const kindLabel =
+    nextDocument.kind === 'adnd-encumbrance-dm' ? 'dm' : 'player';
+  const baseName =
+    nextDocument.kind === 'adnd-encumbrance-dm'
+      ? nextDocument.characters.length > 1
+        ? 'party'
+        : nextDocument.characters[0]?.name || 'character'
+      : nextDocument.character.name || 'character';
+
+  return `${slugify(baseName)}-encumbrance-${kindLabel}.json`;
+};
 
 const isDmDocument = (
   document: EncumbranceDocument
@@ -488,8 +577,14 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     useState<PendingRemovalState | null>(null);
   const [pendingMergeReview, setPendingMergeReview] =
     useState<PendingMergeReviewState | null>(null);
+  const [showFileMenu, setShowFileMenu] = useState<boolean>(false);
+  const [currentDocumentFileHandle, setCurrentDocumentFileHandle] =
+    useState<BrowserFileHandle | null>(null);
+  const [playerFileHandlesByCharacterId, setPlayerFileHandlesByCharacterId] =
+    useState<Record<string, BrowserFileHandle>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mergeFileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileMenuRef = useRef<HTMLDivElement | null>(null);
   const activeCharacter = useMemo(
     () => getActiveCharacterState(document),
     [document]
@@ -511,6 +606,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     [inventorySorts, isAllCharactersView]
   );
   const hasActiveInventorySorts = activeInventorySorts.length > 0;
+  const supportsNativeFileHandles = supportsBrowserFileSystemAccess();
 
   useEffect(() => {
     if (
@@ -568,6 +664,35 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       );
     }
   }, [isAllCharactersView]);
+
+  useEffect(() => {
+    if (!showFileMenu) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        fileMenuRef.current &&
+        !fileMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowFileMenu(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowFileMenu(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showFileMenu]);
 
   useEffect(() => {
     if (!editingItemDraft) {
@@ -996,8 +1121,129 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     setShowAddModal(false);
   };
 
+  const closeFileMenu = () => {
+    setShowFileMenu(false);
+  };
+
+  const createFileMenuAction =
+    (action: () => void | Promise<void>) => async () => {
+      closeFileMenu();
+      await action();
+    };
+
   const closeMergeReviewModal = () => {
     setPendingMergeReview(null);
+  };
+
+  const writeDocumentToFileHandle = async (
+    handle: BrowserFileHandle,
+    nextDocument: EncumbranceDocument
+  ) => {
+    const descriptor: BrowserFilePermissionDescriptor = {
+      mode: 'readwrite',
+    };
+
+    if (handle.queryPermission) {
+      const currentPermission = await handle.queryPermission(descriptor);
+
+      if (
+        currentPermission !== 'granted' &&
+        handle.requestPermission &&
+        (await handle.requestPermission(descriptor)) !== 'granted'
+      ) {
+        throw new Error('File access was not granted.');
+      }
+    } else if (
+      handle.requestPermission &&
+      (await handle.requestPermission(descriptor)) !== 'granted'
+    ) {
+      throw new Error('File access was not granted.');
+    }
+
+    const writable = await handle.createWritable();
+    await writable.write(stringifyEncumbranceDocument(nextDocument));
+    await writable.close();
+  };
+
+  const loadDocumentFromText = (
+    text: string,
+    nextHandle: BrowserFileHandle | null = null
+  ) => {
+    const parsed = parseEncumbranceDocument(text);
+    const expectedKind = getDocumentKindForMode(mode);
+
+    if (parsed.kind !== expectedKind) {
+      throw new Error(
+        mode === 'dm'
+          ? 'Dungeon Master View can only load DM files.'
+          : 'Player View can only load player files.'
+      );
+    }
+
+    setDocument(parsed);
+    setCurrentDocumentFileHandle(nextHandle);
+    setPlayerFileHandlesByCharacterId({});
+    setShowAllCharacters(false);
+    setCharacterEditDraft(null);
+    setShowAddModal(false);
+    setEditingItemDraft(null);
+    setPendingRemovalState(null);
+    setPendingMergeReview(null);
+    setSelectedContainerId('');
+    setSelectedQuantity(1);
+    setAddItemDetailsDraft(defaultAddItemDetailsDraft());
+  };
+
+  const loadCurrentDocumentFromFileHandle = async (
+    handle: BrowserFileHandle
+  ) => {
+    const file = await handle.getFile();
+    const text = await file.text();
+    loadDocumentFromText(text, handle);
+  };
+
+  const importPlayerChangesFromText = (
+    text: string,
+    fileName: string,
+    nextHandle: BrowserFileHandle | null = null
+  ) => {
+    if (document.kind !== 'adnd-encumbrance-dm') {
+      throw new Error('Import Player is only available in DM view.');
+    }
+
+    const parsed = parseEncumbranceDocument(text);
+
+    if (parsed.kind !== 'adnd-encumbrance-player') {
+      throw new Error('Import Player can only use exported player files.');
+    }
+
+    const mergePlan = buildPlayerMergePlan(document, parsed);
+    setCharacterEditDraft(null);
+    setShowAddModal(false);
+    setEditingItemDraft(null);
+    setPendingRemovalState(null);
+    setSelectedContainerId('');
+    setSelectedQuantity(1);
+    setAddItemDetailsDraft(defaultAddItemDetailsDraft());
+    setPendingMergeReview({
+      fileName,
+      plan: mergePlan,
+    });
+
+    if (nextHandle) {
+      setPlayerFileHandlesByCharacterId((currentHandles) => ({
+        ...currentHandles,
+        [mergePlan.characterId]: nextHandle,
+      }));
+    }
+  };
+
+  const importPlayerChangesFromFileHandle = async (
+    handle: BrowserFileHandle
+  ) => {
+    const file = await handle.getFile();
+    const text = await file.text();
+    importPlayerChangesFromText(text, file.name || handle.name, handle);
   };
 
   const updateMergeReviewFieldSelection = (
@@ -1578,12 +1824,92 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     setShowAddModal(false);
   };
 
-  const triggerImport = () => {
-    fileInputRef.current?.click();
+  const triggerImport = async () => {
+    if (!supportsBrowserFileSystemAccess()) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    const browserWindow = getBrowserFilePickerWindow();
+
+    if (!browserWindow?.showOpenFilePicker) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    try {
+      const [handle] = await browserWindow.showOpenFilePicker({
+        excludeAcceptAllOption: true,
+        multiple: false,
+        types: documentFilePickerTypes,
+      });
+
+      if (!handle) {
+        return;
+      }
+
+      await loadCurrentDocumentFromFileHandle(handle);
+    } catch (error) {
+      if (isFilePickerAbortError(error)) {
+        return;
+      }
+
+      const message =
+        error instanceof Error ? error.message : 'Unable to load the file.';
+
+      console.error(message);
+      window.alert(message);
+    }
   };
 
-  const triggerMergeImport = () => {
-    mergeFileInputRef.current?.click();
+  const triggerMergeImport = async () => {
+    if (!supportsBrowserFileSystemAccess()) {
+      mergeFileInputRef.current?.click();
+      return;
+    }
+
+    const browserWindow = getBrowserFilePickerWindow();
+
+    if (!browserWindow?.showOpenFilePicker) {
+      mergeFileInputRef.current?.click();
+      return;
+    }
+
+    const rememberedHandle =
+      document.kind === 'adnd-encumbrance-dm' && !isAllCharactersView
+        ? playerFileHandlesByCharacterId[activeCharacter.id] || null
+        : null;
+
+    try {
+      if (rememberedHandle) {
+        await importPlayerChangesFromFileHandle(rememberedHandle);
+        return;
+      }
+
+      const [handle] = await browserWindow.showOpenFilePicker({
+        excludeAcceptAllOption: true,
+        multiple: false,
+        types: documentFilePickerTypes,
+      });
+
+      if (!handle) {
+        return;
+      }
+
+      await importPlayerChangesFromFileHandle(handle);
+    } catch (error) {
+      if (isFilePickerAbortError(error)) {
+        return;
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to import player changes.';
+
+      console.error(message);
+      window.alert(message);
+    }
   };
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -1594,27 +1920,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
     try {
       const text = await file.text();
-      const parsed = parseEncumbranceDocument(text);
-      const expectedKind = getDocumentKindForMode(mode);
-
-      if (parsed.kind !== expectedKind) {
-        throw new Error(
-          mode === 'dm'
-            ? 'Dungeon Master View can only load DM files.'
-            : 'Player View can only load player files.'
-        );
-      }
-
-      setDocument(parsed);
-      setShowAllCharacters(false);
-      setCharacterEditDraft(null);
-      setShowAddModal(false);
-      setEditingItemDraft(null);
-      setPendingRemovalState(null);
-      setPendingMergeReview(null);
-      setSelectedContainerId('');
-      setSelectedQuantity(1);
-      setAddItemDetailsDraft(defaultAddItemDetailsDraft());
+      loadDocumentFromText(text);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unable to load the file.';
@@ -1636,24 +1942,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
 
     try {
       const text = await file.text();
-      const parsed = parseEncumbranceDocument(text);
-
-      if (parsed.kind !== 'adnd-encumbrance-player') {
-        throw new Error('Import Player can only use exported player files.');
-      }
-
-      const mergePlan = buildPlayerMergePlan(document, parsed);
-      setCharacterEditDraft(null);
-      setShowAddModal(false);
-      setEditingItemDraft(null);
-      setPendingRemovalState(null);
-      setSelectedContainerId('');
-      setSelectedQuantity(1);
-      setAddItemDetailsDraft(defaultAddItemDetailsDraft());
-      setPendingMergeReview({
-        fileName: file.name,
-        plan: mergePlan,
-      });
+      importPlayerChangesFromText(text, file.name);
     } catch (error) {
       const message =
         error instanceof Error
@@ -1673,31 +1962,195 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     });
     const url = URL.createObjectURL(blob);
     const anchor = window.document.createElement('a');
-    const kindLabel =
-      nextDocument.kind === 'adnd-encumbrance-dm' ? 'dm' : 'player';
-    const baseName =
-      nextDocument.kind === 'adnd-encumbrance-dm'
-        ? nextDocument.characters.length > 1
-          ? 'party'
-          : nextDocument.characters[0]?.name || 'character'
-        : nextDocument.character.name || 'character';
-
     anchor.href = url;
-    anchor.download = `${slugify(baseName)}-encumbrance-${kindLabel}.json`;
+    anchor.download = getSuggestedDocumentFileName(nextDocument);
     anchor.click();
     URL.revokeObjectURL(url);
   };
 
-  const exportCurrentDocument = () => {
+  const pickSaveFileHandle = async (
+    nextDocument: EncumbranceDocument,
+    pickerId: string
+  ): Promise<BrowserFileHandle | null> => {
+    const browserWindow = getBrowserFilePickerWindow();
+
+    if (!browserWindow?.showSaveFilePicker) {
+      return null;
+    }
+
+    try {
+      return await browserWindow.showSaveFilePicker({
+        excludeAcceptAllOption: true,
+        id: pickerId,
+        suggestedName: getSuggestedDocumentFileName(nextDocument),
+        types: documentFilePickerTypes,
+      });
+    } catch (error) {
+      if (isFilePickerAbortError(error)) {
+        return null;
+      }
+
+      throw error;
+    }
+  };
+
+  const exportCurrentDocument = async () => {
     downloadDocument(document);
   };
 
-  const exportPlayerCopy = () => {
-    downloadDocument(redactEncumbranceDocument(document, activeCharacter.id));
+  const saveCurrentDocument = async () => {
+    if (!supportsNativeFileHandles) {
+      downloadDocument(document);
+      return;
+    }
+
+    try {
+      const handle =
+        currentDocumentFileHandle ||
+        (await pickSaveFileHandle(
+          document,
+          document.kind === 'adnd-encumbrance-dm'
+            ? 'encumbrance-dm-document'
+            : 'encumbrance-player-document'
+        ));
+
+      if (!handle) {
+        return;
+      }
+
+      await writeDocumentToFileHandle(handle, document);
+      setCurrentDocumentFileHandle(handle);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unable to save the file.';
+
+      console.error(message);
+      window.alert(message);
+    }
+  };
+
+  const saveCurrentDocumentAs = async () => {
+    if (!supportsNativeFileHandles) {
+      downloadDocument(document);
+      return;
+    }
+
+    try {
+      const handle = await pickSaveFileHandle(
+        document,
+        document.kind === 'adnd-encumbrance-dm'
+          ? 'encumbrance-dm-document'
+          : 'encumbrance-player-document'
+      );
+
+      if (!handle) {
+        return;
+      }
+
+      await writeDocumentToFileHandle(handle, document);
+      setCurrentDocumentFileHandle(handle);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unable to save the file.';
+
+      console.error(message);
+      window.alert(message);
+    }
+  };
+
+  const savePlayerDocument = async () => {
+    const playerDocument = redactEncumbranceDocument(
+      document,
+      activeCharacter.id
+    );
+
+    if (!supportsNativeFileHandles) {
+      downloadDocument(playerDocument);
+      return;
+    }
+
+    try {
+      const existingHandle =
+        document.kind === 'adnd-encumbrance-dm'
+          ? playerFileHandlesByCharacterId[activeCharacter.id] || null
+          : null;
+      const handle =
+        existingHandle ||
+        (await pickSaveFileHandle(
+          playerDocument,
+          `encumbrance-player-export-${activeCharacter.id}`
+        ));
+
+      if (!handle) {
+        return;
+      }
+
+      await writeDocumentToFileHandle(handle, playerDocument);
+      setPlayerFileHandlesByCharacterId((currentHandles) => ({
+        ...currentHandles,
+        [activeCharacter.id]: handle,
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to save the player file.';
+
+      console.error(message);
+      window.alert(message);
+    }
+  };
+
+  const savePlayerDocumentAs = async () => {
+    const playerDocument = redactEncumbranceDocument(
+      document,
+      activeCharacter.id
+    );
+
+    if (!supportsNativeFileHandles) {
+      downloadDocument(playerDocument);
+      return;
+    }
+
+    try {
+      const handle = await pickSaveFileHandle(
+        playerDocument,
+        `encumbrance-player-export-${activeCharacter.id}`
+      );
+
+      if (!handle) {
+        return;
+      }
+
+      await writeDocumentToFileHandle(handle, playerDocument);
+      setPlayerFileHandlesByCharacterId((currentHandles) => ({
+        ...currentHandles,
+        [activeCharacter.id]: handle,
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to save the player file.';
+
+      console.error(message);
+      window.alert(message);
+    }
+  };
+
+  const exportPlayerCopy = async () => {
+    const playerDocument = redactEncumbranceDocument(
+      document,
+      activeCharacter.id
+    );
+
+    downloadDocument(playerDocument);
   };
 
   const resetDocument = () => {
     setDocument(createEmptyEncumbranceDocument(getDocumentKindForMode(mode)));
+    setCurrentDocumentFileHandle(null);
+    setPlayerFileHandlesByCharacterId({});
     setShowAllCharacters(false);
     setCharacterEditDraft(null);
     setShowAddModal(false);
@@ -2285,53 +2738,136 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             </span>
           </div>
           <div className={styles['toolbarGroup']}>
-            {mode === 'dm' && (
-              <button
-                type="button"
-                className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
-                onClick={resetDocument}
-              >
-                New File
-              </button>
-            )}
-            <button
-              type="button"
-              className={`${styles['button']} ${styles['buttonCompact']}`}
-              onClick={triggerImport}
-            >
-              Load File
-            </button>
-            {mode === 'dm' && (
+            <div className={styles['menuContainer']} ref={fileMenuRef}>
               <button
                 type="button"
                 className={`${styles['button']} ${styles['buttonCompact']}`}
-                onClick={triggerMergeImport}
+                aria-haspopup="menu"
+                aria-expanded={showFileMenu}
+                aria-controls="encumbrance-file-menu"
+                onClick={() => setShowFileMenu((currentValue) => !currentValue)}
               >
-                Import Player
+                File
               </button>
-            )}
-            <button
-              type="button"
-              className={`${styles['button']} ${styles['buttonCompact']}`}
-              onClick={exportCurrentDocument}
-            >
-              {mode === 'dm' ? 'Export DM File' : 'Save File'}
-            </button>
-            {mode === 'dm' && (
-              <button
-                type="button"
-                className={`${styles['button']} ${styles['buttonCompact']}`}
-                onClick={exportPlayerCopy}
-                disabled={isAllCharactersView}
-                title={
-                  isAllCharactersView
-                    ? 'Select a character to export a player file.'
-                    : undefined
-                }
-              >
-                Export Player
-              </button>
-            )}
+              {showFileMenu && (
+                <div
+                  id="encumbrance-file-menu"
+                  role="menu"
+                  aria-label="File"
+                  className={styles['menuPanel']}
+                >
+                  {mode === 'dm' && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles['menuItem']}
+                      onClick={createFileMenuAction(resetDocument)}
+                    >
+                      New File
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={styles['menuItem']}
+                    onClick={createFileMenuAction(triggerImport)}
+                  >
+                    Load File
+                  </button>
+                  {supportsNativeFileHandles && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles['menuItem']}
+                      onClick={createFileMenuAction(saveCurrentDocument)}
+                    >
+                      Save
+                    </button>
+                  )}
+                  {supportsNativeFileHandles && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles['menuItem']}
+                      onClick={createFileMenuAction(saveCurrentDocumentAs)}
+                    >
+                      Save As...
+                    </button>
+                  )}
+                  <div
+                    role="separator"
+                    aria-hidden="true"
+                    className={styles['menuDivider']}
+                  />
+                  {mode === 'dm' && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles['menuItem']}
+                      onClick={createFileMenuAction(triggerMergeImport)}
+                    >
+                      Import Player
+                    </button>
+                  )}
+                  {mode === 'dm' && supportsNativeFileHandles && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles['menuItem']}
+                      onClick={createFileMenuAction(savePlayerDocument)}
+                      disabled={isAllCharactersView}
+                      title={
+                        isAllCharactersView
+                          ? 'Select a character to save a player file.'
+                          : undefined
+                      }
+                    >
+                      Save Player
+                    </button>
+                  )}
+                  {mode === 'dm' && supportsNativeFileHandles && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles['menuItem']}
+                      onClick={createFileMenuAction(savePlayerDocumentAs)}
+                      disabled={isAllCharactersView}
+                      title={
+                        isAllCharactersView
+                          ? 'Select a character to save a player file.'
+                          : undefined
+                      }
+                    >
+                      Save Player As...
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={styles['menuItem']}
+                    onClick={createFileMenuAction(exportCurrentDocument)}
+                  >
+                    {mode === 'dm' ? 'Export DM File' : 'Export File'}
+                  </button>
+                  {mode === 'dm' && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles['menuItem']}
+                      onClick={createFileMenuAction(exportPlayerCopy)}
+                      disabled={isAllCharactersView}
+                      title={
+                        isAllCharactersView
+                          ? 'Select a character to export a player file.'
+                          : undefined
+                      }
+                    >
+                      Export Player
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

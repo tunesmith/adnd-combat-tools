@@ -40,6 +40,60 @@
   align-items: center;
 }
 
+.menuContainer {
+  position: relative;
+}
+
+.menuPanel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 13.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  padding: 0.35rem;
+  background: linear-gradient(
+    180deg,
+    rgba(84, 111, 58, 0.98) 0%,
+    rgba(75, 98, 50, 0.98) 100%
+  );
+  border: 2px solid var(--copper);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+  z-index: 20;
+}
+
+.menuItem {
+  width: 100%;
+  padding: 0.52rem 0.72rem;
+  border: 0;
+  background: transparent;
+  color: var(--eggshell);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  line-height: 1.15;
+}
+
+.menuItem:hover {
+  background: rgba(240, 239, 221, 0.12);
+}
+
+.menuItem:disabled {
+  color: rgba(240, 239, 221, 0.42);
+  cursor: not-allowed;
+}
+
+.menuItem:disabled:hover {
+  background: transparent;
+}
+
+.menuDivider {
+  height: 1px;
+  margin: 0.12rem 0.15rem;
+  background: rgba(240, 239, 221, 0.18);
+}
+
 .modeBadge {
   display: inline-flex;
   align-items: center;
