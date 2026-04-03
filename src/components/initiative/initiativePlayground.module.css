@@ -42,6 +42,12 @@
   justify-content: flex-start;
 }
 
+.shareFeedback {
+  color: var(--eggshell);
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
 .presetButton,
 .addButton,
 .removeButton {

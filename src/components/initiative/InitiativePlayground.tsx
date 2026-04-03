@@ -1,10 +1,15 @@
 import { createPortal } from 'react-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { SingleValue } from 'react-select';
 import Select from 'react-select';
 import { buildInitiativeAttackGraph } from '../../helpers/initiative/attackGraph';
 import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
+import {
+  encodeInitiativePlaytestState,
+  type InitiativePlaytestCombatantState,
+  type InitiativePlaytestState,
+} from '../../helpers/initiativeCodec';
 import { buildInitiativeRoundResolutionViewModel } from '../../helpers/initiative/roundResolutionViewModel';
 import { resolveInitiativeRound } from '../../helpers/initiative/roundResolution';
 import { buildInitiativeScenario } from '../../helpers/initiative/scenario';
@@ -28,24 +33,7 @@ import styles from './initiativePlayground.module.css';
 type InitiativePlaytestSide = 'party' | 'enemy';
 type InitiativePlaytestStateSide = 'party' | 'enemies';
 
-interface InitiativePlaytestCombatant {
-  key: number;
-  name: string;
-  declaredAction: InitiativeDeclaredAction;
-  movementRate: string;
-  weaponId: number;
-  targetCombatantKeys: number[];
-}
-
-interface InitiativePlaytestState {
-  label: string;
-  partyInitiative: string;
-  enemyInitiative: string;
-  nextCombatantKey: number;
-  party: InitiativePlaytestCombatant[];
-  enemies: InitiativePlaytestCombatant[];
-  pairDistances: Record<string, string>;
-}
+type InitiativePlaytestCombatant = InitiativePlaytestCombatantState;
 
 interface InitiativePlaytestEditorTarget {
   side: InitiativePlaytestSide;
@@ -436,9 +424,16 @@ const getGraphNodeLineYs = (height: number, lineCount: number): number[] => {
   );
 };
 
-const InitiativePlayground = () => {
-  const [state, setState] =
-    useState<InitiativePlaytestState>(createMixedPreset);
+interface InitiativePlaygroundProps {
+  rememberedState?: InitiativePlaytestState;
+}
+
+const InitiativePlayground = ({
+  rememberedState,
+}: InitiativePlaygroundProps) => {
+  const [state, setState] = useState<InitiativePlaytestState>(
+    rememberedState || createMixedPreset
+  );
   const [editorTarget, setEditorTarget] = useState<
     InitiativePlaytestEditorTarget | undefined
   >(undefined);
@@ -554,6 +549,49 @@ const InitiativePlayground = () => {
   const menuPortalTarget =
     typeof document !== 'undefined' ? document.body : undefined;
   const modalRoot = typeof document !== 'undefined' ? document.body : null;
+  const [shareFeedback, setShareFeedback] = useState<string | undefined>(
+    undefined
+  );
+  const encodedState = useMemo(
+    () => encodeInitiativePlaytestState(state),
+    [state]
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('s', encodedState);
+    window.history.replaceState({}, '', `${url.pathname}?${url.searchParams}`);
+  }, [encodedState]);
+
+  const getShareUrl = (): string | undefined => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('s', encodedState);
+    return url.toString();
+  };
+
+  const copyShareUrl = async () => {
+    const shareUrl = getShareUrl();
+
+    if (!shareUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareFeedback('Share URL copied.');
+    } catch (error) {
+      console.error('Unable to copy initiative share URL:', error);
+      setShareFeedback('Clipboard blocked. Copy the URL from the address bar.');
+    }
+  };
 
   const updateLabel = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
@@ -704,6 +742,7 @@ const InitiativePlayground = () => {
 
   const loadPreset = (presetFactory: () => InitiativePlaytestState) => {
     setState(presetFactory());
+    setShareFeedback(undefined);
   };
 
   const saveAttackDeclaration = () => {
@@ -955,7 +994,17 @@ const InitiativePlayground = () => {
           >
             Large Mixed
           </button>
+          <button
+            type={'button'}
+            className={styles['presetButton']}
+            onClick={() => void copyShareUrl()}
+          >
+            Copy Share URL
+          </button>
         </div>
+        {shareFeedback ? (
+          <div className={styles['shareFeedback']}>{shareFeedback}</div>
+        ) : null}
       </div>
 
       <div className={styles['layout']}>
