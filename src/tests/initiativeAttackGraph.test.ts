@@ -510,4 +510,283 @@ describe('initiative attack graph', () => {
     expect(graph.edges).toEqual([]);
     expect(graph.layers).toEqual([]);
   });
+
+  test('orders bow versus sling as bow, sling, bow regardless of initiative winner', () => {
+    const partyWinningScenario = buildInitiativeScenario({
+      label: 'Bow vs Sling Party Wins',
+      partyInitiative: 5,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Slinger',
+          declaredAction: 'missile',
+          weaponId: 48,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const enemyWinningScenario = buildInitiativeScenario({
+      label: 'Bow vs Sling Enemy Wins',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Slinger',
+          declaredAction: 'missile',
+          weaponId: 48,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+
+    const partyWinningGraph = buildInitiativeAttackGraph(
+      partyWinningScenario,
+      resolveInitiativeRound(partyWinningScenario)
+    );
+    const enemyWinningGraph = buildInitiativeAttackGraph(
+      enemyWinningScenario,
+      resolveInitiativeRound(enemyWinningScenario)
+    );
+
+    expect(partyWinningGraph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+      ['attack:party-1:2'],
+    ]);
+    expect(enemyWinningGraph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+      ['attack:party-1:2'],
+    ]);
+  });
+
+  test('uses initiative to break ties between equal firing-rate missile routines', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Bow vs Bow',
+      partyInitiative: 6,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Party Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Enemy Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+      ['attack:party-1:2'],
+      ['attack:enemy-3:2'],
+    ]);
+  });
+
+  test('uses initiative for the midpoint clash in dart versus sling', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Dart vs Sling',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Darter',
+          declaredAction: 'missile',
+          weaponId: 19,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Slinger',
+          declaredAction: 'missile',
+          weaponId: 48,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+      ['attack:party-1:2'],
+      ['attack:party-1:3'],
+    ]);
+  });
+
+  test('lets one bow shot happen before a charge when the missile side wins initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Bow vs Charge',
+      partyInitiative: 5,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes.map((node) => node.id)).toEqual([
+      'attack:enemy-3:1',
+      'attack:party-1:1',
+    ]);
+    expect(graph.layers).toEqual([['attack:party-1:1'], ['attack:enemy-3:1']]);
+    expect(graph.edges).toEqual([
+      {
+        fromNodeId: 'attack:party-1:1',
+        toNodeId: 'attack:enemy-3:1',
+        reasons: ['simple-initiative'],
+      },
+    ]);
+  });
+
+  test('drops both bow shots when the charge side wins initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Beats Bow',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes.map((node) => node.id)).toEqual(['attack:enemy-3:1']);
+    expect(graph.layers).toEqual([['attack:enemy-3:1']]);
+    expect(graph.edges).toEqual([]);
+  });
+
+  test('keeps the first bow shot simultaneous with the charge on tied initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Bow vs Charge Tie',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes.map((node) => node.id)).toEqual([
+      'attack:enemy-3:1',
+      'attack:party-1:1',
+    ]);
+    expect(graph.layers).toHaveLength(1);
+    expect(graph.layers[0]?.slice().sort()).toEqual([
+      'attack:enemy-3:1',
+      'attack:party-1:1',
+    ]);
+    expect(graph.edges).toEqual([]);
+  });
 });

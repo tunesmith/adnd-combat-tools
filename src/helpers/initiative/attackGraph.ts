@@ -195,6 +195,210 @@ const getLayers = (
   return layers;
 };
 
+interface SimpleInitiativePhase {
+  combatantId: string;
+  nodeId: string;
+  side: InitiativeScenarioCombatant['side'];
+  phase: number;
+}
+
+const getRoutineComponentCount = (
+  combatant: InitiativeScenarioCombatant
+): number => Math.max(1, combatant.attackRoutine.components.length);
+
+const getRoutinePhase = (
+  componentOrder: number,
+  componentCount: number
+): number => {
+  if (componentCount <= 1) {
+    return 0.5;
+  }
+
+  return (componentOrder - 1) / (componentCount - 1);
+};
+
+const buildSimpleInitiativePhases = (
+  simpleInitiativeNodes: InitiativeAttackNode[],
+  combatantById: Map<string, InitiativeScenarioCombatant>
+): SimpleInitiativePhase[] =>
+  simpleInitiativeNodes.flatMap((node) => {
+    const combatant = combatantById.get(node.combatantId);
+
+    if (!combatant) {
+      return [];
+    }
+
+    return [
+      {
+        combatantId: combatant.id,
+        nodeId: node.id,
+        side: combatant.side,
+        phase: getRoutinePhase(
+          node.attackNumber,
+          getRoutineComponentCount(combatant)
+        ),
+      },
+    ];
+  });
+
+const addSimpleInitiativeEdges = (
+  resolution: InitiativeRoundResolution,
+  combatantById: Map<string, InitiativeScenarioCombatant>,
+  simpleInitiativeNodes: InitiativeAttackNode[],
+  edgesByKey: Map<string, InitiativeAttackEdge>
+) => {
+  const phases = buildSimpleInitiativePhases(
+    simpleInitiativeNodes,
+    combatantById
+  );
+  const phaseValues = Array.from(
+    new Set(phases.map((phase) => phase.phase))
+  ).sort((left, right) => left - right);
+
+  phaseValues.forEach((phaseValue, index) => {
+    const currentNodes = phases.filter((phase) => phase.phase === phaseValue);
+    const nextPhaseValue = phaseValues[index + 1];
+
+    if (resolution.simpleOrder !== 'simultaneous') {
+      const winningSide =
+        resolution.simpleOrder === 'party-first' ? 'party' : 'enemy';
+      const losingSide = winningSide === 'party' ? 'enemy' : 'party';
+      const winningNodes = currentNodes
+        .filter((phase) => phase.side === winningSide)
+        .map((phase) => phase.nodeId);
+      const losingNodes = currentNodes
+        .filter((phase) => phase.side === losingSide)
+        .map((phase) => phase.nodeId);
+
+      winningNodes.forEach((fromNodeId) => {
+        losingNodes.forEach((toNodeId) => {
+          mergeEdgeReason(
+            edgesByKey,
+            fromNodeId,
+            toNodeId,
+            'simple-initiative'
+          );
+        });
+      });
+    }
+
+    if (nextPhaseValue === undefined) {
+      return;
+    }
+
+    const nextNodes = phases
+      .filter((phase) => phase.phase === nextPhaseValue)
+      .map((phase) => phase.nodeId);
+    const currentNodeIds = currentNodes.map((phase) => phase.nodeId);
+
+    currentNodeIds.forEach((fromNodeId) => {
+      nextNodes.forEach((toNodeId) => {
+        mergeEdgeReason(edgesByKey, fromNodeId, toNodeId, 'simple-initiative');
+      });
+    });
+  });
+};
+
+const addDirectMovementPrecedence = (
+  resolution: InitiativeRoundResolution,
+  combatantById: Map<string, InitiativeScenarioCombatant>,
+  movementHandledCombatantIdSet: Set<string>,
+  nodesById: Map<string, InitiativeAttackNode>,
+  edgesByKey: Map<string, InitiativeAttackEdge>
+) => {
+  if (resolution.simpleOrder === 'simultaneous') {
+    return;
+  }
+
+  const winningSide =
+    resolution.simpleOrder === 'party-first' ? 'party' : 'enemy';
+
+  resolution.movementResolutions.forEach((movementResolution) => {
+    if (movementResolution.targetId === undefined) {
+      return;
+    }
+
+    const mover = combatantById.get(movementResolution.combatantId);
+    const target = combatantById.get(movementResolution.targetId);
+
+    if (
+      !mover ||
+      !target ||
+      !target.targetIds.includes(mover.id) ||
+      movementHandledCombatantIdSet.has(target.id)
+    ) {
+      return;
+    }
+
+    const moverNodeIds = Array.from(nodesById.values())
+      .filter((node) => node.combatantId === mover.id)
+      .map((node) => node.id);
+    const targetNodeIds = Array.from(nodesById.values())
+      .filter((node) => node.combatantId === target.id)
+      .map((node) => node.id);
+
+    if (moverNodeIds.length === 0 || targetNodeIds.length === 0) {
+      return;
+    }
+
+    const fromNodeIds =
+      winningSide === target.side ? targetNodeIds : moverNodeIds;
+    const toNodeIds =
+      winningSide === target.side ? moverNodeIds : targetNodeIds;
+
+    fromNodeIds.forEach((fromNodeId) => {
+      toNodeIds.forEach((toNodeId) => {
+        mergeEdgeReason(edgesByKey, fromNodeId, toNodeId, 'simple-initiative');
+      });
+    });
+  });
+};
+
+const getDirectMissileChargeComponentLimit = (
+  combatant: InitiativeScenarioCombatant,
+  resolution: InitiativeRoundResolution,
+  combatantById: Map<string, InitiativeScenarioCombatant>,
+  movementResolutionByCombatantId: Map<string, InitiativeMovementResolution>
+): number | undefined => {
+  if (
+    combatant.declaredAction !== 'missile' ||
+    combatant.targetIds.length !== 1
+  ) {
+    return undefined;
+  }
+
+  const targetId = combatant.targetIds[0];
+  if (!targetId) {
+    return undefined;
+  }
+
+  const target = combatantById.get(targetId);
+  const targetMovementResolution =
+    movementResolutionByCombatantId.get(targetId);
+
+  if (
+    !target ||
+    target.declaredAction !== 'charge' ||
+    target.targetDeclarations.length !== 1 ||
+    target.targetDeclarations[0]?.targetId !== combatant.id ||
+    targetMovementResolution?.reason !== 'contact' ||
+    !targetMovementResolution.sameRoundAttack ||
+    targetMovementResolution.targetId !== combatant.id
+  ) {
+    return undefined;
+  }
+
+  if (resolution.simpleOrder === 'simultaneous') {
+    return 1;
+  }
+
+  const combatantSideWonInitiative =
+    (resolution.simpleOrder === 'party-first' && combatant.side === 'party') ||
+    (resolution.simpleOrder === 'enemy-first' && combatant.side === 'enemy');
+
+  return combatantSideWonInitiative ? 1 : 0;
+};
+
 export const buildInitiativeAttackGraph = (
   scenario: InitiativeScenario,
   resolution: InitiativeRoundResolution
@@ -345,7 +549,22 @@ export const buildInitiativeAttackGraph = (
       return;
     }
 
-    combatant.attackRoutine.components.forEach((component) => {
+    const directMissileChargeComponentLimit =
+      getDirectMissileChargeComponentLimit(
+        combatant,
+        resolution,
+        combatantById,
+        movementResolutionByCombatantId
+      );
+    const attackRoutineComponents =
+      directMissileChargeComponentLimit === undefined
+        ? combatant.attackRoutine.components
+        : combatant.attackRoutine.components.slice(
+            0,
+            directMissileChargeComponentLimit
+          );
+
+    attackRoutineComponents.forEach((component) => {
       addNode(
         nodesById,
         createNode(
@@ -367,35 +586,19 @@ export const buildInitiativeAttackGraph = (
       !movementHandledCombatantIdSet.has(node.combatantId)
   );
 
-  if (resolution.simpleOrder === 'party-first') {
-    const partyNodeIds = simpleInitiativeNodes
-      .filter((node) => node.side === 'party')
-      .map((node) => node.id);
-    const enemyNodeIds = simpleInitiativeNodes
-      .filter((node) => node.side === 'enemy')
-      .map((node) => node.id);
-
-    partyNodeIds.forEach((fromNodeId) => {
-      enemyNodeIds.forEach((toNodeId) => {
-        mergeEdgeReason(edgesByKey, fromNodeId, toNodeId, 'simple-initiative');
-      });
-    });
-  }
-
-  if (resolution.simpleOrder === 'enemy-first') {
-    const partyNodeIds = simpleInitiativeNodes
-      .filter((node) => node.side === 'party')
-      .map((node) => node.id);
-    const enemyNodeIds = simpleInitiativeNodes
-      .filter((node) => node.side === 'enemy')
-      .map((node) => node.id);
-
-    enemyNodeIds.forEach((fromNodeId) => {
-      partyNodeIds.forEach((toNodeId) => {
-        mergeEdgeReason(edgesByKey, fromNodeId, toNodeId, 'simple-initiative');
-      });
-    });
-  }
+  addDirectMovementPrecedence(
+    resolution,
+    combatantById,
+    movementHandledCombatantIdSet,
+    nodesById,
+    edgesByKey
+  );
+  addSimpleInitiativeEdges(
+    resolution,
+    combatantById,
+    simpleInitiativeNodes,
+    edgesByKey
+  );
 
   const edges = Array.from(edgesByKey.values());
 

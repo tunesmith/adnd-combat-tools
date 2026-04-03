@@ -31,16 +31,35 @@ const getCombatantName = (
 
 const DEFAULT_MOVEMENT_RATE = 12;
 
-const buildDefaultAttackRoutine = (
-  combatantId: string
+const getOrdinaryRoundAttackCount = (
+  weaponType: InitiativeWeaponType,
+  fireRate: number | undefined
+): number => {
+  if (weaponType !== 'missile' || fireRate === undefined) {
+    return 1;
+  }
+
+  // Whole-number firing rates map cleanly onto DMG multiple-routine timing.
+  // Fractional rates (for example 1/2) need round-over-round state, so keep
+  // them as a single attack for now.
+  if (fireRate < 1) {
+    return 1;
+  }
+
+  return Math.max(1, Math.floor(fireRate));
+};
+
+const buildAttackRoutine = (
+  combatantId: string,
+  weaponType: InitiativeWeaponType,
+  fireRate: number | undefined
 ): InitiativeAttackRoutine => {
-  const components = [
-    {
-      id: 'attack-1',
-      order: 1,
-      label: 'attack 1',
-    },
-  ];
+  const attackCount = getOrdinaryRoundAttackCount(weaponType, fireRate);
+  const components = Array.from({ length: attackCount }, (_, index) => ({
+    id: `attack-${index + 1}`,
+    order: index + 1,
+    label: `attack ${index + 1}`,
+  }));
 
   return {
     id: `routine:${combatantId}:1`,
@@ -107,6 +126,7 @@ const buildScenarioCombatants = (
   combatants.map((combatant, index) => {
     const weaponInfo = getWeaponInfo(combatant.weaponId);
     const combatantId = getCombatantId(side, combatant.combatantKey);
+    const weaponType = getInitiativeWeaponType(weaponInfo?.weaponType);
     const targetDeclarations = getTargetDeclarations(combatant)
       .filter((targetDeclaration) =>
         opposingCombatantKeys.has(targetDeclaration.targetCombatantKey)
@@ -130,7 +150,7 @@ const buildScenarioCombatants = (
       movementRate: combatant.movementRate ?? DEFAULT_MOVEMENT_RATE,
       weaponId: combatant.weaponId,
       weaponName: weaponInfo?.name || `Weapon ${combatant.weaponId}`,
-      weaponType: getInitiativeWeaponType(weaponInfo?.weaponType),
+      weaponType,
       weaponLength:
         weaponInfo?.weaponType === 'melee' ? weaponInfo.length : undefined,
       weaponSpeedFactor:
@@ -141,7 +161,11 @@ const buildScenarioCombatants = (
       targetIds: targetDeclarations.map(
         (targetDeclaration) => targetDeclaration.targetId
       ),
-      attackRoutine: buildDefaultAttackRoutine(combatantId),
+      attackRoutine: buildAttackRoutine(
+        combatantId,
+        weaponType,
+        weaponInfo?.weaponType === 'missile' ? weaponInfo.fireRate : undefined
+      ),
     };
   });
 

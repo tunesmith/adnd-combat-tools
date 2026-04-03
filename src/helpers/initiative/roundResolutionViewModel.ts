@@ -253,9 +253,99 @@ const buildDirectMeleeCards = (
     };
   });
 
+interface DirectMissileChargeContext {
+  missileCombatant: InitiativeScenarioCombatant;
+  chargeCombatant: InitiativeScenarioCombatant;
+  missileAttackCount: number;
+}
+
+const getDirectMissileChargeContext = (
+  movementResolution: InitiativeMovementResolution,
+  combatantById: Map<string, InitiativeScenarioCombatant>
+): DirectMissileChargeContext | undefined => {
+  if (
+    movementResolution.action !== 'charge' ||
+    movementResolution.reason !== 'contact' ||
+    movementResolution.targetId === undefined
+  ) {
+    return undefined;
+  }
+
+  const chargeCombatant = combatantById.get(movementResolution.combatantId);
+  const missileCombatant = combatantById.get(movementResolution.targetId);
+
+  if (
+    !chargeCombatant ||
+    !missileCombatant ||
+    missileCombatant.declaredAction !== 'missile' ||
+    missileCombatant.targetIds.length !== 1 ||
+    missileCombatant.targetIds[0] !== chargeCombatant.id
+  ) {
+    return undefined;
+  }
+
+  return {
+    missileCombatant,
+    chargeCombatant,
+    missileAttackCount: missileCombatant.attackRoutine.components.length,
+  };
+};
+
+const getDirectMissileChargeSummary = (
+  context: DirectMissileChargeContext,
+  movementResolution: InitiativeMovementResolution,
+  simpleOrder: InitiativeRoundResolution['simpleOrder']
+): string => {
+  const { missileCombatant, chargeCombatant, missileAttackCount } = context;
+  const laterShotText =
+    missileAttackCount > 1
+      ? 'Later missile shots are lost once melee contact is made.'
+      : '';
+
+  if (simpleOrder === 'simultaneous') {
+    return `${chargeCombatant.name} reaches ${missileCombatant.name} on segment ${movementResolution.contactSegment}. The first missile shot and the charge attack are simultaneous in this tied round, even if either would be a killing blow. ${laterShotText}`.trim();
+  }
+
+  const missileSideWonInitiative =
+    (simpleOrder === 'party-first' && missileCombatant.side === 'party') ||
+    (simpleOrder === 'enemy-first' && missileCombatant.side === 'enemy');
+
+  if (missileSideWonInitiative) {
+    return `${missileCombatant.name} wins initiative and gets one missile shot off before ${chargeCombatant.name} reaches contact on segment ${movementResolution.contactSegment}. ${laterShotText}`.trim();
+  }
+
+  return `${chargeCombatant.name} reaches ${missileCombatant.name} on segment ${movementResolution.contactSegment} before ordinary missile fire can be completed. Pending missile shots are lost once melee contact is made.`;
+};
+
+const getDirectMissileChargeOutcome = (
+  context: DirectMissileChargeContext,
+  movementResolution: InitiativeMovementResolution,
+  simpleOrder: InitiativeRoundResolution['simpleOrder']
+): string => {
+  const { missileCombatant, missileAttackCount } = context;
+  const laterShotText =
+    missileAttackCount > 1 ? '; later missile shots are lost at contact' : '';
+
+  if (simpleOrder === 'simultaneous') {
+    return `Contact on segment ${movementResolution.contactSegment}; ${missileCombatant.name}'s first missile shot and the charge attack resolve simultaneously${laterShotText}.`;
+  }
+
+  const missileSideWonInitiative =
+    (simpleOrder === 'party-first' && missileCombatant.side === 'party') ||
+    (simpleOrder === 'enemy-first' && missileCombatant.side === 'enemy');
+
+  if (missileSideWonInitiative) {
+    return `Contact on segment ${movementResolution.contactSegment}; ${missileCombatant.name} gets one missile shot before contact${laterShotText}.`;
+  }
+
+  return `Contact on segment ${movementResolution.contactSegment}; the charge closes before ordinary missile fire, so pending missile shots are lost.`;
+};
+
 const getMovementSummary = (
   movementResolution: InitiativeMovementResolution,
-  combatantNameById: Record<string, string>
+  combatantNameById: Record<string, string>,
+  combatantById: Map<string, InitiativeScenarioCombatant>,
+  simpleOrder: InitiativeRoundResolution['simpleOrder']
 ): string => {
   const combatantName =
     combatantNameById[movementResolution.combatantId] ||
@@ -296,6 +386,19 @@ const getMovementSummary = (
     )} short of striking range.`;
   }
 
+  const directMissileChargeContext = getDirectMissileChargeContext(
+    movementResolution,
+    combatantById
+  );
+
+  if (directMissileChargeContext) {
+    return getDirectMissileChargeSummary(
+      directMissileChargeContext,
+      movementResolution,
+      simpleOrder
+    );
+  }
+
   if (movementResolution.action === 'charge') {
     if (movementResolution.firstStrike === 'attacker') {
       return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment} and can strike on the charge. The charging attacker currently has the longer reach, so ${combatantName} attacks first at contact.`;
@@ -325,7 +428,8 @@ const getMovementSummary = (
 
 const buildMovementCards = (
   resolution: InitiativeRoundResolution,
-  combatantNameById: Record<string, string>
+  combatantNameById: Record<string, string>,
+  combatantById: Map<string, InitiativeScenarioCombatant>
 ): InitiativeResolutionCardViewModel[] =>
   resolution.movementResolutions.map((movementResolution) => {
     const combatantName =
@@ -342,7 +446,12 @@ const buildMovementCards = (
       title: `${combatantName} ${formatMovementActionLabel(
         movementResolution.action
       )}`,
-      summary: getMovementSummary(movementResolution, combatantNameById),
+      summary: getMovementSummary(
+        movementResolution,
+        combatantNameById,
+        combatantById,
+        resolution.simpleOrder
+      ),
       combatantIds: [
         movementResolution.combatantId,
         ...(movementResolution.targetId ? [movementResolution.targetId] : []),
@@ -371,29 +480,45 @@ const buildMovementCards = (
           label: 'Outcome',
           detail:
             movementResolution.reason === 'contact'
-              ? movementResolution.action === 'charge'
-                ? `Contact on segment ${
-                    movementResolution.contactSegment
-                  } at ${formatInches(
-                    movementResolution.closingInchesPerSegment || 0
-                  )} per segment; same-round charge attack applies.`
-                : movementResolution.action === 'set-vs-charge'
-                ? `Charge contact on segment ${
-                    movementResolution.contactSegment
-                  }; the set weapon strikes first and deals ${
-                    movementResolution.damageMultiplier || 2
-                  }x normal damage on a hit.`
-                : movementResolution.sameRoundAttack
-                ? `Striking range reached on segment ${
-                    movementResolution.contactSegment
-                  } at ${formatInches(
-                    movementResolution.closingInchesPerSegment || 0
-                  )} per segment; same-round return attack applies against the charger.`
-                : `Striking range reached on segment ${
-                    movementResolution.contactSegment
-                  } at ${formatInches(
-                    movementResolution.closingInchesPerSegment || 0
-                  )} per segment.`
+              ? (() => {
+                  const directMissileChargeContext =
+                    getDirectMissileChargeContext(
+                      movementResolution,
+                      combatantById
+                    );
+
+                  if (directMissileChargeContext) {
+                    return getDirectMissileChargeOutcome(
+                      directMissileChargeContext,
+                      movementResolution,
+                      resolution.simpleOrder
+                    );
+                  }
+
+                  return movementResolution.action === 'charge'
+                    ? `Contact on segment ${
+                        movementResolution.contactSegment
+                      } at ${formatInches(
+                        movementResolution.closingInchesPerSegment || 0
+                      )} per segment; same-round charge attack applies.`
+                    : movementResolution.action === 'set-vs-charge'
+                    ? `Charge contact on segment ${
+                        movementResolution.contactSegment
+                      }; the set weapon strikes first and deals ${
+                        movementResolution.damageMultiplier || 2
+                      }x normal damage on a hit.`
+                    : movementResolution.sameRoundAttack
+                    ? `Striking range reached on segment ${
+                        movementResolution.contactSegment
+                      } at ${formatInches(
+                        movementResolution.closingInchesPerSegment || 0
+                      )} per segment; same-round return attack applies against the charger.`
+                    : `Striking range reached on segment ${
+                        movementResolution.contactSegment
+                      } at ${formatInches(
+                        movementResolution.closingInchesPerSegment || 0
+                      )} per segment.`;
+                })()
               : movementResolution.reason === 'no-contact'
               ? `No contact this round; approximately ${formatInches(
                   movementResolution.remainingDistanceInches || 0
@@ -452,7 +577,7 @@ export const buildInitiativeRoundResolutionViewModel = (
   const combatantById = buildCombatantById(scenario);
   const cards = [
     buildSimpleOrderCard(scenario, resolution, combatantNameById),
-    ...buildMovementCards(resolution, combatantNameById),
+    ...buildMovementCards(resolution, combatantNameById, combatantById),
     ...buildDirectMeleeCards(resolution, combatantNameById, combatantById),
     buildUnresolvedCard(scenario, resolution, combatantNameById),
   ].filter((card): card is InitiativeResolutionCardViewModel => Boolean(card));

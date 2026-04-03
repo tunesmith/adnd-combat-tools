@@ -228,6 +228,18 @@ const createSetVsChargePreset = (): InitiativePlaytestState => ({
   },
 });
 
+const createMissileVsChargePreset = (): InitiativePlaytestState => ({
+  label: 'Missile vs Charge',
+  partyInitiative: '5',
+  enemyInitiative: '2',
+  nextCombatantKey: 4,
+  party: [createCombatant(1, 'Bowman', 11, [3], 'missile', '12')],
+  enemies: [createCombatant(3, 'Raider', 56, [1], 'charge', '12')],
+  pairDistances: {
+    [getPairDistanceKey(1, 3)]: '4',
+  },
+});
+
 const createLargeBattlePreset = (): InitiativePlaytestState => ({
   label: 'Large Mixed Battle',
   partyInitiative: '4',
@@ -928,6 +940,13 @@ const InitiativePlayground = () => {
             onClick={() => loadPreset(createSetVsChargePreset)}
           >
             Set vs Charge
+          </button>
+          <button
+            type={'button'}
+            className={styles['presetButton']}
+            onClick={() => loadPreset(createMissileVsChargePreset)}
+          >
+            Missile vs Charge
           </button>
           <button
             type={'button'}

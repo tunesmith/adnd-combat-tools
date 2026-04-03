@@ -70,4 +70,69 @@ describe('generic initiative scenario builder', () => {
     );
     expect(scenario.unresolvedMeleeCandidateIds).toEqual([]);
   });
+
+  test('expands ordinary-round missile routines from firing rate', () => {
+    const draft: InitiativeScenarioDraft = {
+      label: 'Missile Routine Counts',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          weaponId: 11,
+          declaredAction: 'missile',
+          targetCombatantKeys: [3],
+        },
+        {
+          combatantKey: 2,
+          name: 'Darter',
+          weaponId: 19,
+          declaredAction: 'missile',
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Target',
+          weaponId: 1,
+          declaredAction: 'open-melee',
+          targetCombatantKeys: [],
+        },
+      ],
+    };
+
+    const scenario = buildInitiativeScenario(draft);
+
+    expect(scenario.party[0]?.attackRoutine.components).toEqual([
+      {
+        id: 'attack-1',
+        order: 1,
+        label: 'attack 1',
+      },
+      {
+        id: 'attack-2',
+        order: 2,
+        label: 'attack 2',
+      },
+    ]);
+    expect(scenario.party[1]?.attackRoutine.components).toEqual([
+      {
+        id: 'attack-1',
+        order: 1,
+        label: 'attack 1',
+      },
+      {
+        id: 'attack-2',
+        order: 2,
+        label: 'attack 2',
+      },
+      {
+        id: 'attack-3',
+        order: 3,
+        label: 'attack 3',
+      },
+    ]);
+  });
 });

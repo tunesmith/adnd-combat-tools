@@ -377,4 +377,163 @@ describe('initiative round resolution view model', () => {
       combatantIds: ['party-1', 'enemy-3'],
     });
   });
+
+  test('explains one bow shot before charge contact when the missile side wins initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Bow vs Charge',
+      partyInitiative: 5,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.id === 'movement-enemy-3'
+    );
+
+    expect(movementCard?.summary).toContain(
+      'Bowman wins initiative and gets one missile shot off before Raider reaches contact on segment 2.'
+    );
+    expect(movementCard?.summary).toContain(
+      'Later missile shots are lost once melee contact is made.'
+    );
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail:
+        'Contact on segment 2; Bowman gets one missile shot before contact; later missile shots are lost at contact.',
+      combatantIds: ['enemy-3', 'party-1'],
+    });
+  });
+
+  test('explains that pending missile shots are lost when the charge wins initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Beats Bow',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.id === 'movement-enemy-3'
+    );
+
+    expect(movementCard?.summary).toContain(
+      'Raider reaches Bowman on segment 2 before ordinary missile fire can be completed.'
+    );
+    expect(movementCard?.summary).toContain(
+      'Pending missile shots are lost once melee contact is made.'
+    );
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail:
+        'Contact on segment 2; the charge closes before ordinary missile fire, so pending missile shots are lost.',
+      combatantIds: ['enemy-3', 'party-1'],
+    });
+  });
+
+  test('explains tied bow fire and charge as simultaneous', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Bow vs Charge Tie',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.id === 'movement-enemy-3'
+    );
+
+    expect(movementCard?.summary).toContain(
+      'The first missile shot and the charge attack are simultaneous in this tied round'
+    );
+    expect(movementCard?.summary).toContain(
+      'Later missile shots are lost once melee contact is made.'
+    );
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail:
+        "Contact on segment 2; Bowman's first missile shot and the charge attack resolve simultaneously; later missile shots are lost at contact.",
+      combatantIds: ['enemy-3', 'party-1'],
+    });
+  });
 });
