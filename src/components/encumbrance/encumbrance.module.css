@@ -197,11 +197,22 @@
   margin-bottom: 0.85rem;
 }
 
+.gridLayoutCompact {
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 0.7rem;
+  align-items: start;
+}
+
 .card {
   background: rgba(0, 0, 0, 0.14);
   border: 1px solid rgba(240, 239, 221, 0.15);
   padding: 0.85rem;
   margin-bottom: 0.85rem;
+}
+
+.cardTight {
+  padding: 0.75rem;
+  margin-bottom: 0;
 }
 
 .cardTitle {
@@ -270,6 +281,12 @@
   font-family: 'Sura', serif;
 }
 
+.characterSummaryCompact {
+  gap: 0.32rem;
+  padding: 0.62rem 0.7rem;
+  border-left-width: 3px;
+}
+
 .characterSummaryButton {
   width: 100%;
   flex: 1;
@@ -298,11 +315,20 @@
   line-height: 1.08;
 }
 
+.characterSummaryNameCompact {
+  font-size: 1.7rem;
+  line-height: 1.08;
+}
+
 .characterSummaryRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem 0.7rem;
+}
+
+.characterSummaryRowCompact {
+  gap: 0.3rem 0.55rem;
 }
 
 .characterSummaryChip {
@@ -316,10 +342,20 @@
   line-height: 1.1;
 }
 
+.characterSummaryChipCompact {
+  padding: 0.18rem 0.6rem;
+  font-size: 0.94rem;
+}
+
 .characterSummaryText {
   font-size: 0.82rem;
   line-height: 1.35;
   opacity: 0.82;
+}
+
+.characterSummaryTextCompact {
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .formGridCompact {
@@ -399,10 +435,26 @@
   gap: 0.6rem;
 }
 
+.summaryGridCompact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
 .summaryValue {
   padding: 0.7rem 0.75rem;
   background: rgba(0, 0, 0, 0.14);
   border-left: 4px solid var(--copper);
+}
+
+.summaryValueCompact {
+  padding: 0.52rem 0.58rem;
+  border-left-width: 3px;
+}
+
+.summaryValueCompact strong {
+  display: block;
+  line-height: 1.08;
+  font-size: 1.2rem;
 }
 
 .summaryLabel {
@@ -412,6 +464,11 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   opacity: 0.8;
+}
+
+.summaryLabelCompact {
+  margin-bottom: 0.16rem;
+  font-size: 0.74rem;
 }
 
 .inventoryHeader {
@@ -1023,6 +1080,10 @@
     grid-template-columns: 1fr;
   }
 
+  .summaryGridCompact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .formGridCompact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1088,6 +1149,10 @@
 
   .contentContainer {
     padding: 0.7rem;
+  }
+
+  .summaryGridCompact {
+    grid-template-columns: 1fr;
   }
 
   .formGridCompact,

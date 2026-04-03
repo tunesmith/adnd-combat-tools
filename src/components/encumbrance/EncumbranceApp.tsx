@@ -2888,8 +2888,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           style={{ display: 'none' }}
         />
 
-        <div className={styles['gridLayout']}>
-          <section className={`${styles['card']} ${styles['characterCard']}`}>
+        <div
+          className={`${styles['gridLayout']} ${
+            mode === 'dm' ? styles['gridLayoutCompact'] : ''
+          }`}
+        >
+          <section
+            className={`${styles['card']} ${styles['characterCard']} ${
+              mode === 'dm' ? styles['cardTight'] : ''
+            }`}
+          >
             <div className={styles['cardHeader']}>
               <div className={styles['cardTitle']}>Character</div>
               {mode === 'dm' && (
@@ -2936,16 +2944,36 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
               </div>
             )}
             {isAllCharactersView ? (
-              <div className={styles['characterSummary']}>
-                <div className={styles['characterSummaryName']}>
+              <div
+                className={`${styles['characterSummary']} ${
+                  mode === 'dm' ? styles['characterSummaryCompact'] : ''
+                }`}
+              >
+                <div
+                  className={`${styles['characterSummaryName']} ${
+                    mode === 'dm' ? styles['characterSummaryNameCompact'] : ''
+                  }`}
+                >
                   {characterSummaryName}
                 </div>
-                <div className={styles['characterSummaryRow']}>
-                  <span className={styles['characterSummaryChip']}>
+                <div
+                  className={`${styles['characterSummaryRow']} ${
+                    mode === 'dm' ? styles['characterSummaryRowCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['characterSummaryChip']} ${
+                      mode === 'dm' ? styles['characterSummaryChipCompact'] : ''
+                    }`}
+                  >
                     {visibleCharacterCount} characters
                   </span>
-                  <span className={styles['characterSummaryText']}>
-                    Select a character tab to edit details.
+                  <span
+                    className={`${styles['characterSummaryText']} ${
+                      mode === 'dm' ? styles['characterSummaryTextCompact'] : ''
+                    }`}
+                  >
+                    Select a tab to edit a character.
                   </span>
                 </div>
               </div>
@@ -2957,16 +2985,36 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 aria-label={`Edit ${characterSummaryName}`}
                 aria-haspopup="dialog"
               >
-                <div className={styles['characterSummary']}>
-                  <div className={styles['characterSummaryName']}>
+                <div
+                  className={`${styles['characterSummary']} ${
+                    mode === 'dm' ? styles['characterSummaryCompact'] : ''
+                  }`}
+                >
+                  <div
+                    className={`${styles['characterSummaryName']} ${
+                      mode === 'dm' ? styles['characterSummaryNameCompact'] : ''
+                    }`}
+                  >
                     {characterSummaryName}
                   </div>
-                  <div className={styles['characterSummaryRow']}>
-                    <span className={styles['characterSummaryChip']}>
+                  <div
+                    className={`${styles['characterSummaryRow']} ${
+                      mode === 'dm' ? styles['characterSummaryRowCompact'] : ''
+                    }`}
+                  >
+                    <span
+                      className={`${styles['characterSummaryChip']} ${
+                        mode === 'dm'
+                          ? styles['characterSummaryChipCompact']
+                          : ''
+                      }`}
+                    >
                       STR {characterSummaryStrength}
                     </span>
                     {mode === 'dm' && hasDmNotes && (
-                      <span className={styles['characterSummaryText']}>
+                      <span
+                        className={`${styles['characterSummaryText']} ${styles['characterSummaryTextCompact']}`}
+                      >
                         Private notes saved
                       </span>
                     )}
@@ -2976,65 +3024,191 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             )}
           </section>
 
-          <section className={styles['card']}>
+          <section
+            className={`${styles['card']} ${
+              mode === 'dm' ? styles['cardTight'] : ''
+            }`}
+          >
             <div className={styles['cardTitle']}>Encumbrance</div>
             {isAllCharactersView ? (
-              <div className={styles['summaryGrid']}>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Characters</span>
+              <div
+                className={`${styles['summaryGrid']} ${
+                  mode === 'dm' ? styles['summaryGridCompact'] : ''
+                }`}
+              >
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Characters
+                  </span>
                   <strong>{visibleCharacterCount}</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Items</span>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Items
+                  </span>
                   <strong>{visibleItemCount}</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Containers</span>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Containers
+                  </span>
                   <strong>{visibleContainerCount}</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Total</span>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Total
+                  </span>
                   <strong>{visibleTotalEncumbranceGp} gp</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
                     {mode === 'dm' ? 'Value' : 'Known value'}
                   </span>
                   <strong>{formatGpValue(visibleTotalValueGp)} gp</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Warnings</span>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Warnings
+                  </span>
                   <strong>{visibleContainerWarningCount}</strong>
                 </div>
               </div>
             ) : (
-              <div className={styles['summaryGrid']}>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Total</span>
+              <div
+                className={`${styles['summaryGrid']} ${
+                  mode === 'dm' ? styles['summaryGridCompact'] : ''
+                }`}
+              >
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Total
+                  </span>
                   <strong>{totalEncumbranceGp} gp</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
                     12&quot; Capacity
                   </span>
                   <strong>{carryingCapacityGp} gp</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
                     {mode === 'dm' ? 'Value' : 'Known value'}
                   </span>
                   <strong>{formatGpValue(totalValueGp)} gp</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Band</span>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Band
+                  </span>
                   <strong>{loadBand.label}</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Move</span>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Move
+                  </span>
                   <strong>{loadBand.movement}</strong>
                 </div>
-                <div className={styles['summaryValue']}>
-                  <span className={styles['summaryLabel']}>Warnings</span>
+                <div
+                  className={`${styles['summaryValue']} ${
+                    mode === 'dm' ? styles['summaryValueCompact'] : ''
+                  }`}
+                >
+                  <span
+                    className={`${styles['summaryLabel']} ${
+                      mode === 'dm' ? styles['summaryLabelCompact'] : ''
+                    }`}
+                  >
+                    Warnings
+                  </span>
                   <strong>{containerWarningCount}</strong>
                 </div>
               </div>
