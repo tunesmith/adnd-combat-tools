@@ -615,6 +615,15 @@
   gap: 0.22rem;
 }
 
+.inventoryOwnerInline {
+  display: none;
+  font-size: 0.74rem;
+  line-height: 1.2;
+  opacity: 0.74;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .inventoryCellSummary {
   display: flex;
   flex-direction: column;
@@ -676,6 +685,10 @@
   font-weight: 500;
 }
 
+.inventoryNotesHeader {
+  display: inline;
+}
+
 .inventoryNotesCell {
   min-width: 0;
 }
@@ -700,6 +713,28 @@
 .inventoryNoteLineDm {
   opacity: 0.72;
   font-style: italic;
+}
+
+.inventoryNotesInline {
+  display: none;
+  margin-top: 0.08rem;
+}
+
+.inventoryCompactMeta {
+  display: none;
+}
+
+.inventoryCompactMetaItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.24rem;
+}
+
+.inventoryCompactMetaLabel {
+  opacity: 0.72;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.72rem;
 }
 
 .modalShadow {
@@ -1093,42 +1128,65 @@
   }
 
   .inventoryHeader {
-    display: none;
+    grid-template-columns:
+      minmax(0, 2.2fr)
+      48px
+      52px
+      80px
+      92px;
+    gap: 0.45rem;
+  }
+
+  .inventoryHeaderParty {
+    grid-template-columns:
+      68px
+      minmax(0, 1.95fr)
+      48px
+      52px
+      80px
+      92px;
   }
 
   .inventoryRowButton,
   .inventoryRowButtonParty {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    padding: 0.5rem 0.55rem 0.48rem;
+  }
+
+  .inventoryRowButton {
+    grid-template-columns:
+      minmax(0, 2.2fr)
+      48px
+      52px
+      80px
+      92px;
+  }
+
+  .inventoryRowButtonParty {
+    grid-template-columns:
+      68px
+      minmax(0, 1.95fr)
+      48px
+      52px
+      80px
+      92px;
   }
 
   .inventoryCellPrimary {
-    grid-column: 1 / -1;
     gap: 0.28rem;
   }
 
-  .inventoryNotesCell {
-    grid-column: 1 / -1;
+  .inventoryNotesCell,
+  .inventoryNotesHeader {
+    display: none;
   }
 
   .inventoryCellSummary {
     gap: 0.28rem;
   }
 
-  .inventoryLabel {
-    position: static;
-    width: auto;
-    height: auto;
-    padding: 0;
-    margin: 0;
-    overflow: visible;
-    clip: auto;
-    clip-path: none;
-    white-space: normal;
-    border: 0;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.72;
+  .inventoryNotesInline {
+    display: flex;
   }
 
   .modalFields,
@@ -1155,9 +1213,7 @@
     grid-template-columns: 1fr;
   }
 
-  .formGridCompact,
-  .inventoryRowButton,
-  .inventoryRowButtonParty {
+  .formGridCompact {
     grid-template-columns: 1fr;
   }
 
@@ -1181,5 +1237,60 @@
   .cardHeader {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .inventoryHeader {
+    display: none;
+  }
+
+  .inventoryRowButton,
+  .inventoryRowButtonParty {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 0.65rem 0.7rem 0.62rem;
+  }
+
+  .inventoryCellSummary,
+  .inventoryNotesCell {
+    display: none;
+  }
+
+  .inventoryCellPrimary {
+    grid-column: 1 / -1;
+    gap: 0.34rem;
+  }
+
+  .inventoryOwnerInline {
+    display: block;
+  }
+
+  .inventoryName {
+    font-size: 1.12rem;
+  }
+
+  .inventoryStatusText {
+    font-size: 0.78rem;
+  }
+
+  .inventoryCompactMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.22rem 0.7rem;
+    margin-top: 0.08rem;
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  .inventoryLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
 }

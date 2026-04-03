@@ -2291,6 +2291,11 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         }
       >
         <span className={styles['inventoryLabel']}>Item</span>
+        {isAllCharactersView && (
+          <div className={styles['inventoryOwnerInline']}>
+            {rowRecord.ownerLabel}
+          </div>
+        )}
         <div className={styles['inventoryNameRow']}>
           <span className={styles['inventoryName']}>
             {rowRecord.displayName}
@@ -2319,6 +2324,42 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                 : `Container status: ${rowRecord.containerUsage}`}
             </div>
           )}
+        {rowRecord.noteLines.length > 0 && (
+          <span
+            className={`${styles['inventoryNotesPreview']} ${styles['inventoryNotesInline']}`}
+          >
+            {rowRecord.noteLines.map((noteLine, index) => (
+              <span
+                key={`${rowRecord.item.id}-inline-note-${index}`}
+                className={`${styles['inventoryNoteLine']} ${
+                  noteLine.tone === 'dm' ? styles['inventoryNoteLineDm'] : ''
+                }`}
+              >
+                {noteLine.text}
+              </span>
+            ))}
+          </span>
+        )}
+        <div className={styles['inventoryCompactMeta']}>
+          <span className={styles['inventoryCompactMetaItem']}>
+            <span className={styles['inventoryCompactMetaLabel']}>Day</span>
+            <span>{rowRecord.item.day}</span>
+          </span>
+          <span className={styles['inventoryCompactMetaItem']}>
+            <span className={styles['inventoryCompactMetaLabel']}>Qty</span>
+            <span>{rowRecord.item.quantity}</span>
+          </span>
+          <span className={styles['inventoryCompactMetaItem']}>
+            <span className={styles['inventoryCompactMetaLabel']}>Load</span>
+            <span>{rowRecord.itemOwnLoadGp} gp</span>
+          </span>
+          <span className={styles['inventoryCompactMetaItem']}>
+            <span className={styles['inventoryCompactMetaLabel']}>
+              {mode === 'dm' ? 'Value' : 'Known value'}
+            </span>
+            <span>{formatOptionalGpValue(rowRecord.itemVisibleValueGp)}</span>
+          </span>
+        </div>
       </div>
       <div className={styles['inventoryCellSummary']}>
         <span className={styles['inventoryLabel']}>Day</span>
@@ -3299,7 +3340,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
             <span>Qty</span>
             <span>Load</span>
             <span>{mode === 'dm' ? 'Value' : 'Known value'}</span>
-            <span>Notes</span>
+            <span className={styles['inventoryNotesHeader']}>Notes</span>
           </div>
           <div className={styles['inventoryList']}>
             {displayedInventoryRows.length > 0 ? (
