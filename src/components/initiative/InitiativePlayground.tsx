@@ -355,6 +355,75 @@ const getGraphLayerIndex = (layers: string[][], nodeId: string): number =>
 const truncateGraphText = (text: string, maxLength: number): string =>
   text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 
+const getGraphActionLines = (text: string): string[] => {
+  const [actionLabel, suffixLabel] = text.split(' · ');
+
+  if (!actionLabel || !suffixLabel) {
+    return [truncateGraphText(text, 20)];
+  }
+
+  return [
+    truncateGraphText(actionLabel, 16),
+    truncateGraphText(suffixLabel, 16),
+  ];
+};
+
+type GraphNodeDisplayLineKind = 'name' | 'target' | 'action';
+
+interface GraphNodeDisplayLine {
+  text: string;
+  kind: GraphNodeDisplayLineKind;
+  isSecondary?: boolean;
+}
+
+interface GraphNodeDisplay {
+  combatantName: string;
+  targetLabel: string;
+  actionLabel: string;
+  lines: GraphNodeDisplayLine[];
+  width: number;
+  height: number;
+}
+
+const GRAPH_NODE_MIN_WIDTH = 102;
+const GRAPH_NODE_MAX_WIDTH = 132;
+const GRAPH_NODE_HEIGHT = 66;
+const GRAPH_NODE_HORIZONTAL_PADDING = 14;
+const GRAPH_NODE_LINE_GAP = 14;
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
+
+const estimateGraphNodeLineWidth = (
+  text: string,
+  kind: GraphNodeDisplayLineKind
+): number =>
+  text.length * (kind === 'name' ? 6.6 : kind === 'target' ? 5.8 : 5.2);
+
+const getGraphNodeWidth = (lines: GraphNodeDisplayLine[]): number =>
+  clamp(
+    Math.max(
+      ...lines.map(
+        (line) =>
+          estimateGraphNodeLineWidth(line.text, line.kind) +
+          GRAPH_NODE_HORIZONTAL_PADDING * 2
+      )
+    ),
+    GRAPH_NODE_MIN_WIDTH,
+    GRAPH_NODE_MAX_WIDTH
+  );
+
+const getGraphNodeLineYs = (height: number, lineCount: number): number[] => {
+  const totalSpan = (lineCount - 1) * GRAPH_NODE_LINE_GAP;
+  const centerY = height / 2 + 1;
+
+  return Array.from(
+    { length: lineCount },
+    (_unusedValue, index) =>
+      centerY - totalSpan / 2 + index * GRAPH_NODE_LINE_GAP
+  );
+};
+
 const InitiativePlayground = () => {
   const [state, setState] =
     useState<InitiativePlaytestState>(createMixedPreset);
@@ -379,10 +448,6 @@ const InitiativePlayground = () => {
     () => buildInitiativeAttackGraph(scenario, resolution),
     [resolution, scenario]
   );
-  const graphLayout = useMemo(
-    () => buildInitiativeAttackGraphLayout(attackGraph),
-    [attackGraph]
-  );
   const viewModel = useMemo(
     () => buildInitiativeRoundResolutionViewModel(scenario, resolution),
     [resolution, scenario]
@@ -402,6 +467,77 @@ const InitiativePlayground = () => {
           .map((combatant) => [combatant.id, combatant] as const)
       ),
     [scenario.enemies, scenario.party]
+  );
+  const graphNodeDisplayById = useMemo(
+    () =>
+      Object.fromEntries(
+        attackGraph.nodes.map((node) => {
+          const combatantName =
+            viewModel.combatantNameById[node.combatantId] || node.combatantId;
+          const combatant = combatantById.get(node.combatantId);
+
+          let targetLabel = 'No target';
+          if (combatant?.targetIds.length === 1) {
+            const targetId = combatant.targetIds[0];
+            targetLabel = targetId
+              ? viewModel.combatantNameById[targetId] || targetId
+              : 'No target';
+          } else if ((combatant?.targetIds.length || 0) > 1) {
+            targetLabel = 'Multiple targets';
+          }
+
+          const actionLabel = combatant
+            ? `${formatDeclaredAction(combatant.declaredAction)} · ${
+                node.label
+              }`
+            : 'Unknown action';
+          const actionLines = getGraphActionLines(actionLabel);
+          const lines: GraphNodeDisplayLine[] = [
+            {
+              text: truncateGraphText(combatantName, 18),
+              kind: 'name',
+            },
+            {
+              text: truncateGraphText(`→ ${targetLabel}`, 18),
+              kind: 'target',
+            },
+            ...actionLines.map((actionLine, index) => ({
+              text: actionLine,
+              kind: 'action' as const,
+              isSecondary: index > 0,
+            })),
+          ];
+
+          return [
+            node.id,
+            {
+              combatantName,
+              targetLabel,
+              actionLabel,
+              lines,
+              width: getGraphNodeWidth(lines),
+              height: GRAPH_NODE_HEIGHT,
+            } as GraphNodeDisplay,
+          ];
+        })
+      ),
+    [attackGraph.nodes, combatantById, viewModel.combatantNameById]
+  );
+  const graphLayout = useMemo(
+    () =>
+      buildInitiativeAttackGraphLayout(
+        attackGraph,
+        Object.fromEntries(
+          Object.entries(graphNodeDisplayById).map(([nodeId, display]) => [
+            nodeId,
+            {
+              width: display.width,
+              height: display.height,
+            },
+          ])
+        )
+      ),
+    [attackGraph, graphNodeDisplayById]
   );
   const menuPortalTarget =
     typeof document !== 'undefined' ? document.body : undefined;
@@ -648,47 +784,6 @@ const InitiativePlayground = () => {
         ])
       ),
     [attackGraph.nodes, viewModel.combatantNameById]
-  );
-  const graphNodeTargetLabelById = useMemo(
-    () =>
-      Object.fromEntries(
-        attackGraph.nodes.map((node) => {
-          const combatant = combatantById.get(node.combatantId);
-
-          if (!combatant || combatant.targetIds.length === 0) {
-            return [node.id, 'No target'];
-          }
-
-          if (combatant.targetIds.length > 1) {
-            return [node.id, 'Multiple targets'];
-          }
-
-          const targetId = combatant.targetIds[0];
-          if (!targetId) {
-            return [node.id, 'No target'];
-          }
-
-          return [node.id, viewModel.combatantNameById[targetId] || targetId];
-        })
-      ),
-    [attackGraph.nodes, combatantById, viewModel.combatantNameById]
-  );
-  const graphNodeActionLabelById = useMemo(
-    () =>
-      Object.fromEntries(
-        attackGraph.nodes.map((node) => {
-          const combatant = combatantById.get(node.combatantId);
-          return [
-            node.id,
-            combatant
-              ? `${formatDeclaredAction(combatant.declaredAction)} · ${
-                  node.label
-                }`
-              : 'Unknown action',
-          ];
-        })
-      ),
-    [attackGraph.nodes, combatantById]
   );
   const toggleSelectedGraphNode = (nodeId: string) => {
     setSelectedGraphNodeId((previous) =>
@@ -1317,15 +1412,15 @@ const InitiativePlayground = () => {
                       <defs>
                         <marker
                           id={'initiative-dag-arrowhead'}
-                          viewBox={'0 0 12 12'}
-                          refX={'10'}
-                          refY={'6'}
-                          markerWidth={'10'}
-                          markerHeight={'10'}
+                          viewBox={'0 0 8 8'}
+                          refX={'7'}
+                          refY={'4'}
+                          markerWidth={'7'}
+                          markerHeight={'7'}
                           orient={'auto-start-reverse'}
                         >
                           <path
-                            d={'M 0 0 L 12 6 L 0 12 z'}
+                            d={'M 0 0 L 6 3 L 0 6 z'}
                             className={styles['graphArrowhead']}
                           />
                         </marker>
@@ -1333,6 +1428,30 @@ const InitiativePlayground = () => {
 
                       {graphLayout.hasSegmentBand ? (
                         <>
+                          {graphLayout.segmentColumns.map(
+                            (segmentColumn, columnIndex) => (
+                              <rect
+                                key={`segment-lane-${segmentColumn.segment}`}
+                                x={segmentColumn.startX}
+                                y={graphLayout.headerLineY}
+                                width={
+                                  segmentColumn.endX - segmentColumn.startX
+                                }
+                                height={
+                                  graphLayout.segmentBandBottomY -
+                                  graphLayout.headerLineY
+                                }
+                                className={[
+                                  styles['graphSegmentLane'],
+                                  columnIndex % 2 === 0
+                                    ? styles['graphSegmentLaneEven']
+                                    : styles['graphSegmentLaneOdd'],
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                              />
+                            )
+                          )}
                           <line
                             x1={graphLayout.segmentBoundaryXs[0] || 0}
                             y1={graphLayout.headerLineY}
@@ -1407,14 +1526,16 @@ const InitiativePlayground = () => {
                           return null;
                         }
 
-                        const combatantName =
-                          viewModel.combatantNameById[node.combatantId] ||
-                          node.combatantId;
-                        const targetLabel =
-                          graphNodeTargetLabelById[node.id] || 'No target';
-                        const actionLabel =
-                          graphNodeActionLabelById[node.id] || 'Unknown action';
+                        const display = graphNodeDisplayById[node.id];
+                        if (!display) {
+                          return null;
+                        }
+
                         const isSelected = selectedGraphNode?.id === node.id;
+                        const lineYs = getGraphNodeLineYs(
+                          layoutNode.height,
+                          display.lines.length
+                        );
 
                         return (
                           <g
@@ -1422,7 +1543,7 @@ const InitiativePlayground = () => {
                             transform={`translate(${layoutNode.x} ${layoutNode.y})`}
                             role={'button'}
                             tabIndex={0}
-                            aria-label={`${combatantName}, target ${targetLabel}, ${actionLabel}`}
+                            aria-label={`${display.combatantName}, target ${display.targetLabel}, ${display.actionLabel}`}
                             onClick={() => toggleSelectedGraphNode(node.id)}
                             onKeyDown={(event) => {
                               if (event.key === 'Enter' || event.key === ' ') {
@@ -1437,6 +1558,13 @@ const InitiativePlayground = () => {
                               width={layoutNode.width}
                               height={layoutNode.height}
                               rx={16}
+                              style={{
+                                fill: isSelected
+                                  ? '#ae7c32'
+                                  : node.side === 'party'
+                                  ? '#6d8e3a'
+                                  : '#8d623c',
+                              }}
                               className={[
                                 styles['graphNodeCard'],
                                 node.side === 'party'
@@ -1447,50 +1575,29 @@ const InitiativePlayground = () => {
                                 .filter(Boolean)
                                 .join(' ')}
                             />
-                            <text
-                              x={layoutNode.width / 2}
-                              y={23}
-                              textAnchor={'middle'}
-                              className={styles['graphNodeName']}
-                            >
-                              {truncateGraphText(combatantName, 18)}
-                            </text>
-                            {node.segment !== undefined ? (
-                              <>
-                                <rect
-                                  x={layoutNode.width - 52}
-                                  y={8}
-                                  width={40}
-                                  height={18}
-                                  rx={9}
-                                  className={styles['graphSegmentBadge']}
-                                />
-                                <text
-                                  x={layoutNode.width - 32}
-                                  y={21}
-                                  textAnchor={'middle'}
-                                  className={styles['graphSegmentBadgeLabel']}
-                                >
-                                  S{node.segment}
-                                </text>
-                              </>
-                            ) : null}
-                            <text
-                              x={layoutNode.width / 2}
-                              y={43}
-                              textAnchor={'middle'}
-                              className={styles['graphNodeTarget']}
-                            >
-                              {truncateGraphText(`-> ${targetLabel}`, 20)}
-                            </text>
-                            <text
-                              x={layoutNode.width / 2}
-                              y={61}
-                              textAnchor={'middle'}
-                              className={styles['graphNodeAction']}
-                            >
-                              {truncateGraphText(actionLabel, 20)}
-                            </text>
+                            {display.lines.map((line, index) => (
+                              <text
+                                key={`${layoutNode.nodeId}-line-${index}`}
+                                x={layoutNode.width / 2}
+                                y={lineYs[index]}
+                                textAnchor={'middle'}
+                                dominantBaseline={'middle'}
+                                className={[
+                                  line.kind === 'name'
+                                    ? styles['graphNodeName']
+                                    : line.kind === 'target'
+                                    ? styles['graphNodeTarget']
+                                    : styles['graphNodeAction'],
+                                  line.isSecondary
+                                    ? styles['graphNodeActionSecondary']
+                                    : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                              >
+                                {line.text}
+                              </text>
+                            ))}
                           </g>
                         );
                       })}

@@ -581,8 +581,13 @@
 
 .graphViewport,
 .graphInspector {
-  background: rgba(240, 239, 221, 0.08);
-  border: 1px solid rgba(172, 114, 35, 0.5);
+  background: radial-gradient(
+      circle at top center,
+      rgba(215, 165, 45, 0.08),
+      transparent 24rem
+    ),
+    linear-gradient(180deg, #526631 0%, #415427 46%, #334120 100%);
+  border: 1px solid rgba(172, 114, 35, 0.72);
   padding: 0.9rem;
 }
 
@@ -608,12 +613,8 @@
 .graphInspectorOverlay .graphInspector {
   height: 100%;
   overflow: auto;
-  background: linear-gradient(
-    180deg,
-    rgba(84, 111, 58, 0.98),
-    rgba(56, 73, 40, 1)
-  );
-  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, #536630, #3f4f25);
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.42);
   pointer-events: auto;
 }
 
@@ -622,99 +623,102 @@
 }
 
 .graphArrowhead {
-  fill: rgba(240, 239, 221, 0.75);
+  fill: rgba(246, 238, 214, 0.88);
 }
 
 .graphSegmentHeaderLine {
-  stroke: rgba(172, 114, 35, 0.65);
-  stroke-width: 1.5px;
+  stroke: rgba(172, 114, 35, 0.82);
+  stroke-width: 1.75px;
 }
 
 .graphSegmentBandLine {
-  stroke: rgba(172, 114, 35, 0.45);
-  stroke-width: 1px;
+  stroke: rgba(172, 114, 35, 0.72);
+  stroke-width: 1.15px;
+}
+
+.graphSegmentLane {
+  stroke: none;
+}
+
+.graphSegmentLaneEven {
+  fill: rgba(79, 96, 41, 0.54);
+}
+
+.graphSegmentLaneOdd {
+  fill: rgba(61, 76, 33, 0.44);
 }
 
 .graphSegmentColumnLabel {
   fill: var(--goldenrod);
-  font-size: 1.05rem;
+  font-size: 0.96rem;
   font-weight: 700;
 }
 
 .graphSegmentGuide {
-  stroke: rgba(215, 165, 45, 0.28);
+  stroke: rgba(215, 165, 45, 0.42);
   stroke-width: 1px;
-  stroke-dasharray: 8 8;
+  stroke-dasharray: 6 8;
 }
 
 .graphEdge {
   fill: none;
-  stroke: rgba(240, 239, 221, 0.42);
-  stroke-width: 2.5px;
+  stroke: rgba(244, 236, 210, 0.78);
+  stroke-width: 1.55px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .graphEdgeSelected {
   stroke: rgba(215, 165, 45, 0.98);
-  stroke-width: 3px;
+  stroke-width: 2.5px;
 }
 
 .graphNodeCard {
   cursor: pointer;
-  stroke-width: 2px;
+  stroke-width: 1.9px;
+  filter: drop-shadow(0 0.18rem 0.32rem rgba(17, 21, 10, 0.24));
   transition: fill 140ms ease, stroke 140ms ease, filter 140ms ease;
 }
 
 .graphNodeParty {
-  fill: rgba(104, 141, 75, 0.32);
-  stroke: rgba(202, 222, 166, 0.62);
+  stroke: #edf6ce;
 }
 
 .graphNodeEnemy {
-  fill: rgba(143, 74, 63, 0.35);
-  stroke: rgba(255, 207, 198, 0.48);
+  stroke: #f8dac4;
 }
 
 .graphNodeSelected {
   stroke: var(--goldenrod);
-  fill: rgba(215, 165, 45, 0.18);
-  filter: drop-shadow(0 0 0.6rem rgba(215, 165, 45, 0.24));
-}
-
-.graphSegmentBadge {
-  fill: rgba(215, 165, 45, 0.2);
-  stroke: rgba(215, 165, 45, 0.75);
-  stroke-width: 1px;
-}
-
-.graphSegmentBadgeLabel {
-  fill: var(--goldenrod);
-  font-size: 0.68rem;
-  font-weight: 700;
-  pointer-events: none;
+  filter: drop-shadow(0 0 0.5rem rgba(215, 165, 45, 0.26));
 }
 
 .graphNodeName,
 .graphNodeTarget,
 .graphNodeAction {
-  fill: var(--eggshell);
+  fill: #fff7e9;
   pointer-events: none;
 }
 
 .graphNodeName {
-  font-size: 0.84rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
 .graphNodeTarget {
-  font-size: 0.72rem;
-  fill: rgba(240, 239, 221, 0.9);
+  font-size: 0.62rem;
+  fill: #fff8ea;
 }
 
 .graphNodeAction {
-  font-size: 0.66rem;
+  font-size: 0.56rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  fill: rgba(240, 239, 221, 0.86);
+  letter-spacing: 0.03em;
+  fill: #fffbed;
+}
+
+.graphNodeActionSecondary {
+  fill: #fff8ea;
 }
 
 .graphSubhead {
@@ -751,7 +755,7 @@
   gap: 0.25rem;
   margin-bottom: 1rem;
   font-size: 0.98rem;
-  color: rgba(240, 239, 221, 0.85);
+  color: rgba(240, 239, 221, 0.94);
 }
 
 .graphInspectorSection + .graphInspectorSection {
@@ -766,15 +770,15 @@
 }
 
 .graphInspectorItem {
-  background: rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(172, 114, 35, 0.4);
+  background: rgba(36, 46, 24, 0.38);
+  border: 1px solid rgba(172, 114, 35, 0.56);
   padding: 0.7rem 0.8rem;
 }
 
 .graphInspectorEmpty,
 .graphEmpty {
-  background: rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(172, 114, 35, 0.4);
+  background: rgba(36, 46, 24, 0.34);
+  border: 1px solid rgba(172, 114, 35, 0.52);
   padding: 0.8rem;
   line-height: 1.45;
 }

@@ -125,8 +125,13 @@ describe('initiative attack graph layout', () => {
 
     expect(segmentTwoColumn).toBeDefined();
     expect(layout.hasSegmentBand).toBe(true);
-    expect(attackerNode?.x).toBe(segmentTwoColumn?.x);
-    expect(defenderNode?.x).toBe(segmentTwoColumn?.x);
+    expect(attackerNode?.x).toBeGreaterThanOrEqual(
+      segmentTwoColumn?.startX || 0
+    );
+    expect(attackerNode?.x).toBeLessThan(
+      (segmentTwoColumn?.endX || 0) - (attackerNode?.width || 0)
+    );
+    expect(defenderNode?.x).toBe(attackerNode?.x);
     expect(attackerNode?.y).toBeLessThan(defenderNode?.y || 0);
 
     expect(layout.edges).toEqual(
@@ -134,10 +139,98 @@ describe('initiative attack graph layout', () => {
         expect.objectContaining({
           fromNodeId: 'attack:party-1:1',
           toNodeId: 'attack:enemy-3:1',
-          path: expect.stringContaining(`M ${segmentTwoColumn?.centerX} `),
+          path: expect.stringMatching(/^M /),
         }),
       ])
     );
+  });
+
+  test('splits independent same-segment chains into local subcolumns', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Segment Two Split',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Doran',
+          declaredAction: 'set-vs-charge',
+          movementRate: 12,
+          weaponId: 50,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 2,
+          name: 'Garran',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 4,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 4,
+          name: 'Hobgoblin Guard',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 59,
+          targetCombatantKeys: [2],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+    const layout = buildInitiativeAttackGraphLayout(graph);
+
+    const hobgoblinNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:enemy-4:1'
+    );
+    const garranNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-2:1'
+    );
+    const doranNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-1:1'
+    );
+    const raiderNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:enemy-3:1'
+    );
+    const segmentTwoColumn = layout.segmentColumns.find(
+      (column) => column.segment === 2
+    );
+
+    expect(segmentTwoColumn).toBeDefined();
+    expect(hobgoblinNode?.x).not.toBe(doranNode?.x);
+    expect(hobgoblinNode?.y).toBe(doranNode?.y);
+    expect(garranNode?.x).toBe(hobgoblinNode?.x);
+    expect(raiderNode?.x).toBe(doranNode?.x);
+    expect(garranNode?.y).toBe(raiderNode?.y);
+    expect(
+      (segmentTwoColumn?.endX || 0) - (segmentTwoColumn?.startX || 0)
+    ).toBeGreaterThan(300);
   });
 
   test('keeps segment guides in the upper band and pushes dependency-only nodes below it', () => {
