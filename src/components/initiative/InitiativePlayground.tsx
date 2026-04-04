@@ -58,6 +58,7 @@ const ACTION_OPTIONS: Array<{
   { value: 'charge', label: 'Charge' },
   { value: 'set-vs-charge', label: 'Set vs charge' },
   { value: 'missile', label: 'Missile' },
+  { value: 'turn-undead', label: 'Turn undead' },
 ];
 
 const MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS = [
@@ -280,6 +281,16 @@ const createMissileDexEdgePreset = (): InitiativePlaytestState => ({
   },
 });
 
+const createTurnUndeadPreset = (): InitiativePlaytestState => ({
+  label: 'Turn Undead',
+  partyInitiative: '3',
+  enemyInitiative: '5',
+  nextCombatantKey: 4,
+  party: [createCombatant(1, 'Sister Arda', 17, [3], 'turn-undead', '12')],
+  enemies: [createCombatant(3, 'Skeleton', 1, [1], 'open-melee', '12')],
+  pairDistances: {},
+});
+
 const createLargeBattlePreset = (): InitiativePlaytestState => ({
   label: 'Large Mixed Battle',
   partyInitiative: '4',
@@ -395,6 +406,7 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
         )}`
       : undefined,
     isNonMissileWeaponId(combatant.weaponId) &&
+    combatant.declaredAction !== 'turn-undead' &&
     (combatant.attackRoutineCount.trim() || '1') !== '1'
       ? `Routine x${combatant.attackRoutineCount.trim()}`
       : undefined,
@@ -1096,6 +1108,13 @@ const InitiativePlayground = ({
                 <button
                   type={'button'}
                   className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createTurnUndeadPreset)}
+                >
+                  Turn Undead
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
                   onClick={() => loadPreset(createLargeBattlePreset)}
                 >
                   Large Mixed
@@ -1123,11 +1142,11 @@ const InitiativePlayground = ({
               <h3 className={styles['matrixTitle']}>Engagement Matrix</h3>
               <p className={styles['matrixCopy']}>
                 Party combatants run across the top, enemies run down the side.
-                Click `P→E` when the party column attacks the enemy row, `E→P`
-                for the reverse, and use the declaration modal to set the action
-                plus any inch distance for that directed attack. Clean
-                open-melee mutual targets light up as duels. Click a row or
-                column header to edit persistent combatant metadata.
+                Click `P→E` when the party column acts against the enemy row,
+                `E→P` for the reverse, and use the declaration modal to set the
+                action plus any inch distance for that directed declaration.
+                Clean open-melee mutual targets light up as duels. Click a row
+                or column header to edit persistent combatant metadata.
               </p>
             </div>
 
@@ -2006,7 +2025,8 @@ const InitiativePlayground = ({
                   DMG Dexterity missile-initiative adjustment. This affects only
                   missile timing, not melee or movement order.
                 </p>
-                {isNonMissileWeaponId(editedCombatant.weaponId) ? (
+                {isNonMissileWeaponId(editedCombatant.weaponId) &&
+                editedCombatant.declaredAction !== 'turn-undead' ? (
                   <>
                     <label
                       className={styles['modalLabel']}

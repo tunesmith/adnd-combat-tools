@@ -39,7 +39,7 @@ describe("wsf", () => {
     // Adjusted weapon speed is 0, which is "as the spell is begun"
     expect(determineWeaponVsTimedAction(5, 3, 5)).toBe(WEAPON_WINS);
   });
-  test("DMG p67 ex4", () => {
+  test('DMG p67 ex4', () => {
     /**
      * >"Suppose instead that a dagger were being employed. It has a speed factor of only 2, so it will strike prior
      * to spell completion if the initiative roll which lost was 1-4 (the adjusted segment indicator being 1, 0, 1, 2
@@ -54,7 +54,7 @@ describe("wsf", () => {
      */
     expect(determineWeaponVsTimedAction(2, 3, 5)).toBe(TIMED_ACTION_WEAPON_TIE);
   });
-  test("DMG p67 ex5", () => {
+  test('DMG p67 ex5', () => {
     /**
      * >"If the weapon being employed was a two-handed sword (or any other weapon with a speed factor of 10,
      * or 9 for that matter) there would be no chance far the reacting side to strike the spell caster
@@ -71,7 +71,7 @@ describe("wsf", () => {
     expect(determineWeaponVsTimedAction(9, 3, 4)).toBe(TIMED_ACTION_WINS);
     expect(determineWeaponVsTimedAction(9, 3, 5)).toBe(TIMED_ACTION_WINS);
   });
-  test("DMG p67 ex6", () => {
+  test('DMG p67 ex6', () => {
     /**
      * >"Note that even though a spell takes but 1 segment to complete, this is 6 seconds, and during that period
      * a reacting attacker might be able to attack the magic-user or other spell caster prior to actual completion
@@ -86,8 +86,8 @@ describe("wsf", () => {
   });
 });
 
-describe("controversial wsf tests", () => {
-  test("umm", () => {
+describe('controversial wsf tests', () => {
+  test('umm', () => {
     /**
      * Test case: Fighter attacks magic-user. Fighter attacks with 2H Sword (WSF 10).
      * Magic-User casts Mass Charm, 8 segments. Fighter loses initiative with a roll

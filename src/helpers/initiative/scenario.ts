@@ -56,10 +56,27 @@ const getOrdinaryRoundAttackCount = (
 
 const buildAttackRoutine = (
   combatantId: string,
+  declaredAction: InitiativeScenarioCombatant['declaredAction'],
   weaponType: InitiativeWeaponType,
   fireRate: number | undefined,
   attackRoutineCount: number | undefined
 ): InitiativeAttackRoutine => {
+  if (declaredAction === 'turn-undead') {
+    return {
+      id: `routine:${combatantId}:1`,
+      label: 'Turn undead',
+      combatantId,
+      components: [
+        {
+          id: 'turn-attempt',
+          order: 1,
+          label: 'attempt',
+        },
+      ],
+      timingBasisComponentId: 'turn-attempt',
+    };
+  }
+
   const attackCount = getOrdinaryRoundAttackCount(
     weaponType,
     fireRate,
@@ -174,6 +191,7 @@ const buildScenarioCombatants = (
       ),
       attackRoutine: buildAttackRoutine(
         combatantId,
+        combatant.declaredAction ?? 'open-melee',
         weaponType,
         weaponInfo?.weaponType === 'missile' ? weaponInfo.fireRate : undefined,
         combatant.attackRoutineCount

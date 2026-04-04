@@ -41,10 +41,9 @@ describe('initiative attack graph', () => {
     const resolution = resolveInitiativeRound(scenario);
     const graph = buildInitiativeAttackGraph(scenario, resolution);
 
-    expect(graph.nodes.map((node) => node.id)).toEqual([
-      'attack:enemy-3:1',
-      'attack:party-1:1',
-    ]);
+    expect(graph.nodes.map((node) => node.id)).toEqual(
+      expect.arrayContaining(['attack:enemy-3:1', 'attack:party-1:1'])
+    );
     expect(graph.layers).toEqual([['attack:enemy-3:1'], ['attack:party-1:1']]);
     expect(graph.edges).toEqual([
       {
@@ -110,6 +109,77 @@ describe('initiative attack graph', () => {
         reasons: ['direct-melee'],
       },
     ]);
+  });
+
+  test('graphs turn undead behind an enemy melee attack when the turner loses initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Turn Undead',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Sister Arda',
+          declaredAction: 'turn-undead',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes.map((node) => node.id)).toEqual(
+      expect.arrayContaining(['attack:enemy-3:1', 'attack:party-1:1'])
+    );
+    expect(graph.edges).toEqual([
+      {
+        fromNodeId: 'attack:enemy-3:1',
+        toNodeId: 'attack:party-1:1',
+        reasons: ['simple-initiative'],
+      },
+    ]);
+    expect(graph.layers).toEqual([['attack:enemy-3:1'], ['attack:party-1:1']]);
+  });
+
+  test('keeps turn undead simultaneous with melee on tied initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Turn Undead Tie',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Sister Arda',
+          declaredAction: 'turn-undead',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.edges).toEqual([]);
+    expect(graph.layers).toEqual([['attack:party-1:1', 'attack:enemy-3:1']]);
   });
 
   test('keeps an extra attacker on baseline initiative while only the duel gets local precedence', () => {

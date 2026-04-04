@@ -9,7 +9,8 @@ export type InitiativeDeclaredAction =
   | 'close'
   | 'charge'
   | 'set-vs-charge'
-  | 'missile';
+  | 'missile'
+  | 'turn-undead';
 
 interface InitiativeAttackRoutineComponent {
   id: string;

@@ -35,8 +35,8 @@ import sequencePlayers from "../helpers/initiative/sequence";
  *     attacks, but not WSF attacks.
  */
 
-describe("ruleTwo", () => {
-  test("default p65", () => {
+describe('ruleTwo', () => {
+  test('default p65', () => {
     /**
      * >"If the spell caster's side won the initiative with a roll of 5,
      * the attack must come then, not on the opponent's losing roll of

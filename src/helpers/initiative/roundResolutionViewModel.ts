@@ -2,6 +2,7 @@ import { getMultipleAttackThreshold } from './openMelee';
 import { compareCombatantInitiative } from './initiativeTiming';
 import type {
   DirectMeleeEngagement,
+  InitiativeDeclaredAction,
   InitiativeMovementResolution,
   InitiativeRoundResolution,
   InitiativeScenario,
@@ -17,7 +18,12 @@ interface InitiativeResolutionStepViewModel {
 
 interface InitiativeResolutionCardViewModel {
   id: string;
-  kind: 'simple-order' | 'movement' | 'direct-melee' | 'unresolved';
+  kind:
+    | 'simple-order'
+    | 'movement'
+    | 'direct-melee'
+    | 'turn-undead'
+    | 'unresolved';
   title: string;
   summary: string;
   combatantIds: string[];
@@ -32,14 +38,18 @@ interface InitiativeRoundResolutionViewModel {
 const formatInches = (value: number): string =>
   `${Number.isInteger(value) ? value : value.toFixed(1).replace(/\.0$/, '')}"`;
 
-const formatMovementActionLabel = (
-  action: InitiativeMovementResolution['action']
-): string =>
+const formatDeclaredActionLabel = (action: InitiativeDeclaredAction): string =>
   action === 'open-melee'
     ? 'open melee'
     : action === 'set-vs-charge'
     ? 'set vs charge'
+    : action === 'turn-undead'
+    ? 'turn undead'
     : action;
+
+const formatMovementActionLabel = (
+  action: InitiativeMovementResolution['action']
+): string => formatDeclaredActionLabel(action);
 
 const formatNames = (
   combatantIds: string[],
@@ -537,6 +547,94 @@ const buildMovementCards = (
     };
   });
 
+const getTurnUndeadSummary = (
+  combatant: InitiativeScenarioCombatant,
+  combatantNameById: Record<string, string>,
+  combatantById: Map<string, InitiativeScenarioCombatant>
+): string => {
+  const targetNames = formatNames(combatant.targetIds, combatantNameById);
+
+  if (combatant.targetIds.length !== 1) {
+    return `${combatant.name} attempts to turn ${targetNames}. In this rules slice, turning is subject to initiative and is not spoiled by ordinary damage unless ${combatant.name} is killed or otherwise incapacitated before the attempt resolves.`;
+  }
+
+  const targetId = combatant.targetIds[0];
+  if (!targetId) {
+    return `${combatant.name} attempts to turn undead.`;
+  }
+
+  const target = combatantById.get(targetId);
+  if (!target) {
+    return `${combatant.name} attempts to turn ${targetNames}.`;
+  }
+
+  const initiativeComparison = compareCombatantInitiative(combatant, target);
+  const targetActionLabel = formatDeclaredActionLabel(target.declaredAction);
+
+  if (initiativeComparison > 0) {
+    return `${combatant.name} attempts to turn ${target.name} before ${
+      target.name
+    }'s ${targetActionLabel.toLowerCase()} because ${
+      combatant.side
+    } side currently acts earlier in this exchange. Ordinary damage does not spoil turning in this slice unless ${
+      combatant.name
+    } is killed or otherwise incapacitated first.`;
+  }
+
+  if (initiativeComparison < 0) {
+    return `${
+      target.name
+    }'s ${targetActionLabel.toLowerCase()} happens before ${
+      combatant.name
+    }'s turn attempt in this round. If ${
+      combatant.name
+    } survives and is not incapacitated, the turn attempt still resolves later because turning is not treated like spell casting for interruption here.`;
+  }
+
+  return `${combatant.name}'s turn attempt and ${
+    target.name
+  }'s ${targetActionLabel.toLowerCase()} are simultaneous in this tied round. Ordinary damage does not spoil turning in this slice unless ${
+    combatant.name
+  } is killed or otherwise incapacitated.`;
+};
+
+const buildTurnUndeadCards = (
+  scenario: InitiativeScenario,
+  combatantNameById: Record<string, string>,
+  combatantById: Map<string, InitiativeScenarioCombatant>
+): InitiativeResolutionCardViewModel[] =>
+  scenario.party
+    .concat(scenario.enemies)
+    .filter(
+      (combatant) =>
+        combatant.declaredAction === 'turn-undead' &&
+        combatant.targetIds.length > 0
+    )
+    .map((combatant) => ({
+      id: `turn-undead-${combatant.id}`,
+      kind: 'turn-undead' as const,
+      title: `${combatant.name} turn undead`,
+      summary: getTurnUndeadSummary(
+        combatant,
+        combatantNameById,
+        combatantById
+      ),
+      combatantIds: [combatant.id, ...combatant.targetIds],
+      steps: [
+        {
+          label: 'Targets',
+          detail: formatNames(combatant.targetIds, combatantNameById),
+          combatantIds: [combatant.id, ...combatant.targetIds],
+        },
+        {
+          label: 'Timing',
+          detail:
+            'Turn undead is subject to initiative, but ordinary damage does not spoil it the way spell damage does in this rules slice.',
+          combatantIds: [combatant.id, ...combatant.targetIds],
+        },
+      ],
+    }));
+
 const buildUnresolvedCard = (
   scenario: InitiativeScenario,
   resolution: InitiativeRoundResolution,
@@ -580,6 +678,7 @@ export const buildInitiativeRoundResolutionViewModel = (
     buildSimpleOrderCard(scenario, resolution, combatantNameById),
     ...buildMovementCards(resolution, combatantNameById, combatantById),
     ...buildDirectMeleeCards(resolution, combatantNameById, combatantById),
+    ...buildTurnUndeadCards(scenario, combatantNameById, combatantById),
     buildUnresolvedCard(scenario, resolution, combatantNameById),
   ].filter((card): card is InitiativeResolutionCardViewModel => Boolean(card));
 

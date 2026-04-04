@@ -178,4 +178,39 @@ describe('generic initiative scenario builder', () => {
       'multiple-routines'
     );
   });
+
+  test('treats turn undead as a single attempt regardless of routine count input', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Turn Undead',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Sister Arda',
+          declaredAction: 'turn-undead',
+          attackRoutineCount: 3,
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+
+    expect(scenario.party[0]?.attackRoutine.components).toEqual([
+      {
+        id: 'turn-attempt',
+        order: 1,
+        label: 'attempt',
+      },
+    ]);
+  });
 });

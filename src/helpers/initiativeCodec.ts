@@ -41,6 +41,7 @@ const INITIATIVE_ACTIONS: InitiativeDeclaredAction[] = [
   'charge',
   'set-vs-charge',
   'missile',
+  'turn-undead',
 ];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

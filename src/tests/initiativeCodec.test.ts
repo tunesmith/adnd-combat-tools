@@ -122,4 +122,42 @@ describe('initiative codec', () => {
       pairDistances: {},
     });
   });
+
+  test('accepts turn undead as a shareable declared action', async () => {
+    const state: InitiativePlaytestState = {
+      label: 'Turn Undead',
+      partyInitiative: '3',
+      enemyInitiative: '5',
+      nextCombatantKey: 4,
+      party: [
+        {
+          key: 1,
+          name: 'Sister Arda',
+          declaredAction: 'turn-undead',
+          movementRate: '12',
+          missileInitiativeAdjustment: '0',
+          attackRoutineCount: '3',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          key: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          movementRate: '12',
+          missileInitiativeAdjustment: '0',
+          attackRoutineCount: '1',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+      pairDistances: {},
+    };
+
+    await expect(
+      decodeInitiativePlaytestState(encodeInitiativePlaytestState(state))
+    ).resolves.toEqual(state);
+  });
 });

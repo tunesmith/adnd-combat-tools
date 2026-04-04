@@ -178,6 +178,64 @@ describe('initiative round resolution view model', () => {
     });
   });
 
+  test('adds a turn undead card and explains that ordinary damage does not spoil it', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Turn Undead',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Sister Arda',
+          declaredAction: 'turn-undead',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const turnCard = viewModel.cards.find(
+      (card) => card.kind === 'turn-undead'
+    );
+
+    expect(turnCard).toMatchObject({
+      kind: 'turn-undead',
+      title: 'Sister Arda turn undead',
+    });
+    expect(turnCard?.summary).toContain(
+      "Skeleton's open melee happens before Sister Arda's turn attempt"
+    );
+    expect(turnCard?.summary).toContain(
+      'not treated like spell casting for interruption'
+    );
+    expect(turnCard?.steps).toEqual([
+      {
+        label: 'Targets',
+        detail: 'Skeleton',
+        combatantIds: ['party-1', 'enemy-3'],
+      },
+      {
+        label: 'Timing',
+        detail:
+          'Turn undead is subject to initiative, but ordinary damage does not spoil it the way spell damage does in this rules slice.',
+        combatantIds: ['party-1', 'enemy-3'],
+      },
+    ]);
+  });
+
   test('explains set versus charge as an automatic first strike with double damage', () => {
     const scenario = buildInitiativeScenario({
       label: 'Set vs Charge',
