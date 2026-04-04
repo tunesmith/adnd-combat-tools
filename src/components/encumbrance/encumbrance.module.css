@@ -8,6 +8,12 @@
   padding: 1.5rem 1.75rem 2rem;
 }
 
+.outerContainerDm {
+}
+
+.outerContainerPlayer {
+}
+
 .title {
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.04;
@@ -1405,5 +1411,207 @@ select.fieldControl {
     clip-path: inset(50%);
     white-space: nowrap;
     border: 0;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+
+  .outerContainerPlayer {
+    color: #141414;
+    background: #ffffff;
+    padding: 0;
+    font-size: 11pt;
+  }
+
+  .outerContainerPlayer .title {
+    margin: 0 0 0.22in;
+    color: #111111;
+    font-size: 22pt;
+    line-height: 1.08;
+    text-align: left;
+  }
+
+  .outerContainerPlayer .contentContainer,
+  .outerContainerPlayer .card,
+  .outerContainerPlayer .characterSummary,
+  .outerContainerPlayer .summaryValue,
+  .outerContainerPlayer .inventoryRowButton,
+  .outerContainerPlayer .inventoryRowButtonParty,
+  .outerContainerPlayer .inventoryBadge,
+  .outerContainerPlayer .placeholder {
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #111111 !important;
+  }
+
+  .outerContainerPlayer .contentContainer {
+    border: 0;
+    padding: 0;
+  }
+
+  .outerContainerPlayer .toolbar,
+  .outerContainerPlayer .cardHeaderActions,
+  .outerContainerPlayer .menuPanel,
+  .outerContainerPlayer .inventorySortPriority,
+  .outerContainerPlayer .modalShadow,
+  .outerContainerPlayer .modal {
+    display: none !important;
+  }
+
+  .outerContainerPlayer .gridLayout,
+  .outerContainerPlayer .gridLayoutCompact {
+    grid-template-columns: 1fr;
+    gap: 0.18in;
+    margin-bottom: 0.18in;
+  }
+
+  .outerContainerPlayer .card,
+  .outerContainerPlayer .cardTight {
+    margin-bottom: 0.18in;
+    padding: 0.16in 0.18in;
+    border: 1px solid #8b8b8b;
+  }
+
+  .outerContainerPlayer .cardTitle {
+    margin-bottom: 0.1in;
+    font-size: 14pt;
+    color: #111111;
+  }
+
+  .outerContainerPlayer .characterSummaryButton {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    cursor: default;
+  }
+
+  .outerContainerPlayer .characterSummary {
+    gap: 0.08in;
+    padding: 0.12in 0.14in;
+    border-left: 2px solid #555555;
+  }
+
+  .outerContainerPlayer .characterSummaryName,
+  .outerContainerPlayer .characterSummaryNameCompact {
+    font-size: 18pt;
+    line-height: 1.08;
+  }
+
+  .outerContainerPlayer .characterSummaryChip,
+  .outerContainerPlayer .characterSummaryChipCompact {
+    border: 1px solid #8b8b8b;
+    background: transparent;
+    color: #111111;
+    font-size: 10.5pt;
+  }
+
+  .outerContainerPlayer .summaryGrid,
+  .outerContainerPlayer .summaryGridCompact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.1in;
+  }
+
+  .outerContainerPlayer .summaryValue,
+  .outerContainerPlayer .summaryValueCompact {
+    padding: 0.1in 0.12in;
+    border: 1px solid #8b8b8b;
+    border-left: 2px solid #555555;
+  }
+
+  .outerContainerPlayer .summaryLabel,
+  .outerContainerPlayer .summaryLabelCompact {
+    margin-bottom: 0.04in;
+    color: #444444;
+    opacity: 1;
+    font-size: 8.5pt;
+  }
+
+  .outerContainerPlayer .summaryValue strong,
+  .outerContainerPlayer .summaryValueCompact strong {
+    font-size: 13pt;
+    line-height: 1.15;
+  }
+
+  .outerContainerPlayer .inventoryHeader {
+    padding: 0 0.08in 0.08in;
+    border-bottom: 1px solid #8b8b8b;
+    color: #444444;
+    opacity: 1;
+    font-size: 8.5pt;
+  }
+
+  .outerContainerPlayer .inventoryHeaderSortButton {
+    cursor: default;
+    opacity: 1;
+  }
+
+  .outerContainerPlayer .inventoryList {
+    gap: 0;
+  }
+
+  .outerContainerPlayer .inventoryRowShell {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .outerContainerPlayer .inventoryRowButton,
+  .outerContainerPlayer .inventoryRowButtonParty {
+    gap: 0.1in;
+    padding: 0.09in 0.08in;
+    border-top: 1px solid #d0d0d0;
+    border-left: 2px solid transparent;
+    align-items: start;
+  }
+
+  .outerContainerPlayer .inventoryCellPrimary {
+    padding-left: 0;
+    gap: 0.04in;
+  }
+
+  .outerContainerPlayer .inventoryName {
+    font-size: 12.5pt;
+    line-height: 1.16;
+    font-weight: 600;
+  }
+
+  .outerContainerPlayer .inventoryBadge {
+    border: 1px solid #8b8b8b;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+
+  .outerContainerPlayer .inventoryStatusText,
+  .outerContainerPlayer .inventorySummaryValue,
+  .outerContainerPlayer .inventoryNotesPreview,
+  .outerContainerPlayer .inventoryOwnerInline {
+    color: #111111;
+    opacity: 1;
+  }
+
+  .outerContainerPlayer .inventorySummaryValue {
+    font-size: 11pt;
+  }
+
+  .outerContainerPlayer .inventoryNotesPreview {
+    min-height: 0;
+    font-size: 9.5pt;
+    line-height: 1.3;
+  }
+
+  .outerContainerPlayer .inventoryNoteLineDm {
+    opacity: 1;
+    font-style: normal;
+  }
+
+  .outerContainerPlayer .placeholder {
+    border: 1px dashed #8b8b8b;
+  }
+
+  .outerContainerPlayer :global(#app-modal) {
+    display: none !important;
   }
 }

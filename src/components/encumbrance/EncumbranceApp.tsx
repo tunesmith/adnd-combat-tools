@@ -2973,7 +2973,13 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     !isAllCharactersView && Boolean(activeCharacterSummary.dmNotes.trim());
 
   return (
-    <div className={styles['outerContainer']}>
+    <div
+      className={`${styles['outerContainer']} ${
+        mode === 'dm'
+          ? styles['outerContainerDm']
+          : styles['outerContainerPlayer']
+      }`}
+    >
       <div className={styles['title']}>AD&amp;D Encumbrance &amp; Gear</div>
       <div className={styles['contentContainer']}>
         <div className={styles['toolbar']}>
