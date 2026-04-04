@@ -37,6 +37,7 @@ export interface InitiativeScenarioCombatant {
   combatantKey: number;
   name: string;
   initiative: number;
+  missileInitiativeAdjustment: number;
   declaredAction: InitiativeDeclaredAction;
   movementRate: number;
   weaponId: number;
@@ -61,6 +62,7 @@ export interface InitiativeScenarioDraftCombatant {
   name?: string;
   declaredAction?: InitiativeDeclaredAction;
   movementRate?: number;
+  missileInitiativeAdjustment?: number;
   attackRoutineCount?: number;
   weaponId: number;
   intention?: string;

@@ -60,6 +60,16 @@ const ACTION_OPTIONS: Array<{
   { value: 'missile', label: 'Missile' },
 ];
 
+const MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS = [
+  '-3',
+  '-2',
+  '-1',
+  '0',
+  '+1',
+  '+2',
+  '+3',
+];
+
 const parseInitiative = (value: string): number => {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -84,6 +94,22 @@ const parseAttackRoutineCount = (value: string): number | undefined => {
   }
 
   return Math.max(1, Math.floor(parsed));
+};
+
+const parseMissileInitiativeAdjustment = (value: string): number => {
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return 0;
+  }
+
+  const parsed = Number(trimmed);
+
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Math.max(-3, Math.min(3, Math.trunc(parsed)));
 };
 
 const isSingleTargetDeclarationAction = (
@@ -141,12 +167,14 @@ const createCombatant = (
     weaponId
   ),
   movementRate = '12',
-  attackRoutineCount = '1'
+  attackRoutineCount = '1',
+  missileInitiativeAdjustment = '0'
 ): InitiativePlaytestCombatant => ({
   key,
   name,
   declaredAction,
   movementRate,
+  missileInitiativeAdjustment,
   attackRoutineCount,
   weaponId,
   targetCombatantKeys,
@@ -276,6 +304,9 @@ const buildDraftCombatants = (
     name: combatant.name.trim() || undefined,
     declaredAction: combatant.declaredAction,
     movementRate: parseOptionalNumber(combatant.movementRate),
+    missileInitiativeAdjustment: parseMissileInitiativeAdjustment(
+      combatant.missileInitiativeAdjustment
+    ),
     attackRoutineCount: parseAttackRoutineCount(combatant.attackRoutineCount),
     weaponId: combatant.weaponId,
     targetDeclarations: combatant.targetCombatantKeys.map(
@@ -338,6 +369,19 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
   [
     `MV ${combatant.movementRate.trim() || '12'}"`,
     getWeaponSummary(combatant.weaponId),
+    getWeaponInfo(combatant.weaponId)?.weaponType === 'missile' &&
+    parseMissileInitiativeAdjustment(combatant.missileInitiativeAdjustment) !==
+      0
+      ? `MI ${
+          parseMissileInitiativeAdjustment(
+            combatant.missileInitiativeAdjustment
+          ) > 0
+            ? '+'
+            : ''
+        }${parseMissileInitiativeAdjustment(
+          combatant.missileInitiativeAdjustment
+        )}`
+      : undefined,
     isNonMissileWeaponId(combatant.weaponId) &&
     (combatant.attackRoutineCount.trim() || '1') !== '1'
       ? `Routine x${combatant.attackRoutineCount.trim()}`
@@ -1917,6 +1961,32 @@ const InitiativePlayground = ({
                     })
                   }
                 />
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={`initiative-missile-init-${editedCombatant.key}`}
+                >
+                  Missile initiative adj
+                </label>
+                <select
+                  id={`initiative-missile-init-${editedCombatant.key}`}
+                  className={styles['selectInput']}
+                  value={editedCombatant.missileInitiativeAdjustment}
+                  onChange={(event) =>
+                    updateCombatant(editorTarget.side, editedCombatant.key, {
+                      missileInitiativeAdjustment: event.target.value,
+                    })
+                  }
+                >
+                  {MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <p className={styles['modalHint']}>
+                  DMG Dexterity missile-initiative adjustment. This affects only
+                  missile timing, not melee or movement order.
+                </p>
                 {isNonMissileWeaponId(editedCombatant.weaponId) ? (
                   <>
                     <label

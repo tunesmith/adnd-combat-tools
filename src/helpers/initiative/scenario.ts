@@ -156,6 +156,7 @@ const buildScenarioCombatants = (
       combatantKey: combatant.combatantKey,
       name: getCombatantName(combatant.name, side, index),
       initiative,
+      missileInitiativeAdjustment: combatant.missileInitiativeAdjustment ?? 0,
       declaredAction: combatant.declaredAction ?? 'open-melee',
       movementRate: combatant.movementRate ?? DEFAULT_MOVEMENT_RATE,
       weaponId: combatant.weaponId,

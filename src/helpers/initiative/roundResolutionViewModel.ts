@@ -1,4 +1,5 @@
 import { getMultipleAttackThreshold } from './openMelee';
+import { compareCombatantInitiative } from './initiativeTiming';
 import type {
   DirectMeleeEngagement,
   InitiativeMovementResolution,
@@ -297,8 +298,7 @@ const getDirectMissileChargeContext = (
 
 const getDirectMissileChargeSummary = (
   context: DirectMissileChargeContext,
-  movementResolution: InitiativeMovementResolution,
-  simpleOrder: InitiativeRoundResolution['simpleOrder']
+  movementResolution: InitiativeMovementResolution
 ): string => {
   const { missileCombatant, chargeCombatant, missileAttackCount } = context;
   const laterShotText =
@@ -306,16 +306,17 @@ const getDirectMissileChargeSummary = (
       ? 'Later missile shots are lost once melee contact is made.'
       : '';
 
-  if (simpleOrder === 'simultaneous') {
+  const initiativeComparison = compareCombatantInitiative(
+    missileCombatant,
+    chargeCombatant
+  );
+
+  if (initiativeComparison === 0) {
     return `${chargeCombatant.name} reaches ${missileCombatant.name} on segment ${movementResolution.contactSegment}. The first missile shot and the charge attack are simultaneous in this tied round, even if either would be a killing blow. ${laterShotText}`.trim();
   }
 
-  const missileSideWonInitiative =
-    (simpleOrder === 'party-first' && missileCombatant.side === 'party') ||
-    (simpleOrder === 'enemy-first' && missileCombatant.side === 'enemy');
-
-  if (missileSideWonInitiative) {
-    return `${missileCombatant.name} wins initiative and gets one missile shot off before ${chargeCombatant.name} reaches contact on segment ${movementResolution.contactSegment}. ${laterShotText}`.trim();
+  if (initiativeComparison > 0) {
+    return `${missileCombatant.name} gets one missile shot off before ${chargeCombatant.name} reaches contact on segment ${movementResolution.contactSegment}. ${laterShotText}`.trim();
   }
 
   return `${chargeCombatant.name} reaches ${missileCombatant.name} on segment ${movementResolution.contactSegment} before ordinary missile fire can be completed. Pending missile shots are lost once melee contact is made.`;
@@ -323,22 +324,22 @@ const getDirectMissileChargeSummary = (
 
 const getDirectMissileChargeOutcome = (
   context: DirectMissileChargeContext,
-  movementResolution: InitiativeMovementResolution,
-  simpleOrder: InitiativeRoundResolution['simpleOrder']
+  movementResolution: InitiativeMovementResolution
 ): string => {
-  const { missileCombatant, missileAttackCount } = context;
+  const { missileCombatant, chargeCombatant, missileAttackCount } = context;
   const laterShotText =
     missileAttackCount > 1 ? '; later missile shots are lost at contact' : '';
 
-  if (simpleOrder === 'simultaneous') {
+  const initiativeComparison = compareCombatantInitiative(
+    missileCombatant,
+    chargeCombatant
+  );
+
+  if (initiativeComparison === 0) {
     return `Contact on segment ${movementResolution.contactSegment}; ${missileCombatant.name}'s first missile shot and the charge attack resolve simultaneously${laterShotText}.`;
   }
 
-  const missileSideWonInitiative =
-    (simpleOrder === 'party-first' && missileCombatant.side === 'party') ||
-    (simpleOrder === 'enemy-first' && missileCombatant.side === 'enemy');
-
-  if (missileSideWonInitiative) {
+  if (initiativeComparison > 0) {
     return `Contact on segment ${movementResolution.contactSegment}; ${missileCombatant.name} gets one missile shot before contact${laterShotText}.`;
   }
 
@@ -348,8 +349,7 @@ const getDirectMissileChargeOutcome = (
 const getMovementSummary = (
   movementResolution: InitiativeMovementResolution,
   combatantNameById: Record<string, string>,
-  combatantById: Map<string, InitiativeScenarioCombatant>,
-  simpleOrder: InitiativeRoundResolution['simpleOrder']
+  combatantById: Map<string, InitiativeScenarioCombatant>
 ): string => {
   const combatantName =
     combatantNameById[movementResolution.combatantId] ||
@@ -398,8 +398,7 @@ const getMovementSummary = (
   if (directMissileChargeContext) {
     return getDirectMissileChargeSummary(
       directMissileChargeContext,
-      movementResolution,
-      simpleOrder
+      movementResolution
     );
   }
 
@@ -453,8 +452,7 @@ const buildMovementCards = (
       summary: getMovementSummary(
         movementResolution,
         combatantNameById,
-        combatantById,
-        resolution.simpleOrder
+        combatantById
       ),
       combatantIds: [
         movementResolution.combatantId,
@@ -494,8 +492,7 @@ const buildMovementCards = (
                   if (directMissileChargeContext) {
                     return getDirectMissileChargeOutcome(
                       directMissileChargeContext,
-                      movementResolution,
-                      resolution.simpleOrder
+                      movementResolution
                     );
                   }
 

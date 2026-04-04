@@ -418,7 +418,7 @@ describe('initiative round resolution view model', () => {
     );
 
     expect(movementCard?.summary).toContain(
-      'Bowman wins initiative and gets one missile shot off before Raider reaches contact on segment 2.'
+      'Bowman gets one missile shot off before Raider reaches contact on segment 2.'
     );
     expect(movementCard?.summary).toContain(
       'Later missile shots are lost once melee contact is made.'
@@ -535,5 +535,44 @@ describe('initiative round resolution view model', () => {
         "Contact on segment 2; Bowman's first missile shot and the charge attack resolve simultaneously; later missile shots are lost at contact.",
       combatantIds: ['enemy-3', 'party-1'],
     });
+  });
+
+  test('explains missile timing that overrides the side initiative winner', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Missile Dex Edge',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          missileInitiativeAdjustment: 3,
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Orc',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const simpleOrderCard = viewModel.cards.find(
+      (card) => card.id === 'simple-order'
+    );
+
+    expect(simpleOrderCard?.summary).toContain(
+      'Enemy side won initiative 5 to 3'
+    );
   });
 });

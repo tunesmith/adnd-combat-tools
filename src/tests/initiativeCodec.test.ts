@@ -1,3 +1,4 @@
+import { deflateSync } from 'zlib';
 import {
   decodeInitiativePlaytestState,
   encodeInitiativePlaytestState,
@@ -17,6 +18,7 @@ describe('initiative codec', () => {
           name: 'Aldred',
           declaredAction: 'open-melee',
           movementRate: '12',
+          missileInitiativeAdjustment: '0',
           attackRoutineCount: '2',
           weaponId: 56,
           targetCombatantKeys: [6],
@@ -26,6 +28,7 @@ describe('initiative codec', () => {
           name: 'Doran',
           declaredAction: 'set-vs-charge',
           movementRate: '12',
+          missileInitiativeAdjustment: '0',
           attackRoutineCount: '1',
           weaponId: 50,
           targetCombatantKeys: [7],
@@ -37,6 +40,7 @@ describe('initiative codec', () => {
           name: 'Gnoll Captain',
           declaredAction: 'open-melee',
           movementRate: '12',
+          missileInitiativeAdjustment: '0',
           attackRoutineCount: '1',
           weaponId: 2,
           targetCombatantKeys: [1],
@@ -46,6 +50,7 @@ describe('initiative codec', () => {
           name: 'Raider',
           declaredAction: 'charge',
           movementRate: '12',
+          missileInitiativeAdjustment: '0',
           attackRoutineCount: '1',
           weaponId: 56,
           targetCombatantKeys: [2],
@@ -68,5 +73,53 @@ describe('initiative codec', () => {
         encodeURIComponent(Buffer.from('{"version":999}').toString('base64'))
       )
     ).rejects.toThrow();
+  });
+
+  test('defaults missing missile initiative adjustment to zero for old URLs', async () => {
+    const encodedState = encodeURIComponent(
+      deflateSync(
+        JSON.stringify({
+          version: 1,
+          label: 'Legacy',
+          partyInitiative: '4',
+          enemyInitiative: '4',
+          nextCombatantKey: 2,
+          party: [
+            {
+              key: 1,
+              name: 'Bowman',
+              declaredAction: 'missile',
+              movementRate: '12',
+              attackRoutineCount: '1',
+              weaponId: 11,
+              targetCombatantKeys: [],
+            },
+          ],
+          enemies: [],
+          pairDistances: {},
+        })
+      ).toString('base64')
+    );
+
+    await expect(decodeInitiativePlaytestState(encodedState)).resolves.toEqual({
+      label: 'Legacy',
+      partyInitiative: '4',
+      enemyInitiative: '4',
+      nextCombatantKey: 2,
+      party: [
+        {
+          key: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          movementRate: '12',
+          missileInitiativeAdjustment: '0',
+          attackRoutineCount: '1',
+          weaponId: 11,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [],
+      pairDistances: {},
+    });
   });
 });

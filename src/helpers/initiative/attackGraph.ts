@@ -8,6 +8,7 @@ import type {
   InitiativeScenario,
   InitiativeScenarioCombatant,
 } from '../../types/initiative';
+import { compareCombatantInitiative } from './initiativeTiming';
 
 const getAttackNodeId = (combatantId: string, attackNumber: number): string =>
   `attack:${combatantId}:${attackNumber}`;
@@ -200,6 +201,7 @@ interface SimpleInitiativePhase {
   nodeId: string;
   side: InitiativeScenarioCombatant['side'];
   phase: number;
+  effectiveInitiative: number;
 }
 
 const getRoutineComponentCount = (
@@ -237,12 +239,16 @@ const buildSimpleInitiativePhases = (
           node.attackNumber,
           getRoutineComponentCount(combatant)
         ),
+        effectiveInitiative:
+          combatant.initiative +
+          (combatant.declaredAction === 'missile'
+            ? combatant.missileInitiativeAdjustment
+            : 0),
       },
     ];
   });
 
 const addSimpleInitiativeEdges = (
-  resolution: InitiativeRoundResolution,
   combatantById: Map<string, InitiativeScenarioCombatant>,
   simpleInitiativeNodes: InitiativeAttackNode[],
   edgesByKey: Map<string, InitiativeAttackEdge>
@@ -259,28 +265,32 @@ const addSimpleInitiativeEdges = (
     const currentNodes = phases.filter((phase) => phase.phase === phaseValue);
     const nextPhaseValue = phaseValues[index + 1];
 
-    if (resolution.simpleOrder !== 'simultaneous') {
-      const winningSide =
-        resolution.simpleOrder === 'party-first' ? 'party' : 'enemy';
-      const losingSide = winningSide === 'party' ? 'enemy' : 'party';
-      const winningNodes = currentNodes
-        .filter((phase) => phase.side === winningSide)
-        .map((phase) => phase.nodeId);
-      const losingNodes = currentNodes
-        .filter((phase) => phase.side === losingSide)
-        .map((phase) => phase.nodeId);
+    currentNodes.forEach((leftPhase, leftIndex) => {
+      currentNodes.slice(leftIndex + 1).forEach((rightPhase) => {
+        if (leftPhase.side === rightPhase.side) {
+          return;
+        }
 
-      winningNodes.forEach((fromNodeId) => {
-        losingNodes.forEach((toNodeId) => {
+        if (leftPhase.effectiveInitiative > rightPhase.effectiveInitiative) {
           mergeEdgeReason(
             edgesByKey,
-            fromNodeId,
-            toNodeId,
+            leftPhase.nodeId,
+            rightPhase.nodeId,
             'simple-initiative'
           );
-        });
+          return;
+        }
+
+        if (rightPhase.effectiveInitiative > leftPhase.effectiveInitiative) {
+          mergeEdgeReason(
+            edgesByKey,
+            rightPhase.nodeId,
+            leftPhase.nodeId,
+            'simple-initiative'
+          );
+        }
       });
-    }
+    });
 
     if (nextPhaseValue === undefined) {
       return;
@@ -306,13 +316,6 @@ const addDirectMovementPrecedence = (
   nodesById: Map<string, InitiativeAttackNode>,
   edgesByKey: Map<string, InitiativeAttackEdge>
 ) => {
-  if (resolution.simpleOrder === 'simultaneous') {
-    return;
-  }
-
-  const winningSide =
-    resolution.simpleOrder === 'party-first' ? 'party' : 'enemy';
-
   resolution.movementResolutions.forEach((movementResolution) => {
     if (movementResolution.targetId === undefined) {
       return;
@@ -341,10 +344,14 @@ const addDirectMovementPrecedence = (
       return;
     }
 
-    const fromNodeIds =
-      winningSide === target.side ? targetNodeIds : moverNodeIds;
-    const toNodeIds =
-      winningSide === target.side ? moverNodeIds : targetNodeIds;
+    const initiativeComparison = compareCombatantInitiative(target, mover);
+
+    if (initiativeComparison === 0) {
+      return;
+    }
+
+    const fromNodeIds = initiativeComparison > 0 ? targetNodeIds : moverNodeIds;
+    const toNodeIds = initiativeComparison > 0 ? moverNodeIds : targetNodeIds;
 
     fromNodeIds.forEach((fromNodeId) => {
       toNodeIds.forEach((toNodeId) => {
@@ -356,7 +363,6 @@ const addDirectMovementPrecedence = (
 
 const getDirectMissileChargeComponentLimit = (
   combatant: InitiativeScenarioCombatant,
-  resolution: InitiativeRoundResolution,
   combatantById: Map<string, InitiativeScenarioCombatant>,
   movementResolutionByCombatantId: Map<string, InitiativeMovementResolution>
 ): number | undefined => {
@@ -388,15 +394,13 @@ const getDirectMissileChargeComponentLimit = (
     return undefined;
   }
 
-  if (resolution.simpleOrder === 'simultaneous') {
+  const initiativeComparison = compareCombatantInitiative(combatant, target);
+
+  if (initiativeComparison === 0) {
     return 1;
   }
 
-  const combatantSideWonInitiative =
-    (resolution.simpleOrder === 'party-first' && combatant.side === 'party') ||
-    (resolution.simpleOrder === 'enemy-first' && combatant.side === 'enemy');
-
-  return combatantSideWonInitiative ? 1 : 0;
+  return initiativeComparison > 0 ? 1 : 0;
 };
 
 export const buildInitiativeAttackGraph = (
@@ -552,7 +556,6 @@ export const buildInitiativeAttackGraph = (
     const directMissileChargeComponentLimit =
       getDirectMissileChargeComponentLimit(
         combatant,
-        resolution,
         combatantById,
         movementResolutionByCombatantId
       );
@@ -593,12 +596,7 @@ export const buildInitiativeAttackGraph = (
     nodesById,
     edgesByKey
   );
-  addSimpleInitiativeEdges(
-    resolution,
-    combatantById,
-    simpleInitiativeNodes,
-    edgesByKey
-  );
+  addSimpleInitiativeEdges(combatantById, simpleInitiativeNodes, edgesByKey);
 
   const edges = Array.from(edgesByKey.values());
 

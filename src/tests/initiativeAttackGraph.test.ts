@@ -617,6 +617,44 @@ describe('initiative attack graph', () => {
     ]);
   });
 
+  test('uses the missile initiative adjustment to break ties between equal firing-rate missile routines', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Bow vs Bow With Dex',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Party Bowman',
+          declaredAction: 'missile',
+          missileInitiativeAdjustment: 3,
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Enemy Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+      ['attack:party-1:2'],
+      ['attack:enemy-3:2'],
+    ]);
+  });
+
   test('uses initiative for the midpoint clash in dart versus sling', () => {
     const scenario = buildInitiativeScenario({
       label: 'Dart vs Sling',
@@ -701,6 +739,96 @@ describe('initiative attack graph', () => {
         reasons: ['simple-initiative'],
       },
     ]);
+  });
+
+  test('lets a missile attack beat base side initiative when the missile adjustment is higher', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Missile Dex Edge',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          missileInitiativeAdjustment: 3,
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Orc',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+      ['attack:party-1:2'],
+    ]);
+    expect(graph.edges).toEqual([
+      {
+        fromNodeId: 'attack:party-1:1',
+        toNodeId: 'attack:enemy-3:1',
+        reasons: ['simple-initiative'],
+      },
+      {
+        fromNodeId: 'attack:enemy-3:1',
+        toNodeId: 'attack:party-1:2',
+        reasons: ['simple-initiative'],
+      },
+    ]);
+  });
+
+  test('drops missile shots when a charge beats them after missile adjustment', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Beats Bow With Dex',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          missileInitiativeAdjustment: -3,
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Raider',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes.map((node) => node.id)).toEqual(['attack:enemy-3:1']);
+    expect(graph.layers).toEqual([['attack:enemy-3:1']]);
+    expect(graph.edges).toEqual([]);
   });
 
   test('drops both bow shots when the charge side wins initiative', () => {
