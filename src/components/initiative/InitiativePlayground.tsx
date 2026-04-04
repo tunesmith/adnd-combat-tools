@@ -268,6 +268,18 @@ const createMissileVsChargePreset = (): InitiativePlaytestState => ({
   },
 });
 
+const createMissileDexEdgePreset = (): InitiativePlaytestState => ({
+  label: 'Missile Dex Edge',
+  partyInitiative: '3',
+  enemyInitiative: '5',
+  nextCombatantKey: 4,
+  party: [createCombatant(1, 'Bowman', 11, [3], 'missile', '12', '1', '+3')],
+  enemies: [createCombatant(3, 'Raider', 56, [1], 'charge', '12')],
+  pairDistances: {
+    [getPairDistanceKey(1, 3)]: '4',
+  },
+});
+
 const createLargeBattlePreset = (): InitiativePlaytestState => ({
   label: 'Large Mixed Battle',
   partyInitiative: '4',
@@ -1073,6 +1085,13 @@ const InitiativePlayground = ({
                   onClick={() => loadPreset(createMissileVsChargePreset)}
                 >
                   Missile vs Charge
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createMissileDexEdgePreset)}
+                >
+                  Missile Dex Edge
                 </button>
                 <button
                   type={'button'}
