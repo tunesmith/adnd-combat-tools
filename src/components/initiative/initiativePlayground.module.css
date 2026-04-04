@@ -628,15 +628,20 @@
   margin-bottom: 0.25rem;
 }
 
-.graphCopy {
-  font-size: 1.02rem;
-  line-height: 1.45;
-}
-
 .graphViewportShell {
-  position: relative;
   max-width: 100%;
   min-width: 0;
+}
+
+.graphWorkspace {
+  display: block;
+}
+
+.graphWorkspaceWithInspector {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1rem;
+  align-items: start;
 }
 
 .graphViewport,
@@ -660,22 +665,15 @@
   min-width: 0;
 }
 
-.graphInspectorOverlay {
-  position: absolute;
-  top: 0.9rem;
-  right: 0.9rem;
-  width: min(24rem, calc(100% - 2rem));
-  max-height: calc(100% - 2rem);
-  pointer-events: none;
-  z-index: 2;
+.graphInspectorDock {
+  min-width: 0;
 }
 
-.graphInspectorOverlay .graphInspector {
-  height: 100%;
+.graphInspectorDock .graphInspector {
   overflow: auto;
+  max-height: 46rem;
   background: linear-gradient(180deg, #536630, #3f4f25);
-  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.42);
-  pointer-events: auto;
+  box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.28);
 }
 
 .graphSvg {
@@ -876,14 +874,12 @@
     grid-column: auto;
   }
 
-  .graphInspectorOverlay {
-    position: static;
-    width: auto;
-    max-height: none;
-    margin-top: 1rem;
+  .graphWorkspaceWithInspector {
+    grid-template-columns: 1fr;
   }
 
-  .graphInspectorOverlay .graphInspector {
+  .graphInspectorDock .graphInspector {
+    max-height: none;
     box-shadow: none;
   }
 }

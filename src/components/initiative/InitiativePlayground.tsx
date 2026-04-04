@@ -568,6 +568,21 @@ const InitiativePlayground = ({
     window.history.replaceState({}, '', `${url.pathname}?${url.searchParams}`);
   }, [encodedState]);
 
+  useEffect(() => {
+    if (!selectedGraphNodeId || typeof window === 'undefined') {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedGraphNodeId(undefined);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedGraphNodeId]);
+
   const getShareUrl = (): string | undefined => {
     if (typeof window === 'undefined') {
       return undefined;
@@ -1426,13 +1441,6 @@ const InitiativePlayground = ({
           <div className={styles['graphPanel']}>
             <div className={styles['graphHeader']}>
               <h2 className={styles['graphTitle']}>Precedence DAG</h2>
-              <p className={styles['graphCopy']}>
-                The graph only contains attack relations justified by baseline
-                initiative or a narrower melee timing rule. Segment-aware
-                actions occupy the upper swim-lane band; unsegmented attacks
-                stay in the freeform precedence band below. Click a node to
-                toggle its local rule detail panel.
-              </p>
             </div>
             <div className={styles['summaryStrip']}>
               <div
@@ -1474,10 +1482,17 @@ const InitiativePlayground = ({
                 </span>
               </div>
             </div>
-            <div className={styles['graphViewportShell']}>
-              <div className={styles['graphViewport']}>
-                {attackGraph.nodes.length > 0 ? (
-                  <>
+            <div
+              className={[
+                styles['graphWorkspace'],
+                selectedGraphNode ? styles['graphWorkspaceWithInspector'] : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <div className={styles['graphViewportShell']}>
+                <div className={styles['graphViewport']}>
+                  {attackGraph.nodes.length > 0 ? (
                     <svg
                       className={styles['graphSvg']}
                       viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
@@ -1678,130 +1693,123 @@ const InitiativePlayground = ({
                         );
                       })}
                     </svg>
-                    {selectedGraphNode ? (
-                      <aside className={styles['graphInspectorOverlay']}>
-                        <div className={styles['graphInspector']}>
-                          <div className={styles['graphInspectorHeader']}>
-                            <div className={styles['graphInspectorTitle']}>
-                              {attackNodeLabelById[selectedGraphNode.id] ||
-                                selectedGraphNode.id}
-                            </div>
-                            <button
-                              type={'button'}
-                              className={styles['graphInspectorButton']}
-                              onClick={() => setSelectedGraphNodeId(undefined)}
-                            >
-                              Dismiss
-                            </button>
-                          </div>
-                          <div className={styles['graphInspectorMeta']}>
-                            <span>
-                              Side:{' '}
-                              {selectedGraphNode.side === 'party'
-                                ? 'Party'
-                                : 'Enemy'}
-                            </span>
-                            <span>Layer: {selectedGraphNodeLayer}</span>
-                            {selectedGraphNode.segment !== undefined ? (
-                              <span>Segment: {selectedGraphNode.segment}</span>
-                            ) : null}
-                            <span>
-                              Source:{' '}
-                              {getGraphNodeSourceLabel(
-                                selectedGraphNode.source
-                              )}
-                            </span>
-                          </div>
-
-                          <div className={styles['graphInspectorSection']}>
-                            <h4 className={styles['graphSubhead']}>
-                              Blocked By
-                            </h4>
-                            {selectedGraphIncomingEdges.length > 0 ? (
-                              <ol className={styles['graphInspectorList']}>
-                                {selectedGraphIncomingEdges.map((edge) => (
-                                  <li
-                                    key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
-                                    className={styles['graphInspectorItem']}
-                                  >
-                                    <span className={styles['stepLabel']}>
-                                      {attackNodeLabelById[edge.fromNodeId] ||
-                                        edge.fromNodeId}
-                                    </span>
-                                    <span className={styles['stepDetail']}>
-                                      {formatGraphEdgeReasons(edge.reasons)}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ol>
-                            ) : (
-                              <div className={styles['graphInspectorEmpty']}>
-                                No explicit blockers. This attack is currently
-                                enabled at the left edge of the graph.
-                              </div>
-                            )}
-                          </div>
-
-                          <div className={styles['graphInspectorSection']}>
-                            <h4 className={styles['graphSubhead']}>Blocks</h4>
-                            {selectedGraphOutgoingEdges.length > 0 ? (
-                              <ol className={styles['graphInspectorList']}>
-                                {selectedGraphOutgoingEdges.map((edge) => (
-                                  <li
-                                    key={`outgoing-${edge.fromNodeId}-${edge.toNodeId}`}
-                                    className={styles['graphInspectorItem']}
-                                  >
-                                    <span className={styles['stepLabel']}>
-                                      {attackNodeLabelById[edge.toNodeId] ||
-                                        edge.toNodeId}
-                                    </span>
-                                    <span className={styles['stepDetail']}>
-                                      {formatGraphEdgeReasons(edge.reasons)}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ol>
-                            ) : (
-                              <div className={styles['graphInspectorEmpty']}>
-                                This node adds no further precedence. Any
-                                remaining relative order is underdetermined at
-                                this rules slice.
-                              </div>
-                            )}
-                          </div>
-
-                          {selectedGraphRelatedCards.length > 0 ? (
-                            <div className={styles['graphInspectorSection']}>
-                              <h4 className={styles['graphSubhead']}>
-                                Related Calls
-                              </h4>
-                              <ol className={styles['graphInspectorList']}>
-                                {selectedGraphRelatedCards.map((card) => (
-                                  <li
-                                    key={`related-${card.id}`}
-                                    className={styles['graphInspectorItem']}
-                                  >
-                                    <span className={styles['stepLabel']}>
-                                      {card.title}
-                                    </span>
-                                    <span className={styles['stepDetail']}>
-                                      {card.summary}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ol>
-                            </div>
-                          ) : null}
-                        </div>
-                      </aside>
-                    ) : null}
-                  </>
-                ) : (
-                  <div className={styles['graphEmpty']}>
-                    Add combatants to generate a precedence graph.
-                  </div>
-                )}
+                  ) : (
+                    <div className={styles['graphEmpty']}>
+                      Add combatants to generate a precedence graph.
+                    </div>
+                  )}
+                </div>
               </div>
+              {selectedGraphNode ? (
+                <aside className={styles['graphInspectorDock']}>
+                  <div className={styles['graphInspector']}>
+                    <div className={styles['graphInspectorHeader']}>
+                      <div className={styles['graphInspectorTitle']}>
+                        {attackNodeLabelById[selectedGraphNode.id] ||
+                          selectedGraphNode.id}
+                      </div>
+                      <button
+                        type={'button'}
+                        className={styles['graphInspectorButton']}
+                        onClick={() => setSelectedGraphNodeId(undefined)}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                    <div className={styles['graphInspectorMeta']}>
+                      <span>
+                        Side:{' '}
+                        {selectedGraphNode.side === 'party' ? 'Party' : 'Enemy'}
+                      </span>
+                      <span>Layer: {selectedGraphNodeLayer}</span>
+                      {selectedGraphNode.segment !== undefined ? (
+                        <span>Segment: {selectedGraphNode.segment}</span>
+                      ) : null}
+                      <span>
+                        Source:{' '}
+                        {getGraphNodeSourceLabel(selectedGraphNode.source)}
+                      </span>
+                    </div>
+
+                    <div className={styles['graphInspectorSection']}>
+                      <h4 className={styles['graphSubhead']}>Blocked By</h4>
+                      {selectedGraphIncomingEdges.length > 0 ? (
+                        <ol className={styles['graphInspectorList']}>
+                          {selectedGraphIncomingEdges.map((edge) => (
+                            <li
+                              key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
+                              className={styles['graphInspectorItem']}
+                            >
+                              <span className={styles['stepLabel']}>
+                                {attackNodeLabelById[edge.fromNodeId] ||
+                                  edge.fromNodeId}
+                              </span>
+                              <span className={styles['stepDetail']}>
+                                {formatGraphEdgeReasons(edge.reasons)}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <div className={styles['graphInspectorEmpty']}>
+                          No explicit blockers. This attack is currently enabled
+                          at the left edge of the graph.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={styles['graphInspectorSection']}>
+                      <h4 className={styles['graphSubhead']}>Blocks</h4>
+                      {selectedGraphOutgoingEdges.length > 0 ? (
+                        <ol className={styles['graphInspectorList']}>
+                          {selectedGraphOutgoingEdges.map((edge) => (
+                            <li
+                              key={`outgoing-${edge.fromNodeId}-${edge.toNodeId}`}
+                              className={styles['graphInspectorItem']}
+                            >
+                              <span className={styles['stepLabel']}>
+                                {attackNodeLabelById[edge.toNodeId] ||
+                                  edge.toNodeId}
+                              </span>
+                              <span className={styles['stepDetail']}>
+                                {formatGraphEdgeReasons(edge.reasons)}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <div className={styles['graphInspectorEmpty']}>
+                          This node adds no further precedence. Any remaining
+                          relative order is underdetermined at this rules slice.
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedGraphRelatedCards.length > 0 ? (
+                      <div className={styles['graphInspectorSection']}>
+                        <h4 className={styles['graphSubhead']}>
+                          Related Calls
+                        </h4>
+                        <ol className={styles['graphInspectorList']}>
+                          {selectedGraphRelatedCards.map((card) => (
+                            <li
+                              key={`related-${card.id}`}
+                              className={styles['graphInspectorItem']}
+                            >
+                              <span className={styles['stepLabel']}>
+                                {card.title}
+                              </span>
+                              <span className={styles['stepDetail']}>
+                                {card.summary}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    ) : null}
+                  </div>
+                </aside>
+              ) : null}
             </div>
           </div>
         </section>
