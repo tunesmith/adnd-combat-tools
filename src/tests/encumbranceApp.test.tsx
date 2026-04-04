@@ -16,6 +16,19 @@ import {
 import { encumbranceCatalog } from '../tables/encumbranceCatalog';
 import type { EncumbranceDocument } from '../types/encumbrance';
 
+const categoryLabelsForTest: Record<string, string> = {
+  containers: 'Containers',
+  armor: 'Armor',
+  arms: 'Arms',
+  clothing: 'Clothing',
+  herbs: 'Herbs',
+  'adventuring-gear': 'Adventuring Gear',
+  provisions: 'Provisions',
+  'religious-items': 'Religious Items',
+  treasure: 'Treasure',
+  coins: 'Coins',
+};
+
 const getCatalogIdByName = (name: string): string => {
   const item = encumbranceCatalog.find((candidate) => candidate.name === name);
 
@@ -32,6 +45,56 @@ const closeTopModal = () => {
 
 const openFileMenu = () => {
   fireEvent.click(screen.getByRole('button', { name: 'File' }));
+};
+
+const getLabeledFieldContainer = (
+  scope: ReturnType<typeof within> | typeof screen,
+  label: string
+) => {
+  const fieldLabel = scope.getByText(label, { selector: 'span' });
+  const container = fieldLabel.closest('label') || fieldLabel.parentElement;
+
+  if (!container) {
+    throw new Error(`Unable to find field container for "${label}".`);
+  }
+
+  return container as HTMLElement;
+};
+
+const chooseSelectOption = (
+  scope: ReturnType<typeof within> | typeof screen,
+  label: string,
+  optionText: string
+) => {
+  const selectInput = scope.getByLabelText(label);
+  const control =
+    selectInput.closest('[class*="-control"]') || selectInput.parentElement;
+
+  if (!control) {
+    throw new Error(`Unable to find select control for "${label}".`);
+  }
+
+  fireEvent.mouseDown(control);
+
+  const option =
+    screen.queryByRole('option', { name: optionText }) ||
+    [...screen.getAllByText(optionText)].pop();
+
+  if (!option) {
+    throw new Error(`Unable to find option "${optionText}" for "${label}".`);
+  }
+
+  fireEvent.click(option);
+};
+
+const expectSelectDisplayValue = (
+  scope: ReturnType<typeof within> | typeof screen,
+  label: string,
+  selectedText: string
+) => {
+  expect(
+    within(getLabeledFieldContainer(scope, label)).getByText(selectedText)
+  ).toBeInTheDocument();
 };
 
 const renameCharacterInOpenModal = (nextName: string) => {
@@ -56,10 +119,7 @@ const addCatalogItem = ({
   fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
 
   const dialog = screen.getByRole('dialog', { name: 'Add Item' });
-  const itemSelect = within(dialog).getByLabelText('Item');
-  fireEvent.change(itemSelect, {
-    target: { value: getCatalogIdByName(name) },
-  });
+  chooseSelectOption(within(dialog), 'Item', name);
 
   if (typeof quantity === 'number') {
     fireEvent.change(within(dialog).getByLabelText('Quantity'), {
@@ -72,14 +132,7 @@ const addCatalogItem = ({
   });
 
   if (storedIn) {
-    const storedInSelect = within(dialog).getByLabelText('Stored in');
-    const storedInOption = within(storedInSelect).getByRole('option', {
-      name: storedIn,
-    }) as HTMLOptionElement;
-
-    fireEvent.change(storedInSelect, {
-      target: { value: storedInOption.value },
-    });
+    chooseSelectOption(within(dialog), 'Stored in', storedIn);
   }
 
   fireEvent.click(within(dialog).getByRole('button', { name: 'Add Item' }));
@@ -107,9 +160,7 @@ const addCustomItem = ({
   fireEvent.change(screen.getByLabelText('Name'), {
     target: { value: name },
   });
-  fireEvent.change(screen.getByLabelText('Category'), {
-    target: { value: category },
-  });
+  chooseSelectOption(screen, 'Category', categoryLabelsForTest[category] || '');
   fireEvent.change(screen.getByLabelText('Weight per item'), {
     target: { value: String(weightGp) },
   });
@@ -126,22 +177,26 @@ describe('encumbrance app regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
 
     let dialog = screen.getByRole('dialog', { name: 'Add Item' });
-    expect(
-      within(dialog).getByLabelText('Magic known to player')
-    ).toHaveDisplayValue('Known mundane');
-    expect(
-      within(dialog).getByLabelText('Value known to player')
-    ).toHaveDisplayValue('Known');
+    expectSelectDisplayValue(
+      within(dialog),
+      'Magic known to player',
+      'Known mundane'
+    );
+    expectSelectDisplayValue(within(dialog), 'Value known to player', 'Known');
 
     fireEvent.click(screen.getByRole('button', { name: 'Custom Item' }));
 
     dialog = screen.getByRole('dialog', { name: 'Add Item' });
-    expect(
-      within(dialog).getByLabelText('Magic known to player')
-    ).toHaveDisplayValue('Unknown');
-    expect(
-      within(dialog).getByLabelText('Value known to player')
-    ).toHaveDisplayValue('Unknown');
+    expectSelectDisplayValue(
+      within(dialog),
+      'Magic known to player',
+      'Unknown'
+    );
+    expectSelectDisplayValue(
+      within(dialog),
+      'Value known to player',
+      'Unknown'
+    );
   });
 
   test('custom container flow keeps the established add fields and edit metadata', () => {
@@ -152,9 +207,7 @@ describe('encumbrance app regressions', () => {
     fireEvent.change(screen.getByLabelText('Name'), {
       target: { value: 'Backpack of Holding' },
     });
-    fireEvent.change(screen.getByLabelText('Category'), {
-      target: { value: 'containers' },
-    });
+    chooseSelectOption(screen, 'Category', 'Containers');
     fireEvent.change(screen.getByLabelText('Weight per item'), {
       target: { value: '150' },
     });
@@ -164,9 +217,7 @@ describe('encumbrance app regressions', () => {
     fireEvent.change(screen.getByLabelText('Capacity'), {
       target: { value: '5000' },
     });
-    fireEvent.change(screen.getByLabelText('Carried weight'), {
-      target: { value: 'own' },
-    });
+    chooseSelectOption(screen, 'Carried weight', 'Own weight only');
     fireEvent.click(screen.getByRole('button', { name: 'Add Custom Item' }));
 
     fireEvent.click(
@@ -1020,15 +1071,7 @@ describe('encumbrance app regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit Backpack' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Backpack' });
-    const heldBySelect = within(dialog).getByLabelText(
-      'Held by'
-    ) as HTMLSelectElement;
-    const targetOption = within(heldBySelect).getByRole('option', {
-      name: 'Character 2',
-    }) as HTMLOptionElement;
-    fireEvent.change(heldBySelect, {
-      target: { value: targetOption.value },
-    });
+    chooseSelectOption(within(dialog), 'Held by', 'Character 2');
     closeTopModal();
 
     fireEvent.click(screen.getByRole('button', { name: 'Character 2' }));
@@ -1070,27 +1113,19 @@ describe('encumbrance app regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit Diamond' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Diamond' });
-    const heldBySelect = within(dialog).getByLabelText(
-      'Held by'
-    ) as HTMLSelectElement;
-    const targetOption = within(heldBySelect).getByRole('option', {
-      name: 'Character 2',
-    }) as HTMLOptionElement;
-    fireEvent.change(heldBySelect, {
-      target: { value: targetOption.value },
-    });
+    chooseSelectOption(within(dialog), 'Held by', 'Character 2');
 
-    expect(within(dialog).getByLabelText('Stored in')).toHaveDisplayValue(
-      'On person'
-    );
+    expectSelectDisplayValue(within(dialog), 'Stored in', 'On person');
 
     closeTopModal();
     fireEvent.click(screen.getByRole('button', { name: 'Character 2' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit Diamond' }));
 
     const transferredDialog = screen.getByRole('dialog', { name: 'Diamond' });
-    expect(
-      within(transferredDialog).getByLabelText('Stored in')
-    ).toHaveDisplayValue('On person');
+    expectSelectDisplayValue(
+      within(transferredDialog),
+      'Stored in',
+      'On person'
+    );
   });
 });

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
+import type { GroupBase, SingleValue } from 'react-select';
+import Select from 'react-select';
 import styles from './encumbrance.module.css';
 import type {
   EncumbranceCatalogItem,
@@ -47,10 +49,21 @@ import {
   encumbranceCatalog,
   encumbranceCatalogById,
 } from '../../tables/encumbranceCatalog';
+import {
+  createEncumbranceSelectStyles,
+  type EncumbranceSelectOption,
+  type EncumbranceSelectValue,
+} from '../../helpers/encumbranceSelectStyles';
 
 interface EncumbranceAppProps {
   mode: EncumbranceMode;
 }
+
+type EncumbranceSelectGroup = GroupBase<EncumbranceSelectOption>;
+type EncumbranceSelectOptions = readonly (
+  | EncumbranceSelectOption
+  | EncumbranceSelectGroup
+)[];
 
 type AddMode = 'catalog' | 'custom';
 type InventorySortKey = 'owner' | 'item' | 'day';
@@ -230,6 +243,138 @@ const carriedWeightRuleOptions = {
   count: 'Count contents',
   own: 'Own weight only',
 } as const;
+
+const strengthScoreOptions: EncumbranceSelectOption[] = Array.from(
+  { length: 16 },
+  (_, index) => {
+    const score = index + 3;
+
+    return {
+      value: score,
+      label: `${score}`,
+    };
+  }
+);
+
+const exceptionalStrengthOptions: EncumbranceSelectOption[] = [
+  { value: 'none', label: 'None' },
+  { value: '01-50', label: '18/01-50' },
+  { value: '51-75', label: '18/51-75' },
+  { value: '76-90', label: '18/76-90' },
+  { value: '91-99', label: '18/91-99' },
+  { value: '00', label: '18/00' },
+];
+
+const customCategorySelectOptions: EncumbranceSelectOption[] =
+  customCategoryOptions.map((category) => ({
+    value: category,
+    label: categoryLabels[category],
+  }));
+
+const magicKnowledgeOptions: EncumbranceSelectOption[] = (
+  Object.keys(magicKnowledgeLabels) as MagicKnowledge[]
+).map((knowledge) => ({
+  value: knowledge,
+  label: magicKnowledgeLabels[knowledge],
+}));
+
+const valueKnowledgeOptions: EncumbranceSelectOption[] = [
+  { value: 'yes', label: 'Known' },
+  { value: 'no', label: 'Unknown' },
+];
+
+const magicalTruthOptions: EncumbranceSelectOption[] = [
+  { value: 'no', label: 'Mundane' },
+  { value: 'yes', label: 'Magical' },
+];
+
+const fullyIdentifiedOptions: EncumbranceSelectOption[] = [
+  { value: 'no', label: 'Not fully identified' },
+  { value: 'yes', label: 'Fully identified' },
+];
+
+const carriedWeightSelectOptions: EncumbranceSelectOption[] = [
+  {
+    value: 'count',
+    label: carriedWeightRuleOptions.count,
+  },
+  {
+    value: 'own',
+    label: carriedWeightRuleOptions.own,
+  },
+];
+
+const isEncumbranceSelectGroup = (
+  option: EncumbranceSelectOption | EncumbranceSelectGroup
+): option is EncumbranceSelectGroup => 'options' in option;
+
+const findEncumbranceSelectOption = (
+  options: EncumbranceSelectOptions,
+  value: EncumbranceSelectValue
+): EncumbranceSelectOption | null => {
+  for (const option of options) {
+    if (isEncumbranceSelectGroup(option)) {
+      const match = option.options.find(
+        (groupOption) => groupOption.value === value
+      );
+
+      if (match) {
+        return match;
+      }
+
+      continue;
+    }
+
+    if (option.value === value) {
+      return option;
+    }
+  }
+
+  return null;
+};
+
+const encumbranceSelectStyles = createEncumbranceSelectStyles();
+
+interface EncumbranceSelectFieldProps {
+  inputId: string;
+  ariaLabel: string;
+  options: EncumbranceSelectOptions;
+  value: EncumbranceSelectValue;
+  onChange: (value: EncumbranceSelectValue) => void;
+  isDisabled?: boolean;
+  autoFocus?: boolean;
+  menuPortalTarget?: HTMLElement;
+}
+
+const EncumbranceSelectField = ({
+  inputId,
+  ariaLabel,
+  options,
+  value,
+  onChange,
+  isDisabled = false,
+  autoFocus = false,
+  menuPortalTarget,
+}: EncumbranceSelectFieldProps) => (
+  <Select<EncumbranceSelectOption, false, EncumbranceSelectGroup>
+    inputId={inputId}
+    aria-label={ariaLabel}
+    isSearchable={false}
+    styles={encumbranceSelectStyles}
+    menuPortalTarget={menuPortalTarget}
+    menuPosition="fixed"
+    openMenuOnFocus
+    value={findEncumbranceSelectOption(options, value)}
+    options={options}
+    onChange={(nextOption: SingleValue<EncumbranceSelectOption>) => {
+      if (nextOption) {
+        onChange(nextOption.value);
+      }
+    }}
+    isDisabled={isDisabled}
+    autoFocus={autoFocus}
+  />
+);
 
 const documentFilePickerTypes: BrowserFilePickerAcceptType[] = [
   {
@@ -607,6 +752,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   );
   const hasActiveInventorySorts = activeInventorySorts.length > 0;
   const supportsNativeFileHandles = supportsBrowserFileSystemAccess();
+  const selectMenuPortalTarget =
+    typeof window === 'undefined' ? undefined : window.document.body;
 
   useEffect(() => {
     if (
@@ -784,6 +931,18 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     return groups;
   }, []);
 
+  const selectableCatalogOptionGroups = useMemo(
+    () =>
+      (Object.keys(categoryLabels) as EquipmentCategory[]).map((category) => ({
+        label: categoryLabels[category],
+        options: selectableCatalogGroups[category].map((item) => ({
+          value: item.id,
+          label: item.name,
+        })),
+      })),
+    [selectableCatalogGroups]
+  );
+
   const containerItems = useMemo(
     () =>
       activeCharacter.inventory.filter((item) => {
@@ -949,6 +1108,51 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         })
       : [];
   const editingCustomItemInfo = editingItem?.customItem;
+  const storedInOptions: EncumbranceSelectOption[] = [
+    {
+      value: '',
+      label: 'On person',
+    },
+    ...containerItems.map((containerItem) => {
+      const containerInfo = getInventoryItemInfo(containerItem, catalogById);
+      const isAllowed = containerInfo
+        ? canStoreItemInContainer(
+            addPreviewItem || customPreviewItem,
+            containerInfo
+          )
+        : true;
+
+      return {
+        value: containerItem.id,
+        label: containerInfo
+          ? getInventoryItemDisplayName(containerItem, containerInfo)
+          : 'Container',
+        isDisabled: !isAllowed,
+      };
+    }),
+  ];
+  const editingStoredInOptions: EncumbranceSelectOption[] = [
+    {
+      value: '',
+      label: 'On person',
+    },
+    ...editingParentOptions.map((containerItem) => {
+      const containerInfo = getInventoryItemInfo(containerItem, catalogById);
+
+      return {
+        value: containerItem.id,
+        label: containerInfo
+          ? getInventoryItemDisplayName(containerItem, containerInfo)
+          : 'Container',
+      };
+    }),
+  ];
+  const heldByOptions: EncumbranceSelectOption[] = editingTransferOptions.map(
+    (character) => ({
+      value: character.id,
+      label: character.label,
+    })
+  );
   const mergeReviewPlan = pendingMergeReview?.plan;
   const mergeAppliedCharacterFieldCount = mergeReviewPlan
     ? countResolvedCharacterFields(mergeReviewPlan)
@@ -3525,53 +3729,43 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                       </label>
                       <label className={styles['fieldGroup']}>
                         <span className={styles['fieldLabel']}>Strength</span>
-                        <select
-                          className={styles['fieldControl']}
+                        <EncumbranceSelectField
+                          inputId="encumbrance-character-strength"
+                          ariaLabel="Strength"
+                          options={strengthScoreOptions}
                           value={characterEditDraft.strengthScore}
-                          onChange={(event) =>
+                          onChange={(nextValue) =>
                             updateCharacterEditDraft((currentDraft) => ({
                               ...currentDraft,
-                              strengthScore: Number(event.target.value) || 8,
+                              strengthScore: Number(nextValue) || 8,
                               exceptional:
-                                Number(event.target.value) === 18
+                                Number(nextValue) === 18
                                   ? currentDraft.exceptional
                                   : 'none',
                             }))
                           }
-                        >
-                          {Array.from(
-                            { length: 16 },
-                            (_, index) => index + 3
-                          ).map((score) => (
-                            <option key={score} value={score}>
-                              {score}
-                            </option>
-                          ))}
-                        </select>
+                          menuPortalTarget={selectMenuPortalTarget}
+                        />
                       </label>
                       {characterEditDraft.strengthScore === 18 && (
                         <label className={styles['fieldGroup']}>
                           <span className={styles['fieldLabel']}>
                             Exceptional
                           </span>
-                          <select
-                            className={styles['fieldControl']}
+                          <EncumbranceSelectField
+                            inputId="encumbrance-character-exceptional"
+                            ariaLabel="Exceptional"
+                            options={exceptionalStrengthOptions}
                             value={characterEditDraft.exceptional}
-                            onChange={(event) =>
+                            onChange={(nextValue) =>
                               updateCharacterEditDraft((currentDraft) => ({
                                 ...currentDraft,
-                                exceptional: event.target
-                                  .value as ExceptionalStrengthTier,
+                                exceptional:
+                                  nextValue as ExceptionalStrengthTier,
                               }))
                             }
-                          >
-                            <option value="none">None</option>
-                            <option value="01-50">18/01-50</option>
-                            <option value="51-75">18/51-75</option>
-                            <option value="76-90">18/76-90</option>
-                            <option value="91-99">18/91-99</option>
-                            <option value="00">18/00</option>
-                          </select>
+                            menuPortalTarget={selectMenuPortalTarget}
+                          />
                         </label>
                       )}
                       {mode === 'dm' && (
@@ -3661,11 +3855,13 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                         {addMode === 'catalog' ? (
                           <label className={styles['modalFieldWide']}>
                             <span className={styles['fieldLabel']}>Item</span>
-                            <select
-                              className={styles['fieldControl']}
+                            <EncumbranceSelectField
+                              inputId="encumbrance-add-item"
+                              ariaLabel="Item"
+                              options={selectableCatalogOptionGroups}
                               value={selectedCatalogId}
-                              onChange={(event) => {
-                                const nextCatalogId = event.target.value;
+                              onChange={(nextValue) => {
+                                const nextCatalogId = `${nextValue}`;
                                 setSelectedCatalogId(nextCatalogId);
                                 const nextItem =
                                   encumbranceCatalogById.get(nextCatalogId);
@@ -3673,26 +3869,8 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                   setSelectedQuantity(1);
                                 }
                               }}
-                            >
-                              {(
-                                Object.keys(
-                                  categoryLabels
-                                ) as EquipmentCategory[]
-                              ).map((category) => (
-                                <optgroup
-                                  key={category}
-                                  label={categoryLabels[category]}
-                                >
-                                  {selectableCatalogGroups[category].map(
-                                    (item) => (
-                                      <option key={item.id} value={item.id}>
-                                        {item.name}
-                                      </option>
-                                    )
-                                  )}
-                                </optgroup>
-                              ))}
-                            </select>
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </label>
                         ) : (
                           <>
@@ -3716,22 +3894,19 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                               <span className={styles['fieldLabel']}>
                                 Category
                               </span>
-                              <select
-                                className={styles['fieldControl']}
+                              <EncumbranceSelectField
+                                inputId="encumbrance-add-category"
+                                ariaLabel="Category"
+                                options={customCategorySelectOptions}
                                 value={customItemDraft.category}
-                                onChange={(event) =>
+                                onChange={(nextValue) =>
                                   updateCustomItemDraft(
                                     'category',
-                                    event.target.value as CustomCategory
+                                    nextValue as CustomCategory
                                   )
                                 }
-                              >
-                                {customCategoryOptions.map((category) => (
-                                  <option key={category} value={category}>
-                                    {categoryLabels[category]}
-                                  </option>
-                                ))}
-                              </select>
+                                menuPortalTarget={selectMenuPortalTarget}
+                              />
                             </label>
                           </>
                         )}
@@ -3783,42 +3958,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                           <span className={styles['fieldLabel']}>
                             Stored in
                           </span>
-                          <select
-                            className={styles['fieldControl']}
+                          <EncumbranceSelectField
+                            inputId="encumbrance-add-stored-in"
+                            ariaLabel="Stored in"
+                            options={storedInOptions}
                             value={selectedContainerId}
-                            onChange={(event) =>
-                              setSelectedContainerId(event.target.value)
+                            onChange={(nextValue) =>
+                              setSelectedContainerId(`${nextValue}`)
                             }
-                          >
-                            <option value="">On person</option>
-                            {containerItems.map((containerItem) => {
-                              const containerInfo = getInventoryItemInfo(
-                                containerItem,
-                                catalogById
-                              );
-                              const isAllowed = containerInfo
-                                ? canStoreItemInContainer(
-                                    addPreviewItem || customPreviewItem,
-                                    containerInfo
-                                  )
-                                : true;
-
-                              return (
-                                <option
-                                  key={containerItem.id}
-                                  value={containerItem.id}
-                                  disabled={!isAllowed}
-                                >
-                                  {containerInfo
-                                    ? getInventoryItemDisplayName(
-                                        containerItem,
-                                        containerInfo
-                                      )
-                                    : 'Container'}
-                                </option>
-                              );
-                            })}
-                          </select>
+                            menuPortalTarget={selectMenuPortalTarget}
+                          />
                         </label>
                         <label className={styles['fieldGroup']}>
                           <span className={styles['fieldLabel']}>
@@ -3897,27 +4046,23 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                 <span className={styles['fieldLabel']}>
                                   Carried weight
                                 </span>
-                                <select
-                                  className={styles['fieldControl']}
+                                <EncumbranceSelectField
+                                  inputId="encumbrance-add-carried-weight"
+                                  ariaLabel="Carried weight"
+                                  options={carriedWeightSelectOptions}
                                   value={
                                     customItemDraft.ignoresContentsWeightForEncumbrance
                                       ? 'own'
                                       : 'count'
                                   }
-                                  onChange={(event) =>
+                                  onChange={(nextValue) =>
                                     updateCustomItemDraft(
                                       'ignoresContentsWeightForEncumbrance',
-                                      event.target.value === 'own'
+                                      nextValue === 'own'
                                     )
                                   }
-                                >
-                                  <option value="count">
-                                    {carriedWeightRuleOptions.count}
-                                  </option>
-                                  <option value="own">
-                                    {carriedWeightRuleOptions.own}
-                                  </option>
-                                </select>
+                                  menuPortalTarget={selectMenuPortalTarget}
+                                />
                               </label>
                             </>
                           )}
@@ -3953,13 +4098,15 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                             <span className={styles['fieldLabel']}>
                               Magic known to player
                             </span>
-                            <select
-                              className={styles['fieldControl']}
+                            <EncumbranceSelectField
+                              inputId="encumbrance-add-magic-known"
+                              ariaLabel="Magic known to player"
+                              options={magicKnowledgeOptions}
                               value={addItemDetailsDraft.playerMagicKnowledge}
-                              onChange={(event) =>
+                              onChange={(nextValue) =>
                                 setAddItemDetailsDraft((currentDraft) => {
-                                  const nextKnowledge = event.target
-                                    .value as MagicKnowledge;
+                                  const nextKnowledge =
+                                    nextValue as MagicKnowledge;
                                   return {
                                     ...currentDraft,
                                     playerMagicKnowledge: nextKnowledge,
@@ -3970,92 +4117,81 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                   };
                                 })
                               }
-                            >
-                              {(
-                                Object.keys(
-                                  magicKnowledgeLabels
-                                ) as MagicKnowledge[]
-                              ).map((knowledge) => (
-                                <option key={knowledge} value={knowledge}>
-                                  {magicKnowledgeLabels[knowledge]}
-                                </option>
-                              ))}
-                            </select>
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </label>
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
                               Value known to player
                             </span>
-                            <select
-                              className={styles['fieldControl']}
+                            <EncumbranceSelectField
+                              inputId="encumbrance-add-value-known"
+                              ariaLabel="Value known to player"
+                              options={valueKnowledgeOptions}
                               value={
                                 addItemDetailsDraft.playerKnowsValue
                                   ? 'yes'
                                   : 'no'
                               }
-                              onChange={(event) =>
+                              onChange={(nextValue) =>
                                 setAddItemDetailsDraft((currentDraft) => ({
                                   ...currentDraft,
-                                  playerKnowsValue:
-                                    event.target.value === 'yes',
+                                  playerKnowsValue: nextValue === 'yes',
                                 }))
                               }
-                            >
-                              <option value="yes">Known</option>
-                              <option value="no">Unknown</option>
-                            </select>
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </label>
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
                               Magical truth
                             </span>
-                            <select
-                              className={styles['fieldControl']}
+                            <EncumbranceSelectField
+                              inputId="encumbrance-add-magical-truth"
+                              ariaLabel="Magical truth"
+                              options={magicalTruthOptions}
                               value={
                                 addItemDetailsDraft.isMagical ? 'yes' : 'no'
                               }
-                              onChange={(event) =>
+                              onChange={(nextValue) =>
                                 setAddItemDetailsDraft((currentDraft) => ({
                                   ...currentDraft,
-                                  isMagical: event.target.value === 'yes',
+                                  isMagical: nextValue === 'yes',
                                   fullyIdentified:
-                                    event.target.value === 'yes'
+                                    nextValue === 'yes'
                                       ? currentDraft.fullyIdentified
                                       : false,
                                 }))
                               }
-                            >
-                              <option value="no">Mundane</option>
-                              <option value="yes">Magical</option>
-                            </select>
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </label>
                           {addItemDetailsDraft.isMagical && (
                             <label className={styles['fieldGroup']}>
                               <span className={styles['fieldLabel']}>
                                 Fully identified
                               </span>
-                              <select
-                                className={styles['fieldControl']}
+                              <EncumbranceSelectField
+                                inputId="encumbrance-add-fully-identified"
+                                ariaLabel="Fully identified"
+                                options={fullyIdentifiedOptions}
                                 value={
                                   addItemDetailsDraft.fullyIdentified
                                     ? 'yes'
                                     : 'no'
                                 }
-                                onChange={(event) =>
+                                onChange={(nextValue) =>
                                   setAddItemDetailsDraft((currentDraft) => ({
                                     ...currentDraft,
-                                    fullyIdentified:
-                                      event.target.value === 'yes',
+                                    fullyIdentified: nextValue === 'yes',
                                     playerMagicKnowledge:
-                                      event.target.value === 'yes'
+                                      nextValue === 'yes'
                                         ? 'known-magical'
                                         : currentDraft.playerMagicKnowledge,
                                   }))
                                 }
-                              >
-                                <option value="no">Not fully identified</option>
-                                <option value="yes">Fully identified</option>
-                              </select>
+                                menuPortalTarget={selectMenuPortalTarget}
+                              />
                             </label>
                           )}
                           <label className={styles['modalFieldWide']}>
@@ -4282,57 +4418,35 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                             <span className={styles['fieldLabel']}>
                               Held by
                             </span>
-                            <select
-                              className={styles['fieldControl']}
+                            <EncumbranceSelectField
+                              inputId="encumbrance-edit-held-by"
+                              ariaLabel="Held by"
+                              options={heldByOptions}
                               value={editingItemDraft.characterId}
-                              onChange={(event) =>
-                                transferEditingItem(event.target.value)
+                              onChange={(nextValue) =>
+                                transferEditingItem(`${nextValue}`)
                               }
-                            >
-                              {editingTransferOptions.map((character) => (
-                                <option key={character.id} value={character.id}>
-                                  {character.label}
-                                </option>
-                              ))}
-                            </select>
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </label>
                         )}
                         <label className={styles['fieldGroup']}>
                           <span className={styles['fieldLabel']}>
                             Stored in
                           </span>
-                          <select
-                            className={styles['fieldControl']}
+                          <EncumbranceSelectField
+                            inputId="encumbrance-edit-stored-in"
+                            ariaLabel="Stored in"
+                            options={editingStoredInOptions}
                             value={editingItemDraft.containerId}
-                            onChange={(event) =>
+                            onChange={(nextValue) =>
                               updateEditingItemDraft((currentDraft) => ({
                                 ...currentDraft,
-                                containerId: event.target.value,
+                                containerId: `${nextValue}`,
                               }))
                             }
-                          >
-                            <option value="">On person</option>
-                            {editingParentOptions.map((containerItem) => {
-                              const containerInfo = getInventoryItemInfo(
-                                containerItem,
-                                catalogById
-                              );
-
-                              return (
-                                <option
-                                  key={containerItem.id}
-                                  value={containerItem.id}
-                                >
-                                  {containerInfo
-                                    ? getInventoryItemDisplayName(
-                                        containerItem,
-                                        containerInfo
-                                      )
-                                    : 'Container'}
-                                </option>
-                              );
-                            })}
-                          </select>
+                            menuPortalTarget={selectMenuPortalTarget}
+                          />
                         </label>
                         <label className={styles['modalFieldWide']}>
                           <span className={styles['fieldLabel']}>
@@ -4387,56 +4501,57 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                             <span className={styles['fieldLabel']}>
                               Value known to player
                             </span>
-                            <select
-                              className={styles['fieldControl']}
+                            <EncumbranceSelectField
+                              inputId="encumbrance-edit-value-known"
+                              ariaLabel="Value known to player"
+                              options={valueKnowledgeOptions}
                               value={
                                 editingItemDraft.playerKnowsValue ? 'yes' : 'no'
                               }
-                              onChange={(event) =>
+                              onChange={(nextValue) =>
                                 updateEditingItemDraft((currentDraft) => ({
                                   ...currentDraft,
-                                  playerKnowsValue:
-                                    event.target.value === 'yes',
+                                  playerKnowsValue: nextValue === 'yes',
                                 }))
                               }
-                            >
-                              <option value="yes">Known</option>
-                              <option value="no">Unknown</option>
-                            </select>
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </label>
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
                               Magical truth
                             </span>
-                            <select
-                              className={styles['fieldControl']}
+                            <EncumbranceSelectField
+                              inputId="encumbrance-edit-magical-truth"
+                              ariaLabel="Magical truth"
+                              options={magicalTruthOptions}
                               value={editingItemDraft.isMagical ? 'yes' : 'no'}
-                              onChange={(event) =>
+                              onChange={(nextValue) =>
                                 updateEditingItemDraft((currentDraft) => ({
                                   ...currentDraft,
-                                  isMagical: event.target.value === 'yes',
+                                  isMagical: nextValue === 'yes',
                                   fullyIdentified:
-                                    event.target.value === 'yes'
+                                    nextValue === 'yes'
                                       ? currentDraft.fullyIdentified
                                       : false,
                                 }))
                               }
-                            >
-                              <option value="no">Mundane</option>
-                              <option value="yes">Magical</option>
-                            </select>
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </label>
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
                               Magic known to player
                             </span>
-                            <select
-                              className={styles['fieldControl']}
+                            <EncumbranceSelectField
+                              inputId="encumbrance-edit-magic-known"
+                              ariaLabel="Magic known to player"
+                              options={magicKnowledgeOptions}
                               value={editingItemDraft.playerMagicKnowledge}
-                              onChange={(event) =>
+                              onChange={(nextValue) =>
                                 updateEditingItemDraft((currentDraft) => {
-                                  const nextKnowledge = event.target
-                                    .value as MagicKnowledge;
+                                  const nextKnowledge =
+                                    nextValue as MagicKnowledge;
 
                                   return {
                                     ...currentDraft,
@@ -4448,49 +4563,36 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                                   };
                                 })
                               }
-                            >
-                              {(
-                                Object.keys(
-                                  magicKnowledgeLabels
-                                ) as MagicKnowledge[]
-                              ).map((knowledge) => (
-                                <option key={knowledge} value={knowledge}>
-                                  {magicKnowledgeLabels[knowledge]}
-                                </option>
-                              ))}
-                            </select>
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </label>
                           {editingCustomItemInfo?.isContainer && (
                             <label className={styles['fieldGroup']}>
                               <span className={styles['fieldLabel']}>
                                 Carried weight
                               </span>
-                              <select
-                                className={styles['fieldControl']}
+                              <EncumbranceSelectField
+                                inputId="encumbrance-edit-carried-weight"
+                                ariaLabel="Carried weight"
+                                options={carriedWeightSelectOptions}
                                 value={
                                   editingCustomItemInfo.ignoresContentsWeightForEncumbrance
                                     ? 'own'
                                     : 'count'
                                 }
-                                onChange={(event) =>
+                                onChange={(nextValue) =>
                                   updateCustomInventoryItem(
                                     editingItemDraft.characterId,
                                     editingItemDraft.itemId,
                                     (currentItem) => ({
                                       ...currentItem,
                                       ignoresContentsWeightForEncumbrance:
-                                        event.target.value === 'own',
+                                        nextValue === 'own',
                                     })
                                   )
                                 }
-                              >
-                                <option value="count">
-                                  {carriedWeightRuleOptions.count}
-                                </option>
-                                <option value="own">
-                                  {carriedWeightRuleOptions.own}
-                                </option>
-                              </select>
+                                menuPortalTarget={selectMenuPortalTarget}
+                              />
                             </label>
                           )}
                           {editingItemDraft.isMagical && (
@@ -4498,28 +4600,27 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                               <span className={styles['fieldLabel']}>
                                 Fully identified
                               </span>
-                              <select
-                                className={styles['fieldControl']}
+                              <EncumbranceSelectField
+                                inputId="encumbrance-edit-fully-identified"
+                                ariaLabel="Fully identified"
+                                options={fullyIdentifiedOptions}
                                 value={
                                   editingItemDraft.fullyIdentified
                                     ? 'yes'
                                     : 'no'
                                 }
-                                onChange={(event) =>
+                                onChange={(nextValue) =>
                                   updateEditingItemDraft((currentDraft) => ({
                                     ...currentDraft,
-                                    fullyIdentified:
-                                      event.target.value === 'yes',
+                                    fullyIdentified: nextValue === 'yes',
                                     playerMagicKnowledge:
-                                      event.target.value === 'yes'
+                                      nextValue === 'yes'
                                         ? 'known-magical'
                                         : currentDraft.playerMagicKnowledge,
                                   }))
                                 }
-                              >
-                                <option value="no">Not fully identified</option>
-                                <option value="yes">Fully identified</option>
-                              </select>
+                                menuPortalTarget={selectMenuPortalTarget}
+                              />
                             </label>
                           )}
                           <label className={styles['modalFieldWide']}>
