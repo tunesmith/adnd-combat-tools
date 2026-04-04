@@ -405,6 +405,22 @@
   border-radius: 10px;
 }
 
+select.fieldControl {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 1rem) calc(50% - 0.08rem),
+    calc(100% - 0.7rem) calc(50% - 0.08rem);
+  background-size: 0.42rem 0.42rem, 0.42rem 0.42rem;
+  background-repeat: no-repeat;
+  line-height: 2.1rem;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .fieldControlDense {
   height: 34px;
   min-height: 34px;
@@ -1227,6 +1243,103 @@
 
   .modal {
     width: calc(100vw - 1.25rem);
+    max-height: calc(100vh - 1.25rem);
+    max-height: calc(100dvh - 1.25rem);
+    border-width: 2px;
+    box-shadow: 0 0.9rem 1.8rem rgba(0, 0, 0, 0.28);
+  }
+
+  .modalTitle {
+    padding: 0.7rem 0.8rem 0.34rem;
+    font-size: 1.08rem;
+  }
+
+  .modalBody {
+    padding: 0 0.76rem;
+  }
+
+  .liveEditModalBody {
+    padding-top: 0.62rem;
+    padding-bottom: 0.82rem;
+  }
+
+  .modalToggleRow {
+    gap: 0.35rem;
+    margin-bottom: 0.58rem;
+  }
+
+  .modalToggleRow .button {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 0.46rem 0.55rem;
+    font-size: 0.94rem;
+  }
+
+  .fieldGroup,
+  .fieldGroupWide {
+    gap: 0.22rem;
+  }
+
+  .modalFields {
+    gap: 0.52rem;
+    margin-bottom: 0.72rem;
+  }
+
+  .fieldLabel {
+    font-size: 0.74rem;
+    letter-spacing: 0.045em;
+  }
+
+  .fieldControl,
+  .fieldReadonly {
+    height: 2.28rem;
+    min-height: 2.28rem;
+    padding: 0.34rem 0.58rem;
+    border-radius: 9px;
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+
+  select.fieldControl {
+    line-height: 2.08rem;
+  }
+
+  .modalNotes {
+    min-height: 3.5rem;
+  }
+
+  .modalSection {
+    margin-bottom: 0.68rem;
+  }
+
+  .modalSectionDm {
+    padding-top: 0.58rem;
+  }
+
+  .modalMetaGrid {
+    gap: 0.34rem 0.58rem;
+    margin-bottom: 0.68rem;
+    padding: 0.58rem;
+  }
+
+  .modalMetaLabel {
+    font-size: 0.66rem;
+  }
+
+  .modalMetaValue {
+    font-size: 0.84rem;
+    line-height: 1.22;
+  }
+
+  .modalDangerRow {
+    padding-top: 0.58rem;
+    padding-bottom: 0;
+  }
+
+  .modalActions {
+    gap: 0.4rem;
+    padding: 0 0.7rem 0.58rem;
   }
 
   .modalDangerRow {
