@@ -1,0 +1,209 @@
+@import url('https://fonts.googleapis.com/css2?family=Sura:wght@400;700&display=swap');
+
+.outerContainer {
+  min-height: 100vh;
+  padding: 1.5rem 1.6rem 2rem;
+  font-family: 'Sura', serif;
+  font-size: 15px;
+  color: var(--eggshell);
+  background: radial-gradient(
+      circle at top,
+      rgba(181, 132, 55, 0.08),
+      transparent 30%
+    ),
+    var(--caput-martuum);
+}
+
+.title {
+  margin: 0 auto 1rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.04;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.contentContainer {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 0.95rem;
+  border: 6px solid var(--copper);
+  background: linear-gradient(
+    180deg,
+    rgba(84, 111, 58, 0.98) 0%,
+    rgba(75, 98, 50, 0.98) 100%
+  );
+}
+
+.chooserPanel {
+  border: 1px solid rgba(240, 239, 221, 0.12);
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0.9rem;
+}
+
+.chooserTitle {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.viewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.viewCard {
+  display: flex;
+  min-width: 0;
+  min-height: 12rem;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem 0.92rem;
+  border-left: 4px solid var(--copper);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.viewCopy {
+  min-width: 0;
+}
+
+.viewLabel {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.62rem;
+  padding: 0.18rem 0.68rem;
+  border-radius: 999px;
+  background: rgba(240, 239, 221, 0.95);
+  color: var(--dark-olive-green);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.viewHeading {
+  margin: 0 0 0.42rem;
+  font-size: clamp(1.45rem, 2vw, 1.9rem);
+  font-weight: 400;
+  line-height: 1.08;
+  text-wrap: pretty;
+}
+
+.viewDescription {
+  max-width: 32rem;
+  margin: 0;
+  color: rgba(240, 239, 221, 0.88);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.viewAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 11rem;
+  padding: 0.55rem 0.9rem;
+  border: 2px solid var(--copper);
+  background: rgba(240, 239, 221, 0.97);
+  color: var(--dark-olive-green);
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 120ms ease;
+}
+
+.viewAction:hover {
+  background: #f7f5e8;
+}
+
+@media screen and (max-width: 980px) {
+  .outerContainer {
+    padding: 1.2rem 1rem 1.5rem;
+  }
+
+  .contentContainer {
+    padding: 0.8rem;
+  }
+
+  .chooserPanel {
+    padding: 0.82rem 0.88rem 0.92rem;
+  }
+
+  .viewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .viewCard {
+    min-height: 0;
+  }
+}
+
+@media screen and (max-width: 540px) {
+  .outerContainer {
+    padding: 0.95rem 0.7rem 1.1rem;
+  }
+
+  .title {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.9rem, 8vw, 2.5rem);
+  }
+
+  .contentContainer {
+    padding: 0.55rem;
+    border-width: 5px;
+  }
+
+  .chooserPanel {
+    padding: 0.68rem 0.68rem 0.76rem;
+  }
+
+  .chooserTitle {
+    margin-bottom: 0.58rem;
+    font-size: 0.94rem;
+  }
+
+  .viewGrid {
+    gap: 0.72rem;
+  }
+
+  .viewCard {
+    gap: 0.68rem;
+    padding: 0.82rem 0.8rem 0.78rem;
+    border-left-width: 4px;
+  }
+
+  .viewLabel {
+    margin-bottom: 0.48rem;
+    padding: 0.16rem 0.56rem;
+    font-size: 0.84rem;
+  }
+
+  .viewHeading {
+    margin-bottom: 0.36rem;
+    font-size: 1.28rem;
+    line-height: 1.1;
+  }
+
+  .viewDescription {
+    font-size: 0.88rem;
+    line-height: 1.34;
+  }
+
+  .viewAction {
+    width: 100%;
+    min-width: 0;
+    padding: 0.56rem 0.8rem;
+    font-size: 0.94rem;
+  }
+}
