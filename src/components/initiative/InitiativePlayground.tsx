@@ -937,12 +937,6 @@ const InitiativePlayground = ({
         <div>
           <div className={styles['eyebrow']}>AD&amp;D 1e Initiative</div>
           <h1 className={styles['title']}>Initiative Playground</h1>
-          <p className={styles['lede']}>
-            This page is for playtesting the current rules slice: simple side
-            initiative, conservative direct melee pairing, open-melee weapon
-            speed factor resolution, charge/close contact handling, set versus
-            charge, and generic attack routines with named components.
-          </p>
         </div>
         <div className={styles['presetBar']}>
           <button
@@ -1041,9 +1035,6 @@ const InitiativePlayground = ({
                           <div className={styles['matrixCornerHeading']}>
                             <span className={styles['matrixLegendLabel']}>
                               Party vs Enemy
-                            </span>
-                            <span className={styles['matrixLegendMeta']}>
-                              `P→E` and `E→P` are the declared attacks.
                             </span>
                           </div>
                           <button
