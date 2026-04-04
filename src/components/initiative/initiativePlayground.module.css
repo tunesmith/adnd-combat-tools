@@ -440,43 +440,44 @@
   max-height: calc(100vh - 8rem);
   overflow: auto;
   border: 3px solid var(--goldenrod);
-  background: linear-gradient(
-    180deg,
-    rgba(84, 111, 58, 0.98),
-    rgba(56, 73, 40, 1)
-  );
-  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.34);
-  padding: 1.3rem;
+  background: linear-gradient(180deg, #566f38 0%, #3d4d26 100%);
+  box-shadow: 0 1.6rem 3.2rem rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: var(--eggshell);
+  padding: 1.45rem;
 }
 
 .modalTitle {
   font-family: 'Sura', serif;
   font-size: 1.8rem;
-  margin-bottom: 0.5rem;
+  line-height: 1.12;
+  margin-bottom: 0.55rem;
 }
 
 .modalText {
   line-height: 1.45;
-  margin-bottom: 0.9rem;
+  margin-bottom: 1rem;
+  color: rgba(248, 243, 224, 0.94);
 }
 
 .modalHint {
   line-height: 1.45;
   margin-top: 0.55rem;
-  color: rgba(240, 239, 221, 0.82);
+  color: rgba(248, 243, 224, 0.8);
 }
 
 .modalLabel {
   display: block;
   font-weight: 700;
-  margin: 0.8rem 0 0.35rem;
+  margin: 0.9rem 0 0.4rem;
+  color: var(--eggshell);
 }
 
 .modalMeta {
   margin-top: 1rem;
-  padding: 0.8rem;
-  border: 1px solid rgba(172, 114, 35, 0.5);
-  background: rgba(0, 0, 0, 0.12);
+  padding: 0.9rem;
+  border: 1px solid rgba(172, 114, 35, 0.58);
+  background: rgba(22, 28, 14, 0.22);
 }
 
 .modalMetaLabel,
@@ -487,6 +488,7 @@
 .modalMetaLabel {
   font-weight: 700;
   margin-bottom: 0.25rem;
+  color: rgba(248, 243, 224, 0.94);
 }
 
 .modalMetaValue + .modalMetaValue {
@@ -515,7 +517,7 @@
 }
 
 .modalButton {
-  background: rgba(240, 239, 221, 0.08);
+  background: rgba(240, 239, 221, 0.12);
 }
 
 .modalButtonDanger {
