@@ -61,6 +61,7 @@ export interface InitiativeScenarioDraftCombatant {
   name?: string;
   declaredAction?: InitiativeDeclaredAction;
   movementRate?: number;
+  attackRoutineCount?: number;
   weaponId: number;
   intention?: string;
   result?: string;
@@ -102,6 +103,7 @@ interface DirectMeleeAttackStep {
 
 type DirectMeleeResolutionReason =
   | 'initiative'
+  | 'multiple-routines'
   | 'simultaneous'
   | 'weapon-speed'
   | 'weapon-speed-double'

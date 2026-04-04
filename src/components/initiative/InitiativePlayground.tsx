@@ -76,6 +76,16 @@ const parseOptionalNumber = (value: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+const parseAttackRoutineCount = (value: string): number | undefined => {
+  const parsed = parseOptionalNumber(value);
+
+  if (parsed === undefined) {
+    return undefined;
+  }
+
+  return Math.max(1, Math.floor(parsed));
+};
+
 const isSingleTargetDeclarationAction = (
   declaredAction: InitiativeDeclaredAction
 ): boolean =>
@@ -130,12 +140,14 @@ const createCombatant = (
   declaredAction: InitiativeDeclaredAction = getDefaultDeclaredActionForWeaponId(
     weaponId
   ),
-  movementRate = '12'
+  movementRate = '12',
+  attackRoutineCount = '1'
 ): InitiativePlaytestCombatant => ({
   key,
   name,
   declaredAction,
   movementRate,
+  attackRoutineCount,
   weaponId,
   targetCombatantKeys,
 });
@@ -264,6 +276,7 @@ const buildDraftCombatants = (
     name: combatant.name.trim() || undefined,
     declaredAction: combatant.declaredAction,
     movementRate: parseOptionalNumber(combatant.movementRate),
+    attackRoutineCount: parseAttackRoutineCount(combatant.attackRoutineCount),
     weaponId: combatant.weaponId,
     targetDeclarations: combatant.targetCombatantKeys.map(
       (targetCombatantKey) => ({
@@ -322,9 +335,16 @@ const getWeaponSummary = (weaponId: number): string => {
 };
 
 const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
-  `MV ${combatant.movementRate.trim() || '12'}" · ${getWeaponSummary(
-    combatant.weaponId
-  )}`;
+  [
+    `MV ${combatant.movementRate.trim() || '12'}"`,
+    getWeaponSummary(combatant.weaponId),
+    isNonMissileWeaponId(combatant.weaponId) &&
+    (combatant.attackRoutineCount.trim() || '1') !== '1'
+      ? `Routine x${combatant.attackRoutineCount.trim()}`
+      : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
 const isNonMissileWeaponId = (weaponId: number): boolean =>
   getWeaponInfo(weaponId)?.weaponType !== 'missile';
@@ -1837,7 +1857,8 @@ const InitiativePlayground = ({
                 </div>
                 <p className={styles['modalText']}>
                   Target declarations are edited from the engagement matrix. Use
-                  this modal to change the combatant label, movement, or weapon.
+                  this modal to change the combatant label, movement, weapon, or
+                  current-round routine count.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -1896,6 +1917,38 @@ const InitiativePlayground = ({
                     })
                   }
                 />
+                {isNonMissileWeaponId(editedCombatant.weaponId) ? (
+                  <>
+                    <label
+                      className={styles['modalLabel']}
+                      htmlFor={`initiative-routines-${editedCombatant.key}`}
+                    >
+                      Attack routines this round
+                    </label>
+                    <input
+                      id={`initiative-routines-${editedCombatant.key}`}
+                      className={styles['textInput']}
+                      inputMode={'numeric'}
+                      type={'text'}
+                      value={editedCombatant.attackRoutineCount}
+                      onChange={(event) =>
+                        updateCombatant(
+                          editorTarget.side,
+                          editedCombatant.key,
+                          {
+                            attackRoutineCount: event.target.value,
+                          }
+                        )
+                      }
+                    />
+                    <p className={styles['modalHint']}>
+                      Use <strong>1</strong> for an ordinary weapon routine or a
+                      natural routine such as claw/claw/bite. Increase this only
+                      when the combatant can use that routine more than once in
+                      the current round.
+                    </p>
+                  </>
+                ) : null}
                 <div className={styles['modalMeta']}>
                   <span className={styles['modalMetaLabel']}>
                     Current display

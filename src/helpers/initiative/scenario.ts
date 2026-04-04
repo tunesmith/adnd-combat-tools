@@ -33,9 +33,14 @@ const DEFAULT_MOVEMENT_RATE = 12;
 
 const getOrdinaryRoundAttackCount = (
   weaponType: InitiativeWeaponType,
-  fireRate: number | undefined
+  fireRate: number | undefined,
+  attackRoutineCount: number | undefined
 ): number => {
-  if (weaponType !== 'missile' || fireRate === undefined) {
+  if (weaponType !== 'missile') {
+    return Math.max(1, attackRoutineCount || 1);
+  }
+
+  if (fireRate === undefined) {
     return 1;
   }
 
@@ -52,9 +57,14 @@ const getOrdinaryRoundAttackCount = (
 const buildAttackRoutine = (
   combatantId: string,
   weaponType: InitiativeWeaponType,
-  fireRate: number | undefined
+  fireRate: number | undefined,
+  attackRoutineCount: number | undefined
 ): InitiativeAttackRoutine => {
-  const attackCount = getOrdinaryRoundAttackCount(weaponType, fireRate);
+  const attackCount = getOrdinaryRoundAttackCount(
+    weaponType,
+    fireRate,
+    attackRoutineCount
+  );
   const components = Array.from({ length: attackCount }, (_, index) => ({
     id: `attack-${index + 1}`,
     order: index + 1,
@@ -164,7 +174,8 @@ const buildScenarioCombatants = (
       attackRoutine: buildAttackRoutine(
         combatantId,
         weaponType,
-        weaponInfo?.weaponType === 'missile' ? weaponInfo.fireRate : undefined
+        weaponInfo?.weaponType === 'missile' ? weaponInfo.fireRate : undefined,
+        combatant.attackRoutineCount
       ),
     };
   });

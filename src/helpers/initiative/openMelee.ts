@@ -19,6 +19,7 @@ interface OpenMeleeStep {
 
 type OpenMeleeReason =
   | 'initiative'
+  | 'multiple-routines'
   | 'simultaneous'
   | 'weapon-speed'
   | 'weapon-speed-double'
@@ -33,23 +34,29 @@ const createAttack = (
   combatant: OpenMeleeCombatant,
   attackNumber: number
 ): InitiativeAttackEntry => {
-  const timingBasisComponent =
+  const routineComponent =
+    combatant.attackRoutine.components.find(
+      (component) => component.order === attackNumber
+    ) ||
     combatant.attackRoutine.components.find(
       (component) =>
         component.id === combatant.attackRoutine.timingBasisComponentId
-    ) || combatant.attackRoutine.components[0];
+    ) ||
+    combatant.attackRoutine.components[0];
 
-  if (!timingBasisComponent) {
-    throw new Error(`Combatant ${combatant.id} has no attack routine component`);
+  if (!routineComponent) {
+    throw new Error(
+      `Combatant ${combatant.id} has no attack routine component`
+    );
   }
 
-  if (attackNumber === 1) {
+  if (attackNumber <= combatant.attackRoutine.components.length) {
     return {
       combatantId: combatant.id,
       routineId: combatant.attackRoutine.id,
-      componentId: timingBasisComponent.id,
+      componentId: routineComponent.id,
       attackNumber,
-      label: timingBasisComponent.label,
+      label: routineComponent.label,
       source: 'routine-component',
     };
   }
@@ -95,6 +102,112 @@ const getWeaponSpeedFactor = (combatant: OpenMeleeCombatant): number => {
   return weaponSpeedFactor;
 };
 
+const getRoutineComponentCount = (combatant: OpenMeleeCombatant): number =>
+  Math.max(1, combatant.attackRoutine.components.length);
+
+const getRoutinePhase = (attackNumber: number, attackCount: number): number => {
+  if (attackCount <= 1) {
+    return 0.5;
+  }
+
+  return (attackNumber - 1) / (attackCount - 1);
+};
+
+const compareSharedPhaseAttacks = (
+  left: OpenMeleeCombatant,
+  right: OpenMeleeCombatant
+): -1 | 0 | 1 => {
+  if (left.initiative > right.initiative) {
+    return -1;
+  }
+
+  if (right.initiative > left.initiative) {
+    return 1;
+  }
+
+  if (left.weaponKind !== 'weapon' || right.weaponKind !== 'weapon') {
+    return 0;
+  }
+
+  const leftSpeedFactor = getWeaponSpeedFactor(left);
+  const rightSpeedFactor = getWeaponSpeedFactor(right);
+
+  if (leftSpeedFactor < rightSpeedFactor) {
+    return -1;
+  }
+
+  if (rightSpeedFactor < leftSpeedFactor) {
+    return 1;
+  }
+
+  return 0;
+};
+
+const resolveMultipleRoutineExchange = (
+  left: OpenMeleeCombatant,
+  right: OpenMeleeCombatant
+): OpenMeleeResolution => {
+  const leftCount = getRoutineComponentCount(left);
+  const rightCount = getRoutineComponentCount(right);
+  const phaseValues = Array.from(
+    new Set(
+      Array.from({ length: leftCount }, (_, index) =>
+        getRoutinePhase(index + 1, leftCount)
+      ).concat(
+        Array.from({ length: rightCount }, (_, index) =>
+          getRoutinePhase(index + 1, rightCount)
+        )
+      )
+    )
+  ).sort((leftPhase, rightPhase) => leftPhase - rightPhase);
+
+  const steps: OpenMeleeStep[] = phaseValues.flatMap((phaseValue) => {
+    const leftAttackNumber = Array.from(
+      { length: leftCount },
+      (_, index) => index + 1
+    ).find(
+      (attackNumber) => getRoutinePhase(attackNumber, leftCount) === phaseValue
+    );
+    const rightAttackNumber = Array.from(
+      { length: rightCount },
+      (_, index) => index + 1
+    ).find(
+      (attackNumber) => getRoutinePhase(attackNumber, rightCount) === phaseValue
+    );
+
+    if (leftAttackNumber && rightAttackNumber) {
+      const leftAttack = createAttack(left, leftAttackNumber);
+      const rightAttack = createAttack(right, rightAttackNumber);
+      const order = compareSharedPhaseAttacks(left, right);
+
+      if (order < 0) {
+        return [{ attacks: [leftAttack] }, { attacks: [rightAttack] }];
+      }
+
+      if (order > 0) {
+        return [{ attacks: [rightAttack] }, { attacks: [leftAttack] }];
+      }
+
+      return [createSimultaneousStep(leftAttack, rightAttack)];
+    }
+
+    if (leftAttackNumber) {
+      return [createSingleAttackStep(left, leftAttackNumber)];
+    }
+
+    if (rightAttackNumber) {
+      return [createSingleAttackStep(right, rightAttackNumber)];
+    }
+
+    return [];
+  });
+
+  return {
+    reason: 'multiple-routines',
+    steps,
+  };
+};
+
 /**
  * DMG p66 caps the "double the lower factor" threshold with
  * "or 5 or more factors in any case".
@@ -113,6 +226,13 @@ export const resolveOpenMeleeExchange = (
   left: OpenMeleeCombatant,
   right: OpenMeleeCombatant
 ): OpenMeleeResolution => {
+  if (
+    getRoutineComponentCount(left) > 1 ||
+    getRoutineComponentCount(right) > 1
+  ) {
+    return resolveMultipleRoutineExchange(left, right);
+  }
+
   if (left.initiative > right.initiative) {
     return {
       reason: 'initiative',
@@ -137,10 +257,7 @@ export const resolveOpenMeleeExchange = (
     return {
       reason: 'simultaneous',
       steps: [
-        createSimultaneousStep(
-          createAttack(left, 1),
-          createAttack(right, 1)
-        ),
+        createSimultaneousStep(createAttack(left, 1), createAttack(right, 1)),
       ],
     };
   }
@@ -152,10 +269,7 @@ export const resolveOpenMeleeExchange = (
     return {
       reason: 'simultaneous',
       steps: [
-        createSimultaneousStep(
-          createAttack(left, 1),
-          createAttack(right, 1)
-        ),
+        createSimultaneousStep(createAttack(left, 1), createAttack(right, 1)),
       ],
     };
   }

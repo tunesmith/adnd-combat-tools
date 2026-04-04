@@ -183,6 +183,10 @@ const getDirectMeleeSummary = (
     return `Both sides tied initiative at ${partyCombatant.initiative}. At least one combatant is not using a melee weapon with a speed factor, so this exchange remains simultaneous in the current rules slice.`;
   }
 
+  if (engagement.resolution.reason === 'multiple-routines') {
+    return `${partyCombatant.name} and ${enemyCombatant.name} are using more than one ordinary attack routine this round. The order follows the DMG multiple-routine rule, with initiative or tied-melee timing only breaking clashes at the same point in the round.`;
+  }
+
   const { faster, slower, difference } = getFasterAndSlower(
     partyCombatant,
     enemyCombatant

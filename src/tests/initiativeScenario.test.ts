@@ -135,4 +135,47 @@ describe('generic initiative scenario builder', () => {
       },
     ]);
   });
+
+  test('uses explicit round-local routine counts for non-missile combatants', () => {
+    const draft: InitiativeScenarioDraft = {
+      label: 'Multiple Melee Routines',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Fighter',
+          weaponId: 56,
+          attackRoutineCount: 2,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Gnoll',
+          weaponId: 2,
+          targetCombatantKeys: [1],
+        },
+      ],
+    };
+
+    const scenario = buildInitiativeScenario(draft);
+
+    expect(scenario.party[0]?.attackRoutine.components).toEqual([
+      {
+        id: 'attack-1',
+        order: 1,
+        label: 'attack 1',
+      },
+      {
+        id: 'attack-2',
+        order: 2,
+        label: 'attack 2',
+      },
+    ]);
+    expect(scenario.directMeleeEngagements[0]?.resolution.reason).toBe(
+      'multiple-routines'
+    );
+  });
 });

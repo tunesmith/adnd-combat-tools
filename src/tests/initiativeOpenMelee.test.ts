@@ -8,7 +8,8 @@ import {
 const createWeaponCombatant = (
   id: string,
   initiative: number,
-  weaponSpeedFactor: number
+  weaponSpeedFactor: number,
+  attackRoutineCount = 1
 ): OpenMeleeCombatant => ({
   id,
   initiative,
@@ -18,13 +19,11 @@ const createWeaponCombatant = (
     id: `routine:${id}:1`,
     label: 'Attack routine',
     combatantId: id,
-    components: [
-      {
-        id: 'attack-1',
-        order: 1,
-        label: 'attack 1',
-      },
-    ],
+    components: Array.from({ length: attackRoutineCount }, (_, index) => ({
+      id: `attack-${index + 1}`,
+      order: index + 1,
+      label: `attack ${index + 1}`,
+    })),
     timingBasisComponentId: 'attack-1',
   },
 });
@@ -205,5 +204,45 @@ describe('open melee initiative helper', () => {
         expect(stepSignatures(resolution)).toEqual([['fast1'], ['slow1']]);
       }
     }
+  });
+
+  test('lets a combatant with two routines strike first and last against a single-routine foe', () => {
+    const resolution = resolveOpenMeleeExchange(
+      createWeaponCombatant('A', 2, 5, 2),
+      createWeaponCombatant('B', 5, 3, 1)
+    );
+
+    expect(resolution.reason).toBe('multiple-routines');
+    expect(stepSignatures(resolution)).toEqual([['A1'], ['B1'], ['A2']]);
+  });
+
+  test('uses initiative to break same-phase clashes when both sides have two routines', () => {
+    const resolution = resolveOpenMeleeExchange(
+      createWeaponCombatant('A', 5, 7, 2),
+      createWeaponCombatant('B', 3, 3, 2)
+    );
+
+    expect(resolution.reason).toBe('multiple-routines');
+    expect(stepSignatures(resolution)).toEqual([
+      ['A1'],
+      ['B1'],
+      ['A2'],
+      ['B2'],
+    ]);
+  });
+
+  test('uses tied-melee timing to break same-phase clashes when both sides have two routines and initiative ties', () => {
+    const resolution = resolveOpenMeleeExchange(
+      createWeaponCombatant('fast', 4, 2, 2),
+      createWeaponCombatant('slow', 4, 6, 2)
+    );
+
+    expect(resolution.reason).toBe('multiple-routines');
+    expect(stepSignatures(resolution)).toEqual([
+      ['fast1'],
+      ['slow1'],
+      ['fast2'],
+      ['slow2'],
+    ]);
   });
 });
