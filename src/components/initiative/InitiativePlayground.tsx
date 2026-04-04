@@ -443,6 +443,7 @@ const InitiativePlayground = ({
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<
     string | undefined
   >(undefined);
+  const [examplesMenuOpen, setExamplesMenuOpen] = useState<boolean>(false);
   const scenario = useMemo(
     () => buildInitiativeScenario(buildDraftFromState(state)),
     [state]
@@ -743,6 +744,7 @@ const InitiativePlayground = ({
   const loadPreset = (presetFactory: () => InitiativePlaytestState) => {
     setState(presetFactory());
     setShareFeedback(undefined);
+    setExamplesMenuOpen(false);
   };
 
   const saveAttackDeclaration = () => {
@@ -939,55 +941,70 @@ const InitiativePlayground = ({
           <h1 className={styles['title']}>Initiative Playground</h1>
         </div>
         <div className={styles['presetBar']}>
-          <button
-            type={'button'}
-            className={styles['presetButton']}
-            onClick={() => loadPreset(createMixedPreset)}
-          >
-            Mixed Example
-          </button>
-          <button
-            type={'button'}
-            className={styles['presetButton']}
-            onClick={() => loadPreset(createEnemyEdgePreset)}
-          >
-            Enemy Edge
-          </button>
-          <button
-            type={'button'}
-            className={styles['presetButton']}
-            onClick={() => loadPreset(createScrumPreset)}
-          >
-            Ambiguous Scrum
-          </button>
-          <button
-            type={'button'}
-            className={styles['presetButton']}
-            onClick={() => loadPreset(createChargePreset)}
-          >
-            Charge Contact
-          </button>
-          <button
-            type={'button'}
-            className={styles['presetButton']}
-            onClick={() => loadPreset(createSetVsChargePreset)}
-          >
-            Set vs Charge
-          </button>
-          <button
-            type={'button'}
-            className={styles['presetButton']}
-            onClick={() => loadPreset(createMissileVsChargePreset)}
-          >
-            Missile vs Charge
-          </button>
-          <button
-            type={'button'}
-            className={styles['presetButton']}
-            onClick={() => loadPreset(createLargeBattlePreset)}
-          >
-            Large Mixed
-          </button>
+          <div className={styles['presetMenuWrap']}>
+            <button
+              type={'button'}
+              className={styles['presetButton']}
+              aria-expanded={examplesMenuOpen}
+              aria-haspopup={'true'}
+              onClick={() => setExamplesMenuOpen((previous) => !previous)}
+            >
+              Examples
+            </button>
+            {examplesMenuOpen ? (
+              <div className={styles['presetMenu']}>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createMixedPreset)}
+                >
+                  Mixed Example
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createEnemyEdgePreset)}
+                >
+                  Enemy Edge
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createScrumPreset)}
+                >
+                  Ambiguous Scrum
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createChargePreset)}
+                >
+                  Charge Contact
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createSetVsChargePreset)}
+                >
+                  Set vs Charge
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createMissileVsChargePreset)}
+                >
+                  Missile vs Charge
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createLargeBattlePreset)}
+                >
+                  Large Mixed
+                </button>
+              </div>
+            ) : null}
+          </div>
           <button
             type={'button'}
             className={styles['presetButton']}
