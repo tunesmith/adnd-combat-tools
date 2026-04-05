@@ -59,6 +59,7 @@ describe('initiative codec', () => {
       pairDistances: {
         '2:7': '4',
       },
+      attackActivationSegments: {},
     };
 
     const encodedState = encodeInitiativePlaytestState(state);
@@ -120,6 +121,7 @@ describe('initiative codec', () => {
       ],
       enemies: [],
       pairDistances: {},
+      attackActivationSegments: {},
     });
   });
 
@@ -154,6 +156,48 @@ describe('initiative codec', () => {
         },
       ],
       pairDistances: {},
+      attackActivationSegments: {},
+    };
+
+    await expect(
+      decodeInitiativePlaytestState(encodeInitiativePlaytestState(state))
+    ).resolves.toEqual(state);
+  });
+
+  test('round-trips magical device activation segments per directed declaration', async () => {
+    const state: InitiativePlaytestState = {
+      label: 'Magical Device',
+      partyInitiative: '3',
+      enemyInitiative: '5',
+      nextCombatantKey: 4,
+      party: [
+        {
+          key: 1,
+          name: 'Rodric',
+          declaredAction: 'magical-device',
+          movementRate: '12',
+          missileInitiativeAdjustment: '0',
+          attackRoutineCount: '3',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          key: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          movementRate: '12',
+          missileInitiativeAdjustment: '0',
+          attackRoutineCount: '1',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+      pairDistances: {},
+      attackActivationSegments: {
+        'party:1:3': '3',
+      },
     };
 
     await expect(

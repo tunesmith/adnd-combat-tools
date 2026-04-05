@@ -20,6 +20,7 @@ export interface InitiativePlaytestState {
   party: InitiativePlaytestCombatantState[];
   enemies: InitiativePlaytestCombatantState[];
   pairDistances: Record<string, string>;
+  attackActivationSegments: Record<string, string>;
 }
 
 interface InitiativePlaytestStateV1 {
@@ -31,6 +32,7 @@ interface InitiativePlaytestStateV1 {
   party: InitiativePlaytestCombatantState[];
   enemies: InitiativePlaytestCombatantState[];
   pairDistances: Record<string, string>;
+  attackActivationSegments: Record<string, string>;
 }
 
 type InitiativePlaytestStateAnyVersion = InitiativePlaytestStateV1;
@@ -42,6 +44,7 @@ const INITIATIVE_ACTIONS: InitiativeDeclaredAction[] = [
   'set-vs-charge',
   'missile',
   'turn-undead',
+  'magical-device',
 ];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -106,6 +109,23 @@ const sanitizePairDistances = (value: unknown): Record<string, string> => {
   );
 };
 
+const sanitizeAttackActivationSegments = (
+  value: unknown
+): Record<string, string> => {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => /^(party|enemy):\d+:\d+$/.test(key))
+      .map(([key, activationSegments]) => [
+        key,
+        sanitizeString(activationSegments),
+      ])
+  );
+};
+
 const transformInitiativePlaytestState = (
   candidate: InitiativePlaytestStateAnyVersion
 ): InitiativePlaytestState => {
@@ -123,6 +143,9 @@ const transformInitiativePlaytestState = (
     party: candidate.party.map(sanitizeCombatant),
     enemies: candidate.enemies.map(sanitizeCombatant),
     pairDistances: sanitizePairDistances(candidate.pairDistances),
+    attackActivationSegments: sanitizeAttackActivationSegments(
+      candidate.attackActivationSegments
+    ),
   };
 };
 
@@ -151,6 +174,9 @@ const parseInitiativePlaytestState = (
     party: value['party'].map(sanitizeCombatant),
     enemies: value['enemies'].map(sanitizeCombatant),
     pairDistances: sanitizePairDistances(value['pairDistances']),
+    attackActivationSegments: sanitizeAttackActivationSegments(
+      value['attackActivationSegments']
+    ),
   });
 };
 

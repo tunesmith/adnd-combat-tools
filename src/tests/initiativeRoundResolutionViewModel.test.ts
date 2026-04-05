@@ -236,6 +236,67 @@ describe('initiative round resolution view model', () => {
     ]);
   });
 
+  test('adds a magical device card and explains optional activation timing', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Magical Device',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Rodric',
+          declaredAction: 'magical-device',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              activationSegments: 3,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const deviceCard = viewModel.cards.find(
+      (card) => card.kind === 'magical-device'
+    );
+
+    expect(deviceCard).toMatchObject({
+      kind: 'magical-device',
+      title: 'Rodric magical device',
+    });
+    expect(deviceCard?.summary).toContain(
+      "Skeleton's open melee happens before Rodric's magical device discharge"
+    );
+    expect(deviceCard?.summary).toContain('segment-3 activation');
+    expect(deviceCard?.steps).toEqual([
+      {
+        label: 'Targets',
+        detail: 'Skeleton',
+        combatantIds: ['party-1', 'enemy-3'],
+      },
+      {
+        label: 'Timing',
+        detail:
+          'Magical device discharge is subject to initiative and uses an explicit activation time of 3 segments in this rules slice.',
+        combatantIds: ['party-1', 'enemy-3'],
+      },
+    ]);
+  });
+
   test('explains set versus charge as an automatic first strike with double damage', () => {
     const scenario = buildInitiativeScenario({
       label: 'Set vs Charge',

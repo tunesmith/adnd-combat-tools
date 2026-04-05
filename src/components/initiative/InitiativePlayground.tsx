@@ -46,6 +46,7 @@ interface InitiativePlaytestAttackEditorTarget {
   targetKey: number;
   action: InitiativeDeclaredAction;
   distanceInches: string;
+  activationSegments: string;
 }
 
 const ALL_WEAPON_OPTIONS = getWeaponOptions(MONSTER);
@@ -59,6 +60,7 @@ const ACTION_OPTIONS: Array<{
   { value: 'set-vs-charge', label: 'Set vs charge' },
   { value: 'missile', label: 'Missile' },
   { value: 'turn-undead', label: 'Turn undead' },
+  { value: 'magical-device', label: 'Magical device' },
 ];
 
 const MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS = [
@@ -69,6 +71,19 @@ const MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS = [
   '+1',
   '+2',
   '+3',
+];
+
+const ACTIVATION_SEGMENT_OPTIONS: Array<{
+  value: string;
+  label: string;
+}> = [
+  { value: '', label: 'None' },
+  { value: '1', label: '1 segment' },
+  { value: '2', label: '2 segments' },
+  { value: '3', label: '3 segments' },
+  { value: '4', label: '4 segments' },
+  { value: '5', label: '5 segments' },
+  { value: '6', label: '6 segments' },
 ];
 
 const parseInitiative = (value: string): number => {
@@ -97,6 +112,16 @@ const parseAttackRoutineCount = (value: string): number | undefined => {
   return Math.max(1, Math.floor(parsed));
 };
 
+const parseActivationSegments = (value: string): number | undefined => {
+  const parsed = parseOptionalNumber(value);
+
+  if (parsed === undefined) {
+    return undefined;
+  }
+
+  return Math.max(1, Math.min(6, Math.floor(parsed)));
+};
+
 const parseMissileInitiativeAdjustment = (value: string): number => {
   const trimmed = value.trim();
 
@@ -118,16 +143,27 @@ const isSingleTargetDeclarationAction = (
 ): boolean =>
   declaredAction === 'close' ||
   declaredAction === 'charge' ||
-  declaredAction === 'set-vs-charge';
+  declaredAction === 'set-vs-charge' ||
+  declaredAction === 'magical-device';
 
 const requiresDistanceInput = (
   declaredAction: InitiativeDeclaredAction
 ): boolean => declaredAction === 'close' || declaredAction === 'charge';
 
+const requiresActivationSegmentsInput = (
+  declaredAction: InitiativeDeclaredAction
+): boolean => declaredAction === 'magical-device';
+
 const getPairDistanceKey = (
   partyCombatantKey: number,
   enemyCombatantKey: number
 ): string => `${partyCombatantKey}:${enemyCombatantKey}`;
+
+const getAttackDeclarationKey = (
+  attackingSide: InitiativePlaytestSide,
+  attackerKey: number,
+  targetKey: number
+): string => `${attackingSide}:${attackerKey}:${targetKey}`;
 
 const getDefaultDeclaredActionForWeaponId = (
   weaponId: number
@@ -139,6 +175,30 @@ const formatDeclaredAction = (
 ): string =>
   ACTION_OPTIONS.find((option) => option.value === declaredAction)?.label ||
   declaredAction;
+
+const formatDeclarationMeta = (
+  declaredAction: InitiativeDeclaredAction,
+  distanceInches: string,
+  activationSegments: string
+): string => {
+  if (
+    requiresDistanceInput(declaredAction) &&
+    distanceInches.trim().length > 0
+  ) {
+    return `${formatDeclaredAction(declaredAction)} · ${distanceInches}"`;
+  }
+
+  if (
+    requiresActivationSegmentsInput(declaredAction) &&
+    activationSegments.trim().length > 0
+  ) {
+    return `${formatDeclaredAction(declaredAction)} · ${activationSegments} ${
+      activationSegments === '1' ? 'segment' : 'segments'
+    }`;
+  }
+
+  return formatDeclaredAction(declaredAction);
+};
 
 const getAvailableActionOptions = (
   weaponId: number
@@ -195,6 +255,7 @@ const createMixedPreset = (): InitiativePlaytestState => ({
     createCombatant(4, 'Ghoul', 1),
   ],
   pairDistances: {},
+  attackActivationSegments: {},
 });
 
 const createEnemyEdgePreset = (): InitiativePlaytestState => ({
@@ -208,6 +269,7 @@ const createEnemyEdgePreset = (): InitiativePlaytestState => ({
     createCombatant(4, 'Orc Archer', 16),
   ],
   pairDistances: {},
+  attackActivationSegments: {},
 });
 
 const createScrumPreset = (): InitiativePlaytestState => ({
@@ -225,6 +287,7 @@ const createScrumPreset = (): InitiativePlaytestState => ({
     createCombatant(5, 'Kobold', 1),
   ],
   pairDistances: {},
+  attackActivationSegments: {},
 });
 
 const createChargePreset = (): InitiativePlaytestState => ({
@@ -243,6 +306,7 @@ const createChargePreset = (): InitiativePlaytestState => ({
   pairDistances: {
     [getPairDistanceKey(1, 3)]: '4',
   },
+  attackActivationSegments: {},
 });
 
 const createSetVsChargePreset = (): InitiativePlaytestState => ({
@@ -255,6 +319,7 @@ const createSetVsChargePreset = (): InitiativePlaytestState => ({
   pairDistances: {
     [getPairDistanceKey(1, 3)]: '4',
   },
+  attackActivationSegments: {},
 });
 
 const createMissileVsChargePreset = (): InitiativePlaytestState => ({
@@ -267,6 +332,7 @@ const createMissileVsChargePreset = (): InitiativePlaytestState => ({
   pairDistances: {
     [getPairDistanceKey(1, 3)]: '4',
   },
+  attackActivationSegments: {},
 });
 
 const createMissileDexEdgePreset = (): InitiativePlaytestState => ({
@@ -279,6 +345,7 @@ const createMissileDexEdgePreset = (): InitiativePlaytestState => ({
   pairDistances: {
     [getPairDistanceKey(1, 3)]: '4',
   },
+  attackActivationSegments: {},
 });
 
 const createTurnUndeadPreset = (): InitiativePlaytestState => ({
@@ -289,6 +356,20 @@ const createTurnUndeadPreset = (): InitiativePlaytestState => ({
   party: [createCombatant(1, 'Sister Arda', 17, [3], 'turn-undead', '12')],
   enemies: [createCombatant(3, 'Skeleton', 1, [1], 'open-melee', '12')],
   pairDistances: {},
+  attackActivationSegments: {},
+});
+
+const createMagicalDevicePreset = (): InitiativePlaytestState => ({
+  label: 'Magical Device',
+  partyInitiative: '3',
+  enemyInitiative: '5',
+  nextCombatantKey: 4,
+  party: [createCombatant(1, 'Rodric', 17, [3], 'magical-device', '12')],
+  enemies: [createCombatant(3, 'Skeleton', 1, [1], 'open-melee', '12')],
+  pairDistances: {},
+  attackActivationSegments: {
+    [getAttackDeclarationKey('party', 1, 3)]: '3',
+  },
 });
 
 const createLargeBattlePreset = (): InitiativePlaytestState => ({
@@ -315,12 +396,14 @@ const createLargeBattlePreset = (): InitiativePlaytestState => ({
     [getPairDistanceKey(4, 8)]: '6',
     [getPairDistanceKey(5, 10)]: '4',
   },
+  attackActivationSegments: {},
 });
 
 const buildDraftCombatants = (
   side: InitiativePlaytestSide,
   combatants: InitiativePlaytestCombatant[],
-  pairDistances: Record<string, string>
+  pairDistances: Record<string, string>,
+  attackActivationSegments: Record<string, string>
 ): InitiativeScenarioDraftCombatant[] =>
   combatants.map((combatant) => ({
     combatantKey: combatant.key,
@@ -342,6 +425,11 @@ const buildDraftCombatants = (
               : getPairDistanceKey(targetCombatantKey, combatant.key)
           ] || ''
         ),
+        activationSegments: parseActivationSegments(
+          attackActivationSegments[
+            getAttackDeclarationKey(side, combatant.key, targetCombatantKey)
+          ] || ''
+        ),
       })
     ),
   }));
@@ -352,8 +440,18 @@ const buildDraftFromState = (
   label: state.label.trim() || 'Initiative Playtest',
   partyInitiative: parseInitiative(state.partyInitiative),
   enemyInitiative: parseInitiative(state.enemyInitiative),
-  party: buildDraftCombatants('party', state.party, state.pairDistances),
-  enemies: buildDraftCombatants('enemy', state.enemies, state.pairDistances),
+  party: buildDraftCombatants(
+    'party',
+    state.party,
+    state.pairDistances,
+    state.attackActivationSegments
+  ),
+  enemies: buildDraftCombatants(
+    'enemy',
+    state.enemies,
+    state.pairDistances,
+    state.attackActivationSegments
+  ),
 });
 
 const getDefaultWeaponIdForSide = (side: InitiativePlaytestSide): number =>
@@ -407,6 +505,7 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
       : undefined,
     isNonMissileWeaponId(combatant.weaponId) &&
     combatant.declaredAction !== 'turn-undead' &&
+    combatant.declaredAction !== 'magical-device' &&
     (combatant.attackRoutineCount.trim() || '1') !== '1'
       ? `Routine x${combatant.attackRoutineCount.trim()}`
       : undefined,
@@ -770,6 +869,11 @@ const InitiativePlayground = ({
       attackingSide === 'party'
         ? getPairDistanceKey(attackerKey, targetKey)
         : getPairDistanceKey(targetKey, attackerKey);
+    const declarationKey = getAttackDeclarationKey(
+      attackingSide,
+      attackerKey,
+      targetKey
+    );
 
     setAttackEditorTarget({
       attackingSide,
@@ -777,6 +881,7 @@ const InitiativePlayground = ({
       targetKey,
       action: attackingCombatant.declaredAction,
       distanceInches: state.pairDistances[pairKey] || '',
+      activationSegments: state.attackActivationSegments[declarationKey] || '',
     });
   };
 
@@ -821,6 +926,31 @@ const InitiativePlayground = ({
           return enemyCombatantKey !== combatantKey;
         })
       ),
+      attackActivationSegments: Object.fromEntries(
+        Object.entries(previous.attackActivationSegments).filter(
+          ([declarationKey]) => {
+            const [declarationSide, attackerKeyValue, targetKeyValue] =
+              declarationKey.split(':');
+            const attackerKey = parseInt(attackerKeyValue || '', 10);
+            const targetKey = parseInt(targetKeyValue || '', 10);
+
+            if (declarationSide !== 'party' && declarationSide !== 'enemy') {
+              return false;
+            }
+
+            if (side === declarationSide && attackerKey === combatantKey) {
+              return false;
+            }
+
+            const targetSide = declarationSide === 'party' ? 'enemy' : 'party';
+            if (side === targetSide && targetKey === combatantKey) {
+              return false;
+            }
+
+            return true;
+          }
+        )
+      ),
       [stateSide]: previous[stateSide].filter(
         (combatant) => combatant.key !== combatantKey
       ),
@@ -862,6 +992,11 @@ const InitiativePlayground = ({
       attackingSide === 'party'
         ? getPairDistanceKey(attackerKey, targetKey)
         : getPairDistanceKey(targetKey, attackerKey);
+    const declarationKey = getAttackDeclarationKey(
+      attackingSide,
+      attackerKey,
+      targetKey
+    );
 
     setState((previous) => ({
       ...previous,
@@ -869,6 +1004,18 @@ const InitiativePlayground = ({
         ...previous.pairDistances,
         [pairKey]: distanceInches,
       },
+      attackActivationSegments:
+        requiresActivationSegmentsInput(action) &&
+        attackEditorTarget.activationSegments.trim().length > 0
+          ? {
+              ...previous.attackActivationSegments,
+              [declarationKey]: attackEditorTarget.activationSegments,
+            }
+          : Object.fromEntries(
+              Object.entries(previous.attackActivationSegments).filter(
+                ([existingKey]) => existingKey !== declarationKey
+              )
+            ),
       [stateSide]: previous[stateSide].map((combatant) => {
         if (combatant.key !== attackerKey) {
           return combatant;
@@ -906,12 +1053,23 @@ const InitiativePlayground = ({
       attackingSide === 'party'
         ? getPairDistanceKey(attackerKey, targetKey)
         : getPairDistanceKey(targetKey, attackerKey);
+    const declarationKey = getAttackDeclarationKey(
+      attackingSide,
+      attackerKey,
+      targetKey
+    );
 
     setState((previous) => ({
       ...previous,
       pairDistances: Object.fromEntries(
         Object.entries(previous.pairDistances).filter(
           ([existingPairKey]) => existingPairKey !== pairKey
+        )
+      ),
+      attackActivationSegments: Object.fromEntries(
+        Object.entries(previous.attackActivationSegments).filter(
+          ([existingDeclarationKey]) =>
+            existingDeclarationKey !== declarationKey
         )
       ),
       [stateSide]: previous[stateSide].map((combatant) =>
@@ -1115,6 +1273,13 @@ const InitiativePlayground = ({
                 <button
                   type={'button'}
                   className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createMagicalDevicePreset)}
+                >
+                  Magical Device
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
                   onClick={() => loadPreset(createLargeBattlePreset)}
                 >
                   Large Mixed
@@ -1144,9 +1309,10 @@ const InitiativePlayground = ({
                 Party combatants run across the top, enemies run down the side.
                 Click `P→E` when the party column acts against the enemy row,
                 `E→P` for the reverse, and use the declaration modal to set the
-                action plus any inch distance for that directed declaration.
-                Clean open-melee mutual targets light up as duels. Click a row
-                or column header to edit persistent combatant metadata.
+                action plus any inch distance or device activation time for that
+                directed declaration. Clean open-melee mutual targets light up
+                as duels. Click a row or column header to edit persistent
+                combatant metadata.
               </p>
             </div>
 
@@ -1363,27 +1529,35 @@ const InitiativePlayground = ({
                                   enemyCombatant.key
                                 )
                               ] || '';
+                            const partyActivationSegments =
+                              state.attackActivationSegments[
+                                getAttackDeclarationKey(
+                                  'party',
+                                  partyCombatant.key,
+                                  enemyCombatant.key
+                                )
+                              ] || '';
+                            const enemyActivationSegments =
+                              state.attackActivationSegments[
+                                getAttackDeclarationKey(
+                                  'enemy',
+                                  enemyCombatant.key,
+                                  partyCombatant.key
+                                )
+                              ] || '';
                             const partyDeclarationLabel = partyTargetsEnemy
-                              ? `${formatDeclaredAction(
-                                  partyCombatant.declaredAction
-                                )}${
-                                  requiresDistanceInput(
-                                    partyCombatant.declaredAction
-                                  ) && pairDistance
-                                    ? ` · ${pairDistance}"`
-                                    : ''
-                                }`
+                              ? formatDeclarationMeta(
+                                  partyCombatant.declaredAction,
+                                  pairDistance,
+                                  partyActivationSegments
+                                )
                               : '';
                             const enemyDeclarationLabel = enemyTargetsParty
-                              ? `${formatDeclaredAction(
-                                  enemyCombatant.declaredAction
-                                )}${
-                                  requiresDistanceInput(
-                                    enemyCombatant.declaredAction
-                                  ) && pairDistance
-                                    ? ` · ${pairDistance}"`
-                                    : ''
-                                }`
+                              ? formatDeclarationMeta(
+                                  enemyCombatant.declaredAction,
+                                  pairDistance,
+                                  enemyActivationSegments
+                                )
                               : '';
 
                             return (
@@ -2026,7 +2200,8 @@ const InitiativePlayground = ({
                   missile timing, not melee or movement order.
                 </p>
                 {isNonMissileWeaponId(editedCombatant.weaponId) &&
-                editedCombatant.declaredAction !== 'turn-undead' ? (
+                editedCombatant.declaredAction !== 'turn-undead' &&
+                editedCombatant.declaredAction !== 'magical-device' ? (
                   <>
                     <label
                       className={styles['modalLabel']}
@@ -2118,8 +2293,8 @@ const InitiativePlayground = ({
                   Set the action for <strong>{attackEditedAttackerName}</strong>{' '}
                   against <strong>{attackEditedTargetName}</strong>. In this
                   rules slice, the chosen action applies to that
-                  combatant&apos;s current round, while any inch distance is
-                  stored for this specific target.
+                  combatant&apos;s current round, while any inch distance or
+                  device activation time is stored for this specific target.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -2183,6 +2358,43 @@ const InitiativePlayground = ({
                     </p>
                   </>
                 ) : null}
+                {requiresActivationSegmentsInput(attackEditorTarget.action) ? (
+                  <>
+                    <label
+                      className={styles['modalLabel']}
+                      htmlFor={'initiative-attack-activation-segments'}
+                    >
+                      Activation time
+                    </label>
+                    <select
+                      id={'initiative-attack-activation-segments'}
+                      className={styles['selectInput']}
+                      value={attackEditorTarget.activationSegments}
+                      onChange={(event) =>
+                        setAttackEditorTarget((previous) =>
+                          previous
+                            ? {
+                                ...previous,
+                                activationSegments: event.target.value,
+                              }
+                            : previous
+                        )
+                      }
+                    >
+                      {ACTIVATION_SEGMENT_OPTIONS.map((option) => (
+                        <option key={option.label} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className={styles['modalHint']}>
+                      Use this only when the device description gives an
+                      activation time. Leave it at None when the device attack
+                      is initiative-controlled but not tied to a specific
+                      segment.
+                    </p>
+                  </>
+                ) : null}
                 <div className={styles['modalMeta']}>
                   <span className={styles['modalMetaLabel']}>
                     Current declaration
@@ -2191,11 +2403,11 @@ const InitiativePlayground = ({
                     {attackEditedAttackerName} → {attackEditedTargetName}
                   </span>
                   <span className={styles['modalMetaValue']}>
-                    {formatDeclaredAction(attackEditorTarget.action)}
-                    {requiresDistanceInput(attackEditorTarget.action) &&
-                    attackEditorTarget.distanceInches.trim().length > 0
-                      ? ` · ${attackEditorTarget.distanceInches}"`
-                      : ''}
+                    {formatDeclarationMeta(
+                      attackEditorTarget.action,
+                      attackEditorTarget.distanceInches,
+                      attackEditorTarget.activationSegments
+                    )}
                   </span>
                 </div>
                 <div className={styles['modalActions']}>

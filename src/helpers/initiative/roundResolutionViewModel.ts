@@ -23,6 +23,7 @@ interface InitiativeResolutionCardViewModel {
     | 'movement'
     | 'direct-melee'
     | 'turn-undead'
+    | 'magical-device'
     | 'unresolved';
   title: string;
   summary: string;
@@ -45,6 +46,8 @@ const formatDeclaredActionLabel = (action: InitiativeDeclaredAction): string =>
     ? 'set vs charge'
     : action === 'turn-undead'
     ? 'turn undead'
+    : action === 'magical-device'
+    ? 'magical device'
     : action;
 
 const formatMovementActionLabel = (
@@ -635,6 +638,97 @@ const buildTurnUndeadCards = (
       ],
     }));
 
+const getMagicalDeviceSummary = (
+  combatant: InitiativeScenarioCombatant,
+  combatantNameById: Record<string, string>,
+  combatantById: Map<string, InitiativeScenarioCombatant>
+): string => {
+  const targetNames = formatNames(combatant.targetIds, combatantNameById);
+  const activationSegments =
+    combatant.targetDeclarations.length === 1
+      ? combatant.targetDeclarations[0]?.activationSegments
+      : undefined;
+  const activationText =
+    activationSegments !== undefined
+      ? ` The device discharge is treated as a segment-${activationSegments} activation in this rules slice.`
+      : ' No specific activation time was given, so the discharge remains initiative-controlled but unsegmented.';
+
+  if (combatant.targetIds.length !== 1) {
+    return `${combatant.name} uses a magical device against ${targetNames}. Device discharge is subject to initiative but is not treated like spell casting for interruption here.${activationText}`;
+  }
+
+  const targetId = combatant.targetIds[0];
+  if (!targetId) {
+    return `${combatant.name} uses a magical device.${activationText}`;
+  }
+
+  const target = combatantById.get(targetId);
+  if (!target) {
+    return `${combatant.name} uses a magical device against ${targetNames}.${activationText}`;
+  }
+
+  const initiativeComparison = compareCombatantInitiative(combatant, target);
+  const targetActionLabel = formatDeclaredActionLabel(target.declaredAction);
+
+  if (initiativeComparison > 0) {
+    return `${combatant.name}'s magical device resolves before ${target.name}'s ${targetActionLabel} because ${combatant.side} side currently acts earlier in this exchange. Ordinary damage does not spoil the device discharge the way it would spoil spell casting.${activationText}`;
+  }
+
+  if (initiativeComparison < 0) {
+    return `${target.name}'s ${targetActionLabel} happens before ${combatant.name}'s magical device discharge in this round. If ${combatant.name} survives and is not incapacitated, the device attack still resolves later because device use is not treated like spell casting for interruption here.${activationText}`;
+  }
+
+  return `${combatant.name}'s magical device discharge and ${target.name}'s ${targetActionLabel} are simultaneous in this tied round. Ordinary damage does not spoil the device use in this slice unless ${combatant.name} is killed or otherwise incapacitated.${activationText}`;
+};
+
+const buildMagicalDeviceCards = (
+  scenario: InitiativeScenario,
+  combatantNameById: Record<string, string>,
+  combatantById: Map<string, InitiativeScenarioCombatant>
+): InitiativeResolutionCardViewModel[] =>
+  scenario.party
+    .concat(scenario.enemies)
+    .filter(
+      (combatant) =>
+        combatant.declaredAction === 'magical-device' &&
+        combatant.targetIds.length > 0
+    )
+    .map((combatant) => {
+      const activationSegments =
+        combatant.targetDeclarations.length === 1
+          ? combatant.targetDeclarations[0]?.activationSegments
+          : undefined;
+
+      return {
+        id: `magical-device-${combatant.id}`,
+        kind: 'magical-device' as const,
+        title: `${combatant.name} magical device`,
+        summary: getMagicalDeviceSummary(
+          combatant,
+          combatantNameById,
+          combatantById
+        ),
+        combatantIds: [combatant.id, ...combatant.targetIds],
+        steps: [
+          {
+            label: 'Targets',
+            detail: formatNames(combatant.targetIds, combatantNameById),
+            combatantIds: [combatant.id, ...combatant.targetIds],
+          },
+          {
+            label: 'Timing',
+            detail:
+              activationSegments !== undefined
+                ? `Magical device discharge is subject to initiative and uses an explicit activation time of ${activationSegments} ${
+                    activationSegments === 1 ? 'segment' : 'segments'
+                  } in this rules slice.`
+                : 'Magical device discharge is subject to initiative. With no specific activation time supplied, it remains unsegmented in this rules slice.',
+            combatantIds: [combatant.id, ...combatant.targetIds],
+          },
+        ],
+      };
+    });
+
 const buildUnresolvedCard = (
   scenario: InitiativeScenario,
   resolution: InitiativeRoundResolution,
@@ -679,6 +773,7 @@ export const buildInitiativeRoundResolutionViewModel = (
     ...buildMovementCards(resolution, combatantNameById, combatantById),
     ...buildDirectMeleeCards(resolution, combatantNameById, combatantById),
     ...buildTurnUndeadCards(scenario, combatantNameById, combatantById),
+    ...buildMagicalDeviceCards(scenario, combatantNameById, combatantById),
     buildUnresolvedCard(scenario, resolution, combatantNameById),
   ].filter((card): card is InitiativeResolutionCardViewModel => Boolean(card));
 

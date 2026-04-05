@@ -581,7 +581,7 @@ describe('initiative attack graph', () => {
     expect(graph.layers).toEqual([]);
   });
 
-  test('orders bow versus sling as bow, sling, bow regardless of initiative winner', () => {
+  test('keeps ordinary missile volleys together under initiative rather than bow, sling, bow', () => {
     const partyWinningScenario = buildInitiativeScenario({
       label: 'Bow vs Sling Party Wins',
       partyInitiative: 5,
@@ -639,18 +639,16 @@ describe('initiative attack graph', () => {
     );
 
     expect(partyWinningGraph.layers).toEqual([
-      ['attack:party-1:1'],
+      ['attack:party-1:1', 'attack:party-1:2'],
       ['attack:enemy-3:1'],
-      ['attack:party-1:2'],
     ]);
     expect(enemyWinningGraph.layers).toEqual([
-      ['attack:party-1:1'],
       ['attack:enemy-3:1'],
-      ['attack:party-1:2'],
+      ['attack:party-1:1', 'attack:party-1:2'],
     ]);
   });
 
-  test('uses initiative to break ties between equal firing-rate missile routines', () => {
+  test('uses initiative to order equal firing-rate missile volleys as groups', () => {
     const scenario = buildInitiativeScenario({
       label: 'Bow vs Bow',
       partyInitiative: 6,
@@ -680,14 +678,12 @@ describe('initiative attack graph', () => {
     );
 
     expect(graph.layers).toEqual([
-      ['attack:party-1:1'],
-      ['attack:enemy-3:1'],
-      ['attack:party-1:2'],
-      ['attack:enemy-3:2'],
+      ['attack:party-1:1', 'attack:party-1:2'],
+      ['attack:enemy-3:1', 'attack:enemy-3:2'],
     ]);
   });
 
-  test('uses the missile initiative adjustment to break ties between equal firing-rate missile routines', () => {
+  test('uses the missile initiative adjustment to order equal firing-rate missile volleys as groups', () => {
     const scenario = buildInitiativeScenario({
       label: 'Bow vs Bow With Dex',
       partyInitiative: 3,
@@ -718,14 +714,12 @@ describe('initiative attack graph', () => {
     );
 
     expect(graph.layers).toEqual([
-      ['attack:party-1:1'],
-      ['attack:enemy-3:1'],
-      ['attack:party-1:2'],
-      ['attack:enemy-3:2'],
+      ['attack:party-1:1', 'attack:party-1:2'],
+      ['attack:enemy-3:1', 'attack:enemy-3:2'],
     ]);
   });
 
-  test('uses initiative for the midpoint clash in dart versus sling', () => {
+  test('keeps all dart shots inside one initiative-controlled volley', () => {
     const scenario = buildInitiativeScenario({
       label: 'Dart vs Sling',
       partyInitiative: 2,
@@ -755,10 +749,8 @@ describe('initiative attack graph', () => {
     );
 
     expect(graph.layers).toEqual([
-      ['attack:party-1:1'],
       ['attack:enemy-3:1'],
-      ['attack:party-1:2'],
-      ['attack:party-1:3'],
+      ['attack:party-1:1', 'attack:party-1:2', 'attack:party-1:3'],
     ]);
   });
 
@@ -811,7 +803,7 @@ describe('initiative attack graph', () => {
     ]);
   });
 
-  test('lets a missile attack beat base side initiative when the missile adjustment is higher', () => {
+  test('lets a missile volley beat base side initiative when the missile adjustment is higher', () => {
     const scenario = buildInitiativeScenario({
       label: 'Missile Dex Edge',
       partyInitiative: 3,
@@ -842,9 +834,8 @@ describe('initiative attack graph', () => {
     );
 
     expect(graph.layers).toEqual([
-      ['attack:party-1:1'],
+      ['attack:party-1:1', 'attack:party-1:2'],
       ['attack:enemy-3:1'],
-      ['attack:party-1:2'],
     ]);
     expect(graph.edges).toEqual([
       {
@@ -853,8 +844,8 @@ describe('initiative attack graph', () => {
         reasons: ['simple-initiative'],
       },
       {
-        fromNodeId: 'attack:enemy-3:1',
-        toNodeId: 'attack:party-1:2',
+        fromNodeId: 'attack:party-1:2',
+        toNodeId: 'attack:enemy-3:1',
         reasons: ['simple-initiative'],
       },
     ]);
@@ -986,5 +977,99 @@ describe('initiative attack graph', () => {
       'attack:party-1:1',
     ]);
     expect(graph.edges).toEqual([]);
+  });
+
+  test('renders magical device discharge in a segment lane when activation time is specified', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Magical Device Segments',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Rodric',
+          declaredAction: 'magical-device',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              activationSegments: 3,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          segment: 3,
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          segment: undefined,
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual([
+      {
+        fromNodeId: 'attack:enemy-3:1',
+        toNodeId: 'attack:party-1:1',
+        reasons: ['simple-initiative'],
+      },
+    ]);
+  });
+
+  test('keeps magical device discharge unsegmented when no activation time is supplied', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Magical Device',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Rodric',
+          declaredAction: 'magical-device',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          segment: undefined,
+        }),
+      ])
+    );
   });
 });

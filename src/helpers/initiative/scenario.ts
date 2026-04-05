@@ -44,7 +44,7 @@ const getOrdinaryRoundAttackCount = (
     return 1;
   }
 
-  // Whole-number firing rates map cleanly onto DMG multiple-routine timing.
+  // Whole-number firing rates expand to that many shots in the round.
   // Fractional rates (for example 1/2) need round-over-round state, so keep
   // them as a single attack for now.
   if (fireRate < 1) {
@@ -74,6 +74,22 @@ const buildAttackRoutine = (
         },
       ],
       timingBasisComponentId: 'turn-attempt',
+    };
+  }
+
+  if (declaredAction === 'magical-device') {
+    return {
+      id: `routine:${combatantId}:1`,
+      label: 'Magical device',
+      combatantId,
+      components: [
+        {
+          id: 'device-discharge',
+          order: 1,
+          label: 'discharge',
+        },
+      ],
+      timingBasisComponentId: 'device-discharge',
     };
   }
 
@@ -164,6 +180,7 @@ const buildScenarioCombatants = (
           targetDeclaration.targetCombatantKey
         ),
         distanceInches: targetDeclaration.distanceInches,
+        activationSegments: targetDeclaration.activationSegments,
       }));
 
     return {

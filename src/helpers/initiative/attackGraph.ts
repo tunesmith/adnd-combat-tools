@@ -97,6 +97,14 @@ const createRoutineAttackNode = (
   );
 };
 
+const getDeclaredActionSegment = (
+  combatant: InitiativeScenarioCombatant
+): number | undefined =>
+  combatant.declaredAction === 'magical-device' &&
+  combatant.targetDeclarations.length === 1
+    ? combatant.targetDeclarations[0]?.activationSegments
+    : undefined;
+
 const hasRegisteredCombatAction = (
   combatant: InitiativeScenarioCombatant
 ): boolean => combatant.targetIds.length > 0;
@@ -219,6 +227,17 @@ const getRoutinePhase = (
   return (componentOrder - 1) / (componentCount - 1);
 };
 
+const getSimpleInitiativePhase = (
+  combatant: InitiativeScenarioCombatant,
+  attackNumber: number
+): number => {
+  if (combatant.declaredAction === 'missile') {
+    return 0.5;
+  }
+
+  return getRoutinePhase(attackNumber, getRoutineComponentCount(combatant));
+};
+
 const buildSimpleInitiativePhases = (
   simpleInitiativeNodes: InitiativeAttackNode[],
   combatantById: Map<string, InitiativeScenarioCombatant>
@@ -235,10 +254,7 @@ const buildSimpleInitiativePhases = (
         combatantId: combatant.id,
         nodeId: node.id,
         side: combatant.side,
-        phase: getRoutinePhase(
-          node.attackNumber,
-          getRoutineComponentCount(combatant)
-        ),
+        phase: getSimpleInitiativePhase(combatant, node.attackNumber),
         effectiveInitiative:
           combatant.initiative +
           (combatant.declaredAction === 'missile'
@@ -576,7 +592,8 @@ export const buildInitiativeAttackGraph = (
           component.order,
           component.label,
           'routine-component',
-          'attack'
+          'attack',
+          getDeclaredActionSegment(combatant)
         )
       );
     });

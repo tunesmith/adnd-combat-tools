@@ -10,7 +10,8 @@ export type InitiativeDeclaredAction =
   | 'charge'
   | 'set-vs-charge'
   | 'missile'
-  | 'turn-undead';
+  | 'turn-undead'
+  | 'magical-device';
 
 interface InitiativeAttackRoutineComponent {
   id: string;
@@ -29,6 +30,7 @@ export interface InitiativeAttackRoutine {
 interface InitiativeTargetDeclaration {
   targetId: string;
   distanceInches?: number;
+  activationSegments?: number;
 }
 
 export interface InitiativeScenarioCombatant {
@@ -56,6 +58,7 @@ export interface InitiativeScenarioCombatant {
 export interface InitiativeScenarioDraftTargetDeclaration {
   targetCombatantKey: number;
   distanceInches?: number;
+  activationSegments?: number;
 }
 
 export interface InitiativeScenarioDraftCombatant {

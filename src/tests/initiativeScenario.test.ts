@@ -213,4 +213,51 @@ describe('generic initiative scenario builder', () => {
       },
     ]);
   });
+
+  test('treats magical device use as a single discharge and carries activation segments', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Magical Device',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Rodric',
+          declaredAction: 'magical-device',
+          attackRoutineCount: 3,
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              activationSegments: 3,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+
+    expect(scenario.party[0]?.attackRoutine.components).toEqual([
+      {
+        id: 'device-discharge',
+        order: 1,
+        label: 'discharge',
+      },
+    ]);
+    expect(scenario.party[0]?.targetDeclarations).toEqual([
+      {
+        targetId: 'enemy-3',
+        activationSegments: 3,
+        distanceInches: undefined,
+      },
+    ]);
+  });
 });
