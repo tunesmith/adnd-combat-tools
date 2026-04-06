@@ -233,6 +233,86 @@ describe('initiative attack graph layout', () => {
     ).toBeGreaterThan(300);
   });
 
+  test('keeps an unrelated charge below a spanning spell corridor in the segment band', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell Corridor And Charge',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Sot',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 5,
+              castingSegments: 3,
+            },
+          ],
+        },
+        {
+          combatantKey: 2,
+          name: 'Bemis',
+          declaredAction: 'open-melee',
+          movementRate: 12,
+          weaponId: 59,
+          targetCombatantKeys: [4],
+        },
+        {
+          combatantKey: 3,
+          name: 'Astrid',
+          declaredAction: 'open-melee',
+          movementRate: 12,
+          weaponId: 59,
+          targetCombatantKeys: [5],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 4,
+          name: 'Ankylosaurus',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 2,
+              distanceInches: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 5,
+          name: 'Pillar Gnoll',
+          declaredAction: 'open-melee',
+          movementRate: 12,
+          weaponId: 1,
+          targetCombatantKeys: [3],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+    const layout = buildInitiativeAttackGraphLayout(graph);
+
+    const spellStart = layout.nodes.find(
+      (node) => node.nodeId === 'spell-start:party-1'
+    );
+    const spellCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:party-1'
+    );
+    const chargeAttack = layout.nodes.find(
+      (node) => node.nodeId === 'attack:enemy-4:1'
+    );
+
+    expect(spellStart).toBeDefined();
+    expect(spellCompletion).toBeDefined();
+    expect(chargeAttack).toBeDefined();
+    expect(spellStart?.y).toBe(spellCompletion?.y);
+    expect(chargeAttack?.y).toBeGreaterThan(spellStart?.y || 0);
+  });
+
   test('keeps segment guides in the upper band and pushes dependency-only nodes below it', () => {
     const scenario = buildInitiativeScenario({
       label: 'Large Mixed Battle',

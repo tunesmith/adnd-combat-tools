@@ -323,11 +323,14 @@ export const buildInitiativeAttackGraphLayout = (
   });
 
   const spellChainRowIndexByNodeId = new Map<string, number>();
+  const spellChainRowsBySegment = new Map<number, Set<number>>();
   graph.edges
     .filter((edge) => edge.reasons.includes('spell-casting'))
     .map((edge) => ({
       startNodeId: edge.fromNodeId,
       completionNodeId: edge.toNodeId,
+      startSegment:
+        graphNodeById.get(edge.fromNodeId)?.segment ?? Number.MAX_SAFE_INTEGER,
       completionSegment:
         graphNodeById.get(edge.toNodeId)?.segment ?? Number.MAX_SAFE_INTEGER,
       startLayerIndex:
@@ -353,6 +356,23 @@ export const buildInitiativeAttackGraphLayout = (
     .forEach((spellChain, rowIndex) => {
       spellChainRowIndexByNodeId.set(spellChain.startNodeId, rowIndex);
       spellChainRowIndexByNodeId.set(spellChain.completionNodeId, rowIndex);
+
+      if (
+        spellChain.startSegment === Number.MAX_SAFE_INTEGER ||
+        spellChain.completionSegment === Number.MAX_SAFE_INTEGER
+      ) {
+        return;
+      }
+
+      for (
+        let segment = spellChain.startSegment;
+        segment <= spellChain.completionSegment;
+        segment += 1
+      ) {
+        const existingRows = spellChainRowsBySegment.get(segment) || new Set();
+        existingRows.add(rowIndex);
+        spellChainRowsBySegment.set(segment, existingRows);
+      }
     });
 
   const segmentLanes = buildSegmentLanes(
@@ -374,8 +394,12 @@ export const buildInitiativeAttackGraphLayout = (
 
   const segmentRowCount = Math.max(
     0,
-    ...Array.from(segmentedNodesBySegment.values(), (nodeIds) => {
-      const usedRows = new Set<number>();
+    ...Array.from({ length: SEGMENT_COUNT }, (_, index) => {
+      const segment = index + 1;
+      const nodeIds = segmentedNodesBySegment.get(segment) || [];
+      const usedRows = new Set<number>(
+        spellChainRowsBySegment.get(segment) || []
+      );
       nodeIds.forEach((nodeId) => {
         const spellChainRowIndex = spellChainRowIndexByNodeId.get(nodeId);
         if (spellChainRowIndex !== undefined) {
@@ -452,7 +476,9 @@ export const buildInitiativeAttackGraphLayout = (
       const node = graphNodeById.get(nodeId);
       return node?.kind !== 'spell-start' && node?.kind !== 'spell-completion';
     });
-    const usedRows = new Set<number>();
+    const usedRows = new Set<number>(
+      spellChainRowsBySegment.get(segmentLane.segment) || []
+    );
     nodeIds.forEach((nodeId) => {
       const spellChainRowIndex = spellChainRowIndexByNodeId.get(nodeId);
       if (spellChainRowIndex !== undefined) {
