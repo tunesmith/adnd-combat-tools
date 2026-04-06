@@ -364,6 +364,76 @@ describe('initiative round resolution view model', () => {
     ]);
   });
 
+  test('uses the shared casting time for a multi-target spell card', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Sleep vs Many',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 3,
+            },
+            {
+              targetCombatantKey: 4,
+              castingSegments: 3,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Zombie',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const spellCard = viewModel.cards.find(
+      (card) => card.kind === 'spell-casting'
+    );
+
+    expect(spellCard?.summary).toContain(
+      'casts a spell against Skeleton, Zombie'
+    );
+    expect(spellCard?.summary).toContain(
+      'The spell completes on segment 3 in this rules slice.'
+    );
+    expect(spellCard?.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Targets',
+          detail: 'Skeleton, Zombie',
+        }),
+        expect.objectContaining({
+          label: 'Casting time',
+          detail:
+            'Casting time 3 segments; completion is placed on that segment in this rules slice.',
+        }),
+      ])
+    );
+  });
+
   test('explains set versus charge as an automatic first strike with double damage', () => {
     const scenario = buildInitiativeScenario({
       label: 'Set vs Charge',

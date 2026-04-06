@@ -123,9 +123,10 @@ const getDeclaredActionSegment = (
 const getSpellCastingSegments = (
   combatant: InitiativeScenarioCombatant
 ): number | undefined =>
-  combatant.declaredAction === 'spell-casting' &&
-  combatant.targetDeclarations.length === 1
-    ? combatant.targetDeclarations[0]?.castingSegments
+  combatant.declaredAction === 'spell-casting'
+    ? combatant.targetDeclarations.find(
+        (targetDeclaration) => targetDeclaration.castingSegments !== undefined
+      )?.castingSegments
     : undefined;
 
 const hasRegisteredCombatAction = (
@@ -595,7 +596,7 @@ const addSpellInterruptionEdges = (
   scenario.party.concat(scenario.enemies).forEach((caster) => {
     if (
       caster.declaredAction !== 'spell-casting' ||
-      caster.targetIds.length !== 1
+      caster.targetIds.length < 1
     ) {
       return;
     }

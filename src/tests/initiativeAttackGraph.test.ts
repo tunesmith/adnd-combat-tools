@@ -1297,6 +1297,89 @@ describe('initiative attack graph', () => {
     );
   });
 
+  test('lets one spell completion interrupt multiple targeted spell casters', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Magic Missile vs Multiple Casters',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 1,
+            },
+            {
+              targetCombatantKey: 4,
+              castingSegments: 1,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Shield',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 1,
+            },
+          ],
+        },
+        {
+          combatantKey: 4,
+          name: 'Charm Person',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 3,
+            },
+          ],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'spell-start:party-1',
+          segment: 1,
+        }),
+        expect.objectContaining({
+          id: 'spell-completion:party-1',
+          segment: 1,
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'spell-completion:party-1',
+          toNodeId: 'spell-completion:enemy-3',
+          reasons: ['spell-interruption'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'spell-completion:party-1',
+          toNodeId: 'spell-completion:enemy-4',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
+
   test('does not let a later ordinary melee routine automatically spoil a short spell', () => {
     const scenario = buildInitiativeScenario({
       label: 'Later Routine vs Short Spell',

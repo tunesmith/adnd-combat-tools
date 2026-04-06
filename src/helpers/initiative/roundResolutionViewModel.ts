@@ -750,16 +750,22 @@ const formatCastingTimeLabel = (
   return `${castingSegments} ${castingSegments === 1 ? 'segment' : 'segments'}`;
 };
 
+const getSharedSpellCastingSegments = (
+  combatant: InitiativeScenarioCombatant
+): number | undefined =>
+  combatant.declaredAction === 'spell-casting'
+    ? combatant.targetDeclarations.find(
+        (targetDeclaration) => targetDeclaration.castingSegments !== undefined
+      )?.castingSegments
+    : undefined;
+
 const getSpellCastingSummary = (
   combatant: InitiativeScenarioCombatant,
   combatantNameById: Record<string, string>,
   combatantById: Map<string, InitiativeScenarioCombatant>
 ): string => {
   const targetNames = formatNames(combatant.targetIds, combatantNameById);
-  const castingSegments =
-    combatant.targetDeclarations.length === 1
-      ? combatant.targetDeclarations[0]?.castingSegments
-      : undefined;
+  const castingSegments = getSharedSpellCastingSegments(combatant);
   const castingTimeLabel = formatCastingTimeLabel(castingSegments);
   const completionText =
     castingSegments === 0
@@ -813,10 +819,7 @@ const buildSpellCastingCards = (
         combatant.targetIds.length > 0
     )
     .map((combatant) => {
-      const castingSegments =
-        combatant.targetDeclarations.length === 1
-          ? combatant.targetDeclarations[0]?.castingSegments
-          : undefined;
+      const castingSegments = getSharedSpellCastingSegments(combatant);
 
       return {
         id: `spell-casting-${combatant.id}`,

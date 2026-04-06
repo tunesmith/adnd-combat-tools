@@ -174,8 +174,7 @@ const isSingleTargetDeclarationAction = (
   declaredAction === 'close' ||
   declaredAction === 'charge' ||
   declaredAction === 'set-vs-charge' ||
-  declaredAction === 'magical-device' ||
-  declaredAction === 'spell-casting';
+  declaredAction === 'magical-device';
 
 const requiresDistanceInput = (
   declaredAction: InitiativeDeclaredAction
@@ -208,6 +207,20 @@ const getAttackDeclarationKey = (
   attackerKey: number,
   targetKey: number
 ): string => `${attackingSide}:${attackerKey}:${targetKey}`;
+
+const getStoredCastingSegmentsForAttacker = (
+  state: InitiativePlaytestState,
+  attackingSide: InitiativePlaytestSide,
+  attackerKey: number
+): string | undefined => {
+  const prefix = `${attackingSide}:${attackerKey}:`;
+  const match = Object.entries(state.attackCastingSegments).find(
+    ([declarationKey, value]) =>
+      declarationKey.startsWith(prefix) && value.trim().length > 0
+  );
+
+  return match?.[1];
+};
 
 const getDefaultDeclaredActionForWeaponId = (
   weaponId: number
@@ -981,7 +994,16 @@ const InitiativePlayground = ({
       attackRoutineCount: attackingCombatant.attackRoutineCount,
       distanceInches: state.pairDistances[pairKey] || '',
       activationSegments: state.attackActivationSegments[declarationKey] || '',
-      castingSegments: state.attackCastingSegments[declarationKey] || '1',
+      castingSegments:
+        state.attackCastingSegments[declarationKey] ||
+        (attackingCombatant.declaredAction === 'spell-casting'
+          ? getStoredCastingSegmentsForAttacker(
+              state,
+              attackingSide,
+              attackerKey
+            )
+          : undefined) ||
+        '1',
     });
   };
 
@@ -1130,13 +1152,25 @@ const InitiativePlayground = ({
       targetKey
     );
 
-    setState((previous) => ({
-      ...previous,
-      pairDistances: {
-        ...previous.pairDistances,
-        [pairKey]: distanceInches,
-      },
-      attackActivationSegments:
+    setState((previous) => {
+      const attackingCombatant = previous[stateSide].find(
+        (combatant) => combatant.key === attackerKey
+      );
+
+      if (!attackingCombatant) {
+        return previous;
+      }
+
+      const nextTargetCombatantKeys =
+        attackingCombatant.targetCombatantKeys.includes(targetKey)
+          ? isSingleTargetDeclarationAction(action)
+            ? [targetKey]
+            : attackingCombatant.targetCombatantKeys
+          : isSingleTargetDeclarationAction(action)
+          ? [targetKey]
+          : attackingCombatant.targetCombatantKeys.concat(targetKey);
+
+      const nextAttackActivationSegments =
         requiresActivationSegmentsInput(action) &&
         attackEditorTarget.activationSegments.trim().length > 0
           ? {
@@ -1147,47 +1181,82 @@ const InitiativePlayground = ({
               Object.entries(previous.attackActivationSegments).filter(
                 ([existingKey]) => existingKey !== declarationKey
               )
-            ),
-      attackCastingSegments:
-        requiresCastingSegmentsInput(action) &&
-        castingSegments.trim().length > 0
-          ? {
-              ...previous.attackCastingSegments,
-              [declarationKey]: castingSegments,
+            );
+
+      const nextAttackCastingSegments = (() => {
+        const remainingEntries = Object.entries(previous.attackCastingSegments)
+          .filter(([existingKey]) => {
+            const [existingSide, existingAttackerKeyValue] =
+              existingKey.split(':');
+            const existingAttackerKey = parseInt(
+              existingAttackerKeyValue || '',
+              10
+            );
+
+            if (
+              action === 'spell-casting' &&
+              existingSide === attackingSide &&
+              existingAttackerKey === attackerKey
+            ) {
+              return false;
             }
-          : Object.fromEntries(
-              Object.entries(previous.attackCastingSegments).filter(
-                ([existingKey]) => existingKey !== declarationKey
-              )
-            ),
-      [stateSide]: previous[stateSide].map((combatant) => {
-        if (combatant.key !== attackerKey) {
-          return combatant;
+
+            return existingKey !== declarationKey;
+          })
+          .reduce<Record<string, string>>((next, [existingKey, value]) => {
+            next[existingKey] = value;
+            return next;
+          }, {});
+
+        if (
+          !requiresCastingSegmentsInput(action) ||
+          castingSegments.trim().length === 0
+        ) {
+          return remainingEntries;
         }
 
-        const nextTargetCombatantKeys = combatant.targetCombatantKeys.includes(
-          targetKey
-        )
-          ? isSingleTargetDeclarationAction(action)
-            ? [targetKey]
-            : combatant.targetCombatantKeys
-          : isSingleTargetDeclarationAction(action)
-          ? [targetKey]
-          : combatant.targetCombatantKeys.concat(targetKey);
+        if (action === 'spell-casting') {
+          nextTargetCombatantKeys.forEach((declaredTargetKey) => {
+            remainingEntries[
+              getAttackDeclarationKey(
+                attackingSide,
+                attackerKey,
+                declaredTargetKey
+              )
+            ] = castingSegments;
+          });
+          return remainingEntries;
+        }
 
-        return {
-          ...combatant,
-          declaredAction: action,
-          attackRoutineCount: requiresAttackRoutineCountInput(
-            action,
-            combatant.weaponId
-          )
-            ? attackRoutineCount
-            : combatant.attackRoutineCount,
-          targetCombatantKeys: nextTargetCombatantKeys,
-        };
-      }),
-    }));
+        remainingEntries[declarationKey] = castingSegments;
+        return remainingEntries;
+      })();
+
+      return {
+        ...previous,
+        pairDistances: {
+          ...previous.pairDistances,
+          [pairKey]: distanceInches,
+        },
+        attackActivationSegments: nextAttackActivationSegments,
+        attackCastingSegments: nextAttackCastingSegments,
+        [stateSide]: previous[stateSide].map((combatant) =>
+          combatant.key !== attackerKey
+            ? combatant
+            : {
+                ...combatant,
+                declaredAction: action,
+                attackRoutineCount: requiresAttackRoutineCountInput(
+                  action,
+                  combatant.weaponId
+                )
+                  ? attackRoutineCount
+                  : combatant.attackRoutineCount,
+                targetCombatantKeys: nextTargetCombatantKeys,
+              }
+        ),
+      };
+    });
 
     setAttackEditorTarget(undefined);
   };
