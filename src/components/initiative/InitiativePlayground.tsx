@@ -168,6 +168,18 @@ const parseMissileInitiativeAdjustment = (value: string): number => {
   return Math.max(-3, Math.min(3, Math.trunc(parsed)));
 };
 
+const getMissileTargetLimitForWeaponId = (weaponId: number): number => {
+  const weaponInfo = getWeaponInfo(weaponId);
+  const fireRate =
+    weaponInfo?.weaponType === 'missile' ? weaponInfo.fireRate : undefined;
+
+  if (fireRate === undefined || fireRate < 1) {
+    return 1;
+  }
+
+  return Math.max(1, Math.floor(fireRate));
+};
+
 const isSingleTargetDeclarationAction = (
   declaredAction: InitiativeDeclaredAction
 ): boolean =>
@@ -779,7 +791,10 @@ const InitiativePlayground = ({
           const combatant = combatantById.get(node.combatantId);
 
           let targetLabel = 'No target';
-          if (combatant?.targetIds.length === 1) {
+          if (node.targetId) {
+            targetLabel =
+              viewModel.combatantNameById[node.targetId] || node.targetId;
+          } else if (combatant?.targetIds.length === 1) {
             const targetId = combatant.targetIds[0];
             targetLabel = targetId
               ? viewModel.combatantNameById[targetId] || targetId
@@ -1168,7 +1183,20 @@ const InitiativePlayground = ({
             : attackingCombatant.targetCombatantKeys
           : isSingleTargetDeclarationAction(action)
           ? [targetKey]
-          : attackingCombatant.targetCombatantKeys.concat(targetKey);
+          : (() => {
+              const nextTargets =
+                attackingCombatant.targetCombatantKeys.concat(targetKey);
+
+              if (action !== 'missile') {
+                return nextTargets;
+              }
+
+              const missileTargetLimit = getMissileTargetLimitForWeaponId(
+                attackingCombatant.weaponId
+              );
+
+              return nextTargets.slice(-missileTargetLimit);
+            })();
 
       const nextAttackActivationSegments =
         requiresActivationSegmentsInput(action) &&
@@ -2708,6 +2736,24 @@ const InitiativePlayground = ({
                       spell completes.
                     </p>
                   </>
+                ) : null}
+                {attackEditorTarget.action === 'missile' ? (
+                  <p className={styles['modalHint']}>
+                    This missile volley can currently be declared against up to{' '}
+                    <strong>
+                      {getMissileTargetLimitForWeaponId(
+                        attackEditedAttacker.weaponId
+                      )}
+                    </strong>{' '}
+                    target
+                    {getMissileTargetLimitForWeaponId(
+                      attackEditedAttacker.weaponId
+                    ) === 1
+                      ? ''
+                      : 's'}
+                    . If you pick more, the newest selections replace the oldest
+                    ones.
+                  </p>
                 ) : null}
                 <div className={styles['modalMeta']}>
                   <span className={styles['modalMetaLabel']}>

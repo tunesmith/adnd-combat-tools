@@ -1439,4 +1439,92 @@ describe('initiative attack graph', () => {
       ])
     );
   });
+
+  test('uses target-specific missile volley nodes against multiple spellcasters', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Bowman vs Two Casters',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [3, 4],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Shield',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 1,
+            },
+          ],
+        },
+        {
+          combatantKey: 4,
+          name: 'Charm Person',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 3,
+            },
+          ],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          targetId: 'enemy-3',
+        }),
+        expect.objectContaining({
+          id: 'attack:party-1:2',
+          targetId: 'enemy-4',
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'spell-completion:enemy-3',
+          reasons: ['spell-interruption'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'attack:party-1:2',
+          toNodeId: 'spell-completion:enemy-4',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+    expect(graph.edges).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'spell-completion:enemy-4',
+          reasons: ['spell-interruption'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'attack:party-1:2',
+          toNodeId: 'spell-completion:enemy-3',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
 });

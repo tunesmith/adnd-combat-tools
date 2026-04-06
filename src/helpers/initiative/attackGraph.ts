@@ -66,7 +66,8 @@ const createNode = (
   label: string,
   source: InitiativeAttackNode['source'],
   kind: InitiativeAttackNode['kind'],
-  segment?: number
+  segment?: number,
+  targetId?: string
 ): InitiativeAttackNode => ({
   id:
     kind === 'contact'
@@ -77,6 +78,7 @@ const createNode = (
       ? getSpellCompletionNodeId(combatant.id)
       : getAttackNodeId(combatant.id, attackNumber),
   combatantId: combatant.id,
+  targetId,
   routineId: combatant.attackRoutine.id,
   componentId,
   side: combatant.side,
@@ -89,7 +91,8 @@ const createNode = (
 
 const createRoutineAttackNode = (
   combatant: InitiativeScenarioCombatant,
-  segment?: number
+  segment?: number,
+  targetId?: string
 ): InitiativeAttackNode => {
   const timingBasisComponent =
     combatant.attackRoutine.components.find(
@@ -108,7 +111,8 @@ const createRoutineAttackNode = (
     timingBasisComponent.label,
     'routine-component',
     'attack',
-    segment
+    segment,
+    targetId
   );
 };
 
@@ -615,7 +619,14 @@ const addSpellInterruptionEdges = (
       );
 
     attackers.forEach((attacker) => {
-      const attackerNodes = getRelevantSpellDirectedNodes(attacker, nodesById);
+      const attackerNodes = getRelevantSpellDirectedNodes(
+        attacker,
+        nodesById
+      ).filter(
+        (attackerNode) =>
+          attackerNode.targetId === undefined ||
+          attackerNode.targetId === caster.id
+      );
       if (attackerNodes.length === 0) {
         return;
       }
@@ -765,7 +776,8 @@ export const buildInitiativeAttackGraph = (
     const targetAttackNode = createRoutineAttackNode(
       target,
       targetMovementResolution?.contactSegment ||
-        movementResolution.contactSegment
+        movementResolution.contactSegment,
+      attacker.id
     );
     addNode(nodesById, targetAttackNode);
     movementHandledCombatantIdSet.add(target.id);
@@ -841,6 +853,43 @@ export const buildInitiativeAttackGraph = (
             directMissileChargeComponentLimit
           );
 
+    if (
+      combatant.declaredAction === 'missile' &&
+      combatant.targetIds.length > 0
+    ) {
+      const missileTargetIds = combatant.targetIds.slice(
+        0,
+        attackRoutineComponents.length
+      );
+      const usesTargetSpecificMissileNodes = missileTargetIds.length > 1;
+
+      if (usesTargetSpecificMissileNodes) {
+        missileTargetIds.forEach((targetId, index) => {
+          const component =
+            attackRoutineComponents[index] || attackRoutineComponents[0];
+
+          if (!component) {
+            return;
+          }
+
+          addNode(
+            nodesById,
+            createNode(
+              combatant,
+              component.id,
+              component.order,
+              component.label,
+              'routine-component',
+              'attack',
+              getDeclaredActionSegment(combatant),
+              targetId
+            )
+          );
+        });
+        return;
+      }
+    }
+
     attackRoutineComponents.forEach((component) => {
       addNode(
         nodesById,
@@ -851,7 +900,8 @@ export const buildInitiativeAttackGraph = (
           component.label,
           'routine-component',
           'attack',
-          getDeclaredActionSegment(combatant)
+          getDeclaredActionSegment(combatant),
+          combatant.targetIds.length === 1 ? combatant.targetIds[0] : undefined
         )
       );
     });

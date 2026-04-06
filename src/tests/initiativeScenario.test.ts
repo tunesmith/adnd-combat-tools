@@ -136,6 +136,45 @@ describe('generic initiative scenario builder', () => {
     ]);
   });
 
+  test('caps missile targets to whole-number firing rate', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Split Targets',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          weaponId: 11,
+          declaredAction: 'missile',
+          targetCombatantKeys: [3, 4, 5],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Orc 1',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+        },
+        {
+          combatantKey: 4,
+          name: 'Orc 2',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+        },
+        {
+          combatantKey: 5,
+          name: 'Orc 3',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+        },
+      ],
+    });
+
+    expect(scenario.party[0]?.targetIds).toEqual(['enemy-3', 'enemy-4']);
+  });
+
   test('uses explicit round-local routine counts for non-missile combatants', () => {
     const draft: InitiativeScenarioDraft = {
       label: 'Multiple Melee Routines',

@@ -54,6 +54,9 @@ const getOrdinaryRoundAttackCount = (
   return Math.max(1, Math.floor(fireRate));
 };
 
+const getMissileTargetLimit = (fireRate: number | undefined): number =>
+  getOrdinaryRoundAttackCount('missile', fireRate, undefined);
+
 const buildAttackRoutine = (
   combatantId: string,
   declaredAction: InitiativeScenarioCombatant['declaredAction'],
@@ -189,6 +192,16 @@ const buildScenarioCombatants = (
     const targetDeclarations = getTargetDeclarations(combatant)
       .filter((targetDeclaration) =>
         opposingCombatantKeys.has(targetDeclaration.targetCombatantKey)
+      )
+      .slice(
+        0,
+        weaponType === 'missile'
+          ? getMissileTargetLimit(
+              weaponInfo?.weaponType === 'missile'
+                ? weaponInfo.fireRate
+                : undefined
+            )
+          : undefined
       )
       .map((targetDeclaration) => ({
         targetId: getCombatantId(

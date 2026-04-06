@@ -190,6 +190,7 @@ export interface InitiativeRoundResolution {
 export interface InitiativeAttackNode {
   id: string;
   combatantId: string;
+  targetId?: string;
   routineId: string;
   componentId: string;
   side: InitiativeScenarioSide;
