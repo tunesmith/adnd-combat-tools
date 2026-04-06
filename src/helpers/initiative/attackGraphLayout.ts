@@ -598,6 +598,42 @@ export const buildInitiativeAttackGraphLayout = (
     });
   });
 
+  graph.layers.forEach((layer) => {
+    layer.forEach((nodeId) => {
+      const graphNode = graphNodeById.get(nodeId);
+      const targetLayoutNode = nodeLayoutById.get(nodeId);
+
+      if (
+        !graphNode ||
+        graphNode.segment !== undefined ||
+        !targetLayoutNode
+      ) {
+        return;
+      }
+
+      let requiredX = targetLayoutNode.x;
+      graph.edges.forEach((edge) => {
+        if (edge.toNodeId !== nodeId) {
+          return;
+        }
+
+        const sourceLayoutNode = nodeLayoutById.get(edge.fromNodeId);
+        if (!sourceLayoutNode) {
+          return;
+        }
+
+        requiredX = Math.max(
+          requiredX,
+          sourceLayoutNode.x + sourceLayoutNode.width + DEPENDENCY_COLUMN_GAP
+        );
+      });
+
+      if (requiredX > targetLayoutNode.x) {
+        targetLayoutNode.x = requiredX;
+      }
+    });
+  });
+
   const nodes = graph.nodes.flatMap((node) => {
     const layoutNode = nodeLayoutById.get(node.id);
     return layoutNode ? [layoutNode] : [];

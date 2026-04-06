@@ -470,7 +470,11 @@ const getDirectMissileChargeComponentLimit = (
   return initiativeComparison > 0 ? 1 : 0;
 };
 
-type SpellTimingRelation = 'before' | 'simultaneous' | 'after';
+type SpellTimingRelation =
+  | 'before'
+  | 'simultaneous'
+  | 'after'
+  | 'indeterminate';
 
 const compareToSpellCompletion = (
   timingSegment: number,
@@ -500,7 +504,7 @@ const getSpellInterruptionRelation = (
   attacker: InitiativeScenarioCombatant,
   caster: InitiativeScenarioCombatant,
   castingSegments: number,
-  attackerNodes: InitiativeAttackNode[]
+  attackerNode: InitiativeAttackNode
 ): SpellTimingRelation => {
   if (castingSegments === 0) {
     return 'after';
@@ -530,18 +534,24 @@ const getSpellInterruptionRelation = (
     return 'simultaneous';
   }
 
-  const explicitAttackSegments = attackerNodes
-    .map((node) => node.segment)
-    .filter((segment): segment is number => segment !== undefined);
-
-  if (explicitAttackSegments.length > 0) {
-    return compareToSpellCompletion(
-      Math.min(...explicitAttackSegments),
-      castingSegments
-    );
+  if (attackerNode.segment !== undefined) {
+    return compareToSpellCompletion(attackerNode.segment, castingSegments);
   }
 
   const initiativeComparison = compareCombatantInitiative(attacker, caster);
+  const isLaterOrdinaryRoutineAttack =
+    attackerNode.kind === 'attack' &&
+    attacker.attackRoutine.components.length > 1 &&
+    attackerNode.attackNumber > 1 &&
+    attacker.declaredAction !== 'missile';
+
+  // The DMG multiple-routine rule establishes a later attack as "last" in the
+  // round, not as another early attack segment. Treat that later ordinary
+  // routine as too vague to order against same-round spell completion unless a
+  // narrower timing rule makes it explicit.
+  if (isLaterOrdinaryRoutineAttack) {
+    return castingSegments >= 10 ? 'before' : 'indeterminate';
+  }
 
   if (
     attacker.declaredAction === 'open-melee' &&
@@ -609,34 +619,32 @@ const addSpellInterruptionEdges = (
         return;
       }
 
-      const relation = getSpellInterruptionRelation(
-        attacker,
-        caster,
-        castingSegments,
-        attackerNodes
-      );
-
-      if (relation !== 'before') {
-        if (relation === 'after') {
-          attackerNodes.forEach((attackerNode) => {
-            mergeEdgeReason(
-              edgesByKey,
-              completionNodeId,
-              attackerNode.id,
-              'spell-interruption'
-            );
-          });
-        }
-        return;
-      }
-
       attackerNodes.forEach((attackerNode) => {
-        mergeEdgeReason(
-          edgesByKey,
-          attackerNode.id,
-          completionNodeId,
-          'spell-interruption'
+        const relation = getSpellInterruptionRelation(
+          attacker,
+          caster,
+          castingSegments,
+          attackerNode
         );
+
+        if (relation === 'before') {
+          mergeEdgeReason(
+            edgesByKey,
+            attackerNode.id,
+            completionNodeId,
+            'spell-interruption'
+          );
+          return;
+        }
+
+        if (relation === 'after') {
+          mergeEdgeReason(
+            edgesByKey,
+            completionNodeId,
+            attackerNode.id,
+            'spell-interruption'
+          );
+        }
       });
     });
   });

@@ -1296,4 +1296,64 @@ describe('initiative attack graph', () => {
       ])
     );
   });
+
+  test('does not let a later ordinary melee routine automatically spoil a short spell', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Later Routine vs Short Spell',
+      partyInitiative: 2,
+      enemyInitiative: 6,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Levitate',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 2,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Enemy 6',
+          declaredAction: 'open-melee',
+          attackRoutineCount: 2,
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+    expect(graph.edges).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-3:2',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'spell-completion:party-1',
+          toNodeId: 'attack:enemy-3:2',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
 });

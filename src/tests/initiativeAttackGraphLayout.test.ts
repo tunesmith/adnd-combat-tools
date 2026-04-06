@@ -439,4 +439,83 @@ describe('initiative attack graph layout', () => {
     expect(magicMissileStart?.y).toBe(magicMissileCompletion?.y);
     expect(shieldStart?.y).toBe(shieldCompletion?.y);
   });
+
+  test('keeps segmented spell completions in-lane while nudging later dependency attacks right', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell Lane vs Later Attack',
+      partyInitiative: 2,
+      enemyInitiative: 6,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Fighter A',
+          declaredAction: 'open-melee',
+          weaponId: 58,
+          targetCombatantKeys: [3],
+        },
+        {
+          combatantKey: 2,
+          name: 'Levitate',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 4,
+              castingSegments: 2,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Cause Fear',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 4,
+          name: 'Enemy 6',
+          declaredAction: 'open-melee',
+          attackRoutineCount: 2,
+          weaponId: 1,
+          targetCombatantKeys: [2],
+        },
+      ],
+    });
+    const layout = buildInitiativeAttackGraphLayout(
+      buildInitiativeAttackGraph(scenario, resolveInitiativeRound(scenario))
+    );
+
+    const segmentTwoColumn = layout.segmentColumns.find(
+      (column) => column.segment === 2
+    );
+    const causeFearCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:enemy-3'
+    );
+    const levitateCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:party-2'
+    );
+    const fighterAttack = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-1:1'
+    );
+
+    expect(segmentTwoColumn).toBeDefined();
+    expect(causeFearCompletion).toBeDefined();
+    expect(levitateCompletion).toBeDefined();
+    expect(fighterAttack).toBeDefined();
+    expect(levitateCompletion?.x).toBeGreaterThanOrEqual(
+      segmentTwoColumn?.startX || 0
+    );
+    expect(levitateCompletion?.x).toBeLessThan(
+      (segmentTwoColumn?.endX || 0) - (levitateCompletion?.width || 0)
+    );
+    expect(fighterAttack?.x).toBeGreaterThan(causeFearCompletion?.x || 0);
+  });
 });
