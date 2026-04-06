@@ -21,6 +21,7 @@ export interface InitiativePlaytestState {
   enemies: InitiativePlaytestCombatantState[];
   pairDistances: Record<string, string>;
   attackActivationSegments: Record<string, string>;
+  attackCastingSegments: Record<string, string>;
 }
 
 interface InitiativePlaytestStateV1 {
@@ -33,6 +34,7 @@ interface InitiativePlaytestStateV1 {
   enemies: InitiativePlaytestCombatantState[];
   pairDistances: Record<string, string>;
   attackActivationSegments: Record<string, string>;
+  attackCastingSegments: Record<string, string>;
 }
 
 type InitiativePlaytestStateAnyVersion = InitiativePlaytestStateV1;
@@ -45,6 +47,7 @@ const INITIATIVE_ACTIONS: InitiativeDeclaredAction[] = [
   'missile',
   'turn-undead',
   'magical-device',
+  'spell-casting',
 ];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -126,6 +129,20 @@ const sanitizeAttackActivationSegments = (
   );
 };
 
+const sanitizeAttackCastingSegments = (
+  value: unknown
+): Record<string, string> => {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => /^(party|enemy):\d+:\d+$/.test(key))
+      .map(([key, castingSegments]) => [key, sanitizeString(castingSegments)])
+  );
+};
+
 const transformInitiativePlaytestState = (
   candidate: InitiativePlaytestStateAnyVersion
 ): InitiativePlaytestState => {
@@ -145,6 +162,9 @@ const transformInitiativePlaytestState = (
     pairDistances: sanitizePairDistances(candidate.pairDistances),
     attackActivationSegments: sanitizeAttackActivationSegments(
       candidate.attackActivationSegments
+    ),
+    attackCastingSegments: sanitizeAttackCastingSegments(
+      candidate.attackCastingSegments
     ),
   };
 };
@@ -176,6 +196,9 @@ const parseInitiativePlaytestState = (
     pairDistances: sanitizePairDistances(value['pairDistances']),
     attackActivationSegments: sanitizeAttackActivationSegments(
       value['attackActivationSegments']
+    ),
+    attackCastingSegments: sanitizeAttackCastingSegments(
+      value['attackCastingSegments']
     ),
   });
 };

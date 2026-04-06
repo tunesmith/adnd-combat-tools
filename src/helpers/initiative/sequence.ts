@@ -1,6 +1,6 @@
-import type Player from "../../types/player";
-import type { PlayerMove, RoundDag } from "../../types/sequence";
-import matchup, { Ruleset } from "../matchup";
+import type Player from '../../types/player';
+import type { PlayerMove, RoundDag } from '../../types/sequence';
+import matchup, { Ruleset } from '../matchup';
 
 /**
  * I believe the goal here is to receive a collection of players,

@@ -681,7 +681,8 @@
 }
 
 .graphArrowhead {
-  fill: rgba(246, 238, 214, 0.88);
+  fill: #f6eed6;
+  stroke: none;
 }
 
 .graphSegmentHeaderLine {
@@ -722,8 +723,12 @@
   fill: none;
   stroke: rgba(244, 236, 210, 0.78);
   stroke-width: 1.55px;
-  stroke-linecap: round;
+  stroke-linecap: butt;
   stroke-linejoin: round;
+}
+
+.graphEdgeSpellCasting {
+  stroke-width: 6px;
 }
 
 .graphEdgeSelected {

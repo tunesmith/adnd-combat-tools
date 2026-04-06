@@ -112,20 +112,20 @@ the direction in which they are intended to matter.
 
 With that in mind, let's look at Rule #2 on page 65.
 
->"Attacks directed at spell casters will come on that segment of the 
-> round shown on the opponent's or on their own side's initiative die, 
-> whichever is applicable. (If the spell caster's side won the initiative 
-> with a roll of 5, the attack must come then, not on the opponent's losing 
-> roll of 4 or less.) Thus, all such attacks will occur on the 1st-6th 
+> "Attacks directed at spell casters will come on that segment of the
+> round shown on the opponent's or on their own side's initiative die,
+> whichever is applicable. (If the spell caster's side won the initiative
+> with a roll of 5, the attack must come then, not on the opponent's losing
+> roll of 4 or less.) Thus, all such attacks will occur on the 1st-6th
 > segments of the round." (DMG p65)
 
-Leaving aside the confusion regarding the "whichever is applicable" 
-phrase for the moment, let's examine the two clearer sentences and 
+Leaving aside the confusion regarding the "whichever is applicable"
+phrase for the moment, let's examine the two clearer sentences and
 their implications.
 
-First, we know that if a caster *wins* initiative, an attack directed
+First, we know that if a caster _wins_ initiative, an attack directed
 at them will come on the segment of the caster's die.
 
 One implication: if the caster chooses to cast a spell with a six-
 segment casting time, and they are attacked and hit, the attack will
-*absolutely interrupt the spell*, even if the caster wins initiative.
+_absolutely interrupt the spell_, even if the caster wins initiative.

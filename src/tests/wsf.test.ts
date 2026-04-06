@@ -3,27 +3,27 @@ import {
   TIMED_ACTION_WEAPON_TIE,
   TIMED_ACTION_WINS,
   WEAPON_WINS,
-} from "../helpers/wsf";
+} from '../helpers/wsf';
 
-describe("wsf", () => {
+describe('wsf', () => {
   /**
    * >"A sword with a factor of 5 (broad or long) is being used by on opponent of a magic-user attempting to cast a
    * fireball spell (3 segment casting time)." (DMG p67)
    */
-  test("DMG p67 ex1", () => {
+  test('DMG p67 ex1', () => {
     /**
      * >"If the sword-wielding attacker was represented by a losing initiative die roll of 1, the spell will be cast
      * prior to the sword's blow."
      */
     expect(determineWeaponVsTimedAction(5, 3, 1)).toBe(TIMED_ACTION_WINS);
   });
-  test("DMG p67 ex2", () => {
+  test('DMG p67 ex2', () => {
     /**
      * >"A 2 will indicate that the spell and the blow are completed simultaneously."
      */
     expect(determineWeaponVsTimedAction(5, 3, 2)).toBe(TIMED_ACTION_WEAPON_TIE);
   });
-  test("DMG p67 ex3", () => {
+  test('DMG p67 ex3', () => {
     /**
      * >"A 3-5 will indicate that the blow has a chance of striking (if o successful "to hit" roll is made) before
      * the spell is cast, arriving either as the spell is begun or during the first segment of its casting."

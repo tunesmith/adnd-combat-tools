@@ -60,6 +60,7 @@ describe('initiative codec', () => {
         '2:7': '4',
       },
       attackActivationSegments: {},
+      attackCastingSegments: {},
     };
 
     const encodedState = encodeInitiativePlaytestState(state);
@@ -122,6 +123,7 @@ describe('initiative codec', () => {
       enemies: [],
       pairDistances: {},
       attackActivationSegments: {},
+      attackCastingSegments: {},
     });
   });
 
@@ -157,6 +159,7 @@ describe('initiative codec', () => {
       ],
       pairDistances: {},
       attackActivationSegments: {},
+      attackCastingSegments: {},
     };
 
     await expect(
@@ -197,6 +200,49 @@ describe('initiative codec', () => {
       pairDistances: {},
       attackActivationSegments: {
         'party:1:3': '3',
+      },
+      attackCastingSegments: {},
+    };
+
+    await expect(
+      decodeInitiativePlaytestState(encodeInitiativePlaytestState(state))
+    ).resolves.toEqual(state);
+  });
+
+  test('round-trips spell casting time per directed declaration', async () => {
+    const state: InitiativePlaytestState = {
+      label: 'Spell Casting',
+      partyInitiative: '5',
+      enemyInitiative: '4',
+      nextCombatantKey: 4,
+      party: [
+        {
+          key: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          movementRate: '12',
+          missileInitiativeAdjustment: '0',
+          attackRoutineCount: '1',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          key: 3,
+          name: 'Hobgoblin',
+          declaredAction: 'open-melee',
+          movementRate: '12',
+          missileInitiativeAdjustment: '0',
+          attackRoutineCount: '1',
+          weaponId: 17,
+          targetCombatantKeys: [1],
+        },
+      ],
+      pairDistances: {},
+      attackActivationSegments: {},
+      attackCastingSegments: {
+        'party:1:3': '6',
       },
     };
 

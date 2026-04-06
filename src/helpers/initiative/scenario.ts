@@ -93,6 +93,22 @@ const buildAttackRoutine = (
     };
   }
 
+  if (declaredAction === 'spell-casting') {
+    return {
+      id: `routine:${combatantId}:1`,
+      label: 'Spell',
+      combatantId,
+      components: [
+        {
+          id: 'spell',
+          order: 1,
+          label: 'spell',
+        },
+      ],
+      timingBasisComponentId: 'spell',
+    };
+  }
+
   const attackCount = getOrdinaryRoundAttackCount(
     weaponType,
     fireRate,
@@ -181,6 +197,7 @@ const buildScenarioCombatants = (
         ),
         distanceInches: targetDeclaration.distanceInches,
         activationSegments: targetDeclaration.activationSegments,
+        castingSegments: targetDeclaration.castingSegments,
       }));
 
     return {

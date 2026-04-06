@@ -47,6 +47,7 @@ interface InitiativePlaytestAttackEditorTarget {
   action: InitiativeDeclaredAction;
   distanceInches: string;
   activationSegments: string;
+  castingSegments: string;
 }
 
 const ALL_WEAPON_OPTIONS = getWeaponOptions(MONSTER);
@@ -61,6 +62,7 @@ const ACTION_OPTIONS: Array<{
   { value: 'missile', label: 'Missile' },
   { value: 'turn-undead', label: 'Turn undead' },
   { value: 'magical-device', label: 'Magical device' },
+  { value: 'spell-casting', label: 'Cast spell' },
 ];
 
 const MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS = [
@@ -84,6 +86,23 @@ const ACTIVATION_SEGMENT_OPTIONS: Array<{
   { value: '4', label: '4 segments' },
   { value: '5', label: '5 segments' },
   { value: '6', label: '6 segments' },
+];
+
+const SPELL_CASTING_TIME_OPTIONS: Array<{
+  value: string;
+  label: string;
+}> = [
+  { value: '0', label: 'Instant' },
+  { value: '1', label: '1 segment' },
+  { value: '2', label: '2 segments' },
+  { value: '3', label: '3 segments' },
+  { value: '4', label: '4 segments' },
+  { value: '5', label: '5 segments' },
+  { value: '6', label: '6 segments' },
+  { value: '7', label: '7 segments' },
+  { value: '8', label: '8 segments' },
+  { value: '9', label: '9 segments' },
+  { value: '10', label: '10+ segments' },
 ];
 
 const parseInitiative = (value: string): number => {
@@ -122,6 +141,16 @@ const parseActivationSegments = (value: string): number | undefined => {
   return Math.max(1, Math.min(6, Math.floor(parsed)));
 };
 
+const parseCastingSegments = (value: string): number | undefined => {
+  const parsed = parseOptionalNumber(value);
+
+  if (parsed === undefined) {
+    return undefined;
+  }
+
+  return Math.max(0, Math.min(10, Math.floor(parsed)));
+};
+
 const parseMissileInitiativeAdjustment = (value: string): number => {
   const trimmed = value.trim();
 
@@ -144,7 +173,8 @@ const isSingleTargetDeclarationAction = (
   declaredAction === 'close' ||
   declaredAction === 'charge' ||
   declaredAction === 'set-vs-charge' ||
-  declaredAction === 'magical-device';
+  declaredAction === 'magical-device' ||
+  declaredAction === 'spell-casting';
 
 const requiresDistanceInput = (
   declaredAction: InitiativeDeclaredAction
@@ -153,6 +183,10 @@ const requiresDistanceInput = (
 const requiresActivationSegmentsInput = (
   declaredAction: InitiativeDeclaredAction
 ): boolean => declaredAction === 'magical-device';
+
+const requiresCastingSegmentsInput = (
+  declaredAction: InitiativeDeclaredAction
+): boolean => declaredAction === 'spell-casting';
 
 const getPairDistanceKey = (
   partyCombatantKey: number,
@@ -179,7 +213,8 @@ const formatDeclaredAction = (
 const formatDeclarationMeta = (
   declaredAction: InitiativeDeclaredAction,
   distanceInches: string,
-  activationSegments: string
+  activationSegments: string,
+  castingSegments: string
 ): string => {
   if (
     requiresDistanceInput(declaredAction) &&
@@ -194,6 +229,23 @@ const formatDeclarationMeta = (
   ) {
     return `${formatDeclaredAction(declaredAction)} · ${activationSegments} ${
       activationSegments === '1' ? 'segment' : 'segments'
+    }`;
+  }
+
+  if (
+    requiresCastingSegmentsInput(declaredAction) &&
+    castingSegments.trim().length > 0
+  ) {
+    if (castingSegments === '0') {
+      return `${formatDeclaredAction(declaredAction)} · Instant`;
+    }
+
+    return `${formatDeclaredAction(declaredAction)} · ${
+      castingSegments === '10'
+        ? '10+ segments'
+        : `${castingSegments} ${
+            castingSegments === '1' ? 'segment' : 'segments'
+          }`
     }`;
   }
 
@@ -256,6 +308,7 @@ const createMixedPreset = (): InitiativePlaytestState => ({
   ],
   pairDistances: {},
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const createEnemyEdgePreset = (): InitiativePlaytestState => ({
@@ -270,6 +323,7 @@ const createEnemyEdgePreset = (): InitiativePlaytestState => ({
   ],
   pairDistances: {},
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const createScrumPreset = (): InitiativePlaytestState => ({
@@ -288,6 +342,7 @@ const createScrumPreset = (): InitiativePlaytestState => ({
   ],
   pairDistances: {},
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const createChargePreset = (): InitiativePlaytestState => ({
@@ -307,6 +362,7 @@ const createChargePreset = (): InitiativePlaytestState => ({
     [getPairDistanceKey(1, 3)]: '4',
   },
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const createSetVsChargePreset = (): InitiativePlaytestState => ({
@@ -320,6 +376,7 @@ const createSetVsChargePreset = (): InitiativePlaytestState => ({
     [getPairDistanceKey(1, 3)]: '4',
   },
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const createMissileVsChargePreset = (): InitiativePlaytestState => ({
@@ -333,6 +390,7 @@ const createMissileVsChargePreset = (): InitiativePlaytestState => ({
     [getPairDistanceKey(1, 3)]: '4',
   },
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const createMissileDexEdgePreset = (): InitiativePlaytestState => ({
@@ -346,6 +404,7 @@ const createMissileDexEdgePreset = (): InitiativePlaytestState => ({
     [getPairDistanceKey(1, 3)]: '4',
   },
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const createTurnUndeadPreset = (): InitiativePlaytestState => ({
@@ -357,6 +416,7 @@ const createTurnUndeadPreset = (): InitiativePlaytestState => ({
   enemies: [createCombatant(3, 'Skeleton', 1, [1], 'open-melee', '12')],
   pairDistances: {},
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const createMagicalDevicePreset = (): InitiativePlaytestState => ({
@@ -369,6 +429,21 @@ const createMagicalDevicePreset = (): InitiativePlaytestState => ({
   pairDistances: {},
   attackActivationSegments: {
     [getAttackDeclarationKey('party', 1, 3)]: '3',
+  },
+  attackCastingSegments: {},
+});
+
+const createSpellCastingPreset = (): InitiativePlaytestState => ({
+  label: 'Spell Casting',
+  partyInitiative: '5',
+  enemyInitiative: '4',
+  nextCombatantKey: 4,
+  party: [createCombatant(1, 'Mereth', 17, [3], 'spell-casting', '12')],
+  enemies: [createCombatant(3, 'Hobgoblin', 17, [1], 'open-melee', '12')],
+  pairDistances: {},
+  attackActivationSegments: {},
+  attackCastingSegments: {
+    [getAttackDeclarationKey('party', 1, 3)]: '6',
   },
 });
 
@@ -397,13 +472,15 @@ const createLargeBattlePreset = (): InitiativePlaytestState => ({
     [getPairDistanceKey(5, 10)]: '4',
   },
   attackActivationSegments: {},
+  attackCastingSegments: {},
 });
 
 const buildDraftCombatants = (
   side: InitiativePlaytestSide,
   combatants: InitiativePlaytestCombatant[],
   pairDistances: Record<string, string>,
-  attackActivationSegments: Record<string, string>
+  attackActivationSegments: Record<string, string>,
+  attackCastingSegments: Record<string, string>
 ): InitiativeScenarioDraftCombatant[] =>
   combatants.map((combatant) => ({
     combatantKey: combatant.key,
@@ -430,6 +507,11 @@ const buildDraftCombatants = (
             getAttackDeclarationKey(side, combatant.key, targetCombatantKey)
           ] || ''
         ),
+        castingSegments: parseCastingSegments(
+          attackCastingSegments[
+            getAttackDeclarationKey(side, combatant.key, targetCombatantKey)
+          ] || ''
+        ),
       })
     ),
   }));
@@ -444,13 +526,15 @@ const buildDraftFromState = (
     'party',
     state.party,
     state.pairDistances,
-    state.attackActivationSegments
+    state.attackActivationSegments,
+    state.attackCastingSegments
   ),
   enemies: buildDraftCombatants(
     'enemy',
     state.enemies,
     state.pairDistances,
-    state.attackActivationSegments
+    state.attackActivationSegments,
+    state.attackCastingSegments
   ),
 });
 
@@ -506,6 +590,7 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
     isNonMissileWeaponId(combatant.weaponId) &&
     combatant.declaredAction !== 'turn-undead' &&
     combatant.declaredAction !== 'magical-device' &&
+    combatant.declaredAction !== 'spell-casting' &&
     (combatant.attackRoutineCount.trim() || '1') !== '1'
       ? `Routine x${combatant.attackRoutineCount.trim()}`
       : undefined,
@@ -523,14 +608,20 @@ const getGraphNodeSourceLabel = (
     ? 'Routine component'
     : source === 'timing-bonus'
     ? 'Timing bonus'
-    : 'Movement contact';
+    : source === 'movement-contact'
+    ? 'Movement contact'
+    : 'Spell casting';
 
 const getGraphEdgeReasonLabel = (reason: InitiativeAttackEdgeReason): string =>
   reason === 'simple-initiative'
     ? 'baseline side initiative'
     : reason === 'direct-melee'
     ? 'duel timing rule'
-    : 'movement contact rule';
+    : reason === 'movement'
+    ? 'movement contact rule'
+    : reason === 'spell-casting'
+    ? 'spell duration'
+    : 'spell interruption rule';
 
 const formatGraphEdgeReasons = (
   reasons: InitiativeAttackEdgeReason[]
@@ -682,9 +773,13 @@ const InitiativePlayground = ({
           }
 
           const actionLabel = combatant
-            ? `${formatDeclaredAction(combatant.declaredAction)} · ${
-                node.label
-              }`
+            ? node.kind === 'spell-start'
+              ? 'Cast spell · start'
+              : node.kind === 'spell-completion'
+              ? 'Cast spell · complete'
+              : `${formatDeclaredAction(combatant.declaredAction)} · ${
+                  node.label
+                }`
             : 'Unknown action';
           const actionLines = getGraphActionLines(actionLabel);
           const lines: GraphNodeDisplayLine[] = [
@@ -882,6 +977,7 @@ const InitiativePlayground = ({
       action: attackingCombatant.declaredAction,
       distanceInches: state.pairDistances[pairKey] || '',
       activationSegments: state.attackActivationSegments[declarationKey] || '',
+      castingSegments: state.attackCastingSegments[declarationKey] || '1',
     });
   };
 
@@ -951,6 +1047,31 @@ const InitiativePlayground = ({
           }
         )
       ),
+      attackCastingSegments: Object.fromEntries(
+        Object.entries(previous.attackCastingSegments).filter(
+          ([declarationKey]) => {
+            const [declarationSide, attackerKeyValue, targetKeyValue] =
+              declarationKey.split(':');
+            const attackerKey = parseInt(attackerKeyValue || '', 10);
+            const targetKey = parseInt(targetKeyValue || '', 10);
+
+            if (declarationSide !== 'party' && declarationSide !== 'enemy') {
+              return false;
+            }
+
+            if (side === declarationSide && attackerKey === combatantKey) {
+              return false;
+            }
+
+            const targetSide = declarationSide === 'party' ? 'enemy' : 'party';
+            if (side === targetSide && targetKey === combatantKey) {
+              return false;
+            }
+
+            return true;
+          }
+        )
+      ),
       [stateSide]: previous[stateSide].filter(
         (combatant) => combatant.key !== combatantKey
       ),
@@ -985,8 +1106,14 @@ const InitiativePlayground = ({
       return;
     }
 
-    const { attackingSide, attackerKey, targetKey, action, distanceInches } =
-      attackEditorTarget;
+    const {
+      attackingSide,
+      attackerKey,
+      targetKey,
+      action,
+      distanceInches,
+      castingSegments,
+    } = attackEditorTarget;
     const stateSide = getStateSide(attackingSide);
     const pairKey =
       attackingSide === 'party'
@@ -1013,6 +1140,18 @@ const InitiativePlayground = ({
             }
           : Object.fromEntries(
               Object.entries(previous.attackActivationSegments).filter(
+                ([existingKey]) => existingKey !== declarationKey
+              )
+            ),
+      attackCastingSegments:
+        requiresCastingSegmentsInput(action) &&
+        castingSegments.trim().length > 0
+          ? {
+              ...previous.attackCastingSegments,
+              [declarationKey]: castingSegments,
+            }
+          : Object.fromEntries(
+              Object.entries(previous.attackCastingSegments).filter(
                 ([existingKey]) => existingKey !== declarationKey
               )
             ),
@@ -1068,6 +1207,12 @@ const InitiativePlayground = ({
       ),
       attackActivationSegments: Object.fromEntries(
         Object.entries(previous.attackActivationSegments).filter(
+          ([existingDeclarationKey]) =>
+            existingDeclarationKey !== declarationKey
+        )
+      ),
+      attackCastingSegments: Object.fromEntries(
+        Object.entries(previous.attackCastingSegments).filter(
           ([existingDeclarationKey]) =>
             existingDeclarationKey !== declarationKey
         )
@@ -1276,6 +1421,13 @@ const InitiativePlayground = ({
                   onClick={() => loadPreset(createMagicalDevicePreset)}
                 >
                   Magical Device
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createSpellCastingPreset)}
+                >
+                  Spell Casting
                 </button>
                 <button
                   type={'button'}
@@ -1545,18 +1697,36 @@ const InitiativePlayground = ({
                                   partyCombatant.key
                                 )
                               ] || '';
+                            const partyCastingSegments =
+                              state.attackCastingSegments[
+                                getAttackDeclarationKey(
+                                  'party',
+                                  partyCombatant.key,
+                                  enemyCombatant.key
+                                )
+                              ] || '';
+                            const enemyCastingSegments =
+                              state.attackCastingSegments[
+                                getAttackDeclarationKey(
+                                  'enemy',
+                                  enemyCombatant.key,
+                                  partyCombatant.key
+                                )
+                              ] || '';
                             const partyDeclarationLabel = partyTargetsEnemy
                               ? formatDeclarationMeta(
                                   partyCombatant.declaredAction,
                                   pairDistance,
-                                  partyActivationSegments
+                                  partyActivationSegments,
+                                  partyCastingSegments
                                 )
                               : '';
                             const enemyDeclarationLabel = enemyTargetsParty
                               ? formatDeclarationMeta(
                                   enemyCombatant.declaredAction,
                                   pairDistance,
-                                  enemyActivationSegments
+                                  enemyActivationSegments,
+                                  enemyCastingSegments
                                 )
                               : '';
 
@@ -1779,15 +1949,31 @@ const InitiativePlayground = ({
                       <defs>
                         <marker
                           id={'initiative-dag-arrowhead'}
-                          viewBox={'0 0 8 8'}
-                          refX={'7'}
-                          refY={'4'}
-                          markerWidth={'7'}
-                          markerHeight={'7'}
+                          viewBox={'0 0 10 10'}
+                          refX={'4'}
+                          refY={'5'}
+                          markerUnits={'userSpaceOnUse'}
+                          markerWidth={'8'}
+                          markerHeight={'8'}
                           orient={'auto-start-reverse'}
                         >
                           <path
-                            d={'M 0 0 L 6 3 L 0 6 z'}
+                            d={'M 0 0 L 10 5 L 0 10 z'}
+                            className={styles['graphArrowhead']}
+                          />
+                        </marker>
+                        <marker
+                          id={'initiative-dag-arrowhead-spell'}
+                          viewBox={'0 0 14 14'}
+                          refX={'4'}
+                          refY={'7'}
+                          markerUnits={'userSpaceOnUse'}
+                          markerWidth={'12'}
+                          markerHeight={'12'}
+                          orient={'auto-start-reverse'}
+                        >
+                          <path
+                            d={'M 0 0 L 14 7 L 0 14 z'}
                             className={styles['graphArrowhead']}
                           />
                         </marker>
@@ -1871,6 +2057,8 @@ const InitiativePlayground = ({
                           selectedGraphNode !== undefined &&
                           (edge.fromNodeId === selectedGraphNode.id ||
                             edge.toNodeId === selectedGraphNode.id);
+                        const isSpellCastingEdge =
+                          edge.reasons.includes('spell-casting');
 
                         return (
                           <path
@@ -1878,11 +2066,18 @@ const InitiativePlayground = ({
                             d={edge.path}
                             className={[
                               styles['graphEdge'],
+                              isSpellCastingEdge
+                                ? styles['graphEdgeSpellCasting']
+                                : '',
                               isSelected ? styles['graphEdgeSelected'] : '',
                             ]
                               .filter(Boolean)
                               .join(' ')}
-                            markerEnd={'url(#initiative-dag-arrowhead)'}
+                            markerEnd={
+                              isSpellCastingEdge
+                                ? 'url(#initiative-dag-arrowhead-spell)'
+                                : 'url(#initiative-dag-arrowhead)'
+                            }
                           />
                         );
                       })}
@@ -2028,7 +2223,7 @@ const InitiativePlayground = ({
                         </ol>
                       ) : (
                         <div className={styles['graphInspectorEmpty']}>
-                          No explicit blockers. This attack is currently enabled
+                          No explicit blockers. This node is currently enabled
                           at the left edge of the graph.
                         </div>
                       )}
@@ -2201,7 +2396,8 @@ const InitiativePlayground = ({
                 </p>
                 {isNonMissileWeaponId(editedCombatant.weaponId) &&
                 editedCombatant.declaredAction !== 'turn-undead' &&
-                editedCombatant.declaredAction !== 'magical-device' ? (
+                editedCombatant.declaredAction !== 'magical-device' &&
+                editedCombatant.declaredAction !== 'spell-casting' ? (
                   <>
                     <label
                       className={styles['modalLabel']}
@@ -2294,7 +2490,7 @@ const InitiativePlayground = ({
                   against <strong>{attackEditedTargetName}</strong>. In this
                   rules slice, the chosen action applies to that
                   combatant&apos;s current round, while any inch distance or
-                  device activation time is stored for this specific target.
+                  action timing is stored for this specific target.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -2395,6 +2591,42 @@ const InitiativePlayground = ({
                     </p>
                   </>
                 ) : null}
+                {requiresCastingSegmentsInput(attackEditorTarget.action) ? (
+                  <>
+                    <label
+                      className={styles['modalLabel']}
+                      htmlFor={'initiative-attack-casting-segments'}
+                    >
+                      Casting time
+                    </label>
+                    <select
+                      id={'initiative-attack-casting-segments'}
+                      className={styles['selectInput']}
+                      value={attackEditorTarget.castingSegments}
+                      onChange={(event) =>
+                        setAttackEditorTarget((previous) =>
+                          previous
+                            ? {
+                                ...previous,
+                                castingSegments: event.target.value,
+                              }
+                            : previous
+                        )
+                      }
+                    >
+                      {SPELL_CASTING_TIME_OPTIONS.map((option) => (
+                        <option key={option.label} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className={styles['modalHint']}>
+                      Use the spell&apos;s casting time. In this rules slice,
+                      casting time is also treated as the segment where the
+                      spell completes.
+                    </p>
+                  </>
+                ) : null}
                 <div className={styles['modalMeta']}>
                   <span className={styles['modalMetaLabel']}>
                     Current declaration
@@ -2406,7 +2638,8 @@ const InitiativePlayground = ({
                     {formatDeclarationMeta(
                       attackEditorTarget.action,
                       attackEditorTarget.distanceInches,
-                      attackEditorTarget.activationSegments
+                      attackEditorTarget.activationSegments,
+                      attackEditorTarget.castingSegments
                     )}
                   </span>
                 </div>

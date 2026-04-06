@@ -12,6 +12,7 @@ interface InitiativeAttackGraphLayoutEdge {
   fromNodeId: string;
   toNodeId: string;
   path: string;
+  reasons: InitiativeAttackGraph['edges'][number]['reasons'];
 }
 
 interface InitiativeAttackGraphLayoutSegmentColumn {
@@ -66,6 +67,8 @@ const SEGMENT_SUBCOLUMN_GAP = 18;
 const ROW_GAP = 16;
 const BAND_GAP = 28;
 const SEGMENT_COUNT = 10;
+const NORMAL_ARROWHEAD_EXTENSION = 6;
+const SPELL_ARROWHEAD_EXTENSION = 10;
 
 const getContentHeight = (rowCount: number): number =>
   rowCount > 0 ? rowCount * NODE_HEIGHT + (rowCount - 1) * ROW_GAP : 0;
@@ -78,8 +81,12 @@ const getDependencyColumnX = (layerIndex: number): number =>
 
 const getEdgePath = (
   fromNode: InitiativeAttackGraphLayoutNode,
-  toNode: InitiativeAttackGraphLayoutNode
+  toNode: InitiativeAttackGraphLayoutNode,
+  reasons: InitiativeAttackGraph['edges'][number]['reasons']
 ): string => {
+  const endOffset = reasons.includes('spell-casting')
+    ? SPELL_ARROWHEAD_EXTENSION
+    : NORMAL_ARROWHEAD_EXTENSION;
   const fromCenterX = fromNode.x + fromNode.width / 2;
   const toCenterX = toNode.x + toNode.width / 2;
   const fromCenterY = fromNode.y + fromNode.height / 2;
@@ -94,21 +101,26 @@ const getEdgePath = (
   ) {
     const centerX = (fromCenterX + toCenterX) / 2;
     const startY = fromNode.y + fromNode.height;
-    const endY = toNode.y;
+    const endY =
+      startY <= toNode.y ? toNode.y - endOffset : toNode.y + endOffset;
     return `M ${centerX} ${startY} L ${centerX} ${endY}`;
   }
 
   if (Math.abs(fromCenterY - toCenterY) < 8) {
     const isForward = fromNode.x < toNode.x;
     const startX = isForward ? fromNode.x + fromNode.width : fromNode.x;
-    const endX = isForward ? toNode.x : toNode.x + toNode.width;
+    const endX = isForward
+      ? toNode.x - endOffset
+      : toNode.x + toNode.width + endOffset;
 
     return `M ${startX} ${fromCenterY} L ${endX} ${toCenterY}`;
   }
 
   const isForward = fromNode.x < toNode.x;
   const startX = isForward ? fromNode.x + fromNode.width : fromNode.x;
-  const endX = isForward ? toNode.x : toNode.x + toNode.width;
+  const endX = isForward
+    ? toNode.x - endOffset
+    : toNode.x + toNode.width + endOffset;
   const startY = fromCenterY;
   const endY = toCenterY;
   const controlOffset = Math.max(Math.abs(endX - startX) / 2, 42);
@@ -459,7 +471,8 @@ export const buildInitiativeAttackGraphLayout = (
       {
         fromNodeId: edge.fromNodeId,
         toNodeId: edge.toNodeId,
-        path: getEdgePath(fromNode, toNode),
+        path: getEdgePath(fromNode, toNode, edge.reasons),
+        reasons: edge.reasons,
       },
     ];
   });

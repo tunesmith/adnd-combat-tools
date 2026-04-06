@@ -297,6 +297,73 @@ describe('initiative round resolution view model', () => {
     ]);
   });
 
+  test('adds a spell card and explains completion plus interruption risk', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell Casting',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 6,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Hobgoblin',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const spellCard = viewModel.cards.find(
+      (card) => card.kind === 'spell-casting'
+    );
+
+    expect(spellCard).toMatchObject({
+      kind: 'spell-casting',
+      title: 'Mereth spell',
+    });
+    expect(spellCard?.summary).toContain('takes 6 segments to complete');
+    expect(spellCard?.summary).toContain(
+      'Directed attacks that land before completion spoil it'
+    );
+    expect(spellCard?.steps).toEqual([
+      {
+        label: 'Targets',
+        detail: 'Hobgoblin',
+        combatantIds: ['party-1', 'enemy-3'],
+      },
+      {
+        label: 'Casting time',
+        detail:
+          'Casting time 6 segments; completion is placed on that segment in this rules slice.',
+        combatantIds: ['party-1', 'enemy-3'],
+      },
+      {
+        label: 'Interruption',
+        detail:
+          'Successful directed attacks before completion spoil the spell. Ordinary damage is treated unlike turn undead or magical-device use here.',
+        combatantIds: ['party-1', 'enemy-3'],
+      },
+    ]);
+  });
+
   test('explains set versus charge as an automatic first strike with double damage', () => {
     const scenario = buildInitiativeScenario({
       label: 'Set vs Charge',

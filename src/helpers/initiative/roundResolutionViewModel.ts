@@ -24,6 +24,7 @@ interface InitiativeResolutionCardViewModel {
     | 'direct-melee'
     | 'turn-undead'
     | 'magical-device'
+    | 'spell-casting'
     | 'unresolved';
   title: string;
   summary: string;
@@ -48,6 +49,8 @@ const formatDeclaredActionLabel = (action: InitiativeDeclaredAction): string =>
     ? 'turn undead'
     : action === 'magical-device'
     ? 'magical device'
+    : action === 'spell-casting'
+    ? 'cast spell'
     : action;
 
 const formatMovementActionLabel = (
@@ -729,6 +732,128 @@ const buildMagicalDeviceCards = (
       };
     });
 
+const formatCastingTimeLabel = (
+  castingSegments: number | undefined
+): string => {
+  if (castingSegments === undefined) {
+    return '1 segment';
+  }
+
+  if (castingSegments === 0) {
+    return 'Instant';
+  }
+
+  if (castingSegments >= 10) {
+    return '10+ segments';
+  }
+
+  return `${castingSegments} ${castingSegments === 1 ? 'segment' : 'segments'}`;
+};
+
+const getSpellCastingSummary = (
+  combatant: InitiativeScenarioCombatant,
+  combatantNameById: Record<string, string>,
+  combatantById: Map<string, InitiativeScenarioCombatant>
+): string => {
+  const targetNames = formatNames(combatant.targetIds, combatantNameById);
+  const castingSegments =
+    combatant.targetDeclarations.length === 1
+      ? combatant.targetDeclarations[0]?.castingSegments
+      : undefined;
+  const castingTimeLabel = formatCastingTimeLabel(castingSegments);
+  const completionText =
+    castingSegments === 0
+      ? 'The spell completes immediately in this rules slice.'
+      : `The spell completes on segment ${
+          castingSegments ?? 1
+        } in this rules slice.`;
+
+  if (combatant.targetIds.length !== 1) {
+    return `${combatant.name} casts a spell against ${targetNames}. ${completionText} Directed attacks that resolve before completion spoil the spell.`;
+  }
+
+  const targetId = combatant.targetIds[0];
+  if (!targetId) {
+    return `${combatant.name} casts a spell. ${completionText}`;
+  }
+
+  const target = combatantById.get(targetId);
+  if (!target) {
+    return `${combatant.name} casts a spell against ${targetNames}. ${completionText}`;
+  }
+
+  const initiativeComparison = compareCombatantInitiative(combatant, target);
+  const targetActionLabel = formatDeclaredActionLabel(target.declaredAction);
+
+  if (initiativeComparison > 0) {
+    return `${combatant.name} starts casting before ${
+      target.name
+    }'s ${targetActionLabel} in the baseline initiative order, but the spell still takes ${castingTimeLabel.toLowerCase()} to complete. Directed attacks that land before completion spoil it.`;
+  }
+
+  if (initiativeComparison < 0) {
+    return `${target.name}'s ${targetActionLabel} happens before ${combatant.name}'s spell in this round. In this rules slice, successful directed attacks before completion spoil the spell instead of delaying it.`;
+  }
+
+  return `${combatant.name} and ${
+    target.name
+  } are tied on initiative, but the spell still takes ${castingTimeLabel.toLowerCase()} to complete. Directed attacks that resolve before completion spoil it; simultaneous outcomes are left simultaneous.`;
+};
+
+const buildSpellCastingCards = (
+  scenario: InitiativeScenario,
+  combatantNameById: Record<string, string>,
+  combatantById: Map<string, InitiativeScenarioCombatant>
+): InitiativeResolutionCardViewModel[] =>
+  scenario.party
+    .concat(scenario.enemies)
+    .filter(
+      (combatant) =>
+        combatant.declaredAction === 'spell-casting' &&
+        combatant.targetIds.length > 0
+    )
+    .map((combatant) => {
+      const castingSegments =
+        combatant.targetDeclarations.length === 1
+          ? combatant.targetDeclarations[0]?.castingSegments
+          : undefined;
+
+      return {
+        id: `spell-casting-${combatant.id}`,
+        kind: 'spell-casting' as const,
+        title: `${combatant.name} spell`,
+        summary: getSpellCastingSummary(
+          combatant,
+          combatantNameById,
+          combatantById
+        ),
+        combatantIds: [combatant.id, ...combatant.targetIds],
+        steps: [
+          {
+            label: 'Targets',
+            detail: formatNames(combatant.targetIds, combatantNameById),
+            combatantIds: [combatant.id, ...combatant.targetIds],
+          },
+          {
+            label: 'Casting time',
+            detail:
+              castingSegments === 0
+                ? 'Instant completion.'
+                : `Casting time ${formatCastingTimeLabel(
+                    castingSegments
+                  ).toLowerCase()}; completion is placed on that segment in this rules slice.`,
+            combatantIds: [combatant.id, ...combatant.targetIds],
+          },
+          {
+            label: 'Interruption',
+            detail:
+              'Successful directed attacks before completion spoil the spell. Ordinary damage is treated unlike turn undead or magical-device use here.',
+            combatantIds: [combatant.id, ...combatant.targetIds],
+          },
+        ],
+      };
+    });
+
 const buildUnresolvedCard = (
   scenario: InitiativeScenario,
   resolution: InitiativeRoundResolution,
@@ -774,6 +899,7 @@ export const buildInitiativeRoundResolutionViewModel = (
     ...buildDirectMeleeCards(resolution, combatantNameById, combatantById),
     ...buildTurnUndeadCards(scenario, combatantNameById, combatantById),
     ...buildMagicalDeviceCards(scenario, combatantNameById, combatantById),
+    ...buildSpellCastingCards(scenario, combatantNameById, combatantById),
     buildUnresolvedCard(scenario, resolution, combatantNameById),
   ].filter((card): card is InitiativeResolutionCardViewModel => Boolean(card));
 

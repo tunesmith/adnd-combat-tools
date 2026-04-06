@@ -256,6 +256,55 @@ describe('generic initiative scenario builder', () => {
       {
         targetId: 'enemy-3',
         activationSegments: 3,
+        castingSegments: undefined,
+        distanceInches: undefined,
+      },
+    ]);
+  });
+
+  test('treats spell casting as a single routine and carries casting time', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell Casting',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          attackRoutineCount: 3,
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 6,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Hobgoblin',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+
+    expect(scenario.party[0]?.attackRoutine.components).toEqual([
+      {
+        id: 'spell',
+        order: 1,
+        label: 'spell',
+      },
+    ]);
+    expect(scenario.party[0]?.targetDeclarations).toEqual([
+      {
+        targetId: 'enemy-3',
+        activationSegments: undefined,
+        castingSegments: 6,
         distanceInches: undefined,
       },
     ]);

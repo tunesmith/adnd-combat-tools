@@ -11,7 +11,8 @@ export type InitiativeDeclaredAction =
   | 'set-vs-charge'
   | 'missile'
   | 'turn-undead'
-  | 'magical-device';
+  | 'magical-device'
+  | 'spell-casting';
 
 interface InitiativeAttackRoutineComponent {
   id: string;
@@ -31,6 +32,7 @@ interface InitiativeTargetDeclaration {
   targetId: string;
   distanceInches?: number;
   activationSegments?: number;
+  castingSegments?: number;
 }
 
 export interface InitiativeScenarioCombatant {
@@ -59,6 +61,7 @@ export interface InitiativeScenarioDraftTargetDeclaration {
   targetCombatantKey: number;
   distanceInches?: number;
   activationSegments?: number;
+  castingSegments?: number;
 }
 
 export interface InitiativeScenarioDraftCombatant {
@@ -92,7 +95,8 @@ export interface DirectMeleePair {
 type InitiativeAttackSource =
   | 'routine-component'
   | 'timing-bonus'
-  | 'movement-contact';
+  | 'movement-contact'
+  | 'spell-casting';
 
 export interface InitiativeAttackEntry {
   combatantId: string;
@@ -192,14 +196,16 @@ export interface InitiativeAttackNode {
   attackNumber: number;
   label: string;
   source: InitiativeAttackSource;
-  kind: 'attack' | 'contact';
+  kind: 'attack' | 'contact' | 'spell-start' | 'spell-completion';
   segment?: number;
 }
 
 export type InitiativeAttackEdgeReason =
   | 'simple-initiative'
   | 'direct-melee'
-  | 'movement';
+  | 'movement'
+  | 'spell-casting'
+  | 'spell-interruption';
 
 export interface InitiativeAttackEdge {
   fromNodeId: string;

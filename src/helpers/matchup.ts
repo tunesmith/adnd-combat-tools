@@ -9,9 +9,9 @@ import {
   MISSILE_MULTI,
   SPELL,
   TURN,
-} from "../types/action";
-import { getSequential, getSimultaneous } from "./move";
-import { attackCaster } from "./ruleTwo";
+} from '../types/action';
+import { getSequential, getSimultaneous } from './move';
+import { attackCaster } from './ruleTwo';
 
 export enum Ruleset {
   Simultaneous,

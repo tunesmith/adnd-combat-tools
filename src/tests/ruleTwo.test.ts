@@ -1,7 +1,7 @@
-import type Player from "../types/player";
-import { MISSILE, SPELL } from "../types/action";
-import type { RoundDag } from "../types/sequence";
-import sequencePlayers from "../helpers/initiative/sequence";
+import type Player from '../types/player';
+import { MISSILE, SPELL } from '../types/action';
+import type { RoundDag } from '../types/sequence';
+import sequencePlayers from '../helpers/initiative/sequence';
 
 /**
  * The big question with rule #2: who does it apply to?

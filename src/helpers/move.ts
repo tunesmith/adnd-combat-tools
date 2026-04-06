@@ -1,5 +1,5 @@
-import type Player from "../types/player";
-import type { PlayerMove, RoundDag } from "../types/sequence";
+import type Player from '../types/player';
+import type { PlayerMove, RoundDag } from '../types/sequence';
 
 const initPlayers = (
   attacker: Player,

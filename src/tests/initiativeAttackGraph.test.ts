@@ -1072,4 +1072,158 @@ describe('initiative attack graph', () => {
       ])
     );
   });
+
+  test('graphs spell start and completion as separate nodes', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell Casting',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 6,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Hobgoblin',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'spell-start:party-1',
+          kind: 'spell-start',
+          segment: 1,
+        }),
+        expect.objectContaining({
+          id: 'spell-completion:party-1',
+          kind: 'spell-completion',
+          segment: 6,
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'spell-start:party-1',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-casting'],
+        }),
+      ])
+    );
+  });
+
+  test('lets an attack spoil a spell when the caster loses initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell Interrupted',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 5,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
+
+  test('uses the attacks-directed-at-spell-casters segment when the caster wins initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell vs Missile',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 6,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Archer',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-3:2',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
 });
