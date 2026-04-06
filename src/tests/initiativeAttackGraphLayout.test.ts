@@ -303,4 +303,140 @@ describe('initiative attack graph layout', () => {
     expect(dependencyNode?.y).toBeGreaterThanOrEqual(layout.dependencyBandTopY);
     expect(layout.segmentBandBottomY).toBeLessThan(layout.dependencyBandTopY);
   });
+
+  test('stacks same-segment spell chains vertically and preserves their row across start and completion', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Parallel Three-Segment Spells',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 3,
+            },
+          ],
+        },
+        {
+          combatantKey: 2,
+          name: 'Lodi',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 4,
+              castingSegments: 3,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Hobgoblin',
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+        {
+          combatantKey: 4,
+          name: 'Orc',
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+    const layout = buildInitiativeAttackGraphLayout(graph);
+
+    const merethStart = layout.nodes.find(
+      (node) => node.nodeId === 'spell-start:party-1'
+    );
+    const merethCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:party-1'
+    );
+    const lodiStart = layout.nodes.find(
+      (node) => node.nodeId === 'spell-start:party-2'
+    );
+    const lodiCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:party-2'
+    );
+
+    expect(merethStart).toBeDefined();
+    expect(merethCompletion).toBeDefined();
+    expect(lodiStart).toBeDefined();
+    expect(lodiCompletion).toBeDefined();
+    expect(merethStart?.x).toBe(lodiStart?.x);
+    expect(merethCompletion?.x).toBe(lodiCompletion?.x);
+    expect(merethStart?.y).toBe(merethCompletion?.y);
+    expect(lodiStart?.y).toBe(lodiCompletion?.y);
+    expect(merethStart?.y).toBeLessThan(lodiStart?.y || 0);
+    expect(merethCompletion?.y).toBeLessThan(lodiCompletion?.y || 0);
+  });
+
+  test('gives one-segment spells visible start-to-completion span inside segment 1', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Instant Spell Exchange',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Magic Missile',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 1,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Shield',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 1,
+            },
+          ],
+        },
+      ],
+    });
+    const layout = buildInitiativeAttackGraphLayout(
+      buildInitiativeAttackGraph(scenario, resolveInitiativeRound(scenario))
+    );
+
+    const magicMissileStart = layout.nodes.find(
+      (node) => node.nodeId === 'spell-start:party-1'
+    );
+    const magicMissileCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:party-1'
+    );
+    const shieldStart = layout.nodes.find(
+      (node) => node.nodeId === 'spell-start:enemy-3'
+    );
+    const shieldCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:enemy-3'
+    );
+
+    expect(magicMissileStart).toBeDefined();
+    expect(magicMissileCompletion).toBeDefined();
+    expect(shieldStart).toBeDefined();
+    expect(shieldCompletion).toBeDefined();
+    expect(magicMissileStart?.x).toBeLessThan(magicMissileCompletion?.x || 0);
+    expect(shieldStart?.x).toBeLessThan(shieldCompletion?.x || 0);
+    expect(magicMissileStart?.y).toBe(magicMissileCompletion?.y);
+    expect(shieldStart?.y).toBe(shieldCompletion?.y);
+  });
 });

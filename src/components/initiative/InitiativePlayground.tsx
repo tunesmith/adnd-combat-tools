@@ -45,6 +45,7 @@ interface InitiativePlaytestAttackEditorTarget {
   attackerKey: number;
   targetKey: number;
   action: InitiativeDeclaredAction;
+  attackRoutineCount: string;
   distanceInches: string;
   activationSegments: string;
   castingSegments: string;
@@ -187,6 +188,15 @@ const requiresActivationSegmentsInput = (
 const requiresCastingSegmentsInput = (
   declaredAction: InitiativeDeclaredAction
 ): boolean => declaredAction === 'spell-casting';
+
+const requiresAttackRoutineCountInput = (
+  declaredAction: InitiativeDeclaredAction,
+  weaponId: number
+): boolean =>
+  isNonMissileWeaponId(weaponId) &&
+  declaredAction !== 'turn-undead' &&
+  declaredAction !== 'magical-device' &&
+  declaredAction !== 'spell-casting';
 
 const getPairDistanceKey = (
   partyCombatantKey: number,
@@ -587,13 +597,6 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
           combatant.missileInitiativeAdjustment
         )}`
       : undefined,
-    isNonMissileWeaponId(combatant.weaponId) &&
-    combatant.declaredAction !== 'turn-undead' &&
-    combatant.declaredAction !== 'magical-device' &&
-    combatant.declaredAction !== 'spell-casting' &&
-    (combatant.attackRoutineCount.trim() || '1') !== '1'
-      ? `Routine x${combatant.attackRoutineCount.trim()}`
-      : undefined,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -975,6 +978,7 @@ const InitiativePlayground = ({
       attackerKey,
       targetKey,
       action: attackingCombatant.declaredAction,
+      attackRoutineCount: attackingCombatant.attackRoutineCount,
       distanceInches: state.pairDistances[pairKey] || '',
       activationSegments: state.attackActivationSegments[declarationKey] || '',
       castingSegments: state.attackCastingSegments[declarationKey] || '1',
@@ -1111,6 +1115,7 @@ const InitiativePlayground = ({
       attackerKey,
       targetKey,
       action,
+      attackRoutineCount,
       distanceInches,
       castingSegments,
     } = attackEditorTarget;
@@ -1173,6 +1178,12 @@ const InitiativePlayground = ({
         return {
           ...combatant,
           declaredAction: action,
+          attackRoutineCount: requiresAttackRoutineCountInput(
+            action,
+            combatant.weaponId
+          )
+            ? attackRoutineCount
+            : combatant.attackRoutineCount,
           targetCombatantKeys: nextTargetCombatantKeys,
         };
       }),
@@ -2309,7 +2320,7 @@ const InitiativePlayground = ({
                 <p className={styles['modalText']}>
                   Target declarations are edited from the engagement matrix. Use
                   this modal to change the combatant label, movement, weapon, or
-                  current-round routine count.
+                  missile timing metadata.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -2394,41 +2405,6 @@ const InitiativePlayground = ({
                   DMG Dexterity missile-initiative adjustment. This affects only
                   missile timing, not melee or movement order.
                 </p>
-                {isNonMissileWeaponId(editedCombatant.weaponId) &&
-                editedCombatant.declaredAction !== 'turn-undead' &&
-                editedCombatant.declaredAction !== 'magical-device' &&
-                editedCombatant.declaredAction !== 'spell-casting' ? (
-                  <>
-                    <label
-                      className={styles['modalLabel']}
-                      htmlFor={`initiative-routines-${editedCombatant.key}`}
-                    >
-                      Attack routines this round
-                    </label>
-                    <input
-                      id={`initiative-routines-${editedCombatant.key}`}
-                      className={styles['textInput']}
-                      inputMode={'numeric'}
-                      type={'text'}
-                      value={editedCombatant.attackRoutineCount}
-                      onChange={(event) =>
-                        updateCombatant(
-                          editorTarget.side,
-                          editedCombatant.key,
-                          {
-                            attackRoutineCount: event.target.value,
-                          }
-                        )
-                      }
-                    />
-                    <p className={styles['modalHint']}>
-                      Use <strong>1</strong> for an ordinary weapon routine or a
-                      natural routine such as claw/claw/bite. Increase this only
-                      when the combatant can use that routine more than once in
-                      the current round.
-                    </p>
-                  </>
-                ) : null}
                 <div className={styles['modalMeta']}>
                   <span className={styles['modalMetaLabel']}>
                     Current display
@@ -2522,6 +2498,43 @@ const InitiativePlayground = ({
                     )
                   )}
                 </select>
+                {requiresAttackRoutineCountInput(
+                  attackEditorTarget.action,
+                  attackEditedAttacker.weaponId
+                ) ? (
+                  <>
+                    <label
+                      className={styles['modalLabel']}
+                      htmlFor={'initiative-attack-routines'}
+                    >
+                      Attack routines this round
+                    </label>
+                    <input
+                      id={'initiative-attack-routines'}
+                      className={styles['textInput']}
+                      inputMode={'numeric'}
+                      type={'text'}
+                      value={attackEditorTarget.attackRoutineCount}
+                      onChange={(event) =>
+                        setAttackEditorTarget((previous) =>
+                          previous
+                            ? {
+                                ...previous,
+                                attackRoutineCount: event.target.value,
+                              }
+                            : previous
+                        )
+                      }
+                    />
+                    <p className={styles['modalHint']}>
+                      This applies to{' '}
+                      <strong>{attackEditedAttackerName}</strong>
+                      {` `}for the whole round, not just this target. Use{' '}
+                      <strong>1</strong> for an ordinary weapon routine or a
+                      natural routine such as claw/claw/bite.
+                    </p>
+                  </>
+                ) : null}
                 {requiresDistanceInput(attackEditorTarget.action) ? (
                   <>
                     <label

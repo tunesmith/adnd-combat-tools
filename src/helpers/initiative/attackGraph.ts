@@ -508,7 +508,26 @@ const getSpellInterruptionRelation = (
 
   if (attacker.declaredAction === 'spell-casting') {
     const attackerCastingSegments = getSpellCastingSegments(attacker) ?? 1;
-    return compareToSpellCompletion(attackerCastingSegments, castingSegments);
+    const spellTimingRelation = compareToSpellCompletion(
+      attackerCastingSegments,
+      castingSegments
+    );
+
+    if (spellTimingRelation !== 'simultaneous') {
+      return spellTimingRelation;
+    }
+
+    const initiativeComparison = compareCombatantInitiative(attacker, caster);
+
+    if (initiativeComparison > 0) {
+      return 'before';
+    }
+
+    if (initiativeComparison < 0) {
+      return 'after';
+    }
+
+    return 'simultaneous';
   }
 
   const explicitAttackSegments = attackerNodes
@@ -604,7 +623,7 @@ const addSpellInterruptionEdges = (
               edgesByKey,
               completionNodeId,
               attackerNode.id,
-              'spell-casting'
+              'spell-interruption'
             );
           });
         }

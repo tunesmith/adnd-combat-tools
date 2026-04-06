@@ -1226,4 +1226,74 @@ describe('initiative attack graph', () => {
       ])
     );
   });
+
+  test('uses initiative to order equal-time spell completions within the same segment', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Magic Missile vs Shield',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 1,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Shield',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 1,
+            },
+          ],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'spell-start:party-1',
+          segment: 1,
+        }),
+        expect.objectContaining({
+          id: 'spell-completion:party-1',
+          segment: 1,
+        }),
+        expect.objectContaining({
+          id: 'spell-start:enemy-3',
+          segment: 1,
+        }),
+        expect.objectContaining({
+          id: 'spell-completion:enemy-3',
+          segment: 1,
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'spell-completion:party-1',
+          toNodeId: 'spell-completion:enemy-3',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
 });
