@@ -70,6 +70,7 @@ const BAND_GAP = 28;
 const SEGMENT_COUNT = 10;
 const NORMAL_ARROWHEAD_EXTENSION = 6;
 const SPELL_ARROWHEAD_EXTENSION = 10;
+const SEGMENT_TO_DEPENDENCY_FORWARD_GAP = NODE_COLUMN_WIDTH;
 
 const getContentHeight = (rowCount: number): number =>
   rowCount > 0 ? rowCount * NODE_HEIGHT + (rowCount - 1) * ROW_GAP : 0;
@@ -603,11 +604,7 @@ export const buildInitiativeAttackGraphLayout = (
       const graphNode = graphNodeById.get(nodeId);
       const targetLayoutNode = nodeLayoutById.get(nodeId);
 
-      if (
-        !graphNode ||
-        graphNode.segment !== undefined ||
-        !targetLayoutNode
-      ) {
+      if (!graphNode || graphNode.segment !== undefined || !targetLayoutNode) {
         return;
       }
 
@@ -618,13 +615,19 @@ export const buildInitiativeAttackGraphLayout = (
         }
 
         const sourceLayoutNode = nodeLayoutById.get(edge.fromNodeId);
+        const sourceGraphNode = graphNodeById.get(edge.fromNodeId);
         if (!sourceLayoutNode) {
           return;
         }
 
+        const forwardGap =
+          sourceGraphNode?.segment !== undefined
+            ? SEGMENT_TO_DEPENDENCY_FORWARD_GAP
+            : DEPENDENCY_COLUMN_GAP;
+
         requiredX = Math.max(
           requiredX,
-          sourceLayoutNode.x + sourceLayoutNode.width + DEPENDENCY_COLUMN_GAP
+          sourceLayoutNode.x + sourceLayoutNode.width + forwardGap
         );
       });
 
@@ -633,6 +636,96 @@ export const buildInitiativeAttackGraphLayout = (
       }
     });
   });
+
+  Array.from({ length: SEGMENT_COUNT }, (_, index) => index + 1).forEach(
+    (segment) => {
+      const completionNodeIds = graph.nodes
+        .filter(
+          (node) => node.segment === segment && node.kind === 'spell-completion'
+        )
+        .map((node) => node.id);
+
+      if (completionNodeIds.length === 0) {
+        return;
+      }
+
+      let requiredShift = 0;
+      completionNodeIds.forEach((completionNodeId) => {
+        const completionLayoutNode = nodeLayoutById.get(completionNodeId);
+        if (!completionLayoutNode) {
+          return;
+        }
+
+        graph.edges.forEach((edge) => {
+          if (edge.toNodeId !== completionNodeId) {
+            return;
+          }
+
+          const sourceGraphNode = graphNodeById.get(edge.fromNodeId);
+          const sourceLayoutNode = nodeLayoutById.get(edge.fromNodeId);
+
+          if (
+            !sourceGraphNode ||
+            sourceGraphNode.segment !== undefined ||
+            !sourceLayoutNode
+          ) {
+            return;
+          }
+
+          const desiredX =
+            sourceLayoutNode.x + sourceLayoutNode.width + DEPENDENCY_COLUMN_GAP;
+          requiredShift = Math.max(
+            requiredShift,
+            desiredX - completionLayoutNode.x
+          );
+        });
+      });
+
+      if (requiredShift <= 0) {
+        return;
+      }
+
+      graph.nodes.forEach((node) => {
+        const layoutNode = nodeLayoutById.get(node.id);
+        if (
+          !layoutNode ||
+          node.segment === undefined ||
+          node.segment < segment
+        ) {
+          return;
+        }
+
+        if (node.segment === segment) {
+          if (node.kind === 'spell-completion') {
+            layoutNode.x += requiredShift;
+          }
+          return;
+        }
+
+        layoutNode.x += requiredShift;
+      });
+
+      segmentLanes.forEach((segmentLane) => {
+        if (segmentLane.segment < segment) {
+          return;
+        }
+
+        if (segmentLane.segment === segment) {
+          segmentLane.width += requiredShift;
+          segmentLane.endX += requiredShift;
+          segmentLane.centerX += requiredShift / 2;
+          return;
+        }
+
+        segmentLane.startX += requiredShift;
+        segmentLane.endX += requiredShift;
+        segmentLane.centerX += requiredShift;
+        segmentLane.nodeColumnXs = segmentLane.nodeColumnXs.map(
+          (columnX) => columnX + requiredShift
+        );
+      });
+    }
+  );
 
   const nodes = graph.nodes.flatMap((node) => {
     const layoutNode = nodeLayoutById.get(node.id);

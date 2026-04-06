@@ -518,4 +518,182 @@ describe('initiative attack graph layout', () => {
     );
     expect(fighterAttack?.x).toBeGreaterThan(causeFearCompletion?.x || 0);
   });
+
+  test('widens the spell-completion lane so upward spell interruption edges stay forward and curved', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Enemy (A) vs Player (B)',
+      partyInitiative: 6,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'B1',
+          declaredAction: 'open-melee',
+          weaponId: 58,
+          targetCombatantKeys: [3],
+        },
+        {
+          combatantKey: 5,
+          name: 'B2 - Hold Person',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 4,
+              castingSegments: 5,
+            },
+          ],
+        },
+        {
+          combatantKey: 6,
+          name: 'B3',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [7],
+        },
+        {
+          combatantKey: 8,
+          name: 'B4',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [9],
+        },
+        {
+          combatantKey: 10,
+          name: 'B5 - Magic Missile',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 11,
+              castingSegments: 1,
+            },
+          ],
+        },
+        {
+          combatantKey: 13,
+          name: 'B6 - Levitate',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 12,
+              castingSegments: 2,
+            },
+          ],
+        },
+        {
+          combatantKey: 15,
+          name: 'B7',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [14],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'A1 Cause Fear',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 4,
+          name: 'A2',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [5],
+        },
+        {
+          combatantKey: 7,
+          name: 'A3',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [6],
+        },
+        {
+          combatantKey: 9,
+          name: 'A4',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [8],
+        },
+        {
+          combatantKey: 11,
+          name: 'A5 - Shield',
+          declaredAction: 'spell-casting',
+          weaponId: 1,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 10,
+              castingSegments: 1,
+            },
+          ],
+        },
+        {
+          combatantKey: 12,
+          name: 'A6',
+          declaredAction: 'open-melee',
+          attackRoutineCount: 2,
+          weaponId: 1,
+          targetCombatantKeys: [13],
+        },
+        {
+          combatantKey: 14,
+          name: 'A7 - Heat Metal',
+          declaredAction: 'spell-casting',
+          weaponId: 1,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 15,
+              castingSegments: 4,
+            },
+          ],
+        },
+      ],
+    });
+    const layout = buildInitiativeAttackGraphLayout(
+      buildInitiativeAttackGraph(scenario, resolveInitiativeRound(scenario))
+    );
+
+    const causeFearCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:enemy-3'
+    );
+    const b1Attack = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-1:1'
+    );
+    const heatMetalCompletion = layout.nodes.find(
+      (node) => node.nodeId === 'spell-completion:enemy-14'
+    );
+    const b7Attack = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-15:1'
+    );
+    const b1Edge = layout.edges.find(
+      (edge) =>
+        edge.fromNodeId === 'attack:party-1:1' &&
+        edge.toNodeId === 'spell-completion:enemy-3'
+    );
+    const b7Edge = layout.edges.find(
+      (edge) =>
+        edge.fromNodeId === 'attack:party-15:1' &&
+        edge.toNodeId === 'spell-completion:enemy-14'
+    );
+
+    expect(causeFearCompletion).toBeDefined();
+    expect(b1Attack).toBeDefined();
+    expect(heatMetalCompletion).toBeDefined();
+    expect(b7Attack).toBeDefined();
+    expect(b1Edge).toBeDefined();
+    expect(b7Edge).toBeDefined();
+    expect(causeFearCompletion?.x).toBeGreaterThan(b1Attack?.x || 0);
+    expect(heatMetalCompletion?.x).toBeGreaterThan(b7Attack?.x || 0);
+    expect(b1Edge?.path).toContain(' C ');
+    expect(b7Edge?.path).toContain(' C ');
+  });
 });
