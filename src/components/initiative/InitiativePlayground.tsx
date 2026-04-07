@@ -203,11 +203,7 @@ const requiresCastingSegmentsInput = (
 const requiresAttackRoutineCountInput = (
   declaredAction: InitiativeDeclaredAction,
   weaponId: number
-): boolean =>
-  isNonMissileWeaponId(weaponId) &&
-  declaredAction !== 'turn-undead' &&
-  declaredAction !== 'magical-device' &&
-  declaredAction !== 'spell-casting';
+): boolean => declaredAction === 'open-melee' && isNonMissileWeaponId(weaponId);
 
 const getPairDistanceKey = (
   partyCombatantKey: number,

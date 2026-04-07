@@ -218,6 +218,73 @@ describe('generic initiative scenario builder', () => {
     );
   });
 
+  test('treats close and charge as single routines regardless of stored routine count', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Movement Actions Stay Single',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Closer',
+          declaredAction: 'close',
+          weaponId: 56,
+          attackRoutineCount: 3,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 2,
+          name: 'Charger',
+          declaredAction: 'charge',
+          weaponId: 56,
+          attackRoutineCount: 2,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 4,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Target 1',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Target 2',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [2],
+        },
+      ],
+    });
+
+    expect(scenario.party[0]?.attackRoutine.components).toEqual([
+      {
+        id: 'attack-1',
+        order: 1,
+        label: 'attack 1',
+      },
+    ]);
+    expect(scenario.party[1]?.attackRoutine.components).toEqual([
+      {
+        id: 'attack-1',
+        order: 1,
+        label: 'attack 1',
+      },
+    ]);
+  });
+
   test('treats turn undead as a single attempt regardless of routine count input', () => {
     const scenario = buildInitiativeScenario({
       label: 'Turn Undead',

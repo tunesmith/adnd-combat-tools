@@ -32,30 +32,35 @@ const getCombatantName = (
 const DEFAULT_MOVEMENT_RATE = 12;
 
 const getOrdinaryRoundAttackCount = (
+  declaredAction: InitiativeScenarioCombatant['declaredAction'],
   weaponType: InitiativeWeaponType,
   fireRate: number | undefined,
   attackRoutineCount: number | undefined
 ): number => {
-  if (weaponType !== 'missile') {
+  if (weaponType === 'missile') {
+    if (fireRate === undefined) {
+      return 1;
+    }
+
+    // Whole-number firing rates expand to that many shots in the round.
+    // Fractional rates (for example 1/2) need round-over-round state, so keep
+    // them as a single attack for now.
+    if (fireRate < 1) {
+      return 1;
+    }
+
+    return Math.max(1, Math.floor(fireRate));
+  }
+
+  if (declaredAction === 'open-melee') {
     return Math.max(1, attackRoutineCount || 1);
   }
 
-  if (fireRate === undefined) {
-    return 1;
-  }
-
-  // Whole-number firing rates expand to that many shots in the round.
-  // Fractional rates (for example 1/2) need round-over-round state, so keep
-  // them as a single attack for now.
-  if (fireRate < 1) {
-    return 1;
-  }
-
-  return Math.max(1, Math.floor(fireRate));
+  return 1;
 };
 
 const getMissileTargetLimit = (fireRate: number | undefined): number =>
-  getOrdinaryRoundAttackCount('missile', fireRate, undefined);
+  getOrdinaryRoundAttackCount('missile', 'missile', fireRate, undefined);
 
 const buildAttackRoutine = (
   combatantId: string,
@@ -113,6 +118,7 @@ const buildAttackRoutine = (
   }
 
   const attackCount = getOrdinaryRoundAttackCount(
+    declaredAction,
     weaponType,
     fireRate,
     attackRoutineCount
