@@ -709,6 +709,49 @@ interface InitiativePlaygroundProps {
   rememberedState?: InitiativePlaytestState;
 }
 
+type GraphNodeStatus = 'resolved' | 'lost';
+
+const GRAPH_NODE_FILL_BY_SIDE: Record<
+  InitiativePlaytestSide,
+  Record<'unresolved' | GraphNodeStatus, string>
+> = {
+  party: {
+    unresolved: '#6F8E34',
+    resolved: '#556C2E',
+    lost: '#3E4D28',
+  },
+  enemy: {
+    unresolved: '#9A4E40',
+    resolved: '#74483C',
+    lost: '#553730',
+  },
+};
+
+const GRAPH_NODE_STATUS_BADGE: Record<
+  GraphNodeStatus,
+  {
+    label: string;
+    symbol: string;
+  }
+> = {
+  resolved: {
+    label: 'Resolved',
+    symbol: '✓',
+  },
+  lost: {
+    label: 'Lost',
+    symbol: '×',
+  },
+};
+
+const getGraphNodeFill = (
+  side: InitiativePlaytestSide,
+  status: GraphNodeStatus | undefined
+): string => GRAPH_NODE_FILL_BY_SIDE[side][status || 'unresolved'];
+
+const getGraphNodeStatusLabel = (status: GraphNodeStatus): string =>
+  GRAPH_NODE_STATUS_BADGE[status].label;
+
 const InitiativePlayground = ({
   rememberedState,
 }: InitiativePlaygroundProps) => {
@@ -724,6 +767,9 @@ const InitiativePlayground = ({
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<
     string | undefined
   >(undefined);
+  const [graphNodeStatusById, setGraphNodeStatusById] = useState<
+    Record<string, GraphNodeStatus>
+  >({});
   const [examplesMenuOpen, setExamplesMenuOpen] = useState<boolean>(false);
   const scenario = useMemo(
     () => buildInitiativeScenario(buildDraftFromState(state)),
@@ -870,6 +916,12 @@ const InitiativePlayground = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedGraphNodeId]);
+
+  useEffect(() => {
+    setGraphNodeStatusById((previous) =>
+      Object.keys(previous).length === 0 ? previous : {}
+    );
+  }, [attackGraph]);
 
   const getShareUrl = (): string | undefined => {
     if (typeof window === 'undefined') {
@@ -1332,17 +1384,55 @@ const InitiativePlayground = ({
       previous === nodeId ? undefined : nodeId
     );
   };
+  const setGraphNodeStatus = (
+    nodeId: string,
+    status: GraphNodeStatus | undefined
+  ) => {
+    setGraphNodeStatusById((previous) => {
+      if (status === undefined) {
+        if (!(nodeId in previous)) {
+          return previous;
+        }
+
+        const next = { ...previous };
+        delete next[nodeId];
+        return next;
+      }
+
+      if (previous[nodeId] === status) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [nodeId]: status,
+      };
+    });
+  };
   const selectedGraphNode = attackGraph.nodes.find(
     (node) => node.id === selectedGraphNodeId
   );
-  const selectedGraphIncomingEdges = selectedGraphNode
-    ? attackGraph.edges.filter((edge) => edge.toNodeId === selectedGraphNode.id)
-    : [];
-  const selectedGraphOutgoingEdges = selectedGraphNode
-    ? attackGraph.edges.filter(
-        (edge) => edge.fromNodeId === selectedGraphNode.id
-      )
-    : [];
+  const selectedGraphNodeStatus = selectedGraphNode
+    ? graphNodeStatusById[selectedGraphNode.id]
+    : undefined;
+  const selectedGraphIncomingEdges = useMemo(
+    () =>
+      selectedGraphNode
+        ? attackGraph.edges.filter(
+            (edge) => edge.toNodeId === selectedGraphNode.id
+          )
+        : [],
+    [attackGraph.edges, selectedGraphNode]
+  );
+  const selectedGraphOutgoingEdges = useMemo(
+    () =>
+      selectedGraphNode
+        ? attackGraph.edges.filter(
+            (edge) => edge.fromNodeId === selectedGraphNode.id
+          )
+        : [],
+    [attackGraph.edges, selectedGraphNode]
+  );
   const selectedGraphOutgoingTargets = useMemo(() => {
     const seen = new Set<string>();
 
@@ -1360,6 +1450,11 @@ const InitiativePlayground = ({
       ];
     });
   }, [attackNodeLabelById, selectedGraphOutgoingEdges]);
+  const selectedGraphLostLabel =
+    selectedGraphNode?.kind === 'spell-start' ||
+    selectedGraphNode?.kind === 'spell-completion'
+      ? 'Mark spoiled'
+      : 'Mark lost';
   const movementResolutionByCombatantId = useMemo(
     () =>
       new Map(
@@ -2468,6 +2563,7 @@ const InitiativePlayground = ({
                             edge.toNodeId === selectedGraphNode.id);
                         const isSpellCastingEdge =
                           edge.reasons.includes('spell-casting');
+                        const fromStatus = graphNodeStatusById[edge.fromNodeId];
 
                         return (
                           <path
@@ -2477,6 +2573,12 @@ const InitiativePlayground = ({
                               styles['graphEdge'],
                               isSpellCastingEdge
                                 ? styles['graphEdgeSpellCasting']
+                                : '',
+                              fromStatus === 'resolved'
+                                ? styles['graphEdgeResolved']
+                                : '',
+                              fromStatus === 'lost'
+                                ? styles['graphEdgeLost']
                                 : '',
                               isSelected ? styles['graphEdgeSelected'] : '',
                             ]
@@ -2503,6 +2605,7 @@ const InitiativePlayground = ({
                         }
 
                         const isSelected = selectedGraphNode?.id === node.id;
+                        const nodeStatus = graphNodeStatusById[node.id];
                         const lineYs = getGraphNodeLineYs(
                           layoutNode.height,
                           display.lines.length
@@ -2533,22 +2636,59 @@ const InitiativePlayground = ({
                               height={layoutNode.height}
                               rx={16}
                               style={{
-                                fill: isSelected
-                                  ? '#ae7c32'
-                                  : node.side === 'party'
-                                  ? '#6d8e3a'
-                                  : '#8d623c',
+                                fill: getGraphNodeFill(node.side, nodeStatus),
                               }}
                               className={[
                                 styles['graphNodeCard'],
                                 node.side === 'party'
                                   ? styles['graphNodeParty']
                                   : styles['graphNodeEnemy'],
+                                nodeStatus === 'resolved'
+                                  ? styles['graphNodeResolved']
+                                  : '',
+                                nodeStatus === 'lost'
+                                  ? styles['graphNodeLost']
+                                  : '',
                                 isSelected ? styles['graphNodeSelected'] : '',
                               ]
                                 .filter(Boolean)
                                 .join(' ')}
                             />
+                            {nodeStatus ? (
+                              <g
+                                aria-label={getGraphNodeStatusLabel(nodeStatus)}
+                              >
+                                <circle
+                                  cx={layoutNode.width - 13}
+                                  cy={13}
+                                  r={9}
+                                  className={[
+                                    styles['graphNodeStatusBadge'],
+                                    nodeStatus === 'resolved'
+                                      ? styles['graphNodeStatusBadgeResolved']
+                                      : styles['graphNodeStatusBadgeLost'],
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                />
+                                <text
+                                  x={layoutNode.width - 13}
+                                  y={13}
+                                  textAnchor={'middle'}
+                                  dominantBaseline={'central'}
+                                  className={[
+                                    styles['graphNodeStatusBadgeText'],
+                                    nodeStatus === 'lost'
+                                      ? styles['graphNodeStatusBadgeTextLost']
+                                      : '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                >
+                                  {GRAPH_NODE_STATUS_BADGE[nodeStatus].symbol}
+                                </text>
+                              </g>
+                            ) : null}
                             {display.lines.map((line, index) => (
                               <text
                                 key={`${layoutNode.nodeId}-line-${index}`}
@@ -2606,6 +2746,60 @@ const InitiativePlayground = ({
                       </span>
                       {selectedGraphNode.segment !== undefined ? (
                         <span>Segment: {selectedGraphNode.segment}</span>
+                      ) : null}
+                      <span>
+                        Status:{' '}
+                        {selectedGraphNodeStatus
+                          ? getGraphNodeStatusLabel(selectedGraphNodeStatus)
+                          : 'Pending'}
+                      </span>
+                    </div>
+                    <div className={styles['graphInspectorActions']}>
+                      <button
+                        type={'button'}
+                        className={[
+                          styles['graphInspectorButton'],
+                          styles['graphInspectorButtonResolve'],
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={() =>
+                          setGraphNodeStatus(selectedGraphNode.id, 'resolved')
+                        }
+                        disabled={selectedGraphNodeStatus === 'resolved'}
+                      >
+                        Resolve
+                      </button>
+                      <button
+                        type={'button'}
+                        className={[
+                          styles['graphInspectorButton'],
+                          styles['graphInspectorButtonLost'],
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={() =>
+                          setGraphNodeStatus(selectedGraphNode.id, 'lost')
+                        }
+                        disabled={selectedGraphNodeStatus === 'lost'}
+                      >
+                        {selectedGraphLostLabel}
+                      </button>
+                      {selectedGraphNodeStatus ? (
+                        <button
+                          type={'button'}
+                          className={[
+                            styles['graphInspectorButton'],
+                            styles['graphInspectorButtonClear'],
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          onClick={() =>
+                            setGraphNodeStatus(selectedGraphNode.id, undefined)
+                          }
+                        >
+                          Clear status
+                        </button>
                       ) : null}
                     </div>
 

@@ -732,6 +732,16 @@
   stroke-width: 6px;
 }
 
+.graphEdgeResolved {
+  stroke: #9e8f69;
+  stroke-dasharray: 8 6;
+}
+
+.graphEdgeLost {
+  stroke: #665f48;
+  stroke-dasharray: 5 7;
+}
+
 .graphEdgeSelected {
   stroke: rgba(215, 165, 45, 0.98);
   stroke-width: 2.5px;
@@ -755,6 +765,39 @@
 .graphNodeSelected {
   stroke: var(--goldenrod);
   filter: drop-shadow(0 0 0.5rem rgba(215, 165, 45, 0.26));
+}
+
+.graphNodeResolved {
+  filter: drop-shadow(0 0.12rem 0.22rem rgba(17, 21, 10, 0.18));
+}
+
+.graphNodeLost {
+  filter: none;
+}
+
+.graphNodeStatusBadge {
+  stroke-width: 1px;
+}
+
+.graphNodeStatusBadgeResolved {
+  fill: #efe5ca;
+  stroke: #3d4a24;
+}
+
+.graphNodeStatusBadgeLost {
+  fill: #4a231e;
+  stroke: #dcbda8;
+}
+
+.graphNodeStatusBadgeText {
+  fill: #29351a;
+  font-size: 0.62rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.graphNodeStatusBadgeTextLost {
+  fill: #fff2df;
 }
 
 .graphNodeName,
@@ -813,13 +856,39 @@
   font-size: 0.92rem;
 }
 
+.graphInspectorButtonResolve {
+  background: rgba(124, 159, 69, 0.18);
+  border-color: rgba(237, 246, 206, 0.34);
+}
+
+.graphInspectorButtonLost {
+  background: rgba(143, 74, 63, 0.24);
+  border-color: rgba(248, 218, 196, 0.34);
+}
+
+.graphInspectorButtonClear {
+  background: transparent;
+}
+
+.graphInspectorButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .graphInspectorMeta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem 0.85rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
   font-size: 0.98rem;
   color: rgba(240, 239, 221, 0.94);
+}
+
+.graphInspectorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
 }
 
 .graphInspectorSection + .graphInspectorSection {
