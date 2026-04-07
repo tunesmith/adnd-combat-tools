@@ -21,9 +21,9 @@ import {
   getWeaponOptions,
 } from '../../tables/weapon';
 import type {
-  InitiativeAttackEdgeReason,
-  InitiativeAttackNode,
+  InitiativeAttackEdge,
   InitiativeDeclaredAction,
+  InitiativeScenarioCombatant,
   InitiativeScenarioDraft,
   InitiativeScenarioDraftCombatant,
 } from '../../types/initiative';
@@ -629,34 +629,13 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
 const isNonMissileWeaponId = (weaponId: number): boolean =>
   getWeaponInfo(weaponId)?.weaponType !== 'missile';
 
-const getGraphNodeSourceLabel = (
-  source: InitiativeAttackNode['source']
-): string =>
-  source === 'routine-component'
-    ? 'Routine component'
-    : source === 'timing-bonus'
-    ? 'Timing bonus'
-    : source === 'movement-contact'
-    ? 'Movement contact'
-    : 'Spell casting';
-
-const getGraphEdgeReasonLabel = (reason: InitiativeAttackEdgeReason): string =>
-  reason === 'simple-initiative'
-    ? 'baseline side initiative'
-    : reason === 'direct-melee'
-    ? 'duel timing rule'
-    : reason === 'movement'
-    ? 'movement contact rule'
-    : reason === 'spell-casting'
-    ? 'spell duration'
-    : 'spell interruption rule';
-
-const formatGraphEdgeReasons = (
-  reasons: InitiativeAttackEdgeReason[]
-): string => reasons.map(getGraphEdgeReasonLabel).join(', ');
-
-const getGraphLayerIndex = (layers: string[][], nodeId: string): number =>
-  layers.findIndex((layer) => layer.includes(nodeId)) + 1;
+const getEffectiveInitiativeValue = (
+  combatant: InitiativeScenarioCombatant
+): number =>
+  combatant.initiative +
+  (combatant.declaredAction === 'missile'
+    ? combatant.missileInitiativeAdjustment
+    : 0);
 
 const truncateGraphText = (text: string, maxLength: number): string =>
   text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
@@ -1360,9 +1339,6 @@ const InitiativePlayground = ({
   const selectedGraphNode = attackGraph.nodes.find(
     (node) => node.id === selectedGraphNodeId
   );
-  const selectedGraphNodeLayer = selectedGraphNode
-    ? getGraphLayerIndex(attackGraph.layers, selectedGraphNode.id)
-    : 0;
   const selectedGraphIncomingEdges = selectedGraphNode
     ? attackGraph.edges.filter((edge) => edge.toNodeId === selectedGraphNode.id)
     : [];
@@ -1371,13 +1347,288 @@ const InitiativePlayground = ({
         (edge) => edge.fromNodeId === selectedGraphNode.id
       )
     : [];
-  const selectedGraphRelatedCards = selectedGraphNode
-    ? viewModel.cards.filter(
-        (card) =>
-          card.kind !== 'simple-order' &&
-          card.combatantIds.includes(selectedGraphNode.combatantId)
-      )
-    : [];
+  const movementResolutionByCombatantId = useMemo(
+    () =>
+      new Map(
+        resolution.movementResolutions.map((movementResolution) => [
+          movementResolution.combatantId,
+          movementResolution,
+        ])
+      ),
+    [resolution.movementResolutions]
+  );
+  const selectedGraphWhyHere = useMemo(() => {
+    if (!selectedGraphNode) {
+      return [];
+    }
+
+    const combatant = combatantById.get(selectedGraphNode.combatantId);
+    if (!combatant) {
+      return [];
+    }
+
+    const lines: string[] = [];
+    const hasDirectMeleeEdge = selectedGraphIncomingEdges
+      .concat(selectedGraphOutgoingEdges)
+      .some((edge) => edge.reasons.includes('direct-melee'));
+    const hasMovementEdge = selectedGraphIncomingEdges
+      .concat(selectedGraphOutgoingEdges)
+      .some((edge) => edge.reasons.includes('movement'));
+    const targetName = selectedGraphNode.targetId
+      ? viewModel.combatantNameById[selectedGraphNode.targetId] ||
+        selectedGraphNode.targetId
+      : undefined;
+    const movementResolution = movementResolutionByCombatantId.get(
+      combatant.id
+    );
+
+    if (selectedGraphNode.kind === 'spell-start') {
+      if (selectedGraphNode.segment !== undefined) {
+        lines.push(
+          `This is the start of ${combatant.name}'s spell. Non-instant spells begin on segment ${selectedGraphNode.segment} in this slice so the casting span can be shown explicitly.`
+        );
+      } else {
+        lines.push(
+          `This is the start of ${combatant.name}'s spell. Instant spells stay unsegmented because there is no casting span to plot.`
+        );
+      }
+    } else if (selectedGraphNode.kind === 'spell-completion') {
+      if (selectedGraphNode.segment !== undefined) {
+        lines.push(
+          `${combatant.name}'s spell completes on segment ${selectedGraphNode.segment} because completion is placed on the declared casting time in this slice.`
+        );
+      } else {
+        lines.push(
+          `${combatant.name}'s spell is treated as instant here, so completion has no separate segment placement.`
+        );
+      }
+    } else if (selectedGraphNode.kind === 'contact') {
+      lines.push(
+        `This node marks movement contact on segment ${selectedGraphNode.segment}. Contact is shown explicitly here without inventing an automatic same-round blow.`
+      );
+    } else if (selectedGraphNode.segmentReason === 'spell-directed') {
+      lines.push(
+        `${combatant.name}'s attack is directed at ${
+          targetName || 'a spell caster'
+        }. DMG p. 65 rule 2 places that attack on segment ${
+          selectedGraphNode.segment
+        }.`
+      );
+    } else if (
+      selectedGraphNode.segmentReason === 'declared-action' &&
+      combatant.declaredAction === 'magical-device'
+    ) {
+      lines.push(
+        `${combatant.name}'s magical device discharge is on segment ${selectedGraphNode.segment} because that activation time was declared for the device this round.`
+      );
+    } else if (
+      selectedGraphNode.kind === 'attack' &&
+      selectedGraphNode.segment !== undefined &&
+      (hasMovementEdge ||
+        movementResolution?.contactSegment === selectedGraphNode.segment)
+    ) {
+      lines.push(
+        `${combatant.name}'s attack is placed on segment ${selectedGraphNode.segment} because movement contact reaches that point in the round there.`
+      );
+    } else if (
+      selectedGraphNode.kind === 'attack' &&
+      combatant.declaredAction === 'missile'
+    ) {
+      lines.push(
+        selectedGraphNode.targetId !== undefined &&
+          combatant.targetIds.length > 1
+          ? `${combatant.name}'s volley is split across multiple targets, so this node represents the shot aimed at ${targetName}. Ordinary missile fire still stays unsegmented unless a narrower rule gives it a segment.`
+          : `${combatant.name}'s missile volley stays unsegmented here. Ordinary firing rate is treated as one initiative-controlled volley rather than as separate early and late shots.`
+      );
+    } else if (
+      selectedGraphNode.kind === 'attack' &&
+      combatant.declaredAction === 'turn-undead'
+    ) {
+      lines.push(
+        `${combatant.name}'s turning attempt stays initiative-controlled but unsegmented in this slice.`
+      );
+    } else if (
+      selectedGraphNode.kind === 'attack' &&
+      combatant.declaredAction === 'magical-device'
+    ) {
+      lines.push(
+        `${combatant.name}'s device discharge stays unsegmented because no activation time was declared for it.`
+      );
+    } else if (hasDirectMeleeEdge) {
+      lines.push(
+        `${combatant.name}'s node is part of a direct melee exchange, so narrower duel timing rules refine or override the round's baseline initiative here.`
+      );
+    } else if (
+      selectedGraphNode.kind === 'attack' &&
+      combatant.attackRoutine.components.length > 1 &&
+      combatant.declaredAction !== 'missile'
+    ) {
+      lines.push(
+        `This is ${combatant.name}'s attack ${selectedGraphNode.attackNumber} in the ordinary routine sequence for this round.`
+      );
+    } else {
+      lines.push(
+        `This node has no separate segment call in the current rules slice, so its position is determined by baseline initiative plus the precedence edges shown below.`
+      );
+    }
+
+    if (resolution.simpleOrder === 'simultaneous') {
+      lines.push(
+        `Baseline initiative is tied at ${scenario.partyInitiative}, so only narrower timing rules and explicit precedence edges move this node ahead of anything else.`
+      );
+    } else {
+      const sideActsFirst =
+        (combatant.side === 'party' &&
+          resolution.simpleOrder === 'party-first') ||
+        (combatant.side === 'enemy' &&
+          resolution.simpleOrder === 'enemy-first');
+      const winnerScore =
+        resolution.simpleOrder === 'party-first'
+          ? scenario.partyInitiative
+          : scenario.enemyInitiative;
+      const loserScore =
+        resolution.simpleOrder === 'party-first'
+          ? scenario.enemyInitiative
+          : scenario.partyInitiative;
+
+      lines.push(
+        sideActsFirst
+          ? `${
+              combatant.side === 'party' ? 'Party' : 'Enemy'
+            } side won baseline initiative ${winnerScore} to ${loserScore}, so this side normally acts first unless a narrower rule overrides it.`
+          : `${
+              combatant.side === 'party' ? 'Party' : 'Enemy'
+            } side lost baseline initiative ${loserScore} to ${winnerScore}, so this side normally reacts unless a narrower rule pulls this node forward.`
+      );
+    }
+
+    return lines;
+  }, [
+    combatantById,
+    movementResolutionByCombatantId,
+    resolution.simpleOrder,
+    scenario.enemyInitiative,
+    scenario.partyInitiative,
+    selectedGraphIncomingEdges,
+    selectedGraphNode,
+    selectedGraphOutgoingEdges,
+    viewModel.combatantNameById,
+  ]);
+  const getGraphEdgeExplanation = (edge: InitiativeAttackEdge): string => {
+    const fromNode = attackNodeById.get(edge.fromNodeId);
+    const toNode = attackNodeById.get(edge.toNodeId);
+    const fromCombatant = fromNode
+      ? combatantById.get(fromNode.combatantId)
+      : undefined;
+    const toCombatant = toNode
+      ? combatantById.get(toNode.combatantId)
+      : undefined;
+    const fromName =
+      (fromNode && attackNodeLabelById[fromNode.id]) || edge.fromNodeId;
+    const toName = (toNode && attackNodeLabelById[toNode.id]) || edge.toNodeId;
+
+    return edge.reasons
+      .map((reason) => {
+        if (reason === 'simple-initiative') {
+          if (
+            fromNode &&
+            toNode &&
+            fromNode.combatantId === toNode.combatantId
+          ) {
+            return `This is the same combatant's ordinary routine order: ${fromName} resolves before ${toName}.`;
+          }
+
+          if (fromCombatant && toCombatant) {
+            const fromInitiative = getEffectiveInitiativeValue(fromCombatant);
+            const toInitiative = getEffectiveInitiativeValue(toCombatant);
+
+            if (fromInitiative !== toInitiative) {
+              return `${fromCombatant.name}'s effective initiative ${fromInitiative} beats ${toCombatant.name}'s ${toInitiative}, so ${fromName} resolves first at this phase of the round.`;
+            }
+          }
+
+          return `This edge comes from the round's baseline attack ordering for this phase.`;
+        }
+
+        if (reason === 'direct-melee') {
+          return `This local duel uses the narrower direct-melee timing rules rather than the round's baseline initiative order.`;
+        }
+
+        if (reason === 'movement') {
+          if (fromNode?.kind === 'contact' && fromNode.segment !== undefined) {
+            return `Contact is established on segment ${fromNode.segment}, and that contact must occur before the later consequence shown here.`;
+          }
+
+          if (fromNode?.segment !== undefined) {
+            return `Movement/contact timing places ${fromName} before ${toName} on segment ${fromNode.segment}.`;
+          }
+
+          return `Movement and contact timing create this local precedence.`;
+        }
+
+        if (reason === 'spell-casting') {
+          if (
+            fromNode?.kind === 'spell-start' &&
+            toNode?.kind === 'spell-completion'
+          ) {
+            return toNode.segment !== undefined
+              ? `This is the spell's casting span: it begins here and completes on segment ${toNode.segment}.`
+              : `This edge connects the spell's start and completion.`;
+          }
+
+          return `This edge is part of the same spell's casting sequence.`;
+        }
+
+        if (
+          fromNode?.kind === 'spell-completion' &&
+          toNode?.kind === 'spell-completion'
+        ) {
+          if (
+            fromNode.segment !== undefined &&
+            toNode.segment !== undefined &&
+            fromNode.segment === toNode.segment
+          ) {
+            return `Both spells complete on segment ${
+              fromNode.segment
+            }, so initiative breaks the tie in favor of ${
+              fromCombatant?.name || fromName
+            }.`;
+          }
+
+          return `${
+            fromCombatant?.name || fromName
+          } completes early enough to interrupt ${
+            toCombatant?.name || toName
+          }.`;
+        }
+
+        if (toNode?.kind === 'spell-completion') {
+          if (
+            fromNode?.segmentReason === 'spell-directed' &&
+            fromNode.segment !== undefined
+          ) {
+            return `${
+              fromCombatant?.name || fromName
+            }'s directed attack is placed on segment ${
+              fromNode.segment
+            } against a spell caster under DMG p. 65 rule 2. A successful hit there spoils the spell.`;
+          }
+
+          return `${
+            fromCombatant?.name || fromName
+          } resolves before the spell completes, so a successful hit spoils it.`;
+        }
+
+        if (fromNode?.kind === 'spell-completion') {
+          return `${fromCombatant?.name || fromName} completes before ${
+            toCombatant?.name || toName
+          }, so that later action no longer has a chance to spoil the spell.`;
+        }
+
+        return `This edge comes from the spell interruption timing rules.`;
+      })
+      .join(' ');
+  };
   const editedCombatant =
     editorTarget !== undefined
       ? state[getStateSide(editorTarget.side)].find(
@@ -2300,14 +2551,23 @@ const InitiativePlayground = ({
                         Side:{' '}
                         {selectedGraphNode.side === 'party' ? 'Party' : 'Enemy'}
                       </span>
-                      <span>Layer: {selectedGraphNodeLayer}</span>
                       {selectedGraphNode.segment !== undefined ? (
                         <span>Segment: {selectedGraphNode.segment}</span>
                       ) : null}
-                      <span>
-                        Source:{' '}
-                        {getGraphNodeSourceLabel(selectedGraphNode.source)}
-                      </span>
+                    </div>
+
+                    <div className={styles['graphInspectorSection']}>
+                      <h4 className={styles['graphSubhead']}>Why Here</h4>
+                      <ol className={styles['graphInspectorList']}>
+                        {selectedGraphWhyHere.map((line, index) => (
+                          <li
+                            key={`why-here-${selectedGraphNode.id}-${index}`}
+                            className={styles['graphInspectorItem']}
+                          >
+                            <span className={styles['stepDetail']}>{line}</span>
+                          </li>
+                        ))}
+                      </ol>
                     </div>
 
                     <div className={styles['graphInspectorSection']}>
@@ -2324,7 +2584,7 @@ const InitiativePlayground = ({
                                   edge.fromNodeId}
                               </span>
                               <span className={styles['stepDetail']}>
-                                {formatGraphEdgeReasons(edge.reasons)}
+                                {getGraphEdgeExplanation(edge)}
                               </span>
                             </li>
                           ))}
@@ -2351,7 +2611,7 @@ const InitiativePlayground = ({
                                   edge.toNodeId}
                               </span>
                               <span className={styles['stepDetail']}>
-                                {formatGraphEdgeReasons(edge.reasons)}
+                                {getGraphEdgeExplanation(edge)}
                               </span>
                             </li>
                           ))}
@@ -2363,29 +2623,6 @@ const InitiativePlayground = ({
                         </div>
                       )}
                     </div>
-
-                    {selectedGraphRelatedCards.length > 0 ? (
-                      <div className={styles['graphInspectorSection']}>
-                        <h4 className={styles['graphSubhead']}>
-                          Related Calls
-                        </h4>
-                        <ol className={styles['graphInspectorList']}>
-                          {selectedGraphRelatedCards.map((card) => (
-                            <li
-                              key={`related-${card.id}`}
-                              className={styles['graphInspectorItem']}
-                            >
-                              <span className={styles['stepLabel']}>
-                                {card.title}
-                              </span>
-                              <span className={styles['stepDetail']}>
-                                {card.summary}
-                              </span>
-                            </li>
-                          ))}
-                        </ol>
-                      </div>
-                    ) : null}
                   </div>
                 </aside>
               ) : null}
