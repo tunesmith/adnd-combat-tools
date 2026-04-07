@@ -1343,6 +1343,23 @@ const InitiativePlayground = ({
         (edge) => edge.fromNodeId === selectedGraphNode.id
       )
     : [];
+  const selectedGraphOutgoingTargets = useMemo(() => {
+    const seen = new Set<string>();
+
+    return selectedGraphOutgoingEdges.flatMap((edge) => {
+      if (seen.has(edge.toNodeId)) {
+        return [];
+      }
+
+      seen.add(edge.toNodeId);
+      return [
+        {
+          nodeId: edge.toNodeId,
+          label: attackNodeLabelById[edge.toNodeId] || edge.toNodeId,
+        },
+      ];
+    });
+  }, [attackNodeLabelById, selectedGraphOutgoingEdges]);
   const movementResolutionByCombatantId = useMemo(
     () =>
       new Map(
@@ -2300,6 +2317,11 @@ const InitiativePlayground = ({
                       width={graphLayout.width}
                       height={graphLayout.height}
                       aria-label={'Initiative precedence graph'}
+                      onClick={() => {
+                        if (selectedGraphNodeId) {
+                          setSelectedGraphNodeId(undefined);
+                        }
+                      }}
                     >
                       <defs>
                         <marker
@@ -2461,7 +2483,10 @@ const InitiativePlayground = ({
                             role={'button'}
                             tabIndex={0}
                             aria-label={`${display.combatantName}, target ${display.targetLabel}, ${display.actionLabel}`}
-                            onClick={() => toggleSelectedGraphNode(node.id)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleSelectedGraphNode(node.id);
+                            }}
                             onKeyDown={(event) => {
                               if (event.key === 'Enter' || event.key === ' ') {
                                 event.preventDefault();
@@ -2594,28 +2619,25 @@ const InitiativePlayground = ({
                     </div>
 
                     <div className={styles['graphInspectorSection']}>
-                      <h4 className={styles['graphSubhead']}>Blocks</h4>
-                      {selectedGraphOutgoingEdges.length > 0 ? (
-                        <ol className={styles['graphInspectorList']}>
-                          {selectedGraphOutgoingEdges.map((edge) => (
-                            <li
-                              key={`outgoing-${edge.fromNodeId}-${edge.toNodeId}`}
-                              className={styles['graphInspectorItem']}
+                      <h4 className={styles['graphSubhead']}>Affects</h4>
+                      {selectedGraphOutgoingTargets.length > 0 ? (
+                        <div className={styles['graphInspectorNav']}>
+                          {selectedGraphOutgoingTargets.map((target) => (
+                            <button
+                              key={`outgoing-target-${target.nodeId}`}
+                              type={'button'}
+                              className={styles['graphInspectorNavButton']}
+                              onClick={() =>
+                                setSelectedGraphNodeId(target.nodeId)
+                              }
                             >
-                              <span className={styles['stepLabel']}>
-                                {attackNodeLabelById[edge.toNodeId] ||
-                                  edge.toNodeId}
-                              </span>
-                              <span className={styles['stepDetail']}>
-                                {getGraphEdgeExplanation(edge)}
-                              </span>
-                            </li>
+                              {target.label}
+                            </button>
                           ))}
-                        </ol>
+                        </div>
                       ) : (
                         <div className={styles['graphInspectorEmpty']}>
-                          This node adds no further precedence. Any remaining
-                          relative order is underdetermined at this rules slice.
+                          No downstream precedence is pinned from this node.
                         </div>
                       )}
                     </div>

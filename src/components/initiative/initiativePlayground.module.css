@@ -847,6 +847,27 @@
   line-height: 1.45;
 }
 
+.graphInspectorNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.graphInspectorNavButton {
+  border: 1px solid rgba(172, 114, 35, 0.56);
+  background: rgba(36, 46, 24, 0.38);
+  color: var(--eggshell);
+  cursor: pointer;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+}
+
+.graphInspectorNavButton:hover,
+.graphInspectorNavButton:focus-visible {
+  background: rgba(120, 150, 62, 0.24);
+  outline: none;
+}
+
 .graphEmpty {
   min-height: 10rem;
 }
