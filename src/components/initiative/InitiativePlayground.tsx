@@ -1394,25 +1394,38 @@ const InitiativePlayground = ({
     const movementResolution = movementResolutionByCombatantId.get(
       combatant.id
     );
+    const targetCombatant = selectedGraphNode.targetId
+      ? combatantById.get(selectedGraphNode.targetId)
+      : undefined;
+    const combatantInitiative = getEffectiveInitiativeValue(combatant);
+    const targetInitiative = targetCombatant
+      ? getEffectiveInitiativeValue(targetCombatant)
+      : undefined;
 
     if (selectedGraphNode.kind === 'spell-start') {
       if (selectedGraphNode.segment !== undefined) {
         lines.push(
-          `This is the start of ${combatant.name}'s spell. Non-instant spells begin on segment ${selectedGraphNode.segment} in this slice so the casting span can be shown explicitly.`
+          `Spells begin on segment ${selectedGraphNode.segment}. Casting span is shown explicitly.`
         );
       } else {
-        lines.push(
-          `This is the start of ${combatant.name}'s spell. Instant spells stay unsegmented because there is no casting span to plot.`
-        );
+        lines.push(`This instant spell has no separate casting span to show.`);
       }
     } else if (selectedGraphNode.kind === 'spell-completion') {
       if (selectedGraphNode.segment !== undefined) {
         lines.push(
-          `${combatant.name}'s spell completes on segment ${selectedGraphNode.segment} because completion is placed on the declared casting time in this slice.`
+          `This spell completes at the end of segment ${
+            selectedGraphNode.segment
+          } because its casting time is ${
+            selectedGraphNode.segment >= 10
+              ? '10+ segments'
+              : `${selectedGraphNode.segment} ${
+                  selectedGraphNode.segment === 1 ? 'segment' : 'segments'
+                }`
+          }.`
         );
       } else {
         lines.push(
-          `${combatant.name}'s spell is treated as instant here, so completion has no separate segment placement.`
+          `This spell is instantaneous, so completion has no separate segment placement.`
         );
       }
     } else if (selectedGraphNode.kind === 'contact') {
@@ -1420,13 +1433,35 @@ const InitiativePlayground = ({
         `This node marks movement contact on segment ${selectedGraphNode.segment}. Contact is shown explicitly here without inventing an automatic same-round blow.`
       );
     } else if (selectedGraphNode.segmentReason === 'spell-directed') {
-      lines.push(
-        `${combatant.name}'s attack is directed at ${
-          targetName || 'a spell caster'
-        }. DMG p. 65 rule 2 places that attack on segment ${
-          selectedGraphNode.segment
-        }.`
-      );
+      if (
+        targetName &&
+        targetInitiative !== undefined &&
+        targetInitiative > combatantInitiative
+      ) {
+        lines.push(
+          `${combatant.name}'s attack is directed at ${targetName}. Since ${
+            targetCombatant?.side === 'party' ? 'Party' : 'Enemy'
+          } won initiative ${targetInitiative} to ${combatantInitiative}, attacks against the spell caster land on segment ${
+            selectedGraphNode.segment
+          } (DMG p. 65 rule 2).`
+        );
+      } else if (
+        targetName &&
+        targetInitiative !== undefined &&
+        targetInitiative === combatantInitiative
+      ) {
+        lines.push(
+          `${combatant.name}'s attack is directed at ${targetName}. With initiative tied at ${targetInitiative}, attacks against the spell caster land on segment ${selectedGraphNode.segment} (DMG p. 65 rule 2).`
+        );
+      } else {
+        lines.push(
+          `${combatant.name}'s attack is directed at ${
+            targetName || 'a spell caster'
+          }. DMG p. 65 rule 2 places that attack on segment ${
+            selectedGraphNode.segment
+          }.`
+        );
+      }
     } else if (
       selectedGraphNode.segmentReason === 'declared-action' &&
       combatant.declaredAction === 'magical-device'
@@ -1458,7 +1493,7 @@ const InitiativePlayground = ({
       combatant.declaredAction === 'turn-undead'
     ) {
       lines.push(
-        `${combatant.name}'s turning attempt stays initiative-controlled but unsegmented in this slice.`
+        `${combatant.name}'s turning attempt stays initiative-controlled but unsegmented.`
       );
     } else if (
       selectedGraphNode.kind === 'attack' &&
@@ -1469,7 +1504,7 @@ const InitiativePlayground = ({
       );
     } else if (hasDirectMeleeEdge) {
       lines.push(
-        `${combatant.name}'s node is part of a direct melee exchange, so narrower duel timing rules refine or override the round's baseline initiative here.`
+        `${combatant.name}'s node is part of a direct melee exchange, so local duel timing rules determine its position here.`
       );
     } else if (
       selectedGraphNode.kind === 'attack' &&
@@ -1481,37 +1516,7 @@ const InitiativePlayground = ({
       );
     } else {
       lines.push(
-        `This node has no separate segment call in the current rules slice, so its position is determined by baseline initiative plus the precedence edges shown below.`
-      );
-    }
-
-    if (resolution.simpleOrder === 'simultaneous') {
-      lines.push(
-        `Baseline initiative is tied at ${scenario.partyInitiative}, so only narrower timing rules and explicit precedence edges move this node ahead of anything else.`
-      );
-    } else {
-      const sideActsFirst =
-        (combatant.side === 'party' &&
-          resolution.simpleOrder === 'party-first') ||
-        (combatant.side === 'enemy' &&
-          resolution.simpleOrder === 'enemy-first');
-      const winnerScore =
-        resolution.simpleOrder === 'party-first'
-          ? scenario.partyInitiative
-          : scenario.enemyInitiative;
-      const loserScore =
-        resolution.simpleOrder === 'party-first'
-          ? scenario.enemyInitiative
-          : scenario.partyInitiative;
-
-      lines.push(
-        sideActsFirst
-          ? `${
-              combatant.side === 'party' ? 'Party' : 'Enemy'
-            } side won baseline initiative ${winnerScore} to ${loserScore}, so this side normally acts first unless a narrower rule overrides it.`
-          : `${
-              combatant.side === 'party' ? 'Party' : 'Enemy'
-            } side lost baseline initiative ${loserScore} to ${winnerScore}, so this side normally reacts unless a narrower rule pulls this node forward.`
+        `This node has no separate segment call, so its position is determined by the precedence edges shown below.`
       );
     }
 
@@ -1519,9 +1524,6 @@ const InitiativePlayground = ({
   }, [
     combatantById,
     movementResolutionByCombatantId,
-    resolution.simpleOrder,
-    scenario.enemyInitiative,
-    scenario.partyInitiative,
     selectedGraphIncomingEdges,
     selectedGraphNode,
     selectedGraphOutgoingEdges,
@@ -1564,7 +1566,7 @@ const InitiativePlayground = ({
         }
 
         if (reason === 'direct-melee') {
-          return `This local duel uses the narrower direct-melee timing rules rather than the round's baseline initiative order.`;
+          return `This local duel uses direct-melee timing rules instead of the general round order.`;
         }
 
         if (reason === 'movement') {
@@ -1585,7 +1587,7 @@ const InitiativePlayground = ({
             toNode?.kind === 'spell-completion'
           ) {
             return toNode.segment !== undefined
-              ? `This is the spell's casting span: it begins here and completes on segment ${toNode.segment}.`
+              ? `This is the spell's casting span: it begins here and completes at the end of segment ${toNode.segment}.`
               : `This edge connects the spell's start and completion.`;
           }
 
@@ -2591,32 +2593,33 @@ const InitiativePlayground = ({
                       </ol>
                     </div>
 
-                    <div className={styles['graphInspectorSection']}>
-                      <h4 className={styles['graphSubhead']}>Blocked By</h4>
-                      {selectedGraphIncomingEdges.length > 0 ? (
+                    {selectedGraphIncomingEdges.length > 0 ? (
+                      <div className={styles['graphInspectorSection']}>
+                        <h4 className={styles['graphSubhead']}>Blocked By</h4>
                         <ol className={styles['graphInspectorList']}>
                           {selectedGraphIncomingEdges.map((edge) => (
                             <li
                               key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
                               className={styles['graphInspectorItem']}
                             >
-                              <span className={styles['stepLabel']}>
+                              <button
+                                type={'button'}
+                                className={styles['graphInspectorLinkButton']}
+                                onClick={() =>
+                                  setSelectedGraphNodeId(edge.fromNodeId)
+                                }
+                              >
                                 {attackNodeLabelById[edge.fromNodeId] ||
                                   edge.fromNodeId}
-                              </span>
+                              </button>
                               <span className={styles['stepDetail']}>
                                 {getGraphEdgeExplanation(edge)}
                               </span>
                             </li>
                           ))}
                         </ol>
-                      ) : (
-                        <div className={styles['graphInspectorEmpty']}>
-                          No explicit blockers. This node is currently enabled
-                          at the left edge of the graph.
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : null}
 
                     <div className={styles['graphInspectorSection']}>
                       <h4 className={styles['graphSubhead']}>Affects</h4>

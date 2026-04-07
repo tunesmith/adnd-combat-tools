@@ -839,6 +839,27 @@
   padding: 0.7rem 0.8rem;
 }
 
+.graphInspectorLinkButton {
+  border: 0;
+  background: transparent;
+  color: var(--eggshell);
+  cursor: pointer;
+  display: inline-block;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(240, 239, 221, 0.45);
+  text-underline-offset: 0.16em;
+}
+
+.graphInspectorLinkButton:hover,
+.graphInspectorLinkButton:focus-visible {
+  color: #fff8ea;
+  text-decoration-color: rgba(255, 248, 234, 0.8);
+  outline: none;
+}
+
 .graphInspectorEmpty,
 .graphEmpty {
   background: rgba(36, 46, 24, 0.34);
