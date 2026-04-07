@@ -1384,6 +1384,9 @@ const InitiativePlayground = ({
     const hasDirectMeleeEdge = selectedGraphIncomingEdges
       .concat(selectedGraphOutgoingEdges)
       .some((edge) => edge.reasons.includes('direct-melee'));
+    const directMeleeEdge = selectedGraphIncomingEdges
+      .concat(selectedGraphOutgoingEdges)
+      .find((edge) => edge.reasons.includes('direct-melee'));
     const hasMovementEdge = selectedGraphIncomingEdges
       .concat(selectedGraphOutgoingEdges)
       .some((edge) => edge.reasons.includes('movement'));
@@ -1397,6 +1400,16 @@ const InitiativePlayground = ({
     const targetCombatant = selectedGraphNode.targetId
       ? combatantById.get(selectedGraphNode.targetId)
       : undefined;
+    const directMeleeOpponentId =
+      directMeleeEdge?.fromNodeId === selectedGraphNode.id
+        ? attackNodeById.get(directMeleeEdge.toNodeId)?.combatantId
+        : directMeleeEdge?.toNodeId === selectedGraphNode.id
+        ? attackNodeById.get(directMeleeEdge.fromNodeId)?.combatantId
+        : undefined;
+    const directMeleeOpponentName = directMeleeOpponentId
+      ? viewModel.combatantNameById[directMeleeOpponentId] ||
+        directMeleeOpponentId
+      : undefined;
     const combatantInitiative = getEffectiveInitiativeValue(combatant);
     const targetInitiative = targetCombatant
       ? getEffectiveInitiativeValue(targetCombatant)
@@ -1408,7 +1421,9 @@ const InitiativePlayground = ({
           `Spells begin on segment ${selectedGraphNode.segment}. Casting span is shown explicitly.`
         );
       } else {
-        lines.push(`This instant spell has no separate casting span to show.`);
+        lines.push(
+          `This is an instant spell, so there is no separate casting span to show.`
+        );
       }
     } else if (selectedGraphNode.kind === 'spell-completion') {
       if (selectedGraphNode.segment !== undefined) {
@@ -1425,12 +1440,12 @@ const InitiativePlayground = ({
         );
       } else {
         lines.push(
-          `This spell is instantaneous, so completion has no separate segment placement.`
+          `This spell is instantaneous, so it has no separate completion segment.`
         );
       }
     } else if (selectedGraphNode.kind === 'contact') {
       lines.push(
-        `This node marks movement contact on segment ${selectedGraphNode.segment}. Contact is shown explicitly here without inventing an automatic same-round blow.`
+        `Contact is reached on segment ${selectedGraphNode.segment}. This marks the moment movement closes to melee without assuming an automatic same-round blow.`
       );
     } else if (selectedGraphNode.segmentReason === 'spell-directed') {
       if (
@@ -1441,7 +1456,7 @@ const InitiativePlayground = ({
         lines.push(
           `${combatant.name}'s attack is directed at ${targetName}. Since ${
             targetCombatant?.side === 'party' ? 'Party' : 'Enemy'
-          } won initiative ${targetInitiative} to ${combatantInitiative}, attacks against the spell caster land on segment ${
+          } won initiative ${targetInitiative} to ${combatantInitiative}, attacks against ${targetName} land on segment ${
             selectedGraphNode.segment
           } (DMG p. 65 rule 2).`
         );
@@ -1451,7 +1466,7 @@ const InitiativePlayground = ({
         targetInitiative === combatantInitiative
       ) {
         lines.push(
-          `${combatant.name}'s attack is directed at ${targetName}. With initiative tied at ${targetInitiative}, attacks against the spell caster land on segment ${selectedGraphNode.segment} (DMG p. 65 rule 2).`
+          `${combatant.name}'s attack is directed at ${targetName}. With initiative tied at ${targetInitiative}, attacks against ${targetName} land on segment ${selectedGraphNode.segment} (DMG p. 65 rule 2).`
         );
       } else {
         lines.push(
@@ -1467,7 +1482,7 @@ const InitiativePlayground = ({
       combatant.declaredAction === 'magical-device'
     ) {
       lines.push(
-        `${combatant.name}'s magical device discharge is on segment ${selectedGraphNode.segment} because that activation time was declared for the device this round.`
+        `${combatant.name}'s device use is on segment ${selectedGraphNode.segment} because its declared activation time places it there.`
       );
     } else if (
       selectedGraphNode.kind === 'attack' &&
@@ -1475,9 +1490,15 @@ const InitiativePlayground = ({
       (hasMovementEdge ||
         movementResolution?.contactSegment === selectedGraphNode.segment)
     ) {
-      lines.push(
-        `${combatant.name}'s attack is placed on segment ${selectedGraphNode.segment} because movement contact reaches that point in the round there.`
-      );
+      if (movementResolution?.distanceInches !== undefined) {
+        lines.push(
+          `${combatant.name}'s attack is on segment ${selectedGraphNode.segment} because, at movement rate ${combatant.movementRate}", it can cover ${movementResolution.distanceInches}" and reach contact by then.`
+        );
+      } else {
+        lines.push(
+          `${combatant.name}'s attack is on segment ${selectedGraphNode.segment} because movement contact is reached by then.`
+        );
+      }
     } else if (
       selectedGraphNode.kind === 'attack' &&
       combatant.declaredAction === 'missile'
@@ -1485,26 +1506,32 @@ const InitiativePlayground = ({
       lines.push(
         selectedGraphNode.targetId !== undefined &&
           combatant.targetIds.length > 1
-          ? `${combatant.name}'s volley is split across multiple targets, so this node represents the shot aimed at ${targetName}. Ordinary missile fire still stays unsegmented unless a narrower rule gives it a segment.`
-          : `${combatant.name}'s missile volley stays unsegmented here. Ordinary firing rate is treated as one initiative-controlled volley rather than as separate early and late shots.`
+          ? `${combatant.name}'s missile volley is split across multiple targets. This node is the shot aimed at ${targetName}.`
+          : `${combatant.name}'s missile volley stays unsegmented. Ordinary firing rate is treated as one initiative-controlled volley rather than as separate early and late shots.`
       );
     } else if (
       selectedGraphNode.kind === 'attack' &&
       combatant.declaredAction === 'turn-undead'
     ) {
       lines.push(
-        `${combatant.name}'s turning attempt stays initiative-controlled but unsegmented.`
+        `${combatant.name}'s turning attempt is initiative-controlled, but it has no separate segment timing.`
       );
     } else if (
       selectedGraphNode.kind === 'attack' &&
       combatant.declaredAction === 'magical-device'
     ) {
       lines.push(
-        `${combatant.name}'s device discharge stays unsegmented because no activation time was declared for it.`
+        `${combatant.name}'s device use stays unsegmented because no activation time was declared for it.`
       );
     } else if (hasDirectMeleeEdge) {
       lines.push(
-        `${combatant.name}'s node is part of a direct melee exchange, so local duel timing rules determine its position here.`
+        `${combatant.name}${
+          targetName
+            ? ` and ${targetName}`
+            : directMeleeOpponentName
+            ? ` and ${directMeleeOpponentName}`
+            : ''
+        } are in direct melee, so initiative determines the order of their blows here.`
       );
     } else if (
       selectedGraphNode.kind === 'attack' &&
@@ -1512,17 +1539,18 @@ const InitiativePlayground = ({
       combatant.declaredAction !== 'missile'
     ) {
       lines.push(
-        `This is ${combatant.name}'s attack ${selectedGraphNode.attackNumber} in the ordinary routine sequence for this round.`
+        `This is ${combatant.name}'s attack ${selectedGraphNode.attackNumber} in that combatant's ordinary round routine.`
       );
     } else {
       lines.push(
-        `This node has no separate segment call, so its position is determined by the precedence edges shown below.`
+        `This action has no separate segment timing, so its order comes from the other actions it must happen before or after.`
       );
     }
 
     return lines;
   }, [
     combatantById,
+    attackNodeById,
     movementResolutionByCombatantId,
     selectedGraphIncomingEdges,
     selectedGraphNode,
@@ -1550,7 +1578,7 @@ const InitiativePlayground = ({
             toNode &&
             fromNode.combatantId === toNode.combatantId
           ) {
-            return `This is the same combatant's ordinary routine order: ${fromName} resolves before ${toName}.`;
+            return `This is the same combatant's ordinary routine order. ${fromName} happens before ${toName}.`;
           }
 
           if (fromCombatant && toCombatant) {
@@ -1558,27 +1586,29 @@ const InitiativePlayground = ({
             const toInitiative = getEffectiveInitiativeValue(toCombatant);
 
             if (fromInitiative !== toInitiative) {
-              return `${fromCombatant.name}'s effective initiative ${fromInitiative} beats ${toCombatant.name}'s ${toInitiative}, so ${fromName} resolves first at this phase of the round.`;
+              return `${fromCombatant.name}'s effective initiative ${fromInitiative} beats ${toCombatant.name}'s ${toInitiative}, so ${fromName} happens first at this stage of the round.`;
             }
           }
 
-          return `This edge comes from the round's baseline attack ordering for this phase.`;
+          return `This follows the general round order for this stage.`;
         }
 
         if (reason === 'direct-melee') {
-          return `This local duel uses direct-melee timing rules instead of the general round order.`;
+          return `${fromCombatant?.name || fromName} and ${
+            toCombatant?.name || toName
+          } are in direct melee, so initiative decides which blow happens first.`;
         }
 
         if (reason === 'movement') {
           if (fromNode?.kind === 'contact' && fromNode.segment !== undefined) {
-            return `Contact is established on segment ${fromNode.segment}, and that contact must occur before the later consequence shown here.`;
+            return `Contact is established on segment ${fromNode.segment}, and that has to happen before the later result shown here.`;
           }
 
           if (fromNode?.segment !== undefined) {
-            return `Movement/contact timing places ${fromName} before ${toName} on segment ${fromNode.segment}.`;
+            return `Movement/contact timing means ${fromName} happens before ${toName} on segment ${fromNode.segment}.`;
           }
 
-          return `Movement and contact timing create this local precedence.`;
+          return `Movement and contact timing create this local order.`;
         }
 
         if (reason === 'spell-casting') {
@@ -1587,11 +1617,11 @@ const InitiativePlayground = ({
             toNode?.kind === 'spell-completion'
           ) {
             return toNode.segment !== undefined
-              ? `This is the spell's casting span: it begins here and completes at the end of segment ${toNode.segment}.`
-              : `This edge connects the spell's start and completion.`;
+              ? `This is the spell's casting span. It starts here and completes at the end of segment ${toNode.segment}.`
+              : `This links the spell's start and completion.`;
           }
 
-          return `This edge is part of the same spell's casting sequence.`;
+          return `This is part of the same spell's casting sequence.`;
         }
 
         if (
@@ -1624,14 +1654,14 @@ const InitiativePlayground = ({
           ) {
             return `${
               fromCombatant?.name || fromName
-            }'s directed attack is placed on segment ${
+            }'s attack is placed on segment ${
               fromNode.segment
             } against a spell caster under DMG p. 65 rule 2. A successful hit there spoils the spell.`;
           }
 
           return `${
             fromCombatant?.name || fromName
-          } resolves before the spell completes, so a successful hit spoils it.`;
+          } can attack before the spell completes, so a successful hit spoils it.`;
         }
 
         if (fromNode?.kind === 'spell-completion') {
@@ -1640,7 +1670,7 @@ const InitiativePlayground = ({
           }, so that later action no longer has a chance to spoil the spell.`;
         }
 
-        return `This edge comes from the spell interruption timing rules.`;
+        return `This comes from the spell interruption timing rules.`;
       })
       .join(' ');
   };
@@ -2581,11 +2611,11 @@ const InitiativePlayground = ({
 
                     <div className={styles['graphInspectorSection']}>
                       <h4 className={styles['graphSubhead']}>Why Here</h4>
-                      <ol className={styles['graphInspectorList']}>
+                      <ol className={styles['graphInspectorPlainList']}>
                         {selectedGraphWhyHere.map((line, index) => (
                           <li
                             key={`why-here-${selectedGraphNode.id}-${index}`}
-                            className={styles['graphInspectorItem']}
+                            className={styles['graphInspectorPlainItem']}
                           >
                             <span className={styles['stepDetail']}>{line}</span>
                           </li>
@@ -2621,29 +2651,26 @@ const InitiativePlayground = ({
                       </div>
                     ) : null}
 
-                    <div className={styles['graphInspectorSection']}>
-                      <h4 className={styles['graphSubhead']}>Affects</h4>
-                      {selectedGraphOutgoingTargets.length > 0 ? (
-                        <div className={styles['graphInspectorNav']}>
+                    {selectedGraphOutgoingTargets.length > 0 ? (
+                      <div className={styles['graphInspectorSection']}>
+                        <h4 className={styles['graphSubhead']}>Blocks</h4>
+                        <ul className={styles['graphInspectorLinkList']}>
                           {selectedGraphOutgoingTargets.map((target) => (
-                            <button
-                              key={`outgoing-target-${target.nodeId}`}
-                              type={'button'}
-                              className={styles['graphInspectorNavButton']}
-                              onClick={() =>
-                                setSelectedGraphNodeId(target.nodeId)
-                              }
-                            >
-                              {target.label}
-                            </button>
+                            <li key={`outgoing-target-${target.nodeId}`}>
+                              <button
+                                type={'button'}
+                                className={styles['graphInspectorLinkButton']}
+                                onClick={() =>
+                                  setSelectedGraphNodeId(target.nodeId)
+                                }
+                              >
+                                {target.label}
+                              </button>
+                            </li>
                           ))}
-                        </div>
-                      ) : (
-                        <div className={styles['graphInspectorEmpty']}>
-                          No downstream precedence is pinned from this node.
-                        </div>
-                      )}
-                    </div>
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
                 </aside>
               ) : null}

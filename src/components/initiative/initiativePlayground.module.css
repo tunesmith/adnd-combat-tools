@@ -815,8 +815,8 @@
 
 .graphInspectorMeta {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.85rem;
   margin-bottom: 1rem;
   font-size: 0.98rem;
   color: rgba(240, 239, 221, 0.94);
@@ -833,10 +833,21 @@
   list-style: none;
 }
 
+.graphInspectorPlainList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  list-style: none;
+}
+
 .graphInspectorItem {
   background: rgba(36, 46, 24, 0.38);
   border: 1px solid rgba(172, 114, 35, 0.56);
   padding: 0.7rem 0.8rem;
+}
+
+.graphInspectorPlainItem {
+  padding: 0;
 }
 
 .graphInspectorLinkButton {
@@ -846,6 +857,7 @@
   cursor: pointer;
   display: inline-block;
   font: inherit;
+  margin-bottom: 0.35rem;
   padding: 0;
   text-align: left;
   text-decoration: underline;
@@ -868,25 +880,11 @@
   line-height: 1.45;
 }
 
-.graphInspectorNav {
+.graphInspectorLinkList {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.graphInspectorNavButton {
-  border: 1px solid rgba(172, 114, 35, 0.56);
-  background: rgba(36, 46, 24, 0.38);
-  color: var(--eggshell);
-  cursor: pointer;
-  padding: 0.55rem 0.75rem;
-  text-align: left;
-}
-
-.graphInspectorNavButton:hover,
-.graphInspectorNavButton:focus-visible {
-  background: rgba(120, 150, 62, 0.24);
-  outline: none;
+  flex-direction: column;
+  gap: 0.45rem;
+  list-style: none;
 }
 
 .graphEmpty {
