@@ -733,13 +733,27 @@
 }
 
 .graphEdgeResolved {
-  stroke: #9e8f69;
   stroke-dasharray: 8 6;
 }
 
+.graphEdgeResolvedParty {
+  stroke: #8b9670;
+}
+
+.graphEdgeResolvedEnemy {
+  stroke: #9a7f74;
+}
+
 .graphEdgeLost {
-  stroke: #665f48;
   stroke-dasharray: 5 7;
+}
+
+.graphEdgeLostParty {
+  stroke: #5d654e;
+}
+
+.graphEdgeLostEnemy {
+  stroke: #6b5751;
 }
 
 .graphEdgeSelected {
@@ -771,8 +785,24 @@
   filter: drop-shadow(0 0.12rem 0.22rem rgba(17, 21, 10, 0.18));
 }
 
+.graphNodePartyResolved {
+  stroke: #cfd9ad;
+}
+
+.graphNodeEnemyResolved {
+  stroke: #e2bca7;
+}
+
 .graphNodeLost {
   filter: none;
+}
+
+.graphNodePartyLost {
+  stroke: #9baa80;
+}
+
+.graphNodeEnemyLost {
+  stroke: #ae8d84;
 }
 
 .graphNodeStatusBadge {
@@ -812,6 +842,14 @@
   font-weight: 700;
 }
 
+.graphNodeNameResolved {
+  font-weight: 600;
+}
+
+.graphNodeNameLost {
+  font-weight: 500;
+}
+
 .graphNodeTarget {
   font-size: 0.62rem;
   fill: #fff8ea;
@@ -826,6 +864,14 @@
 
 .graphNodeActionSecondary {
   fill: #fff8ea;
+}
+
+.graphNodeTextResolved {
+  fill: #efe4cc;
+}
+
+.graphNodeTextLost {
+  fill: #d8cfbb;
 }
 
 .graphSubhead {

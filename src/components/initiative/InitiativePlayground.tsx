@@ -2563,6 +2563,7 @@ const InitiativePlayground = ({
                             edge.toNodeId === selectedGraphNode.id);
                         const isSpellCastingEdge =
                           edge.reasons.includes('spell-casting');
+                        const fromNode = attackNodeById.get(edge.fromNodeId);
                         const fromStatus = graphNodeStatusById[edge.fromNodeId];
 
                         return (
@@ -2577,8 +2578,24 @@ const InitiativePlayground = ({
                               fromStatus === 'resolved'
                                 ? styles['graphEdgeResolved']
                                 : '',
+                              fromStatus === 'resolved' &&
+                              fromNode?.side === 'party'
+                                ? styles['graphEdgeResolvedParty']
+                                : '',
+                              fromStatus === 'resolved' &&
+                              fromNode?.side === 'enemy'
+                                ? styles['graphEdgeResolvedEnemy']
+                                : '',
                               fromStatus === 'lost'
                                 ? styles['graphEdgeLost']
+                                : '',
+                              fromStatus === 'lost' &&
+                              fromNode?.side === 'party'
+                                ? styles['graphEdgeLostParty']
+                                : '',
+                              fromStatus === 'lost' &&
+                              fromNode?.side === 'enemy'
+                                ? styles['graphEdgeLostEnemy']
                                 : '',
                               isSelected ? styles['graphEdgeSelected'] : '',
                             ]
@@ -2646,8 +2663,22 @@ const InitiativePlayground = ({
                                 nodeStatus === 'resolved'
                                   ? styles['graphNodeResolved']
                                   : '',
+                                nodeStatus === 'resolved' &&
+                                node.side === 'party'
+                                  ? styles['graphNodePartyResolved']
+                                  : '',
+                                nodeStatus === 'resolved' &&
+                                node.side === 'enemy'
+                                  ? styles['graphNodeEnemyResolved']
+                                  : '',
                                 nodeStatus === 'lost'
                                   ? styles['graphNodeLost']
+                                  : '',
+                                nodeStatus === 'lost' && node.side === 'party'
+                                  ? styles['graphNodePartyLost']
+                                  : '',
+                                nodeStatus === 'lost' && node.side === 'enemy'
+                                  ? styles['graphNodeEnemyLost']
                                   : '',
                                 isSelected ? styles['graphNodeSelected'] : '',
                               ]
@@ -2702,6 +2733,19 @@ const InitiativePlayground = ({
                                     : line.kind === 'target'
                                     ? styles['graphNodeTarget']
                                     : styles['graphNodeAction'],
+                                  nodeStatus === 'resolved'
+                                    ? styles['graphNodeTextResolved']
+                                    : '',
+                                  nodeStatus === 'lost'
+                                    ? styles['graphNodeTextLost']
+                                    : '',
+                                  line.kind === 'name' &&
+                                  nodeStatus === 'resolved'
+                                    ? styles['graphNodeNameResolved']
+                                    : '',
+                                  line.kind === 'name' && nodeStatus === 'lost'
+                                    ? styles['graphNodeNameLost']
+                                    : '',
                                   line.isSecondary
                                     ? styles['graphNodeActionSecondary']
                                     : '',
