@@ -1239,6 +1239,129 @@ describe('initiative attack graph', () => {
     );
   });
 
+  test('uses the tied initiative segment when initiative is tied against a spell caster', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Tied Spell vs Missile',
+      partyInitiative: 5,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 6,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Archer',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          segment: 5,
+          segmentReason: 'spell-directed',
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:2',
+          segment: 5,
+          segmentReason: 'spell-directed',
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-3:2',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
+
+  test('keeps a tied directed attack simultaneous when the spell completes on the tied segment', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Tied Spell Completion Segment',
+      partyInitiative: 5,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 5,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Archer',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          segment: 5,
+          segmentReason: 'spell-directed',
+        }),
+      ])
+    );
+    expect(graph.edges).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'spell-completion:party-1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
+
   test('uses initiative to order equal-time spell completions within the same segment', () => {
     const scenario = buildInitiativeScenario({
       label: 'Magic Missile vs Shield',

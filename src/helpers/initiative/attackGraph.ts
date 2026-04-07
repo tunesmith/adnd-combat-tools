@@ -664,10 +664,6 @@ const getSpellInterruptionRelation = (
     return 'before';
   }
 
-  if (initiativeComparison === 0) {
-    return 'simultaneous';
-  }
-
   return compareToSpellCompletion(caster.initiative, castingSegments);
 };
 
@@ -709,7 +705,7 @@ const getSpellInterruptionSegment = (
     return undefined;
   }
 
-  return initiativeComparison < 0 ? caster.initiative : undefined;
+  return initiativeComparison <= 0 ? caster.initiative : undefined;
 };
 
 const addSpellInterruptionEdges = (
