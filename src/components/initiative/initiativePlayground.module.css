@@ -641,7 +641,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 22rem;
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .graphViewport,
@@ -667,11 +667,12 @@
 
 .graphInspectorDock {
   min-width: 0;
+  display: flex;
 }
 
 .graphInspectorDock .graphInspector {
+  flex: 1 1 auto;
   overflow: auto;
-  max-height: 46rem;
   background: linear-gradient(180deg, #536630, #3f4f25);
   box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.28);
 }
