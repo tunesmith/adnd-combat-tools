@@ -67,7 +67,8 @@ const createNode = (
   source: InitiativeAttackNode['source'],
   kind: InitiativeAttackNode['kind'],
   segment?: number,
-  targetId?: string
+  targetId?: string,
+  segmentReason?: InitiativeAttackNode['segmentReason']
 ): InitiativeAttackNode => ({
   id:
     kind === 'contact'
@@ -87,12 +88,14 @@ const createNode = (
   source,
   kind,
   segment,
+  segmentReason,
 });
 
 const createRoutineAttackNode = (
   combatant: InitiativeScenarioCombatant,
   segment?: number,
-  targetId?: string
+  targetId?: string,
+  segmentReason?: InitiativeAttackNode['segmentReason']
 ): InitiativeAttackNode => {
   const timingBasisComponent =
     combatant.attackRoutine.components.find(
@@ -112,7 +115,8 @@ const createRoutineAttackNode = (
     'routine-component',
     'attack',
     segment,
-    targetId
+    targetId,
+    segmentReason
   );
 };
 
@@ -162,7 +166,9 @@ const createContactNode = (
     'contact',
     'movement-contact',
     'contact',
-    segment
+    segment,
+    undefined,
+    'movement'
   );
 
 const createSpellStartNode = (
@@ -176,7 +182,9 @@ const createSpellStartNode = (
     'spell start',
     'spell-casting',
     'spell-start',
-    segment
+    segment,
+    undefined,
+    'spell-start'
   );
 
 const createSpellCompletionNode = (
@@ -190,7 +198,9 @@ const createSpellCompletionNode = (
     'spell completion',
     'spell-casting',
     'spell-completion',
-    segment
+    segment,
+    undefined,
+    'spell-completion'
   );
 
 const addNode = (
@@ -206,6 +216,13 @@ const addNode = (
 
   if (existing.segment === undefined && node.segment !== undefined) {
     existing.segment = node.segment;
+  }
+
+  if (
+    existing.segmentReason === undefined &&
+    node.segmentReason !== undefined
+  ) {
+    existing.segmentReason = node.segmentReason;
   }
 };
 
@@ -266,6 +283,7 @@ interface SimpleInitiativePhase {
   side: InitiativeScenarioCombatant['side'];
   phase: number;
   effectiveInitiative: number;
+  node: InitiativeAttackNode;
 }
 
 const getRoutineComponentCount = (
@@ -316,6 +334,7 @@ const buildSimpleInitiativePhases = (
           (combatant.declaredAction === 'missile'
             ? combatant.missileInitiativeAdjustment
             : 0),
+        node,
       },
     ];
   });
@@ -340,6 +359,14 @@ const addSimpleInitiativeEdges = (
     currentNodes.forEach((leftPhase, leftIndex) => {
       currentNodes.slice(leftIndex + 1).forEach((rightPhase) => {
         if (leftPhase.side === rightPhase.side) {
+          return;
+        }
+
+        if (
+          (leftPhase.node.segmentReason === 'spell-directed' ||
+            rightPhase.node.segmentReason === 'spell-directed') &&
+          leftPhase.combatantId !== rightPhase.combatantId
+        ) {
           return;
         }
 
@@ -374,9 +401,61 @@ const addSimpleInitiativeEdges = (
     const currentNodeIds = currentNodes.map((phase) => phase.nodeId);
 
     currentNodeIds.forEach((fromNodeId) => {
+      const fromPhase = currentNodes.find(
+        (phase) => phase.nodeId === fromNodeId
+      );
       nextNodes.forEach((toNodeId) => {
+        const toPhase = phases.find((phase) => phase.nodeId === toNodeId);
+
+        if (
+          fromPhase?.node.segmentReason === 'spell-directed' &&
+          fromPhase.combatantId !== toPhase?.combatantId
+        ) {
+          return;
+        }
+
         mergeEdgeReason(edgesByKey, fromNodeId, toNodeId, 'simple-initiative');
       });
+    });
+  });
+};
+
+const addRoutineSequenceEdges = (
+  combatantById: Map<string, InitiativeScenarioCombatant>,
+  simpleInitiativeNodes: InitiativeAttackNode[],
+  edgesByKey: Map<string, InitiativeAttackEdge>
+) => {
+  const nodesByCombatant = new Map<string, InitiativeAttackNode[]>();
+
+  simpleInitiativeNodes.forEach((node) => {
+    const existing = nodesByCombatant.get(node.combatantId) || [];
+    existing.push(node);
+    nodesByCombatant.set(node.combatantId, existing);
+  });
+
+  nodesByCombatant.forEach((nodes, combatantId) => {
+    const combatant = combatantById.get(combatantId);
+
+    if (
+      !combatant ||
+      combatant.declaredAction === 'missile' ||
+      combatant.attackRoutine.components.length <= 1
+    ) {
+      return;
+    }
+
+    const orderedNodes = [...nodes].sort(
+      (leftNode, rightNode) => leftNode.attackNumber - rightNode.attackNumber
+    );
+
+    orderedNodes.forEach((node, index) => {
+      const nextNode = orderedNodes[index + 1];
+
+      if (!nextNode) {
+        return;
+      }
+
+      mergeEdgeReason(edgesByKey, node.id, nextNode.id, 'simple-initiative');
     });
   });
 };
@@ -592,6 +671,47 @@ const getSpellInterruptionRelation = (
   return compareToSpellCompletion(caster.initiative, castingSegments);
 };
 
+const getSpellInterruptionSegment = (
+  attacker: InitiativeScenarioCombatant,
+  caster: InitiativeScenarioCombatant,
+  castingSegments: number,
+  attackerNode: InitiativeAttackNode
+): number | undefined => {
+  if (castingSegments === 0) {
+    return undefined;
+  }
+
+  if (attacker.declaredAction === 'spell-casting') {
+    return undefined;
+  }
+
+  if (attackerNode.segment !== undefined) {
+    return attackerNode.segment;
+  }
+
+  const initiativeComparison = compareCombatantInitiative(attacker, caster);
+  const isLaterOrdinaryRoutineAttack =
+    attackerNode.kind === 'attack' &&
+    attacker.attackRoutine.components.length > 1 &&
+    attackerNode.attackNumber > 1 &&
+    attacker.declaredAction !== 'missile';
+
+  if (isLaterOrdinaryRoutineAttack) {
+    return undefined;
+  }
+
+  if (
+    attacker.declaredAction === 'open-melee' &&
+    attacker.weaponType === 'melee' &&
+    attacker.weaponSpeedFactor !== undefined &&
+    initiativeComparison <= 0
+  ) {
+    return undefined;
+  }
+
+  return initiativeComparison < 0 ? caster.initiative : undefined;
+};
+
 const addSpellInterruptionEdges = (
   scenario: InitiativeScenario,
   nodesById: Map<string, InitiativeAttackNode>,
@@ -632,6 +752,21 @@ const addSpellInterruptionEdges = (
       }
 
       attackerNodes.forEach((attackerNode) => {
+        const interruptionSegment = getSpellInterruptionSegment(
+          attacker,
+          caster,
+          castingSegments,
+          attackerNode
+        );
+
+        if (
+          interruptionSegment !== undefined &&
+          attackerNode.segment === undefined
+        ) {
+          attackerNode.segment = interruptionSegment;
+          attackerNode.segmentReason = 'spell-directed';
+        }
+
         const relation = getSpellInterruptionRelation(
           attacker,
           caster,
@@ -882,7 +1017,10 @@ export const buildInitiativeAttackGraph = (
               'routine-component',
               'attack',
               getDeclaredActionSegment(combatant),
-              targetId
+              targetId,
+              getDeclaredActionSegment(combatant) !== undefined
+                ? 'declared-action'
+                : undefined
             )
           );
         });
@@ -901,7 +1039,10 @@ export const buildInitiativeAttackGraph = (
           'routine-component',
           'attack',
           getDeclaredActionSegment(combatant),
-          combatant.targetIds.length === 1 ? combatant.targetIds[0] : undefined
+          combatant.targetIds.length === 1 ? combatant.targetIds[0] : undefined,
+          getDeclaredActionSegment(combatant) !== undefined
+            ? 'declared-action'
+            : undefined
         )
       );
     });
@@ -915,6 +1056,7 @@ export const buildInitiativeAttackGraph = (
       !movementHandledCombatantIdSet.has(node.combatantId)
   );
 
+  addSpellInterruptionEdges(scenario, nodesById, edgesByKey);
   addDirectMovementPrecedence(
     resolution,
     combatantById,
@@ -922,8 +1064,8 @@ export const buildInitiativeAttackGraph = (
     nodesById,
     edgesByKey
   );
+  addRoutineSequenceEdges(combatantById, simpleInitiativeNodes, edgesByKey);
   addSimpleInitiativeEdges(combatantById, simpleInitiativeNodes, edgesByKey);
-  addSpellInterruptionEdges(scenario, nodesById, edgesByKey);
 
   const edges = Array.from(edgesByKey.values());
 

@@ -199,6 +199,12 @@ export interface InitiativeAttackNode {
   source: InitiativeAttackSource;
   kind: 'attack' | 'contact' | 'spell-start' | 'spell-completion';
   segment?: number;
+  segmentReason?:
+    | 'declared-action'
+    | 'movement'
+    | 'spell-directed'
+    | 'spell-start'
+    | 'spell-completion';
 }
 
 export type InitiativeAttackEdgeReason =

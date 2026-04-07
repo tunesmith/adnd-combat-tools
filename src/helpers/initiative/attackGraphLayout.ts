@@ -233,6 +233,8 @@ const buildSegmentLanes = (
       components[spellColumnIndex]?.push(nodeId);
     });
 
+    const nonSpellComponents: string[][] = [];
+
     orderedNodeIds.forEach((nodeId) => {
       if (visited.has(nodeId)) {
         return;
@@ -260,6 +262,34 @@ const buildSegmentLanes = (
         });
       }
 
+      nonSpellComponents.push(component);
+    });
+
+    const isolatedComponents = nonSpellComponents.filter(
+      (component) =>
+        component.length === 1 &&
+        (adjacency.get(component[0] || '') || []).length === 0
+    );
+    const connectedComponents = nonSpellComponents.filter(
+      (component) =>
+        !(
+          component.length === 1 &&
+          (adjacency.get(component[0] || '') || []).length === 0
+        )
+    );
+
+    if (isolatedComponents.length > 0) {
+      components.push(isolatedComponents.flat());
+      const isolatedComponentIndex = components.length - 1;
+      isolatedComponents.forEach((component) => {
+        const nodeId = component[0];
+        if (nodeId) {
+          componentIndexByNodeId.set(nodeId, isolatedComponentIndex);
+        }
+      });
+    }
+
+    connectedComponents.forEach((component) => {
       components.push(component);
       const componentIndex = components.length - 1;
       component.forEach((componentNodeId) => {
@@ -407,15 +437,38 @@ export const buildInitiativeAttackGraphLayout = (
         }
       });
 
-      const nonSpellLayerIndices = Array.from(
+      const sameSegmentEdges = graph.edges.filter((edge) => {
+        const fromNode = graphNodeById.get(edge.fromNodeId);
+        const toNode = graphNodeById.get(edge.toNodeId);
+
+        return fromNode?.segment === segment && toNode?.segment === segment;
+      });
+      const adjacency = new Map<string, string[]>();
+      nodeIds
+        .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
+        .forEach((nodeId) => adjacency.set(nodeId, []));
+      sameSegmentEdges.forEach((edge) => {
+        if (!adjacency.has(edge.fromNodeId) || !adjacency.has(edge.toNodeId)) {
+          return;
+        }
+
+        adjacency.get(edge.fromNodeId)?.push(edge.toNodeId);
+        adjacency.get(edge.toNodeId)?.push(edge.fromNodeId);
+      });
+
+      const nonSpellRowKeys = Array.from(
         new Set(
           nodeIds
             .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
-            .map((nodeId) => layerIndexByNodeId.get(nodeId) ?? 0)
+            .map((nodeId) =>
+              (adjacency.get(nodeId) || []).length === 0
+                ? `${segment}:isolated:${nodeId}`
+                : `${segment}:layer:${layerIndexByNodeId.get(nodeId) ?? 0}`
+            )
         )
-      ).sort((leftIndex, rightIndex) => leftIndex - rightIndex);
+      ).sort();
 
-      nonSpellLayerIndices.forEach(() => {
+      nonSpellRowKeys.forEach(() => {
         usedRows.add(getSmallestAvailableRow(usedRows));
       });
 
@@ -487,23 +540,6 @@ export const buildInitiativeAttackGraphLayout = (
       }
     });
 
-    const nonSpellLayerIndices = Array.from(
-      new Set(
-        nodeIds
-          .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
-          .map((nodeId) => layerIndexByNodeId.get(nodeId) ?? 0)
-      )
-    ).sort((leftIndex, rightIndex) => leftIndex - rightIndex);
-
-    nonSpellLayerIndices.forEach((layerIndex) => {
-      const rowIndex = getSmallestAvailableRow(usedRows);
-      usedRows.add(rowIndex);
-      segmentRowIndexByKey.set(
-        `${segmentLane.segment}:${layerIndex}`,
-        rowIndex
-      );
-    });
-
     const sameSegmentEdges = graph.edges.filter((edge) => {
       const fromNode = graphNodeById.get(edge.fromNodeId);
       const toNode = graphNodeById.get(edge.toNodeId);
@@ -522,6 +558,26 @@ export const buildInitiativeAttackGraphLayout = (
 
       adjacency.get(edge.fromNodeId)?.push(edge.toNodeId);
       adjacency.get(edge.toNodeId)?.push(edge.fromNodeId);
+    });
+
+    const nonSpellRowKeys = Array.from(
+      new Set(
+        nodeIds
+          .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
+          .map((nodeId) =>
+            (adjacency.get(nodeId) || []).length === 0
+              ? `${segmentLane.segment}:isolated:${nodeId}`
+              : `${segmentLane.segment}:layer:${
+                  layerIndexByNodeId.get(nodeId) ?? 0
+                }`
+          )
+      )
+    ).sort();
+
+    nonSpellRowKeys.forEach((rowKey) => {
+      const rowIndex = getSmallestAvailableRow(usedRows);
+      usedRows.add(rowIndex);
+      segmentRowIndexByKey.set(rowKey, rowIndex);
     });
 
     const orderedNodeIds = [...nonSpellNodeIds].sort(
@@ -551,7 +607,7 @@ export const buildInitiativeAttackGraphLayout = (
         componentIndexByNodeId.set(nodeId, spellColumnIndex);
       });
     }
-    let componentIndex = segmentLane.spellColumnCount;
+    const nonSpellComponents: string[][] = [];
 
     orderedNodeIds.forEach((nodeId) => {
       if (visited.has(nodeId)) {
@@ -559,6 +615,7 @@ export const buildInitiativeAttackGraphLayout = (
       }
 
       const stack = [nodeId];
+      const componentNodeIds: string[] = [];
       visited.add(nodeId);
 
       while (stack.length > 0) {
@@ -568,7 +625,7 @@ export const buildInitiativeAttackGraphLayout = (
           continue;
         }
 
-        componentIndexByNodeId.set(currentNodeId, componentIndex);
+        componentNodeIds.push(currentNodeId);
         (adjacency.get(currentNodeId) || []).forEach((neighborNodeId) => {
           if (visited.has(neighborNodeId)) {
             return;
@@ -579,6 +636,37 @@ export const buildInitiativeAttackGraphLayout = (
         });
       }
 
+      nonSpellComponents.push(componentNodeIds);
+    });
+
+    const isolatedComponents = nonSpellComponents.filter(
+      (componentNodeIds) =>
+        componentNodeIds.length === 1 &&
+        (adjacency.get(componentNodeIds[0] || '') || []).length === 0
+    );
+    const connectedComponents = nonSpellComponents.filter(
+      (componentNodeIds) =>
+        !(
+          componentNodeIds.length === 1 &&
+          (adjacency.get(componentNodeIds[0] || '') || []).length === 0
+        )
+    );
+    let componentIndex = segmentLane.spellColumnCount;
+
+    if (isolatedComponents.length > 0) {
+      isolatedComponents.forEach((componentNodeIds) => {
+        const nodeId = componentNodeIds[0];
+        if (nodeId) {
+          componentIndexByNodeId.set(nodeId, componentIndex);
+        }
+      });
+      componentIndex += 1;
+    }
+
+    connectedComponents.forEach((componentNodeIds) => {
+      componentNodeIds.forEach((nodeId) => {
+        componentIndexByNodeId.set(nodeId, componentIndex);
+      });
       componentIndex += 1;
     });
 
@@ -591,7 +679,11 @@ export const buildInitiativeAttackGraphLayout = (
       const layerIndex = layerIndexByNodeId.get(nodeId) ?? 0;
       const rowIndex =
         segmentRowIndexByKey.get(nodeId) ??
-        segmentRowIndexByKey.get(`${segmentLane.segment}:${layerIndex}`) ??
+        segmentRowIndexByKey.get(
+          (adjacency.get(nodeId) || []).length === 0
+            ? `${segmentLane.segment}:isolated:${nodeId}`
+            : `${segmentLane.segment}:layer:${layerIndex}`
+        ) ??
         0;
       const localColumnIndex = componentIndexByNodeId.get(nodeId) ?? 0;
       const nodeSize = nodeSizeById?.[nodeId];

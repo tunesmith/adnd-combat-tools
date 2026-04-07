@@ -313,6 +313,134 @@ describe('initiative attack graph layout', () => {
     expect(chargeAttack?.y).toBeGreaterThan(spellStart?.y || 0);
   });
 
+  test('places attacks directed at a spellcaster into the applicable initiative segment lane', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell vs Missile Segment Placement',
+      partyInitiative: 5,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Mereth',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 6,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Archer',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+    const layout = buildInitiativeAttackGraphLayout(graph);
+
+    const segmentFiveColumn = layout.segmentColumns.find(
+      (column) => column.segment === 5
+    );
+    const attackOne = layout.nodes.find(
+      (node) => node.nodeId === 'attack:enemy-3:1'
+    );
+    const attackTwo = layout.nodes.find(
+      (node) => node.nodeId === 'attack:enemy-3:2'
+    );
+
+    expect(segmentFiveColumn).toBeDefined();
+    expect(attackOne).toBeDefined();
+    expect(attackTwo).toBeDefined();
+    expect(attackOne?.y).toBeGreaterThanOrEqual(layout.segmentBandTopY);
+    expect(attackOne?.y).toBeLessThan(layout.segmentBandBottomY);
+    expect(attackTwo?.y).toBeGreaterThanOrEqual(layout.segmentBandTopY);
+    expect(attackTwo?.y).toBeLessThan(layout.segmentBandBottomY);
+    expect(attackOne?.x).toBeGreaterThanOrEqual(segmentFiveColumn?.startX || 0);
+    expect(attackOne?.x).toBeLessThan(
+      (segmentFiveColumn?.endX || 0) - (attackOne?.width || 0)
+    );
+    expect(attackTwo?.x).toBeGreaterThanOrEqual(segmentFiveColumn?.startX || 0);
+    expect(attackTwo?.x).toBeLessThan(
+      (segmentFiveColumn?.endX || 0) - (attackTwo?.width || 0)
+    );
+  });
+
+  test('stacks parallel missile volleys vertically within one applicable spell-interruption segment lane', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Parallel Missile Volleys vs Caster',
+      partyInitiative: 6,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Shep',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              castingSegments: 5,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Pillar Gnoll 2',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Pillar Gnoll 3',
+          declaredAction: 'missile',
+          weaponId: 11,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+    const layout = buildInitiativeAttackGraphLayout(graph);
+
+    const attackNodes = [
+      layout.nodes.find((node) => node.nodeId === 'attack:enemy-3:1'),
+      layout.nodes.find((node) => node.nodeId === 'attack:enemy-3:2'),
+      layout.nodes.find((node) => node.nodeId === 'attack:enemy-4:1'),
+      layout.nodes.find((node) => node.nodeId === 'attack:enemy-4:2'),
+    ];
+
+    attackNodes.forEach((attackNode) => {
+      expect(attackNode).toBeDefined();
+      expect(attackNode?.y).toBeGreaterThanOrEqual(layout.segmentBandTopY);
+      expect(attackNode?.y).toBeLessThan(layout.segmentBandBottomY);
+    });
+
+    const xPositions = Array.from(
+      new Set(attackNodes.map((attackNode) => attackNode?.x))
+    );
+    const yPositions = attackNodes
+      .map((attackNode) => attackNode?.y)
+      .filter((value): value is number => value !== undefined)
+      .sort((left, right) => left - right);
+
+    expect(xPositions).toHaveLength(1);
+    expect(yPositions).toEqual(
+      [...yPositions].sort((left, right) => left - right)
+    );
+    expect(new Set(yPositions).size).toBe(4);
+  });
+
   test('keeps segment guides in the upper band and pushes dependency-only nodes below it', () => {
     const scenario = buildInitiativeScenario({
       label: 'Large Mixed Battle',

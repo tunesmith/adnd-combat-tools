@@ -1211,6 +1211,18 @@ describe('initiative attack graph', () => {
       resolveInitiativeRound(scenario)
     );
 
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          segment: 5,
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:2',
+          segment: 5,
+        }),
+      ])
+    );
     expect(graph.edges).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -1435,6 +1447,99 @@ describe('initiative attack graph', () => {
           fromNodeId: 'spell-completion:party-1',
           toNodeId: 'attack:enemy-3:2',
           reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
+
+  test('does not let a spell-directed first attack globally delay unrelated attacks', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Spell-directed first attack stays local',
+      partyInitiative: 6,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'B1',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [3],
+        },
+        {
+          combatantKey: 2,
+          name: 'B6',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 4,
+              castingSegments: 2,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'A7',
+          declaredAction: 'spell-casting',
+          weaponId: 17,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 4,
+            },
+          ],
+        },
+        {
+          combatantKey: 4,
+          name: 'A6',
+          declaredAction: 'open-melee',
+          attackRoutineCount: 2,
+          weaponId: 1,
+          targetCombatantKeys: [2],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:enemy-4:1',
+          segment: 6,
+          segmentReason: 'spell-directed',
+        }),
+      ])
+    );
+    expect(graph.edges).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-4:1',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['simple-initiative'],
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'spell-completion:enemy-3',
+          reasons: ['spell-interruption'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'attack:enemy-4:1',
+          toNodeId: 'attack:enemy-4:2',
+          reasons: ['simple-initiative'],
+        }),
+        expect.objectContaining({
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-4:2',
+          reasons: ['simple-initiative'],
         }),
       ])
     );
