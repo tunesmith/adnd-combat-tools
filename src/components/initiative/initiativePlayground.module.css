@@ -683,6 +683,10 @@
   stroke: none;
 }
 
+.graphArrowheadSelected {
+  fill: #d7a52d;
+}
+
 .graphSegmentHeaderLine {
   stroke: rgba(172, 114, 35, 0.82);
   stroke-width: 1.75px;

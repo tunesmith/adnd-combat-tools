@@ -771,6 +771,9 @@ const InitiativePlayground = ({
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<
     string | undefined
   >(undefined);
+  const [hoveredGraphNodeId, setHoveredGraphNodeId] = useState<
+    string | undefined
+  >(undefined);
   const [graphNodeStatusById, setGraphNodeStatusById] = useState<
     Record<string, GraphNodeStatus>
   >({});
@@ -1592,6 +1595,27 @@ const InitiativePlayground = ({
     selectedGraphNode?.kind === 'spell-completion'
       ? 'Mark spoiled'
       : 'Mark lost';
+  const graphEdgesInRenderOrder = useMemo(() => {
+    if (!hoveredGraphNodeId) {
+      return graphLayout.edges;
+    }
+
+    const highlightedEdges: typeof graphLayout.edges = [];
+    const ordinaryEdges: typeof graphLayout.edges = [];
+
+    graphLayout.edges.forEach((edge) => {
+      if (
+        edge.fromNodeId === hoveredGraphNodeId ||
+        edge.toNodeId === hoveredGraphNodeId
+      ) {
+        highlightedEdges.push(edge);
+      } else {
+        ordinaryEdges.push(edge);
+      }
+    });
+
+    return ordinaryEdges.concat(highlightedEdges);
+  }, [graphLayout.edges, hoveredGraphNodeId]);
   const selectedGraphPopoverPosition = useMemo(() => {
     if (!selectedGraphNodeLayout) {
       return undefined;
@@ -2641,6 +2665,29 @@ const InitiativePlayground = ({
                         width={graphLayout.width}
                         height={graphLayout.height}
                         aria-label={'Initiative precedence graph'}
+                        onMouseMove={(event) => {
+                          const target = event.target;
+
+                          if (!(target instanceof Element)) {
+                            return;
+                          }
+
+                          const nodeElement = target.closest(
+                            '[data-graph-node-button="true"]'
+                          );
+                          const nextHoveredNodeId =
+                            nodeElement?.getAttribute('data-graph-node-id') ||
+                            undefined;
+
+                          setHoveredGraphNodeId((previous) =>
+                            previous === nextHoveredNodeId
+                              ? previous
+                              : nextHoveredNodeId
+                          );
+                        }}
+                        onMouseLeave={() => {
+                          setHoveredGraphNodeId(undefined);
+                        }}
                         onClick={() => {
                           if (selectedGraphNodeId) {
                             setSelectedGraphNodeId(undefined);
@@ -2664,6 +2711,26 @@ const InitiativePlayground = ({
                             />
                           </marker>
                           <marker
+                            id={'initiative-dag-arrowhead-highlighted'}
+                            viewBox={'0 0 10 10'}
+                            refX={'4'}
+                            refY={'5'}
+                            markerUnits={'userSpaceOnUse'}
+                            markerWidth={'8'}
+                            markerHeight={'8'}
+                            orient={'auto-start-reverse'}
+                          >
+                            <path
+                              d={'M 0 0 L 10 5 L 0 10 z'}
+                              className={[
+                                styles['graphArrowhead'],
+                                styles['graphArrowheadSelected'],
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                            />
+                          </marker>
+                          <marker
                             id={'initiative-dag-arrowhead-spell'}
                             viewBox={'0 0 14 14'}
                             refX={'4'}
@@ -2676,6 +2743,26 @@ const InitiativePlayground = ({
                             <path
                               d={'M 0 0 L 14 7 L 0 14 z'}
                               className={styles['graphArrowhead']}
+                            />
+                          </marker>
+                          <marker
+                            id={'initiative-dag-arrowhead-spell-highlighted'}
+                            viewBox={'0 0 14 14'}
+                            refX={'4'}
+                            refY={'7'}
+                            markerUnits={'userSpaceOnUse'}
+                            markerWidth={'12'}
+                            markerHeight={'12'}
+                            orient={'auto-start-reverse'}
+                          >
+                            <path
+                              d={'M 0 0 L 14 7 L 0 14 z'}
+                              className={[
+                                styles['graphArrowhead'],
+                                styles['graphArrowheadSelected'],
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
                             />
                           </marker>
                         </defs>
@@ -2755,11 +2842,11 @@ const InitiativePlayground = ({
                           </>
                         ) : null}
 
-                        {graphLayout.edges.map((edge) => {
-                          const isSelected =
-                            selectedGraphNode !== undefined &&
-                            (edge.fromNodeId === selectedGraphNode.id ||
-                              edge.toNodeId === selectedGraphNode.id);
+                        {graphEdgesInRenderOrder.map((edge) => {
+                          const isHighlighted =
+                            hoveredGraphNodeId !== undefined &&
+                            (edge.fromNodeId === hoveredGraphNodeId ||
+                              edge.toNodeId === hoveredGraphNodeId);
                           const isSpellCastingEdge =
                             edge.reasons.includes('spell-casting');
                           const fromNode = attackNodeById.get(edge.fromNodeId);
@@ -2768,7 +2855,9 @@ const InitiativePlayground = ({
 
                           return (
                             <path
-                              key={`${edge.fromNodeId}-${edge.toNodeId}`}
+                              key={`${edge.fromNodeId}-${edge.toNodeId}-${
+                                isHighlighted ? 'highlighted' : 'normal'
+                              }`}
                               d={edge.path}
                               className={[
                                 styles['graphEdge'],
@@ -2797,13 +2886,19 @@ const InitiativePlayground = ({
                                 fromNode?.side === 'enemy'
                                   ? styles['graphEdgeLostEnemy']
                                   : '',
-                                isSelected ? styles['graphEdgeSelected'] : '',
+                                isHighlighted
+                                  ? styles['graphEdgeSelected']
+                                  : '',
                               ]
                                 .filter(Boolean)
                                 .join(' ')}
                               markerEnd={
                                 isSpellCastingEdge
-                                  ? 'url(#initiative-dag-arrowhead-spell)'
+                                  ? isHighlighted
+                                    ? 'url(#initiative-dag-arrowhead-spell-highlighted)'
+                                    : 'url(#initiative-dag-arrowhead-spell)'
+                                  : isHighlighted
+                                  ? 'url(#initiative-dag-arrowhead-highlighted)'
                                   : 'url(#initiative-dag-arrowhead)'
                               }
                             />
@@ -2835,11 +2930,18 @@ const InitiativePlayground = ({
                               role={'button'}
                               tabIndex={0}
                               data-graph-node-button={'true'}
+                              data-graph-node-id={node.id}
                               aria-label={`${display.combatantName}, target ${display.targetLabel}, ${display.actionLabel}`}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 toggleSelectedGraphNode(node.id);
                               }}
+                              onFocus={() => setHoveredGraphNodeId(node.id)}
+                              onBlur={() =>
+                                setHoveredGraphNodeId((previous) =>
+                                  previous === node.id ? undefined : previous
+                                )
+                              }
                               onKeyDown={(event) => {
                                 if (
                                   event.key === 'Enter' ||
