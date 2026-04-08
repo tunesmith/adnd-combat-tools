@@ -851,6 +851,7 @@ export const buildInitiativeAttackGraph = (
     )
   );
   const movementHandledCombatantIdSet = new Set<string>();
+  const simultaneousGroupsByKey = new Map<string, string[]>();
 
   resolution.directMeleeEngagements.forEach((engagement) => {
     engagement.resolution.steps.forEach((step, stepIndex) => {
@@ -871,6 +872,18 @@ export const buildInitiativeAttackGraph = (
         addNode(nodesById, node);
         return [node.id];
       });
+
+      if (step.attacks.length > 1 && stepNodeIds.length > 1) {
+        const simultaneousNodeIds = stepNodeIds.filter((nodeId) => {
+          const node = nodesById.get(nodeId);
+          return node?.segment === undefined;
+        });
+
+        if (simultaneousNodeIds.length > 1) {
+          const groupKey = [...simultaneousNodeIds].sort().join('|');
+          simultaneousGroupsByKey.set(groupKey, simultaneousNodeIds);
+        }
+      }
 
       if (stepIndex === 0) {
         return;
@@ -1111,5 +1124,6 @@ export const buildInitiativeAttackGraph = (
     nodes,
     edges,
     layers: getLayers(nodes, edges),
+    simultaneousGroups: Array.from(simultaneousGroupsByKey.values()),
   };
 };

@@ -34,6 +34,13 @@ interface InitiativeAttackGraphLayout {
   dependencyBandTopY: number;
   segmentBoundaryXs: number[];
   segmentColumns: InitiativeAttackGraphLayoutSegmentColumn[];
+  simultaneousGroups: Array<{
+    nodeIds: string[];
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>;
   nodes: InitiativeAttackGraphLayoutNode[];
   edges: InitiativeAttackGraphLayoutEdge[];
 }
@@ -71,6 +78,8 @@ const SEGMENT_COUNT = 10;
 const NORMAL_ARROWHEAD_EXTENSION = 6;
 const SPELL_ARROWHEAD_EXTENSION = 10;
 const SEGMENT_TO_DEPENDENCY_FORWARD_GAP = NODE_COLUMN_WIDTH;
+const SIMULTANEOUS_GROUP_PADDING_X = 14;
+const SIMULTANEOUS_GROUP_PADDING_Y = 10;
 
 const getContentHeight = (rowCount: number): number =>
   rowCount > 0 ? rowCount * NODE_HEIGHT + (rowCount - 1) * ROW_GAP : 0;
@@ -868,6 +877,33 @@ export const buildInitiativeAttackGraphLayout = (
     ];
   });
 
+  const simultaneousGroups = graph.simultaneousGroups.flatMap((nodeIds) => {
+    const groupNodes = nodeIds
+      .map((nodeId) => nodeLayoutById.get(nodeId))
+      .filter(
+        (node): node is InitiativeAttackGraphLayoutNode => node !== undefined
+      );
+
+    if (groupNodes.length < 2) {
+      return [];
+    }
+
+    const minX = Math.min(...groupNodes.map((node) => node.x));
+    const minY = Math.min(...groupNodes.map((node) => node.y));
+    const maxX = Math.max(...groupNodes.map((node) => node.x + node.width));
+    const maxY = Math.max(...groupNodes.map((node) => node.y + node.height));
+
+    return [
+      {
+        nodeIds,
+        x: minX - SIMULTANEOUS_GROUP_PADDING_X,
+        y: minY - SIMULTANEOUS_GROUP_PADDING_Y,
+        width: maxX - minX + SIMULTANEOUS_GROUP_PADDING_X * 2,
+        height: maxY - minY + SIMULTANEOUS_GROUP_PADDING_Y * 2,
+      },
+    ];
+  });
+
   const rightmostNodeX = Math.max(
     HORIZONTAL_PADDING,
     ...nodes.map((node) => node.x)
@@ -915,6 +951,7 @@ export const buildInitiativeAttackGraphLayout = (
     dependencyBandTopY,
     segmentBoundaryXs,
     segmentColumns,
+    simultaneousGroups,
     nodes,
     edges,
   };

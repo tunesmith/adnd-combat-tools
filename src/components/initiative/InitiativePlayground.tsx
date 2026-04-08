@@ -1615,7 +1615,7 @@ const InitiativePlayground = ({
     });
 
     return ordinaryEdges.concat(highlightedEdges);
-  }, [graphLayout.edges, hoveredGraphNodeId]);
+  }, [graphLayout, hoveredGraphNodeId]);
   const selectedGraphPopoverPosition = useMemo(() => {
     if (!selectedGraphNodeLayout) {
       return undefined;
@@ -2841,6 +2841,20 @@ const InitiativePlayground = ({
                             ))}
                           </>
                         ) : null}
+
+                        {graphLayout.simultaneousGroups.map((group) => (
+                          <rect
+                            key={`simultaneous-group-${group.nodeIds.join(
+                              '-'
+                            )}`}
+                            x={group.x}
+                            y={group.y}
+                            width={group.width}
+                            height={group.height}
+                            rx={18}
+                            className={styles['graphSimultaneousGroup']}
+                          />
+                        ))}
 
                         {graphEdgesInRenderOrder.map((edge) => {
                           const isHighlighted =

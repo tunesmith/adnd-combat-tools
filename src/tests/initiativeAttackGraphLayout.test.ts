@@ -145,6 +145,65 @@ describe('initiative attack graph layout', () => {
     );
   });
 
+  test('renders a soft cluster box around explicit simultaneous unsegmented nodes', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Simultaneous Direct Melee',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Aldred',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Ghoul',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+    const layout = buildInitiativeAttackGraphLayout(graph);
+
+    const partyNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-1:1'
+    );
+    const enemyNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:enemy-3:1'
+    );
+
+    expect(layout.simultaneousGroups).toHaveLength(1);
+    expect(partyNode).toBeDefined();
+    expect(enemyNode).toBeDefined();
+    expect(layout.simultaneousGroups[0]).toEqual(
+      expect.objectContaining({
+        nodeIds: ['attack:party-1:1', 'attack:enemy-3:1'],
+      })
+    );
+    expect(layout.simultaneousGroups[0]?.x).toBeLessThanOrEqual(
+      partyNode?.x || 0
+    );
+    expect(layout.simultaneousGroups[0]?.x).toBeLessThanOrEqual(
+      enemyNode?.x || 0
+    );
+    expect(
+      (layout.simultaneousGroups[0]?.x || 0) +
+        (layout.simultaneousGroups[0]?.width || 0)
+    ).toBeGreaterThanOrEqual((partyNode?.x || 0) + (partyNode?.width || 0));
+    expect(
+      (layout.simultaneousGroups[0]?.x || 0) +
+        (layout.simultaneousGroups[0]?.width || 0)
+    ).toBeGreaterThanOrEqual((enemyNode?.x || 0) + (enemyNode?.width || 0));
+  });
+
   test('splits independent same-segment chains into local subcolumns', () => {
     const scenario = buildInitiativeScenario({
       label: 'Segment Two Split',

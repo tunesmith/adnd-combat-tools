@@ -224,4 +224,5 @@ export interface InitiativeAttackGraph {
   nodes: InitiativeAttackNode[];
   edges: InitiativeAttackEdge[];
   layers: string[][];
+  simultaneousGroups: string[][];
 }

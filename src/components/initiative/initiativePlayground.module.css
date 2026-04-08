@@ -721,6 +721,13 @@
   stroke-dasharray: 6 8;
 }
 
+.graphSimultaneousGroup {
+  fill: rgba(240, 239, 221, 0.08);
+  stroke: rgba(215, 165, 45, 0.46);
+  stroke-width: 1.25px;
+  stroke-dasharray: 7 6;
+}
+
 .graphEdge {
   fill: none;
   stroke: rgba(244, 236, 210, 0.78);

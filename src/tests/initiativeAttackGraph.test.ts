@@ -182,6 +182,38 @@ describe('initiative attack graph', () => {
     expect(graph.layers).toEqual([['attack:party-1:1', 'attack:enemy-3:1']]);
   });
 
+  test('records explicit simultaneous groups for tied direct melee steps', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Simultaneous Direct Melee',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Aldred',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Ghoul',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.simultaneousGroups).toEqual([
+      ['attack:party-1:1', 'attack:enemy-3:1'],
+    ]);
+  });
+
   test('keeps an extra attacker on baseline initiative while the duel combatants still participate against others', () => {
     const scenario = buildInitiativeScenario({
       label: 'Ambiguous Scrum',
