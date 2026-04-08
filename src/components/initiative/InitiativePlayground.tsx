@@ -1638,20 +1638,46 @@ const InitiativePlayground = ({
       }
     });
 
+    const baseEnabledNodes = attackGraph.nodes.filter((node) => {
+      if (graphNodeStatusById[node.id] !== undefined) {
+        return false;
+      }
+
+      const blockerIds = incomingBlockerIdsByNodeId.get(node.id);
+      const hasUnresolvedBlockers = blockerIds
+        ? Array.from(blockerIds).some(
+            (blockerId) => graphNodeStatusById[blockerId] === undefined
+          )
+        : false;
+
+      return !hasUnresolvedBlockers;
+    });
+    const earliestEnabledSegment = baseEnabledNodes.reduce<number | undefined>(
+      (earliestSegment, node) => {
+        if (node.segment === undefined) {
+          return earliestSegment;
+        }
+
+        if (earliestSegment === undefined || node.segment < earliestSegment) {
+          return node.segment;
+        }
+
+        return earliestSegment;
+      },
+      undefined
+    );
+
     return new Set(
-      attackGraph.nodes.flatMap((node) => {
-        if (graphNodeStatusById[node.id] !== undefined) {
+      baseEnabledNodes.flatMap((node) => {
+        if (
+          node.segment !== undefined &&
+          earliestEnabledSegment !== undefined &&
+          node.segment > earliestEnabledSegment
+        ) {
           return [];
         }
 
-        const blockerIds = incomingBlockerIdsByNodeId.get(node.id);
-        const hasUnresolvedBlockers = blockerIds
-          ? Array.from(blockerIds).some(
-              (blockerId) => graphNodeStatusById[blockerId] === undefined
-            )
-          : false;
-
-        return hasUnresolvedBlockers ? [] : [node.id];
+        return [node.id];
       })
     );
   }, [attackGraph.edges, attackGraph.nodes, graphNodeStatusById]);
