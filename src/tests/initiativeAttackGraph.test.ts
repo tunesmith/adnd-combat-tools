@@ -182,7 +182,7 @@ describe('initiative attack graph', () => {
     expect(graph.layers).toEqual([['attack:party-1:1', 'attack:enemy-3:1']]);
   });
 
-  test('keeps an extra attacker on baseline initiative while only the duel gets local precedence', () => {
+  test('keeps an extra attacker on baseline initiative while the duel combatants still participate against others', () => {
     const scenario = buildInitiativeScenario({
       label: 'Ambiguous Scrum',
       partyInitiative: 6,
@@ -223,7 +223,70 @@ describe('initiative attack graph', () => {
         toNodeId: 'attack:enemy-4:1',
         reasons: ['direct-melee'],
       },
+      {
+        fromNodeId: 'attack:party-2:1',
+        toNodeId: 'attack:enemy-4:1',
+        reasons: ['simple-initiative'],
+      },
     ]);
+  });
+
+  test('lets a direct-melee combatant remain in the broader multiple-routine ordering against other combatants', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Direct Melee Still Orders Against Others',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Astrid',
+          declaredAction: 'open-melee',
+          weaponId: 39,
+          targetCombatantKeys: [3],
+        },
+        {
+          combatantKey: 2,
+          name: 'Bemis',
+          declaredAction: 'open-melee',
+          weaponId: 13,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Halberd Gnoll 1',
+          declaredAction: 'open-melee',
+          weaponId: 30,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Halberd Gnoll 2',
+          declaredAction: 'open-melee',
+          attackRoutineCount: 2,
+          weaponId: 30,
+          targetCombatantKeys: [2],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:enemy-4:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'attack:enemy-4:2',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
   });
 
   test('graphs charge contact and local first-strike precedence', () => {

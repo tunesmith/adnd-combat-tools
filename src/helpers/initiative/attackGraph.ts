@@ -286,6 +286,13 @@ interface SimpleInitiativePhase {
   node: InitiativeAttackNode;
 }
 
+const areDirectMeleeOpponents = (
+  leftCombatantId: string,
+  rightCombatantId: string,
+  directMeleeOpponentByCombatantId: Map<string, string>
+): boolean =>
+  directMeleeOpponentByCombatantId.get(leftCombatantId) === rightCombatantId;
+
 const getRoutineComponentCount = (
   combatant: InitiativeScenarioCombatant
 ): number => Math.max(1, combatant.attackRoutine.components.length);
@@ -342,7 +349,8 @@ const buildSimpleInitiativePhases = (
 const addSimpleInitiativeEdges = (
   combatantById: Map<string, InitiativeScenarioCombatant>,
   simpleInitiativeNodes: InitiativeAttackNode[],
-  edgesByKey: Map<string, InitiativeAttackEdge>
+  edgesByKey: Map<string, InitiativeAttackEdge>,
+  directMeleeOpponentByCombatantId: Map<string, string>
 ) => {
   const phases = buildSimpleInitiativePhases(
     simpleInitiativeNodes,
@@ -366,6 +374,16 @@ const addSimpleInitiativeEdges = (
           (leftPhase.node.segmentReason === 'spell-directed' ||
             rightPhase.node.segmentReason === 'spell-directed') &&
           leftPhase.combatantId !== rightPhase.combatantId
+        ) {
+          return;
+        }
+
+        if (
+          areDirectMeleeOpponents(
+            leftPhase.combatantId,
+            rightPhase.combatantId,
+            directMeleeOpponentByCombatantId
+          )
         ) {
           return;
         }
@@ -410,6 +428,18 @@ const addSimpleInitiativeEdges = (
         if (
           fromPhase?.node.segmentReason === 'spell-directed' &&
           fromPhase.combatantId !== toPhase?.combatantId
+        ) {
+          return;
+        }
+
+        if (
+          fromPhase &&
+          toPhase &&
+          areDirectMeleeOpponents(
+            fromPhase.combatantId,
+            toPhase.combatantId,
+            directMeleeOpponentByCombatantId
+          )
         ) {
           return;
         }
@@ -798,9 +828,17 @@ export const buildInitiativeAttackGraph = (
   resolution: InitiativeRoundResolution
 ): InitiativeAttackGraph => {
   const combatantById = getCombatantById(scenario);
-  const directMeleeCombatantIdSet = new Set(resolution.overriddenCombatantIds);
   const nodesById = new Map<string, InitiativeAttackNode>();
   const edgesByKey = new Map<string, InitiativeAttackEdge>();
+  const directMeleeOpponentByCombatantId = new Map(
+    resolution.directMeleeEngagements.flatMap((engagement) => [
+      [engagement.partyCombatantId, engagement.enemyCombatantId] as const,
+      [engagement.enemyCombatantId, engagement.partyCombatantId] as const,
+    ])
+  );
+  const directMeleeCombatantIdSet = new Set(
+    directMeleeOpponentByCombatantId.keys()
+  );
   const movementResolutionByCombatantId = new Map(
     resolution.movementResolutions.map((movementResolution) => [
       movementResolution.combatantId,
@@ -1048,7 +1086,6 @@ export const buildInitiativeAttackGraph = (
   const simpleInitiativeNodes = nodes.filter(
     (node) =>
       node.kind === 'attack' &&
-      !directMeleeCombatantIdSet.has(node.combatantId) &&
       !movementHandledCombatantIdSet.has(node.combatantId)
   );
 
@@ -1061,7 +1098,12 @@ export const buildInitiativeAttackGraph = (
     edgesByKey
   );
   addRoutineSequenceEdges(combatantById, simpleInitiativeNodes, edgesByKey);
-  addSimpleInitiativeEdges(combatantById, simpleInitiativeNodes, edgesByKey);
+  addSimpleInitiativeEdges(
+    combatantById,
+    simpleInitiativeNodes,
+    edgesByKey,
+    directMeleeOpponentByCombatantId
+  );
 
   const edges = Array.from(edgesByKey.values());
 
