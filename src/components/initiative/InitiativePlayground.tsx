@@ -715,6 +715,12 @@ interface InitiativePlaygroundProps {
 
 type GraphNodeStatus = 'resolved' | 'lost';
 
+interface GraphContextMenuState {
+  nodeId: string;
+  left: number;
+  top: number;
+}
+
 const GRAPH_NODE_FILL_BY_SIDE: Record<
   InitiativePlaytestSide,
   Record<'unresolved' | GraphNodeStatus, string>
@@ -781,11 +787,15 @@ const InitiativePlayground = ({
   >({});
   const [examplesMenuOpen, setExamplesMenuOpen] = useState<boolean>(false);
   const graphPopoverRef = useRef<HTMLDivElement | null>(null);
+  const graphContextMenuRef = useRef<HTMLDivElement | null>(null);
   const graphViewportRef = useRef<HTMLDivElement | null>(null);
   const pendingGraphRevealNodeIdRef = useRef<string | undefined>(undefined);
   const [graphPopoverHeight, setGraphPopoverHeight] = useState<number>(
     GRAPH_POPOVER_FALLBACK_HEIGHT
   );
+  const [graphContextMenu, setGraphContextMenu] = useState<
+    GraphContextMenuState | undefined
+  >(undefined);
   const scenario = useMemo(
     () => buildInitiativeScenario(buildDraftFromState(state)),
     [state]
@@ -918,19 +928,23 @@ const InitiativePlayground = ({
   }, [encodedState]);
 
   useEffect(() => {
-    if (!selectedGraphNodeId || typeof window === 'undefined') {
+    if (
+      (!selectedGraphNodeId && !graphContextMenu) ||
+      typeof window === 'undefined'
+    ) {
       return;
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setSelectedGraphNodeId(undefined);
+        setGraphContextMenu(undefined);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedGraphNodeId]);
+  }, [graphContextMenu, selectedGraphNodeId]);
 
   useEffect(() => {
     if (!selectedGraphNodeId) {
@@ -966,7 +980,10 @@ const InitiativePlayground = ({
   }, [selectedGraphNodeId]);
 
   useEffect(() => {
-    if (!selectedGraphNodeId || typeof window === 'undefined') {
+    if (
+      (!selectedGraphNodeId && !graphContextMenu) ||
+      typeof window === 'undefined'
+    ) {
       return;
     }
 
@@ -981,21 +998,27 @@ const InitiativePlayground = ({
         return;
       }
 
+      if (graphContextMenuRef.current?.contains(target)) {
+        return;
+      }
+
       if (target.closest('[data-graph-node-button="true"]')) {
         return;
       }
 
       setSelectedGraphNodeId(undefined);
+      setGraphContextMenu(undefined);
     };
 
     window.addEventListener('click', handleDocumentClick);
     return () => window.removeEventListener('click', handleDocumentClick);
-  }, [selectedGraphNodeId]);
+  }, [graphContextMenu, selectedGraphNodeId]);
 
   useEffect(() => {
     setGraphNodeStatusById((previous) =>
       Object.keys(previous).length === 0 ? previous : {}
     );
+    setGraphContextMenu(undefined);
   }, [attackGraph]);
 
   const getShareUrl = (): string | undefined => {
@@ -1542,6 +1565,13 @@ const InitiativePlayground = ({
       };
     });
   };
+  const applyGraphNodeStatus = (
+    nodeId: string,
+    status: GraphNodeStatus | undefined
+  ) => {
+    setGraphNodeStatus(nodeId, status);
+    setGraphContextMenu(undefined);
+  };
   const selectedGraphNode = attackGraph.nodes.find(
     (node) => node.id === selectedGraphNodeId
   );
@@ -1628,6 +1658,17 @@ const InitiativePlayground = ({
   const selectedGraphLostLabel =
     selectedGraphNode?.kind === 'spell-start' ||
     selectedGraphNode?.kind === 'spell-completion'
+      ? 'Mark spoiled'
+      : 'Mark lost';
+  const contextMenuGraphNode = graphContextMenu
+    ? attackGraph.nodes.find((node) => node.id === graphContextMenu.nodeId)
+    : undefined;
+  const contextMenuGraphNodeStatus = contextMenuGraphNode
+    ? graphNodeStatusById[contextMenuGraphNode.id]
+    : undefined;
+  const contextMenuGraphNodeLostLabel =
+    contextMenuGraphNode?.kind === 'spell-start' ||
+    contextMenuGraphNode?.kind === 'spell-completion'
       ? 'Mark spoiled'
       : 'Mark lost';
   const graphEdgesInRenderOrder = useMemo(() => {
@@ -2689,6 +2730,7 @@ const InitiativePlayground = ({
                   {attackGraph.nodes.length > 0 ? (
                     <div
                       className={styles['graphCanvas']}
+                      data-graph-canvas={'true'}
                       style={{
                         width: graphLayout.width,
                         height: graphLayout.height,
@@ -2724,6 +2766,9 @@ const InitiativePlayground = ({
                           setHoveredGraphNodeId(undefined);
                         }}
                         onClick={() => {
+                          if (graphContextMenu) {
+                            setGraphContextMenu(undefined);
+                          }
                           if (selectedGraphNodeId) {
                             setSelectedGraphNodeId(undefined);
                           }
@@ -2986,7 +3031,42 @@ const InitiativePlayground = ({
                               aria-label={`${display.combatantName}, target ${display.targetLabel}, ${display.actionLabel}`}
                               onClick={(event) => {
                                 event.stopPropagation();
+                                setGraphContextMenu(undefined);
                                 toggleSelectedGraphNode(node.id);
+                              }}
+                              onContextMenu={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+
+                                const canvasElement =
+                                  graphViewportRef.current?.querySelector(
+                                    '[data-graph-canvas="true"]'
+                                  );
+                                const canvasRect =
+                                  canvasElement?.getBoundingClientRect();
+
+                                if (!canvasRect) {
+                                  return;
+                                }
+
+                                setSelectedGraphNodeId(undefined);
+                                setGraphContextMenu({
+                                  nodeId: node.id,
+                                  left: Math.min(
+                                    Math.max(
+                                      8,
+                                      event.clientX - canvasRect.left + 10
+                                    ),
+                                    Math.max(8, graphLayout.width - 190)
+                                  ),
+                                  top: Math.min(
+                                    Math.max(
+                                      8,
+                                      event.clientY - canvasRect.top + 10
+                                    ),
+                                    Math.max(8, graphLayout.height - 128)
+                                  ),
+                                });
                               }}
                               onFocus={() => setHoveredGraphNodeId(node.id)}
                               onBlur={() =>
@@ -3137,6 +3217,58 @@ const InitiativePlayground = ({
                           );
                         })}
                       </svg>
+                      {contextMenuGraphNode && graphContextMenu ? (
+                        <div
+                          ref={graphContextMenuRef}
+                          className={styles['graphContextMenu']}
+                          style={{
+                            left: graphContextMenu.left,
+                            top: graphContextMenu.top,
+                          }}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <button
+                            type={'button'}
+                            className={styles['graphContextMenuButton']}
+                            onClick={() =>
+                              applyGraphNodeStatus(
+                                contextMenuGraphNode.id,
+                                'resolved'
+                              )
+                            }
+                            disabled={contextMenuGraphNodeStatus === 'resolved'}
+                          >
+                            Resolve
+                          </button>
+                          <button
+                            type={'button'}
+                            className={styles['graphContextMenuButton']}
+                            onClick={() =>
+                              applyGraphNodeStatus(
+                                contextMenuGraphNode.id,
+                                'lost'
+                              )
+                            }
+                            disabled={contextMenuGraphNodeStatus === 'lost'}
+                          >
+                            {contextMenuGraphNodeLostLabel}
+                          </button>
+                          {contextMenuGraphNodeStatus ? (
+                            <button
+                              type={'button'}
+                              className={styles['graphContextMenuButton']}
+                              onClick={() =>
+                                applyGraphNodeStatus(
+                                  contextMenuGraphNode.id,
+                                  undefined
+                                )
+                              }
+                            >
+                              Clear status
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : null}
                       {selectedGraphNode && selectedGraphPopoverPosition ? (
                         <div
                           ref={graphPopoverRef}
@@ -3184,7 +3316,7 @@ const InitiativePlayground = ({
                                 .filter(Boolean)
                                 .join(' ')}
                               onClick={() =>
-                                setGraphNodeStatus(
+                                applyGraphNodeStatus(
                                   selectedGraphNode.id,
                                   'resolved'
                                 )
@@ -3202,7 +3334,10 @@ const InitiativePlayground = ({
                                 .filter(Boolean)
                                 .join(' ')}
                               onClick={() =>
-                                setGraphNodeStatus(selectedGraphNode.id, 'lost')
+                                applyGraphNodeStatus(
+                                  selectedGraphNode.id,
+                                  'lost'
+                                )
                               }
                               disabled={selectedGraphNodeStatus === 'lost'}
                             >
@@ -3218,7 +3353,7 @@ const InitiativePlayground = ({
                                   .filter(Boolean)
                                   .join(' ')}
                                 onClick={() =>
-                                  setGraphNodeStatus(
+                                  applyGraphNodeStatus(
                                     selectedGraphNode.id,
                                     undefined
                                   )

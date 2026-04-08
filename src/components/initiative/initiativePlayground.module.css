@@ -674,6 +674,41 @@
   box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.28);
 }
 
+.graphContextMenu {
+  position: absolute;
+  z-index: 4;
+  min-width: 10rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.35rem;
+  background: linear-gradient(180deg, #536630, #3f4f25);
+  border: 1px solid rgba(172, 114, 35, 0.76);
+  box-shadow: 0 0.65rem 1.5rem rgba(0, 0, 0, 0.28);
+}
+
+.graphContextMenuButton {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--eggshell);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+}
+
+.graphContextMenuButton:hover,
+.graphContextMenuButton:focus-visible {
+  background: rgba(240, 239, 221, 0.08);
+  border-color: rgba(172, 114, 35, 0.48);
+  outline: none;
+}
+
+.graphContextMenuButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .graphSvg {
   display: block;
 }
