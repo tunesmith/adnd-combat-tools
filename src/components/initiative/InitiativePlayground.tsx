@@ -756,6 +756,8 @@ const getGraphNodeFill = (
 const getGraphNodeStatusLabel = (status: GraphNodeStatus): string =>
   GRAPH_NODE_STATUS_BADGE[status].label;
 
+const GRAPH_NODE_ENABLED_LABEL = 'Ready to resolve';
+
 const InitiativePlayground = ({
   rememberedState,
 }: InitiativePlaygroundProps) => {
@@ -1590,6 +1592,39 @@ const InitiativePlayground = ({
       ];
     });
   }, [attackNodeLabelById, selectedGraphOutgoingEdges]);
+  const enabledGraphNodeIds = useMemo(() => {
+    const incomingBlockerIdsByNodeId = new Map<string, Set<string>>();
+
+    attackGraph.edges.forEach((edge) => {
+      const blockerIds = incomingBlockerIdsByNodeId.get(edge.toNodeId);
+
+      if (blockerIds) {
+        blockerIds.add(edge.fromNodeId);
+      } else {
+        incomingBlockerIdsByNodeId.set(
+          edge.toNodeId,
+          new Set([edge.fromNodeId])
+        );
+      }
+    });
+
+    return new Set(
+      attackGraph.nodes.flatMap((node) => {
+        if (graphNodeStatusById[node.id] !== undefined) {
+          return [];
+        }
+
+        const blockerIds = incomingBlockerIdsByNodeId.get(node.id);
+        const hasUnresolvedBlockers = blockerIds
+          ? Array.from(blockerIds).some(
+              (blockerId) => graphNodeStatusById[blockerId] === undefined
+            )
+          : false;
+
+        return hasUnresolvedBlockers ? [] : [node.id];
+      })
+    );
+  }, [attackGraph.edges, attackGraph.nodes, graphNodeStatusById]);
   const selectedGraphLostLabel =
     selectedGraphNode?.kind === 'spell-start' ||
     selectedGraphNode?.kind === 'spell-completion'
@@ -2932,6 +2967,9 @@ const InitiativePlayground = ({
 
                           const isSelected = selectedGraphNode?.id === node.id;
                           const nodeStatus = graphNodeStatusById[node.id];
+                          const isEnabled =
+                            nodeStatus === undefined &&
+                            enabledGraphNodeIds.has(node.id);
                           const lineYs = getGraphNodeLineYs(
                             layoutNode.height,
                             display.lines.length
@@ -3005,6 +3043,22 @@ const InitiativePlayground = ({
                                   .filter(Boolean)
                                   .join(' ')}
                               />
+                              {isEnabled ? (
+                                <g aria-label={GRAPH_NODE_ENABLED_LABEL}>
+                                  <circle
+                                    cx={13}
+                                    cy={13}
+                                    r={8}
+                                    className={styles['graphNodeEnabledBadge']}
+                                  />
+                                  <path
+                                    d={'M 10 8.5 L 10 17.5 L 17 13 z'}
+                                    className={
+                                      styles['graphNodeEnabledBadgeIcon']
+                                    }
+                                  />
+                                </g>
+                              ) : null}
                               {nodeStatus ? (
                                 <g
                                   aria-label={getGraphNodeStatusLabel(

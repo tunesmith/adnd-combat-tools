@@ -817,6 +817,17 @@
   stroke-width: 1px;
 }
 
+.graphNodeEnabledBadge {
+  fill: #e2b235;
+  stroke: #3d4a24;
+  stroke-width: 1px;
+}
+
+.graphNodeEnabledBadgeIcon {
+  fill: #39471f;
+  pointer-events: none;
+}
+
 .graphNodeStatusBadgeResolved {
   fill: #efe5ca;
   stroke: #3d4a24;
