@@ -6,6 +6,11 @@ const customStyles = {
     backgroundColor: '#F0EFDD',
   }),
 
+  menu: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    zIndex: 9999,
+  }),
+
   option: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
     ...provided,
     backgroundColor: '#F0EFDD',
@@ -14,7 +19,7 @@ const customStyles = {
 
   menuPortal: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
     ...provided,
-    zIndex: 20,
+    zIndex: 9999,
   }),
 };
 

@@ -1,3 +1,5 @@
 node_modules/
 .idea/
 .next/
+out/
+data/party-encumbrance-dm.json
