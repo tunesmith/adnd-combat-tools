@@ -637,13 +637,6 @@
   display: block;
 }
 
-.graphWorkspaceWithInspector {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 22rem;
-  gap: 1rem;
-  align-items: stretch;
-}
-
 .graphViewport,
 .graphInspector {
   background: radial-gradient(
@@ -665,14 +658,18 @@
   min-width: 0;
 }
 
-.graphInspectorDock {
-  min-width: 0;
-  display: flex;
+.graphCanvas {
+  position: relative;
+  min-width: fit-content;
 }
 
-.graphInspectorDock .graphInspector {
-  flex: 1 1 auto;
+.graphPopover {
+  position: absolute;
+  width: 20rem;
+  max-width: min(20rem, calc(100vw - 4rem));
+  max-height: min(28rem, calc(100vh - 8rem));
   overflow: auto;
+  z-index: 3;
   background: linear-gradient(180deg, #536630, #3f4f25);
   box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.28);
 }
@@ -1033,15 +1030,6 @@
 @media (max-width: 900px) {
   .summaryCellBaseline {
     grid-column: auto;
-  }
-
-  .graphWorkspaceWithInspector {
-    grid-template-columns: 1fr;
-  }
-
-  .graphInspectorDock .graphInspector {
-    max-height: none;
-    box-shadow: none;
   }
 }
 

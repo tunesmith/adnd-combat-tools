@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { SingleValue } from 'react-select';
 import Select from 'react-select';
@@ -671,6 +671,10 @@ const GRAPH_NODE_MAX_WIDTH = 132;
 const GRAPH_NODE_HEIGHT = 66;
 const GRAPH_NODE_HORIZONTAL_PADDING = 14;
 const GRAPH_NODE_LINE_GAP = 14;
+const GRAPH_POPOVER_WIDTH = 320;
+const GRAPH_POPOVER_GAP = 14;
+const GRAPH_POPOVER_MARGIN = 10;
+const GRAPH_POPOVER_FALLBACK_HEIGHT = 320;
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
@@ -771,6 +775,12 @@ const InitiativePlayground = ({
     Record<string, GraphNodeStatus>
   >({});
   const [examplesMenuOpen, setExamplesMenuOpen] = useState<boolean>(false);
+  const graphPopoverRef = useRef<HTMLDivElement | null>(null);
+  const graphViewportRef = useRef<HTMLDivElement | null>(null);
+  const pendingGraphRevealNodeIdRef = useRef<string | undefined>(undefined);
+  const [graphPopoverHeight, setGraphPopoverHeight] = useState<number>(
+    GRAPH_POPOVER_FALLBACK_HEIGHT
+  );
   const scenario = useMemo(
     () => buildInitiativeScenario(buildDraftFromState(state)),
     [state]
@@ -915,6 +925,66 @@ const InitiativePlayground = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedGraphNodeId]);
+
+  useEffect(() => {
+    if (!selectedGraphNodeId) {
+      setGraphPopoverHeight(GRAPH_POPOVER_FALLBACK_HEIGHT);
+      return;
+    }
+
+    const popoverElement = graphPopoverRef.current;
+
+    if (!popoverElement) {
+      return;
+    }
+
+    const updateHeight = () => {
+      const nextHeight = Math.ceil(popoverElement.offsetHeight);
+      setGraphPopoverHeight((previous) =>
+        previous === nextHeight ? previous : nextHeight
+      );
+    };
+
+    updateHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    resizeObserver.observe(popoverElement);
+    return () => resizeObserver.disconnect();
+  }, [selectedGraphNodeId]);
+
+  useEffect(() => {
+    if (!selectedGraphNodeId || typeof window === 'undefined') {
+      return;
+    }
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      if (graphPopoverRef.current?.contains(target)) {
+        return;
+      }
+
+      if (target.closest('[data-graph-node-button="true"]')) {
+        return;
+      }
+
+      setSelectedGraphNodeId(undefined);
+    };
+
+    window.addEventListener('click', handleDocumentClick);
+    return () => window.removeEventListener('click', handleDocumentClick);
   }, [selectedGraphNodeId]);
 
   useEffect(() => {
@@ -1379,10 +1449,68 @@ const InitiativePlayground = ({
       ),
     [attackGraph.nodes, viewModel.combatantNameById]
   );
+  const revealGraphNodeInViewport = useCallback(
+    (nodeId: string) => {
+      const viewport = graphViewportRef.current;
+      const layoutNode = graphLayout.nodes.find(
+        (candidate) => candidate.nodeId === nodeId
+      );
+
+      if (!viewport || !layoutNode) {
+        return;
+      }
+
+      const margin = 32;
+      const nodeLeft = layoutNode.x;
+      const nodeRight = layoutNode.x + layoutNode.width;
+      const nodeTop = layoutNode.y;
+      const nodeBottom = layoutNode.y + layoutNode.height;
+      const viewLeft = viewport.scrollLeft;
+      const viewRight = viewLeft + viewport.clientWidth;
+      const viewTop = viewport.scrollTop;
+      const viewBottom = viewTop + viewport.clientHeight;
+
+      let nextLeft = viewLeft;
+      let nextTop = viewTop;
+
+      if (nodeLeft - margin < viewLeft) {
+        nextLeft = Math.max(0, nodeLeft - margin);
+      } else if (nodeRight + margin > viewRight) {
+        nextLeft = Math.max(0, nodeRight + margin - viewport.clientWidth);
+      }
+
+      if (nodeTop - margin < viewTop) {
+        nextTop = Math.max(0, nodeTop - margin);
+      } else if (nodeBottom + margin > viewBottom) {
+        nextTop = Math.max(0, nodeBottom + margin - viewport.clientHeight);
+      }
+
+      if (nextLeft !== viewLeft || nextTop !== viewTop) {
+        viewport.scrollTo({
+          left: nextLeft,
+          top: nextTop,
+          behavior: 'smooth',
+        });
+      }
+    },
+    [graphLayout.nodes]
+  );
+  const openGraphNode = (nodeId: string, revealInViewport = false) => {
+    if (revealInViewport) {
+      pendingGraphRevealNodeIdRef.current = nodeId;
+    }
+
+    setSelectedGraphNodeId(nodeId);
+  };
   const toggleSelectedGraphNode = (nodeId: string) => {
-    setSelectedGraphNodeId((previous) =>
-      previous === nodeId ? undefined : nodeId
-    );
+    setSelectedGraphNodeId((previous) => {
+      if (previous === nodeId) {
+        pendingGraphRevealNodeIdRef.current = undefined;
+        return undefined;
+      }
+
+      return nodeId;
+    });
   };
   const setGraphNodeStatus = (
     nodeId: string,
@@ -1411,6 +1539,15 @@ const InitiativePlayground = ({
   };
   const selectedGraphNode = attackGraph.nodes.find(
     (node) => node.id === selectedGraphNodeId
+  );
+  const selectedGraphNodeLayout = useMemo(
+    () =>
+      selectedGraphNode
+        ? graphLayout.nodes.find(
+            (layoutNode) => layoutNode.nodeId === selectedGraphNode.id
+          )
+        : undefined,
+    [graphLayout.nodes, selectedGraphNode]
   );
   const selectedGraphNodeStatus = selectedGraphNode
     ? graphNodeStatusById[selectedGraphNode.id]
@@ -1455,6 +1592,66 @@ const InitiativePlayground = ({
     selectedGraphNode?.kind === 'spell-completion'
       ? 'Mark spoiled'
       : 'Mark lost';
+  const selectedGraphPopoverPosition = useMemo(() => {
+    if (!selectedGraphNodeLayout) {
+      return undefined;
+    }
+
+    const preferredRight =
+      selectedGraphNodeLayout.x +
+      selectedGraphNodeLayout.width +
+      GRAPH_POPOVER_GAP;
+    const maxLeft = Math.max(
+      GRAPH_POPOVER_MARGIN,
+      graphLayout.width - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_MARGIN
+    );
+    const placeLeft =
+      preferredRight >
+      graphLayout.width - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_MARGIN;
+    const maxTop = Math.max(
+      GRAPH_POPOVER_MARGIN,
+      graphLayout.height - graphPopoverHeight - GRAPH_POPOVER_MARGIN
+    );
+    const preferredTop = Math.max(
+      GRAPH_POPOVER_MARGIN,
+      selectedGraphNodeLayout.y - 6
+    );
+
+    return {
+      left: placeLeft
+        ? Math.max(
+            GRAPH_POPOVER_MARGIN,
+            selectedGraphNodeLayout.x - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_GAP
+          )
+        : Math.min(preferredRight, maxLeft),
+      top: Math.min(preferredTop, maxTop),
+    };
+  }, [
+    graphLayout.height,
+    graphLayout.width,
+    graphPopoverHeight,
+    selectedGraphNodeLayout,
+  ]);
+
+  useEffect(() => {
+    if (
+      !selectedGraphNodeId ||
+      pendingGraphRevealNodeIdRef.current !== selectedGraphNodeId
+    ) {
+      return;
+    }
+
+    pendingGraphRevealNodeIdRef.current = undefined;
+
+    if (typeof window === 'undefined') {
+      revealGraphNodeInViewport(selectedGraphNodeId);
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      revealGraphNodeInViewport(selectedGraphNodeId);
+    });
+  }, [revealGraphNodeInViewport, selectedGraphNodeId]);
   const movementResolutionByCombatantId = useMemo(
     () =>
       new Map(
@@ -2427,339 +2624,514 @@ const InitiativePlayground = ({
                 </span>
               </div>
             </div>
-            <div
-              className={[
-                styles['graphWorkspace'],
-                selectedGraphNode ? styles['graphWorkspaceWithInspector'] : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
+            <div className={styles['graphWorkspace']}>
               <div className={styles['graphViewportShell']}>
-                <div className={styles['graphViewport']}>
+                <div ref={graphViewportRef} className={styles['graphViewport']}>
                   {attackGraph.nodes.length > 0 ? (
-                    <svg
-                      className={styles['graphSvg']}
-                      viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
-                      width={graphLayout.width}
-                      height={graphLayout.height}
-                      aria-label={'Initiative precedence graph'}
-                      onClick={() => {
-                        if (selectedGraphNodeId) {
-                          setSelectedGraphNodeId(undefined);
-                        }
+                    <div
+                      className={styles['graphCanvas']}
+                      style={{
+                        width: graphLayout.width,
+                        height: graphLayout.height,
                       }}
                     >
-                      <defs>
-                        <marker
-                          id={'initiative-dag-arrowhead'}
-                          viewBox={'0 0 10 10'}
-                          refX={'4'}
-                          refY={'5'}
-                          markerUnits={'userSpaceOnUse'}
-                          markerWidth={'8'}
-                          markerHeight={'8'}
-                          orient={'auto-start-reverse'}
-                        >
-                          <path
-                            d={'M 0 0 L 10 5 L 0 10 z'}
-                            className={styles['graphArrowhead']}
-                          />
-                        </marker>
-                        <marker
-                          id={'initiative-dag-arrowhead-spell'}
-                          viewBox={'0 0 14 14'}
-                          refX={'4'}
-                          refY={'7'}
-                          markerUnits={'userSpaceOnUse'}
-                          markerWidth={'12'}
-                          markerHeight={'12'}
-                          orient={'auto-start-reverse'}
-                        >
-                          <path
-                            d={'M 0 0 L 14 7 L 0 14 z'}
-                            className={styles['graphArrowhead']}
-                          />
-                        </marker>
-                      </defs>
-
-                      {graphLayout.hasSegmentBand ? (
-                        <>
-                          {graphLayout.segmentColumns.map(
-                            (segmentColumn, columnIndex) => (
-                              <rect
-                                key={`segment-lane-${segmentColumn.segment}`}
-                                x={segmentColumn.startX}
-                                y={graphLayout.headerLineY}
-                                width={
-                                  segmentColumn.endX - segmentColumn.startX
-                                }
-                                height={
-                                  graphLayout.segmentBandBottomY -
-                                  graphLayout.headerLineY
-                                }
-                                className={[
-                                  styles['graphSegmentLane'],
-                                  columnIndex % 2 === 0
-                                    ? styles['graphSegmentLaneEven']
-                                    : styles['graphSegmentLaneOdd'],
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ')}
-                              />
-                            )
-                          )}
-                          <line
-                            x1={graphLayout.segmentBoundaryXs[0] || 0}
-                            y1={graphLayout.headerLineY}
-                            x2={
-                              graphLayout.segmentBoundaryXs[
-                                graphLayout.segmentBoundaryXs.length - 1
-                              ] || 0
-                            }
-                            y2={graphLayout.headerLineY}
-                            className={styles['graphSegmentHeaderLine']}
-                          />
-                          <line
-                            x1={graphLayout.segmentBoundaryXs[0] || 0}
-                            y1={graphLayout.segmentBandBottomY}
-                            x2={
-                              graphLayout.segmentBoundaryXs[
-                                graphLayout.segmentBoundaryXs.length - 1
-                              ] || 0
-                            }
-                            y2={graphLayout.segmentBandBottomY}
-                            className={styles['graphSegmentBandLine']}
-                          />
-                          {graphLayout.segmentColumns.map((segmentColumn) => (
-                            <g key={`segment-column-${segmentColumn.segment}`}>
-                              <text
-                                x={segmentColumn.centerX}
-                                y={graphLayout.headerLabelY}
-                                textAnchor={'middle'}
-                                className={styles['graphSegmentColumnLabel']}
-                              >
-                                {segmentColumn.segment}
-                              </text>
-                            </g>
-                          ))}
-                          {graphLayout.segmentBoundaryXs.map((boundaryX) => (
-                            <line
-                              key={`segment-boundary-${boundaryX}`}
-                              x1={boundaryX}
-                              y1={graphLayout.headerLineY}
-                              x2={boundaryX}
-                              y2={graphLayout.segmentBandBottomY}
-                              className={styles['graphSegmentGuide']}
-                            />
-                          ))}
-                        </>
-                      ) : null}
-
-                      {graphLayout.edges.map((edge) => {
-                        const isSelected =
-                          selectedGraphNode !== undefined &&
-                          (edge.fromNodeId === selectedGraphNode.id ||
-                            edge.toNodeId === selectedGraphNode.id);
-                        const isSpellCastingEdge =
-                          edge.reasons.includes('spell-casting');
-                        const fromNode = attackNodeById.get(edge.fromNodeId);
-                        const fromStatus = graphNodeStatusById[edge.fromNodeId];
-
-                        return (
-                          <path
-                            key={`${edge.fromNodeId}-${edge.toNodeId}`}
-                            d={edge.path}
-                            className={[
-                              styles['graphEdge'],
-                              isSpellCastingEdge
-                                ? styles['graphEdgeSpellCasting']
-                                : '',
-                              fromStatus === 'resolved'
-                                ? styles['graphEdgeResolved']
-                                : '',
-                              fromStatus === 'resolved' &&
-                              fromNode?.side === 'party'
-                                ? styles['graphEdgeResolvedParty']
-                                : '',
-                              fromStatus === 'resolved' &&
-                              fromNode?.side === 'enemy'
-                                ? styles['graphEdgeResolvedEnemy']
-                                : '',
-                              fromStatus === 'lost'
-                                ? styles['graphEdgeLost']
-                                : '',
-                              fromStatus === 'lost' &&
-                              fromNode?.side === 'party'
-                                ? styles['graphEdgeLostParty']
-                                : '',
-                              fromStatus === 'lost' &&
-                              fromNode?.side === 'enemy'
-                                ? styles['graphEdgeLostEnemy']
-                                : '',
-                              isSelected ? styles['graphEdgeSelected'] : '',
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                            markerEnd={
-                              isSpellCastingEdge
-                                ? 'url(#initiative-dag-arrowhead-spell)'
-                                : 'url(#initiative-dag-arrowhead)'
-                            }
-                          />
-                        );
-                      })}
-
-                      {graphLayout.nodes.map((layoutNode) => {
-                        const node = attackNodeById.get(layoutNode.nodeId);
-                        if (!node) {
-                          return null;
-                        }
-
-                        const display = graphNodeDisplayById[node.id];
-                        if (!display) {
-                          return null;
-                        }
-
-                        const isSelected = selectedGraphNode?.id === node.id;
-                        const nodeStatus = graphNodeStatusById[node.id];
-                        const lineYs = getGraphNodeLineYs(
-                          layoutNode.height,
-                          display.lines.length
-                        );
-
-                        return (
-                          <g
-                            key={layoutNode.nodeId}
-                            transform={`translate(${layoutNode.x} ${layoutNode.y})`}
-                            role={'button'}
-                            tabIndex={0}
-                            aria-label={`${display.combatantName}, target ${display.targetLabel}, ${display.actionLabel}`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              toggleSelectedGraphNode(node.id);
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter' || event.key === ' ') {
-                                event.preventDefault();
-                                toggleSelectedGraphNode(node.id);
-                              }
-                            }}
+                      <svg
+                        className={styles['graphSvg']}
+                        viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
+                        width={graphLayout.width}
+                        height={graphLayout.height}
+                        aria-label={'Initiative precedence graph'}
+                        onClick={() => {
+                          if (selectedGraphNodeId) {
+                            setSelectedGraphNodeId(undefined);
+                          }
+                        }}
+                      >
+                        <defs>
+                          <marker
+                            id={'initiative-dag-arrowhead'}
+                            viewBox={'0 0 10 10'}
+                            refX={'4'}
+                            refY={'5'}
+                            markerUnits={'userSpaceOnUse'}
+                            markerWidth={'8'}
+                            markerHeight={'8'}
+                            orient={'auto-start-reverse'}
                           >
-                            <rect
-                              x={0}
-                              y={0}
-                              width={layoutNode.width}
-                              height={layoutNode.height}
-                              rx={16}
-                              style={{
-                                fill: getGraphNodeFill(node.side, nodeStatus),
-                              }}
-                              className={[
-                                styles['graphNodeCard'],
-                                node.side === 'party'
-                                  ? styles['graphNodeParty']
-                                  : styles['graphNodeEnemy'],
-                                nodeStatus === 'resolved'
-                                  ? styles['graphNodeResolved']
-                                  : '',
-                                nodeStatus === 'resolved' &&
-                                node.side === 'party'
-                                  ? styles['graphNodePartyResolved']
-                                  : '',
-                                nodeStatus === 'resolved' &&
-                                node.side === 'enemy'
-                                  ? styles['graphNodeEnemyResolved']
-                                  : '',
-                                nodeStatus === 'lost'
-                                  ? styles['graphNodeLost']
-                                  : '',
-                                nodeStatus === 'lost' && node.side === 'party'
-                                  ? styles['graphNodePartyLost']
-                                  : '',
-                                nodeStatus === 'lost' && node.side === 'enemy'
-                                  ? styles['graphNodeEnemyLost']
-                                  : '',
-                                isSelected ? styles['graphNodeSelected'] : '',
-                              ]
-                                .filter(Boolean)
-                                .join(' ')}
+                            <path
+                              d={'M 0 0 L 10 5 L 0 10 z'}
+                              className={styles['graphArrowhead']}
                             />
-                            {nodeStatus ? (
-                              <g
-                                aria-label={getGraphNodeStatusLabel(nodeStatus)}
-                              >
-                                <circle
-                                  cx={layoutNode.width - 13}
-                                  cy={13}
-                                  r={9}
+                          </marker>
+                          <marker
+                            id={'initiative-dag-arrowhead-spell'}
+                            viewBox={'0 0 14 14'}
+                            refX={'4'}
+                            refY={'7'}
+                            markerUnits={'userSpaceOnUse'}
+                            markerWidth={'12'}
+                            markerHeight={'12'}
+                            orient={'auto-start-reverse'}
+                          >
+                            <path
+                              d={'M 0 0 L 14 7 L 0 14 z'}
+                              className={styles['graphArrowhead']}
+                            />
+                          </marker>
+                        </defs>
+
+                        {graphLayout.hasSegmentBand ? (
+                          <>
+                            {graphLayout.segmentColumns.map(
+                              (segmentColumn, columnIndex) => (
+                                <rect
+                                  key={`segment-lane-${segmentColumn.segment}`}
+                                  x={segmentColumn.startX}
+                                  y={graphLayout.headerLineY}
+                                  width={
+                                    segmentColumn.endX - segmentColumn.startX
+                                  }
+                                  height={
+                                    graphLayout.segmentBandBottomY -
+                                    graphLayout.headerLineY
+                                  }
                                   className={[
-                                    styles['graphNodeStatusBadge'],
-                                    nodeStatus === 'resolved'
-                                      ? styles['graphNodeStatusBadgeResolved']
-                                      : styles['graphNodeStatusBadgeLost'],
+                                    styles['graphSegmentLane'],
+                                    columnIndex % 2 === 0
+                                      ? styles['graphSegmentLaneEven']
+                                      : styles['graphSegmentLaneOdd'],
                                   ]
                                     .filter(Boolean)
                                     .join(' ')}
                                 />
+                              )
+                            )}
+                            <line
+                              x1={graphLayout.segmentBoundaryXs[0] || 0}
+                              y1={graphLayout.headerLineY}
+                              x2={
+                                graphLayout.segmentBoundaryXs[
+                                  graphLayout.segmentBoundaryXs.length - 1
+                                ] || 0
+                              }
+                              y2={graphLayout.headerLineY}
+                              className={styles['graphSegmentHeaderLine']}
+                            />
+                            <line
+                              x1={graphLayout.segmentBoundaryXs[0] || 0}
+                              y1={graphLayout.segmentBandBottomY}
+                              x2={
+                                graphLayout.segmentBoundaryXs[
+                                  graphLayout.segmentBoundaryXs.length - 1
+                                ] || 0
+                              }
+                              y2={graphLayout.segmentBandBottomY}
+                              className={styles['graphSegmentBandLine']}
+                            />
+                            {graphLayout.segmentColumns.map((segmentColumn) => (
+                              <g
+                                key={`segment-column-${segmentColumn.segment}`}
+                              >
                                 <text
-                                  x={layoutNode.width - 13}
-                                  y={13}
+                                  x={segmentColumn.centerX}
+                                  y={graphLayout.headerLabelY}
                                   textAnchor={'middle'}
-                                  dominantBaseline={'central'}
+                                  className={styles['graphSegmentColumnLabel']}
+                                >
+                                  {segmentColumn.segment}
+                                </text>
+                              </g>
+                            ))}
+                            {graphLayout.segmentBoundaryXs.map((boundaryX) => (
+                              <line
+                                key={`segment-boundary-${boundaryX}`}
+                                x1={boundaryX}
+                                y1={graphLayout.headerLineY}
+                                x2={boundaryX}
+                                y2={graphLayout.segmentBandBottomY}
+                                className={styles['graphSegmentGuide']}
+                              />
+                            ))}
+                          </>
+                        ) : null}
+
+                        {graphLayout.edges.map((edge) => {
+                          const isSelected =
+                            selectedGraphNode !== undefined &&
+                            (edge.fromNodeId === selectedGraphNode.id ||
+                              edge.toNodeId === selectedGraphNode.id);
+                          const isSpellCastingEdge =
+                            edge.reasons.includes('spell-casting');
+                          const fromNode = attackNodeById.get(edge.fromNodeId);
+                          const fromStatus =
+                            graphNodeStatusById[edge.fromNodeId];
+
+                          return (
+                            <path
+                              key={`${edge.fromNodeId}-${edge.toNodeId}`}
+                              d={edge.path}
+                              className={[
+                                styles['graphEdge'],
+                                isSpellCastingEdge
+                                  ? styles['graphEdgeSpellCasting']
+                                  : '',
+                                fromStatus === 'resolved'
+                                  ? styles['graphEdgeResolved']
+                                  : '',
+                                fromStatus === 'resolved' &&
+                                fromNode?.side === 'party'
+                                  ? styles['graphEdgeResolvedParty']
+                                  : '',
+                                fromStatus === 'resolved' &&
+                                fromNode?.side === 'enemy'
+                                  ? styles['graphEdgeResolvedEnemy']
+                                  : '',
+                                fromStatus === 'lost'
+                                  ? styles['graphEdgeLost']
+                                  : '',
+                                fromStatus === 'lost' &&
+                                fromNode?.side === 'party'
+                                  ? styles['graphEdgeLostParty']
+                                  : '',
+                                fromStatus === 'lost' &&
+                                fromNode?.side === 'enemy'
+                                  ? styles['graphEdgeLostEnemy']
+                                  : '',
+                                isSelected ? styles['graphEdgeSelected'] : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                              markerEnd={
+                                isSpellCastingEdge
+                                  ? 'url(#initiative-dag-arrowhead-spell)'
+                                  : 'url(#initiative-dag-arrowhead)'
+                              }
+                            />
+                          );
+                        })}
+
+                        {graphLayout.nodes.map((layoutNode) => {
+                          const node = attackNodeById.get(layoutNode.nodeId);
+                          if (!node) {
+                            return null;
+                          }
+
+                          const display = graphNodeDisplayById[node.id];
+                          if (!display) {
+                            return null;
+                          }
+
+                          const isSelected = selectedGraphNode?.id === node.id;
+                          const nodeStatus = graphNodeStatusById[node.id];
+                          const lineYs = getGraphNodeLineYs(
+                            layoutNode.height,
+                            display.lines.length
+                          );
+
+                          return (
+                            <g
+                              key={layoutNode.nodeId}
+                              transform={`translate(${layoutNode.x} ${layoutNode.y})`}
+                              role={'button'}
+                              tabIndex={0}
+                              data-graph-node-button={'true'}
+                              aria-label={`${display.combatantName}, target ${display.targetLabel}, ${display.actionLabel}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleSelectedGraphNode(node.id);
+                              }}
+                              onKeyDown={(event) => {
+                                if (
+                                  event.key === 'Enter' ||
+                                  event.key === ' '
+                                ) {
+                                  event.preventDefault();
+                                  toggleSelectedGraphNode(node.id);
+                                }
+                              }}
+                            >
+                              <rect
+                                x={0}
+                                y={0}
+                                width={layoutNode.width}
+                                height={layoutNode.height}
+                                rx={16}
+                                style={{
+                                  fill: getGraphNodeFill(node.side, nodeStatus),
+                                }}
+                                className={[
+                                  styles['graphNodeCard'],
+                                  node.side === 'party'
+                                    ? styles['graphNodeParty']
+                                    : styles['graphNodeEnemy'],
+                                  nodeStatus === 'resolved'
+                                    ? styles['graphNodeResolved']
+                                    : '',
+                                  nodeStatus === 'resolved' &&
+                                  node.side === 'party'
+                                    ? styles['graphNodePartyResolved']
+                                    : '',
+                                  nodeStatus === 'resolved' &&
+                                  node.side === 'enemy'
+                                    ? styles['graphNodeEnemyResolved']
+                                    : '',
+                                  nodeStatus === 'lost'
+                                    ? styles['graphNodeLost']
+                                    : '',
+                                  nodeStatus === 'lost' && node.side === 'party'
+                                    ? styles['graphNodePartyLost']
+                                    : '',
+                                  nodeStatus === 'lost' && node.side === 'enemy'
+                                    ? styles['graphNodeEnemyLost']
+                                    : '',
+                                  isSelected ? styles['graphNodeSelected'] : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                              />
+                              {nodeStatus ? (
+                                <g
+                                  aria-label={getGraphNodeStatusLabel(
+                                    nodeStatus
+                                  )}
+                                >
+                                  <circle
+                                    cx={layoutNode.width - 13}
+                                    cy={13}
+                                    r={9}
+                                    className={[
+                                      styles['graphNodeStatusBadge'],
+                                      nodeStatus === 'resolved'
+                                        ? styles['graphNodeStatusBadgeResolved']
+                                        : styles['graphNodeStatusBadgeLost'],
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
+                                  />
+                                  <text
+                                    x={layoutNode.width - 13}
+                                    y={13}
+                                    textAnchor={'middle'}
+                                    dominantBaseline={'central'}
+                                    className={[
+                                      styles['graphNodeStatusBadgeText'],
+                                      nodeStatus === 'lost'
+                                        ? styles['graphNodeStatusBadgeTextLost']
+                                        : '',
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
+                                  >
+                                    {GRAPH_NODE_STATUS_BADGE[nodeStatus].symbol}
+                                  </text>
+                                </g>
+                              ) : null}
+                              {display.lines.map((line, index) => (
+                                <text
+                                  key={`${layoutNode.nodeId}-line-${index}`}
+                                  x={layoutNode.width / 2}
+                                  y={lineYs[index]}
+                                  textAnchor={'middle'}
+                                  dominantBaseline={'middle'}
                                   className={[
-                                    styles['graphNodeStatusBadgeText'],
+                                    line.kind === 'name'
+                                      ? styles['graphNodeName']
+                                      : line.kind === 'target'
+                                      ? styles['graphNodeTarget']
+                                      : styles['graphNodeAction'],
+                                    nodeStatus === 'resolved'
+                                      ? styles['graphNodeTextResolved']
+                                      : '',
                                     nodeStatus === 'lost'
-                                      ? styles['graphNodeStatusBadgeTextLost']
+                                      ? styles['graphNodeTextLost']
+                                      : '',
+                                    line.kind === 'name' &&
+                                    nodeStatus === 'resolved'
+                                      ? styles['graphNodeNameResolved']
+                                      : '',
+                                    line.kind === 'name' &&
+                                    nodeStatus === 'lost'
+                                      ? styles['graphNodeNameLost']
+                                      : '',
+                                    line.isSecondary
+                                      ? styles['graphNodeActionSecondary']
                                       : '',
                                   ]
                                     .filter(Boolean)
                                     .join(' ')}
                                 >
-                                  {GRAPH_NODE_STATUS_BADGE[nodeStatus].symbol}
+                                  {line.text}
                                 </text>
-                              </g>
+                              ))}
+                            </g>
+                          );
+                        })}
+                      </svg>
+                      {selectedGraphNode && selectedGraphPopoverPosition ? (
+                        <div
+                          ref={graphPopoverRef}
+                          className={[
+                            styles['graphInspector'],
+                            styles['graphPopover'],
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          style={selectedGraphPopoverPosition}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className={styles['graphInspectorHeader']}>
+                            <div className={styles['graphInspectorTitle']}>
+                              {attackNodeLabelById[selectedGraphNode.id] ||
+                                selectedGraphNode.id}
+                            </div>
+                          </div>
+                          <div className={styles['graphInspectorMeta']}>
+                            <span>
+                              Side:{' '}
+                              {selectedGraphNode.side === 'party'
+                                ? 'Party'
+                                : 'Enemy'}
+                            </span>
+                            {selectedGraphNode.segment !== undefined ? (
+                              <span>Segment: {selectedGraphNode.segment}</span>
                             ) : null}
-                            {display.lines.map((line, index) => (
-                              <text
-                                key={`${layoutNode.nodeId}-line-${index}`}
-                                x={layoutNode.width / 2}
-                                y={lineYs[index]}
-                                textAnchor={'middle'}
-                                dominantBaseline={'middle'}
+                            <span>
+                              Status:{' '}
+                              {selectedGraphNodeStatus
+                                ? getGraphNodeStatusLabel(
+                                    selectedGraphNodeStatus
+                                  )
+                                : 'Pending'}
+                            </span>
+                          </div>
+                          <div className={styles['graphInspectorActions']}>
+                            <button
+                              type={'button'}
+                              className={[
+                                styles['graphInspectorButton'],
+                                styles['graphInspectorButtonResolve'],
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                              onClick={() =>
+                                setGraphNodeStatus(
+                                  selectedGraphNode.id,
+                                  'resolved'
+                                )
+                              }
+                              disabled={selectedGraphNodeStatus === 'resolved'}
+                            >
+                              Resolve
+                            </button>
+                            <button
+                              type={'button'}
+                              className={[
+                                styles['graphInspectorButton'],
+                                styles['graphInspectorButtonLost'],
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                              onClick={() =>
+                                setGraphNodeStatus(selectedGraphNode.id, 'lost')
+                              }
+                              disabled={selectedGraphNodeStatus === 'lost'}
+                            >
+                              {selectedGraphLostLabel}
+                            </button>
+                            {selectedGraphNodeStatus ? (
+                              <button
+                                type={'button'}
                                 className={[
-                                  line.kind === 'name'
-                                    ? styles['graphNodeName']
-                                    : line.kind === 'target'
-                                    ? styles['graphNodeTarget']
-                                    : styles['graphNodeAction'],
-                                  nodeStatus === 'resolved'
-                                    ? styles['graphNodeTextResolved']
-                                    : '',
-                                  nodeStatus === 'lost'
-                                    ? styles['graphNodeTextLost']
-                                    : '',
-                                  line.kind === 'name' &&
-                                  nodeStatus === 'resolved'
-                                    ? styles['graphNodeNameResolved']
-                                    : '',
-                                  line.kind === 'name' && nodeStatus === 'lost'
-                                    ? styles['graphNodeNameLost']
-                                    : '',
-                                  line.isSecondary
-                                    ? styles['graphNodeActionSecondary']
-                                    : '',
+                                  styles['graphInspectorButton'],
+                                  styles['graphInspectorButtonClear'],
                                 ]
                                   .filter(Boolean)
                                   .join(' ')}
+                                onClick={() =>
+                                  setGraphNodeStatus(
+                                    selectedGraphNode.id,
+                                    undefined
+                                  )
+                                }
                               >
-                                {line.text}
-                              </text>
-                            ))}
-                          </g>
-                        );
-                      })}
-                    </svg>
+                                Clear status
+                              </button>
+                            ) : null}
+                          </div>
+
+                          <div className={styles['graphInspectorSection']}>
+                            <h4 className={styles['graphSubhead']}>Why Here</h4>
+                            <ol className={styles['graphInspectorPlainList']}>
+                              {selectedGraphWhyHere.map((line, index) => (
+                                <li
+                                  key={`why-here-${selectedGraphNode.id}-${index}`}
+                                  className={styles['graphInspectorPlainItem']}
+                                >
+                                  <span className={styles['stepDetail']}>
+                                    {line}
+                                  </span>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+
+                          {selectedGraphIncomingEdges.length > 0 ? (
+                            <div className={styles['graphInspectorSection']}>
+                              <h4 className={styles['graphSubhead']}>
+                                Blocked By
+                              </h4>
+                              <ol className={styles['graphInspectorList']}>
+                                {selectedGraphIncomingEdges.map((edge) => (
+                                  <li
+                                    key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
+                                    className={styles['graphInspectorItem']}
+                                  >
+                                    <button
+                                      type={'button'}
+                                      className={
+                                        styles['graphInspectorLinkButton']
+                                      }
+                                      onClick={() =>
+                                        openGraphNode(edge.fromNodeId, true)
+                                      }
+                                    >
+                                      {attackNodeLabelById[edge.fromNodeId] ||
+                                        edge.fromNodeId}
+                                    </button>
+                                    <span className={styles['stepDetail']}>
+                                      {getGraphEdgeExplanation(edge)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+                          ) : null}
+
+                          {selectedGraphOutgoingTargets.length > 0 ? (
+                            <div className={styles['graphInspectorSection']}>
+                              <h4 className={styles['graphSubhead']}>Blocks</h4>
+                              <ul className={styles['graphInspectorLinkList']}>
+                                {selectedGraphOutgoingTargets.map((target) => (
+                                  <li key={`outgoing-target-${target.nodeId}`}>
+                                    <button
+                                      type={'button'}
+                                      className={
+                                        styles['graphInspectorLinkButton']
+                                      }
+                                      onClick={() =>
+                                        openGraphNode(target.nodeId, true)
+                                      }
+                                    >
+                                      {target.label}
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
                   ) : (
                     <div className={styles['graphEmpty']}>
                       Add combatants to generate a precedence graph.
@@ -2767,151 +3139,6 @@ const InitiativePlayground = ({
                   )}
                 </div>
               </div>
-              {selectedGraphNode ? (
-                <aside className={styles['graphInspectorDock']}>
-                  <div className={styles['graphInspector']}>
-                    <div className={styles['graphInspectorHeader']}>
-                      <div className={styles['graphInspectorTitle']}>
-                        {attackNodeLabelById[selectedGraphNode.id] ||
-                          selectedGraphNode.id}
-                      </div>
-                      <button
-                        type={'button'}
-                        className={styles['graphInspectorButton']}
-                        onClick={() => setSelectedGraphNodeId(undefined)}
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                    <div className={styles['graphInspectorMeta']}>
-                      <span>
-                        Side:{' '}
-                        {selectedGraphNode.side === 'party' ? 'Party' : 'Enemy'}
-                      </span>
-                      {selectedGraphNode.segment !== undefined ? (
-                        <span>Segment: {selectedGraphNode.segment}</span>
-                      ) : null}
-                      <span>
-                        Status:{' '}
-                        {selectedGraphNodeStatus
-                          ? getGraphNodeStatusLabel(selectedGraphNodeStatus)
-                          : 'Pending'}
-                      </span>
-                    </div>
-                    <div className={styles['graphInspectorActions']}>
-                      <button
-                        type={'button'}
-                        className={[
-                          styles['graphInspectorButton'],
-                          styles['graphInspectorButtonResolve'],
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                        onClick={() =>
-                          setGraphNodeStatus(selectedGraphNode.id, 'resolved')
-                        }
-                        disabled={selectedGraphNodeStatus === 'resolved'}
-                      >
-                        Resolve
-                      </button>
-                      <button
-                        type={'button'}
-                        className={[
-                          styles['graphInspectorButton'],
-                          styles['graphInspectorButtonLost'],
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                        onClick={() =>
-                          setGraphNodeStatus(selectedGraphNode.id, 'lost')
-                        }
-                        disabled={selectedGraphNodeStatus === 'lost'}
-                      >
-                        {selectedGraphLostLabel}
-                      </button>
-                      {selectedGraphNodeStatus ? (
-                        <button
-                          type={'button'}
-                          className={[
-                            styles['graphInspectorButton'],
-                            styles['graphInspectorButtonClear'],
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                          onClick={() =>
-                            setGraphNodeStatus(selectedGraphNode.id, undefined)
-                          }
-                        >
-                          Clear status
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <div className={styles['graphInspectorSection']}>
-                      <h4 className={styles['graphSubhead']}>Why Here</h4>
-                      <ol className={styles['graphInspectorPlainList']}>
-                        {selectedGraphWhyHere.map((line, index) => (
-                          <li
-                            key={`why-here-${selectedGraphNode.id}-${index}`}
-                            className={styles['graphInspectorPlainItem']}
-                          >
-                            <span className={styles['stepDetail']}>{line}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-
-                    {selectedGraphIncomingEdges.length > 0 ? (
-                      <div className={styles['graphInspectorSection']}>
-                        <h4 className={styles['graphSubhead']}>Blocked By</h4>
-                        <ol className={styles['graphInspectorList']}>
-                          {selectedGraphIncomingEdges.map((edge) => (
-                            <li
-                              key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
-                              className={styles['graphInspectorItem']}
-                            >
-                              <button
-                                type={'button'}
-                                className={styles['graphInspectorLinkButton']}
-                                onClick={() =>
-                                  setSelectedGraphNodeId(edge.fromNodeId)
-                                }
-                              >
-                                {attackNodeLabelById[edge.fromNodeId] ||
-                                  edge.fromNodeId}
-                              </button>
-                              <span className={styles['stepDetail']}>
-                                {getGraphEdgeExplanation(edge)}
-                              </span>
-                            </li>
-                          ))}
-                        </ol>
-                      </div>
-                    ) : null}
-
-                    {selectedGraphOutgoingTargets.length > 0 ? (
-                      <div className={styles['graphInspectorSection']}>
-                        <h4 className={styles['graphSubhead']}>Blocks</h4>
-                        <ul className={styles['graphInspectorLinkList']}>
-                          {selectedGraphOutgoingTargets.map((target) => (
-                            <li key={`outgoing-target-${target.nodeId}`}>
-                              <button
-                                type={'button'}
-                                className={styles['graphInspectorLinkButton']}
-                                onClick={() =>
-                                  setSelectedGraphNodeId(target.nodeId)
-                                }
-                              >
-                                {target.label}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                  </div>
-                </aside>
-              ) : null}
             </div>
           </div>
         </section>
