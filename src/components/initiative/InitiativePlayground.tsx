@@ -339,7 +339,7 @@ const createCombatant = (
 });
 
 const createMixedPreset = (): InitiativePlaytestState => ({
-  label: 'Mixed Open Melee',
+  label: 'Tied Initiative Melee',
   partyInitiative: '4',
   enemyInitiative: '4',
   nextCombatantKey: 5,
@@ -356,124 +356,52 @@ const createMixedPreset = (): InitiativePlaytestState => ({
   attackCastingSegments: {},
 });
 
-const createEnemyEdgePreset = (): InitiativePlaytestState => ({
-  label: 'Enemy Initiative Edge',
-  partyInitiative: '2',
+const createChargeInteractionsPreset = (): InitiativePlaytestState => ({
+  label: 'Charge Interactions',
+  partyInitiative: '3',
   enemyInitiative: '5',
-  nextCombatantKey: 5,
-  party: [createCombatant(1, 'Hugh', 2, [3]), createCombatant(2, 'Lysa', 17)],
-  enemies: [
-    createCombatant(3, 'Orc', 1, [1]),
-    createCombatant(4, 'Orc Archer', 16),
-  ],
-  pairDistances: {},
-  attackActivationSegments: {},
-  attackCastingSegments: {},
-});
-
-const createScrumPreset = (): InitiativePlaytestState => ({
-  label: 'Ambiguous Scrum',
-  partyInitiative: '6',
-  enemyInitiative: '1',
-  nextCombatantKey: 6,
+  nextCombatantKey: 11,
   party: [
-    createCombatant(1, 'Moryn', 2, [4]),
-    createCombatant(2, 'Sella', 3, [4]),
-    createCombatant(3, 'Tarn', 16),
+    createCombatant(1, 'Garran', 59, [6], 'charge', '12'),
+    createCombatant(2, 'Mave', 56, [7], 'charge', '12'),
+    createCombatant(3, 'Doran', 50, [8], 'set-vs-charge', '12'),
+    createCombatant(4, 'Bowman', 11, [9], 'missile', '12'),
+    createCombatant(5, 'Quick Bowman', 11, [10], 'missile', '12', '1', '+3'),
   ],
   enemies: [
-    createCombatant(4, 'Bugbear', 1, [1]),
-    createCombatant(5, 'Kobold', 1),
+    createCombatant(6, 'Shortsword Guard', 57, [1], 'open-melee', '9'),
+    createCombatant(7, 'Trident Guard', 59, [2], 'open-melee', '9'),
+    createCombatant(8, 'Raider', 56, [3], 'charge', '12'),
+    createCombatant(9, 'Raider', 56, [4], 'charge', '12'),
+    createCombatant(10, 'Raider Captain', 56, [5], 'charge', '12'),
   ],
-  pairDistances: {},
+  pairDistances: {
+    [getPairDistanceKey(1, 6)]: '4',
+    [getPairDistanceKey(2, 7)]: '4',
+    [getPairDistanceKey(3, 8)]: '4',
+    [getPairDistanceKey(4, 9)]: '4',
+    [getPairDistanceKey(5, 10)]: '4',
+  },
   attackActivationSegments: {},
   attackCastingSegments: {},
 });
 
-const createChargePreset = (): InitiativePlaytestState => ({
-  label: 'Charge Contact',
+const createTurnAndDevicePreset = (): InitiativePlaytestState => ({
+  label: 'Turn and Device',
   partyInitiative: '3',
   enemyInitiative: '5',
   nextCombatantKey: 5,
   party: [
-    createCombatant(1, 'Garran', 56, [3], 'charge', '12'),
-    createCombatant(2, 'Ysra', 49, [], 'missile', '12'),
+    createCombatant(1, 'Sister Arda', 17, [3], 'turn-undead', '12'),
+    createCombatant(2, 'Rodric', 17, [4], 'magical-device', '12'),
   ],
   enemies: [
-    createCombatant(3, 'Hobgoblin', 57, [1], 'open-melee', '9'),
-    createCombatant(4, 'Goblin Archer', 16, [], 'missile', '6'),
+    createCombatant(3, 'Skeleton', 1, [1], 'open-melee', '12'),
+    createCombatant(4, 'Skeleton 2', 1, [2], 'open-melee', '12'),
   ],
-  pairDistances: {
-    [getPairDistanceKey(1, 3)]: '4',
-  },
-  attackActivationSegments: {},
-  attackCastingSegments: {},
-});
-
-const createSetVsChargePreset = (): InitiativePlaytestState => ({
-  label: 'Set vs Charge',
-  partyInitiative: '2',
-  enemyInitiative: '5',
-  nextCombatantKey: 4,
-  party: [createCombatant(1, 'Doran', 50, [3], 'set-vs-charge', '12')],
-  enemies: [createCombatant(3, 'Raider', 56, [1], 'charge', '12')],
-  pairDistances: {
-    [getPairDistanceKey(1, 3)]: '4',
-  },
-  attackActivationSegments: {},
-  attackCastingSegments: {},
-});
-
-const createMissileVsChargePreset = (): InitiativePlaytestState => ({
-  label: 'Missile vs Charge',
-  partyInitiative: '5',
-  enemyInitiative: '2',
-  nextCombatantKey: 4,
-  party: [createCombatant(1, 'Bowman', 11, [3], 'missile', '12')],
-  enemies: [createCombatant(3, 'Raider', 56, [1], 'charge', '12')],
-  pairDistances: {
-    [getPairDistanceKey(1, 3)]: '4',
-  },
-  attackActivationSegments: {},
-  attackCastingSegments: {},
-});
-
-const createMissileDexEdgePreset = (): InitiativePlaytestState => ({
-  label: 'Missile Dex Edge',
-  partyInitiative: '3',
-  enemyInitiative: '5',
-  nextCombatantKey: 4,
-  party: [createCombatant(1, 'Bowman', 11, [3], 'missile', '12', '1', '+3')],
-  enemies: [createCombatant(3, 'Raider', 56, [1], 'charge', '12')],
-  pairDistances: {
-    [getPairDistanceKey(1, 3)]: '4',
-  },
-  attackActivationSegments: {},
-  attackCastingSegments: {},
-});
-
-const createTurnUndeadPreset = (): InitiativePlaytestState => ({
-  label: 'Turn Undead',
-  partyInitiative: '3',
-  enemyInitiative: '5',
-  nextCombatantKey: 4,
-  party: [createCombatant(1, 'Sister Arda', 17, [3], 'turn-undead', '12')],
-  enemies: [createCombatant(3, 'Skeleton', 1, [1], 'open-melee', '12')],
-  pairDistances: {},
-  attackActivationSegments: {},
-  attackCastingSegments: {},
-});
-
-const createMagicalDevicePreset = (): InitiativePlaytestState => ({
-  label: 'Magical Device',
-  partyInitiative: '3',
-  enemyInitiative: '5',
-  nextCombatantKey: 4,
-  party: [createCombatant(1, 'Rodric', 17, [3], 'magical-device', '12')],
-  enemies: [createCombatant(3, 'Skeleton', 1, [1], 'open-melee', '12')],
   pairDistances: {},
   attackActivationSegments: {
-    [getAttackDeclarationKey('party', 1, 3)]: '3',
+    [getAttackDeclarationKey('party', 2, 4)]: '3',
   },
   attackCastingSegments: {},
 });
@@ -2882,63 +2810,21 @@ const InitiativePlayground = ({
                   className={styles['presetMenuButton']}
                   onClick={() => loadPreset(createMixedPreset)}
                 >
-                  Mixed Example
+                  Tied Melee
                 </button>
                 <button
                   type={'button'}
                   className={styles['presetMenuButton']}
-                  onClick={() => loadPreset(createEnemyEdgePreset)}
+                  onClick={() => loadPreset(createChargeInteractionsPreset)}
                 >
-                  Enemy Edge
+                  Charge Interactions
                 </button>
                 <button
                   type={'button'}
                   className={styles['presetMenuButton']}
-                  onClick={() => loadPreset(createScrumPreset)}
+                  onClick={() => loadPreset(createTurnAndDevicePreset)}
                 >
-                  Ambiguous Scrum
-                </button>
-                <button
-                  type={'button'}
-                  className={styles['presetMenuButton']}
-                  onClick={() => loadPreset(createChargePreset)}
-                >
-                  Charge Contact
-                </button>
-                <button
-                  type={'button'}
-                  className={styles['presetMenuButton']}
-                  onClick={() => loadPreset(createSetVsChargePreset)}
-                >
-                  Set vs Charge
-                </button>
-                <button
-                  type={'button'}
-                  className={styles['presetMenuButton']}
-                  onClick={() => loadPreset(createMissileVsChargePreset)}
-                >
-                  Missile vs Charge
-                </button>
-                <button
-                  type={'button'}
-                  className={styles['presetMenuButton']}
-                  onClick={() => loadPreset(createMissileDexEdgePreset)}
-                >
-                  Missile Dex Edge
-                </button>
-                <button
-                  type={'button'}
-                  className={styles['presetMenuButton']}
-                  onClick={() => loadPreset(createTurnUndeadPreset)}
-                >
-                  Turn Undead
-                </button>
-                <button
-                  type={'button'}
-                  className={styles['presetMenuButton']}
-                  onClick={() => loadPreset(createMagicalDevicePreset)}
-                >
-                  Magical Device
+                  Turn and Device
                 </button>
                 <button
                   type={'button'}
