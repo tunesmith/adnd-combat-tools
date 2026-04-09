@@ -19,6 +19,8 @@ const getSimpleOrderStep = (
 export const resolveInitiativeRound = (
   scenario: InitiativeScenario
 ): InitiativeRoundResolution => {
+  const hasRoundAction = (combatant: InitiativeScenario['party'][number]) =>
+    combatant.declaredAction !== 'none';
   const overriddenCombatantIds = Array.from(
     new Set(
       scenario.directMeleeEngagements.flatMap((engagement) => [
@@ -27,12 +29,12 @@ export const resolveInitiativeRound = (
       ])
     )
   );
-  const simpleOrderPartyCombatantIds = scenario.party.map(
-    (combatant) => combatant.id
-  );
-  const simpleOrderEnemyCombatantIds = scenario.enemies.map(
-    (combatant) => combatant.id
-  );
+  const simpleOrderPartyCombatantIds = scenario.party
+    .filter(hasRoundAction)
+    .map((combatant) => combatant.id);
+  const simpleOrderEnemyCombatantIds = scenario.enemies
+    .filter(hasRoundAction)
+    .map((combatant) => combatant.id);
 
   const simpleOrderSteps = (() => {
     if (scenario.simpleOrder === 'party-first') {

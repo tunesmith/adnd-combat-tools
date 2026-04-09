@@ -137,8 +137,9 @@ const getSpellCastingSegments = (
 const hasRegisteredCombatAction = (
   combatant: InitiativeScenarioCombatant
 ): boolean =>
-  combatant.targetIds.length > 0 ||
-  combatant.declaredAction === 'spell-casting';
+  combatant.declaredAction !== 'none' &&
+  (combatant.targetIds.length > 0 ||
+    combatant.declaredAction === 'spell-casting');
 
 const hasInvalidOpenMeleeOpposition = (
   combatant: InitiativeScenarioCombatant,

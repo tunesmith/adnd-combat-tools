@@ -41,7 +41,9 @@ const formatInches = (value: number): string =>
   `${Number.isInteger(value) ? value : value.toFixed(1).replace(/\.0$/, '')}"`;
 
 const formatDeclaredActionLabel = (action: InitiativeDeclaredAction): string =>
-  action === 'open-melee'
+  action === 'none'
+    ? 'no combat action'
+    : action === 'open-melee'
     ? 'open melee'
     : action === 'set-vs-charge'
     ? 'set vs charge'

@@ -40,9 +40,25 @@ interface InitiativePlaytestStateV1 {
   attackCastingSegments: Record<string, string>;
 }
 
-type InitiativePlaytestStateAnyVersion = InitiativePlaytestStateV1;
+interface InitiativePlaytestStateV2 {
+  version: 2;
+  label: string;
+  partyInitiative: string;
+  enemyInitiative: string;
+  nextCombatantKey: number;
+  party: InitiativePlaytestCombatantState[];
+  enemies: InitiativePlaytestCombatantState[];
+  pairDistances: Record<string, string>;
+  attackActivationSegments: Record<string, string>;
+  attackCastingSegments: Record<string, string>;
+}
+
+type InitiativePlaytestStateAnyVersion =
+  | InitiativePlaytestStateV1
+  | InitiativePlaytestStateV2;
 
 const INITIATIVE_ACTIONS: InitiativeDeclaredAction[] = [
+  'none',
   'open-melee',
   'close',
   'charge',
@@ -87,12 +103,14 @@ const sanitizeCombatant = (
         .filter((value) => Number.isFinite(value))
     : [];
 
+  const declaredAction = isInitiativeDeclaredAction(candidate['declaredAction'])
+    ? candidate['declaredAction']
+    : 'open-melee';
+
   return {
     key: sanitizeNumber(candidate['key'], 0),
     name: sanitizeString(candidate['name']),
-    declaredAction: isInitiativeDeclaredAction(candidate['declaredAction'])
-      ? candidate['declaredAction']
-      : 'open-melee',
+    declaredAction,
     movementRate: sanitizeString(candidate['movementRate'] || '12'),
     actionDistanceInches: sanitizeString(candidate['actionDistanceInches']),
     activationSegments: sanitizeString(candidate['activationSegments']),
@@ -102,7 +120,7 @@ const sanitizeCombatant = (
     ),
     attackRoutineCount: sanitizeString(candidate['attackRoutineCount'] || '1'),
     weaponId: sanitizeNumber(candidate['weaponId'], 1),
-    targetCombatantKeys,
+    targetCombatantKeys: declaredAction === 'none' ? [] : targetCombatantKeys,
   };
 };
 
@@ -152,12 +170,6 @@ const sanitizeAttackCastingSegments = (
 const transformInitiativePlaytestState = (
   candidate: InitiativePlaytestStateAnyVersion
 ): InitiativePlaytestState => {
-  if (candidate.version !== 1) {
-    throw new Error(
-      `Unsupported initiative state version ${candidate.version}`
-    );
-  }
-
   return {
     label: sanitizeString(candidate.label),
     partyInitiative: sanitizeString(candidate.partyInitiative),
@@ -183,7 +195,7 @@ const parseInitiativePlaytestState = (
   }
 
   const version = sanitizeNumber(value['version'], NaN);
-  if (version !== 1) {
+  if (version !== 1 && version !== 2) {
     throw new Error('Stored initiative state is not a supported version.');
   }
 
@@ -192,7 +204,7 @@ const parseInitiativePlaytestState = (
   }
 
   return transformInitiativePlaytestState({
-    version: 1,
+    version,
     label: sanitizeString(value['label']),
     partyInitiative: sanitizeString(value['partyInitiative']),
     enemyInitiative: sanitizeString(value['enemyInitiative']),
@@ -212,8 +224,8 @@ const parseInitiativePlaytestState = (
 export const encodeInitiativePlaytestState = (
   state: InitiativePlaytestState
 ): string => {
-  const persistedState: InitiativePlaytestStateV1 = {
-    version: 1,
+  const persistedState: InitiativePlaytestStateV2 = {
+    version: 2,
     ...state,
   };
 

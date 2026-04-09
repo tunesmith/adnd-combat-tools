@@ -55,6 +55,7 @@ const ACTION_OPTIONS: Array<{
   value: InitiativeDeclaredAction;
   label: string;
 }> = [
+  { value: 'none', label: 'No combat action' },
   { value: 'open-melee', label: 'Open melee' },
   { value: 'close', label: 'Close' },
   { value: 'charge', label: 'Charge' },
@@ -203,6 +204,10 @@ const requiresAttackRoutineCountInput = (
   declaredAction: InitiativeDeclaredAction,
   weaponId: number
 ): boolean => declaredAction === 'open-melee' && isNonMissileWeaponId(weaponId);
+
+const usesTargetSelection = (
+  declaredAction: InitiativeDeclaredAction
+): boolean => declaredAction !== 'none';
 
 const getPairDistanceKey = (
   partyCombatantKey: number,
@@ -683,6 +688,10 @@ const getCombatantActionHint = (
 const getCombatantTargetSummary = (
   combatant: InitiativePlaytestCombatant
 ): string => {
+  if (!usesTargetSelection(combatant.declaredAction)) {
+    return 'No targets used';
+  }
+
   const targetCount = combatant.targetCombatantKeys.length;
 
   if (targetCount === 0) {
@@ -1151,6 +1160,13 @@ const InitiativePlayground = ({
 
               if (
                 changes.declaredAction &&
+                !usesTargetSelection(changes.declaredAction)
+              ) {
+                updatedCombatant.targetCombatantKeys = [];
+              }
+
+              if (
+                changes.declaredAction &&
                 isSingleTargetDeclarationAction(changes.declaredAction) &&
                 updatedCombatant.targetCombatantKeys.length > 1
               ) {
@@ -1373,7 +1389,9 @@ const InitiativePlayground = ({
         return previous;
       }
 
-      const nextTargetCombatantKeys = isSingleTargetDeclarationAction(action)
+      const nextTargetCombatantKeys = !usesTargetSelection(action)
+        ? []
+        : isSingleTargetDeclarationAction(action)
         ? attackingCombatant.targetCombatantKeys.slice(0, 1)
         : action === 'missile'
         ? attackingCombatant.targetCombatantKeys.slice(
@@ -1426,7 +1444,10 @@ const InitiativePlayground = ({
         (combatant) => combatant.key === attackerKey
       );
 
-      if (!attackingCombatant) {
+      if (
+        !attackingCombatant ||
+        !usesTargetSelection(attackingCombatant.declaredAction)
+      ) {
         return previous;
       }
 
@@ -2624,6 +2645,11 @@ const InitiativePlayground = ({
                                       ]
                                         .filter(Boolean)
                                         .join(' ')}
+                                      disabled={
+                                        !usesTargetSelection(
+                                          enemyCombatant.declaredAction
+                                        )
+                                      }
                                       aria-label={`Declare enemy attack from ${getCombatantDisplayName(
                                         'enemy',
                                         enemyCombatant,
@@ -2671,6 +2697,11 @@ const InitiativePlayground = ({
                                       ]
                                         .filter(Boolean)
                                         .join(' ')}
+                                      disabled={
+                                        !usesTargetSelection(
+                                          partyCombatant.declaredAction
+                                        )
+                                      }
                                       aria-label={`Declare party attack from ${getCombatantDisplayName(
                                         'party',
                                         partyCombatant,
@@ -3863,6 +3894,13 @@ const InitiativePlayground = ({
                       spell completes.
                     </p>
                   </>
+                ) : null}
+                {actionEditorTarget.action === 'none' ? (
+                  <p className={styles['modalHint']}>
+                    This combatant is spending the round on a non-combat action.
+                    It will not appear in the initiative graph and it ignores
+                    target selections in the matrix.
+                  </p>
                 ) : null}
                 {actionEditorTarget.action === 'missile' ? (
                   <p className={styles['modalHint']}>

@@ -188,6 +188,72 @@ describe('initiative codec', () => {
     ).resolves.toEqual(state);
   });
 
+  test('round-trips no combat action and clears stale targets from older payloads', async () => {
+    const state: InitiativePlaytestState = {
+      label: 'No Combat Action',
+      partyInitiative: '3',
+      enemyInitiative: '5',
+      nextCombatantKey: 4,
+      party: [
+        {
+          key: 1,
+          name: 'Brother Caradoc',
+          declaredAction: 'none',
+          movementRate: '12',
+          actionDistanceInches: '',
+          activationSegments: '',
+          castingSegments: '',
+          missileInitiativeAdjustment: '0',
+          attackRoutineCount: '1',
+          weaponId: 17,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [],
+      pairDistances: {},
+      attackActivationSegments: {},
+      attackCastingSegments: {},
+    };
+
+    await expect(
+      decodeInitiativePlaytestState(encodeInitiativePlaytestState(state))
+    ).resolves.toEqual(state);
+
+    const legacyEncodedState = encodeURIComponent(
+      deflateSync(
+        JSON.stringify({
+          version: 1,
+          label: 'Legacy None',
+          partyInitiative: '3',
+          enemyInitiative: '5',
+          nextCombatantKey: 4,
+          party: [
+            {
+              key: 1,
+              name: 'Brother Caradoc',
+              declaredAction: 'none',
+              movementRate: '12',
+              attackRoutineCount: '1',
+              weaponId: 17,
+              targetCombatantKeys: [3],
+            },
+          ],
+          enemies: [],
+          pairDistances: {},
+          attackActivationSegments: {},
+          attackCastingSegments: {},
+        })
+      ).toString('base64')
+    );
+
+    await expect(
+      decodeInitiativePlaytestState(legacyEncodedState)
+    ).resolves.toEqual({
+      ...state,
+      label: 'Legacy None',
+    });
+  });
+
   test('round-trips magical device activation segments per directed declaration', async () => {
     const state: InitiativePlaytestState = {
       label: 'Magical Device',

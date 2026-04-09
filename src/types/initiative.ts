@@ -5,6 +5,7 @@ export type InitiativeScenarioOrder =
   | 'simultaneous';
 export type InitiativeWeaponType = 'melee' | 'missile' | 'natural';
 export type InitiativeDeclaredAction =
+  | 'none'
   | 'open-melee'
   | 'close'
   | 'charge'

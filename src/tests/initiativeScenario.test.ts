@@ -320,6 +320,45 @@ describe('generic initiative scenario builder', () => {
     ]);
   });
 
+  test('treats no combat action as graphless and targetless even if stale targets are present', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'No Combat Action',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Brother Caradoc',
+          declaredAction: 'none',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+
+    expect(scenario.party[0]?.targetIds).toEqual([]);
+    expect(scenario.party[0]?.attackRoutine).toMatchObject({
+      label: 'No combat action',
+      timingBasisComponentId: 'idle',
+      components: [
+        {
+          id: 'idle',
+          order: 1,
+          label: 'idle',
+        },
+      ],
+    });
+  });
+
   test('treats magical device use as a single discharge and carries activation segments', () => {
     const scenario = buildInitiativeScenario({
       label: 'Magical Device',

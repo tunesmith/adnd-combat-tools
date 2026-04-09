@@ -54,6 +54,38 @@ describe('initiative attack graph', () => {
     ]);
   });
 
+  test('omits no combat action nodes from the graph even if stale targets are present', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'No Combat Action',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Brother Caradoc',
+          declaredAction: 'none',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual([]);
+    expect(graph.edges).toEqual([]);
+    expect(graph.layers).toEqual([]);
+  });
+
   test('adds only local direct-melee precedence in a tied round', () => {
     const draft: InitiativeScenarioDraft = {
       label: 'Mixed Open Melee',

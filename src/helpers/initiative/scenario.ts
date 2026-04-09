@@ -37,6 +37,10 @@ const getOrdinaryRoundAttackCount = (
   fireRate: number | undefined,
   attackRoutineCount: number | undefined
 ): number => {
+  if (declaredAction === 'none') {
+    return 0;
+  }
+
   if (weaponType === 'missile') {
     if (fireRate === undefined) {
       return 1;
@@ -69,6 +73,22 @@ const buildAttackRoutine = (
   fireRate: number | undefined,
   attackRoutineCount: number | undefined
 ): InitiativeAttackRoutine => {
+  if (declaredAction === 'none') {
+    return {
+      id: `routine:${combatantId}:1`,
+      label: 'No combat action',
+      combatantId,
+      components: [
+        {
+          id: 'idle',
+          order: 1,
+          label: 'idle',
+        },
+      ],
+      timingBasisComponentId: 'idle',
+    };
+  }
+
   if (declaredAction === 'turn-undead') {
     return {
       id: `routine:${combatantId}:1`,
@@ -218,30 +238,34 @@ const buildScenarioCombatants = (
     const weaponInfo = getWeaponInfo(combatant.weaponId);
     const combatantId = getCombatantId(side, combatant.combatantKey);
     const weaponType = getInitiativeWeaponType(weaponInfo?.weaponType);
+    const declaredAction = combatant.declaredAction ?? 'open-melee';
     const draftTargetDeclarations = getTargetDeclarations(combatant);
-    const targetDeclarations = draftTargetDeclarations
-      .filter((targetDeclaration) =>
-        opposingCombatantKeys.has(targetDeclaration.targetCombatantKey)
-      )
-      .slice(
-        0,
-        weaponType === 'missile'
-          ? getMissileTargetLimit(
-              weaponInfo?.weaponType === 'missile'
-                ? weaponInfo.fireRate
+    const targetDeclarations =
+      declaredAction === 'none'
+        ? []
+        : draftTargetDeclarations
+            .filter((targetDeclaration) =>
+              opposingCombatantKeys.has(targetDeclaration.targetCombatantKey)
+            )
+            .slice(
+              0,
+              weaponType === 'missile'
+                ? getMissileTargetLimit(
+                    weaponInfo?.weaponType === 'missile'
+                      ? weaponInfo.fireRate
+                      : undefined
+                  )
                 : undefined
             )
-          : undefined
-      )
-      .map((targetDeclaration) => ({
-        targetId: getCombatantId(
-          opposingSide,
-          targetDeclaration.targetCombatantKey
-        ),
-        distanceInches: targetDeclaration.distanceInches,
-        activationSegments: targetDeclaration.activationSegments,
-        castingSegments: targetDeclaration.castingSegments,
-      }));
+            .map((targetDeclaration) => ({
+              targetId: getCombatantId(
+                opposingSide,
+                targetDeclaration.targetCombatantKey
+              ),
+              distanceInches: targetDeclaration.distanceInches,
+              activationSegments: targetDeclaration.activationSegments,
+              castingSegments: targetDeclaration.castingSegments,
+            }));
     const sharedDistanceInches =
       combatant.actionDistanceInches ??
       getSharedDeclarationValue(draftTargetDeclarations, 'distanceInches');
@@ -260,7 +284,7 @@ const buildScenarioCombatants = (
       name: getCombatantName(combatant.name, side, index),
       initiative,
       missileInitiativeAdjustment: combatant.missileInitiativeAdjustment ?? 0,
-      declaredAction: combatant.declaredAction ?? 'open-melee',
+      declaredAction,
       movementRate: combatant.movementRate ?? DEFAULT_MOVEMENT_RATE,
       actionDistanceInches: sharedDistanceInches,
       activationSegments: sharedActivationSegments,
@@ -280,7 +304,7 @@ const buildScenarioCombatants = (
       ),
       attackRoutine: buildAttackRoutine(
         combatantId,
-        combatant.declaredAction ?? 'open-melee',
+        declaredAction,
         weaponType,
         weaponInfo?.weaponType === 'missile' ? weaponInfo.fireRate : undefined,
         combatant.attackRoutineCount
