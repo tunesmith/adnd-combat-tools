@@ -758,6 +758,8 @@ const GRAPH_POPOVER_WIDTH = 320;
 const GRAPH_POPOVER_GAP = 14;
 const GRAPH_POPOVER_MARGIN = 10;
 const GRAPH_POPOVER_FALLBACK_HEIGHT = 320;
+const GRAPH_POPOVER_MAX_HEIGHT = 448;
+const GRAPH_POPOVER_VIEWPORT_INSET = 28;
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
@@ -1322,6 +1324,17 @@ const InitiativePlayground = ({
   const [graphPopoverHeight, setGraphPopoverHeight] = useState<number>(
     GRAPH_POPOVER_FALLBACK_HEIGHT
   );
+  const [graphViewportMetrics, setGraphViewportMetrics] = useState<{
+    clientHeight: number;
+    clientWidth: number;
+    scrollLeft: number;
+    scrollTop: number;
+  }>({
+    clientHeight: 0,
+    clientWidth: 0,
+    scrollLeft: 0,
+    scrollTop: 0,
+  });
   const [graphContextMenu, setGraphContextMenu] = useState<
     GraphContextMenuState | undefined
   >(undefined);
@@ -1527,6 +1540,49 @@ const InitiativePlayground = ({
     resizeObserver.observe(popoverElement);
     return () => resizeObserver.disconnect();
   }, [selectedGraphNodeId]);
+
+  useEffect(() => {
+    const viewport = graphViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const updateMetrics = () => {
+      const nextMetrics = {
+        clientHeight: viewport.clientHeight,
+        clientWidth: viewport.clientWidth,
+        scrollLeft: viewport.scrollLeft,
+        scrollTop: viewport.scrollTop,
+      };
+
+      setGraphViewportMetrics((previous) =>
+        previous.clientHeight === nextMetrics.clientHeight &&
+        previous.clientWidth === nextMetrics.clientWidth &&
+        previous.scrollLeft === nextMetrics.scrollLeft &&
+        previous.scrollTop === nextMetrics.scrollTop
+          ? previous
+          : nextMetrics
+      );
+    };
+
+    updateMetrics();
+    viewport.addEventListener('scroll', updateMetrics, { passive: true });
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => viewport.removeEventListener('scroll', updateMetrics);
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateMetrics();
+    });
+
+    resizeObserver.observe(viewport);
+    return () => {
+      viewport.removeEventListener('scroll', updateMetrics);
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (
@@ -2248,39 +2304,65 @@ const InitiativePlayground = ({
       return undefined;
     }
 
+    const viewportWidth =
+      graphViewportMetrics.clientWidth > 0
+        ? graphViewportMetrics.clientWidth
+        : graphLayout.width;
+    const viewportHeight =
+      graphViewportMetrics.clientHeight > 0
+        ? graphViewportMetrics.clientHeight
+        : graphLayout.height;
+    const visibleNodeLeft =
+      selectedGraphNodeLayout.x - graphViewportMetrics.scrollLeft;
+    const visibleNodeTop =
+      selectedGraphNodeLayout.y - graphViewportMetrics.scrollTop;
     const preferredRight =
-      selectedGraphNodeLayout.x +
-      selectedGraphNodeLayout.width +
-      GRAPH_POPOVER_GAP;
+      visibleNodeLeft + selectedGraphNodeLayout.width + GRAPH_POPOVER_GAP;
     const maxLeft = Math.max(
       GRAPH_POPOVER_MARGIN,
-      graphLayout.width - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_MARGIN
+      viewportWidth - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_MARGIN
     );
     const placeLeft =
       preferredRight >
-      graphLayout.width - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_MARGIN;
+      viewportWidth - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_MARGIN;
+    const maxPopoverHeight = Math.max(
+      160,
+      Math.min(
+        GRAPH_POPOVER_MAX_HEIGHT,
+        viewportHeight - GRAPH_POPOVER_MARGIN * 2 - GRAPH_POPOVER_VIEWPORT_INSET
+      )
+    );
+    const effectivePopoverHeight = Math.min(
+      graphPopoverHeight,
+      maxPopoverHeight
+    );
     const maxTop = Math.max(
       GRAPH_POPOVER_MARGIN,
-      graphLayout.height - graphPopoverHeight - GRAPH_POPOVER_MARGIN
+      viewportHeight -
+        effectivePopoverHeight -
+        GRAPH_POPOVER_MARGIN -
+        GRAPH_POPOVER_VIEWPORT_INSET
     );
-    const preferredTop = Math.max(
-      GRAPH_POPOVER_MARGIN,
-      selectedGraphNodeLayout.y - 6
-    );
+    const preferredTop = Math.max(GRAPH_POPOVER_MARGIN, visibleNodeTop - 6);
 
     return {
       left: placeLeft
         ? Math.max(
             GRAPH_POPOVER_MARGIN,
-            selectedGraphNodeLayout.x - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_GAP
+            visibleNodeLeft - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_GAP
           )
         : Math.min(preferredRight, maxLeft),
       top: Math.min(preferredTop, maxTop),
+      maxHeight: maxPopoverHeight,
     };
   }, [
     graphLayout.height,
     graphLayout.width,
     graphPopoverHeight,
+    graphViewportMetrics.clientHeight,
+    graphViewportMetrics.clientWidth,
+    graphViewportMetrics.scrollLeft,
+    graphViewportMetrics.scrollTop,
     selectedGraphNodeLayout,
   ]);
 
@@ -3950,179 +4032,168 @@ const InitiativePlayground = ({
                           ) : null}
                         </div>
                       ) : null}
-                      {selectedGraphNode && selectedGraphPopoverPosition ? (
-                        <div
-                          ref={graphPopoverRef}
-                          className={[
-                            styles['graphInspector'],
-                            styles['graphPopover'],
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                          style={selectedGraphPopoverPosition}
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className={styles['graphInspectorHeader']}>
-                            <div className={styles['graphInspectorTitle']}>
-                              {attackNodeLabelById[selectedGraphNode.id] ||
-                                selectedGraphNode.id}
-                            </div>
-                          </div>
-                          <div className={styles['graphInspectorMeta']}>
-                            <span>
-                              Side:{' '}
-                              {selectedGraphNode.side === 'party'
-                                ? 'Party'
-                                : 'Enemy'}
-                            </span>
-                            {selectedGraphNode.segment !== undefined ? (
-                              <span>Segment: {selectedGraphNode.segment}</span>
-                            ) : null}
-                            <span>
-                              Status:{' '}
-                              {selectedGraphNodeStatus
-                                ? getGraphNodeStatusLabel(
-                                    selectedGraphNodeStatus
-                                  )
-                                : 'Pending'}
-                            </span>
-                          </div>
-                          <div className={styles['graphInspectorActions']}>
-                            <button
-                              type={'button'}
-                              className={[
-                                styles['graphInspectorButton'],
-                                styles['graphInspectorButtonResolve'],
-                              ]
-                                .filter(Boolean)
-                                .join(' ')}
-                              onClick={() =>
-                                applyGraphNodeStatus(
-                                  selectedGraphNode.id,
-                                  'resolved'
-                                )
-                              }
-                              disabled={selectedGraphNodeStatus === 'resolved'}
-                            >
-                              Resolve
-                            </button>
-                            <button
-                              type={'button'}
-                              className={[
-                                styles['graphInspectorButton'],
-                                styles['graphInspectorButtonLost'],
-                              ]
-                                .filter(Boolean)
-                                .join(' ')}
-                              onClick={() =>
-                                applyGraphNodeStatus(
-                                  selectedGraphNode.id,
-                                  'lost'
-                                )
-                              }
-                              disabled={selectedGraphNodeStatus === 'lost'}
-                            >
-                              {selectedGraphLostLabel}
-                            </button>
-                            {selectedGraphNodeStatus ? (
-                              <button
-                                type={'button'}
-                                className={[
-                                  styles['graphInspectorButton'],
-                                  styles['graphInspectorButtonClear'],
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ')}
-                                onClick={() =>
-                                  applyGraphNodeStatus(
-                                    selectedGraphNode.id,
-                                    undefined
-                                  )
-                                }
-                              >
-                                Clear status
-                              </button>
-                            ) : null}
-                          </div>
-
-                          <div className={styles['graphInspectorSection']}>
-                            <h4 className={styles['graphSubhead']}>Why Here</h4>
-                            <ol className={styles['graphInspectorPlainList']}>
-                              {selectedGraphWhyHere.map((line, index) => (
-                                <li
-                                  key={`why-here-${selectedGraphNode.id}-${index}`}
-                                  className={styles['graphInspectorPlainItem']}
-                                >
-                                  <span className={styles['stepDetail']}>
-                                    {line}
-                                  </span>
-                                </li>
-                              ))}
-                            </ol>
-                          </div>
-
-                          {selectedGraphIncomingEdges.length > 0 ? (
-                            <div className={styles['graphInspectorSection']}>
-                              <h4 className={styles['graphSubhead']}>
-                                Blocked By
-                              </h4>
-                              <ol className={styles['graphInspectorList']}>
-                                {selectedGraphIncomingEdges.map((edge) => (
-                                  <li
-                                    key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
-                                    className={styles['graphInspectorItem']}
-                                  >
-                                    <button
-                                      type={'button'}
-                                      className={
-                                        styles['graphInspectorLinkButton']
-                                      }
-                                      onClick={() =>
-                                        openGraphNode(edge.fromNodeId, true)
-                                      }
-                                    >
-                                      {attackNodeLabelById[edge.fromNodeId] ||
-                                        edge.fromNodeId}
-                                    </button>
-                                    <span className={styles['stepDetail']}>
-                                      {getGraphEdgeExplanation(edge)}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ol>
-                            </div>
-                          ) : null}
-
-                          {selectedGraphOutgoingTargets.length > 0 ? (
-                            <div className={styles['graphInspectorSection']}>
-                              <h4 className={styles['graphSubhead']}>Blocks</h4>
-                              <ul className={styles['graphInspectorLinkList']}>
-                                {selectedGraphOutgoingTargets.map((target) => (
-                                  <li key={`outgoing-target-${target.nodeId}`}>
-                                    <button
-                                      type={'button'}
-                                      className={
-                                        styles['graphInspectorLinkButton']
-                                      }
-                                      onClick={() =>
-                                        openGraphNode(target.nodeId, true)
-                                      }
-                                    >
-                                      {target.label}
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
                     </div>
                   ) : (
                     <div className={styles['graphEmpty']}>
                       Add combatants to generate a precedence graph.
                     </div>
                   )}
+                  {selectedGraphNode && selectedGraphPopoverPosition ? (
+                    <div
+                      ref={graphPopoverRef}
+                      className={[
+                        styles['graphInspector'],
+                        styles['graphPopover'],
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      style={selectedGraphPopoverPosition}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <div className={styles['graphInspectorHeader']}>
+                        <div className={styles['graphInspectorTitle']}>
+                          {attackNodeLabelById[selectedGraphNode.id] ||
+                            selectedGraphNode.id}
+                        </div>
+                      </div>
+                      <div className={styles['graphInspectorMeta']}>
+                        <span>
+                          Side:{' '}
+                          {selectedGraphNode.side === 'party'
+                            ? 'Party'
+                            : 'Enemy'}
+                        </span>
+                        {selectedGraphNode.segment !== undefined ? (
+                          <span>Segment: {selectedGraphNode.segment}</span>
+                        ) : null}
+                        <span>
+                          Status:{' '}
+                          {selectedGraphNodeStatus
+                            ? getGraphNodeStatusLabel(selectedGraphNodeStatus)
+                            : 'Pending'}
+                        </span>
+                      </div>
+                      <div className={styles['graphInspectorActions']}>
+                        <button
+                          type={'button'}
+                          className={[
+                            styles['graphInspectorButton'],
+                            styles['graphInspectorButtonResolve'],
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          onClick={() =>
+                            applyGraphNodeStatus(
+                              selectedGraphNode.id,
+                              'resolved'
+                            )
+                          }
+                          disabled={selectedGraphNodeStatus === 'resolved'}
+                        >
+                          Resolve
+                        </button>
+                        <button
+                          type={'button'}
+                          className={[
+                            styles['graphInspectorButton'],
+                            styles['graphInspectorButtonLost'],
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          onClick={() =>
+                            applyGraphNodeStatus(selectedGraphNode.id, 'lost')
+                          }
+                          disabled={selectedGraphNodeStatus === 'lost'}
+                        >
+                          {selectedGraphLostLabel}
+                        </button>
+                        {selectedGraphNodeStatus ? (
+                          <button
+                            type={'button'}
+                            className={[
+                              styles['graphInspectorButton'],
+                              styles['graphInspectorButtonClear'],
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                            onClick={() =>
+                              applyGraphNodeStatus(
+                                selectedGraphNode.id,
+                                undefined
+                              )
+                            }
+                          >
+                            Clear status
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <div className={styles['graphInspectorSection']}>
+                        <h4 className={styles['graphSubhead']}>Why Here</h4>
+                        <ol className={styles['graphInspectorPlainList']}>
+                          {selectedGraphWhyHere.map((line, index) => (
+                            <li
+                              key={`why-here-${selectedGraphNode.id}-${index}`}
+                              className={styles['graphInspectorPlainItem']}
+                            >
+                              <span className={styles['stepDetail']}>
+                                {line}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+
+                      {selectedGraphIncomingEdges.length > 0 ? (
+                        <div className={styles['graphInspectorSection']}>
+                          <h4 className={styles['graphSubhead']}>Blocked By</h4>
+                          <ol className={styles['graphInspectorList']}>
+                            {selectedGraphIncomingEdges.map((edge) => (
+                              <li
+                                key={`incoming-${edge.fromNodeId}-${edge.toNodeId}`}
+                                className={styles['graphInspectorItem']}
+                              >
+                                <button
+                                  type={'button'}
+                                  className={styles['graphInspectorLinkButton']}
+                                  onClick={() =>
+                                    openGraphNode(edge.fromNodeId, true)
+                                  }
+                                >
+                                  {attackNodeLabelById[edge.fromNodeId] ||
+                                    edge.fromNodeId}
+                                </button>
+                                <span className={styles['stepDetail']}>
+                                  {getGraphEdgeExplanation(edge)}
+                                </span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      ) : null}
+
+                      {selectedGraphOutgoingTargets.length > 0 ? (
+                        <div className={styles['graphInspectorSection']}>
+                          <h4 className={styles['graphSubhead']}>Blocks</h4>
+                          <ul className={styles['graphInspectorLinkList']}>
+                            {selectedGraphOutgoingTargets.map((target) => (
+                              <li key={`outgoing-target-${target.nodeId}`}>
+                                <button
+                                  type={'button'}
+                                  className={styles['graphInspectorLinkButton']}
+                                  onClick={() =>
+                                    openGraphNode(target.nodeId, true)
+                                  }
+                                >
+                                  {target.label}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
