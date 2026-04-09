@@ -212,6 +212,64 @@ export interface InitiativeAttackNode {
     | 'spell-directed'
     | 'spell-start'
     | 'spell-completion';
+  placement?:
+    | {
+        kind: 'spell-start';
+        castingSegments?: number;
+      }
+    | {
+        kind: 'spell-completion';
+        castingSegments?: number;
+      }
+    | {
+        kind: 'contact';
+        distanceInches?: number;
+        movementRate: number;
+      }
+    | {
+        kind: 'spell-directed';
+        casterId: string;
+      }
+    | {
+        kind: 'declared-action-segment';
+        declaredAction: 'magical-device';
+        activationSegments: number;
+      }
+    | {
+        kind: 'movement-attack';
+        action: InitiativeDeclaredAction;
+        role: 'acting-combatant' | 'charge-target';
+        opponentId: string;
+        distanceInches?: number;
+        movementRate: number;
+        contactSegment: number;
+        firstStrike?: InitiativeChargeFirstStrike;
+        damageMultiplier?: number;
+      }
+    | {
+        kind: 'missile-volley';
+        splitTarget: boolean;
+        targetId?: string;
+      }
+    | {
+        kind: 'turn-undead-unsegmented';
+      }
+    | {
+        kind: 'magical-device-unsegmented';
+      }
+    | {
+        kind: 'direct-melee';
+        opponentId: string;
+        resolutionReason: DirectMeleeResolutionReason;
+      }
+    | {
+        kind: 'routine-sequence';
+        attackNumber: number;
+        routineCount: number;
+      }
+    | {
+        kind: 'general-unsegmented';
+      };
 }
 
 export type InitiativeAttackEdgeReason =

@@ -68,7 +68,8 @@ const createNode = (
   kind: InitiativeAttackNode['kind'],
   segment?: number,
   targetId?: string,
-  segmentReason?: InitiativeAttackNode['segmentReason']
+  segmentReason?: InitiativeAttackNode['segmentReason'],
+  placement?: InitiativeAttackNode['placement']
 ): InitiativeAttackNode => ({
   id:
     kind === 'contact'
@@ -89,13 +90,15 @@ const createNode = (
   kind,
   segment,
   segmentReason,
+  placement,
 });
 
 const createRoutineAttackNode = (
   combatant: InitiativeScenarioCombatant,
   segment?: number,
   targetId?: string,
-  segmentReason?: InitiativeAttackNode['segmentReason']
+  segmentReason?: InitiativeAttackNode['segmentReason'],
+  placement?: InitiativeAttackNode['placement']
 ): InitiativeAttackNode => {
   const timingBasisComponent =
     combatant.attackRoutine.components.find(
@@ -116,7 +119,8 @@ const createRoutineAttackNode = (
     'attack',
     segment,
     targetId,
-    segmentReason
+    segmentReason,
+    placement
   );
 };
 
@@ -157,7 +161,8 @@ const hasInvalidOpenMeleeOpposition = (
 
 const createContactNode = (
   combatant: InitiativeScenarioCombatant,
-  segment: number
+  segment: number,
+  distanceInches?: number
 ): InitiativeAttackNode =>
   createNode(
     combatant,
@@ -168,7 +173,12 @@ const createContactNode = (
     'contact',
     segment,
     undefined,
-    'movement'
+    'movement',
+    {
+      kind: 'contact',
+      distanceInches,
+      movementRate: combatant.movementRate,
+    }
   );
 
 const createSpellStartNode = (
@@ -184,7 +194,11 @@ const createSpellStartNode = (
     'spell-start',
     segment,
     undefined,
-    'spell-start'
+    'spell-start',
+    {
+      kind: 'spell-start',
+      castingSegments: getSpellCastingSegments(combatant),
+    }
   );
 
 const createSpellCompletionNode = (
@@ -200,8 +214,58 @@ const createSpellCompletionNode = (
     'spell-completion',
     segment,
     undefined,
-    'spell-completion'
+    'spell-completion',
+    {
+      kind: 'spell-completion',
+      castingSegments: getSpellCastingSegments(combatant),
+    }
   );
+
+const createMovementAttackPlacement = (
+  combatant: InitiativeScenarioCombatant,
+  movementResolution: InitiativeMovementResolution
+): InitiativeAttackNode['placement'] | undefined => {
+  if (
+    movementResolution.targetId === undefined ||
+    movementResolution.contactSegment === undefined
+  ) {
+    return undefined;
+  }
+
+  return {
+    kind: 'movement-attack',
+    action: movementResolution.action,
+    role: 'acting-combatant',
+    opponentId: movementResolution.targetId,
+    distanceInches: movementResolution.distanceInches,
+    movementRate: combatant.movementRate,
+    contactSegment: movementResolution.contactSegment,
+    firstStrike: movementResolution.firstStrike,
+    damageMultiplier: movementResolution.damageMultiplier,
+  };
+};
+
+const createChargeTargetResponsePlacement = (
+  combatant: InitiativeScenarioCombatant,
+  charger: InitiativeScenarioCombatant,
+  movementResolution: InitiativeMovementResolution
+): InitiativeAttackNode['placement'] | undefined => {
+  if (movementResolution.contactSegment === undefined) {
+    return undefined;
+  }
+
+  return {
+    kind: 'movement-attack',
+    action: combatant.declaredAction,
+    role: 'charge-target',
+    opponentId: charger.id,
+    distanceInches: movementResolution.distanceInches,
+    movementRate: combatant.movementRate,
+    contactSegment: movementResolution.contactSegment,
+    firstStrike: movementResolution.firstStrike,
+    damageMultiplier: movementResolution.damageMultiplier,
+  };
+};
 
 const addNode = (
   nodesById: Map<string, InitiativeAttackNode>,
@@ -223,6 +287,10 @@ const addNode = (
     node.segmentReason !== undefined
   ) {
     existing.segmentReason = node.segmentReason;
+  }
+
+  if (existing.placement === undefined && node.placement !== undefined) {
+    existing.placement = node.placement;
   }
 };
 
@@ -788,6 +856,10 @@ const addSpellInterruptionEdges = (
         ) {
           attackerNode.segment = interruptionSegment;
           attackerNode.segmentReason = 'spell-directed';
+          attackerNode.placement = {
+            kind: 'spell-directed',
+            casterId: caster.id,
+          };
         }
 
         const relation = getSpellInterruptionRelation(
@@ -864,7 +936,18 @@ export const buildInitiativeAttackGraph = (
           attack.attackNumber,
           attack.label,
           attack.source,
-          'attack'
+          'attack',
+          undefined,
+          undefined,
+          undefined,
+          {
+            kind: 'direct-melee',
+            opponentId:
+              combatant.side === 'party'
+                ? engagement.enemyCombatantId
+                : engagement.partyCombatantId,
+            resolutionReason: engagement.resolution.reason,
+          }
         );
         addNode(nodesById, node);
         return [node.id];
@@ -923,7 +1006,8 @@ export const buildInitiativeAttackGraph = (
     if (!movementResolution.sameRoundAttack) {
       const contactNode = createContactNode(
         attacker,
-        movementResolution.contactSegment
+        movementResolution.contactSegment,
+        movementResolution.distanceInches
       );
       addNode(nodesById, contactNode);
       return;
@@ -931,7 +1015,10 @@ export const buildInitiativeAttackGraph = (
 
     const attackerAttackNode = createRoutineAttackNode(
       attacker,
-      movementResolution.contactSegment
+      movementResolution.contactSegment,
+      undefined,
+      undefined,
+      createMovementAttackPlacement(attacker, movementResolution)
     );
     addNode(nodesById, attackerAttackNode);
     movementHandledCombatantIdSet.add(attacker.id);
@@ -956,7 +1043,17 @@ export const buildInitiativeAttackGraph = (
       target,
       targetMovementResolution?.contactSegment ||
         movementResolution.contactSegment,
-      attacker.id
+      attacker.id,
+      undefined,
+      targetMovementResolution
+        ? createMovementAttackPlacement(target, targetMovementResolution)
+        : movementResolution.action === 'charge'
+        ? createChargeTargetResponsePlacement(
+            target,
+            attacker,
+            movementResolution
+          )
+        : undefined
     );
     addNode(nodesById, targetAttackNode);
     movementHandledCombatantIdSet.add(target.id);
@@ -1064,7 +1161,12 @@ export const buildInitiativeAttackGraph = (
               targetId,
               getDeclaredActionSegment(combatant) !== undefined
                 ? 'declared-action'
-                : undefined
+                : undefined,
+              {
+                kind: 'missile-volley',
+                splitTarget: true,
+                targetId,
+              }
             )
           );
         });
@@ -1086,7 +1188,41 @@ export const buildInitiativeAttackGraph = (
           combatant.targetIds.length === 1 ? combatant.targetIds[0] : undefined,
           getDeclaredActionSegment(combatant) !== undefined
             ? 'declared-action'
-            : undefined
+            : undefined,
+          getDeclaredActionSegment(combatant) !== undefined &&
+            combatant.declaredAction === 'magical-device' &&
+            combatant.activationSegments !== undefined
+            ? {
+                kind: 'declared-action-segment',
+                declaredAction: 'magical-device',
+                activationSegments: combatant.activationSegments,
+              }
+            : combatant.declaredAction === 'missile'
+            ? {
+                kind: 'missile-volley',
+                splitTarget: false,
+                targetId:
+                  combatant.targetIds.length === 1
+                    ? combatant.targetIds[0]
+                    : undefined,
+              }
+            : combatant.declaredAction === 'turn-undead'
+            ? {
+                kind: 'turn-undead-unsegmented',
+              }
+            : combatant.declaredAction === 'magical-device'
+            ? {
+                kind: 'magical-device-unsegmented',
+              }
+            : combatant.attackRoutine.components.length > 1
+            ? {
+                kind: 'routine-sequence',
+                attackNumber: component.order,
+                routineCount: combatant.attackRoutine.components.length,
+              }
+            : {
+                kind: 'general-unsegmented',
+              }
         )
       );
     });

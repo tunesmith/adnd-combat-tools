@@ -143,6 +143,66 @@ describe('initiative attack graph', () => {
     ]);
   });
 
+  test('records direct melee placement reasons on mixed tied open melee nodes', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Mixed Open Melee',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Aldred',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+        {
+          combatantKey: 2,
+          name: 'Bera',
+          weaponId: 13,
+          targetCombatantKeys: [4],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Gnoll',
+          weaponId: 2,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Ghoul',
+          weaponId: 1,
+          targetCombatantKeys: [2],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(
+      graph.nodes.find((node) => node.id === 'attack:party-1:2')?.placement
+    ).toEqual({
+      kind: 'direct-melee',
+      opponentId: 'enemy-3',
+      resolutionReason: 'weapon-speed-double',
+    });
+    expect(
+      graph.nodes.find((node) => node.id === 'attack:party-2:1')?.placement
+    ).toEqual({
+      kind: 'direct-melee',
+      opponentId: 'enemy-4',
+      resolutionReason: 'simultaneous',
+    });
+    expect(
+      graph.nodes.find((node) => node.id === 'attack:enemy-4:1')?.placement
+    ).toEqual({
+      kind: 'direct-melee',
+      opponentId: 'party-2',
+      resolutionReason: 'simultaneous',
+    });
+  });
+
   test('graphs turn undead behind an enemy melee attack when the turner loses initiative', () => {
     const scenario = buildInitiativeScenario({
       label: 'Turn Undead',
@@ -498,8 +558,36 @@ describe('initiative attack graph', () => {
 
     expect(graph.nodes).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'attack:party-1:1', segment: 2 }),
-        expect.objectContaining({ id: 'attack:enemy-3:1', segment: 2 }),
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          segment: 2,
+          placement: {
+            kind: 'movement-attack',
+            action: 'set-vs-charge',
+            role: 'acting-combatant',
+            opponentId: 'enemy-3',
+            distanceInches: 4,
+            movementRate: 12,
+            contactSegment: 2,
+            firstStrike: 'attacker',
+            damageMultiplier: 2,
+          },
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          segment: 2,
+          placement: {
+            kind: 'movement-attack',
+            action: 'charge',
+            role: 'acting-combatant',
+            opponentId: 'party-1',
+            distanceInches: 4,
+            movementRate: 12,
+            contactSegment: 2,
+            firstStrike: 'target',
+            damageMultiplier: undefined,
+          },
+        }),
       ])
     );
     expect(graph.edges).toEqual(
@@ -507,6 +595,70 @@ describe('initiative attack graph', () => {
         {
           fromNodeId: 'attack:party-1:1',
           toNodeId: 'attack:enemy-3:1',
+          reasons: ['movement'],
+        },
+      ])
+    );
+  });
+
+  test('records a charge target response placement for an open-melee defender', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge vs Open Melee Response',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lancer',
+          declaredAction: 'charge',
+          movementRate: 12,
+          weaponId: 56,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 3,
+              distanceInches: 4,
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Guard',
+          declaredAction: 'open-melee',
+          movementRate: 9,
+          weaponId: 50,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          segment: 2,
+          placement: {
+            kind: 'movement-attack',
+            action: 'open-melee',
+            role: 'charge-target',
+            opponentId: 'party-1',
+            distanceInches: 4,
+            movementRate: 9,
+            contactSegment: 2,
+            firstStrike: 'target',
+            damageMultiplier: undefined,
+          },
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'attack:party-1:1',
           reasons: ['movement'],
         },
       ])
@@ -1457,11 +1609,19 @@ describe('initiative attack graph', () => {
           id: 'attack:enemy-3:1',
           segment: 5,
           segmentReason: 'spell-directed',
+          placement: {
+            kind: 'spell-directed',
+            casterId: 'party-1',
+          },
         }),
         expect.objectContaining({
           id: 'attack:enemy-3:2',
           segment: 5,
           segmentReason: 'spell-directed',
+          placement: {
+            kind: 'spell-directed',
+            casterId: 'party-1',
+          },
         }),
       ])
     );

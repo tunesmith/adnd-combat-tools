@@ -24,6 +24,7 @@ import {
 import type {
   InitiativeAttackEdge,
   InitiativeAttackNode,
+  InitiativeChargeFirstStrike,
   InitiativeDeclaredAction,
   DirectMeleeEngagement,
   InitiativeScenarioCombatant,
@@ -991,6 +992,220 @@ const getDirectMeleeEdgeExplanation = ({
     case 'simultaneous':
       return `${left.name} and ${right.name} tied initiative, so their blows land simultaneously here.`;
   }
+};
+
+const getReachPriorityText = ({
+  combatant,
+  opponent,
+  firstStrike,
+  thisBlowIsFirst,
+}: {
+  combatant: InitiativeScenarioCombatant;
+  opponent: InitiativeScenarioCombatant;
+  firstStrike?: InitiativeChargeFirstStrike;
+  thisBlowIsFirst: boolean;
+}): string => {
+  if (firstStrike === 'attacker') {
+    if (
+      combatant.weaponLength !== undefined &&
+      opponent.weaponLength !== undefined &&
+      combatant.weaponType !== 'missile' &&
+      opponent.weaponType !== 'missile'
+    ) {
+      return thisBlowIsFirst
+        ? `${combatant.name}'s ${combatant.weaponName} has longer reach (${combatant.weaponLength} vs ${opponent.weaponLength}), so ${combatant.name} attacks first at contact.`
+        : `${opponent.name}'s ${opponent.weaponName} has longer reach (${opponent.weaponLength} vs ${combatant.weaponLength}), so ${combatant.name}'s blow comes after ${opponent.name}'s.`;
+    }
+
+    return thisBlowIsFirst
+      ? `${combatant.name} attacks first at contact.`
+      : `${combatant.name}'s blow comes after ${opponent.name}'s at contact.`;
+  }
+
+  if (firstStrike === 'target') {
+    if (
+      combatant.weaponLength !== undefined &&
+      opponent.weaponLength !== undefined &&
+      combatant.weaponType !== 'missile' &&
+      opponent.weaponType !== 'missile'
+    ) {
+      return thisBlowIsFirst
+        ? `${combatant.name}'s ${combatant.weaponName} has longer reach (${combatant.weaponLength} vs ${opponent.weaponLength}), so ${combatant.name} attacks first at contact.`
+        : `${opponent.name}'s ${opponent.weaponName} has longer reach (${opponent.weaponLength} vs ${combatant.weaponLength}), so ${combatant.name}'s blow comes after ${opponent.name}'s.`;
+    }
+
+    return thisBlowIsFirst
+      ? `${combatant.name} attacks first at contact.`
+      : `${combatant.name}'s blow comes after ${opponent.name}'s at contact.`;
+  }
+
+  if (firstStrike === 'simultaneous') {
+    if (
+      combatant.weaponLength !== undefined &&
+      opponent.weaponLength !== undefined &&
+      combatant.weaponType !== 'missile' &&
+      opponent.weaponType !== 'missile'
+    ) {
+      return `Their reach is equal at ${combatant.weaponLength}, so the blows land simultaneously at contact.`;
+    }
+
+    return `The blows land simultaneously at contact.`;
+  }
+
+  return `Reach does not currently settle who attacks first at contact.`;
+};
+
+const getMovementAttackWhyHereText = ({
+  node,
+  combatant,
+  placement,
+  opponent,
+}: {
+  node: InitiativeAttackNode;
+  combatant: InitiativeScenarioCombatant;
+  placement: Extract<
+    NonNullable<InitiativeAttackNode['placement']>,
+    {
+      kind: 'movement-attack';
+    }
+  >;
+  opponent?: InitiativeScenarioCombatant;
+}): string => {
+  const opponentName = opponent?.name || 'the opposing combatant';
+  const segment = placement.contactSegment || node.segment;
+
+  if (placement.action === 'set-vs-charge') {
+    return `${
+      combatant.name
+    } sets against ${opponentName}'s charge. Because ${opponentName} reaches contact on segment ${segment}, ${
+      combatant.name
+    }'s set weapon strikes first and deals ${
+      placement.damageMultiplier || 2
+    }x normal damage if it hits.`;
+  }
+
+  if (placement.role === 'charge-target') {
+    return `${
+      combatant.name
+    } is being charged by ${opponentName}. Contact comes on segment ${segment}. ${getReachPriorityText(
+      {
+        combatant,
+        opponent: opponent || combatant,
+        firstStrike: placement.firstStrike,
+        thisBlowIsFirst: placement.firstStrike === 'target',
+      }
+    )}`;
+  }
+
+  if (placement.action === 'charge') {
+    const distanceText =
+      placement.distanceInches !== undefined
+        ? ` reaches ${opponentName} from ${placement.distanceInches}" away`
+        : ` reaches ${opponentName}`;
+
+    return `${
+      combatant.name
+    }${distanceText} on segment ${segment} and can strike on the charge. ${getReachPriorityText(
+      {
+        combatant,
+        opponent: opponent || combatant,
+        firstStrike: placement.firstStrike,
+        thisBlowIsFirst: placement.firstStrike === 'attacker',
+      }
+    )}`;
+  }
+
+  if (placement.action === 'close') {
+    const distanceText =
+      placement.distanceInches !== undefined
+        ? ` from ${placement.distanceInches}" away`
+        : '';
+
+    return `${
+      combatant.name
+    } reaches striking range of ${opponentName}${distanceText} on segment ${segment}. Because ${opponentName} is charging into contact, ${
+      combatant.name
+    } can also attack in the same round. ${getReachPriorityText({
+      combatant,
+      opponent: opponent || combatant,
+      firstStrike: placement.firstStrike,
+      thisBlowIsFirst: placement.firstStrike === 'target',
+    })}`;
+  }
+
+  if (placement.distanceInches !== undefined) {
+    return `${combatant.name}'s attack is on segment ${segment} because movement contact is reached from ${placement.distanceInches}" away by then.`;
+  }
+
+  return `${combatant.name}'s attack is on segment ${segment} because movement contact is reached by then.`;
+};
+
+const getMovementEdgeExplanation = ({
+  fromNode,
+  toNode,
+  fromCombatant,
+  toCombatant,
+  fromName,
+  toName,
+}: {
+  fromNode?: InitiativeAttackNode;
+  toNode?: InitiativeAttackNode;
+  fromCombatant?: InitiativeScenarioCombatant;
+  toCombatant?: InitiativeScenarioCombatant;
+  fromName: string;
+  toName: string;
+}): string => {
+  const fromPlacement =
+    fromNode?.placement?.kind === 'movement-attack' ? fromNode.placement : null;
+  const toPlacement =
+    toNode?.placement?.kind === 'movement-attack' ? toNode.placement : null;
+
+  if (
+    fromPlacement?.action === 'set-vs-charge' &&
+    fromCombatant &&
+    toCombatant
+  ) {
+    return `${fromCombatant.name} is set against ${toCombatant.name}'s charge, so the set weapon strikes first when contact is made on segment ${fromPlacement.contactSegment}.`;
+  }
+
+  if (toPlacement?.action === 'set-vs-charge' && fromCombatant && toCombatant) {
+    return `${toCombatant.name} is set against ${fromCombatant.name}'s charge, so ${fromName} waits until after the set weapon takes effect on segment ${toPlacement.contactSegment}.`;
+  }
+
+  if (
+    fromPlacement?.action === 'charge' &&
+    fromCombatant &&
+    toCombatant &&
+    fromPlacement.firstStrike === 'attacker'
+  ) {
+    return `${fromCombatant.name}'s charge reaches contact on segment ${fromPlacement.contactSegment}, and longer reach lets ${fromCombatant.name} strike before ${toCombatant.name}.`;
+  }
+
+  if (
+    fromPlacement?.role === 'charge-target' &&
+    fromCombatant &&
+    toCombatant &&
+    fromPlacement.firstStrike === 'target'
+  ) {
+    return `${fromCombatant.name} is charged on segment ${fromPlacement.contactSegment} but has the longer reach, so ${fromName} happens before ${toName}.`;
+  }
+
+  if (
+    fromPlacement?.firstStrike === 'simultaneous' ||
+    toPlacement?.firstStrike === 'simultaneous'
+  ) {
+    return `Contact is simultaneous here, so no movement edge should separate these blows.`;
+  }
+
+  if (fromNode?.kind === 'contact' && fromNode.segment !== undefined) {
+    return `Contact is established on segment ${fromNode.segment}, and that has to happen before the later result shown here.`;
+  }
+
+  if (fromNode?.segment !== undefined) {
+    return `Movement and contact timing make ${fromName} happen before ${toName} on segment ${fromNode.segment}.`;
+  }
+
+  return `Movement and contact timing create this local order.`;
 };
 
 const estimateGraphNodeLineWidth = (
@@ -2088,16 +2303,6 @@ const InitiativePlayground = ({
       revealGraphNodeInViewport(selectedGraphNodeId);
     });
   }, [revealGraphNodeInViewport, selectedGraphNodeId]);
-  const movementResolutionByCombatantId = useMemo(
-    () =>
-      new Map(
-        resolution.movementResolutions.map((movementResolution) => [
-          movementResolution.combatantId,
-          movementResolution,
-        ])
-      ),
-    [resolution.movementResolutions]
-  );
   const selectedGraphWhyHere = useMemo(() => {
     if (!selectedGraphNode) {
       return [];
@@ -2109,6 +2314,7 @@ const InitiativePlayground = ({
     }
 
     const lines: string[] = [];
+    const placement = selectedGraphNode.placement;
     const relatedEdges = selectedGraphIncomingEdges.concat(
       selectedGraphOutgoingEdges
     );
@@ -2126,18 +2332,21 @@ const InitiativePlayground = ({
 
         return otherNode?.combatantId !== combatant.id;
       }) || directMeleeEdges[0];
-    const hasMovementEdge = relatedEdges.some((edge) =>
-      edge.reasons.includes('movement')
-    );
     const targetName = selectedGraphNode.targetId
       ? viewModel.combatantNameById[selectedGraphNode.targetId] ||
         selectedGraphNode.targetId
       : undefined;
-    const movementResolution = movementResolutionByCombatantId.get(
-      combatant.id
-    );
     const targetCombatant = selectedGraphNode.targetId
       ? combatantById.get(selectedGraphNode.targetId)
+      : undefined;
+    const placementOpponentId =
+      placement?.kind === 'movement-attack'
+        ? placement.opponentId
+        : placement?.kind === 'direct-melee'
+        ? placement.opponentId
+        : undefined;
+    const placementOpponent = placementOpponentId
+      ? combatantById.get(placementOpponentId)
       : undefined;
     const directMeleeOpponentId =
       directMeleeEdge?.fromNodeId === selectedGraphNode.id
@@ -2145,11 +2354,8 @@ const InitiativePlayground = ({
         : directMeleeEdge?.toNodeId === selectedGraphNode.id
         ? attackNodeById.get(directMeleeEdge.fromNodeId)?.combatantId
         : undefined;
-    const directMeleeOpponentName = directMeleeOpponentId
-      ? viewModel.combatantNameById[directMeleeOpponentId] ||
-        directMeleeOpponentId
-      : undefined;
     const directMeleeTargetId =
+      (placement?.kind === 'direct-melee' ? placement.opponentId : undefined) ||
       targetCombatant?.id ||
       (combatant.targetIds.length === 1 ? combatant.targetIds[0] : undefined) ||
       (directMeleeOpponentId !== undefined &&
@@ -2208,7 +2414,79 @@ const InitiativePlayground = ({
       lines.push(
         `Contact is reached on segment ${selectedGraphNode.segment}. This marks the moment movement closes to melee without assuming an automatic same-round blow.`
       );
-    } else if (selectedGraphSimultaneousGroup) {
+    } else if (placement?.kind === 'spell-directed') {
+      const caster =
+        combatantById.get(placement.casterId) ||
+        (targetCombatant?.declaredAction === 'spell-casting'
+          ? targetCombatant
+          : undefined);
+      const casterName = caster?.name || targetName || 'the spell caster';
+      const casterInitiative = caster
+        ? getEffectiveInitiativeValue(caster)
+        : targetInitiative;
+
+      if (
+        casterName &&
+        casterInitiative !== undefined &&
+        casterInitiative > combatantInitiative
+      ) {
+        lines.push(
+          `${combatant.name}'s attack is directed at ${casterName}. Since ${
+            caster?.side === 'party' ? 'Party' : 'Enemy'
+          } won initiative ${casterInitiative} to ${combatantInitiative}, attacks against ${casterName} land on segment ${
+            selectedGraphNode.segment
+          } (DMG p. 65 rule 2).`
+        );
+      } else if (
+        casterName &&
+        casterInitiative !== undefined &&
+        casterInitiative === combatantInitiative
+      ) {
+        lines.push(
+          `${combatant.name}'s attack is directed at ${casterName}. With initiative tied at ${casterInitiative}, attacks against ${casterName} land on segment ${selectedGraphNode.segment} (DMG p. 65 rule 2).`
+        );
+      } else {
+        lines.push(
+          `${combatant.name}'s attack is directed at ${casterName}. DMG p. 65 rule 2 places that attack on segment ${selectedGraphNode.segment}.`
+        );
+      }
+    } else if (placement?.kind === 'declared-action-segment') {
+      lines.push(
+        `${combatant.name}'s device use is on segment ${
+          selectedGraphNode.segment
+        } because its declared activation time is ${
+          placement.activationSegments
+        } ${placement.activationSegments === 1 ? 'segment' : 'segments'}.`
+      );
+    } else if (placement?.kind === 'movement-attack') {
+      lines.push(
+        getMovementAttackWhyHereText({
+          node: selectedGraphNode,
+          combatant,
+          placement,
+          opponent: placementOpponent,
+        })
+      );
+    } else if (placement?.kind === 'missile-volley') {
+      lines.push(
+        placement.splitTarget && placement.targetId !== undefined
+          ? `${
+              combatant.name
+            }'s missile volley is split across multiple targets. This node is the shot aimed at ${
+              viewModel.combatantNameById[placement.targetId] ||
+              placement.targetId
+            }.`
+          : `${combatant.name}'s missile volley stays unsegmented. Ordinary firing rate is treated as one initiative-controlled volley rather than as separate early and late shots.`
+      );
+    } else if (placement?.kind === 'turn-undead-unsegmented') {
+      lines.push(
+        `${combatant.name}'s turning attempt is initiative-controlled, but it has no separate segment timing.`
+      );
+    } else if (placement?.kind === 'magical-device-unsegmented') {
+      lines.push(
+        `${combatant.name}'s device use stays unsegmented because no activation time was declared for it.`
+      );
+    } else if (placement?.kind === 'direct-melee') {
       if (directMeleeEngagement && directMeleeOpponent) {
         lines.push(
           getDirectMeleeWhyHereText({
@@ -2229,114 +2507,38 @@ const InitiativePlayground = ({
           `This action is part of a simultaneous exchange, so no narrower rule in this slice gives it precedence over the other action in that cluster.`
         );
       }
-    } else if (selectedGraphNode.segmentReason === 'spell-directed') {
-      if (
-        targetName &&
-        targetInitiative !== undefined &&
-        targetInitiative > combatantInitiative
-      ) {
+    } else if (placement?.kind === 'routine-sequence') {
+      lines.push(
+        `This is ${combatant.name}'s attack ${placement.attackNumber} in that combatant's ordinary round routine.`
+      );
+    } else if (selectedGraphSimultaneousGroup) {
+      if (simultaneousPeerLabels.length > 0) {
         lines.push(
-          `${combatant.name}'s attack is directed at ${targetName}. Since ${
-            targetCombatant?.side === 'party' ? 'Party' : 'Enemy'
-          } won initiative ${targetInitiative} to ${combatantInitiative}, attacks against ${targetName} land on segment ${
-            selectedGraphNode.segment
-          } (DMG p. 65 rule 2).`
-        );
-      } else if (
-        targetName &&
-        targetInitiative !== undefined &&
-        targetInitiative === combatantInitiative
-      ) {
-        lines.push(
-          `${combatant.name}'s attack is directed at ${targetName}. With initiative tied at ${targetInitiative}, attacks against ${targetName} land on segment ${selectedGraphNode.segment} (DMG p. 65 rule 2).`
+          `This action is simultaneous with ${simultaneousPeerLabels.join(
+            ' and '
+          )}. No narrower rule in this slice gives either action precedence.`
         );
       } else {
         lines.push(
-          `${combatant.name}'s attack is directed at ${
-            targetName || 'a spell caster'
-          }. DMG p. 65 rule 2 places that attack on segment ${
-            selectedGraphNode.segment
-          }.`
+          `This action is part of a simultaneous exchange, so no narrower rule in this slice gives it precedence over the other action in that cluster.`
         );
       }
     } else if (
-      selectedGraphNode.segmentReason === 'declared-action' &&
-      combatant.declaredAction === 'magical-device'
+      hasDirectMeleeEdge &&
+      directMeleeEngagement &&
+      directMeleeOpponent
     ) {
       lines.push(
-        `${combatant.name}'s device use is on segment ${selectedGraphNode.segment} because its declared activation time places it there.`
-      );
-    } else if (
-      selectedGraphNode.kind === 'attack' &&
-      selectedGraphNode.segment !== undefined &&
-      (hasMovementEdge ||
-        movementResolution?.contactSegment === selectedGraphNode.segment)
-    ) {
-      if (movementResolution?.distanceInches !== undefined) {
-        lines.push(
-          `${combatant.name}'s attack is on segment ${selectedGraphNode.segment} because, at movement rate ${combatant.movementRate}", it can cover ${movementResolution.distanceInches}" and reach contact by then.`
-        );
-      } else {
-        lines.push(
-          `${combatant.name}'s attack is on segment ${selectedGraphNode.segment} because movement contact is reached by then.`
-        );
-      }
-    } else if (
-      selectedGraphNode.kind === 'attack' &&
-      combatant.declaredAction === 'missile'
-    ) {
-      lines.push(
-        selectedGraphNode.targetId !== undefined &&
-          combatant.targetIds.length > 1
-          ? `${combatant.name}'s missile volley is split across multiple targets. This node is the shot aimed at ${targetName}.`
-          : `${combatant.name}'s missile volley stays unsegmented. Ordinary firing rate is treated as one initiative-controlled volley rather than as separate early and late shots.`
-      );
-    } else if (
-      selectedGraphNode.kind === 'attack' &&
-      combatant.declaredAction === 'turn-undead'
-    ) {
-      lines.push(
-        `${combatant.name}'s turning attempt is initiative-controlled, but it has no separate segment timing.`
-      );
-    } else if (
-      selectedGraphNode.kind === 'attack' &&
-      combatant.declaredAction === 'magical-device'
-    ) {
-      lines.push(
-        `${combatant.name}'s device use stays unsegmented because no activation time was declared for it.`
-      );
-    } else if (hasDirectMeleeEdge) {
-      if (directMeleeEngagement && directMeleeOpponent) {
-        lines.push(
-          getDirectMeleeWhyHereText({
-            node: selectedGraphNode,
-            combatant,
-            opponent: directMeleeOpponent,
-            engagement: directMeleeEngagement,
-          })
-        );
-      } else {
-        lines.push(
-          `${combatant.name}${
-            targetName
-              ? ` and ${targetName}`
-              : directMeleeOpponentName
-              ? ` and ${directMeleeOpponentName}`
-              : ''
-          } are in direct melee, so initiative determines the order of their blows here.`
-        );
-      }
-    } else if (
-      selectedGraphNode.kind === 'attack' &&
-      combatant.attackRoutine.components.length > 1 &&
-      combatant.declaredAction !== 'missile'
-    ) {
-      lines.push(
-        `This is ${combatant.name}'s attack ${selectedGraphNode.attackNumber} in that combatant's ordinary round routine.`
+        getDirectMeleeWhyHereText({
+          node: selectedGraphNode,
+          combatant,
+          opponent: directMeleeOpponent,
+          engagement: directMeleeEngagement,
+        })
       );
     } else {
       lines.push(
-        `This action has no separate segment timing, so its order comes from the other actions it must happen before or after.`
+        `This action has no separate segment call of its own. It follows the ordinary round order shown by the arrows around it.`
       );
     }
 
@@ -2345,7 +2547,6 @@ const InitiativePlayground = ({
     combatantById,
     attackNodeById,
     attackNodeLabelById,
-    movementResolutionByCombatantId,
     directMeleeEngagementByCombatantIds,
     selectedGraphIncomingEdges,
     selectedGraphNode,
@@ -2366,11 +2567,17 @@ const InitiativePlayground = ({
       (fromNode && attackNodeLabelById[fromNode.id]) || edge.fromNodeId;
     const toName = (toNode && attackNodeLabelById[toNode.id]) || edge.toNodeId;
     const fromDirectMeleeTargetId =
+      (fromNode?.placement?.kind === 'direct-melee'
+        ? fromNode.placement.opponentId
+        : undefined) ||
       fromNode?.targetId ||
       (fromCombatant?.targetIds.length === 1
         ? fromCombatant.targetIds[0]
         : undefined);
     const toDirectMeleeTargetId =
+      (toNode?.placement?.kind === 'direct-melee'
+        ? toNode.placement.opponentId
+        : undefined) ||
       toNode?.targetId ||
       (toCombatant?.targetIds.length === 1
         ? toCombatant.targetIds[0]
@@ -2433,15 +2640,14 @@ const InitiativePlayground = ({
         }
 
         if (reason === 'movement') {
-          if (fromNode?.kind === 'contact' && fromNode.segment !== undefined) {
-            return `Contact is established on segment ${fromNode.segment}, and that has to happen before the later result shown here.`;
-          }
-
-          if (fromNode?.segment !== undefined) {
-            return `Movement/contact timing means ${fromName} happens before ${toName} on segment ${fromNode.segment}.`;
-          }
-
-          return `Movement and contact timing create this local order.`;
+          return getMovementEdgeExplanation({
+            fromNode,
+            toNode,
+            fromCombatant,
+            toCombatant,
+            fromName,
+            toName,
+          });
         }
 
         if (reason === 'spell-casting') {
