@@ -1,0 +1,63 @@
+.approachPanel {
+  max-width: 66rem;
+  margin: 1rem auto 0;
+  padding: 1.6rem 1.85rem 1.8rem;
+  border: 1px solid rgba(172, 114, 35, 0.75);
+  background: linear-gradient(
+    180deg,
+    rgba(86, 111, 62, 0.92),
+    rgba(50, 66, 36, 0.96)
+  );
+  box-shadow: 0 0.9rem 1.8rem rgba(0, 0, 0, 0.16);
+}
+
+.approachHeader {
+  margin-bottom: 1.35rem;
+}
+
+.approachTitle {
+  font-family: 'Sura', serif;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.approachSections {
+  display: grid;
+  gap: 1.45rem;
+}
+
+.approachSection {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.approachSectionTitle {
+  color: var(--goldenrod);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.approachParagraph {
+  font-size: 1.04rem;
+  line-height: 1.68;
+}
+
+.approachSection p + p {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 720px) {
+  .approachPanel {
+    padding: 1.2rem 1.1rem 1.35rem;
+  }
+
+  .approachTitle {
+    font-size: 1.7rem;
+  }
+
+  .approachSections {
+    gap: 1.2rem;
+  }
+}

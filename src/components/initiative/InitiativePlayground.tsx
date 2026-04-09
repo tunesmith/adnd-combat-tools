@@ -32,6 +32,7 @@ import type {
   InitiativeScenarioDraftCombatant,
 } from '../../types/initiative';
 import type { WeaponOption } from '../../types/option';
+import InitiativeApproachPanel from './InitiativeApproachPanel';
 import styles from './initiativePlayground.module.css';
 
 type InitiativePlaytestSide = 'party' | 'enemy';
@@ -1383,6 +1384,7 @@ const InitiativePlayground = ({
     Record<string, GraphNodeStatus>
   >({});
   const [examplesMenuOpen, setExamplesMenuOpen] = useState<boolean>(false);
+  const [approachOpen, setApproachOpen] = useState<boolean>(false);
   const graphPopoverRef = useRef<HTMLDivElement | null>(null);
   const graphContextMenuRef = useRef<HTMLDivElement | null>(null);
   const graphViewportRef = useRef<HTMLDivElement | null>(null);
@@ -3009,10 +3011,22 @@ const InitiativePlayground = ({
           >
             Copy Share URL
           </button>
+          <button
+            type={'button'}
+            className={styles['presetButton']}
+            aria-expanded={approachOpen}
+            onClick={() => {
+              setApproachOpen((previous) => !previous);
+              setExamplesMenuOpen(false);
+            }}
+          >
+            Approach
+          </button>
         </div>
         {shareFeedback ? (
           <div className={styles['shareFeedback']}>{shareFeedback}</div>
         ) : null}
+        {approachOpen ? <InitiativeApproachPanel /> : null}
       </div>
 
       <div className={styles['layout']}>
