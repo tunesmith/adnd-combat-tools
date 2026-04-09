@@ -5,6 +5,7 @@ import type { SingleValue } from 'react-select';
 import Select from 'react-select';
 import { buildInitiativeAttackGraph } from '../../helpers/initiative/attackGraph';
 import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
+import { getMultipleAttackThreshold } from '../../helpers/initiative/openMelee';
 import {
   encodeInitiativePlaytestState,
   type InitiativePlaytestCombatantState,
@@ -22,7 +23,9 @@ import {
 } from '../../tables/weapon';
 import type {
   InitiativeAttackEdge,
+  InitiativeAttackNode,
   InitiativeDeclaredAction,
+  DirectMeleeEngagement,
   InitiativeScenarioCombatant,
   InitiativeScenarioDraft,
   InitiativeScenarioDraftCombatant,
@@ -341,11 +344,11 @@ const createMixedPreset = (): InitiativePlaytestState => ({
   nextCombatantKey: 5,
   party: [
     createCombatant(1, 'Aldred', 17, [3]),
-    createCombatant(2, 'Bera', 16),
+    createCombatant(2, 'Bera', 13, [4]),
   ],
   enemies: [
     createCombatant(3, 'Gnoll', 2, [1]),
-    createCombatant(4, 'Ghoul', 1),
+    createCombatant(4, 'Ghoul', 1, [2]),
   ],
   pairDistances: {},
   attackActivationSegments: {},
@@ -758,6 +761,238 @@ const GRAPH_POPOVER_FALLBACK_HEIGHT = 320;
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
+const getDirectMeleeEngagementKey = (
+  leftCombatantId: string,
+  rightCombatantId: string
+) => `${leftCombatantId}|${rightCombatantId}`;
+
+const getDirectMeleeFasterAndSlower = (
+  left: InitiativeScenarioCombatant,
+  right: InitiativeScenarioCombatant
+) => {
+  if (
+    left.weaponSpeedFactor !== undefined &&
+    right.weaponSpeedFactor !== undefined &&
+    left.weaponSpeedFactor <= right.weaponSpeedFactor
+  ) {
+    return {
+      faster: left,
+      slower: right,
+      difference: right.weaponSpeedFactor - left.weaponSpeedFactor,
+    };
+  }
+
+  return {
+    faster: right,
+    slower: left,
+    difference: (left.weaponSpeedFactor || 0) - (right.weaponSpeedFactor || 0),
+  };
+};
+
+const findDirectMeleeStepIndex = (
+  engagement: DirectMeleeEngagement,
+  node: InitiativeAttackNode
+) =>
+  engagement.resolution.steps.findIndex((step) =>
+    step.attacks.some(
+      (attack) =>
+        attack.combatantId === node.combatantId &&
+        attack.attackNumber === node.attackNumber
+    )
+  );
+
+const getDirectMeleeWhyHereText = ({
+  node,
+  combatant,
+  opponent,
+  engagement,
+}: {
+  node: InitiativeAttackNode;
+  combatant: InitiativeScenarioCombatant;
+  opponent: InitiativeScenarioCombatant;
+  engagement: DirectMeleeEngagement;
+}): string => {
+  const tieInitiative = combatant.initiative;
+  const { faster, slower } = getDirectMeleeFasterAndSlower(
+    combatant.side === 'party' ? combatant : opponent,
+    combatant.side === 'party' ? opponent : combatant
+  );
+
+  switch (engagement.resolution.reason) {
+    case 'initiative': {
+      const winner =
+        combatant.initiative > opponent.initiative ? combatant : opponent;
+      const loser = winner.id === combatant.id ? opponent : combatant;
+
+      return `${combatant.name} and ${opponent.name} are in direct melee. ${
+        winner.name
+      } wins initiative ${winner.initiative} to ${loser.initiative}, so ${
+        winner.id === combatant.id
+          ? 'this blow comes first'
+          : `${combatant.name}'s blow comes after ${winner.name}'s`
+      }.`;
+    }
+
+    case 'simultaneous': {
+      if (
+        combatant.weaponType === 'melee' &&
+        opponent.weaponType === 'melee' &&
+        combatant.weaponSpeedFactor === opponent.weaponSpeedFactor &&
+        combatant.weaponSpeedFactor !== undefined
+      ) {
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. Their weapons are equally fast at weapon speed factor ${combatant.weaponSpeedFactor}, so these blows land simultaneously.`;
+      }
+
+      if (
+        combatant.weaponType === 'natural' ||
+        opponent.weaponType === 'natural'
+      ) {
+        const naturalWeaponCombatant =
+          combatant.weaponType === 'natural' ? combatant : opponent;
+
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. ${naturalWeaponCombatant.name} is attacking with natural weapons, so weapon speed does not break the tie and these blows land simultaneously.`;
+      }
+
+      return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. At least one combatant is not using a melee weapon with a speed factor, so neither blow gains priority and they land simultaneously.`;
+    }
+
+    case 'multiple-routines': {
+      return `${combatant.name} and ${
+        opponent.name
+      } are in direct melee, and multiple routines are in play. This blow is placed by the DMG first/middle/last routine order${
+        combatant.attackRoutine.components.length > 1
+          ? `. This is ${combatant.name}'s attack ${node.attackNumber} in that sequence.`
+          : '.'
+      }`;
+    }
+
+    case 'weapon-speed': {
+      if (
+        faster.weaponSpeedFactor === undefined ||
+        slower.weaponSpeedFactor === undefined
+      ) {
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. Weapon speed breaks the tie here.`;
+      }
+
+      if (combatant.id === faster.id) {
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. ${combatant.name}'s ${combatant.weaponName} is faster (${combatant.weaponSpeedFactor} vs ${opponent.weaponSpeedFactor}), so this blow comes first.`;
+      }
+
+      return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. ${faster.name}'s ${faster.weaponName} is faster (${faster.weaponSpeedFactor} vs ${slower.weaponSpeedFactor}), so ${combatant.name}'s blow comes after ${faster.name}'s.`;
+    }
+
+    case 'weapon-speed-double': {
+      if (
+        faster.weaponSpeedFactor === undefined ||
+        slower.weaponSpeedFactor === undefined
+      ) {
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. The faster weapon earns an extra blow here.`;
+      }
+
+      if (combatant.id === faster.id && node.attackNumber === 2) {
+        return `${combatant.name} and ${
+          opponent.name
+        } are in direct melee with initiative tied at ${tieInitiative}. ${
+          combatant.name
+        }'s ${combatant.weaponName} is more than twice as fast as ${
+          opponent.name
+        }'s ${opponent.weaponName} (${combatant.weaponSpeedFactor} vs ${
+          opponent.weaponSpeedFactor
+        }; threshold ${getMultipleAttackThreshold(
+          faster.weaponSpeedFactor
+        )}), so ${combatant.name} gets this extra second blow before ${
+          opponent.name
+        } can strike.`;
+      }
+
+      if (combatant.id === faster.id) {
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. ${combatant.name}'s ${combatant.weaponName} is more than twice as fast as ${opponent.name}'s ${opponent.weaponName} (${combatant.weaponSpeedFactor} vs ${opponent.weaponSpeedFactor}), so ${combatant.name} gets two blows before ${opponent.name}'s first.`;
+      }
+
+      return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. ${faster.name}'s ${faster.weaponName} is more than twice as fast as ${slower.name}'s ${slower.weaponName} (${faster.weaponSpeedFactor} vs ${slower.weaponSpeedFactor}), so ${combatant.name}'s first blow waits until after ${faster.name}'s two attacks.`;
+    }
+
+    case 'weapon-speed-triple': {
+      if (
+        faster.weaponSpeedFactor === undefined ||
+        slower.weaponSpeedFactor === undefined
+      ) {
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. The faster weapon gets an extra third blow here.`;
+      }
+
+      const stepIndex = findDirectMeleeStepIndex(engagement, node);
+
+      if (combatant.id === faster.id && node.attackNumber < 3) {
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. ${combatant.name}'s ${combatant.weaponName} is at least 10 factors faster than ${opponent.name}'s ${opponent.weaponName} (${combatant.weaponSpeedFactor} vs ${opponent.weaponSpeedFactor}), so ${combatant.name} gets extra early blows before ${opponent.name} can strike.`;
+      }
+
+      if (stepIndex >= 0) {
+        return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. The weapon speed difference is 10 or more (${faster.weaponSpeedFactor} vs ${slower.weaponSpeedFactor}), so ${faster.name}'s third blow and ${slower.name}'s first blow are simultaneous.`;
+      }
+
+      return `${combatant.name} and ${opponent.name} are in direct melee with initiative tied at ${tieInitiative}. The large weapon speed difference creates an extra third blow in this exchange.`;
+    }
+  }
+};
+
+const getDirectMeleeEdgeExplanation = ({
+  engagement,
+  fromNode,
+  toNode,
+  fromCombatant,
+  toCombatant,
+  fromName,
+  toName,
+}: {
+  engagement: DirectMeleeEngagement;
+  fromNode?: InitiativeAttackNode;
+  toNode?: InitiativeAttackNode;
+  fromCombatant?: InitiativeScenarioCombatant;
+  toCombatant?: InitiativeScenarioCombatant;
+  fromName: string;
+  toName: string;
+}): string => {
+  if (!fromCombatant || !toCombatant || !fromNode || !toNode) {
+    return `${fromName} and ${toName} are part of the same direct melee exchange.`;
+  }
+
+  const left = fromCombatant.side === 'party' ? fromCombatant : toCombatant;
+  const right = fromCombatant.side === 'party' ? toCombatant : fromCombatant;
+  const { faster } = getDirectMeleeFasterAndSlower(left, right);
+
+  switch (engagement.resolution.reason) {
+    case 'initiative': {
+      const winner =
+        fromCombatant.initiative > toCombatant.initiative
+          ? fromCombatant
+          : toCombatant;
+      const loser =
+        winner.id === fromCombatant.id ? toCombatant : fromCombatant;
+
+      return `${winner.name} wins initiative ${winner.initiative} to ${loser.initiative}, so ${fromName} comes before ${toName} in this melee exchange.`;
+    }
+
+    case 'multiple-routines':
+      return fromCombatant.id === toCombatant.id
+        ? `${fromCombatant.name} has multiple routine attacks this round, so ${fromName} comes before ${toName} under the DMG first/middle/last routine order.`
+        : `Multiple routine attacks are in play here, so ${fromName} falls earlier in the DMG first/middle/last routine order than ${toName}.`;
+
+    case 'weapon-speed':
+      return `${left.name} and ${right.name} tied initiative at ${left.initiative}. ${faster.name}'s lower weapon speed factor breaks the tie, so ${fromName} comes before ${toName}.`;
+
+    case 'weapon-speed-double':
+      return fromCombatant.id === toCombatant.id
+        ? `${left.name} and ${right.name} tied initiative at ${left.initiative}. ${faster.name}'s faster weapon earns an extra blow, so ${fromName} comes before ${toName}.`
+        : `${left.name} and ${right.name} tied initiative at ${left.initiative}. ${faster.name}'s weapon is more than twice as fast, so ${fromName} comes before ${toName}.`;
+
+    case 'weapon-speed-triple':
+      return `${left.name} and ${right.name} tied initiative at ${left.initiative}. The large weapon speed difference creates an extra third blow, which sets the order between ${fromName} and ${toName}.`;
+
+    case 'simultaneous':
+      return `${left.name} and ${right.name} tied initiative, so their blows land simultaneously here.`;
+  }
+};
+
 const estimateGraphNodeLineWidth = (
   text: string,
   kind: GraphNodeDisplayLineKind
@@ -907,6 +1142,26 @@ const InitiativePlayground = ({
       ),
     [scenario.enemies, scenario.party]
   );
+  const directMeleeEngagementByCombatantIds = useMemo(() => {
+    const entries = resolution.directMeleeEngagements.flatMap((engagement) => [
+      [
+        getDirectMeleeEngagementKey(
+          engagement.partyCombatantId,
+          engagement.enemyCombatantId
+        ),
+        engagement,
+      ] as const,
+      [
+        getDirectMeleeEngagementKey(
+          engagement.enemyCombatantId,
+          engagement.partyCombatantId
+        ),
+        engagement,
+      ] as const,
+    ]);
+
+    return new Map(entries);
+  }, [resolution.directMeleeEngagements]);
   const graphNodeDisplayById = useMemo(
     () =>
       Object.fromEntries(
@@ -1668,6 +1923,15 @@ const InitiativePlayground = ({
       ];
     });
   }, [attackNodeLabelById, selectedGraphOutgoingEdges]);
+  const selectedGraphSimultaneousGroup = useMemo(
+    () =>
+      selectedGraphNode
+        ? attackGraph.simultaneousGroups.find((group) =>
+            group.includes(selectedGraphNode.id)
+          )
+        : undefined,
+    [attackGraph.simultaneousGroups, selectedGraphNode]
+  );
   const enabledGraphNodeIds = useMemo(() => {
     const incomingBlockerIdsByNodeId = new Map<string, Set<string>>();
 
@@ -1845,15 +2109,26 @@ const InitiativePlayground = ({
     }
 
     const lines: string[] = [];
-    const hasDirectMeleeEdge = selectedGraphIncomingEdges
-      .concat(selectedGraphOutgoingEdges)
-      .some((edge) => edge.reasons.includes('direct-melee'));
-    const directMeleeEdge = selectedGraphIncomingEdges
-      .concat(selectedGraphOutgoingEdges)
-      .find((edge) => edge.reasons.includes('direct-melee'));
-    const hasMovementEdge = selectedGraphIncomingEdges
-      .concat(selectedGraphOutgoingEdges)
-      .some((edge) => edge.reasons.includes('movement'));
+    const relatedEdges = selectedGraphIncomingEdges.concat(
+      selectedGraphOutgoingEdges
+    );
+    const directMeleeEdges = relatedEdges.filter((edge) =>
+      edge.reasons.includes('direct-melee')
+    );
+    const hasDirectMeleeEdge = directMeleeEdges.length > 0;
+    const directMeleeEdge =
+      directMeleeEdges.find((edge) => {
+        const otherNodeId =
+          edge.fromNodeId === selectedGraphNode.id
+            ? edge.toNodeId
+            : edge.fromNodeId;
+        const otherNode = attackNodeById.get(otherNodeId);
+
+        return otherNode?.combatantId !== combatant.id;
+      }) || directMeleeEdges[0];
+    const hasMovementEdge = relatedEdges.some((edge) =>
+      edge.reasons.includes('movement')
+    );
     const targetName = selectedGraphNode.targetId
       ? viewModel.combatantNameById[selectedGraphNode.targetId] ||
         selectedGraphNode.targetId
@@ -1874,6 +2149,28 @@ const InitiativePlayground = ({
       ? viewModel.combatantNameById[directMeleeOpponentId] ||
         directMeleeOpponentId
       : undefined;
+    const directMeleeTargetId =
+      targetCombatant?.id ||
+      (combatant.targetIds.length === 1 ? combatant.targetIds[0] : undefined) ||
+      (directMeleeOpponentId !== undefined &&
+      directMeleeOpponentId !== combatant.id
+        ? directMeleeOpponentId
+        : undefined);
+    const directMeleeEngagement =
+      directMeleeTargetId !== undefined
+        ? directMeleeEngagementByCombatantIds.get(
+            getDirectMeleeEngagementKey(combatant.id, directMeleeTargetId)
+          )
+        : undefined;
+    const directMeleeOpponent =
+      (directMeleeTargetId !== undefined
+        ? combatantById.get(directMeleeTargetId)
+        : undefined) || targetCombatant;
+    const simultaneousPeerLabels = selectedGraphSimultaneousGroup
+      ? selectedGraphSimultaneousGroup
+          .filter((nodeId) => nodeId !== selectedGraphNode.id)
+          .map((nodeId) => attackNodeLabelById[nodeId] || nodeId)
+      : [];
     const combatantInitiative = getEffectiveInitiativeValue(combatant);
     const targetInitiative = targetCombatant
       ? getEffectiveInitiativeValue(targetCombatant)
@@ -1911,6 +2208,27 @@ const InitiativePlayground = ({
       lines.push(
         `Contact is reached on segment ${selectedGraphNode.segment}. This marks the moment movement closes to melee without assuming an automatic same-round blow.`
       );
+    } else if (selectedGraphSimultaneousGroup) {
+      if (directMeleeEngagement && directMeleeOpponent) {
+        lines.push(
+          getDirectMeleeWhyHereText({
+            node: selectedGraphNode,
+            combatant,
+            opponent: directMeleeOpponent,
+            engagement: directMeleeEngagement,
+          })
+        );
+      } else if (simultaneousPeerLabels.length > 0) {
+        lines.push(
+          `This action is simultaneous with ${simultaneousPeerLabels.join(
+            ' and '
+          )}. No narrower rule in this slice gives either action precedence.`
+        );
+      } else {
+        lines.push(
+          `This action is part of a simultaneous exchange, so no narrower rule in this slice gives it precedence over the other action in that cluster.`
+        );
+      }
     } else if (selectedGraphNode.segmentReason === 'spell-directed') {
       if (
         targetName &&
@@ -1988,15 +2306,26 @@ const InitiativePlayground = ({
         `${combatant.name}'s device use stays unsegmented because no activation time was declared for it.`
       );
     } else if (hasDirectMeleeEdge) {
-      lines.push(
-        `${combatant.name}${
-          targetName
-            ? ` and ${targetName}`
-            : directMeleeOpponentName
-            ? ` and ${directMeleeOpponentName}`
-            : ''
-        } are in direct melee, so initiative determines the order of their blows here.`
-      );
+      if (directMeleeEngagement && directMeleeOpponent) {
+        lines.push(
+          getDirectMeleeWhyHereText({
+            node: selectedGraphNode,
+            combatant,
+            opponent: directMeleeOpponent,
+            engagement: directMeleeEngagement,
+          })
+        );
+      } else {
+        lines.push(
+          `${combatant.name}${
+            targetName
+              ? ` and ${targetName}`
+              : directMeleeOpponentName
+              ? ` and ${directMeleeOpponentName}`
+              : ''
+          } are in direct melee, so initiative determines the order of their blows here.`
+        );
+      }
     } else if (
       selectedGraphNode.kind === 'attack' &&
       combatant.attackRoutine.components.length > 1 &&
@@ -2015,10 +2344,13 @@ const InitiativePlayground = ({
   }, [
     combatantById,
     attackNodeById,
+    attackNodeLabelById,
     movementResolutionByCombatantId,
+    directMeleeEngagementByCombatantIds,
     selectedGraphIncomingEdges,
     selectedGraphNode,
     selectedGraphOutgoingEdges,
+    selectedGraphSimultaneousGroup,
     viewModel.combatantNameById,
   ]);
   const getGraphEdgeExplanation = (edge: InitiativeAttackEdge): string => {
@@ -2033,6 +2365,33 @@ const InitiativePlayground = ({
     const fromName =
       (fromNode && attackNodeLabelById[fromNode.id]) || edge.fromNodeId;
     const toName = (toNode && attackNodeLabelById[toNode.id]) || edge.toNodeId;
+    const fromDirectMeleeTargetId =
+      fromNode?.targetId ||
+      (fromCombatant?.targetIds.length === 1
+        ? fromCombatant.targetIds[0]
+        : undefined);
+    const toDirectMeleeTargetId =
+      toNode?.targetId ||
+      (toCombatant?.targetIds.length === 1
+        ? toCombatant.targetIds[0]
+        : undefined);
+    const directMeleeEngagement =
+      fromCombatant && fromDirectMeleeTargetId
+        ? directMeleeEngagementByCombatantIds.get(
+            getDirectMeleeEngagementKey(
+              fromCombatant.id,
+              fromDirectMeleeTargetId
+            )
+          )
+        : toCombatant && toDirectMeleeTargetId
+        ? directMeleeEngagementByCombatantIds.get(
+            getDirectMeleeEngagementKey(toCombatant.id, toDirectMeleeTargetId)
+          )
+        : fromCombatant && toCombatant
+        ? directMeleeEngagementByCombatantIds.get(
+            getDirectMeleeEngagementKey(fromCombatant.id, toCombatant.id)
+          )
+        : undefined;
 
     return edge.reasons
       .map((reason) => {
@@ -2058,9 +2417,19 @@ const InitiativePlayground = ({
         }
 
         if (reason === 'direct-melee') {
-          return `${fromCombatant?.name || fromName} and ${
-            toCombatant?.name || toName
-          } are in direct melee, so initiative decides which blow happens first.`;
+          return directMeleeEngagement
+            ? getDirectMeleeEdgeExplanation({
+                engagement: directMeleeEngagement,
+                fromNode,
+                toNode,
+                fromCombatant,
+                toCombatant,
+                fromName,
+                toName,
+              })
+            : `${fromCombatant?.name || fromName} and ${
+                toCombatant?.name || toName
+              } are in direct melee, so initiative decides which blow happens first.`;
         }
 
         if (reason === 'movement') {
