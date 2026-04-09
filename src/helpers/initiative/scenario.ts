@@ -171,7 +171,30 @@ const getTargetDeclarations = (
   combatant.targetDeclarations ||
   (combatant.targetCombatantKeys || []).map((targetCombatantKey) => ({
     targetCombatantKey,
+    distanceInches: combatant.actionDistanceInches,
+    activationSegments: combatant.activationSegments,
+    castingSegments: combatant.castingSegments,
   }));
+
+const getSharedDeclarationValue = <
+  TKey extends 'distanceInches' | 'activationSegments' | 'castingSegments'
+>(
+  targetDeclarations: InitiativeScenarioDraftTargetDeclaration[],
+  key: TKey
+): number | undefined => {
+  const definedValues = targetDeclarations
+    .map((targetDeclaration) => targetDeclaration[key])
+    .filter((value): value is number => value !== undefined);
+
+  if (definedValues.length === 0) {
+    return undefined;
+  }
+
+  const firstValue = definedValues[0];
+  return definedValues.every((value) => value === firstValue)
+    ? firstValue
+    : undefined;
+};
 
 const toOpenMeleeCombatant = (
   combatant: InitiativeScenarioCombatant
@@ -195,7 +218,8 @@ const buildScenarioCombatants = (
     const weaponInfo = getWeaponInfo(combatant.weaponId);
     const combatantId = getCombatantId(side, combatant.combatantKey);
     const weaponType = getInitiativeWeaponType(weaponInfo?.weaponType);
-    const targetDeclarations = getTargetDeclarations(combatant)
+    const draftTargetDeclarations = getTargetDeclarations(combatant);
+    const targetDeclarations = draftTargetDeclarations
       .filter((targetDeclaration) =>
         opposingCombatantKeys.has(targetDeclaration.targetCombatantKey)
       )
@@ -218,6 +242,15 @@ const buildScenarioCombatants = (
         activationSegments: targetDeclaration.activationSegments,
         castingSegments: targetDeclaration.castingSegments,
       }));
+    const sharedDistanceInches =
+      combatant.actionDistanceInches ??
+      getSharedDeclarationValue(draftTargetDeclarations, 'distanceInches');
+    const sharedActivationSegments =
+      combatant.activationSegments ??
+      getSharedDeclarationValue(draftTargetDeclarations, 'activationSegments');
+    const sharedCastingSegments =
+      combatant.castingSegments ??
+      getSharedDeclarationValue(draftTargetDeclarations, 'castingSegments');
 
     return {
       id: combatantId,
@@ -229,6 +262,9 @@ const buildScenarioCombatants = (
       missileInitiativeAdjustment: combatant.missileInitiativeAdjustment ?? 0,
       declaredAction: combatant.declaredAction ?? 'open-melee',
       movementRate: combatant.movementRate ?? DEFAULT_MOVEMENT_RATE,
+      actionDistanceInches: sharedDistanceInches,
+      activationSegments: sharedActivationSegments,
+      castingSegments: sharedCastingSegments,
       weaponId: combatant.weaponId,
       weaponName: weaponInfo?.name || `Weapon ${combatant.weaponId}`,
       weaponType,

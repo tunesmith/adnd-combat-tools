@@ -151,6 +151,57 @@ describe('initiative attack graph', () => {
     expect(graph.layers).toEqual([['attack:enemy-3:1'], ['attack:party-1:1']]);
   });
 
+  test('keeps a targetless spell in the graph and lets directed attacks interrupt it', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Targetless Spell',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Cleric',
+          declaredAction: 'spell-casting',
+          castingSegments: 2,
+          weaponId: 17,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Ghoul',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes.map((node) => node.id)).toEqual(
+      expect.arrayContaining([
+        'spell-start:party-1',
+        'spell-completion:party-1',
+        'attack:enemy-3:1',
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'spell-start:party-1',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-casting'],
+        },
+        {
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'spell-completion:party-1',
+          reasons: ['spell-interruption'],
+        },
+      ])
+    );
+  });
+
   test('keeps turn undead simultaneous with melee on tied initiative', () => {
     const scenario = buildInitiativeScenario({
       label: 'Turn Undead Tie',

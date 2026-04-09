@@ -41,4 +41,3 @@ order just from the MU showing up. But I think Thorfinn doesn't agree
 with this interpretation, either.
 
 ## The Prince
-

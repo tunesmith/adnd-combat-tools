@@ -647,10 +647,7 @@ const getMagicalDeviceSummary = (
   combatantById: Map<string, InitiativeScenarioCombatant>
 ): string => {
   const targetNames = formatNames(combatant.targetIds, combatantNameById);
-  const activationSegments =
-    combatant.targetDeclarations.length === 1
-      ? combatant.targetDeclarations[0]?.activationSegments
-      : undefined;
+  const activationSegments = combatant.activationSegments;
   const activationText =
     activationSegments !== undefined
       ? ` The device discharge is treated as a segment-${activationSegments} activation in this rules slice.`
@@ -691,16 +688,9 @@ const buildMagicalDeviceCards = (
 ): InitiativeResolutionCardViewModel[] =>
   scenario.party
     .concat(scenario.enemies)
-    .filter(
-      (combatant) =>
-        combatant.declaredAction === 'magical-device' &&
-        combatant.targetIds.length > 0
-    )
+    .filter((combatant) => combatant.declaredAction === 'magical-device')
     .map((combatant) => {
-      const activationSegments =
-        combatant.targetDeclarations.length === 1
-          ? combatant.targetDeclarations[0]?.activationSegments
-          : undefined;
+      const activationSegments = combatant.activationSegments;
 
       return {
         id: `magical-device-${combatant.id}`,
@@ -754,9 +744,7 @@ const getSharedSpellCastingSegments = (
   combatant: InitiativeScenarioCombatant
 ): number | undefined =>
   combatant.declaredAction === 'spell-casting'
-    ? combatant.targetDeclarations.find(
-        (targetDeclaration) => targetDeclaration.castingSegments !== undefined
-      )?.castingSegments
+    ? combatant.castingSegments
     : undefined;
 
 const getSpellCastingSummary = (
@@ -773,6 +761,10 @@ const getSpellCastingSummary = (
       : `The spell completes on segment ${
           castingSegments ?? 1
         } in this rules slice.`;
+
+  if (combatant.targetIds.length === 0) {
+    return `${combatant.name} casts a spell. ${completionText} Directed attacks that resolve before completion spoil the spell.`;
+  }
 
   if (combatant.targetIds.length !== 1) {
     return `${combatant.name} casts a spell against ${targetNames}. ${completionText} Directed attacks that resolve before completion spoil the spell.`;
@@ -813,11 +805,7 @@ const buildSpellCastingCards = (
 ): InitiativeResolutionCardViewModel[] =>
   scenario.party
     .concat(scenario.enemies)
-    .filter(
-      (combatant) =>
-        combatant.declaredAction === 'spell-casting' &&
-        combatant.targetIds.length > 0
-    )
+    .filter((combatant) => combatant.declaredAction === 'spell-casting')
     .map((combatant) => {
       const castingSegments = getSharedSpellCastingSegments(combatant);
 

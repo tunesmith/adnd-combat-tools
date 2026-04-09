@@ -6,6 +6,9 @@ export interface InitiativePlaytestCombatantState {
   name: string;
   declaredAction: InitiativeDeclaredAction;
   movementRate: string;
+  actionDistanceInches: string;
+  activationSegments: string;
+  castingSegments: string;
   missileInitiativeAdjustment: string;
   attackRoutineCount: string;
   weaponId: number;
@@ -91,6 +94,9 @@ const sanitizeCombatant = (
       ? candidate['declaredAction']
       : 'open-melee',
     movementRate: sanitizeString(candidate['movementRate'] || '12'),
+    actionDistanceInches: sanitizeString(candidate['actionDistanceInches']),
+    activationSegments: sanitizeString(candidate['activationSegments']),
+    castingSegments: sanitizeString(candidate['castingSegments']),
     missileInitiativeAdjustment: sanitizeString(
       candidate['missileInitiativeAdjustment'] || '0'
     ),

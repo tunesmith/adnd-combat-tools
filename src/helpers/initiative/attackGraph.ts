@@ -123,23 +123,22 @@ const createRoutineAttackNode = (
 const getDeclaredActionSegment = (
   combatant: InitiativeScenarioCombatant
 ): number | undefined =>
-  combatant.declaredAction === 'magical-device' &&
-  combatant.targetDeclarations.length === 1
-    ? combatant.targetDeclarations[0]?.activationSegments
+  combatant.declaredAction === 'magical-device'
+    ? combatant.activationSegments
     : undefined;
 
 const getSpellCastingSegments = (
   combatant: InitiativeScenarioCombatant
 ): number | undefined =>
   combatant.declaredAction === 'spell-casting'
-    ? combatant.targetDeclarations.find(
-        (targetDeclaration) => targetDeclaration.castingSegments !== undefined
-      )?.castingSegments
+    ? combatant.castingSegments
     : undefined;
 
 const hasRegisteredCombatAction = (
   combatant: InitiativeScenarioCombatant
-): boolean => combatant.targetIds.length > 0;
+): boolean =>
+  combatant.targetIds.length > 0 ||
+  combatant.declaredAction === 'spell-casting';
 
 const hasInvalidOpenMeleeOpposition = (
   combatant: InitiativeScenarioCombatant,
@@ -744,10 +743,7 @@ const addSpellInterruptionEdges = (
   edgesByKey: Map<string, InitiativeAttackEdge>
 ) => {
   scenario.party.concat(scenario.enemies).forEach((caster) => {
-    if (
-      caster.declaredAction !== 'spell-casting' ||
-      caster.targetIds.length < 1
-    ) {
+    if (caster.declaredAction !== 'spell-casting') {
       return;
     }
 

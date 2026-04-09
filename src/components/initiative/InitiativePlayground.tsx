@@ -41,9 +41,8 @@ interface InitiativePlaytestEditorTarget {
 }
 
 interface InitiativePlaytestAttackEditorTarget {
-  attackingSide: InitiativePlaytestSide;
-  attackerKey: number;
-  targetKey: number;
+  side: InitiativePlaytestSide;
+  combatantKey: number;
   action: InitiativeDeclaredAction;
   attackRoutineCount: string;
   distanceInches: string;
@@ -312,12 +311,18 @@ const createCombatant = (
   ),
   movementRate = '12',
   attackRoutineCount = '1',
-  missileInitiativeAdjustment = '0'
+  missileInitiativeAdjustment = '0',
+  actionDistanceInches = '',
+  activationSegments = '',
+  castingSegments = ''
 ): InitiativePlaytestCombatant => ({
   key,
   name,
   declaredAction,
   movementRate,
+  actionDistanceInches,
+  activationSegments,
+  castingSegments,
   missileInitiativeAdjustment,
   attackRoutineCount,
   weaponId,
@@ -518,33 +523,60 @@ const buildDraftCombatants = (
     name: combatant.name.trim() || undefined,
     declaredAction: combatant.declaredAction,
     movementRate: parseOptionalNumber(combatant.movementRate),
-    missileInitiativeAdjustment: parseMissileInitiativeAdjustment(
-      combatant.missileInitiativeAdjustment
-    ),
-    attackRoutineCount: parseAttackRoutineCount(combatant.attackRoutineCount),
-    weaponId: combatant.weaponId,
-    targetDeclarations: combatant.targetCombatantKeys.map(
-      (targetCombatantKey) => ({
-        targetCombatantKey,
-        distanceInches: parseOptionalNumber(
+    actionDistanceInches:
+      parseOptionalNumber(combatant.actionDistanceInches) ??
+      (() => {
+        if (combatant.targetCombatantKeys.length !== 1) {
+          return undefined;
+        }
+
+        const targetCombatantKey = combatant.targetCombatantKeys[0];
+        if (targetCombatantKey === undefined) {
+          return undefined;
+        }
+        return parseOptionalNumber(
           pairDistances[
             side === 'party'
               ? getPairDistanceKey(combatant.key, targetCombatantKey)
               : getPairDistanceKey(targetCombatantKey, combatant.key)
           ] || ''
-        ),
-        activationSegments: parseActivationSegments(
+        );
+      })(),
+    activationSegments:
+      parseActivationSegments(combatant.activationSegments) ??
+      (() => {
+        if (combatant.targetCombatantKeys.length !== 1) {
+          return undefined;
+        }
+
+        const targetCombatantKey = combatant.targetCombatantKeys[0];
+        if (targetCombatantKey === undefined) {
+          return undefined;
+        }
+        return parseActivationSegments(
           attackActivationSegments[
             getAttackDeclarationKey(side, combatant.key, targetCombatantKey)
           ] || ''
-        ),
-        castingSegments: parseCastingSegments(
-          attackCastingSegments[
-            getAttackDeclarationKey(side, combatant.key, targetCombatantKey)
-          ] || ''
-        ),
-      })
+        );
+      })(),
+    castingSegments:
+      parseCastingSegments(combatant.castingSegments) ??
+      (() => {
+        const prefix = `${side}:${combatant.key}:`;
+        const storedCastingSegments = Object.entries(
+          attackCastingSegments
+        ).find(
+          ([declarationKey, value]) =>
+            declarationKey.startsWith(prefix) && value.trim().length > 0
+        )?.[1];
+        return parseCastingSegments(storedCastingSegments || '');
+      })(),
+    missileInitiativeAdjustment: parseMissileInitiativeAdjustment(
+      combatant.missileInitiativeAdjustment
     ),
+    attackRoutineCount: parseAttackRoutineCount(combatant.attackRoutineCount),
+    weaponId: combatant.weaponId,
+    targetCombatantKeys: combatant.targetCombatantKeys,
   }));
 
 const buildDraftFromState = (
@@ -621,6 +653,44 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
   ]
     .filter(Boolean)
     .join(' · ');
+
+const getCombatantActionMeta = (
+  combatant: InitiativePlaytestCombatant
+): string =>
+  formatDeclarationMeta(
+    combatant.declaredAction,
+    combatant.actionDistanceInches,
+    combatant.activationSegments,
+    combatant.castingSegments
+  );
+
+const getCombatantActionHint = (
+  combatant: InitiativePlaytestCombatant
+): string | undefined => {
+  const actionMeta = getCombatantActionMeta(combatant);
+  const actionLabel = formatDeclaredAction(combatant.declaredAction);
+
+  if (actionMeta === actionLabel) {
+    return undefined;
+  }
+
+  const metaPrefix = `${actionLabel} · `;
+  return actionMeta.startsWith(metaPrefix)
+    ? actionMeta.slice(metaPrefix.length)
+    : actionMeta;
+};
+
+const getCombatantTargetSummary = (
+  combatant: InitiativePlaytestCombatant
+): string => {
+  const targetCount = combatant.targetCombatantKeys.length;
+
+  if (targetCount === 0) {
+    return 'No targets';
+  }
+
+  return `${targetCount} ${targetCount === 1 ? 'target' : 'targets'}`;
+};
 
 const isNonMissileWeaponId = (weaponId: number): boolean =>
   getWeaponInfo(weaponId)?.weaponType !== 'missile';
@@ -773,7 +843,7 @@ const InitiativePlayground = ({
   const [editorTarget, setEditorTarget] = useState<
     InitiativePlaytestEditorTarget | undefined
   >(undefined);
-  const [attackEditorTarget, setAttackEditorTarget] = useState<
+  const [actionEditorTarget, setActionEditorTarget] = useState<
     InitiativePlaytestAttackEditorTarget | undefined
   >(undefined);
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<
@@ -1103,47 +1173,51 @@ const InitiativePlayground = ({
     }));
   };
 
-  const openAttackEditor = (
-    attackingSide: InitiativePlaytestSide,
-    attackerKey: number,
-    targetKey: number
+  const openActionEditor = (
+    side: InitiativePlaytestSide,
+    combatantKey: number
   ) => {
-    const attackingCombatant = state[getStateSide(attackingSide)].find(
-      (combatant) => combatant.key === attackerKey
+    const combatant = state[getStateSide(side)].find(
+      (candidate) => candidate.key === combatantKey
     );
 
-    if (!attackingCombatant) {
+    if (!combatant) {
       return;
     }
 
+    const firstTargetKey = combatant.targetCombatantKeys[0];
     const pairKey =
-      attackingSide === 'party'
-        ? getPairDistanceKey(attackerKey, targetKey)
-        : getPairDistanceKey(targetKey, attackerKey);
-    const declarationKey = getAttackDeclarationKey(
-      attackingSide,
-      attackerKey,
-      targetKey
-    );
+      firstTargetKey !== undefined
+        ? side === 'party'
+          ? getPairDistanceKey(combatantKey, firstTargetKey)
+          : getPairDistanceKey(firstTargetKey, combatantKey)
+        : undefined;
+    const declarationKey =
+      firstTargetKey !== undefined
+        ? getAttackDeclarationKey(side, combatantKey, firstTargetKey)
+        : undefined;
 
-    setAttackEditorTarget({
-      attackingSide,
-      attackerKey,
-      targetKey,
-      action: attackingCombatant.declaredAction,
-      attackRoutineCount: attackingCombatant.attackRoutineCount,
-      distanceInches: state.pairDistances[pairKey] || '',
-      activationSegments: state.attackActivationSegments[declarationKey] || '',
+    setActionEditorTarget({
+      side,
+      combatantKey,
+      action: combatant.declaredAction,
+      attackRoutineCount: combatant.attackRoutineCount,
+      distanceInches:
+        combatant.actionDistanceInches ||
+        (pairKey ? state.pairDistances[pairKey] || '' : ''),
+      activationSegments:
+        combatant.activationSegments ||
+        (declarationKey
+          ? state.attackActivationSegments[declarationKey] || ''
+          : ''),
       castingSegments:
-        state.attackCastingSegments[declarationKey] ||
-        (attackingCombatant.declaredAction === 'spell-casting'
-          ? getStoredCastingSegmentsForAttacker(
-              state,
-              attackingSide,
-              attackerKey
-            )
-          : undefined) ||
-        '1',
+        combatant.castingSegments ||
+        (combatant.declaredAction === 'spell-casting'
+          ? getStoredCastingSegmentsForAttacker(state, side, combatantKey) ||
+            '1'
+          : declarationKey
+          ? state.attackCastingSegments[declarationKey] || ''
+          : ''),
     });
   };
 
@@ -1259,6 +1333,13 @@ const InitiativePlayground = ({
         ? undefined
         : previous
     );
+    setActionEditorTarget((previous) =>
+      previous &&
+      previous.side === side &&
+      previous.combatantKey === combatantKey
+        ? undefined
+        : previous
+    );
   };
 
   const loadPreset = (presetFactory: () => InitiativePlaytestState) => {
@@ -1267,138 +1348,57 @@ const InitiativePlayground = ({
     setExamplesMenuOpen(false);
   };
 
-  const saveAttackDeclaration = () => {
-    if (!attackEditorTarget) {
+  const saveActionDeclaration = () => {
+    if (!actionEditorTarget) {
       return;
     }
 
     const {
-      attackingSide,
-      attackerKey,
-      targetKey,
+      side,
+      combatantKey,
       action,
       attackRoutineCount,
       distanceInches,
+      activationSegments,
       castingSegments,
-    } = attackEditorTarget;
-    const stateSide = getStateSide(attackingSide);
-    const pairKey =
-      attackingSide === 'party'
-        ? getPairDistanceKey(attackerKey, targetKey)
-        : getPairDistanceKey(targetKey, attackerKey);
-    const declarationKey = getAttackDeclarationKey(
-      attackingSide,
-      attackerKey,
-      targetKey
-    );
+    } = actionEditorTarget;
+    const stateSide = getStateSide(side);
 
     setState((previous) => {
       const attackingCombatant = previous[stateSide].find(
-        (combatant) => combatant.key === attackerKey
+        (combatant) => combatant.key === combatantKey
       );
 
       if (!attackingCombatant) {
         return previous;
       }
 
-      const nextTargetCombatantKeys =
-        attackingCombatant.targetCombatantKeys.includes(targetKey)
-          ? isSingleTargetDeclarationAction(action)
-            ? [targetKey]
-            : attackingCombatant.targetCombatantKeys
-          : isSingleTargetDeclarationAction(action)
-          ? [targetKey]
-          : (() => {
-              const nextTargets =
-                attackingCombatant.targetCombatantKeys.concat(targetKey);
-
-              if (action !== 'missile') {
-                return nextTargets;
-              }
-
-              const missileTargetLimit = getMissileTargetLimitForWeaponId(
-                attackingCombatant.weaponId
-              );
-
-              return nextTargets.slice(-missileTargetLimit);
-            })();
-
-      const nextAttackActivationSegments =
-        requiresActivationSegmentsInput(action) &&
-        attackEditorTarget.activationSegments.trim().length > 0
-          ? {
-              ...previous.attackActivationSegments,
-              [declarationKey]: attackEditorTarget.activationSegments,
-            }
-          : Object.fromEntries(
-              Object.entries(previous.attackActivationSegments).filter(
-                ([existingKey]) => existingKey !== declarationKey
-              )
-            );
-
-      const nextAttackCastingSegments = (() => {
-        const remainingEntries = Object.entries(previous.attackCastingSegments)
-          .filter(([existingKey]) => {
-            const [existingSide, existingAttackerKeyValue] =
-              existingKey.split(':');
-            const existingAttackerKey = parseInt(
-              existingAttackerKeyValue || '',
-              10
-            );
-
-            if (
-              action === 'spell-casting' &&
-              existingSide === attackingSide &&
-              existingAttackerKey === attackerKey
-            ) {
-              return false;
-            }
-
-            return existingKey !== declarationKey;
-          })
-          .reduce<Record<string, string>>((next, [existingKey, value]) => {
-            next[existingKey] = value;
-            return next;
-          }, {});
-
-        if (
-          !requiresCastingSegmentsInput(action) ||
-          castingSegments.trim().length === 0
-        ) {
-          return remainingEntries;
-        }
-
-        if (action === 'spell-casting') {
-          nextTargetCombatantKeys.forEach((declaredTargetKey) => {
-            remainingEntries[
-              getAttackDeclarationKey(
-                attackingSide,
-                attackerKey,
-                declaredTargetKey
-              )
-            ] = castingSegments;
-          });
-          return remainingEntries;
-        }
-
-        remainingEntries[declarationKey] = castingSegments;
-        return remainingEntries;
-      })();
+      const nextTargetCombatantKeys = isSingleTargetDeclarationAction(action)
+        ? attackingCombatant.targetCombatantKeys.slice(0, 1)
+        : action === 'missile'
+        ? attackingCombatant.targetCombatantKeys.slice(
+            0,
+            getMissileTargetLimitForWeaponId(attackingCombatant.weaponId)
+          )
+        : attackingCombatant.targetCombatantKeys;
 
       return {
         ...previous,
-        pairDistances: {
-          ...previous.pairDistances,
-          [pairKey]: distanceInches,
-        },
-        attackActivationSegments: nextAttackActivationSegments,
-        attackCastingSegments: nextAttackCastingSegments,
         [stateSide]: previous[stateSide].map((combatant) =>
-          combatant.key !== attackerKey
+          combatant.key !== combatantKey
             ? combatant
             : {
                 ...combatant,
                 declaredAction: action,
+                actionDistanceInches: requiresDistanceInput(action)
+                  ? distanceInches
+                  : '',
+                activationSegments: requiresActivationSegmentsInput(action)
+                  ? activationSegments
+                  : '',
+                castingSegments: requiresCastingSegmentsInput(action)
+                  ? castingSegments
+                  : '',
                 attackRoutineCount: requiresAttackRoutineCountInput(
                   action,
                   combatant.weaponId
@@ -1411,58 +1411,83 @@ const InitiativePlayground = ({
       };
     });
 
-    setAttackEditorTarget(undefined);
+    setActionEditorTarget(undefined);
   };
 
-  const clearAttackDeclaration = () => {
-    if (!attackEditorTarget) {
+  const toggleAttackTarget = (
+    attackingSide: InitiativePlaytestSide,
+    attackerKey: number,
+    targetKey: number
+  ) => {
+    const stateSide = getStateSide(attackingSide);
+
+    setState((previous) => {
+      const attackingCombatant = previous[stateSide].find(
+        (combatant) => combatant.key === attackerKey
+      );
+
+      if (!attackingCombatant) {
+        return previous;
+      }
+
+      const isSelected =
+        attackingCombatant.targetCombatantKeys.includes(targetKey);
+      let nextTargetCombatantKeys: number[];
+
+      if (isSelected) {
+        nextTargetCombatantKeys = attackingCombatant.targetCombatantKeys.filter(
+          (existingTargetKey) => existingTargetKey !== targetKey
+        );
+      } else if (
+        isSingleTargetDeclarationAction(attackingCombatant.declaredAction)
+      ) {
+        nextTargetCombatantKeys = [targetKey];
+      } else {
+        nextTargetCombatantKeys =
+          attackingCombatant.targetCombatantKeys.concat(targetKey);
+
+        if (attackingCombatant.declaredAction === 'missile') {
+          nextTargetCombatantKeys = nextTargetCombatantKeys.slice(
+            -getMissileTargetLimitForWeaponId(attackingCombatant.weaponId)
+          );
+        }
+      }
+
+      return {
+        ...previous,
+        [stateSide]: previous[stateSide].map((combatant) =>
+          combatant.key === attackerKey
+            ? {
+                ...combatant,
+                targetCombatantKeys: nextTargetCombatantKeys,
+              }
+            : combatant
+        ),
+      };
+    });
+  };
+
+  const clearActionDeclaration = () => {
+    if (!actionEditorTarget) {
       return;
     }
 
-    const { attackingSide, attackerKey, targetKey } = attackEditorTarget;
-    const stateSide = getStateSide(attackingSide);
-    const pairKey =
-      attackingSide === 'party'
-        ? getPairDistanceKey(attackerKey, targetKey)
-        : getPairDistanceKey(targetKey, attackerKey);
-    const declarationKey = getAttackDeclarationKey(
-      attackingSide,
-      attackerKey,
-      targetKey
-    );
+    const { side, combatantKey } = actionEditorTarget;
+    const stateSide = getStateSide(side);
 
     setState((previous) => ({
       ...previous,
-      pairDistances: Object.fromEntries(
-        Object.entries(previous.pairDistances).filter(
-          ([existingPairKey]) => existingPairKey !== pairKey
-        )
-      ),
-      attackActivationSegments: Object.fromEntries(
-        Object.entries(previous.attackActivationSegments).filter(
-          ([existingDeclarationKey]) =>
-            existingDeclarationKey !== declarationKey
-        )
-      ),
-      attackCastingSegments: Object.fromEntries(
-        Object.entries(previous.attackCastingSegments).filter(
-          ([existingDeclarationKey]) =>
-            existingDeclarationKey !== declarationKey
-        )
-      ),
       [stateSide]: previous[stateSide].map((combatant) =>
-        combatant.key === attackerKey
+        combatant.key === combatantKey
           ? {
               ...combatant,
-              targetCombatantKeys: combatant.targetCombatantKeys.filter(
-                (existingTargetKey) => existingTargetKey !== targetKey
-              ),
+              targetCombatantKeys: [],
             }
           : combatant
       ),
     }));
 
-    setAttackEditorTarget(undefined);
+    setActionEditorTarget(undefined);
   };
 
   const attackNodeLabelById = useMemo(
@@ -2112,54 +2137,47 @@ const InitiativePlayground = ({
           editedCombatantIndex
         )
       : undefined;
-  const attackEditedAttacker =
-    attackEditorTarget !== undefined
-      ? state[getStateSide(attackEditorTarget.attackingSide)].find(
-          (combatant) => combatant.key === attackEditorTarget.attackerKey
+  const actionEditedCombatant =
+    actionEditorTarget !== undefined
+      ? state[getStateSide(actionEditorTarget.side)].find(
+          (combatant) => combatant.key === actionEditorTarget.combatantKey
         )
       : undefined;
-  const attackEditedTargetSide: InitiativePlaytestSide | undefined =
-    attackEditorTarget
-      ? attackEditorTarget.attackingSide === 'party'
-        ? 'enemy'
-        : 'party'
-      : undefined;
-  const attackEditedTargetCombatants =
-    attackEditedTargetSide !== undefined
-      ? state[getStateSide(attackEditedTargetSide)]
-      : [];
-  const attackEditedTargetIndex =
-    attackEditorTarget !== undefined
-      ? attackEditedTargetCombatants.findIndex(
-          (combatant) => combatant.key === attackEditorTarget.targetKey
+  const actionEditedCombatantIndex =
+    actionEditorTarget !== undefined
+      ? state[getStateSide(actionEditorTarget.side)].findIndex(
+          (combatant) => combatant.key === actionEditorTarget.combatantKey
         )
       : -1;
-  const attackEditedTargetCombatant =
-    attackEditedTargetIndex >= 0
-      ? attackEditedTargetCombatants[attackEditedTargetIndex]
-      : undefined;
-  const attackEditedAttackerIndex =
-    attackEditorTarget !== undefined
-      ? state[getStateSide(attackEditorTarget.attackingSide)].findIndex(
-          (combatant) => combatant.key === attackEditorTarget.attackerKey
-        )
-      : -1;
-  const attackEditedAttackerName =
-    attackEditedAttacker && attackEditorTarget && attackEditedAttackerIndex >= 0
+  const actionEditedCombatantName =
+    actionEditedCombatant &&
+    actionEditorTarget &&
+    actionEditedCombatantIndex >= 0
       ? getCombatantDisplayName(
-          attackEditorTarget.attackingSide,
-          attackEditedAttacker,
-          attackEditedAttackerIndex
+          actionEditorTarget.side,
+          actionEditedCombatant,
+          actionEditedCombatantIndex
         )
       : undefined;
-  const attackEditedTargetName =
-    attackEditedTargetCombatant && attackEditedTargetSide !== undefined
-      ? getCombatantDisplayName(
-          attackEditedTargetSide,
-          attackEditedTargetCombatant,
-          attackEditedTargetIndex
-        )
-      : undefined;
+  const actionEditedTargetNames =
+    actionEditedCombatant?.targetCombatantKeys.map((targetCombatantKey) => {
+      const targetSide =
+        actionEditorTarget?.side === 'party' ? 'enemy' : 'party';
+      const targetCombatants = state[getStateSide(targetSide)];
+      const targetIndex = targetCombatants.findIndex(
+        (combatant) => combatant.key === targetCombatantKey
+      );
+      const targetCombatant =
+        targetIndex >= 0 ? targetCombatants[targetIndex] : undefined;
+
+      return targetCombatant
+        ? getCombatantDisplayName(targetSide, targetCombatant, targetIndex)
+        : undefined;
+    }) || [];
+  const actionEditedTargetSummary =
+    actionEditedTargetNames.length > 0
+      ? actionEditedTargetNames.filter(Boolean).join(', ')
+      : 'No targets selected';
 
   return (
     <div className={styles['page']}>
@@ -2281,12 +2299,10 @@ const InitiativePlayground = ({
               <h3 className={styles['matrixTitle']}>Engagement Matrix</h3>
               <p className={styles['matrixCopy']}>
                 Party combatants run across the top, enemies run down the side.
-                Click `P→E` when the party column acts against the enemy row,
-                `E→P` for the reverse, and use the declaration modal to set the
-                action plus any inch distance or device activation time for that
-                directed declaration. Clean open-melee mutual targets light up
-                as duels. Click a row or column header to edit persistent
-                combatant metadata.
+                Set each combatant&apos;s round action from its header, then use
+                the cells only to toggle targets. Clean open-melee mutual
+                targets light up as duels. Click the metadata half of a row or
+                column header to edit persistent combatant details.
               </p>
             </div>
 
@@ -2427,27 +2443,56 @@ const InitiativePlayground = ({
                           key={`party-header-${partyCombatant.key}`}
                           className={styles['matrixColumnHeader']}
                         >
-                          <button
-                            type={'button'}
-                            className={styles['matrixCombatantButton']}
-                            onClick={() =>
-                              setEditorTarget({
-                                side: 'party',
-                                combatantKey: partyCombatant.key,
-                              })
-                            }
-                          >
-                            <span className={styles['matrixCombatantName']}>
-                              {getCombatantDisplayName(
-                                'party',
-                                partyCombatant,
-                                partyIndex
-                              )}
-                            </span>
-                            <span className={styles['matrixCombatantMeta']}>
-                              {getCombatantMeta(partyCombatant)}
-                            </span>
-                          </button>
+                          <div className={styles['matrixColumnHeaderSplit']}>
+                            <button
+                              type={'button'}
+                              className={[
+                                styles['matrixCombatantButton'],
+                                styles['matrixCombatantMetaButton'],
+                              ].join(' ')}
+                              onClick={() =>
+                                setEditorTarget({
+                                  side: 'party',
+                                  combatantKey: partyCombatant.key,
+                                })
+                              }
+                            >
+                              <span className={styles['matrixCombatantName']}>
+                                {getCombatantDisplayName(
+                                  'party',
+                                  partyCombatant,
+                                  partyIndex
+                                )}
+                              </span>
+                              <span className={styles['matrixCombatantMeta']}>
+                                {getCombatantMeta(partyCombatant)}
+                              </span>
+                            </button>
+                            <button
+                              type={'button'}
+                              className={[
+                                styles['matrixCombatantButton'],
+                                styles['matrixCombatantActionButton'],
+                              ].join(' ')}
+                              onClick={() =>
+                                openActionEditor('party', partyCombatant.key)
+                              }
+                            >
+                              <span className={styles['matrixCombatantName']}>
+                                {formatDeclaredAction(
+                                  partyCombatant.declaredAction
+                                )}
+                              </span>
+                              {getCombatantActionHint(partyCombatant) ? (
+                                <span className={styles['matrixCombatantMeta']}>
+                                  {getCombatantActionHint(partyCombatant)}
+                                </span>
+                              ) : null}
+                              <span className={styles['matrixCombatantMeta']}>
+                                {getCombatantTargetSummary(partyCombatant)}
+                              </span>
+                            </button>
+                          </div>
                         </th>
                       ))}
                     </tr>
@@ -2457,27 +2502,58 @@ const InitiativePlayground = ({
                       return (
                         <tr key={`enemy-row-${enemyCombatant.key}`}>
                           <th className={styles['matrixRowHeader']}>
-                            <button
-                              type={'button'}
-                              className={styles['matrixCombatantButton']}
-                              onClick={() =>
-                                setEditorTarget({
-                                  side: 'enemy',
-                                  combatantKey: enemyCombatant.key,
-                                })
-                              }
-                            >
-                              <span className={styles['matrixCombatantName']}>
-                                {getCombatantDisplayName(
-                                  'enemy',
-                                  enemyCombatant,
-                                  enemyIndex
-                                )}
-                              </span>
-                              <span className={styles['matrixCombatantMeta']}>
-                                {getCombatantMeta(enemyCombatant)}
-                              </span>
-                            </button>
+                            <div className={styles['matrixRowHeaderSplit']}>
+                              <button
+                                type={'button'}
+                                className={[
+                                  styles['matrixCombatantButton'],
+                                  styles['matrixCombatantMetaButton'],
+                                ].join(' ')}
+                                onClick={() =>
+                                  setEditorTarget({
+                                    side: 'enemy',
+                                    combatantKey: enemyCombatant.key,
+                                  })
+                                }
+                              >
+                                <span className={styles['matrixCombatantName']}>
+                                  {getCombatantDisplayName(
+                                    'enemy',
+                                    enemyCombatant,
+                                    enemyIndex
+                                  )}
+                                </span>
+                                <span className={styles['matrixCombatantMeta']}>
+                                  {getCombatantMeta(enemyCombatant)}
+                                </span>
+                              </button>
+                              <button
+                                type={'button'}
+                                className={[
+                                  styles['matrixCombatantButton'],
+                                  styles['matrixCombatantActionButton'],
+                                ].join(' ')}
+                                onClick={() =>
+                                  openActionEditor('enemy', enemyCombatant.key)
+                                }
+                              >
+                                <span className={styles['matrixCombatantName']}>
+                                  {formatDeclaredAction(
+                                    enemyCombatant.declaredAction
+                                  )}
+                                </span>
+                                {getCombatantActionHint(enemyCombatant) ? (
+                                  <span
+                                    className={styles['matrixCombatantMeta']}
+                                  >
+                                    {getCombatantActionHint(enemyCombatant)}
+                                  </span>
+                                ) : null}
+                                <span className={styles['matrixCombatantMeta']}>
+                                  {getCombatantTargetSummary(enemyCombatant)}
+                                </span>
+                              </button>
+                            </div>
                           </th>
                           {state.party.map((partyCombatant, partyIndex) => {
                             const partyTargetsEnemy =
@@ -2497,58 +2573,31 @@ const InitiativePlayground = ({
                               isNonMissileWeaponId(partyCombatant.weaponId) &&
                               isNonMissileWeaponId(enemyCombatant.weaponId);
                             const pairDistance =
+                              partyCombatant.actionDistanceInches ||
+                              enemyCombatant.actionDistanceInches ||
                               state.pairDistances[
                                 getPairDistanceKey(
                                   partyCombatant.key,
                                   enemyCombatant.key
                                 )
-                              ] || '';
-                            const partyActivationSegments =
-                              state.attackActivationSegments[
-                                getAttackDeclarationKey(
-                                  'party',
-                                  partyCombatant.key,
-                                  enemyCombatant.key
-                                )
-                              ] || '';
-                            const enemyActivationSegments =
-                              state.attackActivationSegments[
-                                getAttackDeclarationKey(
-                                  'enemy',
-                                  enemyCombatant.key,
-                                  partyCombatant.key
-                                )
-                              ] || '';
-                            const partyCastingSegments =
-                              state.attackCastingSegments[
-                                getAttackDeclarationKey(
-                                  'party',
-                                  partyCombatant.key,
-                                  enemyCombatant.key
-                                )
-                              ] || '';
-                            const enemyCastingSegments =
-                              state.attackCastingSegments[
-                                getAttackDeclarationKey(
-                                  'enemy',
-                                  enemyCombatant.key,
-                                  partyCombatant.key
-                                )
-                              ] || '';
+                              ] ||
+                              '';
                             const partyDeclarationLabel = partyTargetsEnemy
                               ? formatDeclarationMeta(
                                   partyCombatant.declaredAction,
-                                  pairDistance,
-                                  partyActivationSegments,
-                                  partyCastingSegments
+                                  partyCombatant.actionDistanceInches ||
+                                    pairDistance,
+                                  partyCombatant.activationSegments,
+                                  partyCombatant.castingSegments
                                 )
                               : '';
                             const enemyDeclarationLabel = enemyTargetsParty
                               ? formatDeclarationMeta(
                                   enemyCombatant.declaredAction,
-                                  pairDistance,
-                                  enemyActivationSegments,
-                                  enemyCastingSegments
+                                  enemyCombatant.actionDistanceInches ||
+                                    pairDistance,
+                                  enemyCombatant.activationSegments,
+                                  enemyCombatant.castingSegments
                                 )
                               : '';
 
@@ -2585,7 +2634,7 @@ const InitiativePlayground = ({
                                         partyIndex
                                       )}`}
                                       onClick={() =>
-                                        openAttackEditor(
+                                        toggleAttackTarget(
                                           'enemy',
                                           enemyCombatant.key,
                                           partyCombatant.key
@@ -2632,7 +2681,7 @@ const InitiativePlayground = ({
                                         enemyIndex
                                       )}`}
                                       onClick={() =>
-                                        openAttackEditor(
+                                        toggleAttackTarget(
                                           'party',
                                           partyCombatant.key,
                                           enemyCombatant.key
@@ -3617,15 +3666,12 @@ const InitiativePlayground = ({
             modalRoot
           )
         : null}
-      {attackEditorTarget &&
-      attackEditedAttacker &&
-      attackEditedTargetName &&
-      modalRoot
+      {actionEditorTarget && actionEditedCombatant && modalRoot
         ? createPortal(
             <>
               <div
                 className={styles['modalShadow']}
-                onClick={() => setAttackEditorTarget(undefined)}
+                onClick={() => setActionEditorTarget(undefined)}
               />
               <div
                 className={styles['modal']}
@@ -3637,14 +3683,13 @@ const InitiativePlayground = ({
                   id={'initiative-attack-editor-title'}
                   className={styles['modalTitle']}
                 >
-                  Edit Attack Declaration
+                  Edit Action
                 </div>
                 <p className={styles['modalText']}>
-                  Set the action for <strong>{attackEditedAttackerName}</strong>{' '}
-                  against <strong>{attackEditedTargetName}</strong>. In this
-                  rules slice, the chosen action applies to that
-                  combatant&apos;s current round, while any inch distance or
-                  action timing is stored for this specific target.
+                  Set the round action for{' '}
+                  <strong>{actionEditedCombatantName}</strong>. Choose targets
+                  in the engagement matrix; any distance or timing entered here
+                  applies to the whole declaration.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -3655,30 +3700,34 @@ const InitiativePlayground = ({
                 <select
                   id={'initiative-attack-action'}
                   className={styles['selectInput']}
-                  value={attackEditorTarget.action}
+                  value={actionEditorTarget.action}
                   onChange={(event) =>
-                    setAttackEditorTarget((previous) =>
+                    setActionEditorTarget((previous) =>
                       previous
                         ? {
                             ...previous,
                             action: event.target
                               .value as InitiativeDeclaredAction,
+                            castingSegments:
+                              event.target.value === 'spell-casting'
+                                ? previous.castingSegments || '1'
+                                : previous.castingSegments,
                           }
                         : previous
                     )
                   }
                 >
-                  {getAvailableActionOptions(attackEditedAttacker.weaponId).map(
-                    (option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    )
-                  )}
+                  {getAvailableActionOptions(
+                    actionEditedCombatant.weaponId
+                  ).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
                 {requiresAttackRoutineCountInput(
-                  attackEditorTarget.action,
-                  attackEditedAttacker.weaponId
+                  actionEditorTarget.action,
+                  actionEditedCombatant.weaponId
                 ) ? (
                   <>
                     <label
@@ -3692,9 +3741,9 @@ const InitiativePlayground = ({
                       className={styles['textInput']}
                       inputMode={'numeric'}
                       type={'text'}
-                      value={attackEditorTarget.attackRoutineCount}
+                      value={actionEditorTarget.attackRoutineCount}
                       onChange={(event) =>
-                        setAttackEditorTarget((previous) =>
+                        setActionEditorTarget((previous) =>
                           previous
                             ? {
                                 ...previous,
@@ -3705,21 +3754,18 @@ const InitiativePlayground = ({
                       }
                     />
                     <p className={styles['modalHint']}>
-                      This applies to{' '}
-                      <strong>{attackEditedAttackerName}</strong>
-                      {` `}for the whole round, not just this target. Use{' '}
-                      <strong>1</strong> for an ordinary weapon routine or a
+                      Use <strong>1</strong> for an ordinary weapon routine or a
                       natural routine such as claw/claw/bite.
                     </p>
                   </>
                 ) : null}
-                {requiresDistanceInput(attackEditorTarget.action) ? (
+                {requiresDistanceInput(actionEditorTarget.action) ? (
                   <>
                     <label
                       className={styles['modalLabel']}
                       htmlFor={'initiative-attack-distance'}
                     >
-                      Distance to {attackEditedTargetName} (inches)
+                      Distance to target (inches)
                     </label>
                     <input
                       id={'initiative-attack-distance'}
@@ -3727,9 +3773,9 @@ const InitiativePlayground = ({
                       inputMode={'decimal'}
                       type={'text'}
                       placeholder={'e.g. 4'}
-                      value={attackEditorTarget.distanceInches}
+                      value={actionEditorTarget.distanceInches}
                       onChange={(event) =>
-                        setAttackEditorTarget((previous) =>
+                        setActionEditorTarget((previous) =>
                           previous
                             ? {
                                 ...previous,
@@ -3745,7 +3791,7 @@ const InitiativePlayground = ({
                     </p>
                   </>
                 ) : null}
-                {requiresActivationSegmentsInput(attackEditorTarget.action) ? (
+                {requiresActivationSegmentsInput(actionEditorTarget.action) ? (
                   <>
                     <label
                       className={styles['modalLabel']}
@@ -3756,9 +3802,9 @@ const InitiativePlayground = ({
                     <select
                       id={'initiative-attack-activation-segments'}
                       className={styles['selectInput']}
-                      value={attackEditorTarget.activationSegments}
+                      value={actionEditorTarget.activationSegments}
                       onChange={(event) =>
-                        setAttackEditorTarget((previous) =>
+                        setActionEditorTarget((previous) =>
                           previous
                             ? {
                                 ...previous,
@@ -3782,7 +3828,7 @@ const InitiativePlayground = ({
                     </p>
                   </>
                 ) : null}
-                {requiresCastingSegmentsInput(attackEditorTarget.action) ? (
+                {requiresCastingSegmentsInput(actionEditorTarget.action) ? (
                   <>
                     <label
                       className={styles['modalLabel']}
@@ -3793,9 +3839,9 @@ const InitiativePlayground = ({
                     <select
                       id={'initiative-attack-casting-segments'}
                       className={styles['selectInput']}
-                      value={attackEditorTarget.castingSegments}
+                      value={actionEditorTarget.castingSegments}
                       onChange={(event) =>
-                        setAttackEditorTarget((previous) =>
+                        setActionEditorTarget((previous) =>
                           previous
                             ? {
                                 ...previous,
@@ -3818,17 +3864,17 @@ const InitiativePlayground = ({
                     </p>
                   </>
                 ) : null}
-                {attackEditorTarget.action === 'missile' ? (
+                {actionEditorTarget.action === 'missile' ? (
                   <p className={styles['modalHint']}>
                     This missile volley can currently be declared against up to{' '}
                     <strong>
                       {getMissileTargetLimitForWeaponId(
-                        attackEditedAttacker.weaponId
+                        actionEditedCombatant.weaponId
                       )}
                     </strong>{' '}
                     target
                     {getMissileTargetLimitForWeaponId(
-                      attackEditedAttacker.weaponId
+                      actionEditedCombatant.weaponId
                     ) === 1
                       ? ''
                       : 's'}
@@ -3836,44 +3882,58 @@ const InitiativePlayground = ({
                     ones.
                   </p>
                 ) : null}
+                {isSingleTargetDeclarationAction(actionEditorTarget.action) ? (
+                  <p className={styles['modalHint']}>
+                    This action uses only one target. If more than one cell is
+                    selected, only the first target will be kept when you save.
+                  </p>
+                ) : null}
                 <div className={styles['modalMeta']}>
                   <span className={styles['modalMetaLabel']}>
-                    Current declaration
+                    Current action
                   </span>
                   <span className={styles['modalMetaValue']}>
-                    {attackEditedAttackerName} → {attackEditedTargetName}
+                    {actionEditedCombatantName}
                   </span>
                   <span className={styles['modalMetaValue']}>
                     {formatDeclarationMeta(
-                      attackEditorTarget.action,
-                      attackEditorTarget.distanceInches,
-                      attackEditorTarget.activationSegments,
-                      attackEditorTarget.castingSegments
+                      actionEditorTarget.action,
+                      actionEditorTarget.distanceInches,
+                      actionEditorTarget.activationSegments,
+                      actionEditorTarget.castingSegments
                     )}
+                  </span>
+                  <span className={styles['modalMetaLabel']}>Targets</span>
+                  <span className={styles['modalMetaValue']}>
+                    {actionEditedTargetSummary}
                   </span>
                 </div>
                 <div className={styles['modalActions']}>
-                  <button
-                    type={'button'}
-                    className={styles['modalButtonDanger']}
-                    onClick={clearAttackDeclaration}
-                  >
-                    Clear attack
-                  </button>
+                  {actionEditedCombatant.targetCombatantKeys.length > 0 ? (
+                    <button
+                      type={'button'}
+                      className={styles['modalButtonDanger']}
+                      onClick={clearActionDeclaration}
+                    >
+                      Clear targets
+                    </button>
+                  ) : (
+                    <span />
+                  )}
                   <div className={styles['modalActionGroup']}>
                     <button
                       type={'button'}
                       className={styles['modalButton']}
-                      onClick={() => setAttackEditorTarget(undefined)}
+                      onClick={() => setActionEditorTarget(undefined)}
                     >
                       Cancel
                     </button>
                     <button
                       type={'button'}
                       className={styles['modalButton']}
-                      onClick={saveAttackDeclaration}
+                      onClick={saveActionDeclaration}
                     >
-                      Save attack
+                      Save action
                     </button>
                   </div>
                 </div>

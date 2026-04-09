@@ -45,6 +45,9 @@ export interface InitiativeScenarioCombatant {
   missileInitiativeAdjustment: number;
   declaredAction: InitiativeDeclaredAction;
   movementRate: number;
+  actionDistanceInches?: number;
+  activationSegments?: number;
+  castingSegments?: number;
   weaponId: number;
   weaponName: string;
   weaponType: InitiativeWeaponType;
@@ -69,6 +72,9 @@ export interface InitiativeScenarioDraftCombatant {
   name?: string;
   declaredAction?: InitiativeDeclaredAction;
   movementRate?: number;
+  actionDistanceInches?: number;
+  activationSegments?: number;
+  castingSegments?: number;
   missileInitiativeAdjustment?: number;
   attackRoutineCount?: number;
   weaponId: number;
