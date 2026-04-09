@@ -408,15 +408,151 @@ const createTurnAndDevicePreset = (): InitiativePlaytestState => ({
 
 const createSpellCastingPreset = (): InitiativePlaytestState => ({
   label: 'Spell Casting',
-  partyInitiative: '5',
+  partyInitiative: '4',
   enemyInitiative: '4',
-  nextCombatantKey: 4,
-  party: [createCombatant(1, 'Mereth', 17, [3], 'spell-casting', '12')],
-  enemies: [createCombatant(3, 'Hobgoblin', 17, [1], 'open-melee', '12')],
+  nextCombatantKey: 8,
+  party: [
+    createCombatant(
+      1,
+      'Mereth - Prayer',
+      17,
+      [],
+      'spell-casting',
+      '12',
+      '1',
+      '0',
+      '',
+      '',
+      '3'
+    ),
+    createCombatant(
+      2,
+      'Selise - Hold Person',
+      17,
+      [5],
+      'spell-casting',
+      '12',
+      '1',
+      '0',
+      '',
+      '',
+      '5'
+    ),
+    createCombatant(
+      3,
+      'Talan - Sleep',
+      17,
+      [6, 7],
+      'spell-casting',
+      '12',
+      '1',
+      '0',
+      '',
+      '',
+      '1'
+    ),
+  ],
+  enemies: [
+    createCombatant(
+      5,
+      'Hexer - Cause Fear',
+      17,
+      [2],
+      'spell-casting',
+      '12',
+      '1',
+      '0',
+      '',
+      '',
+      '4'
+    ),
+    createCombatant(6, 'Guard A', 17, [], 'none'),
+    createCombatant(7, 'Guard B', 17, [], 'none'),
+  ],
   pairDistances: {},
   attackActivationSegments: {},
+  attackCastingSegments: {},
+});
+
+const createDfCastingAtMeleePreset = (): InitiativePlaytestState => ({
+  label: 'Casting at Melee',
+  partyInitiative: '2',
+  enemyInitiative: '1',
+  nextCombatantKey: 5,
+  party: [createCombatant(1, 'Fighter A', 58, [3], 'open-melee')],
+  enemies: [
+    createCombatant(3, 'Fighter B', 17, [1], 'open-melee'),
+    createCombatant(4, 'Magic-User', 1, [1], 'spell-casting'),
+  ],
+  pairDistances: {
+    [getPairDistanceKey(1, 3)]: '',
+    [getPairDistanceKey(1, 4)]: '',
+  },
+  attackActivationSegments: {},
   attackCastingSegments: {
-    [getAttackDeclarationKey('party', 1, 3)]: '6',
+    [getAttackDeclarationKey('enemy', 4, 1)]: '3',
+  },
+});
+
+const createDfPrincePreset = (): InitiativePlaytestState => ({
+  label: 'The Prince',
+  partyInitiative: '6',
+  enemyInitiative: '4',
+  nextCombatantKey: 16,
+  party: [
+    createCombatant(1, 'Fighter A', 11, [3], 'missile'),
+    createCombatant(5, 'Prince', 23, [], 'none'),
+  ],
+  enemies: [createCombatant(3, 'Magic-User B', 11, [5], 'spell-casting')],
+  pairDistances: {
+    [getPairDistanceKey(5, 3)]: '',
+  },
+  attackActivationSegments: {},
+  attackCastingSegments: {
+    [getAttackDeclarationKey('enemy', 3, 5)]: '3',
+  },
+});
+
+const createDfSpellsAndMeleePreset = (): InitiativePlaytestState => ({
+  label: 'Enemy (A) vs Player (B)',
+  partyInitiative: '6',
+  enemyInitiative: '2',
+  nextCombatantKey: 16,
+  party: [
+    createCombatant(1, 'B1', 58, [3], 'open-melee'),
+    createCombatant(5, 'B2 - Hold Person', 17, [4], 'spell-casting'),
+    createCombatant(6, 'B3', 17, [7], 'open-melee'),
+    createCombatant(8, 'B4', 17, [9], 'open-melee'),
+    createCombatant(10, 'B5 - Magic Missile', 17, [11], 'spell-casting'),
+    createCombatant(13, 'B6 - Levitate', 17, [12], 'spell-casting'),
+    createCombatant(15, 'B7', 17, [14], 'open-melee'),
+  ],
+  enemies: [
+    createCombatant(3, 'A1 - Cause Fear', 17, [1], 'spell-casting'),
+    createCombatant(4, 'A2', 1, [5], 'open-melee'),
+    createCombatant(7, 'A3', 1, [6], 'open-melee'),
+    createCombatant(9, 'A4', 1, [8], 'open-melee'),
+    createCombatant(11, 'A5 - Shield', 1, [10], 'spell-casting'),
+    createCombatant(12, 'A6 (two attacks)', 1, [13], 'open-melee', '12', '2'),
+    createCombatant(14, 'A7 - Heat Metal', 1, [15], 'spell-casting'),
+  ],
+  pairDistances: {
+    [getPairDistanceKey(1, 3)]: '',
+    [getPairDistanceKey(5, 4)]: '',
+    [getPairDistanceKey(6, 7)]: '',
+    [getPairDistanceKey(8, 9)]: '',
+    [getPairDistanceKey(10, 11)]: '',
+    [getPairDistanceKey(13, 12)]: '',
+    [getPairDistanceKey(15, 14)]: '',
+  },
+  attackActivationSegments: {},
+  attackCastingSegments: {
+    [getAttackDeclarationKey('enemy', 3, 1)]: '4',
+    [getAttackDeclarationKey('party', 5, 4)]: '5',
+    [getAttackDeclarationKey('enemy', 11, 10)]: '1',
+    [getAttackDeclarationKey('party', 10, 11)]: '1',
+    [getAttackDeclarationKey('party', 13, 12)]: '2',
+    [getAttackDeclarationKey('enemy', 14, 15)]: '4',
   },
 });
 
@@ -428,7 +564,7 @@ const createLargeBattlePreset = (): InitiativePlaytestState => ({
   party: [
     createCombatant(1, 'Aldred', 56, [6], 'open-melee', '12'),
     createCombatant(2, 'Doran', 50, [7], 'set-vs-charge', '12'),
-    createCombatant(3, 'Ysra', 49, [9], 'missile', '12'),
+    createCombatant(3, 'Ysra - Rod', 49, [9], 'magical-device', '12'),
     createCombatant(4, 'Mave', 55, [8], 'close', '9'),
     createCombatant(5, 'Garran', 56, [10], 'charge', '12'),
   ],
@@ -444,7 +580,9 @@ const createLargeBattlePreset = (): InitiativePlaytestState => ({
     [getPairDistanceKey(4, 8)]: '6',
     [getPairDistanceKey(5, 10)]: '4',
   },
-  attackActivationSegments: {},
+  attackActivationSegments: {
+    [getAttackDeclarationKey('party', 3, 9)]: '5',
+  },
   attackCastingSegments: {},
 });
 
@@ -2839,6 +2977,27 @@ const InitiativePlayground = ({
                   onClick={() => loadPreset(createLargeBattlePreset)}
                 >
                   Large Mixed
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createDfCastingAtMeleePreset)}
+                >
+                  DF: Casting at Melee
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createDfPrincePreset)}
+                >
+                  DF: The Prince
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createDfSpellsAndMeleePreset)}
+                >
+                  DF: Spells and Melee
                 </button>
               </div>
             ) : null}
