@@ -5,6 +5,11 @@ import type { SingleValue } from 'react-select';
 import Select from 'react-select';
 import { buildInitiativeAttackGraph } from '../../helpers/initiative/attackGraph';
 import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
+import {
+  getAppliedMissileInitiativeAdjustment,
+  getEffectiveInitiative,
+  movementSuppressesPositiveReactionInitiativeBonuses,
+} from '../../helpers/initiative/initiativeTiming';
 import { getMultipleAttackThreshold } from '../../helpers/initiative/openMelee';
 import {
   encodeInitiativePlaytestState,
@@ -739,26 +744,38 @@ const getWeaponSummary = (weaponId: number): string => {
   return weaponInfo?.weaponType || 'natural';
 };
 
-const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string =>
-  [
+const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string => {
+  const movementRate = parseOptionalNumber(combatant.movementRate) ?? 12;
+  const missileInitiativeAdjustment = parseMissileInitiativeAdjustment(
+    combatant.missileInitiativeAdjustment
+  );
+  const appliedMissileInitiativeAdjustment =
+    combatant.declaredAction === 'missile'
+      ? getAppliedMissileInitiativeAdjustment({
+          declaredAction: combatant.declaredAction,
+          movementRate,
+          missileInitiativeAdjustment,
+        })
+      : 0;
+  const missileInitiativeMeta =
+    getWeaponInfo(combatant.weaponId)?.weaponType === 'missile' &&
+    missileInitiativeAdjustment !== 0
+      ? `MI ${
+          missileInitiativeAdjustment > 0 ? '+' : ''
+        }${missileInitiativeAdjustment}${
+          appliedMissileInitiativeAdjustment !== missileInitiativeAdjustment
+            ? ' suppressed'
+            : ''
+        }`
+      : undefined;
+  return [
     `MV ${combatant.movementRate.trim() || '12'}"`,
     getWeaponSummary(combatant.weaponId),
-    getWeaponInfo(combatant.weaponId)?.weaponType === 'missile' &&
-    parseMissileInitiativeAdjustment(combatant.missileInitiativeAdjustment) !==
-      0
-      ? `MI ${
-          parseMissileInitiativeAdjustment(
-            combatant.missileInitiativeAdjustment
-          ) > 0
-            ? '+'
-            : ''
-        }${parseMissileInitiativeAdjustment(
-          combatant.missileInitiativeAdjustment
-        )}`
-      : undefined,
+    missileInitiativeMeta,
   ]
     .filter(Boolean)
     .join(' · ');
+};
 
 const getCombatantActionMeta = (
   combatant: InitiativePlaytestCombatant
@@ -807,11 +824,7 @@ const isNonMissileWeaponId = (weaponId: number): boolean =>
 
 const getEffectiveInitiativeValue = (
   combatant: InitiativeScenarioCombatant
-): number =>
-  combatant.initiative +
-  (combatant.declaredAction === 'missile'
-    ? combatant.missileInitiativeAdjustment
-    : 0);
+): number => getEffectiveInitiative(combatant);
 
 const truncateGraphText = (text: string, maxLength: number): string =>
   text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
@@ -4436,6 +4449,18 @@ const InitiativePlayground = ({
                   DMG Dexterity missile-initiative adjustment. This affects only
                   missile timing, not melee or movement order.
                 </p>
+                {movementSuppressesPositiveReactionInitiativeBonuses(
+                  parseOptionalNumber(editedCombatant.movementRate) ?? 12
+                ) &&
+                parseMissileInitiativeAdjustment(
+                  editedCombatant.missileInitiativeAdjustment
+                ) > 0 ? (
+                  <p className={styles['modalHint']}>
+                    PHB encumbrance treats movement below 12&quot; as normal, no
+                    reaction or initiative bonuses. Positive missile-initiative
+                    bonuses are ignored at this movement rate.
+                  </p>
+                ) : null}
                 <div className={styles['modalMeta']}>
                   <span className={styles['modalMetaLabel']}>
                     Current display

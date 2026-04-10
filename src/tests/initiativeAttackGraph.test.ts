@@ -1181,6 +1181,43 @@ describe('initiative attack graph', () => {
     ]);
   });
 
+  test('suppresses positive missile initiative bonuses below 12 movement', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Encumbered Bowman',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          movementRate: 9,
+          missileInitiativeAdjustment: 3,
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Orc',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.layers).toEqual([
+      ['attack:enemy-3:1'],
+      ['attack:party-1:1', 'attack:party-1:2'],
+    ]);
+  });
+
   test('drops missile shots when a charge beats them after missile adjustment', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge Beats Bow With Dex',
@@ -1220,6 +1257,43 @@ describe('initiative attack graph', () => {
     expect(graph.nodes.map((node) => node.id)).toEqual(['attack:enemy-3:1']);
     expect(graph.layers).toEqual([['attack:enemy-3:1']]);
     expect(graph.edges).toEqual([]);
+  });
+
+  test('still applies negative missile initiative adjustments below 12 movement', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Encumbered Slow Bowman',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bowman',
+          declaredAction: 'missile',
+          movementRate: 9,
+          missileInitiativeAdjustment: -3,
+          weaponId: 11,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Orc',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.layers).toEqual([
+      ['attack:enemy-3:1'],
+      ['attack:party-1:1', 'attack:party-1:2'],
+    ]);
   });
 
   test('drops both bow shots when the charge side wins initiative', () => {

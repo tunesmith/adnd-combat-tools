@@ -1,15 +1,32 @@
 import type { InitiativeScenarioCombatant } from '../../types/initiative';
 
-const getMissileInitiativeAdjustment = (
-  combatant: InitiativeScenarioCombatant
+type MissileTimingCombatant = Pick<
+  InitiativeScenarioCombatant,
+  'declaredAction' | 'movementRate' | 'missileInitiativeAdjustment'
+>;
+
+type InitiativeTimingCombatant = MissileTimingCombatant &
+  Pick<InitiativeScenarioCombatant, 'initiative'>;
+
+export const movementSuppressesPositiveReactionInitiativeBonuses = (
+  movementRate: number
+): boolean => movementRate < 12;
+
+export const getAppliedMissileInitiativeAdjustment = (
+  combatant: MissileTimingCombatant
 ): number =>
   combatant.declaredAction === 'missile'
-    ? combatant.missileInitiativeAdjustment
+    ? movementSuppressesPositiveReactionInitiativeBonuses(
+        combatant.movementRate
+      )
+      ? Math.min(combatant.missileInitiativeAdjustment, 0)
+      : combatant.missileInitiativeAdjustment
     : 0;
 
-const getEffectiveInitiative = (
-  combatant: InitiativeScenarioCombatant
-): number => combatant.initiative + getMissileInitiativeAdjustment(combatant);
+export const getEffectiveInitiative = (
+  combatant: InitiativeTimingCombatant
+): number =>
+  combatant.initiative + getAppliedMissileInitiativeAdjustment(combatant);
 
 export const compareCombatantInitiative = (
   left: InitiativeScenarioCombatant,

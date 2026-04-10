@@ -8,7 +8,10 @@ import type {
   InitiativeScenario,
   InitiativeScenarioCombatant,
 } from '../../types/initiative';
-import { compareCombatantInitiative } from './initiativeTiming';
+import {
+  compareCombatantInitiative,
+  getEffectiveInitiative,
+} from './initiativeTiming';
 import {
   determineWeaponVsTimedAction,
   TIMED_ACTION_WEAPON_TIE,
@@ -404,11 +407,7 @@ const buildSimpleInitiativePhases = (
         nodeId: node.id,
         side: combatant.side,
         phase: getSimpleInitiativePhase(combatant, node.attackNumber),
-        effectiveInitiative:
-          combatant.initiative +
-          (combatant.declaredAction === 'missile'
-            ? combatant.missileInitiativeAdjustment
-            : 0),
+        effectiveInitiative: getEffectiveInitiative(combatant),
         node,
       },
     ];
