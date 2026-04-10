@@ -39,6 +39,11 @@ export const TIMED_ACTION_WEAPON_TIE = 3;
  * a caster with fireball (3). With a roll of 6-1, the defenseless
  * caster can still get the spell of, whether they win or lose initiative.
  *
+ * Here's a truism: *If* ruleTwo applies to WSF weapons, *then* casting must not
+ * always start on seg-1. In this case, ruleTwo effectively "anchors" the spell
+ * casting into some range that must be interrupted if the OWFD rule applies.
+ * Which is weird. Part of the reason we conclude ruleTwo does not apply to WSF.
+ *
  * @param wsf the weapon speed factor of the weapon wielded by the attacker
  * @param actionTime the duration of the action, e.g. casting time of a spell
  * @param losingDie the number on the die roll of attacker that lost initiative
