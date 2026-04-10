@@ -1641,6 +1641,67 @@ describe('initiative attack graph', () => {
     );
   });
 
+  test('records weapon-vs-spell placement on a melee attacker striking a caster', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Fighters and Cleric',
+      partyInitiative: 5,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Fighter A',
+          declaredAction: 'open-melee',
+          weaponId: 54,
+          targetCombatantKeys: [4],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Fighter B',
+          declaredAction: 'open-melee',
+          weaponId: 2,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Cleric',
+          declaredAction: 'spell-casting',
+          weaponId: 1,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              castingSegments: 5,
+            },
+          ],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(
+      graph.nodes.find((node) => node.id === 'attack:party-1:1')?.placement
+    ).toEqual({
+      kind: 'weapon-vs-spell',
+      casterId: 'enemy-4',
+      castingSegments: 5,
+      weaponSpeedFactor: 6,
+      relation: 'after',
+    });
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromNodeId: 'spell-completion:enemy-4',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['spell-interruption'],
+        }),
+      ])
+    );
+  });
+
   test('keeps a tied directed attack simultaneous when the spell completes on the tied segment', () => {
     const scenario = buildInitiativeScenario({
       label: 'Tied Spell Completion Segment',

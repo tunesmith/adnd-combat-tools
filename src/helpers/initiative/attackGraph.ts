@@ -806,6 +806,57 @@ const getSpellInterruptionSegment = (
   return initiativeComparison <= 0 ? caster.initiative : undefined;
 };
 
+const getWeaponVsSpellPlacement = (
+  attacker: InitiativeScenarioCombatant,
+  caster: InitiativeScenarioCombatant,
+  castingSegments: number,
+  attackerNode: InitiativeAttackNode
+):
+  | Extract<InitiativeAttackNode['placement'], { kind: 'weapon-vs-spell' }>
+  | undefined => {
+  if (
+    castingSegments === 0 ||
+    attacker.declaredAction !== 'open-melee' ||
+    attacker.weaponType !== 'melee' ||
+    attacker.weaponSpeedFactor === undefined
+  ) {
+    return undefined;
+  }
+
+  const initiativeComparison = compareCombatantInitiative(attacker, caster);
+  if (initiativeComparison > 0) {
+    return undefined;
+  }
+
+  const isLaterOrdinaryRoutineAttack =
+    attackerNode.kind === 'attack' &&
+    attacker.attackRoutine.components.length > 1 &&
+    attackerNode.attackNumber > 1;
+
+  if (isLaterOrdinaryRoutineAttack) {
+    return undefined;
+  }
+
+  const weaponVsSpellResult = determineWeaponVsTimedAction(
+    attacker.weaponSpeedFactor,
+    castingSegments,
+    initiativeComparison === 0 ? null : attacker.initiative
+  );
+
+  return {
+    kind: 'weapon-vs-spell',
+    casterId: caster.id,
+    castingSegments,
+    weaponSpeedFactor: attacker.weaponSpeedFactor,
+    relation:
+      weaponVsSpellResult === WEAPON_WINS
+        ? 'before'
+        : weaponVsSpellResult === TIMED_ACTION_WEAPON_TIE
+        ? 'simultaneous'
+        : 'after',
+  };
+};
+
 const addSpellInterruptionEdges = (
   scenario: InitiativeScenario,
   nodesById: Map<string, InitiativeAttackNode>,
@@ -843,6 +894,13 @@ const addSpellInterruptionEdges = (
       }
 
       attackerNodes.forEach((attackerNode) => {
+        const weaponVsSpellPlacement = getWeaponVsSpellPlacement(
+          attacker,
+          caster,
+          castingSegments,
+          attackerNode
+        );
+
         const interruptionSegment = getSpellInterruptionSegment(
           attacker,
           caster,
@@ -860,6 +918,15 @@ const addSpellInterruptionEdges = (
             kind: 'spell-directed',
             casterId: caster.id,
           };
+        }
+
+        if (
+          weaponVsSpellPlacement &&
+          (attackerNode.placement === undefined ||
+            attackerNode.placement.kind === 'general-unsegmented' ||
+            attackerNode.placement.kind === 'routine-sequence')
+        ) {
+          attackerNode.placement = weaponVsSpellPlacement;
         }
 
         const relation = getSpellInterruptionRelation(

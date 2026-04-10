@@ -231,6 +231,13 @@ export interface InitiativeAttackNode {
         casterId: string;
       }
     | {
+        kind: 'weapon-vs-spell';
+        casterId: string;
+        castingSegments: number;
+        weaponSpeedFactor: number;
+        relation: 'before' | 'simultaneous' | 'after';
+      }
+    | {
         kind: 'declared-action-segment';
         declaredAction: 'magical-device';
         activationSegments: number;

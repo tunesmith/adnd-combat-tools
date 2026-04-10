@@ -495,6 +495,36 @@ const createDfCastingAtMeleePreset = (): InitiativePlaytestState => ({
   },
 });
 
+const createDfFightersAndClericPreset = (): InitiativePlaytestState => ({
+  label: 'Fighters and Cleric',
+  partyInitiative: '5',
+  enemyInitiative: '5',
+  nextCombatantKey: 5,
+  party: [createCombatant(1, 'Fighter A', 54, [4], 'open-melee')],
+  enemies: [
+    createCombatant(3, 'Fighter B', 2, [1], 'open-melee'),
+    createCombatant(
+      4,
+      'Cleric',
+      1,
+      [1],
+      'spell-casting',
+      '12',
+      '1',
+      '0',
+      '',
+      '',
+      '5'
+    ),
+  ],
+  pairDistances: {
+    [getPairDistanceKey(1, 3)]: '',
+    [getPairDistanceKey(1, 4)]: '',
+  },
+  attackActivationSegments: {},
+  attackCastingSegments: {},
+});
+
 const createDfPrincePreset = (): InitiativePlaytestState => ({
   label: 'The Prince',
   partyInitiative: '6',
@@ -2600,6 +2630,37 @@ const InitiativePlayground = ({
           `${combatant.name}'s attack is directed at ${casterName}. DMG p. 65 rule 2 places that attack on segment ${selectedGraphNode.segment}.`
         );
       }
+    } else if (placement?.kind === 'weapon-vs-spell') {
+      const caster = combatantById.get(placement.casterId) || targetCombatant;
+      const casterName = caster?.name || targetName || 'the spell caster';
+      const effectiveInitiative = getEffectiveInitiativeValue(combatant);
+      const casterInitiative = caster
+        ? getEffectiveInitiativeValue(caster)
+        : undefined;
+      const initiativeText =
+        casterInitiative !== undefined &&
+        casterInitiative === effectiveInitiative
+          ? `initiative is tied at ${effectiveInitiative}`
+          : casterInitiative !== undefined
+          ? `${
+              caster?.side === 'party' ? 'Party' : 'Enemy'
+            } won initiative ${casterInitiative} to ${effectiveInitiative}`
+          : 'initiative and weapon speed are compared here';
+      const weaponLabel = combatant.weaponName || `${combatant.name}'s weapon`;
+
+      if (placement.relation === 'before') {
+        lines.push(
+          `${combatant.name} is striking a caster in melee. Since ${initiativeText}, ${weaponLabel}'s weapon speed factor ${placement.weaponSpeedFactor} beats this ${placement.castingSegments}-segment spell under DMG p. 66-67, so ${combatant.name} can attack before ${casterName}'s spell completes.`
+        );
+      } else if (placement.relation === 'simultaneous') {
+        lines.push(
+          `${combatant.name} is striking a caster in melee. Since ${initiativeText}, ${weaponLabel}'s weapon speed factor ${placement.weaponSpeedFactor} matches this ${placement.castingSegments}-segment spell under DMG p. 66-67, so the blow and the spell completion are simultaneous.`
+        );
+      } else {
+        lines.push(
+          `${combatant.name} is striking a caster in melee. Since ${initiativeText}, ${weaponLabel}'s weapon speed factor ${placement.weaponSpeedFactor} is too slow to beat this ${placement.castingSegments}-segment spell under DMG p. 66-67, so ${casterName}'s spell completes before ${combatant.name} can strike.`
+        );
+      }
     } else if (placement?.kind === 'declared-action-segment') {
       lines.push(
         `${combatant.name}'s device use is on segment ${
@@ -2986,6 +3047,13 @@ const InitiativePlayground = ({
                   onClick={() => loadPreset(createDfCastingAtMeleePreset)}
                 >
                   DF: Casting at Melee
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['presetMenuButton']}
+                  onClick={() => loadPreset(createDfFightersAndClericPreset)}
+                >
+                  DF: Fighters and Cleric
                 </button>
                 <button
                   type={'button'}
