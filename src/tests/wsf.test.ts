@@ -7,7 +7,7 @@ import {
 
 describe('wsf', () => {
   /**
-   * >"A sword with a factor of 5 (broad or long) is being used by on opponent of a magic-user attempting to cast a
+   * >"A sword with a factor of 5 (broad or long) is being used by one opponent of a magic-user attempting to cast a
    * fireball spell (3 segment casting time)." (DMG p67)
    */
   test('DMG p67 ex1', () => {
@@ -25,7 +25,7 @@ describe('wsf', () => {
   });
   test('DMG p67 ex3', () => {
     /**
-     * >"A 3-5 will indicate that the blow has a chance of striking (if o successful "to hit" roll is made) before
+     * >"A 3-5 will indicate that the blow has a chance of striking (if a successful "to hit" roll is made) before
      * the spell is cast, arriving either as the spell is begun or during the first segment of its casting."
      *
      * Note there is an error in the DMG for the losing die of 3. In this case, the adjusted weapon speed
@@ -57,7 +57,7 @@ describe('wsf', () => {
   test('DMG p67 ex5', () => {
     /**
      * >"If the weapon being employed was a two-handed sword (or any other weapon with a speed factor of 10,
-     * or 9 for that matter) there would be no chance far the reacting side to strike the spell caster
+     * or 9 for that matter) there would be no chance for the reacting side to strike the spell caster
      * prior to completion of the fireball."
      */
     expect(determineWeaponVsTimedAction(10, 3, 1)).toBe(TIMED_ACTION_WINS);
@@ -86,8 +86,8 @@ describe('wsf', () => {
   });
 });
 
-describe('controversial wsf tests', () => {
-  test('umm', () => {
+describe('DF wsf tests', () => {
+  test('DF ex1', () => {
     /**
      * Test case: Fighter attacks magic-user. Fighter attacks with 2H Sword (WSF 10).
      * Magic-User casts Mass Charm, 8 segments. Fighter loses initiative with a roll
@@ -97,19 +97,6 @@ describe('controversial wsf tests', () => {
      * so the Magic-User is able to get the spell off before the attack happens.
      */
     expect(determineWeaponVsTimedAction(10, 8, 1)).toBe(TIMED_ACTION_WINS);
-    /**
-     * Note this conflicts with rule #2.
-     *
-     * EOTB's interpretation is that #2 supersedes this rule. If it's a super
-     * long casting time, then he still might be interrupted, even by a 2H sword,
-     * since an attack will always come on segments 1-6. This assumes Rule #2
-     * applies to weapons with WSF.
-     *
-     * Nagora's interpretation is that the 2H sword only interrupts an 8-segment
-     * spell if it wins initiative or loses with a roll of 3+. Which means rule #2
-     * does not supersede the WSF function. This assumes Rule #2 does not apply to
-     * weapons with WSF.
-     */
     expect(determineWeaponVsTimedAction(10, 8, 2)).toBe(
       TIMED_ACTION_WEAPON_TIE
     );

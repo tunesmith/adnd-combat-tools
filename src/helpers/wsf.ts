@@ -39,17 +39,6 @@ export const TIMED_ACTION_WEAPON_TIE = 3;
  * a caster with fireball (3). With a roll of 6-1, the defenseless
  * caster can still get the spell of, whether they win or lose initiative.
  *
- * One other thing that is interesting - some folks like to interpret this
- * on a deeper level, to communicating exactly *when* the attack occurs within
- * that timed action. So in that sense, the adjusted speed is relevant *if*
- * it is <= the action time, since that segment indicator might come into
- * play later. If so, it should be returned as part of the result.
- *
- * It's also arguable that this could be used with natural weapons, if the
- * natural weapons are assigned a WSF of 1 (like fist / open hand is).
- *
- * But either way, still never *against* someone else that is striking blows.
- *
  * @param wsf the weapon speed factor of the weapon wielded by the attacker
  * @param actionTime the duration of the action, e.g. casting time of a spell
  * @param losingDie the number on the die roll of attacker that lost initiative
