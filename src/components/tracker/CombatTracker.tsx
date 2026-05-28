@@ -29,6 +29,12 @@ import {
   encodeTrackerStateSync,
 } from '../../helpers/trackerCodec';
 import {
+  buildTrackerShareHash,
+  buildTrackerSharePath,
+  buildTrackerShareUrl,
+  getTrackerEncodedStateFromUrlText,
+} from '../../helpers/trackerUrl';
+import {
   deleteTrackerLocalDraft,
   getOrCreateTrackerSessionDraftId,
   listTrackerLocalDrafts,
@@ -263,6 +269,10 @@ const CombatTracker = ({
   const [shareModalUrl, setShareModalUrl] = useState<string | undefined>(
     undefined
   );
+  const [showImportModal, setShowImportModal] = useState<boolean>(false);
+  const [importUrlValue, setImportUrlValue] = useState<string>('');
+  const [importError, setImportError] = useState<string | undefined>(undefined);
+  const [importingShareUrl, setImportingShareUrl] = useState<boolean>(false);
   const [shareCopied, setShareCopied] = useState<boolean>(false);
   const [showMoreActions, setShowMoreActions] = useState<boolean>(false);
   const [showDeleteRoundModal, setShowDeleteRoundModal] =
@@ -295,6 +305,7 @@ const CombatTracker = ({
   const urlWarningShown = useRef<boolean>(false);
   const recoverPromptHandled = useRef<boolean>(false);
   const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const importTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const combatResultTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const intentionsTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
@@ -515,22 +526,21 @@ const CombatTracker = ({
       return;
     }
 
-    const nextUrl = new URL(
-      `${window.location.pathname}?s=${encodedTrackerState}`,
-      window.location.origin
-    ).toString();
+    const nextUrl = buildTrackerShareUrl(
+      window.location.origin,
+      window.location.pathname,
+      encodedTrackerState
+    );
 
     window.history.replaceState(
       {},
       '',
-      `${window.location.pathname}?s=${encodedTrackerState}`
+      buildTrackerSharePath(window.location.pathname, encodedTrackerState)
     );
 
-    const actualEncodedState = window.location.search.startsWith('?s=')
-      ? window.location.search.slice(3)
-      : '';
+    const expectedHash = buildTrackerShareHash(encodedTrackerState);
 
-    if (actualEncodedState !== encodedTrackerState) {
+    if (window.location.hash !== expectedHash) {
       setAddressBarUrlTruncated(true);
       setUrlWarningLength(nextUrl.length);
       if (!urlWarningShown.current) {
@@ -635,6 +645,7 @@ const CombatTracker = ({
       !showUrlWarning &&
       !showRecoverModal &&
       !showShareModal &&
+      !showImportModal &&
       !showIntentionsWizard &&
       !showCombatWizard
     ) {
@@ -646,11 +657,13 @@ const CombatTracker = ({
         setShowUrlWarning(false);
         setShowRecoverModal(false);
         setShowShareModal(false);
+        setShowImportModal(false);
         setShowDeleteRoundModal(false);
         setShowIntentionsWizard(false);
         setShowCombatWizard(false);
         setShowMoreActions(false);
         setRecoverError(undefined);
+        setImportError(undefined);
       }
     };
 
@@ -661,6 +674,7 @@ const CombatTracker = ({
     showCombatWizard,
     showDeleteRoundModal,
     showIntentionsWizard,
+    showImportModal,
     showMoreActions,
     showRecoverModal,
     showShareModal,
@@ -768,6 +782,14 @@ const CombatTracker = ({
   }, [showShareModal]);
 
   useEffect(() => {
+    if (!showImportModal) {
+      return;
+    }
+
+    importTextareaRef.current?.focus();
+  }, [showImportModal]);
+
+  useEffect(() => {
     if (!showCombatWizard || currentCombatWizardEntryKey === undefined) {
       return;
     }
@@ -856,6 +878,11 @@ const CombatTracker = ({
     setShowShareModal(false);
   };
 
+  const closeImportModal = () => {
+    setShowImportModal(false);
+    setImportError(undefined);
+  };
+
   const closeDeleteRoundModal = () => {
     setShowDeleteRoundModal(false);
   };
@@ -865,10 +892,11 @@ const CombatTracker = ({
       return undefined;
     }
 
-    return new URL(
-      `${window.location.pathname}?s=${encodedTrackerState}`,
-      window.location.origin
-    ).toString();
+    return buildTrackerShareUrl(
+      window.location.origin,
+      window.location.pathname,
+      encodedTrackerState
+    );
   };
 
   const handleCopyShareUrl = async () => {
@@ -887,6 +915,42 @@ const CombatTracker = ({
       setShareCopied(false);
       setShareModalUrl(shareUrl);
       setShowShareModal(true);
+    }
+  };
+
+  const openImportModal = () => {
+    setImportUrlValue('');
+    setImportError(undefined);
+    setShowImportModal(true);
+    setShowMoreActions(false);
+  };
+
+  const handleImportShareUrl = async () => {
+    const encodedState = getTrackerEncodedStateFromUrlText(importUrlValue);
+
+    if (!encodedState) {
+      setImportError('Paste a combat tracker share URL first.');
+      return;
+    }
+
+    setImportingShareUrl(true);
+    setImportError(undefined);
+
+    try {
+      const importedState = await decodeTrackerState(encodedState);
+      initialStateRef.current = importedState;
+      dispatch({ type: 'replace-state', state: importedState });
+      setAutosavePaused(false);
+      pausedEncodedState.current = undefined;
+      setImportUrlValue('');
+      setShowImportModal(false);
+    } catch (error) {
+      console.error('Unable to import tracker URL:', error);
+      setImportError(
+        'This share URL could not be decoded. Check that the complete URL was pasted.'
+      );
+    } finally {
+      setImportingShareUrl(false);
     }
   };
 
@@ -1553,6 +1617,13 @@ const CombatTracker = ({
                     <button
                       type={'button'}
                       className={styles['toolbarMenuItem']}
+                      onClick={openImportModal}
+                    >
+                      Import Share URL
+                    </button>
+                    <button
+                      type={'button'}
+                      className={styles['toolbarMenuItem']}
                       disabled={savedDrafts.length === 0}
                       onClick={() => {
                         setRecoverError(undefined);
@@ -2095,7 +2166,9 @@ const CombatTracker = ({
                   >
                     This tracker is stored entirely in the URL. Once it gets
                     this large, some browsers, chat apps, and notes tools may
-                    stop saving or reopening it reliably.
+                    stop saving or reopening it reliably. The share link uses
+                    the URL hash so hosts do not receive the tracker state when
+                    the page reloads.
                   </p>
                   <p className={styles['modalText']}>
                     If you want to keep it portable, consider trimming longer
@@ -2118,6 +2191,59 @@ const CombatTracker = ({
                 onClick={() => setShowUrlWarning(false)}
               >
                 Continue Editing
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+      {showImportModal && (
+        <>
+          <div className={styles['modalShadow']} onClick={closeImportModal} />
+          <div
+            className={`${styles['modal']} ${styles['shareModal']}`}
+            role={'dialog'}
+            aria-modal={'true'}
+            aria-labelledby={'import-share-url-title'}
+            aria-describedby={'import-share-url-description'}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={'import-share-url-title'} className={styles['modalTitle']}>
+              Import Share URL
+            </div>
+            <div className={styles['modalBody']}>
+              <p
+                id={'import-share-url-description'}
+                className={styles['modalText']}
+              >
+                Paste a combat tracker share URL or encoded tracker state. This
+                replaces the current tracker view.
+              </p>
+              {importError && (
+                <p className={styles['recoverError']}>{importError}</p>
+              )}
+              <textarea
+                ref={importTextareaRef}
+                className={styles['shareUrlTextarea']}
+                value={importUrlValue}
+                onChange={(event) => setImportUrlValue(event.target.value)}
+              />
+            </div>
+            <div className={styles['modalActions']}>
+              <button
+                type={'button'}
+                className={styles['toolbarButtonPrimary']}
+                disabled={!importUrlValue.trim() || importingShareUrl}
+                onClick={() => void handleImportShareUrl()}
+              >
+                {importingShareUrl ? 'Importing...' : 'Import Tracker'}
+              </button>
+              <button
+                type={'button'}
+                className={styles['toolbarButton']}
+                disabled={importingShareUrl}
+                onClick={closeImportModal}
+              >
+                Close
               </button>
             </div>
           </div>

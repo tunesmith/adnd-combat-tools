@@ -2,13 +2,14 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import CombatTracker from '../../components/tracker/CombatTracker';
 import TrackerDecoder from '../../components/tracker/TrackerDecoder';
+import { getTrackerEncodedStateFromLocationParts } from '../../helpers/trackerUrl';
 
 const getEncodedStateFromLocation = (): string | undefined => {
   if (typeof window === 'undefined') {
     return undefined;
   }
 
-  const encodedState = new URLSearchParams(window.location.search).get('s');
+  const encodedState = getTrackerEncodedStateFromLocationParts(window.location);
   return encodedState || undefined;
 };
 
@@ -30,9 +31,11 @@ const TrackerIndexPage = () => {
     };
 
     syncFromLocation();
+    window.addEventListener('hashchange', syncFromLocation);
     window.addEventListener('popstate', syncFromLocation);
 
     return () => {
+      window.removeEventListener('hashchange', syncFromLocation);
       window.removeEventListener('popstate', syncFromLocation);
     };
   }, [router.isReady]);
