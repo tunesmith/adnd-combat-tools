@@ -97,6 +97,10 @@ const ACTIVATION_SEGMENT_OPTIONS: Array<{
   { value: '4', label: '4 segments' },
   { value: '5', label: '5 segments' },
   { value: '6', label: '6 segments' },
+  { value: '7', label: '7 segments' },
+  { value: '8', label: '8 segments' },
+  { value: '9', label: '9 segments' },
+  { value: '10', label: '10+ segments' },
 ];
 
 const SPELL_CASTING_TIME_OPTIONS: Array<{
@@ -149,7 +153,7 @@ const parseActivationSegments = (value: string): number | undefined => {
     return undefined;
   }
 
-  return Math.max(1, Math.min(6, Math.floor(parsed)));
+  return Math.max(1, Math.min(10, Math.floor(parsed)));
 };
 
 const parseCastingSegments = (value: string): number | undefined => {
@@ -813,6 +817,10 @@ const getCombatantTargetSummary = (
   const targetCount = combatant.targetCombatantKeys.length;
 
   if (targetCount === 0) {
+    if (combatant.declaredAction === 'magical-device') {
+      return 'No target/self';
+    }
+
     return 'No targets';
   }
 
@@ -4517,8 +4525,9 @@ const InitiativePlayground = ({
                 <p className={styles['modalText']}>
                   Set the round action for{' '}
                   <strong>{actionEditedCombatantName}</strong>. Choose targets
-                  in the engagement matrix; any distance or timing entered here
-                  applies to the whole declaration.
+                  in the engagement matrix when the action needs one; any
+                  distance or timing entered here applies to the whole
+                  declaration.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -4718,7 +4727,15 @@ const InitiativePlayground = ({
                     ones.
                   </p>
                 ) : null}
-                {isSingleTargetDeclarationAction(actionEditorTarget.action) ? (
+                {actionEditorTarget.action === 'magical-device' ? (
+                  <p className={styles['modalHint']}>
+                    Magical device use can have one target or no target. Leave
+                    targets empty for self or targetless activations such as
+                    drinking a potion.
+                  </p>
+                ) : isSingleTargetDeclarationAction(
+                    actionEditorTarget.action
+                  ) ? (
                   <p className={styles['modalHint']}>
                     This action uses only one target. If more than one cell is
                     selected, only the first target will be kept when you save.

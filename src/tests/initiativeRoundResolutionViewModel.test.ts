@@ -297,6 +297,53 @@ describe('initiative round resolution view model', () => {
     ]);
   });
 
+  test('explains targetless magical device timing', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Potion Timing',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Shep',
+          declaredAction: 'magical-device',
+          weaponId: 17,
+          activationSegments: 7,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const deviceCard = viewModel.cards.find(
+      (card) => card.kind === 'magical-device'
+    );
+
+    expect(deviceCard).toMatchObject({
+      kind: 'magical-device',
+      title: 'Shep magical device',
+    });
+    expect(deviceCard?.summary).toContain('Shep uses a magical device.');
+    expect(deviceCard?.summary).toContain('segment-7 activation');
+    expect(deviceCard?.steps).toEqual([
+      {
+        label: 'Targets',
+        detail: 'None',
+        combatantIds: ['party-1'],
+      },
+      {
+        label: 'Timing',
+        detail:
+          'Magical device discharge is subject to initiative and uses an explicit activation time of 7 segments in this rules slice.',
+        combatantIds: ['party-1'],
+      },
+    ]);
+  });
+
   test('adds a spell card and explains completion plus interruption risk', () => {
     const scenario = buildInitiativeScenario({
       label: 'Spell Casting',

@@ -1438,6 +1438,45 @@ describe('initiative attack graph', () => {
     ]);
   });
 
+  test('renders targetless magical device discharge when activation time is specified', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Potion Timing',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Shep',
+          declaredAction: 'magical-device',
+          weaponId: 17,
+          activationSegments: 7,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual([
+      expect.objectContaining({
+        id: 'attack:party-1:1',
+        combatantId: 'party-1',
+        targetId: undefined,
+        segment: 7,
+        segmentReason: 'declared-action',
+        placement: {
+          kind: 'declared-action-segment',
+          declaredAction: 'magical-device',
+          activationSegments: 7,
+        },
+      }),
+    ]);
+    expect(graph.edges).toEqual([]);
+  });
+
   test('keeps magical device discharge unsegmented when no activation time is supplied', () => {
     const scenario = buildInitiativeScenario({
       label: 'Magical Device',

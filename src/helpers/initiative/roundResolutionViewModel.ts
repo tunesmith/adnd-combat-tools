@@ -655,6 +655,10 @@ const getMagicalDeviceSummary = (
       ? ` The device discharge is treated as a segment-${activationSegments} activation in this rules slice.`
       : ' No specific activation time was given, so the discharge remains initiative-controlled but unsegmented.';
 
+  if (combatant.targetIds.length === 0) {
+    return `${combatant.name} uses a magical device.${activationText}`;
+  }
+
   if (combatant.targetIds.length !== 1) {
     return `${combatant.name} uses a magical device against ${targetNames}. Device discharge is subject to initiative but is not treated like spell casting for interruption here.${activationText}`;
   }
@@ -693,6 +697,10 @@ const buildMagicalDeviceCards = (
     .filter((combatant) => combatant.declaredAction === 'magical-device')
     .map((combatant) => {
       const activationSegments = combatant.activationSegments;
+      const targetDetail =
+        combatant.targetIds.length > 0
+          ? formatNames(combatant.targetIds, combatantNameById)
+          : 'None';
 
       return {
         id: `magical-device-${combatant.id}`,
@@ -707,7 +715,7 @@ const buildMagicalDeviceCards = (
         steps: [
           {
             label: 'Targets',
-            detail: formatNames(combatant.targetIds, combatantNameById),
+            detail: targetDetail,
             combatantIds: [combatant.id, ...combatant.targetIds],
           },
           {

@@ -146,6 +146,8 @@ const hasRegisteredCombatAction = (
 ): boolean =>
   combatant.declaredAction !== 'none' &&
   (combatant.targetIds.length > 0 ||
+    (combatant.declaredAction === 'magical-device' &&
+      combatant.activationSegments !== undefined) ||
     combatant.declaredAction === 'spell-casting');
 
 const hasInvalidOpenMeleeOpposition = (
