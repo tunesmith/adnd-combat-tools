@@ -575,6 +575,18 @@
   margin-top: 0.2rem;
 }
 
+.modalMetaValue + .modalMetaLabel {
+  margin-top: 0.7rem;
+}
+
+.modalMetaValuePrimary {
+  font-weight: 700;
+}
+
+.modalMetaValueSecondary {
+  color: rgba(248, 243, 224, 0.78);
+}
+
 .modalActions {
   display: flex;
   justify-content: space-between;
@@ -938,9 +950,8 @@
 }
 
 .graphNodeAction {
-  font-size: 0.56rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: 0.58rem;
+  font-weight: 600;
   fill: #fffbed;
 }
 
@@ -963,8 +974,8 @@
 }
 
 .graphInspectorTitle {
-  font-family: 'Sura', serif;
-  font-size: 1.55rem;
+  font-size: 1.05rem;
+  line-height: 1.3;
   margin-bottom: 0.55rem;
 }
 
@@ -1052,21 +1063,56 @@
   background: transparent;
   color: var(--eggshell);
   cursor: pointer;
-  display: inline-block;
+  display: block;
   font: inherit;
   margin-bottom: 0.35rem;
   padding: 0;
   text-align: left;
-  text-decoration: underline;
-  text-decoration-color: rgba(240, 239, 221, 0.45);
-  text-underline-offset: 0.16em;
+  text-decoration: none;
+  width: 100%;
 }
 
 .graphInspectorLinkButton:hover,
 .graphInspectorLinkButton:focus-visible {
   color: #fff8ea;
-  text-decoration-color: rgba(255, 248, 234, 0.8);
   outline: none;
+}
+
+.graphNodeReference {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.graphNodeReferenceName {
+  font-weight: 700;
+}
+
+.graphNodeReferenceAction {
+  font-family: 'Sura', serif;
+  font-size: 1.2rem;
+  line-height: 1.18;
+}
+
+.graphNodeReferenceMeta {
+  color: rgba(240, 239, 221, 0.8);
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.graphInspectorLinkButton .graphNodeReferenceAction {
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.25;
+  text-decoration: underline;
+  text-decoration-color: rgba(240, 239, 221, 0.45);
+  text-underline-offset: 0.16em;
+}
+
+.graphInspectorLinkButton:hover .graphNodeReferenceAction,
+.graphInspectorLinkButton:focus-visible .graphNodeReferenceAction {
+  text-decoration-color: rgba(255, 248, 234, 0.8);
 }
 
 .graphInspectorEmpty,

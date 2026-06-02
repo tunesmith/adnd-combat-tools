@@ -17,6 +17,7 @@ describe('initiative codec', () => {
           key: 1,
           name: 'Aldred',
           declaredAction: 'open-melee',
+          actionLabel: 'Sword of speed',
           movementRate: '12',
           actionDistanceInches: '',
           activationSegments: '',

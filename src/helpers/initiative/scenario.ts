@@ -239,6 +239,7 @@ const buildScenarioCombatants = (
     const combatantId = getCombatantId(side, combatant.combatantKey);
     const weaponType = getInitiativeWeaponType(weaponInfo?.weaponType);
     const declaredAction = combatant.declaredAction ?? 'open-melee';
+    const actionLabel = combatant.actionLabel?.trim();
     const draftTargetDeclarations = getTargetDeclarations(combatant);
     const targetDeclarations =
       declaredAction === 'none'
@@ -285,6 +286,7 @@ const buildScenarioCombatants = (
       initiative,
       missileInitiativeAdjustment: combatant.missileInitiativeAdjustment ?? 0,
       declaredAction,
+      ...(actionLabel ? { actionLabel } : {}),
       movementRate: combatant.movementRate ?? DEFAULT_MOVEMENT_RATE,
       actionDistanceInches: sharedDistanceInches,
       activationSegments: sharedActivationSegments,

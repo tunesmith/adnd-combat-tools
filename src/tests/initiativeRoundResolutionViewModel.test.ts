@@ -307,6 +307,7 @@ describe('initiative round resolution view model', () => {
           combatantKey: 1,
           name: 'Shep',
           declaredAction: 'magical-device',
+          actionLabel: 'Drink potion',
           weaponId: 17,
           activationSegments: 7,
           targetCombatantKeys: [],
@@ -325,9 +326,11 @@ describe('initiative round resolution view model', () => {
 
     expect(deviceCard).toMatchObject({
       kind: 'magical-device',
-      title: 'Shep magical device',
+      title: 'Shep Drink potion (magical device)',
     });
-    expect(deviceCard?.summary).toContain('Shep uses a magical device.');
+    expect(deviceCard?.summary).toContain(
+      'Shep uses Drink potion (magical device).'
+    );
     expect(deviceCard?.summary).toContain('segment-7 activation');
     expect(deviceCard?.steps).toEqual([
       {

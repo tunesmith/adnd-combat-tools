@@ -13,6 +13,7 @@ import {
 import { getMultipleAttackThreshold } from '../../helpers/initiative/openMelee';
 import {
   encodeInitiativePlaytestState,
+  INITIATIVE_ACTION_LABEL_MAX_LENGTH,
   type InitiativePlaytestCombatantState,
   type InitiativePlaytestState,
 } from '../../helpers/initiativeCodec';
@@ -54,6 +55,7 @@ interface InitiativePlaytestAttackEditorTarget {
   side: InitiativePlaytestSide;
   combatantKey: number;
   action: InitiativeDeclaredAction;
+  actionLabel: string;
   attackRoutineCount: string;
   distanceInches: string;
   activationSegments: string;
@@ -259,24 +261,33 @@ const formatDeclaredAction = (
   ACTION_OPTIONS.find((option) => option.value === declaredAction)?.label ||
   declaredAction;
 
-const formatDeclarationMeta = (
+const normalizeActionLabel = (value: string | undefined): string =>
+  (value || '').trim().slice(0, INITIATIVE_ACTION_LABEL_MAX_LENGTH);
+
+const formatCompactDeclaredAction = (
+  declaredAction: InitiativeDeclaredAction,
+  actionLabel: string | undefined
+): string =>
+  normalizeActionLabel(actionLabel) || formatDeclaredAction(declaredAction);
+
+const getDeclarationDetail = (
   declaredAction: InitiativeDeclaredAction,
   distanceInches: string,
   activationSegments: string,
   castingSegments: string
-): string => {
+): string | undefined => {
   if (
     requiresDistanceInput(declaredAction) &&
     distanceInches.trim().length > 0
   ) {
-    return `${formatDeclaredAction(declaredAction)} · ${distanceInches}"`;
+    return `${distanceInches}"`;
   }
 
   if (
     requiresActivationSegmentsInput(declaredAction) &&
     activationSegments.trim().length > 0
   ) {
-    return `${formatDeclaredAction(declaredAction)} · ${activationSegments} ${
+    return `${activationSegments} ${
       activationSegments === '1' ? 'segment' : 'segments'
     }`;
   }
@@ -286,19 +297,59 @@ const formatDeclarationMeta = (
     castingSegments.trim().length > 0
   ) {
     if (castingSegments === '0') {
-      return `${formatDeclaredAction(declaredAction)} · Instant`;
+      return 'Instant';
     }
 
-    return `${formatDeclaredAction(declaredAction)} · ${
-      castingSegments === '10'
-        ? '10+ segments'
-        : `${castingSegments} ${
-            castingSegments === '1' ? 'segment' : 'segments'
-          }`
-    }`;
+    return castingSegments === '10'
+      ? '10+ segments'
+      : `${castingSegments} ${
+          castingSegments === '1' ? 'segment' : 'segments'
+        }`;
   }
 
-  return formatDeclaredAction(declaredAction);
+  return undefined;
+};
+
+const formatCompactDeclarationMeta = (
+  declaredAction: InitiativeDeclaredAction,
+  actionLabel: string | undefined,
+  distanceInches: string,
+  activationSegments: string,
+  castingSegments: string
+): string => {
+  const displayAction = formatCompactDeclaredAction(
+    declaredAction,
+    actionLabel
+  );
+  const declarationDetail = getDeclarationDetail(
+    declaredAction,
+    distanceInches,
+    activationSegments,
+    castingSegments
+  );
+
+  return declarationDetail
+    ? `${displayAction} · ${declarationDetail}`
+    : displayAction;
+};
+
+const formatActionTypeMeta = (
+  declaredAction: InitiativeDeclaredAction,
+  distanceInches: string,
+  activationSegments: string,
+  castingSegments: string
+): string => {
+  const actionType = formatDeclaredAction(declaredAction);
+  const declarationDetail = getDeclarationDetail(
+    declaredAction,
+    distanceInches,
+    activationSegments,
+    castingSegments
+  );
+
+  return declarationDetail
+    ? `${actionType} · ${declarationDetail}`
+    : actionType;
 };
 
 const getAvailableActionOptions = (
@@ -637,6 +688,7 @@ const buildDraftCombatants = (
     combatantKey: combatant.key,
     name: combatant.name.trim() || undefined,
     declaredAction: combatant.declaredAction,
+    actionLabel: normalizeActionLabel(combatant.actionLabel) || undefined,
     movementRate: parseOptionalNumber(combatant.movementRate),
     actionDistanceInches:
       parseOptionalNumber(combatant.actionDistanceInches) ??
@@ -784,8 +836,9 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string => {
 const getCombatantActionMeta = (
   combatant: InitiativePlaytestCombatant
 ): string =>
-  formatDeclarationMeta(
+  formatCompactDeclarationMeta(
     combatant.declaredAction,
+    combatant.actionLabel,
     combatant.actionDistanceInches,
     combatant.activationSegments,
     combatant.castingSegments
@@ -794,6 +847,18 @@ const getCombatantActionMeta = (
 const getCombatantActionHint = (
   combatant: InitiativePlaytestCombatant
 ): string | undefined => {
+  const normalizedActionLabel = normalizeActionLabel(combatant.actionLabel);
+  const actionTypeMeta = formatActionTypeMeta(
+    combatant.declaredAction,
+    combatant.actionDistanceInches,
+    combatant.activationSegments,
+    combatant.castingSegments
+  );
+
+  if (normalizedActionLabel) {
+    return actionTypeMeta;
+  }
+
   const actionMeta = getCombatantActionMeta(combatant);
   const actionLabel = formatDeclaredAction(combatant.declaredAction);
 
@@ -837,16 +902,76 @@ const getEffectiveInitiativeValue = (
 const truncateGraphText = (text: string, maxLength: number): string =>
   text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 
-const getGraphActionLines = (text: string): string[] => {
-  const [actionLabel, suffixLabel] = text.split(' · ');
+const wrapGraphText = (
+  text: string,
+  maxLength: number,
+  maxLines: number
+): string[] => {
+  const words = text.trim().split(/\s+/).filter(Boolean);
 
-  if (!actionLabel || !suffixLabel) {
-    return [truncateGraphText(text, 20)];
+  if (words.length === 0) {
+    return [];
+  }
+
+  const lines: string[] = [];
+  let currentLine = '';
+
+  words.forEach((word) => {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+
+    if (nextLine.length <= maxLength) {
+      currentLine = nextLine;
+      return;
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    currentLine = word;
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length <= maxLines) {
+    return lines.map((line) => truncateGraphText(line, maxLength));
+  }
+
+  const visibleLines = lines.slice(0, maxLines);
+  const remainingText = lines.slice(maxLines - 1).join(' ');
+  visibleLines[maxLines - 1] = truncateGraphText(remainingText, maxLength);
+
+  return visibleLines;
+};
+
+const getGraphNodeActionDetail = (node: InitiativeAttackNode): string =>
+  node.kind === 'spell-start'
+    ? 'start'
+    : node.kind === 'spell-completion'
+    ? 'complete'
+    : node.label;
+
+const getGraphActionLines = (
+  actionTitle: string,
+  actionDetail: string | undefined,
+  hasCustomLabel: boolean
+): string[] => {
+  if (hasCustomLabel) {
+    const labelLines = wrapGraphText(actionTitle, 20, 2);
+    return actionDetail
+      ? labelLines.concat(truncateGraphText(actionDetail, 20))
+      : labelLines;
+  }
+
+  if (!actionDetail) {
+    return [truncateGraphText(actionTitle, 20)];
   }
 
   return [
-    truncateGraphText(actionLabel, 16),
-    truncateGraphText(suffixLabel, 16),
+    truncateGraphText(actionTitle, 18),
+    truncateGraphText(actionDetail, 18),
   ];
 };
 
@@ -861,6 +986,8 @@ interface GraphNodeDisplayLine {
 interface GraphNodeDisplay {
   combatantName: string;
   targetLabel: string;
+  actionTitle: string;
+  actionMeta?: string;
   actionLabel: string;
   lines: GraphNodeDisplayLine[];
   width: number;
@@ -868,8 +995,8 @@ interface GraphNodeDisplay {
 }
 
 const GRAPH_NODE_MIN_WIDTH = 102;
-const GRAPH_NODE_MAX_WIDTH = 132;
-const GRAPH_NODE_HEIGHT = 66;
+const GRAPH_NODE_MAX_WIDTH = 164;
+const GRAPH_NODE_MIN_HEIGHT = 66;
 const GRAPH_NODE_HORIZONTAL_PADDING = 14;
 const GRAPH_NODE_LINE_GAP = 14;
 const GRAPH_POPOVER_WIDTH = 320;
@@ -1347,6 +1474,12 @@ const getGraphNodeWidth = (lines: GraphNodeDisplayLine[]): number =>
     GRAPH_NODE_MAX_WIDTH
   );
 
+const getGraphNodeHeight = (lineCount: number): number =>
+  Math.max(
+    GRAPH_NODE_MIN_HEIGHT,
+    24 + Math.max(0, lineCount - 1) * GRAPH_NODE_LINE_GAP
+  );
+
 const getGraphNodeLineYs = (height: number, lineCount: number): number[] => {
   const totalSpan = (lineCount - 1) * GRAPH_NODE_LINE_GAP;
   const centerY = height / 2 + 1;
@@ -1530,16 +1663,29 @@ const InitiativePlayground = ({
             targetLabel = 'Multiple targets';
           }
 
-          const actionLabel = combatant
-            ? node.kind === 'spell-start'
-              ? 'Cast spell · start'
-              : node.kind === 'spell-completion'
-              ? 'Cast spell · complete'
-              : `${formatDeclaredAction(combatant.declaredAction)} · ${
-                  node.label
-                }`
+          const customActionLabel = normalizeActionLabel(
+            node.actionLabel || combatant?.actionLabel
+          );
+          const actionTitle = combatant
+            ? customActionLabel ||
+              formatDeclaredAction(combatant.declaredAction)
             : 'Unknown action';
-          const actionLines = getGraphActionLines(actionLabel);
+          const actionDetail = getGraphNodeActionDetail(node);
+          const actionMeta = combatant
+            ? customActionLabel
+              ? `${formatDeclaredAction(
+                  combatant.declaredAction
+                )} · ${actionDetail}`
+              : actionDetail
+            : actionDetail;
+          const actionLabel = actionMeta
+            ? `${actionTitle} · ${actionMeta}`
+            : actionTitle;
+          const actionLines = getGraphActionLines(
+            actionTitle,
+            actionDetail,
+            Boolean(customActionLabel)
+          );
           const lines: GraphNodeDisplayLine[] = [
             {
               text: truncateGraphText(combatantName, 18),
@@ -1555,16 +1701,19 @@ const InitiativePlayground = ({
               isSecondary: index > 0,
             })),
           ];
+          const height = getGraphNodeHeight(lines.length);
 
           return [
             node.id,
             {
               combatantName,
               targetLabel,
+              actionTitle,
+              actionMeta,
               actionLabel,
               lines,
               width: getGraphNodeWidth(lines),
-              height: GRAPH_NODE_HEIGHT,
+              height,
             } as GraphNodeDisplay,
           ];
         })
@@ -1862,6 +2011,7 @@ const InitiativePlayground = ({
       side,
       combatantKey,
       action: combatant.declaredAction,
+      actionLabel: combatant.actionLabel || '',
       attackRoutineCount: combatant.attackRoutineCount,
       distanceInches:
         combatant.actionDistanceInches ||
@@ -2018,6 +2168,7 @@ const InitiativePlayground = ({
       side,
       combatantKey,
       action,
+      actionLabel,
       attackRoutineCount,
       distanceInches,
       activationSegments,
@@ -2053,6 +2204,7 @@ const InitiativePlayground = ({
             : {
                 ...combatant,
                 declaredAction: action,
+                actionLabel: normalizeActionLabel(actionLabel) || undefined,
                 actionDistanceInches: requiresDistanceInput(action)
                   ? distanceInches
                   : '',
@@ -2159,14 +2311,14 @@ const InitiativePlayground = ({
   const attackNodeLabelById = useMemo(
     () =>
       Object.fromEntries(
-        attackGraph.nodes.map((node) => [
-          node.id,
-          `${
-            viewModel.combatantNameById[node.combatantId] || node.combatantId
-          } ${node.label}`,
+        Object.entries(graphNodeDisplayById).map(([nodeId, display]) => [
+          nodeId,
+          `${display.combatantName}: ${display.actionTitle}${
+            display.actionMeta ? `, ${display.actionMeta}` : ''
+          }`,
         ])
       ),
-    [attackGraph.nodes, viewModel.combatantNameById]
+    [graphNodeDisplayById]
   );
   const revealGraphNodeInViewport = useCallback(
     (nodeId: string) => {
@@ -3006,6 +3158,52 @@ const InitiativePlayground = ({
     actionEditedTargetNames.length > 0
       ? actionEditedTargetNames.filter(Boolean).join(', ')
       : 'No targets selected';
+  const actionEditedPrimarySummary = actionEditorTarget
+    ? normalizeActionLabel(actionEditorTarget.actionLabel)
+      ? formatCompactDeclaredAction(
+          actionEditorTarget.action,
+          actionEditorTarget.actionLabel
+        )
+      : formatCompactDeclarationMeta(
+          actionEditorTarget.action,
+          actionEditorTarget.actionLabel,
+          actionEditorTarget.distanceInches,
+          actionEditorTarget.activationSegments,
+          actionEditorTarget.castingSegments
+        )
+    : undefined;
+  const actionEditedSecondarySummary =
+    actionEditorTarget && normalizeActionLabel(actionEditorTarget.actionLabel)
+      ? formatActionTypeMeta(
+          actionEditorTarget.action,
+          actionEditorTarget.distanceInches,
+          actionEditorTarget.activationSegments,
+          actionEditorTarget.castingSegments
+        )
+      : undefined;
+  const renderGraphNodeReference = (nodeId: string) => {
+    const display = graphNodeDisplayById[nodeId];
+
+    if (!display) {
+      return nodeId;
+    }
+
+    return (
+      <span className={styles['graphNodeReference']}>
+        <span className={styles['graphNodeReferenceName']}>
+          {display.combatantName}
+        </span>
+        <span className={styles['graphNodeReferenceAction']}>
+          {display.actionTitle}
+        </span>
+        {display.actionMeta ? (
+          <span className={styles['graphNodeReferenceMeta']}>
+            {display.actionMeta}
+          </span>
+        ) : null}
+      </span>
+    );
+  };
 
   return (
     <div className={styles['page']}>
@@ -3305,8 +3503,9 @@ const InitiativePlayground = ({
                               }
                             >
                               <span className={styles['matrixCombatantName']}>
-                                {formatDeclaredAction(
-                                  partyCombatant.declaredAction
+                                {formatCompactDeclaredAction(
+                                  partyCombatant.declaredAction,
+                                  partyCombatant.actionLabel
                                 )}
                               </span>
                               {getCombatantActionHint(partyCombatant) ? (
@@ -3364,8 +3563,9 @@ const InitiativePlayground = ({
                                 }
                               >
                                 <span className={styles['matrixCombatantName']}>
-                                  {formatDeclaredAction(
-                                    enemyCombatant.declaredAction
+                                  {formatCompactDeclaredAction(
+                                    enemyCombatant.declaredAction,
+                                    enemyCombatant.actionLabel
                                   )}
                                 </span>
                                 {getCombatantActionHint(enemyCombatant) ? (
@@ -3409,8 +3609,9 @@ const InitiativePlayground = ({
                               ] ||
                               '';
                             const partyDeclarationLabel = partyTargetsEnemy
-                              ? formatDeclarationMeta(
+                              ? formatCompactDeclarationMeta(
                                   partyCombatant.declaredAction,
+                                  partyCombatant.actionLabel,
                                   partyCombatant.actionDistanceInches ||
                                     pairDistance,
                                   partyCombatant.activationSegments,
@@ -3418,8 +3619,9 @@ const InitiativePlayground = ({
                                 )
                               : '';
                             const enemyDeclarationLabel = enemyTargetsParty
-                              ? formatDeclarationMeta(
+                              ? formatCompactDeclarationMeta(
                                   enemyCombatant.declaredAction,
+                                  enemyCombatant.actionLabel,
                                   enemyCombatant.actionDistanceInches ||
                                     pairDistance,
                                   enemyCombatant.activationSegments,
@@ -4200,8 +4402,7 @@ const InitiativePlayground = ({
                     >
                       <div className={styles['graphInspectorHeader']}>
                         <div className={styles['graphInspectorTitle']}>
-                          {attackNodeLabelById[selectedGraphNode.id] ||
-                            selectedGraphNode.id}
+                          {renderGraphNodeReference(selectedGraphNode.id)}
                         </div>
                       </div>
                       <div className={styles['graphInspectorMeta']}>
@@ -4308,8 +4509,7 @@ const InitiativePlayground = ({
                                     openGraphNode(edge.fromNodeId, true)
                                   }
                                 >
-                                  {attackNodeLabelById[edge.fromNodeId] ||
-                                    edge.fromNodeId}
+                                  {renderGraphNodeReference(edge.fromNodeId)}
                                 </button>
                                 <span className={styles['stepDetail']}>
                                   {getGraphEdgeExplanation(edge)}
@@ -4333,7 +4533,7 @@ const InitiativePlayground = ({
                                     openGraphNode(target.nodeId, true)
                                   }
                                 >
-                                  {target.label}
+                                  {renderGraphNodeReference(target.nodeId)}
                                 </button>
                               </li>
                             ))}
@@ -4563,6 +4763,30 @@ const InitiativePlayground = ({
                     </option>
                   ))}
                 </select>
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={'initiative-attack-label'}
+                >
+                  Action label
+                </label>
+                <input
+                  id={'initiative-attack-label'}
+                  className={styles['textInput']}
+                  type={'text'}
+                  placeholder={'e.g. Drink potion'}
+                  maxLength={INITIATIVE_ACTION_LABEL_MAX_LENGTH}
+                  value={actionEditorTarget.actionLabel}
+                  onChange={(event) =>
+                    setActionEditorTarget((previous) =>
+                      previous
+                        ? {
+                            ...previous,
+                            actionLabel: event.target.value,
+                          }
+                        : previous
+                    )
+                  }
+                />
                 {requiresAttackRoutineCountInput(
                   actionEditorTarget.action,
                   actionEditedCombatant.weaponId
@@ -4745,17 +4969,24 @@ const InitiativePlayground = ({
                   <span className={styles['modalMetaLabel']}>
                     Current action
                   </span>
-                  <span className={styles['modalMetaValue']}>
-                    {actionEditedCombatantName}
+                  <span
+                    className={[
+                      styles['modalMetaValue'],
+                      styles['modalMetaValuePrimary'],
+                    ].join(' ')}
+                  >
+                    {actionEditedPrimarySummary}
                   </span>
-                  <span className={styles['modalMetaValue']}>
-                    {formatDeclarationMeta(
-                      actionEditorTarget.action,
-                      actionEditorTarget.distanceInches,
-                      actionEditorTarget.activationSegments,
-                      actionEditorTarget.castingSegments
-                    )}
-                  </span>
+                  {actionEditedSecondarySummary ? (
+                    <span
+                      className={[
+                        styles['modalMetaValue'],
+                        styles['modalMetaValueSecondary'],
+                      ].join(' ')}
+                    >
+                      {actionEditedSecondarySummary}
+                    </span>
+                  ) : null}
                   <span className={styles['modalMetaLabel']}>Targets</span>
                   <span className={styles['modalMetaValue']}>
                     {actionEditedTargetSummary}

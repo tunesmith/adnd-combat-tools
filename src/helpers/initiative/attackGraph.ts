@@ -89,6 +89,7 @@ const createNode = (
   side: combatant.side,
   attackNumber,
   label,
+  actionLabel: combatant.actionLabel,
   source,
   kind,
   segment,

@@ -1448,6 +1448,7 @@ describe('initiative attack graph', () => {
           combatantKey: 1,
           name: 'Shep',
           declaredAction: 'magical-device',
+          actionLabel: 'Drink potion',
           weaponId: 17,
           activationSegments: 7,
           targetCombatantKeys: [],
@@ -1464,6 +1465,7 @@ describe('initiative attack graph', () => {
       expect.objectContaining({
         id: 'attack:party-1:1',
         combatantId: 'party-1',
+        actionLabel: 'Drink potion',
         targetId: undefined,
         segment: 7,
         segmentReason: 'declared-action',

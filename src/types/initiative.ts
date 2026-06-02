@@ -45,6 +45,7 @@ export interface InitiativeScenarioCombatant {
   initiative: number;
   missileInitiativeAdjustment: number;
   declaredAction: InitiativeDeclaredAction;
+  actionLabel?: string;
   movementRate: number;
   actionDistanceInches?: number;
   activationSegments?: number;
@@ -72,6 +73,7 @@ export interface InitiativeScenarioDraftCombatant {
   combatantKey: number;
   name?: string;
   declaredAction?: InitiativeDeclaredAction;
+  actionLabel?: string;
   movementRate?: number;
   actionDistanceInches?: number;
   activationSegments?: number;
@@ -203,6 +205,7 @@ export interface InitiativeAttackNode {
   side: InitiativeScenarioSide;
   attackNumber: number;
   label: string;
+  actionLabel?: string;
   source: InitiativeAttackSource;
   kind: 'attack' | 'contact' | 'spell-start' | 'spell-completion';
   segment?: number;

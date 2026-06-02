@@ -5,6 +5,7 @@ export interface InitiativePlaytestCombatantState {
   key: number;
   name: string;
   declaredAction: InitiativeDeclaredAction;
+  actionLabel?: string;
   movementRate: string;
   actionDistanceInches: string;
   activationSegments: string;
@@ -69,6 +70,8 @@ const INITIATIVE_ACTIONS: InitiativeDeclaredAction[] = [
   'spell-casting',
 ];
 
+export const INITIATIVE_ACTION_LABEL_MAX_LENGTH = 80;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -80,6 +83,14 @@ const isInitiativeDeclaredAction = (
 
 const sanitizeString = (value: unknown): string =>
   typeof value === 'string' ? value : String(value ?? '');
+
+const sanitizeActionLabel = (value: unknown): string | undefined => {
+  const label = sanitizeString(value).trim();
+
+  return label.length > 0
+    ? label.slice(0, INITIATIVE_ACTION_LABEL_MAX_LENGTH)
+    : undefined;
+};
 
 const sanitizeNumber = (value: unknown, fallback: number): number => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -106,11 +117,13 @@ const sanitizeCombatant = (
   const declaredAction = isInitiativeDeclaredAction(candidate['declaredAction'])
     ? candidate['declaredAction']
     : 'open-melee';
+  const actionLabel = sanitizeActionLabel(candidate['actionLabel']);
 
   return {
     key: sanitizeNumber(candidate['key'], 0),
     name: sanitizeString(candidate['name']),
     declaredAction,
+    ...(actionLabel ? { actionLabel } : {}),
     movementRate: sanitizeString(candidate['movementRate'] || '12'),
     actionDistanceInches: sanitizeString(candidate['actionDistanceInches']),
     activationSegments: sanitizeString(candidate['activationSegments']),

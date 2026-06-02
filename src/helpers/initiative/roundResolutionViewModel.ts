@@ -55,6 +55,15 @@ const formatDeclaredActionLabel = (action: InitiativeDeclaredAction): string =>
     ? 'cast spell'
     : action;
 
+const formatCombatantActionLabel = (
+  combatant: InitiativeScenarioCombatant
+): string =>
+  combatant.actionLabel
+    ? `${combatant.actionLabel} (${formatDeclaredActionLabel(
+        combatant.declaredAction
+      )})`
+    : formatDeclaredActionLabel(combatant.declaredAction);
+
 const formatMovementActionLabel = (
   action: InitiativeMovementResolution['action']
 ): string => formatDeclaredActionLabel(action);
@@ -268,7 +277,12 @@ const buildDirectMeleeCards = (
           .map((attack) => {
             const combatantName =
               combatantNameById[attack.combatantId] || attack.combatantId;
-            return `${combatantName} ${attack.label}`;
+            const combatant = combatantById.get(attack.combatantId);
+            const actionLabel =
+              combatant && combatant.actionLabel
+                ? `${formatCombatantActionLabel(combatant)} `
+                : '';
+            return `${combatantName} ${actionLabel}${attack.label}`;
           })
           .join(step.attacks.length > 1 ? ' and ' : ''),
         combatantIds: step.attacks.map((attack) => attack.combatantId),
@@ -372,11 +386,14 @@ const getMovementSummary = (
   const combatantName =
     combatantNameById[movementResolution.combatantId] ||
     movementResolution.combatantId;
+  const combatant = combatantById.get(movementResolution.combatantId);
   const targetName = movementResolution.targetId
     ? combatantNameById[movementResolution.targetId] ||
       movementResolution.targetId
     : 'the declared target';
-  const actionLabel = formatMovementActionLabel(movementResolution.action);
+  const actionLabel = combatant
+    ? formatCombatantActionLabel(combatant)
+    : formatMovementActionLabel(movementResolution.action);
 
   if (movementResolution.reason === 'missing-target') {
     return `${combatantName} declared ${actionLabel}, but no single target was available to resolve.`;
@@ -460,13 +477,16 @@ const buildMovementCards = (
       ? combatantNameById[movementResolution.targetId] ||
         movementResolution.targetId
       : 'No target';
+    const combatant = combatantById.get(movementResolution.combatantId);
 
     return {
       id: `movement-${movementResolution.combatantId}`,
       kind: 'movement',
-      title: `${combatantName} ${formatMovementActionLabel(
-        movementResolution.action
-      )}`,
+      title: `${combatantName} ${
+        combatant
+          ? formatCombatantActionLabel(combatant)
+          : formatMovementActionLabel(movementResolution.action)
+      }`,
       summary: getMovementSummary(
         movementResolution,
         combatantNameById,
@@ -561,49 +581,48 @@ const getTurnUndeadSummary = (
   combatantById: Map<string, InitiativeScenarioCombatant>
 ): string => {
   const targetNames = formatNames(combatant.targetIds, combatantNameById);
+  const actionLabel = combatant.actionLabel
+    ? formatCombatantActionLabel(combatant)
+    : undefined;
 
   if (combatant.targetIds.length !== 1) {
-    return `${combatant.name} attempts to turn ${targetNames}. In this rules slice, turning is subject to initiative and is not spoiled by ordinary damage unless ${combatant.name} is killed or otherwise incapacitated before the attempt resolves.`;
+    return actionLabel
+      ? `${combatant.name} attempts ${actionLabel} against ${targetNames}. In this rules slice, turning is subject to initiative and is not spoiled by ordinary damage unless ${combatant.name} is killed or otherwise incapacitated before the attempt resolves.`
+      : `${combatant.name} attempts to turn ${targetNames}. In this rules slice, turning is subject to initiative and is not spoiled by ordinary damage unless ${combatant.name} is killed or otherwise incapacitated before the attempt resolves.`;
   }
 
   const targetId = combatant.targetIds[0];
   if (!targetId) {
-    return `${combatant.name} attempts to turn undead.`;
+    return actionLabel
+      ? `${combatant.name} attempts ${actionLabel}.`
+      : `${combatant.name} attempts to turn undead.`;
   }
 
   const target = combatantById.get(targetId);
   if (!target) {
-    return `${combatant.name} attempts to turn ${targetNames}.`;
+    return actionLabel
+      ? `${combatant.name} attempts ${actionLabel} against ${targetNames}.`
+      : `${combatant.name} attempts to turn ${targetNames}.`;
   }
 
   const initiativeComparison = compareCombatantInitiative(combatant, target);
-  const targetActionLabel = formatDeclaredActionLabel(target.declaredAction);
+  const targetActionLabel = formatCombatantActionLabel(target);
 
   if (initiativeComparison > 0) {
-    return `${combatant.name} attempts to turn ${target.name} before ${
-      target.name
-    }'s ${targetActionLabel.toLowerCase()} because ${
-      combatant.side
-    } side currently acts earlier in this exchange. Ordinary damage does not spoil turning in this slice unless ${
-      combatant.name
-    } is killed or otherwise incapacitated first.`;
+    return actionLabel
+      ? `${combatant.name} attempts ${actionLabel} against ${target.name} before ${target.name}'s ${targetActionLabel} because ${combatant.side} side currently acts earlier in this exchange. Ordinary damage does not spoil turning in this slice unless ${combatant.name} is killed or otherwise incapacitated first.`
+      : `${combatant.name} attempts to turn ${target.name} before ${target.name}'s ${targetActionLabel} because ${combatant.side} side currently acts earlier in this exchange. Ordinary damage does not spoil turning in this slice unless ${combatant.name} is killed or otherwise incapacitated first.`;
   }
 
   if (initiativeComparison < 0) {
-    return `${
-      target.name
-    }'s ${targetActionLabel.toLowerCase()} happens before ${
-      combatant.name
-    }'s turn attempt in this round. If ${
-      combatant.name
-    } survives and is not incapacitated, the turn attempt still resolves later because turning is not treated like spell casting for interruption here.`;
+    return actionLabel
+      ? `${target.name}'s ${targetActionLabel} happens before ${combatant.name}'s ${actionLabel} attempt in this round. If ${combatant.name} survives and is not incapacitated, the turn attempt still resolves later because turning is not treated like spell casting for interruption here.`
+      : `${target.name}'s ${targetActionLabel} happens before ${combatant.name}'s turn attempt in this round. If ${combatant.name} survives and is not incapacitated, the turn attempt still resolves later because turning is not treated like spell casting for interruption here.`;
   }
 
-  return `${combatant.name}'s turn attempt and ${
-    target.name
-  }'s ${targetActionLabel.toLowerCase()} are simultaneous in this tied round. Ordinary damage does not spoil turning in this slice unless ${
-    combatant.name
-  } is killed or otherwise incapacitated.`;
+  return actionLabel
+    ? `${combatant.name}'s ${actionLabel} attempt and ${target.name}'s ${targetActionLabel} are simultaneous in this tied round. Ordinary damage does not spoil turning in this slice unless ${combatant.name} is killed or otherwise incapacitated.`
+    : `${combatant.name}'s turn attempt and ${target.name}'s ${targetActionLabel} are simultaneous in this tied round. Ordinary damage does not spoil turning in this slice unless ${combatant.name} is killed or otherwise incapacitated.`;
 };
 
 const buildTurnUndeadCards = (
@@ -621,7 +640,7 @@ const buildTurnUndeadCards = (
     .map((combatant) => ({
       id: `turn-undead-${combatant.id}`,
       kind: 'turn-undead' as const,
-      title: `${combatant.name} turn undead`,
+      title: `${combatant.name} ${formatCombatantActionLabel(combatant)}`,
       summary: getTurnUndeadSummary(
         combatant,
         combatantNameById,
@@ -649,6 +668,12 @@ const getMagicalDeviceSummary = (
   combatantById: Map<string, InitiativeScenarioCombatant>
 ): string => {
   const targetNames = formatNames(combatant.targetIds, combatantNameById);
+  const actionReference = combatant.actionLabel
+    ? formatCombatantActionLabel(combatant)
+    : 'a magical device';
+  const possessiveAction = combatant.actionLabel
+    ? formatCombatantActionLabel(combatant)
+    : 'magical device';
   const activationSegments = combatant.activationSegments;
   const activationText =
     activationSegments !== undefined
@@ -656,35 +681,35 @@ const getMagicalDeviceSummary = (
       : ' No specific activation time was given, so the discharge remains initiative-controlled but unsegmented.';
 
   if (combatant.targetIds.length === 0) {
-    return `${combatant.name} uses a magical device.${activationText}`;
+    return `${combatant.name} uses ${actionReference}.${activationText}`;
   }
 
   if (combatant.targetIds.length !== 1) {
-    return `${combatant.name} uses a magical device against ${targetNames}. Device discharge is subject to initiative but is not treated like spell casting for interruption here.${activationText}`;
+    return `${combatant.name} uses ${actionReference} against ${targetNames}. Device discharge is subject to initiative but is not treated like spell casting for interruption here.${activationText}`;
   }
 
   const targetId = combatant.targetIds[0];
   if (!targetId) {
-    return `${combatant.name} uses a magical device.${activationText}`;
+    return `${combatant.name} uses ${actionReference}.${activationText}`;
   }
 
   const target = combatantById.get(targetId);
   if (!target) {
-    return `${combatant.name} uses a magical device against ${targetNames}.${activationText}`;
+    return `${combatant.name} uses ${actionReference} against ${targetNames}.${activationText}`;
   }
 
   const initiativeComparison = compareCombatantInitiative(combatant, target);
-  const targetActionLabel = formatDeclaredActionLabel(target.declaredAction);
+  const targetActionLabel = formatCombatantActionLabel(target);
 
   if (initiativeComparison > 0) {
-    return `${combatant.name}'s magical device resolves before ${target.name}'s ${targetActionLabel} because ${combatant.side} side currently acts earlier in this exchange. Ordinary damage does not spoil the device discharge the way it would spoil spell casting.${activationText}`;
+    return `${combatant.name}'s ${possessiveAction} resolves before ${target.name}'s ${targetActionLabel} because ${combatant.side} side currently acts earlier in this exchange. Ordinary damage does not spoil the device discharge the way it would spoil spell casting.${activationText}`;
   }
 
   if (initiativeComparison < 0) {
-    return `${target.name}'s ${targetActionLabel} happens before ${combatant.name}'s magical device discharge in this round. If ${combatant.name} survives and is not incapacitated, the device attack still resolves later because device use is not treated like spell casting for interruption here.${activationText}`;
+    return `${target.name}'s ${targetActionLabel} happens before ${combatant.name}'s ${possessiveAction} discharge in this round. If ${combatant.name} survives and is not incapacitated, the device attack still resolves later because device use is not treated like spell casting for interruption here.${activationText}`;
   }
 
-  return `${combatant.name}'s magical device discharge and ${target.name}'s ${targetActionLabel} are simultaneous in this tied round. Ordinary damage does not spoil the device use in this slice unless ${combatant.name} is killed or otherwise incapacitated.${activationText}`;
+  return `${combatant.name}'s ${possessiveAction} discharge and ${target.name}'s ${targetActionLabel} are simultaneous in this tied round. Ordinary damage does not spoil the device use in this slice unless ${combatant.name} is killed or otherwise incapacitated.${activationText}`;
 };
 
 const buildMagicalDeviceCards = (
@@ -705,7 +730,7 @@ const buildMagicalDeviceCards = (
       return {
         id: `magical-device-${combatant.id}`,
         kind: 'magical-device' as const,
-        title: `${combatant.name} magical device`,
+        title: `${combatant.name} ${formatCombatantActionLabel(combatant)}`,
         summary: getMagicalDeviceSummary(
           combatant,
           combatantNameById,
@@ -763,6 +788,15 @@ const getSpellCastingSummary = (
   combatantById: Map<string, InitiativeScenarioCombatant>
 ): string => {
   const targetNames = formatNames(combatant.targetIds, combatantNameById);
+  const spellReference = combatant.actionLabel
+    ? formatCombatantActionLabel(combatant)
+    : 'a spell';
+  const possessiveSpell = combatant.actionLabel
+    ? formatCombatantActionLabel(combatant)
+    : 'spell';
+  const timedSpellReference = combatant.actionLabel
+    ? possessiveSpell
+    : 'the spell';
   const castingSegments = getSharedSpellCastingSegments(combatant);
   const castingTimeLabel = formatCastingTimeLabel(castingSegments);
   const completionText =
@@ -773,39 +807,39 @@ const getSpellCastingSummary = (
         } in this rules slice.`;
 
   if (combatant.targetIds.length === 0) {
-    return `${combatant.name} casts a spell. ${completionText} Directed attacks that resolve before completion spoil the spell.`;
+    return `${combatant.name} casts ${spellReference}. ${completionText} Directed attacks that resolve before completion spoil the spell.`;
   }
 
   if (combatant.targetIds.length !== 1) {
-    return `${combatant.name} casts a spell against ${targetNames}. ${completionText} Directed attacks that resolve before completion spoil the spell.`;
+    return `${combatant.name} casts ${spellReference} against ${targetNames}. ${completionText} Directed attacks that resolve before completion spoil the spell.`;
   }
 
   const targetId = combatant.targetIds[0];
   if (!targetId) {
-    return `${combatant.name} casts a spell. ${completionText}`;
+    return `${combatant.name} casts ${spellReference}. ${completionText}`;
   }
 
   const target = combatantById.get(targetId);
   if (!target) {
-    return `${combatant.name} casts a spell against ${targetNames}. ${completionText}`;
+    return `${combatant.name} casts ${spellReference} against ${targetNames}. ${completionText}`;
   }
 
   const initiativeComparison = compareCombatantInitiative(combatant, target);
-  const targetActionLabel = formatDeclaredActionLabel(target.declaredAction);
+  const targetActionLabel = formatCombatantActionLabel(target);
 
   if (initiativeComparison > 0) {
-    return `${combatant.name} starts casting before ${
+    return `${combatant.name} starts casting ${spellReference} before ${
       target.name
     }'s ${targetActionLabel} in the baseline initiative order, but the spell still takes ${castingTimeLabel.toLowerCase()} to complete. Directed attacks that land before completion spoil it.`;
   }
 
   if (initiativeComparison < 0) {
-    return `${target.name}'s ${targetActionLabel} happens before ${combatant.name}'s spell in this round. In this rules slice, successful directed attacks before completion spoil the spell instead of delaying it.`;
+    return `${target.name}'s ${targetActionLabel} happens before ${combatant.name}'s ${possessiveSpell} in this round. In this rules slice, successful directed attacks before completion spoil the spell instead of delaying it.`;
   }
 
   return `${combatant.name} and ${
     target.name
-  } are tied on initiative, but the spell still takes ${castingTimeLabel.toLowerCase()} to complete. Directed attacks that resolve before completion spoil it; simultaneous outcomes are left simultaneous.`;
+  } are tied on initiative, but ${timedSpellReference} still takes ${castingTimeLabel.toLowerCase()} to complete. Directed attacks that resolve before completion spoil it; simultaneous outcomes are left simultaneous.`;
 };
 
 const buildSpellCastingCards = (
@@ -822,7 +856,9 @@ const buildSpellCastingCards = (
       return {
         id: `spell-casting-${combatant.id}`,
         kind: 'spell-casting' as const,
-        title: `${combatant.name} spell`,
+        title: combatant.actionLabel
+          ? `${combatant.name} ${formatCombatantActionLabel(combatant)}`
+          : `${combatant.name} spell`,
         summary: getSpellCastingSummary(
           combatant,
           combatantNameById,
