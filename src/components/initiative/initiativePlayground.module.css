@@ -616,6 +616,12 @@
   background: linear-gradient(180deg, #8f4a3f 0%, #6a2928 100%);
 }
 
+.modalButton:disabled,
+.modalButtonDanger:disabled {
+  cursor: not-allowed;
+  opacity: 0.54;
+}
+
 .summaryStrip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));

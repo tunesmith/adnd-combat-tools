@@ -95,6 +95,56 @@ const isInvalidOpenMeleeOpposition = (
   target.declaredAction === 'open-melee' &&
   target.targetIds.includes(attacker.id);
 
+const getMovementCompletionSegment = (
+  distanceInches: number,
+  inchesPerSegment: number
+): number =>
+  Math.max(1, Math.ceil(Math.max(distanceInches, 0) / inchesPerSegment));
+
+const resolveTargetlessMove = (
+  attacker: InitiativeScenarioCombatant
+): InitiativeMovementResolution => {
+  const distanceInches = attacker.actionDistanceInches;
+
+  if (distanceInches === undefined || distanceInches <= 0) {
+    return {
+      combatantId: attacker.id,
+      action: attacker.declaredAction,
+      reason: 'missing-distance',
+      sameRoundAttack: false,
+    };
+  }
+
+  const closingInchesPerSegment = getInchesPerSegment(attacker);
+  const maximumDistanceCovered = closingInchesPerSegment * SEGMENTS_PER_ROUND;
+
+  if (distanceInches > maximumDistanceCovered) {
+    return {
+      combatantId: attacker.id,
+      action: attacker.declaredAction,
+      reason: 'no-contact',
+      distanceInches,
+      closingInchesPerSegment,
+      remainingDistanceInches: distanceInches - maximumDistanceCovered,
+      sameRoundAttack: false,
+    };
+  }
+
+  return {
+    combatantId: attacker.id,
+    action: attacker.declaredAction,
+    reason: 'movement-complete',
+    distanceInches,
+    closingInchesPerSegment,
+    contactSegment: getMovementCompletionSegment(
+      distanceInches,
+      closingInchesPerSegment
+    ),
+    remainingDistanceInches: 0,
+    sameRoundAttack: false,
+  };
+};
+
 export const resolveMovementAgainstTarget = (
   attacker: InitiativeScenarioCombatant,
   targetById: Map<string, InitiativeScenarioCombatant>
@@ -107,6 +157,10 @@ export const resolveMovementAgainstTarget = (
   }
 
   if (attacker.targetDeclarations.length === 0) {
+    if (attacker.declaredAction === 'close') {
+      return resolveTargetlessMove(attacker);
+    }
+
     return {
       combatantId: attacker.id,
       action: attacker.declaredAction,

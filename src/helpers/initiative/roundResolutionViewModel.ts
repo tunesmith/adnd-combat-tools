@@ -45,6 +45,8 @@ const formatDeclaredActionLabel = (action: InitiativeDeclaredAction): string =>
     ? 'no combat action'
     : action === 'open-melee'
     ? 'open melee'
+    : action === 'close'
+    ? 'move/close'
     : action === 'set-vs-charge'
     ? 'set vs charge'
     : action === 'turn-undead'
@@ -404,6 +406,10 @@ const getMovementSummary = (
   }
 
   if (movementResolution.reason === 'missing-distance') {
+    if (movementResolution.targetId === undefined) {
+      return `${combatantName} declared ${actionLabel}, but no movement distance in inches was supplied.`;
+    }
+
     return `${combatantName} declared ${actionLabel} toward ${targetName}, but no effective starting distance in inches was supplied.`;
   }
 
@@ -420,9 +426,21 @@ const getMovementSummary = (
   }
 
   if (movementResolution.reason === 'no-contact') {
+    if (movementResolution.targetId === undefined) {
+      return `${combatantName} cannot finish that move this round. The tool estimates that ${formatInches(
+        movementResolution.remainingDistanceInches || 0
+      )} remain.`;
+    }
+
     return `${combatantName} cannot reach ${targetName} this round. The tool estimates that ${combatantName} ends ${formatInches(
       movementResolution.remainingDistanceInches || 0
     )} short of striking range.`;
+  }
+
+  if (movementResolution.reason === 'movement-complete') {
+    return `${combatantName} finishes moving ${formatInches(
+      movementResolution.distanceInches || 0
+    )} on segment ${movementResolution.contactSegment}.`;
   }
 
   const directMissileChargeContext = getDirectMissileChargeContext(
@@ -479,6 +497,10 @@ const buildMovementCards = (
       : 'No target';
     const combatant = combatantById.get(movementResolution.combatantId);
 
+    const distanceLabel = movementResolution.targetId
+      ? 'effective start range'
+      : 'move distance';
+
     return {
       id: `movement-${movementResolution.combatantId}`,
       kind: 'movement',
@@ -510,7 +532,7 @@ const buildMovementCards = (
             movementResolution.distanceInches !== undefined
               ? `${formatInches(
                   movementResolution.distanceInches
-                )} effective start range`
+                )} ${distanceLabel}`
               : 'Distance not supplied',
           combatantIds: movementResolution.targetId
             ? [movementResolution.combatantId, movementResolution.targetId]
@@ -558,10 +580,20 @@ const buildMovementCards = (
                         movementResolution.closingInchesPerSegment || 0
                       )} per segment.`;
                 })()
+              : movementResolution.reason === 'movement-complete'
+              ? `Move complete on segment ${
+                  movementResolution.contactSegment
+                } at ${formatInches(
+                  movementResolution.closingInchesPerSegment || 0
+                )} per segment.`
               : movementResolution.reason === 'no-contact'
-              ? `No contact this round; approximately ${formatInches(
-                  movementResolution.remainingDistanceInches || 0
-                )} remain.`
+              ? movementResolution.targetId
+                ? `No contact this round; approximately ${formatInches(
+                    movementResolution.remainingDistanceInches || 0
+                  )} remain.`
+                : `Move not complete this round; approximately ${formatInches(
+                    movementResolution.remainingDistanceInches || 0
+                  )} remain.`
               : movementResolution.reason === 'set-not-triggered'
               ? 'No charging contact occurred against the set weapon this round.'
               : movementResolution.reason === 'invalid-open-melee-target'

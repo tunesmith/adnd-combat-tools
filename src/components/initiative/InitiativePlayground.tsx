@@ -69,7 +69,7 @@ const ACTION_OPTIONS: Array<{
 }> = [
   { value: 'none', label: 'No combat action' },
   { value: 'open-melee', label: 'Open melee' },
-  { value: 'close', label: 'Close' },
+  { value: 'close', label: 'Move/Close' },
   { value: 'charge', label: 'Charge' },
   { value: 'set-vs-charge', label: 'Set vs charge' },
   { value: 'missile', label: 'Missile' },
@@ -207,6 +207,11 @@ const isSingleTargetDeclarationAction = (
 const requiresDistanceInput = (
   declaredAction: InitiativeDeclaredAction
 ): boolean => declaredAction === 'close' || declaredAction === 'charge';
+
+const hasRequiredDistanceInput = (value: string): boolean => {
+  const parsed = parseOptionalNumber(value);
+  return parsed !== undefined && parsed > 0;
+};
 
 const requiresActivationSegmentsInput = (
   declaredAction: InitiativeDeclaredAction
@@ -2763,6 +2768,10 @@ const InitiativePlayground = ({
           `This spell is instantaneous, so it has no separate completion segment.`
         );
       }
+    } else if (placement?.kind === 'movement-completion') {
+      lines.push(
+        `${combatant.name} finishes moving ${placement.distanceInches}" on segment ${selectedGraphNode.segment}. This marks a targetless Move/Close declaration at MV ${placement.movementRate}".`
+      );
     } else if (selectedGraphNode.kind === 'contact') {
       lines.push(
         `Contact is reached on segment ${selectedGraphNode.segment}. This marks the moment movement closes to melee without assuming an automatic same-round blow.`
@@ -3181,6 +3190,14 @@ const InitiativePlayground = ({
           actionEditorTarget.castingSegments
         )
       : undefined;
+  const actionEditorDistanceMissing =
+    actionEditorTarget !== undefined &&
+    requiresDistanceInput(actionEditorTarget.action) &&
+    !hasRequiredDistanceInput(actionEditorTarget.distanceInches);
+  const actionEditorDistanceLabel =
+    actionEditorTarget?.action === 'close'
+      ? 'Move distance (inches)'
+      : 'Distance to target (inches)';
   const renderGraphNodeReference = (nodeId: string) => {
     const display = graphNodeDisplayById[nodeId];
 
@@ -4827,7 +4844,7 @@ const InitiativePlayground = ({
                       className={styles['modalLabel']}
                       htmlFor={'initiative-attack-distance'}
                     >
-                      Distance to target (inches)
+                      {actionEditorDistanceLabel}
                     </label>
                     <input
                       id={'initiative-attack-distance'}
@@ -4848,8 +4865,9 @@ const InitiativePlayground = ({
                       }
                     />
                     <p className={styles['modalHint']}>
-                      Enter the current effective range in tabletop inches. The
-                      DM can translate from the actual battlefield during play.
+                      {actionEditorTarget.action === 'close'
+                        ? 'Enter the tabletop inches being crossed. With no selected target, the graph marks when this move finishes.'
+                        : 'Enter the current effective range in tabletop inches. The DM can translate from the actual battlefield during play.'}
                     </p>
                   </>
                 ) : null}
@@ -4951,7 +4969,13 @@ const InitiativePlayground = ({
                     ones.
                   </p>
                 ) : null}
-                {actionEditorTarget.action === 'magical-device' ? (
+                {actionEditorTarget.action === 'close' ? (
+                  <p className={styles['modalHint']}>
+                    Move/Close can have one target or no target. With a target,
+                    it resolves closing to striking range; without one, it marks
+                    movement completion.
+                  </p>
+                ) : actionEditorTarget.action === 'magical-device' ? (
                   <p className={styles['modalHint']}>
                     Magical device use can have one target or no target. Leave
                     targets empty for self or targetless activations such as
@@ -5016,6 +5040,7 @@ const InitiativePlayground = ({
                       type={'button'}
                       className={styles['modalButton']}
                       onClick={saveActionDeclaration}
+                      disabled={actionEditorDistanceMissing}
                     >
                       Save action
                     </button>

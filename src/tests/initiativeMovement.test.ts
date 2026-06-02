@@ -46,6 +46,66 @@ describe('initiative movement resolution', () => {
     ]);
   });
 
+  test('resolves targetless move/close as movement completion by distance', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Move Across Room',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          declaredAction: 'close',
+          movementRate: 12,
+          actionDistanceInches: 12,
+          weaponId: 2,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [],
+    });
+
+    expect(scenario.movementResolutions).toEqual([
+      expect.objectContaining({
+        combatantId: 'party-1',
+        action: 'close',
+        reason: 'movement-complete',
+        distanceInches: 12,
+        contactSegment: 10,
+        closingInchesPerSegment: 1.2,
+        sameRoundAttack: false,
+      }),
+    ]);
+  });
+
+  test('requires distance for targetless move/close', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Move Without Distance',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          declaredAction: 'close',
+          movementRate: 12,
+          weaponId: 2,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [],
+    });
+
+    expect(scenario.movementResolutions).toEqual([
+      expect.objectContaining({
+        combatantId: 'party-1',
+        action: 'close',
+        reason: 'missing-distance',
+        sameRoundAttack: false,
+      }),
+    ]);
+  });
+
   test('resolves charge contact and reach-based first strike', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge Contact',

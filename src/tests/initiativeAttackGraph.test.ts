@@ -718,6 +718,43 @@ describe('initiative attack graph', () => {
     expect(graph.edges).toEqual([]);
   });
 
+  test('graphs targetless move/close as a movement completion segment', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Move Across Room',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          declaredAction: 'close',
+          movementRate: 12,
+          actionDistanceInches: 12,
+          weaponId: 2,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual([
+      expect.objectContaining({
+        id: 'movement:party-1',
+        kind: 'movement-completion',
+        label: 'move complete',
+        segment: 10,
+        placement: expect.objectContaining({
+          kind: 'movement-completion',
+          distanceInches: 12,
+          movementRate: 12,
+        }),
+      }),
+    ]);
+    expect(graph.edges).toEqual([]);
+  });
+
   test('omits an untriggered set weapon from the graph while leaving the opponent on baseline order', () => {
     const scenario = buildInitiativeScenario({
       label: 'Set Not Triggered',

@@ -24,6 +24,9 @@ const getAttackNodeId = (combatantId: string, attackNumber: number): string =>
 const getContactNodeId = (combatantId: string): string =>
   `contact:${combatantId}`;
 
+const getMovementCompletionNodeId = (combatantId: string): string =>
+  `movement:${combatantId}`;
+
 const getSpellStartNodeId = (combatantId: string): string =>
   `spell-start:${combatantId}`;
 
@@ -77,6 +80,8 @@ const createNode = (
   id:
     kind === 'contact'
       ? getContactNodeId(combatant.id)
+      : kind === 'movement-completion'
+      ? getMovementCompletionNodeId(combatant.id)
       : kind === 'spell-start'
       ? getSpellStartNodeId(combatant.id)
       : kind === 'spell-completion'
@@ -182,6 +187,28 @@ const createContactNode = (
     'movement',
     {
       kind: 'contact',
+      distanceInches,
+      movementRate: combatant.movementRate,
+    }
+  );
+
+const createMovementCompletionNode = (
+  combatant: InitiativeScenarioCombatant,
+  segment: number,
+  distanceInches: number
+): InitiativeAttackNode =>
+  createNode(
+    combatant,
+    'movement-completion',
+    0,
+    'move complete',
+    'movement-completion',
+    'movement-completion',
+    segment,
+    undefined,
+    'movement',
+    {
+      kind: 'movement-completion',
       distanceInches,
       movementRate: combatant.movementRate,
     }
@@ -1055,6 +1082,30 @@ export const buildInitiativeAttackGraph = (
   });
 
   resolution.movementResolutions.forEach((movementResolution) => {
+    if (
+      movementResolution.reason === 'movement-complete' &&
+      movementResolution.targetId === undefined &&
+      movementResolution.contactSegment !== undefined &&
+      movementResolution.distanceInches !== undefined
+    ) {
+      const mover = combatantById.get(movementResolution.combatantId);
+
+      if (!mover) {
+        return;
+      }
+
+      movementHandledCombatantIdSet.add(mover.id);
+      addNode(
+        nodesById,
+        createMovementCompletionNode(
+          mover,
+          movementResolution.contactSegment,
+          movementResolution.distanceInches
+        )
+      );
+      return;
+    }
+
     if (
       movementResolution.reason !== 'contact' ||
       movementResolution.targetId === undefined ||

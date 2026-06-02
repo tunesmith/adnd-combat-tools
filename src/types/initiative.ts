@@ -105,6 +105,7 @@ type InitiativeAttackSource =
   | 'routine-component'
   | 'timing-bonus'
   | 'movement-contact'
+  | 'movement-completion'
   | 'spell-casting';
 
 export interface InitiativeAttackEntry {
@@ -139,6 +140,7 @@ export interface DirectMeleeEngagement extends DirectMeleePair {
 
 type InitiativeMovementResolutionReason =
   | 'contact'
+  | 'movement-complete'
   | 'no-contact'
   | 'missing-target'
   | 'missing-distance'
@@ -207,7 +209,12 @@ export interface InitiativeAttackNode {
   label: string;
   actionLabel?: string;
   source: InitiativeAttackSource;
-  kind: 'attack' | 'contact' | 'spell-start' | 'spell-completion';
+  kind:
+    | 'attack'
+    | 'contact'
+    | 'movement-completion'
+    | 'spell-start'
+    | 'spell-completion';
   segment?: number;
   segmentReason?:
     | 'declared-action'
@@ -227,6 +234,11 @@ export interface InitiativeAttackNode {
     | {
         kind: 'contact';
         distanceInches?: number;
+        movementRate: number;
+      }
+    | {
+        kind: 'movement-completion';
+        distanceInches: number;
         movementRate: number;
       }
     | {
