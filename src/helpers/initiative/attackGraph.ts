@@ -150,11 +150,13 @@ const getSpellCastingSegments = (
 const hasRegisteredCombatAction = (
   combatant: InitiativeScenarioCombatant
 ): boolean =>
-  combatant.declaredAction !== 'none' &&
-  (combatant.targetIds.length > 0 ||
-    (combatant.declaredAction === 'magical-device' &&
-      combatant.activationSegments !== undefined) ||
-    combatant.declaredAction === 'spell-casting');
+  (combatant.declaredAction === 'none' &&
+    combatant.actionLabel !== undefined) ||
+  (combatant.declaredAction !== 'none' &&
+    (combatant.targetIds.length > 0 ||
+      (combatant.declaredAction === 'magical-device' &&
+        combatant.activationSegments !== undefined) ||
+      combatant.declaredAction === 'spell-casting'));
 
 const hasInvalidOpenMeleeOpposition = (
   combatant: InitiativeScenarioCombatant,
@@ -1295,13 +1297,16 @@ export const buildInitiativeAttackGraph = (
     }
 
     attackRoutineComponents.forEach((component) => {
+      const graphLabel =
+        combatant.declaredAction === 'none' ? 'action' : component.label;
+
       addNode(
         nodesById,
         createNode(
           combatant,
           component.id,
           component.order,
-          component.label,
+          graphLabel,
           'routine-component',
           'attack',
           getDeclaredActionSegment(combatant),
@@ -1333,6 +1338,10 @@ export const buildInitiativeAttackGraph = (
             : combatant.declaredAction === 'magical-device'
             ? {
                 kind: 'magical-device-unsegmented',
+              }
+            : combatant.declaredAction === 'none'
+            ? {
+                kind: 'non-combat-unsegmented',
               }
             : combatant.attackRoutine.components.length > 1
             ? {

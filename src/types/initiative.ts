@@ -280,6 +280,9 @@ export interface InitiativeAttackNode {
         kind: 'magical-device-unsegmented';
       }
     | {
+        kind: 'non-combat-unsegmented';
+      }
+    | {
         kind: 'direct-melee';
         opponentId: string;
         resolutionReason: DirectMeleeResolutionReason;

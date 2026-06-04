@@ -86,6 +86,61 @@ describe('initiative attack graph', () => {
     expect(graph.layers).toEqual([]);
   });
 
+  test('graphs labeled no combat actions on simple initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Labeled Non Combat Action',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Brother Caradoc',
+          declaredAction: 'none',
+          actionLabel: 'Search fallen pack',
+          weaponId: 17,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Skeleton',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          combatantId: 'party-1',
+          label: 'action',
+          actionLabel: 'Search fallen pack',
+          placement: {
+            kind: 'non-combat-unsegmented',
+          },
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          combatantId: 'enemy-3',
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual([
+      {
+        fromNodeId: 'attack:enemy-3:1',
+        toNodeId: 'attack:party-1:1',
+        reasons: ['simple-initiative'],
+      },
+    ]);
+    expect(graph.layers).toEqual([['attack:enemy-3:1'], ['attack:party-1:1']]);
+  });
+
   test('adds only local direct-melee precedence in a tied round', () => {
     const draft: InitiativeScenarioDraft = {
       label: 'Mixed Open Melee',

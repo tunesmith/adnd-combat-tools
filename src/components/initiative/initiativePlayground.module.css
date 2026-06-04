@@ -938,7 +938,7 @@
 }
 
 .graphNodeName {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
@@ -951,12 +951,12 @@
 }
 
 .graphNodeTarget {
-  font-size: 0.62rem;
+  font-size: 0.67rem;
   fill: #fff8ea;
 }
 
 .graphNodeAction {
-  font-size: 0.58rem;
+  font-size: 0.64rem;
   font-weight: 600;
   fill: #fffbed;
 }

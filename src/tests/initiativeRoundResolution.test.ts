@@ -1,4 +1,5 @@
 import { resolveInitiativeRound } from '../helpers/initiative/roundResolution';
+import { buildInitiativeScenario } from '../helpers/initiative/scenario';
 import { buildInitiativeScenarioFromTrackerRound } from '../helpers/initiative/trackerScenario';
 import { createInitialTrackerState } from '../helpers/trackerState';
 import type { TrackerRound } from '../types/tracker';
@@ -81,6 +82,47 @@ describe('initiative round resolution', () => {
     ]);
     expect(resolution.directMeleeEngagements).toHaveLength(1);
     expect(resolution.unresolvedMeleeCandidateIds).toEqual([]);
+  });
+
+  test('keeps labeled no combat actions on the baseline side initiative track', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Labeled Non Combat Action',
+      partyInitiative: 6,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          declaredAction: 'none',
+          actionLabel: 'Cross room',
+          weaponId: 2,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Gnoll',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+
+    expect(resolution.simpleOrder).toBe('party-first');
+    expect(resolution.simpleOrderSteps).toEqual([
+      {
+        sides: ['party'],
+        combatantIds: ['party-1'],
+      },
+      {
+        sides: ['enemy'],
+        combatantIds: ['enemy-3'],
+      },
+    ]);
+    expect(resolution.simpleOrderCombatantIds).toEqual(['party-1', 'enemy-3']);
   });
 
   test('groups simple-order combatants together when side initiative is simultaneous', () => {

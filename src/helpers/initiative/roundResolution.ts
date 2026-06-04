@@ -20,7 +20,7 @@ export const resolveInitiativeRound = (
   scenario: InitiativeScenario
 ): InitiativeRoundResolution => {
   const hasRoundAction = (combatant: InitiativeScenario['party'][number]) =>
-    combatant.declaredAction !== 'none';
+    combatant.declaredAction !== 'none' || combatant.actionLabel !== undefined;
   const overriddenCombatantIds = Array.from(
     new Set(
       scenario.directMeleeEngagements.flatMap((engagement) => [

@@ -2879,6 +2879,10 @@ const InitiativePlayground = ({
       lines.push(
         `${combatant.name}'s device use stays unsegmented because no activation time was declared for it.`
       );
+    } else if (placement?.kind === 'non-combat-unsegmented') {
+      lines.push(
+        `${combatant.name}'s non-combat action is initiative-controlled, but it has no separate segment timing.`
+      );
     } else if (placement?.kind === 'direct-melee') {
       if (directMeleeEngagement && directMeleeOpponent) {
         lines.push(
@@ -4947,8 +4951,9 @@ const InitiativePlayground = ({
                 {actionEditorTarget.action === 'none' ? (
                   <p className={styles['modalHint']}>
                     This combatant is spending the round on a non-combat action.
-                    It will not appear in the initiative graph and it ignores
-                    target selections in the matrix.
+                    Add a label to show it as an untimed initiative-controlled
+                    graph entry; unlabeled non-combat actions are omitted and
+                    target selections are ignored.
                   </p>
                 ) : null}
                 {actionEditorTarget.action === 'missile' ? (
