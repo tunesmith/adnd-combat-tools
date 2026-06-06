@@ -1,19 +1,24 @@
 import { deflateSync, unzip } from 'zlib';
 import type { InitiativeDeclaredAction } from '../types/initiative';
 
-export interface InitiativePlaytestCombatantState {
-  key: number;
-  name: string;
+export interface InitiativePlaytestActionState {
+  id: string;
   declaredAction: InitiativeDeclaredAction;
   actionLabel?: string;
-  movementRate: string;
   actionDistanceInches: string;
   activationSegments: string;
   castingSegments: string;
-  missileInitiativeAdjustment: string;
   attackRoutineCount: string;
-  weaponId: number;
   targetCombatantKeys: number[];
+}
+
+export interface InitiativePlaytestCombatantState {
+  key: number;
+  name: string;
+  movementRate: string;
+  missileInitiativeAdjustment: string;
+  weaponId: number;
+  actions: InitiativePlaytestActionState[];
 }
 
 export interface InitiativePlaytestState {
@@ -34,8 +39,8 @@ interface InitiativePlaytestStateV1 {
   partyInitiative: string;
   enemyInitiative: string;
   nextCombatantKey: number;
-  party: InitiativePlaytestCombatantState[];
-  enemies: InitiativePlaytestCombatantState[];
+  party: unknown[];
+  enemies: unknown[];
   pairDistances: Record<string, string>;
   attackActivationSegments: Record<string, string>;
   attackCastingSegments: Record<string, string>;
@@ -43,6 +48,19 @@ interface InitiativePlaytestStateV1 {
 
 interface InitiativePlaytestStateV2 {
   version: 2;
+  label: string;
+  partyInitiative: string;
+  enemyInitiative: string;
+  nextCombatantKey: number;
+  party: unknown[];
+  enemies: unknown[];
+  pairDistances: Record<string, string>;
+  attackActivationSegments: Record<string, string>;
+  attackCastingSegments: Record<string, string>;
+}
+
+interface InitiativePlaytestStateV3 {
+  version: 3;
   label: string;
   partyInitiative: string;
   enemyInitiative: string;
@@ -56,7 +74,8 @@ interface InitiativePlaytestStateV2 {
 
 type InitiativePlaytestStateAnyVersion =
   | InitiativePlaytestStateV1
-  | InitiativePlaytestStateV2;
+  | InitiativePlaytestStateV2
+  | InitiativePlaytestStateV3;
 
 const INITIATIVE_ACTIONS: InitiativeDeclaredAction[] = [
   'none',
@@ -101,6 +120,64 @@ const sanitizeNumber = (value: unknown, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const sanitizeTargetCombatantKeys = (value: unknown): number[] =>
+  Array.isArray(value)
+    ? value
+        .map((targetKey) => sanitizeNumber(targetKey, NaN))
+        .filter((targetKey) => Number.isFinite(targetKey))
+    : [];
+
+interface InitiativePlaytestActionFallback {
+  declaredAction: InitiativeDeclaredAction;
+  actionLabel?: string;
+  actionDistanceInches: string;
+  activationSegments: string;
+  castingSegments: string;
+  attackRoutineCount: string;
+  targetCombatantKeys: number[];
+}
+
+const sanitizeAction = (
+  candidate: unknown,
+  fallback: InitiativePlaytestActionFallback,
+  index: number
+): InitiativePlaytestActionState | undefined => {
+  if (!isRecord(candidate)) {
+    return undefined;
+  }
+
+  const declaredAction = isInitiativeDeclaredAction(candidate['declaredAction'])
+    ? candidate['declaredAction']
+    : fallback.declaredAction;
+  const actionLabel = sanitizeActionLabel(candidate['actionLabel']);
+  const targetCombatantKeys = sanitizeTargetCombatantKeys(
+    candidate['targetCombatantKeys']
+  );
+
+  return {
+    id: sanitizeString(
+      candidate['id'] || (index === 0 ? 'main' : `action-${index + 1}`)
+    )
+      .trim()
+      .slice(0, 40),
+    declaredAction,
+    ...(actionLabel ? { actionLabel } : {}),
+    actionDistanceInches: sanitizeString(
+      candidate['actionDistanceInches'] ?? fallback.actionDistanceInches
+    ),
+    activationSegments: sanitizeString(
+      candidate['activationSegments'] ?? fallback.activationSegments
+    ),
+    castingSegments: sanitizeString(
+      candidate['castingSegments'] ?? fallback.castingSegments
+    ),
+    attackRoutineCount: sanitizeString(
+      candidate['attackRoutineCount'] ?? fallback.attackRoutineCount
+    ),
+    targetCombatantKeys: declaredAction === 'none' ? [] : targetCombatantKeys,
+  };
+};
+
 const sanitizeCombatant = (
   candidate: unknown
 ): InitiativePlaytestCombatantState => {
@@ -108,32 +185,50 @@ const sanitizeCombatant = (
     throw new Error('Stored initiative combatant is invalid.');
   }
 
-  const targetCombatantKeys = Array.isArray(candidate['targetCombatantKeys'])
-    ? candidate['targetCombatantKeys']
-        .map((value) => sanitizeNumber(value, NaN))
-        .filter((value) => Number.isFinite(value))
-    : [];
+  const targetCombatantKeys = sanitizeTargetCombatantKeys(
+    candidate['targetCombatantKeys']
+  );
 
   const declaredAction = isInitiativeDeclaredAction(candidate['declaredAction'])
     ? candidate['declaredAction']
     : 'open-melee';
   const actionLabel = sanitizeActionLabel(candidate['actionLabel']);
+  const fallbackAction: InitiativePlaytestActionFallback = {
+    declaredAction,
+    ...(actionLabel ? { actionLabel } : {}),
+    actionDistanceInches: sanitizeString(candidate['actionDistanceInches']),
+    activationSegments: sanitizeString(candidate['activationSegments']),
+    castingSegments: sanitizeString(candidate['castingSegments']),
+    attackRoutineCount: sanitizeString(candidate['attackRoutineCount'] || '1'),
+    targetCombatantKeys: declaredAction === 'none' ? [] : targetCombatantKeys,
+  };
+
+  const actions = Array.isArray(candidate['actions'])
+    ? candidate['actions']
+        .map((action, index) => sanitizeAction(action, fallbackAction, index))
+        .filter(
+          (action): action is InitiativePlaytestActionState =>
+            action !== undefined
+        )
+    : [];
 
   return {
     key: sanitizeNumber(candidate['key'], 0),
     name: sanitizeString(candidate['name']),
-    declaredAction,
-    ...(actionLabel ? { actionLabel } : {}),
     movementRate: sanitizeString(candidate['movementRate'] || '12'),
-    actionDistanceInches: sanitizeString(candidate['actionDistanceInches']),
-    activationSegments: sanitizeString(candidate['activationSegments']),
-    castingSegments: sanitizeString(candidate['castingSegments']),
     missileInitiativeAdjustment: sanitizeString(
       candidate['missileInitiativeAdjustment'] || '0'
     ),
-    attackRoutineCount: sanitizeString(candidate['attackRoutineCount'] || '1'),
     weaponId: sanitizeNumber(candidate['weaponId'], 1),
-    targetCombatantKeys: declaredAction === 'none' ? [] : targetCombatantKeys,
+    actions:
+      actions.length > 0
+        ? actions
+        : [
+            {
+              id: 'main',
+              ...fallbackAction,
+            },
+          ],
   };
 };
 
@@ -208,7 +303,7 @@ const parseInitiativePlaytestState = (
   }
 
   const version = sanitizeNumber(value['version'], NaN);
-  if (version !== 1 && version !== 2) {
+  if (version !== 1 && version !== 2 && version !== 3) {
     throw new Error('Stored initiative state is not a supported version.');
   }
 
@@ -222,8 +317,8 @@ const parseInitiativePlaytestState = (
     partyInitiative: sanitizeString(value['partyInitiative']),
     enemyInitiative: sanitizeString(value['enemyInitiative']),
     nextCombatantKey: sanitizeNumber(value['nextCombatantKey'], 1),
-    party: value['party'].map(sanitizeCombatant),
-    enemies: value['enemies'].map(sanitizeCombatant),
+    party: value['party'],
+    enemies: value['enemies'],
     pairDistances: sanitizePairDistances(value['pairDistances']),
     attackActivationSegments: sanitizeAttackActivationSegments(
       value['attackActivationSegments']
@@ -237,8 +332,8 @@ const parseInitiativePlaytestState = (
 export const encodeInitiativePlaytestState = (
   state: InitiativePlaytestState
 ): string => {
-  const persistedState: InitiativePlaytestStateV2 = {
-    version: 2,
+  const persistedState: InitiativePlaytestStateV3 = {
+    version: 3,
     ...state,
   };
 

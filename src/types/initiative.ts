@@ -41,6 +41,9 @@ export interface InitiativeScenarioCombatant {
   side: InitiativeScenarioSide;
   index: number;
   combatantKey: number;
+  ownerCombatantKey?: number;
+  actionId?: string;
+  actionIndex?: number;
   name: string;
   initiative: number;
   missileInitiativeAdjustment: number;
@@ -69,6 +72,18 @@ export interface InitiativeScenarioDraftTargetDeclaration {
   castingSegments?: number;
 }
 
+export interface InitiativeScenarioDraftActionDeclaration {
+  id?: string;
+  declaredAction: InitiativeDeclaredAction;
+  actionLabel?: string;
+  actionDistanceInches?: number;
+  activationSegments?: number;
+  castingSegments?: number;
+  attackRoutineCount?: number;
+  targetCombatantKeys?: number[];
+  targetDeclarations?: InitiativeScenarioDraftTargetDeclaration[];
+}
+
 export interface InitiativeScenarioDraftCombatant {
   combatantKey: number;
   name?: string;
@@ -85,6 +100,7 @@ export interface InitiativeScenarioDraftCombatant {
   result?: string;
   targetCombatantKeys?: number[];
   targetDeclarations?: InitiativeScenarioDraftTargetDeclaration[];
+  actions?: InitiativeScenarioDraftActionDeclaration[];
 }
 
 export interface InitiativeScenarioDraft {

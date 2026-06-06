@@ -454,4 +454,75 @@ describe('generic initiative scenario builder', () => {
       },
     ]);
   });
+
+  test('projects multiple declared actions into separate scenario combatants', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Multiple Actions',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Astrid',
+          weaponId: 17,
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Flail',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'spell-casting',
+              actionLabel: 'Spiritual hammer',
+              castingSegments: 0,
+              targetCombatantKeys: [4],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Ghoul',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Yeenoghu',
+          declaredAction: 'none',
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+
+    expect(scenario.party).toHaveLength(2);
+    expect(scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      combatantKey: 1,
+      ownerCombatantKey: 1,
+      actionId: 'main',
+      actionIndex: 0,
+      name: 'Astrid',
+      declaredAction: 'open-melee',
+      actionLabel: 'Flail',
+      targetIds: ['enemy-3'],
+    });
+    expect(scenario.party[1]).toMatchObject({
+      id: 'party-action-1001',
+      combatantKey: -1001,
+      ownerCombatantKey: 1,
+      actionId: 'action-2',
+      actionIndex: 1,
+      name: 'Astrid',
+      declaredAction: 'spell-casting',
+      actionLabel: 'Spiritual hammer',
+      castingSegments: 0,
+      targetIds: ['enemy-4'],
+    });
+  });
 });

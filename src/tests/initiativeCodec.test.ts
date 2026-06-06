@@ -2,8 +2,58 @@ import { deflateSync } from 'zlib';
 import {
   decodeInitiativePlaytestState,
   encodeInitiativePlaytestState,
+  type InitiativePlaytestActionState,
+  type InitiativePlaytestCombatantState,
   type InitiativePlaytestState,
 } from '../helpers/initiativeCodec';
+
+interface CombatantStateInput {
+  key: number;
+  name: string;
+  weaponId: number;
+  declaredAction: InitiativePlaytestActionState['declaredAction'];
+  actionLabel?: string;
+  movementRate?: string;
+  actionDistanceInches?: string;
+  activationSegments?: string;
+  castingSegments?: string;
+  missileInitiativeAdjustment?: string;
+  attackRoutineCount?: string;
+  targetCombatantKeys?: number[];
+}
+
+const createCombatantState = ({
+  key,
+  name,
+  weaponId,
+  declaredAction,
+  actionLabel,
+  movementRate = '12',
+  actionDistanceInches = '',
+  activationSegments = '',
+  castingSegments = '',
+  missileInitiativeAdjustment = '0',
+  attackRoutineCount = '1',
+  targetCombatantKeys = [],
+}: CombatantStateInput): InitiativePlaytestCombatantState => ({
+  key,
+  name,
+  movementRate,
+  missileInitiativeAdjustment,
+  weaponId,
+  actions: [
+    {
+      id: 'main',
+      declaredAction,
+      ...(actionLabel ? { actionLabel } : {}),
+      actionDistanceInches,
+      activationSegments,
+      castingSegments,
+      attackRoutineCount,
+      targetCombatantKeys,
+    },
+  ],
+});
 
 describe('initiative codec', () => {
   test('round-trips a shareable initiative scenario state', async () => {
@@ -13,7 +63,7 @@ describe('initiative codec', () => {
       enemyInitiative: '4',
       nextCombatantKey: 11,
       party: [
-        {
+        createCombatantState({
           key: 1,
           name: 'Aldred',
           declaredAction: 'open-melee',
@@ -26,8 +76,8 @@ describe('initiative codec', () => {
           attackRoutineCount: '2',
           weaponId: 56,
           targetCombatantKeys: [6],
-        },
-        {
+        }),
+        createCombatantState({
           key: 2,
           name: 'Doran',
           declaredAction: 'set-vs-charge',
@@ -39,10 +89,10 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 50,
           targetCombatantKeys: [7],
-        },
+        }),
       ],
       enemies: [
-        {
+        createCombatantState({
           key: 6,
           name: 'Gnoll Captain',
           declaredAction: 'open-melee',
@@ -54,8 +104,8 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 2,
           targetCombatantKeys: [1],
-        },
-        {
+        }),
+        createCombatantState({
           key: 7,
           name: 'Raider',
           declaredAction: 'charge',
@@ -67,7 +117,7 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 56,
           targetCombatantKeys: [2],
-        },
+        }),
       ],
       pairDistances: {
         '2:7': '4',
@@ -80,6 +130,71 @@ describe('initiative codec', () => {
     const decodedState = await decodeInitiativePlaytestState(encodedState);
 
     expect(decodedState).toEqual(state);
+  });
+
+  test('round-trips multiple actions as canonical action arrays', async () => {
+    const state: InitiativePlaytestState = {
+      label: 'Multiple Actions',
+      partyInitiative: '5',
+      enemyInitiative: '3',
+      nextCombatantKey: 5,
+      party: [
+        {
+          ...createCombatantState({
+            key: 1,
+            name: 'Astrid',
+            declaredAction: 'open-melee',
+            actionLabel: 'Flail',
+            weaponId: 17,
+            targetCombatantKeys: [3],
+          }),
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Flail',
+              actionDistanceInches: '',
+              activationSegments: '',
+              castingSegments: '',
+              attackRoutineCount: '1',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'magical-device',
+              actionLabel: 'Spiritual hammer',
+              actionDistanceInches: '',
+              activationSegments: '',
+              castingSegments: '',
+              attackRoutineCount: '1',
+              targetCombatantKeys: [4],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        createCombatantState({
+          key: 3,
+          name: 'Ghoul',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        }),
+        createCombatantState({
+          key: 4,
+          name: 'Yeenoghu',
+          declaredAction: 'none',
+          weaponId: 1,
+        }),
+      ],
+      pairDistances: {},
+      attackActivationSegments: {},
+      attackCastingSegments: {},
+    };
+
+    await expect(
+      decodeInitiativePlaytestState(encodeInitiativePlaytestState(state))
+    ).resolves.toEqual(state);
   });
 
   test('rejects unsupported initiative state payloads', async () => {
@@ -122,7 +237,7 @@ describe('initiative codec', () => {
       enemyInitiative: '4',
       nextCombatantKey: 2,
       party: [
-        {
+        createCombatantState({
           key: 1,
           name: 'Bowman',
           declaredAction: 'missile',
@@ -134,7 +249,7 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 11,
           targetCombatantKeys: [],
-        },
+        }),
       ],
       enemies: [],
       pairDistances: {},
@@ -150,7 +265,7 @@ describe('initiative codec', () => {
       enemyInitiative: '5',
       nextCombatantKey: 4,
       party: [
-        {
+        createCombatantState({
           key: 1,
           name: 'Sister Arda',
           declaredAction: 'turn-undead',
@@ -162,10 +277,10 @@ describe('initiative codec', () => {
           attackRoutineCount: '3',
           weaponId: 17,
           targetCombatantKeys: [3],
-        },
+        }),
       ],
       enemies: [
-        {
+        createCombatantState({
           key: 3,
           name: 'Skeleton',
           declaredAction: 'open-melee',
@@ -177,7 +292,7 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 1,
           targetCombatantKeys: [1],
-        },
+        }),
       ],
       pairDistances: {},
       attackActivationSegments: {},
@@ -196,7 +311,7 @@ describe('initiative codec', () => {
       enemyInitiative: '5',
       nextCombatantKey: 4,
       party: [
-        {
+        createCombatantState({
           key: 1,
           name: 'Brother Caradoc',
           declaredAction: 'none',
@@ -208,7 +323,7 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 17,
           targetCombatantKeys: [],
-        },
+        }),
       ],
       enemies: [],
       pairDistances: {},
@@ -262,7 +377,7 @@ describe('initiative codec', () => {
       enemyInitiative: '5',
       nextCombatantKey: 4,
       party: [
-        {
+        createCombatantState({
           key: 1,
           name: 'Rodric',
           declaredAction: 'magical-device',
@@ -274,10 +389,10 @@ describe('initiative codec', () => {
           attackRoutineCount: '3',
           weaponId: 17,
           targetCombatantKeys: [3],
-        },
+        }),
       ],
       enemies: [
-        {
+        createCombatantState({
           key: 3,
           name: 'Skeleton',
           declaredAction: 'open-melee',
@@ -289,7 +404,7 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 1,
           targetCombatantKeys: [1],
-        },
+        }),
       ],
       pairDistances: {},
       attackActivationSegments: {},
@@ -308,7 +423,7 @@ describe('initiative codec', () => {
       enemyInitiative: '4',
       nextCombatantKey: 4,
       party: [
-        {
+        createCombatantState({
           key: 1,
           name: 'Mereth',
           declaredAction: 'spell-casting',
@@ -320,10 +435,10 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 17,
           targetCombatantKeys: [3],
-        },
+        }),
       ],
       enemies: [
-        {
+        createCombatantState({
           key: 3,
           name: 'Hobgoblin',
           declaredAction: 'open-melee',
@@ -335,7 +450,7 @@ describe('initiative codec', () => {
           attackRoutineCount: '1',
           weaponId: 17,
           targetCombatantKeys: [1],
-        },
+        }),
       ],
       pairDistances: {},
       attackActivationSegments: {},

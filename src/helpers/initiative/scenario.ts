@@ -8,6 +8,7 @@ import type {
   DirectMeleeEngagement,
   DirectMeleePair,
   InitiativeAttackRoutine,
+  InitiativeScenarioDraftActionDeclaration,
   InitiativeScenarioDraftTargetDeclaration,
   InitiativeScenario,
   InitiativeScenarioCombatant,
@@ -21,7 +22,16 @@ import type {
 const getCombatantId = (
   side: InitiativeScenarioSide,
   combatantKey: number
-): string => `${side}-${combatantKey}`;
+): string =>
+  combatantKey < 0
+    ? `${side}-action-${Math.abs(combatantKey)}`
+    : `${side}-${combatantKey}`;
+
+const getActionCombatantKey = (
+  combatantKey: number,
+  actionIndex: number
+): number =>
+  actionIndex === 0 ? combatantKey : -(combatantKey * 1000 + actionIndex);
 
 const getCombatantName = (
   name: string | undefined,
@@ -185,15 +195,34 @@ const getInitiativeWeaponType = (
   weaponType: InitiativeWeaponType | undefined
 ): InitiativeWeaponType => weaponType || 'natural';
 
-const getTargetDeclarations = (
+const getDraftActionDeclarations = (
   combatant: InitiativeScenarioDraftCombatant
+): InitiativeScenarioDraftActionDeclaration[] =>
+  combatant.actions && combatant.actions.length > 0
+    ? combatant.actions
+    : [
+        {
+          id: 'main',
+          declaredAction: combatant.declaredAction ?? 'open-melee',
+          actionLabel: combatant.actionLabel,
+          actionDistanceInches: combatant.actionDistanceInches,
+          activationSegments: combatant.activationSegments,
+          castingSegments: combatant.castingSegments,
+          attackRoutineCount: combatant.attackRoutineCount,
+          targetCombatantKeys: combatant.targetCombatantKeys,
+          targetDeclarations: combatant.targetDeclarations,
+        },
+      ];
+
+const getTargetDeclarations = (
+  action: InitiativeScenarioDraftActionDeclaration
 ): InitiativeScenarioDraftTargetDeclaration[] =>
-  combatant.targetDeclarations ||
-  (combatant.targetCombatantKeys || []).map((targetCombatantKey) => ({
+  action.targetDeclarations ||
+  (action.targetCombatantKeys || []).map((targetCombatantKey) => ({
     targetCombatantKey,
-    distanceInches: combatant.actionDistanceInches,
-    activationSegments: combatant.activationSegments,
-    castingSegments: combatant.castingSegments,
+    distanceInches: action.actionDistanceInches,
+    activationSegments: action.activationSegments,
+    castingSegments: action.castingSegments,
   }));
 
 const getSharedDeclarationValue = <
@@ -234,84 +263,102 @@ const buildScenarioCombatants = (
   opposingSide: InitiativeScenarioSide,
   opposingCombatantKeys: Set<number>
 ): InitiativeScenarioCombatant[] =>
-  combatants.map((combatant, index) => {
+  combatants.flatMap((combatant, index) => {
     const weaponInfo = getWeaponInfo(combatant.weaponId);
-    const combatantId = getCombatantId(side, combatant.combatantKey);
     const weaponType = getInitiativeWeaponType(weaponInfo?.weaponType);
-    const declaredAction = combatant.declaredAction ?? 'open-melee';
-    const actionLabel = combatant.actionLabel?.trim();
-    const draftTargetDeclarations = getTargetDeclarations(combatant);
-    const targetDeclarations =
-      declaredAction === 'none'
-        ? []
-        : draftTargetDeclarations
-            .filter((targetDeclaration) =>
-              opposingCombatantKeys.has(targetDeclaration.targetCombatantKey)
-            )
-            .slice(
-              0,
-              weaponType === 'missile'
-                ? getMissileTargetLimit(
-                    weaponInfo?.weaponType === 'missile'
-                      ? weaponInfo.fireRate
-                      : undefined
-                  )
-                : undefined
-            )
-            .map((targetDeclaration) => ({
-              targetId: getCombatantId(
-                opposingSide,
-                targetDeclaration.targetCombatantKey
-              ),
-              distanceInches: targetDeclaration.distanceInches,
-              activationSegments: targetDeclaration.activationSegments,
-              castingSegments: targetDeclaration.castingSegments,
-            }));
-    const sharedDistanceInches =
-      combatant.actionDistanceInches ??
-      getSharedDeclarationValue(draftTargetDeclarations, 'distanceInches');
-    const sharedActivationSegments =
-      combatant.activationSegments ??
-      getSharedDeclarationValue(draftTargetDeclarations, 'activationSegments');
-    const sharedCastingSegments =
-      combatant.castingSegments ??
-      getSharedDeclarationValue(draftTargetDeclarations, 'castingSegments');
+    const combatantName = getCombatantName(combatant.name, side, index);
 
-    return {
-      id: combatantId,
-      side,
-      index,
-      combatantKey: combatant.combatantKey,
-      name: getCombatantName(combatant.name, side, index),
-      initiative,
-      missileInitiativeAdjustment: combatant.missileInitiativeAdjustment ?? 0,
-      declaredAction,
-      ...(actionLabel ? { actionLabel } : {}),
-      movementRate: combatant.movementRate ?? DEFAULT_MOVEMENT_RATE,
-      actionDistanceInches: sharedDistanceInches,
-      activationSegments: sharedActivationSegments,
-      castingSegments: sharedCastingSegments,
-      weaponId: combatant.weaponId,
-      weaponName: weaponInfo?.name || `Weapon ${combatant.weaponId}`,
-      weaponType,
-      weaponLength:
-        weaponInfo?.weaponType === 'melee' ? weaponInfo.length : undefined,
-      weaponSpeedFactor:
-        weaponInfo?.weaponType === 'melee' ? weaponInfo.speedFactor : undefined,
-      intention: combatant.intention || '',
-      result: combatant.result || '',
-      targetDeclarations,
-      targetIds: targetDeclarations.map(
-        (targetDeclaration) => targetDeclaration.targetId
-      ),
-      attackRoutine: buildAttackRoutine(
-        combatantId,
+    return getDraftActionDeclarations(combatant).map((action, actionIndex) => {
+      const combatantKey = getActionCombatantKey(
+        combatant.combatantKey,
+        actionIndex
+      );
+      const combatantId = getCombatantId(side, combatantKey);
+      const declaredAction = action.declaredAction;
+      const actionLabel = action.actionLabel?.trim();
+      const draftTargetDeclarations = getTargetDeclarations(action);
+      const targetDeclarations =
+        declaredAction === 'none'
+          ? []
+          : draftTargetDeclarations
+              .filter((targetDeclaration) =>
+                opposingCombatantKeys.has(targetDeclaration.targetCombatantKey)
+              )
+              .slice(
+                0,
+                weaponType === 'missile'
+                  ? getMissileTargetLimit(
+                      weaponInfo?.weaponType === 'missile'
+                        ? weaponInfo.fireRate
+                        : undefined
+                    )
+                  : undefined
+              )
+              .map((targetDeclaration) => ({
+                targetId: getCombatantId(
+                  opposingSide,
+                  targetDeclaration.targetCombatantKey
+                ),
+                distanceInches: targetDeclaration.distanceInches,
+                activationSegments: targetDeclaration.activationSegments,
+                castingSegments: targetDeclaration.castingSegments,
+              }));
+      const sharedDistanceInches =
+        action.actionDistanceInches ??
+        getSharedDeclarationValue(draftTargetDeclarations, 'distanceInches');
+      const sharedActivationSegments =
+        action.activationSegments ??
+        getSharedDeclarationValue(
+          draftTargetDeclarations,
+          'activationSegments'
+        );
+      const sharedCastingSegments =
+        action.castingSegments ??
+        getSharedDeclarationValue(draftTargetDeclarations, 'castingSegments');
+
+      return {
+        id: combatantId,
+        side,
+        index,
+        combatantKey,
+        ownerCombatantKey: combatant.combatantKey,
+        actionId: action.id,
+        actionIndex,
+        name: combatantName,
+        initiative,
+        missileInitiativeAdjustment: combatant.missileInitiativeAdjustment ?? 0,
         declaredAction,
+        ...(actionLabel ? { actionLabel } : {}),
+        movementRate: combatant.movementRate ?? DEFAULT_MOVEMENT_RATE,
+        actionDistanceInches: sharedDistanceInches,
+        activationSegments: sharedActivationSegments,
+        castingSegments: sharedCastingSegments,
+        weaponId: combatant.weaponId,
+        weaponName: weaponInfo?.name || `Weapon ${combatant.weaponId}`,
         weaponType,
-        weaponInfo?.weaponType === 'missile' ? weaponInfo.fireRate : undefined,
-        combatant.attackRoutineCount
-      ),
-    };
+        weaponLength:
+          weaponInfo?.weaponType === 'melee' ? weaponInfo.length : undefined,
+        weaponSpeedFactor:
+          weaponInfo?.weaponType === 'melee'
+            ? weaponInfo.speedFactor
+            : undefined,
+        intention: combatant.intention || '',
+        result: combatant.result || '',
+        targetDeclarations,
+        targetIds: targetDeclarations.map(
+          (targetDeclaration) => targetDeclaration.targetId
+        ),
+        attackRoutine: buildAttackRoutine(
+          combatantId,
+          declaredAction,
+          weaponType,
+          weaponInfo?.weaponType === 'missile'
+            ? weaponInfo.fireRate
+            : undefined,
+          action.attackRoutineCount
+        ),
+      };
+    });
   });
 
 export const buildInitiativeScenario = (

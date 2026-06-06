@@ -81,8 +81,8 @@ const SEGMENT_TO_DEPENDENCY_FORWARD_GAP = NODE_COLUMN_WIDTH;
 const SIMULTANEOUS_GROUP_PADDING_X = 14;
 const SIMULTANEOUS_GROUP_PADDING_Y = 10;
 
-const getContentHeight = (rowCount: number): number =>
-  rowCount > 0 ? rowCount * NODE_HEIGHT + (rowCount - 1) * ROW_GAP : 0;
+const getContentHeight = (rowCount: number, rowHeight: number): number =>
+  rowCount > 0 ? rowCount * rowHeight + (rowCount - 1) * ROW_GAP : 0;
 
 const getDependencyColumnPitch = (): number =>
   NODE_COLUMN_WIDTH + DEPENDENCY_COLUMN_GAP;
@@ -354,6 +354,10 @@ export const buildInitiativeAttackGraphLayout = (
     stackIndex: number;
   }> = [];
   const layerIndexByNodeId = new Map<string, number>();
+  const getNodeHeight = (nodeId: string): number =>
+    nodeSizeById?.[nodeId]?.height ?? NODE_HEIGHT;
+  const getMaxNodeHeight = (nodeIds: string[]): number =>
+    Math.max(NODE_HEIGHT, ...nodeIds.map(getNodeHeight));
 
   graph.layers.forEach((layer, layerIndex) => {
     layer.forEach((nodeId) => {
@@ -430,6 +434,14 @@ export const buildInitiativeAttackGraphLayout = (
     existing.push(node.id);
     segmentedNodesBySegment.set(node.segment, existing);
   });
+  const segmentedNodeIds = graph.nodes
+    .filter((node) => node.segment !== undefined)
+    .map((node) => node.id);
+  const dependencyNodeIds = graph.nodes
+    .filter((node) => node.segment === undefined)
+    .map((node) => node.id);
+  const segmentRowHeight = getMaxNodeHeight(segmentedNodeIds);
+  const dependencyRowHeight = getMaxNodeHeight(dependencyNodeIds);
 
   const segmentRowCount = Math.max(
     0,
@@ -484,7 +496,10 @@ export const buildInitiativeAttackGraphLayout = (
       return usedRows.size;
     })
   );
-  const segmentContentHeight = getContentHeight(segmentRowCount);
+  const segmentContentHeight = getContentHeight(
+    segmentRowCount,
+    segmentRowHeight
+  );
   const hasSegmentBand = segmentContentHeight > 0;
   const segmentHeaderHeight = hasSegmentBand ? SEGMENT_HEADER_HEIGHT : 0;
   const segmentTopY =
@@ -519,7 +534,8 @@ export const buildInitiativeAttackGraphLayout = (
     Math.max(
       0,
       ...Array.from(dependencyStackCountByKey.values(), (count) => count)
-    )
+    ),
+    dependencyRowHeight
   );
   const dependencyTopY =
     hasSegmentBand && dependencyContentHeight > 0
@@ -706,7 +722,7 @@ export const buildInitiativeAttackGraphLayout = (
       nodeLayoutById.set(nodeId, {
         nodeId,
         x,
-        y: segmentTopY + rowIndex * (NODE_HEIGHT + ROW_GAP),
+        y: segmentTopY + rowIndex * (segmentRowHeight + ROW_GAP),
         width,
         height,
       });
@@ -720,7 +736,9 @@ export const buildInitiativeAttackGraphLayout = (
     nodeLayoutById.set(positionedNode.nodeId, {
       nodeId: positionedNode.nodeId,
       x: positionedNode.x + (NODE_COLUMN_WIDTH - width) / 2,
-      y: dependencyTopY + positionedNode.stackIndex * (NODE_HEIGHT + ROW_GAP),
+      y:
+        dependencyTopY +
+        positionedNode.stackIndex * (dependencyRowHeight + ROW_GAP),
       width,
       height,
     });

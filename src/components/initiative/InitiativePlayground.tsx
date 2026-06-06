@@ -14,6 +14,7 @@ import { getMultipleAttackThreshold } from '../../helpers/initiative/openMelee';
 import {
   encodeInitiativePlaytestState,
   INITIATIVE_ACTION_LABEL_MAX_LENGTH,
+  type InitiativePlaytestActionState,
   type InitiativePlaytestCombatantState,
   type InitiativePlaytestState,
 } from '../../helpers/initiativeCodec';
@@ -54,12 +55,14 @@ interface InitiativePlaytestEditorTarget {
 interface InitiativePlaytestAttackEditorTarget {
   side: InitiativePlaytestSide;
   combatantKey: number;
-  action: InitiativeDeclaredAction;
-  actionLabel: string;
-  attackRoutineCount: string;
-  distanceInches: string;
-  activationSegments: string;
-  castingSegments: string;
+  selectedActionId: string;
+  actions: InitiativePlaytestActionState[];
+}
+
+interface InitiativeTargetPickerTarget {
+  attackingSide: InitiativePlaytestSide;
+  attackerKey: number;
+  targetKey: number;
 }
 
 const ALL_WEAPON_OPTIONS = getWeaponOptions(MONSTER);
@@ -376,6 +379,193 @@ const normalizeDeclaredActionForWeapon = (
     ? getDefaultDeclaredActionForWeaponId(weaponId)
     : declaredAction;
 
+const MAIN_ACTION_ID = 'main';
+
+const normalizeActionStateForCombatant = (
+  action: InitiativePlaytestActionState,
+  weaponId: number
+): InitiativePlaytestActionState => {
+  const declaredAction = normalizeDeclaredActionForWeapon(
+    action.declaredAction,
+    weaponId
+  );
+  let targetCombatantKeys = !usesTargetSelection(declaredAction)
+    ? []
+    : action.targetCombatantKeys;
+
+  if (
+    isSingleTargetDeclarationAction(declaredAction) &&
+    targetCombatantKeys.length > 1
+  ) {
+    targetCombatantKeys = targetCombatantKeys.slice(0, 1);
+  }
+
+  if (declaredAction === 'missile' && targetCombatantKeys.length > 0) {
+    targetCombatantKeys = targetCombatantKeys.slice(
+      0,
+      getMissileTargetLimitForWeaponId(weaponId)
+    );
+  }
+
+  const actionLabel = normalizeActionLabel(action.actionLabel) || undefined;
+
+  return {
+    id: action.id || MAIN_ACTION_ID,
+    declaredAction,
+    ...(actionLabel ? { actionLabel } : {}),
+    actionDistanceInches: requiresDistanceInput(declaredAction)
+      ? action.actionDistanceInches
+      : '',
+    activationSegments: requiresActivationSegmentsInput(declaredAction)
+      ? action.activationSegments
+      : '',
+    castingSegments: requiresCastingSegmentsInput(declaredAction)
+      ? action.castingSegments
+      : '',
+    attackRoutineCount: requiresAttackRoutineCountInput(
+      declaredAction,
+      weaponId
+    )
+      ? action.attackRoutineCount
+      : action.attackRoutineCount || '1',
+    targetCombatantKeys,
+  };
+};
+
+const getCombatantActions = (
+  combatant: InitiativePlaytestCombatant
+): InitiativePlaytestActionState[] => {
+  const normalizedActions = combatant.actions.map((action, index) =>
+    normalizeActionStateForCombatant(
+      {
+        ...action,
+        id: action.id || (index === 0 ? MAIN_ACTION_ID : `action-${index + 1}`),
+      },
+      combatant.weaponId
+    )
+  );
+
+  return normalizedActions.length > 0
+    ? normalizedActions
+    : [
+        normalizeActionStateForCombatant(
+          {
+            id: MAIN_ACTION_ID,
+            declaredAction: getDefaultDeclaredActionForWeaponId(
+              combatant.weaponId
+            ),
+            actionDistanceInches: '',
+            activationSegments: '',
+            castingSegments: '',
+            attackRoutineCount: '1',
+            targetCombatantKeys: [],
+          },
+          combatant.weaponId
+        ),
+      ];
+};
+
+const getPrimaryCombatantAction = (
+  combatant: InitiativePlaytestCombatant
+): InitiativePlaytestActionState => {
+  const primaryAction = getCombatantActions(combatant)[0];
+
+  if (!primaryAction) {
+    throw new Error(`Missing primary action for combatant ${combatant.key}`);
+  }
+
+  return primaryAction;
+};
+
+const syncCombatantActions = (
+  combatant: InitiativePlaytestCombatant,
+  actions: InitiativePlaytestActionState[]
+): InitiativePlaytestCombatant => {
+  const normalizedActions =
+    actions.length > 0
+      ? actions.map((action, index) =>
+          normalizeActionStateForCombatant(
+            {
+              ...action,
+              id:
+                action.id ||
+                (index === 0 ? MAIN_ACTION_ID : `action-${index + 1}`),
+            },
+            combatant.weaponId
+          )
+        )
+      : getCombatantActions(combatant);
+
+  return {
+    ...combatant,
+    actions: normalizedActions,
+  };
+};
+
+const getNextActionIdForActions = (
+  actions: InitiativePlaytestActionState[]
+): string => {
+  const usedActionIds = new Set(actions.map((action) => action.id));
+  let nextIndex = 2;
+
+  while (usedActionIds.has(`action-${nextIndex}`)) {
+    nextIndex += 1;
+  }
+
+  return `action-${nextIndex}`;
+};
+
+const updateActionInList = (
+  actions: InitiativePlaytestActionState[],
+  actionId: string,
+  updateAction: (
+    action: InitiativePlaytestActionState
+  ) => InitiativePlaytestActionState
+): InitiativePlaytestActionState[] =>
+  actions.map((action) =>
+    action.id === actionId ? updateAction(action) : action
+  );
+
+const toggleActionTargetKey = (
+  action: InitiativePlaytestActionState,
+  targetKey: number,
+  weaponId: number
+): InitiativePlaytestActionState => {
+  if (!usesTargetSelection(action.declaredAction)) {
+    return action;
+  }
+
+  const isSelected = action.targetCombatantKeys.includes(targetKey);
+
+  if (isSelected) {
+    return {
+      ...action,
+      targetCombatantKeys: action.targetCombatantKeys.filter(
+        (existingTargetKey) => existingTargetKey !== targetKey
+      ),
+    };
+  }
+
+  if (isSingleTargetDeclarationAction(action.declaredAction)) {
+    return {
+      ...action,
+      targetCombatantKeys: [targetKey],
+    };
+  }
+
+  const nextTargetCombatantKeys = action.targetCombatantKeys.concat(targetKey);
+
+  return {
+    ...action,
+    targetCombatantKeys:
+      action.declaredAction === 'missile'
+        ? nextTargetCombatantKeys.slice(
+            -getMissileTargetLimitForWeaponId(weaponId)
+          )
+        : nextTargetCombatantKeys,
+  };
+};
+
 const createCombatant = (
   key: number,
   name: string,
@@ -393,15 +583,20 @@ const createCombatant = (
 ): InitiativePlaytestCombatant => ({
   key,
   name,
-  declaredAction,
   movementRate,
-  actionDistanceInches,
-  activationSegments,
-  castingSegments,
   missileInitiativeAdjustment,
-  attackRoutineCount,
   weaponId,
-  targetCombatantKeys,
+  actions: [
+    {
+      id: MAIN_ACTION_ID,
+      declaredAction,
+      actionDistanceInches,
+      activationSegments,
+      castingSegments,
+      attackRoutineCount,
+      targetCombatantKeys,
+    },
+  ],
 });
 
 const createMixedPreset = (): InitiativePlaytestState => ({
@@ -689,23 +884,23 @@ const buildDraftCombatants = (
   attackActivationSegments: Record<string, string>,
   attackCastingSegments: Record<string, string>
 ): InitiativeScenarioDraftCombatant[] =>
-  combatants.map((combatant) => ({
-    combatantKey: combatant.key,
-    name: combatant.name.trim() || undefined,
-    declaredAction: combatant.declaredAction,
-    actionLabel: normalizeActionLabel(combatant.actionLabel) || undefined,
-    movementRate: parseOptionalNumber(combatant.movementRate),
-    actionDistanceInches:
-      parseOptionalNumber(combatant.actionDistanceInches) ??
+  combatants.map((combatant) => {
+    const actions = getCombatantActions(combatant);
+    const primaryAction = getPrimaryCombatantAction(combatant);
+    const getActionDistanceInches = (
+      action: InitiativePlaytestActionState
+    ): number | undefined =>
+      parseOptionalNumber(action.actionDistanceInches) ??
       (() => {
-        if (combatant.targetCombatantKeys.length !== 1) {
+        if (action.targetCombatantKeys.length !== 1) {
           return undefined;
         }
 
-        const targetCombatantKey = combatant.targetCombatantKeys[0];
+        const targetCombatantKey = action.targetCombatantKeys[0];
         if (targetCombatantKey === undefined) {
           return undefined;
         }
+
         return parseOptionalNumber(
           pairDistances[
             side === 'party'
@@ -713,26 +908,31 @@ const buildDraftCombatants = (
               : getPairDistanceKey(targetCombatantKey, combatant.key)
           ] || ''
         );
-      })(),
-    activationSegments:
-      parseActivationSegments(combatant.activationSegments) ??
+      })();
+    const getActionActivationSegments = (
+      action: InitiativePlaytestActionState
+    ): number | undefined =>
+      parseActivationSegments(action.activationSegments) ??
       (() => {
-        if (combatant.targetCombatantKeys.length !== 1) {
+        if (action.targetCombatantKeys.length !== 1) {
           return undefined;
         }
 
-        const targetCombatantKey = combatant.targetCombatantKeys[0];
+        const targetCombatantKey = action.targetCombatantKeys[0];
         if (targetCombatantKey === undefined) {
           return undefined;
         }
+
         return parseActivationSegments(
           attackActivationSegments[
             getAttackDeclarationKey(side, combatant.key, targetCombatantKey)
           ] || ''
         );
-      })(),
-    castingSegments:
-      parseCastingSegments(combatant.castingSegments) ??
+      })();
+    const getActionCastingSegments = (
+      action: InitiativePlaytestActionState
+    ): number | undefined =>
+      parseCastingSegments(action.castingSegments) ??
       (() => {
         const prefix = `${side}:${combatant.key}:`;
         const storedCastingSegments = Object.entries(
@@ -742,14 +942,37 @@ const buildDraftCombatants = (
             declarationKey.startsWith(prefix) && value.trim().length > 0
         )?.[1];
         return parseCastingSegments(storedCastingSegments || '');
-      })(),
-    missileInitiativeAdjustment: parseMissileInitiativeAdjustment(
-      combatant.missileInitiativeAdjustment
-    ),
-    attackRoutineCount: parseAttackRoutineCount(combatant.attackRoutineCount),
-    weaponId: combatant.weaponId,
-    targetCombatantKeys: combatant.targetCombatantKeys,
-  }));
+      })();
+
+    return {
+      combatantKey: combatant.key,
+      name: combatant.name.trim() || undefined,
+      declaredAction: primaryAction.declaredAction,
+      actionLabel: normalizeActionLabel(primaryAction.actionLabel) || undefined,
+      movementRate: parseOptionalNumber(combatant.movementRate),
+      actionDistanceInches: getActionDistanceInches(primaryAction),
+      activationSegments: getActionActivationSegments(primaryAction),
+      castingSegments: getActionCastingSegments(primaryAction),
+      missileInitiativeAdjustment: parseMissileInitiativeAdjustment(
+        combatant.missileInitiativeAdjustment
+      ),
+      attackRoutineCount: parseAttackRoutineCount(
+        primaryAction.attackRoutineCount
+      ),
+      weaponId: combatant.weaponId,
+      targetCombatantKeys: primaryAction.targetCombatantKeys,
+      actions: actions.map((action) => ({
+        id: action.id,
+        declaredAction: action.declaredAction,
+        actionLabel: normalizeActionLabel(action.actionLabel) || undefined,
+        actionDistanceInches: getActionDistanceInches(action),
+        activationSegments: getActionActivationSegments(action),
+        castingSegments: getActionCastingSegments(action),
+        attackRoutineCount: parseAttackRoutineCount(action.attackRoutineCount),
+        targetCombatantKeys: action.targetCombatantKeys,
+      })),
+    };
+  });
 
 const buildDraftFromState = (
   state: InitiativePlaytestState
@@ -806,14 +1029,15 @@ const getWeaponSummary = (weaponId: number): string => {
 };
 
 const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string => {
+  const primaryAction = getPrimaryCombatantAction(combatant);
   const movementRate = parseOptionalNumber(combatant.movementRate) ?? 12;
   const missileInitiativeAdjustment = parseMissileInitiativeAdjustment(
     combatant.missileInitiativeAdjustment
   );
   const appliedMissileInitiativeAdjustment =
-    combatant.declaredAction === 'missile'
+    primaryAction.declaredAction === 'missile'
       ? getAppliedMissileInitiativeAdjustment({
-          declaredAction: combatant.declaredAction,
+          declaredAction: primaryAction.declaredAction,
           movementRate,
           missileInitiativeAdjustment,
         })
@@ -838,34 +1062,29 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string => {
     .join(' · ');
 };
 
-const getCombatantActionMeta = (
-  combatant: InitiativePlaytestCombatant
-): string =>
-  formatCompactDeclarationMeta(
-    combatant.declaredAction,
-    combatant.actionLabel,
-    combatant.actionDistanceInches,
-    combatant.activationSegments,
-    combatant.castingSegments
-  );
-
-const getCombatantActionHint = (
-  combatant: InitiativePlaytestCombatant
+const getActionHint = (
+  action: InitiativePlaytestActionState
 ): string | undefined => {
-  const normalizedActionLabel = normalizeActionLabel(combatant.actionLabel);
+  const normalizedActionLabel = normalizeActionLabel(action.actionLabel);
   const actionTypeMeta = formatActionTypeMeta(
-    combatant.declaredAction,
-    combatant.actionDistanceInches,
-    combatant.activationSegments,
-    combatant.castingSegments
+    action.declaredAction,
+    action.actionDistanceInches,
+    action.activationSegments,
+    action.castingSegments
   );
 
   if (normalizedActionLabel) {
     return actionTypeMeta;
   }
 
-  const actionMeta = getCombatantActionMeta(combatant);
-  const actionLabel = formatDeclaredAction(combatant.declaredAction);
+  const actionMeta = formatCompactDeclarationMeta(
+    action.declaredAction,
+    action.actionLabel,
+    action.actionDistanceInches,
+    action.activationSegments,
+    action.castingSegments
+  );
+  const actionLabel = formatDeclaredAction(action.declaredAction);
 
   if (actionMeta === actionLabel) {
     return undefined;
@@ -877,25 +1096,78 @@ const getCombatantActionHint = (
     : actionMeta;
 };
 
-const getCombatantTargetSummary = (
-  combatant: InitiativePlaytestCombatant
-): string => {
-  if (!usesTargetSelection(combatant.declaredAction)) {
-    return 'No targets used';
+const getActionTargetSummary = (
+  action: InitiativePlaytestActionState
+): string | undefined => {
+  if (!usesTargetSelection(action.declaredAction)) {
+    return undefined;
   }
 
-  const targetCount = combatant.targetCombatantKeys.length;
+  const targetCount = action.targetCombatantKeys.length;
 
   if (targetCount === 0) {
-    if (combatant.declaredAction === 'magical-device') {
-      return 'No target/self';
-    }
-
-    return 'No targets';
+    return action.declaredAction === 'magical-device'
+      ? 'No target/self'
+      : 'No target';
   }
 
   return `${targetCount} ${targetCount === 1 ? 'target' : 'targets'}`;
 };
+
+interface MatrixHeaderActionSummary {
+  id: string;
+  title: string;
+  meta: string | undefined;
+}
+
+const getMatrixHeaderActionSummaries = (
+  combatant: InitiativePlaytestCombatant
+): MatrixHeaderActionSummary[] =>
+  getCombatantActions(combatant).map((action, actionIndex) => {
+    const meta = [getActionHint(action), getActionTargetSummary(action)]
+      .filter((value): value is string => Boolean(value))
+      .join(' · ');
+
+    return {
+      id: `${action.id}-${actionIndex}`,
+      title: formatCompactDeclaredAction(
+        action.declaredAction,
+        action.actionLabel
+      ),
+      meta: meta || undefined,
+    };
+  });
+
+const getActionsTargetingKey = (
+  combatant: InitiativePlaytestCombatant,
+  targetKey: number
+): InitiativePlaytestActionState[] =>
+  getCombatantActions(combatant).filter((action) =>
+    action.targetCombatantKeys.includes(targetKey)
+  );
+
+const canCombatantTarget = (combatant: InitiativePlaytestCombatant): boolean =>
+  getCombatantActions(combatant).some((action) =>
+    usesTargetSelection(action.declaredAction)
+  );
+
+const formatActionTargetLabel = (
+  action: InitiativePlaytestActionState,
+  pairDistance: string
+): string =>
+  formatCompactDeclarationMeta(
+    action.declaredAction,
+    action.actionLabel,
+    action.actionDistanceInches || pairDistance,
+    action.activationSegments,
+    action.castingSegments
+  );
+
+const formatMatrixTargetLabels = (
+  actions: InitiativePlaytestActionState[],
+  pairDistance: string
+): string[] =>
+  actions.map((action) => formatActionTargetLabel(action, pairDistance));
 
 const isNonMissileWeaponId = (weaponId: number): boolean =>
   getWeaponInfo(weaponId)?.weaponType !== 'missile';
@@ -1563,6 +1835,9 @@ const InitiativePlayground = ({
   const [actionEditorTarget, setActionEditorTarget] = useState<
     InitiativePlaytestAttackEditorTarget | undefined
   >(undefined);
+  const [targetPickerTarget, setTargetPickerTarget] = useState<
+    InitiativeTargetPickerTarget | undefined
+  >(undefined);
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<
     string | undefined
   >(undefined);
@@ -1957,28 +2232,13 @@ const InitiativePlayground = ({
           ? (() => {
               const updatedCombatant = { ...combatant, ...changes };
 
-              if (
-                changes.declaredAction &&
-                !usesTargetSelection(changes.declaredAction)
-              ) {
-                updatedCombatant.targetCombatantKeys = [];
-              }
-
-              if (
-                changes.declaredAction &&
-                isSingleTargetDeclarationAction(changes.declaredAction) &&
-                updatedCombatant.targetCombatantKeys.length > 1
-              ) {
-                updatedCombatant.targetCombatantKeys =
-                  updatedCombatant.targetCombatantKeys.slice(0, 1);
-              }
-
               if (changes.weaponId !== undefined) {
-                updatedCombatant.declaredAction =
-                  normalizeDeclaredActionForWeapon(
-                    updatedCombatant.declaredAction,
-                    changes.weaponId
-                  );
+                const weaponId = changes.weaponId;
+                updatedCombatant.actions = getCombatantActions(
+                  updatedCombatant
+                ).map((action) =>
+                  normalizeActionStateForCombatant(action, weaponId)
+                );
               }
 
               return updatedCombatant;
@@ -2000,40 +2260,46 @@ const InitiativePlayground = ({
       return;
     }
 
-    const firstTargetKey = combatant.targetCombatantKeys[0];
-    const pairKey =
-      firstTargetKey !== undefined
-        ? side === 'party'
-          ? getPairDistanceKey(combatantKey, firstTargetKey)
-          : getPairDistanceKey(firstTargetKey, combatantKey)
-        : undefined;
-    const declarationKey =
-      firstTargetKey !== undefined
-        ? getAttackDeclarationKey(side, combatantKey, firstTargetKey)
-        : undefined;
+    const actions = getCombatantActions(combatant).map((action) => {
+      const firstTargetKey = action.targetCombatantKeys[0];
+      const pairKey =
+        firstTargetKey !== undefined
+          ? side === 'party'
+            ? getPairDistanceKey(combatantKey, firstTargetKey)
+            : getPairDistanceKey(firstTargetKey, combatantKey)
+          : undefined;
+      const declarationKey =
+        firstTargetKey !== undefined
+          ? getAttackDeclarationKey(side, combatantKey, firstTargetKey)
+          : undefined;
+
+      return {
+        ...action,
+        actionDistanceInches:
+          action.actionDistanceInches ||
+          (pairKey ? state.pairDistances[pairKey] || '' : ''),
+        activationSegments:
+          action.activationSegments ||
+          (declarationKey
+            ? state.attackActivationSegments[declarationKey] || ''
+            : ''),
+        castingSegments:
+          action.castingSegments ||
+          (action.declaredAction === 'spell-casting'
+            ? getStoredCastingSegmentsForAttacker(state, side, combatantKey) ||
+              '1'
+            : declarationKey
+            ? state.attackCastingSegments[declarationKey] || ''
+            : ''),
+      };
+    });
+    const primaryAction = actions[0];
 
     setActionEditorTarget({
       side,
       combatantKey,
-      action: combatant.declaredAction,
-      actionLabel: combatant.actionLabel || '',
-      attackRoutineCount: combatant.attackRoutineCount,
-      distanceInches:
-        combatant.actionDistanceInches ||
-        (pairKey ? state.pairDistances[pairKey] || '' : ''),
-      activationSegments:
-        combatant.activationSegments ||
-        (declarationKey
-          ? state.attackActivationSegments[declarationKey] || ''
-          : ''),
-      castingSegments:
-        combatant.castingSegments ||
-        (combatant.declaredAction === 'spell-casting'
-          ? getStoredCastingSegmentsForAttacker(state, side, combatantKey) ||
-            '1'
-          : declarationKey
-          ? state.attackCastingSegments[declarationKey] || ''
-          : ''),
+      selectedActionId: primaryAction?.id || MAIN_ACTION_ID,
+      actions,
     });
   };
 
@@ -2132,14 +2398,15 @@ const InitiativePlayground = ({
         (combatant) => combatant.key !== combatantKey
       ),
       [opposingStateSide]: previous[opposingStateSide].map((combatant) =>
-        combatant.targetCombatantKeys.includes(combatantKey)
-          ? {
-              ...combatant,
-              targetCombatantKeys: combatant.targetCombatantKeys.filter(
-                (targetKey) => targetKey !== combatantKey
-              ),
-            }
-          : combatant
+        syncCombatantActions(
+          combatant,
+          getCombatantActions(combatant).map((action) => ({
+            ...action,
+            targetCombatantKeys: action.targetCombatantKeys.filter(
+              (targetKey) => targetKey !== combatantKey
+            ),
+          }))
+        )
       ),
     }));
     setEditorTarget((previous) =>
@@ -2156,6 +2423,18 @@ const InitiativePlayground = ({
         ? undefined
         : previous
     );
+    setTargetPickerTarget((previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      const targetSide = previous.attackingSide === 'party' ? 'enemy' : 'party';
+      return (previous.attackingSide === side &&
+        previous.attackerKey === combatantKey) ||
+        (targetSide === side && previous.targetKey === combatantKey)
+        ? undefined
+        : previous;
+    });
   };
 
   const loadPreset = (presetFactory: () => InitiativePlaytestState) => {
@@ -2169,16 +2448,7 @@ const InitiativePlayground = ({
       return;
     }
 
-    const {
-      side,
-      combatantKey,
-      action,
-      actionLabel,
-      attackRoutineCount,
-      distanceInches,
-      activationSegments,
-      castingSegments,
-    } = actionEditorTarget;
+    const { side, combatantKey, actions } = actionEditorTarget;
     const stateSide = getStateSide(side);
 
     setState((previous) => {
@@ -2190,43 +2460,12 @@ const InitiativePlayground = ({
         return previous;
       }
 
-      const nextTargetCombatantKeys = !usesTargetSelection(action)
-        ? []
-        : isSingleTargetDeclarationAction(action)
-        ? attackingCombatant.targetCombatantKeys.slice(0, 1)
-        : action === 'missile'
-        ? attackingCombatant.targetCombatantKeys.slice(
-            0,
-            getMissileTargetLimitForWeaponId(attackingCombatant.weaponId)
-          )
-        : attackingCombatant.targetCombatantKeys;
-
       return {
         ...previous,
         [stateSide]: previous[stateSide].map((combatant) =>
           combatant.key !== combatantKey
             ? combatant
-            : {
-                ...combatant,
-                declaredAction: action,
-                actionLabel: normalizeActionLabel(actionLabel) || undefined,
-                actionDistanceInches: requiresDistanceInput(action)
-                  ? distanceInches
-                  : '',
-                activationSegments: requiresActivationSegmentsInput(action)
-                  ? activationSegments
-                  : '',
-                castingSegments: requiresCastingSegmentsInput(action)
-                  ? castingSegments
-                  : '',
-                attackRoutineCount: requiresAttackRoutineCountInput(
-                  action,
-                  combatant.weaponId
-                )
-                  ? attackRoutineCount
-                  : combatant.attackRoutineCount,
-                targetCombatantKeys: nextTargetCombatantKeys,
-              }
+            : syncCombatantActions(combatant, actions)
         ),
       };
     });
@@ -2245,48 +2484,61 @@ const InitiativePlayground = ({
       const attackingCombatant = previous[stateSide].find(
         (combatant) => combatant.key === attackerKey
       );
+      const targetAction = attackingCombatant
+        ? getCombatantActions(attackingCombatant).find((action) =>
+            usesTargetSelection(action.declaredAction)
+          )
+        : undefined;
 
-      if (
-        !attackingCombatant ||
-        !usesTargetSelection(attackingCombatant.declaredAction)
-      ) {
+      if (!attackingCombatant || !targetAction) {
         return previous;
       }
 
-      const isSelected =
-        attackingCombatant.targetCombatantKeys.includes(targetKey);
-      let nextTargetCombatantKeys: number[];
-
-      if (isSelected) {
-        nextTargetCombatantKeys = attackingCombatant.targetCombatantKeys.filter(
-          (existingTargetKey) => existingTargetKey !== targetKey
-        );
-      } else if (
-        isSingleTargetDeclarationAction(attackingCombatant.declaredAction)
-      ) {
-        nextTargetCombatantKeys = [targetKey];
-      } else {
-        nextTargetCombatantKeys =
-          attackingCombatant.targetCombatantKeys.concat(targetKey);
-
-        if (attackingCombatant.declaredAction === 'missile') {
-          nextTargetCombatantKeys = nextTargetCombatantKeys.slice(
-            -getMissileTargetLimitForWeaponId(attackingCombatant.weaponId)
-          );
-        }
-      }
+      const nextActions = updateActionInList(
+        getCombatantActions(attackingCombatant),
+        targetAction.id,
+        (action) =>
+          toggleActionTargetKey(action, targetKey, attackingCombatant.weaponId)
+      );
 
       return {
         ...previous,
         [stateSide]: previous[stateSide].map((combatant) =>
           combatant.key === attackerKey
-            ? {
-                ...combatant,
-                targetCombatantKeys: nextTargetCombatantKeys,
-              }
+            ? syncCombatantActions(combatant, nextActions)
             : combatant
         ),
       };
+    });
+  };
+
+  const openTargetPickerOrToggle = (
+    attackingSide: InitiativePlaytestSide,
+    attackerKey: number,
+    targetKey: number
+  ) => {
+    const stateSide = getStateSide(attackingSide);
+    const attackingCombatant = state[stateSide].find(
+      (combatant) => combatant.key === attackerKey
+    );
+
+    if (!attackingCombatant) {
+      return;
+    }
+
+    const targetableActions = getCombatantActions(attackingCombatant).filter(
+      (action) => usesTargetSelection(action.declaredAction)
+    );
+
+    if (targetableActions.length <= 1) {
+      toggleAttackTarget(attackingSide, attackerKey, targetKey);
+      return;
+    }
+
+    setTargetPickerTarget({
+      attackingSide,
+      attackerKey,
+      targetKey,
     });
   };
 
@@ -2302,10 +2554,17 @@ const InitiativePlayground = ({
       ...previous,
       [stateSide]: previous[stateSide].map((combatant) =>
         combatant.key === combatantKey
-          ? {
-              ...combatant,
-              targetCombatantKeys: [],
-            }
+          ? syncCombatantActions(
+              combatant,
+              updateActionInList(
+                getCombatantActions(combatant),
+                actionEditorTarget.selectedActionId,
+                (action) => ({
+                  ...action,
+                  targetCombatantKeys: [],
+                })
+              )
+            )
           : combatant
       ),
     }));
@@ -3152,8 +3411,41 @@ const InitiativePlayground = ({
           actionEditedCombatantIndex
         )
       : undefined;
+  const selectedEditedAction =
+    actionEditorTarget?.actions.find(
+      (action) => action.id === actionEditorTarget.selectedActionId
+    ) || actionEditorTarget?.actions[0];
+  const updateSelectedEditedAction = (
+    updateAction: (
+      action: InitiativePlaytestActionState
+    ) => InitiativePlaytestActionState
+  ) => {
+    setActionEditorTarget((previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      const selectedAction =
+        previous.actions.find(
+          (action) => action.id === previous.selectedActionId
+        ) || previous.actions[0];
+
+      if (!selectedAction) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        actions: updateActionInList(
+          previous.actions,
+          selectedAction.id,
+          updateAction
+        ),
+      };
+    });
+  };
   const actionEditedTargetNames =
-    actionEditedCombatant?.targetCombatantKeys.map((targetCombatantKey) => {
+    selectedEditedAction?.targetCombatantKeys.map((targetCombatantKey) => {
       const targetSide =
         actionEditorTarget?.side === 'party' ? 'enemy' : 'party';
       const targetCombatants = state[getStateSide(targetSide)];
@@ -3171,37 +3463,108 @@ const InitiativePlayground = ({
     actionEditedTargetNames.length > 0
       ? actionEditedTargetNames.filter(Boolean).join(', ')
       : 'No targets selected';
-  const actionEditedPrimarySummary = actionEditorTarget
-    ? normalizeActionLabel(actionEditorTarget.actionLabel)
+  const actionEditedPrimarySummary = selectedEditedAction
+    ? normalizeActionLabel(selectedEditedAction.actionLabel)
       ? formatCompactDeclaredAction(
-          actionEditorTarget.action,
-          actionEditorTarget.actionLabel
+          selectedEditedAction.declaredAction,
+          selectedEditedAction.actionLabel
         )
       : formatCompactDeclarationMeta(
-          actionEditorTarget.action,
-          actionEditorTarget.actionLabel,
-          actionEditorTarget.distanceInches,
-          actionEditorTarget.activationSegments,
-          actionEditorTarget.castingSegments
+          selectedEditedAction.declaredAction,
+          selectedEditedAction.actionLabel,
+          selectedEditedAction.actionDistanceInches,
+          selectedEditedAction.activationSegments,
+          selectedEditedAction.castingSegments
         )
     : undefined;
   const actionEditedSecondarySummary =
-    actionEditorTarget && normalizeActionLabel(actionEditorTarget.actionLabel)
+    selectedEditedAction &&
+    normalizeActionLabel(selectedEditedAction.actionLabel)
       ? formatActionTypeMeta(
-          actionEditorTarget.action,
-          actionEditorTarget.distanceInches,
-          actionEditorTarget.activationSegments,
-          actionEditorTarget.castingSegments
+          selectedEditedAction.declaredAction,
+          selectedEditedAction.actionDistanceInches,
+          selectedEditedAction.activationSegments,
+          selectedEditedAction.castingSegments
         )
       : undefined;
   const actionEditorDistanceMissing =
-    actionEditorTarget !== undefined &&
-    requiresDistanceInput(actionEditorTarget.action) &&
-    !hasRequiredDistanceInput(actionEditorTarget.distanceInches);
+    selectedEditedAction !== undefined &&
+    requiresDistanceInput(selectedEditedAction.declaredAction) &&
+    !hasRequiredDistanceInput(selectedEditedAction.actionDistanceInches);
   const actionEditorDistanceLabel =
-    actionEditorTarget?.action === 'close'
+    selectedEditedAction?.declaredAction === 'close'
       ? 'Move distance (inches)'
       : 'Distance to target (inches)';
+  const targetPickerCombatant = targetPickerTarget
+    ? state[getStateSide(targetPickerTarget.attackingSide)].find(
+        (combatant) => combatant.key === targetPickerTarget.attackerKey
+      )
+    : undefined;
+  const targetPickerCombatantIndex = targetPickerTarget
+    ? state[getStateSide(targetPickerTarget.attackingSide)].findIndex(
+        (combatant) => combatant.key === targetPickerTarget.attackerKey
+      )
+    : -1;
+  const targetPickerTargetSide =
+    targetPickerTarget?.attackingSide === 'party' ? 'enemy' : 'party';
+  const targetPickerDefender = targetPickerTarget
+    ? state[getStateSide(targetPickerTargetSide)].find(
+        (combatant) => combatant.key === targetPickerTarget.targetKey
+      )
+    : undefined;
+  const targetPickerDefenderIndex = targetPickerTarget
+    ? state[getStateSide(targetPickerTargetSide)].findIndex(
+        (combatant) => combatant.key === targetPickerTarget.targetKey
+      )
+    : -1;
+  const targetPickerCombatantName =
+    targetPickerTarget &&
+    targetPickerCombatant &&
+    targetPickerCombatantIndex >= 0
+      ? getCombatantDisplayName(
+          targetPickerTarget.attackingSide,
+          targetPickerCombatant,
+          targetPickerCombatantIndex
+        )
+      : undefined;
+  const targetPickerDefenderName =
+    targetPickerTarget && targetPickerDefender && targetPickerDefenderIndex >= 0
+      ? getCombatantDisplayName(
+          targetPickerTargetSide,
+          targetPickerDefender,
+          targetPickerDefenderIndex
+        )
+      : undefined;
+  const targetPickerActions = targetPickerCombatant
+    ? getCombatantActions(targetPickerCombatant).filter((action) =>
+        usesTargetSelection(action.declaredAction)
+      )
+    : [];
+  const toggleTargetPickerAction = (actionId: string) => {
+    if (!targetPickerTarget) {
+      return;
+    }
+
+    const { attackingSide, attackerKey, targetKey } = targetPickerTarget;
+    const stateSide = getStateSide(attackingSide);
+
+    setState((previous) => ({
+      ...previous,
+      [stateSide]: previous[stateSide].map((combatant) =>
+        combatant.key === attackerKey
+          ? syncCombatantActions(
+              combatant,
+              updateActionInList(
+                getCombatantActions(combatant),
+                actionId,
+                (action) =>
+                  toggleActionTargetKey(action, targetKey, combatant.weaponId)
+              )
+            )
+          : combatant
+      ),
+    }));
+  };
   const renderGraphNodeReference = (nodeId: string) => {
     const display = graphNodeDisplayById[nodeId];
 
@@ -3483,68 +3846,91 @@ const InitiativePlayground = ({
                           </button>
                         </div>
                       </th>
-                      {state.party.map((partyCombatant, partyIndex) => (
-                        <th
-                          key={`party-header-${partyCombatant.key}`}
-                          className={styles['matrixColumnHeader']}
-                        >
-                          <div className={styles['matrixColumnHeaderSplit']}>
-                            <button
-                              type={'button'}
-                              className={[
-                                styles['matrixCombatantButton'],
-                                styles['matrixCombatantMetaButton'],
-                              ].join(' ')}
-                              onClick={() =>
-                                setEditorTarget({
-                                  side: 'party',
-                                  combatantKey: partyCombatant.key,
-                                })
-                              }
-                            >
-                              <span className={styles['matrixCombatantName']}>
-                                {getCombatantDisplayName(
-                                  'party',
-                                  partyCombatant,
-                                  partyIndex
-                                )}
-                              </span>
-                              <span className={styles['matrixCombatantMeta']}>
-                                {getCombatantMeta(partyCombatant)}
-                              </span>
-                            </button>
-                            <button
-                              type={'button'}
-                              className={[
-                                styles['matrixCombatantButton'],
-                                styles['matrixCombatantActionButton'],
-                              ].join(' ')}
-                              onClick={() =>
-                                openActionEditor('party', partyCombatant.key)
-                              }
-                            >
-                              <span className={styles['matrixCombatantName']}>
-                                {formatCompactDeclaredAction(
-                                  partyCombatant.declaredAction,
-                                  partyCombatant.actionLabel
-                                )}
-                              </span>
-                              {getCombatantActionHint(partyCombatant) ? (
-                                <span className={styles['matrixCombatantMeta']}>
-                                  {getCombatantActionHint(partyCombatant)}
+                      {state.party.map((partyCombatant, partyIndex) => {
+                        const partyActionSummaries =
+                          getMatrixHeaderActionSummaries(partyCombatant);
+
+                        return (
+                          <th
+                            key={`party-header-${partyCombatant.key}`}
+                            className={styles['matrixColumnHeader']}
+                          >
+                            <div className={styles['matrixColumnHeaderSplit']}>
+                              <button
+                                type={'button'}
+                                className={[
+                                  styles['matrixCombatantButton'],
+                                  styles['matrixCombatantMetaButton'],
+                                ].join(' ')}
+                                onClick={() =>
+                                  setEditorTarget({
+                                    side: 'party',
+                                    combatantKey: partyCombatant.key,
+                                  })
+                                }
+                              >
+                                <span className={styles['matrixCombatantName']}>
+                                  {getCombatantDisplayName(
+                                    'party',
+                                    partyCombatant,
+                                    partyIndex
+                                  )}
                                 </span>
-                              ) : null}
-                              <span className={styles['matrixCombatantMeta']}>
-                                {getCombatantTargetSummary(partyCombatant)}
-                              </span>
-                            </button>
-                          </div>
-                        </th>
-                      ))}
+                                <span className={styles['matrixCombatantMeta']}>
+                                  {getCombatantMeta(partyCombatant)}
+                                </span>
+                              </button>
+                              <button
+                                type={'button'}
+                                className={[
+                                  styles['matrixCombatantButton'],
+                                  styles['matrixCombatantActionButton'],
+                                ].join(' ')}
+                                onClick={() =>
+                                  openActionEditor('party', partyCombatant.key)
+                                }
+                              >
+                                <span
+                                  className={styles['matrixActionSummaryList']}
+                                >
+                                  {partyActionSummaries.map((actionSummary) => (
+                                    <span
+                                      key={actionSummary.id}
+                                      className={
+                                        styles['matrixActionSummaryItem']
+                                      }
+                                    >
+                                      <span
+                                        className={
+                                          styles['matrixActionSummaryTitle']
+                                        }
+                                      >
+                                        {actionSummary.title}
+                                      </span>
+                                      {actionSummary.meta ? (
+                                        <span
+                                          className={
+                                            styles['matrixActionSummaryMeta']
+                                          }
+                                        >
+                                          {actionSummary.meta}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                  ))}
+                                </span>
+                              </button>
+                            </div>
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>
                     {state.enemies.map((enemyCombatant, enemyIndex) => {
+                      const enemyActionSummaries =
+                        getMatrixHeaderActionSummaries(enemyCombatant);
+
                       return (
                         <tr key={`enemy-row-${enemyCombatant.key}`}>
                           <th className={styles['matrixRowHeader']}>
@@ -3583,45 +3969,76 @@ const InitiativePlayground = ({
                                   openActionEditor('enemy', enemyCombatant.key)
                                 }
                               >
-                                <span className={styles['matrixCombatantName']}>
-                                  {formatCompactDeclaredAction(
-                                    enemyCombatant.declaredAction,
-                                    enemyCombatant.actionLabel
-                                  )}
-                                </span>
-                                {getCombatantActionHint(enemyCombatant) ? (
-                                  <span
-                                    className={styles['matrixCombatantMeta']}
-                                  >
-                                    {getCombatantActionHint(enemyCombatant)}
-                                  </span>
-                                ) : null}
-                                <span className={styles['matrixCombatantMeta']}>
-                                  {getCombatantTargetSummary(enemyCombatant)}
+                                <span
+                                  className={styles['matrixActionSummaryList']}
+                                >
+                                  {enemyActionSummaries.map((actionSummary) => (
+                                    <span
+                                      key={actionSummary.id}
+                                      className={
+                                        styles['matrixActionSummaryItem']
+                                      }
+                                    >
+                                      <span
+                                        className={
+                                          styles['matrixActionSummaryTitle']
+                                        }
+                                      >
+                                        {actionSummary.title}
+                                      </span>
+                                      {actionSummary.meta ? (
+                                        <span
+                                          className={
+                                            styles['matrixActionSummaryMeta']
+                                          }
+                                        >
+                                          {actionSummary.meta}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                  ))}
                                 </span>
                               </button>
                             </div>
                           </th>
                           {state.party.map((partyCombatant, partyIndex) => {
-                            const partyTargetsEnemy =
-                              partyCombatant.targetCombatantKeys.includes(
+                            const partyPrimaryAction =
+                              getPrimaryCombatantAction(partyCombatant);
+                            const enemyPrimaryAction =
+                              getPrimaryCombatantAction(enemyCombatant);
+                            const partyTargetingActions =
+                              getActionsTargetingKey(
+                                partyCombatant,
                                 enemyCombatant.key
                               );
-                            const enemyTargetsParty =
-                              enemyCombatant.targetCombatantKeys.includes(
+                            const enemyTargetingActions =
+                              getActionsTargetingKey(
+                                enemyCombatant,
                                 partyCombatant.key
                               );
+                            const partyTargetsEnemy =
+                              partyTargetingActions.length > 0;
+                            const enemyTargetsParty =
+                              enemyTargetingActions.length > 0;
                             const isMutualTarget =
                               partyTargetsEnemy && enemyTargetsParty;
                             const isDuel =
                               isMutualTarget &&
-                              partyCombatant.declaredAction === 'open-melee' &&
-                              enemyCombatant.declaredAction === 'open-melee' &&
+                              partyPrimaryAction.declaredAction ===
+                                'open-melee' &&
+                              enemyPrimaryAction.declaredAction ===
+                                'open-melee' &&
+                              partyPrimaryAction.targetCombatantKeys.includes(
+                                enemyCombatant.key
+                              ) &&
+                              enemyPrimaryAction.targetCombatantKeys.includes(
+                                partyCombatant.key
+                              ) &&
                               isNonMissileWeaponId(partyCombatant.weaponId) &&
                               isNonMissileWeaponId(enemyCombatant.weaponId);
                             const pairDistance =
-                              partyCombatant.actionDistanceInches ||
-                              enemyCombatant.actionDistanceInches ||
+                              partyPrimaryAction.actionDistanceInches ||
+                              enemyPrimaryAction.actionDistanceInches ||
                               state.pairDistances[
                                 getPairDistanceKey(
                                   partyCombatant.key,
@@ -3629,26 +4046,18 @@ const InitiativePlayground = ({
                                 )
                               ] ||
                               '';
-                            const partyDeclarationLabel = partyTargetsEnemy
-                              ? formatCompactDeclarationMeta(
-                                  partyCombatant.declaredAction,
-                                  partyCombatant.actionLabel,
-                                  partyCombatant.actionDistanceInches ||
-                                    pairDistance,
-                                  partyCombatant.activationSegments,
-                                  partyCombatant.castingSegments
+                            const partyDeclarationLabels = partyTargetsEnemy
+                              ? formatMatrixTargetLabels(
+                                  partyTargetingActions,
+                                  pairDistance
                                 )
-                              : '';
-                            const enemyDeclarationLabel = enemyTargetsParty
-                              ? formatCompactDeclarationMeta(
-                                  enemyCombatant.declaredAction,
-                                  enemyCombatant.actionLabel,
-                                  enemyCombatant.actionDistanceInches ||
-                                    pairDistance,
-                                  enemyCombatant.activationSegments,
-                                  enemyCombatant.castingSegments
+                              : [];
+                            const enemyDeclarationLabels = enemyTargetsParty
+                              ? formatMatrixTargetLabels(
+                                  enemyTargetingActions,
+                                  pairDistance
                                 )
-                              : '';
+                              : [];
 
                             return (
                               <td
@@ -3674,9 +4083,7 @@ const InitiativePlayground = ({
                                         .filter(Boolean)
                                         .join(' ')}
                                       disabled={
-                                        !usesTargetSelection(
-                                          enemyCombatant.declaredAction
-                                        )
+                                        !canCombatantTarget(enemyCombatant)
                                       }
                                       aria-label={`Declare enemy attack from ${getCombatantDisplayName(
                                         'enemy',
@@ -3688,7 +4095,7 @@ const InitiativePlayground = ({
                                         partyIndex
                                       )}`}
                                       onClick={() =>
-                                        toggleAttackTarget(
+                                        openTargetPickerOrToggle(
                                           'enemy',
                                           enemyCombatant.key,
                                           partyCombatant.key
@@ -3709,7 +4116,23 @@ const InitiativePlayground = ({
                                               styles['matrixToggleMeta']
                                             }
                                           >
-                                            {enemyDeclarationLabel}
+                                            {enemyDeclarationLabels.map(
+                                              (
+                                                declarationLabel,
+                                                labelIndex
+                                              ) => (
+                                                <span
+                                                  key={`${declarationLabel}-${labelIndex}`}
+                                                  className={
+                                                    styles[
+                                                      'matrixToggleMetaLine'
+                                                    ]
+                                                  }
+                                                >
+                                                  {declarationLabel}
+                                                </span>
+                                              )
+                                            )}
                                           </span>
                                         </>
                                       ) : null}
@@ -3726,9 +4149,7 @@ const InitiativePlayground = ({
                                         .filter(Boolean)
                                         .join(' ')}
                                       disabled={
-                                        !usesTargetSelection(
-                                          partyCombatant.declaredAction
-                                        )
+                                        !canCombatantTarget(partyCombatant)
                                       }
                                       aria-label={`Declare party attack from ${getCombatantDisplayName(
                                         'party',
@@ -3740,7 +4161,7 @@ const InitiativePlayground = ({
                                         enemyIndex
                                       )}`}
                                       onClick={() =>
-                                        toggleAttackTarget(
+                                        openTargetPickerOrToggle(
                                           'party',
                                           partyCombatant.key,
                                           enemyCombatant.key
@@ -3761,7 +4182,23 @@ const InitiativePlayground = ({
                                               styles['matrixToggleMeta']
                                             }
                                           >
-                                            {partyDeclarationLabel}
+                                            {partyDeclarationLabels.map(
+                                              (
+                                                declarationLabel,
+                                                labelIndex
+                                              ) => (
+                                                <span
+                                                  key={`${declarationLabel}-${labelIndex}`}
+                                                  className={
+                                                    styles[
+                                                      'matrixToggleMetaLine'
+                                                    ]
+                                                  }
+                                                >
+                                                  {declarationLabel}
+                                                </span>
+                                              )
+                                            )}
                                           </span>
                                         </>
                                       ) : null}
@@ -4724,7 +5161,10 @@ const InitiativePlayground = ({
             modalRoot
           )
         : null}
-      {actionEditorTarget && actionEditedCombatant && modalRoot
+      {actionEditorTarget &&
+      actionEditedCombatant &&
+      selectedEditedAction &&
+      modalRoot
         ? createPortal(
             <>
               <div
@@ -4750,6 +5190,74 @@ const InitiativePlayground = ({
                   distance or timing entered here applies to the whole
                   declaration.
                 </p>
+                <div className={styles['actionList']}>
+                  {actionEditorTarget.actions.map((action, actionIndex) => (
+                    <button
+                      key={action.id}
+                      type={'button'}
+                      className={[
+                        styles['actionListButton'],
+                        action.id === selectedEditedAction.id
+                          ? styles['actionListButtonActive']
+                          : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() =>
+                        setActionEditorTarget((previous) =>
+                          previous
+                            ? {
+                                ...previous,
+                                selectedActionId: action.id,
+                              }
+                            : previous
+                        )
+                      }
+                    >
+                      <span className={styles['actionListButtonTitle']}>
+                        {actionIndex === 0
+                          ? 'Main'
+                          : `Action ${actionIndex + 1}`}
+                      </span>
+                      <span className={styles['actionListButtonMeta']}>
+                        {formatCompactDeclaredAction(
+                          action.declaredAction,
+                          action.actionLabel
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                  <button
+                    type={'button'}
+                    className={styles['actionListAddButton']}
+                    onClick={() =>
+                      setActionEditorTarget((previous) => {
+                        if (!previous) {
+                          return previous;
+                        }
+
+                        const nextAction: InitiativePlaytestActionState = {
+                          id: getNextActionIdForActions(previous.actions),
+                          declaredAction: 'none',
+                          actionLabel: 'Extra action',
+                          actionDistanceInches: '',
+                          activationSegments: '',
+                          castingSegments: '',
+                          attackRoutineCount: '1',
+                          targetCombatantKeys: [],
+                        };
+
+                        return {
+                          ...previous,
+                          selectedActionId: nextAction.id,
+                          actions: previous.actions.concat(nextAction),
+                        };
+                      })
+                    }
+                  >
+                    Add action
+                  </button>
+                </div>
                 <label
                   className={styles['modalLabel']}
                   htmlFor={'initiative-attack-action'}
@@ -4759,22 +5267,25 @@ const InitiativePlayground = ({
                 <select
                   id={'initiative-attack-action'}
                   className={styles['selectInput']}
-                  value={actionEditorTarget.action}
-                  onChange={(event) =>
-                    setActionEditorTarget((previous) =>
-                      previous
-                        ? {
-                            ...previous,
-                            action: event.target
-                              .value as InitiativeDeclaredAction,
-                            castingSegments:
-                              event.target.value === 'spell-casting'
-                                ? previous.castingSegments || '1'
-                                : previous.castingSegments,
-                          }
-                        : previous
-                    )
-                  }
+                  value={selectedEditedAction.declaredAction}
+                  onChange={(event) => {
+                    const declaredAction = event.target
+                      .value as InitiativeDeclaredAction;
+
+                    updateSelectedEditedAction((action) =>
+                      normalizeActionStateForCombatant(
+                        {
+                          ...action,
+                          declaredAction,
+                          castingSegments:
+                            declaredAction === 'spell-casting'
+                              ? action.castingSegments || '1'
+                              : action.castingSegments,
+                        },
+                        actionEditedCombatant.weaponId
+                      )
+                    );
+                  }}
                 >
                   {getAvailableActionOptions(
                     actionEditedCombatant.weaponId
@@ -4796,20 +5307,16 @@ const InitiativePlayground = ({
                   type={'text'}
                   placeholder={'e.g. Drink potion'}
                   maxLength={INITIATIVE_ACTION_LABEL_MAX_LENGTH}
-                  value={actionEditorTarget.actionLabel}
+                  value={selectedEditedAction.actionLabel || ''}
                   onChange={(event) =>
-                    setActionEditorTarget((previous) =>
-                      previous
-                        ? {
-                            ...previous,
-                            actionLabel: event.target.value,
-                          }
-                        : previous
-                    )
+                    updateSelectedEditedAction((action) => ({
+                      ...action,
+                      actionLabel: event.target.value,
+                    }))
                   }
                 />
                 {requiresAttackRoutineCountInput(
-                  actionEditorTarget.action,
+                  selectedEditedAction.declaredAction,
                   actionEditedCombatant.weaponId
                 ) ? (
                   <>
@@ -4824,16 +5331,12 @@ const InitiativePlayground = ({
                       className={styles['textInput']}
                       inputMode={'numeric'}
                       type={'text'}
-                      value={actionEditorTarget.attackRoutineCount}
+                      value={selectedEditedAction.attackRoutineCount}
                       onChange={(event) =>
-                        setActionEditorTarget((previous) =>
-                          previous
-                            ? {
-                                ...previous,
-                                attackRoutineCount: event.target.value,
-                              }
-                            : previous
-                        )
+                        updateSelectedEditedAction((action) => ({
+                          ...action,
+                          attackRoutineCount: event.target.value,
+                        }))
                       }
                     />
                     <p className={styles['modalHint']}>
@@ -4842,7 +5345,7 @@ const InitiativePlayground = ({
                     </p>
                   </>
                 ) : null}
-                {requiresDistanceInput(actionEditorTarget.action) ? (
+                {requiresDistanceInput(selectedEditedAction.declaredAction) ? (
                   <>
                     <label
                       className={styles['modalLabel']}
@@ -4856,26 +5359,24 @@ const InitiativePlayground = ({
                       inputMode={'decimal'}
                       type={'text'}
                       placeholder={'e.g. 4'}
-                      value={actionEditorTarget.distanceInches}
+                      value={selectedEditedAction.actionDistanceInches}
                       onChange={(event) =>
-                        setActionEditorTarget((previous) =>
-                          previous
-                            ? {
-                                ...previous,
-                                distanceInches: event.target.value,
-                              }
-                            : previous
-                        )
+                        updateSelectedEditedAction((action) => ({
+                          ...action,
+                          actionDistanceInches: event.target.value,
+                        }))
                       }
                     />
                     <p className={styles['modalHint']}>
-                      {actionEditorTarget.action === 'close'
+                      {selectedEditedAction.declaredAction === 'close'
                         ? 'Enter the tabletop inches being crossed. With no selected target, the graph marks when this move finishes.'
                         : 'Enter the current effective range in tabletop inches. The DM can translate from the actual battlefield during play.'}
                     </p>
                   </>
                 ) : null}
-                {requiresActivationSegmentsInput(actionEditorTarget.action) ? (
+                {requiresActivationSegmentsInput(
+                  selectedEditedAction.declaredAction
+                ) ? (
                   <>
                     <label
                       className={styles['modalLabel']}
@@ -4886,16 +5387,12 @@ const InitiativePlayground = ({
                     <select
                       id={'initiative-attack-activation-segments'}
                       className={styles['selectInput']}
-                      value={actionEditorTarget.activationSegments}
+                      value={selectedEditedAction.activationSegments}
                       onChange={(event) =>
-                        setActionEditorTarget((previous) =>
-                          previous
-                            ? {
-                                ...previous,
-                                activationSegments: event.target.value,
-                              }
-                            : previous
-                        )
+                        updateSelectedEditedAction((action) => ({
+                          ...action,
+                          activationSegments: event.target.value,
+                        }))
                       }
                     >
                       {ACTIVATION_SEGMENT_OPTIONS.map((option) => (
@@ -4912,7 +5409,9 @@ const InitiativePlayground = ({
                     </p>
                   </>
                 ) : null}
-                {requiresCastingSegmentsInput(actionEditorTarget.action) ? (
+                {requiresCastingSegmentsInput(
+                  selectedEditedAction.declaredAction
+                ) ? (
                   <>
                     <label
                       className={styles['modalLabel']}
@@ -4923,16 +5422,12 @@ const InitiativePlayground = ({
                     <select
                       id={'initiative-attack-casting-segments'}
                       className={styles['selectInput']}
-                      value={actionEditorTarget.castingSegments}
+                      value={selectedEditedAction.castingSegments}
                       onChange={(event) =>
-                        setActionEditorTarget((previous) =>
-                          previous
-                            ? {
-                                ...previous,
-                                castingSegments: event.target.value,
-                              }
-                            : previous
-                        )
+                        updateSelectedEditedAction((action) => ({
+                          ...action,
+                          castingSegments: event.target.value,
+                        }))
                       }
                     >
                       {SPELL_CASTING_TIME_OPTIONS.map((option) => (
@@ -4948,7 +5443,7 @@ const InitiativePlayground = ({
                     </p>
                   </>
                 ) : null}
-                {actionEditorTarget.action === 'none' ? (
+                {selectedEditedAction.declaredAction === 'none' ? (
                   <p className={styles['modalHint']}>
                     This combatant is spending the round on a non-combat action.
                     Add a label to show it as an untimed initiative-controlled
@@ -4956,7 +5451,7 @@ const InitiativePlayground = ({
                     target selections are ignored.
                   </p>
                 ) : null}
-                {actionEditorTarget.action === 'missile' ? (
+                {selectedEditedAction.declaredAction === 'missile' ? (
                   <p className={styles['modalHint']}>
                     This missile volley can currently be declared against up to{' '}
                     <strong>
@@ -4974,20 +5469,20 @@ const InitiativePlayground = ({
                     ones.
                   </p>
                 ) : null}
-                {actionEditorTarget.action === 'close' ? (
+                {selectedEditedAction.declaredAction === 'close' ? (
                   <p className={styles['modalHint']}>
                     Move/Close can have one target or no target. With a target,
                     it resolves closing to striking range; without one, it marks
                     movement completion.
                   </p>
-                ) : actionEditorTarget.action === 'magical-device' ? (
+                ) : selectedEditedAction.declaredAction === 'magical-device' ? (
                   <p className={styles['modalHint']}>
                     Magical device use can have one target or no target. Leave
                     targets empty for self or targetless activations such as
                     drinking a potion.
                   </p>
                 ) : isSingleTargetDeclarationAction(
-                    actionEditorTarget.action
+                    selectedEditedAction.declaredAction
                   ) ? (
                   <p className={styles['modalHint']}>
                     This action uses only one target. If more than one cell is
@@ -5022,7 +5517,7 @@ const InitiativePlayground = ({
                   </span>
                 </div>
                 <div className={styles['modalActions']}>
-                  {actionEditedCombatant.targetCombatantKeys.length > 0 ? (
+                  {selectedEditedAction.targetCombatantKeys.length > 0 ? (
                     <button
                       type={'button'}
                       className={styles['modalButtonDanger']}
@@ -5034,6 +5529,32 @@ const InitiativePlayground = ({
                     <span />
                   )}
                   <div className={styles['modalActionGroup']}>
+                    {selectedEditedAction.id !== MAIN_ACTION_ID ? (
+                      <button
+                        type={'button'}
+                        className={styles['modalButtonDanger']}
+                        onClick={() =>
+                          setActionEditorTarget((previous) => {
+                            if (!previous) {
+                              return previous;
+                            }
+
+                            const nextActions = previous.actions.filter(
+                              (action) => action.id !== selectedEditedAction.id
+                            );
+
+                            return {
+                              ...previous,
+                              selectedActionId:
+                                nextActions[0]?.id || MAIN_ACTION_ID,
+                              actions: nextActions,
+                            };
+                          })
+                        }
+                      >
+                        Remove action
+                      </button>
+                    ) : null}
                     <button
                       type={'button'}
                       className={styles['modalButton']}
@@ -5048,6 +5569,91 @@ const InitiativePlayground = ({
                       disabled={actionEditorDistanceMissing}
                     >
                       Save action
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>,
+            modalRoot
+          )
+        : null}
+      {targetPickerTarget &&
+      targetPickerCombatant &&
+      targetPickerDefender &&
+      modalRoot
+        ? createPortal(
+            <>
+              <div
+                className={styles['modalShadow']}
+                onClick={() => setTargetPickerTarget(undefined)}
+              />
+              <div
+                className={styles['modal']}
+                role={'dialog'}
+                aria-modal={'true'}
+                aria-labelledby={'initiative-target-picker-title'}
+              >
+                <div
+                  id={'initiative-target-picker-title'}
+                  className={styles['modalTitle']}
+                >
+                  Assign Target
+                </div>
+                <p className={styles['modalText']}>
+                  Choose which actions from{' '}
+                  <strong>{targetPickerCombatantName}</strong> apply to{' '}
+                  <strong>{targetPickerDefenderName}</strong>.
+                </p>
+                <div className={styles['targetPickerList']}>
+                  {targetPickerActions.map((action, actionIndex) => {
+                    const isChecked = action.targetCombatantKeys.includes(
+                      targetPickerTarget.targetKey
+                    );
+
+                    return (
+                      <label
+                        key={action.id}
+                        className={styles['targetPickerOption']}
+                      >
+                        <input
+                          className={styles['targetPickerCheckbox']}
+                          type={'checkbox'}
+                          checked={isChecked}
+                          onChange={() => toggleTargetPickerAction(action.id)}
+                        />
+                        <span className={styles['targetPickerText']}>
+                          <span className={styles['targetPickerTitle']}>
+                            {actionIndex === 0
+                              ? 'Main action'
+                              : `Action ${actionIndex + 1}`}
+                          </span>
+                          <span className={styles['targetPickerMeta']}>
+                            {formatCompactDeclarationMeta(
+                              action.declaredAction,
+                              action.actionLabel,
+                              action.actionDistanceInches,
+                              action.activationSegments,
+                              action.castingSegments
+                            )}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className={styles['modalHint']}>
+                  Single-target actions replace their previous target when
+                  checked here.
+                </p>
+                <div className={styles['modalActions']}>
+                  <span />
+                  <div className={styles['modalActionGroup']}>
+                    <button
+                      type={'button'}
+                      className={styles['modalButton']}
+                      onClick={() => setTargetPickerTarget(undefined)}
+                    >
+                      Done
                     </button>
                   </div>
                 </div>

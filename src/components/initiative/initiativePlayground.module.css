@@ -358,6 +358,39 @@
   margin-bottom: 0.2rem;
 }
 
+.matrixActionSummaryList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.matrixActionSummaryItem,
+.matrixActionSummaryTitle,
+.matrixActionSummaryMeta {
+  display: block;
+  min-width: 0;
+}
+
+.matrixActionSummaryItem + .matrixActionSummaryItem {
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(240, 239, 221, 0.14);
+}
+
+.matrixActionSummaryTitle {
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.matrixActionSummaryMeta {
+  color: rgba(240, 239, 221, 0.82);
+  font-size: 0.88rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 .matrixCombatantButton {
   position: relative;
   border: 1px solid transparent;
@@ -451,6 +484,17 @@
   font-size: 0.82rem;
   line-height: 1.35;
   color: rgba(240, 239, 221, 0.86);
+}
+
+.matrixToggleMetaLine {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.matrixToggleMetaLine + .matrixToggleMetaLine {
+  margin-top: 0.18rem;
+  padding-top: 0.18rem;
+  border-top: 1px solid rgba(240, 239, 221, 0.16);
 }
 
 .matrixToggleIdle {
@@ -551,6 +595,90 @@
   font-weight: 700;
   margin: 0.9rem 0 0.4rem;
   color: var(--eggshell);
+}
+
+.actionList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.9rem 0 0.2rem;
+}
+
+.actionListButton,
+.actionListAddButton {
+  border: 1px solid rgba(172, 114, 35, 0.72);
+  background: rgba(240, 239, 221, 0.1);
+  color: var(--eggshell);
+  cursor: pointer;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+}
+
+.actionListButton {
+  min-width: 7.5rem;
+}
+
+.actionListButtonActive {
+  border-color: var(--goldenrod);
+  background: rgba(215, 165, 45, 0.2);
+}
+
+.actionListButtonTitle,
+.actionListButtonMeta {
+  display: block;
+}
+
+.actionListButtonTitle {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--goldenrod);
+}
+
+.actionListButtonMeta {
+  margin-top: 0.2rem;
+  font-size: 0.92rem;
+}
+
+.actionListAddButton {
+  align-self: stretch;
+}
+
+.targetPickerList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
+
+.targetPickerOption {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+  border: 1px solid rgba(172, 114, 35, 0.58);
+  background: rgba(22, 28, 14, 0.18);
+  padding: 0.65rem;
+}
+
+.targetPickerCheckbox {
+  margin-top: 0.2rem;
+}
+
+.targetPickerText,
+.targetPickerTitle,
+.targetPickerMeta {
+  display: block;
+}
+
+.targetPickerTitle {
+  font-weight: 700;
+}
+
+.targetPickerMeta {
+  color: rgba(248, 243, 224, 0.78);
+  font-size: 0.95rem;
+  line-height: 1.35;
 }
 
 .modalMeta {

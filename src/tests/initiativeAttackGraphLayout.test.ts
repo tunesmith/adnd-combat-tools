@@ -2,6 +2,7 @@ import { buildInitiativeAttackGraph } from '../helpers/initiative/attackGraph';
 import { buildInitiativeAttackGraphLayout } from '../helpers/initiative/attackGraphLayout';
 import { resolveInitiativeRound } from '../helpers/initiative/roundResolution';
 import { buildInitiativeScenario } from '../helpers/initiative/scenario';
+import type { InitiativeAttackGraph } from '../types/initiative';
 
 describe('initiative attack graph layout', () => {
   test('places unsegmented graph nodes on dependency columns and emits a path for each edge', () => {
@@ -962,5 +963,65 @@ describe('initiative attack graph layout', () => {
     expect(heatMetalCompletion?.x).toBeGreaterThan(b7Attack?.x || 0);
     expect(b1Edge?.path).toContain(' C ');
     expect(b7Edge?.path).toContain(' C ');
+  });
+
+  test('uses rendered node heights when stacking dependency rows', () => {
+    const graph: InitiativeAttackGraph = {
+      nodes: [
+        {
+          id: 'attack:party-1:1',
+          combatantId: 'party-1',
+          routineId: 'routine:party-1:1',
+          componentId: 'attack-1',
+          side: 'party',
+          attackNumber: 1,
+          label: 'attack 1',
+          source: 'routine-component',
+          kind: 'attack',
+          placement: {
+            kind: 'general-unsegmented',
+          },
+        },
+        {
+          id: 'attack:party-2:1',
+          combatantId: 'party-2',
+          routineId: 'routine:party-2:1',
+          componentId: 'attack-1',
+          side: 'party',
+          attackNumber: 1,
+          label: 'attack 1',
+          source: 'routine-component',
+          kind: 'attack',
+          placement: {
+            kind: 'general-unsegmented',
+          },
+        },
+      ],
+      edges: [],
+      layers: [['attack:party-1:1', 'attack:party-2:1']],
+      simultaneousGroups: [],
+    };
+    const layout = buildInitiativeAttackGraphLayout(graph, {
+      'attack:party-1:1': {
+        width: 132,
+        height: 120,
+      },
+      'attack:party-2:1': {
+        width: 132,
+        height: 66,
+      },
+    });
+    const tallNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-1:1'
+    );
+    const followingNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-2:1'
+    );
+
+    expect(tallNode).toBeDefined();
+    expect(followingNode).toBeDefined();
+    expect(followingNode?.y).toBeGreaterThanOrEqual(
+      (tallNode?.y || 0) + (tallNode?.height || 0) + 16
+    );
   });
 });

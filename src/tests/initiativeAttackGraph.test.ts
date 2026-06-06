@@ -141,6 +141,135 @@ describe('initiative attack graph', () => {
     expect(graph.layers).toEqual([['attack:enemy-3:1'], ['attack:party-1:1']]);
   });
 
+  test('graphs extra declared actions as separate action nodes', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Multiple Actions',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Astrid',
+          weaponId: 17,
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Flail',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'magical-device',
+              actionLabel: 'Spiritual hammer',
+              targetCombatantKeys: [4],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Ghoul',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Yeenoghu',
+          declaredAction: 'none',
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          combatantId: 'party-1',
+          actionLabel: 'Flail',
+          placement: {
+            kind: 'direct-melee',
+            opponentId: 'enemy-3',
+            resolutionReason: 'initiative',
+          },
+        }),
+        expect.objectContaining({
+          id: 'attack:party-action-1001:1',
+          combatantId: 'party-action-1001',
+          actionLabel: 'Spiritual hammer',
+          targetId: 'enemy-4',
+          placement: {
+            kind: 'magical-device-unsegmented',
+          },
+        }),
+      ])
+    );
+  });
+
+  test('graphs an extra targeted melee action against the same enemy', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Backstab and Attack',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          weaponId: 17,
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Backstab',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'open-melee',
+              actionLabel: 'Attack',
+              targetCombatantKeys: [3],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Pillar Gnoll 2',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          combatantId: 'party-1',
+          actionLabel: 'Backstab',
+        }),
+        expect.objectContaining({
+          id: 'attack:party-action-1001:1',
+          combatantId: 'party-action-1001',
+          actionLabel: 'Attack',
+          targetId: 'enemy-3',
+        }),
+      ])
+    );
+  });
+
   test('adds only local direct-melee precedence in a tied round', () => {
     const draft: InitiativeScenarioDraft = {
       label: 'Mixed Open Melee',
