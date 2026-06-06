@@ -996,31 +996,139 @@ describe('initiative attack graph layout', () => {
             kind: 'general-unsegmented',
           },
         },
+        {
+          id: 'attack:party-3:1',
+          combatantId: 'party-3',
+          routineId: 'routine:party-3:1',
+          componentId: 'attack-1',
+          side: 'party',
+          attackNumber: 1,
+          label: 'attack 1',
+          source: 'routine-component',
+          kind: 'attack',
+          placement: {
+            kind: 'general-unsegmented',
+          },
+        },
       ],
       edges: [],
-      layers: [['attack:party-1:1', 'attack:party-2:1']],
+      layers: [['attack:party-1:1', 'attack:party-2:1', 'attack:party-3:1']],
       simultaneousGroups: [],
     };
     const layout = buildInitiativeAttackGraphLayout(graph, {
       'attack:party-1:1': {
         width: 132,
-        height: 120,
+        height: 66,
       },
       'attack:party-2:1': {
+        width: 132,
+        height: 120,
+      },
+      'attack:party-3:1': {
         width: 132,
         height: 66,
       },
     });
-    const tallNode = layout.nodes.find(
+    const firstNode = layout.nodes.find(
       (node) => node.nodeId === 'attack:party-1:1'
     );
-    const followingNode = layout.nodes.find(
+    const tallNode = layout.nodes.find(
       (node) => node.nodeId === 'attack:party-2:1'
     );
+    const followingNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-3:1'
+    );
 
+    expect(firstNode).toBeDefined();
     expect(tallNode).toBeDefined();
     expect(followingNode).toBeDefined();
-    expect(followingNode?.y).toBeGreaterThanOrEqual(
+    expect(tallNode?.y).toBe(
+      (firstNode?.y || 0) + (firstNode?.height || 0) + 16
+    );
+    expect(followingNode?.y).toBe(
+      (tallNode?.y || 0) + (tallNode?.height || 0) + 16
+    );
+  });
+
+  test('uses rendered node heights when stacking segment rows', () => {
+    const graph: InitiativeAttackGraph = {
+      nodes: [
+        {
+          id: 'attack:party-1:1',
+          combatantId: 'party-1',
+          routineId: 'routine:party-1:1',
+          componentId: 'attack-1',
+          side: 'party',
+          attackNumber: 1,
+          label: 'attack 1',
+          source: 'routine-component',
+          kind: 'attack',
+          segment: 2,
+          segmentReason: 'declared-action',
+        },
+        {
+          id: 'attack:party-2:1',
+          combatantId: 'party-2',
+          routineId: 'routine:party-2:1',
+          componentId: 'attack-1',
+          side: 'party',
+          attackNumber: 1,
+          label: 'attack 1',
+          source: 'routine-component',
+          kind: 'attack',
+          segment: 2,
+          segmentReason: 'declared-action',
+        },
+        {
+          id: 'attack:party-3:1',
+          combatantId: 'party-3',
+          routineId: 'routine:party-3:1',
+          componentId: 'attack-1',
+          side: 'party',
+          attackNumber: 1,
+          label: 'attack 1',
+          source: 'routine-component',
+          kind: 'attack',
+          segment: 2,
+          segmentReason: 'declared-action',
+        },
+      ],
+      edges: [],
+      layers: [['attack:party-1:1', 'attack:party-2:1', 'attack:party-3:1']],
+      simultaneousGroups: [],
+    };
+    const layout = buildInitiativeAttackGraphLayout(graph, {
+      'attack:party-1:1': {
+        width: 132,
+        height: 66,
+      },
+      'attack:party-2:1': {
+        width: 132,
+        height: 120,
+      },
+      'attack:party-3:1': {
+        width: 132,
+        height: 66,
+      },
+    });
+    const firstNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-1:1'
+    );
+    const tallNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-2:1'
+    );
+    const followingNode = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-3:1'
+    );
+
+    expect(layout.hasSegmentBand).toBe(true);
+    expect(firstNode).toBeDefined();
+    expect(tallNode).toBeDefined();
+    expect(followingNode).toBeDefined();
+    expect(tallNode?.y).toBe(
+      (firstNode?.y || 0) + (firstNode?.height || 0) + 16
+    );
+    expect(followingNode?.y).toBe(
       (tallNode?.y || 0) + (tallNode?.height || 0) + 16
     );
   });

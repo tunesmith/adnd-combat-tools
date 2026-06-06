@@ -81,8 +81,43 @@ const SEGMENT_TO_DEPENDENCY_FORWARD_GAP = NODE_COLUMN_WIDTH;
 const SIMULTANEOUS_GROUP_PADDING_X = 14;
 const SIMULTANEOUS_GROUP_PADDING_Y = 10;
 
-const getContentHeight = (rowCount: number, rowHeight: number): number =>
-  rowCount > 0 ? rowCount * rowHeight + (rowCount - 1) * ROW_GAP : 0;
+const getContentHeight = (rowHeights: number[]): number =>
+  rowHeights.length > 0
+    ? rowHeights.reduce((total, rowHeight) => total + rowHeight, 0) +
+      (rowHeights.length - 1) * ROW_GAP
+    : 0;
+
+const getRowOffsets = (rowHeights: number[]): number[] => {
+  let offset = 0;
+
+  return rowHeights.map((rowHeight) => {
+    const rowOffset = offset;
+    offset += rowHeight + ROW_GAP;
+    return rowOffset;
+  });
+};
+
+const setMaxRowHeight = (
+  rowHeightByIndex: Map<number, number>,
+  rowIndex: number,
+  rowHeight: number
+) => {
+  rowHeightByIndex.set(
+    rowIndex,
+    Math.max(rowHeightByIndex.get(rowIndex) ?? NODE_HEIGHT, rowHeight)
+  );
+};
+
+const getOrderedRowHeights = (
+  rowHeightByIndex: Map<number, number>
+): number[] => {
+  const maxRowIndex = Math.max(-1, ...Array.from(rowHeightByIndex.keys()));
+
+  return Array.from(
+    { length: maxRowIndex + 1 },
+    (_value, rowIndex) => rowHeightByIndex.get(rowIndex) ?? NODE_HEIGHT
+  );
+};
 
 const getDependencyColumnPitch = (): number =>
   NODE_COLUMN_WIDTH + DEPENDENCY_COLUMN_GAP;
@@ -356,8 +391,6 @@ export const buildInitiativeAttackGraphLayout = (
   const layerIndexByNodeId = new Map<string, number>();
   const getNodeHeight = (nodeId: string): number =>
     nodeSizeById?.[nodeId]?.height ?? NODE_HEIGHT;
-  const getMaxNodeHeight = (nodeIds: string[]): number =>
-    Math.max(NODE_HEIGHT, ...nodeIds.map(getNodeHeight));
 
   graph.layers.forEach((layer, layerIndex) => {
     layer.forEach((nodeId) => {
@@ -434,72 +467,88 @@ export const buildInitiativeAttackGraphLayout = (
     existing.push(node.id);
     segmentedNodesBySegment.set(node.segment, existing);
   });
-  const segmentedNodeIds = graph.nodes
-    .filter((node) => node.segment !== undefined)
-    .map((node) => node.id);
-  const dependencyNodeIds = graph.nodes
-    .filter((node) => node.segment === undefined)
-    .map((node) => node.id);
-  const segmentRowHeight = getMaxNodeHeight(segmentedNodeIds);
-  const dependencyRowHeight = getMaxNodeHeight(dependencyNodeIds);
 
-  const segmentRowCount = Math.max(
-    0,
-    ...Array.from({ length: SEGMENT_COUNT }, (_, index) => {
-      const segment = index + 1;
-      const nodeIds = segmentedNodesBySegment.get(segment) || [];
-      const usedRows = new Set<number>(
-        spellChainRowsBySegment.get(segment) || []
-      );
-      nodeIds.forEach((nodeId) => {
-        const spellChainRowIndex = spellChainRowIndexByNodeId.get(nodeId);
-        if (spellChainRowIndex !== undefined) {
-          usedRows.add(spellChainRowIndex);
-        }
+  const segmentRowIndexByKey = new Map<string, number>();
+  const segmentRowHeightByIndex = new Map<number, number>();
+
+  Array.from({ length: SEGMENT_COUNT }, (_, index) => {
+    const segment = index + 1;
+    const nodeIds = segmentedNodesBySegment.get(segment) || [];
+    const usedRows = new Set<number>(
+      spellChainRowsBySegment.get(segment) || []
+    );
+    usedRows.forEach((rowIndex) => {
+      setMaxRowHeight(segmentRowHeightByIndex, rowIndex, NODE_HEIGHT);
+    });
+    nodeIds.forEach((nodeId) => {
+      const spellChainRowIndex = spellChainRowIndexByNodeId.get(nodeId);
+      if (spellChainRowIndex !== undefined) {
+        usedRows.add(spellChainRowIndex);
+        setMaxRowHeight(
+          segmentRowHeightByIndex,
+          spellChainRowIndex,
+          getNodeHeight(nodeId)
+        );
+      }
+    });
+
+    const sameSegmentEdges = graph.edges.filter((edge) => {
+      const fromNode = graphNodeById.get(edge.fromNodeId);
+      const toNode = graphNodeById.get(edge.toNodeId);
+
+      return fromNode?.segment === segment && toNode?.segment === segment;
+    });
+    const adjacency = new Map<string, string[]>();
+    nodeIds
+      .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
+      .forEach((nodeId) => adjacency.set(nodeId, []));
+    sameSegmentEdges.forEach((edge) => {
+      if (!adjacency.has(edge.fromNodeId) || !adjacency.has(edge.toNodeId)) {
+        return;
+      }
+
+      adjacency.get(edge.fromNodeId)?.push(edge.toNodeId);
+      adjacency.get(edge.toNodeId)?.push(edge.fromNodeId);
+    });
+
+    const nonSpellRowKeys = Array.from(
+      new Set(
+        nodeIds
+          .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
+          .map((nodeId) =>
+            (adjacency.get(nodeId) || []).length === 0
+              ? `${segment}:isolated:${nodeId}`
+              : `${segment}:layer:${layerIndexByNodeId.get(nodeId) ?? 0}`
+          )
+      )
+    ).sort();
+
+    nonSpellRowKeys.forEach((rowKey) => {
+      const rowIndex = getSmallestAvailableRow(usedRows);
+      usedRows.add(rowIndex);
+      segmentRowIndexByKey.set(rowKey, rowIndex);
+    });
+
+    nodeIds
+      .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
+      .forEach((nodeId) => {
+        const rowIndex =
+          segmentRowIndexByKey.get(
+            (adjacency.get(nodeId) || []).length === 0
+              ? `${segment}:isolated:${nodeId}`
+              : `${segment}:layer:${layerIndexByNodeId.get(nodeId) ?? 0}`
+          ) ?? 0;
+
+        setMaxRowHeight(
+          segmentRowHeightByIndex,
+          rowIndex,
+          getNodeHeight(nodeId)
+        );
       });
-
-      const sameSegmentEdges = graph.edges.filter((edge) => {
-        const fromNode = graphNodeById.get(edge.fromNodeId);
-        const toNode = graphNodeById.get(edge.toNodeId);
-
-        return fromNode?.segment === segment && toNode?.segment === segment;
-      });
-      const adjacency = new Map<string, string[]>();
-      nodeIds
-        .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
-        .forEach((nodeId) => adjacency.set(nodeId, []));
-      sameSegmentEdges.forEach((edge) => {
-        if (!adjacency.has(edge.fromNodeId) || !adjacency.has(edge.toNodeId)) {
-          return;
-        }
-
-        adjacency.get(edge.fromNodeId)?.push(edge.toNodeId);
-        adjacency.get(edge.toNodeId)?.push(edge.fromNodeId);
-      });
-
-      const nonSpellRowKeys = Array.from(
-        new Set(
-          nodeIds
-            .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
-            .map((nodeId) =>
-              (adjacency.get(nodeId) || []).length === 0
-                ? `${segment}:isolated:${nodeId}`
-                : `${segment}:layer:${layerIndexByNodeId.get(nodeId) ?? 0}`
-            )
-        )
-      ).sort();
-
-      nonSpellRowKeys.forEach(() => {
-        usedRows.add(getSmallestAvailableRow(usedRows));
-      });
-
-      return usedRows.size;
-    })
-  );
-  const segmentContentHeight = getContentHeight(
-    segmentRowCount,
-    segmentRowHeight
-  );
+  });
+  const segmentRowHeights = getOrderedRowHeights(segmentRowHeightByIndex);
+  const segmentRowOffsets = getRowOffsets(segmentRowHeights);
+  const segmentContentHeight = getContentHeight(segmentRowHeights);
   const hasSegmentBand = segmentContentHeight > 0;
   const segmentHeaderHeight = hasSegmentBand ? SEGMENT_HEADER_HEIGHT : 0;
   const segmentTopY =
@@ -530,19 +579,22 @@ export const buildInitiativeAttackGraphLayout = (
     });
   });
 
-  const dependencyContentHeight = getContentHeight(
-    Math.max(
-      0,
-      ...Array.from(dependencyStackCountByKey.values(), (count) => count)
-    ),
-    dependencyRowHeight
-  );
+  const dependencyRowHeightByIndex = new Map<number, number>();
+  dependencyPositionedNodes.forEach(({ nodeId, stackIndex }) => {
+    setMaxRowHeight(
+      dependencyRowHeightByIndex,
+      stackIndex,
+      getNodeHeight(nodeId)
+    );
+  });
+  const dependencyRowHeights = getOrderedRowHeights(dependencyRowHeightByIndex);
+  const dependencyRowOffsets = getRowOffsets(dependencyRowHeights);
+  const dependencyContentHeight = getContentHeight(dependencyRowHeights);
   const dependencyTopY =
     hasSegmentBand && dependencyContentHeight > 0
       ? segmentBandBottomY + BAND_GAP
       : TOP_PADDING + 12;
   const dependencyBandTopY = dependencyTopY;
-  const segmentRowIndexByKey = new Map<string, number>();
 
   segmentLanes.forEach((segmentLane) => {
     const nodeIds = segmentedNodesBySegment.get(segmentLane.segment) || [];
@@ -600,6 +652,12 @@ export const buildInitiativeAttackGraphLayout = (
     ).sort();
 
     nonSpellRowKeys.forEach((rowKey) => {
+      const existingRowIndex = segmentRowIndexByKey.get(rowKey);
+      if (existingRowIndex !== undefined) {
+        usedRows.add(existingRowIndex);
+        return;
+      }
+
       const rowIndex = getSmallestAvailableRow(usedRows);
       usedRows.add(rowIndex);
       segmentRowIndexByKey.set(rowKey, rowIndex);
@@ -722,7 +780,7 @@ export const buildInitiativeAttackGraphLayout = (
       nodeLayoutById.set(nodeId, {
         nodeId,
         x,
-        y: segmentTopY + rowIndex * (segmentRowHeight + ROW_GAP),
+        y: segmentTopY + (segmentRowOffsets[rowIndex] ?? 0),
         width,
         height,
       });
@@ -737,8 +795,7 @@ export const buildInitiativeAttackGraphLayout = (
       nodeId: positionedNode.nodeId,
       x: positionedNode.x + (NODE_COLUMN_WIDTH - width) / 2,
       y:
-        dependencyTopY +
-        positionedNode.stackIndex * (dependencyRowHeight + ROW_GAP),
+        dependencyTopY + (dependencyRowOffsets[positionedNode.stackIndex] ?? 0),
       width,
       height,
     });
