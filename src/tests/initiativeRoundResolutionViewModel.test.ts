@@ -341,7 +341,7 @@ describe('initiative round resolution view model', () => {
       {
         label: 'Timing',
         detail:
-          'Magical device discharge is subject to initiative and uses an explicit activation time of 7 segments in this rules slice.',
+          'Magical device discharge uses an explicit activation time of 7 segments in this rules slice and is not ordered against unrelated actions by broad simple initiative.',
         combatantIds: ['party-1'],
       },
     ]);

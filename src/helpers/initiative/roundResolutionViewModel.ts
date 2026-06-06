@@ -851,9 +851,13 @@ const buildMagicalDeviceCards = (
             label: 'Timing',
             detail:
               activationSegments !== undefined
-                ? `Magical device discharge is subject to initiative and uses an explicit activation time of ${activationSegments} ${
-                    activationSegments === 1 ? 'segment' : 'segments'
-                  } in this rules slice.`
+                ? combatant.targetIds.length === 0
+                  ? `Magical device discharge uses an explicit activation time of ${activationSegments} ${
+                      activationSegments === 1 ? 'segment' : 'segments'
+                    } in this rules slice and is not ordered against unrelated actions by broad simple initiative.`
+                  : `Magical device discharge is subject to initiative and uses an explicit activation time of ${activationSegments} ${
+                      activationSegments === 1 ? 'segment' : 'segments'
+                    } in this rules slice.`
                 : 'Magical device discharge is subject to initiative. With no specific activation time supplied, it remains unsegmented in this rules slice.',
             combatantIds: [combatant.id, ...combatant.targetIds],
           },

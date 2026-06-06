@@ -296,6 +296,20 @@ const formatInitiativeTimingMeta = (
     : 'Loses initiative';
 };
 
+const getActionTimingHint = (
+  declaredAction: InitiativeDeclaredAction
+): string | undefined => {
+  if (declaredAction === 'magical-device') {
+    return 'Potion reminder: if packed away, finding it is usually 3-4 segments, quaffing is 1 segment, and the effect begins 2-5 segments later. Enter the total segments here.';
+  }
+
+  if (declaredAction === 'spell-casting') {
+    return 'Scroll reminder: when a scroll reproduces a spell, use the spell casting time. Use Cast spell when scroll timing or interruption matters.';
+  }
+
+  return undefined;
+};
+
 const normalizeActionLabel = (value: string | undefined): string =>
   (value || '').trim().slice(0, INITIATIVE_ACTION_LABEL_MAX_LENGTH);
 
@@ -5579,10 +5593,7 @@ const InitiativePlayground = ({
                       ))}
                     </select>
                     <p className={styles['modalHint']}>
-                      Use this only when the device description gives an
-                      activation time. Leave it at None when the device attack
-                      is initiative-controlled but not tied to a specific
-                      segment.
+                      {getActionTimingHint(selectedEditedAction.declaredAction)}
                     </p>
                   </>
                 ) : null}
@@ -5614,9 +5625,7 @@ const InitiativePlayground = ({
                       ))}
                     </select>
                     <p className={styles['modalHint']}>
-                      Use the spell&apos;s casting time. In this rules slice,
-                      casting time is also treated as the segment where the
-                      spell completes.
+                      {getActionTimingHint(selectedEditedAction.declaredAction)}
                     </p>
                   </>
                 ) : null}

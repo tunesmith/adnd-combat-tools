@@ -442,6 +442,30 @@ const buildSimpleInitiativePhases = (
     ];
   });
 
+const isSegmentedMagicalDeviceNode = (
+  node: InitiativeAttackNode,
+  combatant: InitiativeScenarioCombatant
+): boolean =>
+  combatant.declaredAction === 'magical-device' &&
+  node.placement?.kind === 'declared-action-segment';
+
+const areSimpleInitiativePhasesRelated = (
+  leftPhase: SimpleInitiativePhase,
+  rightPhase: SimpleInitiativePhase
+): boolean =>
+  leftPhase.node.targetId === rightPhase.combatantId ||
+  rightPhase.node.targetId === leftPhase.combatantId ||
+  leftPhase.combatant.targetIds.includes(rightPhase.combatantId) ||
+  rightPhase.combatant.targetIds.includes(leftPhase.combatantId);
+
+const shouldSkipSegmentedMagicalDeviceSimpleInitiative = (
+  leftPhase: SimpleInitiativePhase,
+  rightPhase: SimpleInitiativePhase
+): boolean =>
+  (isSegmentedMagicalDeviceNode(leftPhase.node, leftPhase.combatant) ||
+    isSegmentedMagicalDeviceNode(rightPhase.node, rightPhase.combatant)) &&
+  !areSimpleInitiativePhasesRelated(leftPhase, rightPhase);
+
 const addSimpleInitiativeEdges = (
   combatantById: Map<string, InitiativeScenarioCombatant>,
   simpleInitiativeNodes: InitiativeAttackNode[],
@@ -463,6 +487,15 @@ const addSimpleInitiativeEdges = (
     currentNodes.forEach((leftPhase, leftIndex) => {
       currentNodes.slice(leftIndex + 1).forEach((rightPhase) => {
         if (leftPhase.side === rightPhase.side) {
+          return;
+        }
+
+        if (
+          shouldSkipSegmentedMagicalDeviceSimpleInitiative(
+            leftPhase,
+            rightPhase
+          )
+        ) {
           return;
         }
 
@@ -529,6 +562,14 @@ const addSimpleInitiativeEdges = (
         if (
           fromPhase?.node.segmentReason === 'spell-directed' &&
           fromPhase.combatantId !== toPhase?.combatantId
+        ) {
+          return;
+        }
+
+        if (
+          fromPhase &&
+          toPhase &&
+          shouldSkipSegmentedMagicalDeviceSimpleInitiative(fromPhase, toPhase)
         ) {
           return;
         }

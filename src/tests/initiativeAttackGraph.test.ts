@@ -212,6 +212,70 @@ describe('initiative attack graph', () => {
     );
   });
 
+  test('does not let a segmented targetless magical device block unrelated enemy attacks', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Potion Segment',
+      partyInitiative: 6,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Shep',
+          declaredAction: 'magical-device',
+          actionLabel: 'Drink mercury quicksilver potion',
+          activationSegments: 8,
+          weaponId: 17,
+          targetCombatantKeys: [],
+        },
+        {
+          combatantKey: 2,
+          name: 'Lodi',
+          declaredAction: 'none',
+          weaponId: 17,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Pillar Gnoll 2',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [2],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          combatantId: 'party-1',
+          segment: 8,
+          placement: {
+            kind: 'declared-action-segment',
+            declaredAction: 'magical-device',
+            activationSegments: 8,
+          },
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          combatantId: 'enemy-3',
+          targetId: 'party-2',
+        }),
+      ])
+    );
+    expect(graph.edges).not.toContainEqual({
+      fromNodeId: 'attack:party-1:1',
+      toNodeId: 'attack:enemy-3:1',
+      reasons: ['simple-initiative'],
+    });
+  });
+
   test('graphs an extra targeted melee action against the same enemy', () => {
     const scenario = buildInitiativeScenario({
       label: 'Backstab and Attack',
