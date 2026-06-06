@@ -8,6 +8,7 @@ import type {
   InitiativeScenario,
   InitiativeScenarioCombatant,
   InitiativeSimpleOrderStep,
+  InitiativeTimingOverride,
 } from '../../types/initiative';
 
 interface InitiativeResolutionStepViewModel {
@@ -66,6 +67,47 @@ const formatCombatantActionLabel = (
       )})`
     : formatDeclaredActionLabel(combatant.declaredAction);
 
+const formatInitiativeTimingOverride = (
+  initiativeTiming: InitiativeTimingOverride | undefined
+): string | undefined =>
+  initiativeTiming === 'wins-initiative'
+    ? 'wins initiative'
+    : initiativeTiming === 'loses-initiative'
+    ? 'loses initiative'
+    : undefined;
+
+const getInitiativeTimingComparisonSummary = (
+  earlier: InitiativeScenarioCombatant,
+  later: InitiativeScenarioCombatant
+): string | undefined => {
+  const earlierTiming = formatInitiativeTimingOverride(
+    earlier.initiativeTiming
+  );
+  const laterTiming = formatInitiativeTimingOverride(later.initiativeTiming);
+
+  if (earlierTiming && laterTiming) {
+    return `${earlier.name}'s ${formatCombatantActionLabel(
+      earlier
+    )} is marked ${earlierTiming}, while ${
+      later.name
+    }'s ${formatCombatantActionLabel(later)} is marked ${laterTiming}.`;
+  }
+
+  if (earlierTiming) {
+    return `${earlier.name}'s ${formatCombatantActionLabel(
+      earlier
+    )} is marked ${earlierTiming}.`;
+  }
+
+  if (laterTiming) {
+    return `${later.name}'s ${formatCombatantActionLabel(
+      later
+    )} is marked ${laterTiming}.`;
+  }
+
+  return undefined;
+};
+
 const formatMovementActionLabel = (
   action: InitiativeMovementResolution['action']
 ): string => formatDeclaredActionLabel(action);
@@ -103,15 +145,27 @@ const getSimpleOrderSummary = (
   scenario: InitiativeScenario,
   resolution: InitiativeRoundResolution
 ): string => {
+  const timingOverrideCount = scenario.party
+    .concat(scenario.enemies)
+    .filter(
+      (combatant) =>
+        combatant.initiativeTiming !== undefined &&
+        combatant.initiativeTiming !== 'normal'
+    ).length;
+  const overrideText =
+    timingOverrideCount > 0
+      ? ' Explicit action timing overrides are grouped ahead of or behind that baseline.'
+      : '';
+
   if (resolution.simpleOrder === 'party-first') {
-    return `Party side won initiative ${scenario.partyInitiative} to ${scenario.enemyInitiative}. This is the baseline side-order for the round; narrower melee timing rules can still refine specific exchanges.`;
+    return `Party side won initiative ${scenario.partyInitiative} to ${scenario.enemyInitiative}. This is the baseline side-order for the round; narrower melee timing rules can still refine specific exchanges.${overrideText}`;
   }
 
   if (resolution.simpleOrder === 'enemy-first') {
-    return `Enemy side won initiative ${scenario.enemyInitiative} to ${scenario.partyInitiative}. This is the baseline side-order for the round; narrower melee timing rules can still refine specific exchanges.`;
+    return `Enemy side won initiative ${scenario.enemyInitiative} to ${scenario.partyInitiative}. This is the baseline side-order for the round; narrower melee timing rules can still refine specific exchanges.${overrideText}`;
   }
 
-  return `Both sides tied initiative at ${scenario.partyInitiative}. This leaves the baseline order simultaneous unless narrower melee timing rules create local precedence.`;
+  return `Both sides tied initiative at ${scenario.partyInitiative}. This leaves the baseline order simultaneous unless narrower melee timing rules create local precedence.${overrideText}`;
 };
 
 const getSimpleOrderStepLabel = (
@@ -119,14 +173,27 @@ const getSimpleOrderStepLabel = (
   resolution: InitiativeRoundResolution
 ): string => {
   if (resolution.simpleOrder === 'simultaneous') {
-    return 'Simultaneous group';
+    return step.initiativeTiming === 'wins-initiative'
+      ? 'Wins initiative'
+      : step.initiativeTiming === 'loses-initiative'
+      ? 'Loses initiative'
+      : 'Simultaneous group';
   }
+
+  const timingPrefix =
+    step.initiativeTiming === 'wins-initiative'
+      ? 'Wins initiative: '
+      : step.initiativeTiming === 'loses-initiative'
+      ? 'Loses initiative: '
+      : '';
 
   if (step.sides.length === 1) {
-    return step.sides[0] === 'party' ? 'Party side' : 'Enemy side';
+    return `${timingPrefix}${
+      step.sides[0] === 'party' ? 'Party side' : 'Enemy side'
+    }`;
   }
 
-  return 'Mixed group';
+  return `${timingPrefix}Mixed group`;
 };
 
 const buildSimpleOrderCard = (
@@ -188,11 +255,16 @@ const getDirectMeleeSummary = (
 
   if (engagement.resolution.reason === 'initiative') {
     const winner =
-      partyCombatant.initiative > enemyCombatant.initiative
+      compareCombatantInitiative(partyCombatant, enemyCombatant) > 0
         ? partyCombatant
         : enemyCombatant;
     const loser =
       winner.id === partyCombatant.id ? enemyCombatant : partyCombatant;
+    const timingSummary = getInitiativeTimingComparisonSummary(winner, loser);
+
+    if (timingSummary) {
+      return `${winner.name} acts before ${loser.name} because ${timingSummary} Weapon speed does not override this initiative override in this slice.`;
+    }
 
     return `${winner.name} acts before ${loser.name} because ${
       winner.side === 'party' ? 'party' : 'enemy'

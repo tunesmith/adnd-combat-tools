@@ -6,6 +6,7 @@ import Select from 'react-select';
 import { buildInitiativeAttackGraph } from '../../helpers/initiative/attackGraph';
 import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
 import {
+  compareCombatantInitiative,
   getAppliedMissileInitiativeAdjustment,
   getEffectiveInitiative,
   movementSuppressesPositiveReactionInitiativeBonuses,
@@ -37,6 +38,7 @@ import type {
   InitiativeScenarioCombatant,
   InitiativeScenarioDraft,
   InitiativeScenarioDraftCombatant,
+  InitiativeTimingOverride,
 } from '../../types/initiative';
 import type { WeaponOption } from '../../types/option';
 import InitiativeApproachPanel from './InitiativeApproachPanel';
@@ -89,6 +91,15 @@ const MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS = [
   '+1',
   '+2',
   '+3',
+];
+
+const INITIATIVE_TIMING_OPTIONS: Array<{
+  value: InitiativeTimingOverride;
+  label: string;
+}> = [
+  { value: 'normal', label: 'Normal initiative' },
+  { value: 'wins-initiative', label: 'Wins initiative' },
+  { value: 'loses-initiative', label: 'Loses initiative' },
 ];
 
 const ACTIVATION_SEGMENT_OPTIONS: Array<{
@@ -269,6 +280,22 @@ const formatDeclaredAction = (
   ACTION_OPTIONS.find((option) => option.value === declaredAction)?.label ||
   declaredAction;
 
+const getActionInitiativeTiming = (
+  action: Pick<InitiativePlaytestActionState, 'initiativeTiming'>
+): InitiativeTimingOverride => action.initiativeTiming || 'normal';
+
+const formatInitiativeTimingMeta = (
+  initiativeTiming: InitiativeTimingOverride | undefined
+): string | undefined => {
+  if (!initiativeTiming || initiativeTiming === 'normal') {
+    return undefined;
+  }
+
+  return initiativeTiming === 'wins-initiative'
+    ? 'Wins initiative'
+    : 'Loses initiative';
+};
+
 const normalizeActionLabel = (value: string | undefined): string =>
   (value || '').trim().slice(0, INITIATIVE_ACTION_LABEL_MAX_LENGTH);
 
@@ -408,11 +435,13 @@ const normalizeActionStateForCombatant = (
   }
 
   const actionLabel = normalizeActionLabel(action.actionLabel) || undefined;
+  const initiativeTiming = getActionInitiativeTiming(action);
 
   return {
     id: action.id || MAIN_ACTION_ID,
     declaredAction,
     ...(actionLabel ? { actionLabel } : {}),
+    ...(initiativeTiming !== 'normal' ? { initiativeTiming } : {}),
     actionDistanceInches: requiresDistanceInput(declaredAction)
       ? action.actionDistanceInches
       : '',
@@ -949,6 +978,7 @@ const buildDraftCombatants = (
       name: combatant.name.trim() || undefined,
       declaredAction: primaryAction.declaredAction,
       actionLabel: normalizeActionLabel(primaryAction.actionLabel) || undefined,
+      initiativeTiming: primaryAction.initiativeTiming,
       movementRate: parseOptionalNumber(combatant.movementRate),
       actionDistanceInches: getActionDistanceInches(primaryAction),
       activationSegments: getActionActivationSegments(primaryAction),
@@ -965,6 +995,7 @@ const buildDraftCombatants = (
         id: action.id,
         declaredAction: action.declaredAction,
         actionLabel: normalizeActionLabel(action.actionLabel) || undefined,
+        initiativeTiming: action.initiativeTiming,
         actionDistanceInches: getActionDistanceInches(action),
         activationSegments: getActionActivationSegments(action),
         castingSegments: getActionCastingSegments(action),
@@ -1124,7 +1155,11 @@ const getMatrixHeaderActionSummaries = (
   combatant: InitiativePlaytestCombatant
 ): MatrixHeaderActionSummary[] =>
   getCombatantActions(combatant).map((action, actionIndex) => {
-    const meta = [getActionHint(action), getActionTargetSummary(action)]
+    const meta = [
+      formatInitiativeTimingMeta(action.initiativeTiming),
+      getActionHint(action),
+      getActionTargetSummary(action),
+    ]
       .filter((value): value is string => Boolean(value))
       .join(' · ');
 
@@ -1154,14 +1189,20 @@ const canCombatantTarget = (combatant: InitiativePlaytestCombatant): boolean =>
 const formatActionTargetLabel = (
   action: InitiativePlaytestActionState,
   pairDistance: string
-): string =>
-  formatCompactDeclarationMeta(
+): string => {
+  const timingMeta = formatInitiativeTimingMeta(action.initiativeTiming);
+  const declarationMeta = formatCompactDeclarationMeta(
     action.declaredAction,
     action.actionLabel,
     action.actionDistanceInches || pairDistance,
     action.activationSegments,
     action.castingSegments
   );
+
+  return [declarationMeta, timingMeta]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+};
 
 const formatMatrixTargetLabels = (
   actions: InitiativePlaytestActionState[],
@@ -1175,6 +1216,51 @@ const isNonMissileWeaponId = (weaponId: number): boolean =>
 const getEffectiveInitiativeValue = (
   combatant: InitiativeScenarioCombatant
 ): number => getEffectiveInitiative(combatant);
+
+const formatScenarioCombatantActionLabel = (
+  combatant: InitiativeScenarioCombatant
+): string =>
+  combatant.actionLabel
+    ? `${combatant.actionLabel} (${formatDeclaredAction(
+        combatant.declaredAction
+      )})`
+    : formatDeclaredAction(combatant.declaredAction);
+
+const getInitiativeTimingExplanation = (
+  earlierCombatant: InitiativeScenarioCombatant,
+  laterCombatant: InitiativeScenarioCombatant
+): string | undefined => {
+  const earlierTiming = formatInitiativeTimingMeta(
+    earlierCombatant.initiativeTiming
+  );
+  const laterTiming = formatInitiativeTimingMeta(
+    laterCombatant.initiativeTiming
+  );
+
+  if (earlierTiming && laterTiming) {
+    return `${earlierCombatant.name}'s ${formatScenarioCombatantActionLabel(
+      earlierCombatant
+    )} is marked ${earlierTiming.toLowerCase()}, while ${
+      laterCombatant.name
+    }'s ${formatScenarioCombatantActionLabel(
+      laterCombatant
+    )} is marked ${laterTiming.toLowerCase()}.`;
+  }
+
+  if (earlierTiming) {
+    return `${earlierCombatant.name}'s ${formatScenarioCombatantActionLabel(
+      earlierCombatant
+    )} is marked ${earlierTiming.toLowerCase()}.`;
+  }
+
+  if (laterTiming) {
+    return `${laterCombatant.name}'s ${formatScenarioCombatantActionLabel(
+      laterCombatant
+    )} is marked ${laterTiming.toLowerCase()}.`;
+  }
+
+  return undefined;
+};
 
 const truncateGraphText = (text: string, maxLength: number): string =>
   text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
@@ -1223,12 +1309,29 @@ const wrapGraphText = (
   return visibleLines;
 };
 
-const getGraphNodeActionDetail = (node: InitiativeAttackNode): string =>
-  node.kind === 'spell-start'
-    ? 'start'
-    : node.kind === 'spell-completion'
-    ? 'complete'
-    : node.label;
+const getGraphNodeActionDetail = (
+  node: InitiativeAttackNode,
+  combatant: InitiativeScenarioCombatant | undefined
+): string | undefined => {
+  if (node.kind === 'spell-start') {
+    return 'start';
+  }
+
+  if (node.kind === 'spell-completion') {
+    return 'complete';
+  }
+
+  if (
+    node.kind === 'attack' &&
+    node.source === 'routine-component' &&
+    node.label === 'attack 1' &&
+    (combatant?.attackRoutine.components.length || 0) <= 1
+  ) {
+    return undefined;
+  }
+
+  return node.label;
+};
 
 const getGraphActionLines = (
   actionTitle: string,
@@ -1488,11 +1591,16 @@ const getDirectMeleeEdgeExplanation = ({
   switch (engagement.resolution.reason) {
     case 'initiative': {
       const winner =
-        fromCombatant.initiative > toCombatant.initiative
+        compareCombatantInitiative(fromCombatant, toCombatant) > 0
           ? fromCombatant
           : toCombatant;
       const loser =
         winner.id === fromCombatant.id ? toCombatant : fromCombatant;
+      const timingExplanation = getInitiativeTimingExplanation(winner, loser);
+
+      if (timingExplanation) {
+        return `${timingExplanation} ${fromName} comes before ${toName} in this melee exchange.`;
+      }
 
       return `${winner.name} wins initiative ${winner.initiative} to ${loser.initiative}, so ${fromName} comes before ${toName} in this melee exchange.`;
     }
@@ -1950,12 +2058,15 @@ const InitiativePlayground = ({
             ? customActionLabel ||
               formatDeclaredAction(combatant.declaredAction)
             : 'Unknown action';
-          const actionDetail = getGraphNodeActionDetail(node);
+          const actionDetail = getGraphNodeActionDetail(node, combatant);
+          const actionType = combatant
+            ? formatDeclaredAction(combatant.declaredAction)
+            : undefined;
           const actionMeta = combatant
             ? customActionLabel
-              ? `${formatDeclaredAction(
-                  combatant.declaredAction
-                )} · ${actionDetail}`
+              ? [actionType, actionDetail]
+                  .filter((value): value is string => Boolean(value))
+                  .join(' · ')
               : actionDetail
             : actionDetail;
           const actionLabel = actionMeta
@@ -3268,6 +3379,14 @@ const InitiativePlayground = ({
           }
 
           if (fromCombatant && toCombatant) {
+            const timingExplanation = getInitiativeTimingExplanation(
+              fromCombatant,
+              toCombatant
+            );
+            if (timingExplanation) {
+              return `${timingExplanation} ${fromName} happens before ${toName}.`;
+            }
+
             const fromInitiative = getEffectiveInitiativeValue(fromCombatant);
             const toInitiative = getEffectiveInitiativeValue(toCombatant);
 
@@ -3277,6 +3396,21 @@ const InitiativePlayground = ({
           }
 
           return `This follows the general round order for this stage.`;
+        }
+
+        if (reason === 'action-sequence') {
+          if (fromCombatant && toCombatant) {
+            const timingExplanation = getInitiativeTimingExplanation(
+              fromCombatant,
+              toCombatant
+            );
+
+            return timingExplanation
+              ? `${timingExplanation} ${fromName} is ordered before ${toName}.`
+              : `${fromCombatant.name}'s action order puts ${fromName} before ${toName}.`;
+          }
+
+          return `${fromName} is ordered before ${toName} by action timing.`;
         }
 
         if (reason === 'direct-melee') {
@@ -3478,14 +3612,20 @@ const InitiativePlayground = ({
         )
     : undefined;
   const actionEditedSecondarySummary =
-    selectedEditedAction &&
-    normalizeActionLabel(selectedEditedAction.actionLabel)
-      ? formatActionTypeMeta(
-          selectedEditedAction.declaredAction,
-          selectedEditedAction.actionDistanceInches,
-          selectedEditedAction.activationSegments,
-          selectedEditedAction.castingSegments
-        )
+    selectedEditedAction !== undefined
+      ? [
+          normalizeActionLabel(selectedEditedAction.actionLabel)
+            ? formatActionTypeMeta(
+                selectedEditedAction.declaredAction,
+                selectedEditedAction.actionDistanceInches,
+                selectedEditedAction.activationSegments,
+                selectedEditedAction.castingSegments
+              )
+            : undefined,
+          formatInitiativeTimingMeta(selectedEditedAction.initiativeTiming),
+        ]
+          .filter((value): value is string => Boolean(value))
+          .join(' · ') || undefined
       : undefined;
   const actionEditorDistanceMissing =
     selectedEditedAction !== undefined &&
@@ -5220,10 +5360,15 @@ const InitiativePlayground = ({
                           : `Action ${actionIndex + 1}`}
                       </span>
                       <span className={styles['actionListButtonMeta']}>
-                        {formatCompactDeclaredAction(
-                          action.declaredAction,
-                          action.actionLabel
-                        )}
+                        {[
+                          formatCompactDeclaredAction(
+                            action.declaredAction,
+                            action.actionLabel
+                          ),
+                          formatInitiativeTimingMeta(action.initiativeTiming),
+                        ]
+                          .filter((value): value is string => Boolean(value))
+                          .join(' · ')}
                       </span>
                     </button>
                   ))}
@@ -5315,6 +5460,38 @@ const InitiativePlayground = ({
                     }))
                   }
                 />
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={'initiative-attack-timing'}
+                >
+                  Initiative timing
+                </label>
+                <select
+                  id={'initiative-attack-timing'}
+                  className={styles['selectInput']}
+                  value={getActionInitiativeTiming(selectedEditedAction)}
+                  onChange={(event) => {
+                    const initiativeTiming = event.target
+                      .value as InitiativeTimingOverride;
+
+                    updateSelectedEditedAction((action) => ({
+                      ...action,
+                      ...(initiativeTiming === 'normal'
+                        ? { initiativeTiming: undefined }
+                        : { initiativeTiming }),
+                    }));
+                  }}
+                >
+                  {INITIATIVE_TIMING_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className={styles['modalHint']}>
+                  Use this only for effects such as speed weapons or slow that
+                  explicitly make this action win or lose initiative.
+                </p>
                 {requiresAttackRoutineCountInput(
                   selectedEditedAction.declaredAction,
                   actionEditedCombatant.weaponId
@@ -5628,13 +5805,22 @@ const InitiativePlayground = ({
                               : `Action ${actionIndex + 1}`}
                           </span>
                           <span className={styles['targetPickerMeta']}>
-                            {formatCompactDeclarationMeta(
-                              action.declaredAction,
-                              action.actionLabel,
-                              action.actionDistanceInches,
-                              action.activationSegments,
-                              action.castingSegments
-                            )}
+                            {[
+                              formatCompactDeclarationMeta(
+                                action.declaredAction,
+                                action.actionLabel,
+                                action.actionDistanceInches,
+                                action.activationSegments,
+                                action.castingSegments
+                              ),
+                              formatInitiativeTimingMeta(
+                                action.initiativeTiming
+                              ),
+                            ]
+                              .filter((value): value is string =>
+                                Boolean(value)
+                              )
+                              .join(' · ')}
                           </span>
                         </span>
                       </label>

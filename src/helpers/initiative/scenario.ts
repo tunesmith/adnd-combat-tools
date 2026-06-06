@@ -205,6 +205,7 @@ const getDraftActionDeclarations = (
           id: 'main',
           declaredAction: combatant.declaredAction ?? 'open-melee',
           actionLabel: combatant.actionLabel,
+          initiativeTiming: combatant.initiativeTiming,
           actionDistanceInches: combatant.actionDistanceInches,
           activationSegments: combatant.activationSegments,
           castingSegments: combatant.castingSegments,
@@ -250,6 +251,7 @@ const toOpenMeleeCombatant = (
 ): OpenMeleeCombatant => ({
   id: combatant.id,
   initiative: combatant.initiative,
+  initiativeTiming: combatant.initiativeTiming,
   weaponKind: combatant.weaponType === 'melee' ? 'weapon' : 'natural',
   weaponSpeedFactor:
     combatant.weaponType === 'melee' ? combatant.weaponSpeedFactor : undefined,
@@ -276,6 +278,10 @@ const buildScenarioCombatants = (
       const combatantId = getCombatantId(side, combatantKey);
       const declaredAction = action.declaredAction;
       const actionLabel = action.actionLabel?.trim();
+      const initiativeTiming =
+        action.initiativeTiming && action.initiativeTiming !== 'normal'
+          ? action.initiativeTiming
+          : undefined;
       const draftTargetDeclarations = getTargetDeclarations(action);
       const targetDeclarations =
         declaredAction === 'none'
@@ -326,6 +332,7 @@ const buildScenarioCombatants = (
         actionIndex,
         name: combatantName,
         initiative,
+        ...(initiativeTiming ? { initiativeTiming } : {}),
         missileInitiativeAdjustment: combatant.missileInitiativeAdjustment ?? 0,
         declaredAction,
         ...(actionLabel ? { actionLabel } : {}),

@@ -136,6 +136,64 @@ describe('generic initiative scenario builder', () => {
     ]);
   });
 
+  test('carries initiative timing overrides through expanded actions', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Action Timing',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          weaponId: 17,
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Sword of speed',
+              initiativeTiming: 'wins-initiative',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'open-melee',
+              actionLabel: 'Normal attack',
+              targetCombatantKeys: [3],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Gnoll',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+
+    const speedAction = scenario.party.find(
+      (combatant) => combatant.id === 'party-1'
+    );
+    const normalAction = scenario.party.find(
+      (combatant) => combatant.id === 'party-action-1001'
+    );
+
+    expect(speedAction).toMatchObject({
+      actionId: 'main',
+      actionIndex: 0,
+      actionLabel: 'Sword of speed',
+      initiativeTiming: 'wins-initiative',
+    });
+    expect(normalAction).toMatchObject({
+      actionId: 'action-2',
+      actionIndex: 1,
+      actionLabel: 'Normal attack',
+    });
+    expect(normalAction?.initiativeTiming).toBeUndefined();
+  });
+
   test('caps missile targets to whole-number firing rate', () => {
     const scenario = buildInitiativeScenario({
       label: 'Split Targets',

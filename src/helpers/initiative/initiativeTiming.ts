@@ -1,4 +1,7 @@
-import type { InitiativeScenarioCombatant } from '../../types/initiative';
+import type {
+  InitiativeScenarioCombatant,
+  InitiativeTimingOverride,
+} from '../../types/initiative';
 
 type MissileTimingCombatant = Pick<
   InitiativeScenarioCombatant,
@@ -6,7 +9,7 @@ type MissileTimingCombatant = Pick<
 >;
 
 type InitiativeTimingCombatant = MissileTimingCombatant &
-  Pick<InitiativeScenarioCombatant, 'initiative'>;
+  Pick<InitiativeScenarioCombatant, 'initiative' | 'initiativeTiming'>;
 
 export const movementSuppressesPositiveReactionInitiativeBonuses = (
   movementRate: number
@@ -28,7 +31,29 @@ export const getEffectiveInitiative = (
 ): number =>
   combatant.initiative + getAppliedMissileInitiativeAdjustment(combatant);
 
+export const getInitiativeTimingOverrideRank = (
+  initiativeTiming: InitiativeTimingOverride | undefined
+): number => {
+  if (initiativeTiming === 'wins-initiative') {
+    return 1;
+  }
+
+  if (initiativeTiming === 'loses-initiative') {
+    return -1;
+  }
+
+  return 0;
+};
+
 export const compareCombatantInitiative = (
   left: InitiativeScenarioCombatant,
   right: InitiativeScenarioCombatant
-): number => getEffectiveInitiative(left) - getEffectiveInitiative(right);
+): number => {
+  const timingRankDifference =
+    getInitiativeTimingOverrideRank(left.initiativeTiming) -
+    getInitiativeTimingOverrideRank(right.initiativeTiming);
+
+  return timingRankDifference !== 0
+    ? timingRankDifference
+    : getEffectiveInitiative(left) - getEffectiveInitiative(right);
+};

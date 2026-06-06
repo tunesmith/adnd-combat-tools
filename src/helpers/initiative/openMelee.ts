@@ -1,13 +1,16 @@
 import type {
   InitiativeAttackEntry,
   InitiativeAttackRoutine,
+  InitiativeTimingOverride,
 } from '../../types/initiative';
+import { getInitiativeTimingOverrideRank } from './initiativeTiming';
 
 type OpenMeleeWeaponKind = 'weapon' | 'natural';
 
 export interface OpenMeleeCombatant {
   id: string;
   initiative: number;
+  initiativeTiming?: InitiativeTimingOverride;
   weaponKind: OpenMeleeWeaponKind;
   weaponSpeedFactor?: number;
   attackRoutine: InitiativeAttackRoutine;
@@ -113,16 +116,41 @@ const getRoutinePhase = (attackNumber: number, attackCount: number): number => {
   return (attackNumber - 1) / (attackCount - 1);
 };
 
-const compareSharedPhaseAttacks = (
+const compareInitiativeTimingAndDie = (
   left: OpenMeleeCombatant,
   right: OpenMeleeCombatant
 ): -1 | 0 | 1 => {
+  const timingRankDifference =
+    getInitiativeTimingOverrideRank(left.initiativeTiming) -
+    getInitiativeTimingOverrideRank(right.initiativeTiming);
+
+  if (timingRankDifference > 0) {
+    return -1;
+  }
+
+  if (timingRankDifference < 0) {
+    return 1;
+  }
+
   if (left.initiative > right.initiative) {
     return -1;
   }
 
   if (right.initiative > left.initiative) {
     return 1;
+  }
+
+  return 0;
+};
+
+const compareSharedPhaseAttacks = (
+  left: OpenMeleeCombatant,
+  right: OpenMeleeCombatant
+): -1 | 0 | 1 => {
+  const initiativeOrder = compareInitiativeTimingAndDie(left, right);
+
+  if (initiativeOrder !== 0) {
+    return initiativeOrder;
   }
 
   if (left.weaponKind !== 'weapon' || right.weaponKind !== 'weapon') {
@@ -233,7 +261,9 @@ export const resolveOpenMeleeExchange = (
     return resolveMultipleRoutineExchange(left, right);
   }
 
-  if (left.initiative > right.initiative) {
+  const initiativeOrder = compareInitiativeTimingAndDie(left, right);
+
+  if (initiativeOrder < 0) {
     return {
       reason: 'initiative',
       steps: [
@@ -243,7 +273,7 @@ export const resolveOpenMeleeExchange = (
     };
   }
 
-  if (right.initiative > left.initiative) {
+  if (initiativeOrder > 0) {
     return {
       reason: 'initiative',
       steps: [

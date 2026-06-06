@@ -270,6 +270,125 @@ describe('initiative attack graph', () => {
     );
   });
 
+  test('orders a winning speed action before normal attacks from the same combatant', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Speed Sword Timing',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          weaponId: 17,
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Sword of speed',
+              initiativeTiming: 'wins-initiative',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'open-melee',
+              actionLabel: 'Normal attack',
+              targetCombatantKeys: [3],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Pillar Gnoll',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+      ['attack:party-action-1001:1'],
+    ]);
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['direct-melee'],
+        },
+        {
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'attack:party-action-1001:1',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:party-action-1001:1',
+          reasons: ['action-sequence'],
+        },
+      ])
+    );
+  });
+
+  test('lets a slowed spellcaster lose initiative without changing casting time', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Slow Spell Timing',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Sot',
+          declaredAction: 'open-melee',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Yeenoghu',
+          declaredAction: 'spell-casting',
+          actionLabel: 'Cause fear',
+          initiativeTiming: 'loses-initiative',
+          castingSegments: 4,
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'spell-completion:enemy-3',
+          segment: 4,
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'spell-completion:enemy-3',
+          reasons: ['spell-interruption'],
+        },
+      ])
+    );
+  });
+
   test('adds only local direct-melee precedence in a tied round', () => {
     const draft: InitiativeScenarioDraft = {
       label: 'Mixed Open Melee',

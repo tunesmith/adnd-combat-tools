@@ -197,6 +197,65 @@ describe('initiative codec', () => {
     ).resolves.toEqual(state);
   });
 
+  test('round-trips per-action initiative timing overrides', async () => {
+    const state: InitiativePlaytestState = {
+      label: 'Timing Overrides',
+      partyInitiative: '2',
+      enemyInitiative: '5',
+      nextCombatantKey: 4,
+      party: [
+        {
+          ...createCombatantState({
+            key: 1,
+            name: 'Lodi',
+            declaredAction: 'open-melee',
+            weaponId: 17,
+            targetCombatantKeys: [3],
+          }),
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Sword of speed',
+              initiativeTiming: 'wins-initiative',
+              actionDistanceInches: '',
+              activationSegments: '',
+              castingSegments: '',
+              attackRoutineCount: '1',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'open-melee',
+              actionLabel: 'Normal attack',
+              actionDistanceInches: '',
+              activationSegments: '',
+              castingSegments: '',
+              attackRoutineCount: '1',
+              targetCombatantKeys: [3],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        createCombatantState({
+          key: 3,
+          name: 'Gnoll',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        }),
+      ],
+      pairDistances: {},
+      attackActivationSegments: {},
+      attackCastingSegments: {},
+    };
+
+    await expect(
+      decodeInitiativePlaytestState(encodeInitiativePlaytestState(state))
+    ).resolves.toEqual(state);
+  });
+
   test('rejects unsupported initiative state payloads', async () => {
     await expect(
       decodeInitiativePlaytestState(

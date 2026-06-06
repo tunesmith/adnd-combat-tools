@@ -125,6 +125,72 @@ describe('initiative round resolution', () => {
     expect(resolution.simpleOrderCombatantIds).toEqual(['party-1', 'enemy-3']);
   });
 
+  test('groups action timing overrides before and after normal side initiative', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Timing Overrides',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          weaponId: 17,
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Sword of speed',
+              initiativeTiming: 'wins-initiative',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'open-melee',
+              actionLabel: 'Normal attack',
+              targetCombatantKeys: [3],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Yeenoghu',
+          declaredAction: 'spell-casting',
+          actionLabel: 'Slow spell',
+          initiativeTiming: 'loses-initiative',
+          castingSegments: 4,
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+
+    expect(resolution.simpleOrder).toBe('enemy-first');
+    expect(resolution.simpleOrderSteps).toEqual([
+      {
+        sides: ['party'],
+        initiativeTiming: 'wins-initiative',
+        combatantIds: ['party-1'],
+      },
+      {
+        sides: ['party'],
+        combatantIds: ['party-action-1001'],
+      },
+      {
+        sides: ['enemy'],
+        initiativeTiming: 'loses-initiative',
+        combatantIds: ['enemy-3'],
+      },
+    ]);
+    expect(resolution.simpleOrderCombatantIds).toEqual([
+      'party-1',
+      'party-action-1001',
+      'enemy-3',
+    ]);
+  });
+
   test('groups simple-order combatants together when side initiative is simultaneous', () => {
     const round = requireRound();
 

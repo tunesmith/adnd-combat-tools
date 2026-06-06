@@ -1,10 +1,14 @@
 import { deflateSync, unzip } from 'zlib';
-import type { InitiativeDeclaredAction } from '../types/initiative';
+import type {
+  InitiativeDeclaredAction,
+  InitiativeTimingOverride,
+} from '../types/initiative';
 
 export interface InitiativePlaytestActionState {
   id: string;
   declaredAction: InitiativeDeclaredAction;
   actionLabel?: string;
+  initiativeTiming?: InitiativeTimingOverride;
   actionDistanceInches: string;
   activationSegments: string;
   castingSegments: string;
@@ -72,10 +76,24 @@ interface InitiativePlaytestStateV3 {
   attackCastingSegments: Record<string, string>;
 }
 
+interface InitiativePlaytestStateV4 {
+  version: 4;
+  label: string;
+  partyInitiative: string;
+  enemyInitiative: string;
+  nextCombatantKey: number;
+  party: InitiativePlaytestCombatantState[];
+  enemies: InitiativePlaytestCombatantState[];
+  pairDistances: Record<string, string>;
+  attackActivationSegments: Record<string, string>;
+  attackCastingSegments: Record<string, string>;
+}
+
 type InitiativePlaytestStateAnyVersion =
   | InitiativePlaytestStateV1
   | InitiativePlaytestStateV2
-  | InitiativePlaytestStateV3;
+  | InitiativePlaytestStateV3
+  | InitiativePlaytestStateV4;
 
 const INITIATIVE_ACTIONS: InitiativeDeclaredAction[] = [
   'none',
@@ -89,6 +107,12 @@ const INITIATIVE_ACTIONS: InitiativeDeclaredAction[] = [
   'spell-casting',
 ];
 
+const INITIATIVE_TIMING_OVERRIDES: InitiativeTimingOverride[] = [
+  'normal',
+  'wins-initiative',
+  'loses-initiative',
+];
+
 export const INITIATIVE_ACTION_LABEL_MAX_LENGTH = 80;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -99,6 +123,12 @@ const isInitiativeDeclaredAction = (
 ): value is InitiativeDeclaredAction =>
   typeof value === 'string' &&
   INITIATIVE_ACTIONS.includes(value as InitiativeDeclaredAction);
+
+const isInitiativeTimingOverride = (
+  value: unknown
+): value is InitiativeTimingOverride =>
+  typeof value === 'string' &&
+  INITIATIVE_TIMING_OVERRIDES.includes(value as InitiativeTimingOverride);
 
 const sanitizeString = (value: unknown): string =>
   typeof value === 'string' ? value : String(value ?? '');
@@ -130,6 +160,7 @@ const sanitizeTargetCombatantKeys = (value: unknown): number[] =>
 interface InitiativePlaytestActionFallback {
   declaredAction: InitiativeDeclaredAction;
   actionLabel?: string;
+  initiativeTiming?: InitiativeTimingOverride;
   actionDistanceInches: string;
   activationSegments: string;
   castingSegments: string;
@@ -150,6 +181,11 @@ const sanitizeAction = (
     ? candidate['declaredAction']
     : fallback.declaredAction;
   const actionLabel = sanitizeActionLabel(candidate['actionLabel']);
+  const initiativeTiming = isInitiativeTimingOverride(
+    candidate['initiativeTiming']
+  )
+    ? candidate['initiativeTiming']
+    : fallback.initiativeTiming;
   const targetCombatantKeys = sanitizeTargetCombatantKeys(
     candidate['targetCombatantKeys']
   );
@@ -162,6 +198,9 @@ const sanitizeAction = (
       .slice(0, 40),
     declaredAction,
     ...(actionLabel ? { actionLabel } : {}),
+    ...(initiativeTiming && initiativeTiming !== 'normal'
+      ? { initiativeTiming }
+      : {}),
     actionDistanceInches: sanitizeString(
       candidate['actionDistanceInches'] ?? fallback.actionDistanceInches
     ),
@@ -196,6 +235,10 @@ const sanitizeCombatant = (
   const fallbackAction: InitiativePlaytestActionFallback = {
     declaredAction,
     ...(actionLabel ? { actionLabel } : {}),
+    ...(isInitiativeTimingOverride(candidate['initiativeTiming']) &&
+    candidate['initiativeTiming'] !== 'normal'
+      ? { initiativeTiming: candidate['initiativeTiming'] }
+      : {}),
     actionDistanceInches: sanitizeString(candidate['actionDistanceInches']),
     activationSegments: sanitizeString(candidate['activationSegments']),
     castingSegments: sanitizeString(candidate['castingSegments']),
@@ -303,7 +346,7 @@ const parseInitiativePlaytestState = (
   }
 
   const version = sanitizeNumber(value['version'], NaN);
-  if (version !== 1 && version !== 2 && version !== 3) {
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4) {
     throw new Error('Stored initiative state is not a supported version.');
   }
 
@@ -332,8 +375,8 @@ const parseInitiativePlaytestState = (
 export const encodeInitiativePlaytestState = (
   state: InitiativePlaytestState
 ): string => {
-  const persistedState: InitiativePlaytestStateV3 = {
-    version: 3,
+  const persistedState: InitiativePlaytestStateV4 = {
+    version: 4,
     ...state,
   };
 

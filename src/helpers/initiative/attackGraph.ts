@@ -8,10 +8,7 @@ import type {
   InitiativeScenario,
   InitiativeScenarioCombatant,
 } from '../../types/initiative';
-import {
-  compareCombatantInitiative,
-  getEffectiveInitiative,
-} from './initiativeTiming';
+import { compareCombatantInitiative } from './initiativeTiming';
 import {
   determineWeaponVsTimedAction,
   TIMED_ACTION_WEAPON_TIE,
@@ -385,7 +382,7 @@ interface SimpleInitiativePhase {
   nodeId: string;
   side: InitiativeScenarioCombatant['side'];
   phase: number;
-  effectiveInitiative: number;
+  combatant: InitiativeScenarioCombatant;
   node: InitiativeAttackNode;
 }
 
@@ -439,7 +436,7 @@ const buildSimpleInitiativePhases = (
         nodeId: node.id,
         side: combatant.side,
         phase: getSimpleInitiativePhase(combatant, node.attackNumber),
-        effectiveInitiative: getEffectiveInitiative(combatant),
+        combatant,
         node,
       },
     ];
@@ -487,7 +484,12 @@ const addSimpleInitiativeEdges = (
           return;
         }
 
-        if (leftPhase.effectiveInitiative > rightPhase.effectiveInitiative) {
+        const initiativeComparison = compareCombatantInitiative(
+          leftPhase.combatant,
+          rightPhase.combatant
+        );
+
+        if (initiativeComparison > 0) {
           mergeEdgeReason(
             edgesByKey,
             leftPhase.nodeId,
@@ -497,7 +499,7 @@ const addSimpleInitiativeEdges = (
           return;
         }
 
-        if (rightPhase.effectiveInitiative > leftPhase.effectiveInitiative) {
+        if (initiativeComparison < 0) {
           mergeEdgeReason(
             edgesByKey,
             rightPhase.nodeId,
@@ -545,6 +547,81 @@ const addSimpleInitiativeEdges = (
 
         mergeEdgeReason(edgesByKey, fromNodeId, toNodeId, 'simple-initiative');
       });
+    });
+  });
+};
+
+const addOwnerActionTimingEdges = (
+  combatantById: Map<string, InitiativeScenarioCombatant>,
+  simpleInitiativeNodes: InitiativeAttackNode[],
+  edgesByKey: Map<string, InitiativeAttackEdge>
+) => {
+  const nodesByCombatantId = new Map<string, InitiativeAttackNode[]>();
+  simpleInitiativeNodes.forEach((node) => {
+    const existing = nodesByCombatantId.get(node.combatantId) || [];
+    existing.push(node);
+    nodesByCombatantId.set(node.combatantId, existing);
+  });
+
+  const combatantsByOwnerKey = new Map<string, InitiativeScenarioCombatant[]>();
+  combatantById.forEach((combatant) => {
+    if (
+      combatant.ownerCombatantKey === undefined ||
+      combatant.actionIndex === undefined
+    ) {
+      return;
+    }
+
+    const nodeCount = nodesByCombatantId.get(combatant.id)?.length || 0;
+    if (nodeCount === 0) {
+      return;
+    }
+
+    const ownerKey = `${combatant.side}:${combatant.ownerCombatantKey}`;
+    const existing = combatantsByOwnerKey.get(ownerKey) || [];
+    existing.push(combatant);
+    combatantsByOwnerKey.set(ownerKey, existing);
+  });
+
+  combatantsByOwnerKey.forEach((combatants) => {
+    if (combatants.length < 2) {
+      return;
+    }
+
+    const orderedCombatants = [...combatants].sort((left, right) => {
+      const initiativeComparison = compareCombatantInitiative(left, right);
+
+      if (initiativeComparison !== 0) {
+        return -initiativeComparison;
+      }
+
+      return (left.actionIndex || 0) - (right.actionIndex || 0);
+    });
+
+    orderedCombatants.forEach((combatant, index) => {
+      const nextCombatant = orderedCombatants[index + 1];
+      if (!nextCombatant) {
+        return;
+      }
+
+      if (compareCombatantInitiative(combatant, nextCombatant) === 0) {
+        return;
+      }
+
+      const fromNodes = [...(nodesByCombatantId.get(combatant.id) || [])].sort(
+        (left, right) => left.attackNumber - right.attackNumber
+      );
+      const toNodes = [
+        ...(nodesByCombatantId.get(nextCombatant.id) || []),
+      ].sort((left, right) => left.attackNumber - right.attackNumber);
+      const fromNode = fromNodes[fromNodes.length - 1];
+      const toNode = toNodes[0];
+
+      if (!fromNode || !toNode) {
+        return;
+      }
+
+      mergeEdgeReason(edgesByKey, fromNode.id, toNode.id, 'action-sequence');
     });
   });
 };
@@ -1373,6 +1450,7 @@ export const buildInitiativeAttackGraph = (
     edgesByKey
   );
   addRoutineSequenceEdges(combatantById, simpleInitiativeNodes, edgesByKey);
+  addOwnerActionTimingEdges(combatantById, simpleInitiativeNodes, edgesByKey);
   addSimpleInitiativeEdges(
     combatantById,
     simpleInitiativeNodes,

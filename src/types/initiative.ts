@@ -4,6 +4,10 @@ export type InitiativeScenarioOrder =
   | 'enemy-first'
   | 'simultaneous';
 export type InitiativeWeaponType = 'melee' | 'missile' | 'natural';
+export type InitiativeTimingOverride =
+  | 'normal'
+  | 'wins-initiative'
+  | 'loses-initiative';
 export type InitiativeDeclaredAction =
   | 'none'
   | 'open-melee'
@@ -46,6 +50,7 @@ export interface InitiativeScenarioCombatant {
   actionIndex?: number;
   name: string;
   initiative: number;
+  initiativeTiming?: InitiativeTimingOverride;
   missileInitiativeAdjustment: number;
   declaredAction: InitiativeDeclaredAction;
   actionLabel?: string;
@@ -76,6 +81,7 @@ export interface InitiativeScenarioDraftActionDeclaration {
   id?: string;
   declaredAction: InitiativeDeclaredAction;
   actionLabel?: string;
+  initiativeTiming?: InitiativeTimingOverride;
   actionDistanceInches?: number;
   activationSegments?: number;
   castingSegments?: number;
@@ -91,6 +97,7 @@ export interface InitiativeScenarioDraftCombatant {
   actionLabel?: string;
   movementRate?: number;
   actionDistanceInches?: number;
+  initiativeTiming?: InitiativeTimingOverride;
   activationSegments?: number;
   castingSegments?: number;
   missileInitiativeAdjustment?: number;
@@ -201,6 +208,7 @@ export interface InitiativeScenario {
 export interface InitiativeSimpleOrderStep {
   combatantIds: string[];
   sides: InitiativeScenarioSide[];
+  initiativeTiming?: InitiativeTimingOverride;
 }
 
 export interface InitiativeRoundResolution {
@@ -315,6 +323,7 @@ export interface InitiativeAttackNode {
 
 export type InitiativeAttackEdgeReason =
   | 'simple-initiative'
+  | 'action-sequence'
   | 'direct-melee'
   | 'movement'
   | 'spell-casting'
