@@ -3862,9 +3862,8 @@ const InitiativePlayground = ({
               <p className={styles['matrixCopy']}>
                 Party combatants run across the top, enemies run down the side.
                 Set each combatant&apos;s round action from its header, then use
-                the cells only to toggle targets. Clean open-melee mutual
-                targets light up as duels. Click the metadata half of a row or
-                column header to edit persistent combatant details.
+                the cells only to toggle targets. Click the metadata half of a
+                row or column header to edit persistent combatant details.
               </p>
             </div>
 
@@ -4174,22 +4173,6 @@ const InitiativePlayground = ({
                               partyTargetingActions.length > 0;
                             const enemyTargetsParty =
                               enemyTargetingActions.length > 0;
-                            const isMutualTarget =
-                              partyTargetsEnemy && enemyTargetsParty;
-                            const isDuel =
-                              isMutualTarget &&
-                              partyPrimaryAction.declaredAction ===
-                                'open-melee' &&
-                              enemyPrimaryAction.declaredAction ===
-                                'open-melee' &&
-                              partyPrimaryAction.targetCombatantKeys.includes(
-                                enemyCombatant.key
-                              ) &&
-                              enemyPrimaryAction.targetCombatantKeys.includes(
-                                partyCombatant.key
-                              ) &&
-                              isNonMissileWeaponId(partyCombatant.weaponId) &&
-                              isNonMissileWeaponId(enemyCombatant.weaponId);
                             const pairDistance =
                               partyPrimaryAction.actionDistanceInches ||
                               enemyPrimaryAction.actionDistanceInches ||
@@ -4216,12 +4199,7 @@ const InitiativePlayground = ({
                             return (
                               <td
                                 key={`matrix-${enemyCombatant.key}-${partyCombatant.key}`}
-                                className={[
-                                  styles['matrixCell'],
-                                  isDuel ? styles['matrixCellDuel'] : '',
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ')}
+                                className={styles['matrixCell']}
                               >
                                 <div className={styles['matrixCellBody']}>
                                   <div className={styles['matrixCellActions']}>
@@ -4358,15 +4336,6 @@ const InitiativePlayground = ({
                                       ) : null}
                                     </button>
                                   </div>
-                                  {isDuel ? (
-                                    <span className={styles['matrixBadge']}>
-                                      Duel
-                                    </span>
-                                  ) : isMutualTarget ? (
-                                    <span className={styles['matrixBadge']}>
-                                      Mutual target
-                                    </span>
-                                  ) : null}
                                 </div>
                               </td>
                             );
@@ -4431,7 +4400,7 @@ const InitiativePlayground = ({
                 </span>
               </div>
               <div className={styles['summaryCell']}>
-                <span className={styles['summaryLabel']}>Duels</span>
+                <span className={styles['summaryLabel']}>Melee pairs</span>
                 <span className={styles['summaryValue']}>
                   {resolution.directMeleeEngagements.length}
                 </span>
