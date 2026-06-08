@@ -202,7 +202,6 @@ export interface InitiativeScenario {
   movementResolutions: InitiativeMovementResolution[];
   directMeleePairs: DirectMeleePair[];
   directMeleeEngagements: DirectMeleeEngagement[];
-  unresolvedMeleeCandidateIds: string[];
 }
 
 export interface InitiativeSimpleOrderStep {
@@ -219,7 +218,6 @@ export interface InitiativeRoundResolution {
   overriddenCombatantIds: string[];
   movementResolutions: InitiativeMovementResolution[];
   directMeleeEngagements: DirectMeleeEngagement[];
-  unresolvedMeleeCandidateIds: string[];
 }
 
 export interface InitiativeAttackNode {

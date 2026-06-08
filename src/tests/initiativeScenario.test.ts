@@ -68,7 +68,6 @@ describe('generic initiative scenario builder', () => {
     expect(scenario.directMeleeEngagements[0]?.resolution.reason).toBe(
       'weapon-speed-double'
     );
-    expect(scenario.unresolvedMeleeCandidateIds).toEqual([]);
   });
 
   test('expands ordinary-round missile routines from firing rate', () => {

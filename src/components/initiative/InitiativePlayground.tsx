@@ -1904,15 +1904,15 @@ interface GraphContextMenuState {
 
 const GRAPH_NODE_FILL_BY_SIDE: Record<
   InitiativePlaytestSide,
-  Record<'unresolved' | GraphNodeStatus, string>
+  Record<'pending' | GraphNodeStatus, string>
 > = {
   party: {
-    unresolved: '#6F8E34',
+    pending: '#6F8E34',
     resolved: '#556C2E',
     lost: '#3E4D28',
   },
   enemy: {
-    unresolved: '#9A4E40',
+    pending: '#9A4E40',
     resolved: '#74483C',
     lost: '#553730',
   },
@@ -1938,7 +1938,7 @@ const GRAPH_NODE_STATUS_BADGE: Record<
 const getGraphNodeFill = (
   side: InitiativePlaytestSide,
   status: GraphNodeStatus | undefined
-): string => GRAPH_NODE_FILL_BY_SIDE[side][status || 'unresolved'];
+): string => GRAPH_NODE_FILL_BY_SIDE[side][status || 'pending'];
 
 const getGraphNodeStatusLabel = (status: GraphNodeStatus): string =>
   GRAPH_NODE_STATUS_BADGE[status].label;
@@ -2007,9 +2007,6 @@ const InitiativePlayground = ({
   const viewModel = useMemo(
     () => buildInitiativeRoundResolutionViewModel(scenario, resolution),
     [resolution, scenario]
-  );
-  const simpleOrderCard = viewModel.cards.find(
-    (card) => card.kind === 'simple-order'
   );
   const attackNodeById = useMemo(
     () => new Map(attackGraph.nodes.map((node) => [node.id, node] as const)),
@@ -2885,13 +2882,13 @@ const InitiativePlayground = ({
       }
 
       const blockerIds = incomingBlockerIdsByNodeId.get(node.id);
-      const hasUnresolvedBlockers = blockerIds
+      const hasPendingBlockers = blockerIds
         ? Array.from(blockerIds).some(
             (blockerId) => graphNodeStatusById[blockerId] === undefined
           )
         : false;
 
-      return !hasUnresolvedBlockers;
+      return !hasPendingBlockers;
     });
     const earliestEnabledSegment = baseEnabledNodes.reduce<number | undefined>(
       (earliestSegment, node) => {
@@ -4375,49 +4372,7 @@ const InitiativePlayground = ({
 
         <section className={styles['panel']}>
           <div className={styles['graphPanel']}>
-            <div className={styles['graphHeader']}>
-              <h2 className={styles['graphTitle']}>Precedence DAG</h2>
-            </div>
-            <div className={styles['summaryStrip']}>
-              <div
-                className={[
-                  styles['summaryCell'],
-                  styles['summaryCellBaseline'],
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                <span className={styles['summaryLabel']}>Baseline</span>
-                <span
-                  className={[
-                    styles['summaryValue'],
-                    styles['summaryValueLong'],
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {simpleOrderCard?.summary || resolution.simpleOrder}
-                </span>
-              </div>
-              <div className={styles['summaryCell']}>
-                <span className={styles['summaryLabel']}>Melee pairs</span>
-                <span className={styles['summaryValue']}>
-                  {resolution.directMeleeEngagements.length}
-                </span>
-              </div>
-              <div className={styles['summaryCell']}>
-                <span className={styles['summaryLabel']}>Movement</span>
-                <span className={styles['summaryValue']}>
-                  {resolution.movementResolutions.length}
-                </span>
-              </div>
-              <div className={styles['summaryCell']}>
-                <span className={styles['summaryLabel']}>Unresolved</span>
-                <span className={styles['summaryValue']}>
-                  {resolution.unresolvedMeleeCandidateIds.length}
-                </span>
-              </div>
-            </div>
+            <h2 className={styles['graphTitle']}>Precedence DAG</h2>
             <div className={styles['graphWorkspace']}>
               <div className={styles['graphViewportShell']}>
                 <div ref={graphViewportRef} className={styles['graphViewport']}>

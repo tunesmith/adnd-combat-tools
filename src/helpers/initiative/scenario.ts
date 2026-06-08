@@ -471,19 +471,6 @@ export const buildInitiativeScenario = (
     }
   );
 
-  const directPairCombatantIds = new Set(
-    directMeleePairs.flatMap((pair) => [
-      pair.partyCombatantId,
-      pair.enemyCombatantId,
-    ])
-  );
-  const unresolvedMeleeCandidateIds = Array.from(
-    new Set(
-      mutualCandidates
-        .flatMap((pair) => [pair.partyCombatantId, pair.enemyCombatantId])
-        .filter((combatantId) => !directPairCombatantIds.has(combatantId))
-    )
-  );
   const initialMovementResolutions = party
     .concat(enemies)
     .flatMap((combatant) => {
@@ -520,6 +507,5 @@ export const buildInitiativeScenario = (
     movementResolutions,
     directMeleePairs,
     directMeleeEngagements,
-    unresolvedMeleeCandidateIds,
   };
 };

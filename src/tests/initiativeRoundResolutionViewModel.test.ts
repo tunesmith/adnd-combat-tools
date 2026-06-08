@@ -78,52 +78,6 @@ describe('initiative round resolution view model', () => {
     ]);
   });
 
-  test('adds an unresolved card when mutual contact is ambiguous', () => {
-    const scenario = buildInitiativeScenario({
-      label: 'Ambiguous Scrum',
-      partyInitiative: 6,
-      enemyInitiative: 1,
-      party: [
-        {
-          combatantKey: 1,
-          name: 'Moryn',
-          weaponId: 2,
-          targetCombatantKeys: [4],
-        },
-        {
-          combatantKey: 2,
-          name: 'Sella',
-          weaponId: 3,
-          targetCombatantKeys: [4],
-        },
-      ],
-      enemies: [
-        {
-          combatantKey: 4,
-          name: 'Bugbear',
-          weaponId: 1,
-          targetCombatantKeys: [1, 2],
-        },
-      ],
-    });
-    const resolution = resolveInitiativeRound(scenario);
-    const viewModel = buildInitiativeRoundResolutionViewModel(
-      scenario,
-      resolution
-    );
-    const unresolvedCard = viewModel.cards.find(
-      (card) => card.kind === 'unresolved'
-    );
-
-    expect(unresolvedCard?.kind).toBe('unresolved');
-    expect(unresolvedCard?.summary).toContain('clean one-to-one pairing');
-    expect(unresolvedCard?.steps[0]).toEqual({
-      label: 'Held back for adjudication',
-      detail: 'Moryn, Sella, Bugbear',
-      combatantIds: ['party-1', 'party-2', 'enemy-4'],
-    });
-  });
-
   test('adds movement cards for close and charge outcomes', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge Contact',

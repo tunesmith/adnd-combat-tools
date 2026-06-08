@@ -25,8 +25,7 @@ interface InitiativeResolutionCardViewModel {
     | 'direct-melee'
     | 'turn-undead'
     | 'magical-device'
-    | 'spell-casting'
-    | 'unresolved';
+    | 'spell-casting';
   title: string;
   summary: string;
   combatantIds: string[];
@@ -137,9 +136,6 @@ const buildCombatantById = (
       .concat(scenario.enemies)
       .map((combatant) => [combatant.id, combatant] as const)
   );
-
-const getOrderedCombatantIds = (scenario: InitiativeScenario): string[] =>
-  scenario.party.concat(scenario.enemies).map((combatant) => combatant.id);
 
 const getSimpleOrderSummary = (
   scenario: InitiativeScenario,
@@ -305,25 +301,6 @@ const getDirectMeleeSummary = (
   }
 
   return `Both sides tied initiative at ${partyCombatant.initiative}. ${faster.name}'s weapon speed factor ${faster.weaponSpeedFactor} beats ${slower.name}'s ${slower.weaponSpeedFactor} by ${difference}, which is 10 or more, so the faster weapon gets a third attack simultaneous with the slower weapon's first.`;
-};
-
-const getStepDetail = (
-  combatantIds: string[],
-  combatantNameById: Record<string, string>
-): string => {
-  const names = combatantIds.map(
-    (combatantId) => combatantNameById[combatantId] || combatantId
-  );
-
-  if (names.length <= 1) {
-    return names[0] || '';
-  }
-
-  if (names.length === 2) {
-    return `${names[0]} and ${names[1]}`;
-  }
-
-  return `${names.slice(0, -1).join(', ')}, ${names[names.length - 1]}`;
 };
 
 const buildDirectMeleeCards = (
@@ -999,39 +976,6 @@ const buildSpellCastingCards = (
       };
     });
 
-const buildUnresolvedCard = (
-  scenario: InitiativeScenario,
-  resolution: InitiativeRoundResolution,
-  combatantNameById: Record<string, string>
-): InitiativeResolutionCardViewModel | undefined => {
-  if (resolution.unresolvedMeleeCandidateIds.length === 0) {
-    return undefined;
-  }
-
-  const unresolvedCombatantIdSet = new Set(
-    resolution.unresolvedMeleeCandidateIds
-  );
-  const orderedCombatantIds = getOrderedCombatantIds(scenario).filter(
-    (combatantId) => unresolvedCombatantIdSet.has(combatantId)
-  );
-
-  return {
-    id: 'unresolved-melee',
-    kind: 'unresolved',
-    title: 'Unresolved Melee Contact',
-    summary:
-      'These combatants are in mutual melee contact, but not in a clean one-to-one pairing. The current rules slice does not infer extra local precedence for them beyond the baseline initiative order.',
-    combatantIds: resolution.unresolvedMeleeCandidateIds,
-    steps: [
-      {
-        label: 'Held back for adjudication',
-        detail: getStepDetail(orderedCombatantIds, combatantNameById),
-        combatantIds: orderedCombatantIds,
-      },
-    ],
-  };
-};
-
 export const buildInitiativeRoundResolutionViewModel = (
   scenario: InitiativeScenario,
   resolution: InitiativeRoundResolution
@@ -1045,7 +989,6 @@ export const buildInitiativeRoundResolutionViewModel = (
     ...buildTurnUndeadCards(scenario, combatantNameById, combatantById),
     ...buildMagicalDeviceCards(scenario, combatantNameById, combatantById),
     ...buildSpellCastingCards(scenario, combatantNameById, combatantById),
-    buildUnresolvedCard(scenario, resolution, combatantNameById),
   ].filter((card): card is InitiativeResolutionCardViewModel => Boolean(card));
 
   return {

@@ -180,7 +180,6 @@ describe('tracker initiative scenario builder', () => {
     expect(scenario.directMeleeEngagements).toHaveLength(1);
     expect(engagement.resolution.reason).toBe('simultaneous');
     expect(getStepSignatures(engagement)).toEqual([['party-11', 'enemy-41']]);
-    expect(scenario.unresolvedMeleeCandidateIds).toEqual([]);
   });
 
   test('applies the open melee weapon speed resolver to tied direct weapon pairs', () => {
@@ -218,7 +217,7 @@ describe('tracker initiative scenario builder', () => {
     ]);
   });
 
-  test('leaves ambiguous mutual melee contact unresolved instead of inventing pairs', () => {
+  test('does not invent direct pairs for many-to-one melee contact', () => {
     const round = requireRound();
 
     if (!round.party[0] || !round.party[1] || !round.enemies[0]) {
@@ -236,9 +235,5 @@ describe('tracker initiative scenario builder', () => {
 
     expect(scenario.directMeleePairs).toEqual([]);
     expect(scenario.directMeleeEngagements).toEqual([]);
-    expect(scenario.unresolvedMeleeCandidateIds).toEqual(
-      expect.arrayContaining(['party-1', 'party-2', 'enemy-4'])
-    );
-    expect(scenario.unresolvedMeleeCandidateIds).toHaveLength(3);
   });
 });

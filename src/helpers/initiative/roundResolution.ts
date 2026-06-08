@@ -130,6 +130,5 @@ export const resolveInitiativeRound = (
     overriddenCombatantIds,
     movementResolutions: scenario.movementResolutions,
     directMeleeEngagements: scenario.directMeleeEngagements,
-    unresolvedMeleeCandidateIds: scenario.unresolvedMeleeCandidateIds,
   };
 };

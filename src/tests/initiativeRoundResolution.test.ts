@@ -81,7 +81,6 @@ describe('initiative round resolution', () => {
       'party-3',
     ]);
     expect(resolution.directMeleeEngagements).toHaveLength(1);
-    expect(resolution.unresolvedMeleeCandidateIds).toEqual([]);
   });
 
   test('keeps labeled no combat actions on the baseline side initiative track', () => {
@@ -216,10 +215,9 @@ describe('initiative round resolution', () => {
       },
     ]);
     expect(resolution.directMeleeEngagements).toEqual([]);
-    expect(resolution.unresolvedMeleeCandidateIds).toEqual([]);
   });
 
-  test('leaves unresolved melee candidates on baseline side initiative', () => {
+  test('leaves many-to-one melee contact on baseline side initiative', () => {
     const round = requireRound();
 
     round.partyInitiative = '6';
@@ -241,9 +239,6 @@ describe('initiative round resolution', () => {
 
     expect(resolution.directMeleeEngagements).toEqual([]);
     expect(resolution.overriddenCombatantIds).toEqual([]);
-    expect(resolution.unresolvedMeleeCandidateIds).toEqual(
-      expect.arrayContaining(['party-1', 'party-2', 'enemy-4'])
-    );
     expect(resolution.simpleOrderSteps).toEqual([
       {
         sides: ['party'],
