@@ -8,7 +8,10 @@ import type {
   InitiativeScenario,
   InitiativeScenarioCombatant,
 } from '../../types/initiative';
-import { compareCombatantInitiative } from './initiativeTiming';
+import {
+  compareCombatantInitiative,
+  getInitiativeTimingOverrideRank,
+} from './initiativeTiming';
 import {
   determineWeaponVsTimedAction,
   TIMED_ACTION_WEAPON_TIE,
@@ -412,11 +415,17 @@ const getSimpleInitiativePhase = (
   combatant: InitiativeScenarioCombatant,
   attackNumber: number
 ): number => {
+  const timingOffset =
+    getInitiativeTimingOverrideRank(combatant.initiativeTiming) * 10;
+
   if (combatant.declaredAction === 'missile') {
-    return 0.5;
+    return 0.5 - timingOffset;
   }
 
-  return getRoutinePhase(attackNumber, getRoutineComponentCount(combatant));
+  return (
+    getRoutinePhase(attackNumber, getRoutineComponentCount(combatant)) -
+    timingOffset
+  );
 };
 
 const buildSimpleInitiativePhases = (

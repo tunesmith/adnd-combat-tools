@@ -108,6 +108,11 @@ const getWeaponSpeedFactor = (combatant: OpenMeleeCombatant): number => {
 const getRoutineComponentCount = (combatant: OpenMeleeCombatant): number =>
   Math.max(1, combatant.attackRoutine.components.length);
 
+const createRoutineSteps = (combatant: OpenMeleeCombatant): OpenMeleeStep[] =>
+  Array.from({ length: getRoutineComponentCount(combatant) }, (_, index) =>
+    createSingleAttackStep(combatant, index + 1)
+  );
+
 const getRoutinePhase = (attackNumber: number, attackCount: number): number => {
   if (attackCount <= 1) {
     return 0.5;
@@ -175,6 +180,20 @@ const resolveMultipleRoutineExchange = (
   left: OpenMeleeCombatant,
   right: OpenMeleeCombatant
 ): OpenMeleeResolution => {
+  const timingRankDifference =
+    getInitiativeTimingOverrideRank(left.initiativeTiming) -
+    getInitiativeTimingOverrideRank(right.initiativeTiming);
+
+  if (timingRankDifference !== 0) {
+    return {
+      reason: 'multiple-routines',
+      steps:
+        timingRankDifference > 0
+          ? createRoutineSteps(left).concat(createRoutineSteps(right))
+          : createRoutineSteps(right).concat(createRoutineSteps(left)),
+    };
+  }
+
   const leftCount = getRoutineComponentCount(left);
   const rightCount = getRoutineComponentCount(right);
   const phaseValues = Array.from(

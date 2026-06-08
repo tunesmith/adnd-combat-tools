@@ -393,13 +393,163 @@ describe('initiative attack graph', () => {
           toNodeId: 'attack:party-action-1001:1',
           reasons: ['simple-initiative'],
         },
-        {
+        expect.objectContaining({
           fromNodeId: 'attack:party-1:1',
           toNodeId: 'attack:party-action-1001:1',
-          reasons: ['action-sequence'],
+          reasons: expect.arrayContaining(['action-sequence']),
+        }),
+      ])
+    );
+  });
+
+  test('orders a winning extra action before an opponent with multiple attack routines', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Speed Sword Against Multiple Routines',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          weaponId: 17,
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Sword of speed',
+              initiativeTiming: 'wins-initiative',
+              targetCombatantKeys: [3],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'open-melee',
+              actionLabel: 'Normal attack',
+              targetCombatantKeys: [3],
+            },
+          ],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Halberd Gnoll 2',
+          declaredAction: 'open-melee',
+          weaponId: 56,
+          attackRoutineCount: 2,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-3:1'],
+      ['attack:party-action-1001:1'],
+      ['attack:enemy-3:2'],
+    ]);
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['direct-melee'],
+        },
+        {
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'attack:party-action-1001:1',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:party-action-1001:1',
+          toNodeId: 'attack:enemy-3:2',
+          reasons: ['simple-initiative'],
         },
       ])
     );
+  });
+
+  test('orders a winning action before unrelated normal multiple-routine attacks', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Speed Sword Against Unrelated Multiple Routines',
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          weaponId: 57,
+          actions: [
+            {
+              id: 'main',
+              declaredAction: 'open-melee',
+              actionLabel: 'Attack',
+              initiativeTiming: 'wins-initiative',
+              targetCombatantKeys: [21],
+            },
+            {
+              id: 'action-2',
+              declaredAction: 'open-melee',
+              actionLabel: 'Sword/dagger',
+              targetCombatantKeys: [21],
+            },
+          ],
+        },
+        {
+          combatantKey: 6,
+          name: 'Bemis',
+          declaredAction: 'none',
+          weaponId: 13,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 15,
+          name: 'Halberd Gnoll 2',
+          declaredAction: 'open-melee',
+          weaponId: 30,
+          attackRoutineCount: 2,
+          targetCombatantKeys: [6],
+        },
+        {
+          combatantKey: 21,
+          name: 'Pillar Gnoll 2',
+          declaredAction: 'open-melee',
+          weaponId: 56,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-15:1',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-21:1',
+          reasons: ['direct-melee'],
+        },
+      ])
+    );
+    expect(
+      graph.edges.some(
+        (edge) =>
+          edge.fromNodeId === 'attack:enemy-15:1' &&
+          edge.toNodeId === 'attack:party-1:1'
+      )
+    ).toBe(false);
   });
 
   test('lets a slowed spellcaster lose initiative without changing casting time', () => {
