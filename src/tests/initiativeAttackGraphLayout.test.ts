@@ -433,7 +433,7 @@ describe('initiative attack graph layout', () => {
     );
   });
 
-  test('stacks parallel missile volleys vertically within one applicable spell-interruption segment lane', () => {
+  test('stacks sequenced parallel missile volleys within one applicable spell-interruption segment lane', () => {
     const scenario = buildInitiativeScenario({
       label: 'Parallel Missile Volleys vs Caster',
       partyInitiative: 6,
@@ -494,11 +494,16 @@ describe('initiative attack graph layout', () => {
       .filter((value): value is number => value !== undefined)
       .sort((left, right) => left - right);
 
-    expect(xPositions).toHaveLength(1);
+    expect(xPositions).toHaveLength(2);
+    expect(attackNodes[0]?.x).toBe(attackNodes[1]?.x);
+    expect(attackNodes[2]?.x).toBe(attackNodes[3]?.x);
+    expect(attackNodes[0]?.x || 0).toBeLessThan(attackNodes[2]?.x || 0);
+    expect(attackNodes[0]?.y || 0).toBeLessThan(attackNodes[1]?.y || 0);
+    expect(attackNodes[2]?.y || 0).toBeLessThan(attackNodes[3]?.y || 0);
     expect(yPositions).toEqual(
       [...yPositions].sort((left, right) => left - right)
     );
-    expect(new Set(yPositions).size).toBe(4);
+    expect(new Set(yPositions).size).toBe(2);
   });
 
   test('keeps segment guides in the upper band and pushes dependency-only nodes below it', () => {

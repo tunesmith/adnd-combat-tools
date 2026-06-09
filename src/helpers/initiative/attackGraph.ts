@@ -691,11 +691,7 @@ const addRoutineSequenceEdges = (
   nodesByCombatant.forEach((nodes, combatantId) => {
     const combatant = combatantById.get(combatantId);
 
-    if (
-      !combatant ||
-      combatant.declaredAction === 'missile' ||
-      combatant.attackRoutine.components.length <= 1
-    ) {
+    if (!combatant || combatant.attackRoutine.components.length <= 1) {
       return;
     }
 

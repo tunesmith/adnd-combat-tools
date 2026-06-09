@@ -1465,7 +1465,7 @@ describe('initiative attack graph', () => {
     expect(graph.layers).toEqual([]);
   });
 
-  test('keeps ordinary missile volleys together under initiative rather than bow, sling, bow', () => {
+  test('sequences missile volley shots without interleaving opposing volleys', () => {
     const partyWinningScenario = buildInitiativeScenario({
       label: 'Bow vs Sling Party Wins',
       partyInitiative: 5,
@@ -1523,16 +1523,18 @@ describe('initiative attack graph', () => {
     );
 
     expect(partyWinningGraph.layers).toEqual([
-      ['attack:party-1:1', 'attack:party-1:2'],
+      ['attack:party-1:1'],
+      ['attack:party-1:2'],
       ['attack:enemy-3:1'],
     ]);
     expect(enemyWinningGraph.layers).toEqual([
       ['attack:enemy-3:1'],
-      ['attack:party-1:1', 'attack:party-1:2'],
+      ['attack:party-1:1'],
+      ['attack:party-1:2'],
     ]);
   });
 
-  test('uses initiative to order equal firing-rate missile volleys as groups', () => {
+  test('uses initiative to order equal firing-rate missile volleys before sequencing each volley', () => {
     const scenario = buildInitiativeScenario({
       label: 'Bow vs Bow',
       partyInitiative: 6,
@@ -1562,12 +1564,14 @@ describe('initiative attack graph', () => {
     );
 
     expect(graph.layers).toEqual([
-      ['attack:party-1:1', 'attack:party-1:2'],
-      ['attack:enemy-3:1', 'attack:enemy-3:2'],
+      ['attack:party-1:1'],
+      ['attack:party-1:2'],
+      ['attack:enemy-3:1'],
+      ['attack:enemy-3:2'],
     ]);
   });
 
-  test('uses the missile initiative adjustment to order equal firing-rate missile volleys as groups', () => {
+  test('uses the missile initiative adjustment to order equal firing-rate missile volleys before sequencing each volley', () => {
     const scenario = buildInitiativeScenario({
       label: 'Bow vs Bow With Dex',
       partyInitiative: 3,
@@ -1598,12 +1602,14 @@ describe('initiative attack graph', () => {
     );
 
     expect(graph.layers).toEqual([
-      ['attack:party-1:1', 'attack:party-1:2'],
-      ['attack:enemy-3:1', 'attack:enemy-3:2'],
+      ['attack:party-1:1'],
+      ['attack:party-1:2'],
+      ['attack:enemy-3:1'],
+      ['attack:enemy-3:2'],
     ]);
   });
 
-  test('keeps all dart shots inside one initiative-controlled volley', () => {
+  test('keeps all dart shots after the winning opposing volley while sequencing the shots', () => {
     const scenario = buildInitiativeScenario({
       label: 'Dart vs Sling',
       partyInitiative: 2,
@@ -1634,7 +1640,9 @@ describe('initiative attack graph', () => {
 
     expect(graph.layers).toEqual([
       ['attack:enemy-3:1'],
-      ['attack:party-1:1', 'attack:party-1:2', 'attack:party-1:3'],
+      ['attack:party-1:1'],
+      ['attack:party-1:2'],
+      ['attack:party-1:3'],
     ]);
   });
 
@@ -1718,21 +1726,30 @@ describe('initiative attack graph', () => {
     );
 
     expect(graph.layers).toEqual([
-      ['attack:party-1:1', 'attack:party-1:2'],
+      ['attack:party-1:1'],
+      ['attack:party-1:2'],
       ['attack:enemy-3:1'],
     ]);
-    expect(graph.edges).toEqual([
-      {
-        fromNodeId: 'attack:party-1:1',
-        toNodeId: 'attack:enemy-3:1',
-        reasons: ['simple-initiative'],
-      },
-      {
-        fromNodeId: 'attack:party-1:2',
-        toNodeId: 'attack:enemy-3:1',
-        reasons: ['simple-initiative'],
-      },
-    ]);
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:party-1:2',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:party-1:2',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
+    expect(graph.edges).toHaveLength(3);
   });
 
   test('suppresses positive missile initiative bonuses below 12 movement', () => {
@@ -1768,7 +1785,8 @@ describe('initiative attack graph', () => {
 
     expect(graph.layers).toEqual([
       ['attack:enemy-3:1'],
-      ['attack:party-1:1', 'attack:party-1:2'],
+      ['attack:party-1:1'],
+      ['attack:party-1:2'],
     ]);
   });
 
@@ -1846,7 +1864,8 @@ describe('initiative attack graph', () => {
 
     expect(graph.layers).toEqual([
       ['attack:enemy-3:1'],
-      ['attack:party-1:1', 'attack:party-1:2'],
+      ['attack:party-1:1'],
+      ['attack:party-1:2'],
     ]);
   });
 
