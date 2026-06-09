@@ -153,9 +153,8 @@ const hasRegisteredCombatAction = (
   (combatant.declaredAction === 'none' &&
     combatant.actionLabel !== undefined) ||
   (combatant.declaredAction !== 'none' &&
-    (combatant.targetIds.length > 0 ||
-      (combatant.declaredAction === 'magical-device' &&
-        combatant.activationSegments !== undefined) ||
+    (combatant.declaredAction === 'magical-device' ||
+      combatant.targetIds.length > 0 ||
       combatant.declaredAction === 'spell-casting'));
 
 const hasInvalidOpenMeleeOpposition = (

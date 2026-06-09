@@ -2033,6 +2033,66 @@ describe('initiative attack graph', () => {
     expect(graph.edges).toEqual([]);
   });
 
+  test('renders targetless magical device use on simple initiative without activation time', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Ring Timing',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          declaredAction: 'magical-device',
+          actionLabel: 'Invoke ring of invisibility',
+          weaponId: 17,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Gnoll',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          combatantId: 'party-1',
+          actionLabel: 'Invoke ring of invisibility',
+          targetId: undefined,
+          segment: undefined,
+          placement: {
+            kind: 'magical-device-unsegmented',
+          },
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          combatantId: 'enemy-3',
+          targetId: 'party-1',
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
+  });
+
   test('keeps magical device discharge unsegmented when no activation time is supplied', () => {
     const scenario = buildInitiativeScenario({
       label: 'Magical Device',
