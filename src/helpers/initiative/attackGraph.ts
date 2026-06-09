@@ -379,6 +379,59 @@ const getLayers = (
   return layers;
 };
 
+const isSimpleInitiativeOnlyEdge = (edge: InitiativeAttackEdge): boolean =>
+  edge.reasons.length === 1 && edge.reasons[0] === 'simple-initiative';
+
+const reduceTransitiveSimpleInitiativeEdges = (
+  edges: InitiativeAttackEdge[]
+): InitiativeAttackEdge[] => {
+  const outgoingEdgesByNodeId = new Map<string, InitiativeAttackEdge[]>();
+
+  edges.forEach((edge) => {
+    const existing = outgoingEdgesByNodeId.get(edge.fromNodeId) || [];
+    existing.push(edge);
+    outgoingEdgesByNodeId.set(edge.fromNodeId, existing);
+  });
+
+  const hasAlternatePath = (
+    fromNodeId: string,
+    toNodeId: string,
+    excludedEdge: InitiativeAttackEdge
+  ): boolean => {
+    const visitedNodeIds = new Set<string>([fromNodeId]);
+    const stack = (outgoingEdgesByNodeId.get(fromNodeId) || [])
+      .filter((edge) => edge !== excludedEdge)
+      .map((edge) => edge.toNodeId);
+
+    while (stack.length > 0) {
+      const currentNodeId = stack.pop();
+
+      if (!currentNodeId || visitedNodeIds.has(currentNodeId)) {
+        continue;
+      }
+
+      if (currentNodeId === toNodeId) {
+        return true;
+      }
+
+      visitedNodeIds.add(currentNodeId);
+      (outgoingEdgesByNodeId.get(currentNodeId) || []).forEach((edge) => {
+        if (edge !== excludedEdge) {
+          stack.push(edge.toNodeId);
+        }
+      });
+    }
+
+    return false;
+  };
+
+  return edges.filter(
+    (edge) =>
+      !isSimpleInitiativeOnlyEdge(edge) ||
+      !hasAlternatePath(edge.fromNodeId, edge.toNodeId, edge)
+  );
+};
+
 interface SimpleInitiativePhase {
   combatantId: string;
   nodeId: string;
@@ -1503,7 +1556,9 @@ export const buildInitiativeAttackGraph = (
     directMeleeOpponentByCombatantId
   );
 
-  const edges = Array.from(edgesByKey.values());
+  const edges = reduceTransitiveSimpleInitiativeEdges(
+    Array.from(edgesByKey.values())
+  );
 
   return {
     nodes,

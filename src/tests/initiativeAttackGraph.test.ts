@@ -973,6 +973,15 @@ describe('initiative attack graph', () => {
           reasons: ['simple-initiative'],
         },
         {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-4:2',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
+    expect(graph.edges).not.toEqual(
+      expect.arrayContaining([
+        {
           fromNodeId: 'attack:enemy-3:1',
           toNodeId: 'attack:enemy-4:2',
           reasons: ['simple-initiative'],
@@ -1532,6 +1541,52 @@ describe('initiative attack graph', () => {
       ['attack:party-1:1'],
       ['attack:party-1:2'],
     ]);
+    expect(partyWinningGraph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:party-1:2',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:party-1:2',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
+    expect(partyWinningGraph.edges).not.toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
+    expect(enemyWinningGraph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'attack:party-1:1',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:party-1:2',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
+    expect(enemyWinningGraph.edges).not.toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:enemy-3:1',
+          toNodeId: 'attack:party-1:2',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
   });
 
   test('uses initiative to order equal firing-rate missile volleys before sequencing each volley', () => {
@@ -1733,11 +1788,6 @@ describe('initiative attack graph', () => {
     expect(graph.edges).toEqual(
       expect.arrayContaining([
         {
-          fromNodeId: 'attack:party-1:1',
-          toNodeId: 'attack:enemy-3:1',
-          reasons: ['simple-initiative'],
-        },
-        {
           fromNodeId: 'attack:party-1:2',
           toNodeId: 'attack:enemy-3:1',
           reasons: ['simple-initiative'],
@@ -1749,7 +1799,16 @@ describe('initiative attack graph', () => {
         },
       ])
     );
-    expect(graph.edges).toHaveLength(3);
+    expect(graph.edges).not.toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
+    expect(graph.edges).toHaveLength(2);
   });
 
   test('suppresses positive missile initiative bonuses below 12 movement', () => {
