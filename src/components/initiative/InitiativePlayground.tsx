@@ -215,8 +215,7 @@ const isSingleTargetDeclarationAction = (
 ): boolean =>
   declaredAction === 'close' ||
   declaredAction === 'charge' ||
-  declaredAction === 'set-vs-charge' ||
-  declaredAction === 'magical-device';
+  declaredAction === 'set-vs-charge';
 
 const requiresDistanceInput = (
   declaredAction: InitiativeDeclaredAction
@@ -5587,9 +5586,9 @@ const InitiativePlayground = ({
                   </p>
                 ) : selectedEditedAction.declaredAction === 'magical-device' ? (
                   <p className={styles['modalHint']}>
-                    Magical device use can have one target or no target. Leave
-                    targets empty for self or targetless activations such as
-                    drinking a potion.
+                    Magical device use can have multiple targets or no target.
+                    Leave targets empty for self or targetless activations such
+                    as drinking a potion.
                   </p>
                 ) : isSingleTargetDeclarationAction(
                     selectedEditedAction.declaredAction

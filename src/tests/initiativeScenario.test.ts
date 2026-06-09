@@ -232,6 +232,41 @@ describe('generic initiative scenario builder', () => {
     expect(scenario.party[0]?.targetIds).toEqual(['enemy-3', 'enemy-4']);
   });
 
+  test('preserves multiple magical device targets', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Forked Wand',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Ysra',
+          weaponId: 49,
+          declaredAction: 'magical-device',
+          targetCombatantKeys: [3, 4],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Gnoll 1',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+        },
+        {
+          combatantKey: 4,
+          name: 'Gnoll 2',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+        },
+      ],
+    });
+
+    expect(scenario.party[0]?.targetIds).toEqual(['enemy-3', 'enemy-4']);
+    expect(scenario.directMeleePairs).toEqual([]);
+    expect(scenario.directMeleeEngagements).toEqual([]);
+  });
+
   test('uses explicit round-local routine counts for non-missile combatants', () => {
     const draft: InitiativeScenarioDraft = {
       label: 'Multiple Melee Routines',

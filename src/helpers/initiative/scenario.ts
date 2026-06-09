@@ -292,7 +292,7 @@ const buildScenarioCombatants = (
               )
               .slice(
                 0,
-                weaponType === 'missile'
+                declaredAction === 'missile' && weaponType === 'missile'
                   ? getMissileTargetLimit(
                       weaponInfo?.weaponType === 'missile'
                         ? weaponInfo.fireRate

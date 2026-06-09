@@ -2072,6 +2072,71 @@ describe('initiative attack graph', () => {
     );
   });
 
+  test('orders a multi-target magical device against each affected target', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Forked Wand',
+      partyInitiative: 5,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Ysra',
+          declaredAction: 'magical-device',
+          actionLabel: 'Forked wand blast',
+          weaponId: 49,
+          targetCombatantKeys: [3, 4],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Gnoll 1',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Gnoll 2',
+          declaredAction: 'open-melee',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          actionLabel: 'Forked wand blast',
+          targetId: undefined,
+          placement: {
+            kind: 'magical-device-unsegmented',
+          },
+        }),
+      ])
+    );
+    expect(graph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-3:1',
+          reasons: ['simple-initiative'],
+        },
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-4:1',
+          reasons: ['simple-initiative'],
+        },
+      ])
+    );
+  });
+
   test('graphs spell start and completion as separate nodes', () => {
     const scenario = buildInitiativeScenario({
       label: 'Spell Casting',
