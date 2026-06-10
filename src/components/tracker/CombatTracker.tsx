@@ -58,6 +58,8 @@ import {
 } from '../../helpers/trackerCombatWizard';
 import {
   buildTrackerAttackDetail,
+  getTrackerWeaponAdjustmentSummary,
+  shouldShowTrackerEffectiveArmorClass,
   type TrackerAttackDetail,
 } from '../../helpers/trackerAttackDetail';
 
@@ -142,26 +144,6 @@ const PARTY_COLUMN_MIN_WIDTH_PX = 112;
 const LOCAL_DRAFT_AUTOSAVE_MS = 750;
 const URL_WARNING_THRESHOLD = 6000;
 
-const formatSignedNumber = (value: number): string =>
-  value > 0 ? `+${value}` : String(value);
-
-const getWeaponAdjustmentSummary = (detail: TrackerAttackDetail): string => {
-  const difference = detail.toHit - detail.unadjustedToHit;
-
-  if (difference > 0) {
-    return `${formatSignedNumber(
-      detail.weaponAdjustment
-    )} to AC, making this ${difference} harder to hit.`;
-  }
-
-  if (difference < 0) {
-    return `${formatSignedNumber(
-      detail.weaponAdjustment
-    )} to AC, making this ${Math.abs(difference)} easier to hit.`;
-  }
-
-  return `${formatSignedNumber(detail.weaponAdjustment)} to AC, no net change.`;
-};
 const SHARE_URL_COPIED_MS = 2200;
 
 type AutoHeightTextareaProps = Omit<
@@ -2492,12 +2474,16 @@ const CombatTracker = ({
                 </div>
                 <div className={styles['attackDetailRow']}>
                   <dt>Weapon vs armor</dt>
-                  <dd>{getWeaponAdjustmentSummary(selectedAttackDetail)}</dd>
+                  <dd>
+                    {getTrackerWeaponAdjustmentSummary(selectedAttackDetail)}
+                  </dd>
                 </div>
-                <div className={styles['attackDetailRow']}>
-                  <dt>Effective AC</dt>
-                  <dd>{selectedAttackDetail.adjustedArmorClass}</dd>
-                </div>
+                {shouldShowTrackerEffectiveArmorClass(selectedAttackDetail) ? (
+                  <div className={styles['attackDetailRow']}>
+                    <dt>Effective AC</dt>
+                    <dd>{selectedAttackDetail.adjustedArmorClass}</dd>
+                  </div>
+                ) : null}
               </dl>
               <div className={styles['attackDetailResult']}>
                 Needs {selectedAttackDetail.toHit}+ on d20
