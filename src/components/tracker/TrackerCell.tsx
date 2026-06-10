@@ -15,6 +15,7 @@ interface TrackerCellProps {
   onPartyToEnemyVisibilityChange: (value: boolean) => void;
   onEnemyToPartyChange: (value: string) => void;
   onPartyToEnemyChange: (value: string) => void;
+  onAttackDetailOpen?: (direction: 'enemyToParty' | 'partyToEnemy') => void;
   allowVisibilityToggle?: boolean;
   displayMode?: 'both' | 'enemyOnly' | 'partyOnly';
   style?: CSSProperties;
@@ -31,6 +32,7 @@ const TrackerCell = ({
   onPartyToEnemyVisibilityChange,
   onEnemyToPartyChange,
   onPartyToEnemyChange,
+  onAttackDetailOpen,
   allowVisibilityToggle = true,
   displayMode = 'both',
   style,
@@ -80,6 +82,27 @@ const TrackerCell = ({
     }
   };
 
+  const renderToHitLabel = (
+    toHit: number,
+    direction: 'enemyToParty' | 'partyToEnemy',
+    label: string
+  ) =>
+    onAttackDetailOpen ? (
+      <button
+        type={'button'}
+        className={styles['cellEntryLabelButton']}
+        aria-label={label}
+        onClick={(event) => {
+          event.stopPropagation();
+          onAttackDetailOpen(direction);
+        }}
+      >
+        {toHit}
+      </button>
+    ) : (
+      <span className={styles['cellEntryLabel']}>{toHit}</span>
+    );
+
   return (
     <td className={styles['interactionCell']} style={style}>
       <div
@@ -124,7 +147,11 @@ const TrackerCell = ({
           >
             {enemyToPartyVisible ? (
               <>
-                <span className={styles['cellEntryLabel']}>{rowToHit}</span>
+                {renderToHitLabel(
+                  rowToHit,
+                  'enemyToParty',
+                  'Show enemy attack details'
+                )}
                 <input
                   className={styles['cellEntryInputInline']}
                   type={'text'}
@@ -171,7 +198,11 @@ const TrackerCell = ({
           >
             {partyToEnemyVisible ? (
               <>
-                <span className={styles['cellEntryLabel']}>{columnToHit}</span>
+                {renderToHitLabel(
+                  columnToHit,
+                  'partyToEnemy',
+                  'Show party attack details'
+                )}
                 <input
                   className={styles['cellEntryInputInline']}
                   type={'text'}

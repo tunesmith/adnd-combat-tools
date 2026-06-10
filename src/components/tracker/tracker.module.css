@@ -440,6 +440,25 @@
   white-space: nowrap;
 }
 
+.cellEntryLabelButton {
+  border: 0;
+  background: transparent;
+  color: rgba(240, 239, 221, 0.72);
+  font-family: 'Sura', serif;
+  font-size: 0.76rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  padding: 0.08rem 0.16rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cellEntryLabelButton:hover,
+.cellEntryLabelButton:focus-visible {
+  color: var(--eggshell);
+  text-decoration: underline;
+}
+
 .cellEntryInputInline {
   width: 100%;
   min-width: 0;
@@ -748,6 +767,10 @@
   width: min(28rem, calc(100vw - 2rem));
 }
 
+.attackDetailModal {
+  width: min(34rem, calc(100vw - 2rem));
+}
+
 .intentionsModal {
   top: 1.5rem;
   width: min(50rem, calc(100vw - 2rem));
@@ -781,6 +804,48 @@
   color: #111;
   font-size: 1rem;
   line-height: 1.35;
+}
+
+.attackDetailMatchup {
+  margin-bottom: 0.75rem;
+  color: #111;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.attackDetailList {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0 0 0.85rem;
+}
+
+.attackDetailRow {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.45fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(175, 127, 0, 0.24);
+  padding-bottom: 0.42rem;
+}
+
+.attackDetailRow dt {
+  color: rgba(17, 17, 17, 0.72);
+  font-weight: 700;
+}
+
+.attackDetailRow dd {
+  margin: 0;
+  color: #111;
+}
+
+.attackDetailResult {
+  border: 2px solid var(--copper);
+  background: rgba(84, 111, 58, 0.14);
+  color: #111;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.15;
+  padding: 0.65rem 0.75rem;
 }
 
 .recoverError {

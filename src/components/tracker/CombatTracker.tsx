@@ -55,6 +55,10 @@ import {
   buildCombatWizardEntries,
   type CombatWizardEntry,
 } from '../../helpers/trackerCombatWizard';
+import {
+  buildTrackerAttackDetail,
+  type TrackerAttackDetail,
+} from '../../helpers/trackerAttackDetail';
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -62,6 +66,7 @@ interface CombatTrackerProps {
 }
 
 type TrackerSide = 'party' | 'enemy';
+type AttackDetailDirection = 'enemyToParty' | 'partyToEnemy';
 type RoundField = 'partyInitiative' | 'enemyInitiative' | 'summary';
 type RoundCombatantField = keyof TrackerCombatantRoundState;
 type CellField = Extract<
@@ -72,6 +77,12 @@ type CellVisibilityField = Extract<
   keyof TrackerCellState,
   'enemyToPartyVisible' | 'partyToEnemyVisible'
 >;
+
+interface AttackDetailTarget {
+  enemyIndex: number;
+  partyIndex: number;
+  direction: AttackDetailDirection;
+}
 
 type TrackerAction =
   | { type: 'replace-state'; state: TrackerState }
@@ -128,6 +139,27 @@ const enemyFieldDefinitions = partyFieldDefinitions;
 const PARTY_COLUMN_MIN_WIDTH_PX = 112;
 const LOCAL_DRAFT_AUTOSAVE_MS = 750;
 const URL_WARNING_THRESHOLD = 6000;
+
+const formatSignedNumber = (value: number): string =>
+  value > 0 ? `+${value}` : String(value);
+
+const getWeaponAdjustmentSummary = (detail: TrackerAttackDetail): string => {
+  const difference = detail.toHit - detail.unadjustedToHit;
+
+  if (difference > 0) {
+    return `${formatSignedNumber(
+      detail.weaponAdjustment
+    )} to AC, making this ${difference} harder to hit.`;
+  }
+
+  if (difference < 0) {
+    return `${formatSignedNumber(
+      detail.weaponAdjustment
+    )} to AC, making this ${Math.abs(difference)} easier to hit.`;
+  }
+
+  return `${formatSignedNumber(detail.weaponAdjustment)} to AC, no net change.`;
+};
 const SHARE_URL_COPIED_MS = 2200;
 
 type AutoHeightTextareaProps = Omit<
@@ -295,6 +327,9 @@ const CombatTracker = ({
     useState<boolean>(false);
   const [combatWizardAnchorKeysByRound, setCombatWizardAnchorKeysByRound] =
     useState<Record<number, number | undefined>>({});
+  const [attackDetailTarget, setAttackDetailTarget] = useState<
+    AttackDetailTarget | undefined
+  >(undefined);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleDraft, setTitleDraft] = useState<string>('');
   const [isEditingRoundLabel, setIsEditingRoundLabel] =
@@ -430,6 +465,32 @@ const CombatTracker = ({
   const currentRound = state.rounds[state.activeRound];
   const currentRoundLabel = currentRound?.label || '';
   const trackerTitle = state.title || '';
+  const selectedAttackDetail = useMemo<TrackerAttackDetail | undefined>(() => {
+    if (!currentRound || !attackDetailTarget) {
+      return undefined;
+    }
+
+    const enemyCombatant = currentRound.enemies[attackDetailTarget.enemyIndex];
+    const partyCombatant = currentRound.party[attackDetailTarget.partyIndex];
+
+    if (!enemyCombatant || !partyCombatant) {
+      return undefined;
+    }
+
+    return attackDetailTarget.direction === 'enemyToParty'
+      ? buildTrackerAttackDetail(
+          enemyCombatant,
+          partyCombatant,
+          `Enemy ${attackDetailTarget.enemyIndex + 1}`,
+          `Party ${attackDetailTarget.partyIndex + 1}`
+        )
+      : buildTrackerAttackDetail(
+          partyCombatant,
+          enemyCombatant,
+          `Party ${attackDetailTarget.partyIndex + 1}`,
+          `Enemy ${attackDetailTarget.enemyIndex + 1}`
+        );
+  }, [attackDetailTarget, currentRound]);
   const canOpenCombatWizard = Boolean(
     currentRound?.partyInitiative.trim() && currentRound?.enemyInitiative.trim()
   );
@@ -647,7 +708,8 @@ const CombatTracker = ({
       !showShareModal &&
       !showImportModal &&
       !showIntentionsWizard &&
-      !showCombatWizard
+      !showCombatWizard &&
+      !attackDetailTarget
     ) {
       return;
     }
@@ -661,6 +723,7 @@ const CombatTracker = ({
         setShowDeleteRoundModal(false);
         setShowIntentionsWizard(false);
         setShowCombatWizard(false);
+        setAttackDetailTarget(undefined);
         setShowMoreActions(false);
         setRecoverError(undefined);
         setImportError(undefined);
@@ -671,6 +734,7 @@ const CombatTracker = ({
 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
+    attackDetailTarget,
     showCombatWizard,
     showDeleteRoundModal,
     showIntentionsWizard,
@@ -885,6 +949,10 @@ const CombatTracker = ({
 
   const closeDeleteRoundModal = () => {
     setShowDeleteRoundModal(false);
+  };
+
+  const closeAttackDetailModal = () => {
+    setAttackDetailTarget(undefined);
   };
 
   const buildShareUrl = () => {
@@ -1244,6 +1312,13 @@ const CombatTracker = ({
         partyToEnemyVisible={cellState.partyToEnemyVisible}
         allowVisibilityToggle={allowVisibilityToggle}
         displayMode={displayMode}
+        onAttackDetailOpen={(direction) =>
+          setAttackDetailTarget({
+            enemyIndex,
+            partyIndex,
+            direction,
+          })
+        }
         onEnemyToPartyVisibilityChange={(value) =>
           dispatch({
             type: 'set-cell-visibility',
@@ -2328,6 +2403,73 @@ const CombatTracker = ({
                 onClick={confirmDeleteRound}
               >
                 Delete Round
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+      {selectedAttackDetail && (
+        <>
+          <div
+            className={styles['modalShadow']}
+            onClick={closeAttackDetailModal}
+          />
+          <div
+            className={`${styles['modal']} ${styles['attackDetailModal']}`}
+            role={'dialog'}
+            aria-modal={'true'}
+            aria-labelledby={'attack-detail-title'}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={'attack-detail-title'} className={styles['modalTitle']}>
+              Attack Detail
+            </div>
+            <div className={styles['modalBody']}>
+              <div className={styles['attackDetailMatchup']}>
+                {selectedAttackDetail.attackerName}
+                {' -> '}
+                {selectedAttackDetail.targetName}
+              </div>
+              <dl className={styles['attackDetailList']}>
+                <div className={styles['attackDetailRow']}>
+                  <dt>Weapon</dt>
+                  <dd>{selectedAttackDetail.weaponName}</dd>
+                </div>
+                <div className={styles['attackDetailRow']}>
+                  <dt>Target armor</dt>
+                  <dd>
+                    {selectedAttackDetail.targetArmorDescription}, AC{' '}
+                    {selectedAttackDetail.targetArmorClass}
+                  </dd>
+                </div>
+                <div className={styles['attackDetailRow']}>
+                  <dt>Base target</dt>
+                  <dd>
+                    THAC0 {selectedAttackDetail.thaco} vs AC{' '}
+                    {selectedAttackDetail.targetArmorClass}: needs{' '}
+                    {selectedAttackDetail.unadjustedToHit}
+                  </dd>
+                </div>
+                <div className={styles['attackDetailRow']}>
+                  <dt>Weapon vs armor</dt>
+                  <dd>{getWeaponAdjustmentSummary(selectedAttackDetail)}</dd>
+                </div>
+                <div className={styles['attackDetailRow']}>
+                  <dt>Effective AC</dt>
+                  <dd>{selectedAttackDetail.adjustedArmorClass}</dd>
+                </div>
+              </dl>
+              <div className={styles['attackDetailResult']}>
+                Needs {selectedAttackDetail.toHit}+ on d20
+              </div>
+            </div>
+            <div className={styles['modalActions']}>
+              <button
+                type={'button'}
+                className={styles['toolbarButton']}
+                onClick={closeAttackDetailModal}
+              >
+                Close
               </button>
             </div>
           </div>
