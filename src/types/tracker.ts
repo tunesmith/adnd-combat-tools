@@ -5,6 +5,7 @@ export type TrackerAttackHand = 'main' | 'offHand';
 export interface TrackerCombatant extends Creature {
   maxHp?: string;
   offHandWeapon?: number;
+  weaponShortlist?: number[];
 }
 
 export interface TrackerCombatantRoundStateV1 {

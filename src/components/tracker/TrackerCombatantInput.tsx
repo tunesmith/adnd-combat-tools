@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent, FocusEvent } from 'react';
-import type { SingleValue } from 'react-select';
+import type { MultiValue, SingleValue } from 'react-select';
 import Select from 'react-select';
 import { getTrackerCombatantHeaderDisplay } from '../../helpers/trackerCombatantDisplay';
 import customStyles from '../../helpers/selectCustomStyles';
@@ -51,6 +51,8 @@ const TrackerCombatantInput = ({
   onUpdate,
 }: TrackerCombatantInputProps) => {
   const [open, setOpen] = useState<boolean>(false);
+  const [isEditingWeaponShortlist, setIsEditingWeaponShortlist] =
+    useState<boolean>(false);
   const [draft, setDraft] = useState<TrackerCombatant>(combatant);
 
   useEffect(() => {
@@ -67,6 +69,24 @@ const TrackerCombatantInput = ({
   const weaponOptions = useMemo<WeaponOption[]>(
     () => getWeaponOptions(draft.class),
     [draft.class]
+  );
+  const weaponOptionsById = useMemo<Map<number, WeaponOption>>(
+    () =>
+      new Map(
+        weaponOptions.map((weaponOption) => [weaponOption.value, weaponOption])
+      ),
+    [weaponOptions]
+  );
+  const weaponShortlistOptions = useMemo<WeaponOption[]>(
+    () =>
+      (draft.weaponShortlist || []).reduce<WeaponOption[]>(
+        (options, weaponId) => {
+          const weaponOption = weaponOptionsById.get(weaponId);
+          return weaponOption ? options.concat(weaponOption) : options;
+        },
+        []
+      ),
+    [draft.weaponShortlist, weaponOptionsById]
   );
   const offHandWeaponOptions = useMemo<WeaponOption[]>(
     () => [NO_OFF_HAND_WEAPON_OPTION, ...getOffHandWeaponOptions(draft.class)],
@@ -92,6 +112,16 @@ const TrackerCombatantInput = ({
   const commit = (nextCombatant: TrackerCombatant) => {
     setDraft(nextCombatant);
     onUpdate(nextCombatant);
+  };
+
+  const openModal = () => {
+    setIsEditingWeaponShortlist(false);
+    setOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsEditingWeaponShortlist(false);
+    setOpen(false);
   };
 
   const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -131,6 +161,9 @@ const TrackerCombatantInput = ({
     const nextArmorTypeOptions =
       getExpandedArmorOptionsByClass(newCreatureClass);
     const nextWeaponOptions = getWeaponOptions(newCreatureClass);
+    const nextWeaponIds = new Set(
+      nextWeaponOptions.map((weaponOption) => weaponOption.value)
+    );
     const nextOffHandWeaponOptions = getOffHandWeaponOptions(newCreatureClass);
     const nextArmorType = nextArmorTypeOptions[0]?.value || draft.armorType;
     const nextWeapon = nextWeaponOptions[0]?.value || draft.weapon;
@@ -139,6 +172,9 @@ const TrackerCombatantInput = ({
     )
       ? draft.offHandWeapon
       : undefined;
+    const nextWeaponShortlist = (draft.weaponShortlist || []).filter(
+      (weaponId) => nextWeaponIds.has(weaponId)
+    );
 
     commit({
       ...draft,
@@ -148,6 +184,9 @@ const TrackerCombatantInput = ({
       armorClass: getDerivedArmorClass(nextArmorType),
       weapon: nextWeapon,
       offHandWeapon: nextOffHandWeapon,
+      weaponShortlist: nextWeaponShortlist.length
+        ? nextWeaponShortlist
+        : undefined,
     });
   };
 
@@ -190,6 +229,33 @@ const TrackerCombatantInput = ({
         weapon: nextWeapon,
       });
     }
+  };
+
+  const handleQuickWeapon = (weapon: number) => {
+    commit({
+      ...draft,
+      weapon,
+    });
+  };
+
+  const handleRemoveQuickWeapon = (weapon: number) => {
+    const weaponShortlist = (draft.weaponShortlist || []).filter(
+      (weaponId) => weaponId !== weapon
+    );
+
+    commit({
+      ...draft,
+      weaponShortlist: weaponShortlist.length ? weaponShortlist : undefined,
+    });
+  };
+
+  const handleWeaponShortlist = (options: MultiValue<WeaponOption>) => {
+    const weaponShortlist = options.map((option) => option.value);
+
+    commit({
+      ...draft,
+      weaponShortlist: weaponShortlist.length ? weaponShortlist : undefined,
+    });
   };
 
   const handleOffHandWeapon = (option: SingleValue<WeaponOption>) => {
@@ -247,7 +313,7 @@ const TrackerCombatantInput = ({
         aria-label={`Edit ${
           draft.name || (side === 'party' ? 'party member' : 'enemy')
         }`}
-        onClick={() => setOpen(true)}
+        onClick={openModal}
       >
         {renderHeaderContent()}
       </button>
@@ -269,10 +335,7 @@ const TrackerCombatantInput = ({
         modalRoot &&
         createPortal(
           <>
-            <div
-              className={styles['modalShadow']}
-              onClick={() => setOpen(false)}
-            />
+            <div className={styles['modalShadow']} onClick={closeModal} />
             <div className={styles['modal']}>
               <div className={styles['modalTitle']}>
                 {side === 'party' ? 'Edit Party Member' : 'Edit Enemy'}
@@ -360,6 +423,77 @@ const TrackerCombatantInput = ({
                 onChange={handleArmorClass}
               />
               <label className={styles['modalLabel']}>Weapon</label>
+              <div className={styles['quickWeaponList']}>
+                {weaponShortlistOptions.map((weaponOption) => (
+                  <button
+                    key={weaponOption.value}
+                    type={'button'}
+                    aria-label={
+                      isEditingWeaponShortlist
+                        ? `Remove ${weaponOption.label} from shortlist`
+                        : undefined
+                    }
+                    className={
+                      isEditingWeaponShortlist
+                        ? styles['quickWeaponRemoveButton']
+                        : weaponOption.value === draft.weapon
+                        ? styles['quickWeaponButtonActive']
+                        : styles['quickWeaponButton']
+                    }
+                    onClick={() =>
+                      isEditingWeaponShortlist
+                        ? handleRemoveQuickWeapon(weaponOption.value)
+                        : handleQuickWeapon(weaponOption.value)
+                    }
+                  >
+                    {isEditingWeaponShortlist ? (
+                      <span
+                        className={styles['quickWeaponRemoveMark']}
+                        aria-hidden={'true'}
+                      >
+                        x
+                      </span>
+                    ) : null}
+                    {weaponOption.label}
+                  </button>
+                ))}
+                <button
+                  type={'button'}
+                  className={styles['quickWeaponEditButton']}
+                  aria-expanded={isEditingWeaponShortlist}
+                  onClick={() =>
+                    setIsEditingWeaponShortlist((previous) => !previous)
+                  }
+                >
+                  {isEditingWeaponShortlist
+                    ? 'Done'
+                    : weaponShortlistOptions.length
+                    ? 'Edit shortlist'
+                    : 'Add shortlist'}
+                </button>
+              </div>
+              {isEditingWeaponShortlist ? (
+                <div className={styles['weaponShortlistEditor']}>
+                  <Select
+                    isMulti
+                    isSearchable
+                    autoFocus
+                    closeMenuOnSelect={false}
+                    blurInputOnSelect={false}
+                    controlShouldRenderValue={false}
+                    defaultMenuIsOpen
+                    hideSelectedOptions={false}
+                    instanceId={`weaponShortlist-${draft.key}`}
+                    styles={customStyles}
+                    menuPortalTarget={selectMenuPortalTarget}
+                    menuPosition={'fixed'}
+                    value={weaponShortlistOptions}
+                    options={weaponOptions}
+                    onChange={handleWeaponShortlist}
+                    placeholder={'Choose quick weapons'}
+                  />
+                </div>
+              ) : null}
               <Select
                 isSearchable={false}
                 instanceId={`weapon-${draft.key}`}

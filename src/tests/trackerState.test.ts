@@ -279,6 +279,7 @@ describe('tracker state helpers', () => {
     lastEnemy.armorType = 5;
     lastEnemy.armorClass = 6;
     lastEnemy.weapon = 11;
+    lastEnemy.weaponShortlist = [11, 12];
     lastEnemy.maxHp = '20';
 
     const updated = addCombatant(initialState, 'enemy', 99);
@@ -294,6 +295,7 @@ describe('tracker state helpers', () => {
       armorType: 5,
       armorClass: 6,
       weapon: 11,
+      weaponShortlist: [11, 12],
       maxHp: '20',
     });
     expect(addedEnemyState).toEqual({
