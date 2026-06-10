@@ -50,6 +50,10 @@ interface InitiativeAttackGraphLayoutNodeSize {
   height: number;
 }
 
+interface InitiativeAttackGraphLayoutOptions {
+  showEmptySegmentBand?: boolean;
+}
+
 interface InitiativeAttackGraphLayoutSegmentLane {
   segment: number;
   startX: number;
@@ -376,7 +380,8 @@ const buildSegmentLanes = (
 
 export const buildInitiativeAttackGraphLayout = (
   graph: InitiativeAttackGraph,
-  nodeSizeById?: Record<string, InitiativeAttackGraphLayoutNodeSize>
+  nodeSizeById?: Record<string, InitiativeAttackGraphLayoutNodeSize>,
+  options: InitiativeAttackGraphLayoutOptions = {}
 ): InitiativeAttackGraphLayout => {
   const nodeLayoutById = new Map<string, InitiativeAttackGraphLayoutNode>();
   const graphNodeById = new Map(
@@ -548,8 +553,15 @@ export const buildInitiativeAttackGraphLayout = (
   });
   const segmentRowHeights = getOrderedRowHeights(segmentRowHeightByIndex);
   const segmentRowOffsets = getRowOffsets(segmentRowHeights);
-  const segmentContentHeight = getContentHeight(segmentRowHeights);
-  const hasSegmentBand = segmentContentHeight > 0;
+  const populatedSegmentContentHeight = getContentHeight(segmentRowHeights);
+  const hasSegmentBand =
+    populatedSegmentContentHeight > 0 || Boolean(options.showEmptySegmentBand);
+  const segmentContentHeight =
+    populatedSegmentContentHeight > 0
+      ? populatedSegmentContentHeight
+      : hasSegmentBand
+      ? NODE_HEIGHT
+      : 0;
   const segmentHeaderHeight = hasSegmentBand ? SEGMENT_HEADER_HEIGHT : 0;
   const segmentTopY =
     TOP_PADDING + segmentHeaderHeight + (hasSegmentBand ? CONTENT_TOP_GAP : 0);

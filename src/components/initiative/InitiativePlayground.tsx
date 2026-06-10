@@ -3,6 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { SingleValue } from 'react-select';
 import Select from 'react-select';
+import {
+  buildInitiativeAttackGraphNodeDisplayById,
+  getInitiativeAttackGraphNodeLineYs,
+} from '../../helpers/initiative/attackGraphDisplay';
 import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
 import {
   compareCombatantInitiative,
@@ -1272,132 +1276,12 @@ const getInitiativeTimingExplanation = (
   return undefined;
 };
 
-const truncateGraphText = (text: string, maxLength: number): string =>
-  text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
-
-const wrapGraphText = (
-  text: string,
-  maxLength: number,
-  maxLines: number
-): string[] => {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-
-  if (words.length === 0) {
-    return [];
-  }
-
-  const lines: string[] = [];
-  let currentLine = '';
-
-  words.forEach((word) => {
-    const nextLine = currentLine ? `${currentLine} ${word}` : word;
-
-    if (nextLine.length <= maxLength) {
-      currentLine = nextLine;
-      return;
-    }
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-
-    currentLine = word;
-  });
-
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-
-  if (lines.length <= maxLines) {
-    return lines.map((line) => truncateGraphText(line, maxLength));
-  }
-
-  const visibleLines = lines.slice(0, maxLines);
-  const remainingText = lines.slice(maxLines - 1).join(' ');
-  visibleLines[maxLines - 1] = truncateGraphText(remainingText, maxLength);
-
-  return visibleLines;
-};
-
-const getGraphNodeActionDetail = (
-  node: InitiativeAttackNode,
-  combatant: InitiativeScenarioCombatant | undefined
-): string | undefined => {
-  if (node.kind === 'spell-start') {
-    return 'start';
-  }
-
-  if (node.kind === 'spell-completion') {
-    return 'complete';
-  }
-
-  if (
-    node.kind === 'attack' &&
-    node.source === 'routine-component' &&
-    node.label === 'attack 1' &&
-    (combatant?.attackRoutine.components.length || 0) <= 1
-  ) {
-    return undefined;
-  }
-
-  return node.label;
-};
-
-const getGraphActionLines = (
-  actionTitle: string,
-  actionDetail: string | undefined,
-  hasCustomLabel: boolean
-): string[] => {
-  if (hasCustomLabel) {
-    const labelLines = wrapGraphText(actionTitle, 20, 2);
-    return actionDetail
-      ? labelLines.concat(truncateGraphText(actionDetail, 20))
-      : labelLines;
-  }
-
-  if (!actionDetail) {
-    return [truncateGraphText(actionTitle, 20)];
-  }
-
-  return [
-    truncateGraphText(actionTitle, 18),
-    truncateGraphText(actionDetail, 18),
-  ];
-};
-
-type GraphNodeDisplayLineKind = 'name' | 'target' | 'action';
-
-interface GraphNodeDisplayLine {
-  text: string;
-  kind: GraphNodeDisplayLineKind;
-  isSecondary?: boolean;
-}
-
-interface GraphNodeDisplay {
-  combatantName: string;
-  targetLabel: string;
-  actionTitle: string;
-  actionMeta?: string;
-  actionLabel: string;
-  lines: GraphNodeDisplayLine[];
-  width: number;
-  height: number;
-}
-
-const GRAPH_NODE_MIN_WIDTH = 102;
-const GRAPH_NODE_MAX_WIDTH = 164;
-const GRAPH_NODE_MIN_HEIGHT = 66;
-const GRAPH_NODE_HORIZONTAL_PADDING = 14;
-const GRAPH_NODE_LINE_GAP = 14;
 const GRAPH_POPOVER_WIDTH = 320;
 const GRAPH_POPOVER_GAP = 14;
 const GRAPH_POPOVER_MARGIN = 10;
 const GRAPH_POPOVER_FALLBACK_HEIGHT = 320;
 const GRAPH_POPOVER_MAX_HEIGHT = 448;
 const GRAPH_POPOVER_VIEWPORT_INSET = 28;
-
-const clamp = (value: number, min: number, max: number): number =>
-  Math.min(Math.max(value, min), max);
 
 const getDirectMeleeEngagementKey = (
   leftCombatantId: string,
@@ -1850,42 +1734,6 @@ const getMovementEdgeExplanation = ({
   return `Movement and contact timing create this local order.`;
 };
 
-const estimateGraphNodeLineWidth = (
-  text: string,
-  kind: GraphNodeDisplayLineKind
-): number =>
-  text.length * (kind === 'name' ? 6.6 : kind === 'target' ? 5.8 : 5.2);
-
-const getGraphNodeWidth = (lines: GraphNodeDisplayLine[]): number =>
-  clamp(
-    Math.max(
-      ...lines.map(
-        (line) =>
-          estimateGraphNodeLineWidth(line.text, line.kind) +
-          GRAPH_NODE_HORIZONTAL_PADDING * 2
-      )
-    ),
-    GRAPH_NODE_MIN_WIDTH,
-    GRAPH_NODE_MAX_WIDTH
-  );
-
-const getGraphNodeHeight = (lineCount: number): number =>
-  Math.max(
-    GRAPH_NODE_MIN_HEIGHT,
-    24 + Math.max(0, lineCount - 1) * GRAPH_NODE_LINE_GAP
-  );
-
-const getGraphNodeLineYs = (height: number, lineCount: number): number[] => {
-  const totalSpan = (lineCount - 1) * GRAPH_NODE_LINE_GAP;
-  const centerY = height / 2 + 1;
-
-  return Array.from(
-    { length: lineCount },
-    (_unusedValue, index) =>
-      centerY - totalSpan / 2 + index * GRAPH_NODE_LINE_GAP
-  );
-};
-
 interface InitiativePlaygroundProps {
   rememberedState?: InitiativePlaytestState;
 }
@@ -2028,84 +1876,10 @@ const InitiativePlayground = ({
   }, [resolution.directMeleeEngagements]);
   const graphNodeDisplayById = useMemo(
     () =>
-      Object.fromEntries(
-        attackGraph.nodes.map((node) => {
-          const combatantName =
-            viewModel.combatantNameById[node.combatantId] || node.combatantId;
-          const combatant = combatantById.get(node.combatantId);
-
-          let targetLabel = 'No target';
-          if (node.targetId) {
-            targetLabel =
-              viewModel.combatantNameById[node.targetId] || node.targetId;
-          } else if (combatant?.targetIds.length === 1) {
-            const targetId = combatant.targetIds[0];
-            targetLabel = targetId
-              ? viewModel.combatantNameById[targetId] || targetId
-              : 'No target';
-          } else if ((combatant?.targetIds.length || 0) > 1) {
-            targetLabel = 'Multiple targets';
-          }
-
-          const customActionLabel = normalizeActionLabel(
-            node.actionLabel || combatant?.actionLabel
-          );
-          const actionTitle = combatant
-            ? customActionLabel ||
-              formatDeclaredAction(combatant.declaredAction)
-            : 'Unknown action';
-          const actionDetail = getGraphNodeActionDetail(node, combatant);
-          const actionType = combatant
-            ? formatDeclaredAction(combatant.declaredAction)
-            : undefined;
-          const actionMeta = combatant
-            ? customActionLabel
-              ? [actionType, actionDetail]
-                  .filter((value): value is string => Boolean(value))
-                  .join(' · ')
-              : actionDetail
-            : actionDetail;
-          const actionLabel = actionMeta
-            ? `${actionTitle} · ${actionMeta}`
-            : actionTitle;
-          const actionLines = getGraphActionLines(
-            actionTitle,
-            actionDetail,
-            Boolean(customActionLabel)
-          );
-          const lines: GraphNodeDisplayLine[] = [
-            {
-              text: truncateGraphText(combatantName, 18),
-              kind: 'name',
-            },
-            {
-              text: truncateGraphText(`→ ${targetLabel}`, 18),
-              kind: 'target',
-            },
-            ...actionLines.map((actionLine, index) => ({
-              text: actionLine,
-              kind: 'action' as const,
-              isSecondary: index > 0,
-            })),
-          ];
-          const height = getGraphNodeHeight(lines.length);
-
-          return [
-            node.id,
-            {
-              combatantName,
-              targetLabel,
-              actionTitle,
-              actionMeta,
-              actionLabel,
-              lines,
-              width: getGraphNodeWidth(lines),
-              height,
-            } as GraphNodeDisplay,
-          ];
-        })
-      ),
-    [attackGraph.nodes, combatantById, viewModel.combatantNameById]
+      buildInitiativeAttackGraphNodeDisplayById(resolvedRound, {
+        targetPrefix: '→',
+      }),
+    [resolvedRound]
   );
   const graphLayout = useMemo(
     () =>
@@ -4649,7 +4423,7 @@ const InitiativePlayground = ({
                           const isEnabled =
                             nodeStatus === undefined &&
                             enabledGraphNodeIds.has(node.id);
-                          const lineYs = getGraphNodeLineYs(
+                          const lineYs = getInitiativeAttackGraphNodeLineYs(
                             layoutNode.height,
                             display.lines.length
                           );

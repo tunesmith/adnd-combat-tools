@@ -79,6 +79,45 @@ describe('initiative attack graph layout', () => {
     );
   });
 
+  test('can reserve segment lanes even when every node is unsegmented', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Tracker Preview',
+      partyInitiative: 6,
+      enemyInitiative: 3,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Lodi',
+          weaponId: 16,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Rust Monster',
+          weaponId: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+    const defaultLayout = buildInitiativeAttackGraphLayout(graph);
+    const layout = buildInitiativeAttackGraphLayout(graph, undefined, {
+      showEmptySegmentBand: true,
+    });
+
+    expect(defaultLayout.hasSegmentBand).toBe(false);
+    expect(layout.hasSegmentBand).toBe(true);
+    expect(layout.segmentColumns).toHaveLength(10);
+    expect(layout.segmentBoundaryXs).toHaveLength(11);
+    expect(layout.segmentBandBottomY).toBeGreaterThan(layout.headerLineY);
+    expect(
+      layout.nodes.every((node) => node.y > layout.segmentBandBottomY)
+    ).toBe(true);
+  });
+
   test('anchors same-segment charge attacks under their segment column', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge Contact',

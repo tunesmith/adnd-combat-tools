@@ -1,0 +1,160 @@
+.graphViewport {
+  position: relative;
+  overflow: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 24rem;
+  border: 1px solid rgba(172, 114, 35, 0.72);
+  background: radial-gradient(
+      circle at top center,
+      rgba(215, 165, 45, 0.08),
+      transparent 24rem
+    ),
+    linear-gradient(180deg, #526631 0%, #415427 46%, #334120 100%);
+  padding: 0.9rem;
+}
+
+.emptyGraph {
+  border: 1px solid rgba(172, 114, 35, 0.72);
+  background: rgba(84, 111, 58, 0.24);
+  color: rgba(240, 239, 221, 0.82);
+  font-size: 1rem;
+  line-height: 1.3;
+  padding: 0.9rem 1rem;
+}
+
+.graphCanvas {
+  position: relative;
+  min-width: fit-content;
+}
+
+.graphSvg {
+  display: block;
+}
+
+.graphArrowhead {
+  fill: #f6eed6;
+  stroke: none;
+}
+
+.graphArrowheadSelected {
+  fill: #d7a52d;
+}
+
+.graphSegmentHeaderLine {
+  stroke: rgba(172, 114, 35, 0.82);
+  stroke-width: 1.75px;
+}
+
+.graphSegmentBandLine {
+  stroke: rgba(172, 114, 35, 0.72);
+  stroke-width: 1.15px;
+}
+
+.graphSegmentLane {
+  stroke: none;
+}
+
+.graphSegmentLaneEven {
+  fill: rgba(79, 96, 41, 0.54);
+}
+
+.graphSegmentLaneOdd {
+  fill: rgba(61, 76, 33, 0.44);
+}
+
+.graphSegmentColumnLabel {
+  fill: var(--goldenrod);
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.graphSegmentGuide {
+  stroke: rgba(215, 165, 45, 0.42);
+  stroke-width: 1px;
+  stroke-dasharray: 6 8;
+}
+
+.graphSimultaneousGroup {
+  fill: rgba(240, 239, 221, 0.08);
+  stroke: rgba(215, 165, 45, 0.46);
+  stroke-width: 1.25px;
+  stroke-dasharray: 7 6;
+}
+
+.graphEdge {
+  fill: none;
+  stroke: rgba(244, 236, 210, 0.78);
+  stroke-width: 1.55px;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+}
+
+.graphEdgeSpellCasting {
+  stroke-width: 6px;
+}
+
+.graphEdgeSelected {
+  stroke: rgba(215, 165, 45, 0.98);
+  stroke-width: 2.5px;
+}
+
+.graphNodeCard {
+  cursor: default;
+  stroke-width: 1.9px;
+  filter: drop-shadow(0 0.18rem 0.32rem rgba(17, 21, 10, 0.24));
+  transition: fill 140ms ease, stroke 140ms ease, filter 140ms ease;
+}
+
+.graphNodeParty {
+  stroke: #edf6ce;
+}
+
+.graphNodeEnemy {
+  stroke: #f8dac4;
+}
+
+.graphNodeSelected {
+  stroke: var(--goldenrod);
+  filter: drop-shadow(0 0 0.5rem rgba(215, 165, 45, 0.26));
+}
+
+.graphNodeName,
+.graphNodeTarget,
+.graphNodeAction {
+  fill: #fff7e9;
+  pointer-events: none;
+}
+
+.graphNodeName {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.graphNodeTarget {
+  fill: #fff8ea;
+  font-size: 0.67rem;
+}
+
+.graphNodeAction {
+  fill: #fffbed;
+  font-size: 0.64rem;
+  font-weight: 600;
+}
+
+.graphNodeActionSecondary {
+  fill: #fff8ea;
+}
+
+.graphViewportReadable .graphNodeName {
+  font-size: 0.9rem;
+}
+
+.graphViewportReadable .graphNodeTarget {
+  font-size: 0.76rem;
+}
+
+.graphViewportReadable .graphNodeAction {
+  font-size: 0.74rem;
+}

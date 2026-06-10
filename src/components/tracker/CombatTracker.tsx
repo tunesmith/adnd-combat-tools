@@ -62,6 +62,8 @@ import {
   shouldShowTrackerEffectiveArmorClass,
   type TrackerAttackDetail,
 } from '../../helpers/trackerAttackDetail';
+import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
+import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -510,6 +512,13 @@ const CombatTracker = ({
   const combatWizardEntries = useMemo<CombatWizardEntry[]>(
     () => (currentRound ? buildCombatWizardEntries(currentRound) : []),
     [currentRound]
+  );
+  const resolvedInitiativeRound = useMemo(
+    () =>
+      currentRound && canOpenCombatWizard
+        ? resolveTrackerRoundInitiative(currentRound)
+        : undefined,
+    [canOpenCombatWizard, currentRound]
   );
   const currentCombatWizardEntry = combatWizardEntries[combatWizardIndex];
   const currentCombatWizardEntryKey = currentCombatWizardEntry?.combatantKey;
@@ -2125,6 +2134,30 @@ const CombatTracker = ({
             </tfoot>
           </table>
         </div>
+        <section
+          className={styles['initiativeDagPanel']}
+          aria-labelledby={'tracker-initiative-dag-title'}
+        >
+          <h2
+            id={'tracker-initiative-dag-title'}
+            className={styles['initiativeDagTitle']}
+          >
+            Precedence DAG
+          </h2>
+          {resolvedInitiativeRound ? (
+            <InitiativeAttackGraphView
+              resolvedRound={resolvedInitiativeRound}
+              markerIdPrefix={'tracker-initiative-dag'}
+              minHeightRem={22}
+              readableText={true}
+              showEmptySegmentLanes={true}
+            />
+          ) : (
+            <div className={styles['initiativeDagEmpty']}>
+              Enter party and enemy initiative to draw the current round DAG.
+            </div>
+          )}
+        </section>
       </div>
       {showRecoverModal && (
         <>
