@@ -32,7 +32,7 @@ interface InitiativeResolutionCardViewModel {
   steps: InitiativeResolutionStepViewModel[];
 }
 
-interface InitiativeRoundResolutionViewModel {
+export interface InitiativeRoundResolutionViewModel {
   cards: InitiativeResolutionCardViewModel[];
   combatantNameById: Record<string, string>;
 }

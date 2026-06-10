@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { SingleValue } from 'react-select';
 import Select from 'react-select';
-import { buildInitiativeAttackGraph } from '../../helpers/initiative/attackGraph';
 import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
 import {
   compareCombatantInitiative,
@@ -19,9 +18,7 @@ import {
   type InitiativePlaytestCombatantState,
   type InitiativePlaytestState,
 } from '../../helpers/initiativeCodec';
-import { buildInitiativeRoundResolutionViewModel } from '../../helpers/initiative/roundResolutionViewModel';
-import { resolveInitiativeRound } from '../../helpers/initiative/roundResolution';
-import { buildInitiativeScenario } from '../../helpers/initiative/scenario';
+import { resolveInitiativeDraft } from '../../helpers/initiative/resolvedRound';
 import customStyles from '../../helpers/selectCustomStyles';
 import { MONSTER } from '../../tables/attackerClass';
 import {
@@ -1991,22 +1988,11 @@ const InitiativePlayground = ({
   const [graphContextMenu, setGraphContextMenu] = useState<
     GraphContextMenuState | undefined
   >(undefined);
-  const scenario = useMemo(
-    () => buildInitiativeScenario(buildDraftFromState(state)),
+  const resolvedRound = useMemo(
+    () => resolveInitiativeDraft(buildDraftFromState(state)),
     [state]
   );
-  const resolution = useMemo(
-    () => resolveInitiativeRound(scenario),
-    [scenario]
-  );
-  const attackGraph = useMemo(
-    () => buildInitiativeAttackGraph(scenario, resolution),
-    [resolution, scenario]
-  );
-  const viewModel = useMemo(
-    () => buildInitiativeRoundResolutionViewModel(scenario, resolution),
-    [resolution, scenario]
-  );
+  const { scenario, resolution, attackGraph, viewModel } = resolvedRound;
   const attackNodeById = useMemo(
     () => new Map(attackGraph.nodes.map((node) => [node.id, node] as const)),
     [attackGraph.nodes]
