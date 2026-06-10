@@ -603,6 +603,9 @@ const CombatTracker = ({
       window.location.pathname,
       encodedTrackerState
     );
+    const nextUrlLength = nextUrl.length;
+
+    setUrlWarningLength(nextUrlLength);
 
     window.history.replaceState(
       {},
@@ -614,7 +617,6 @@ const CombatTracker = ({
 
     if (window.location.hash !== expectedHash) {
       setAddressBarUrlTruncated(true);
-      setUrlWarningLength(nextUrl.length);
       if (!urlWarningShown.current) {
         setShowUrlWarning(true);
         urlWarningShown.current = true;
@@ -623,16 +625,6 @@ const CombatTracker = ({
     }
 
     setAddressBarUrlTruncated(false);
-
-    if (nextUrl.length >= URL_WARNING_THRESHOLD) {
-      setUrlWarningLength(nextUrl.length);
-      if (!urlWarningShown.current) {
-        setShowUrlWarning(true);
-        urlWarningShown.current = true;
-      }
-      return;
-    }
-
     urlWarningShown.current = false;
   }, [encodedTrackerState]);
 
@@ -1289,6 +1281,11 @@ const CombatTracker = ({
     : hasLocalDraft && lastLocalSaveAt
     ? `Saved locally ${formatDraftSavedAt(lastLocalSaveAt)}`
     : 'Local recovery will start after your next edit.';
+  const showLongUrlNotice =
+    addressBarUrlTruncated || urlWarningLength >= URL_WARNING_THRESHOLD;
+  const longUrlNoticeTitle = addressBarUrlTruncated
+    ? 'The browser address bar may not contain the full tracker state. Use Copy Share URL instead.'
+    : `This tracker URL is ${urlWarningLength.toLocaleString()} characters. Use Copy Share URL rather than copying from the address bar.`;
 
   const getPartyDisplayName = (partyIndex: number): string =>
     currentRound.party[partyIndex]?.name || `Party ${partyIndex + 1}`;
@@ -1681,14 +1678,30 @@ const CombatTracker = ({
               >
                 Advance Round
               </button>
-              <button
-                type={'button'}
-                className={styles['toolbarButton']}
-                disabled={!encodedTrackerState}
-                onClick={() => void handleCopyShareUrl()}
-              >
-                {shareCopied ? 'Share URL Copied' : 'Copy Share URL'}
-              </button>
+              <span className={styles['shareButtonWrap']}>
+                <button
+                  type={'button'}
+                  className={styles['toolbarButton']}
+                  disabled={!encodedTrackerState}
+                  title={showLongUrlNotice ? longUrlNoticeTitle : undefined}
+                  aria-label={
+                    showLongUrlNotice
+                      ? `Copy Share URL. ${longUrlNoticeTitle}`
+                      : undefined
+                  }
+                  onClick={() => void handleCopyShareUrl()}
+                >
+                  {shareCopied ? 'Share URL Copied' : 'Copy Share URL'}
+                </button>
+                {showLongUrlNotice ? (
+                  <span
+                    className={styles['shareUrlBadge']}
+                    aria-hidden={'true'}
+                  >
+                    Long URL
+                  </span>
+                ) : null}
+              </span>
               <div className={styles['toolbarMenuWrap']} ref={moreActionsRef}>
                 <button
                   type={'button'}
@@ -2223,46 +2236,21 @@ const CombatTracker = ({
             onClick={(event) => event.stopPropagation()}
           >
             <div id={'url-warning-title'} className={styles['modalTitle']}>
-              Tracker URL Is Getting Long
+              Address Bar URL Is Incomplete
             </div>
             <div className={styles['modalBody']}>
               <div className={styles['urlWarningCount']}>
                 {urlWarningLength.toLocaleString()} characters
               </div>
-              {addressBarUrlTruncated ? (
-                <>
-                  <p
-                    id={'url-warning-description'}
-                    className={styles['modalText']}
-                  >
-                    This browser could not keep the full tracker URL in the
-                    address bar. The page may still work locally, but the
-                    displayed address-bar URL can reopen as corrupted elsewhere.
-                  </p>
-                  <p className={styles['modalText']}>
-                    Use Copy Share URL to copy the full encoded tracker state
-                    directly instead of relying on the browser&apos;s displayed
-                    URL.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p
-                    id={'url-warning-description'}
-                    className={styles['modalText']}
-                  >
-                    This tracker is stored entirely in the URL. Once it gets
-                    this large, some browsers, chat apps, and notes tools may
-                    stop saving or reopening it reliably. The share link uses
-                    the URL hash so hosts do not receive the tracker state when
-                    the page reloads.
-                  </p>
-                  <p className={styles['modalText']}>
-                    If you want to keep it portable, consider trimming longer
-                    notes or splitting the combat into shorter tracker URLs.
-                  </p>
-                </>
-              )}
+              <p id={'url-warning-description'} className={styles['modalText']}>
+                This browser could not keep the full tracker URL in the address
+                bar. The page may still work locally, but the displayed
+                address-bar URL can reopen as corrupted elsewhere.
+              </p>
+              <p className={styles['modalText']}>
+                Use Copy Share URL to copy the full encoded tracker state
+                directly instead of relying on the browser&apos;s displayed URL.
+              </p>
             </div>
             <div className={styles['modalActions']}>
               <button
@@ -2355,6 +2343,12 @@ const CombatTracker = ({
                 Clipboard access was blocked, so the full tracker URL is shown
                 here instead.
               </p>
+              {shareModalUrl.length >= URL_WARNING_THRESHOLD ? (
+                <div className={styles['shareUrlNotice']}>
+                  This URL is {shareModalUrl.length.toLocaleString()}{' '}
+                  characters. Copy this full field rather than the address bar.
+                </div>
+              ) : null}
               <textarea
                 ref={shareTextareaRef}
                 readOnly

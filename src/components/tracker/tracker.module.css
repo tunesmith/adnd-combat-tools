@@ -90,6 +90,27 @@
   color: var(--caput-martuum);
 }
 
+.shareButtonWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.shareUrlBadge {
+  position: absolute;
+  top: -0.62rem;
+  right: 0.35rem;
+  border: 1px solid var(--eggshell);
+  background: var(--dark-olive-green);
+  color: var(--eggshell);
+  box-shadow: 0 0 0 1px var(--copper);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.16rem 0.32rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .toolbarButtonDanger {
   background: rgba(140, 33, 33, 0.14);
   color: #111;
@@ -902,6 +923,16 @@
   color: #111;
   font-size: 1rem;
   line-height: 1.35;
+}
+
+.shareUrlNotice {
+  margin: 0 0 0.75rem;
+  border: 1px solid var(--copper);
+  background: rgba(175, 127, 0, 0.12);
+  color: #111;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  padding: 0.45rem 0.55rem;
 }
 
 .attackDetailMatchup {
