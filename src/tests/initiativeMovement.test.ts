@@ -78,6 +78,63 @@ describe('initiative movement resolution', () => {
     ]);
   });
 
+  test('resolves a charge against a targetless mover from the supplied distance', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Targetless Mover',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bemis',
+          declaredAction: 'close',
+          movementRate: 12,
+          actionDistanceInches: 5,
+          weaponId: 13,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Flesh Golem',
+          declaredAction: 'charge',
+          movementRate: 8,
+          weaponId: 1,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 2.5,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(scenario.movementResolutions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          combatantId: 'party-1',
+          action: 'close',
+          reason: 'movement-complete',
+          distanceInches: 5,
+          contactSegment: 5,
+          sameRoundAttack: false,
+        }),
+        expect.objectContaining({
+          combatantId: 'enemy-3',
+          targetId: 'party-1',
+          action: 'charge',
+          reason: 'contact',
+          distanceInches: 2.5,
+          closingInchesPerSegment: 1.6,
+          contactSegment: 1,
+          sameRoundAttack: true,
+        }),
+      ])
+    );
+  });
+
   test('requires distance for targetless move/close', () => {
     const scenario = buildInitiativeScenario({
       label: 'Move Without Distance',

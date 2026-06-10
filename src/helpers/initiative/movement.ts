@@ -72,6 +72,13 @@ const getRelativeClosingInchesPerSegment = (
     return attackerInchesPerSegment + getInchesPerSegment(target);
   }
 
+  if (
+    target.declaredAction === 'close' &&
+    target.targetDeclarations.length === 0
+  ) {
+    return attackerInchesPerSegment;
+  }
+
   if (target.declaredAction === 'close' || target.declaredAction === 'charge') {
     return undefined;
   }
