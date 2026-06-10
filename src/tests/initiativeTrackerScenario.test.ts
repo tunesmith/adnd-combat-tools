@@ -112,10 +112,17 @@ describe('tracker initiative scenario builder', () => {
     expect(scenario.party[1]).toMatchObject({
       id: 'party-2',
       weaponId: 9,
+      declaredAction: 'missile',
       weaponType: 'missile',
       weaponSpeedFactor: undefined,
       intention: 'loose arrow',
       targetIds: ['enemy-5'],
+      attackRoutine: {
+        components: [
+          { id: 'attack-1', order: 1, label: 'attack 1' },
+          { id: 'attack-2', order: 2, label: 'attack 2' },
+        ],
+      },
     });
     expect(scenario.enemies[0]).toMatchObject({
       id: 'enemy-4',

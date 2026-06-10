@@ -1,6 +1,9 @@
 import type { Creature } from './creature';
+import type { InitiativeDeclaredAction } from './initiative';
 
 export type TrackerAttackHand = 'main' | 'offHand';
+export type TrackerActionSide = 'party' | 'enemy';
+export type TrackerActionDirection = 'partyToEnemy' | 'enemyToParty';
 
 export interface TrackerCombatant extends Creature {
   maxHp?: string;
@@ -32,6 +35,29 @@ export interface TrackerCellState {
   partyToEnemy: string;
   enemyToPartyVisible: boolean;
   partyToEnemyVisible: boolean;
+}
+
+export interface TrackerActionTargetDeclaration {
+  targetCombatantKey: number;
+  targetCombatantIndex: number;
+  cellRowIndex: number;
+  cellColumnIndex: number;
+  cellResultText: string;
+}
+
+export interface TrackerActionDeclaration {
+  id: string;
+  source: 'combat-cell';
+  side: TrackerActionSide;
+  direction: TrackerActionDirection;
+  combatantKey: number;
+  combatantIndex: number;
+  targetSide: TrackerActionSide;
+  declaredAction: InitiativeDeclaredAction;
+  weaponId: number;
+  intention: string;
+  result: string;
+  targetDeclarations: TrackerActionTargetDeclaration[];
 }
 
 export interface TrackerRoundV1 {
@@ -89,6 +115,7 @@ export interface TrackerRoundV6 extends Omit<TrackerRoundV5, 'cells'> {
 
 export interface TrackerRound extends TrackerRoundV6 {
   label: string;
+  actions?: TrackerActionDeclaration[];
 }
 
 export interface TrackerStateV1 {

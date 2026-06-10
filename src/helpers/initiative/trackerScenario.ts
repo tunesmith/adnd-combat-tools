@@ -1,44 +1,56 @@
 import { buildInitiativeScenario } from './scenario';
 import type {
   InitiativeScenario,
+  InitiativeScenarioDraftActionDeclaration,
   InitiativeScenarioDraft,
 } from '../../types/initiative';
-import type { TrackerRound } from '../../types/tracker';
+import { getTrackerActionDeclarations } from '../trackerActionDeclarations';
+import type {
+  TrackerActionDeclaration,
+  TrackerActionSide,
+  TrackerRound,
+} from '../../types/tracker';
 
 const parseInitiative = (value: string): number => {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const getTargetIndicesForPartyCombatant = (
-  round: TrackerRound,
-  partyIndex: number
-): number[] =>
-  round.enemies.flatMap((_, enemyIndex) => {
-    const cell = round.cells[enemyIndex]?.[partyIndex];
-    return cell &&
-      (cell.partyToEnemyVisible || Boolean(cell.partyToEnemy.trim()))
-      ? [enemyIndex]
-      : [];
-  });
+const getActionKey = (side: TrackerActionSide, combatantKey: number): string =>
+  `${side}:${combatantKey}`;
 
-const getTargetIndicesForEnemyCombatant = (
-  round: TrackerRound,
-  enemyIndex: number
-): number[] =>
-  round.party.flatMap((_, partyIndex) => {
-    const cell = round.cells[enemyIndex]?.[partyIndex];
-    return cell &&
-      (cell.enemyToPartyVisible || Boolean(cell.enemyToParty.trim()))
-      ? [partyIndex]
-      : [];
-  });
+const groupActionsByCombatant = (
+  actions: TrackerActionDeclaration[]
+): Map<string, TrackerActionDeclaration[]> =>
+  actions.reduce<Map<string, TrackerActionDeclaration[]>>((groups, action) => {
+    const key = getActionKey(action.side, action.combatantKey);
+    groups.set(key, (groups.get(key) || []).concat(action));
+    return groups;
+  }, new Map());
+
+const toInitiativeDraftActions = (
+  actions: TrackerActionDeclaration[]
+): InitiativeScenarioDraftActionDeclaration[] | undefined =>
+  actions.length > 0
+    ? actions.map((action) => ({
+        id: action.id,
+        declaredAction: action.declaredAction,
+        targetDeclarations: action.targetDeclarations.map(
+          (targetDeclaration) => ({
+            targetCombatantKey: targetDeclaration.targetCombatantKey,
+          })
+        ),
+      }))
+    : undefined;
 
 export const buildInitiativeScenarioFromTrackerRound = (
   round: TrackerRound
 ): InitiativeScenario => {
   const partyInitiative = parseInitiative(round.partyInitiative);
   const enemyInitiative = parseInitiative(round.enemyInitiative);
+  const actionGroups = groupActionsByCombatant(
+    getTrackerActionDeclarations(round)
+  );
 
   const draft: InitiativeScenarioDraft = {
     label: round.label,
@@ -50,11 +62,9 @@ export const buildInitiativeScenarioFromTrackerRound = (
       weaponId: combatant.weapon,
       intention: round.partyStates[index]?.action || '',
       result: round.partyStates[index]?.result || '',
-      targetCombatantKeys: getTargetIndicesForPartyCombatant(round, index)
-        .map((enemyIndex) => round.enemies[enemyIndex]?.key)
-        .filter((combatantKey): combatantKey is number =>
-          Number.isFinite(combatantKey)
-        ),
+      actions: toInitiativeDraftActions(
+        actionGroups.get(getActionKey('party', combatant.key)) || []
+      ),
     })),
     enemies: round.enemies.map((combatant, index) => ({
       combatantKey: combatant.key,
@@ -62,11 +72,9 @@ export const buildInitiativeScenarioFromTrackerRound = (
       weaponId: combatant.weapon,
       intention: round.enemyStates[index]?.action || '',
       result: round.enemyStates[index]?.result || '',
-      targetCombatantKeys: getTargetIndicesForEnemyCombatant(round, index)
-        .map((partyIndex) => round.party[partyIndex]?.key)
-        .filter((combatantKey): combatantKey is number =>
-          Number.isFinite(combatantKey)
-        ),
+      actions: toInitiativeDraftActions(
+        actionGroups.get(getActionKey('enemy', combatant.key)) || []
+      ),
     })),
   };
 
