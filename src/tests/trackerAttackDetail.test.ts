@@ -1,5 +1,6 @@
 import { buildTrackerAttackDetail } from '../helpers/trackerAttackDetail';
 import { FIGHTER } from '../tables/attackerClass';
+import { getOffHandWeaponOptions } from '../tables/weapon';
 import type { TrackerCombatant } from '../types/tracker';
 
 const createCombatant = (
@@ -45,5 +46,41 @@ describe('tracker attack detail', () => {
       unadjustedToHit: 17,
       toHit: 19,
     });
+  });
+
+  test('can explain an off-hand weapon instead of the main weapon', () => {
+    const attacker = createCombatant({
+      key: 1,
+      name: 'Lodi',
+      weapon: 57,
+      offHandWeapon: 17,
+    });
+    const target = createCombatant({
+      key: 2,
+      name: 'Plate Guard',
+      armorType: 20,
+      armorClass: 3,
+      weapon: 1,
+    });
+
+    expect(
+      buildTrackerAttackDetail(attacker, target, 'Party 1', 'Enemy 1', 17)
+    ).toMatchObject({
+      attackerName: 'Lodi',
+      targetName: 'Plate Guard',
+      weaponName: 'Dagger (Held)',
+      targetArmorDescription: 'AT 3 - Plate mail',
+      weaponAdjustment: -3,
+      adjustedArmorClass: 0,
+      unadjustedToHit: 17,
+      toHit: 20,
+    });
+  });
+
+  test('limits off-hand weapon options to dagger and hammer choices allowed by class', () => {
+    expect(getOffHandWeaponOptions(FIGHTER)).toEqual([
+      { value: 17, label: 'Dagger (Held)' },
+      { value: 32, label: 'Hammer (Held)' },
+    ]);
   });
 });

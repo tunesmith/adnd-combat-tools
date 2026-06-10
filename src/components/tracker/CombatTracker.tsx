@@ -17,6 +17,7 @@ import {
   updateCombatant,
 } from '../../helpers/trackerState';
 import type {
+  TrackerAttackHand,
   TrackerCombatant,
   TrackerCellState,
   TrackerCombatantRoundState,
@@ -82,6 +83,7 @@ interface AttackDetailTarget {
   enemyIndex: number;
   partyIndex: number;
   direction: AttackDetailDirection;
+  hand: TrackerAttackHand;
 }
 
 type TrackerAction =
@@ -477,19 +479,46 @@ const CombatTracker = ({
       return undefined;
     }
 
+    const attacker =
+      attackDetailTarget.direction === 'enemyToParty'
+        ? enemyCombatant
+        : partyCombatant;
+    const attackWeapon =
+      attackDetailTarget.hand === 'offHand'
+        ? attacker.offHandWeapon
+        : attacker.weapon;
+
+    if (!attackWeapon) {
+      return undefined;
+    }
+
     return attackDetailTarget.direction === 'enemyToParty'
       ? buildTrackerAttackDetail(
           enemyCombatant,
           partyCombatant,
           `Enemy ${attackDetailTarget.enemyIndex + 1}`,
-          `Party ${attackDetailTarget.partyIndex + 1}`
+          `Party ${attackDetailTarget.partyIndex + 1}`,
+          attackWeapon
         )
       : buildTrackerAttackDetail(
           partyCombatant,
           enemyCombatant,
           `Party ${attackDetailTarget.partyIndex + 1}`,
-          `Enemy ${attackDetailTarget.enemyIndex + 1}`
+          `Enemy ${attackDetailTarget.enemyIndex + 1}`,
+          attackWeapon
         );
+  }, [attackDetailTarget, currentRound]);
+  const selectedAttackHasOffHand = useMemo<boolean>(() => {
+    if (!currentRound || !attackDetailTarget) {
+      return false;
+    }
+
+    const attacker =
+      attackDetailTarget.direction === 'enemyToParty'
+        ? currentRound.enemies[attackDetailTarget.enemyIndex]
+        : currentRound.party[attackDetailTarget.partyIndex];
+
+    return Boolean(attacker?.offHandWeapon);
   }, [attackDetailTarget, currentRound]);
   const canOpenCombatWizard = Boolean(
     currentRound?.partyInitiative.trim() && currentRound?.enemyInitiative.trim()
@@ -1312,11 +1341,12 @@ const CombatTracker = ({
         partyToEnemyVisible={cellState.partyToEnemyVisible}
         allowVisibilityToggle={allowVisibilityToggle}
         displayMode={displayMode}
-        onAttackDetailOpen={(direction) =>
+        onAttackDetailOpen={(direction, hand) =>
           setAttackDetailTarget({
             enemyIndex,
             partyIndex,
             direction,
+            hand,
           })
         }
         onEnemyToPartyVisibilityChange={(value) =>
@@ -2431,6 +2461,16 @@ const CombatTracker = ({
                 {selectedAttackDetail.targetName}
               </div>
               <dl className={styles['attackDetailList']}>
+                {selectedAttackHasOffHand ? (
+                  <div className={styles['attackDetailRow']}>
+                    <dt>Attack</dt>
+                    <dd>
+                      {attackDetailTarget?.hand === 'offHand'
+                        ? 'Off-hand'
+                        : 'Main hand'}
+                    </dd>
+                  </div>
+                ) : null}
                 <div className={styles['attackDetailRow']}>
                   <dt>Weapon</dt>
                   <dd>{selectedAttackDetail.weaponName}</dd>

@@ -58,6 +58,9 @@ export const getTrackerCombatantHeaderDisplay = (
   )?.armorDescription;
   const weaponLabel =
     getWeaponInfo(combatant.weapon)?.name || '(No weapon selected)';
+  const offHandWeaponLabel = combatant.offHandWeapon
+    ? getWeaponInfo(combatant.offHandWeapon)?.name
+    : undefined;
 
   return {
     name,
@@ -68,6 +71,7 @@ export const getTrackerCombatantHeaderDisplay = (
         : []),
       `AC ${combatant.armorClass}`,
       weaponLabel,
+      ...(offHandWeaponLabel ? [offHandWeaponLabel] : []),
     ],
   };
 };

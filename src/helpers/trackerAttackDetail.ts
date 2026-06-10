@@ -27,7 +27,8 @@ export const buildTrackerAttackDetail = (
   attacker: TrackerCombatant,
   target: TrackerCombatant,
   attackerFallbackName: string,
-  targetFallbackName: string
+  targetFallbackName: string,
+  weapon: number = attacker.weapon
 ): TrackerAttackDetail => {
   const targetArmor = expandedArmorTypes.find(
     (armorProps) => armorProps.key === target.armorType
@@ -38,15 +39,13 @@ export const buildTrackerAttackDetail = (
     attacker.level
   );
   const weaponAdjustment =
-    targetArmorType === null
-      ? 0
-      : getWeaponAdjustment(attacker.weapon, targetArmorType);
+    targetArmorType === null ? 0 : getWeaponAdjustment(weapon, targetArmorType);
   const adjustedArmorClass = target.armorClass + weaponAdjustment;
 
   return {
     attackerName: getCombatantName(attacker, attackerFallbackName),
     targetName: getCombatantName(target, targetFallbackName),
-    weaponName: getWeaponInfo(attacker.weapon)?.name || 'Unknown weapon',
+    weaponName: getWeaponInfo(weapon)?.name || 'Unknown weapon',
     targetArmorDescription:
       targetArmor?.armorDescription || 'Unknown armor type',
     targetArmorClass: target.armorClass,

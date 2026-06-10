@@ -440,6 +440,21 @@
   white-space: nowrap;
 }
 
+.cellEntryLabels {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.cellEntryLabelSeparator {
+  color: rgba(240, 239, 221, 0.56);
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
 .cellEntryLabelButton {
   border: 0;
   background: transparent;

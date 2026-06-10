@@ -1,7 +1,7 @@
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import getToHit from '../../helpers/getToHit';
 import { expandedArmorTypes } from '../../tables/armorType';
-import type { TrackerCombatant } from '../../types/tracker';
+import type { TrackerAttackHand, TrackerCombatant } from '../../types/tracker';
 import styles from './tracker.module.css';
 
 interface TrackerCellProps {
@@ -15,7 +15,10 @@ interface TrackerCellProps {
   onPartyToEnemyVisibilityChange: (value: boolean) => void;
   onEnemyToPartyChange: (value: string) => void;
   onPartyToEnemyChange: (value: string) => void;
-  onAttackDetailOpen?: (direction: 'enemyToParty' | 'partyToEnemy') => void;
+  onAttackDetailOpen?: (
+    direction: 'enemyToParty' | 'partyToEnemy',
+    hand: TrackerAttackHand
+  ) => void;
   allowVisibilityToggle?: boolean;
   displayMode?: 'both' | 'enemyOnly' | 'partyOnly';
   style?: CSSProperties;
@@ -44,20 +47,49 @@ const TrackerCell = ({
     (armorProps) => armorProps.key === rowCombatant.armorType
   );
 
-  const rowToHit = getToHit(
-    rowCombatant.class,
-    rowCombatant.level,
-    rowTargetArmor?.armorType || null,
+  const getCombatantToHit = (
+    attacker: TrackerCombatant,
+    targetArmorType: number | null,
+    targetArmorClass: number,
+    weapon: number
+  ): number =>
+    getToHit(
+      attacker.class,
+      attacker.level,
+      targetArmorType,
+      targetArmorClass,
+      weapon
+    );
+  const rowTargetArmorType = rowTargetArmor?.armorType || null;
+  const columnTargetArmorType = columnTargetArmor?.armorType || null;
+  const rowToHit = getCombatantToHit(
+    rowCombatant,
+    rowTargetArmorType,
     columnCombatant.armorClass,
     rowCombatant.weapon
   );
-  const columnToHit = getToHit(
-    columnCombatant.class,
-    columnCombatant.level,
-    columnTargetArmor?.armorType || null,
+  const rowOffHandToHit = rowCombatant.offHandWeapon
+    ? getCombatantToHit(
+        rowCombatant,
+        rowTargetArmorType,
+        columnCombatant.armorClass,
+        rowCombatant.offHandWeapon
+      )
+    : undefined;
+  const columnToHit = getCombatantToHit(
+    columnCombatant,
+    columnTargetArmorType,
     rowCombatant.armorClass,
     columnCombatant.weapon
   );
+  const columnOffHandToHit = columnCombatant.offHandWeapon
+    ? getCombatantToHit(
+        columnCombatant,
+        columnTargetArmorType,
+        rowCombatant.armorClass,
+        columnCombatant.offHandWeapon
+      )
+    : undefined;
   const enemyHasContent = Boolean(enemyToPartyValue.trim());
   const partyHasContent = Boolean(partyToEnemyValue.trim());
   const showEnemyHalf = displayMode !== 'partyOnly';
@@ -85,6 +117,7 @@ const TrackerCell = ({
   const renderToHitLabel = (
     toHit: number,
     direction: 'enemyToParty' | 'partyToEnemy',
+    hand: TrackerAttackHand,
     label: string
   ) =>
     onAttackDetailOpen ? (
@@ -92,9 +125,10 @@ const TrackerCell = ({
         type={'button'}
         className={styles['cellEntryLabelButton']}
         aria-label={label}
+        title={label}
         onClick={(event) => {
           event.stopPropagation();
-          onAttackDetailOpen(direction);
+          onAttackDetailOpen(direction, hand);
         }}
       >
         {toHit}
@@ -102,6 +136,33 @@ const TrackerCell = ({
     ) : (
       <span className={styles['cellEntryLabel']}>{toHit}</span>
     );
+
+  const renderToHitLabels = (
+    direction: 'enemyToParty' | 'partyToEnemy',
+    sideLabel: 'enemy' | 'party',
+    mainToHit: number,
+    offHandToHit?: number
+  ) => (
+    <span className={styles['cellEntryLabels']}>
+      {renderToHitLabel(
+        mainToHit,
+        direction,
+        'main',
+        `Show ${sideLabel} main-hand attack details`
+      )}
+      {offHandToHit !== undefined ? (
+        <>
+          <span className={styles['cellEntryLabelSeparator']}>/</span>
+          {renderToHitLabel(
+            offHandToHit,
+            direction,
+            'offHand',
+            `Show ${sideLabel} off-hand attack details`
+          )}
+        </>
+      ) : null}
+    </span>
+  );
 
   return (
     <td className={styles['interactionCell']} style={style}>
@@ -147,10 +208,11 @@ const TrackerCell = ({
           >
             {enemyToPartyVisible ? (
               <>
-                {renderToHitLabel(
-                  rowToHit,
+                {renderToHitLabels(
                   'enemyToParty',
-                  'Show enemy attack details'
+                  'enemy',
+                  rowToHit,
+                  rowOffHandToHit
                 )}
                 <input
                   className={styles['cellEntryInputInline']}
@@ -198,10 +260,11 @@ const TrackerCell = ({
           >
             {partyToEnemyVisible ? (
               <>
-                {renderToHitLabel(
-                  columnToHit,
+                {renderToHitLabels(
                   'partyToEnemy',
-                  'Show party attack details'
+                  'party',
+                  columnToHit,
+                  columnOffHandToHit
                 )}
                 <input
                   className={styles['cellEntryInputInline']}

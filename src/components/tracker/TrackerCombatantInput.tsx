@@ -15,7 +15,7 @@ import {
   getExpandedArmorOptionsByClass,
 } from '../../tables/armorType';
 import { getLevelOptionsByCombatClass } from '../../tables/combatLevel';
-import { getWeaponOptions } from '../../tables/weapon';
+import { getOffHandWeaponOptions, getWeaponOptions } from '../../tables/weapon';
 import type {
   ArmorClassOption,
   CreatureOption,
@@ -25,6 +25,11 @@ import type {
 } from '../../types/option';
 import type { TrackerCombatant } from '../../types/tracker';
 import styles from './tracker.module.css';
+
+const NO_OFF_HAND_WEAPON_OPTION: WeaponOption = {
+  value: 0,
+  label: 'No off-hand weapon',
+};
 
 interface TrackerCombatantInputProps {
   combatant: TrackerCombatant;
@@ -61,6 +66,10 @@ const TrackerCombatantInput = ({
   );
   const weaponOptions = useMemo<WeaponOption[]>(
     () => getWeaponOptions(draft.class),
+    [draft.class]
+  );
+  const offHandWeaponOptions = useMemo<WeaponOption[]>(
+    () => [NO_OFF_HAND_WEAPON_OPTION, ...getOffHandWeaponOptions(draft.class)],
     [draft.class]
   );
   const armorTypeOptions = useMemo<ExpandedArmorTypeOption[]>(
@@ -122,8 +131,14 @@ const TrackerCombatantInput = ({
     const nextArmorTypeOptions =
       getExpandedArmorOptionsByClass(newCreatureClass);
     const nextWeaponOptions = getWeaponOptions(newCreatureClass);
+    const nextOffHandWeaponOptions = getOffHandWeaponOptions(newCreatureClass);
     const nextArmorType = nextArmorTypeOptions[0]?.value || draft.armorType;
     const nextWeapon = nextWeaponOptions[0]?.value || draft.weapon;
+    const nextOffHandWeapon = nextOffHandWeaponOptions.some(
+      (option) => option.value === draft.offHandWeapon
+    )
+      ? draft.offHandWeapon
+      : undefined;
 
     commit({
       ...draft,
@@ -132,6 +147,7 @@ const TrackerCombatantInput = ({
       armorType: nextArmorType,
       armorClass: getDerivedArmorClass(nextArmorType),
       weapon: nextWeapon,
+      offHandWeapon: nextOffHandWeapon,
     });
   };
 
@@ -174,6 +190,15 @@ const TrackerCombatantInput = ({
         weapon: nextWeapon,
       });
     }
+  };
+
+  const handleOffHandWeapon = (option: SingleValue<WeaponOption>) => {
+    const nextWeapon = option?.value;
+
+    commit({
+      ...draft,
+      offHandWeapon: nextWeapon ? nextWeapon : undefined,
+    });
   };
 
   const modalRoot =
@@ -346,6 +371,19 @@ const TrackerCombatantInput = ({
                 )}
                 options={weaponOptions}
                 onChange={handleWeapon}
+              />
+              <label className={styles['modalLabel']}>Off-hand Weapon</label>
+              <Select
+                isSearchable={false}
+                instanceId={`offHandWeapon-${draft.key}`}
+                styles={customStyles}
+                menuPortalTarget={selectMenuPortalTarget}
+                menuPosition={'fixed'}
+                value={offHandWeaponOptions.filter(
+                  (option) => option.value === (draft.offHandWeapon || 0)
+                )}
+                options={offHandWeaponOptions}
+                onChange={handleOffHandWeapon}
               />
             </div>
           </>,

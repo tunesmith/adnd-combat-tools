@@ -1,7 +1,10 @@
 import type { Creature } from './creature';
 
+export type TrackerAttackHand = 'main' | 'offHand';
+
 export interface TrackerCombatant extends Creature {
   maxHp?: string;
+  offHandWeapon?: number;
 }
 
 export interface TrackerCombatantRoundStateV1 {
