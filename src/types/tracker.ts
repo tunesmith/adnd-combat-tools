@@ -1,5 +1,8 @@
 import type { Creature } from './creature';
-import type { InitiativeDeclaredAction } from './initiative';
+import type {
+  InitiativeDeclaredAction,
+  InitiativeTimingOverride,
+} from './initiative';
 
 export type TrackerAttackHand = 'main' | 'offHand';
 export type TrackerActionSide = 'party' | 'enemy';
@@ -57,6 +60,7 @@ export interface TrackerActionDeclaration {
   targetSide: TrackerActionSide;
   declaredAction: InitiativeDeclaredAction;
   actionLabel?: string;
+  initiativeTiming?: InitiativeTimingOverride;
   actionDistanceInches?: number;
   activationSegments?: number;
   castingSegments?: number;

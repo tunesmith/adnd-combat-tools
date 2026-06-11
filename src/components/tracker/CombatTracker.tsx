@@ -25,6 +25,7 @@ import type {
   TrackerRound,
   TrackerState,
 } from '../../types/tracker';
+import type { InitiativeTimingOverride } from '../../types/initiative';
 import {
   decodeTrackerState,
   encodeTrackerState,
@@ -72,6 +73,7 @@ import {
 } from '../../helpers/initiative/actionSegments';
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
 import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
+import { getDefaultTrackerDeclaredAction } from '../../helpers/trackerActionDeclarations';
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -112,10 +114,20 @@ interface TrackerActionEditorTarget {
 interface TrackerActionEditorDraft {
   mode: TrackerActionEditorMode;
   label: string;
+  initiativeTiming: InitiativeTimingOverride;
   distanceInches: string;
   activationSegments: string;
   castingSegments: string;
 }
+
+const INITIATIVE_TIMING_OPTIONS: Array<{
+  value: InitiativeTimingOverride;
+  label: string;
+}> = [
+  { value: 'normal', label: 'Normal initiative' },
+  { value: 'wins-initiative', label: 'Wins initiative' },
+  { value: 'loses-initiative', label: 'Loses initiative' },
+];
 
 type TrackerAction =
   | { type: 'replace-state'; state: TrackerState }
@@ -368,6 +380,52 @@ const formatMagicalDeviceIntention = (
   return label ? `${label} (${timingText})` : `Magical device (${timingText})`;
 };
 
+const formatDeclaredAction = (
+  declaredAction: TrackerActionDeclaration['declaredAction']
+): string => {
+  switch (declaredAction) {
+    case 'none':
+      return 'No combat action';
+    case 'open-melee':
+      return 'Open melee';
+    case 'close':
+      return 'Move/Close';
+    case 'charge':
+      return 'Charge';
+    case 'set-vs-charge':
+      return 'Set vs charge';
+    case 'missile':
+      return 'Missile';
+    case 'turn-undead':
+      return 'Turn undead';
+    case 'magical-device':
+      return 'Magical device';
+    case 'spell-casting':
+      return 'Cast spell';
+  }
+};
+
+const getActionInitiativeTiming = (
+  action: Pick<TrackerActionDeclaration, 'initiativeTiming'> | undefined
+): InitiativeTimingOverride => action?.initiativeTiming || 'normal';
+
+const getSavedInitiativeTiming = (
+  initiativeTiming: InitiativeTimingOverride
+): InitiativeTimingOverride | undefined =>
+  initiativeTiming === 'normal' ? undefined : initiativeTiming;
+
+const formatInitiativeTimingMeta = (
+  initiativeTiming: InitiativeTimingOverride | undefined
+): string | undefined => {
+  if (!initiativeTiming || initiativeTiming === 'normal') {
+    return undefined;
+  }
+
+  return initiativeTiming === 'wins-initiative'
+    ? 'Wins initiative'
+    : 'Loses initiative';
+};
+
 const getActionSummaryLines = (
   action: TrackerActionDeclaration | undefined,
   fallbackIntention: string
@@ -382,40 +440,58 @@ const getActionSummaryLines = (
         ? `${formatDistanceInches(action.actionDistanceInches)}"`
         : undefined;
     const label = action.actionLabel?.trim();
+    const timingText = formatInitiativeTimingMeta(action.initiativeTiming);
 
     return [
       label || 'Move/Close',
-      ['Move/Close', distanceText].filter(Boolean).join(' '),
+      [['Move/Close', distanceText].filter(Boolean).join(' '), timingText]
+        .filter(Boolean)
+        .join(' · '),
     ];
   }
 
   if (action.declaredAction === 'spell-casting') {
-    const timingText =
+    const castingText =
       action.castingSegments !== undefined
         ? formatCastingSegments(action.castingSegments)
         : undefined;
     const label = action.actionLabel?.trim();
+    const timingText = formatInitiativeTimingMeta(action.initiativeTiming);
 
     return [
       label || 'Cast spell',
-      ['Cast spell', timingText].filter(Boolean).join(' · '),
+      ['Cast spell', castingText, timingText].filter(Boolean).join(' · '),
     ];
   }
 
   if (action.declaredAction === 'magical-device') {
     const label = action.actionLabel?.trim();
-    const timingText =
+    const activationText =
       action.activationSegments !== undefined
         ? formatActivationSegments(action.activationSegments)
         : undefined;
+    const timingText = formatInitiativeTimingMeta(action.initiativeTiming);
 
     return [
       label || 'Magical device',
-      ['Magical device', timingText].filter(Boolean).join(' · '),
+      ['Magical device', activationText, timingText]
+        .filter(Boolean)
+        .join(' · '),
     ];
   }
 
-  return [action.actionLabel || action.intention || 'Structured action'];
+  const label =
+    action.actionLabel ||
+    action.intention ||
+    formatDeclaredAction(action.declaredAction);
+  const timingText = formatInitiativeTimingMeta(action.initiativeTiming);
+
+  return timingText
+    ? [
+        label,
+        [formatDeclaredAction(action.declaredAction), timingText].join(' · '),
+      ]
+    : [label];
 };
 
 const createActionEditorDraft = (
@@ -426,6 +502,7 @@ const createActionEditorDraft = (
     return {
       mode: 'move-close',
       label: action.actionLabel || '',
+      initiativeTiming: getActionInitiativeTiming(action),
       distanceInches:
         action.actionDistanceInches !== undefined
           ? formatDistanceInches(action.actionDistanceInches)
@@ -439,6 +516,7 @@ const createActionEditorDraft = (
     return {
       mode: 'cast-spell',
       label: action.actionLabel || '',
+      initiativeTiming: getActionInitiativeTiming(action),
       distanceInches: '',
       activationSegments: '',
       castingSegments:
@@ -452,6 +530,7 @@ const createActionEditorDraft = (
     return {
       mode: 'magical-device',
       label: action.actionLabel || '',
+      initiativeTiming: getActionInitiativeTiming(action),
       distanceInches: '',
       activationSegments:
         action.activationSegments !== undefined
@@ -464,6 +543,7 @@ const createActionEditorDraft = (
   return {
     mode: 'combat-grid',
     label: fallbackIntention,
+    initiativeTiming: getActionInitiativeTiming(action),
     distanceInches: '',
     activationSegments: '',
     castingSegments: '1',
@@ -540,6 +620,7 @@ const CombatTracker = ({
     useState<TrackerActionEditorDraft>({
       mode: 'combat-grid',
       label: '',
+      initiativeTiming: 'normal',
       distanceInches: '',
       activationSegments: '',
       castingSegments: '1',
@@ -1295,13 +1376,42 @@ const CombatTracker = ({
     }
 
     const label = actionEditorDraft.label.trim();
+    const savedInitiativeTiming = getSavedInitiativeTiming(
+      actionEditorDraft.initiativeTiming
+    );
+    const actionDeclarationBase = {
+      id: `${actionEditorTarget.side}:${combatant.key}:main`,
+      source: 'intention' as const,
+      side: actionEditorTarget.side,
+      direction: getActionDirection(actionEditorTarget.side),
+      combatantKey: combatant.key,
+      combatantIndex: actionEditorTarget.index,
+      targetSide: getActionTargetSide(actionEditorTarget.side),
+      ...(savedInitiativeTiming
+        ? { initiativeTiming: savedInitiativeTiming }
+        : {}),
+      weaponId: combatant.weapon,
+      result: roundState?.result || '',
+      targetDeclarations: [],
+    };
 
     if (actionEditorDraft.mode === 'combat-grid') {
+      const actionDeclaration: TrackerActionDeclaration | undefined =
+        savedInitiativeTiming
+          ? {
+              ...actionDeclarationBase,
+              declaredAction: getDefaultTrackerDeclaredAction(combatant),
+              ...(label ? { actionLabel: label } : {}),
+              intention: label,
+            }
+          : undefined;
+
       dispatch({
         type: 'set-combatant-action',
         side: actionEditorTarget.side,
         index: actionEditorTarget.index,
         intention: label,
+        actionDeclaration,
       });
       closeActionEditor();
       return;
@@ -1319,20 +1429,11 @@ const CombatTracker = ({
 
       const intention = formatSpellCastingIntention(label, castingSegments);
       const actionDeclaration: TrackerActionDeclaration = {
-        id: `${actionEditorTarget.side}:${combatant.key}:main`,
-        source: 'intention',
-        side: actionEditorTarget.side,
-        direction: getActionDirection(actionEditorTarget.side),
-        combatantKey: combatant.key,
-        combatantIndex: actionEditorTarget.index,
-        targetSide: getActionTargetSide(actionEditorTarget.side),
+        ...actionDeclarationBase,
         declaredAction: 'spell-casting',
         ...(label ? { actionLabel: label } : {}),
         castingSegments,
-        weaponId: combatant.weapon,
         intention,
-        result: roundState?.result || '',
-        targetDeclarations: [],
       };
 
       dispatch({
@@ -1364,20 +1465,11 @@ const CombatTracker = ({
 
       const intention = formatMagicalDeviceIntention(label, activationSegments);
       const actionDeclaration: TrackerActionDeclaration = {
-        id: `${actionEditorTarget.side}:${combatant.key}:main`,
-        source: 'intention',
-        side: actionEditorTarget.side,
-        direction: getActionDirection(actionEditorTarget.side),
-        combatantKey: combatant.key,
-        combatantIndex: actionEditorTarget.index,
-        targetSide: getActionTargetSide(actionEditorTarget.side),
+        ...actionDeclarationBase,
         declaredAction: 'magical-device',
         ...(label ? { actionLabel: label } : {}),
         ...(activationSegments !== undefined ? { activationSegments } : {}),
-        weaponId: combatant.weapon,
         intention,
-        result: roundState?.result || '',
-        targetDeclarations: [],
       };
 
       dispatch({
@@ -1400,20 +1492,11 @@ const CombatTracker = ({
 
     const intention = formatMoveCloseIntention(label, distanceInches);
     const actionDeclaration: TrackerActionDeclaration = {
-      id: `${actionEditorTarget.side}:${combatant.key}:main`,
-      source: 'intention',
-      side: actionEditorTarget.side,
-      direction: getActionDirection(actionEditorTarget.side),
-      combatantKey: combatant.key,
-      combatantIndex: actionEditorTarget.index,
-      targetSide: getActionTargetSide(actionEditorTarget.side),
+      ...actionDeclarationBase,
       declaredAction: 'close',
       ...(label ? { actionLabel: label } : {}),
       actionDistanceInches: distanceInches,
-      weaponId: combatant.weapon,
       intention,
-      result: roundState?.result || '',
-      targetDeclarations: [],
     };
 
     dispatch({
@@ -3271,6 +3354,34 @@ const CombatTracker = ({
                   />
                 </>
               )}
+              <label
+                className={styles['modalLabel']}
+                htmlFor={'action-intent-initiative-timing'}
+              >
+                Initiative timing
+              </label>
+              <select
+                id={'action-intent-initiative-timing'}
+                className={styles['actionIntentSelect']}
+                value={actionEditorDraft.initiativeTiming}
+                onChange={(event) =>
+                  setActionEditorDraft((draft) => ({
+                    ...draft,
+                    initiativeTiming: event.target
+                      .value as InitiativeTimingOverride,
+                  }))
+                }
+              >
+                {INITIATIVE_TIMING_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className={styles['modalHint']}>
+                Use this only for effects such as speed weapons or slow that
+                explicitly make this action win or lose initiative.
+              </p>
               {actionEditorError ? (
                 <div className={styles['actionIntentError']}>
                   {actionEditorError}

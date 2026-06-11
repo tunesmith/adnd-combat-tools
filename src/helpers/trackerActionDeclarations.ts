@@ -11,7 +11,7 @@ import type {
   TrackerRound,
 } from '../types/tracker';
 
-const getDefaultDeclaredAction = (
+export const getDefaultTrackerDeclaredAction = (
   combatant: TrackerCombatant
 ): InitiativeDeclaredAction =>
   getWeaponInfo(combatant.weapon)?.weaponType === 'missile'
@@ -71,7 +71,7 @@ const buildActionDeclaration = ({
   combatantKey: combatant.key,
   combatantIndex,
   targetSide,
-  declaredAction: getDefaultDeclaredAction(combatant),
+  declaredAction: getDefaultTrackerDeclaredAction(combatant),
   weaponId: combatant.weapon,
   intention: roundState?.action || '',
   result: roundState?.result || '',

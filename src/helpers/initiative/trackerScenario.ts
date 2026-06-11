@@ -36,6 +36,7 @@ const toInitiativeDraftActions = (
         id: action.id,
         declaredAction: action.declaredAction,
         actionLabel: action.actionLabel,
+        initiativeTiming: action.initiativeTiming,
         actionDistanceInches: action.actionDistanceInches,
         activationSegments: action.activationSegments,
         castingSegments: action.castingSegments,

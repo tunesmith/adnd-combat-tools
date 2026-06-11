@@ -152,6 +152,7 @@ describe('tracker action declarations', () => {
       targetSide: 'enemy',
       declaredAction: 'close',
       actionLabel: 'Move east',
+      initiativeTiming: 'wins-initiative',
       actionDistanceInches: 6,
       weaponId: 1,
       intention: 'Move east (6")',

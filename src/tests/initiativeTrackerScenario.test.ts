@@ -327,6 +327,58 @@ describe('tracker initiative scenario builder', () => {
     });
   });
 
+  test('maps structured tracker initiative timing overrides for grid attacks', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '2';
+    round.enemyInitiative = '5';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Lodi';
+    round.party[0].weapon = 17;
+    round.enemies[0].name = 'Gnoll';
+    round.enemies[0].weapon = 1;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'open-melee',
+        actionLabel: 'Sword of speed',
+        initiativeTiming: 'wins-initiative',
+        weaponId: 17,
+        intention: 'Sword of speed',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    setMutualTarget(round, 0, 0);
+
+    const scenario = buildInitiativeScenarioFromTrackerRound(round);
+    const engagement = requireEngagement(scenario.directMeleeEngagements[0]);
+
+    expect(scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      declaredAction: 'open-melee',
+      actionLabel: 'Sword of speed',
+      initiativeTiming: 'wins-initiative',
+      targetIds: ['enemy-4'],
+    });
+    expect(engagement.resolution.steps[0]?.attacks).toEqual([
+      expect.objectContaining({
+        combatantId: 'party-1',
+      }),
+    ]);
+  });
+
   test('maps structured tracker Cast spell intentions to spell timing nodes', () => {
     const round = requireRound();
 
