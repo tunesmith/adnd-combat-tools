@@ -3,6 +3,7 @@ import {
   resolveMovementAgainstTarget,
   resolveSetAgainstChargeResponse,
 } from './movement';
+import { DEFAULT_MOVEMENT_RATE } from './initiativeTiming';
 import { getWeaponInfo } from '../../tables/weapon';
 import type {
   DirectMeleeEngagement,
@@ -38,8 +39,6 @@ const getCombatantName = (
   side: InitiativeScenarioSide,
   index: number
 ): string => name || `${side === 'party' ? 'Party' : 'Enemy'} ${index + 1}`;
-
-const DEFAULT_MOVEMENT_RATE = 12;
 
 const getOrdinaryRoundAttackCount = (
   declaredAction: InitiativeScenarioCombatant['declaredAction'],

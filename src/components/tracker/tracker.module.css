@@ -704,6 +704,45 @@
   font-size: 0.95rem;
 }
 
+.combatantTimingGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.65rem;
+  margin: 0.75rem 0.75rem 0;
+}
+
+.combatantTimingField {
+  min-width: 0;
+}
+
+.compactModalLabel {
+  display: block;
+  color: #111;
+  font-size: 0.85rem;
+  line-height: 1.15;
+}
+
+.compactTextInput,
+.compactSelectInput {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--copper);
+  background: var(--eggshell);
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  min-height: 2.25rem;
+  margin-top: 0.2rem;
+}
+
+.compactTextInput {
+  padding: 0.35rem 0.45rem;
+}
+
+.compactSelectInput {
+  padding: 0.35rem 0.3rem;
+}
+
 .quickWeaponList {
   display: flex;
   flex-wrap: wrap;

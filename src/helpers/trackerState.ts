@@ -1,4 +1,8 @@
 import { FIGHTER, MONSTER } from '../tables/attackerClass';
+import {
+  DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
+  DEFAULT_MOVEMENT_RATE,
+} from './initiative/initiativeTiming';
 import type {
   TrackerCombatant,
   TrackerCellState,
@@ -26,6 +30,8 @@ const createBaseCombatant = (
   armorClass: side === 'party' ? 10 : 5,
   weapon: 1,
   maxHp: '',
+  movementRate: DEFAULT_MOVEMENT_RATE,
+  missileInitiativeAdjustment: DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
 });
 
 const createTrackerCombatant = (

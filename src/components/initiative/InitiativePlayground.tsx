@@ -15,10 +15,12 @@ import {
   parseCastingSegments,
 } from '../../helpers/initiative/actionSegments';
 import {
+  MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS,
   compareCombatantInitiative,
   getAppliedMissileInitiativeAdjustment,
   getEffectiveInitiative,
   movementSuppressesPositiveReactionInitiativeBonuses,
+  parseMissileInitiativeAdjustment,
 } from '../../helpers/initiative/initiativeTiming';
 import { getMultipleAttackThreshold } from '../../helpers/initiative/openMelee';
 import {
@@ -90,16 +92,6 @@ const ACTION_OPTIONS: Array<{
   { value: 'spell-casting', label: 'Cast spell' },
 ];
 
-const MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS = [
-  '-3',
-  '-2',
-  '-1',
-  '0',
-  '+1',
-  '+2',
-  '+3',
-];
-
 const INITIATIVE_TIMING_OPTIONS: Array<{
   value: InitiativeTimingOverride;
   label: string;
@@ -133,22 +125,6 @@ const parseAttackRoutineCount = (value: string): number | undefined => {
   }
 
   return Math.max(1, Math.floor(parsed));
-};
-
-const parseMissileInitiativeAdjustment = (value: string): number => {
-  const trimmed = value.trim();
-
-  if (trimmed.length === 0) {
-    return 0;
-  }
-
-  const parsed = Number(trimmed);
-
-  if (!Number.isFinite(parsed)) {
-    return 0;
-  }
-
-  return Math.max(-3, Math.min(3, Math.trunc(parsed)));
 };
 
 const getMissileTargetLimitForWeaponId = (weaponId: number): number => {

@@ -1,5 +1,10 @@
 import { expandedArmorTypes } from '../tables/armorType';
 import { BARD, MONSTER, attackerClassOptions } from '../tables/attackerClass';
+import {
+  DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
+  DEFAULT_MOVEMENT_RATE,
+  formatMissileInitiativeAdjustment,
+} from './initiative/initiativeTiming';
 import { monsterLevels } from '../tables/combatLevel';
 import { getWeaponInfo } from '../tables/weapon';
 import type { TrackerCombatant } from '../types/tracker';
@@ -21,6 +26,11 @@ const getDefaultCombatantName = (side: TrackerCombatantSide): string =>
 
 const stripArmorPrefix = (armorDescription: string): string =>
   armorDescription.replace(/^AT \d+ - /, '');
+
+const formatMovementRate = (movementRate: number): string =>
+  Number.isInteger(movementRate)
+    ? movementRate.toString()
+    : movementRate.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 
 const measureTextWidth = (text: string, font: string): number => {
   if (typeof document === 'undefined') {
@@ -61,6 +71,10 @@ export const getTrackerCombatantHeaderDisplay = (
   const offHandWeaponLabel = combatant.offHandWeapon
     ? getWeaponInfo(combatant.offHandWeapon)?.name
     : undefined;
+  const movementRate = combatant.movementRate ?? DEFAULT_MOVEMENT_RATE;
+  const missileInitiativeAdjustment =
+    combatant.missileInitiativeAdjustment ??
+    DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT;
 
   return {
     name,
@@ -70,6 +84,16 @@ export const getTrackerCombatantHeaderDisplay = (
         ? [stripArmorPrefix(armorLabel)]
         : []),
       `AC ${combatant.armorClass}`,
+      ...(movementRate !== DEFAULT_MOVEMENT_RATE
+        ? [`MV ${formatMovementRate(movementRate)}"`]
+        : []),
+      ...(missileInitiativeAdjustment !== DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT
+        ? [
+            `Missile init ${formatMissileInitiativeAdjustment(
+              missileInitiativeAdjustment
+            )}`,
+          ]
+        : []),
       weaponLabel,
       ...(offHandWeaponLabel ? [offHandWeaponLabel] : []),
     ],

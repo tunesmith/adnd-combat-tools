@@ -257,6 +257,7 @@ describe('tracker initiative scenario builder', () => {
 
     round.party[0].name = 'Lodi';
     round.party[0].weapon = 2;
+    round.party[0].movementRate = 9;
     round.actions = [
       {
         id: 'party:1:main',
@@ -283,6 +284,7 @@ describe('tracker initiative scenario builder', () => {
       name: 'Lodi',
       declaredAction: 'close',
       actionLabel: 'Move east',
+      movementRate: 9,
       actionDistanceInches: 6,
       targetIds: [],
     });
@@ -292,10 +294,37 @@ describe('tracker initiative scenario builder', () => {
         action: 'close',
         reason: 'movement-complete',
         distanceInches: 6,
-        contactSegment: 5,
+        closingInchesPerSegment: 0.9,
+        contactSegment: 7,
         sameRoundAttack: false,
       }),
     ]);
+  });
+
+  test('maps tracker missile initiative adjustment to initiative combatants', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '4';
+    round.enemyInitiative = '4';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Lodi';
+    round.party[0].weapon = 9;
+    round.party[0].missileInitiativeAdjustment = 2;
+    round.enemies[0].name = 'Gnoll';
+    setMutualTarget(round, 0, 0);
+
+    const scenario = buildInitiativeScenarioFromTrackerRound(round);
+
+    expect(scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      name: 'Lodi',
+      declaredAction: 'missile',
+      missileInitiativeAdjustment: 2,
+    });
   });
 
   test('maps structured tracker Cast spell intentions to spell timing nodes', () => {

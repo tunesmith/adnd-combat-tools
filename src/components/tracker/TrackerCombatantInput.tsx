@@ -1,10 +1,19 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, FocusEvent } from 'react';
 import type { MultiValue, SingleValue } from 'react-select';
 import Select from 'react-select';
 import { getTrackerCombatantHeaderDisplay } from '../../helpers/trackerCombatantDisplay';
 import customStyles from '../../helpers/selectCustomStyles';
+import {
+  DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
+  DEFAULT_MOVEMENT_RATE,
+  MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS,
+  formatMissileInitiativeAdjustment,
+  movementSuppressesPositiveReactionInitiativeBonuses,
+  parseMissileInitiativeAdjustment,
+  parseMovementRate,
+} from '../../helpers/initiative/initiativeTiming';
 import {
   attackerClassOptions,
   getGeneralClass,
@@ -43,6 +52,9 @@ const getDerivedArmorClass = (armorTypeId: number): number =>
   expandedArmorTypes.find((armorProps) => armorProps.key === armorTypeId)
     ?.armorType || 10;
 
+const formatMovementRateInput = (movementRate: number | undefined): string =>
+  (movementRate ?? DEFAULT_MOVEMENT_RATE).toString();
+
 const TrackerCombatantInput = ({
   combatant,
   side,
@@ -54,9 +66,20 @@ const TrackerCombatantInput = ({
   const [isEditingWeaponShortlist, setIsEditingWeaponShortlist] =
     useState<boolean>(false);
   const [draft, setDraft] = useState<TrackerCombatant>(combatant);
+  const [movementRateInput, setMovementRateInput] = useState<string>(
+    formatMovementRateInput(combatant.movementRate)
+  );
+  const movementRateInputRef = useRef<string>(
+    formatMovementRateInput(combatant.movementRate)
+  );
 
   useEffect(() => {
     setDraft(combatant);
+    const nextMovementRateInput = formatMovementRateInput(
+      combatant.movementRate
+    );
+    setMovementRateInput(nextMovementRateInput);
+    movementRateInputRef.current = nextMovementRateInput;
   }, [combatant]);
 
   const levelOptions = useMemo<LevelOption[]>(
@@ -149,6 +172,51 @@ const TrackerCombatantInput = ({
     commit({
       ...draft,
       maxHp: event.target.value,
+    });
+  };
+
+  const handleMovementRateChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextValue = event.target.value;
+    const movementRate = parseMovementRate(nextValue);
+
+    movementRateInputRef.current = nextValue;
+    setMovementRateInput(nextValue);
+
+    if (movementRate !== undefined) {
+      commit({
+        ...draft,
+        movementRate,
+      });
+    }
+  };
+
+  const handleMovementRateBlur = (event: FocusEvent<HTMLInputElement>) => {
+    const movementRate =
+      parseMovementRate(event.target.value) ?? DEFAULT_MOVEMENT_RATE;
+    const nextValue = formatMovementRateInput(movementRate);
+
+    movementRateInputRef.current = nextValue;
+    setMovementRateInput(nextValue);
+    commit({
+      ...draft,
+      movementRate,
+    });
+  };
+
+  const handleMissileInitiativeAdjustment = (
+    event: ChangeEvent<HTMLSelectElement>
+  ) => {
+    const movementRate =
+      parseMovementRate(movementRateInputRef.current) ??
+      draft.movementRate ??
+      DEFAULT_MOVEMENT_RATE;
+
+    commit({
+      ...draft,
+      movementRate,
+      missileInitiativeAdjustment: parseMissileInitiativeAdjustment(
+        event.target.value
+      ),
     });
   };
 
@@ -273,6 +341,12 @@ const TrackerCombatantInput = ({
       : null;
   const selectMenuPortalTarget =
     typeof document !== 'undefined' ? document.body : null;
+  const movementRateForDisplay =
+    parseMovementRate(movementRateInput) ??
+    draft.movementRate ??
+    DEFAULT_MOVEMENT_RATE;
+  const missileInitiativeAdjustment =
+    draft.missileInitiativeAdjustment ?? DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT;
   const sizerClassName =
     side === 'party'
       ? `${styles['combatantSizer']} ${styles['combatantSizerParty']}`
@@ -370,6 +444,56 @@ const TrackerCombatantInput = ({
                 onBlur={handleMaxHpBlur}
                 placeholder={'Optional default maximum HP'}
               />
+              <div className={styles['combatantTimingGrid']}>
+                <div className={styles['combatantTimingField']}>
+                  <label
+                    className={styles['compactModalLabel']}
+                    htmlFor={`movement-rate-${draft.key}`}
+                  >
+                    Movement rate
+                  </label>
+                  <input
+                    id={`movement-rate-${draft.key}`}
+                    className={styles['compactTextInput']}
+                    inputMode={'decimal'}
+                    type={'text'}
+                    value={movementRateInput}
+                    onChange={handleMovementRateChange}
+                    onBlur={handleMovementRateBlur}
+                    placeholder={`${DEFAULT_MOVEMENT_RATE}`}
+                  />
+                </div>
+                <div className={styles['combatantTimingField']}>
+                  <label
+                    className={styles['compactModalLabel']}
+                    htmlFor={`missile-initiative-${draft.key}`}
+                  >
+                    Missile init adj
+                  </label>
+                  <select
+                    id={`missile-initiative-${draft.key}`}
+                    className={styles['compactSelectInput']}
+                    value={formatMissileInitiativeAdjustment(
+                      missileInitiativeAdjustment
+                    )}
+                    onChange={handleMissileInitiativeAdjustment}
+                  >
+                    {MISSILE_INITIATIVE_ADJUSTMENT_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {movementSuppressesPositiveReactionInitiativeBonuses(
+                movementRateForDisplay
+              ) && missileInitiativeAdjustment > 0 ? (
+                <p className={styles['modalHint']}>
+                  Positive missile-initiative bonuses are ignored below MV
+                  12&quot;.
+                </p>
+              ) : null}
               <label className={styles['modalLabel']}>Class</label>
               <Select
                 isSearchable={false}

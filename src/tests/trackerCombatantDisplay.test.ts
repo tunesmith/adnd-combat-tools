@@ -30,4 +30,23 @@ describe('tracker combatant display', () => {
       'Dagger (Held)',
     ]);
   });
+
+  test('shows non-default movement and missile initiative timing', () => {
+    expect(
+      getTrackerCombatantHeaderDisplay(
+        createCombatant({
+          movementRate: 9,
+          missileInitiativeAdjustment: 2,
+        }),
+        'party'
+      ).detailLines
+    ).toEqual([
+      'Fighter: L1',
+      'No Armor',
+      'AC 10',
+      'MV 9"',
+      'Missile init +2',
+      'Sword, short',
+    ]);
+  });
 });

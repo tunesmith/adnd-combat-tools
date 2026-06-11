@@ -7,6 +7,8 @@ export type TrackerActionDirection = 'partyToEnemy' | 'enemyToParty';
 
 export interface TrackerCombatant extends Creature {
   maxHp?: string;
+  movementRate?: number;
+  missileInitiativeAdjustment?: number;
   offHandWeapon?: number;
   weaponShortlist?: number[];
 }

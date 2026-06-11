@@ -63,6 +63,8 @@ export const buildInitiativeScenarioFromTrackerRound = (
       combatantKey: combatant.key,
       name: combatant.name,
       weaponId: combatant.weapon,
+      movementRate: combatant.movementRate,
+      missileInitiativeAdjustment: combatant.missileInitiativeAdjustment,
       intention: round.partyStates[index]?.action || '',
       result: round.partyStates[index]?.result || '',
       actions: toInitiativeDraftActions(
@@ -73,6 +75,8 @@ export const buildInitiativeScenarioFromTrackerRound = (
       combatantKey: combatant.key,
       name: combatant.name,
       weaponId: combatant.weapon,
+      movementRate: combatant.movementRate,
+      missileInitiativeAdjustment: combatant.missileInitiativeAdjustment,
       intention: round.enemyStates[index]?.action || '',
       result: round.enemyStates[index]?.result || '',
       actions: toInitiativeDraftActions(
