@@ -558,6 +558,11 @@
   max-width: 10rem;
 }
 
+.enemyActionCell,
+.partyActionCell {
+  height: 1px;
+}
+
 .partyFieldLabel {
   position: sticky;
   left: 0;
@@ -648,6 +653,7 @@
   align-items: flex-start;
   justify-content: flex-start;
   width: 100%;
+  height: 100%;
   min-width: 0;
   min-height: 2.6rem;
   border: 0;
@@ -1047,6 +1053,13 @@
   color: #111;
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+.modalHint {
+  margin: 0.45rem 0.75rem 0;
+  color: rgba(17, 17, 17, 0.78);
+  font-size: 0.9rem;
+  line-height: 1.25;
 }
 
 .actionIntentError {

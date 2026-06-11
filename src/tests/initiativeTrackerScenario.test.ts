@@ -1,4 +1,5 @@
 import { buildInitiativeScenarioFromTrackerRound } from '../helpers/initiative/trackerScenario';
+import { resolveTrackerRoundInitiative } from '../helpers/initiative/trackerRoundResolution';
 import { createInitialTrackerState } from '../helpers/trackerState';
 import type { DirectMeleeEngagement } from '../types/initiative';
 import type { TrackerRound } from '../types/tracker';
@@ -295,5 +296,62 @@ describe('tracker initiative scenario builder', () => {
         sameRoundAttack: false,
       }),
     ]);
+  });
+
+  test('maps structured tracker Cast spell intentions to spell timing nodes', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '6';
+    round.enemyInitiative = '3';
+
+    if (!round.party[0]) {
+      throw new Error('Missing combatant');
+    }
+
+    round.party[0].name = 'Sot';
+    round.party[0].weapon = 5;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'spell-casting',
+        actionLabel: 'Magic Missile',
+        castingSegments: 1,
+        weaponId: 5,
+        intention: 'Magic Missile (1 segment)',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      name: 'Sot',
+      declaredAction: 'spell-casting',
+      actionLabel: 'Magic Missile',
+      castingSegments: 1,
+      targetIds: [],
+    });
+    expect(resolvedRound.attackGraph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'spell-start:party-1',
+          kind: 'spell-start',
+          segment: 1,
+        }),
+        expect.objectContaining({
+          id: 'spell-completion:party-1',
+          kind: 'spell-completion',
+          segment: 1,
+        }),
+      ])
+    );
   });
 });

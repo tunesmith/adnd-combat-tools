@@ -63,6 +63,11 @@ import {
   shouldShowTrackerEffectiveArmorClass,
   type TrackerAttackDetail,
 } from '../../helpers/trackerAttackDetail';
+import {
+  SPELL_CASTING_TIME_OPTIONS,
+  formatCastingSegments,
+  parseCastingSegments,
+} from '../../helpers/initiative/actionSegments';
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
 import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
 
@@ -91,7 +96,7 @@ interface AttackDetailTarget {
   hand: TrackerAttackHand;
 }
 
-type TrackerActionEditorMode = 'combat-grid' | 'move-close';
+type TrackerActionEditorMode = 'combat-grid' | 'move-close' | 'cast-spell';
 
 interface TrackerActionEditorTarget {
   side: TrackerSide;
@@ -102,6 +107,7 @@ interface TrackerActionEditorDraft {
   mode: TrackerActionEditorMode;
   label: string;
   distanceInches: string;
+  castingSegments: string;
 }
 
 type TrackerAction =
@@ -323,6 +329,14 @@ const formatMoveCloseIntention = (
   return label ? `${label} (${distanceText})` : `Move/Close ${distanceText}`;
 };
 
+const formatSpellCastingIntention = (
+  label: string,
+  castingSegments: number
+): string => {
+  const timingText = formatCastingSegments(castingSegments);
+  return label ? `${label} (${timingText})` : `Cast spell (${timingText})`;
+};
+
 const getActionSummaryLines = (
   action: TrackerActionDeclaration | undefined,
   fallbackIntention: string
@@ -344,6 +358,19 @@ const getActionSummaryLines = (
     ];
   }
 
+  if (action.declaredAction === 'spell-casting') {
+    const timingText =
+      action.castingSegments !== undefined
+        ? formatCastingSegments(action.castingSegments)
+        : undefined;
+    const label = action.actionLabel?.trim();
+
+    return [
+      label || 'Cast spell',
+      ['Cast spell', timingText].filter(Boolean).join(' · '),
+    ];
+  }
+
   return [action.actionLabel || action.intention || 'Structured action'];
 };
 
@@ -359,6 +386,19 @@ const createActionEditorDraft = (
         action.actionDistanceInches !== undefined
           ? formatDistanceInches(action.actionDistanceInches)
           : '',
+      castingSegments: '1',
+    };
+  }
+
+  if (action?.declaredAction === 'spell-casting') {
+    return {
+      mode: 'cast-spell',
+      label: action.actionLabel || '',
+      distanceInches: '',
+      castingSegments:
+        action.castingSegments !== undefined
+          ? action.castingSegments.toString()
+          : '1',
     };
   }
 
@@ -366,6 +406,7 @@ const createActionEditorDraft = (
     mode: 'combat-grid',
     label: fallbackIntention,
     distanceInches: '',
+    castingSegments: '1',
   };
 };
 
@@ -440,6 +481,7 @@ const CombatTracker = ({
       mode: 'combat-grid',
       label: '',
       distanceInches: '',
+      castingSegments: '1',
     });
   const [actionEditorError, setActionEditorError] = useState<
     string | undefined
@@ -1199,6 +1241,45 @@ const CombatTracker = ({
         side: actionEditorTarget.side,
         index: actionEditorTarget.index,
         intention: label,
+      });
+      closeActionEditor();
+      return;
+    }
+
+    if (actionEditorDraft.mode === 'cast-spell') {
+      const castingSegments = parseCastingSegments(
+        actionEditorDraft.castingSegments
+      );
+
+      if (castingSegments === undefined) {
+        setActionEditorError('Cast spell needs a casting time.');
+        return;
+      }
+
+      const intention = formatSpellCastingIntention(label, castingSegments);
+      const actionDeclaration: TrackerActionDeclaration = {
+        id: `${actionEditorTarget.side}:${combatant.key}:main`,
+        source: 'intention',
+        side: actionEditorTarget.side,
+        direction: getActionDirection(actionEditorTarget.side),
+        combatantKey: combatant.key,
+        combatantIndex: actionEditorTarget.index,
+        targetSide: getActionTargetSide(actionEditorTarget.side),
+        declaredAction: 'spell-casting',
+        ...(label ? { actionLabel: label } : {}),
+        castingSegments,
+        weaponId: combatant.weapon,
+        intention,
+        result: roundState?.result || '',
+        targetDeclarations: [],
+      };
+
+      dispatch({
+        type: 'set-combatant-action',
+        side: actionEditorTarget.side,
+        index: actionEditorTarget.index,
+        intention,
+        actionDeclaration,
       });
       closeActionEditor();
       return;
@@ -2395,7 +2476,11 @@ const CombatTracker = ({
                     return (
                       <td
                         key={`party-field-${combatant.key}-${field.key}`}
-                        className={styles['partyMetaCell']}
+                        className={
+                          field.key === 'action'
+                            ? `${styles['partyMetaCell']} ${styles['partyActionCell']}`
+                            : styles['partyMetaCell']
+                        }
                         style={partyColumnStyles[partyIndex]}
                       >
                         {field.key === 'hp' ? (
@@ -2890,15 +2975,22 @@ const CombatTracker = ({
                 onChange={(event) =>
                   setActionEditorDraft((draft) => ({
                     ...draft,
-                    mode:
-                      event.target.value === 'move-close'
-                        ? 'move-close'
-                        : 'combat-grid',
+                    mode: ['move-close', 'cast-spell'].includes(
+                      event.target.value
+                    )
+                      ? (event.target.value as TrackerActionEditorMode)
+                      : 'combat-grid',
+                    castingSegments:
+                      event.target.value === 'cast-spell' &&
+                      draft.castingSegments.trim().length === 0
+                        ? '1'
+                        : draft.castingSegments,
                   }))
                 }
               >
                 <option value={'combat-grid'}>Use combat grid</option>
                 <option value={'move-close'}>Move/Close</option>
+                <option value={'cast-spell'}>Cast spell</option>
               </select>
               {actionEditorDraft.mode === 'move-close' ? (
                 <>
@@ -2946,6 +3038,54 @@ const CombatTracker = ({
                       &quot;
                     </span>
                   </div>
+                </>
+              ) : actionEditorDraft.mode === 'cast-spell' ? (
+                <>
+                  <label
+                    className={styles['modalLabel']}
+                    htmlFor={'action-intent-label'}
+                  >
+                    Spell or label
+                  </label>
+                  <input
+                    id={'action-intent-label'}
+                    className={styles['actionIntentTextInput']}
+                    type={'text'}
+                    value={actionEditorDraft.label}
+                    onChange={(event) =>
+                      setActionEditorDraft((draft) => ({
+                        ...draft,
+                        label: event.target.value,
+                      }))
+                    }
+                  />
+                  <label
+                    className={styles['modalLabel']}
+                    htmlFor={'action-intent-casting-segments'}
+                  >
+                    Casting time
+                  </label>
+                  <select
+                    id={'action-intent-casting-segments'}
+                    className={styles['actionIntentSelect']}
+                    value={actionEditorDraft.castingSegments}
+                    onChange={(event) =>
+                      setActionEditorDraft((draft) => ({
+                        ...draft,
+                        castingSegments: event.target.value,
+                      }))
+                    }
+                  >
+                    {SPELL_CASTING_TIME_OPTIONS.map((option) => (
+                      <option key={option.label} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className={styles['modalHint']}>
+                    For scrolls that reproduce spells, use the spell casting
+                    time.
+                  </p>
                 </>
               ) : (
                 <>

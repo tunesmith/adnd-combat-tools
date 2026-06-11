@@ -9,6 +9,12 @@ import {
 } from '../../helpers/initiative/attackGraphDisplay';
 import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
 import {
+  ACTIVATION_SEGMENT_OPTIONS,
+  SPELL_CASTING_TIME_OPTIONS,
+  parseActivationSegments,
+  parseCastingSegments,
+} from '../../helpers/initiative/actionSegments';
+import {
   compareCombatantInitiative,
   getAppliedMissileInitiativeAdjustment,
   getEffectiveInitiative,
@@ -103,40 +109,6 @@ const INITIATIVE_TIMING_OPTIONS: Array<{
   { value: 'loses-initiative', label: 'Loses initiative' },
 ];
 
-const ACTIVATION_SEGMENT_OPTIONS: Array<{
-  value: string;
-  label: string;
-}> = [
-  { value: '', label: 'None' },
-  { value: '1', label: '1 segment' },
-  { value: '2', label: '2 segments' },
-  { value: '3', label: '3 segments' },
-  { value: '4', label: '4 segments' },
-  { value: '5', label: '5 segments' },
-  { value: '6', label: '6 segments' },
-  { value: '7', label: '7 segments' },
-  { value: '8', label: '8 segments' },
-  { value: '9', label: '9 segments' },
-  { value: '10', label: '10+ segments' },
-];
-
-const SPELL_CASTING_TIME_OPTIONS: Array<{
-  value: string;
-  label: string;
-}> = [
-  { value: '0', label: 'Instant' },
-  { value: '1', label: '1 segment' },
-  { value: '2', label: '2 segments' },
-  { value: '3', label: '3 segments' },
-  { value: '4', label: '4 segments' },
-  { value: '5', label: '5 segments' },
-  { value: '6', label: '6 segments' },
-  { value: '7', label: '7 segments' },
-  { value: '8', label: '8 segments' },
-  { value: '9', label: '9 segments' },
-  { value: '10', label: '10+ segments' },
-];
-
 const parseInitiative = (value: string): number => {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -161,26 +133,6 @@ const parseAttackRoutineCount = (value: string): number | undefined => {
   }
 
   return Math.max(1, Math.floor(parsed));
-};
-
-const parseActivationSegments = (value: string): number | undefined => {
-  const parsed = parseOptionalNumber(value);
-
-  if (parsed === undefined) {
-    return undefined;
-  }
-
-  return Math.max(1, Math.min(10, Math.floor(parsed)));
-};
-
-const parseCastingSegments = (value: string): number | undefined => {
-  const parsed = parseOptionalNumber(value);
-
-  if (parsed === undefined) {
-    return undefined;
-  }
-
-  return Math.max(0, Math.min(10, Math.floor(parsed)));
 };
 
 const parseMissileInitiativeAdjustment = (value: string): number => {
