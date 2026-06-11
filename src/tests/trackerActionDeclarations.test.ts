@@ -140,7 +140,7 @@ describe('tracker action declarations', () => {
     ]);
   });
 
-  test('uses explicit round actions for that combatant while deriving others from the grid', () => {
+  test('uses explicit round actions while inheriting that combatant target selections from the grid', () => {
     const round = requireRound();
     const explicitAction: TrackerActionDeclaration = {
       id: 'party:1:main',
@@ -169,7 +169,7 @@ describe('tracker action declarations', () => {
     firstRow[0] = {
       ...firstCell,
       partyToEnemyVisible: true,
-      partyToEnemy: 'would be suppressed',
+      partyToEnemy: 'selected target',
     };
     firstRow[1] = {
       ...secondCell,
@@ -191,7 +191,18 @@ describe('tracker action declarations', () => {
           }),
         ],
       }),
-      explicitAction,
+      {
+        ...explicitAction,
+        targetDeclarations: [
+          {
+            targetCombatantKey: 4,
+            targetCombatantIndex: 0,
+            cellRowIndex: 0,
+            cellColumnIndex: 0,
+            cellResultText: 'selected target',
+          },
+        ],
+      },
     ]);
   });
 });

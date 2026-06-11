@@ -64,8 +64,10 @@ import {
   type TrackerAttackDetail,
 } from '../../helpers/trackerAttackDetail';
 import {
+  ACTIVATION_SEGMENT_OPTIONS,
   SPELL_CASTING_TIME_OPTIONS,
   formatCastingSegments,
+  parseActivationSegments,
   parseCastingSegments,
 } from '../../helpers/initiative/actionSegments';
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
@@ -96,7 +98,11 @@ interface AttackDetailTarget {
   hand: TrackerAttackHand;
 }
 
-type TrackerActionEditorMode = 'combat-grid' | 'move-close' | 'cast-spell';
+type TrackerActionEditorMode =
+  | 'combat-grid'
+  | 'move-close'
+  | 'cast-spell'
+  | 'magical-device';
 
 interface TrackerActionEditorTarget {
   side: TrackerSide;
@@ -107,6 +113,7 @@ interface TrackerActionEditorDraft {
   mode: TrackerActionEditorMode;
   label: string;
   distanceInches: string;
+  activationSegments: string;
   castingSegments: string;
 }
 
@@ -337,6 +344,30 @@ const formatSpellCastingIntention = (
   return label ? `${label} (${timingText})` : `Cast spell (${timingText})`;
 };
 
+const formatActivationSegments = (
+  activationSegments: number | undefined
+): string => {
+  if (activationSegments === undefined) {
+    return 'no activation time';
+  }
+
+  if (activationSegments >= 10) {
+    return '10+ segments';
+  }
+
+  return `${activationSegments} ${
+    activationSegments === 1 ? 'segment' : 'segments'
+  }`;
+};
+
+const formatMagicalDeviceIntention = (
+  label: string,
+  activationSegments: number | undefined
+): string => {
+  const timingText = formatActivationSegments(activationSegments);
+  return label ? `${label} (${timingText})` : `Magical device (${timingText})`;
+};
+
 const getActionSummaryLines = (
   action: TrackerActionDeclaration | undefined,
   fallbackIntention: string
@@ -371,6 +402,19 @@ const getActionSummaryLines = (
     ];
   }
 
+  if (action.declaredAction === 'magical-device') {
+    const label = action.actionLabel?.trim();
+    const timingText =
+      action.activationSegments !== undefined
+        ? formatActivationSegments(action.activationSegments)
+        : undefined;
+
+    return [
+      label || 'Magical device',
+      ['Magical device', timingText].filter(Boolean).join(' · '),
+    ];
+  }
+
   return [action.actionLabel || action.intention || 'Structured action'];
 };
 
@@ -386,6 +430,7 @@ const createActionEditorDraft = (
         action.actionDistanceInches !== undefined
           ? formatDistanceInches(action.actionDistanceInches)
           : '',
+      activationSegments: '',
       castingSegments: '1',
     };
   }
@@ -395,6 +440,7 @@ const createActionEditorDraft = (
       mode: 'cast-spell',
       label: action.actionLabel || '',
       distanceInches: '',
+      activationSegments: '',
       castingSegments:
         action.castingSegments !== undefined
           ? action.castingSegments.toString()
@@ -402,10 +448,24 @@ const createActionEditorDraft = (
     };
   }
 
+  if (action?.declaredAction === 'magical-device') {
+    return {
+      mode: 'magical-device',
+      label: action.actionLabel || '',
+      distanceInches: '',
+      activationSegments:
+        action.activationSegments !== undefined
+          ? action.activationSegments.toString()
+          : '',
+      castingSegments: '1',
+    };
+  }
+
   return {
     mode: 'combat-grid',
     label: fallbackIntention,
     distanceInches: '',
+    activationSegments: '',
     castingSegments: '1',
   };
 };
@@ -481,6 +541,7 @@ const CombatTracker = ({
       mode: 'combat-grid',
       label: '',
       distanceInches: '',
+      activationSegments: '',
       castingSegments: '1',
     });
   const [actionEditorError, setActionEditorError] = useState<
@@ -1268,6 +1329,51 @@ const CombatTracker = ({
         declaredAction: 'spell-casting',
         ...(label ? { actionLabel: label } : {}),
         castingSegments,
+        weaponId: combatant.weapon,
+        intention,
+        result: roundState?.result || '',
+        targetDeclarations: [],
+      };
+
+      dispatch({
+        type: 'set-combatant-action',
+        side: actionEditorTarget.side,
+        index: actionEditorTarget.index,
+        intention,
+        actionDeclaration,
+      });
+      closeActionEditor();
+      return;
+    }
+
+    if (actionEditorDraft.mode === 'magical-device') {
+      const activationSegmentInput =
+        actionEditorDraft.activationSegments.trim();
+      const activationSegments =
+        activationSegmentInput.length > 0
+          ? parseActivationSegments(activationSegmentInput)
+          : undefined;
+
+      if (
+        activationSegmentInput.length > 0 &&
+        activationSegments === undefined
+      ) {
+        setActionEditorError('Magical device activation time is invalid.');
+        return;
+      }
+
+      const intention = formatMagicalDeviceIntention(label, activationSegments);
+      const actionDeclaration: TrackerActionDeclaration = {
+        id: `${actionEditorTarget.side}:${combatant.key}:main`,
+        source: 'intention',
+        side: actionEditorTarget.side,
+        direction: getActionDirection(actionEditorTarget.side),
+        combatantKey: combatant.key,
+        combatantIndex: actionEditorTarget.index,
+        targetSide: getActionTargetSide(actionEditorTarget.side),
+        declaredAction: 'magical-device',
+        ...(label ? { actionLabel: label } : {}),
+        ...(activationSegments !== undefined ? { activationSegments } : {}),
         weaponId: combatant.weapon,
         intention,
         result: roundState?.result || '',
@@ -2975,9 +3081,11 @@ const CombatTracker = ({
                 onChange={(event) =>
                   setActionEditorDraft((draft) => ({
                     ...draft,
-                    mode: ['move-close', 'cast-spell'].includes(
-                      event.target.value
-                    )
+                    mode: [
+                      'move-close',
+                      'cast-spell',
+                      'magical-device',
+                    ].includes(event.target.value)
                       ? (event.target.value as TrackerActionEditorMode)
                       : 'combat-grid',
                     castingSegments:
@@ -2991,6 +3099,7 @@ const CombatTracker = ({
                 <option value={'combat-grid'}>Use combat grid</option>
                 <option value={'move-close'}>Move/Close</option>
                 <option value={'cast-spell'}>Cast spell</option>
+                <option value={'magical-device'}>Magical device</option>
               </select>
               {actionEditorDraft.mode === 'move-close' ? (
                 <>
@@ -3085,6 +3194,59 @@ const CombatTracker = ({
                   <p className={styles['modalHint']}>
                     For scrolls that reproduce spells, use the spell casting
                     time.
+                  </p>
+                </>
+              ) : actionEditorDraft.mode === 'magical-device' ? (
+                <>
+                  <label
+                    className={styles['modalLabel']}
+                    htmlFor={'action-intent-label'}
+                  >
+                    Device or label
+                  </label>
+                  <input
+                    id={'action-intent-label'}
+                    className={styles['actionIntentTextInput']}
+                    type={'text'}
+                    value={actionEditorDraft.label}
+                    onChange={(event) =>
+                      setActionEditorDraft((draft) => ({
+                        ...draft,
+                        label: event.target.value,
+                      }))
+                    }
+                  />
+                  <label
+                    className={styles['modalLabel']}
+                    htmlFor={'action-intent-activation-segments'}
+                  >
+                    Activation time
+                  </label>
+                  <select
+                    id={'action-intent-activation-segments'}
+                    className={styles['actionIntentSelect']}
+                    value={actionEditorDraft.activationSegments}
+                    onChange={(event) =>
+                      setActionEditorDraft((draft) => ({
+                        ...draft,
+                        activationSegments: event.target.value,
+                      }))
+                    }
+                  >
+                    {ACTIVATION_SEGMENT_OPTIONS.map((option) => (
+                      <option key={option.label} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className={styles['modalHint']}>
+                    Targets are optional. Select one or more targets in the
+                    intention grid when the device affects a creature.
+                  </p>
+                  <p className={styles['modalHint']}>
+                    Potion reminder: finding a packed potion is usually 3-4
+                    segments, quaffing is 1 segment, and the effect begins 2-5
+                    segments later.
                   </p>
                 </>
               ) : (

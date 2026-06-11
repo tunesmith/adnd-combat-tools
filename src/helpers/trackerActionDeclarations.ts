@@ -42,6 +42,11 @@ const getActionId = (
   combatant: TrackerCombatant
 ): string => `${side}:${combatant.key}:main`;
 
+const getActionGroupKey = (
+  side: TrackerActionSide,
+  combatantKey: number
+): string => `${side}:${combatantKey}`;
+
 const buildActionDeclaration = ({
   side,
   direction,
@@ -155,18 +160,43 @@ export const getTrackerActionDeclarations = (
   round: TrackerRound
 ): TrackerActionDeclaration[] => {
   const explicitActions = round.actions || [];
+  const derivedRoundActions = deriveTrackerActionDeclarations(round);
 
   if (explicitActions.length === 0) {
-    return deriveTrackerActionDeclarations(round);
+    return derivedRoundActions;
   }
 
   const explicitCombatantKeys = new Set(
-    explicitActions.map((action) => `${action.side}:${action.combatantKey}`)
+    explicitActions.map((action) =>
+      getActionGroupKey(action.side, action.combatantKey)
+    )
   );
-  const derivedActions = deriveTrackerActionDeclarations(round).filter(
+  const derivedActionByCombatant = new Map(
+    derivedRoundActions.map((action) => [
+      getActionGroupKey(action.side, action.combatantKey),
+      action,
+    ])
+  );
+  const derivedActions = derivedRoundActions.filter(
     (action) =>
-      !explicitCombatantKeys.has(`${action.side}:${action.combatantKey}`)
+      !explicitCombatantKeys.has(
+        getActionGroupKey(action.side, action.combatantKey)
+      )
   );
+  const explicitActionsWithCurrentTargets = explicitActions.map((action) => {
+    const derivedAction = derivedActionByCombatant.get(
+      getActionGroupKey(action.side, action.combatantKey)
+    );
 
-  return derivedActions.concat(explicitActions);
+    if (!derivedAction?.targetDeclarations.length) {
+      return action;
+    }
+
+    return {
+      ...action,
+      targetDeclarations: derivedAction.targetDeclarations,
+    };
+  });
+
+  return derivedActions.concat(explicitActionsWithCurrentTargets);
 };

@@ -383,4 +383,84 @@ describe('tracker initiative scenario builder', () => {
       ])
     );
   });
+
+  test('maps structured tracker Magical device intentions with optional multiple targets', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '6';
+    round.enemyInitiative = '3';
+
+    if (!round.party[0] || !round.enemies[0] || !round.enemies[1]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Shep';
+    round.party[0].weapon = 5;
+    round.enemies[0].name = 'Ghoul 1';
+    round.enemies[1].name = 'Ghoul 2';
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'magical-device',
+        actionLabel: 'Wand burst',
+        activationSegments: 7,
+        weaponId: 5,
+        intention: 'Wand burst (7 segments)',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    const firstRow = round.cells[0];
+    const secondRow = round.cells[1];
+    const firstCell = firstRow?.[0];
+    const secondCell = secondRow?.[0];
+
+    if (!firstRow || !secondRow || !firstCell || !secondCell) {
+      throw new Error('Missing target cells');
+    }
+
+    firstRow[0] = {
+      ...firstCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'target',
+    };
+    secondRow[0] = {
+      ...secondCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'target',
+    };
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      name: 'Shep',
+      declaredAction: 'magical-device',
+      actionLabel: 'Wand burst',
+      activationSegments: 7,
+      targetIds: ['enemy-4', 'enemy-5'],
+    });
+    expect(resolvedRound.attackGraph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          combatantId: 'party-1',
+          actionLabel: 'Wand burst',
+          segment: 7,
+          placement: {
+            kind: 'declared-action-segment',
+            declaredAction: 'magical-device',
+            activationSegments: 7,
+          },
+        }),
+      ])
+    );
+  });
 });

@@ -37,6 +37,7 @@ const toInitiativeDraftActions = (
         declaredAction: action.declaredAction,
         actionLabel: action.actionLabel,
         actionDistanceInches: action.actionDistanceInches,
+        activationSegments: action.activationSegments,
         castingSegments: action.castingSegments,
         targetDeclarations: action.targetDeclarations.map(
           (targetDeclaration) => ({

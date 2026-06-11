@@ -58,6 +58,7 @@ export interface TrackerActionDeclaration {
   declaredAction: InitiativeDeclaredAction;
   actionLabel?: string;
   actionDistanceInches?: number;
+  activationSegments?: number;
   castingSegments?: number;
   weaponId: number;
   intention: string;
