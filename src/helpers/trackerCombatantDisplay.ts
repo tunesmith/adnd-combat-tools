@@ -17,7 +17,7 @@ interface TrackerCombatantHeaderDisplay {
 }
 
 const NAME_FONT = '700 18px Sura';
-const DETAIL_FONT = '700 14px Sura';
+const DETAIL_FONT = '400 14px Sura';
 
 let measurementCanvas: HTMLCanvasElement | null = null;
 
@@ -26,6 +26,12 @@ const getDefaultCombatantName = (side: TrackerCombatantSide): string =>
 
 const stripArmorPrefix = (armorDescription: string): string =>
   armorDescription.replace(/^AT \d+ - /, '');
+
+const formatArmorLabel = (armorDescription: string): string => {
+  const armorLabel = stripArmorPrefix(armorDescription);
+
+  return armorLabel === 'No Armor' ? 'No armor' : armorLabel;
+};
 
 const formatMovementRate = (movementRate: number): string =>
   Number.isInteger(movementRate)
@@ -79,17 +85,14 @@ export const getTrackerCombatantHeaderDisplay = (
   return {
     name,
     detailLines: [
-      levelLabel ? `${classLabel}: ${levelPrefix}${levelLabel}` : classLabel,
+      levelLabel ? `${classLabel} ${levelPrefix}${levelLabel}` : classLabel,
       ...(combatant.armorType > 1 && armorLabel
-        ? [stripArmorPrefix(armorLabel)]
+        ? [formatArmorLabel(armorLabel)]
         : []),
-      `AC ${combatant.armorClass}`,
-      ...(movementRate !== DEFAULT_MOVEMENT_RATE
-        ? [`MV ${formatMovementRate(movementRate)}"`]
-        : []),
+      `AC ${combatant.armorClass} · MV ${formatMovementRate(movementRate)}"`,
       ...(missileInitiativeAdjustment !== DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT
         ? [
-            `Missile init ${formatMissileInitiativeAdjustment(
+            `Dex ${formatMissileInitiativeAdjustment(
               missileInitiativeAdjustment
             )}`,
           ]

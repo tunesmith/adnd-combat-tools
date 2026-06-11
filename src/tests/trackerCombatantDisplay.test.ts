@@ -1,5 +1,5 @@
 import { getTrackerCombatantHeaderDisplay } from '../helpers/trackerCombatantDisplay';
-import { FIGHTER } from '../tables/attackerClass';
+import { FIGHTER, MONSTER } from '../tables/attackerClass';
 import type { TrackerCombatant } from '../types/tracker';
 
 const createCombatant = (
@@ -23,9 +23,9 @@ describe('tracker combatant display', () => {
         'party'
       ).detailLines
     ).toEqual([
-      'Fighter: L1',
-      'No Armor',
-      'AC 10',
+      'Fighter L1',
+      'No armor',
+      'AC 10 · MV 12"',
       'Sword, short',
       'Dagger (Held)',
     ]);
@@ -41,12 +41,27 @@ describe('tracker combatant display', () => {
         'party'
       ).detailLines
     ).toEqual([
-      'Fighter: L1',
-      'No Armor',
-      'AC 10',
-      'MV 9"',
-      'Missile init +2',
+      'Fighter L1',
+      'No armor',
+      'AC 10 · MV 9"',
+      'Dex +2',
       'Sword, short',
     ]);
+  });
+
+  test('keeps monster headers compact', () => {
+    expect(
+      getTrackerCombatantHeaderDisplay(
+        createCombatant({
+          class: MONSTER,
+          level: 5,
+          armorType: 1,
+          armorClass: 6,
+          movementRate: 6,
+          weapon: 1,
+        }),
+        'enemy'
+      ).detailLines
+    ).toEqual(['Monster HD 2-3+', 'AC 6 · MV 6"', 'Natural Weapon (Monster)']);
   });
 });
