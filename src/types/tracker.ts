@@ -67,6 +67,7 @@ export interface TrackerActionDeclaration {
   actionDistanceInches?: number;
   activationSegments?: number;
   castingSegments?: number;
+  attackRoutineCount?: number;
   weaponId: number;
   intention: string;
   result: string;

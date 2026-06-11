@@ -40,6 +40,7 @@ const toInitiativeDraftActions = (
         actionDistanceInches: action.actionDistanceInches,
         activationSegments: action.activationSegments,
         castingSegments: action.castingSegments,
+        attackRoutineCount: action.attackRoutineCount,
         targetDeclarations: action.targetDeclarations.map(
           (targetDeclaration) => ({
             targetCombatantKey: targetDeclaration.targetCombatantKey,

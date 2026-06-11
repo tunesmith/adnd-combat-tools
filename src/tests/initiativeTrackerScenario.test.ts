@@ -269,6 +269,71 @@ describe('tracker initiative scenario builder', () => {
     ]);
   });
 
+  test('maps structured tracker attack routine counts to open melee sequencing', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '5';
+    round.enemyInitiative = '3';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Lodi';
+    round.party[0].weapon = 17;
+    round.enemies[0].name = 'Gnoll';
+    round.enemies[0].weapon = 1;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'open-melee',
+        actionLabel: 'Two attacks',
+        attackRoutineCount: 2,
+        weaponId: 17,
+        intention: 'Two attacks',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    setMutualTarget(round, 0, 0);
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+    const engagement = requireEngagement(
+      resolvedRound.scenario.directMeleeEngagements[0]
+    );
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      declaredAction: 'open-melee',
+      actionLabel: 'Two attacks',
+      attackRoutine: {
+        components: [
+          { id: 'attack-1', order: 1, label: 'attack 1' },
+          { id: 'attack-2', order: 2, label: 'attack 2' },
+        ],
+      },
+      targetIds: ['enemy-4'],
+    });
+    expect(engagement.resolution.reason).toBe('multiple-routines');
+    expect(getStepSignatures(engagement)).toEqual([
+      ['party-11'],
+      ['enemy-41'],
+      ['party-12'],
+    ]);
+    expect(resolvedRound.attackGraph.layers).toEqual([
+      ['attack:party-1:1'],
+      ['attack:enemy-4:1'],
+      ['attack:party-1:2'],
+    ]);
+  });
+
   test('does not invent direct pairs for many-to-one melee contact', () => {
     const round = requireRound();
 

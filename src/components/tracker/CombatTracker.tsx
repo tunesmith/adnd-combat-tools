@@ -77,7 +77,7 @@ import {
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
 import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
 import { getDefaultTrackerDeclaredAction } from '../../helpers/trackerActionDeclarations';
-import { canSetAgainstCharge } from '../../tables/weapon';
+import { canSetAgainstCharge, getWeaponInfo } from '../../tables/weapon';
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -139,6 +139,7 @@ interface TrackerActionEditorDraft {
   distanceInches: string;
   activationSegments: string;
   castingSegments: string;
+  attackRoutineCount: string;
 }
 
 const INITIATIVE_TIMING_OPTIONS: Array<{
@@ -504,9 +505,50 @@ const formatDistanceInches = (distanceInches: number): string =>
     ? distanceInches.toString()
     : distanceInches.toFixed(1).replace(/\.0$/, '');
 
+const parseOptionalNumber = (value: string): number | undefined => {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number(trimmedValue);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const parseAttackRoutineCount = (value: string): number | undefined => {
+  const parsed = parseOptionalNumber(value);
+
+  if (parsed === undefined) {
+    return undefined;
+  }
+
+  return Math.max(1, Math.floor(parsed));
+};
+
 const requiresActionDistanceInput = (
   declaredAction: InitiativeDeclaredAction
 ): boolean => declaredAction === 'close' || declaredAction === 'charge';
+
+const hasCombatWizardInitiatives = (
+  round: TrackerRound | undefined
+): boolean => {
+  if (!round) {
+    return false;
+  }
+
+  return (
+    round.partyInitiative.trim().length > 0 &&
+    round.enemyInitiative.trim().length > 0
+  );
+};
+
+const requiresAttackRoutineCountInput = (
+  declaredAction: InitiativeDeclaredAction,
+  weaponId: number | undefined
+): boolean =>
+  declaredAction === 'open-melee' &&
+  (weaponId === undefined || getWeaponInfo(weaponId)?.weaponType !== 'missile');
 
 const formatDistanceActionIntention = (
   declaredAction: InitiativeDeclaredAction,
@@ -598,6 +640,30 @@ const formatInitiativeTimingMeta = (
     : 'Loses initiative';
 };
 
+const formatAttackRoutineCountMeta = (
+  attackRoutineCount: number | undefined
+): string | undefined => {
+  if (attackRoutineCount === undefined || attackRoutineCount <= 1) {
+    return undefined;
+  }
+
+  return `${attackRoutineCount} routines`;
+};
+
+const getSavedAttackRoutineCount = (
+  draft: TrackerActionEditorDraft,
+  weaponId: number | undefined
+): number | undefined => {
+  if (!requiresAttackRoutineCountInput(draft.mode, weaponId)) {
+    return undefined;
+  }
+
+  const attackRoutineCount = parseAttackRoutineCount(draft.attackRoutineCount);
+  return attackRoutineCount !== undefined && attackRoutineCount > 1
+    ? attackRoutineCount
+    : undefined;
+};
+
 const getActionSummaryLines = (
   action: TrackerActionDeclaration | undefined,
   fallbackIntention: string
@@ -658,13 +724,21 @@ const getActionSummaryLines = (
     action.intention ||
     formatDeclaredAction(action.declaredAction);
   const timingText = formatInitiativeTimingMeta(action.initiativeTiming);
+  const attackRoutineCountText =
+    action.declaredAction === 'open-melee'
+      ? formatAttackRoutineCountMeta(action.attackRoutineCount)
+      : undefined;
+  const metaLine = [
+    action.actionLabel
+      ? formatDeclaredAction(action.declaredAction)
+      : undefined,
+    attackRoutineCountText,
+    timingText,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
-  return timingText
-    ? [
-        label,
-        [formatDeclaredAction(action.declaredAction), timingText].join(' · '),
-      ]
-    : [label];
+  return metaLine ? [label, metaLine] : [label];
 };
 
 const getActionListSummaryLines = (
@@ -743,8 +817,16 @@ const getActionDraftSummary = (draft: TrackerActionEditorDraft): string => {
   const title = label || actionType;
   const actionTypeMeta = label ? actionType : undefined;
   const timingText = formatInitiativeTimingMeta(draft.initiativeTiming);
+  const attackRoutineCountText =
+    draft.mode === 'open-melee'
+      ? formatAttackRoutineCountMeta(
+          parseAttackRoutineCount(draft.attackRoutineCount)
+        )
+      : undefined;
 
-  return [title, actionTypeMeta, timingText].filter(Boolean).join(' · ');
+  return [title, actionTypeMeta, attackRoutineCountText, timingText]
+    .filter(Boolean)
+    .join(' · ');
 };
 
 const createActionEditorDraft = (
@@ -769,6 +851,7 @@ const createActionEditorDraft = (
           : '',
       activationSegments: '',
       castingSegments: '1',
+      attackRoutineCount: '1',
     };
   }
 
@@ -784,6 +867,7 @@ const createActionEditorDraft = (
         action.castingSegments !== undefined
           ? action.castingSegments.toString()
           : '1',
+      attackRoutineCount: '1',
     };
   }
 
@@ -799,6 +883,7 @@ const createActionEditorDraft = (
           ? action.activationSegments.toString()
           : '',
       castingSegments: '1',
+      attackRoutineCount: '1',
     };
   }
 
@@ -814,6 +899,10 @@ const createActionEditorDraft = (
     distanceInches: '',
     activationSegments: '',
     castingSegments: '1',
+    attackRoutineCount:
+      action?.attackRoutineCount !== undefined
+        ? action.attackRoutineCount.toString()
+        : '1',
   };
 };
 
@@ -828,6 +917,7 @@ const createAddedActionEditorDraft = (
   distanceInches: '',
   activationSegments: '',
   castingSegments: '1',
+  attackRoutineCount: '1',
 });
 
 const getActionEditorDrafts = ({
@@ -1305,9 +1395,9 @@ const CombatTracker = ({
 
     return Boolean(attacker?.offHandWeapon);
   }, [attackDetailTarget, currentRound]);
-  const selectedCellActionAssignment = useMemo<
-    SelectedCellActionAssignment | undefined
-  >(() => {
+  const selectedCellActionAssignment = useMemo(():
+    | SelectedCellActionAssignment
+    | undefined => {
     if (!currentRound || !cellActionAssignmentTarget) {
       return undefined;
     }
@@ -1356,9 +1446,7 @@ const CombatTracker = ({
       options,
     };
   }, [cellActionAssignmentTarget, currentRound]);
-  const canOpenCombatWizard = Boolean(
-    currentRound?.partyInitiative.trim() && currentRound?.enemyInitiative.trim()
-  );
+  const canOpenCombatWizard = hasCombatWizardInitiatives(currentRound);
   const currentIntentionWizardEntry =
     intentionWizardEntries[intentionWizardIndex];
   const combatWizardEntries = useMemo<CombatWizardEntry[]>(
@@ -1973,7 +2061,8 @@ const CombatTracker = ({
       drafts.some(
         (draft) =>
           draft.mode !== defaultDeclaredAction ||
-          getSavedInitiativeTiming(draft.initiativeTiming) !== undefined
+          getSavedInitiativeTiming(draft.initiativeTiming) !== undefined ||
+          getSavedAttackRoutineCount(draft, combatant.weapon) !== undefined
       );
     const actionDeclarations: TrackerActionDeclaration[] = [];
 
@@ -1982,6 +2071,21 @@ const CombatTracker = ({
       const savedInitiativeTiming = getSavedInitiativeTiming(
         draft.initiativeTiming
       );
+      const attackRoutineCountInput = draft.attackRoutineCount.trim();
+      const savedAttackRoutineCount = getSavedAttackRoutineCount(
+        draft,
+        combatant.weapon
+      );
+
+      if (
+        requiresAttackRoutineCountInput(draft.mode, combatant.weapon) &&
+        attackRoutineCountInput.length > 0 &&
+        parseAttackRoutineCount(attackRoutineCountInput) === undefined
+      ) {
+        setActionEditorError('Attack routines this round must be a number.');
+        return;
+      }
+
       const actionDeclarationBase = {
         id: draft.id,
         source: 'intention' as const,
@@ -2008,6 +2112,9 @@ const CombatTracker = ({
             ...actionDeclarationBase,
             declaredAction: draft.mode,
             ...(label ? { actionLabel: label } : {}),
+            ...(savedAttackRoutineCount !== undefined
+              ? { attackRoutineCount: savedAttackRoutineCount }
+              : {}),
             intention: label || formatDeclaredAction(draft.mode),
           });
         }
@@ -3997,6 +4104,13 @@ const CombatTracker = ({
                         draft.castingSegments.trim().length === 0
                           ? '1'
                           : draft.castingSegments,
+                      attackRoutineCount:
+                        requiresAttackRoutineCountInput(
+                          nextMode,
+                          selectedActionEditorCombatant?.weapon
+                        ) && draft.attackRoutineCount.trim().length === 0
+                          ? '1'
+                          : draft.attackRoutineCount,
                     };
                   })
                 }
@@ -4177,6 +4291,36 @@ const CombatTracker = ({
                   />
                 </>
               )}
+              {requiresAttackRoutineCountInput(
+                selectedActionEditorDraft.mode,
+                selectedActionEditorCombatant?.weapon
+              ) ? (
+                <>
+                  <label
+                    className={styles['modalLabel']}
+                    htmlFor={'action-intent-attack-routines'}
+                  >
+                    Attack routines this round
+                  </label>
+                  <input
+                    id={'action-intent-attack-routines'}
+                    className={styles['actionIntentTextInput']}
+                    type={'text'}
+                    inputMode={'numeric'}
+                    value={selectedActionEditorDraft.attackRoutineCount}
+                    onChange={(event) =>
+                      updateSelectedActionEditorDraft((draft) => ({
+                        ...draft,
+                        attackRoutineCount: event.target.value,
+                      }))
+                    }
+                  />
+                  <p className={styles['modalHint']}>
+                    Use <strong>1</strong> for an ordinary weapon routine or a
+                    natural routine such as claw/claw/bite.
+                  </p>
+                </>
+              ) : null}
               <label
                 className={styles['modalLabel']}
                 htmlFor={'action-intent-initiative-timing'}
