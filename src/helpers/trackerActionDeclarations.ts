@@ -84,6 +84,9 @@ const buildActionDeclaration = ({
   combatantIndex,
   targetSide,
   declaredAction: getDefaultTrackerDeclaredAction(combatant),
+  ...(roundState?.action.trim()
+    ? { actionLabel: roundState.action.trim() }
+    : {}),
   weaponId: combatant.weapon,
   intention: roundState?.action || '',
   result: roundState?.result || '',

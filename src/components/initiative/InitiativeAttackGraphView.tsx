@@ -14,6 +14,7 @@ interface InitiativeAttackGraphViewProps {
   minHeightRem?: number;
   readableText?: boolean;
   showEmptySegmentLanes?: boolean;
+  targetPrefix?: string;
 }
 
 const getGraphNodeFill = (side: InitiativeAttackNode['side']): string =>
@@ -25,6 +26,7 @@ export const InitiativeAttackGraphView = ({
   minHeightRem,
   readableText = false,
   showEmptySegmentLanes = false,
+  targetPrefix,
 }: InitiativeAttackGraphViewProps) => {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | undefined>(
     undefined
@@ -35,8 +37,11 @@ export const InitiativeAttackGraphView = ({
     [attackGraph.nodes]
   );
   const graphNodeDisplayById = useMemo(
-    () => buildInitiativeAttackGraphNodeDisplayById(resolvedRound),
-    [resolvedRound]
+    () =>
+      buildInitiativeAttackGraphNodeDisplayById(resolvedRound, {
+        targetPrefix,
+      }),
+    [resolvedRound, targetPrefix]
   );
   const graphLayout = useMemo(
     () =>

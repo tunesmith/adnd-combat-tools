@@ -64,6 +64,7 @@ describe('tracker action declarations', () => {
         combatantIndex: 0,
         targetSide: 'enemy',
         declaredAction: 'missile',
+        actionLabel: 'Fire arrows',
         weaponId: 9,
         intention: 'Fire arrows',
         result: 'Volley resolved',
@@ -127,6 +128,7 @@ describe('tracker action declarations', () => {
         combatantIndex: 0,
         targetSide: 'party',
         declaredAction: 'open-melee',
+        actionLabel: 'Claw Lodi',
         weaponId: 1,
         intention: 'Claw Lodi',
         targetDeclarations: [

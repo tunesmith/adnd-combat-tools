@@ -1020,7 +1020,12 @@
 }
 
 .targetActionModal {
+  z-index: 21;
   width: min(32rem, calc(100vw - 2rem));
+}
+
+.targetActionModalShadow {
+  z-index: 20;
 }
 
 .actionIntentModal {
@@ -1414,6 +1419,17 @@
   margin-bottom: 0.45rem;
 }
 
+.intentionsWizardActionPanel {
+  border: 1px solid rgba(175, 127, 0, 0.48);
+  background: rgba(175, 127, 0, 0.06);
+  margin: 0 0 0.8rem;
+  padding: 0.7rem 0 0.75rem;
+}
+
+.intentionsWizardQuickWeaponList {
+  margin: -0.1rem 0 0.8rem;
+}
+
 .intentionsWizardBodyResolved {
   opacity: 0.82;
 }
@@ -1561,7 +1577,7 @@
 }
 
 .combatWizardGridTable tbody tr:first-child {
-  height: 4.2rem;
+  height: 5.25rem;
 }
 
 .combatWizardCorner,
@@ -1623,35 +1639,62 @@
 
 .combatWizardGridTable .interactionCell,
 .combatWizardListTable .interactionCell {
-  min-width: 7.5rem;
-  height: 4.2rem;
+  min-width: 8.5rem;
+  height: 5.25rem;
   background: #663837;
 }
 
 .combatWizardGridTable .cellShell,
 .combatWizardListTable .cellShell {
-  min-width: 7.5rem;
-  min-height: 4.2rem;
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  min-width: 8.5rem;
+  min-height: 5.25rem;
 }
 
 .combatWizardGridTable .cellHalfEnemyInline,
 .combatWizardGridTable .cellHalfPartyInline,
 .combatWizardListTable .cellHalfEnemyInline,
 .combatWizardListTable .cellHalfPartyInline {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
   gap: 0.14rem;
+  min-height: 100%;
   padding: 0.16rem 0.18rem;
+  box-sizing: border-box;
 }
 
 .combatWizardGridTable .cellEntryLabel,
-.combatWizardListTable .cellEntryLabel {
+.combatWizardGridTable .cellEntryLabelButton,
+.combatWizardListTable .cellEntryLabel,
+.combatWizardListTable .cellEntryLabelButton {
   font-size: 0.76rem;
 }
 
 .combatWizardGridTable .cellEntryInputInline,
 .combatWizardListTable .cellEntryInputInline {
+  width: min(100%, 5.25rem);
   min-height: 1.65rem;
   font-size: 1rem;
   padding: 0.12rem 0.15rem;
+}
+
+.combatWizardGridTable .cellActionAssignmentButton,
+.combatWizardListTable .cellActionAssignmentButton {
+  position: absolute;
+  bottom: 0.2rem;
+  left: 50%;
+  z-index: 1;
+  min-width: 3.1rem;
+  max-width: calc(100% - 0.35rem);
+  min-height: 1rem;
+  padding: 0.05rem 0.24rem;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
 }
 
 .combatWizardHpCell {
@@ -1774,7 +1817,7 @@
 }
 
 .intentionsWizardGridTable tbody tr {
-  height: 4.2rem;
+  height: 5.25rem;
 }
 
 .intentionsWizardGridTable tr:last-child th,
@@ -1835,30 +1878,55 @@
 }
 
 .intentionsWizardGridTable .interactionCell {
-  min-width: 7.5rem;
-  height: 4.2rem;
+  min-width: 8.5rem;
+  height: 5.25rem;
   background: #663837;
 }
 
 .intentionsWizardGridTable .cellShell {
-  min-width: 7.5rem;
-  min-height: 4.2rem;
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  min-width: 8.5rem;
+  min-height: 5.25rem;
 }
 
 .intentionsWizardGridTable .cellHalfEnemyInline,
 .intentionsWizardGridTable .cellHalfPartyInline {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
   gap: 0.14rem;
+  min-height: 100%;
   padding: 0.16rem 0.18rem;
+  box-sizing: border-box;
 }
 
-.intentionsWizardGridTable .cellEntryLabel {
+.intentionsWizardGridTable .cellEntryLabel,
+.intentionsWizardGridTable .cellEntryLabelButton {
   font-size: 0.76rem;
 }
 
 .intentionsWizardGridTable .cellEntryInputInline {
+  width: min(100%, 5.25rem);
   min-height: 1.65rem;
   font-size: 1rem;
   padding: 0.12rem 0.15rem;
+}
+
+.intentionsWizardGridTable .cellActionAssignmentButton {
+  position: absolute;
+  bottom: 0.2rem;
+  left: 50%;
+  z-index: 1;
+  min-width: 3.1rem;
+  max-width: calc(100% - 0.35rem);
+  min-height: 1rem;
+  padding: 0.05rem 0.24rem;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
 }
 
 .textInput {

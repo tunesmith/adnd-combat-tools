@@ -77,7 +77,11 @@ import {
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
 import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
 import { getDefaultTrackerDeclaredAction } from '../../helpers/trackerActionDeclarations';
-import { canSetAgainstCharge, getWeaponInfo } from '../../tables/weapon';
+import {
+  canSetAgainstCharge,
+  getWeaponInfo,
+  getWeaponOptions,
+} from '../../tables/weapon';
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -223,13 +227,6 @@ type TrackerAction =
       index: number;
       field: RoundCombatantField;
       value: string;
-    }
-  | {
-      type: 'set-combatant-action';
-      side: TrackerSide;
-      index: number;
-      intention: string;
-      actionDeclaration?: TrackerActionDeclaration;
     }
   | {
       type: 'set-combatant-actions';
@@ -920,6 +917,191 @@ const createAddedActionEditorDraft = (
   attackRoutineCount: '1',
 });
 
+type BuildActionDeclarationResult =
+  | {
+      ok: true;
+      intention: string;
+      actionDeclarations: TrackerActionDeclaration[];
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+const buildActionDeclarationsFromDrafts = ({
+  side,
+  index,
+  combatant,
+  roundState,
+  drafts,
+}: {
+  side: TrackerSide;
+  index: number;
+  combatant: TrackerCombatant;
+  roundState: TrackerCombatantRoundState | undefined;
+  drafts: TrackerActionEditorDraft[];
+}): BuildActionDeclarationResult => {
+  const defaultDeclaredAction = getDefaultTrackerDeclaredAction(combatant);
+  const effectiveDrafts = drafts.length
+    ? drafts
+    : [
+        createActionEditorDraft(
+          undefined,
+          roundState?.action || '',
+          getMainTrackerActionId(side, combatant.key),
+          defaultDeclaredAction,
+          combatant.weapon
+        ),
+      ];
+  const mustStoreExplicitActions =
+    effectiveDrafts.length > 1 ||
+    effectiveDrafts.some(
+      (draft) =>
+        draft.mode !== defaultDeclaredAction ||
+        getSavedInitiativeTiming(draft.initiativeTiming) !== undefined ||
+        getSavedAttackRoutineCount(draft, combatant.weapon) !== undefined
+    );
+  const actionDeclarations: TrackerActionDeclaration[] = [];
+
+  for (const draft of effectiveDrafts) {
+    const label = draft.label.trim();
+    const savedInitiativeTiming = getSavedInitiativeTiming(
+      draft.initiativeTiming
+    );
+    const attackRoutineCountInput = draft.attackRoutineCount.trim();
+    const savedAttackRoutineCount = getSavedAttackRoutineCount(
+      draft,
+      combatant.weapon
+    );
+
+    if (
+      requiresAttackRoutineCountInput(draft.mode, combatant.weapon) &&
+      attackRoutineCountInput.length > 0 &&
+      parseAttackRoutineCount(attackRoutineCountInput) === undefined
+    ) {
+      return {
+        ok: false,
+        error: 'Attack routines this round must be a number.',
+      };
+    }
+
+    const actionDeclarationBase = {
+      id: draft.id,
+      source: 'intention' as const,
+      side,
+      direction: getActionDirection(side),
+      combatantKey: combatant.key,
+      combatantIndex: index,
+      targetSide: getActionTargetSide(side),
+      ...(savedInitiativeTiming
+        ? { initiativeTiming: savedInitiativeTiming }
+        : {}),
+      weaponId: combatant.weapon,
+      result: roundState?.result || '',
+      targetDeclarations: [],
+    };
+
+    if (
+      !requiresActionDistanceInput(draft.mode) &&
+      draft.mode !== 'spell-casting' &&
+      draft.mode !== 'magical-device'
+    ) {
+      if (mustStoreExplicitActions) {
+        actionDeclarations.push({
+          ...actionDeclarationBase,
+          declaredAction: draft.mode,
+          ...(label ? { actionLabel: label } : {}),
+          ...(savedAttackRoutineCount !== undefined
+            ? { attackRoutineCount: savedAttackRoutineCount }
+            : {}),
+          intention: label || formatDeclaredAction(draft.mode),
+        });
+      }
+
+      continue;
+    }
+
+    if (draft.mode === 'spell-casting') {
+      const castingSegments = parseCastingSegments(draft.castingSegments);
+
+      if (castingSegments === undefined) {
+        return { ok: false, error: 'Cast spell needs a casting time.' };
+      }
+
+      const intention = formatSpellCastingIntention(label, castingSegments);
+      actionDeclarations.push({
+        ...actionDeclarationBase,
+        declaredAction: 'spell-casting',
+        ...(label ? { actionLabel: label } : {}),
+        castingSegments,
+        intention,
+      });
+      continue;
+    }
+
+    if (draft.mode === 'magical-device') {
+      const activationSegmentInput = draft.activationSegments.trim();
+      const activationSegments =
+        activationSegmentInput.length > 0
+          ? parseActivationSegments(activationSegmentInput)
+          : undefined;
+
+      if (
+        activationSegmentInput.length > 0 &&
+        activationSegments === undefined
+      ) {
+        return {
+          ok: false,
+          error: 'Magical device activation time is invalid.',
+        };
+      }
+
+      const intention = formatMagicalDeviceIntention(label, activationSegments);
+      actionDeclarations.push({
+        ...actionDeclarationBase,
+        declaredAction: 'magical-device',
+        ...(label ? { actionLabel: label } : {}),
+        ...(activationSegments !== undefined ? { activationSegments } : {}),
+        intention,
+      });
+      continue;
+    }
+
+    const distanceInches = Number(draft.distanceInches);
+
+    if (!Number.isFinite(distanceInches) || distanceInches <= 0) {
+      return {
+        ok: false,
+        error: `${formatDeclaredAction(
+          draft.mode
+        )} needs a distance greater than 0".`,
+      };
+    }
+
+    const intention = formatDistanceActionIntention(
+      draft.mode,
+      label,
+      distanceInches
+    );
+    actionDeclarations.push({
+      ...actionDeclarationBase,
+      declaredAction: draft.mode,
+      ...(label ? { actionLabel: label } : {}),
+      actionDistanceInches: distanceInches,
+      intention,
+    });
+  }
+
+  return {
+    ok: true,
+    intention:
+      actionDeclarations.length > 0
+        ? actionDeclarations.map((action) => action.intention).join('; ')
+        : effectiveDrafts[0]?.label.trim() || '',
+    actionDeclarations,
+  };
+};
+
 const getActionEditorDrafts = ({
   actions,
   fallbackIntention,
@@ -952,6 +1134,26 @@ const getActionEditorDrafts = ({
           weaponId
         ),
       ];
+
+const getIntentionWizardActionDrafts = (
+  round: TrackerRound,
+  entry: IntentionWizardEntry
+): TrackerActionEditorDraft[] => {
+  const combatant = getActionCombatant(round, entry.side, entry.index);
+  const roundState = getActionRoundState(round, entry.side, entry.index);
+
+  if (!combatant) {
+    return [];
+  }
+
+  return getActionEditorDrafts({
+    actions: getStructuredActionsForCombatant(round, entry.side, entry.index),
+    fallbackIntention: roundState?.action || '',
+    mainActionId: getMainTrackerActionId(entry.side, combatant.key),
+    defaultDeclaredAction: getDefaultTrackerDeclaredAction(combatant),
+    weaponId: combatant.weapon,
+  });
+};
 
 const CombatTracker = ({
   rememberedState,
@@ -1033,6 +1235,13 @@ const CombatTracker = ({
   const [actionEditorError, setActionEditorError] = useState<
     string | undefined
   >(undefined);
+  const [intentionWizardActionDrafts, setIntentionWizardActionDrafts] =
+    useState<TrackerActionEditorDraft[]>([]);
+  const [intentionWizardSelectedActionId, setIntentionWizardSelectedActionId] =
+    useState<string>('');
+  const [intentionWizardActionError, setIntentionWizardActionError] = useState<
+    string | undefined
+  >(undefined);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleDraft, setTitleDraft] = useState<string>('');
   const [isEditingRoundLabel, setIsEditingRoundLabel] =
@@ -1045,7 +1254,6 @@ const CombatTracker = ({
   const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const importTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const combatResultTextareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const intentionsTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const roundLabelInputRef = useRef<HTMLInputElement | null>(null);
   const moreActionsRef = useRef<HTMLDivElement | null>(null);
@@ -1155,68 +1363,6 @@ const CombatTracker = ({
               : enemyState
           ),
         }));
-      case 'set-combatant-action':
-        return updateCurrentRound(state, (round) => {
-          const combatant = getActionCombatant(
-            round,
-            action.side,
-            action.index
-          );
-
-          if (!combatant) {
-            return round;
-          }
-
-          const nextActions = (round.actions || []).filter(
-            (roundAction) =>
-              !(
-                roundAction.side === action.side &&
-                roundAction.combatantKey === combatant.key
-              )
-          );
-          const nextActionIds = new Set(
-            action.actionDeclaration ? [action.actionDeclaration.id] : []
-          );
-          const nextRound = pruneCellActionAssignments(
-            {
-              ...round,
-              actions: action.actionDeclaration
-                ? nextActions.concat(action.actionDeclaration)
-                : nextActions.length > 0
-                ? nextActions
-                : undefined,
-            },
-            action.side,
-            action.index,
-            nextActionIds
-          );
-
-          if (action.side === 'party') {
-            return {
-              ...nextRound,
-              partyStates: nextRound.partyStates.map((partyState, partyIndex) =>
-                partyIndex === action.index
-                  ? {
-                      ...partyState,
-                      action: action.intention,
-                    }
-                  : partyState
-              ),
-            };
-          }
-
-          return {
-            ...nextRound,
-            enemyStates: nextRound.enemyStates.map((enemyState, enemyIndex) =>
-              enemyIndex === action.index
-                ? {
-                    ...enemyState,
-                    action: action.intention,
-                  }
-                : enemyState
-            ),
-          };
-        });
       case 'set-combatant-actions':
         return updateCurrentRound(state, (round) => {
           const combatant = getActionCombatant(
@@ -1307,6 +1453,8 @@ const CombatTracker = ({
   const currentRound = state.rounds[state.activeRound];
   const currentRoundLabel = currentRound?.label || '';
   const trackerTitle = state.title || '';
+  const currentIntentionWizardEntry =
+    intentionWizardEntries[intentionWizardIndex];
   const selectedActionEditorDraftIndex = actionEditorTarget
     ? actionEditorDrafts.findIndex(
         (draft) => draft.id === actionEditorTarget.selectedActionId
@@ -1316,6 +1464,16 @@ const CombatTracker = ({
     selectedActionEditorDraftIndex >= 0
       ? actionEditorDrafts[selectedActionEditorDraftIndex]
       : undefined;
+  const selectedIntentionWizardActionDraftIndex =
+    intentionWizardSelectedActionId.length > 0
+      ? intentionWizardActionDrafts.findIndex(
+          (draft) => draft.id === intentionWizardSelectedActionId
+        )
+      : -1;
+  const selectedIntentionWizardActionDraft =
+    selectedIntentionWizardActionDraftIndex >= 0
+      ? intentionWizardActionDrafts[selectedIntentionWizardActionDraftIndex]
+      : undefined;
   const selectedActionEditorCombatant =
     actionEditorTarget && currentRound
       ? getActionCombatant(
@@ -1324,9 +1482,21 @@ const CombatTracker = ({
           actionEditorTarget.index
         )
       : undefined;
+  const currentIntentionWizardCombatant =
+    currentIntentionWizardEntry && currentRound
+      ? getActionCombatant(
+          currentRound,
+          currentIntentionWizardEntry.side,
+          currentIntentionWizardEntry.index
+        )
+      : undefined;
   const selectedActionEditorModeOptions = getAvailableActionEditorModeOptions(
     selectedActionEditorCombatant?.weapon
   );
+  const selectedIntentionWizardModeOptions =
+    getAvailableActionEditorModeOptions(
+      currentIntentionWizardCombatant?.weapon
+    );
   const updateSelectedActionEditorDraft = (
     updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
   ) => {
@@ -1447,8 +1617,6 @@ const CombatTracker = ({
     };
   }, [cellActionAssignmentTarget, currentRound]);
   const canOpenCombatWizard = hasCombatWizardInitiatives(currentRound);
-  const currentIntentionWizardEntry =
-    intentionWizardEntries[intentionWizardIndex];
   const combatWizardEntries = useMemo<CombatWizardEntry[]>(
     () => (currentRound ? buildCombatWizardEntries(currentRound) : []),
     [currentRound]
@@ -1684,9 +1852,12 @@ const CombatTracker = ({
         setActionEditorTarget(undefined);
         setActionEditorDrafts([]);
         setShowMoreActions(false);
+        setIntentionWizardActionDrafts([]);
+        setIntentionWizardSelectedActionId('');
         setRecoverError(undefined);
         setImportError(undefined);
         setActionEditorError(undefined);
+        setIntentionWizardActionError(undefined);
       }
     };
 
@@ -1735,6 +1906,9 @@ const CombatTracker = ({
     setCellActionAssignmentError(undefined);
     setActionEditorTarget(undefined);
     setActionEditorError(undefined);
+    setIntentionWizardActionDrafts([]);
+    setIntentionWizardSelectedActionId('');
+    setIntentionWizardActionError(undefined);
   }, [state.activeRound]);
 
   useEffect(() => {
@@ -1869,26 +2043,6 @@ const CombatTracker = ({
     roundLabelInputRef.current?.focus();
     roundLabelInputRef.current?.select();
   }, [isEditingRoundLabel]);
-
-  useEffect(() => {
-    if (!showIntentionsWizard || !currentIntentionWizardEntry) {
-      return;
-    }
-
-    const animationFrame = window.requestAnimationFrame(() => {
-      const textarea = intentionsTextareaRef.current;
-
-      if (!textarea) {
-        return;
-      }
-
-      textarea.focus();
-      const cursorPosition = textarea.value.length;
-      textarea.setSelectionRange(cursorPosition, cursorPosition);
-    });
-
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [currentIntentionWizardEntry, intentionWizardIndex, showIntentionsWizard]);
 
   if (!currentRound) {
     return <></>;
@@ -2044,168 +2198,25 @@ const CombatTracker = ({
       return;
     }
 
-    const drafts = actionEditorDrafts.length
-      ? actionEditorDrafts
-      : [
-          createActionEditorDraft(
-            undefined,
-            roundState?.action || '',
-            getMainTrackerActionId(actionEditorTarget.side, combatant.key),
-            getDefaultTrackerDeclaredAction(combatant),
-            combatant.weapon
-          ),
-        ];
-    const defaultDeclaredAction = getDefaultTrackerDeclaredAction(combatant);
-    const mustStoreExplicitActions =
-      drafts.length > 1 ||
-      drafts.some(
-        (draft) =>
-          draft.mode !== defaultDeclaredAction ||
-          getSavedInitiativeTiming(draft.initiativeTiming) !== undefined ||
-          getSavedAttackRoutineCount(draft, combatant.weapon) !== undefined
-      );
-    const actionDeclarations: TrackerActionDeclaration[] = [];
+    const result = buildActionDeclarationsFromDrafts({
+      side: actionEditorTarget.side,
+      index: actionEditorTarget.index,
+      combatant,
+      roundState,
+      drafts: actionEditorDrafts,
+    });
 
-    for (const draft of drafts) {
-      const label = draft.label.trim();
-      const savedInitiativeTiming = getSavedInitiativeTiming(
-        draft.initiativeTiming
-      );
-      const attackRoutineCountInput = draft.attackRoutineCount.trim();
-      const savedAttackRoutineCount = getSavedAttackRoutineCount(
-        draft,
-        combatant.weapon
-      );
-
-      if (
-        requiresAttackRoutineCountInput(draft.mode, combatant.weapon) &&
-        attackRoutineCountInput.length > 0 &&
-        parseAttackRoutineCount(attackRoutineCountInput) === undefined
-      ) {
-        setActionEditorError('Attack routines this round must be a number.');
-        return;
-      }
-
-      const actionDeclarationBase = {
-        id: draft.id,
-        source: 'intention' as const,
-        side: actionEditorTarget.side,
-        direction: getActionDirection(actionEditorTarget.side),
-        combatantKey: combatant.key,
-        combatantIndex: actionEditorTarget.index,
-        targetSide: getActionTargetSide(actionEditorTarget.side),
-        ...(savedInitiativeTiming
-          ? { initiativeTiming: savedInitiativeTiming }
-          : {}),
-        weaponId: combatant.weapon,
-        result: roundState?.result || '',
-        targetDeclarations: [],
-      };
-
-      if (
-        !requiresActionDistanceInput(draft.mode) &&
-        draft.mode !== 'spell-casting' &&
-        draft.mode !== 'magical-device'
-      ) {
-        if (mustStoreExplicitActions) {
-          actionDeclarations.push({
-            ...actionDeclarationBase,
-            declaredAction: draft.mode,
-            ...(label ? { actionLabel: label } : {}),
-            ...(savedAttackRoutineCount !== undefined
-              ? { attackRoutineCount: savedAttackRoutineCount }
-              : {}),
-            intention: label || formatDeclaredAction(draft.mode),
-          });
-        }
-
-        continue;
-      }
-
-      if (draft.mode === 'spell-casting') {
-        const castingSegments = parseCastingSegments(draft.castingSegments);
-
-        if (castingSegments === undefined) {
-          setActionEditorError('Cast spell needs a casting time.');
-          return;
-        }
-
-        const intention = formatSpellCastingIntention(label, castingSegments);
-        actionDeclarations.push({
-          ...actionDeclarationBase,
-          declaredAction: 'spell-casting',
-          ...(label ? { actionLabel: label } : {}),
-          castingSegments,
-          intention,
-        });
-        continue;
-      }
-
-      if (draft.mode === 'magical-device') {
-        const activationSegmentInput = draft.activationSegments.trim();
-        const activationSegments =
-          activationSegmentInput.length > 0
-            ? parseActivationSegments(activationSegmentInput)
-            : undefined;
-
-        if (
-          activationSegmentInput.length > 0 &&
-          activationSegments === undefined
-        ) {
-          setActionEditorError('Magical device activation time is invalid.');
-          return;
-        }
-
-        const intention = formatMagicalDeviceIntention(
-          label,
-          activationSegments
-        );
-        actionDeclarations.push({
-          ...actionDeclarationBase,
-          declaredAction: 'magical-device',
-          ...(label ? { actionLabel: label } : {}),
-          ...(activationSegments !== undefined ? { activationSegments } : {}),
-          intention,
-        });
-        continue;
-      }
-
-      const distanceInches = Number(draft.distanceInches);
-
-      if (!Number.isFinite(distanceInches) || distanceInches <= 0) {
-        setActionEditorError(
-          `${formatDeclaredAction(
-            draft.mode
-          )} needs a distance greater than 0".`
-        );
-        return;
-      }
-
-      const intention = formatDistanceActionIntention(
-        draft.mode,
-        label,
-        distanceInches
-      );
-      actionDeclarations.push({
-        ...actionDeclarationBase,
-        declaredAction: draft.mode,
-        ...(label ? { actionLabel: label } : {}),
-        actionDistanceInches: distanceInches,
-        intention,
-      });
+    if (!result.ok) {
+      setActionEditorError(result.error);
+      return;
     }
-
-    const intention =
-      actionDeclarations.length > 0
-        ? actionDeclarations.map((action) => action.intention).join('; ')
-        : drafts[0]?.label.trim() || '';
 
     dispatch({
       type: 'set-combatant-actions',
       side: actionEditorTarget.side,
       index: actionEditorTarget.index,
-      intention,
-      actionDeclarations,
+      intention: result.intention,
+      actionDeclarations: result.actionDeclarations,
     });
     closeActionEditor();
   };
@@ -2356,11 +2367,21 @@ const CombatTracker = ({
     setIntentionResolvedOnEntry(
       Boolean(nextEntries[nextIndex]?.intention.trim())
     );
+    const nextEntry = nextEntries[nextIndex];
+    const nextDrafts = nextEntry
+      ? getIntentionWizardActionDrafts(currentRound, nextEntry)
+      : [];
+    setIntentionWizardActionDrafts(nextDrafts);
+    setIntentionWizardSelectedActionId(nextDrafts[0]?.id || '');
+    setIntentionWizardActionError(undefined);
     setShowIntentionsWizard(true);
   };
 
   const closeIntentionsWizard = () => {
     setShowIntentionsWizard(false);
+    setIntentionWizardActionDrafts([]);
+    setIntentionWizardSelectedActionId('');
+    setIntentionWizardActionError(undefined);
   };
 
   const navigateIntentionsWizard = (nextIndex: number) => {
@@ -2378,6 +2399,13 @@ const CombatTracker = ({
     setIntentionResolvedOnEntry(
       Boolean(intentionWizardEntries[boundedIndex]?.intention.trim())
     );
+    const nextEntry = intentionWizardEntries[boundedIndex];
+    const nextDrafts = nextEntry
+      ? getIntentionWizardActionDrafts(currentRound, nextEntry)
+      : [];
+    setIntentionWizardActionDrafts(nextDrafts);
+    setIntentionWizardSelectedActionId(nextDrafts[0]?.id || '');
+    setIntentionWizardActionError(undefined);
     setIntentionWizardIndex(boundedIndex);
   };
 
@@ -2425,7 +2453,7 @@ const CombatTracker = ({
     setShowDeleteRoundModal(false);
   };
 
-  const updateWizardEntry = (
+  const updateCurrentIntentionWizardEntry = (
     updater: (entry: IntentionWizardEntry) => IntentionWizardEntry
   ) => {
     if (!currentIntentionWizardEntry) {
@@ -2440,13 +2468,493 @@ const CombatTracker = ({
         nextEntry
       )
     );
+  };
+
+  const commitIntentionWizardActionDrafts = (
+    drafts: TrackerActionEditorDraft[],
+    combatantOverride?: TrackerCombatant
+  ): boolean => {
+    if (!currentIntentionWizardEntry) {
+      return false;
+    }
+
+    const combatant =
+      combatantOverride ||
+      getActionCombatant(
+        currentRound,
+        currentIntentionWizardEntry.side,
+        currentIntentionWizardEntry.index
+      );
+    const roundState = getActionRoundState(
+      currentRound,
+      currentIntentionWizardEntry.side,
+      currentIntentionWizardEntry.index
+    );
+
+    if (!combatant) {
+      return false;
+    }
+
+    const result = buildActionDeclarationsFromDrafts({
+      side: currentIntentionWizardEntry.side,
+      index: currentIntentionWizardEntry.index,
+      combatant,
+      roundState,
+      drafts,
+    });
+
+    if (!result.ok) {
+      setIntentionWizardActionError(result.error);
+      return false;
+    }
+
+    setIntentionWizardActionError(undefined);
+    updateCurrentIntentionWizardEntry((entry) => ({
+      ...entry,
+      intention: result.intention,
+    }));
     dispatch({
-      type: 'set-combatant-action',
-      side: nextEntry.side,
-      index: nextEntry.index,
-      intention: nextEntry.intention,
+      type: 'set-combatant-actions',
+      side: currentIntentionWizardEntry.side,
+      index: currentIntentionWizardEntry.index,
+      intention: result.intention,
+      actionDeclarations: result.actionDeclarations,
+    });
+    return true;
+  };
+
+  const updateSelectedIntentionWizardActionDraft = (
+    updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
+  ) => {
+    if (!selectedIntentionWizardActionDraft) {
+      return;
+    }
+
+    const nextDrafts = intentionWizardActionDrafts.map((draft) =>
+      draft.id === selectedIntentionWizardActionDraft.id
+        ? updater(draft)
+        : draft
+    );
+
+    setIntentionWizardActionDrafts(nextDrafts);
+    commitIntentionWizardActionDrafts(nextDrafts);
+  };
+
+  const addIntentionWizardAction = () => {
+    if (!currentIntentionWizardEntry || !currentIntentionWizardCombatant) {
+      return;
+    }
+
+    const nextDraft = createAddedActionEditorDraft(
+      getNextTrackerActionId(
+        currentIntentionWizardEntry.side,
+        currentIntentionWizardCombatant.key,
+        intentionWizardActionDrafts
+      ),
+      getDefaultTrackerDeclaredAction(currentIntentionWizardCombatant)
+    );
+    const nextDrafts = intentionWizardActionDrafts.concat(nextDraft);
+
+    setIntentionWizardActionDrafts(nextDrafts);
+    setIntentionWizardSelectedActionId(nextDraft.id);
+    commitIntentionWizardActionDrafts(nextDrafts);
+  };
+
+  const removeSelectedIntentionWizardAction = () => {
+    if (
+      intentionWizardActionDrafts.length <= 1 ||
+      selectedIntentionWizardActionDraftIndex <= 0
+    ) {
+      return;
+    }
+
+    const nextSelectedActionId =
+      intentionWizardActionDrafts[selectedIntentionWizardActionDraftIndex - 1]
+        ?.id ||
+      intentionWizardActionDrafts[0]?.id ||
+      '';
+    const nextDrafts = intentionWizardActionDrafts.filter(
+      (draft) => draft.id !== selectedIntentionWizardActionDraft?.id
+    );
+
+    setIntentionWizardActionDrafts(nextDrafts);
+    setIntentionWizardSelectedActionId(nextSelectedActionId);
+    commitIntentionWizardActionDrafts(nextDrafts);
+  };
+
+  const getActionDraftsForWeaponChange = (
+    combatant: TrackerCombatant,
+    nextWeapon: number
+  ): TrackerActionEditorDraft[] => {
+    const oldDefaultAction = getDefaultTrackerDeclaredAction(combatant);
+    const nextCombatant = {
+      ...combatant,
+      weapon: nextWeapon,
+    };
+    const nextDefaultAction = getDefaultTrackerDeclaredAction(nextCombatant);
+
+    return intentionWizardActionDrafts.map((draft) => {
+      const nextMode =
+        draft.mode === oldDefaultAction
+          ? nextDefaultAction
+          : normalizeActionEditorModeForWeapon(
+              draft.mode,
+              nextWeapon,
+              nextDefaultAction
+            );
+
+      return {
+        ...draft,
+        mode: nextMode,
+        attackRoutineCount:
+          requiresAttackRoutineCountInput(nextMode, nextWeapon) &&
+          draft.attackRoutineCount.trim().length === 0
+            ? '1'
+            : draft.attackRoutineCount,
+      };
     });
   };
+
+  const updateIntentionWizardWeapon = (nextWeapon: number) => {
+    if (!currentIntentionWizardEntry || !currentIntentionWizardCombatant) {
+      return;
+    }
+
+    const nextCombatant = {
+      ...currentIntentionWizardCombatant,
+      weapon: nextWeapon,
+    };
+    const nextDrafts = getActionDraftsForWeaponChange(
+      currentIntentionWizardCombatant,
+      nextWeapon
+    );
+
+    setIntentionWizardActionDrafts(nextDrafts);
+    dispatch({
+      type: 'update-combatant',
+      side: currentIntentionWizardEntry.side,
+      index: currentIntentionWizardEntry.index,
+      combatant: nextCombatant,
+    });
+    commitIntentionWizardActionDrafts(nextDrafts, nextCombatant);
+  };
+
+  const renderIntentionWizardWeaponPicker = () => {
+    if (!currentIntentionWizardCombatant) {
+      return null;
+    }
+
+    const weaponOptions = getWeaponOptions(
+      currentIntentionWizardCombatant.class
+    );
+    const weaponOptionsById = new Map(
+      weaponOptions.map((weaponOption) => [weaponOption.value, weaponOption])
+    );
+    const quickWeaponOptions = (
+      currentIntentionWizardCombatant.weaponShortlist || []
+    ).flatMap((weaponId) => {
+      const weaponOption = weaponOptionsById.get(weaponId);
+      return weaponOption ? [weaponOption] : [];
+    });
+
+    if (quickWeaponOptions.length === 0) {
+      return null;
+    }
+
+    return (
+      <div
+        className={`${styles['quickWeaponList']} ${styles['intentionsWizardQuickWeaponList']}`}
+      >
+        {quickWeaponOptions.map((weaponOption) => (
+          <button
+            key={weaponOption.value}
+            type={'button'}
+            className={
+              weaponOption.value === currentIntentionWizardCombatant.weapon
+                ? styles['quickWeaponButtonActive']
+                : styles['quickWeaponButton']
+            }
+            onClick={() => updateIntentionWizardWeapon(weaponOption.value)}
+          >
+            {weaponOption.label}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  const renderActionDraftControls = ({
+    idPrefix,
+    selectedDraft,
+    modeOptions,
+    combatant,
+    updateDraft,
+    error,
+  }: {
+    idPrefix: string;
+    selectedDraft: TrackerActionEditorDraft;
+    modeOptions: typeof ACTION_EDITOR_MODE_OPTIONS;
+    combatant: TrackerCombatant | undefined;
+    updateDraft: (
+      updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
+    ) => void;
+    error: string | undefined;
+  }) => (
+    <>
+      <label className={styles['modalLabel']} htmlFor={`${idPrefix}-mode`}>
+        Action
+      </label>
+      <select
+        id={`${idPrefix}-mode`}
+        className={styles['actionIntentSelect']}
+        value={selectedDraft.mode}
+        onChange={(event) =>
+          updateDraft((draft) => {
+            const nextMode = modeOptions.some(
+              (option) => option.value === event.target.value
+            )
+              ? (event.target.value as TrackerActionEditorMode)
+              : modeOptions[0]?.value || 'none';
+
+            return {
+              ...draft,
+              mode: nextMode,
+              castingSegments:
+                nextMode === 'spell-casting' &&
+                draft.castingSegments.trim().length === 0
+                  ? '1'
+                  : draft.castingSegments,
+              attackRoutineCount:
+                requiresAttackRoutineCountInput(nextMode, combatant?.weapon) &&
+                draft.attackRoutineCount.trim().length === 0
+                  ? '1'
+                  : draft.attackRoutineCount,
+            };
+          })
+        }
+      >
+        {modeOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {requiresActionDistanceInput(selectedDraft.mode) ? (
+        <>
+          <label className={styles['modalLabel']} htmlFor={`${idPrefix}-label`}>
+            Label
+          </label>
+          <input
+            id={`${idPrefix}-label`}
+            className={styles['actionIntentTextInput']}
+            type={'text'}
+            value={selectedDraft.label}
+            onChange={(event) =>
+              updateDraft((draft) => ({
+                ...draft,
+                label: event.target.value,
+              }))
+            }
+          />
+          <label
+            className={styles['modalLabel']}
+            htmlFor={`${idPrefix}-distance`}
+          >
+            Distance
+          </label>
+          <div className={styles['actionIntentDistanceRow']}>
+            <input
+              id={`${idPrefix}-distance`}
+              className={styles['actionIntentDistanceInput']}
+              type={'number'}
+              inputMode={'decimal'}
+              min={'0.1'}
+              step={'0.1'}
+              value={selectedDraft.distanceInches}
+              onChange={(event) =>
+                updateDraft((draft) => ({
+                  ...draft,
+                  distanceInches: event.target.value,
+                }))
+              }
+            />
+            <span className={styles['actionIntentDistanceUnit']}>&quot;</span>
+          </div>
+        </>
+      ) : selectedDraft.mode === 'spell-casting' ? (
+        <>
+          <label className={styles['modalLabel']} htmlFor={`${idPrefix}-label`}>
+            Spell or label
+          </label>
+          <input
+            id={`${idPrefix}-label`}
+            className={styles['actionIntentTextInput']}
+            type={'text'}
+            value={selectedDraft.label}
+            onChange={(event) =>
+              updateDraft((draft) => ({
+                ...draft,
+                label: event.target.value,
+              }))
+            }
+          />
+          <label
+            className={styles['modalLabel']}
+            htmlFor={`${idPrefix}-casting-segments`}
+          >
+            Casting time
+          </label>
+          <select
+            id={`${idPrefix}-casting-segments`}
+            className={styles['actionIntentSelect']}
+            value={selectedDraft.castingSegments}
+            onChange={(event) =>
+              updateDraft((draft) => ({
+                ...draft,
+                castingSegments: event.target.value,
+              }))
+            }
+          >
+            {SPELL_CASTING_TIME_OPTIONS.map((option) => (
+              <option key={option.label} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className={styles['modalHint']}>
+            For scrolls that reproduce spells, use the spell casting time.
+          </p>
+        </>
+      ) : selectedDraft.mode === 'magical-device' ? (
+        <>
+          <label className={styles['modalLabel']} htmlFor={`${idPrefix}-label`}>
+            Device or label
+          </label>
+          <input
+            id={`${idPrefix}-label`}
+            className={styles['actionIntentTextInput']}
+            type={'text'}
+            value={selectedDraft.label}
+            onChange={(event) =>
+              updateDraft((draft) => ({
+                ...draft,
+                label: event.target.value,
+              }))
+            }
+          />
+          <label
+            className={styles['modalLabel']}
+            htmlFor={`${idPrefix}-activation-segments`}
+          >
+            Activation time
+          </label>
+          <select
+            id={`${idPrefix}-activation-segments`}
+            className={styles['actionIntentSelect']}
+            value={selectedDraft.activationSegments}
+            onChange={(event) =>
+              updateDraft((draft) => ({
+                ...draft,
+                activationSegments: event.target.value,
+              }))
+            }
+          >
+            {ACTIVATION_SEGMENT_OPTIONS.map((option) => (
+              <option key={option.label} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className={styles['modalHint']}>
+            Targets are optional. Select one or more targets in the intention
+            grid when the device affects a creature.
+          </p>
+          <p className={styles['modalHint']}>
+            Potion reminder: finding a packed potion is usually 3-4 segments,
+            quaffing is 1 segment, and the effect begins 2-5 segments later.
+          </p>
+        </>
+      ) : (
+        <>
+          <label className={styles['modalLabel']} htmlFor={`${idPrefix}-label`}>
+            Intention
+          </label>
+          <AutoHeightTextarea
+            id={`${idPrefix}-label`}
+            className={styles['actionIntentTextarea']}
+            value={selectedDraft.label}
+            onChange={(value) =>
+              updateDraft((draft) => ({
+                ...draft,
+                label: value,
+              }))
+            }
+            rows={2}
+          />
+        </>
+      )}
+      {requiresAttackRoutineCountInput(
+        selectedDraft.mode,
+        combatant?.weapon
+      ) ? (
+        <>
+          <label
+            className={styles['modalLabel']}
+            htmlFor={`${idPrefix}-attack-routines`}
+          >
+            Attack routines this round
+          </label>
+          <input
+            id={`${idPrefix}-attack-routines`}
+            className={styles['actionIntentTextInput']}
+            type={'text'}
+            inputMode={'numeric'}
+            value={selectedDraft.attackRoutineCount}
+            onChange={(event) =>
+              updateDraft((draft) => ({
+                ...draft,
+                attackRoutineCount: event.target.value,
+              }))
+            }
+          />
+          <p className={styles['modalHint']}>
+            Use <strong>1</strong> for an ordinary weapon routine or a natural
+            routine such as claw/claw/bite.
+          </p>
+        </>
+      ) : null}
+      <label
+        className={styles['modalLabel']}
+        htmlFor={`${idPrefix}-initiative-timing`}
+      >
+        Initiative timing
+      </label>
+      <select
+        id={`${idPrefix}-initiative-timing`}
+        className={styles['actionIntentSelect']}
+        value={selectedDraft.initiativeTiming}
+        onChange={(event) =>
+          updateDraft((draft) => ({
+            ...draft,
+            initiativeTiming: event.target.value as InitiativeTimingOverride,
+          }))
+        }
+      >
+        {INITIATIVE_TIMING_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <p className={styles['modalHint']}>
+        Use this only for effects such as speed weapons or slow that explicitly
+        make this action win or lose initiative.
+      </p>
+      {error ? (
+        <div className={styles['actionIntentError']}>{error}</div>
+      ) : null}
+    </>
+  );
 
   const updateCombatWizardResult = (
     entry: CombatWizardEntry,
@@ -3527,6 +4035,7 @@ const CombatTracker = ({
               minHeightRem={22}
               readableText={true}
               showEmptySegmentLanes={true}
+              targetPrefix={'→'}
             />
           ) : (
             <div className={styles['initiativeDagEmpty']}>
@@ -3909,7 +4418,7 @@ const CombatTracker = ({
         selectedCellActionAssignment.options.length >= 2 && (
           <>
             <div
-              className={styles['modalShadow']}
+              className={`${styles['modalShadow']} ${styles['targetActionModalShadow']}`}
               onClick={closeCellActionAssignmentModal}
             />
             <div
@@ -4078,282 +4587,14 @@ const CombatTracker = ({
                   Add action
                 </button>
               </div>
-              <label
-                className={styles['modalLabel']}
-                htmlFor={'action-intent-mode'}
-              >
-                Action
-              </label>
-              <select
-                id={'action-intent-mode'}
-                className={styles['actionIntentSelect']}
-                value={selectedActionEditorDraft.mode}
-                onChange={(event) =>
-                  updateSelectedActionEditorDraft((draft) => {
-                    const nextMode = selectedActionEditorModeOptions.some(
-                      (option) => option.value === event.target.value
-                    )
-                      ? (event.target.value as TrackerActionEditorMode)
-                      : selectedActionEditorModeOptions[0]?.value || 'none';
-
-                    return {
-                      ...draft,
-                      mode: nextMode,
-                      castingSegments:
-                        nextMode === 'spell-casting' &&
-                        draft.castingSegments.trim().length === 0
-                          ? '1'
-                          : draft.castingSegments,
-                      attackRoutineCount:
-                        requiresAttackRoutineCountInput(
-                          nextMode,
-                          selectedActionEditorCombatant?.weapon
-                        ) && draft.attackRoutineCount.trim().length === 0
-                          ? '1'
-                          : draft.attackRoutineCount,
-                    };
-                  })
-                }
-              >
-                {selectedActionEditorModeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              {requiresActionDistanceInput(selectedActionEditorDraft.mode) ? (
-                <>
-                  <label
-                    className={styles['modalLabel']}
-                    htmlFor={'action-intent-label'}
-                  >
-                    Label
-                  </label>
-                  <input
-                    id={'action-intent-label'}
-                    className={styles['actionIntentTextInput']}
-                    type={'text'}
-                    value={selectedActionEditorDraft.label}
-                    onChange={(event) =>
-                      updateSelectedActionEditorDraft((draft) => ({
-                        ...draft,
-                        label: event.target.value,
-                      }))
-                    }
-                  />
-                  <label
-                    className={styles['modalLabel']}
-                    htmlFor={'action-intent-distance'}
-                  >
-                    Distance
-                  </label>
-                  <div className={styles['actionIntentDistanceRow']}>
-                    <input
-                      id={'action-intent-distance'}
-                      className={styles['actionIntentDistanceInput']}
-                      type={'number'}
-                      inputMode={'decimal'}
-                      min={'0.1'}
-                      step={'0.1'}
-                      value={selectedActionEditorDraft.distanceInches}
-                      onChange={(event) =>
-                        updateSelectedActionEditorDraft((draft) => ({
-                          ...draft,
-                          distanceInches: event.target.value,
-                        }))
-                      }
-                    />
-                    <span className={styles['actionIntentDistanceUnit']}>
-                      &quot;
-                    </span>
-                  </div>
-                </>
-              ) : selectedActionEditorDraft.mode === 'spell-casting' ? (
-                <>
-                  <label
-                    className={styles['modalLabel']}
-                    htmlFor={'action-intent-label'}
-                  >
-                    Spell or label
-                  </label>
-                  <input
-                    id={'action-intent-label'}
-                    className={styles['actionIntentTextInput']}
-                    type={'text'}
-                    value={selectedActionEditorDraft.label}
-                    onChange={(event) =>
-                      updateSelectedActionEditorDraft((draft) => ({
-                        ...draft,
-                        label: event.target.value,
-                      }))
-                    }
-                  />
-                  <label
-                    className={styles['modalLabel']}
-                    htmlFor={'action-intent-casting-segments'}
-                  >
-                    Casting time
-                  </label>
-                  <select
-                    id={'action-intent-casting-segments'}
-                    className={styles['actionIntentSelect']}
-                    value={selectedActionEditorDraft.castingSegments}
-                    onChange={(event) =>
-                      updateSelectedActionEditorDraft((draft) => ({
-                        ...draft,
-                        castingSegments: event.target.value,
-                      }))
-                    }
-                  >
-                    {SPELL_CASTING_TIME_OPTIONS.map((option) => (
-                      <option key={option.label} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p className={styles['modalHint']}>
-                    For scrolls that reproduce spells, use the spell casting
-                    time.
-                  </p>
-                </>
-              ) : selectedActionEditorDraft.mode === 'magical-device' ? (
-                <>
-                  <label
-                    className={styles['modalLabel']}
-                    htmlFor={'action-intent-label'}
-                  >
-                    Device or label
-                  </label>
-                  <input
-                    id={'action-intent-label'}
-                    className={styles['actionIntentTextInput']}
-                    type={'text'}
-                    value={selectedActionEditorDraft.label}
-                    onChange={(event) =>
-                      updateSelectedActionEditorDraft((draft) => ({
-                        ...draft,
-                        label: event.target.value,
-                      }))
-                    }
-                  />
-                  <label
-                    className={styles['modalLabel']}
-                    htmlFor={'action-intent-activation-segments'}
-                  >
-                    Activation time
-                  </label>
-                  <select
-                    id={'action-intent-activation-segments'}
-                    className={styles['actionIntentSelect']}
-                    value={selectedActionEditorDraft.activationSegments}
-                    onChange={(event) =>
-                      updateSelectedActionEditorDraft((draft) => ({
-                        ...draft,
-                        activationSegments: event.target.value,
-                      }))
-                    }
-                  >
-                    {ACTIVATION_SEGMENT_OPTIONS.map((option) => (
-                      <option key={option.label} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p className={styles['modalHint']}>
-                    Targets are optional. Select one or more targets in the
-                    intention grid when the device affects a creature.
-                  </p>
-                  <p className={styles['modalHint']}>
-                    Potion reminder: finding a packed potion is usually 3-4
-                    segments, quaffing is 1 segment, and the effect begins 2-5
-                    segments later.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <label
-                    className={styles['modalLabel']}
-                    htmlFor={'action-intent-label'}
-                  >
-                    Intention
-                  </label>
-                  <AutoHeightTextarea
-                    id={'action-intent-label'}
-                    className={styles['actionIntentTextarea']}
-                    value={selectedActionEditorDraft.label}
-                    onChange={(value) =>
-                      updateSelectedActionEditorDraft((draft) => ({
-                        ...draft,
-                        label: value,
-                      }))
-                    }
-                    rows={2}
-                  />
-                </>
-              )}
-              {requiresAttackRoutineCountInput(
-                selectedActionEditorDraft.mode,
-                selectedActionEditorCombatant?.weapon
-              ) ? (
-                <>
-                  <label
-                    className={styles['modalLabel']}
-                    htmlFor={'action-intent-attack-routines'}
-                  >
-                    Attack routines this round
-                  </label>
-                  <input
-                    id={'action-intent-attack-routines'}
-                    className={styles['actionIntentTextInput']}
-                    type={'text'}
-                    inputMode={'numeric'}
-                    value={selectedActionEditorDraft.attackRoutineCount}
-                    onChange={(event) =>
-                      updateSelectedActionEditorDraft((draft) => ({
-                        ...draft,
-                        attackRoutineCount: event.target.value,
-                      }))
-                    }
-                  />
-                  <p className={styles['modalHint']}>
-                    Use <strong>1</strong> for an ordinary weapon routine or a
-                    natural routine such as claw/claw/bite.
-                  </p>
-                </>
-              ) : null}
-              <label
-                className={styles['modalLabel']}
-                htmlFor={'action-intent-initiative-timing'}
-              >
-                Initiative timing
-              </label>
-              <select
-                id={'action-intent-initiative-timing'}
-                className={styles['actionIntentSelect']}
-                value={selectedActionEditorDraft.initiativeTiming}
-                onChange={(event) =>
-                  updateSelectedActionEditorDraft((draft) => ({
-                    ...draft,
-                    initiativeTiming: event.target
-                      .value as InitiativeTimingOverride,
-                  }))
-                }
-              >
-                {INITIATIVE_TIMING_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <p className={styles['modalHint']}>
-                Use this only for effects such as speed weapons or slow that
-                explicitly make this action win or lose initiative.
-              </p>
-              {actionEditorError ? (
-                <div className={styles['actionIntentError']}>
-                  {actionEditorError}
-                </div>
-              ) : null}
+              {renderActionDraftControls({
+                idPrefix: 'action-intent',
+                selectedDraft: selectedActionEditorDraft,
+                modeOptions: selectedActionEditorModeOptions,
+                combatant: selectedActionEditorCombatant,
+                updateDraft: updateSelectedActionEditorDraft,
+                error: actionEditorError,
+              })}
             </div>
             <div className={styles['modalActions']}>
               {actionEditorDrafts.length > 1 &&
@@ -4452,25 +4693,64 @@ const CombatTracker = ({
               <div className={styles['intentionsWizardName']}>
                 {currentIntentionWizardEntry.combatantName}
               </div>
-              <label
-                className={styles['modalLabel']}
-                htmlFor={'intentions-wizard-text'}
-              >
-                Intention
-              </label>
-              <AutoHeightTextarea
-                ref={intentionsTextareaRef}
-                id={'intentions-wizard-text'}
-                className={styles['intentionsWizardTextarea']}
-                value={currentIntentionWizardEntry.intention}
-                onChange={(value) =>
-                  updateWizardEntry((entry) => ({
-                    ...entry,
-                    intention: value,
-                  }))
-                }
-                placeholder={'advance, attack, cast sleep, hold, charge...'}
-              />
+              {renderIntentionWizardWeaponPicker()}
+              {selectedIntentionWizardActionDraft ? (
+                <div className={styles['intentionsWizardActionPanel']}>
+                  <div className={styles['actionIntentActionList']}>
+                    {intentionWizardActionDrafts.map((draft, actionIndex) => (
+                      <button
+                        key={draft.id}
+                        type={'button'}
+                        className={[
+                          styles['actionIntentActionButton'],
+                          draft.id === selectedIntentionWizardActionDraft.id
+                            ? styles['actionIntentActionButtonActive']
+                            : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={() =>
+                          setIntentionWizardSelectedActionId(draft.id)
+                        }
+                      >
+                        <span className={styles['actionIntentActionTitle']}>
+                          {actionIndex === 0
+                            ? 'Main'
+                            : `Action ${actionIndex + 1}`}
+                        </span>
+                        <span className={styles['actionIntentActionMeta']}>
+                          {getActionDraftSummary(draft)}
+                        </span>
+                      </button>
+                    ))}
+                    <button
+                      type={'button'}
+                      className={styles['actionIntentActionAddButton']}
+                      onClick={addIntentionWizardAction}
+                    >
+                      Add action
+                    </button>
+                  </div>
+                  {renderActionDraftControls({
+                    idPrefix: 'intentions-wizard-action',
+                    selectedDraft: selectedIntentionWizardActionDraft,
+                    modeOptions: selectedIntentionWizardModeOptions,
+                    combatant: currentIntentionWizardCombatant,
+                    updateDraft: updateSelectedIntentionWizardActionDraft,
+                    error: intentionWizardActionError,
+                  })}
+                  {intentionWizardActionDrafts.length > 1 &&
+                  selectedIntentionWizardActionDraftIndex > 0 ? (
+                    <button
+                      type={'button'}
+                      className={styles['toolbarButtonDanger']}
+                      onClick={removeSelectedIntentionWizardAction}
+                    >
+                      Remove action
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
               <label
                 className={styles['modalLabel']}
                 htmlFor={'intentions-wizard-effect'}
@@ -4498,7 +4778,10 @@ const CombatTracker = ({
                 placeholder={'hopeless 1/9, slowed 3/8, bless, stoneskin...'}
               />
               <div className={styles['modalLabel']}>Targets</div>
-              <div className={styles['intentionsWizardGridWrap']}>
+              <div
+                key={`intentions-target-grid-${currentIntentionWizardEntry.side}-${currentIntentionWizardEntry.combatantKey}`}
+                className={styles['intentionsWizardGridWrap']}
+              >
                 {currentIntentionWizardEntry.side === 'enemy' ? (
                   <table className={styles['intentionsWizardGridTable']}>
                     <thead>
