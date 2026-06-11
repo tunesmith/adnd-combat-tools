@@ -388,6 +388,12 @@
   max-width: 5.75rem;
 }
 
+.enemyActionHeader {
+  width: 7rem;
+  min-width: 7rem;
+  max-width: 10rem;
+}
+
 .interactionCell {
   position: relative;
   padding: 0;
@@ -546,6 +552,12 @@
   max-width: 5.75rem;
 }
 
+.enemyActionCell {
+  width: 7rem;
+  min-width: 7rem;
+  max-width: 10rem;
+}
+
 .partyFieldLabel {
   position: sticky;
   left: 0;
@@ -628,6 +640,48 @@
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: pre-wrap;
+}
+
+.actionIntentButton {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--eggshell);
+  font-family: 'Sura', serif;
+  line-height: 1.15;
+  text-align: left;
+  padding: 0.34rem 0.42rem;
+  cursor: pointer;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.actionIntentButton:hover,
+.actionIntentButton:focus-visible {
+  background: rgba(240, 239, 221, 0.08);
+  outline: 1px solid rgba(240, 239, 221, 0.28);
+  outline-offset: -1px;
+}
+
+.actionIntentButtonEmpty {
+  color: rgba(240, 239, 221, 0.62);
+}
+
+.actionIntentPrimary {
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.actionIntentSecondary,
+.actionIntentPlaceholder {
+  color: rgba(240, 239, 221, 0.84);
+  font-size: 0.86rem;
 }
 
 .summaryCell {
@@ -890,6 +944,10 @@
   width: min(34rem, calc(100vw - 2rem));
 }
 
+.actionIntentModal {
+  width: min(30rem, calc(100vw - 2rem));
+}
+
 .intentionsModal {
   top: 1.5rem;
   width: min(50rem, calc(100vw - 2rem));
@@ -941,6 +999,64 @@
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.2;
+}
+
+.actionIntentEditorName {
+  margin: 0 0 0.55rem;
+  color: #111;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.actionIntentSelect,
+.actionIntentTextInput,
+.actionIntentTextarea,
+.actionIntentDistanceInput {
+  width: calc(100% - 1.5rem);
+  border: 1px solid var(--copper);
+  background: var(--eggshell);
+  color: #111;
+  font-family: 'Sura', serif;
+  font-size: 1rem;
+  line-height: 1.25;
+  margin: 0 0.75rem;
+  padding: 0.4rem 0.5rem;
+  box-sizing: border-box;
+}
+
+.actionIntentTextarea {
+  min-height: 4.8rem;
+  resize: none;
+  overflow: hidden;
+}
+
+.actionIntentDistanceRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0.75rem;
+}
+
+.actionIntentDistanceInput {
+  width: 8rem;
+  margin: 0;
+}
+
+.actionIntentDistanceUnit {
+  color: #111;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.actionIntentError {
+  margin: 0.75rem 0.75rem 0;
+  border: 1px solid rgba(140, 33, 33, 0.35);
+  background: rgba(140, 33, 33, 0.08);
+  color: #111;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  padding: 0.5rem 0.6rem;
 }
 
 .attackDetailList {

@@ -140,25 +140,58 @@ describe('tracker action declarations', () => {
     ]);
   });
 
-  test('prefers explicit round actions when present', () => {
+  test('uses explicit round actions for that combatant while deriving others from the grid', () => {
     const round = requireRound();
     const explicitAction: TrackerActionDeclaration = {
-      id: 'party:1:custom',
-      source: 'combat-cell',
+      id: 'party:1:main',
+      source: 'intention',
       side: 'party',
       direction: 'partyToEnemy',
       combatantKey: 1,
       combatantIndex: 0,
       targetSide: 'enemy',
-      declaredAction: 'turn-undead',
+      declaredAction: 'close',
+      actionLabel: 'Move east',
+      actionDistanceInches: 6,
       weaponId: 1,
-      intention: 'Turn undead',
+      intention: 'Move east (6")',
       result: '',
       targetDeclarations: [],
+    };
+    const firstRow = round.cells[0];
+    const firstCell = firstRow?.[0];
+    const secondCell = firstRow?.[1];
+
+    if (!firstRow || !firstCell || !secondCell) {
+      throw new Error('Missing target cells');
+    }
+
+    firstRow[0] = {
+      ...firstCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'would be suppressed',
+    };
+    firstRow[1] = {
+      ...secondCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: '7',
     };
 
     round.actions = [explicitAction];
 
-    expect(getTrackerActionDeclarations(round)).toEqual([explicitAction]);
+    expect(getTrackerActionDeclarations(round)).toEqual([
+      expect.objectContaining({
+        id: 'party:2:main',
+        source: 'combat-cell',
+        combatantKey: 2,
+        targetDeclarations: [
+          expect.objectContaining({
+            targetCombatantKey: 4,
+            cellResultText: '7',
+          }),
+        ],
+      }),
+      explicitAction,
+    ]);
   });
 });

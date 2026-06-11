@@ -17,6 +17,7 @@ import {
   updateCombatant,
 } from '../../helpers/trackerState';
 import type {
+  TrackerActionDeclaration,
   TrackerAttackHand,
   TrackerCombatant,
   TrackerCellState,
@@ -90,6 +91,19 @@ interface AttackDetailTarget {
   hand: TrackerAttackHand;
 }
 
+type TrackerActionEditorMode = 'combat-grid' | 'move-close';
+
+interface TrackerActionEditorTarget {
+  side: TrackerSide;
+  index: number;
+}
+
+interface TrackerActionEditorDraft {
+  mode: TrackerActionEditorMode;
+  label: string;
+  distanceInches: string;
+}
+
 type TrackerAction =
   | { type: 'replace-state'; state: TrackerState }
   | { type: 'set-title'; value: string }
@@ -121,6 +135,13 @@ type TrackerAction =
       index: number;
       field: RoundCombatantField;
       value: string;
+    }
+  | {
+      type: 'set-combatant-action';
+      side: TrackerSide;
+      index: number;
+      intention: string;
+      actionDeclaration?: TrackerActionDeclaration;
     }
   | {
       type: 'update-combatant';
@@ -253,6 +274,101 @@ const formatDraftTitle = (draft: TrackerLocalDraftRecord): string =>
         draft.enemyNames
       )}`;
 
+const getActionCombatant = (
+  round: TrackerRound,
+  side: TrackerSide,
+  index: number
+): TrackerCombatant | undefined =>
+  side === 'party' ? round.party[index] : round.enemies[index];
+
+const getActionRoundState = (
+  round: TrackerRound,
+  side: TrackerSide,
+  index: number
+): TrackerCombatantRoundState | undefined =>
+  side === 'party' ? round.partyStates[index] : round.enemyStates[index];
+
+const getStructuredActionForCombatant = (
+  round: TrackerRound,
+  side: TrackerSide,
+  index: number
+): TrackerActionDeclaration | undefined => {
+  const combatant = getActionCombatant(round, side, index);
+
+  if (!combatant) {
+    return undefined;
+  }
+
+  return (round.actions || []).find(
+    (action) => action.side === side && action.combatantKey === combatant.key
+  );
+};
+
+const getActionDirection = (side: TrackerSide): AttackDetailDirection =>
+  side === 'party' ? 'partyToEnemy' : 'enemyToParty';
+
+const getActionTargetSide = (side: TrackerSide): TrackerSide =>
+  side === 'party' ? 'enemy' : 'party';
+
+const formatDistanceInches = (distanceInches: number): string =>
+  Number.isInteger(distanceInches)
+    ? distanceInches.toString()
+    : distanceInches.toFixed(1).replace(/\.0$/, '');
+
+const formatMoveCloseIntention = (
+  label: string,
+  distanceInches: number
+): string => {
+  const distanceText = `${formatDistanceInches(distanceInches)}"`;
+  return label ? `${label} (${distanceText})` : `Move/Close ${distanceText}`;
+};
+
+const getActionSummaryLines = (
+  action: TrackerActionDeclaration | undefined,
+  fallbackIntention: string
+): string[] => {
+  if (!action) {
+    return fallbackIntention.trim() ? [fallbackIntention.trim()] : [];
+  }
+
+  if (action.declaredAction === 'close') {
+    const distanceText =
+      action.actionDistanceInches !== undefined
+        ? `${formatDistanceInches(action.actionDistanceInches)}"`
+        : undefined;
+    const label = action.actionLabel?.trim();
+
+    return [
+      label || 'Move/Close',
+      ['Move/Close', distanceText].filter(Boolean).join(' '),
+    ];
+  }
+
+  return [action.actionLabel || action.intention || 'Structured action'];
+};
+
+const createActionEditorDraft = (
+  action: TrackerActionDeclaration | undefined,
+  fallbackIntention: string
+): TrackerActionEditorDraft => {
+  if (action?.declaredAction === 'close') {
+    return {
+      mode: 'move-close',
+      label: action.actionLabel || '',
+      distanceInches:
+        action.actionDistanceInches !== undefined
+          ? formatDistanceInches(action.actionDistanceInches)
+          : '',
+    };
+  }
+
+  return {
+    mode: 'combat-grid',
+    label: fallbackIntention,
+    distanceInches: '',
+  };
+};
+
 const CombatTracker = ({
   rememberedState,
   loadedFromEncodedState = false,
@@ -315,6 +431,18 @@ const CombatTracker = ({
     useState<Record<number, number | undefined>>({});
   const [attackDetailTarget, setAttackDetailTarget] = useState<
     AttackDetailTarget | undefined
+  >(undefined);
+  const [actionEditorTarget, setActionEditorTarget] = useState<
+    TrackerActionEditorTarget | undefined
+  >(undefined);
+  const [actionEditorDraft, setActionEditorDraft] =
+    useState<TrackerActionEditorDraft>({
+      mode: 'combat-grid',
+      label: '',
+      distanceInches: '',
+    });
+  const [actionEditorError, setActionEditorError] = useState<
+    string | undefined
   >(undefined);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleDraft, setTitleDraft] = useState<string>('');
@@ -419,6 +547,60 @@ const CombatTracker = ({
               : enemyState
           ),
         }));
+      case 'set-combatant-action':
+        return updateCurrentRound(state, (round) => {
+          const combatant = getActionCombatant(
+            round,
+            action.side,
+            action.index
+          );
+
+          if (!combatant) {
+            return round;
+          }
+
+          const nextActions = (round.actions || []).filter(
+            (roundAction) =>
+              !(
+                roundAction.side === action.side &&
+                roundAction.combatantKey === combatant.key
+              )
+          );
+          const nextRound = {
+            ...round,
+            actions: action.actionDeclaration
+              ? nextActions.concat(action.actionDeclaration)
+              : nextActions.length > 0
+              ? nextActions
+              : undefined,
+          };
+
+          if (action.side === 'party') {
+            return {
+              ...nextRound,
+              partyStates: nextRound.partyStates.map((partyState, partyIndex) =>
+                partyIndex === action.index
+                  ? {
+                      ...partyState,
+                      action: action.intention,
+                    }
+                  : partyState
+              ),
+            };
+          }
+
+          return {
+            ...nextRound,
+            enemyStates: nextRound.enemyStates.map((enemyState, enemyIndex) =>
+              enemyIndex === action.index
+                ? {
+                    ...enemyState,
+                    action: action.intention,
+                  }
+                : enemyState
+            ),
+          };
+        });
       case 'update-combatant':
         return updateCombatant(
           state,
@@ -721,7 +903,8 @@ const CombatTracker = ({
       !showImportModal &&
       !showIntentionsWizard &&
       !showCombatWizard &&
-      !attackDetailTarget
+      !attackDetailTarget &&
+      !actionEditorTarget
     ) {
       return;
     }
@@ -736,9 +919,11 @@ const CombatTracker = ({
         setShowIntentionsWizard(false);
         setShowCombatWizard(false);
         setAttackDetailTarget(undefined);
+        setActionEditorTarget(undefined);
         setShowMoreActions(false);
         setRecoverError(undefined);
         setImportError(undefined);
+        setActionEditorError(undefined);
       }
     };
 
@@ -746,6 +931,7 @@ const CombatTracker = ({
 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
+    actionEditorTarget,
     attackDetailTarget,
     showCombatWizard,
     showDeleteRoundModal,
@@ -780,6 +966,8 @@ const CombatTracker = ({
     setShowCombatWizard(false);
     setCombatWizardIndex(0);
     setCombatResolvedOnEntry(false);
+    setActionEditorTarget(undefined);
+    setActionEditorError(undefined);
   }, [state.activeRound]);
 
   useEffect(() => {
@@ -965,6 +1153,90 @@ const CombatTracker = ({
 
   const closeAttackDetailModal = () => {
     setAttackDetailTarget(undefined);
+  };
+
+  const closeActionEditor = () => {
+    setActionEditorTarget(undefined);
+    setActionEditorError(undefined);
+  };
+
+  const openActionEditor = (side: TrackerSide, index: number) => {
+    const action = getStructuredActionForCombatant(currentRound, side, index);
+    const roundState = getActionRoundState(currentRound, side, index);
+
+    setActionEditorDraft(
+      createActionEditorDraft(action, roundState?.action || '')
+    );
+    setActionEditorTarget({ side, index });
+    setActionEditorError(undefined);
+  };
+
+  const saveActionEditor = () => {
+    if (!actionEditorTarget) {
+      return;
+    }
+
+    const combatant = getActionCombatant(
+      currentRound,
+      actionEditorTarget.side,
+      actionEditorTarget.index
+    );
+    const roundState = getActionRoundState(
+      currentRound,
+      actionEditorTarget.side,
+      actionEditorTarget.index
+    );
+
+    if (!combatant) {
+      return;
+    }
+
+    const label = actionEditorDraft.label.trim();
+
+    if (actionEditorDraft.mode === 'combat-grid') {
+      dispatch({
+        type: 'set-combatant-action',
+        side: actionEditorTarget.side,
+        index: actionEditorTarget.index,
+        intention: label,
+      });
+      closeActionEditor();
+      return;
+    }
+
+    const distanceInches = Number(actionEditorDraft.distanceInches);
+
+    if (!Number.isFinite(distanceInches) || distanceInches <= 0) {
+      setActionEditorError('Move/Close needs a distance greater than 0".');
+      return;
+    }
+
+    const intention = formatMoveCloseIntention(label, distanceInches);
+    const actionDeclaration: TrackerActionDeclaration = {
+      id: `${actionEditorTarget.side}:${combatant.key}:main`,
+      source: 'intention',
+      side: actionEditorTarget.side,
+      direction: getActionDirection(actionEditorTarget.side),
+      combatantKey: combatant.key,
+      combatantIndex: actionEditorTarget.index,
+      targetSide: getActionTargetSide(actionEditorTarget.side),
+      declaredAction: 'close',
+      ...(label ? { actionLabel: label } : {}),
+      actionDistanceInches: distanceInches,
+      weaponId: combatant.weapon,
+      intention,
+      result: roundState?.result || '',
+      targetDeclarations: [],
+    };
+
+    dispatch({
+      type: 'set-combatant-action',
+      side: actionEditorTarget.side,
+      index: actionEditorTarget.index,
+      intention,
+      actionDeclaration,
+    });
+    closeActionEditor();
   };
 
   const buildShareUrl = () => {
@@ -1169,10 +1441,10 @@ const CombatTracker = ({
       )
     );
     dispatch({
-      type: nextEntry.side === 'enemy' ? 'set-enemy-state' : 'set-party-state',
+      type: 'set-combatant-action',
+      side: nextEntry.side,
       index: nextEntry.index,
-      field: 'action',
-      value: nextEntry.intention,
+      intention: nextEntry.intention,
     });
   };
 
@@ -1396,6 +1668,48 @@ const CombatTracker = ({
       />
     </div>
   );
+
+  const renderActionIntentionControl = (
+    side: TrackerSide,
+    index: number,
+    fallbackIntention: string
+  ) => {
+    const action = getStructuredActionForCombatant(currentRound, side, index);
+    const summaryLines = getActionSummaryLines(action, fallbackIntention);
+    const isEmpty = summaryLines.length === 0;
+
+    return (
+      <button
+        type={'button'}
+        className={[
+          styles['actionIntentButton'],
+          isEmpty ? styles['actionIntentButtonEmpty'] : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        onClick={() => openActionEditor(side, index)}
+      >
+        {isEmpty ? (
+          <span className={styles['actionIntentPlaceholder']}>
+            Set intention
+          </span>
+        ) : (
+          summaryLines.map((line, lineIndex) => (
+            <span
+              key={`${side}-${index}-action-line-${lineIndex}`}
+              className={
+                lineIndex === 0
+                  ? styles['actionIntentPrimary']
+                  : styles['actionIntentSecondary']
+              }
+            >
+              {line}
+            </span>
+          ))
+        )}
+      </button>
+    );
+  };
 
   const renderCombatWizardHpEditor = (
     maxHp: string | undefined,
@@ -1974,6 +2288,8 @@ const CombatTracker = ({
                     className={
                       field.key === 'hp'
                         ? `${styles['enemyFieldHeader']} ${styles['enemyHpHeader']}`
+                        : field.key === 'action'
+                        ? `${styles['enemyFieldHeader']} ${styles['enemyActionHeader']}`
                         : styles['enemyFieldHeader']
                     }
                   >
@@ -2024,6 +2340,8 @@ const CombatTracker = ({
                         className={
                           field.key === 'hp'
                             ? `${styles['enemyMetaCell']} ${styles['enemyHpCell']}`
+                            : field.key === 'action'
+                            ? `${styles['enemyMetaCell']} ${styles['enemyActionCell']}`
                             : styles['enemyMetaCell']
                         }
                       >
@@ -2039,6 +2357,12 @@ const CombatTracker = ({
                                 value,
                               }),
                             'enemy'
+                          )
+                        ) : field.key === 'action' ? (
+                          renderActionIntentionControl(
+                            'enemy',
+                            enemyIndex,
+                            stateValue
                           )
                         ) : (
                           <AutoHeightTextarea
@@ -2086,6 +2410,12 @@ const CombatTracker = ({
                                 value,
                               }),
                             'party'
+                          )
+                        ) : field.key === 'action' ? (
+                          renderActionIntentionControl(
+                            'party',
+                            partyIndex,
+                            stateValue
                           )
                         ) : (
                           <AutoHeightTextarea
@@ -2523,6 +2853,142 @@ const CombatTracker = ({
                 onClick={closeAttackDetailModal}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+      {actionEditorTarget && (
+        <>
+          <div className={styles['modalShadow']} onClick={closeActionEditor} />
+          <div
+            className={`${styles['modal']} ${styles['actionIntentModal']}`}
+            role={'dialog'}
+            aria-modal={'true'}
+            aria-labelledby={'action-intent-title'}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={'action-intent-title'} className={styles['modalTitle']}>
+              Edit Intention
+            </div>
+            <div className={styles['modalBody']}>
+              <div className={styles['actionIntentEditorName']}>
+                {actionEditorTarget.side === 'party'
+                  ? getPartyDisplayName(actionEditorTarget.index)
+                  : getEnemyDisplayName(actionEditorTarget.index)}
+              </div>
+              <label
+                className={styles['modalLabel']}
+                htmlFor={'action-intent-mode'}
+              >
+                Action
+              </label>
+              <select
+                id={'action-intent-mode'}
+                className={styles['actionIntentSelect']}
+                value={actionEditorDraft.mode}
+                onChange={(event) =>
+                  setActionEditorDraft((draft) => ({
+                    ...draft,
+                    mode:
+                      event.target.value === 'move-close'
+                        ? 'move-close'
+                        : 'combat-grid',
+                  }))
+                }
+              >
+                <option value={'combat-grid'}>Use combat grid</option>
+                <option value={'move-close'}>Move/Close</option>
+              </select>
+              {actionEditorDraft.mode === 'move-close' ? (
+                <>
+                  <label
+                    className={styles['modalLabel']}
+                    htmlFor={'action-intent-label'}
+                  >
+                    Label
+                  </label>
+                  <input
+                    id={'action-intent-label'}
+                    className={styles['actionIntentTextInput']}
+                    type={'text'}
+                    value={actionEditorDraft.label}
+                    onChange={(event) =>
+                      setActionEditorDraft((draft) => ({
+                        ...draft,
+                        label: event.target.value,
+                      }))
+                    }
+                  />
+                  <label
+                    className={styles['modalLabel']}
+                    htmlFor={'action-intent-distance'}
+                  >
+                    Distance
+                  </label>
+                  <div className={styles['actionIntentDistanceRow']}>
+                    <input
+                      id={'action-intent-distance'}
+                      className={styles['actionIntentDistanceInput']}
+                      type={'number'}
+                      inputMode={'decimal'}
+                      min={'0.1'}
+                      step={'0.1'}
+                      value={actionEditorDraft.distanceInches}
+                      onChange={(event) =>
+                        setActionEditorDraft((draft) => ({
+                          ...draft,
+                          distanceInches: event.target.value,
+                        }))
+                      }
+                    />
+                    <span className={styles['actionIntentDistanceUnit']}>
+                      &quot;
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <label
+                    className={styles['modalLabel']}
+                    htmlFor={'action-intent-label'}
+                  >
+                    Intention
+                  </label>
+                  <AutoHeightTextarea
+                    id={'action-intent-label'}
+                    className={styles['actionIntentTextarea']}
+                    value={actionEditorDraft.label}
+                    onChange={(value) =>
+                      setActionEditorDraft((draft) => ({
+                        ...draft,
+                        label: value,
+                      }))
+                    }
+                    rows={2}
+                  />
+                </>
+              )}
+              {actionEditorError ? (
+                <div className={styles['actionIntentError']}>
+                  {actionEditorError}
+                </div>
+              ) : null}
+            </div>
+            <div className={styles['modalActions']}>
+              <button
+                type={'button'}
+                className={styles['toolbarButton']}
+                onClick={closeActionEditor}
+              >
+                Cancel
+              </button>
+              <button
+                type={'button'}
+                className={styles['toolbarButtonPrimary']}
+                onClick={saveActionEditor}
+              >
+                Save intention
               </button>
             </div>
           </div>

@@ -153,7 +153,20 @@ export const deriveTrackerActionDeclarations = (
 
 export const getTrackerActionDeclarations = (
   round: TrackerRound
-): TrackerActionDeclaration[] =>
-  round.actions && round.actions.length > 0
-    ? round.actions
-    : deriveTrackerActionDeclarations(round);
+): TrackerActionDeclaration[] => {
+  const explicitActions = round.actions || [];
+
+  if (explicitActions.length === 0) {
+    return deriveTrackerActionDeclarations(round);
+  }
+
+  const explicitCombatantKeys = new Set(
+    explicitActions.map((action) => `${action.side}:${action.combatantKey}`)
+  );
+  const derivedActions = deriveTrackerActionDeclarations(round).filter(
+    (action) =>
+      !explicitCombatantKeys.has(`${action.side}:${action.combatantKey}`)
+  );
+
+  return derivedActions.concat(explicitActions);
+};

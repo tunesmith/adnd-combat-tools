@@ -243,4 +243,57 @@ describe('tracker initiative scenario builder', () => {
     expect(scenario.directMeleePairs).toEqual([]);
     expect(scenario.directMeleeEngagements).toEqual([]);
   });
+
+  test('maps structured tracker Move/Close intentions to targetless movement timing', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '6';
+    round.enemyInitiative = '3';
+
+    if (!round.party[0]) {
+      throw new Error('Missing combatant');
+    }
+
+    round.party[0].name = 'Lodi';
+    round.party[0].weapon = 2;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'close',
+        actionLabel: 'Move east',
+        actionDistanceInches: 6,
+        weaponId: 2,
+        intention: 'Move east (6")',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    const scenario = buildInitiativeScenarioFromTrackerRound(round);
+
+    expect(scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      name: 'Lodi',
+      declaredAction: 'close',
+      actionLabel: 'Move east',
+      actionDistanceInches: 6,
+      targetIds: [],
+    });
+    expect(scenario.movementResolutions).toEqual([
+      expect.objectContaining({
+        combatantId: 'party-1',
+        action: 'close',
+        reason: 'movement-complete',
+        distanceInches: 6,
+        contactSegment: 5,
+        sameRoundAttack: false,
+      }),
+    ]);
+  });
 });

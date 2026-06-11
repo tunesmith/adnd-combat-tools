@@ -47,13 +47,15 @@ export interface TrackerActionTargetDeclaration {
 
 export interface TrackerActionDeclaration {
   id: string;
-  source: 'combat-cell';
+  source: 'combat-cell' | 'intention';
   side: TrackerActionSide;
   direction: TrackerActionDirection;
   combatantKey: number;
   combatantIndex: number;
   targetSide: TrackerActionSide;
   declaredAction: InitiativeDeclaredAction;
+  actionLabel?: string;
+  actionDistanceInches?: number;
   weaponId: number;
   intention: string;
   result: string;
