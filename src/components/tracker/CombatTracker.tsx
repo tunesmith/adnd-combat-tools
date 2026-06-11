@@ -25,7 +25,10 @@ import type {
   TrackerRound,
   TrackerState,
 } from '../../types/tracker';
-import type { InitiativeTimingOverride } from '../../types/initiative';
+import type {
+  InitiativeDeclaredAction,
+  InitiativeTimingOverride,
+} from '../../types/initiative';
 import {
   decodeTrackerState,
   encodeTrackerState,
@@ -74,6 +77,7 @@ import {
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
 import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
 import { getDefaultTrackerDeclaredAction } from '../../helpers/trackerActionDeclarations';
+import { canSetAgainstCharge } from '../../tables/weapon';
 
 interface CombatTrackerProps {
   rememberedState?: TrackerState;
@@ -92,6 +96,10 @@ type CellVisibilityField = Extract<
   keyof TrackerCellState,
   'enemyToPartyVisible' | 'partyToEnemyVisible'
 >;
+type CellActionIdsField = Extract<
+  keyof TrackerCellState,
+  'enemyToPartyActionIds' | 'partyToEnemyActionIds'
+>;
 
 interface AttackDetailTarget {
   enemyIndex: number;
@@ -100,11 +108,22 @@ interface AttackDetailTarget {
   hand: TrackerAttackHand;
 }
 
-type TrackerActionEditorMode =
-  | 'combat-grid'
-  | 'move-close'
-  | 'cast-spell'
-  | 'magical-device';
+interface CellActionAssignmentTarget {
+  enemyIndex: number;
+  partyIndex: number;
+  direction: AttackDetailDirection;
+}
+
+interface SelectedCellActionAssignment {
+  sourceName: string;
+  targetName: string;
+  rowIndex: number;
+  columnIndex: number;
+  field: CellActionIdsField;
+  options: CellActionOption[];
+}
+
+type TrackerActionEditorMode = InitiativeDeclaredAction;
 
 interface TrackerActionEditorTarget {
   side: TrackerSide;
@@ -117,7 +136,6 @@ interface TrackerActionEditorDraft {
   mode: TrackerActionEditorMode;
   label: string;
   initiativeTiming: InitiativeTimingOverride;
-  usesGridTargets: boolean;
   distanceInches: string;
   activationSegments: string;
   castingSegments: string;
@@ -131,6 +149,40 @@ const INITIATIVE_TIMING_OPTIONS: Array<{
   { value: 'wins-initiative', label: 'Wins initiative' },
   { value: 'loses-initiative', label: 'Loses initiative' },
 ];
+
+const ACTION_EDITOR_MODE_OPTIONS: Array<{
+  value: TrackerActionEditorMode;
+  label: string;
+}> = [
+  { value: 'none', label: 'No combat action' },
+  { value: 'open-melee', label: 'Open melee' },
+  { value: 'close', label: 'Move/Close' },
+  { value: 'charge', label: 'Charge' },
+  { value: 'set-vs-charge', label: 'Set vs charge' },
+  { value: 'missile', label: 'Missile' },
+  { value: 'turn-undead', label: 'Turn undead' },
+  { value: 'magical-device', label: 'Magical device' },
+  { value: 'spell-casting', label: 'Cast spell' },
+];
+
+const getAvailableActionEditorModeOptions = (
+  weaponId: number | undefined
+): typeof ACTION_EDITOR_MODE_OPTIONS =>
+  ACTION_EDITOR_MODE_OPTIONS.filter(
+    (option) =>
+      option.value !== 'set-vs-charge' ||
+      (weaponId !== undefined && canSetAgainstCharge(weaponId))
+  );
+
+const normalizeActionEditorModeForWeapon = (
+  declaredAction: InitiativeDeclaredAction,
+  weaponId: number | undefined,
+  defaultDeclaredAction: InitiativeDeclaredAction
+): InitiativeDeclaredAction =>
+  declaredAction === 'set-vs-charge' &&
+  (weaponId === undefined || !canSetAgainstCharge(weaponId))
+    ? defaultDeclaredAction
+    : declaredAction;
 
 type TrackerAction =
   | { type: 'replace-state'; state: TrackerState }
@@ -151,6 +203,13 @@ type TrackerAction =
       columnIndex: number;
       field: CellField;
       value: string;
+    }
+  | {
+      type: 'set-cell-action-ids';
+      rowIndex: number;
+      columnIndex: number;
+      field: CellActionIdsField;
+      actionIds: string[] | undefined;
     }
   | {
       type: 'set-party-state';
@@ -339,6 +398,69 @@ const getStructuredActionsForCombatant = (
   );
 };
 
+interface CellActionOption {
+  id: string;
+  title: string;
+  summary: string;
+}
+
+const getActionIdsField = (
+  direction: AttackDetailDirection
+): CellActionIdsField =>
+  direction === 'partyToEnemy'
+    ? 'partyToEnemyActionIds'
+    : 'enemyToPartyActionIds';
+
+const getCellActionIds = (
+  cell: TrackerCellState,
+  direction: AttackDetailDirection
+): string[] => cell[getActionIdsField(direction)] || [];
+
+const filterActionIds = (
+  actionIds: string[] | undefined,
+  validActionIds: Set<string>
+): string[] | undefined => {
+  const nextActionIds = (actionIds || []).filter((actionId) =>
+    validActionIds.has(actionId)
+  );
+
+  return nextActionIds.length > 0 ? nextActionIds : undefined;
+};
+
+const pruneCellActionAssignments = (
+  round: TrackerRound,
+  side: TrackerSide,
+  index: number,
+  validActionIds: Set<string>
+): TrackerRound => ({
+  ...round,
+  cells: round.cells.map((row, rowIndex) =>
+    row.map((cell, columnIndex) => {
+      if (side === 'party' && columnIndex === index) {
+        return {
+          ...cell,
+          partyToEnemyActionIds: filterActionIds(
+            cell.partyToEnemyActionIds,
+            validActionIds
+          ),
+        };
+      }
+
+      if (side === 'enemy' && rowIndex === index) {
+        return {
+          ...cell,
+          enemyToPartyActionIds: filterActionIds(
+            cell.enemyToPartyActionIds,
+            validActionIds
+          ),
+        };
+      }
+
+      return cell;
+    })
+  ),
+});
+
 const getTrackerActionId = (
   side: TrackerSide,
   combatantKey: number,
@@ -382,12 +504,20 @@ const formatDistanceInches = (distanceInches: number): string =>
     ? distanceInches.toString()
     : distanceInches.toFixed(1).replace(/\.0$/, '');
 
-const formatMoveCloseIntention = (
+const requiresActionDistanceInput = (
+  declaredAction: InitiativeDeclaredAction
+): boolean => declaredAction === 'close' || declaredAction === 'charge';
+
+const formatDistanceActionIntention = (
+  declaredAction: InitiativeDeclaredAction,
   label: string,
   distanceInches: number
 ): string => {
+  const actionLabel = formatDeclaredAction(declaredAction);
   const distanceText = `${formatDistanceInches(distanceInches)}"`;
-  return label ? `${label} (${distanceText})` : `Move/Close ${distanceText}`;
+  return label
+    ? `${label} (${distanceText})`
+    : `${actionLabel} ${distanceText}`;
 };
 
 const formatSpellCastingIntention = (
@@ -476,17 +606,18 @@ const getActionSummaryLines = (
     return fallbackIntention.trim() ? [fallbackIntention.trim()] : [];
   }
 
-  if (action.declaredAction === 'close') {
+  if (requiresActionDistanceInput(action.declaredAction)) {
     const distanceText =
       action.actionDistanceInches !== undefined
         ? `${formatDistanceInches(action.actionDistanceInches)}"`
         : undefined;
     const label = action.actionLabel?.trim();
     const timingText = formatInitiativeTimingMeta(action.initiativeTiming);
+    const actionLabel = formatDeclaredAction(action.declaredAction);
 
     return [
-      label || 'Move/Close',
-      [['Move/Close', distanceText].filter(Boolean).join(' '), timingText]
+      label || actionLabel,
+      [[actionLabel, distanceText].filter(Boolean).join(' '), timingText]
         .filter(Boolean)
         .join(' · '),
     ];
@@ -558,29 +689,80 @@ const getActionListSummaryLines = (
   });
 };
 
-const getActionDraftSummary = (
-  draft: TrackerActionEditorDraft,
-  actionIndex: number
-): string => {
+const getCellActionOptions = (
+  actions: TrackerActionDeclaration[]
+): CellActionOption[] =>
+  actions.flatMap((action, actionIndex) => {
+    if (action.usesGridTargets === false) {
+      return [];
+    }
+
+    const lines = getActionSummaryLines(action, '');
+    const summary =
+      lines.join(' · ') || formatDeclaredAction(action.declaredAction);
+
+    return [
+      {
+        id: action.id,
+        title: actionIndex === 0 ? 'Main' : `Action ${actionIndex + 1}`,
+        summary,
+      },
+    ];
+  });
+
+const getCellActionAssignmentLabel = (
+  options: CellActionOption[],
+  assignedActionIds: string[]
+): string | undefined => {
+  if (options.length < 2) {
+    return undefined;
+  }
+
+  const optionIds = new Set(options.map((option) => option.id));
+  const selectedActionIds = assignedActionIds.filter((actionId) =>
+    optionIds.has(actionId)
+  );
+
+  if (
+    selectedActionIds.length === 0 ||
+    selectedActionIds.length === options.length
+  ) {
+    return 'All actions';
+  }
+
+  if (selectedActionIds.length === 1) {
+    return options.find((option) => option.id === selectedActionIds[0])?.title;
+  }
+
+  return `${selectedActionIds.length} actions`;
+};
+
+const getActionDraftSummary = (draft: TrackerActionEditorDraft): string => {
   const label = draft.label.trim();
-  const title = label || (actionIndex === 0 ? 'Main action' : 'Extra action');
+  const actionType = formatDeclaredAction(draft.mode);
+  const title = label || actionType;
+  const actionTypeMeta = label ? actionType : undefined;
   const timingText = formatInitiativeTimingMeta(draft.initiativeTiming);
 
-  return [title, timingText].filter(Boolean).join(' · ');
+  return [title, actionTypeMeta, timingText].filter(Boolean).join(' · ');
 };
 
 const createActionEditorDraft = (
   action: TrackerActionDeclaration | undefined,
   fallbackIntention: string,
-  fallbackActionId: string
+  fallbackActionId: string,
+  defaultDeclaredAction: InitiativeDeclaredAction,
+  weaponId: number | undefined
 ): TrackerActionEditorDraft => {
-  if (action?.declaredAction === 'close') {
+  if (
+    action?.declaredAction &&
+    requiresActionDistanceInput(action.declaredAction)
+  ) {
     return {
       id: action.id,
-      mode: 'move-close',
+      mode: action.declaredAction,
       label: action.actionLabel || '',
       initiativeTiming: getActionInitiativeTiming(action),
-      usesGridTargets: action.usesGridTargets !== false,
       distanceInches:
         action.actionDistanceInches !== undefined
           ? formatDistanceInches(action.actionDistanceInches)
@@ -593,10 +775,9 @@ const createActionEditorDraft = (
   if (action?.declaredAction === 'spell-casting') {
     return {
       id: action.id,
-      mode: 'cast-spell',
+      mode: 'spell-casting',
       label: action.actionLabel || '',
       initiativeTiming: getActionInitiativeTiming(action),
-      usesGridTargets: action.usesGridTargets !== false,
       distanceInches: '',
       activationSegments: '',
       castingSegments:
@@ -612,7 +793,6 @@ const createActionEditorDraft = (
       mode: 'magical-device',
       label: action.actionLabel || '',
       initiativeTiming: getActionInitiativeTiming(action),
-      usesGridTargets: action.usesGridTargets !== false,
       distanceInches: '',
       activationSegments:
         action.activationSegments !== undefined
@@ -624,10 +804,13 @@ const createActionEditorDraft = (
 
   return {
     id: action?.id || fallbackActionId,
-    mode: 'combat-grid',
+    mode: normalizeActionEditorModeForWeapon(
+      action?.declaredAction || defaultDeclaredAction,
+      weaponId,
+      defaultDeclaredAction
+    ),
     label: action?.actionLabel || action?.intention || fallbackIntention,
     initiativeTiming: getActionInitiativeTiming(action),
-    usesGridTargets: action?.usesGridTargets !== false,
     distanceInches: '',
     activationSegments: '',
     castingSegments: '1',
@@ -635,13 +818,13 @@ const createActionEditorDraft = (
 };
 
 const createAddedActionEditorDraft = (
-  id: string
+  id: string,
+  defaultDeclaredAction: InitiativeDeclaredAction
 ): TrackerActionEditorDraft => ({
   id,
-  mode: 'combat-grid',
-  label: 'Extra action',
+  mode: defaultDeclaredAction,
+  label: '',
   initiativeTiming: 'normal',
-  usesGridTargets: false,
   distanceInches: '',
   activationSegments: '',
   castingSegments: '1',
@@ -651,14 +834,34 @@ const getActionEditorDrafts = ({
   actions,
   fallbackIntention,
   mainActionId,
+  defaultDeclaredAction,
+  weaponId,
 }: {
   actions: TrackerActionDeclaration[];
   fallbackIntention: string;
   mainActionId: string;
+  defaultDeclaredAction: InitiativeDeclaredAction;
+  weaponId: number | undefined;
 }): TrackerActionEditorDraft[] =>
   actions.length > 0
-    ? actions.map((action) => createActionEditorDraft(action, '', mainActionId))
-    : [createActionEditorDraft(undefined, fallbackIntention, mainActionId)];
+    ? actions.map((action) =>
+        createActionEditorDraft(
+          action,
+          '',
+          mainActionId,
+          defaultDeclaredAction,
+          weaponId
+        )
+      )
+    : [
+        createActionEditorDraft(
+          undefined,
+          fallbackIntention,
+          mainActionId,
+          defaultDeclaredAction,
+          weaponId
+        ),
+      ];
 
 const CombatTracker = ({
   rememberedState,
@@ -722,6 +925,14 @@ const CombatTracker = ({
     useState<Record<number, number | undefined>>({});
   const [attackDetailTarget, setAttackDetailTarget] = useState<
     AttackDetailTarget | undefined
+  >(undefined);
+  const [cellActionAssignmentTarget, setCellActionAssignmentTarget] = useState<
+    CellActionAssignmentTarget | undefined
+  >(undefined);
+  const [cellActionAssignmentDraftIds, setCellActionAssignmentDraftIds] =
+    useState<string[]>([]);
+  const [cellActionAssignmentError, setCellActionAssignmentError] = useState<
+    string | undefined
   >(undefined);
   const [actionEditorTarget, setActionEditorTarget] = useState<
     TrackerActionEditorTarget | undefined
@@ -811,6 +1022,25 @@ const CombatTracker = ({
               : row
           ),
         }));
+      case 'set-cell-action-ids':
+        return updateCurrentRound(state, (round) => ({
+          ...round,
+          cells: round.cells.map((row, rowIndex) =>
+            rowIndex === action.rowIndex
+              ? row.map((cell, columnIndex) =>
+                  columnIndex === action.columnIndex
+                    ? {
+                        ...cell,
+                        [action.field]: action.actionIds,
+                        ...(action.field === 'enemyToPartyActionIds'
+                          ? { enemyToPartyVisible: true }
+                          : { partyToEnemyVisible: true }),
+                      }
+                    : cell
+                )
+              : row
+          ),
+        }));
       case 'set-party-state':
         return updateCurrentRound(state, (round) => ({
           ...round,
@@ -854,14 +1084,22 @@ const CombatTracker = ({
                 roundAction.combatantKey === combatant.key
               )
           );
-          const nextRound = {
-            ...round,
-            actions: action.actionDeclaration
-              ? nextActions.concat(action.actionDeclaration)
-              : nextActions.length > 0
-              ? nextActions
-              : undefined,
-          };
+          const nextActionIds = new Set(
+            action.actionDeclaration ? [action.actionDeclaration.id] : []
+          );
+          const nextRound = pruneCellActionAssignments(
+            {
+              ...round,
+              actions: action.actionDeclaration
+                ? nextActions.concat(action.actionDeclaration)
+                : nextActions.length > 0
+                ? nextActions
+                : undefined,
+            },
+            action.side,
+            action.index,
+            nextActionIds
+          );
 
           if (action.side === 'party') {
             return {
@@ -909,10 +1147,17 @@ const CombatTracker = ({
               )
           );
           const combinedActions = nextActions.concat(action.actionDeclarations);
-          const nextRound = {
-            ...round,
-            actions: combinedActions.length > 0 ? combinedActions : undefined,
-          };
+          const nextRound = pruneCellActionAssignments(
+            {
+              ...round,
+              actions: combinedActions.length > 0 ? combinedActions : undefined,
+            },
+            action.side,
+            action.index,
+            new Set(
+              action.actionDeclarations.map((declaration) => declaration.id)
+            )
+          );
 
           if (action.side === 'party') {
             return {
@@ -981,6 +1226,17 @@ const CombatTracker = ({
     selectedActionEditorDraftIndex >= 0
       ? actionEditorDrafts[selectedActionEditorDraftIndex]
       : undefined;
+  const selectedActionEditorCombatant =
+    actionEditorTarget && currentRound
+      ? getActionCombatant(
+          currentRound,
+          actionEditorTarget.side,
+          actionEditorTarget.index
+        )
+      : undefined;
+  const selectedActionEditorModeOptions = getAvailableActionEditorModeOptions(
+    selectedActionEditorCombatant?.weapon
+  );
   const updateSelectedActionEditorDraft = (
     updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
   ) => {
@@ -1049,6 +1305,57 @@ const CombatTracker = ({
 
     return Boolean(attacker?.offHandWeapon);
   }, [attackDetailTarget, currentRound]);
+  const selectedCellActionAssignment = useMemo<
+    SelectedCellActionAssignment | undefined
+  >(() => {
+    if (!currentRound || !cellActionAssignmentTarget) {
+      return undefined;
+    }
+
+    const enemyCombatant =
+      currentRound.enemies[cellActionAssignmentTarget.enemyIndex];
+    const partyCombatant =
+      currentRound.party[cellActionAssignmentTarget.partyIndex];
+    const cell =
+      currentRound.cells[cellActionAssignmentTarget.enemyIndex]?.[
+        cellActionAssignmentTarget.partyIndex
+      ];
+
+    if (!enemyCombatant || !partyCombatant || !cell) {
+      return undefined;
+    }
+
+    const sourceSide =
+      cellActionAssignmentTarget.direction === 'partyToEnemy'
+        ? 'party'
+        : 'enemy';
+    const sourceIndex =
+      sourceSide === 'party'
+        ? cellActionAssignmentTarget.partyIndex
+        : cellActionAssignmentTarget.enemyIndex;
+    const sourceName =
+      sourceSide === 'party'
+        ? partyCombatant.name || `Party ${sourceIndex + 1}`
+        : enemyCombatant.name || `Enemy ${sourceIndex + 1}`;
+    const targetName =
+      sourceSide === 'party'
+        ? enemyCombatant.name ||
+          `Enemy ${cellActionAssignmentTarget.enemyIndex + 1}`
+        : partyCombatant.name ||
+          `Party ${cellActionAssignmentTarget.partyIndex + 1}`;
+    const options = getCellActionOptions(
+      getStructuredActionsForCombatant(currentRound, sourceSide, sourceIndex)
+    );
+
+    return {
+      sourceName,
+      targetName,
+      rowIndex: cellActionAssignmentTarget.enemyIndex,
+      columnIndex: cellActionAssignmentTarget.partyIndex,
+      field: getActionIdsField(cellActionAssignmentTarget.direction),
+      options,
+    };
+  }, [cellActionAssignmentTarget, currentRound]);
   const canOpenCombatWizard = Boolean(
     currentRound?.partyInitiative.trim() && currentRound?.enemyInitiative.trim()
   );
@@ -1267,6 +1574,7 @@ const CombatTracker = ({
       !showIntentionsWizard &&
       !showCombatWizard &&
       !attackDetailTarget &&
+      !cellActionAssignmentTarget &&
       !actionEditorTarget
     ) {
       return;
@@ -1282,6 +1590,9 @@ const CombatTracker = ({
         setShowIntentionsWizard(false);
         setShowCombatWizard(false);
         setAttackDetailTarget(undefined);
+        setCellActionAssignmentTarget(undefined);
+        setCellActionAssignmentDraftIds([]);
+        setCellActionAssignmentError(undefined);
         setActionEditorTarget(undefined);
         setActionEditorDrafts([]);
         setShowMoreActions(false);
@@ -1297,6 +1608,7 @@ const CombatTracker = ({
   }, [
     actionEditorTarget,
     attackDetailTarget,
+    cellActionAssignmentTarget,
     showCombatWizard,
     showDeleteRoundModal,
     showIntentionsWizard,
@@ -1330,6 +1642,9 @@ const CombatTracker = ({
     setShowCombatWizard(false);
     setCombatWizardIndex(0);
     setCombatResolvedOnEntry(false);
+    setCellActionAssignmentTarget(undefined);
+    setCellActionAssignmentDraftIds([]);
+    setCellActionAssignmentError(undefined);
     setActionEditorTarget(undefined);
     setActionEditorError(undefined);
   }, [state.activeRound]);
@@ -1519,10 +1834,81 @@ const CombatTracker = ({
     setAttackDetailTarget(undefined);
   };
 
+  const closeCellActionAssignmentModal = () => {
+    setCellActionAssignmentTarget(undefined);
+    setCellActionAssignmentDraftIds([]);
+    setCellActionAssignmentError(undefined);
+  };
+
   const closeActionEditor = () => {
     setActionEditorTarget(undefined);
     setActionEditorDrafts([]);
     setActionEditorError(undefined);
+  };
+
+  const openCellActionAssignmentEditor = (
+    enemyIndex: number,
+    partyIndex: number,
+    direction: AttackDetailDirection
+  ) => {
+    const cell = currentRound.cells[enemyIndex]?.[partyIndex];
+    const sourceSide = direction === 'partyToEnemy' ? 'party' : 'enemy';
+    const sourceIndex = sourceSide === 'party' ? partyIndex : enemyIndex;
+    const options = getCellActionOptions(
+      getStructuredActionsForCombatant(currentRound, sourceSide, sourceIndex)
+    );
+
+    if (!cell || options.length < 2) {
+      return;
+    }
+
+    const optionIds = new Set(options.map((option) => option.id));
+    const assignedActionIds = getCellActionIds(cell, direction).filter(
+      (actionId) => optionIds.has(actionId)
+    );
+
+    setCellActionAssignmentDraftIds(
+      assignedActionIds.length > 0
+        ? assignedActionIds
+        : options.map((option) => option.id)
+    );
+    setCellActionAssignmentTarget({
+      enemyIndex,
+      partyIndex,
+      direction,
+    });
+    setCellActionAssignmentError(undefined);
+  };
+
+  const saveCellActionAssignment = () => {
+    if (!selectedCellActionAssignment) {
+      return;
+    }
+
+    const selectedActionIds = selectedCellActionAssignment.options
+      .map((option) => option.id)
+      .filter((actionId) => cellActionAssignmentDraftIds.includes(actionId));
+
+    if (selectedActionIds.length === 0) {
+      setCellActionAssignmentError(
+        'Select at least one action for this target.'
+      );
+      return;
+    }
+
+    const actionIds =
+      selectedActionIds.length === selectedCellActionAssignment.options.length
+        ? undefined
+        : selectedActionIds;
+
+    dispatch({
+      type: 'set-cell-action-ids',
+      rowIndex: selectedCellActionAssignment.rowIndex,
+      columnIndex: selectedCellActionAssignment.columnIndex,
+      field: selectedCellActionAssignment.field,
+      actionIds,
+    });
+    closeCellActionAssignmentModal();
   };
 
   const openActionEditor = (side: TrackerSide, index: number) => {
@@ -1538,6 +1924,8 @@ const CombatTracker = ({
       actions,
       fallbackIntention: roundState?.action || '',
       mainActionId: getMainTrackerActionId(side, combatant.key),
+      defaultDeclaredAction: getDefaultTrackerDeclaredAction(combatant),
+      weaponId: combatant.weapon,
     });
     setActionEditorDrafts(drafts);
     setActionEditorTarget({
@@ -1574,16 +1962,18 @@ const CombatTracker = ({
           createActionEditorDraft(
             undefined,
             roundState?.action || '',
-            getMainTrackerActionId(actionEditorTarget.side, combatant.key)
+            getMainTrackerActionId(actionEditorTarget.side, combatant.key),
+            getDefaultTrackerDeclaredAction(combatant),
+            combatant.weapon
           ),
         ];
+    const defaultDeclaredAction = getDefaultTrackerDeclaredAction(combatant);
     const mustStoreExplicitActions =
       drafts.length > 1 ||
       drafts.some(
         (draft) =>
-          draft.mode !== 'combat-grid' ||
-          getSavedInitiativeTiming(draft.initiativeTiming) !== undefined ||
-          !draft.usesGridTargets
+          draft.mode !== defaultDeclaredAction ||
+          getSavedInitiativeTiming(draft.initiativeTiming) !== undefined
       );
     const actionDeclarations: TrackerActionDeclaration[] = [];
 
@@ -1603,28 +1993,29 @@ const CombatTracker = ({
         ...(savedInitiativeTiming
           ? { initiativeTiming: savedInitiativeTiming }
           : {}),
-        ...(draft.usesGridTargets ? {} : { usesGridTargets: false }),
         weaponId: combatant.weapon,
         result: roundState?.result || '',
         targetDeclarations: [],
       };
 
-      if (draft.mode === 'combat-grid') {
+      if (
+        !requiresActionDistanceInput(draft.mode) &&
+        draft.mode !== 'spell-casting' &&
+        draft.mode !== 'magical-device'
+      ) {
         if (mustStoreExplicitActions) {
-          const declaredAction = getDefaultTrackerDeclaredAction(combatant);
-
           actionDeclarations.push({
             ...actionDeclarationBase,
-            declaredAction,
+            declaredAction: draft.mode,
             ...(label ? { actionLabel: label } : {}),
-            intention: label || formatDeclaredAction(declaredAction),
+            intention: label || formatDeclaredAction(draft.mode),
           });
         }
 
         continue;
       }
 
-      if (draft.mode === 'cast-spell') {
+      if (draft.mode === 'spell-casting') {
         const castingSegments = parseCastingSegments(draft.castingSegments);
 
         if (castingSegments === undefined) {
@@ -1675,14 +2066,22 @@ const CombatTracker = ({
       const distanceInches = Number(draft.distanceInches);
 
       if (!Number.isFinite(distanceInches) || distanceInches <= 0) {
-        setActionEditorError('Move/Close needs a distance greater than 0".');
+        setActionEditorError(
+          `${formatDeclaredAction(
+            draft.mode
+          )} needs a distance greater than 0".`
+        );
         return;
       }
 
-      const intention = formatMoveCloseIntention(label, distanceInches);
+      const intention = formatDistanceActionIntention(
+        draft.mode,
+        label,
+        distanceInches
+      );
       actionDeclarations.push({
         ...actionDeclarationBase,
-        declaredAction: 'close',
+        declaredAction: draft.mode,
         ...(label ? { actionLabel: label } : {}),
         actionDistanceInches: distanceInches,
         intention,
@@ -1702,6 +2101,35 @@ const CombatTracker = ({
       actionDeclarations,
     });
     closeActionEditor();
+  };
+
+  const removeSelectedActionEditorDraft = () => {
+    if (actionEditorDrafts.length <= 1 || selectedActionEditorDraftIndex <= 0) {
+      return;
+    }
+
+    const actionIdToRemove =
+      actionEditorDrafts[selectedActionEditorDraftIndex]?.id;
+    const nextSelectedActionId =
+      actionEditorDrafts[selectedActionEditorDraftIndex - 1]?.id ||
+      actionEditorDrafts[0]?.id ||
+      '';
+
+    if (!actionIdToRemove) {
+      return;
+    }
+
+    setActionEditorDrafts((drafts) =>
+      drafts.filter((draft) => draft.id !== actionIdToRemove)
+    );
+    setActionEditorTarget((previous) =>
+      previous
+        ? {
+            ...previous,
+            selectedActionId: nextSelectedActionId,
+          }
+        : previous
+    );
   };
 
   const buildShareUrl = () => {
@@ -2054,6 +2482,21 @@ const CombatTracker = ({
       return null;
     }
 
+    const enemyActionOptions = getCellActionOptions(
+      getStructuredActionsForCombatant(currentRound, 'enemy', enemyIndex)
+    );
+    const partyActionOptions = getCellActionOptions(
+      getStructuredActionsForCombatant(currentRound, 'party', partyIndex)
+    );
+    const enemyAssignmentLabel = getCellActionAssignmentLabel(
+      enemyActionOptions,
+      getCellActionIds(cellState, 'enemyToParty')
+    );
+    const partyAssignmentLabel = getCellActionAssignmentLabel(
+      partyActionOptions,
+      getCellActionIds(cellState, 'partyToEnemy')
+    );
+
     return (
       <TrackerCell
         key={`cell-${enemyCombatant.key}-${partyCombatant.key}`}
@@ -2064,8 +2507,30 @@ const CombatTracker = ({
         partyToEnemyValue={cellState.partyToEnemy}
         enemyToPartyVisible={cellState.enemyToPartyVisible}
         partyToEnemyVisible={cellState.partyToEnemyVisible}
+        enemyToPartyActionAssignmentLabel={enemyAssignmentLabel}
+        partyToEnemyActionAssignmentLabel={partyAssignmentLabel}
         allowVisibilityToggle={allowVisibilityToggle}
         displayMode={displayMode}
+        onEnemyToPartyActionAssignmentOpen={
+          enemyAssignmentLabel
+            ? () =>
+                openCellActionAssignmentEditor(
+                  enemyIndex,
+                  partyIndex,
+                  'enemyToParty'
+                )
+            : undefined
+        }
+        onPartyToEnemyActionAssignmentOpen={
+          partyAssignmentLabel
+            ? () =>
+                openCellActionAssignmentEditor(
+                  enemyIndex,
+                  partyIndex,
+                  'partyToEnemy'
+                )
+            : undefined
+        }
         onAttackDetailOpen={(direction, hand) =>
           setAttackDetailTarget({
             enemyIndex,
@@ -3045,40 +3510,6 @@ const CombatTracker = ({
               )}
             </div>
             <div className={styles['modalActions']}>
-              {actionEditorDrafts.length > 1 &&
-              selectedActionEditorDraftIndex > 0 ? (
-                <button
-                  type={'button'}
-                  className={styles['toolbarButtonDanger']}
-                  onClick={() => {
-                    const actionIdToRemove =
-                      actionEditorDrafts[selectedActionEditorDraftIndex]?.id;
-                    const nextSelectedActionId =
-                      actionEditorDrafts[selectedActionEditorDraftIndex - 1]
-                        ?.id ||
-                      actionEditorDrafts[0]?.id ||
-                      '';
-
-                    if (!actionIdToRemove) {
-                      return;
-                    }
-
-                    setActionEditorDrafts((drafts) =>
-                      drafts.filter((draft) => draft.id !== actionIdToRemove)
-                    );
-                    setActionEditorTarget((previous) =>
-                      previous
-                        ? {
-                            ...previous,
-                            selectedActionId: nextSelectedActionId,
-                          }
-                        : previous
-                    );
-                  }}
-                >
-                  Remove action
-                </button>
-              ) : null}
               <button
                 type={'button'}
                 className={styles['toolbarButton']}
@@ -3366,6 +3797,92 @@ const CombatTracker = ({
           </div>
         </>
       )}
+      {cellActionAssignmentTarget &&
+        selectedCellActionAssignment &&
+        selectedCellActionAssignment.options.length >= 2 && (
+          <>
+            <div
+              className={styles['modalShadow']}
+              onClick={closeCellActionAssignmentModal}
+            />
+            <div
+              className={`${styles['modal']} ${styles['targetActionModal']}`}
+              role={'dialog'}
+              aria-modal={'true'}
+              aria-labelledby={'target-action-title'}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div id={'target-action-title'} className={styles['modalTitle']}>
+                Assign Target
+              </div>
+              <div className={styles['modalBody']}>
+                <div className={styles['targetActionMatchup']}>
+                  {selectedCellActionAssignment.sourceName}
+                  {' -> '}
+                  {selectedCellActionAssignment.targetName}
+                </div>
+                <div className={styles['targetActionOptionList']}>
+                  {selectedCellActionAssignment.options.map((option) => {
+                    const checked = cellActionAssignmentDraftIds.includes(
+                      option.id
+                    );
+
+                    return (
+                      <label
+                        key={option.id}
+                        className={styles['targetActionOption']}
+                      >
+                        <input
+                          type={'checkbox'}
+                          checked={checked}
+                          onChange={(event) => {
+                            setCellActionAssignmentError(undefined);
+                            setCellActionAssignmentDraftIds((actionIds) =>
+                              event.target.checked
+                                ? actionIds.includes(option.id)
+                                  ? actionIds
+                                  : actionIds.concat(option.id)
+                                : actionIds.filter(
+                                    (actionId) => actionId !== option.id
+                                  )
+                            );
+                          }}
+                        />
+                        <span className={styles['targetActionOptionTitle']}>
+                          {option.title}
+                        </span>
+                        <span className={styles['targetActionOptionSummary']}>
+                          {option.summary}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {cellActionAssignmentError ? (
+                  <div className={styles['actionIntentError']}>
+                    {cellActionAssignmentError}
+                  </div>
+                ) : null}
+              </div>
+              <div className={styles['modalActions']}>
+                <button
+                  type={'button'}
+                  className={styles['toolbarButton']}
+                  onClick={closeCellActionAssignmentModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type={'button'}
+                  className={styles['toolbarButtonPrimary']}
+                  onClick={saveCellActionAssignment}
+                >
+                  Save target
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       {actionEditorTarget && selectedActionEditorDraft && (
         <>
           <div className={styles['modalShadow']} onClick={closeActionEditor} />
@@ -3413,7 +3930,7 @@ const CombatTracker = ({
                       {actionIndex === 0 ? 'Main' : `Action ${actionIndex + 1}`}
                     </span>
                     <span className={styles['actionIntentActionMeta']}>
-                      {getActionDraftSummary(draft, actionIndex)}
+                      {getActionDraftSummary(draft)}
                     </span>
                   </button>
                 ))}
@@ -3436,7 +3953,8 @@ const CombatTracker = ({
                         actionEditorTarget.side,
                         combatant.key,
                         actionEditorDrafts
-                      )
+                      ),
+                      getDefaultTrackerDeclaredAction(combatant)
                     );
 
                     setActionEditorDrafts((drafts) => drafts.concat(nextDraft));
@@ -3464,29 +3982,32 @@ const CombatTracker = ({
                 className={styles['actionIntentSelect']}
                 value={selectedActionEditorDraft.mode}
                 onChange={(event) =>
-                  updateSelectedActionEditorDraft((draft) => ({
-                    ...draft,
-                    mode: [
-                      'move-close',
-                      'cast-spell',
-                      'magical-device',
-                    ].includes(event.target.value)
+                  updateSelectedActionEditorDraft((draft) => {
+                    const nextMode = selectedActionEditorModeOptions.some(
+                      (option) => option.value === event.target.value
+                    )
                       ? (event.target.value as TrackerActionEditorMode)
-                      : 'combat-grid',
-                    castingSegments:
-                      event.target.value === 'cast-spell' &&
-                      draft.castingSegments.trim().length === 0
-                        ? '1'
-                        : draft.castingSegments,
-                  }))
+                      : selectedActionEditorModeOptions[0]?.value || 'none';
+
+                    return {
+                      ...draft,
+                      mode: nextMode,
+                      castingSegments:
+                        nextMode === 'spell-casting' &&
+                        draft.castingSegments.trim().length === 0
+                          ? '1'
+                          : draft.castingSegments,
+                    };
+                  })
                 }
               >
-                <option value={'combat-grid'}>Use combat grid</option>
-                <option value={'move-close'}>Move/Close</option>
-                <option value={'cast-spell'}>Cast spell</option>
-                <option value={'magical-device'}>Magical device</option>
+                {selectedActionEditorModeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
-              {selectedActionEditorDraft.mode === 'move-close' ? (
+              {requiresActionDistanceInput(selectedActionEditorDraft.mode) ? (
                 <>
                   <label
                     className={styles['modalLabel']}
@@ -3533,7 +4054,7 @@ const CombatTracker = ({
                     </span>
                   </div>
                 </>
-              ) : selectedActionEditorDraft.mode === 'cast-spell' ? (
+              ) : selectedActionEditorDraft.mode === 'spell-casting' ? (
                 <>
                   <label
                     className={styles['modalLabel']}
@@ -3658,31 +4179,6 @@ const CombatTracker = ({
               )}
               <label
                 className={styles['modalLabel']}
-                htmlFor={'action-intent-target-mode'}
-              >
-                Targets
-              </label>
-              <select
-                id={'action-intent-target-mode'}
-                className={styles['actionIntentSelect']}
-                value={
-                  selectedActionEditorDraft.usesGridTargets ? 'grid' : 'none'
-                }
-                onChange={(event) =>
-                  updateSelectedActionEditorDraft((draft) => ({
-                    ...draft,
-                    usesGridTargets: event.target.value === 'grid',
-                  }))
-                }
-              >
-                <option value={'grid'}>Use combat grid targets</option>
-                <option value={'none'}>No target</option>
-              </select>
-              <p className={styles['modalHint']}>
-                Grid targets apply only to actions set to use them.
-              </p>
-              <label
-                className={styles['modalLabel']}
                 htmlFor={'action-intent-initiative-timing'}
               >
                 Initiative timing
@@ -3716,6 +4212,16 @@ const CombatTracker = ({
               ) : null}
             </div>
             <div className={styles['modalActions']}>
+              {actionEditorDrafts.length > 1 &&
+              selectedActionEditorDraftIndex > 0 ? (
+                <button
+                  type={'button'}
+                  className={styles['toolbarButtonDanger']}
+                  onClick={removeSelectedActionEditorDraft}
+                >
+                  Remove action
+                </button>
+              ) : null}
               <button
                 type={'button'}
                 className={styles['toolbarButton']}

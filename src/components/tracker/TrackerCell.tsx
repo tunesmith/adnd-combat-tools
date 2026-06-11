@@ -11,10 +11,14 @@ interface TrackerCellProps {
   partyToEnemyValue: string;
   enemyToPartyVisible: boolean;
   partyToEnemyVisible: boolean;
+  enemyToPartyActionAssignmentLabel?: string;
+  partyToEnemyActionAssignmentLabel?: string;
   onEnemyToPartyVisibilityChange: (value: boolean) => void;
   onPartyToEnemyVisibilityChange: (value: boolean) => void;
   onEnemyToPartyChange: (value: string) => void;
   onPartyToEnemyChange: (value: string) => void;
+  onEnemyToPartyActionAssignmentOpen?: () => void;
+  onPartyToEnemyActionAssignmentOpen?: () => void;
   onAttackDetailOpen?: (
     direction: 'enemyToParty' | 'partyToEnemy',
     hand: TrackerAttackHand
@@ -31,10 +35,14 @@ const TrackerCell = ({
   partyToEnemyValue,
   enemyToPartyVisible,
   partyToEnemyVisible,
+  enemyToPartyActionAssignmentLabel,
+  partyToEnemyActionAssignmentLabel,
   onEnemyToPartyVisibilityChange,
   onPartyToEnemyVisibilityChange,
   onEnemyToPartyChange,
   onPartyToEnemyChange,
+  onEnemyToPartyActionAssignmentOpen,
+  onPartyToEnemyActionAssignmentOpen,
   onAttackDetailOpen,
   allowVisibilityToggle = true,
   displayMode = 'both',
@@ -164,6 +172,25 @@ const TrackerCell = ({
     </span>
   );
 
+  const renderActionAssignmentButton = (
+    label: string | undefined,
+    onOpen: (() => void) | undefined
+  ) =>
+    label && onOpen ? (
+      <button
+        type={'button'}
+        className={styles['cellActionAssignmentButton']}
+        title={'Choose which action uses this target'}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen();
+        }}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        {label}
+      </button>
+    ) : null;
+
   return (
     <td className={styles['interactionCell']} style={style}>
       <div
@@ -222,6 +249,10 @@ const TrackerCell = ({
                   onKeyDown={(event) => event.stopPropagation()}
                   onChange={(event) => onEnemyToPartyChange(event.target.value)}
                 />
+                {renderActionAssignmentButton(
+                  enemyToPartyActionAssignmentLabel,
+                  onEnemyToPartyActionAssignmentOpen
+                )}
               </>
             ) : null}
           </div>
@@ -274,6 +305,10 @@ const TrackerCell = ({
                   onKeyDown={(event) => event.stopPropagation()}
                   onChange={(event) => onPartyToEnemyChange(event.target.value)}
                 />
+                {renderActionAssignmentButton(
+                  partyToEnemyActionAssignmentLabel,
+                  onPartyToEnemyActionAssignmentOpen
+                )}
               </>
             ) : null}
           </div>

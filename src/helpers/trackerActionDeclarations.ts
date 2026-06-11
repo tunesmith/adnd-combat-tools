@@ -27,8 +27,12 @@ const hasActiveCellDirection = (
   }
 
   return direction === 'partyToEnemy'
-    ? cell.partyToEnemyVisible || Boolean(cell.partyToEnemy.trim())
-    : cell.enemyToPartyVisible || Boolean(cell.enemyToParty.trim());
+    ? cell.partyToEnemyVisible ||
+        Boolean(cell.partyToEnemy.trim()) ||
+        Boolean(cell.partyToEnemyActionIds?.length)
+    : cell.enemyToPartyVisible ||
+        Boolean(cell.enemyToParty.trim()) ||
+        Boolean(cell.enemyToPartyActionIds?.length);
 };
 
 const getCellResultText = (
@@ -36,6 +40,14 @@ const getCellResultText = (
   direction: TrackerActionDirection
 ): string =>
   direction === 'partyToEnemy' ? cell.partyToEnemy : cell.enemyToParty;
+
+const getCellActionIds = (
+  cell: TrackerCellState,
+  direction: TrackerActionDirection
+): string[] =>
+  direction === 'partyToEnemy'
+    ? cell.partyToEnemyActionIds || []
+    : cell.enemyToPartyActionIds || [];
 
 const getActionId = (
   side: TrackerActionSide,
@@ -156,6 +168,63 @@ export const deriveTrackerActionDeclarations = (
   return partyDeclarations.concat(enemyDeclarations);
 };
 
+const getTargetDeclarationsForAction = (
+  round: TrackerRound,
+  action: TrackerActionDeclaration
+): TrackerActionTargetDeclaration[] => {
+  if (action.usesGridTargets === false) {
+    return [];
+  }
+
+  if (action.direction === 'partyToEnemy') {
+    return round.enemies.flatMap((targetCombatant, enemyIndex) => {
+      const cell = round.cells[enemyIndex]?.[action.combatantIndex];
+
+      if (!cell || !hasActiveCellDirection(cell, action.direction)) {
+        return [];
+      }
+
+      const actionIds = getCellActionIds(cell, action.direction);
+      if (actionIds.length > 0 && !actionIds.includes(action.id)) {
+        return [];
+      }
+
+      return [
+        {
+          targetCombatantKey: targetCombatant.key,
+          targetCombatantIndex: enemyIndex,
+          cellRowIndex: enemyIndex,
+          cellColumnIndex: action.combatantIndex,
+          cellResultText: getCellResultText(cell, action.direction),
+        },
+      ];
+    });
+  }
+
+  return round.party.flatMap((targetCombatant, partyIndex) => {
+    const cell = round.cells[action.combatantIndex]?.[partyIndex];
+
+    if (!cell || !hasActiveCellDirection(cell, action.direction)) {
+      return [];
+    }
+
+    const actionIds = getCellActionIds(cell, action.direction);
+    if (actionIds.length > 0 && !actionIds.includes(action.id)) {
+      return [];
+    }
+
+    return [
+      {
+        targetCombatantKey: targetCombatant.key,
+        targetCombatantIndex: partyIndex,
+        cellRowIndex: action.combatantIndex,
+        cellColumnIndex: partyIndex,
+        cellResultText: getCellResultText(cell, action.direction),
+      },
+    ];
+  });
+};
+
 export const getTrackerActionDeclarations = (
   round: TrackerRound
 ): TrackerActionDeclaration[] => {
@@ -171,12 +240,6 @@ export const getTrackerActionDeclarations = (
       getActionGroupKey(action.side, action.combatantKey)
     )
   );
-  const derivedActionByCombatant = new Map(
-    derivedRoundActions.map((action) => [
-      getActionGroupKey(action.side, action.combatantKey),
-      action,
-    ])
-  );
   const derivedActions = derivedRoundActions.filter(
     (action) =>
       !explicitCombatantKeys.has(
@@ -184,20 +247,15 @@ export const getTrackerActionDeclarations = (
       )
   );
   const explicitActionsWithCurrentTargets = explicitActions.map((action) => {
-    const derivedAction = derivedActionByCombatant.get(
-      getActionGroupKey(action.side, action.combatantKey)
-    );
+    const targetDeclarations = getTargetDeclarationsForAction(round, action);
 
-    if (
-      action.usesGridTargets === false ||
-      !derivedAction?.targetDeclarations.length
-    ) {
+    if (targetDeclarations.length === 0) {
       return action;
     }
 
     return {
       ...action,
-      targetDeclarations: derivedAction.targetDeclarations,
+      targetDeclarations,
     };
   });
 

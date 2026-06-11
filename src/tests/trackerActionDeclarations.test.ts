@@ -277,4 +277,173 @@ describe('tracker action declarations', () => {
       extraAction,
     ]);
   });
+
+  test('assigns grid targets to specific explicit actions when cell action ids are present', () => {
+    const round = requireRound();
+
+    if (!round.party[0] || !round.enemies[0] || !round.enemies[1]) {
+      throw new Error('Missing combatants');
+    }
+
+    const mainAction: TrackerActionDeclaration = {
+      id: 'party:1:main',
+      source: 'intention',
+      side: 'party',
+      direction: 'partyToEnemy',
+      combatantKey: 1,
+      combatantIndex: 0,
+      targetSide: 'enemy',
+      declaredAction: 'open-melee',
+      actionLabel: 'Sword of speed',
+      weaponId: 1,
+      intention: 'Sword of speed',
+      result: '',
+      targetDeclarations: [],
+    };
+    const extraAction: TrackerActionDeclaration = {
+      id: 'party:1:action-2',
+      source: 'intention',
+      side: 'party',
+      direction: 'partyToEnemy',
+      combatantKey: 1,
+      combatantIndex: 0,
+      targetSide: 'enemy',
+      declaredAction: 'open-melee',
+      actionLabel: 'Normal attack',
+      weaponId: 1,
+      intention: 'Normal attack',
+      result: '',
+      targetDeclarations: [],
+    };
+    const firstRow = round.cells[0];
+    const secondRow = round.cells[1];
+    const firstCell = firstRow?.[0];
+    const secondCell = secondRow?.[0];
+
+    if (!firstRow || !secondRow || !firstCell || !secondCell) {
+      throw new Error('Missing target cells');
+    }
+
+    firstRow[0] = {
+      ...firstCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'speed hit',
+      partyToEnemyActionIds: [mainAction.id],
+    };
+    secondRow[0] = {
+      ...secondCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'normal hit',
+      partyToEnemyActionIds: [extraAction.id],
+    };
+
+    round.actions = [mainAction, extraAction];
+
+    expect(getTrackerActionDeclarations(round)).toEqual([
+      {
+        ...mainAction,
+        targetDeclarations: [
+          {
+            targetCombatantKey: 4,
+            targetCombatantIndex: 0,
+            cellRowIndex: 0,
+            cellColumnIndex: 0,
+            cellResultText: 'speed hit',
+          },
+        ],
+      },
+      {
+        ...extraAction,
+        targetDeclarations: [
+          {
+            targetCombatantKey: 5,
+            targetCombatantIndex: 1,
+            cellRowIndex: 1,
+            cellColumnIndex: 0,
+            cellResultText: 'normal hit',
+          },
+        ],
+      },
+    ]);
+  });
+
+  test('keeps unassigned grid targets as applying to every grid-targeted explicit action', () => {
+    const round = requireRound();
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    const mainAction: TrackerActionDeclaration = {
+      id: 'party:1:main',
+      source: 'intention',
+      side: 'party',
+      direction: 'partyToEnemy',
+      combatantKey: 1,
+      combatantIndex: 0,
+      targetSide: 'enemy',
+      declaredAction: 'open-melee',
+      actionLabel: 'Attack',
+      weaponId: 1,
+      intention: 'Attack',
+      result: '',
+      targetDeclarations: [],
+    };
+    const extraAction: TrackerActionDeclaration = {
+      id: 'party:1:action-2',
+      source: 'intention',
+      side: 'party',
+      direction: 'partyToEnemy',
+      combatantKey: 1,
+      combatantIndex: 0,
+      targetSide: 'enemy',
+      declaredAction: 'magical-device',
+      actionLabel: 'Hammer effect',
+      weaponId: 1,
+      intention: 'Hammer effect',
+      result: '',
+      targetDeclarations: [],
+    };
+    const firstRow = round.cells[0];
+    const firstCell = firstRow?.[0];
+
+    if (!firstRow || !firstCell) {
+      throw new Error('Missing target cell');
+    }
+
+    firstRow[0] = {
+      ...firstCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'shared target',
+    };
+
+    round.actions = [mainAction, extraAction];
+
+    expect(getTrackerActionDeclarations(round)).toEqual([
+      {
+        ...mainAction,
+        targetDeclarations: [
+          {
+            targetCombatantKey: 4,
+            targetCombatantIndex: 0,
+            cellRowIndex: 0,
+            cellColumnIndex: 0,
+            cellResultText: 'shared target',
+          },
+        ],
+      },
+      {
+        ...extraAction,
+        targetDeclarations: [
+          {
+            targetCombatantKey: 4,
+            targetCombatantIndex: 0,
+            cellRowIndex: 0,
+            cellColumnIndex: 0,
+            cellResultText: 'shared target',
+          },
+        ],
+      },
+    ]);
+  });
 });

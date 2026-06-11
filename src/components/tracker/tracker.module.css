@@ -541,6 +541,28 @@
   box-shadow: inset 0 0 0 1px rgba(240, 239, 221, 0.06);
 }
 
+.cellActionAssignmentButton {
+  max-width: 100%;
+  border: 1px solid rgba(240, 239, 221, 0.36);
+  background: rgba(28, 24, 20, 0.18);
+  color: rgba(240, 239, 221, 0.86);
+  font-family: 'Sura', serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.05;
+  padding: 0.1rem 0.24rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cellActionAssignmentButton:hover,
+.cellActionAssignmentButton:focus-visible {
+  color: var(--eggshell);
+  border-color: rgba(240, 239, 221, 0.72);
+}
+
 .enemyMetaCell {
   min-width: 7rem;
   background: var(--caput-martuum);
@@ -997,6 +1019,10 @@
   width: min(34rem, calc(100vw - 2rem));
 }
 
+.targetActionModal {
+  width: min(32rem, calc(100vw - 2rem));
+}
+
 .actionIntentModal {
   width: min(30rem, calc(100vw - 2rem));
 }
@@ -1052,6 +1078,56 @@
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.2;
+}
+
+.targetActionMatchup {
+  margin: 0 0 0.75rem;
+  color: #111;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.targetActionOptionList {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.targetActionOption {
+  display: grid;
+  grid-template-columns: auto minmax(4.5rem, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(172, 114, 35, 0.5);
+  background: rgba(175, 127, 0, 0.08);
+  color: #111;
+  font-size: 1rem;
+  line-height: 1.18;
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+}
+
+.targetActionOption input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+}
+
+.targetActionOptionTitle {
+  color: var(--copper);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.targetActionOptionSummary {
+  min-width: 0;
+  overflow: hidden;
+  color: #111;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .actionIntentEditorName {

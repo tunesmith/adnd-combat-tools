@@ -40,6 +40,8 @@ export interface TrackerCellState {
   partyToEnemy: string;
   enemyToPartyVisible: boolean;
   partyToEnemyVisible: boolean;
+  enemyToPartyActionIds?: string[];
+  partyToEnemyActionIds?: string[];
 }
 
 export interface TrackerActionTargetDeclaration {

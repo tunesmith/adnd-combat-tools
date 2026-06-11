@@ -301,6 +301,95 @@ describe('tracker initiative scenario builder', () => {
     ]);
   });
 
+  test('maps structured tracker Charge intentions to charge contact graph nodes', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '4';
+    round.enemyInitiative = '4';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Garran';
+    round.party[0].weapon = 50;
+    round.party[0].movementRate = 12;
+    round.enemies[0].name = 'Hobgoblin';
+    round.enemies[0].weapon = 57;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'charge',
+        actionDistanceInches: 4,
+        weaponId: 50,
+        intention: 'Charge 4"',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    const firstRow = round.cells[0];
+    const firstCell = firstRow?.[0];
+
+    if (!firstRow || !firstCell) {
+      throw new Error('Missing target cell');
+    }
+
+    firstRow[0] = {
+      ...firstCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'charge target',
+    };
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      declaredAction: 'charge',
+      actionDistanceInches: 4,
+      targetDeclarations: [
+        {
+          targetId: 'enemy-4',
+          distanceInches: 4,
+        },
+      ],
+    });
+    expect(resolvedRound.resolution.movementResolutions).toEqual([
+      expect.objectContaining({
+        combatantId: 'party-1',
+        targetId: 'enemy-4',
+        action: 'charge',
+        reason: 'contact',
+        distanceInches: 4,
+        contactSegment: 2,
+        sameRoundAttack: true,
+      }),
+    ]);
+    expect(resolvedRound.attackGraph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          kind: 'attack',
+          segment: 2,
+          placement: expect.objectContaining({
+            kind: 'movement-attack',
+            action: 'charge',
+            role: 'acting-combatant',
+            opponentId: 'enemy-4',
+            distanceInches: 4,
+            contactSegment: 2,
+          }),
+        }),
+      ])
+    );
+  });
+
   test('maps tracker missile initiative adjustment to initiative combatants', () => {
     const round = requireRound();
 
