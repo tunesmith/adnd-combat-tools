@@ -109,12 +109,15 @@ type TrackerActionEditorMode =
 interface TrackerActionEditorTarget {
   side: TrackerSide;
   index: number;
+  selectedActionId: string;
 }
 
 interface TrackerActionEditorDraft {
+  id: string;
   mode: TrackerActionEditorMode;
   label: string;
   initiativeTiming: InitiativeTimingOverride;
+  usesGridTargets: boolean;
   distanceInches: string;
   activationSegments: string;
   castingSegments: string;
@@ -167,6 +170,13 @@ type TrackerAction =
       index: number;
       intention: string;
       actionDeclaration?: TrackerActionDeclaration;
+    }
+  | {
+      type: 'set-combatant-actions';
+      side: TrackerSide;
+      index: number;
+      intention: string;
+      actionDeclarations: TrackerActionDeclaration[];
     }
   | {
       type: 'update-combatant';
@@ -313,20 +323,52 @@ const getActionRoundState = (
 ): TrackerCombatantRoundState | undefined =>
   side === 'party' ? round.partyStates[index] : round.enemyStates[index];
 
-const getStructuredActionForCombatant = (
+const getStructuredActionsForCombatant = (
   round: TrackerRound,
   side: TrackerSide,
   index: number
-): TrackerActionDeclaration | undefined => {
+): TrackerActionDeclaration[] => {
   const combatant = getActionCombatant(round, side, index);
 
   if (!combatant) {
-    return undefined;
+    return [];
   }
 
-  return (round.actions || []).find(
+  return (round.actions || []).filter(
     (action) => action.side === side && action.combatantKey === combatant.key
   );
+};
+
+const getTrackerActionId = (
+  side: TrackerSide,
+  combatantKey: number,
+  actionId: string
+): string => `${side}:${combatantKey}:${actionId}`;
+
+const getMainTrackerActionId = (
+  side: TrackerSide,
+  combatantKey: number
+): string => getTrackerActionId(side, combatantKey, 'main');
+
+const getNextTrackerActionId = (
+  side: TrackerSide,
+  combatantKey: number,
+  drafts: TrackerActionEditorDraft[]
+): string => {
+  let actionNumber = drafts.length + 1;
+  let actionId = getTrackerActionId(
+    side,
+    combatantKey,
+    `action-${actionNumber}`
+  );
+  const existingIds = new Set(drafts.map((draft) => draft.id));
+
+  while (existingIds.has(actionId)) {
+    actionNumber += 1;
+    actionId = getTrackerActionId(side, combatantKey, `action-${actionNumber}`);
+  }
+
+  return actionId;
 };
 
 const getActionDirection = (side: TrackerSide): AttackDetailDirection =>
@@ -494,15 +536,51 @@ const getActionSummaryLines = (
     : [label];
 };
 
+const getActionListSummaryLines = (
+  actions: TrackerActionDeclaration[],
+  fallbackIntention: string
+): string[] => {
+  if (actions.length === 0) {
+    return fallbackIntention.trim() ? [fallbackIntention.trim()] : [];
+  }
+
+  if (actions.length === 1) {
+    return getActionSummaryLines(actions[0], fallbackIntention);
+  }
+
+  return actions.flatMap((action, actionIndex) => {
+    const lines = getActionSummaryLines(action, '');
+    const title = actionIndex === 0 ? 'Main' : `Action ${actionIndex + 1}`;
+    const primary = lines[0] || formatDeclaredAction(action.declaredAction);
+    const secondary = lines[1];
+
+    return [`${title}: ${primary}`, ...(secondary ? [secondary] : [])];
+  });
+};
+
+const getActionDraftSummary = (
+  draft: TrackerActionEditorDraft,
+  actionIndex: number
+): string => {
+  const label = draft.label.trim();
+  const title = label || (actionIndex === 0 ? 'Main action' : 'Extra action');
+  const timingText = formatInitiativeTimingMeta(draft.initiativeTiming);
+
+  return [title, timingText].filter(Boolean).join(' · ');
+};
+
 const createActionEditorDraft = (
   action: TrackerActionDeclaration | undefined,
-  fallbackIntention: string
+  fallbackIntention: string,
+  fallbackActionId: string
 ): TrackerActionEditorDraft => {
   if (action?.declaredAction === 'close') {
     return {
+      id: action.id,
       mode: 'move-close',
       label: action.actionLabel || '',
       initiativeTiming: getActionInitiativeTiming(action),
+      usesGridTargets: action.usesGridTargets !== false,
       distanceInches:
         action.actionDistanceInches !== undefined
           ? formatDistanceInches(action.actionDistanceInches)
@@ -514,9 +592,11 @@ const createActionEditorDraft = (
 
   if (action?.declaredAction === 'spell-casting') {
     return {
+      id: action.id,
       mode: 'cast-spell',
       label: action.actionLabel || '',
       initiativeTiming: getActionInitiativeTiming(action),
+      usesGridTargets: action.usesGridTargets !== false,
       distanceInches: '',
       activationSegments: '',
       castingSegments:
@@ -528,9 +608,11 @@ const createActionEditorDraft = (
 
   if (action?.declaredAction === 'magical-device') {
     return {
+      id: action.id,
       mode: 'magical-device',
       label: action.actionLabel || '',
       initiativeTiming: getActionInitiativeTiming(action),
+      usesGridTargets: action.usesGridTargets !== false,
       distanceInches: '',
       activationSegments:
         action.activationSegments !== undefined
@@ -541,14 +623,42 @@ const createActionEditorDraft = (
   }
 
   return {
+    id: action?.id || fallbackActionId,
     mode: 'combat-grid',
-    label: fallbackIntention,
+    label: action?.actionLabel || action?.intention || fallbackIntention,
     initiativeTiming: getActionInitiativeTiming(action),
+    usesGridTargets: action?.usesGridTargets !== false,
     distanceInches: '',
     activationSegments: '',
     castingSegments: '1',
   };
 };
+
+const createAddedActionEditorDraft = (
+  id: string
+): TrackerActionEditorDraft => ({
+  id,
+  mode: 'combat-grid',
+  label: 'Extra action',
+  initiativeTiming: 'normal',
+  usesGridTargets: false,
+  distanceInches: '',
+  activationSegments: '',
+  castingSegments: '1',
+});
+
+const getActionEditorDrafts = ({
+  actions,
+  fallbackIntention,
+  mainActionId,
+}: {
+  actions: TrackerActionDeclaration[];
+  fallbackIntention: string;
+  mainActionId: string;
+}): TrackerActionEditorDraft[] =>
+  actions.length > 0
+    ? actions.map((action) => createActionEditorDraft(action, '', mainActionId))
+    : [createActionEditorDraft(undefined, fallbackIntention, mainActionId)];
 
 const CombatTracker = ({
   rememberedState,
@@ -616,15 +726,9 @@ const CombatTracker = ({
   const [actionEditorTarget, setActionEditorTarget] = useState<
     TrackerActionEditorTarget | undefined
   >(undefined);
-  const [actionEditorDraft, setActionEditorDraft] =
-    useState<TrackerActionEditorDraft>({
-      mode: 'combat-grid',
-      label: '',
-      initiativeTiming: 'normal',
-      distanceInches: '',
-      activationSegments: '',
-      castingSegments: '1',
-    });
+  const [actionEditorDrafts, setActionEditorDrafts] = useState<
+    TrackerActionEditorDraft[]
+  >([]);
   const [actionEditorError, setActionEditorError] = useState<
     string | undefined
   >(undefined);
@@ -785,6 +889,57 @@ const CombatTracker = ({
             ),
           };
         });
+      case 'set-combatant-actions':
+        return updateCurrentRound(state, (round) => {
+          const combatant = getActionCombatant(
+            round,
+            action.side,
+            action.index
+          );
+
+          if (!combatant) {
+            return round;
+          }
+
+          const nextActions = (round.actions || []).filter(
+            (roundAction) =>
+              !(
+                roundAction.side === action.side &&
+                roundAction.combatantKey === combatant.key
+              )
+          );
+          const combinedActions = nextActions.concat(action.actionDeclarations);
+          const nextRound = {
+            ...round,
+            actions: combinedActions.length > 0 ? combinedActions : undefined,
+          };
+
+          if (action.side === 'party') {
+            return {
+              ...nextRound,
+              partyStates: nextRound.partyStates.map((partyState, partyIndex) =>
+                partyIndex === action.index
+                  ? {
+                      ...partyState,
+                      action: action.intention,
+                    }
+                  : partyState
+              ),
+            };
+          }
+
+          return {
+            ...nextRound,
+            enemyStates: nextRound.enemyStates.map((enemyState, enemyIndex) =>
+              enemyIndex === action.index
+                ? {
+                    ...enemyState,
+                    action: action.intention,
+                  }
+                : enemyState
+            ),
+          };
+        });
       case 'update-combatant':
         return updateCombatant(
           state,
@@ -817,6 +972,30 @@ const CombatTracker = ({
   const currentRound = state.rounds[state.activeRound];
   const currentRoundLabel = currentRound?.label || '';
   const trackerTitle = state.title || '';
+  const selectedActionEditorDraftIndex = actionEditorTarget
+    ? actionEditorDrafts.findIndex(
+        (draft) => draft.id === actionEditorTarget.selectedActionId
+      )
+    : -1;
+  const selectedActionEditorDraft =
+    selectedActionEditorDraftIndex >= 0
+      ? actionEditorDrafts[selectedActionEditorDraftIndex]
+      : undefined;
+  const updateSelectedActionEditorDraft = (
+    updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
+  ) => {
+    if (!actionEditorTarget) {
+      return;
+    }
+
+    setActionEditorDrafts((drafts) =>
+      drafts.map((draft) =>
+        draft.id === actionEditorTarget.selectedActionId
+          ? updater(draft)
+          : draft
+      )
+    );
+  };
   const selectedAttackDetail = useMemo<TrackerAttackDetail | undefined>(() => {
     if (!currentRound || !attackDetailTarget) {
       return undefined;
@@ -1104,6 +1283,7 @@ const CombatTracker = ({
         setShowCombatWizard(false);
         setAttackDetailTarget(undefined);
         setActionEditorTarget(undefined);
+        setActionEditorDrafts([]);
         setShowMoreActions(false);
         setRecoverError(undefined);
         setImportError(undefined);
@@ -1341,17 +1521,30 @@ const CombatTracker = ({
 
   const closeActionEditor = () => {
     setActionEditorTarget(undefined);
+    setActionEditorDrafts([]);
     setActionEditorError(undefined);
   };
 
   const openActionEditor = (side: TrackerSide, index: number) => {
-    const action = getStructuredActionForCombatant(currentRound, side, index);
+    const combatant = getActionCombatant(currentRound, side, index);
+    const actions = getStructuredActionsForCombatant(currentRound, side, index);
     const roundState = getActionRoundState(currentRound, side, index);
 
-    setActionEditorDraft(
-      createActionEditorDraft(action, roundState?.action || '')
-    );
-    setActionEditorTarget({ side, index });
+    if (!combatant) {
+      return;
+    }
+
+    const drafts = getActionEditorDrafts({
+      actions,
+      fallbackIntention: roundState?.action || '',
+      mainActionId: getMainTrackerActionId(side, combatant.key),
+    });
+    setActionEditorDrafts(drafts);
+    setActionEditorTarget({
+      side,
+      index,
+      selectedActionId: drafts[0]?.id || '',
+    });
     setActionEditorError(undefined);
   };
 
@@ -1375,136 +1568,138 @@ const CombatTracker = ({
       return;
     }
 
-    const label = actionEditorDraft.label.trim();
-    const savedInitiativeTiming = getSavedInitiativeTiming(
-      actionEditorDraft.initiativeTiming
-    );
-    const actionDeclarationBase = {
-      id: `${actionEditorTarget.side}:${combatant.key}:main`,
-      source: 'intention' as const,
-      side: actionEditorTarget.side,
-      direction: getActionDirection(actionEditorTarget.side),
-      combatantKey: combatant.key,
-      combatantIndex: actionEditorTarget.index,
-      targetSide: getActionTargetSide(actionEditorTarget.side),
-      ...(savedInitiativeTiming
-        ? { initiativeTiming: savedInitiativeTiming }
-        : {}),
-      weaponId: combatant.weapon,
-      result: roundState?.result || '',
-      targetDeclarations: [],
-    };
-
-    if (actionEditorDraft.mode === 'combat-grid') {
-      const actionDeclaration: TrackerActionDeclaration | undefined =
-        savedInitiativeTiming
-          ? {
-              ...actionDeclarationBase,
-              declaredAction: getDefaultTrackerDeclaredAction(combatant),
-              ...(label ? { actionLabel: label } : {}),
-              intention: label,
-            }
-          : undefined;
-
-      dispatch({
-        type: 'set-combatant-action',
-        side: actionEditorTarget.side,
-        index: actionEditorTarget.index,
-        intention: label,
-        actionDeclaration,
-      });
-      closeActionEditor();
-      return;
-    }
-
-    if (actionEditorDraft.mode === 'cast-spell') {
-      const castingSegments = parseCastingSegments(
-        actionEditorDraft.castingSegments
+    const drafts = actionEditorDrafts.length
+      ? actionEditorDrafts
+      : [
+          createActionEditorDraft(
+            undefined,
+            roundState?.action || '',
+            getMainTrackerActionId(actionEditorTarget.side, combatant.key)
+          ),
+        ];
+    const mustStoreExplicitActions =
+      drafts.length > 1 ||
+      drafts.some(
+        (draft) =>
+          draft.mode !== 'combat-grid' ||
+          getSavedInitiativeTiming(draft.initiativeTiming) !== undefined ||
+          !draft.usesGridTargets
       );
+    const actionDeclarations: TrackerActionDeclaration[] = [];
 
-      if (castingSegments === undefined) {
-        setActionEditorError('Cast spell needs a casting time.');
+    for (const draft of drafts) {
+      const label = draft.label.trim();
+      const savedInitiativeTiming = getSavedInitiativeTiming(
+        draft.initiativeTiming
+      );
+      const actionDeclarationBase = {
+        id: draft.id,
+        source: 'intention' as const,
+        side: actionEditorTarget.side,
+        direction: getActionDirection(actionEditorTarget.side),
+        combatantKey: combatant.key,
+        combatantIndex: actionEditorTarget.index,
+        targetSide: getActionTargetSide(actionEditorTarget.side),
+        ...(savedInitiativeTiming
+          ? { initiativeTiming: savedInitiativeTiming }
+          : {}),
+        ...(draft.usesGridTargets ? {} : { usesGridTargets: false }),
+        weaponId: combatant.weapon,
+        result: roundState?.result || '',
+        targetDeclarations: [],
+      };
+
+      if (draft.mode === 'combat-grid') {
+        if (mustStoreExplicitActions) {
+          const declaredAction = getDefaultTrackerDeclaredAction(combatant);
+
+          actionDeclarations.push({
+            ...actionDeclarationBase,
+            declaredAction,
+            ...(label ? { actionLabel: label } : {}),
+            intention: label || formatDeclaredAction(declaredAction),
+          });
+        }
+
+        continue;
+      }
+
+      if (draft.mode === 'cast-spell') {
+        const castingSegments = parseCastingSegments(draft.castingSegments);
+
+        if (castingSegments === undefined) {
+          setActionEditorError('Cast spell needs a casting time.');
+          return;
+        }
+
+        const intention = formatSpellCastingIntention(label, castingSegments);
+        actionDeclarations.push({
+          ...actionDeclarationBase,
+          declaredAction: 'spell-casting',
+          ...(label ? { actionLabel: label } : {}),
+          castingSegments,
+          intention,
+        });
+        continue;
+      }
+
+      if (draft.mode === 'magical-device') {
+        const activationSegmentInput = draft.activationSegments.trim();
+        const activationSegments =
+          activationSegmentInput.length > 0
+            ? parseActivationSegments(activationSegmentInput)
+            : undefined;
+
+        if (
+          activationSegmentInput.length > 0 &&
+          activationSegments === undefined
+        ) {
+          setActionEditorError('Magical device activation time is invalid.');
+          return;
+        }
+
+        const intention = formatMagicalDeviceIntention(
+          label,
+          activationSegments
+        );
+        actionDeclarations.push({
+          ...actionDeclarationBase,
+          declaredAction: 'magical-device',
+          ...(label ? { actionLabel: label } : {}),
+          ...(activationSegments !== undefined ? { activationSegments } : {}),
+          intention,
+        });
+        continue;
+      }
+
+      const distanceInches = Number(draft.distanceInches);
+
+      if (!Number.isFinite(distanceInches) || distanceInches <= 0) {
+        setActionEditorError('Move/Close needs a distance greater than 0".');
         return;
       }
 
-      const intention = formatSpellCastingIntention(label, castingSegments);
-      const actionDeclaration: TrackerActionDeclaration = {
+      const intention = formatMoveCloseIntention(label, distanceInches);
+      actionDeclarations.push({
         ...actionDeclarationBase,
-        declaredAction: 'spell-casting',
+        declaredAction: 'close',
         ...(label ? { actionLabel: label } : {}),
-        castingSegments,
+        actionDistanceInches: distanceInches,
         intention,
-      };
-
-      dispatch({
-        type: 'set-combatant-action',
-        side: actionEditorTarget.side,
-        index: actionEditorTarget.index,
-        intention,
-        actionDeclaration,
       });
-      closeActionEditor();
-      return;
     }
 
-    if (actionEditorDraft.mode === 'magical-device') {
-      const activationSegmentInput =
-        actionEditorDraft.activationSegments.trim();
-      const activationSegments =
-        activationSegmentInput.length > 0
-          ? parseActivationSegments(activationSegmentInput)
-          : undefined;
-
-      if (
-        activationSegmentInput.length > 0 &&
-        activationSegments === undefined
-      ) {
-        setActionEditorError('Magical device activation time is invalid.');
-        return;
-      }
-
-      const intention = formatMagicalDeviceIntention(label, activationSegments);
-      const actionDeclaration: TrackerActionDeclaration = {
-        ...actionDeclarationBase,
-        declaredAction: 'magical-device',
-        ...(label ? { actionLabel: label } : {}),
-        ...(activationSegments !== undefined ? { activationSegments } : {}),
-        intention,
-      };
-
-      dispatch({
-        type: 'set-combatant-action',
-        side: actionEditorTarget.side,
-        index: actionEditorTarget.index,
-        intention,
-        actionDeclaration,
-      });
-      closeActionEditor();
-      return;
-    }
-
-    const distanceInches = Number(actionEditorDraft.distanceInches);
-
-    if (!Number.isFinite(distanceInches) || distanceInches <= 0) {
-      setActionEditorError('Move/Close needs a distance greater than 0".');
-      return;
-    }
-
-    const intention = formatMoveCloseIntention(label, distanceInches);
-    const actionDeclaration: TrackerActionDeclaration = {
-      ...actionDeclarationBase,
-      declaredAction: 'close',
-      ...(label ? { actionLabel: label } : {}),
-      actionDistanceInches: distanceInches,
-      intention,
-    };
+    const intention =
+      actionDeclarations.length > 0
+        ? actionDeclarations.map((action) => action.intention).join('; ')
+        : drafts[0]?.label.trim() || '';
 
     dispatch({
-      type: 'set-combatant-action',
+      type: 'set-combatant-actions',
       side: actionEditorTarget.side,
       index: actionEditorTarget.index,
       intention,
-      actionDeclaration,
+      actionDeclarations,
     });
     closeActionEditor();
   };
@@ -1944,8 +2139,8 @@ const CombatTracker = ({
     index: number,
     fallbackIntention: string
   ) => {
-    const action = getStructuredActionForCombatant(currentRound, side, index);
-    const summaryLines = getActionSummaryLines(action, fallbackIntention);
+    const actions = getStructuredActionsForCombatant(currentRound, side, index);
+    const summaryLines = getActionListSummaryLines(actions, fallbackIntention);
     const isEmpty = summaryLines.length === 0;
 
     return (
@@ -1964,18 +2159,23 @@ const CombatTracker = ({
             Set intention
           </span>
         ) : (
-          summaryLines.map((line, lineIndex) => (
-            <span
-              key={`${side}-${index}-action-line-${lineIndex}`}
-              className={
-                lineIndex === 0
-                  ? styles['actionIntentPrimary']
-                  : styles['actionIntentSecondary']
-              }
-            >
-              {line}
-            </span>
-          ))
+          summaryLines.map((line, lineIndex) => {
+            const isActionTitle =
+              line.startsWith('Main:') || line.startsWith('Action ');
+
+            return (
+              <span
+                key={`${side}-${index}-action-line-${lineIndex}`}
+                className={
+                  lineIndex === 0 || isActionTitle
+                    ? styles['actionIntentPrimary']
+                    : styles['actionIntentSecondary']
+                }
+              >
+                {line}
+              </span>
+            );
+          })
         )}
       </button>
     );
@@ -2845,6 +3045,40 @@ const CombatTracker = ({
               )}
             </div>
             <div className={styles['modalActions']}>
+              {actionEditorDrafts.length > 1 &&
+              selectedActionEditorDraftIndex > 0 ? (
+                <button
+                  type={'button'}
+                  className={styles['toolbarButtonDanger']}
+                  onClick={() => {
+                    const actionIdToRemove =
+                      actionEditorDrafts[selectedActionEditorDraftIndex]?.id;
+                    const nextSelectedActionId =
+                      actionEditorDrafts[selectedActionEditorDraftIndex - 1]
+                        ?.id ||
+                      actionEditorDrafts[0]?.id ||
+                      '';
+
+                    if (!actionIdToRemove) {
+                      return;
+                    }
+
+                    setActionEditorDrafts((drafts) =>
+                      drafts.filter((draft) => draft.id !== actionIdToRemove)
+                    );
+                    setActionEditorTarget((previous) =>
+                      previous
+                        ? {
+                            ...previous,
+                            selectedActionId: nextSelectedActionId,
+                          }
+                        : previous
+                    );
+                  }}
+                >
+                  Remove action
+                </button>
+              ) : null}
               <button
                 type={'button'}
                 className={styles['toolbarButton']}
@@ -3132,7 +3366,7 @@ const CombatTracker = ({
           </div>
         </>
       )}
-      {actionEditorTarget && (
+      {actionEditorTarget && selectedActionEditorDraft && (
         <>
           <div className={styles['modalShadow']} onClick={closeActionEditor} />
           <div
@@ -3151,6 +3385,74 @@ const CombatTracker = ({
                   ? getPartyDisplayName(actionEditorTarget.index)
                   : getEnemyDisplayName(actionEditorTarget.index)}
               </div>
+              <div className={styles['actionIntentActionList']}>
+                {actionEditorDrafts.map((draft, actionIndex) => (
+                  <button
+                    key={draft.id}
+                    type={'button'}
+                    className={[
+                      styles['actionIntentActionButton'],
+                      draft.id === selectedActionEditorDraft.id
+                        ? styles['actionIntentActionButtonActive']
+                        : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    onClick={() =>
+                      setActionEditorTarget((previous) =>
+                        previous
+                          ? {
+                              ...previous,
+                              selectedActionId: draft.id,
+                            }
+                          : previous
+                      )
+                    }
+                  >
+                    <span className={styles['actionIntentActionTitle']}>
+                      {actionIndex === 0 ? 'Main' : `Action ${actionIndex + 1}`}
+                    </span>
+                    <span className={styles['actionIntentActionMeta']}>
+                      {getActionDraftSummary(draft, actionIndex)}
+                    </span>
+                  </button>
+                ))}
+                <button
+                  type={'button'}
+                  className={styles['actionIntentActionAddButton']}
+                  onClick={() => {
+                    const combatant = getActionCombatant(
+                      currentRound,
+                      actionEditorTarget.side,
+                      actionEditorTarget.index
+                    );
+
+                    if (!combatant) {
+                      return;
+                    }
+
+                    const nextDraft = createAddedActionEditorDraft(
+                      getNextTrackerActionId(
+                        actionEditorTarget.side,
+                        combatant.key,
+                        actionEditorDrafts
+                      )
+                    );
+
+                    setActionEditorDrafts((drafts) => drafts.concat(nextDraft));
+                    setActionEditorTarget((previous) =>
+                      previous
+                        ? {
+                            ...previous,
+                            selectedActionId: nextDraft.id,
+                          }
+                        : previous
+                    );
+                  }}
+                >
+                  Add action
+                </button>
+              </div>
               <label
                 className={styles['modalLabel']}
                 htmlFor={'action-intent-mode'}
@@ -3160,9 +3462,9 @@ const CombatTracker = ({
               <select
                 id={'action-intent-mode'}
                 className={styles['actionIntentSelect']}
-                value={actionEditorDraft.mode}
+                value={selectedActionEditorDraft.mode}
                 onChange={(event) =>
-                  setActionEditorDraft((draft) => ({
+                  updateSelectedActionEditorDraft((draft) => ({
                     ...draft,
                     mode: [
                       'move-close',
@@ -3184,7 +3486,7 @@ const CombatTracker = ({
                 <option value={'cast-spell'}>Cast spell</option>
                 <option value={'magical-device'}>Magical device</option>
               </select>
-              {actionEditorDraft.mode === 'move-close' ? (
+              {selectedActionEditorDraft.mode === 'move-close' ? (
                 <>
                   <label
                     className={styles['modalLabel']}
@@ -3196,9 +3498,9 @@ const CombatTracker = ({
                     id={'action-intent-label'}
                     className={styles['actionIntentTextInput']}
                     type={'text'}
-                    value={actionEditorDraft.label}
+                    value={selectedActionEditorDraft.label}
                     onChange={(event) =>
-                      setActionEditorDraft((draft) => ({
+                      updateSelectedActionEditorDraft((draft) => ({
                         ...draft,
                         label: event.target.value,
                       }))
@@ -3218,9 +3520,9 @@ const CombatTracker = ({
                       inputMode={'decimal'}
                       min={'0.1'}
                       step={'0.1'}
-                      value={actionEditorDraft.distanceInches}
+                      value={selectedActionEditorDraft.distanceInches}
                       onChange={(event) =>
-                        setActionEditorDraft((draft) => ({
+                        updateSelectedActionEditorDraft((draft) => ({
                           ...draft,
                           distanceInches: event.target.value,
                         }))
@@ -3231,7 +3533,7 @@ const CombatTracker = ({
                     </span>
                   </div>
                 </>
-              ) : actionEditorDraft.mode === 'cast-spell' ? (
+              ) : selectedActionEditorDraft.mode === 'cast-spell' ? (
                 <>
                   <label
                     className={styles['modalLabel']}
@@ -3243,9 +3545,9 @@ const CombatTracker = ({
                     id={'action-intent-label'}
                     className={styles['actionIntentTextInput']}
                     type={'text'}
-                    value={actionEditorDraft.label}
+                    value={selectedActionEditorDraft.label}
                     onChange={(event) =>
-                      setActionEditorDraft((draft) => ({
+                      updateSelectedActionEditorDraft((draft) => ({
                         ...draft,
                         label: event.target.value,
                       }))
@@ -3260,9 +3562,9 @@ const CombatTracker = ({
                   <select
                     id={'action-intent-casting-segments'}
                     className={styles['actionIntentSelect']}
-                    value={actionEditorDraft.castingSegments}
+                    value={selectedActionEditorDraft.castingSegments}
                     onChange={(event) =>
-                      setActionEditorDraft((draft) => ({
+                      updateSelectedActionEditorDraft((draft) => ({
                         ...draft,
                         castingSegments: event.target.value,
                       }))
@@ -3279,7 +3581,7 @@ const CombatTracker = ({
                     time.
                   </p>
                 </>
-              ) : actionEditorDraft.mode === 'magical-device' ? (
+              ) : selectedActionEditorDraft.mode === 'magical-device' ? (
                 <>
                   <label
                     className={styles['modalLabel']}
@@ -3291,9 +3593,9 @@ const CombatTracker = ({
                     id={'action-intent-label'}
                     className={styles['actionIntentTextInput']}
                     type={'text'}
-                    value={actionEditorDraft.label}
+                    value={selectedActionEditorDraft.label}
                     onChange={(event) =>
-                      setActionEditorDraft((draft) => ({
+                      updateSelectedActionEditorDraft((draft) => ({
                         ...draft,
                         label: event.target.value,
                       }))
@@ -3308,9 +3610,9 @@ const CombatTracker = ({
                   <select
                     id={'action-intent-activation-segments'}
                     className={styles['actionIntentSelect']}
-                    value={actionEditorDraft.activationSegments}
+                    value={selectedActionEditorDraft.activationSegments}
                     onChange={(event) =>
-                      setActionEditorDraft((draft) => ({
+                      updateSelectedActionEditorDraft((draft) => ({
                         ...draft,
                         activationSegments: event.target.value,
                       }))
@@ -3343,9 +3645,9 @@ const CombatTracker = ({
                   <AutoHeightTextarea
                     id={'action-intent-label'}
                     className={styles['actionIntentTextarea']}
-                    value={actionEditorDraft.label}
+                    value={selectedActionEditorDraft.label}
                     onChange={(value) =>
-                      setActionEditorDraft((draft) => ({
+                      updateSelectedActionEditorDraft((draft) => ({
                         ...draft,
                         label: value,
                       }))
@@ -3356,6 +3658,31 @@ const CombatTracker = ({
               )}
               <label
                 className={styles['modalLabel']}
+                htmlFor={'action-intent-target-mode'}
+              >
+                Targets
+              </label>
+              <select
+                id={'action-intent-target-mode'}
+                className={styles['actionIntentSelect']}
+                value={
+                  selectedActionEditorDraft.usesGridTargets ? 'grid' : 'none'
+                }
+                onChange={(event) =>
+                  updateSelectedActionEditorDraft((draft) => ({
+                    ...draft,
+                    usesGridTargets: event.target.value === 'grid',
+                  }))
+                }
+              >
+                <option value={'grid'}>Use combat grid targets</option>
+                <option value={'none'}>No target</option>
+              </select>
+              <p className={styles['modalHint']}>
+                Grid targets apply only to actions set to use them.
+              </p>
+              <label
+                className={styles['modalLabel']}
                 htmlFor={'action-intent-initiative-timing'}
               >
                 Initiative timing
@@ -3363,9 +3690,9 @@ const CombatTracker = ({
               <select
                 id={'action-intent-initiative-timing'}
                 className={styles['actionIntentSelect']}
-                value={actionEditorDraft.initiativeTiming}
+                value={selectedActionEditorDraft.initiativeTiming}
                 onChange={(event) =>
-                  setActionEditorDraft((draft) => ({
+                  updateSelectedActionEditorDraft((draft) => ({
                     ...draft,
                     initiativeTiming: event.target
                       .value as InitiativeTimingOverride,

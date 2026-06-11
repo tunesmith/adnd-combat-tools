@@ -188,7 +188,10 @@ export const getTrackerActionDeclarations = (
       getActionGroupKey(action.side, action.combatantKey)
     );
 
-    if (!derivedAction?.targetDeclarations.length) {
+    if (
+      action.usesGridTargets === false ||
+      !derivedAction?.targetDeclarations.length
+    ) {
       return action;
     }
 

@@ -379,6 +379,95 @@ describe('tracker initiative scenario builder', () => {
     ]);
   });
 
+  test('maps multiple structured tracker intentions for one combatant', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '6';
+    round.enemyInitiative = '3';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Lodi';
+    round.party[0].weapon = 17;
+    round.enemies[0].name = 'Gnoll';
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'open-melee',
+        actionLabel: 'Sword of speed',
+        initiativeTiming: 'wins-initiative',
+        weaponId: 17,
+        intention: 'Sword of speed',
+        result: '',
+        targetDeclarations: [],
+      },
+      {
+        id: 'party:1:action-2',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'close',
+        actionLabel: 'Move east',
+        usesGridTargets: false,
+        actionDistanceInches: 6,
+        weaponId: 17,
+        intention: 'Move east (6")',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    const firstRow = round.cells[0];
+    const firstCell = firstRow?.[0];
+
+    if (!firstRow || !firstCell) {
+      throw new Error('Missing target cell');
+    }
+
+    firstRow[0] = {
+      ...firstCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'target',
+    };
+
+    const scenario = buildInitiativeScenarioFromTrackerRound(round);
+
+    expect(scenario.party).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'party-1',
+          actionId: 'party:1:main',
+          actionIndex: 0,
+          ownerCombatantKey: 1,
+          actionLabel: 'Sword of speed',
+          initiativeTiming: 'wins-initiative',
+          targetIds: ['enemy-4'],
+        }),
+        expect.objectContaining({
+          id: 'party-action-1001',
+          actionId: 'party:1:action-2',
+          actionIndex: 1,
+          ownerCombatantKey: 1,
+          declaredAction: 'close',
+          actionLabel: 'Move east',
+          actionDistanceInches: 6,
+          targetIds: [],
+        }),
+      ])
+    );
+  });
+
   test('maps structured tracker Cast spell intentions to spell timing nodes', () => {
     const round = requireRound();
 

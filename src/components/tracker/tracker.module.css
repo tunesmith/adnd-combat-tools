@@ -1062,6 +1062,62 @@
   line-height: 1.15;
 }
 
+.actionIntentActionList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0.75rem 0.3rem;
+}
+
+.actionIntentActionButton,
+.actionIntentActionAddButton {
+  border: 1px solid var(--copper);
+  background: rgba(175, 127, 0, 0.08);
+  color: #111;
+  font-family: 'Sura', serif;
+  line-height: 1.15;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.actionIntentActionButton {
+  min-width: 7rem;
+  max-width: 12rem;
+}
+
+.actionIntentActionButtonActive {
+  background: rgba(175, 127, 0, 0.2);
+  box-shadow: inset 0 0 0 1px var(--copper);
+}
+
+.actionIntentActionTitle,
+.actionIntentActionMeta {
+  display: block;
+}
+
+.actionIntentActionTitle {
+  color: var(--copper);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.actionIntentActionMeta {
+  margin-top: 0.15rem;
+  overflow: hidden;
+  color: #111;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actionIntentActionAddButton {
+  display: flex;
+  align-items: center;
+}
+
 .actionIntentSelect,
 .actionIntentTextInput,
 .actionIntentTextarea,

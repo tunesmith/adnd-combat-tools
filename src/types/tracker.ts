@@ -61,6 +61,7 @@ export interface TrackerActionDeclaration {
   declaredAction: InitiativeDeclaredAction;
   actionLabel?: string;
   initiativeTiming?: InitiativeTimingOverride;
+  usesGridTargets?: boolean;
   actionDistanceInches?: number;
   activationSegments?: number;
   castingSegments?: number;

@@ -206,4 +206,75 @@ describe('tracker action declarations', () => {
       },
     ]);
   });
+
+  test('does not inherit grid targets for explicit actions with target mode disabled', () => {
+    const round = requireRound();
+
+    if (!round.party[0]) {
+      throw new Error('Missing combatant');
+    }
+
+    const mainAction: TrackerActionDeclaration = {
+      id: 'party:1:main',
+      source: 'intention',
+      side: 'party',
+      direction: 'partyToEnemy',
+      combatantKey: 1,
+      combatantIndex: 0,
+      targetSide: 'enemy',
+      declaredAction: 'open-melee',
+      actionLabel: 'Attack',
+      weaponId: 1,
+      intention: 'Attack',
+      result: '',
+      targetDeclarations: [],
+    };
+    const extraAction: TrackerActionDeclaration = {
+      id: 'party:1:action-2',
+      source: 'intention',
+      side: 'party',
+      direction: 'partyToEnemy',
+      combatantKey: 1,
+      combatantIndex: 0,
+      targetSide: 'enemy',
+      declaredAction: 'close',
+      actionLabel: 'Move east',
+      usesGridTargets: false,
+      actionDistanceInches: 6,
+      weaponId: 1,
+      intention: 'Move east (6")',
+      result: '',
+      targetDeclarations: [],
+    };
+    const firstRow = round.cells[0];
+    const firstCell = firstRow?.[0];
+
+    if (!firstRow || !firstCell) {
+      throw new Error('Missing target cell');
+    }
+
+    firstRow[0] = {
+      ...firstCell,
+      partyToEnemyVisible: true,
+      partyToEnemy: 'target',
+    };
+
+    round.actions = [mainAction, extraAction];
+
+    expect(getTrackerActionDeclarations(round)).toEqual([
+      {
+        ...mainAction,
+        targetDeclarations: [
+          {
+            targetCombatantKey: 4,
+            targetCombatantIndex: 0,
+            cellRowIndex: 0,
+            cellColumnIndex: 0,
+            cellResultText: 'target',
+          },
+        ],
+      },
+      extraAction,
+    ]);
+  });
 });
