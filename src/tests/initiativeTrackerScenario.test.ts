@@ -40,6 +40,50 @@ const setMutualTarget = (
   };
 };
 
+const setPartyTarget = (
+  round: TrackerRound,
+  enemyIndex: number,
+  partyIndex: number,
+  text = 'target',
+  actionIds?: string[]
+) => {
+  const row = round.cells[enemyIndex];
+  const current = row?.[partyIndex];
+
+  if (!row || !current) {
+    throw new Error(`Missing tracker cell ${enemyIndex},${partyIndex}`);
+  }
+
+  row[partyIndex] = {
+    ...current,
+    partyToEnemyVisible: true,
+    partyToEnemy: text,
+    ...(actionIds ? { partyToEnemyActionIds: actionIds } : {}),
+  };
+};
+
+const setEnemyTarget = (
+  round: TrackerRound,
+  enemyIndex: number,
+  partyIndex: number,
+  text = 'target',
+  actionIds?: string[]
+) => {
+  const row = round.cells[enemyIndex];
+  const current = row?.[partyIndex];
+
+  if (!row || !current) {
+    throw new Error(`Missing tracker cell ${enemyIndex},${partyIndex}`);
+  }
+
+  row[partyIndex] = {
+    ...current,
+    enemyToPartyVisible: true,
+    enemyToParty: text,
+    ...(actionIds ? { enemyToPartyActionIds: actionIds } : {}),
+  };
+};
+
 const getStepSignatures = (engagement: DirectMeleeEngagement): string[][] =>
   engagement.resolution.steps.map((step) =>
     step.attacks.map((attack) => `${attack.combatantId}${attack.attackNumber}`)
@@ -390,6 +434,57 @@ describe('tracker initiative scenario builder', () => {
     );
   });
 
+  test('maps structured tracker No combat action labels to graph nodes', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '3';
+    round.enemyInitiative = '5';
+
+    if (!round.party[0]) {
+      throw new Error('Missing combatant');
+    }
+
+    round.party[0].name = 'Bemis';
+    round.party[0].weapon = 13;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'none',
+        actionLabel: 'Gem of seeing',
+        weaponId: 13,
+        intention: 'Gem of seeing',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      declaredAction: 'none',
+      actionLabel: 'Gem of seeing',
+      targetIds: [],
+    });
+    expect(resolvedRound.attackGraph.nodes).toEqual([
+      expect.objectContaining({
+        id: 'attack:party-1:1',
+        combatantId: 'party-1',
+        label: 'action',
+        actionLabel: 'Gem of seeing',
+        placement: {
+          kind: 'non-combat-unsegmented',
+        },
+      }),
+    ]);
+  });
+
   test('maps tracker missile initiative adjustment to initiative combatants', () => {
     const round = requireRound();
 
@@ -414,6 +509,79 @@ describe('tracker initiative scenario builder', () => {
       declaredAction: 'missile',
       missileInitiativeAdjustment: 2,
     });
+  });
+
+  test('maps structured tracker Missile intentions to split target volley nodes', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '5';
+    round.enemyInitiative = '2';
+
+    if (!round.party[0] || !round.enemies[0] || !round.enemies[1]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Lodi';
+    round.party[0].weapon = 9;
+    round.enemies[0].name = 'Gnoll 1';
+    round.enemies[1].name = 'Gnoll 2';
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'missile',
+        actionLabel: 'Fire arrows',
+        weaponId: 9,
+        intention: 'Fire arrows',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    setPartyTarget(round, 0, 0, 'first arrow');
+    setPartyTarget(round, 1, 0, 'second arrow');
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      declaredAction: 'missile',
+      actionLabel: 'Fire arrows',
+      targetIds: ['enemy-4', 'enemy-5'],
+      attackRoutine: {
+        components: [
+          { id: 'attack-1', order: 1, label: 'attack 1' },
+          { id: 'attack-2', order: 2, label: 'attack 2' },
+        ],
+      },
+    });
+    expect(resolvedRound.attackGraph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          targetId: 'enemy-4',
+          placement: {
+            kind: 'missile-volley',
+            splitTarget: true,
+            targetId: 'enemy-4',
+          },
+        }),
+        expect.objectContaining({
+          id: 'attack:party-1:2',
+          targetId: 'enemy-5',
+          placement: {
+            kind: 'missile-volley',
+            splitTarget: true,
+            targetId: 'enemy-5',
+          },
+        }),
+      ])
+    );
   });
 
   test('maps structured tracker initiative timing overrides for grid attacks', () => {
@@ -465,6 +633,73 @@ describe('tracker initiative scenario builder', () => {
       expect.objectContaining({
         combatantId: 'party-1',
       }),
+    ]);
+  });
+
+  test('maps structured tracker Turn undead intentions to unsegmented graph nodes', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '3';
+    round.enemyInitiative = '5';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Astrid';
+    round.party[0].weapon = 17;
+    round.enemies[0].name = 'Ghoul';
+    round.enemies[0].weapon = 1;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'turn-undead',
+        actionLabel: 'Turn undead',
+        weaponId: 17,
+        intention: 'Turn undead',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    setPartyTarget(round, 0, 0, 'turn target');
+    setEnemyTarget(round, 0, 0, 'claw');
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      declaredAction: 'turn-undead',
+      actionLabel: 'Turn undead',
+      targetIds: ['enemy-4'],
+    });
+    expect(resolvedRound.attackGraph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          targetId: 'enemy-4',
+          placement: {
+            kind: 'turn-undead-unsegmented',
+          },
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-4:1',
+          targetId: 'party-1',
+        }),
+      ])
+    );
+    expect(resolvedRound.attackGraph.edges).toEqual([
+      {
+        fromNodeId: 'attack:enemy-4:1',
+        toNodeId: 'attack:party-1:1',
+        reasons: ['simple-initiative'],
+      },
     ]);
   });
 
@@ -557,6 +792,95 @@ describe('tracker initiative scenario builder', () => {
     );
   });
 
+  test('maps assigned tracker targets to separate structured action nodes', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '6';
+    round.enemyInitiative = '3';
+
+    if (!round.party[0] || !round.enemies[0] || !round.enemies[1]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Astrid';
+    round.party[0].weapon = 17;
+    round.enemies[0].name = 'Ghoul';
+    round.enemies[1].name = 'Yeenoghu';
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'open-melee',
+        actionLabel: 'Flail',
+        weaponId: 17,
+        intention: 'Flail',
+        result: '',
+        targetDeclarations: [],
+      },
+      {
+        id: 'party:1:action-2',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'magical-device',
+        actionLabel: 'Spiritual hammer',
+        weaponId: 17,
+        intention: 'Spiritual hammer',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    setPartyTarget(round, 0, 0, 'flail hit', ['party:1:main']);
+    setPartyTarget(round, 1, 0, 'hammer hit', ['party:1:action-2']);
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'party-1',
+          actionId: 'party:1:main',
+          declaredAction: 'open-melee',
+          actionLabel: 'Flail',
+          targetIds: ['enemy-4'],
+        }),
+        expect.objectContaining({
+          id: 'party-action-1001',
+          actionId: 'party:1:action-2',
+          declaredAction: 'magical-device',
+          actionLabel: 'Spiritual hammer',
+          targetIds: ['enemy-5'],
+        }),
+      ])
+    );
+    expect(resolvedRound.attackGraph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          targetId: 'enemy-4',
+          actionLabel: 'Flail',
+        }),
+        expect.objectContaining({
+          id: 'attack:party-action-1001:1',
+          targetId: 'enemy-5',
+          actionLabel: 'Spiritual hammer',
+          placement: {
+            kind: 'magical-device-unsegmented',
+          },
+        }),
+      ])
+    );
+  });
+
   test('maps structured tracker Cast spell intentions to spell timing nodes', () => {
     const round = requireRound();
 
@@ -612,6 +936,59 @@ describe('tracker initiative scenario builder', () => {
         }),
       ])
     );
+  });
+
+  test('maps targetless structured tracker Magical device intentions to timed graph nodes', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '6';
+    round.enemyInitiative = '3';
+
+    if (!round.party[0]) {
+      throw new Error('Missing combatant');
+    }
+
+    round.party[0].name = 'Lodi';
+    round.party[0].weapon = 57;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'magical-device',
+        actionLabel: 'Ring of invisibility',
+        activationSegments: 1,
+        weaponId: 57,
+        intention: 'Ring of invisibility',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      declaredAction: 'magical-device',
+      actionLabel: 'Ring of invisibility',
+      activationSegments: 1,
+      targetIds: [],
+    });
+    expect(resolvedRound.attackGraph.nodes).toEqual([
+      expect.objectContaining({
+        id: 'attack:party-1:1',
+        segment: 1,
+        placement: {
+          kind: 'declared-action-segment',
+          declaredAction: 'magical-device',
+          activationSegments: 1,
+        },
+      }),
+    ]);
   });
 
   test('maps structured tracker Magical device intentions with optional multiple targets', () => {
@@ -690,6 +1067,143 @@ describe('tracker initiative scenario builder', () => {
             activationSegments: 7,
           },
         }),
+      ])
+    );
+  });
+
+  test('maps structured tracker Set vs charge responses to charge timing nodes', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '2';
+    round.enemyInitiative = '5';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Doran';
+    round.party[0].weapon = 50;
+    round.party[0].movementRate = 12;
+    round.enemies[0].name = 'Raider';
+    round.enemies[0].weapon = 56;
+    round.enemies[0].movementRate = 12;
+    round.actions = [
+      {
+        id: 'party:1:main',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: 1,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'set-vs-charge',
+        actionLabel: 'Set spear',
+        weaponId: 50,
+        intention: 'Set spear',
+        result: '',
+        targetDeclarations: [],
+      },
+      {
+        id: 'enemy:4:main',
+        source: 'intention',
+        side: 'enemy',
+        direction: 'enemyToParty',
+        combatantKey: 4,
+        combatantIndex: 0,
+        targetSide: 'party',
+        declaredAction: 'charge',
+        actionLabel: 'Charge Doran',
+        actionDistanceInches: 4,
+        weaponId: 56,
+        intention: 'Charge Doran',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    setPartyTarget(round, 0, 0, 'set spear');
+    setEnemyTarget(round, 0, 0, 'charge');
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.party[0]).toMatchObject({
+      id: 'party-1',
+      declaredAction: 'set-vs-charge',
+      targetIds: ['enemy-4'],
+    });
+    expect(resolvedRound.scenario.enemies[0]).toMatchObject({
+      id: 'enemy-4',
+      declaredAction: 'charge',
+      actionDistanceInches: 4,
+      targetDeclarations: [
+        {
+          targetId: 'party-1',
+          distanceInches: 4,
+        },
+      ],
+    });
+    expect(resolvedRound.resolution.movementResolutions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          combatantId: 'enemy-4',
+          targetId: 'party-1',
+          action: 'charge',
+          reason: 'contact',
+          contactSegment: 2,
+          firstStrike: 'target',
+        }),
+        expect.objectContaining({
+          combatantId: 'party-1',
+          targetId: 'enemy-4',
+          action: 'set-vs-charge',
+          reason: 'contact',
+          contactSegment: 2,
+          firstStrike: 'attacker',
+          damageMultiplier: 2,
+        }),
+      ])
+    );
+    expect(resolvedRound.attackGraph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attack:party-1:1',
+          segment: 2,
+          placement: {
+            kind: 'movement-attack',
+            action: 'set-vs-charge',
+            role: 'acting-combatant',
+            opponentId: 'enemy-4',
+            distanceInches: 4,
+            movementRate: 12,
+            contactSegment: 2,
+            firstStrike: 'attacker',
+            damageMultiplier: 2,
+          },
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-4:1',
+          segment: 2,
+          placement: {
+            kind: 'movement-attack',
+            action: 'charge',
+            role: 'acting-combatant',
+            opponentId: 'party-1',
+            distanceInches: 4,
+            movementRate: 12,
+            contactSegment: 2,
+            firstStrike: 'target',
+            damageMultiplier: undefined,
+          },
+        }),
+      ])
+    );
+    expect(resolvedRound.attackGraph.edges).toEqual(
+      expect.arrayContaining([
+        {
+          fromNodeId: 'attack:party-1:1',
+          toNodeId: 'attack:enemy-4:1',
+          reasons: ['movement'],
+        },
       ])
     );
   });
