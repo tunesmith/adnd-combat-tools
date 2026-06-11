@@ -704,26 +704,35 @@
   font-size: 0.95rem;
 }
 
-.combatantTimingGrid {
+.combatantModalForm {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.65rem;
-  margin: 0.75rem 0.75rem 0;
+  gap: 0.72rem 0.85rem;
+  padding: 0.85rem 0.85rem 0.1rem;
 }
 
-.combatantTimingField {
+.combatantField,
+.combatantFieldWide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
   min-width: 0;
 }
 
-.compactModalLabel {
-  display: block;
-  color: #111;
-  font-size: 0.85rem;
-  line-height: 1.15;
+.combatantFieldWide,
+.combatantFormHint {
+  grid-column: 1 / -1;
 }
 
-.compactTextInput,
-.compactSelectInput {
+.combatantFieldLabel {
+  color: #111;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+.combatantTextInput,
+.combatantNativeSelect {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--copper);
@@ -731,23 +740,22 @@
   color: #111;
   font-family: 'Sura', serif;
   font-size: 1rem;
-  min-height: 2.25rem;
-  margin-top: 0.2rem;
+  min-height: 2.45rem;
 }
 
-.compactTextInput {
-  padding: 0.35rem 0.45rem;
+.combatantTextInput {
+  padding: 0.42rem 0.55rem;
 }
 
-.compactSelectInput {
-  padding: 0.35rem 0.3rem;
+.combatantNativeSelect {
+  padding: 0.42rem 0.45rem;
 }
 
 .quickWeaponList {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin: 0.35rem 0.75rem 0.45rem;
+  margin: 0 0 0.18rem;
 }
 
 .quickWeaponButton,
@@ -800,7 +808,7 @@
 }
 
 .weaponShortlistEditor {
-  margin: 0 0.75rem 0.55rem;
+  margin: 0 0 0.45rem;
 }
 
 .summaryTextarea {
@@ -1769,6 +1777,11 @@
   margin: 0.2rem 0.75rem 0;
 }
 
+.combatantField :global(.css-b62m3t-container),
+.combatantFieldWide :global(.css-b62m3t-container) {
+  margin: 0;
+}
+
 .metaTextarea::placeholder,
 .metaInput::placeholder,
 .cellEntryInputInline::placeholder,
@@ -1799,6 +1812,15 @@
 
   .toolbarStatus {
     max-width: 100%;
+  }
+
+  .combatantModalForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .combatantFieldWide,
+  .combatantFormHint {
+    grid-column: auto;
   }
 
   .summaryCell {

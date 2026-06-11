@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, FocusEvent } from 'react';
-import type { MultiValue, SingleValue } from 'react-select';
+import type { CSSObjectWithLabel, MultiValue, SingleValue } from 'react-select';
 import Select from 'react-select';
 import { getTrackerCombatantHeaderDisplay } from '../../helpers/trackerCombatantDisplay';
 import customStyles from '../../helpers/selectCustomStyles';
@@ -38,6 +38,70 @@ import styles from './tracker.module.css';
 const NO_OFF_HAND_WEAPON_OPTION: WeaponOption = {
   value: 0,
   label: 'No off-hand weapon',
+};
+
+interface TrackerSelectControlState {
+  isFocused: boolean;
+}
+
+const combatantSelectStyles = {
+  ...customStyles,
+  container: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    width: '100%',
+  }),
+  control: (
+    provided: CSSObjectWithLabel,
+    state: TrackerSelectControlState
+  ): CSSObjectWithLabel => ({
+    ...provided,
+    minHeight: '2.45rem',
+    borderColor: state.isFocused ? 'var(--goldenrod)' : 'var(--copper)',
+    borderRadius: 0,
+    borderWidth: 1,
+    backgroundColor: 'var(--eggshell)',
+    boxShadow: 'none',
+    color: '#111',
+    fontFamily: "'Sura', serif",
+    '&:hover': {
+      borderColor: 'var(--goldenrod)',
+    },
+  }),
+  valueContainer: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    padding: '0.32rem 0.55rem',
+  }),
+  input: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    margin: 0,
+    padding: 0,
+    color: '#111',
+    fontFamily: "'Sura', serif",
+    fontSize: '1rem',
+  }),
+  singleValue: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    color: '#111',
+    fontFamily: "'Sura', serif",
+    fontSize: '1rem',
+  }),
+  placeholder: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    color: 'rgba(17, 17, 17, 0.58)',
+    fontFamily: "'Sura', serif",
+    fontSize: '1rem',
+  }),
+  dropdownIndicator: (provided: CSSObjectWithLabel): CSSObjectWithLabel => ({
+    ...provided,
+    color: 'rgba(17, 17, 17, 0.65)',
+    padding: '0 0.62rem 0 0.35rem',
+    '&:hover': {
+      color: '#111',
+    },
+  }),
+  indicatorSeparator: (): CSSObjectWithLabel => ({
+    display: 'none',
+  }),
 };
 
 interface TrackerCombatantInputProps {
@@ -414,47 +478,51 @@ const TrackerCombatantInput = ({
               <div className={styles['modalTitle']}>
                 {side === 'party' ? 'Edit Party Member' : 'Edit Enemy'}
               </div>
-              <label
-                className={styles['modalLabel']}
-                htmlFor={`name-${draft.key}`}
-              >
-                Name
-              </label>
-              <input
-                id={`name-${draft.key}`}
-                className={styles['textInput']}
-                type={'text'}
-                value={draft.name || ''}
-                onChange={handleNameChange}
-                onBlur={handleNameBlur}
-                placeholder={'Name or label'}
-              />
-              <label
-                className={styles['modalLabel']}
-                htmlFor={`max-hp-${draft.key}`}
-              >
-                Max HP
-              </label>
-              <input
-                id={`max-hp-${draft.key}`}
-                className={styles['textInput']}
-                type={'text'}
-                value={draft.maxHp || ''}
-                onChange={handleMaxHpChange}
-                onBlur={handleMaxHpBlur}
-                placeholder={'Optional default maximum HP'}
-              />
-              <div className={styles['combatantTimingGrid']}>
-                <div className={styles['combatantTimingField']}>
+              <div className={styles['combatantModalForm']}>
+                <div className={styles['combatantFieldWide']}>
                   <label
-                    className={styles['compactModalLabel']}
+                    className={styles['combatantFieldLabel']}
+                    htmlFor={`name-${draft.key}`}
+                  >
+                    Name
+                  </label>
+                  <input
+                    id={`name-${draft.key}`}
+                    className={styles['combatantTextInput']}
+                    type={'text'}
+                    value={draft.name || ''}
+                    onChange={handleNameChange}
+                    onBlur={handleNameBlur}
+                    placeholder={'Name or label'}
+                  />
+                </div>
+                <div className={styles['combatantField']}>
+                  <label
+                    className={styles['combatantFieldLabel']}
+                    htmlFor={`max-hp-${draft.key}`}
+                  >
+                    Max HP
+                  </label>
+                  <input
+                    id={`max-hp-${draft.key}`}
+                    className={styles['combatantTextInput']}
+                    type={'text'}
+                    value={draft.maxHp || ''}
+                    onChange={handleMaxHpChange}
+                    onBlur={handleMaxHpBlur}
+                    placeholder={'Optional maximum'}
+                  />
+                </div>
+                <div className={styles['combatantField']}>
+                  <label
+                    className={styles['combatantFieldLabel']}
                     htmlFor={`movement-rate-${draft.key}`}
                   >
                     Movement rate
                   </label>
                   <input
                     id={`movement-rate-${draft.key}`}
-                    className={styles['compactTextInput']}
+                    className={styles['combatantTextInput']}
                     inputMode={'decimal'}
                     type={'text'}
                     value={movementRateInput}
@@ -463,16 +531,166 @@ const TrackerCombatantInput = ({
                     placeholder={`${DEFAULT_MOVEMENT_RATE}`}
                   />
                 </div>
-                <div className={styles['combatantTimingField']}>
+                <div className={styles['combatantField']}>
+                  <span className={styles['combatantFieldLabel']}>Class</span>
+                  <Select
+                    isSearchable={false}
+                    instanceId={`creatureClass-${draft.key}`}
+                    styles={combatantSelectStyles}
+                    menuPortalTarget={selectMenuPortalTarget}
+                    menuPosition={'fixed'}
+                    value={attackerClassOptions.filter(
+                      (option) => option.value === draft.class
+                    )}
+                    options={attackerClassOptions}
+                    onChange={handleCreatureClass}
+                  />
+                </div>
+                <div className={styles['combatantField']}>
+                  <span className={styles['combatantFieldLabel']}>Level</span>
+                  <Select
+                    isSearchable={false}
+                    instanceId={`level-${draft.key}`}
+                    styles={combatantSelectStyles}
+                    menuPortalTarget={selectMenuPortalTarget}
+                    menuPosition={'fixed'}
+                    value={levelOptions.filter(
+                      (option) => option.value === draft.level
+                    )}
+                    options={levelOptions}
+                    onChange={handleLevel}
+                  />
+                </div>
+                <div className={styles['combatantField']}>
+                  <span className={styles['combatantFieldLabel']}>
+                    Armor Type
+                  </span>
+                  <Select
+                    isSearchable={false}
+                    instanceId={`armorType-${draft.key}`}
+                    styles={combatantSelectStyles}
+                    menuPortalTarget={selectMenuPortalTarget}
+                    menuPosition={'fixed'}
+                    value={armorTypeOptions.filter(
+                      (option) => option.value === draft.armorType
+                    )}
+                    options={armorTypeOptions}
+                    onChange={handleArmorType}
+                  />
+                </div>
+                <div className={styles['combatantField']}>
+                  <span className={styles['combatantFieldLabel']}>
+                    Armor Class
+                  </span>
+                  <Select
+                    isSearchable={false}
+                    instanceId={`armorClass-${draft.key}`}
+                    styles={combatantSelectStyles}
+                    menuPortalTarget={selectMenuPortalTarget}
+                    menuPosition={'fixed'}
+                    value={armorClassOptions.filter(
+                      (option) => option.value === draft.armorClass
+                    )}
+                    options={armorClassOptions}
+                    onChange={handleArmorClass}
+                  />
+                </div>
+                <div className={styles['combatantFieldWide']}>
+                  <span className={styles['combatantFieldLabel']}>Weapon</span>
+                  <div className={styles['quickWeaponList']}>
+                    {weaponShortlistOptions.map((weaponOption) => (
+                      <button
+                        key={weaponOption.value}
+                        type={'button'}
+                        aria-label={
+                          isEditingWeaponShortlist
+                            ? `Remove ${weaponOption.label} from shortlist`
+                            : undefined
+                        }
+                        className={
+                          isEditingWeaponShortlist
+                            ? styles['quickWeaponRemoveButton']
+                            : weaponOption.value === draft.weapon
+                            ? styles['quickWeaponButtonActive']
+                            : styles['quickWeaponButton']
+                        }
+                        onClick={() =>
+                          isEditingWeaponShortlist
+                            ? handleRemoveQuickWeapon(weaponOption.value)
+                            : handleQuickWeapon(weaponOption.value)
+                        }
+                      >
+                        {isEditingWeaponShortlist ? (
+                          <span
+                            className={styles['quickWeaponRemoveMark']}
+                            aria-hidden={'true'}
+                          >
+                            x
+                          </span>
+                        ) : null}
+                        {weaponOption.label}
+                      </button>
+                    ))}
+                    <button
+                      type={'button'}
+                      className={styles['quickWeaponEditButton']}
+                      aria-expanded={isEditingWeaponShortlist}
+                      onClick={() =>
+                        setIsEditingWeaponShortlist((previous) => !previous)
+                      }
+                    >
+                      {isEditingWeaponShortlist
+                        ? 'Done'
+                        : weaponShortlistOptions.length
+                        ? 'Edit shortlist'
+                        : 'Add shortlist'}
+                    </button>
+                  </div>
+                  {isEditingWeaponShortlist ? (
+                    <div className={styles['weaponShortlistEditor']}>
+                      <Select
+                        isMulti
+                        isSearchable
+                        autoFocus
+                        closeMenuOnSelect={false}
+                        blurInputOnSelect={false}
+                        controlShouldRenderValue={false}
+                        defaultMenuIsOpen
+                        hideSelectedOptions={false}
+                        instanceId={`weaponShortlist-${draft.key}`}
+                        styles={combatantSelectStyles}
+                        menuPortalTarget={selectMenuPortalTarget}
+                        menuPosition={'fixed'}
+                        value={weaponShortlistOptions}
+                        options={weaponOptions}
+                        onChange={handleWeaponShortlist}
+                        placeholder={'Choose quick weapons'}
+                      />
+                    </div>
+                  ) : null}
+                  <Select
+                    isSearchable={false}
+                    instanceId={`weapon-${draft.key}`}
+                    styles={combatantSelectStyles}
+                    menuPortalTarget={selectMenuPortalTarget}
+                    menuPosition={'fixed'}
+                    value={weaponOptions.filter(
+                      (option) => option.value === draft.weapon
+                    )}
+                    options={weaponOptions}
+                    onChange={handleWeapon}
+                  />
+                </div>
+                <div className={styles['combatantField']}>
                   <label
-                    className={styles['compactModalLabel']}
+                    className={styles['combatantFieldLabel']}
                     htmlFor={`missile-initiative-${draft.key}`}
                   >
                     Missile init adj
                   </label>
                   <select
                     id={`missile-initiative-${draft.key}`}
-                    className={styles['compactSelectInput']}
+                    className={styles['combatantNativeSelect']}
                     value={formatMissileInitiativeAdjustment(
                       missileInitiativeAdjustment
                     )}
@@ -485,164 +703,34 @@ const TrackerCombatantInput = ({
                     ))}
                   </select>
                 </div>
-              </div>
-              {movementSuppressesPositiveReactionInitiativeBonuses(
-                movementRateForDisplay
-              ) && missileInitiativeAdjustment > 0 ? (
-                <p className={styles['modalHint']}>
-                  Positive missile-initiative bonuses are ignored below MV
-                  12&quot;.
-                </p>
-              ) : null}
-              <label className={styles['modalLabel']}>Class</label>
-              <Select
-                isSearchable={false}
-                instanceId={`creatureClass-${draft.key}`}
-                styles={customStyles}
-                menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={'fixed'}
-                value={attackerClassOptions.filter(
-                  (option) => option.value === draft.class
-                )}
-                options={attackerClassOptions}
-                onChange={handleCreatureClass}
-              />
-              <label className={styles['modalLabel']}>Level</label>
-              <Select
-                isSearchable={false}
-                instanceId={`level-${draft.key}`}
-                styles={customStyles}
-                menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={'fixed'}
-                value={levelOptions.filter(
-                  (option) => option.value === draft.level
-                )}
-                options={levelOptions}
-                onChange={handleLevel}
-              />
-              <label className={styles['modalLabel']}>Armor Type</label>
-              <Select
-                isSearchable={false}
-                instanceId={`armorType-${draft.key}`}
-                styles={customStyles}
-                menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={'fixed'}
-                value={armorTypeOptions.filter(
-                  (option) => option.value === draft.armorType
-                )}
-                options={armorTypeOptions}
-                onChange={handleArmorType}
-              />
-              <label className={styles['modalLabel']}>Armor Class</label>
-              <Select
-                isSearchable={false}
-                instanceId={`armorClass-${draft.key}`}
-                styles={customStyles}
-                menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={'fixed'}
-                value={armorClassOptions.filter(
-                  (option) => option.value === draft.armorClass
-                )}
-                options={armorClassOptions}
-                onChange={handleArmorClass}
-              />
-              <label className={styles['modalLabel']}>Weapon</label>
-              <div className={styles['quickWeaponList']}>
-                {weaponShortlistOptions.map((weaponOption) => (
-                  <button
-                    key={weaponOption.value}
-                    type={'button'}
-                    aria-label={
-                      isEditingWeaponShortlist
-                        ? `Remove ${weaponOption.label} from shortlist`
-                        : undefined
-                    }
-                    className={
-                      isEditingWeaponShortlist
-                        ? styles['quickWeaponRemoveButton']
-                        : weaponOption.value === draft.weapon
-                        ? styles['quickWeaponButtonActive']
-                        : styles['quickWeaponButton']
-                    }
-                    onClick={() =>
-                      isEditingWeaponShortlist
-                        ? handleRemoveQuickWeapon(weaponOption.value)
-                        : handleQuickWeapon(weaponOption.value)
-                    }
-                  >
-                    {isEditingWeaponShortlist ? (
-                      <span
-                        className={styles['quickWeaponRemoveMark']}
-                        aria-hidden={'true'}
-                      >
-                        x
-                      </span>
-                    ) : null}
-                    {weaponOption.label}
-                  </button>
-                ))}
-                <button
-                  type={'button'}
-                  className={styles['quickWeaponEditButton']}
-                  aria-expanded={isEditingWeaponShortlist}
-                  onClick={() =>
-                    setIsEditingWeaponShortlist((previous) => !previous)
-                  }
-                >
-                  {isEditingWeaponShortlist
-                    ? 'Done'
-                    : weaponShortlistOptions.length
-                    ? 'Edit shortlist'
-                    : 'Add shortlist'}
-                </button>
-              </div>
-              {isEditingWeaponShortlist ? (
-                <div className={styles['weaponShortlistEditor']}>
+                <div className={styles['combatantField']}>
+                  <span className={styles['combatantFieldLabel']}>
+                    Off-hand Weapon
+                  </span>
                   <Select
-                    isMulti
-                    isSearchable
-                    autoFocus
-                    closeMenuOnSelect={false}
-                    blurInputOnSelect={false}
-                    controlShouldRenderValue={false}
-                    defaultMenuIsOpen
-                    hideSelectedOptions={false}
-                    instanceId={`weaponShortlist-${draft.key}`}
-                    styles={customStyles}
+                    isSearchable={false}
+                    instanceId={`offHandWeapon-${draft.key}`}
+                    styles={combatantSelectStyles}
                     menuPortalTarget={selectMenuPortalTarget}
                     menuPosition={'fixed'}
-                    value={weaponShortlistOptions}
-                    options={weaponOptions}
-                    onChange={handleWeaponShortlist}
-                    placeholder={'Choose quick weapons'}
+                    value={offHandWeaponOptions.filter(
+                      (option) => option.value === (draft.offHandWeapon || 0)
+                    )}
+                    options={offHandWeaponOptions}
+                    onChange={handleOffHandWeapon}
                   />
                 </div>
-              ) : null}
-              <Select
-                isSearchable={false}
-                instanceId={`weapon-${draft.key}`}
-                styles={customStyles}
-                menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={'fixed'}
-                value={weaponOptions.filter(
-                  (option) => option.value === draft.weapon
-                )}
-                options={weaponOptions}
-                onChange={handleWeapon}
-              />
-              <label className={styles['modalLabel']}>Off-hand Weapon</label>
-              <Select
-                isSearchable={false}
-                instanceId={`offHandWeapon-${draft.key}`}
-                styles={customStyles}
-                menuPortalTarget={selectMenuPortalTarget}
-                menuPosition={'fixed'}
-                value={offHandWeaponOptions.filter(
-                  (option) => option.value === (draft.offHandWeapon || 0)
-                )}
-                options={offHandWeaponOptions}
-                onChange={handleOffHandWeapon}
-              />
+                {movementSuppressesPositiveReactionInitiativeBonuses(
+                  movementRateForDisplay
+                ) && missileInitiativeAdjustment > 0 ? (
+                  <p
+                    className={`${styles['modalHint']} ${styles['combatantFormHint']}`}
+                  >
+                    Positive missile-initiative bonuses are ignored below MV
+                    12&quot;.
+                  </p>
+                ) : null}
+              </div>
             </div>
           </>,
           modalRoot
