@@ -28,6 +28,7 @@ import type {
 import type {
   InitiativeAttackNode,
   InitiativeDeclaredAction,
+  InitiativeScenarioCombatant,
   InitiativeTimingOverride,
 } from '../../types/initiative';
 import {
@@ -136,6 +137,13 @@ interface SelectedCellActionAssignment {
   columnIndex: number;
   field: CellActionIdsField;
   options: CellActionOption[];
+}
+
+interface CombatTargetEditorScope {
+  side: TrackerSide;
+  index: number;
+  combatantName: string;
+  targetIndices: number[];
 }
 
 type TrackerActionEditorMode = InitiativeDeclaredAction;
@@ -1191,6 +1199,67 @@ const getCombatWizardActionsForEntry = (
   return getTrackerActionDeclarations(round).filter(
     (action) =>
       action.side === entry.side && action.combatantKey === combatant.key
+  );
+};
+
+const getCombatFlowActionForCombatant = (
+  round: TrackerRound,
+  combatant: InitiativeScenarioCombatant | undefined
+): TrackerActionDeclaration | undefined => {
+  if (!combatant?.actionId) {
+    return undefined;
+  }
+
+  const sourceCombatantKey =
+    combatant.ownerCombatantKey ?? combatant.combatantKey;
+
+  return getTrackerActionDeclarations(round).find(
+    (action) =>
+      action.id === combatant.actionId &&
+      action.side === combatant.side &&
+      action.combatantKey === sourceCombatantKey
+  );
+};
+
+const getUniqueTargetIndices = (targetIndices: number[]): number[] =>
+  Array.from(new Set(targetIndices));
+
+const getCombatFlowNodeTargetIndices = (
+  node: InitiativeAttackNode,
+  combatant: InitiativeScenarioCombatant,
+  action: TrackerActionDeclaration | undefined,
+  combatants: InitiativeScenarioCombatant[]
+): number[] => {
+  if (action?.usesGridTargets === false) {
+    return [];
+  }
+
+  if (node.targetId) {
+    const target = combatants.find(
+      (candidate) =>
+        candidate.id === node.targetId && candidate.side !== combatant.side
+    );
+
+    return target ? [target.index] : [];
+  }
+
+  if (action) {
+    return getUniqueTargetIndices(
+      action.targetDeclarations.map(
+        (targetDeclaration) => targetDeclaration.targetCombatantIndex
+      )
+    );
+  }
+
+  return getUniqueTargetIndices(
+    combatant.targetIds.flatMap((targetId) => {
+      const target = combatants.find(
+        (candidate) =>
+          candidate.id === targetId && candidate.side !== combatant.side
+      );
+
+      return target ? [target.index] : [];
+    })
   );
 };
 
@@ -3831,25 +3900,25 @@ const CombatTracker = ({
     />
   );
 
-  const renderCombatWizardTargets = (
-    entry: CombatWizardEntry,
+  const renderCombatTargetEditor = (
+    scope: CombatTargetEditorScope,
     targetIndices: number[],
     selectedAction: TrackerActionDeclaration | undefined
   ) => {
     if (targetIndices.length === 0) {
       const message =
         selectedAction?.usesGridTargets === false
-          ? 'This action does not use the target grid. You can still fill out the action result, or close this modal and adjust the intention.'
-          : selectedAction && entry.targetIndices.length > 0
-          ? 'No active target cells are assigned to this action. Choose another action, or close this modal and adjust target assignments in the tracker.'
-          : 'No targets are active in the grid for this combatant. You can still fill out the action result, or close this modal and adjust targets in the tracker.';
+          ? 'This action does not use the target grid. You can still fill out the action result, or adjust the intention.'
+          : selectedAction && scope.targetIndices.length > 0
+          ? 'No active target cells are assigned to this action. Choose another action, or adjust target assignments in the tracker.'
+          : 'No targets are active in the grid for this combatant. You can still fill out the action result, or adjust targets in the tracker.';
 
       return (
         <div className={styles['combatWizardEmptyTargets']}>{message}</div>
       );
     }
 
-    if (entry.side === 'enemy') {
+    if (scope.side === 'enemy') {
       return (
         <div className={styles['combatWizardGridWrap']}>
           <table className={styles['combatWizardGridTable']}>
@@ -3876,11 +3945,11 @@ const CombatTracker = ({
             <tbody>
               <tr>
                 <th className={styles['combatWizardRowHeader']}>
-                  {entry.combatantName}
+                  {scope.combatantName}
                 </th>
                 {targetIndices.map((partyIndex) =>
                   renderInteractionCell(
-                    entry.index,
+                    scope.index,
                     partyIndex,
                     undefined,
                     false,
@@ -3969,7 +4038,7 @@ const CombatTracker = ({
             <tr>
               <th className={styles['combatWizardCorner']}>Target</th>
               <th className={styles['combatWizardColumnHeader']}>
-                {entry.combatantName}
+                {scope.combatantName}
               </th>
               <th
                 className={`${styles['combatWizardColumnHeader']} ${styles['combatWizardHpLabelParty']}`}
@@ -3999,7 +4068,7 @@ const CombatTracker = ({
                   </th>
                   {renderInteractionCell(
                     enemyIndex,
-                    entry.index,
+                    scope.index,
                     undefined,
                     false,
                     'partyOnly'
@@ -4058,18 +4127,46 @@ const CombatTracker = ({
     const selectedDisplay = selectedCombatFlowNode
       ? combatFlowNodeDisplayById[selectedCombatFlowNode.id]
       : undefined;
+    const initiativeScenarioCombatants =
+      resolvedInitiativeRound.scenario.party.concat(
+        resolvedInitiativeRound.scenario.enemies
+      );
     const selectedCombatant = selectedCombatFlowNode
-      ? resolvedInitiativeRound.scenario.party
-          .concat(resolvedInitiativeRound.scenario.enemies)
-          .find(
-            (combatant) => combatant.id === selectedCombatFlowNode.combatantId
-          )
+      ? initiativeScenarioCombatants.find(
+          (combatant) => combatant.id === selectedCombatFlowNode.combatantId
+        )
       : undefined;
     const selectedRoundState = selectedCombatant
       ? selectedCombatant.side === 'party'
         ? currentRound.partyStates[selectedCombatant.index]
         : currentRound.enemyStates[selectedCombatant.index]
       : undefined;
+    const selectedCombatFlowAction = getCombatFlowActionForCombatant(
+      currentRound,
+      selectedCombatant
+    );
+    const selectedCombatFlowActionTitle = selectedCombatFlowAction
+      ? getActionSummaryLines(selectedCombatFlowAction, '')[0] ||
+        formatDeclaredAction(selectedCombatFlowAction.declaredAction)
+      : selectedDisplay?.actionTitle;
+    const selectedCombatFlowTargetIndices =
+      selectedCombatFlowNode && selectedCombatant
+        ? getCombatFlowNodeTargetIndices(
+            selectedCombatFlowNode,
+            selectedCombatant,
+            selectedCombatFlowAction,
+            initiativeScenarioCombatants
+          )
+        : [];
+    const selectedCombatFlowTargetScope: CombatTargetEditorScope | undefined =
+      selectedCombatant && selectedDisplay
+        ? {
+            side: selectedCombatant.side,
+            index: selectedCombatant.index,
+            combatantName: selectedDisplay.combatantName,
+            targetIndices: selectedCombatFlowTargetIndices,
+          }
+        : undefined;
 
     return (
       <section
@@ -4155,94 +4252,121 @@ const CombatTracker = ({
           <div className={styles['combatFlowResolverPane']}>
             <div className={styles['combatFlowPaneTitle']}>Selected Action</div>
             {selectedCombatFlowNode && selectedDisplay && selectedCombatant ? (
-              <>
-                <div className={styles['combatFlowSelectedCard']}>
-                  <div className={styles['combatFlowSelectedTopline']}>
-                    <span
-                      className={[
-                        styles['combatFlowSideBadge'],
-                        selectedCombatFlowNode.side === 'party'
-                          ? styles['combatFlowSideBadgeParty']
-                          : styles['combatFlowSideBadgeEnemy'],
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                    >
-                      {selectedCombatFlowNode.side === 'party'
-                        ? 'Party'
-                        : 'Enemy'}
-                    </span>
-                    <span className={styles['combatFlowTimingBadge']}>
-                      {formatCombatFlowNodeTiming(selectedCombatFlowNode)}
-                    </span>
+              <div className={styles['combatFlowSelectedLayout']}>
+                <div className={styles['combatFlowSelectedTopRow']}>
+                  <div className={styles['combatFlowSelectedCard']}>
+                    <div className={styles['combatFlowSelectedTopline']}>
+                      <span
+                        className={[
+                          styles['combatFlowSideBadge'],
+                          selectedCombatFlowNode.side === 'party'
+                            ? styles['combatFlowSideBadgeParty']
+                            : styles['combatFlowSideBadgeEnemy'],
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        {selectedCombatFlowNode.side === 'party'
+                          ? 'Party'
+                          : 'Enemy'}
+                      </span>
+                      <span className={styles['combatFlowTimingBadge']}>
+                        {formatCombatFlowNodeTiming(selectedCombatFlowNode)}
+                      </span>
+                    </div>
+                    <div className={styles['combatFlowSelectedName']}>
+                      {selectedDisplay.combatantName}
+                    </div>
+                    <div className={styles['combatFlowSelectedTarget']}>
+                      → {selectedDisplay.targetLabel}
+                    </div>
+                    <div className={styles['combatFlowSelectedAction']}>
+                      {selectedDisplay.actionTitle}
+                    </div>
+                    {selectedDisplay.actionMeta ? (
+                      <div className={styles['combatFlowSelectedMeta']}>
+                        {selectedDisplay.actionMeta}
+                      </div>
+                    ) : null}
                   </div>
-                  <div className={styles['combatFlowSelectedName']}>
-                    {selectedDisplay.combatantName}
+                  <div className={styles['combatFlowFieldStack']}>
+                    <label className={styles['combatFlowField']}>
+                      <span className={styles['combatFlowFieldLabel']}>
+                        Result
+                      </span>
+                      <AutoHeightTextarea
+                        className={styles['combatFlowTextarea']}
+                        value={selectedRoundState?.result || ''}
+                        onChange={(value) =>
+                          dispatch({
+                            type:
+                              selectedCombatant.side === 'party'
+                                ? 'set-party-state'
+                                : 'set-enemy-state',
+                            index: selectedCombatant.index,
+                            field: 'result',
+                            value,
+                          })
+                        }
+                        placeholder={
+                          'misses, hits for 6, sleep: one saves, two asleep...'
+                        }
+                      />
+                    </label>
+                    <label className={styles['combatFlowField']}>
+                      <span className={styles['combatFlowFieldLabel']}>
+                        Current Effect
+                      </span>
+                      <AutoHeightTextarea
+                        className={styles['combatFlowTextarea']}
+                        value={selectedRoundState?.effect || ''}
+                        onChange={(value) =>
+                          dispatch({
+                            type:
+                              selectedCombatant.side === 'party'
+                                ? 'set-party-state'
+                                : 'set-enemy-state',
+                            index: selectedCombatant.index,
+                            field: 'effect',
+                            value,
+                          })
+                        }
+                        placeholder={'hopeless 1/9, slowed 3/8, bless...'}
+                      />
+                    </label>
+                    <div className={styles['combatFlowResolverActions']}>
+                      <button
+                        type={'button'}
+                        className={styles['combatFlowResolveButton']}
+                        onClick={markSelectedCombatFlowNodeResolved}
+                      >
+                        Resolve action
+                      </button>
+                    </div>
                   </div>
-                  <div className={styles['combatFlowSelectedTarget']}>
-                    → {selectedDisplay.targetLabel}
-                  </div>
-                  <div className={styles['combatFlowSelectedAction']}>
-                    {selectedDisplay.actionTitle}
-                  </div>
-                  {selectedDisplay.actionMeta ? (
-                    <div className={styles['combatFlowSelectedMeta']}>
-                      {selectedDisplay.actionMeta}
+                </div>
+                <div className={styles['combatFlowTargetColumn']}>
+                  <div className={styles['combatFlowPaneTitle']}>Targets</div>
+                  {selectedCombatFlowActionTitle ? (
+                    <div className={styles['combatFlowTargetScope']}>
+                      {selectedCombatFlowActionTitle}
                     </div>
                   ) : null}
+                  {selectedCombatFlowTargetScope ? (
+                    <div className={styles['combatFlowTargetEditor']}>
+                      {renderCombatTargetEditor(
+                        selectedCombatFlowTargetScope,
+                        selectedCombatFlowTargetIndices,
+                        selectedCombatFlowAction
+                      )}
+                    </div>
+                  ) : (
+                    <div className={styles['combatFlowEmpty']}>
+                      No target editor is available for this action.
+                    </div>
+                  )}
                 </div>
-                <label className={styles['combatFlowField']}>
-                  <span className={styles['combatFlowFieldLabel']}>Result</span>
-                  <AutoHeightTextarea
-                    className={styles['combatFlowTextarea']}
-                    value={selectedRoundState?.result || ''}
-                    onChange={(value) =>
-                      dispatch({
-                        type:
-                          selectedCombatant.side === 'party'
-                            ? 'set-party-state'
-                            : 'set-enemy-state',
-                        index: selectedCombatant.index,
-                        field: 'result',
-                        value,
-                      })
-                    }
-                    placeholder={
-                      'misses, hits for 6, sleep: one saves, two asleep...'
-                    }
-                  />
-                </label>
-                <label className={styles['combatFlowField']}>
-                  <span className={styles['combatFlowFieldLabel']}>
-                    Current Effect
-                  </span>
-                  <AutoHeightTextarea
-                    className={styles['combatFlowTextarea']}
-                    value={selectedRoundState?.effect || ''}
-                    onChange={(value) =>
-                      dispatch({
-                        type:
-                          selectedCombatant.side === 'party'
-                            ? 'set-party-state'
-                            : 'set-enemy-state',
-                        index: selectedCombatant.index,
-                        field: 'effect',
-                        value,
-                      })
-                    }
-                    placeholder={'hopeless 1/9, slowed 3/8, bless...'}
-                  />
-                </label>
-                <div className={styles['combatFlowResolverActions']}>
-                  <button
-                    type={'button'}
-                    className={styles['combatFlowResolveButton']}
-                    onClick={markSelectedCombatFlowNodeResolved}
-                  >
-                    Resolve action
-                  </button>
-                </div>
-              </>
+              </div>
             ) : (
               <div className={styles['combatFlowEmpty']}>
                 {isFlowComplete
@@ -5833,7 +5957,7 @@ const CombatTracker = ({
                   {selectedCombatWizardActionTitle}
                 </div>
               ) : null}
-              {renderCombatWizardTargets(
+              {renderCombatTargetEditor(
                 currentCombatWizardEntry,
                 currentCombatWizardTargetIndices,
                 selectedCombatWizardAction

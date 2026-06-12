@@ -2075,6 +2075,39 @@
   padding: 0.65rem;
 }
 
+.combatFlowReadyPane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.combatFlowResolverPane {
+  overflow-x: auto;
+}
+
+.combatFlowSelectedLayout {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.combatFlowSelectedTopRow {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.88fr) minmax(18rem, 1.12fr);
+  gap: 0.75rem;
+  align-items: start;
+  min-width: 0;
+}
+
+.combatFlowFieldStack,
+.combatFlowTargetColumn {
+  min-width: 0;
+}
+
+.combatFlowTargetColumn {
+  display: grid;
+  gap: 0.45rem;
+}
+
 .combatFlowPaneTitle {
   margin-bottom: 0.5rem;
   color: var(--mustard);
@@ -2087,8 +2120,9 @@
 
 .combatFlowReadyList {
   display: grid;
+  align-content: start;
   gap: 0.5rem;
-  max-height: 23rem;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -2191,10 +2225,63 @@
   line-height: 1.2;
 }
 
+.combatFlowTargetScope {
+  color: rgba(240, 239, 221, 0.82);
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.combatFlowTargetEditor .combatWizardGridWrap,
+.combatFlowTargetEditor .combatWizardEmptyTargets {
+  margin: 0;
+}
+
+.combatFlowTargetEditor {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.combatFlowTargetEditor .combatWizardGridWrap {
+  width: 100%;
+  max-width: 100%;
+  max-height: min(44vh, 24rem);
+  overflow: auto;
+}
+
+.combatFlowTargetEditor .combatWizardCorner,
+.combatFlowTargetEditor .combatWizardRowHeader,
+.combatFlowTargetEditor .combatWizardHpLabel {
+  min-width: 5.25rem;
+  max-width: 8.5rem;
+}
+
+.combatFlowTargetEditor .combatWizardColumnHeader {
+  min-width: 6.5rem;
+}
+
+.combatFlowTargetEditor .combatWizardGridTable .interactionCell,
+.combatFlowTargetEditor .combatWizardListTable .interactionCell,
+.combatFlowTargetEditor .combatWizardGridTable .cellShell,
+.combatFlowTargetEditor .combatWizardListTable .cellShell {
+  min-width: 6.5rem;
+}
+
+.combatFlowTargetEditor .combatWizardHpCell {
+  min-width: 5.4rem;
+}
+
+.combatFlowTargetEditor .combatWizardEffectCell {
+  min-width: 7rem;
+}
+
 .combatFlowField {
   display: grid;
   gap: 0.22rem;
   margin-top: 0.65rem;
+}
+
+.combatFlowFieldStack .combatFlowField:first-child {
+  margin-top: 0;
 }
 
 .combatFlowFieldLabel {
@@ -2311,6 +2398,10 @@
   }
 
   .combatFlowBody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .combatFlowSelectedTopRow {
     grid-template-columns: minmax(0, 1fr);
   }
 
