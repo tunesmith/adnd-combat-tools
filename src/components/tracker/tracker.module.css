@@ -1511,6 +1511,14 @@
   padding: 0.55rem 0.65rem;
 }
 
+.combatWizardActionList {
+  margin-bottom: 0.75rem;
+}
+
+.combatWizardActionList .actionIntentActionButton {
+  max-width: 15rem;
+}
+
 .combatWizardTextarea {
   width: calc(100% - 1.5rem);
   min-height: 4.8rem;
@@ -1525,6 +1533,13 @@
   resize: none;
   overflow: hidden;
   box-sizing: border-box;
+}
+
+.combatWizardTargetScope {
+  margin: -0.2rem 0.75rem 0.45rem;
+  color: rgba(17, 17, 17, 0.78);
+  font-size: 0.95rem;
+  line-height: 1.2;
 }
 
 .combatWizardEmptyTargets {

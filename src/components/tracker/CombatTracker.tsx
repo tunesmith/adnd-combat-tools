@@ -76,7 +76,10 @@ import {
 } from '../../helpers/initiative/actionSegments';
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
 import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
-import { getDefaultTrackerDeclaredAction } from '../../helpers/trackerActionDeclarations';
+import {
+  getDefaultTrackerDeclaredAction,
+  getTrackerActionDeclarations,
+} from '../../helpers/trackerActionDeclarations';
 import {
   canSetAgainstCharge,
   getWeaponInfo,
@@ -1155,6 +1158,29 @@ const getIntentionWizardActionDrafts = (
   });
 };
 
+const getDefaultCombatWizardActionId = (
+  round: TrackerRound,
+  entry: CombatWizardEntry | undefined
+): string => getCombatWizardActionsForEntry(round, entry)[0]?.id || '';
+
+const getCombatWizardActionsForEntry = (
+  round: TrackerRound,
+  entry: CombatWizardEntry | undefined
+): TrackerActionDeclaration[] => {
+  const combatant = entry
+    ? getActionCombatant(round, entry.side, entry.index)
+    : undefined;
+
+  if (!entry || !combatant) {
+    return [];
+  }
+
+  return getTrackerActionDeclarations(round).filter(
+    (action) =>
+      action.side === entry.side && action.combatantKey === combatant.key
+  );
+};
+
 const CombatTracker = ({
   rememberedState,
   loadedFromEncodedState = false,
@@ -1213,6 +1239,8 @@ const CombatTracker = ({
   const [combatWizardIndex, setCombatWizardIndex] = useState<number>(0);
   const [combatResolvedOnEntry, setCombatResolvedOnEntry] =
     useState<boolean>(false);
+  const [combatWizardSelectedActionId, setCombatWizardSelectedActionId] =
+    useState<string>('');
   const [combatWizardAnchorKeysByRound, setCombatWizardAnchorKeysByRound] =
     useState<Record<number, number | undefined>>({});
   const [attackDetailTarget, setAttackDetailTarget] = useState<
@@ -1630,6 +1658,74 @@ const CombatTracker = ({
   );
   const currentCombatWizardEntry = combatWizardEntries[combatWizardIndex];
   const currentCombatWizardEntryKey = currentCombatWizardEntry?.combatantKey;
+  const currentCombatWizardActions = useMemo<TrackerActionDeclaration[]>(
+    () =>
+      currentCombatWizardEntry && currentRound
+        ? getCombatWizardActionsForEntry(currentRound, currentCombatWizardEntry)
+        : [],
+    [currentCombatWizardEntry, currentRound]
+  );
+  const selectedCombatWizardAction =
+    currentCombatWizardActions.find(
+      (action) => action.id === combatWizardSelectedActionId
+    ) || currentCombatWizardActions[0];
+  const selectedCombatWizardActionTitle = selectedCombatWizardAction
+    ? getActionSummaryLines(selectedCombatWizardAction, '')[0] ||
+      formatDeclaredAction(selectedCombatWizardAction.declaredAction)
+    : undefined;
+  const currentCombatWizardTargetIndices = useMemo<number[]>(() => {
+    if (!currentRound || !currentCombatWizardEntry) {
+      return [];
+    }
+
+    if (!selectedCombatWizardAction) {
+      return currentCombatWizardEntry.targetIndices;
+    }
+
+    if (selectedCombatWizardAction.usesGridTargets === false) {
+      return [];
+    }
+
+    const gridActionIds = new Set(
+      currentCombatWizardActions
+        .filter((action) => action.usesGridTargets !== false)
+        .map((action) => action.id)
+    );
+
+    if (!gridActionIds.has(selectedCombatWizardAction.id)) {
+      return [];
+    }
+
+    const direction: AttackDetailDirection =
+      currentCombatWizardEntry.side === 'party'
+        ? 'partyToEnemy'
+        : 'enemyToParty';
+
+    return currentCombatWizardEntry.targetIndices.filter((targetIndex) => {
+      const cell =
+        currentCombatWizardEntry.side === 'party'
+          ? currentRound.cells[targetIndex]?.[currentCombatWizardEntry.index]
+          : currentRound.cells[currentCombatWizardEntry.index]?.[targetIndex];
+
+      if (!cell) {
+        return false;
+      }
+
+      const assignedActionIds = getCellActionIds(cell, direction).filter(
+        (actionId) => gridActionIds.has(actionId)
+      );
+
+      return (
+        assignedActionIds.length === 0 ||
+        assignedActionIds.includes(selectedCombatWizardAction.id)
+      );
+    });
+  }, [
+    currentCombatWizardActions,
+    currentCombatWizardEntry,
+    currentRound,
+    selectedCombatWizardAction,
+  ]);
   const hasTrackerChanged = state !== initialStateRef.current;
   const partyColumnStyles = useMemo<CSSProperties[]>(
     () =>
@@ -1939,20 +2035,23 @@ const CombatTracker = ({
   }, [currentIntentionWizardEntry, showIntentionsWizard, state.activeRound]);
 
   useEffect(() => {
-    if (combatWizardEntries.length === 0) {
+    if (!currentRound || combatWizardEntries.length === 0) {
       setCombatWizardIndex(0);
       setCombatResolvedOnEntry(false);
+      setCombatWizardSelectedActionId('');
       return;
     }
 
     if (combatWizardIndex >= combatWizardEntries.length) {
       const nextIndex = combatWizardEntries.length - 1;
+      const nextEntry = combatWizardEntries[nextIndex];
       setCombatWizardIndex(nextIndex);
-      setCombatResolvedOnEntry(
-        Boolean(combatWizardEntries[nextIndex]?.result.trim())
+      setCombatResolvedOnEntry(Boolean(nextEntry?.result.trim()));
+      setCombatWizardSelectedActionId(
+        getDefaultCombatWizardActionId(currentRound, nextEntry)
       );
     }
-  }, [combatWizardEntries, combatWizardIndex]);
+  }, [combatWizardEntries, combatWizardIndex, currentRound]);
 
   useEffect(() => {
     if (!showCombatWizard || !currentCombatWizardEntry) {
@@ -1964,6 +2063,32 @@ const CombatTracker = ({
       [state.activeRound]: currentCombatWizardEntry.combatantKey,
     }));
   }, [currentCombatWizardEntry, showCombatWizard, state.activeRound]);
+
+  useEffect(() => {
+    if (!showCombatWizard || !currentCombatWizardEntry) {
+      return;
+    }
+
+    if (currentCombatWizardActions.length === 0) {
+      if (combatWizardSelectedActionId.length > 0) {
+        setCombatWizardSelectedActionId('');
+      }
+      return;
+    }
+
+    if (
+      !currentCombatWizardActions.some(
+        (action) => action.id === combatWizardSelectedActionId
+      )
+    ) {
+      setCombatWizardSelectedActionId(currentCombatWizardActions[0]?.id || '');
+    }
+  }, [
+    combatWizardSelectedActionId,
+    currentCombatWizardActions,
+    currentCombatWizardEntry,
+    showCombatWizard,
+  ]);
 
   useEffect(() => {
     if (!shareCopied) {
@@ -2421,19 +2546,25 @@ const CombatTracker = ({
       : -1;
 
     const nextIndex = anchorIndex >= 0 ? anchorIndex : 0;
+    const nextEntry = nextEntries[nextIndex];
     setCombatWizardIndex(nextIndex);
-    setCombatResolvedOnEntry(Boolean(nextEntries[nextIndex]?.result.trim()));
+    setCombatResolvedOnEntry(Boolean(nextEntry?.result.trim()));
+    setCombatWizardSelectedActionId(
+      getDefaultCombatWizardActionId(currentRound, nextEntry)
+    );
     setShowCombatWizard(true);
   };
 
   const closeCombatWizard = () => {
     setShowCombatWizard(false);
+    setCombatWizardSelectedActionId('');
   };
 
   const navigateCombatWizard = (nextIndex: number) => {
     if (combatWizardEntries.length === 0) {
       setCombatResolvedOnEntry(false);
       setCombatWizardIndex(0);
+      setCombatWizardSelectedActionId('');
       return;
     }
 
@@ -2444,6 +2575,12 @@ const CombatTracker = ({
 
     setCombatResolvedOnEntry(
       Boolean(combatWizardEntries[boundedIndex]?.result.trim())
+    );
+    setCombatWizardSelectedActionId(
+      getDefaultCombatWizardActionId(
+        currentRound,
+        combatWizardEntries[boundedIndex]
+      )
     );
     setCombatWizardIndex(boundedIndex);
   };
@@ -3311,14 +3448,21 @@ const CombatTracker = ({
     />
   );
 
-  const renderCombatWizardTargets = (entry: CombatWizardEntry) => {
-    if (entry.targetIndices.length === 0) {
+  const renderCombatWizardTargets = (
+    entry: CombatWizardEntry,
+    targetIndices: number[],
+    selectedAction: TrackerActionDeclaration | undefined
+  ) => {
+    if (targetIndices.length === 0) {
+      const message =
+        selectedAction?.usesGridTargets === false
+          ? 'This action does not use the target grid. You can still fill out the action result, or close this modal and adjust the intention.'
+          : selectedAction && entry.targetIndices.length > 0
+          ? 'No active target cells are assigned to this action. Choose another action, or close this modal and adjust target assignments in the tracker.'
+          : 'No targets are active in the grid for this combatant. You can still fill out the action result, or close this modal and adjust targets in the tracker.';
+
       return (
-        <div className={styles['combatWizardEmptyTargets']}>
-          No targets are active in the grid for this combatant. You can still
-          fill out the action result, or close this modal and adjust targets in
-          the tracker.
-        </div>
+        <div className={styles['combatWizardEmptyTargets']}>{message}</div>
       );
     }
 
@@ -3329,7 +3473,7 @@ const CombatTracker = ({
             <thead>
               <tr>
                 <th className={styles['combatWizardCorner']}>Target</th>
-                {entry.targetIndices.map((partyIndex) => {
+                {targetIndices.map((partyIndex) => {
                   const partyCombatant = currentRound.party[partyIndex];
                   if (!partyCombatant) {
                     return null;
@@ -3351,7 +3495,7 @@ const CombatTracker = ({
                 <th className={styles['combatWizardRowHeader']}>
                   {entry.combatantName}
                 </th>
-                {entry.targetIndices.map((partyIndex) =>
+                {targetIndices.map((partyIndex) =>
                   renderInteractionCell(
                     entry.index,
                     partyIndex,
@@ -3367,7 +3511,7 @@ const CombatTracker = ({
                 >
                   HP
                 </th>
-                {entry.targetIndices.map((partyIndex) => {
+                {targetIndices.map((partyIndex) => {
                   const partyCombatant = currentRound.party[partyIndex];
                   const partyState = currentRound.partyStates[partyIndex];
 
@@ -3402,7 +3546,7 @@ const CombatTracker = ({
                 >
                   Current Effect
                 </th>
-                {entry.targetIndices.map((partyIndex) => {
+                {targetIndices.map((partyIndex) => {
                   const partyState = currentRound.partyStates[partyIndex];
 
                   if (!partyState) {
@@ -3457,7 +3601,7 @@ const CombatTracker = ({
             </tr>
           </thead>
           <tbody>
-            {entry.targetIndices.map((enemyIndex) => {
+            {targetIndices.map((enemyIndex) => {
               const enemyCombatant = currentRound.enemies[enemyIndex];
               const enemyState = currentRound.enemyStates[enemyIndex];
 
@@ -4979,10 +5123,56 @@ const CombatTracker = ({
               <div className={styles['combatWizardName']}>
                 {currentCombatWizardEntry.combatantName}
               </div>
-              <div className={styles['modalLabel']}>Intention</div>
-              <div className={styles['combatWizardReadOnlyValue']}>
-                {currentCombatWizardEntry.intention || 'No intention recorded.'}
-              </div>
+              {currentCombatWizardActions.length > 0 ? (
+                <>
+                  <div className={styles['modalLabel']}>Action</div>
+                  <div
+                    className={`${styles['actionIntentActionList']} ${styles['combatWizardActionList']}`}
+                  >
+                    {currentCombatWizardActions.map((action, actionIndex) => {
+                      const actionLines = getActionSummaryLines(action, '');
+                      const actionSummary =
+                        actionLines.join(' · ') ||
+                        formatDeclaredAction(action.declaredAction);
+
+                      return (
+                        <button
+                          key={action.id}
+                          type={'button'}
+                          className={[
+                            styles['actionIntentActionButton'],
+                            action.id === selectedCombatWizardAction?.id
+                              ? styles['actionIntentActionButtonActive']
+                              : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          onClick={() =>
+                            setCombatWizardSelectedActionId(action.id)
+                          }
+                        >
+                          <span className={styles['actionIntentActionTitle']}>
+                            {actionIndex === 0
+                              ? 'Main'
+                              : `Action ${actionIndex + 1}`}
+                          </span>
+                          <span className={styles['actionIntentActionMeta']}>
+                            {actionSummary}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles['modalLabel']}>Intention</div>
+                  <div className={styles['combatWizardReadOnlyValue']}>
+                    {currentCombatWizardEntry.intention ||
+                      'No intention recorded.'}
+                  </div>
+                </>
+              )}
               <label
                 className={styles['modalLabel']}
                 htmlFor={'combat-wizard-result'}
@@ -5022,8 +5212,17 @@ const CombatTracker = ({
                 }
                 placeholder={'hopeless 1/9, slowed 3/8, bless, stoneskin...'}
               />
-              <div className={styles['modalLabel']}>Current Targets</div>
-              {renderCombatWizardTargets(currentCombatWizardEntry)}
+              <div className={styles['modalLabel']}>Targets</div>
+              {selectedCombatWizardActionTitle ? (
+                <div className={styles['combatWizardTargetScope']}>
+                  {selectedCombatWizardActionTitle}
+                </div>
+              ) : null}
+              {renderCombatWizardTargets(
+                currentCombatWizardEntry,
+                currentCombatWizardTargetIndices,
+                selectedCombatWizardAction
+              )}
             </div>
             <div className={styles['modalActions']}>
               <button
