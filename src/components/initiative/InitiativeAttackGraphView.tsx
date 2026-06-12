@@ -13,6 +13,7 @@ import styles from './initiativeAttackGraphView.module.css';
 
 interface InitiativeAttackGraphViewProps {
   completedNodeIds?: Set<string>;
+  onNodeSelect?: (nodeId: string) => void;
   readyNodeIds?: Set<string>;
   resolvedRound?: InitiativeResolvedRound;
   markerIdPrefix?: string;
@@ -39,6 +40,7 @@ export const InitiativeAttackGraphView = (
 ) => {
   const completedIdsForDisplay =
     props.completedNodeIds || EMPTY_ATTACK_GRAPH_NODE_IDS;
+  const handleNodeSelect = props.onNodeSelect;
   const readyIdsForDisplay = props.readyNodeIds || EMPTY_ATTACK_GRAPH_NODE_IDS;
   const initiativeResolvedRound = props.resolvedRound;
   const markerIdPrefix = props.markerIdPrefix || 'initiative-dag';
@@ -328,12 +330,14 @@ export const InitiativeAttackGraphView = (
             const isReady = readyIdsForDisplay.has(node.id);
             const isSelected = selectedNodeId === node.id;
             const isHovered = hoveredNodeId === node.id;
+            const canSelectNode = Boolean(handleNodeSelect);
 
             return (
               <g
                 key={layoutNode.nodeId}
                 className={[
                   isCompleted ? styles['graphNodeGroupCompleted'] : '',
+                  canSelectNode ? styles['graphNodeGroupInteractive'] : '',
                   isReady ? styles['graphNodeGroupReady'] : '',
                   isSelected ? styles['graphNodeGroupActive'] : '',
                 ]
@@ -342,12 +346,33 @@ export const InitiativeAttackGraphView = (
                 transform={`translate(${layoutNode.x} ${layoutNode.y})`}
                 data-graph-node={'true'}
                 data-graph-node-id={node.id}
+                role={canSelectNode ? 'button' : undefined}
                 aria-label={`${display.combatantName}, target ${display.targetLabel}, ${display.actionLabel}`}
+                onClick={
+                  canSelectNode
+                    ? (event) => {
+                        event.stopPropagation();
+                        handleNodeSelect?.(node.id);
+                      }
+                    : undefined
+                }
                 onFocus={() => setHoveredNodeId(node.id)}
                 onBlur={() =>
                   setHoveredNodeId((previous) =>
                     previous === node.id ? undefined : previous
                   )
+                }
+                onKeyDown={
+                  canSelectNode
+                    ? (event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') {
+                          return;
+                        }
+
+                        event.preventDefault();
+                        handleNodeSelect?.(node.id);
+                      }
+                    : undefined
                 }
                 tabIndex={0}
               >
@@ -379,18 +404,17 @@ export const InitiativeAttackGraphView = (
                     ]
                       .filter(Boolean)
                       .join(' ')}
-                    transform={'translate(10 10)'}
                     aria-hidden={'true'}
                   >
                     <title>{'Ready in Combat Flow'}</title>
                     <circle
-                      cx={0}
-                      cy={0}
-                      r={9}
+                      cx={13}
+                      cy={13}
+                      r={8}
                       className={styles['graphNodeReadyMarkerCircle']}
                     />
                     <path
-                      d={'M -3 -5 L 5 0 L -3 5 z'}
+                      d={'M 10 8.5 L 10 17.5 L 17 13 z'}
                       className={styles['graphNodeReadyMarkerGlyph']}
                     />
                   </g>

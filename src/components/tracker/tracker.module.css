@@ -1019,6 +1019,15 @@
   width: min(34rem, calc(100vw - 2rem));
 }
 
+.graphInspectorPopover {
+  position: fixed;
+  z-index: 12;
+  width: 20rem;
+  max-width: min(20rem, calc(100vw - 4rem));
+  overflow: auto;
+  box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.28);
+}
+
 .targetActionModal {
   z-index: 21;
   width: min(32rem, calc(100vw - 2rem));
@@ -2044,6 +2053,13 @@
   background: rgba(224, 171, 41, 0.26);
 }
 
+.combatFlowResolveButton:disabled {
+  border-color: rgba(240, 239, 221, 0.34);
+  background: rgba(240, 239, 221, 0.08);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
 .combatFlowBody {
   display: grid;
   grid-template-columns: minmax(14rem, 0.9fr) minmax(22rem, 1.5fr);
@@ -2218,6 +2234,7 @@
 }
 
 .initiativeDagPanel {
+  position: relative;
   max-width: 100%;
   margin-top: 1rem;
 }

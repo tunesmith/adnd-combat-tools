@@ -152,6 +152,10 @@
   opacity: 0.62;
 }
 
+.graphNodeGroupInteractive .graphNodeCard {
+  cursor: pointer;
+}
+
 .graphNodeGroupReady .graphNodeName,
 .graphNodeGroupReady .graphNodeTarget,
 .graphNodeGroupReady .graphNodeAction,
@@ -166,10 +170,9 @@
 }
 
 .graphNodeReadyMarkerCircle {
-  fill: #d9a92f;
-  stroke: #2f381f;
-  stroke-width: 1.4px;
-  filter: drop-shadow(0 0.12rem 0.18rem rgba(17, 21, 10, 0.28));
+  fill: #e2b235;
+  stroke: #3d4a24;
+  stroke-width: 1px;
 }
 
 .graphNodeReadyMarkerActive .graphNodeReadyMarkerCircle {

@@ -76,8 +76,14 @@ import {
   parseCastingSegments,
 } from '../../helpers/initiative/actionSegments';
 import { buildInitiativeAttackGraphNodeDisplayById } from '../../helpers/initiative/attackGraphDisplay';
+import {
+  buildInitiativeGraphEnabledNodeIds,
+  buildInitiativeGraphInspectorModel,
+  type InitiativeGraphNodeStatus,
+} from '../../helpers/initiative/graphInspector';
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
 import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
+import { InitiativeGraphInspectorPanel } from '../initiative/InitiativeGraphInspectorPanel';
 import {
   getDefaultTrackerDeclaredAction,
   getTrackerActionDeclarations,
@@ -265,6 +271,11 @@ const LOCAL_DRAFT_AUTOSAVE_MS = 750;
 const URL_WARNING_THRESHOLD = 6000;
 
 const SHARE_URL_COPIED_MS = 2200;
+const GRAPH_POPOVER_WIDTH = 320;
+const GRAPH_POPOVER_GAP = 14;
+const GRAPH_POPOVER_MARGIN = 10;
+const GRAPH_POPOVER_FALLBACK_HEIGHT = 320;
+const GRAPH_POPOVER_MAX_HEIGHT = 448;
 
 type AutoHeightTextareaProps = Omit<
   TextareaHTMLAttributes<HTMLTextAreaElement>,
@@ -1199,6 +1210,193 @@ const formatCombatFlowNodeTiming = (node: InitiativeAttackNode): string => {
   return 'Unsegmented';
 };
 
+const trackerReducer = (
+  state: TrackerState,
+  action: TrackerAction
+): TrackerState => {
+  switch (action.type) {
+    case 'replace-state':
+      return action.state;
+    case 'set-title':
+      return {
+        ...state,
+        title: action.value || undefined,
+      };
+    case 'set-round-label':
+      return updateCurrentRound(state, (round) => ({
+        ...round,
+        label: action.value,
+      }));
+    case 'select-round':
+      return {
+        ...state,
+        activeRound: action.index,
+      };
+    case 'set-round-field':
+      return updateCurrentRound(state, (round) => ({
+        ...round,
+        [action.field]: action.value,
+      }));
+    case 'set-cell-visibility':
+      return updateCurrentRound(state, (round) => ({
+        ...round,
+        cells: round.cells.map((row, rowIndex) =>
+          rowIndex === action.rowIndex
+            ? row.map((cell, columnIndex) =>
+                columnIndex === action.columnIndex
+                  ? {
+                      ...cell,
+                      [action.field]: action.value,
+                    }
+                  : cell
+              )
+            : row
+        ),
+      }));
+    case 'set-cell':
+      return updateCurrentRound(state, (round) => ({
+        ...round,
+        cells: round.cells.map((row, rowIndex) =>
+          rowIndex === action.rowIndex
+            ? row.map((cell, columnIndex) =>
+                columnIndex === action.columnIndex
+                  ? {
+                      ...cell,
+                      [action.field]: action.value,
+                      ...(action.field === 'enemyToParty'
+                        ? { enemyToPartyVisible: true }
+                        : { partyToEnemyVisible: true }),
+                    }
+                  : cell
+              )
+            : row
+        ),
+      }));
+    case 'set-cell-action-ids':
+      return updateCurrentRound(state, (round) => ({
+        ...round,
+        cells: round.cells.map((row, rowIndex) =>
+          rowIndex === action.rowIndex
+            ? row.map((cell, columnIndex) =>
+                columnIndex === action.columnIndex
+                  ? {
+                      ...cell,
+                      [action.field]: action.actionIds,
+                      ...(action.field === 'enemyToPartyActionIds'
+                        ? { enemyToPartyVisible: true }
+                        : { partyToEnemyVisible: true }),
+                    }
+                  : cell
+              )
+            : row
+        ),
+      }));
+    case 'set-party-state':
+      return updateCurrentRound(state, (round) => ({
+        ...round,
+        partyStates: round.partyStates.map((partyState, partyIndex) =>
+          partyIndex === action.index
+            ? {
+                ...partyState,
+                [action.field]: action.value,
+              }
+            : partyState
+        ),
+      }));
+    case 'set-enemy-state':
+      return updateCurrentRound(state, (round) => ({
+        ...round,
+        enemyStates: round.enemyStates.map((enemyState, enemyIndex) =>
+          enemyIndex === action.index
+            ? {
+                ...enemyState,
+                [action.field]: action.value,
+              }
+            : enemyState
+        ),
+      }));
+    case 'set-combatant-actions':
+      return updateCurrentRound(state, (round) => {
+        const combatant = getActionCombatant(round, action.side, action.index);
+
+        if (!combatant) {
+          return round;
+        }
+
+        const nextActions = (round.actions || []).filter(
+          (roundAction) =>
+            !(
+              roundAction.side === action.side &&
+              roundAction.combatantKey === combatant.key
+            )
+        );
+        const combinedActions = nextActions.concat(action.actionDeclarations);
+        const nextRound = pruneCellActionAssignments(
+          {
+            ...round,
+            actions: combinedActions.length > 0 ? combinedActions : undefined,
+          },
+          action.side,
+          action.index,
+          new Set(
+            action.actionDeclarations.map((declaration) => declaration.id)
+          )
+        );
+
+        if (action.side === 'party') {
+          return {
+            ...nextRound,
+            partyStates: nextRound.partyStates.map((partyState, partyIndex) =>
+              partyIndex === action.index
+                ? {
+                    ...partyState,
+                    action: action.intention,
+                  }
+                : partyState
+            ),
+          };
+        }
+
+        return {
+          ...nextRound,
+          enemyStates: nextRound.enemyStates.map((enemyState, enemyIndex) =>
+            enemyIndex === action.index
+              ? {
+                  ...enemyState,
+                  action: action.intention,
+                }
+              : enemyState
+          ),
+        };
+      });
+    case 'update-combatant':
+      return updateCombatant(
+        state,
+        action.side,
+        action.index,
+        action.combatant
+      );
+    case 'add-combatant':
+      return addCombatant(state, action.side, action.key);
+    case 'remove-combatant': {
+      const activeRound = state.rounds[state.activeRound];
+      if (
+        (action.side === 'party' && (activeRound?.party.length || 0) <= 1) ||
+        (action.side === 'enemy' && (activeRound?.enemies.length || 0) <= 1)
+      ) {
+        return state;
+      }
+      return removeCombatant(state, action.side, action.index);
+    }
+    case 'advance-round':
+      return insertRoundAfterActive(state);
+    case 'remove-round':
+      return removeActiveRound(state);
+    default:
+      return state;
+  }
+};
+
 const CombatTracker = ({
   rememberedState,
   loadedFromEncodedState = false,
@@ -1296,6 +1494,8 @@ const CombatTracker = ({
     combatFlowSelectedNodeIdsByRound,
     setCombatFlowSelectedNodeIdsByRound,
   ] = useState<Record<number, string | undefined>>({});
+  const [combatFlowGraphInspectorNodeId, setCombatFlowGraphInspectorNodeId] =
+    useState<string | undefined>(undefined);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleDraft, setTitleDraft] = useState<string>('');
   const [isEditingRoundLabel, setIsEditingRoundLabel] =
@@ -1308,264 +1508,24 @@ const CombatTracker = ({
   const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const importTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const combatResultTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const combatFlowGraphInspectorRef = useRef<HTMLDivElement | null>(null);
+  const combatFlowGraphContainerRef = useRef<HTMLElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const roundLabelInputRef = useRef<HTMLInputElement | null>(null);
   const moreActionsRef = useRef<HTMLDivElement | null>(null);
+  const [combatFlowGraphInspectorHeight, setCombatFlowGraphInspectorHeight] =
+    useState<number>(GRAPH_POPOVER_FALLBACK_HEIGHT);
+  const [
+    combatFlowGraphInspectorPosition,
+    setCombatFlowGraphInspectorPosition,
+  ] = useState<CSSProperties | undefined>(undefined);
 
-  const reducer = (
-    state: TrackerState,
-    action: TrackerAction
-  ): TrackerState => {
-    switch (action.type) {
-      case 'replace-state':
-        return action.state;
-      case 'set-title':
-        return {
-          ...state,
-          title: action.value || undefined,
-        };
-      case 'set-round-label':
-        return updateCurrentRound(state, (round) => ({
-          ...round,
-          label: action.value,
-        }));
-      case 'select-round':
-        return {
-          ...state,
-          activeRound: action.index,
-        };
-      case 'set-round-field':
-        return updateCurrentRound(state, (round) => ({
-          ...round,
-          [action.field]: action.value,
-        }));
-      case 'set-cell-visibility':
-        return updateCurrentRound(state, (round) => ({
-          ...round,
-          cells: round.cells.map((row, rowIndex) =>
-            rowIndex === action.rowIndex
-              ? row.map((cell, columnIndex) =>
-                  columnIndex === action.columnIndex
-                    ? {
-                        ...cell,
-                        [action.field]: action.value,
-                      }
-                    : cell
-                )
-              : row
-          ),
-        }));
-      case 'set-cell':
-        return updateCurrentRound(state, (round) => ({
-          ...round,
-          cells: round.cells.map((row, rowIndex) =>
-            rowIndex === action.rowIndex
-              ? row.map((cell, columnIndex) =>
-                  columnIndex === action.columnIndex
-                    ? {
-                        ...cell,
-                        [action.field]: action.value,
-                        ...(action.field === 'enemyToParty'
-                          ? { enemyToPartyVisible: true }
-                          : { partyToEnemyVisible: true }),
-                      }
-                    : cell
-                )
-              : row
-          ),
-        }));
-      case 'set-cell-action-ids':
-        return updateCurrentRound(state, (round) => ({
-          ...round,
-          cells: round.cells.map((row, rowIndex) =>
-            rowIndex === action.rowIndex
-              ? row.map((cell, columnIndex) =>
-                  columnIndex === action.columnIndex
-                    ? {
-                        ...cell,
-                        [action.field]: action.actionIds,
-                        ...(action.field === 'enemyToPartyActionIds'
-                          ? { enemyToPartyVisible: true }
-                          : { partyToEnemyVisible: true }),
-                      }
-                    : cell
-                )
-              : row
-          ),
-        }));
-      case 'set-party-state':
-        return updateCurrentRound(state, (round) => ({
-          ...round,
-          partyStates: round.partyStates.map((partyState, partyIndex) =>
-            partyIndex === action.index
-              ? {
-                  ...partyState,
-                  [action.field]: action.value,
-                }
-              : partyState
-          ),
-        }));
-      case 'set-enemy-state':
-        return updateCurrentRound(state, (round) => ({
-          ...round,
-          enemyStates: round.enemyStates.map((enemyState, enemyIndex) =>
-            enemyIndex === action.index
-              ? {
-                  ...enemyState,
-                  [action.field]: action.value,
-                }
-              : enemyState
-          ),
-        }));
-      case 'set-combatant-actions':
-        return updateCurrentRound(state, (round) => {
-          const combatant = getActionCombatant(
-            round,
-            action.side,
-            action.index
-          );
-
-          if (!combatant) {
-            return round;
-          }
-
-          const nextActions = (round.actions || []).filter(
-            (roundAction) =>
-              !(
-                roundAction.side === action.side &&
-                roundAction.combatantKey === combatant.key
-              )
-          );
-          const combinedActions = nextActions.concat(action.actionDeclarations);
-          const nextRound = pruneCellActionAssignments(
-            {
-              ...round,
-              actions: combinedActions.length > 0 ? combinedActions : undefined,
-            },
-            action.side,
-            action.index,
-            new Set(
-              action.actionDeclarations.map((declaration) => declaration.id)
-            )
-          );
-
-          if (action.side === 'party') {
-            return {
-              ...nextRound,
-              partyStates: nextRound.partyStates.map((partyState, partyIndex) =>
-                partyIndex === action.index
-                  ? {
-                      ...partyState,
-                      action: action.intention,
-                    }
-                  : partyState
-              ),
-            };
-          }
-
-          return {
-            ...nextRound,
-            enemyStates: nextRound.enemyStates.map((enemyState, enemyIndex) =>
-              enemyIndex === action.index
-                ? {
-                    ...enemyState,
-                    action: action.intention,
-                  }
-                : enemyState
-            ),
-          };
-        });
-      case 'update-combatant':
-        return updateCombatant(
-          state,
-          action.side,
-          action.index,
-          action.combatant
-        );
-      case 'add-combatant':
-        return addCombatant(state, action.side, action.key);
-      case 'remove-combatant': {
-        const activeRound = state.rounds[state.activeRound];
-        if (
-          (action.side === 'party' && (activeRound?.party.length || 0) <= 1) ||
-          (action.side === 'enemy' && (activeRound?.enemies.length || 0) <= 1)
-        ) {
-          return state;
-        }
-        return removeCombatant(state, action.side, action.index);
-      }
-      case 'advance-round':
-        return insertRoundAfterActive(state);
-      case 'remove-round':
-        return removeActiveRound(state);
-      default:
-        return state;
-    }
-  };
-
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(trackerReducer, initialState);
   const currentRound = state.rounds[state.activeRound];
   const currentRoundLabel = currentRound?.label || '';
   const trackerTitle = state.title || '';
   const currentIntentionWizardEntry =
     intentionWizardEntries[intentionWizardIndex];
-  const selectedActionEditorDraftIndex = actionEditorTarget
-    ? actionEditorDrafts.findIndex(
-        (draft) => draft.id === actionEditorTarget.selectedActionId
-      )
-    : -1;
-  const selectedActionEditorDraft =
-    selectedActionEditorDraftIndex >= 0
-      ? actionEditorDrafts[selectedActionEditorDraftIndex]
-      : undefined;
-  const selectedIntentionWizardActionDraftIndex =
-    intentionWizardSelectedActionId.length > 0
-      ? intentionWizardActionDrafts.findIndex(
-          (draft) => draft.id === intentionWizardSelectedActionId
-        )
-      : -1;
-  const selectedIntentionWizardActionDraft =
-    selectedIntentionWizardActionDraftIndex >= 0
-      ? intentionWizardActionDrafts[selectedIntentionWizardActionDraftIndex]
-      : undefined;
-  const selectedActionEditorCombatant =
-    actionEditorTarget && currentRound
-      ? getActionCombatant(
-          currentRound,
-          actionEditorTarget.side,
-          actionEditorTarget.index
-        )
-      : undefined;
-  const currentIntentionWizardCombatant =
-    currentIntentionWizardEntry && currentRound
-      ? getActionCombatant(
-          currentRound,
-          currentIntentionWizardEntry.side,
-          currentIntentionWizardEntry.index
-        )
-      : undefined;
-  const selectedActionEditorModeOptions = getAvailableActionEditorModeOptions(
-    selectedActionEditorCombatant?.weapon
-  );
-  const selectedIntentionWizardModeOptions =
-    getAvailableActionEditorModeOptions(
-      currentIntentionWizardCombatant?.weapon
-    );
-  const updateSelectedActionEditorDraft = (
-    updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
-  ) => {
-    if (!actionEditorTarget) {
-      return;
-    }
-
-    setActionEditorDrafts((drafts) =>
-      drafts.map((draft) =>
-        draft.id === actionEditorTarget.selectedActionId
-          ? updater(draft)
-          : draft
-      )
-    );
-  };
   const selectedAttackDetail = useMemo<TrackerAttackDetail | undefined>(() => {
     if (!currentRound || !attackDetailTarget) {
       return undefined;
@@ -1711,72 +1671,208 @@ const CombatTracker = ({
       state.activeRound,
     ]
   );
-  const combatFlowIncomingNodeIdsById = useMemo(() => {
-    const incomingNodeIdsById = new Map<string, string[]>();
-    const graphNodes = resolvedInitiativeRound?.attackGraph.nodes || [];
-
-    graphNodes.forEach((node) => {
-      incomingNodeIdsById.set(node.id, []);
-    });
-    resolvedInitiativeRound?.attackGraph.edges.forEach((edge) => {
-      incomingNodeIdsById.set(
-        edge.toNodeId,
-        (incomingNodeIdsById.get(edge.toNodeId) || []).concat(edge.fromNodeId)
-      );
-    });
-
-    const segmentedNodes = graphNodes.filter(
-      (node): node is InitiativeAttackNode & { segment: number } =>
-        typeof node.segment === 'number'
-    );
-
-    segmentedNodes.forEach((node) => {
-      const lowerSegmentNodeIds = segmentedNodes
-        .filter((otherNode) => otherNode.segment < node.segment)
-        .map((otherNode) => otherNode.id);
-
-      if (lowerSegmentNodeIds.length === 0) {
-        return;
-      }
-
-      incomingNodeIdsById.set(
-        node.id,
-        Array.from(
-          new Set(
-            (incomingNodeIdsById.get(node.id) || []).concat(lowerSegmentNodeIds)
-          )
-        )
-      );
-    });
-
-    return incomingNodeIdsById;
-  }, [resolvedInitiativeRound]);
-  const combatFlowReadyNodes = useMemo(
+  const combatFlowGraphNodeStatusById = useMemo<
+    Record<string, InitiativeGraphNodeStatus>
+  >(
     () =>
-      (resolvedInitiativeRound?.attackGraph.nodes || []).filter((node) => {
-        if (combatFlowCompletedNodeIds.has(node.id)) {
-          return false;
-        }
-
-        return (combatFlowIncomingNodeIdsById.get(node.id) || []).every(
-          (incomingNodeId) => combatFlowCompletedNodeIds.has(incomingNodeId)
-        );
-      }),
-    [
-      combatFlowCompletedNodeIds,
-      combatFlowIncomingNodeIdsById,
-      resolvedInitiativeRound,
-    ]
+      Object.fromEntries(
+        Array.from(combatFlowCompletedNodeIds).map((nodeId) => [
+          nodeId,
+          'resolved' as const,
+        ])
+      ),
+    [combatFlowCompletedNodeIds]
   );
   const combatFlowReadyNodeIds = useMemo(
-    () => new Set(combatFlowReadyNodes.map((node) => node.id)),
-    [combatFlowReadyNodes]
+    () =>
+      resolvedInitiativeRound
+        ? buildInitiativeGraphEnabledNodeIds(
+            resolvedInitiativeRound.attackGraph,
+            combatFlowGraphNodeStatusById
+          )
+        : new Set<string>(),
+    [combatFlowGraphNodeStatusById, resolvedInitiativeRound]
+  );
+  const combatFlowReadyNodes = useMemo(
+    () =>
+      (resolvedInitiativeRound?.attackGraph.nodes || []).filter((node) =>
+        combatFlowReadyNodeIds.has(node.id)
+      ),
+    [combatFlowReadyNodeIds, resolvedInitiativeRound]
   );
   const combatFlowSelectedNodeId =
     combatFlowSelectedNodeIdsByRound[state.activeRound];
   const selectedCombatFlowNode =
     combatFlowReadyNodes.find((node) => node.id === combatFlowSelectedNodeId) ||
     combatFlowReadyNodes[0];
+  const combatFlowGraphInspectorModel = useMemo(
+    () =>
+      resolvedInitiativeRound && combatFlowGraphInspectorNodeId
+        ? buildInitiativeGraphInspectorModel(
+            resolvedInitiativeRound,
+            combatFlowGraphInspectorNodeId,
+            combatFlowGraphNodeStatusById
+          )
+        : undefined,
+    [
+      combatFlowGraphInspectorNodeId,
+      combatFlowGraphNodeStatusById,
+      resolvedInitiativeRound,
+    ]
+  );
+  useLayoutEffect(() => {
+    if (!combatFlowGraphInspectorNodeId) {
+      setCombatFlowGraphInspectorHeight(GRAPH_POPOVER_FALLBACK_HEIGHT);
+      return;
+    }
+
+    const inspectorElement = combatFlowGraphInspectorRef.current;
+
+    if (!inspectorElement) {
+      return;
+    }
+
+    const updateHeight = () => {
+      const nextHeight = Math.ceil(inspectorElement.offsetHeight);
+      setCombatFlowGraphInspectorHeight((previous) =>
+        previous === nextHeight ? previous : nextHeight
+      );
+    };
+
+    updateHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(inspectorElement);
+    return () => resizeObserver.disconnect();
+  }, [combatFlowGraphInspectorNodeId, combatFlowGraphInspectorModel]);
+  useLayoutEffect(() => {
+    if (!combatFlowGraphInspectorNodeId) {
+      setCombatFlowGraphInspectorPosition(undefined);
+      return;
+    }
+
+    const updatePosition = () => {
+      const graphContainer = combatFlowGraphContainerRef.current;
+      const graphNode = Array.from(
+        graphContainer?.querySelectorAll<SVGGElement>(
+          '[data-graph-node="true"]'
+        ) || []
+      ).find(
+        (nodeElement) =>
+          nodeElement.getAttribute('data-graph-node-id') ===
+          combatFlowGraphInspectorNodeId
+      );
+
+      if (!graphNode || typeof window === 'undefined') {
+        setCombatFlowGraphInspectorPosition(undefined);
+        return;
+      }
+
+      const nodeRect = graphNode.getBoundingClientRect();
+      const viewportWidth =
+        window.innerWidth || document.documentElement.clientWidth;
+      const viewportHeight =
+        window.innerHeight || document.documentElement.clientHeight;
+      const viewportMaxPopoverHeight = Math.min(
+        GRAPH_POPOVER_MAX_HEIGHT,
+        Math.max(1, viewportHeight - GRAPH_POPOVER_MARGIN * 2)
+      );
+      const effectivePopoverHeight = Math.min(
+        combatFlowGraphInspectorHeight,
+        viewportMaxPopoverHeight
+      );
+      const preferredRight = nodeRect.right + GRAPH_POPOVER_GAP;
+      const placeLeft =
+        preferredRight >
+        viewportWidth - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_MARGIN;
+      const left = placeLeft
+        ? Math.max(
+            GRAPH_POPOVER_MARGIN,
+            nodeRect.left - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_GAP
+          )
+        : Math.min(
+            preferredRight,
+            Math.max(
+              GRAPH_POPOVER_MARGIN,
+              viewportWidth - GRAPH_POPOVER_WIDTH - GRAPH_POPOVER_MARGIN
+            )
+          );
+      const top = Math.min(
+        Math.max(GRAPH_POPOVER_MARGIN, nodeRect.top - 6),
+        Math.max(
+          GRAPH_POPOVER_MARGIN,
+          viewportHeight - effectivePopoverHeight - GRAPH_POPOVER_MARGIN
+        )
+      );
+      const availablePopoverHeight = Math.max(
+        1,
+        viewportHeight - top - GRAPH_POPOVER_MARGIN
+      );
+      const maxPopoverHeight = Math.min(
+        viewportMaxPopoverHeight,
+        availablePopoverHeight
+      );
+
+      setCombatFlowGraphInspectorPosition((previous) =>
+        previous?.left === left &&
+        previous?.top === top &&
+        previous?.maxHeight === `${maxPopoverHeight}px`
+          ? previous
+          : {
+              left,
+              top,
+              maxHeight: `${maxPopoverHeight}px`,
+            }
+      );
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [combatFlowGraphInspectorHeight, combatFlowGraphInspectorNodeId]);
+  useEffect(() => {
+    if (!combatFlowGraphInspectorNodeId || typeof window === 'undefined') {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setCombatFlowGraphInspectorNodeId(undefined);
+      }
+    };
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      if (combatFlowGraphInspectorRef.current?.contains(target)) {
+        return;
+      }
+
+      if (target.closest('[data-graph-node="true"]')) {
+        return;
+      }
+
+      setCombatFlowGraphInspectorNodeId(undefined);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('click', handleDocumentClick);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('click', handleDocumentClick);
+    };
+  }, [combatFlowGraphInspectorNodeId]);
   const currentCombatWizardEntry = combatWizardEntries[combatWizardIndex];
   const currentCombatWizardEntryKey = currentCombatWizardEntry?.combatantKey;
   const currentCombatWizardActions = useMemo<TrackerActionDeclaration[]>(
@@ -2328,6 +2424,64 @@ const CombatTracker = ({
     return <></>;
   }
 
+  const selectedActionEditorDraftIndex = actionEditorTarget
+    ? actionEditorDrafts.findIndex(
+        (draft) => draft.id === actionEditorTarget.selectedActionId
+      )
+    : -1;
+  const selectedActionEditorDraft =
+    selectedActionEditorDraftIndex >= 0
+      ? actionEditorDrafts[selectedActionEditorDraftIndex]
+      : undefined;
+  const selectedIntentionWizardActionDraftIndex =
+    intentionWizardSelectedActionId.length > 0
+      ? intentionWizardActionDrafts.findIndex(
+          (draft) => draft.id === intentionWizardSelectedActionId
+        )
+      : -1;
+  const selectedIntentionWizardActionDraft =
+    selectedIntentionWizardActionDraftIndex >= 0
+      ? intentionWizardActionDrafts[selectedIntentionWizardActionDraftIndex]
+      : undefined;
+  const selectedActionEditorCombatant =
+    actionEditorTarget && currentRound
+      ? getActionCombatant(
+          currentRound,
+          actionEditorTarget.side,
+          actionEditorTarget.index
+        )
+      : undefined;
+  const currentIntentionWizardCombatant =
+    currentIntentionWizardEntry && currentRound
+      ? getActionCombatant(
+          currentRound,
+          currentIntentionWizardEntry.side,
+          currentIntentionWizardEntry.index
+        )
+      : undefined;
+  const selectedActionEditorModeOptions = getAvailableActionEditorModeOptions(
+    selectedActionEditorCombatant?.weapon
+  );
+  const selectedIntentionWizardModeOptions =
+    getAvailableActionEditorModeOptions(
+      currentIntentionWizardCombatant?.weapon
+    );
+  const updateSelectedActionEditorDraft = (
+    updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
+  ) => {
+    if (!actionEditorTarget) {
+      return;
+    }
+
+    setActionEditorDrafts((drafts) =>
+      drafts.map((draft) =>
+        draft.id === actionEditorTarget.selectedActionId
+          ? updater(draft)
+          : draft
+      )
+    );
+  };
+
   const nextKey = () => {
     const current = idCounter.current;
     idCounter.current += 1;
@@ -2747,27 +2901,59 @@ const CombatTracker = ({
     }));
   };
 
-  const markSelectedCombatFlowNodeResolved = () => {
-    if (!selectedCombatFlowNode) {
-      return;
-    }
-
+  const markCombatFlowNodeResolved = (nodeId: string) => {
     setCombatFlowCompletedNodeIdsByRound((previous) => {
       const completedNodeIds = previous[state.activeRound] || [];
 
-      if (completedNodeIds.includes(selectedCombatFlowNode.id)) {
+      if (completedNodeIds.includes(nodeId)) {
         return previous;
       }
 
       return {
         ...previous,
-        [state.activeRound]: completedNodeIds.concat(selectedCombatFlowNode.id),
+        [state.activeRound]: completedNodeIds.concat(nodeId),
       };
     });
     setCombatFlowSelectedNodeIdsByRound((previous) => ({
       ...previous,
-      [state.activeRound]: undefined,
+      [state.activeRound]:
+        previous[state.activeRound] === nodeId
+          ? undefined
+          : previous[state.activeRound],
     }));
+  };
+
+  const clearCombatFlowNodeResolved = (nodeId: string) => {
+    setCombatFlowCompletedNodeIdsByRound((previous) => {
+      const completedNodeIds = previous[state.activeRound] || [];
+
+      if (!completedNodeIds.includes(nodeId)) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [state.activeRound]: completedNodeIds.filter(
+          (completedNodeId) => completedNodeId !== nodeId
+        ),
+      };
+    });
+  };
+
+  const openCombatFlowGraphNode = (nodeId: string) => {
+    setCombatFlowGraphInspectorNodeId(nodeId);
+
+    if (combatFlowReadyNodeIds.has(nodeId)) {
+      selectCombatFlowNode(nodeId);
+    }
+  };
+
+  const markSelectedCombatFlowNodeResolved = () => {
+    if (!selectedCombatFlowNode) {
+      return;
+    }
+
+    markCombatFlowNodeResolved(selectedCombatFlowNode.id);
   };
 
   const resetCombatFlowProgress = () => {
@@ -2779,6 +2965,7 @@ const CombatTracker = ({
       ...previous,
       [state.activeRound]: undefined,
     }));
+    setCombatFlowGraphInspectorNodeId(undefined);
   };
 
   const confirmDeleteRound = () => {
@@ -4572,6 +4759,7 @@ const CombatTracker = ({
         </div>
         {renderCombatFlowPanel()}
         <section
+          ref={combatFlowGraphContainerRef}
           className={styles['initiativeDagPanel']}
           aria-labelledby={'tracker-initiative-dag-title'}
         >
@@ -4584,12 +4772,15 @@ const CombatTracker = ({
           {resolvedInitiativeRound ? (
             <InitiativeAttackGraphView
               completedNodeIds={combatFlowCompletedNodeIds}
+              onNodeSelect={openCombatFlowGraphNode}
               readyNodeIds={combatFlowReadyNodeIds}
               resolvedRound={resolvedInitiativeRound}
               markerIdPrefix={'tracker-initiative-dag'}
               minHeightRem={22}
               readableText={true}
-              selectedNodeId={selectedCombatFlowNode?.id}
+              selectedNodeId={
+                combatFlowGraphInspectorNodeId || selectedCombatFlowNode?.id
+              }
               showEmptySegmentLanes={true}
               targetPrefix={'→'}
             />
@@ -4598,6 +4789,18 @@ const CombatTracker = ({
               Enter party and enemy initiative to draw the current round DAG.
             </div>
           )}
+          {combatFlowGraphInspectorModel && combatFlowGraphInspectorPosition ? (
+            <InitiativeGraphInspectorPanel
+              ref={combatFlowGraphInspectorRef}
+              className={styles['graphInspectorPopover']}
+              model={combatFlowGraphInspectorModel}
+              style={combatFlowGraphInspectorPosition}
+              onClick={(event) => event.stopPropagation()}
+              onOpenNode={openCombatFlowGraphNode}
+              onResolve={markCombatFlowNodeResolved}
+              onClearStatus={clearCombatFlowNodeResolved}
+            />
+          ) : null}
         </section>
       </div>
       {showRecoverModal && (
