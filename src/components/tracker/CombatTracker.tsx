@@ -26,6 +26,7 @@ import type {
   TrackerState,
 } from '../../types/tracker';
 import type {
+  InitiativeAttackNode,
   InitiativeDeclaredAction,
   InitiativeTimingOverride,
 } from '../../types/initiative';
@@ -74,6 +75,7 @@ import {
   parseActivationSegments,
   parseCastingSegments,
 } from '../../helpers/initiative/actionSegments';
+import { buildInitiativeAttackGraphNodeDisplayById } from '../../helpers/initiative/attackGraphDisplay';
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
 import { InitiativeAttackGraphView } from '../initiative/InitiativeAttackGraphView';
 import {
@@ -1181,6 +1183,22 @@ const getCombatWizardActionsForEntry = (
   );
 };
 
+const formatCombatFlowNodeTiming = (node: InitiativeAttackNode): string => {
+  if (node.segment !== undefined) {
+    return `Segment ${node.segment}`;
+  }
+
+  if (node.kind === 'spell-start') {
+    return 'Spell starts';
+  }
+
+  if (node.kind === 'spell-completion') {
+    return 'Spell completes';
+  }
+
+  return 'Unsegmented';
+};
+
 const CombatTracker = ({
   rememberedState,
   loadedFromEncodedState = false,
@@ -1270,6 +1288,14 @@ const CombatTracker = ({
   const [intentionWizardActionError, setIntentionWizardActionError] = useState<
     string | undefined
   >(undefined);
+  const [
+    combatFlowCompletedNodeIdsByRound,
+    setCombatFlowCompletedNodeIdsByRound,
+  ] = useState<Record<number, string[]>>({});
+  const [
+    combatFlowSelectedNodeIdsByRound,
+    setCombatFlowSelectedNodeIdsByRound,
+  ] = useState<Record<number, string | undefined>>({});
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleDraft, setTitleDraft] = useState<string>('');
   const [isEditingRoundLabel, setIsEditingRoundLabel] =
@@ -1656,6 +1682,97 @@ const CombatTracker = ({
         : undefined,
     [canOpenCombatWizard, currentRound]
   );
+  const combatFlowNodeDisplayById = useMemo(
+    () =>
+      resolvedInitiativeRound
+        ? buildInitiativeAttackGraphNodeDisplayById(resolvedInitiativeRound, {
+            targetPrefix: '→',
+          })
+        : {},
+    [resolvedInitiativeRound]
+  );
+  const combatFlowGraphNodeIds = useMemo(
+    () =>
+      new Set(
+        resolvedInitiativeRound?.attackGraph.nodes.map((node) => node.id) || []
+      ),
+    [resolvedInitiativeRound]
+  );
+  const combatFlowCompletedNodeIds = useMemo(
+    () =>
+      new Set(
+        (combatFlowCompletedNodeIdsByRound[state.activeRound] || []).filter(
+          (nodeId) => combatFlowGraphNodeIds.has(nodeId)
+        )
+      ),
+    [
+      combatFlowCompletedNodeIdsByRound,
+      combatFlowGraphNodeIds,
+      state.activeRound,
+    ]
+  );
+  const combatFlowIncomingNodeIdsById = useMemo(() => {
+    const incomingNodeIdsById = new Map<string, string[]>();
+    const graphNodes = resolvedInitiativeRound?.attackGraph.nodes || [];
+
+    graphNodes.forEach((node) => {
+      incomingNodeIdsById.set(node.id, []);
+    });
+    resolvedInitiativeRound?.attackGraph.edges.forEach((edge) => {
+      incomingNodeIdsById.set(
+        edge.toNodeId,
+        (incomingNodeIdsById.get(edge.toNodeId) || []).concat(edge.fromNodeId)
+      );
+    });
+
+    const segmentedNodes = graphNodes.filter(
+      (node): node is InitiativeAttackNode & { segment: number } =>
+        typeof node.segment === 'number'
+    );
+
+    segmentedNodes.forEach((node) => {
+      const lowerSegmentNodeIds = segmentedNodes
+        .filter((otherNode) => otherNode.segment < node.segment)
+        .map((otherNode) => otherNode.id);
+
+      if (lowerSegmentNodeIds.length === 0) {
+        return;
+      }
+
+      incomingNodeIdsById.set(
+        node.id,
+        Array.from(
+          new Set(
+            (incomingNodeIdsById.get(node.id) || []).concat(lowerSegmentNodeIds)
+          )
+        )
+      );
+    });
+
+    return incomingNodeIdsById;
+  }, [resolvedInitiativeRound]);
+  const combatFlowReadyNodes = useMemo(
+    () =>
+      (resolvedInitiativeRound?.attackGraph.nodes || []).filter((node) => {
+        if (combatFlowCompletedNodeIds.has(node.id)) {
+          return false;
+        }
+
+        return (combatFlowIncomingNodeIdsById.get(node.id) || []).every(
+          (incomingNodeId) => combatFlowCompletedNodeIds.has(incomingNodeId)
+        );
+      }),
+    [
+      combatFlowCompletedNodeIds,
+      combatFlowIncomingNodeIdsById,
+      resolvedInitiativeRound,
+    ]
+  );
+  const combatFlowSelectedNodeId =
+    combatFlowSelectedNodeIdsByRound[state.activeRound];
+  const selectedCombatFlowNode =
+    combatFlowReadyNodes.find((node) => node.id === combatFlowSelectedNodeId) ||
+    combatFlowReadyNodes[0];
   const currentCombatWizardEntry = combatWizardEntries[combatWizardIndex];
   const currentCombatWizardEntryKey = currentCombatWizardEntry?.combatantKey;
   const currentCombatWizardActions = useMemo<TrackerActionDeclaration[]>(
@@ -2088,6 +2205,40 @@ const CombatTracker = ({
     currentCombatWizardActions,
     currentCombatWizardEntry,
     showCombatWizard,
+  ]);
+
+  useEffect(() => {
+    if (!resolvedInitiativeRound) {
+      return;
+    }
+
+    const savedCompletedNodeIds =
+      combatFlowCompletedNodeIdsByRound[state.activeRound] || [];
+    const validCompletedNodeIds = savedCompletedNodeIds.filter((nodeId) =>
+      combatFlowGraphNodeIds.has(nodeId)
+    );
+
+    if (validCompletedNodeIds.length !== savedCompletedNodeIds.length) {
+      setCombatFlowCompletedNodeIdsByRound((previous) => ({
+        ...previous,
+        [state.activeRound]: validCompletedNodeIds,
+      }));
+    }
+
+    const nextSelectedNodeId = selectedCombatFlowNode?.id;
+    if (combatFlowSelectedNodeId !== nextSelectedNodeId) {
+      setCombatFlowSelectedNodeIdsByRound((previous) => ({
+        ...previous,
+        [state.activeRound]: nextSelectedNodeId,
+      }));
+    }
+  }, [
+    combatFlowCompletedNodeIdsByRound,
+    combatFlowGraphNodeIds,
+    combatFlowSelectedNodeId,
+    resolvedInitiativeRound,
+    selectedCombatFlowNode,
+    state.activeRound,
   ]);
 
   useEffect(() => {
@@ -2583,6 +2734,47 @@ const CombatTracker = ({
       )
     );
     setCombatWizardIndex(boundedIndex);
+  };
+
+  const selectCombatFlowNode = (nodeId: string) => {
+    setCombatFlowSelectedNodeIdsByRound((previous) => ({
+      ...previous,
+      [state.activeRound]: nodeId,
+    }));
+  };
+
+  const markSelectedCombatFlowNodeResolved = () => {
+    if (!selectedCombatFlowNode) {
+      return;
+    }
+
+    setCombatFlowCompletedNodeIdsByRound((previous) => {
+      const completedNodeIds = previous[state.activeRound] || [];
+
+      if (completedNodeIds.includes(selectedCombatFlowNode.id)) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [state.activeRound]: completedNodeIds.concat(selectedCombatFlowNode.id),
+      };
+    });
+    setCombatFlowSelectedNodeIdsByRound((previous) => ({
+      ...previous,
+      [state.activeRound]: undefined,
+    }));
+  };
+
+  const resetCombatFlowProgress = () => {
+    setCombatFlowCompletedNodeIdsByRound((previous) => ({
+      ...previous,
+      [state.activeRound]: [],
+    }));
+    setCombatFlowSelectedNodeIdsByRound((previous) => ({
+      ...previous,
+      [state.activeRound]: undefined,
+    }));
   };
 
   const confirmDeleteRound = () => {
@@ -3661,6 +3853,218 @@ const CombatTracker = ({
     );
   };
 
+  const renderCombatFlowPanel = () => {
+    if (
+      !resolvedInitiativeRound ||
+      resolvedInitiativeRound.attackGraph.nodes.length === 0
+    ) {
+      return null;
+    }
+
+    const totalNodeCount = resolvedInitiativeRound.attackGraph.nodes.length;
+    const completedNodeCount = combatFlowCompletedNodeIds.size;
+    const isFlowComplete = completedNodeCount >= totalNodeCount;
+    const selectedDisplay = selectedCombatFlowNode
+      ? combatFlowNodeDisplayById[selectedCombatFlowNode.id]
+      : undefined;
+    const selectedCombatant = selectedCombatFlowNode
+      ? resolvedInitiativeRound.scenario.party
+          .concat(resolvedInitiativeRound.scenario.enemies)
+          .find(
+            (combatant) => combatant.id === selectedCombatFlowNode.combatantId
+          )
+      : undefined;
+    const selectedRoundState = selectedCombatant
+      ? selectedCombatant.side === 'party'
+        ? currentRound.partyStates[selectedCombatant.index]
+        : currentRound.enemyStates[selectedCombatant.index]
+      : undefined;
+
+    return (
+      <section
+        className={styles['combatFlowPanel']}
+        aria-labelledby={'tracker-combat-flow-title'}
+      >
+        <div className={styles['combatFlowHeader']}>
+          <div>
+            <h2
+              id={'tracker-combat-flow-title'}
+              className={styles['combatFlowTitle']}
+            >
+              Combat Flow
+            </h2>
+            <div className={styles['combatFlowSubtitle']}>
+              Ready actions are unblocked by the current DAG and segment lane.
+            </div>
+          </div>
+          <div className={styles['combatFlowHeaderActions']}>
+            <span className={styles['combatFlowProgress']}>
+              {completedNodeCount} / {totalNodeCount} resolved
+            </span>
+            <button
+              type={'button'}
+              className={styles['combatFlowResetButton']}
+              disabled={completedNodeCount === 0}
+              onClick={resetCombatFlowProgress}
+            >
+              Reset flow
+            </button>
+          </div>
+        </div>
+        <div className={styles['combatFlowBody']}>
+          <div className={styles['combatFlowReadyPane']}>
+            <div className={styles['combatFlowPaneTitle']}>Ready Actions</div>
+            {combatFlowReadyNodes.length > 0 ? (
+              <div className={styles['combatFlowReadyList']}>
+                {combatFlowReadyNodes.map((node) => {
+                  const display = combatFlowNodeDisplayById[node.id];
+                  const isSelected = selectedCombatFlowNode?.id === node.id;
+
+                  return (
+                    <button
+                      key={node.id}
+                      type={'button'}
+                      className={[
+                        styles['combatFlowReadyButton'],
+                        node.side === 'party'
+                          ? styles['combatFlowReadyButtonParty']
+                          : styles['combatFlowReadyButtonEnemy'],
+                        isSelected
+                          ? styles['combatFlowReadyButtonSelected']
+                          : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() => selectCombatFlowNode(node.id)}
+                    >
+                      <span className={styles['combatFlowReadyName']}>
+                        {display?.combatantName || node.combatantId}
+                      </span>
+                      <span className={styles['combatFlowReadyTarget']}>
+                        {display ? `→ ${display.targetLabel}` : '→ Unknown'}
+                      </span>
+                      <span className={styles['combatFlowReadyAction']}>
+                        {display?.actionLabel || node.label}
+                      </span>
+                      <span className={styles['combatFlowReadyTiming']}>
+                        {formatCombatFlowNodeTiming(node)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={styles['combatFlowEmpty']}>
+                {isFlowComplete
+                  ? 'All graph actions are resolved for this session.'
+                  : 'No unblocked graph actions are available. Check the DAG below.'}
+              </div>
+            )}
+          </div>
+          <div className={styles['combatFlowResolverPane']}>
+            <div className={styles['combatFlowPaneTitle']}>Selected Action</div>
+            {selectedCombatFlowNode && selectedDisplay && selectedCombatant ? (
+              <>
+                <div className={styles['combatFlowSelectedCard']}>
+                  <div className={styles['combatFlowSelectedTopline']}>
+                    <span
+                      className={[
+                        styles['combatFlowSideBadge'],
+                        selectedCombatFlowNode.side === 'party'
+                          ? styles['combatFlowSideBadgeParty']
+                          : styles['combatFlowSideBadgeEnemy'],
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      {selectedCombatFlowNode.side === 'party'
+                        ? 'Party'
+                        : 'Enemy'}
+                    </span>
+                    <span className={styles['combatFlowTimingBadge']}>
+                      {formatCombatFlowNodeTiming(selectedCombatFlowNode)}
+                    </span>
+                  </div>
+                  <div className={styles['combatFlowSelectedName']}>
+                    {selectedDisplay.combatantName}
+                  </div>
+                  <div className={styles['combatFlowSelectedTarget']}>
+                    → {selectedDisplay.targetLabel}
+                  </div>
+                  <div className={styles['combatFlowSelectedAction']}>
+                    {selectedDisplay.actionTitle}
+                  </div>
+                  {selectedDisplay.actionMeta ? (
+                    <div className={styles['combatFlowSelectedMeta']}>
+                      {selectedDisplay.actionMeta}
+                    </div>
+                  ) : null}
+                </div>
+                <label className={styles['combatFlowField']}>
+                  <span className={styles['combatFlowFieldLabel']}>Result</span>
+                  <AutoHeightTextarea
+                    className={styles['combatFlowTextarea']}
+                    value={selectedRoundState?.result || ''}
+                    onChange={(value) =>
+                      dispatch({
+                        type:
+                          selectedCombatant.side === 'party'
+                            ? 'set-party-state'
+                            : 'set-enemy-state',
+                        index: selectedCombatant.index,
+                        field: 'result',
+                        value,
+                      })
+                    }
+                    placeholder={
+                      'misses, hits for 6, sleep: one saves, two asleep...'
+                    }
+                  />
+                </label>
+                <label className={styles['combatFlowField']}>
+                  <span className={styles['combatFlowFieldLabel']}>
+                    Current Effect
+                  </span>
+                  <AutoHeightTextarea
+                    className={styles['combatFlowTextarea']}
+                    value={selectedRoundState?.effect || ''}
+                    onChange={(value) =>
+                      dispatch({
+                        type:
+                          selectedCombatant.side === 'party'
+                            ? 'set-party-state'
+                            : 'set-enemy-state',
+                        index: selectedCombatant.index,
+                        field: 'effect',
+                        value,
+                      })
+                    }
+                    placeholder={'hopeless 1/9, slowed 3/8, bless...'}
+                  />
+                </label>
+                <div className={styles['combatFlowResolverActions']}>
+                  <button
+                    type={'button'}
+                    className={styles['combatFlowResolveButton']}
+                    onClick={markSelectedCombatFlowNodeResolved}
+                  >
+                    Resolve action
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className={styles['combatFlowEmpty']}>
+                {isFlowComplete
+                  ? 'The current flow is complete. Reset it to walk the round again.'
+                  : 'Select a ready action to process it here.'}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
   return (
     <div id={'app-modal'}>
       <div className={styles['page']}>
@@ -4162,6 +4566,7 @@ const CombatTracker = ({
             </tfoot>
           </table>
         </div>
+        {renderCombatFlowPanel()}
         <section
           className={styles['initiativeDagPanel']}
           aria-labelledby={'tracker-initiative-dag-title'}
