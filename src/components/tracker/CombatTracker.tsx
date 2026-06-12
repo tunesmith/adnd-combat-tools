@@ -1768,6 +1768,10 @@ const CombatTracker = ({
       resolvedInitiativeRound,
     ]
   );
+  const combatFlowReadyNodeIds = useMemo(
+    () => new Set(combatFlowReadyNodes.map((node) => node.id)),
+    [combatFlowReadyNodes]
+  );
   const combatFlowSelectedNodeId =
     combatFlowSelectedNodeIdsByRound[state.activeRound];
   const selectedCombatFlowNode =
@@ -4579,10 +4583,13 @@ const CombatTracker = ({
           </h2>
           {resolvedInitiativeRound ? (
             <InitiativeAttackGraphView
+              completedNodeIds={combatFlowCompletedNodeIds}
+              readyNodeIds={combatFlowReadyNodeIds}
               resolvedRound={resolvedInitiativeRound}
               markerIdPrefix={'tracker-initiative-dag'}
               minHeightRem={22}
               readableText={true}
+              selectedNodeId={selectedCombatFlowNode?.id}
               showEmptySegmentLanes={true}
               targetPrefix={'→'}
             />

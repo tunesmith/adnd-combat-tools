@@ -5,14 +5,20 @@ import {
 } from '../../helpers/initiative/attackGraphDisplay';
 import { buildInitiativeAttackGraphLayout } from '../../helpers/initiative/attackGraphLayout';
 import type { InitiativeResolvedRound } from '../../helpers/initiative/resolvedRound';
-import type { InitiativeAttackNode } from '../../types/initiative';
+import type {
+  InitiativeAttackGraph,
+  InitiativeAttackNode,
+} from '../../types/initiative';
 import styles from './initiativeAttackGraphView.module.css';
 
 interface InitiativeAttackGraphViewProps {
-  resolvedRound: InitiativeResolvedRound;
+  completedNodeIds?: Set<string>;
+  readyNodeIds?: Set<string>;
+  resolvedRound?: InitiativeResolvedRound;
   markerIdPrefix?: string;
   minHeightRem?: number;
   readableText?: boolean;
+  selectedNodeId?: string;
   showEmptySegmentLanes?: boolean;
   targetPrefix?: string;
 }
@@ -20,28 +26,44 @@ interface InitiativeAttackGraphViewProps {
 const getGraphNodeFill = (side: InitiativeAttackNode['side']): string =>
   side === 'party' ? '#6c8d35' : '#a65042';
 
-export const InitiativeAttackGraphView = ({
-  resolvedRound,
-  markerIdPrefix = 'initiative-dag',
-  minHeightRem,
-  readableText = false,
-  showEmptySegmentLanes = false,
-  targetPrefix,
-}: InitiativeAttackGraphViewProps) => {
+const EMPTY_ATTACK_GRAPH: InitiativeAttackGraph = {
+  nodes: [],
+  edges: [],
+  layers: [],
+  simultaneousGroups: [],
+};
+const EMPTY_ATTACK_GRAPH_NODE_IDS = new Set<string>();
+
+export const InitiativeAttackGraphView = (
+  props: InitiativeAttackGraphViewProps
+) => {
+  const completedIdsForDisplay =
+    props.completedNodeIds || EMPTY_ATTACK_GRAPH_NODE_IDS;
+  const readyIdsForDisplay = props.readyNodeIds || EMPTY_ATTACK_GRAPH_NODE_IDS;
+  const initiativeResolvedRound = props.resolvedRound;
+  const markerIdPrefix = props.markerIdPrefix || 'initiative-dag';
+  const minHeightRem = props.minHeightRem;
+  const readableText = props.readableText || false;
+  const selectedNodeId = props.selectedNodeId;
+  const showEmptySegmentLanes = props.showEmptySegmentLanes || false;
+  const targetPrefix = props.targetPrefix;
   const [hoveredNodeId, setHoveredNodeId] = useState<string | undefined>(
     undefined
   );
-  const { attackGraph } = resolvedRound;
+  const attackGraph =
+    initiativeResolvedRound?.attackGraph || EMPTY_ATTACK_GRAPH;
   const attackNodeById = useMemo(
     () => new Map(attackGraph.nodes.map((node) => [node.id, node] as const)),
     [attackGraph.nodes]
   );
   const graphNodeDisplayById = useMemo(
     () =>
-      buildInitiativeAttackGraphNodeDisplayById(resolvedRound, {
-        targetPrefix,
-      }),
-    [resolvedRound, targetPrefix]
+      initiativeResolvedRound
+        ? buildInitiativeAttackGraphNodeDisplayById(initiativeResolvedRound, {
+            targetPrefix,
+          })
+        : {},
+    [initiativeResolvedRound, targetPrefix]
   );
   const graphLayout = useMemo(
     () =>
@@ -302,10 +324,21 @@ export const InitiativeAttackGraphView = ({
               layoutNode.height,
               display.lines.length
             );
+            const isCompleted = completedIdsForDisplay.has(node.id);
+            const isReady = readyIdsForDisplay.has(node.id);
+            const isSelected = selectedNodeId === node.id;
+            const isHovered = hoveredNodeId === node.id;
 
             return (
               <g
                 key={layoutNode.nodeId}
+                className={[
+                  isCompleted ? styles['graphNodeGroupCompleted'] : '',
+                  isReady ? styles['graphNodeGroupReady'] : '',
+                  isSelected ? styles['graphNodeGroupActive'] : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 transform={`translate(${layoutNode.x} ${layoutNode.y})`}
                 data-graph-node={'true'}
                 data-graph-node-id={node.id}
@@ -330,13 +363,38 @@ export const InitiativeAttackGraphView = ({
                     node.side === 'party'
                       ? styles['graphNodeParty']
                       : styles['graphNodeEnemy'],
-                    hoveredNodeId === node.id
-                      ? styles['graphNodeSelected']
-                      : '',
+                    isCompleted ? styles['graphNodeCompleted'] : '',
+                    isReady ? styles['graphNodeReady'] : '',
+                    isSelected ? styles['graphNodeActive'] : '',
+                    isHovered ? styles['graphNodeSelected'] : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
                 />
+                {isReady && !isCompleted ? (
+                  <g
+                    className={[
+                      styles['graphNodeReadyMarker'],
+                      isSelected ? styles['graphNodeReadyMarkerActive'] : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    transform={'translate(10 10)'}
+                    aria-hidden={'true'}
+                  >
+                    <title>{'Ready in Combat Flow'}</title>
+                    <circle
+                      cx={0}
+                      cy={0}
+                      r={9}
+                      className={styles['graphNodeReadyMarkerCircle']}
+                    />
+                    <path
+                      d={'M -3 -5 L 5 0 L -3 5 z'}
+                      className={styles['graphNodeReadyMarkerGlyph']}
+                    />
+                  </g>
+                ) : null}
                 {display.lines.map((line, index) => (
                   <text
                     key={`${layoutNode.nodeId}-line-${index}`}

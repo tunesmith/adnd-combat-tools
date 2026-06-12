@@ -104,7 +104,8 @@
   cursor: default;
   stroke-width: 1.9px;
   filter: drop-shadow(0 0.18rem 0.32rem rgba(17, 21, 10, 0.24));
-  transition: fill 140ms ease, stroke 140ms ease, filter 140ms ease;
+  transition: fill 140ms ease, opacity 140ms ease, stroke 140ms ease,
+    filter 140ms ease;
 }
 
 .graphNodeParty {
@@ -120,11 +121,68 @@
   filter: drop-shadow(0 0 0.5rem rgba(215, 165, 45, 0.26));
 }
 
+.graphNodeReady {
+  stroke: #fff7d6;
+  stroke-width: 2.9px;
+  filter: drop-shadow(0 0 0.44rem rgba(240, 239, 221, 0.2));
+}
+
+.graphNodeActive {
+  stroke: var(--goldenrod);
+  stroke-width: 3.35px;
+  filter: drop-shadow(0 0 0.7rem rgba(215, 165, 45, 0.36));
+}
+
+.graphNodeCompleted {
+  opacity: 0.46;
+  stroke: rgba(240, 239, 221, 0.52);
+  filter: none;
+}
+
 .graphNodeName,
 .graphNodeTarget,
 .graphNodeAction {
   fill: #fff7e9;
   pointer-events: none;
+}
+
+.graphNodeGroupCompleted .graphNodeName,
+.graphNodeGroupCompleted .graphNodeTarget,
+.graphNodeGroupCompleted .graphNodeAction {
+  opacity: 0.62;
+}
+
+.graphNodeGroupReady .graphNodeName,
+.graphNodeGroupReady .graphNodeTarget,
+.graphNodeGroupReady .graphNodeAction,
+.graphNodeGroupActive .graphNodeName,
+.graphNodeGroupActive .graphNodeTarget,
+.graphNodeGroupActive .graphNodeAction {
+  opacity: 1;
+}
+
+.graphNodeReadyMarker {
+  pointer-events: none;
+}
+
+.graphNodeReadyMarkerCircle {
+  fill: #d9a92f;
+  stroke: #2f381f;
+  stroke-width: 1.4px;
+  filter: drop-shadow(0 0.12rem 0.18rem rgba(17, 21, 10, 0.28));
+}
+
+.graphNodeReadyMarkerActive .graphNodeReadyMarkerCircle {
+  fill: #f0c24a;
+  stroke: #3b2b12;
+}
+
+.graphNodeReadyMarkerGlyph {
+  fill: #2f381f;
+}
+
+.graphNodeReadyMarkerActive .graphNodeReadyMarkerGlyph {
+  fill: #2b2110;
 }
 
 .graphNodeName {
