@@ -1771,9 +1771,9 @@ const CombatTracker = ({
   );
   const combatFlowSelectedNodeId =
     combatFlowSelectedNodeIdsByRound[state.activeRound];
-  const selectedCombatFlowNode =
-    combatFlowReadyNodes.find((node) => node.id === combatFlowSelectedNodeId) ||
-    combatFlowReadyNodes[0];
+  const selectedCombatFlowNode = combatFlowReadyNodes.find(
+    (node) => node.id === combatFlowSelectedNodeId
+  );
   const combatFlowGraphInspectorModel = useMemo(
     () =>
       resolvedInitiativeRound && combatFlowGraphInspectorNodeId
@@ -4167,6 +4167,8 @@ const CombatTracker = ({
             targetIndices: selectedCombatFlowTargetIndices,
           }
         : undefined;
+    const isSelectedCombatFlowSpellStart =
+      selectedCombatFlowNode?.kind === 'spell-start';
 
     return (
       <section
@@ -4290,50 +4292,64 @@ const CombatTracker = ({
                     ) : null}
                   </div>
                   <div className={styles['combatFlowFieldStack']}>
-                    <label className={styles['combatFlowField']}>
-                      <span className={styles['combatFlowFieldLabel']}>
-                        Result
-                      </span>
-                      <AutoHeightTextarea
-                        className={styles['combatFlowTextarea']}
-                        value={selectedRoundState?.result || ''}
-                        onChange={(value) =>
-                          dispatch({
-                            type:
-                              selectedCombatant.side === 'party'
-                                ? 'set-party-state'
-                                : 'set-enemy-state',
-                            index: selectedCombatant.index,
-                            field: 'result',
-                            value,
-                          })
-                        }
-                        placeholder={
-                          'misses, hits for 6, sleep: one saves, two asleep...'
-                        }
-                      />
-                    </label>
-                    <label className={styles['combatFlowField']}>
-                      <span className={styles['combatFlowFieldLabel']}>
-                        Current Effect
-                      </span>
-                      <AutoHeightTextarea
-                        className={styles['combatFlowTextarea']}
-                        value={selectedRoundState?.effect || ''}
-                        onChange={(value) =>
-                          dispatch({
-                            type:
-                              selectedCombatant.side === 'party'
-                                ? 'set-party-state'
-                                : 'set-enemy-state',
-                            index: selectedCombatant.index,
-                            field: 'effect',
-                            value,
-                          })
-                        }
-                        placeholder={'hopeless 1/9, slowed 3/8, bless...'}
-                      />
-                    </label>
+                    {isSelectedCombatFlowSpellStart ? (
+                      <div className={styles['combatFlowStartNotice']}>
+                        <div className={styles['combatFlowStartNoticeTitle']}>
+                          Spell casting starts
+                        </div>
+                        <div className={styles['combatFlowStartNoticeText']}>
+                          Resolve this when casting begins. Record spell outcome
+                          and target effects when the completion node is ready.
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <label className={styles['combatFlowField']}>
+                          <span className={styles['combatFlowFieldLabel']}>
+                            Result
+                          </span>
+                          <AutoHeightTextarea
+                            className={styles['combatFlowTextarea']}
+                            value={selectedRoundState?.result || ''}
+                            onChange={(value) =>
+                              dispatch({
+                                type:
+                                  selectedCombatant.side === 'party'
+                                    ? 'set-party-state'
+                                    : 'set-enemy-state',
+                                index: selectedCombatant.index,
+                                field: 'result',
+                                value,
+                              })
+                            }
+                            placeholder={
+                              'misses, hits for 6, sleep: one saves, two asleep...'
+                            }
+                          />
+                        </label>
+                        <label className={styles['combatFlowField']}>
+                          <span className={styles['combatFlowFieldLabel']}>
+                            Current Effect
+                          </span>
+                          <AutoHeightTextarea
+                            className={styles['combatFlowTextarea']}
+                            value={selectedRoundState?.effect || ''}
+                            onChange={(value) =>
+                              dispatch({
+                                type:
+                                  selectedCombatant.side === 'party'
+                                    ? 'set-party-state'
+                                    : 'set-enemy-state',
+                                index: selectedCombatant.index,
+                                field: 'effect',
+                                value,
+                              })
+                            }
+                            placeholder={'hopeless 1/9, slowed 3/8, bless...'}
+                          />
+                        </label>
+                      </>
+                    )}
                     <div className={styles['combatFlowResolverActions']}>
                       <button
                         type={'button'}
@@ -4345,27 +4361,29 @@ const CombatTracker = ({
                     </div>
                   </div>
                 </div>
-                <div className={styles['combatFlowTargetColumn']}>
-                  <div className={styles['combatFlowPaneTitle']}>Targets</div>
-                  {selectedCombatFlowActionTitle ? (
-                    <div className={styles['combatFlowTargetScope']}>
-                      {selectedCombatFlowActionTitle}
-                    </div>
-                  ) : null}
-                  {selectedCombatFlowTargetScope ? (
-                    <div className={styles['combatFlowTargetEditor']}>
-                      {renderCombatTargetEditor(
-                        selectedCombatFlowTargetScope,
-                        selectedCombatFlowTargetIndices,
-                        selectedCombatFlowAction
-                      )}
-                    </div>
-                  ) : (
-                    <div className={styles['combatFlowEmpty']}>
-                      No target editor is available for this action.
-                    </div>
-                  )}
-                </div>
+                {isSelectedCombatFlowSpellStart ? null : (
+                  <div className={styles['combatFlowTargetColumn']}>
+                    <div className={styles['combatFlowPaneTitle']}>Targets</div>
+                    {selectedCombatFlowActionTitle ? (
+                      <div className={styles['combatFlowTargetScope']}>
+                        {selectedCombatFlowActionTitle}
+                      </div>
+                    ) : null}
+                    {selectedCombatFlowTargetScope ? (
+                      <div className={styles['combatFlowTargetEditor']}>
+                        {renderCombatTargetEditor(
+                          selectedCombatFlowTargetScope,
+                          selectedCombatFlowTargetIndices,
+                          selectedCombatFlowAction
+                        )}
+                      </div>
+                    ) : (
+                      <div className={styles['combatFlowEmpty']}>
+                        No target editor is available for this action.
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className={styles['combatFlowEmpty']}>
