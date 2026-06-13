@@ -3295,10 +3295,48 @@ const CombatTracker = ({
     );
   };
 
+  const updateActionDraftMode = ({
+    nextModeValue,
+    modeOptions,
+    combatant,
+    updateDraft,
+  }: {
+    nextModeValue: string;
+    modeOptions: typeof ACTION_EDITOR_MODE_OPTIONS;
+    combatant: TrackerCombatant | undefined;
+    updateDraft: (
+      updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
+    ) => void;
+  }) => {
+    updateDraft((draft) => {
+      const nextMode = modeOptions.some(
+        (option) => option.value === nextModeValue
+      )
+        ? (nextModeValue as TrackerActionEditorMode)
+        : modeOptions[0]?.value || 'none';
+
+      return {
+        ...draft,
+        mode: nextMode,
+        castingSegments:
+          nextMode === 'spell-casting' &&
+          draft.castingSegments.trim().length === 0
+            ? '1'
+            : draft.castingSegments,
+        attackRoutineCount:
+          requiresAttackRoutineCountInput(nextMode, combatant?.weapon) &&
+          draft.attackRoutineCount.trim().length === 0
+            ? '1'
+            : draft.attackRoutineCount,
+      };
+    });
+  };
+
   const renderActionDraftControls = ({
     idPrefix,
     selectedDraft,
     modeOptions,
+    modeControl = 'select',
     combatant,
     updateDraft,
     error,
@@ -3306,6 +3344,7 @@ const CombatTracker = ({
     idPrefix: string;
     selectedDraft: TrackerActionEditorDraft;
     modeOptions: typeof ACTION_EDITOR_MODE_OPTIONS;
+    modeControl?: 'select' | 'pills';
     combatant: TrackerCombatant | undefined;
     updateDraft: (
       updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
@@ -3313,44 +3352,72 @@ const CombatTracker = ({
     error: string | undefined;
   }) => (
     <>
-      <label className={styles['modalLabel']} htmlFor={`${idPrefix}-mode`}>
-        Action
-      </label>
-      <select
-        id={`${idPrefix}-mode`}
-        className={styles['actionIntentSelect']}
-        value={selectedDraft.mode}
-        onChange={(event) =>
-          updateDraft((draft) => {
-            const nextMode = modeOptions.some(
-              (option) => option.value === event.target.value
-            )
-              ? (event.target.value as TrackerActionEditorMode)
-              : modeOptions[0]?.value || 'none';
+      {modeControl === 'pills' ? (
+        <>
+          <div id={`${idPrefix}-mode-label`} className={styles['modalLabel']}>
+            Action
+          </div>
+          <div
+            className={styles['actionIntentModePills']}
+            role={'radiogroup'}
+            aria-labelledby={`${idPrefix}-mode-label`}
+          >
+            {modeOptions.map((option) => {
+              const selected = option.value === selectedDraft.mode;
 
-            return {
-              ...draft,
-              mode: nextMode,
-              castingSegments:
-                nextMode === 'spell-casting' &&
-                draft.castingSegments.trim().length === 0
-                  ? '1'
-                  : draft.castingSegments,
-              attackRoutineCount:
-                requiresAttackRoutineCountInput(nextMode, combatant?.weapon) &&
-                draft.attackRoutineCount.trim().length === 0
-                  ? '1'
-                  : draft.attackRoutineCount,
-            };
-          })
-        }
-      >
-        {modeOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+              return (
+                <button
+                  key={option.value}
+                  type={'button'}
+                  className={[
+                    styles['actionIntentModePill'],
+                    selected ? styles['actionIntentModePillActive'] : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  role={'radio'}
+                  aria-checked={selected}
+                  onClick={() =>
+                    updateActionDraftMode({
+                      nextModeValue: option.value,
+                      modeOptions,
+                      combatant,
+                      updateDraft,
+                    })
+                  }
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <>
+          <label className={styles['modalLabel']} htmlFor={`${idPrefix}-mode`}>
+            Action
+          </label>
+          <select
+            id={`${idPrefix}-mode`}
+            className={styles['actionIntentSelect']}
+            value={selectedDraft.mode}
+            onChange={(event) =>
+              updateActionDraftMode({
+                nextModeValue: event.target.value,
+                modeOptions,
+                combatant,
+                updateDraft,
+              })
+            }
+          >
+            {modeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
       {requiresActionDistanceInput(selectedDraft.mode) ? (
         <>
           <label className={styles['modalLabel']} htmlFor={`${idPrefix}-label`}>
@@ -5673,6 +5740,7 @@ const CombatTracker = ({
                     idPrefix: 'intentions-wizard-action',
                     selectedDraft: selectedIntentionWizardActionDraft,
                     modeOptions: selectedIntentionWizardModeOptions,
+                    modeControl: 'pills',
                     combatant: currentIntentionWizardCombatant,
                     updateDraft: updateSelectedIntentionWizardActionDraft,
                     error: intentionWizardActionError,
