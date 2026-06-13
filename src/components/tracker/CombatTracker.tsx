@@ -3359,6 +3359,7 @@ const CombatTracker = ({
           </div>
           <div
             className={styles['actionIntentModePills']}
+            data-testid={`${idPrefix}-mode-pills`}
             role={'radiogroup'}
             aria-labelledby={`${idPrefix}-mode-label`}
           >
@@ -3377,6 +3378,7 @@ const CombatTracker = ({
                     .join(' ')}
                   role={'radio'}
                   aria-checked={selected}
+                  data-testid={`${idPrefix}-mode-pill-${option.value}`}
                   onClick={() =>
                     updateActionDraftMode({
                       nextModeValue: option.value,
@@ -3400,6 +3402,7 @@ const CombatTracker = ({
           <select
             id={`${idPrefix}-mode`}
             className={styles['actionIntentSelect']}
+            data-testid={`${idPrefix}-mode-select`}
             value={selectedDraft.mode}
             onChange={(event) =>
               updateActionDraftMode({
@@ -4517,6 +4520,7 @@ const CombatTracker = ({
               <button
                 type={'button'}
                 className={styles['toolbarButton']}
+                data-testid={'tracker-register-intentions-button'}
                 onClick={openIntentionsWizard}
               >
                 Register Intentions
@@ -5638,6 +5642,7 @@ const CombatTracker = ({
           />
           <div
             className={`${styles['modal']} ${styles['intentionsModal']}`}
+            data-testid={'tracker-register-intentions-modal'}
             role={'dialog'}
             aria-modal={'true'}
             aria-labelledby={'intentions-wizard-title'}
@@ -5717,6 +5722,7 @@ const CombatTracker = ({
                         onClick={() =>
                           setIntentionWizardSelectedActionId(draft.id)
                         }
+                        data-testid={`intentions-wizard-action-tab-${actionIndex}`}
                       >
                         <span className={styles['actionIntentActionTitle']}>
                           {actionIndex === 0
@@ -5731,6 +5737,7 @@ const CombatTracker = ({
                     <button
                       type={'button'}
                       className={styles['actionIntentActionAddButton']}
+                      data-testid={'intentions-wizard-action-add'}
                       onClick={addIntentionWizardAction}
                     >
                       Add action

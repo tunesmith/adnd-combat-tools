@@ -1,5 +1,9 @@
 import { createInitialTrackerState } from '../helpers/trackerState';
 import {
+  createRegisterIntentionsFixtureHash,
+  createRegisterIntentionsFixtureState,
+} from './support/trackerFixtures';
+import {
   buildIntentionWizardEntries,
   replaceIntentionWizardEntry,
 } from '../helpers/trackerIntentionsWizard';
@@ -74,5 +78,23 @@ describe('tracker intentions wizard helpers', () => {
     expect(nextEntries[0]).toEqual(updatedFirstEntry);
     expect(nextEntries[1]).toBe(secondEntry);
     expect(entries[0]).toEqual(originalFirstEntry);
+  });
+
+  test('provides a stable register-intentions fixture for browser smoke checks', () => {
+    const state = createRegisterIntentionsFixtureState();
+    const round = state.rounds[0];
+
+    if (!round) {
+      throw new Error('Missing fixture round');
+    }
+
+    expect(round.party[0]?.name).toBe('Lodi');
+    expect(round.party[0]?.weaponShortlist).toEqual([9, 17, 18]);
+    expect(round.enemies[0]?.name).toBe('Pillar Gnoll');
+    expect(round.cells[0]?.[0]).toMatchObject({
+      enemyToPartyVisible: true,
+      partyToEnemyVisible: true,
+    });
+    expect(createRegisterIntentionsFixtureHash()).toMatch(/^#s=/);
   });
 });
