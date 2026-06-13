@@ -15,6 +15,8 @@ describe('tracker state helpers', () => {
     expect(initialState.rounds[0]?.label).toBe('Round 1');
     expect(initialState.rounds[0]?.party).toHaveLength(3);
     expect(initialState.rounds[0]?.enemies).toHaveLength(3);
+    expect(initialState.rounds[0]?.party[0]?.weapon).toBe(2);
+    expect(initialState.rounds[0]?.enemies[0]?.weapon).toBe(1);
     expect(initialState.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: '',
       partyToEnemy: '',

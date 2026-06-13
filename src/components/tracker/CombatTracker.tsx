@@ -966,7 +966,7 @@ const buildActionDeclarationsFromDrafts = ({
   roundState: TrackerCombatantRoundState | undefined;
   drafts: TrackerActionEditorDraft[];
 }): BuildActionDeclarationResult => {
-  const defaultDeclaredAction = getDefaultTrackerDeclaredAction(combatant);
+  const defaultDeclaredAction = getDefaultTrackerDeclaredAction();
   const effectiveDrafts = drafts.length
     ? drafts
     : [
@@ -983,6 +983,7 @@ const buildActionDeclarationsFromDrafts = ({
     effectiveDrafts.some(
       (draft) =>
         draft.mode !== defaultDeclaredAction ||
+        (draft.mode === 'none' && draft.label.trim().length > 0) ||
         getSavedInitiativeTiming(draft.initiativeTiming) !== undefined ||
         getSavedAttackRoutineCount(draft, combatant.weapon) !== undefined
     );
@@ -1036,6 +1037,7 @@ const buildActionDeclarationsFromDrafts = ({
           ...actionDeclarationBase,
           declaredAction: draft.mode,
           ...(label ? { actionLabel: label } : {}),
+          ...(draft.mode === 'none' ? { usesGridTargets: false } : {}),
           ...(savedAttackRoutineCount !== undefined
             ? { attackRoutineCount: savedAttackRoutineCount }
             : {}),
@@ -1175,7 +1177,7 @@ const getIntentionWizardActionDrafts = (
     actions: getStructuredActionsForCombatant(round, entry.side, entry.index),
     fallbackIntention: roundState?.action || '',
     mainActionId: getMainTrackerActionId(entry.side, combatant.key),
-    defaultDeclaredAction: getDefaultTrackerDeclaredAction(combatant),
+    defaultDeclaredAction: getDefaultTrackerDeclaredAction(),
     weaponId: combatant.weapon,
   });
 };
@@ -2670,7 +2672,7 @@ const CombatTracker = ({
       actions,
       fallbackIntention: roundState?.action || '',
       mainActionId: getMainTrackerActionId(side, combatant.key),
-      defaultDeclaredAction: getDefaultTrackerDeclaredAction(combatant),
+      defaultDeclaredAction: getDefaultTrackerDeclaredAction(),
       weaponId: combatant.weapon,
     });
     setActionEditorDrafts(drafts);
@@ -3163,7 +3165,7 @@ const CombatTracker = ({
         currentIntentionWizardCombatant.key,
         intentionWizardActionDrafts
       ),
-      getDefaultTrackerDeclaredAction(currentIntentionWizardCombatant)
+      getDefaultTrackerDeclaredAction()
     );
     const nextDrafts = intentionWizardActionDrafts.concat(nextDraft);
 
@@ -3195,15 +3197,10 @@ const CombatTracker = ({
   };
 
   const getActionDraftsForWeaponChange = (
-    combatant: TrackerCombatant,
     nextWeapon: number
   ): TrackerActionEditorDraft[] => {
-    const oldDefaultAction = getDefaultTrackerDeclaredAction(combatant);
-    const nextCombatant = {
-      ...combatant,
-      weapon: nextWeapon,
-    };
-    const nextDefaultAction = getDefaultTrackerDeclaredAction(nextCombatant);
+    const oldDefaultAction = getDefaultTrackerDeclaredAction();
+    const nextDefaultAction = getDefaultTrackerDeclaredAction();
 
     return intentionWizardActionDrafts.map((draft) => {
       const nextMode =
@@ -3236,10 +3233,7 @@ const CombatTracker = ({
       ...currentIntentionWizardCombatant,
       weapon: nextWeapon,
     };
-    const nextDrafts = getActionDraftsForWeaponChange(
-      currentIntentionWizardCombatant,
-      nextWeapon
-    );
+    const nextDrafts = getActionDraftsForWeaponChange(nextWeapon);
 
     setIntentionWizardActionDrafts(nextDrafts);
     dispatch({
@@ -5579,7 +5573,7 @@ const CombatTracker = ({
                         combatant.key,
                         actionEditorDrafts
                       ),
-                      getDefaultTrackerDeclaredAction(combatant)
+                      getDefaultTrackerDeclaredAction()
                     );
 
                     setActionEditorDrafts((drafts) => drafts.concat(nextDraft));

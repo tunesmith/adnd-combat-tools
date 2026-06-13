@@ -11,7 +11,10 @@ import type {
   TrackerRound,
 } from '../types/tracker';
 
-export const getDefaultTrackerDeclaredAction = (
+export const getDefaultTrackerDeclaredAction = (): InitiativeDeclaredAction =>
+  'none';
+
+const getInferredTrackerDeclaredAction = (
   combatant: TrackerCombatant
 ): InitiativeDeclaredAction =>
   getWeaponInfo(combatant.weapon)?.weaponType === 'missile'
@@ -83,7 +86,7 @@ const buildActionDeclaration = ({
   combatantKey: combatant.key,
   combatantIndex,
   targetSide,
-  declaredAction: getDefaultTrackerDeclaredAction(combatant),
+  declaredAction: getInferredTrackerDeclaredAction(combatant),
   ...(roundState?.action.trim()
     ? { actionLabel: roundState.action.trim() }
     : {}),

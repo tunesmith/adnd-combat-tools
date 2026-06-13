@@ -1,5 +1,6 @@
 import {
   deriveTrackerActionDeclarations,
+  getDefaultTrackerDeclaredAction,
   getTrackerActionDeclarations,
 } from '../helpers/trackerActionDeclarations';
 import { createInitialTrackerState } from '../helpers/trackerState';
@@ -17,6 +18,10 @@ const requireRound = (): TrackerRound => {
 };
 
 describe('tracker action declarations', () => {
+  test('defaults newly structured actions to no combat action', () => {
+    expect(getDefaultTrackerDeclaredAction()).toBe('none');
+  });
+
   test('derives one main party action with multiple target declarations from visible grid cells', () => {
     const round = requireRound();
 

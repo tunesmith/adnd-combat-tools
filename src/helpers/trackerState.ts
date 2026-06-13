@@ -1,4 +1,5 @@
 import { FIGHTER, MONSTER } from '../tables/attackerClass';
+import { getWeaponOptions } from '../tables/weapon';
 import {
   DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
   DEFAULT_MOVEMENT_RATE,
@@ -16,23 +17,34 @@ type TrackerSide = 'party' | 'enemy';
 const DEFAULT_PARTY_COUNT = 3;
 const DEFAULT_ENEMY_COUNT = 3;
 const DEFAULT_ROUND_PREFIX = 'Round';
+const FALLBACK_WEAPON_ID = 1;
+
+const getDefaultClass = (side: TrackerSide): number =>
+  side === 'party' ? FIGHTER : MONSTER;
+
+const getDefaultWeapon = (attackerClass: number): number =>
+  getWeaponOptions(attackerClass)[0]?.value || FALLBACK_WEAPON_ID;
 
 const createBaseCombatant = (
   key: number,
   side: TrackerSide,
   name: string
-): TrackerCombatant => ({
-  key,
-  name,
-  class: side === 'party' ? FIGHTER : MONSTER,
-  level: side === 'party' ? 1 : 3,
-  armorType: side === 'party' ? 2 : 1,
-  armorClass: side === 'party' ? 10 : 5,
-  weapon: 1,
-  maxHp: '',
-  movementRate: DEFAULT_MOVEMENT_RATE,
-  missileInitiativeAdjustment: DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
-});
+): TrackerCombatant => {
+  const attackerClass = getDefaultClass(side);
+
+  return {
+    key,
+    name,
+    class: attackerClass,
+    level: side === 'party' ? 1 : 3,
+    armorType: side === 'party' ? 2 : 1,
+    armorClass: side === 'party' ? 10 : 5,
+    weapon: getDefaultWeapon(attackerClass),
+    maxHp: '',
+    movementRate: DEFAULT_MOVEMENT_RATE,
+    missileInitiativeAdjustment: DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
+  };
+};
 
 const createTrackerCombatant = (
   key: number,
