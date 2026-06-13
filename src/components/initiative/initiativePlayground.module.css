@@ -998,6 +998,7 @@
 .graphNodeTarget,
 .graphNodeAction {
   fill: #fff7e9;
+  font-family: 'Poppins', sans-serif;
   pointer-events: none;
 }
 
