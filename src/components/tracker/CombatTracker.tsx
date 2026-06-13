@@ -80,6 +80,7 @@ import { buildInitiativeAttackGraphNodeDisplayById } from '../../helpers/initiat
 import {
   buildInitiativeGraphEnabledNodeIds,
   buildInitiativeGraphInspectorModel,
+  getNextInitiativeGraphReadyNodeIdAfterResolving,
   type InitiativeGraphNodeStatus,
 } from '../../helpers/initiative/graphInspector';
 import { resolveTrackerRoundInitiative } from '../../helpers/initiative/trackerRoundResolution';
@@ -2970,7 +2971,7 @@ const CombatTracker = ({
     }));
   };
 
-  const markCombatFlowNodeResolved = (nodeId: string) => {
+  const completeCombatFlowNode = (nodeId: string) => {
     setCombatFlowCompletedNodeIdsByRound((previous) => {
       const completedNodeIds = previous[state.activeRound] || [];
 
@@ -2983,6 +2984,10 @@ const CombatTracker = ({
         [state.activeRound]: completedNodeIds.concat(nodeId),
       };
     });
+  };
+
+  const markCombatFlowNodeResolved = (nodeId: string) => {
+    completeCombatFlowNode(nodeId);
     setCombatFlowSelectedNodeIdsByRound((previous) => ({
       ...previous,
       [state.activeRound]:
@@ -3023,6 +3028,24 @@ const CombatTracker = ({
     }
 
     markCombatFlowNodeResolved(selectedCombatFlowNode.id);
+  };
+
+  const markSelectedCombatFlowNodeResolvedAndSelectNext = () => {
+    if (!selectedCombatFlowNode || !resolvedInitiativeRound) {
+      return;
+    }
+
+    const nextSelectedNodeId = getNextInitiativeGraphReadyNodeIdAfterResolving(
+      resolvedInitiativeRound.attackGraph,
+      combatFlowGraphNodeStatusById,
+      selectedCombatFlowNode.id
+    );
+
+    completeCombatFlowNode(selectedCombatFlowNode.id);
+    setCombatFlowSelectedNodeIdsByRound((previous) => ({
+      ...previous,
+      [state.activeRound]: nextSelectedNodeId,
+    }));
   };
 
   const resetCombatFlowProgress = () => {
@@ -4357,6 +4380,20 @@ const CombatTracker = ({
                         onClick={markSelectedCombatFlowNodeResolved}
                       >
                         Resolve action
+                      </button>
+                      <button
+                        type={'button'}
+                        className={[
+                          styles['combatFlowResolveButton'],
+                          styles['combatFlowResolveNextButton'],
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={
+                          markSelectedCombatFlowNodeResolvedAndSelectNext
+                        }
+                      >
+                        Resolve and next
                       </button>
                     </div>
                   </div>

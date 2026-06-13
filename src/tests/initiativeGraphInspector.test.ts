@@ -1,4 +1,7 @@
-import { buildInitiativeGraphEnabledNodeIds } from '../helpers/initiative/graphInspector';
+import {
+  buildInitiativeGraphEnabledNodeIds,
+  getNextInitiativeGraphReadyNodeIdAfterResolving,
+} from '../helpers/initiative/graphInspector';
 import type {
   InitiativeAttackGraph,
   InitiativeAttackNode,
@@ -56,5 +59,44 @@ describe('initiative graph inspector helpers', () => {
         })
       ).sort()
     ).toEqual(['segment-seven']);
+  });
+
+  test('keeps the selected ready-list index when choosing the next flow node', () => {
+    const graph: InitiativeAttackGraph = {
+      nodes: [createNode('first'), createNode('second'), createNode('third')],
+      edges: [],
+      layers: [],
+      simultaneousGroups: [],
+    };
+
+    expect(
+      getNextInitiativeGraphReadyNodeIdAfterResolving(graph, {}, 'second')
+    ).toBe('third');
+  });
+
+  test('moves to the previous ready-list index when resolving the last flow node', () => {
+    const graph: InitiativeAttackGraph = {
+      nodes: [createNode('first'), createNode('second'), createNode('third')],
+      edges: [],
+      layers: [],
+      simultaneousGroups: [],
+    };
+
+    expect(
+      getNextInitiativeGraphReadyNodeIdAfterResolving(graph, {}, 'third')
+    ).toBe('second');
+  });
+
+  test('returns no next flow node when resolving the final node', () => {
+    const graph: InitiativeAttackGraph = {
+      nodes: [createNode('only')],
+      edges: [],
+      layers: [],
+      simultaneousGroups: [],
+    };
+
+    expect(
+      getNextInitiativeGraphReadyNodeIdAfterResolving(graph, {}, 'only')
+    ).toBeUndefined();
   });
 });

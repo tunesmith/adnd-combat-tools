@@ -2060,6 +2060,16 @@
   opacity: 0.72;
 }
 
+.combatFlowResolveNextButton {
+  border-color: var(--goldenrod);
+  background: rgba(215, 165, 45, 0.3);
+}
+
+.combatFlowResolveNextButton:hover,
+.combatFlowResolveNextButton:focus-visible {
+  background: rgba(215, 165, 45, 0.42);
+}
+
 .combatFlowBody {
   display: grid;
   grid-template-columns: minmax(14rem, 0.9fr) minmax(22rem, 1.5fr);
@@ -2330,6 +2340,8 @@
 
 .combatFlowResolverActions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   justify-content: flex-end;
   margin-top: 0.65rem;
 }

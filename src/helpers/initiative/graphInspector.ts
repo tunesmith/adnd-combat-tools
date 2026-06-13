@@ -1175,6 +1175,44 @@ export const buildInitiativeGraphEnabledNodeIds = (
   );
 };
 
+const getReadyGraphNodes = (
+  attackGraph: InitiativeAttackGraph,
+  nodeStatusById: Record<string, InitiativeGraphNodeStatus>
+): InitiativeAttackNode[] => {
+  const readyNodeIds = buildInitiativeGraphEnabledNodeIds(
+    attackGraph,
+    nodeStatusById
+  );
+
+  return attackGraph.nodes.filter((node) => readyNodeIds.has(node.id));
+};
+
+export const getNextInitiativeGraphReadyNodeIdAfterResolving = (
+  attackGraph: InitiativeAttackGraph,
+  nodeStatusById: Record<string, InitiativeGraphNodeStatus>,
+  resolvedNodeId: string
+): string | undefined => {
+  const currentReadyNodes = getReadyGraphNodes(attackGraph, nodeStatusById);
+  const currentIndex = currentReadyNodes.findIndex(
+    (node) => node.id === resolvedNodeId
+  );
+  const nextStatusById = {
+    ...nodeStatusById,
+    [resolvedNodeId]: 'resolved' as const,
+  };
+  const nextReadyNodes = getReadyGraphNodes(attackGraph, nextStatusById);
+
+  if (nextReadyNodes.length === 0) {
+    return undefined;
+  }
+
+  if (currentIndex < 0) {
+    return nextReadyNodes[0]?.id;
+  }
+
+  return nextReadyNodes[Math.min(currentIndex, nextReadyNodes.length - 1)]?.id;
+};
+
 const buildInitiativeGraphNodeReferenceById = (
   resolvedRound: InitiativeResolvedRound
 ): Record<string, InitiativeGraphNodeReference> =>
