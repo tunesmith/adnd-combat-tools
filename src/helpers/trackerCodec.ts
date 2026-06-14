@@ -1,5 +1,5 @@
 import { deflate, deflateSync, unzip } from 'zlib';
-import { getDefaultRoundLabel } from './trackerState';
+import { ensureWeaponShortlist, getDefaultRoundLabel } from './trackerState';
 import type {
   TrackerCellState,
   TrackerCellStateV5,
@@ -19,9 +19,22 @@ import type {
 } from '../types/tracker';
 
 const cloneCombatants = (combatants: TrackerCombatant[]): TrackerCombatant[] =>
-  combatants.map((combatant) => ({
-    ...combatant,
-  }));
+  combatants.map((combatant) =>
+    ensureWeaponShortlist({
+      ...combatant,
+    })
+  );
+
+const normalizeTrackerRound = (round: TrackerRound): TrackerRound => ({
+  ...round,
+  party: cloneCombatants(round.party),
+  enemies: cloneCombatants(round.enemies),
+});
+
+const normalizeTrackerState = (state: TrackerState): TrackerState => ({
+  ...state,
+  rounds: state.rounds.map((round) => normalizeTrackerRound(round)),
+});
 
 const migrateRoundState = (
   oldState: TrackerCombatantRoundStateV1,
@@ -206,42 +219,42 @@ export const transformTrackerState = (
   state: TrackerStateAnyVersion
 ): TrackerState => {
   if (state.version === 7) {
-    return state;
+    return normalizeTrackerState(state);
   }
 
   if (state.version === 6) {
-    return {
+    return normalizeTrackerState({
       version: 7,
       title: state.title,
       rounds: state.rounds.map((round, roundIndex) =>
         migrateRoundV6(round, roundIndex)
       ),
       activeRound: state.activeRound,
-    };
+    });
   }
 
   if (state.version === 5) {
-    return {
+    return normalizeTrackerState({
       version: 7,
       rounds: state.rounds.map((round, roundIndex) =>
         migrateRoundV5(round, roundIndex)
       ),
       activeRound: state.activeRound,
-    };
+    });
   }
 
   if (state.version === 4) {
-    return {
+    return normalizeTrackerState({
       version: 7,
       rounds: state.rounds.map((round, roundIndex) =>
         attachRoundRoster(state, round, roundIndex)
       ),
       activeRound: state.activeRound,
-    };
+    });
   }
 
   if (state.version === 3) {
-    return {
+    return normalizeTrackerState({
       version: 7,
       rounds: state.rounds.map((round, roundIndex) => ({
         label: getDefaultRoundLabel(roundIndex + 1),
@@ -258,7 +271,7 @@ export const transformTrackerState = (
         ),
       })),
       activeRound: state.activeRound,
-    };
+    });
   }
 
   if (state.version === 2) {
@@ -269,7 +282,7 @@ export const transformTrackerState = (
       resolveCombatantMaxHpFromV2(combatant.maxHp, state.rounds, 'enemy', index)
     );
 
-    return {
+    return normalizeTrackerState({
       version: 7,
       rounds: state.rounds.map((round, roundIndex) =>
         migrateRoundV2(
@@ -282,16 +295,16 @@ export const transformTrackerState = (
         )
       ),
       activeRound: state.activeRound,
-    };
+    });
   }
 
-  return {
+  return normalizeTrackerState({
     version: 7,
     rounds: state.rounds.map((round, roundIndex) =>
       migrateRound(round, state, roundIndex)
     ),
     activeRound: state.activeRound,
-  };
+  });
 };
 
 export const encodeTrackerState = (state: TrackerState): Promise<string> =>

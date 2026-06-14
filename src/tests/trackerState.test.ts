@@ -16,7 +16,9 @@ describe('tracker state helpers', () => {
     expect(initialState.rounds[0]?.party).toHaveLength(3);
     expect(initialState.rounds[0]?.enemies).toHaveLength(3);
     expect(initialState.rounds[0]?.party[0]?.weapon).toBe(2);
+    expect(initialState.rounds[0]?.party[0]?.weaponShortlist).toEqual([2]);
     expect(initialState.rounds[0]?.enemies[0]?.weapon).toBe(1);
+    expect(initialState.rounds[0]?.enemies[0]?.weaponShortlist).toEqual([1]);
     expect(initialState.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: '',
       partyToEnemy: '',
@@ -228,6 +230,24 @@ describe('tracker state helpers', () => {
     expect(updatedSecondRound.party[0]?.maxHp).toBe('');
     expect(updatedFirstRound.partyStates[0]?.hp).toBe('24');
     expect(updatedSecondRound.partyStates[0]?.hp).toBe('17');
+  });
+
+  test('updating a combatant with no weapon shortlist defaults it to the equipped weapon', () => {
+    const initialState = createInitialTrackerState();
+    const firstCombatant = initialState.rounds[0]?.party[0];
+
+    if (!firstCombatant) {
+      throw new Error('Missing first combatant');
+    }
+
+    const nextState = updateCombatant(initialState, 'party', 0, {
+      ...firstCombatant,
+      weapon: 12,
+      weaponShortlist: undefined,
+    });
+
+    expect(nextState.rounds[0]?.party[0]?.weapon).toBe(12);
+    expect(nextState.rounds[0]?.party[0]?.weaponShortlist).toEqual([12]);
   });
 
   test('changing combatant metadata in a later round does not mutate previous rounds', () => {

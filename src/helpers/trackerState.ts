@@ -25,12 +25,23 @@ const getDefaultClass = (side: TrackerSide): number =>
 const getDefaultWeapon = (attackerClass: number): number =>
   getWeaponOptions(attackerClass)[0]?.value || FALLBACK_WEAPON_ID;
 
+export const ensureWeaponShortlist = (
+  combatant: TrackerCombatant
+): TrackerCombatant =>
+  combatant.weaponShortlist && combatant.weaponShortlist.length > 0
+    ? combatant
+    : {
+        ...combatant,
+        weaponShortlist: [combatant.weapon],
+      };
+
 const createBaseCombatant = (
   key: number,
   side: TrackerSide,
   name: string
 ): TrackerCombatant => {
   const attackerClass = getDefaultClass(side);
+  const defaultWeapon = getDefaultWeapon(attackerClass);
 
   return {
     key,
@@ -39,7 +50,8 @@ const createBaseCombatant = (
     level: side === 'party' ? 1 : 3,
     armorType: side === 'party' ? 2 : 1,
     armorClass: side === 'party' ? 10 : 5,
-    weapon: getDefaultWeapon(attackerClass),
+    weapon: defaultWeapon,
+    weaponShortlist: [defaultWeapon],
     maxHp: '',
     movementRate: DEFAULT_MOVEMENT_RATE,
     missileInitiativeAdjustment: DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
@@ -99,9 +111,10 @@ const createEmptyCell = (): TrackerCellState => ({
   partyToEnemyVisible: false,
 });
 
-const cloneCombatant = (combatant: TrackerCombatant): TrackerCombatant => ({
-  ...combatant,
-});
+const cloneCombatant = (combatant: TrackerCombatant): TrackerCombatant =>
+  ensureWeaponShortlist({
+    ...combatant,
+  });
 
 const cloneCombatants = (combatants: TrackerCombatant[]): TrackerCombatant[] =>
   combatants.map((combatant) => cloneCombatant(combatant));

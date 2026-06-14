@@ -391,6 +391,79 @@ describe('tracker codec', () => {
     expect(decoded.rounds[0]?.partyStates[0]?.action).toBe('shoot bow');
   });
 
+  test('normalizes current-version combatants without shortlists on decode', async () => {
+    const encoded = await encodeTrackerState({
+      version: 7,
+      rounds: [
+        {
+          label: 'Round 1',
+          party: [
+            {
+              key: 1,
+              name: 'Lodi',
+              class: 1,
+              level: 7,
+              armorType: 10,
+              armorClass: -1,
+              weapon: 12,
+              maxHp: '19',
+            },
+          ],
+          enemies: [
+            {
+              key: 2,
+              name: 'Ghoul',
+              class: 10,
+              level: 3,
+              armorType: 1,
+              armorClass: 6,
+              weapon: 1,
+              maxHp: '11',
+              weaponShortlist: [],
+            },
+          ],
+          partyInitiative: '',
+          enemyInitiative: '',
+          summary: '',
+          cells: [
+            [
+              {
+                enemyToParty: '',
+                partyToEnemy: '',
+                enemyToPartyVisible: false,
+                partyToEnemyVisible: false,
+              },
+            ],
+          ],
+          partyStates: [
+            {
+              hp: '19',
+              effect: '',
+              action: '',
+              result: '',
+              notes: '',
+            },
+          ],
+          enemyStates: [
+            {
+              hp: '11',
+              effect: '',
+              action: '',
+              result: '',
+              notes: '',
+            },
+          ],
+        },
+      ],
+      activeRound: 0,
+    });
+
+    const decoded = await decodeTrackerState(encoded);
+
+    expect(decoded.rounds[0]?.party[0]?.weaponShortlist).toEqual([12]);
+    expect(decoded.rounds[0]?.enemies[0]?.weaponShortlist).toEqual([1]);
+  });
+
   test('sync encoder matches the async codec path', async () => {
     const state = transformTrackerState({
       version: 6,
