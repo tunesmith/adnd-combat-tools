@@ -78,6 +78,38 @@ describe('initiative movement resolution', () => {
     ]);
   });
 
+  test('resolves targetless charge as double-speed movement without an attack', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Across Room',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Flesh Golem',
+          declaredAction: 'charge',
+          movementRate: 8,
+          actionDistanceInches: 8,
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+
+    expect(scenario.movementResolutions).toEqual([
+      expect.objectContaining({
+        combatantId: 'enemy-3',
+        action: 'charge',
+        reason: 'movement-complete',
+        distanceInches: 8,
+        contactSegment: 5,
+        closingInchesPerSegment: 1.6,
+        sameRoundAttack: false,
+      }),
+    ]);
+  });
+
   test('resolves a charge against a targetless mover from the supplied distance', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge Targetless Mover',
@@ -119,6 +151,64 @@ describe('initiative movement resolution', () => {
           reason: 'movement-complete',
           distanceInches: 5,
           contactSegment: 5,
+          sameRoundAttack: false,
+        }),
+        expect.objectContaining({
+          combatantId: 'enemy-3',
+          targetId: 'party-1',
+          action: 'charge',
+          reason: 'contact',
+          distanceInches: 2.5,
+          closingInchesPerSegment: 1.6,
+          contactSegment: 1,
+          sameRoundAttack: true,
+        }),
+      ])
+    );
+  });
+
+  test('resolves a charge against a targetless charging mover from the supplied distance', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Targetless Charger',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bemis',
+          declaredAction: 'charge',
+          movementRate: 12,
+          actionDistanceInches: 5,
+          weaponId: 13,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Flesh Golem',
+          declaredAction: 'charge',
+          movementRate: 8,
+          weaponId: 1,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 2.5,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(scenario.movementResolutions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          combatantId: 'party-1',
+          action: 'charge',
+          reason: 'movement-complete',
+          distanceInches: 5,
+          closingInchesPerSegment: 2.4,
+          contactSegment: 3,
           sameRoundAttack: false,
         }),
         expect.objectContaining({

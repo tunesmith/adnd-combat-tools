@@ -132,6 +132,56 @@ describe('initiative round resolution view model', () => {
     });
   });
 
+  test('explains targetless charge as movement without an automatic attack', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Targetless Charge',
+      partyInitiative: 3,
+      enemyInitiative: 5,
+      party: [],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Flesh Golem',
+          declaredAction: 'charge',
+          movementRate: 8,
+          actionDistanceInches: 8,
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const viewModel = buildInitiativeRoundResolutionViewModel(
+      scenario,
+      resolution
+    );
+    const movementCard = viewModel.cards.find(
+      (card) => card.kind === 'movement'
+    );
+
+    expect(movementCard).toMatchObject({
+      kind: 'movement',
+      title: 'Flesh Golem charge',
+    });
+    expect(movementCard?.summary).toContain(
+      'finishes targetless charge movement of 8" on segment 5'
+    );
+    expect(movementCard?.summary).toContain(
+      'No charge attack is generated because no target was declared'
+    );
+    expect(movementCard?.steps[1]).toEqual({
+      label: 'Distance',
+      detail: '8" charge distance',
+      combatantIds: ['enemy-3'],
+    });
+    expect(movementCard?.steps[2]).toEqual({
+      label: 'Outcome',
+      detail:
+        'Charge movement complete on segment 5 at 1.6" per segment; no automatic attack without a target.',
+      combatantIds: ['enemy-3'],
+    });
+  });
+
   test('adds a turn undead card and explains that ordinary damage does not spoil it', () => {
     const scenario = buildInitiativeScenario({
       label: 'Turn Undead',

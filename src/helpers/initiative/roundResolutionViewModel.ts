@@ -476,7 +476,10 @@ const getMovementSummary = (
 
   if (movementResolution.reason === 'no-contact') {
     if (movementResolution.targetId === undefined) {
-      return `${combatantName} cannot finish that move this round. The tool estimates that ${formatInches(
+      const movementLabel =
+        movementResolution.action === 'charge' ? 'charge movement' : 'move';
+
+      return `${combatantName} cannot finish that ${movementLabel} this round. The tool estimates that ${formatInches(
         movementResolution.remainingDistanceInches || 0
       )} remain.`;
     }
@@ -487,6 +490,14 @@ const getMovementSummary = (
   }
 
   if (movementResolution.reason === 'movement-complete') {
+    if (movementResolution.action === 'charge') {
+      return `${combatantName} finishes targetless charge movement of ${formatInches(
+        movementResolution.distanceInches || 0
+      )} on segment ${
+        movementResolution.contactSegment
+      }. No charge attack is generated because no target was declared.`;
+    }
+
     return `${combatantName} finishes moving ${formatInches(
       movementResolution.distanceInches || 0
     )} on segment ${movementResolution.contactSegment}.`;
@@ -548,6 +559,8 @@ const buildMovementCards = (
 
     const distanceLabel = movementResolution.targetId
       ? 'effective start range'
+      : movementResolution.action === 'charge'
+      ? 'charge distance'
       : 'move distance';
 
     return {
@@ -630,11 +643,17 @@ const buildMovementCards = (
                       )} per segment.`;
                 })()
               : movementResolution.reason === 'movement-complete'
-              ? `Move complete on segment ${
-                  movementResolution.contactSegment
-                } at ${formatInches(
-                  movementResolution.closingInchesPerSegment || 0
-                )} per segment.`
+              ? movementResolution.action === 'charge'
+                ? `Charge movement complete on segment ${
+                    movementResolution.contactSegment
+                  } at ${formatInches(
+                    movementResolution.closingInchesPerSegment || 0
+                  )} per segment; no automatic attack without a target.`
+                : `Move complete on segment ${
+                    movementResolution.contactSegment
+                  } at ${formatInches(
+                    movementResolution.closingInchesPerSegment || 0
+                  )} per segment.`
               : movementResolution.reason === 'no-contact'
               ? movementResolution.targetId
                 ? `No contact this round; approximately ${formatInches(

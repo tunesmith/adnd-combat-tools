@@ -1078,9 +1078,11 @@ const getActionTargetSummary = (
   const targetCount = action.targetCombatantKeys.length;
 
   if (targetCount === 0) {
-    return action.declaredAction === 'magical-device'
-      ? 'No target/self'
-      : 'No target';
+    if (action.declaredAction === 'magical-device') {
+      return 'No target/self';
+    }
+
+    return 'No target';
   }
 
   return `${targetCount} ${targetCount === 1 ? 'target' : 'targets'}`;
@@ -2217,6 +2219,9 @@ const InitiativePlayground = ({
   const actionEditorDistanceLabel =
     selectedEditedAction?.declaredAction === 'close'
       ? 'Move distance (inches)'
+      : selectedEditedAction?.declaredAction === 'charge' &&
+        selectedEditedAction.targetCombatantKeys.length === 0
+      ? 'Charge distance (inches)'
       : 'Distance to target (inches)';
   const targetPickerCombatant = targetPickerTarget
     ? state[getStateSide(targetPickerTarget.attackingSide)].find(

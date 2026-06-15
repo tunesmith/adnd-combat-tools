@@ -1281,6 +1281,46 @@ describe('initiative attack graph', () => {
     expect(graph.edges).toEqual([]);
   });
 
+  test('graphs targetless charge as movement completion without an attack', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Across Room',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Flesh Golem',
+          declaredAction: 'charge',
+          movementRate: 8,
+          actionDistanceInches: 8,
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual([
+      expect.objectContaining({
+        id: 'movement:enemy-3',
+        kind: 'movement-completion',
+        label: 'move complete',
+        segment: 5,
+        placement: expect.objectContaining({
+          kind: 'movement-completion',
+          distanceInches: 8,
+          movementRate: 8,
+        }),
+      }),
+    ]);
+    expect(graph.nodes.map((node) => node.id)).not.toContain(
+      'attack:enemy-3:1'
+    );
+    expect(graph.edges).toEqual([]);
+  });
+
   test('graphs a charge against a targetless mover', () => {
     const scenario = buildInitiativeScenario({
       label: 'Charge Targetless Mover',
@@ -1323,6 +1363,67 @@ describe('initiative attack graph', () => {
           kind: 'movement-completion',
           label: 'move complete',
           segment: 5,
+        }),
+        expect.objectContaining({
+          id: 'attack:enemy-3:1',
+          kind: 'attack',
+          segment: 1,
+          placement: expect.objectContaining({
+            kind: 'movement-attack',
+            action: 'charge',
+            role: 'acting-combatant',
+            opponentId: 'party-1',
+            distanceInches: 2.5,
+            movementRate: 8,
+            contactSegment: 1,
+          }),
+        }),
+      ])
+    );
+  });
+
+  test('graphs a charge against a targetless charging mover', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Charge Targetless Charger',
+      partyInitiative: 4,
+      enemyInitiative: 4,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Bemis',
+          declaredAction: 'charge',
+          movementRate: 12,
+          actionDistanceInches: 5,
+          weaponId: 13,
+          targetCombatantKeys: [],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Flesh Golem',
+          declaredAction: 'charge',
+          movementRate: 8,
+          weaponId: 1,
+          targetDeclarations: [
+            {
+              targetCombatantKey: 1,
+              distanceInches: 2.5,
+            },
+          ],
+        },
+      ],
+    });
+    const resolution = resolveInitiativeRound(scenario);
+    const graph = buildInitiativeAttackGraph(scenario, resolution);
+
+    expect(graph.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'movement:party-1',
+          kind: 'movement-completion',
+          label: 'move complete',
+          segment: 3,
         }),
         expect.objectContaining({
           id: 'attack:enemy-3:1',

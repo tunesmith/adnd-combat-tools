@@ -3436,7 +3436,7 @@ const CombatTracker = ({
             className={styles['modalLabel']}
             htmlFor={`${idPrefix}-distance`}
           >
-            Distance
+            {selectedDraft.mode === 'charge' ? 'Charge distance' : 'Distance'}
           </label>
           <div className={styles['actionIntentDistanceRow']}>
             <input

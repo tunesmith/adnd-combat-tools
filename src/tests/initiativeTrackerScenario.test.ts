@@ -499,6 +499,75 @@ describe('tracker initiative scenario builder', () => {
     );
   });
 
+  test('maps targetless structured tracker Charge intentions to movement timing', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '4';
+    round.enemyInitiative = '4';
+
+    if (!round.enemies[0]) {
+      throw new Error('Missing combatant');
+    }
+
+    round.enemies[0].name = 'Flesh Golem';
+    round.enemies[0].weapon = 1;
+    round.enemies[0].movementRate = 8;
+    round.actions = [
+      {
+        id: 'enemy:4:main',
+        source: 'intention',
+        side: 'enemy',
+        direction: 'enemyToParty',
+        combatantKey: 4,
+        combatantIndex: 0,
+        targetSide: 'party',
+        declaredAction: 'charge',
+        actionLabel: 'Charge to door',
+        actionDistanceInches: 8,
+        weaponId: 1,
+        intention: 'Charge to door (8")',
+        result: '',
+        targetDeclarations: [],
+      },
+    ];
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+
+    expect(resolvedRound.scenario.enemies[0]).toMatchObject({
+      id: 'enemy-4',
+      declaredAction: 'charge',
+      actionLabel: 'Charge to door',
+      actionDistanceInches: 8,
+      targetIds: [],
+    });
+    expect(resolvedRound.resolution.movementResolutions).toEqual([
+      expect.objectContaining({
+        combatantId: 'enemy-4',
+        action: 'charge',
+        reason: 'movement-complete',
+        distanceInches: 8,
+        closingInchesPerSegment: 1.6,
+        contactSegment: 5,
+        sameRoundAttack: false,
+      }),
+    ]);
+    expect(resolvedRound.attackGraph.nodes).toEqual([
+      expect.objectContaining({
+        id: 'movement:enemy-4',
+        kind: 'movement-completion',
+        segment: 5,
+        placement: expect.objectContaining({
+          kind: 'movement-completion',
+          distanceInches: 8,
+          movementRate: 8,
+        }),
+      }),
+    ]);
+    expect(
+      resolvedRound.attackGraph.nodes.map((node) => node.id)
+    ).not.toContain('attack:enemy-4:1');
+  });
+
   test('maps structured tracker No combat action labels to graph nodes', () => {
     const round = requireRound();
 

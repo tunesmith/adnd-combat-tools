@@ -73,7 +73,7 @@ const getRelativeClosingInchesPerSegment = (
   }
 
   if (
-    target.declaredAction === 'close' &&
+    (target.declaredAction === 'close' || target.declaredAction === 'charge') &&
     target.targetDeclarations.length === 0
   ) {
     return attackerInchesPerSegment;
@@ -164,7 +164,10 @@ export const resolveMovementAgainstTarget = (
   }
 
   if (attacker.targetDeclarations.length === 0) {
-    if (attacker.declaredAction === 'close') {
+    if (
+      attacker.declaredAction === 'close' ||
+      attacker.declaredAction === 'charge'
+    ) {
       return resolveTargetlessMove(attacker);
     }
 

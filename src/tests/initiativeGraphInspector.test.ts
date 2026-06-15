@@ -1,7 +1,9 @@
 import {
+  buildInitiativeGraphInspectorModel,
   buildInitiativeGraphEnabledNodeIds,
   getNextInitiativeGraphReadyNodeIdAfterResolving,
 } from '../helpers/initiative/graphInspector';
+import { resolveInitiativeDraft } from '../helpers/initiative/resolvedRound';
 import type {
   InitiativeAttackGraph,
   InitiativeAttackNode,
@@ -98,5 +100,92 @@ describe('initiative graph inspector helpers', () => {
     expect(
       getNextInitiativeGraphReadyNodeIdAfterResolving(graph, {}, 'only')
     ).toBeUndefined();
+  });
+
+  test('explains spell interruption when the caster is marked as losing initiative', () => {
+    const resolvedRound = resolveInitiativeDraft({
+      label: 'Slow Caster',
+      partyInitiative: 2,
+      enemyInitiative: 6,
+      party: [
+        {
+          combatantKey: 5,
+          name: 'Astrid',
+          declaredAction: 'magical-device',
+          actionLabel: 'Spiritual Hammer',
+          weaponId: 17,
+          targetCombatantKeys: [25],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 25,
+          name: 'Yeenoghu',
+          declaredAction: 'spell-casting',
+          actionLabel: 'Color Spray',
+          initiativeTiming: 'loses-initiative',
+          castingSegments: 1,
+          weaponId: 1,
+          targetCombatantKeys: [5],
+        },
+      ],
+    });
+
+    const model = buildInitiativeGraphInspectorModel(
+      resolvedRound,
+      'spell-completion:enemy-25',
+      {}
+    );
+
+    if (!model) {
+      throw new Error('Expected spell completion inspector model');
+    }
+
+    const interruptingAttack = model.incoming.find(
+      (incoming) => incoming.nodeId === 'attack:party-5:1'
+    );
+
+    expect(interruptingAttack?.explanation).toContain(
+      "Yeenoghu's Color Spray (Cast spell) is marked loses initiative."
+    );
+    expect(interruptingAttack?.explanation).toContain(
+      'That timing override is why Astrid can attack before the spell completes'
+    );
+  });
+
+  test('explains targetless charge movement as non-attacking movement', () => {
+    const resolvedRound = resolveInitiativeDraft({
+      label: 'Targetless Charge',
+      partyInitiative: 4,
+      enemyInitiative: 2,
+      party: [],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Flesh Golem',
+          declaredAction: 'charge',
+          movementRate: 8,
+          actionDistanceInches: 8,
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+
+    const model = buildInitiativeGraphInspectorModel(
+      resolvedRound,
+      'movement:enemy-3',
+      {}
+    );
+
+    if (!model) {
+      throw new Error('Expected targetless charge movement inspector model');
+    }
+
+    expect(model.whyHere).toEqual(
+      expect.arrayContaining([
+        'Flesh Golem finishes targetless charge movement of 8" on segment 5. This uses charge movement at MV 8" and does not create a same-round charge attack because no target was declared.',
+      ])
+    );
   });
 });

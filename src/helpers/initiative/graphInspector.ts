@@ -793,20 +793,33 @@ const getGraphEdgeExplanation = ({
       }
 
       if (toNode?.kind === 'spell-completion') {
+        const timingExplanation =
+          fromCombatant && toCombatant
+            ? getInitiativeTimingExplanation(fromCombatant, toCombatant)
+            : undefined;
+
         if (
           fromNode?.segmentReason === 'spell-directed' &&
           fromNode.segment !== undefined
         ) {
-          return `${
+          const segmentExplanation = `${
             fromCombatant?.name || fromName
           }'s attack is placed on segment ${
             fromNode.segment
           } against a spell caster under DMG p. 65 rule 2. A successful hit there spoils the spell.`;
+
+          return timingExplanation
+            ? `${timingExplanation} ${segmentExplanation}`
+            : segmentExplanation;
         }
 
-        return `${
+        const interruptionExplanation = `${
           fromCombatant?.name || fromName
         } can attack before the spell completes, so a successful hit spoils it.`;
+
+        return timingExplanation
+          ? `${timingExplanation} That timing override is why ${interruptionExplanation}`
+          : interruptionExplanation;
       }
 
       if (fromNode?.kind === 'spell-completion') {
@@ -940,9 +953,15 @@ const buildGraphInspectorWhyHere = ({
       );
     }
   } else if (placement?.kind === 'movement-completion') {
-    lines.push(
-      `${combatant.name} finishes moving ${placement.distanceInches}" on segment ${node.segment}. This marks a targetless Move/Close declaration at MV ${placement.movementRate}".`
-    );
+    if (combatant.declaredAction === 'charge') {
+      lines.push(
+        `${combatant.name} finishes targetless charge movement of ${placement.distanceInches}" on segment ${node.segment}. This uses charge movement at MV ${placement.movementRate}" and does not create a same-round charge attack because no target was declared.`
+      );
+    } else {
+      lines.push(
+        `${combatant.name} finishes moving ${placement.distanceInches}" on segment ${node.segment}. This marks a targetless Move/Close declaration at MV ${placement.movementRate}".`
+      );
+    }
   } else if (node.kind === 'contact') {
     lines.push(
       `Contact is reached on segment ${node.segment}. This marks the moment movement closes to melee without assuming an automatic same-round blow.`
