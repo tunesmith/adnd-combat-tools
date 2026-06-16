@@ -191,6 +191,28 @@ interface TrackerStateV7 {
   activeRound: number;
 }
 
+export interface TrackerSparseCellState {
+  rowIndex: number;
+  columnIndex: number;
+  enemyToParty?: string;
+  partyToEnemy?: string;
+  enemyToPartyVisible?: true;
+  partyToEnemyVisible?: true;
+  enemyToPartyActionIds?: string[];
+  partyToEnemyActionIds?: string[];
+}
+
+export interface TrackerRoundV8 extends Omit<TrackerRound, 'cells'> {
+  cells: TrackerSparseCellState[];
+}
+
+export interface TrackerStateV8 {
+  version: 8;
+  title?: string;
+  rounds: TrackerRoundV8[];
+  activeRound: number;
+}
+
 export type TrackerState = TrackerStateV7;
 export type TrackerStateAnyVersion =
   | TrackerStateV1
@@ -199,4 +221,5 @@ export type TrackerStateAnyVersion =
   | TrackerStateV4
   | TrackerStateV5
   | TrackerStateV6
-  | TrackerStateV7;
+  | TrackerStateV7
+  | TrackerStateV8;

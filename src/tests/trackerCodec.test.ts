@@ -1,11 +1,16 @@
-import { deflate } from 'zlib';
+import { deflate, unzipSync } from 'zlib';
 import {
   decodeTrackerState,
   encodeTrackerState,
   encodeTrackerStateSync,
   transformTrackerState,
 } from '../helpers/trackerCodec';
-import type { TrackerStateV2, TrackerStateV5 } from '../types/tracker';
+import type {
+  TrackerState,
+  TrackerStateAnyVersion,
+  TrackerStateV2,
+  TrackerStateV5,
+} from '../types/tracker';
 
 const encodeLegacyState = (value: unknown): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -18,6 +23,15 @@ const encodeLegacyState = (value: unknown): Promise<string> =>
       resolve(encodeURIComponent(buffer.toString('base64')));
     });
   });
+
+const decodeEncodedTrackerPayload = (
+  encodedState: string
+): TrackerStateAnyVersion =>
+  JSON.parse(
+    unzipSync(
+      Buffer.from(decodeURIComponent(encodedState), 'base64')
+    ).toString()
+  ) as TrackerStateAnyVersion;
 
 describe('tracker codec', () => {
   test('migrates version 2 tracker state into round-snapshot shape', () => {
@@ -392,7 +406,7 @@ describe('tracker codec', () => {
   });
 
   test('normalizes current-version combatants without shortlists on decode', async () => {
-    const encoded = await encodeTrackerState({
+    const encoded = await encodeLegacyState({
       version: 7,
       rounds: [
         {
@@ -462,6 +476,165 @@ describe('tracker codec', () => {
 
     expect(decoded.rounds[0]?.party[0]?.weaponShortlist).toEqual([12]);
     expect(decoded.rounds[0]?.enemies[0]?.weaponShortlist).toEqual([1]);
+  });
+
+  test('encodes current tracker cells as sparse version 8 cells', async () => {
+    const state: TrackerState = {
+      version: 7,
+      title: 'Sparse Cells',
+      rounds: [
+        {
+          label: 'Round 1',
+          party: [
+            {
+              key: 1,
+              name: 'Lodi',
+              class: 1,
+              level: 7,
+              armorType: 10,
+              armorClass: -1,
+              weapon: 12,
+              weaponShortlist: [12],
+              maxHp: '19',
+            },
+            {
+              key: 3,
+              name: 'Bemis',
+              class: 1,
+              level: 5,
+              armorType: 6,
+              armorClass: 4,
+              weapon: 13,
+              weaponShortlist: [13],
+              maxHp: '16',
+            },
+          ],
+          enemies: [
+            {
+              key: 2,
+              name: 'Ghoul',
+              class: 10,
+              level: 3,
+              armorType: 1,
+              armorClass: 6,
+              weapon: 1,
+              weaponShortlist: [1],
+              maxHp: '11',
+            },
+            {
+              key: 4,
+              name: 'Gnoll',
+              class: 10,
+              level: 2,
+              armorType: 5,
+              armorClass: 5,
+              weapon: 15,
+              weaponShortlist: [15],
+              maxHp: '8',
+            },
+          ],
+          partyInitiative: '4',
+          enemyInitiative: '5',
+          summary: '',
+          cells: [
+            [
+              {
+                enemyToParty: '',
+                partyToEnemy: '',
+                enemyToPartyVisible: false,
+                partyToEnemyVisible: false,
+              },
+              {
+                enemyToParty: '',
+                partyToEnemy: 'hit 8',
+                enemyToPartyVisible: false,
+                partyToEnemyVisible: true,
+                partyToEnemyActionIds: ['party:3:main'],
+              },
+            ],
+            [
+              {
+                enemyToParty: '',
+                partyToEnemy: '',
+                enemyToPartyVisible: true,
+                partyToEnemyVisible: false,
+              },
+              {
+                enemyToParty: 'claw',
+                partyToEnemy: '',
+                enemyToPartyVisible: true,
+                partyToEnemyVisible: false,
+                enemyToPartyActionIds: ['enemy:4:main'],
+              },
+            ],
+          ],
+          partyStates: [
+            {
+              hp: '19',
+              effect: '',
+              action: 'attack',
+              result: '',
+              notes: '',
+            },
+            {
+              hp: '16',
+              effect: '',
+              action: 'charge',
+              result: '',
+              notes: '',
+            },
+          ],
+          enemyStates: [
+            {
+              hp: '11',
+              effect: '',
+              action: '',
+              result: '',
+              notes: '',
+            },
+            {
+              hp: '8',
+              effect: '',
+              action: 'claw Bemis',
+              result: '',
+              notes: '',
+            },
+          ],
+        },
+      ],
+      activeRound: 0,
+    };
+
+    const encoded = await encodeTrackerState(state);
+    const persisted = decodeEncodedTrackerPayload(encoded);
+
+    expect(persisted.version).toBe(8);
+    if (persisted.version !== 8) {
+      throw new Error('Expected sparse version 8 tracker payload');
+    }
+
+    expect(persisted.rounds[0]?.cells).toEqual([
+      {
+        rowIndex: 0,
+        columnIndex: 1,
+        partyToEnemy: 'hit 8',
+        partyToEnemyVisible: true,
+        partyToEnemyActionIds: ['party:3:main'],
+      },
+      {
+        rowIndex: 1,
+        columnIndex: 0,
+        enemyToPartyVisible: true,
+      },
+      {
+        rowIndex: 1,
+        columnIndex: 1,
+        enemyToParty: 'claw',
+        enemyToPartyVisible: true,
+        enemyToPartyActionIds: ['enemy:4:main'],
+      },
+    ]);
+    await expect(decodeTrackerState(encoded)).resolves.toEqual(state);
   });
 
   test('sync encoder matches the async codec path', async () => {

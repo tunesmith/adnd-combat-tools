@@ -12,11 +12,21 @@ import type {
   TrackerRoundV5,
   TrackerRoundV1,
   TrackerRoundV2,
+  TrackerRoundV8,
+  TrackerSparseCellState,
   TrackerState,
   TrackerStateAnyVersion,
   TrackerStateV4,
   TrackerStateV1,
+  TrackerStateV8,
 } from '../types/tracker';
+
+const createEmptyCell = (): TrackerCellState => ({
+  enemyToParty: '',
+  partyToEnemy: '',
+  enemyToPartyVisible: false,
+  partyToEnemyVisible: false,
+});
 
 const cloneCombatants = (combatants: TrackerCombatant[]): TrackerCombatant[] =>
   combatants.map((combatant) =>
@@ -70,6 +80,114 @@ const migrateCellV5 = (cell: TrackerCellStateV5): TrackerCellState => ({
   partyToEnemy: cell.partyToEnemy,
   enemyToPartyVisible: cell.isVisible,
   partyToEnemyVisible: cell.isVisible,
+});
+
+const compactCell = (
+  cell: TrackerCellState,
+  rowIndex: number,
+  columnIndex: number
+): TrackerSparseCellState | undefined => {
+  const compactedCell: TrackerSparseCellState = {
+    rowIndex,
+    columnIndex,
+  };
+
+  if (cell.enemyToParty) {
+    compactedCell.enemyToParty = cell.enemyToParty;
+  }
+
+  if (cell.partyToEnemy) {
+    compactedCell.partyToEnemy = cell.partyToEnemy;
+  }
+
+  if (cell.enemyToPartyVisible) {
+    compactedCell.enemyToPartyVisible = true;
+  }
+
+  if (cell.partyToEnemyVisible) {
+    compactedCell.partyToEnemyVisible = true;
+  }
+
+  if (cell.enemyToPartyActionIds && cell.enemyToPartyActionIds.length > 0) {
+    compactedCell.enemyToPartyActionIds = cell.enemyToPartyActionIds;
+  }
+
+  if (cell.partyToEnemyActionIds && cell.partyToEnemyActionIds.length > 0) {
+    compactedCell.partyToEnemyActionIds = cell.partyToEnemyActionIds;
+  }
+
+  return compactedCell.enemyToParty ||
+    compactedCell.partyToEnemy ||
+    compactedCell.enemyToPartyVisible ||
+    compactedCell.partyToEnemyVisible ||
+    compactedCell.enemyToPartyActionIds ||
+    compactedCell.partyToEnemyActionIds
+    ? compactedCell
+    : undefined;
+};
+
+const compactCells = (cells: TrackerCellState[][]): TrackerSparseCellState[] =>
+  cells.flatMap((row, rowIndex) =>
+    row.flatMap((cell, columnIndex) => {
+      const compactedCell = compactCell(cell, rowIndex, columnIndex);
+
+      return compactedCell ? [compactedCell] : [];
+    })
+  );
+
+const hydrateSparseCells = (
+  cells: TrackerSparseCellState[],
+  enemyCount: number,
+  partyCount: number
+): TrackerCellState[][] => {
+  const hydratedCells = Array.from({ length: enemyCount }, () =>
+    Array.from({ length: partyCount }, () => createEmptyCell())
+  );
+
+  cells.forEach((cell) => {
+    if (
+      !Number.isInteger(cell.rowIndex) ||
+      !Number.isInteger(cell.columnIndex) ||
+      cell.rowIndex < 0 ||
+      cell.columnIndex < 0 ||
+      cell.rowIndex >= enemyCount ||
+      cell.columnIndex >= partyCount
+    ) {
+      return;
+    }
+
+    const hydratedRow = hydratedCells[cell.rowIndex];
+    if (!hydratedRow) {
+      return;
+    }
+
+    hydratedRow[cell.columnIndex] = {
+      enemyToParty: cell.enemyToParty || '',
+      partyToEnemy: cell.partyToEnemy || '',
+      enemyToPartyVisible: cell.enemyToPartyVisible === true,
+      partyToEnemyVisible: cell.partyToEnemyVisible === true,
+      ...(cell.enemyToPartyActionIds && cell.enemyToPartyActionIds.length > 0
+        ? { enemyToPartyActionIds: cell.enemyToPartyActionIds }
+        : {}),
+      ...(cell.partyToEnemyActionIds && cell.partyToEnemyActionIds.length > 0
+        ? { partyToEnemyActionIds: cell.partyToEnemyActionIds }
+        : {}),
+    };
+  });
+
+  return hydratedCells;
+};
+
+const compactRound = (round: TrackerRound): TrackerRoundV8 => ({
+  ...round,
+  cells: compactCells(round.cells),
+});
+
+const compactTrackerState = (state: TrackerState): TrackerStateV8 => ({
+  version: 8,
+  ...(state.title !== undefined ? { title: state.title } : {}),
+  rounds: state.rounds.map((round) => compactRound(round)),
+  activeRound: state.activeRound,
 });
 
 const migrateRound = (
@@ -215,9 +333,35 @@ const migrateRoundV6 = (
   })),
 });
 
+const migrateRoundV8 = (round: TrackerRoundV8): TrackerRound => ({
+  ...round,
+  party: cloneCombatants(round.party),
+  enemies: cloneCombatants(round.enemies),
+  cells: hydrateSparseCells(
+    round.cells,
+    round.enemies.length,
+    round.party.length
+  ),
+  partyStates: round.partyStates.map((partyState) => ({
+    ...partyState,
+  })),
+  enemyStates: round.enemyStates.map((enemyState) => ({
+    ...enemyState,
+  })),
+});
+
 export const transformTrackerState = (
   state: TrackerStateAnyVersion
 ): TrackerState => {
+  if (state.version === 8) {
+    return normalizeTrackerState({
+      version: 7,
+      title: state.title,
+      rounds: state.rounds.map((round) => migrateRoundV8(round)),
+      activeRound: state.activeRound,
+    });
+  }
+
   if (state.version === 7) {
     return normalizeTrackerState(state);
   }
@@ -309,7 +453,7 @@ export const transformTrackerState = (
 
 export const encodeTrackerState = (state: TrackerState): Promise<string> =>
   new Promise((resolve, reject) => {
-    deflate(JSON.stringify(state), (err, buffer) => {
+    deflate(JSON.stringify(compactTrackerState(state)), (err, buffer) => {
       if (err) {
         reject(err);
         return;
@@ -320,7 +464,9 @@ export const encodeTrackerState = (state: TrackerState): Promise<string> =>
   });
 
 export const encodeTrackerStateSync = (state: TrackerState): string =>
-  encodeURIComponent(deflateSync(JSON.stringify(state)).toString('base64'));
+  encodeURIComponent(
+    deflateSync(JSON.stringify(compactTrackerState(state))).toString('base64')
+  );
 
 export const decodeTrackerState = (
   encodedState: string
