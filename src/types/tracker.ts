@@ -202,8 +202,30 @@ export interface TrackerSparseCellState {
   partyToEnemyActionIds?: string[];
 }
 
-export interface TrackerRoundV8 extends Omit<TrackerRound, 'cells'> {
+export interface TrackerPersistedActionDeclaration {
+  id: string;
+  source?: 'combat-cell' | 'intention';
+  side: TrackerActionSide;
+  combatantKey: number;
+  declaredAction: InitiativeDeclaredAction;
+  actionLabel?: string;
+  initiativeTiming?: InitiativeTimingOverride;
+  usesGridTargets?: boolean;
+  actionDistanceInches?: number;
+  activationSegments?: number;
+  castingSegments?: number;
+  attackRoutineCount?: number;
+  weaponId?: number;
+  intention?: string;
+  result?: string;
+  targetCombatantKeys?: number[];
+  targetDeclarations?: TrackerActionTargetDeclaration[];
+}
+
+export interface TrackerRoundV8
+  extends Omit<TrackerRound, 'actions' | 'cells'> {
   cells: TrackerSparseCellState[];
+  actions?: TrackerPersistedActionDeclaration[];
 }
 
 export interface TrackerStateV8 {

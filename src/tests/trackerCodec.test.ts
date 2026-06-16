@@ -10,6 +10,7 @@ import type {
   TrackerStateAnyVersion,
   TrackerStateV2,
   TrackerStateV5,
+  TrackerStateV8,
 } from '../types/tracker';
 
 const encodeLegacyState = (value: unknown): Promise<string> =>
@@ -568,6 +569,48 @@ describe('tracker codec', () => {
               },
             ],
           ],
+          actions: [
+            {
+              id: 'party:3:main',
+              source: 'intention',
+              side: 'party',
+              direction: 'partyToEnemy',
+              combatantKey: 3,
+              combatantIndex: 1,
+              targetSide: 'enemy',
+              declaredAction: 'charge',
+              actionLabel: 'Door rush',
+              actionDistanceInches: 5,
+              weaponId: 13,
+              intention: 'Door rush (5")',
+              result: '',
+              targetDeclarations: [
+                {
+                  targetCombatantKey: 2,
+                  targetCombatantIndex: 0,
+                  cellRowIndex: 0,
+                  cellColumnIndex: 1,
+                  cellResultText: 'hit 8',
+                },
+              ],
+            },
+            {
+              id: 'enemy:4:main',
+              source: 'intention',
+              side: 'enemy',
+              direction: 'enemyToParty',
+              combatantKey: 4,
+              combatantIndex: 1,
+              targetSide: 'party',
+              declaredAction: 'open-melee',
+              actionLabel: 'Claw',
+              attackRoutineCount: 2,
+              weaponId: 15,
+              intention: 'Claw',
+              result: '',
+              targetDeclarations: [],
+            },
+          ],
           partyStates: [
             {
               hp: '19',
@@ -634,7 +677,124 @@ describe('tracker codec', () => {
         enemyToPartyActionIds: ['enemy:4:main'],
       },
     ]);
+    expect(persisted.rounds[0]?.actions).toEqual([
+      {
+        id: 'party:3:main',
+        side: 'party',
+        combatantKey: 3,
+        declaredAction: 'charge',
+        actionLabel: 'Door rush',
+        actionDistanceInches: 5,
+        targetCombatantKeys: [2],
+      },
+      {
+        id: 'enemy:4:main',
+        side: 'enemy',
+        combatantKey: 4,
+        declaredAction: 'open-melee',
+        actionLabel: 'Claw',
+        attackRoutineCount: 2,
+      },
+    ]);
     await expect(decodeTrackerState(encoded)).resolves.toEqual(state);
+  });
+
+  test('decodes version 8 action targets from pre-compaction target declarations', async () => {
+    const legacyState: TrackerStateV8 = {
+      version: 8,
+      rounds: [
+        {
+          label: 'Round 1',
+          party: [
+            {
+              key: 1,
+              name: 'Bemis',
+              class: 1,
+              level: 5,
+              armorType: 6,
+              armorClass: 4,
+              weapon: 13,
+              maxHp: '16',
+            },
+          ],
+          enemies: [
+            {
+              key: 2,
+              name: 'Ghoul',
+              class: 10,
+              level: 3,
+              armorType: 1,
+              armorClass: 6,
+              weapon: 1,
+              maxHp: '11',
+            },
+          ],
+          partyInitiative: '4',
+          enemyInitiative: '5',
+          summary: '',
+          cells: [
+            {
+              rowIndex: 0,
+              columnIndex: 0,
+              partyToEnemy: 'hit 8',
+              partyToEnemyVisible: true,
+              partyToEnemyActionIds: ['party:1:main'],
+            },
+          ],
+          partyStates: [
+            {
+              hp: '16',
+              effect: '',
+              action: 'charge',
+              result: '',
+              notes: '',
+            },
+          ],
+          enemyStates: [
+            {
+              hp: '11',
+              effect: '',
+              action: '',
+              result: '',
+              notes: '',
+            },
+          ],
+          actions: [
+            {
+              id: 'party:1:main',
+              side: 'party',
+              combatantKey: 1,
+              declaredAction: 'charge',
+              actionDistanceInches: 5,
+              targetDeclarations: [
+                {
+                  targetCombatantKey: 2,
+                  targetCombatantIndex: 0,
+                  cellRowIndex: 0,
+                  cellColumnIndex: 0,
+                  cellResultText: 'hit 8',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      activeRound: 0,
+    };
+
+    const decoded = await decodeTrackerState(
+      await encodeLegacyState(legacyState)
+    );
+
+    expect(decoded.rounds[0]?.actions?.[0]?.targetDeclarations).toEqual([
+      {
+        targetCombatantKey: 2,
+        targetCombatantIndex: 0,
+        cellRowIndex: 0,
+        cellColumnIndex: 0,
+        cellResultText: 'hit 8',
+      },
+    ]);
   });
 
   test('sync encoder matches the async codec path', async () => {

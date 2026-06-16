@@ -1,12 +1,17 @@
 import { deflate, deflateSync, unzip } from 'zlib';
+import { formatCastingSegments } from './initiative/actionSegments';
 import { ensureWeaponShortlist, getDefaultRoundLabel } from './trackerState';
 import type {
+  TrackerActionDeclaration,
+  TrackerActionDirection,
+  TrackerActionSide,
   TrackerCellState,
   TrackerCellStateV5,
   TrackerCombatant,
   TrackerCombatantRoundState,
   TrackerCombatantRoundStateV1,
   TrackerCombatantRoundStateV2,
+  TrackerPersistedActionDeclaration,
   TrackerRound,
   TrackerRoundV6,
   TrackerRoundV5,
@@ -27,6 +32,137 @@ const createEmptyCell = (): TrackerCellState => ({
   enemyToPartyVisible: false,
   partyToEnemyVisible: false,
 });
+
+const getActionDirection = (side: TrackerActionSide): TrackerActionDirection =>
+  side === 'party' ? 'partyToEnemy' : 'enemyToParty';
+
+const getActionTargetSide = (side: TrackerActionSide): TrackerActionSide =>
+  side === 'party' ? 'enemy' : 'party';
+
+const getRoundCombatants = (
+  round: Pick<TrackerRound, 'enemies' | 'party'>,
+  side: TrackerActionSide
+): TrackerCombatant[] => (side === 'party' ? round.party : round.enemies);
+
+const getRoundStates = (
+  round: Pick<TrackerRound, 'enemyStates' | 'partyStates'>,
+  side: TrackerActionSide
+): TrackerCombatantRoundState[] =>
+  side === 'party' ? round.partyStates : round.enemyStates;
+
+const getActionCombatantIndex = (
+  round: Pick<TrackerRound, 'enemies' | 'party'>,
+  side: TrackerActionSide,
+  combatantKey: number
+): number =>
+  getRoundCombatants(round, side).findIndex(
+    (combatant) => combatant.key === combatantKey
+  );
+
+const getActionCombatant = (
+  round: Pick<TrackerRound, 'enemies' | 'party'>,
+  side: TrackerActionSide,
+  combatantKey: number
+): TrackerCombatant | undefined =>
+  getRoundCombatants(round, side).find(
+    (combatant) => combatant.key === combatantKey
+  );
+
+const getActionRoundState = (
+  round: Pick<TrackerRound, 'enemyStates' | 'partyStates'>,
+  side: TrackerActionSide,
+  combatantIndex: number
+): TrackerCombatantRoundState | undefined =>
+  getRoundStates(round, side)[combatantIndex];
+
+const formatDistanceInches = (distanceInches: number): string =>
+  Number.isInteger(distanceInches)
+    ? distanceInches.toString()
+    : distanceInches.toFixed(1).replace(/\.0$/, '');
+
+const formatDeclaredAction = (
+  declaredAction: TrackerActionDeclaration['declaredAction']
+): string => {
+  switch (declaredAction) {
+    case 'none':
+      return 'No combat action';
+    case 'open-melee':
+      return 'Open melee';
+    case 'close':
+      return 'Move/Close';
+    case 'charge':
+      return 'Charge';
+    case 'set-vs-charge':
+      return 'Set vs charge';
+    case 'missile':
+      return 'Missile';
+    case 'turn-undead':
+      return 'Turn undead';
+    case 'magical-device':
+      return 'Magical device';
+    case 'spell-casting':
+      return 'Cast spell';
+  }
+};
+
+const formatActivationSegments = (
+  activationSegments: number | undefined
+): string => {
+  if (activationSegments === undefined) {
+    return 'no activation time';
+  }
+
+  if (activationSegments >= 10) {
+    return '10+ segments';
+  }
+
+  return `${activationSegments} ${
+    activationSegments === 1 ? 'segment' : 'segments'
+  }`;
+};
+
+const getDefaultActionIntention = (
+  action: Pick<
+    TrackerActionDeclaration,
+    | 'actionDistanceInches'
+    | 'actionLabel'
+    | 'activationSegments'
+    | 'castingSegments'
+    | 'declaredAction'
+  >
+): string => {
+  const label = action.actionLabel?.trim() || '';
+
+  if (
+    (action.declaredAction === 'close' || action.declaredAction === 'charge') &&
+    action.actionDistanceInches !== undefined
+  ) {
+    const distanceText = `${formatDistanceInches(
+      action.actionDistanceInches
+    )}"`;
+    const actionLabel = formatDeclaredAction(action.declaredAction);
+    return label
+      ? `${label} (${distanceText})`
+      : `${actionLabel} ${distanceText}`;
+  }
+
+  if (
+    action.declaredAction === 'spell-casting' &&
+    action.castingSegments !== undefined
+  ) {
+    const timingText = formatCastingSegments(action.castingSegments);
+    return label ? `${label} (${timingText})` : `Cast spell (${timingText})`;
+  }
+
+  if (action.declaredAction === 'magical-device') {
+    const timingText = formatActivationSegments(action.activationSegments);
+    return label
+      ? `${label} (${timingText})`
+      : `Magical device (${timingText})`;
+  }
+
+  return label || formatDeclaredAction(action.declaredAction);
+};
 
 const cloneCombatants = (combatants: TrackerCombatant[]): TrackerCombatant[] =>
   combatants.map((combatant) =>
@@ -178,10 +314,194 @@ const hydrateSparseCells = (
   return hydratedCells;
 };
 
-const compactRound = (round: TrackerRound): TrackerRoundV8 => ({
-  ...round,
-  cells: compactCells(round.cells),
-});
+const getCellResultText = (
+  cell: TrackerCellState | undefined,
+  direction: TrackerActionDirection
+): string => {
+  if (!cell) {
+    return '';
+  }
+
+  return direction === 'partyToEnemy' ? cell.partyToEnemy : cell.enemyToParty;
+};
+
+const compactAction = (
+  action: TrackerActionDeclaration,
+  round: TrackerRound
+): TrackerPersistedActionDeclaration => {
+  const combatant = getActionCombatant(round, action.side, action.combatantKey);
+  const defaultIntention = getDefaultActionIntention(action);
+  const roundState = getActionRoundState(
+    round,
+    action.side,
+    action.combatantIndex
+  );
+  const targetCombatantKeys = action.targetDeclarations.map(
+    (targetDeclaration) => targetDeclaration.targetCombatantKey
+  );
+
+  return {
+    id: action.id,
+    ...(action.source !== 'intention' ? { source: action.source } : {}),
+    side: action.side,
+    combatantKey: action.combatantKey,
+    declaredAction: action.declaredAction,
+    ...(action.actionLabel ? { actionLabel: action.actionLabel } : {}),
+    ...(action.initiativeTiming && action.initiativeTiming !== 'normal'
+      ? { initiativeTiming: action.initiativeTiming }
+      : {}),
+    ...(action.usesGridTargets === false ? { usesGridTargets: false } : {}),
+    ...(action.actionDistanceInches !== undefined
+      ? { actionDistanceInches: action.actionDistanceInches }
+      : {}),
+    ...(action.activationSegments !== undefined
+      ? { activationSegments: action.activationSegments }
+      : {}),
+    ...(action.castingSegments !== undefined
+      ? { castingSegments: action.castingSegments }
+      : {}),
+    ...(action.attackRoutineCount !== undefined
+      ? { attackRoutineCount: action.attackRoutineCount }
+      : {}),
+    ...(combatant?.weapon !== action.weaponId
+      ? { weaponId: action.weaponId }
+      : {}),
+    ...(action.intention !== defaultIntention
+      ? { intention: action.intention }
+      : {}),
+    ...((roundState?.result || '') !== action.result
+      ? { result: action.result }
+      : {}),
+    ...(targetCombatantKeys.length > 0 ? { targetCombatantKeys } : {}),
+  };
+};
+
+const compactActions = (
+  round: TrackerRound
+): TrackerPersistedActionDeclaration[] | undefined => {
+  if (!round.actions || round.actions.length === 0) {
+    return undefined;
+  }
+
+  return round.actions.map((action) => compactAction(action, round));
+};
+
+const hydrateTargetDeclarations = (
+  action: TrackerPersistedActionDeclaration,
+  round: TrackerRound,
+  combatantIndex: number
+): TrackerActionDeclaration['targetDeclarations'] => {
+  const targetCombatantKeys =
+    action.targetCombatantKeys ||
+    action.targetDeclarations?.map(
+      (targetDeclaration) => targetDeclaration.targetCombatantKey
+    );
+
+  if (!targetCombatantKeys || combatantIndex < 0) {
+    return [];
+  }
+
+  const direction = getActionDirection(action.side);
+  const targetSide = getActionTargetSide(action.side);
+  const targetCombatants = getRoundCombatants(round, targetSide);
+
+  return targetCombatantKeys.flatMap((targetCombatantKey) => {
+    const targetCombatantIndex = targetCombatants.findIndex(
+      (targetCombatant) => targetCombatant.key === targetCombatantKey
+    );
+
+    if (targetCombatantIndex < 0) {
+      return [];
+    }
+
+    const cellRowIndex =
+      action.side === 'party' ? targetCombatantIndex : combatantIndex;
+    const cellColumnIndex =
+      action.side === 'party' ? combatantIndex : targetCombatantIndex;
+
+    return [
+      {
+        targetCombatantKey,
+        targetCombatantIndex,
+        cellRowIndex,
+        cellColumnIndex,
+        cellResultText: getCellResultText(
+          round.cells[cellRowIndex]?.[cellColumnIndex],
+          direction
+        ),
+      },
+    ];
+  });
+};
+
+const hydrateAction = (
+  action: TrackerPersistedActionDeclaration,
+  round: TrackerRound
+): TrackerActionDeclaration => {
+  const combatantIndex = getActionCombatantIndex(
+    round,
+    action.side,
+    action.combatantKey
+  );
+  const combatant = getActionCombatant(round, action.side, action.combatantKey);
+  const roundState = getActionRoundState(round, action.side, combatantIndex);
+
+  return {
+    id: action.id,
+    source: action.source || 'intention',
+    side: action.side,
+    direction: getActionDirection(action.side),
+    combatantKey: action.combatantKey,
+    combatantIndex,
+    targetSide: getActionTargetSide(action.side),
+    declaredAction: action.declaredAction,
+    ...(action.actionLabel ? { actionLabel: action.actionLabel } : {}),
+    ...(action.initiativeTiming
+      ? { initiativeTiming: action.initiativeTiming }
+      : {}),
+    ...(action.usesGridTargets === false ? { usesGridTargets: false } : {}),
+    ...(action.actionDistanceInches !== undefined
+      ? { actionDistanceInches: action.actionDistanceInches }
+      : {}),
+    ...(action.activationSegments !== undefined
+      ? { activationSegments: action.activationSegments }
+      : {}),
+    ...(action.castingSegments !== undefined
+      ? { castingSegments: action.castingSegments }
+      : {}),
+    ...(action.attackRoutineCount !== undefined
+      ? { attackRoutineCount: action.attackRoutineCount }
+      : {}),
+    weaponId: action.weaponId ?? combatant?.weapon ?? 0,
+    intention:
+      action.intention !== undefined
+        ? action.intention
+        : getDefaultActionIntention(action),
+    result: action.result ?? roundState?.result ?? '',
+    targetDeclarations: hydrateTargetDeclarations(
+      action,
+      round,
+      combatantIndex
+    ),
+  };
+};
+
+const compactRound = (round: TrackerRound): TrackerRoundV8 => {
+  const actions = compactActions(round);
+
+  return {
+    label: round.label,
+    party: round.party,
+    enemies: round.enemies,
+    partyInitiative: round.partyInitiative,
+    enemyInitiative: round.enemyInitiative,
+    summary: round.summary,
+    cells: compactCells(round.cells),
+    partyStates: round.partyStates,
+    enemyStates: round.enemyStates,
+    ...(actions ? { actions } : {}),
+  };
+};
 
 const compactTrackerState = (state: TrackerState): TrackerStateV8 => ({
   version: 8,
@@ -333,22 +653,35 @@ const migrateRoundV6 = (
   })),
 });
 
-const migrateRoundV8 = (round: TrackerRoundV8): TrackerRound => ({
-  ...round,
-  party: cloneCombatants(round.party),
-  enemies: cloneCombatants(round.enemies),
-  cells: hydrateSparseCells(
-    round.cells,
-    round.enemies.length,
-    round.party.length
-  ),
-  partyStates: round.partyStates.map((partyState) => ({
-    ...partyState,
-  })),
-  enemyStates: round.enemyStates.map((enemyState) => ({
-    ...enemyState,
-  })),
-});
+const migrateRoundV8 = (round: TrackerRoundV8): TrackerRound => {
+  const hydratedRound: TrackerRound = {
+    label: round.label,
+    party: cloneCombatants(round.party),
+    enemies: cloneCombatants(round.enemies),
+    partyInitiative: round.partyInitiative,
+    enemyInitiative: round.enemyInitiative,
+    summary: round.summary,
+    cells: hydrateSparseCells(
+      round.cells,
+      round.enemies.length,
+      round.party.length
+    ),
+    partyStates: round.partyStates.map((partyState) => ({
+      ...partyState,
+    })),
+    enemyStates: round.enemyStates.map((enemyState) => ({
+      ...enemyState,
+    })),
+  };
+  const actions = round.actions?.map((action) =>
+    hydrateAction(action, hydratedRound)
+  );
+
+  return {
+    ...hydratedRound,
+    ...(actions && actions.length > 0 ? { actions } : {}),
+  };
+};
 
 export const transformTrackerState = (
   state: TrackerStateAnyVersion
