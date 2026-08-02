@@ -14,7 +14,9 @@ import {
   insertRoundAfterActive,
   removeActiveRound,
   removeCombatant,
+  startNewCombatFromActiveRound,
   updateCombatant,
+  type NewCombatHpMode,
 } from '../../helpers/trackerState';
 import type {
   TrackerActionDeclaration,
@@ -43,6 +45,7 @@ import {
   getTrackerEncodedStateFromUrlText,
 } from '../../helpers/trackerUrl';
 import {
+  createTrackerDraftId,
   deleteTrackerLocalDraft,
   getOrCreateTrackerSessionDraftId,
   listTrackerLocalDrafts,
@@ -1511,6 +1514,10 @@ const CombatTracker = ({
   const [showMoreActions, setShowMoreActions] = useState<boolean>(false);
   const [showDeleteRoundModal, setShowDeleteRoundModal] =
     useState<boolean>(false);
+  const [showStartNewCombatModal, setShowStartNewCombatModal] =
+    useState<boolean>(false);
+  const [newCombatHpMode, setNewCombatHpMode] =
+    useState<NewCombatHpMode>('carry-current');
   const [showIntentionsWizard, setShowIntentionsWizard] =
     useState<boolean>(false);
   const [intentionWizardEntries, setIntentionWizardEntries] = useState<
@@ -1595,6 +1602,8 @@ const CombatTracker = ({
   const [state, dispatch] = useReducer(trackerReducer, initialState);
   const currentRound = state.rounds[state.activeRound];
   const currentRoundLabel = currentRound?.label || '';
+  const currentRoundDisplayLabel =
+    currentRoundLabel || `Round ${state.activeRound + 1}`;
   const trackerTitle = state.title || '';
   const currentIntentionWizardEntry =
     intentionWizardEntries[intentionWizardIndex];
@@ -2212,6 +2221,9 @@ const CombatTracker = ({
       !showRecoverModal &&
       !showShareModal &&
       !showImportModal &&
+      !showDeleteRoundModal &&
+      !showStartNewCombatModal &&
+      !showMoreActions &&
       !showIntentionsWizard &&
       !showCombatWizard &&
       !attackDetailTarget &&
@@ -2228,6 +2240,7 @@ const CombatTracker = ({
         setShowShareModal(false);
         setShowImportModal(false);
         setShowDeleteRoundModal(false);
+        setShowStartNewCombatModal(false);
         setShowIntentionsWizard(false);
         setShowCombatWizard(false);
         setAttackDetailTarget(undefined);
@@ -2260,6 +2273,7 @@ const CombatTracker = ({
     showMoreActions,
     showRecoverModal,
     showShareModal,
+    showStartNewCombatModal,
     showUrlWarning,
   ]);
 
@@ -2576,6 +2590,16 @@ const CombatTracker = ({
 
   const closeDeleteRoundModal = () => {
     setShowDeleteRoundModal(false);
+  };
+
+  const openStartNewCombatModal = () => {
+    setNewCombatHpMode('carry-current');
+    setShowStartNewCombatModal(true);
+    setShowMoreActions(false);
+  };
+
+  const closeStartNewCombatModal = () => {
+    setShowStartNewCombatModal(false);
   };
 
   const closeAttackDetailModal = () => {
@@ -3668,6 +3692,106 @@ const CombatTracker = ({
     });
   };
 
+  const resetUiForNewCombat = () => {
+    setShowUrlWarning(false);
+    setShowRecoverModal(false);
+    setShowShareModal(false);
+    setShowImportModal(false);
+    setShowDeleteRoundModal(false);
+    setShowStartNewCombatModal(false);
+    setShowMoreActions(false);
+    setShowIntentionsWizard(false);
+    setIntentionWizardEntries([]);
+    setIntentionWizardIndex(0);
+    setIntentionResolvedOnEntry(false);
+    setIntentionWizardAnchorKeysByRound({});
+    setIntentionWizardActionDrafts([]);
+    setIntentionWizardSelectedActionId('');
+    setIntentionWizardActionError(undefined);
+    setShowCombatWizard(false);
+    setCombatWizardIndex(0);
+    setCombatResolvedOnEntry(false);
+    setCombatWizardSelectedActionId('');
+    setCombatWizardAnchorKeysByRound({});
+    setAttackDetailTarget(undefined);
+    setCellActionAssignmentTarget(undefined);
+    setCellActionAssignmentDraftIds([]);
+    setCellActionAssignmentError(undefined);
+    setActionEditorTarget(undefined);
+    setActionEditorDrafts([]);
+    setActionEditorError(undefined);
+    setCombatFlowCompletedNodeIdsByRound({});
+    setCombatFlowSelectedNodeIdsByRound({});
+    setCombatFlowGraphInspectorNodeId(undefined);
+    setCombatFlowGraphInspectorPosition(undefined);
+    setIsEditingTitle(false);
+    setTitleDraft('');
+    setIsEditingRoundLabel(false);
+    setRoundLabelDraft('');
+    setRecoverError(undefined);
+    setImportError(undefined);
+    setShareCopied(false);
+  };
+
+  const confirmStartNewCombat = () => {
+    const nextState = startNewCombatFromActiveRound(state, newCombatHpMode);
+    if (nextState === state) {
+      closeStartNewCombatModal();
+      return;
+    }
+
+    const sourceEncodedState = encodeTrackerStateSync(state);
+    const nextEncodedState = encodeTrackerStateSync(nextState);
+    const nextDraftId = createTrackerDraftId();
+    let nextDrafts = savedDrafts;
+    let nextDraftSavedAt: number | undefined;
+    let nextDraftSaved = false;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const storedDrafts = listTrackerLocalDrafts(window.localStorage);
+        const currentStoredDraft = draftId
+          ? storedDrafts.find((draft) => draft.id === draftId)
+          : undefined;
+        if (currentStoredDraft?.encodedState !== sourceEncodedState) {
+          saveTrackerLocalDraft(
+            window.localStorage,
+            createTrackerDraftId(),
+            sourceEncodedState,
+            state
+          );
+        }
+
+        nextDrafts = saveTrackerLocalDraft(
+          window.localStorage,
+          nextDraftId,
+          nextEncodedState,
+          nextState
+        );
+        setTrackerSessionDraftId(window.sessionStorage, nextDraftId);
+
+        const storedNewDraft = nextDrafts.find(
+          (draft) => draft.id === nextDraftId
+        );
+        nextDraftSavedAt = storedNewDraft?.updatedAt;
+        nextDraftSaved = Boolean(storedNewDraft);
+      } catch (error) {
+        console.error('Unable to save tracker drafts while forking:', error);
+      }
+    }
+
+    initialStateRef.current = nextState;
+    dispatch({ type: 'replace-state', state: nextState });
+    setEncodedTrackerState(nextEncodedState);
+    setDraftId(nextDraftId);
+    setSavedDrafts(nextDrafts);
+    setHasLocalDraft(nextDraftSaved);
+    setLastLocalSaveAt(nextDraftSavedAt);
+    setAutosavePaused(false);
+    pausedEncodedState.current = undefined;
+    resetUiForNewCombat();
+  };
+
   const handleClearCurrentDraft = () => {
     if (typeof window === 'undefined' || !draftId) {
       return;
@@ -4603,6 +4727,14 @@ const CombatTracker = ({
                     <div className={styles['toolbarMenuDivider']} />
                     <button
                       type={'button'}
+                      className={styles['toolbarMenuItem']}
+                      onClick={openStartNewCombatModal}
+                    >
+                      Start New Combat From This Round
+                    </button>
+                    <div className={styles['toolbarMenuDivider']} />
+                    <button
+                      type={'button'}
                       className={`${styles['toolbarMenuItem']} ${styles['toolbarMenuItemDanger']}`}
                       disabled={state.rounds.length <= 1}
                       onClick={() => {
@@ -5134,7 +5266,7 @@ const CombatTracker = ({
                 className={styles['toolbarButton']}
                 onClick={closeRecoverModal}
               >
-                {hasTrackerChanged || loadedFromEncodedState
+                {hasTrackerChanged || loadedFromEncodedState || hasLocalDraft
                   ? 'Keep Current Tracker'
                   : 'Start New Tracker'}
               </button>
@@ -5330,6 +5462,103 @@ const CombatTracker = ({
                 onClick={confirmDeleteRound}
               >
                 Delete Round
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+      {showStartNewCombatModal && (
+        <>
+          <div
+            className={styles['modalShadow']}
+            onClick={closeStartNewCombatModal}
+          />
+          <div
+            className={`${styles['modal']} ${styles['confirmModal']}`}
+            role={'dialog'}
+            aria-modal={'true'}
+            aria-labelledby={'start-new-combat-title'}
+            aria-describedby={'start-new-combat-description'}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div id={'start-new-combat-title'} className={styles['modalTitle']}>
+              Start New Combat From {currentRoundDisplayLabel}
+            </div>
+            <div className={styles['modalBody']}>
+              <p
+                id={'start-new-combat-description'}
+                className={styles['modalText']}
+              >
+                Create a new one-round combat with this round&apos;s roster and
+                combatant details. The current combat will remain available in
+                Local Drafts.
+              </p>
+              <div
+                className={styles['newCombatChoices']}
+                role={'radiogroup'}
+                aria-label={'Starting hit points'}
+              >
+                <button
+                  type={'button'}
+                  className={[
+                    styles['newCombatChoice'],
+                    newCombatHpMode === 'carry-current'
+                      ? styles['newCombatChoiceActive']
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  role={'radio'}
+                  aria-checked={newCombatHpMode === 'carry-current'}
+                  onClick={() => setNewCombatHpMode('carry-current')}
+                >
+                  <span className={styles['newCombatChoiceTitle']}>
+                    Carry current HP
+                  </span>
+                  <span className={styles['newCombatChoiceDescription']}>
+                    Keep each combatant&apos;s HP from{' '}
+                    {currentRoundDisplayLabel}. Clear effects, actions, results,
+                    and notes.
+                  </span>
+                </button>
+                <button
+                  type={'button'}
+                  className={[
+                    styles['newCombatChoice'],
+                    newCombatHpMode === 'reset-to-max'
+                      ? styles['newCombatChoiceActive']
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  role={'radio'}
+                  aria-checked={newCombatHpMode === 'reset-to-max'}
+                  onClick={() => setNewCombatHpMode('reset-to-max')}
+                >
+                  <span className={styles['newCombatChoiceTitle']}>
+                    Reset to maximum HP
+                  </span>
+                  <span className={styles['newCombatChoiceDescription']}>
+                    Start each combatant at its Max HP. Blank maximums remain
+                    blank.
+                  </span>
+                </button>
+              </div>
+            </div>
+            <div className={styles['modalActions']}>
+              <button
+                type={'button'}
+                className={styles['toolbarButton']}
+                onClick={closeStartNewCombatModal}
+              >
+                Cancel
+              </button>
+              <button
+                type={'button'}
+                className={styles['toolbarButtonPrimary']}
+                onClick={confirmStartNewCombat}
+              >
+                Start New Combat
               </button>
             </div>
           </div>

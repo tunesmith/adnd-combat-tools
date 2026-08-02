@@ -138,7 +138,7 @@ export const deleteTrackerLocalDraft = (
   return writeStore(storage, remainingDrafts);
 };
 
-const generateDraftId = (): string => {
+export const createTrackerDraftId = (): string => {
   if (
     typeof crypto !== 'undefined' &&
     typeof crypto.randomUUID === 'function'
@@ -157,7 +157,7 @@ export const getOrCreateTrackerSessionDraftId = (
     return existingId;
   }
 
-  const nextId = generateDraftId();
+  const nextId = createTrackerDraftId();
   storage.setItem(TRACKER_SESSION_DRAFT_ID_KEY, nextId);
   return nextId;
 };

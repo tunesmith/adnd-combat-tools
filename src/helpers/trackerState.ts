@@ -14,6 +14,8 @@ import type {
 
 type TrackerSide = 'party' | 'enemy';
 
+export type NewCombatHpMode = 'carry-current' | 'reset-to-max';
+
 const DEFAULT_PARTY_COUNT = 3;
 const DEFAULT_ENEMY_COUNT = 3;
 const DEFAULT_ROUND_PREFIX = 'Round';
@@ -112,10 +114,16 @@ const createEmptyCell = (): TrackerCellState => ({
   partyToEnemyVisible: false,
 });
 
-const cloneCombatant = (combatant: TrackerCombatant): TrackerCombatant =>
-  ensureWeaponShortlist({
+const cloneCombatant = (combatant: TrackerCombatant): TrackerCombatant => {
+  const clone = ensureWeaponShortlist({
     ...combatant,
   });
+
+  return {
+    ...clone,
+    weaponShortlist: clone.weaponShortlist?.slice(),
+  };
+};
 
 const cloneCombatants = (combatants: TrackerCombatant[]): TrackerCombatant[] =>
   combatants.map((combatant) => cloneCombatant(combatant));
@@ -256,6 +264,39 @@ export const insertRoundAfterActive = (state: TrackerState): TrackerState => {
     ...state,
     rounds,
     activeRound: state.activeRound + 1,
+  };
+};
+
+export const startNewCombatFromActiveRound = (
+  state: TrackerState,
+  hpMode: NewCombatHpMode
+): TrackerState => {
+  const currentRound = state.rounds[state.activeRound];
+  if (!currentRound) {
+    return state;
+  }
+
+  const newRound = createTrackerRound(
+    currentRound.party,
+    currentRound.enemies,
+    getDefaultRoundLabel(1)
+  );
+
+  if (hpMode === 'carry-current') {
+    newRound.partyStates = newRound.partyStates.map((roundState, index) => ({
+      ...roundState,
+      hp: currentRound.partyStates[index]?.hp || '',
+    }));
+    newRound.enemyStates = newRound.enemyStates.map((roundState, index) => ({
+      ...roundState,
+      hp: currentRound.enemyStates[index]?.hp || '',
+    }));
+  }
+
+  return {
+    version: state.version,
+    rounds: [newRound],
+    activeRound: 0,
   };
 };
 

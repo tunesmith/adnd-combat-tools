@@ -4,6 +4,7 @@ import {
   getDefaultRoundLabel,
   insertRoundAfterActive,
   incrementRoundLabel,
+  startNewCombatFromActiveRound,
   updateCombatant,
 } from '../helpers/trackerState';
 
@@ -34,7 +35,6 @@ describe('tracker state helpers', () => {
     if (!firstRound) {
       throw new Error('Missing first round');
     }
-
     firstRound.partyInitiative = '4';
     firstRound.enemyInitiative = '5';
     firstRound.summary = 'The ankylosaur charges.';
@@ -116,6 +116,166 @@ describe('tracker state helpers', () => {
       notes: 'immune to charm',
     });
     expect(nextRound.enemies[0]?.attacksPerRoutine).toBe(2);
+  });
+
+  test('starting a new combat carries only current hp when requested', () => {
+    const initialState = createInitialTrackerState();
+    const firstRound = initialState.rounds[0];
+    if (!firstRound) {
+      throw new Error('Missing first round');
+    }
+    const firstRow = firstRound.cells[0];
+    const firstPartyCombatant = firstRound.party[0];
+    if (!firstRow || !firstPartyCombatant) {
+      throw new Error('Missing first round combat data');
+    }
+
+    initialState.title = 'The first combat';
+    firstRound.label = 'Round 4';
+    firstRound.partyInitiative = '3';
+    firstRound.enemyInitiative = '6';
+    firstRound.summary = 'A completed combat.';
+    firstRound.partyStates[0] = {
+      hp: '14',
+      effect: 'blessed',
+      action: 'charge',
+      result: 'hit',
+      notes: 'Used a potion',
+    };
+    firstRound.enemyStates[0] = {
+      hp: '9',
+      effect: 'slowed',
+      action: 'attack',
+      result: 'miss',
+      notes: 'Fled once',
+    };
+    firstRow[0] = {
+      enemyToParty: 'miss',
+      partyToEnemy: '8 damage',
+      enemyToPartyVisible: true,
+      partyToEnemyVisible: true,
+      enemyToPartyActionIds: ['enemy-action'],
+      partyToEnemyActionIds: ['party-action'],
+    };
+    firstRound.actions = [
+      {
+        id: 'party-action',
+        source: 'intention',
+        side: 'party',
+        direction: 'partyToEnemy',
+        combatantKey: firstPartyCombatant.key,
+        combatantIndex: 0,
+        targetSide: 'enemy',
+        declaredAction: 'open-melee',
+        weaponId: firstPartyCombatant.weapon,
+        intention: 'attack',
+        result: 'hit',
+        targetDeclarations: [],
+      },
+    ];
+
+    const nextState = startNewCombatFromActiveRound(
+      initialState,
+      'carry-current'
+    );
+    const nextRound = nextState.rounds[0];
+    if (!nextRound) {
+      throw new Error('Missing new combat round');
+    }
+
+    expect(nextState).toMatchObject({
+      version: initialState.version,
+      activeRound: 0,
+    });
+    expect(nextState).not.toHaveProperty('title');
+    expect(nextState.rounds).toHaveLength(1);
+    expect(nextRound.label).toBe('Round 1');
+    expect(nextRound.party).toEqual(firstRound.party);
+    expect(nextRound.enemies).toEqual(firstRound.enemies);
+    expect(nextRound.party).not.toBe(firstRound.party);
+    expect(nextRound.party[0]?.weaponShortlist).not.toBe(
+      firstRound.party[0]?.weaponShortlist
+    );
+    expect(nextRound.partyInitiative).toBe('');
+    expect(nextRound.enemyInitiative).toBe('');
+    expect(nextRound.summary).toBe('');
+    expect(nextRound.actions).toBeUndefined();
+    expect(nextRound.cells[0]?.[0]).toEqual({
+      enemyToParty: '',
+      partyToEnemy: '',
+      enemyToPartyVisible: false,
+      partyToEnemyVisible: false,
+    });
+    expect(nextRound.partyStates[0]).toEqual({
+      hp: '14',
+      effect: '',
+      action: '',
+      result: '',
+      notes: '',
+    });
+    expect(nextRound.enemyStates[0]).toEqual({
+      hp: '9',
+      effect: '',
+      action: '',
+      result: '',
+      notes: '',
+    });
+    expect(initialState.title).toBe('The first combat');
+    expect(firstRound.actions).toHaveLength(1);
+  });
+
+  test('starting a fresh combat resets hp to combatant maximums', () => {
+    const initialState = createInitialTrackerState();
+    const firstRound = initialState.rounds[0];
+    const firstPartyCombatant = firstRound?.party[0];
+    const firstEnemyCombatant = firstRound?.enemies[0];
+    const firstPartyState = firstRound?.partyStates[0];
+    const firstEnemyState = firstRound?.enemyStates[0];
+    if (
+      !firstRound ||
+      !firstPartyCombatant ||
+      !firstEnemyCombatant ||
+      !firstPartyState ||
+      !firstEnemyState
+    ) {
+      throw new Error('Missing first round combatants');
+    }
+
+    firstPartyCombatant.maxHp = '24';
+    firstEnemyCombatant.maxHp = '18';
+    firstPartyState.hp = '7';
+    firstEnemyState.hp = '2';
+
+    const nextState = startNewCombatFromActiveRound(
+      initialState,
+      'reset-to-max'
+    );
+
+    expect(nextState.rounds[0]?.partyStates[0]?.hp).toBe('24');
+    expect(nextState.rounds[0]?.enemyStates[0]?.hp).toBe('18');
+  });
+
+  test('starting a new combat uses the selected round roster', () => {
+    const initialState = createInitialTrackerState();
+    const firstRound = initialState.rounds[0];
+    if (!firstRound?.enemies[0]) {
+      throw new Error('Missing first round enemy');
+    }
+    firstRound.enemies[0].name = 'Earlier Enemy';
+
+    const laterRoundState = insertRoundAfterActive(initialState);
+    const selectedRound = laterRoundState.rounds[laterRoundState.activeRound];
+    if (!selectedRound?.enemies[0]) {
+      throw new Error('Missing selected round enemy');
+    }
+    selectedRound.enemies[0].name = 'Current Enemy';
+
+    const nextState = startNewCombatFromActiveRound(
+      laterRoundState,
+      'carry-current'
+    );
+
+    expect(nextState.rounds[0]?.enemies[0]?.name).toBe('Current Enemy');
   });
 
   test('adding a party combatant expands each round consistently', () => {

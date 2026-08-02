@@ -1,4 +1,5 @@
 import {
+  createTrackerDraftId,
   deleteTrackerLocalDraft,
   getOrCreateTrackerSessionDraftId,
   getTrackerLocalDraft,
@@ -98,6 +99,10 @@ const createTrackerState = (
 };
 
 describe('tracker local drafts', () => {
+  test('creates a new id for a forked tracker draft', () => {
+    expect(createTrackerDraftId()).not.toBe(createTrackerDraftId());
+  });
+
   test('creates a stable session draft id once one exists', () => {
     const storage = new MemoryStorage();
     const firstId = getOrCreateTrackerSessionDraftId(storage);
