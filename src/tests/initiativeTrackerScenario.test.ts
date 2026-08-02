@@ -314,11 +314,9 @@ describe('tracker initiative scenario builder', () => {
       declaredAction: 'open-melee',
       actionLabel: 'Two attacks',
       attackRoutine: {
-        components: [
-          { id: 'attack-1', order: 1, label: 'attack 1' },
-          { id: 'attack-2', order: 2, label: 'attack 2' },
-        ],
+        components: [{ id: 'attack-1', order: 1, label: 'attack 1' }],
       },
+      attackRoutineCount: 2,
       targetIds: ['enemy-4'],
     });
     expect(engagement.resolution.reason).toBe('multiple-routines');
@@ -331,6 +329,50 @@ describe('tracker initiative scenario builder', () => {
       ['attack:party-1:1'],
       ['attack:enemy-4:1'],
       ['attack:party-1:2'],
+    ]);
+  });
+
+  test('maps tracker attacks per routine without treating them as repeated routines', () => {
+    const round = requireRound();
+
+    round.partyInitiative = '4';
+    round.enemyInitiative = '5';
+
+    if (!round.party[0] || !round.enemies[0]) {
+      throw new Error('Missing combatants');
+    }
+
+    round.party[0].name = 'Fighter';
+    round.party[0].weapon = 17;
+    round.enemies[0].name = 'Flesh Golem';
+    round.enemies[0].weapon = 1;
+    round.enemies[0].attacksPerRoutine = 2;
+
+    setMutualTarget(round, 0, 0);
+
+    const resolvedRound = resolveTrackerRoundInitiative(round);
+    const engagement = requireEngagement(
+      resolvedRound.scenario.directMeleeEngagements[0]
+    );
+
+    expect(resolvedRound.scenario.enemies[0]).toMatchObject({
+      name: 'Flesh Golem',
+      attackRoutineCount: 1,
+      attackRoutine: {
+        components: [
+          { id: 'attack-1', order: 1, label: 'attack 1' },
+          { id: 'attack-2', order: 2, label: 'attack 2' },
+        ],
+      },
+    });
+    expect(engagement.resolution.reason).toBe('initiative');
+    expect(getStepSignatures(engagement)).toEqual([
+      ['enemy-41', 'enemy-42'],
+      ['party-11'],
+    ]);
+    expect(resolvedRound.attackGraph.layers).toEqual([
+      ['attack:enemy-4:1', 'attack:enemy-4:2'],
+      ['attack:party-1:1'],
     ]);
   });
 

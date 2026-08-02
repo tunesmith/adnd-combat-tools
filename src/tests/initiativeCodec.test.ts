@@ -18,6 +18,7 @@ interface CombatantStateInput {
   activationSegments?: string;
   castingSegments?: string;
   missileInitiativeAdjustment?: string;
+  attacksPerRoutine?: string;
   attackRoutineCount?: string;
   targetCombatantKeys?: number[];
 }
@@ -33,6 +34,7 @@ const createCombatantState = ({
   activationSegments = '',
   castingSegments = '',
   missileInitiativeAdjustment = '0',
+  attacksPerRoutine = '1',
   attackRoutineCount = '1',
   targetCombatantKeys = [],
 }: CombatantStateInput): InitiativePlaytestCombatantState => ({
@@ -40,6 +42,7 @@ const createCombatantState = ({
   name,
   movementRate,
   missileInitiativeAdjustment,
+  attacksPerRoutine,
   weaponId,
   actions: [
     {
@@ -73,6 +76,7 @@ describe('initiative codec', () => {
           activationSegments: '',
           castingSegments: '',
           missileInitiativeAdjustment: '0',
+          attacksPerRoutine: '2',
           attackRoutineCount: '2',
           weaponId: 56,
           targetCombatantKeys: [6],

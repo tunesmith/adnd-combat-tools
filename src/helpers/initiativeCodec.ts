@@ -21,6 +21,7 @@ export interface InitiativePlaytestCombatantState {
   name: string;
   movementRate: string;
   missileInitiativeAdjustment: string;
+  attacksPerRoutine: string;
   weaponId: number;
   actions: InitiativePlaytestActionState[];
 }
@@ -262,6 +263,7 @@ const sanitizeCombatant = (
     missileInitiativeAdjustment: sanitizeString(
       candidate['missileInitiativeAdjustment'] || '0'
     ),
+    attacksPerRoutine: sanitizeString(candidate['attacksPerRoutine'] || '1'),
     weaponId: sanitizeNumber(candidate['weaponId'], 1),
     actions:
       actions.length > 0

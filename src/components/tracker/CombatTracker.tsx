@@ -3594,8 +3594,8 @@ const CombatTracker = ({
             }
           />
           <p className={styles['modalHint']}>
-            Use <strong>1</strong> for an ordinary weapon routine or a natural
-            routine such as claw/claw/bite.
+            This repeats the whole routine. Leave this at <strong>1</strong> for
+            a flesh golem&apos;s two fists or a claw/claw/bite routine.
           </p>
         </>
       ) : null}

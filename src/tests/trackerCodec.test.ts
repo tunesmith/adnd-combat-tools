@@ -531,6 +531,7 @@ describe('tracker codec', () => {
               armorClass: 5,
               weapon: 15,
               weaponShortlist: [15],
+              attacksPerRoutine: 2,
               maxHp: '8',
             },
           ],

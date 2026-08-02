@@ -75,7 +75,9 @@ const createNode = (
   segment?: number,
   targetId?: string,
   segmentReason?: InitiativeAttackNode['segmentReason'],
-  placement?: InitiativeAttackNode['placement']
+  placement?: InitiativeAttackNode['placement'],
+  routineNumber?: number,
+  componentNumber?: number
 ): InitiativeAttackNode => ({
   id:
     kind === 'contact'
@@ -93,6 +95,8 @@ const createNode = (
   componentId,
   side: combatant.side,
   attackNumber,
+  routineNumber,
+  componentNumber,
   label,
   actionLabel: combatant.actionLabel,
   source,
@@ -129,8 +133,39 @@ const createRoutineAttackNode = (
     segment,
     targetId,
     segmentReason,
-    placement
+    placement,
+    1,
+    timingBasisComponent.order
   );
+};
+
+interface RoutineAttackOccurrence {
+  componentId: string;
+  attackNumber: number;
+  routineNumber: number;
+  componentNumber: number;
+  label: string;
+}
+
+const getRoutineAttackOccurrences = (
+  combatant: InitiativeScenarioCombatant
+): RoutineAttackOccurrence[] => {
+  const components = combatant.attackRoutine.components;
+  const componentCount = Math.max(1, components.length);
+  const routineCount = Math.max(1, combatant.attackRoutineCount);
+
+  return Array.from({ length: routineCount }, (_, routineIndex) =>
+    components.map((component, componentIndex) => ({
+      componentId: component.id,
+      attackNumber: routineIndex * componentCount + componentIndex + 1,
+      routineNumber: routineIndex + 1,
+      componentNumber: component.order,
+      label:
+        routineCount > 1 && componentCount === 1
+          ? `attack ${routineIndex + 1}`
+          : component.label,
+    }))
+  ).flat();
 };
 
 const getDeclaredActionSegment = (
@@ -448,24 +483,20 @@ const areDirectMeleeOpponents = (
 ): boolean =>
   directMeleeOpponentByCombatantId.get(leftCombatantId) === rightCombatantId;
 
-const getRoutineComponentCount = (
-  combatant: InitiativeScenarioCombatant
-): number => Math.max(1, combatant.attackRoutine.components.length);
-
 const getRoutinePhase = (
-  componentOrder: number,
-  componentCount: number
+  routineNumber: number,
+  routineCount: number
 ): number => {
-  if (componentCount <= 1) {
+  if (routineCount <= 1) {
     return 0.5;
   }
 
-  return (componentOrder - 1) / (componentCount - 1);
+  return (routineNumber - 1) / (routineCount - 1);
 };
 
 const getSimpleInitiativePhase = (
   combatant: InitiativeScenarioCombatant,
-  attackNumber: number
+  node: InitiativeAttackNode
 ): number => {
   const timingOffset =
     getInitiativeTimingOverrideRank(combatant.initiativeTiming) * 10;
@@ -475,7 +506,7 @@ const getSimpleInitiativePhase = (
   }
 
   return (
-    getRoutinePhase(attackNumber, getRoutineComponentCount(combatant)) -
+    getRoutinePhase(node.routineNumber || 1, combatant.attackRoutineCount) -
     timingOffset
   );
 };
@@ -496,7 +527,7 @@ const buildSimpleInitiativePhases = (
         combatantId: combatant.id,
         nodeId: node.id,
         side: combatant.side,
-        phase: getSimpleInitiativePhase(combatant, node.attackNumber),
+        phase: getSimpleInitiativePhase(combatant, node),
         combatant,
         node,
       },
@@ -744,23 +775,60 @@ const addRoutineSequenceEdges = (
   nodesByCombatant.forEach((nodes, combatantId) => {
     const combatant = combatantById.get(combatantId);
 
-    if (!combatant || combatant.attackRoutine.components.length <= 1) {
+    if (!combatant) {
       return;
     }
 
-    const orderedNodes = [...nodes].sort(
-      (leftNode, rightNode) => leftNode.attackNumber - rightNode.attackNumber
-    );
+    if (
+      combatant.declaredAction === 'missile' &&
+      combatant.attackRoutine.components.length > 1
+    ) {
+      const orderedNodes = [...nodes].sort(
+        (left, right) => left.attackNumber - right.attackNumber
+      );
 
-    orderedNodes.forEach((node, index) => {
-      const nextNode = orderedNodes[index + 1];
+      orderedNodes.forEach((node, index) => {
+        const nextNode = orderedNodes[index + 1];
 
-      if (!nextNode) {
-        return;
-      }
+        if (nextNode) {
+          mergeEdgeReason(
+            edgesByKey,
+            node.id,
+            nextNode.id,
+            'simple-initiative'
+          );
+        }
+      });
+      return;
+    }
 
-      mergeEdgeReason(edgesByKey, node.id, nextNode.id, 'simple-initiative');
-    });
+    if (combatant.attackRoutineCount <= 1) {
+      return;
+    }
+
+    for (
+      let routineNumber = 1;
+      routineNumber < combatant.attackRoutineCount;
+      routineNumber += 1
+    ) {
+      const currentRoutineNodes = nodes.filter(
+        (node) => (node.routineNumber || 1) === routineNumber
+      );
+      const nextRoutineNodes = nodes.filter(
+        (node) => (node.routineNumber || 1) === routineNumber + 1
+      );
+
+      currentRoutineNodes.forEach((fromNode) => {
+        nextRoutineNodes.forEach((toNode) => {
+          mergeEdgeReason(
+            edgesByKey,
+            fromNode.id,
+            toNode.id,
+            'simple-initiative'
+          );
+        });
+      });
+    }
   });
 };
 
@@ -929,8 +997,8 @@ const getSpellInterruptionRelation = (
   const initiativeComparison = compareCombatantInitiative(attacker, caster);
   const isLaterOrdinaryRoutineAttack =
     attackerNode.kind === 'attack' &&
-    attacker.attackRoutine.components.length > 1 &&
-    attackerNode.attackNumber > 1 &&
+    attacker.attackRoutineCount > 1 &&
+    (attackerNode.routineNumber || 1) > 1 &&
     attacker.declaredAction !== 'missile';
 
   // The DMG multiple-routine rule establishes a later attack as "last" in the
@@ -992,8 +1060,8 @@ const getSpellInterruptionSegment = (
   const initiativeComparison = compareCombatantInitiative(attacker, caster);
   const isLaterOrdinaryRoutineAttack =
     attackerNode.kind === 'attack' &&
-    attacker.attackRoutine.components.length > 1 &&
-    attackerNode.attackNumber > 1 &&
+    attacker.attackRoutineCount > 1 &&
+    (attackerNode.routineNumber || 1) > 1 &&
     attacker.declaredAction !== 'missile';
 
   if (isLaterOrdinaryRoutineAttack) {
@@ -1036,8 +1104,8 @@ const getWeaponVsSpellPlacement = (
 
   const isLaterOrdinaryRoutineAttack =
     attackerNode.kind === 'attack' &&
-    attacker.attackRoutine.components.length > 1 &&
-    attackerNode.attackNumber > 1;
+    attacker.attackRoutineCount > 1 &&
+    (attackerNode.routineNumber || 1) > 1;
 
   if (isLaterOrdinaryRoutineAttack) {
     return undefined;
@@ -1220,7 +1288,9 @@ export const buildInitiativeAttackGraph = (
                 ? engagement.enemyCombatantId
                 : engagement.partyCombatantId,
             resolutionReason: engagement.resolution.reason,
-          }
+          },
+          attack.routineNumber,
+          attack.componentNumber
         );
         addNode(nodesById, node);
         return [node.id];
@@ -1418,10 +1488,10 @@ export const buildInitiativeAttackGraph = (
         combatantById,
         movementResolutionByCombatantId
       );
-    const attackRoutineComponents =
+    const attackOccurrences =
       directMissileChargeComponentLimit === undefined
-        ? combatant.attackRoutine.components
-        : combatant.attackRoutine.components.slice(
+        ? getRoutineAttackOccurrences(combatant)
+        : getRoutineAttackOccurrences(combatant).slice(
             0,
             directMissileChargeComponentLimit
           );
@@ -1432,16 +1502,15 @@ export const buildInitiativeAttackGraph = (
     ) {
       const missileTargetIds = combatant.targetIds.slice(
         0,
-        attackRoutineComponents.length
+        attackOccurrences.length
       );
       const usesTargetSpecificMissileNodes = missileTargetIds.length > 1;
 
       if (usesTargetSpecificMissileNodes) {
         missileTargetIds.forEach((targetId, index) => {
-          const component =
-            attackRoutineComponents[index] || attackRoutineComponents[0];
+          const occurrence = attackOccurrences[index] || attackOccurrences[0];
 
-          if (!component) {
+          if (!occurrence) {
             return;
           }
 
@@ -1449,9 +1518,9 @@ export const buildInitiativeAttackGraph = (
             nodesById,
             createNode(
               combatant,
-              component.id,
-              component.order,
-              component.label,
+              occurrence.componentId,
+              occurrence.attackNumber,
+              occurrence.label,
               'routine-component',
               'attack',
               getDeclaredActionSegment(combatant),
@@ -1463,7 +1532,9 @@ export const buildInitiativeAttackGraph = (
                 kind: 'missile-volley',
                 splitTarget: true,
                 targetId,
-              }
+              },
+              occurrence.routineNumber,
+              occurrence.componentNumber
             )
           );
         });
@@ -1471,16 +1542,16 @@ export const buildInitiativeAttackGraph = (
       }
     }
 
-    attackRoutineComponents.forEach((component) => {
+    attackOccurrences.forEach((occurrence) => {
       const graphLabel =
-        combatant.declaredAction === 'none' ? 'action' : component.label;
+        combatant.declaredAction === 'none' ? 'action' : occurrence.label;
 
       addNode(
         nodesById,
         createNode(
           combatant,
-          component.id,
-          component.order,
+          occurrence.componentId,
+          occurrence.attackNumber,
           graphLabel,
           'routine-component',
           'attack',
@@ -1518,15 +1589,21 @@ export const buildInitiativeAttackGraph = (
             ? {
                 kind: 'non-combat-unsegmented',
               }
-            : combatant.attackRoutine.components.length > 1
+            : combatant.attackRoutineCount > 1 ||
+              combatant.attackRoutine.components.length > 1
             ? {
                 kind: 'routine-sequence',
-                attackNumber: component.order,
-                routineCount: combatant.attackRoutine.components.length,
+                attackNumber: occurrence.attackNumber,
+                routineNumber: occurrence.routineNumber,
+                routineCount: combatant.attackRoutineCount,
+                componentNumber: occurrence.componentNumber,
+                componentCount: combatant.attackRoutine.components.length,
               }
             : {
                 kind: 'general-unsegmented',
-              }
+              },
+          occurrence.routineNumber,
+          occurrence.componentNumber
         )
       );
     });

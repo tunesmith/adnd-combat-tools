@@ -40,11 +40,11 @@ const getCombatantName = (
   index: number
 ): string => name || `${side === 'party' ? 'Party' : 'Enemy'} ${index + 1}`;
 
-const getOrdinaryRoundAttackCount = (
+const getAttackComponentCount = (
   declaredAction: InitiativeScenarioCombatant['declaredAction'],
   weaponType: InitiativeWeaponType,
   fireRate: number | undefined,
-  attackRoutineCount: number | undefined
+  attacksPerRoutine: number | undefined
 ): number => {
   if (declaredAction === 'none') {
     return 0;
@@ -66,21 +66,21 @@ const getOrdinaryRoundAttackCount = (
   }
 
   if (declaredAction === 'open-melee') {
-    return Math.max(1, attackRoutineCount || 1);
+    return Math.max(1, Math.floor(attacksPerRoutine || 1));
   }
 
   return 1;
 };
 
 const getMissileTargetLimit = (fireRate: number | undefined): number =>
-  getOrdinaryRoundAttackCount('missile', 'missile', fireRate, undefined);
+  getAttackComponentCount('missile', 'missile', fireRate, undefined);
 
 const buildAttackRoutine = (
   combatantId: string,
   declaredAction: InitiativeScenarioCombatant['declaredAction'],
   weaponType: InitiativeWeaponType,
   fireRate: number | undefined,
-  attackRoutineCount: number | undefined
+  attacksPerRoutine: number | undefined
 ): InitiativeAttackRoutine => {
   if (declaredAction === 'none') {
     return {
@@ -146,11 +146,11 @@ const buildAttackRoutine = (
     };
   }
 
-  const attackCount = getOrdinaryRoundAttackCount(
+  const attackCount = getAttackComponentCount(
     declaredAction,
     weaponType,
     fireRate,
-    attackRoutineCount
+    attacksPerRoutine
   );
   const components = Array.from({ length: attackCount }, (_, index) => ({
     id: `attack-${index + 1}`,
@@ -255,6 +255,7 @@ const toOpenMeleeCombatant = (
   weaponSpeedFactor:
     combatant.weaponType === 'melee' ? combatant.weaponSpeedFactor : undefined,
   attackRoutine: combatant.attackRoutine,
+  attackRoutineCount: combatant.attackRoutineCount,
 });
 
 const buildScenarioCombatants = (
@@ -361,8 +362,12 @@ const buildScenarioCombatants = (
           weaponInfo?.weaponType === 'missile'
             ? weaponInfo.fireRate
             : undefined,
-          action.attackRoutineCount
+          combatant.attacksPerRoutine
         ),
+        attackRoutineCount:
+          declaredAction === 'open-melee' && weaponType !== 'missile'
+            ? Math.max(1, Math.floor(action.attackRoutineCount || 1))
+            : 1,
       };
     });
   });

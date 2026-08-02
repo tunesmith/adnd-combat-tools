@@ -126,6 +126,9 @@ const parseAttackRoutineCount = (value: string): number | undefined => {
   return Math.max(1, Math.floor(parsed));
 };
 
+const parseAttacksPerRoutine = (value: string): number | undefined =>
+  parseAttackRoutineCount(value);
+
 const getMissileTargetLimitForWeaponId = (weaponId: number): number => {
   const weaponInfo = getWeaponInfo(weaponId);
   const fireRate =
@@ -549,12 +552,14 @@ const createCombatant = (
   missileInitiativeAdjustment = '0',
   actionDistanceInches = '',
   activationSegments = '',
-  castingSegments = ''
+  castingSegments = '',
+  attacksPerRoutine = '1'
 ): InitiativePlaytestCombatant => ({
   key,
   name,
   movementRate,
   missileInitiativeAdjustment,
+  attacksPerRoutine,
   weaponId,
   actions: [
     {
@@ -927,6 +932,7 @@ const buildDraftCombatants = (
       missileInitiativeAdjustment: parseMissileInitiativeAdjustment(
         combatant.missileInitiativeAdjustment
       ),
+      attacksPerRoutine: parseAttacksPerRoutine(combatant.attacksPerRoutine),
       attackRoutineCount: parseAttackRoutineCount(
         primaryAction.attackRoutineCount
       ),
@@ -1006,6 +1012,8 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string => {
   const missileInitiativeAdjustment = parseMissileInitiativeAdjustment(
     combatant.missileInitiativeAdjustment
   );
+  const attacksPerRoutine =
+    parseAttacksPerRoutine(combatant.attacksPerRoutine) || 1;
   const appliedMissileInitiativeAdjustment =
     primaryAction.declaredAction === 'missile'
       ? getAppliedMissileInitiativeAdjustment({
@@ -1028,6 +1036,9 @@ const getCombatantMeta = (combatant: InitiativePlaytestCombatant): string => {
   return [
     `MV ${combatant.movementRate.trim() || '12'}"`,
     getWeaponSummary(combatant.weaponId),
+    attacksPerRoutine !== 1
+      ? `${attacksPerRoutine} attacks/routine`
+      : undefined,
     missileInitiativeMeta,
   ]
     .filter(Boolean)
@@ -3526,8 +3537,8 @@ const InitiativePlayground = ({
                 </div>
                 <p className={styles['modalText']}>
                   Target declarations are edited from the engagement matrix. Use
-                  this modal to change the combatant label, movement, weapon, or
-                  missile timing metadata.
+                  this modal to change the combatant label, movement, weapon,
+                  attacks within one routine, or missile timing metadata.
                 </p>
                 <label
                   className={styles['modalLabel']}
@@ -3586,6 +3597,29 @@ const InitiativePlayground = ({
                     })
                   }
                 />
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={`initiative-attacks-per-routine-${editedCombatant.key}`}
+                >
+                  Attacks in each routine
+                </label>
+                <input
+                  id={`initiative-attacks-per-routine-${editedCombatant.key}`}
+                  className={styles['textInput']}
+                  inputMode={'numeric'}
+                  type={'text'}
+                  value={editedCombatant.attacksPerRoutine}
+                  onChange={(event) =>
+                    updateCombatant(editorTarget.side, editedCombatant.key, {
+                      attacksPerRoutine: event.target.value,
+                    })
+                  }
+                />
+                <p className={styles['modalHint']}>
+                  A flesh golem has 2 attacks in one routine; claw/claw/bite has
+                  3. This is separate from how many times the routine is used
+                  this round.
+                </p>
                 <label
                   className={styles['modalLabel']}
                   htmlFor={`initiative-missile-init-${editedCombatant.key}`}
@@ -3874,8 +3908,9 @@ const InitiativePlayground = ({
                       }
                     />
                     <p className={styles['modalHint']}>
-                      Use <strong>1</strong> for an ordinary weapon routine or a
-                      natural routine such as claw/claw/bite.
+                      This repeats the whole routine. Leave this at{' '}
+                      <strong>1</strong> for a flesh golem&apos;s two fists or a
+                      claw/claw/bite routine.
                     </p>
                   </>
                 ) : null}

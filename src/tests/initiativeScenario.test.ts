@@ -116,6 +116,7 @@ describe('generic initiative scenario builder', () => {
         label: 'attack 2',
       },
     ]);
+    expect(scenario.party[0]?.attackRoutineCount).toBe(1);
     expect(scenario.party[1]?.attackRoutine.components).toEqual([
       {
         id: 'attack-1',
@@ -299,15 +300,61 @@ describe('generic initiative scenario builder', () => {
         order: 1,
         label: 'attack 1',
       },
-      {
-        id: 'attack-2',
-        order: 2,
-        label: 'attack 2',
-      },
     ]);
+    expect(scenario.party[0]?.attackRoutineCount).toBe(2);
     expect(scenario.directMeleeEngagements[0]?.resolution.reason).toBe(
       'multiple-routines'
     );
+  });
+
+  test('models attacks inside a routine independently from routine count', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Flesh Golem Fists',
+      partyInitiative: 4,
+      enemyInitiative: 5,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Fighter',
+          weaponId: 17,
+          targetCombatantKeys: [3],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Flesh Golem',
+          weaponId: 1,
+          attacksPerRoutine: 2,
+          attackRoutineCount: 1,
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+
+    expect(scenario.enemies[0]).toMatchObject({
+      attackRoutineCount: 1,
+      attackRoutine: {
+        components: [
+          { id: 'attack-1', order: 1, label: 'attack 1' },
+          { id: 'attack-2', order: 2, label: 'attack 2' },
+        ],
+      },
+    });
+    expect(scenario.directMeleeEngagements[0]?.resolution).toMatchObject({
+      reason: 'initiative',
+      steps: [
+        {
+          attacks: [
+            expect.objectContaining({ combatantId: 'enemy-3' }),
+            expect.objectContaining({ combatantId: 'enemy-3' }),
+          ],
+        },
+        {
+          attacks: [expect.objectContaining({ combatantId: 'party-1' })],
+        },
+      ],
+    });
   });
 
   test('treats close and charge as single routines regardless of stored routine count', () => {

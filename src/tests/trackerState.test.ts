@@ -19,6 +19,7 @@ describe('tracker state helpers', () => {
     expect(initialState.rounds[0]?.party[0]?.weaponShortlist).toEqual([2]);
     expect(initialState.rounds[0]?.enemies[0]?.weapon).toBe(1);
     expect(initialState.rounds[0]?.enemies[0]?.weaponShortlist).toEqual([1]);
+    expect(initialState.rounds[0]?.enemies[0]?.attacksPerRoutine).toBe(1);
     expect(initialState.rounds[0]?.cells[0]?.[0]).toEqual({
       enemyToParty: '',
       partyToEnemy: '',
@@ -67,6 +68,9 @@ describe('tracker state helpers', () => {
       result: 'miss',
       notes: 'immune to charm',
     };
+    if (firstRound.enemies[0]) {
+      firstRound.enemies[0].attacksPerRoutine = 2;
+    }
 
     const nextState = insertRoundAfterActive(initialState);
     const nextRound = nextState.rounds[1];
@@ -111,6 +115,7 @@ describe('tracker state helpers', () => {
       result: '',
       notes: 'immune to charm',
     });
+    expect(nextRound.enemies[0]?.attacksPerRoutine).toBe(2);
   });
 
   test('adding a party combatant expands each round consistently', () => {

@@ -98,6 +98,9 @@ export const getTrackerCombatantHeaderDisplay = (
           ]
         : []),
       weaponLabel,
+      ...((combatant.attacksPerRoutine || 1) > 1
+        ? [`${combatant.attacksPerRoutine} attacks/routine`]
+        : []),
       ...(offHandWeaponLabel ? [offHandWeaponLabel] : []),
     ],
   };

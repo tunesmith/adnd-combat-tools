@@ -227,8 +227,10 @@ const getDirectMeleeWhyHereText = ({
       return `${combatant.name} and ${
         opponent.name
       } are in direct melee, and multiple routines are in play. This blow is placed by the DMG first/middle/last routine order${
-        combatant.attackRoutine.components.length > 1
-          ? `. This is ${combatant.name}'s attack ${node.attackNumber} in that sequence.`
+        combatant.attackRoutineCount > 1
+          ? `. This is ${combatant.name}'s routine ${
+              node.routineNumber || 1
+            } of ${combatant.attackRoutineCount}.`
           : '.'
       }`;
     }
@@ -1094,9 +1096,19 @@ const buildGraphInspectorWhyHere = ({
       );
     }
   } else if (placement?.kind === 'routine-sequence') {
-    lines.push(
-      `This is ${combatant.name}'s attack ${placement.attackNumber} in that combatant's ordinary round routine.`
-    );
+    if (placement.routineCount > 1 && placement.componentCount > 1) {
+      lines.push(
+        `This is attack ${placement.componentNumber} of ${placement.componentCount} in ${combatant.name}'s routine ${placement.routineNumber} of ${placement.routineCount} this round.`
+      );
+    } else if (placement.routineCount > 1) {
+      lines.push(
+        `This is ${combatant.name}'s routine ${placement.routineNumber} of ${placement.routineCount} this round.`
+      );
+    } else {
+      lines.push(
+        `This is attack ${placement.componentNumber} of ${placement.componentCount} in ${combatant.name}'s routine.`
+      );
+    }
   } else if (simultaneousGroup) {
     if (simultaneousPeerLabels.length > 0) {
       lines.push(

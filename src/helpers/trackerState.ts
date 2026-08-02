@@ -55,6 +55,7 @@ const createBaseCombatant = (
     maxHp: '',
     movementRate: DEFAULT_MOVEMENT_RATE,
     missileInitiativeAdjustment: DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
+    attacksPerRoutine: 1,
   };
 };
 

@@ -9,17 +9,19 @@ const createWeaponCombatant = (
   id: string,
   initiative: number,
   weaponSpeedFactor: number,
-  attackRoutineCount = 1
+  attackRoutineCount = 1,
+  attacksPerRoutine = 1
 ): OpenMeleeCombatant => ({
   id,
   initiative,
   weaponKind: 'weapon',
   weaponSpeedFactor,
+  attackRoutineCount,
   attackRoutine: {
     id: `routine:${id}:1`,
     label: 'Attack routine',
     combatantId: id,
-    components: Array.from({ length: attackRoutineCount }, (_, index) => ({
+    components: Array.from({ length: attacksPerRoutine }, (_, index) => ({
       id: `attack-${index + 1}`,
       order: index + 1,
       label: `attack ${index + 1}`,
@@ -30,22 +32,23 @@ const createWeaponCombatant = (
 
 const createNaturalCombatant = (
   id: string,
-  initiative: number
+  initiative: number,
+  attacksPerRoutine = 1,
+  attackRoutineCount = 1
 ): OpenMeleeCombatant => ({
   id,
   initiative,
   weaponKind: 'natural',
+  attackRoutineCount,
   attackRoutine: {
     id: `routine:${id}:1`,
     label: 'Attack routine',
     combatantId: id,
-    components: [
-      {
-        id: 'attack-1',
-        order: 1,
-        label: 'attack 1',
-      },
-    ],
+    components: Array.from({ length: attacksPerRoutine }, (_, index) => ({
+      id: `attack-${index + 1}`,
+      order: index + 1,
+      label: `attack ${index + 1}`,
+    })),
     timingBasisComponentId: 'attack-1',
   },
 });
@@ -82,6 +85,37 @@ describe('open melee initiative helper', () => {
 
     expect(resolution.reason).toBe('simultaneous');
     expect(stepSignatures(resolution)).toEqual([['A1', 'B1']]);
+  });
+
+  test('keeps multiple natural attacks together inside one routine', () => {
+    const fleshGolem = createNaturalCombatant('golem', 5, 2);
+    const fighter = createWeaponCombatant('fighter', 4, 5);
+
+    const resolution = resolveOpenMeleeExchange(fleshGolem, fighter);
+
+    expect(resolution.reason).toBe('initiative');
+    expect(stepSignatures(resolution)).toEqual([
+      ['golem1', 'golem2'],
+      ['fighter1'],
+    ]);
+    expect(resolution.steps[0]?.attacks).toEqual([
+      expect.objectContaining({ routineNumber: 1, componentNumber: 1 }),
+      expect.objectContaining({ routineNumber: 1, componentNumber: 2 }),
+    ]);
+  });
+
+  test('schedules repeated multi-attack routines as groups', () => {
+    const repeatedFleshGolem = createNaturalCombatant('golem', 2, 2, 2);
+    const fighter = createWeaponCombatant('fighter', 5, 5);
+
+    const resolution = resolveOpenMeleeExchange(repeatedFleshGolem, fighter);
+
+    expect(resolution.reason).toBe('multiple-routines');
+    expect(stepSignatures(resolution)).toEqual([
+      ['golem1', 'golem2'],
+      ['fighter1'],
+      ['golem3', 'golem4'],
+    ]);
   });
 
   test('treats tied equal-speed weapons as simultaneous', () => {

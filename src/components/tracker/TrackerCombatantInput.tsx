@@ -119,6 +119,18 @@ const getDerivedArmorClass = (armorTypeId: number): number =>
 const formatMovementRateInput = (movementRate: number | undefined): string =>
   (movementRate ?? DEFAULT_MOVEMENT_RATE).toString();
 
+const formatAttacksPerRoutineInput = (
+  attacksPerRoutine: number | undefined
+): string => Math.max(1, Math.floor(attacksPerRoutine || 1)).toString();
+
+const parseAttacksPerRoutine = (value: string): number | undefined => {
+  const parsed = Number(value.trim());
+
+  return Number.isFinite(parsed) && parsed >= 1
+    ? Math.floor(parsed)
+    : undefined;
+};
+
 const TrackerCombatantInput = ({
   combatant,
   side,
@@ -133,6 +145,9 @@ const TrackerCombatantInput = ({
   const [movementRateInput, setMovementRateInput] = useState<string>(
     formatMovementRateInput(combatant.movementRate)
   );
+  const [attacksPerRoutineInput, setAttacksPerRoutineInput] = useState<string>(
+    formatAttacksPerRoutineInput(combatant.attacksPerRoutine)
+  );
   const movementRateInputRef = useRef<string>(
     formatMovementRateInput(combatant.movementRate)
   );
@@ -144,6 +159,9 @@ const TrackerCombatantInput = ({
     );
     setMovementRateInput(nextMovementRateInput);
     movementRateInputRef.current = nextMovementRateInput;
+    setAttacksPerRoutineInput(
+      formatAttacksPerRoutineInput(combatant.attacksPerRoutine)
+    );
   }, [combatant]);
 
   const levelOptions = useMemo<LevelOption[]>(
@@ -281,6 +299,32 @@ const TrackerCombatantInput = ({
       missileInitiativeAdjustment: parseMissileInitiativeAdjustment(
         event.target.value
       ),
+    });
+  };
+
+  const handleAttacksPerRoutineChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const nextValue = event.target.value;
+    const attacksPerRoutine = parseAttacksPerRoutine(nextValue);
+
+    setAttacksPerRoutineInput(nextValue);
+
+    if (attacksPerRoutine !== undefined) {
+      commit({
+        ...draft,
+        attacksPerRoutine,
+      });
+    }
+  };
+
+  const handleAttacksPerRoutineBlur = (event: FocusEvent<HTMLInputElement>) => {
+    const attacksPerRoutine = parseAttacksPerRoutine(event.target.value) ?? 1;
+
+    setAttacksPerRoutineInput(attacksPerRoutine.toString());
+    commit({
+      ...draft,
+      attacksPerRoutine,
     });
   };
 
@@ -718,6 +762,23 @@ const TrackerCombatantInput = ({
                     )}
                     options={offHandWeaponOptions}
                     onChange={handleOffHandWeapon}
+                  />
+                </div>
+                <div className={styles['combatantField']}>
+                  <label
+                    className={styles['combatantFieldLabel']}
+                    htmlFor={`attacks-per-routine-${draft.key}`}
+                  >
+                    Attacks per routine
+                  </label>
+                  <input
+                    id={`attacks-per-routine-${draft.key}`}
+                    className={styles['combatantTextInput']}
+                    inputMode={'numeric'}
+                    type={'text'}
+                    value={attacksPerRoutineInput}
+                    onChange={handleAttacksPerRoutineChange}
+                    onBlur={handleAttacksPerRoutineBlur}
                   />
                 </div>
                 {movementSuppressesPositiveReactionInitiativeBonuses(

@@ -122,7 +122,8 @@ const getGraphNodeActionDetail = (
     node.kind === 'attack' &&
     node.source === 'routine-component' &&
     node.label === 'attack 1' &&
-    (combatant?.attackRoutine.components.length || 0) <= 1
+    (combatant?.attackRoutine.components.length || 0) <= 1 &&
+    (combatant?.attackRoutineCount || 1) <= 1
   ) {
     return undefined;
   }

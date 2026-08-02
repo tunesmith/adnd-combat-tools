@@ -14,6 +14,7 @@ export interface OpenMeleeCombatant {
   weaponKind: OpenMeleeWeaponKind;
   weaponSpeedFactor?: number;
   attackRoutine: InitiativeAttackRoutine;
+  attackRoutineCount: number;
 }
 
 interface OpenMeleeStep {
@@ -33,13 +34,27 @@ export interface OpenMeleeResolution {
   steps: OpenMeleeStep[];
 }
 
-const createAttack = (
+const getAttackComponentCount = (combatant: OpenMeleeCombatant): number =>
+  Math.max(1, combatant.attackRoutine.components.length);
+
+const getAttackRoutineCount = (combatant: OpenMeleeCombatant): number =>
+  Math.max(1, combatant.attackRoutineCount);
+
+const getAttackNumber = (
   combatant: OpenMeleeCombatant,
-  attackNumber: number
+  routineNumber: number,
+  componentNumber: number
+): number =>
+  (routineNumber - 1) * getAttackComponentCount(combatant) + componentNumber;
+
+const createRoutineAttack = (
+  combatant: OpenMeleeCombatant,
+  routineNumber: number,
+  componentNumber: number
 ): InitiativeAttackEntry => {
   const routineComponent =
     combatant.attackRoutine.components.find(
-      (component) => component.order === attackNumber
+      (component) => component.order === componentNumber
     ) ||
     combatant.attackRoutine.components.find(
       (component) =>
@@ -53,39 +68,53 @@ const createAttack = (
     );
   }
 
-  if (attackNumber <= combatant.attackRoutine.components.length) {
-    return {
-      combatantId: combatant.id,
-      routineId: combatant.attackRoutine.id,
-      componentId: routineComponent.id,
-      attackNumber,
-      label: routineComponent.label,
-      source: 'routine-component',
-    };
-  }
-
   return {
     combatantId: combatant.id,
     routineId: combatant.attackRoutine.id,
-    componentId: `generated-attack-${attackNumber}`,
-    attackNumber,
-    label: `attack ${attackNumber}`,
-    source: 'timing-bonus',
+    componentId: routineComponent.id,
+    attackNumber: getAttackNumber(combatant, routineNumber, componentNumber),
+    routineNumber,
+    componentNumber,
+    label:
+      getAttackRoutineCount(combatant) > 1 &&
+      getAttackComponentCount(combatant) === 1
+        ? `attack ${routineNumber}`
+        : routineComponent.label,
+    source: 'routine-component',
   };
 };
 
-const createSingleAttackStep = (
+const createTimingBonusAttack = (
+  combatant: OpenMeleeCombatant,
+  attackNumber: number
+): InitiativeAttackEntry => ({
+  combatantId: combatant.id,
+  routineId: combatant.attackRoutine.id,
+  componentId: `generated-attack-${attackNumber}`,
+  attackNumber,
+  label: `attack ${attackNumber}`,
+  source: 'timing-bonus',
+});
+
+const createRoutineStep = (
+  combatant: OpenMeleeCombatant,
+  routineNumber: number
+): OpenMeleeStep => ({
+  attacks: Array.from(
+    { length: getAttackComponentCount(combatant) },
+    (_, index) => createRoutineAttack(combatant, routineNumber, index + 1)
+  ),
+});
+
+const createTimingBonusStep = (
   combatant: OpenMeleeCombatant,
   attackNumber: number
 ): OpenMeleeStep => ({
-  attacks: [createAttack(combatant, attackNumber)],
+  attacks: [createTimingBonusAttack(combatant, attackNumber)],
 });
 
-const createSimultaneousStep = (
-  left: InitiativeAttackEntry,
-  right: InitiativeAttackEntry
-): OpenMeleeStep => ({
-  attacks: [left, right],
+const combineSteps = (...steps: OpenMeleeStep[]): OpenMeleeStep => ({
+  attacks: steps.flatMap((step) => step.attacks),
 });
 
 const getWeaponSpeedFactor = (combatant: OpenMeleeCombatant): number => {
@@ -105,12 +134,9 @@ const getWeaponSpeedFactor = (combatant: OpenMeleeCombatant): number => {
   return weaponSpeedFactor;
 };
 
-const getRoutineComponentCount = (combatant: OpenMeleeCombatant): number =>
-  Math.max(1, combatant.attackRoutine.components.length);
-
 const createRoutineSteps = (combatant: OpenMeleeCombatant): OpenMeleeStep[] =>
-  Array.from({ length: getRoutineComponentCount(combatant) }, (_, index) =>
-    createSingleAttackStep(combatant, index + 1)
+  Array.from({ length: getAttackRoutineCount(combatant) }, (_, index) =>
+    createRoutineStep(combatant, index + 1)
   );
 
 const getRoutinePhase = (attackNumber: number, attackCount: number): number => {
@@ -194,8 +220,8 @@ const resolveMultipleRoutineExchange = (
     };
   }
 
-  const leftCount = getRoutineComponentCount(left);
-  const rightCount = getRoutineComponentCount(right);
+  const leftCount = getAttackRoutineCount(left);
+  const rightCount = getAttackRoutineCount(right);
   const phaseValues = Array.from(
     new Set(
       Array.from({ length: leftCount }, (_, index) =>
@@ -223,27 +249,27 @@ const resolveMultipleRoutineExchange = (
     );
 
     if (leftAttackNumber && rightAttackNumber) {
-      const leftAttack = createAttack(left, leftAttackNumber);
-      const rightAttack = createAttack(right, rightAttackNumber);
+      const leftStep = createRoutineStep(left, leftAttackNumber);
+      const rightStep = createRoutineStep(right, rightAttackNumber);
       const order = compareSharedPhaseAttacks(left, right);
 
       if (order < 0) {
-        return [{ attacks: [leftAttack] }, { attacks: [rightAttack] }];
+        return [leftStep, rightStep];
       }
 
       if (order > 0) {
-        return [{ attacks: [rightAttack] }, { attacks: [leftAttack] }];
+        return [rightStep, leftStep];
       }
 
-      return [createSimultaneousStep(leftAttack, rightAttack)];
+      return [combineSteps(leftStep, rightStep)];
     }
 
     if (leftAttackNumber) {
-      return [createSingleAttackStep(left, leftAttackNumber)];
+      return [createRoutineStep(left, leftAttackNumber)];
     }
 
     if (rightAttackNumber) {
-      return [createSingleAttackStep(right, rightAttackNumber)];
+      return [createRoutineStep(right, rightAttackNumber)];
     }
 
     return [];
@@ -273,10 +299,7 @@ export const resolveOpenMeleeExchange = (
   left: OpenMeleeCombatant,
   right: OpenMeleeCombatant
 ): OpenMeleeResolution => {
-  if (
-    getRoutineComponentCount(left) > 1 ||
-    getRoutineComponentCount(right) > 1
-  ) {
+  if (getAttackRoutineCount(left) > 1 || getAttackRoutineCount(right) > 1) {
     return resolveMultipleRoutineExchange(left, right);
   }
 
@@ -285,20 +308,14 @@ export const resolveOpenMeleeExchange = (
   if (initiativeOrder < 0) {
     return {
       reason: 'initiative',
-      steps: [
-        createSingleAttackStep(left, 1),
-        createSingleAttackStep(right, 1),
-      ],
+      steps: [createRoutineStep(left, 1), createRoutineStep(right, 1)],
     };
   }
 
   if (initiativeOrder > 0) {
     return {
       reason: 'initiative',
-      steps: [
-        createSingleAttackStep(right, 1),
-        createSingleAttackStep(left, 1),
-      ],
+      steps: [createRoutineStep(right, 1), createRoutineStep(left, 1)],
     };
   }
 
@@ -306,7 +323,7 @@ export const resolveOpenMeleeExchange = (
     return {
       reason: 'simultaneous',
       steps: [
-        createSimultaneousStep(createAttack(left, 1), createAttack(right, 1)),
+        combineSteps(createRoutineStep(left, 1), createRoutineStep(right, 1)),
       ],
     };
   }
@@ -318,7 +335,7 @@ export const resolveOpenMeleeExchange = (
     return {
       reason: 'simultaneous',
       steps: [
-        createSimultaneousStep(createAttack(left, 1), createAttack(right, 1)),
+        combineSteps(createRoutineStep(left, 1), createRoutineStep(right, 1)),
       ],
     };
   }
@@ -335,26 +352,36 @@ export const resolveOpenMeleeExchange = (
   const difference = slower.speedFactor - faster.speedFactor;
 
   if (difference >= 10) {
+    const fasterRoutineStep = createRoutineStep(faster.combatant, 1);
+    const firstTimingBonusAttackNumber =
+      getAttackComponentCount(faster.combatant) + 1;
     return {
       reason: 'weapon-speed-triple',
       steps: [
-        createSingleAttackStep(faster.combatant, 1),
-        createSingleAttackStep(faster.combatant, 2),
-        createSimultaneousStep(
-          createAttack(faster.combatant, 3),
-          createAttack(slower.combatant, 1)
+        fasterRoutineStep,
+        createTimingBonusStep(faster.combatant, firstTimingBonusAttackNumber),
+        combineSteps(
+          createTimingBonusStep(
+            faster.combatant,
+            firstTimingBonusAttackNumber + 1
+          ),
+          createRoutineStep(slower.combatant, 1)
         ),
       ],
     };
   }
 
   if (difference >= getMultipleAttackThreshold(faster.speedFactor)) {
+    const fasterRoutineStep = createRoutineStep(faster.combatant, 1);
     return {
       reason: 'weapon-speed-double',
       steps: [
-        createSingleAttackStep(faster.combatant, 1),
-        createSingleAttackStep(faster.combatant, 2),
-        createSingleAttackStep(slower.combatant, 1),
+        fasterRoutineStep,
+        createTimingBonusStep(
+          faster.combatant,
+          getAttackComponentCount(faster.combatant) + 1
+        ),
+        createRoutineStep(slower.combatant, 1),
       ],
     };
   }
@@ -362,8 +389,8 @@ export const resolveOpenMeleeExchange = (
   return {
     reason: 'weapon-speed',
     steps: [
-      createSingleAttackStep(faster.combatant, 1),
-      createSingleAttackStep(slower.combatant, 1),
+      createRoutineStep(faster.combatant, 1),
+      createRoutineStep(slower.combatant, 1),
     ],
   };
 };

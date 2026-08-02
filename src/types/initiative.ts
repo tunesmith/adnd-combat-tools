@@ -68,6 +68,7 @@ export interface InitiativeScenarioCombatant {
   targetDeclarations: InitiativeTargetDeclaration[];
   targetIds: string[];
   attackRoutine: InitiativeAttackRoutine;
+  attackRoutineCount: number;
 }
 
 export interface InitiativeScenarioDraftTargetDeclaration {
@@ -101,6 +102,7 @@ export interface InitiativeScenarioDraftCombatant {
   activationSegments?: number;
   castingSegments?: number;
   missileInitiativeAdjustment?: number;
+  attacksPerRoutine?: number;
   attackRoutineCount?: number;
   weaponId: number;
   intention?: string;
@@ -136,6 +138,8 @@ export interface InitiativeAttackEntry {
   routineId: string;
   componentId: string;
   attackNumber: number;
+  routineNumber?: number;
+  componentNumber?: number;
   label: string;
   source: InitiativeAttackSource;
 }
@@ -228,6 +232,8 @@ export interface InitiativeAttackNode {
   componentId: string;
   side: InitiativeScenarioSide;
   attackNumber: number;
+  routineNumber?: number;
+  componentNumber?: number;
   label: string;
   actionLabel?: string;
   source: InitiativeAttackSource;
@@ -312,7 +318,10 @@ export interface InitiativeAttackNode {
     | {
         kind: 'routine-sequence';
         attackNumber: number;
+        routineNumber: number;
         routineCount: number;
+        componentNumber: number;
+        componentCount: number;
       }
     | {
         kind: 'general-unsegmented';

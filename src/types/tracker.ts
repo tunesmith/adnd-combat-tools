@@ -12,6 +12,7 @@ export interface TrackerCombatant extends Creature {
   maxHp?: string;
   movementRate?: number;
   missileInitiativeAdjustment?: number;
+  attacksPerRoutine?: number;
   offHandWeapon?: number;
   weaponShortlist?: number[];
 }
