@@ -1555,6 +1555,7 @@ const CombatTracker = ({
   const [actionEditorDrafts, setActionEditorDrafts] = useState<
     TrackerActionEditorDraft[]
   >([]);
+  const [actionEditorWeapon, setActionEditorWeapon] = useState<number>();
   const [actionEditorError, setActionEditorError] = useState<
     string | undefined
   >(undefined);
@@ -2529,7 +2530,7 @@ const CombatTracker = ({
     selectedIntentionWizardActionDraftIndex >= 0
       ? intentionWizardActionDrafts[selectedIntentionWizardActionDraftIndex]
       : undefined;
-  const selectedActionEditorCombatant =
+  const savedActionEditorCombatant =
     actionEditorTarget && currentRound
       ? getActionCombatant(
           currentRound,
@@ -2537,6 +2538,12 @@ const CombatTracker = ({
           actionEditorTarget.index
         )
       : undefined;
+  const selectedActionEditorCombatant = savedActionEditorCombatant
+    ? {
+        ...savedActionEditorCombatant,
+        weapon: actionEditorWeapon ?? savedActionEditorCombatant.weapon,
+      }
+    : undefined;
   const currentIntentionWizardCombatant =
     currentIntentionWizardEntry && currentRound
       ? getActionCombatant(
@@ -2615,6 +2622,7 @@ const CombatTracker = ({
   const closeActionEditor = () => {
     setActionEditorTarget(undefined);
     setActionEditorDrafts([]);
+    setActionEditorWeapon(undefined);
     setActionEditorError(undefined);
   };
 
@@ -2700,6 +2708,7 @@ const CombatTracker = ({
       weaponId: combatant.weapon,
     });
     setActionEditorDrafts(drafts);
+    setActionEditorWeapon(combatant.weapon);
     setActionEditorTarget({
       side,
       index,
@@ -2713,11 +2722,7 @@ const CombatTracker = ({
       return;
     }
 
-    const combatant = getActionCombatant(
-      currentRound,
-      actionEditorTarget.side,
-      actionEditorTarget.index
-    );
+    const combatant = selectedActionEditorCombatant;
     const roundState = getActionRoundState(
       currentRound,
       actionEditorTarget.side,
@@ -2741,6 +2746,12 @@ const CombatTracker = ({
       return;
     }
 
+    dispatch({
+      type: 'update-combatant',
+      side: actionEditorTarget.side,
+      index: actionEditorTarget.index,
+      combatant,
+    });
     dispatch({
       type: 'set-combatant-actions',
       side: actionEditorTarget.side,
@@ -3221,12 +3232,13 @@ const CombatTracker = ({
   };
 
   const getActionDraftsForWeaponChange = (
-    nextWeapon: number
+    nextWeapon: number,
+    drafts: TrackerActionEditorDraft[]
   ): TrackerActionEditorDraft[] => {
     const oldDefaultAction = getDefaultTrackerDeclaredAction();
     const nextDefaultAction = getDefaultTrackerDeclaredAction();
 
-    return intentionWizardActionDrafts.map((draft) => {
+    return drafts.map((draft) => {
       const nextMode =
         draft.mode === oldDefaultAction
           ? nextDefaultAction
@@ -3257,7 +3269,10 @@ const CombatTracker = ({
       ...currentIntentionWizardCombatant,
       weapon: nextWeapon,
     };
-    const nextDrafts = getActionDraftsForWeaponChange(nextWeapon);
+    const nextDrafts = getActionDraftsForWeaponChange(
+      nextWeapon,
+      intentionWizardActionDrafts
+    );
 
     setIntentionWizardActionDrafts(nextDrafts);
     dispatch({
@@ -3269,46 +3284,51 @@ const CombatTracker = ({
     commitIntentionWizardActionDrafts(nextDrafts, nextCombatant);
   };
 
-  const renderIntentionWizardWeaponPicker = () => {
-    if (!currentIntentionWizardCombatant) {
-      return null;
-    }
-
-    const weaponOptions = getWeaponOptions(
-      currentIntentionWizardCombatant.class
+  const renderIntentionWeaponPicker = (
+    combatant: TrackerCombatant | undefined,
+    onChange: (weapon: number) => void,
+    id: string
+  ) => {
+    if (!combatant) return null;
+    const weaponOptions = getWeaponOptions(combatant.class);
+    const quickWeaponOptions = (combatant.weaponShortlist || []).flatMap(
+      (weapon) => {
+        const option = weaponOptions.find(
+          (candidate) => candidate.value === weapon
+        );
+        return option ? [option] : [];
+      }
     );
-    const weaponOptionsById = new Map(
-      weaponOptions.map((weaponOption) => [weaponOption.value, weaponOption])
-    );
-    const quickWeaponOptions = (
-      currentIntentionWizardCombatant.weaponShortlist || []
-    ).flatMap((weaponId) => {
-      const weaponOption = weaponOptionsById.get(weaponId);
-      return weaponOption ? [weaponOption] : [];
-    });
-
-    if (quickWeaponOptions.length === 0) {
-      return null;
-    }
-
     return (
       <div
-        className={`${styles['quickWeaponList']} ${styles['intentionsWizardQuickWeaponList']}`}
+        className={styles['intentionWeaponPicker']}
+        role={'group'}
+        aria-labelledby={id}
       >
-        {quickWeaponOptions.map((weaponOption) => (
-          <button
-            key={weaponOption.value}
-            type={'button'}
-            className={
-              weaponOption.value === currentIntentionWizardCombatant.weapon
-                ? styles['quickWeaponButtonActive']
-                : styles['quickWeaponButton']
-            }
-            onClick={() => updateIntentionWizardWeapon(weaponOption.value)}
-          >
-            {weaponOption.label}
-          </button>
-        ))}
+        <span id={id} className={styles['intentionWeaponLabel']}>
+          Weapon for this round
+        </span>
+        {quickWeaponOptions.length > 0 ? (
+          <div className={styles['quickWeaponList']}>
+            {quickWeaponOptions.map((option) => (
+              <button
+                key={option.value}
+                type={'button'}
+                aria-pressed={option.value === combatant.weapon}
+                className={
+                  option.value === combatant.weapon
+                    ? styles['quickWeaponButtonActive']
+                    : styles['quickWeaponButton']
+                }
+                onClick={() => onChange(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span>{getWeaponInfo(combatant.weapon)?.name || 'Unknown'}</span>
+        )}
       </div>
     );
   };
@@ -4033,6 +4053,7 @@ const CombatTracker = ({
           .filter(Boolean)
           .join(' ')}
         onClick={() => openActionEditor(side, index)}
+        title={'Edit intention and weapon'}
       >
         {isEmpty ? (
           <span className={styles['actionIntentPlaceholder']}>
@@ -5750,6 +5771,16 @@ const CombatTracker = ({
                   ? getPartyDisplayName(actionEditorTarget.index)
                   : getEnemyDisplayName(actionEditorTarget.index)}
               </div>
+              {renderIntentionWeaponPicker(
+                selectedActionEditorCombatant,
+                (weapon) => {
+                  setActionEditorWeapon(weapon);
+                  setActionEditorDrafts((drafts) =>
+                    getActionDraftsForWeaponChange(weapon, drafts)
+                  );
+                },
+                'edit-intention-weapon'
+              )}
               <div className={styles['actionIntentActionList']}>
                 {actionEditorDrafts.map((draft, actionIndex) => (
                   <button
@@ -5926,7 +5957,11 @@ const CombatTracker = ({
               <div className={styles['intentionsWizardName']}>
                 {currentIntentionWizardEntry.combatantName}
               </div>
-              {renderIntentionWizardWeaponPicker()}
+              {renderIntentionWeaponPicker(
+                currentIntentionWizardCombatant,
+                updateIntentionWizardWeapon,
+                'wizard-intention-weapon'
+              )}
               {selectedIntentionWizardActionDraft ? (
                 <div className={styles['intentionsWizardActionPanel']}>
                   <div className={styles['actionIntentActionList']}>
