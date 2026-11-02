@@ -1,4 +1,7 @@
-import { getTrackerCombatantHeaderDisplay } from '../helpers/trackerCombatantDisplay';
+import {
+  getTrackerActiveOffHandWeapon,
+  getTrackerCombatantHeaderDisplay,
+} from '../helpers/trackerCombatantDisplay';
 import { FIGHTER, MONSTER } from '../tables/attackerClass';
 import type { TrackerCombatant } from '../types/tracker';
 
@@ -29,6 +32,20 @@ describe('tracker combatant display', () => {
       'Sword, short',
       'Dagger (Held)',
     ]);
+  });
+
+  test('hides a saved off-hand weapon for a sling and restores it for melee', () => {
+    const combatant = createCombatant({ weapon: 48, offHandWeapon: 17 });
+    expect(getTrackerActiveOffHandWeapon(combatant)).toBeUndefined();
+    expect(
+      getTrackerCombatantHeaderDisplay(combatant, 'party').detailLines
+    ).not.toContain('Dagger (Held)');
+    expect(combatant.offHandWeapon).toBe(17);
+    const meleeCombatant = { ...combatant, weapon: 57 };
+    expect(getTrackerActiveOffHandWeapon(meleeCombatant)).toBe(17);
+    expect(
+      getTrackerCombatantHeaderDisplay(meleeCombatant, 'party').detailLines
+    ).toContain('Dagger (Held)');
   });
 
   test('shows non-default movement and missile initiative timing', () => {

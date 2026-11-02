@@ -56,7 +56,10 @@ import {
 import TrackerCell from './TrackerCell';
 import TrackerCombatantInput from './TrackerCombatantInput';
 import styles from './tracker.module.css';
-import { getTrackerCombatantWidestLineWidth } from '../../helpers/trackerCombatantDisplay';
+import {
+  getTrackerActiveOffHandWeapon,
+  getTrackerCombatantWidestLineWidth,
+} from '../../helpers/trackerCombatantDisplay';
 import {
   buildIntentionWizardEntries,
   replaceIntentionWizardEntry,
@@ -1566,7 +1569,7 @@ const CombatTracker = ({
         : partyCombatant;
     const attackWeapon =
       attackDetailTarget.hand === 'offHand'
-        ? attacker.offHandWeapon
+        ? getTrackerActiveOffHandWeapon(attacker)
         : attacker.weapon;
 
     if (!attackWeapon) {
@@ -1599,7 +1602,7 @@ const CombatTracker = ({
         ? currentRound.enemies[attackDetailTarget.enemyIndex]
         : currentRound.party[attackDetailTarget.partyIndex];
 
-    return Boolean(attacker?.offHandWeapon);
+    return Boolean(attacker && getTrackerActiveOffHandWeapon(attacker));
   }, [attackDetailTarget, currentRound]);
   const selectedCellActionAssignment = useMemo(():
     | SelectedCellActionAssignment

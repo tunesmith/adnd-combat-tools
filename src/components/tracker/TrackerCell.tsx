@@ -1,3 +1,4 @@
+import { getTrackerActiveOffHandWeapon } from '../../helpers/trackerCombatantDisplay';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import getToHit from '../../helpers/getToHit';
 import { expandedArmorTypes } from '../../tables/armorType';
@@ -76,12 +77,13 @@ const TrackerCell = ({
     columnCombatant.armorClass,
     rowCombatant.weapon
   );
-  const rowOffHandToHit = rowCombatant.offHandWeapon
+  const rowOffHandWeapon = getTrackerActiveOffHandWeapon(rowCombatant);
+  const rowOffHandToHit = rowOffHandWeapon
     ? getCombatantToHit(
         rowCombatant,
         rowTargetArmorType,
         columnCombatant.armorClass,
-        rowCombatant.offHandWeapon
+        rowOffHandWeapon
       )
     : undefined;
   const columnToHit = getCombatantToHit(
@@ -90,12 +92,13 @@ const TrackerCell = ({
     rowCombatant.armorClass,
     columnCombatant.weapon
   );
-  const columnOffHandToHit = columnCombatant.offHandWeapon
+  const columnOffHandWeapon = getTrackerActiveOffHandWeapon(columnCombatant);
+  const columnOffHandToHit = columnOffHandWeapon
     ? getCombatantToHit(
         columnCombatant,
         columnTargetArmorType,
         rowCombatant.armorClass,
-        columnCombatant.offHandWeapon
+        columnOffHandWeapon
       )
     : undefined;
   const enemyHasContent = Boolean(enemyToPartyValue.trim());

@@ -56,6 +56,13 @@ const measureTextWidth = (text: string, font: string): number => {
   return context.measureText(text).width;
 };
 
+export const getTrackerActiveOffHandWeapon = (
+  combatant: TrackerCombatant
+): number | undefined =>
+  getWeaponInfo(combatant.weapon)?.weaponType === 'missile'
+    ? undefined
+    : combatant.offHandWeapon;
+
 export const getTrackerCombatantHeaderDisplay = (
   combatant: TrackerCombatant,
   side: TrackerCombatantSide
@@ -74,8 +81,9 @@ export const getTrackerCombatantHeaderDisplay = (
   )?.armorDescription;
   const weaponLabel =
     getWeaponInfo(combatant.weapon)?.name || '(No weapon selected)';
-  const offHandWeaponLabel = combatant.offHandWeapon
-    ? getWeaponInfo(combatant.offHandWeapon)?.name
+  const offHandWeapon = getTrackerActiveOffHandWeapon(combatant);
+  const offHandWeaponLabel = offHandWeapon
+    ? getWeaponInfo(offHandWeapon)?.name
     : undefined;
   const movementRate = combatant.movementRate ?? DEFAULT_MOVEMENT_RATE;
   const missileInitiativeAdjustment =
