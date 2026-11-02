@@ -1,5 +1,5 @@
+import AutoHeightTextarea from './AutoHeightTextarea';
 import {
-  forwardRef,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { CSSProperties, TextareaHTMLAttributes } from 'react';
+import type { CSSProperties } from 'react';
 import {
   addCombatant,
   createInitialTrackerState,
@@ -288,66 +288,6 @@ const GRAPH_POPOVER_GAP = 14;
 const GRAPH_POPOVER_MARGIN = 10;
 const GRAPH_POPOVER_FALLBACK_HEIGHT = 320;
 const GRAPH_POPOVER_MAX_HEIGHT = 448;
-
-type AutoHeightTextareaProps = Omit<
-  TextareaHTMLAttributes<HTMLTextAreaElement>,
-  'onChange' | 'value'
-> & {
-  value: string;
-  onChange: (value: string) => void;
-};
-
-const AutoHeightTextarea = forwardRef<
-  HTMLTextAreaElement,
-  AutoHeightTextareaProps
->(function AutoHeightTextarea(
-  { className, onInput, value, onChange, rows = 1, ...props },
-  forwardedRef
-) {
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const resizeTextarea = () => {
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      return;
-    }
-
-    textarea.style.height = '0px';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  };
-
-  useLayoutEffect(() => {
-    resizeTextarea();
-  }, [value]);
-
-  return (
-    <textarea
-      {...props}
-      ref={(node) => {
-        textareaRef.current = node;
-
-        if (!forwardedRef) {
-          return;
-        }
-
-        if (typeof forwardedRef === 'function') {
-          forwardedRef(node);
-          return;
-        }
-
-        forwardedRef.current = node;
-      }}
-      rows={rows}
-      className={className}
-      value={value}
-      onInput={(event) => {
-        resizeTextarea();
-        onInput?.(event);
-      }}
-      onChange={(event) => onChange(event.target.value)}
-    />
-  );
-});
 
 const updateCurrentRound = (
   state: TrackerState,
