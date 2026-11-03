@@ -161,9 +161,11 @@ const getEdgePath = (
     horizontalOverlap > Math.min(fromNode.width, toNode.width) * 0.45
   ) {
     const centerX = (fromCenterX + toCenterX) / 2;
-    const startY = fromNode.y + fromNode.height;
-    const endY =
-      startY <= toNode.y ? toNode.y - endOffset : toNode.y + endOffset;
+    const downward = fromCenterY < toCenterY;
+    const startY = downward ? fromNode.y + fromNode.height : fromNode.y;
+    const endY = downward
+      ? toNode.y - endOffset
+      : toNode.y + toNode.height + endOffset;
     return `M ${centerX} ${startY} L ${centerX} ${endY}`;
   }
 
@@ -551,133 +553,68 @@ export const buildInitiativeAttackGraphLayout = (
     });
   });
 
-  graph.layers.forEach((layer) => {
-    layer.forEach((nodeId) => {
+  // Enforce forward dependencies across both bands. Widen a segment lane
+  // when an unsegmented prerequisite needs more space, then propagate that
+  // shift through later lanes and downstream dependency nodes.
+  const orderedIds = graph.layers.flat();
+  for (let pass = 0; pass < graph.nodes.length; pass += 1) {
+    let shifted = false;
+    orderedIds.forEach((nodeId) => {
+      const target = nodeLayoutById.get(nodeId);
       const graphNode = graphNodeById.get(nodeId);
-      const targetLayoutNode = nodeLayoutById.get(nodeId);
-
-      if (!graphNode || graphNode.segment !== undefined || !targetLayoutNode) {
-        return;
-      }
-
-      let requiredX = targetLayoutNode.x;
+      if (!target || !graphNode) return;
+      let requiredX = target.x;
       graph.edges.forEach((edge) => {
-        if (edge.toNodeId !== nodeId) {
-          return;
-        }
-
-        const sourceLayoutNode = nodeLayoutById.get(edge.fromNodeId);
+        if (edge.toNodeId !== nodeId) return;
+        const source = nodeLayoutById.get(edge.fromNodeId);
+        if (!source) return;
         const sourceGraphNode = graphNodeById.get(edge.fromNodeId);
-        if (!sourceLayoutNode) {
-          return;
-        }
-
-        const forwardGap =
-          sourceGraphNode?.segment !== undefined
+        const gap =
+          sourceGraphNode?.segment !== undefined &&
+          graphNode.segment === undefined
             ? SEGMENT_TO_DEPENDENCY_FORWARD_GAP
             : DEPENDENCY_COLUMN_GAP;
-
-        requiredX = Math.max(
-          requiredX,
-          sourceLayoutNode.x + sourceLayoutNode.width + forwardGap
-        );
+        requiredX = Math.max(requiredX, source.x + source.width + gap);
       });
-
-      if (requiredX > targetLayoutNode.x) {
-        targetLayoutNode.x = requiredX;
-      }
-    });
-  });
-
-  Array.from({ length: SEGMENT_COUNT }, (_, index) => index + 1).forEach(
-    (segment) => {
-      const completionNodeIds = graph.nodes
-        .filter(
-          (node) => node.segment === segment && node.kind === 'spell-completion'
-        )
-        .map((node) => node.id);
-
-      if (completionNodeIds.length === 0) {
+      const shift = requiredX - target.x;
+      if (shift <= 0) return;
+      shifted = true;
+      if (graphNode.segment === undefined) {
+        target.x = requiredX;
         return;
       }
-
-      let requiredShift = 0;
-      completionNodeIds.forEach((completionNodeId) => {
-        const completionLayoutNode = nodeLayoutById.get(completionNodeId);
-        if (!completionLayoutNode) {
-          return;
-        }
-
-        graph.edges.forEach((edge) => {
-          if (edge.toNodeId !== completionNodeId) {
-            return;
-          }
-
-          const sourceGraphNode = graphNodeById.get(edge.fromNodeId);
-          const sourceLayoutNode = nodeLayoutById.get(edge.fromNodeId);
-
-          if (
-            !sourceGraphNode ||
-            sourceGraphNode.segment !== undefined ||
-            !sourceLayoutNode
-          ) {
-            return;
-          }
-
-          const desiredX =
-            sourceLayoutNode.x + sourceLayoutNode.width + DEPENDENCY_COLUMN_GAP;
-          requiredShift = Math.max(
-            requiredShift,
-            desiredX - completionLayoutNode.x
-          );
-        });
-      });
-
-      if (requiredShift <= 0) {
-        return;
-      }
-
+      const segment = graphNode.segment;
+      const columnCenter = target.x + target.width / 2;
       graph.nodes.forEach((node) => {
         const layoutNode = nodeLayoutById.get(node.id);
+        if (!layoutNode || node.segment === undefined || node.segment < segment)
+          return;
         if (
-          !layoutNode ||
-          node.segment === undefined ||
-          node.segment < segment
+          node.segment > segment ||
+          layoutNode.x + layoutNode.width / 2 >= columnCenter - 0.01
         ) {
-          return;
+          layoutNode.x += shift;
         }
-
-        if (node.segment === segment) {
-          if (node.kind === 'spell-completion') {
-            layoutNode.x += requiredShift;
-          }
-          return;
-        }
-
-        layoutNode.x += requiredShift;
       });
-
-      segmentLanes.forEach((segmentLane) => {
-        if (segmentLane.segment < segment) {
-          return;
+      segmentLanes.forEach((lane) => {
+        if (lane.segment < segment) return;
+        if (lane.segment === segment) {
+          lane.width += shift;
+          lane.endX += shift;
+          lane.centerX += shift / 2;
+          lane.nodeColumnXs = lane.nodeColumnXs.map((x) =>
+            x + NODE_COLUMN_WIDTH / 2 >= columnCenter - 0.01 ? x + shift : x
+          );
+        } else {
+          lane.startX += shift;
+          lane.endX += shift;
+          lane.centerX += shift;
+          lane.nodeColumnXs = lane.nodeColumnXs.map((x) => x + shift);
         }
-
-        if (segmentLane.segment === segment) {
-          segmentLane.width += requiredShift;
-          segmentLane.endX += requiredShift;
-          segmentLane.centerX += requiredShift / 2;
-          return;
-        }
-
-        segmentLane.startX += requiredShift;
-        segmentLane.endX += requiredShift;
-        segmentLane.centerX += requiredShift;
-        segmentLane.nodeColumnXs = segmentLane.nodeColumnXs.map(
-          (columnX) => columnX + requiredShift
-        );
       });
-    }
-  );
+    });
+    if (!shifted) break;
+  }
 
   const nodes = graph.nodes.flatMap((node) => {
     const layoutNode = nodeLayoutById.get(node.id);

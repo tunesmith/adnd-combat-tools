@@ -1,3 +1,4 @@
+import { getTrackerWeaponWarning } from '../../helpers/trackerWeaponWarning';
 import AutoHeightTextarea from './AutoHeightTextarea';
 import {
   useEffect,
@@ -3230,9 +3231,11 @@ const CombatTracker = ({
   const renderIntentionWeaponPicker = (
     combatant: TrackerCombatant | undefined,
     onChange: (weapon: number) => void,
-    id: string
+    id: string,
+    action: InitiativeDeclaredAction
   ) => {
     if (!combatant) return null;
+    const warning = getTrackerWeaponWarning(action, combatant.weapon);
     const weaponOptions = getWeaponOptions(combatant.class);
     const quickWeaponOptions = (combatant.weaponShortlist || []).flatMap(
       (weapon) => {
@@ -3248,9 +3251,28 @@ const CombatTracker = ({
         role={'group'}
         aria-labelledby={id}
       >
-        <span id={id} className={styles['intentionWeaponLabel']}>
-          Weapon for this round
-        </span>
+        <div className={styles['intentionWeaponHeading']}>
+          <span id={id} className={styles['intentionWeaponLabel']}>
+            Weapon for this round
+          </span>
+          <span role={'status'} aria-live={'polite'} aria-atomic={'true'}>
+            {warning ? (
+              <span
+                className={styles['intentionWeaponWarningBadge']}
+                tabIndex={0}
+                aria-label={`Weapon/action mismatch: ${warning}`}
+              >
+                <span aria-hidden={'true'}>⚠</span> Weapon/action mismatch
+                <span
+                  className={styles['intentionWeaponWarningTooltip']}
+                  role={'tooltip'}
+                >
+                  {warning}
+                </span>
+              </span>
+            ) : null}
+          </span>
+        </div>
         {quickWeaponOptions.length > 0 ? (
           <div className={styles['quickWeaponList']}>
             {quickWeaponOptions.map((option) => (
@@ -3407,7 +3429,8 @@ const CombatTracker = ({
       {renderIntentionWeaponPicker(
         combatant,
         onWeaponChange,
-        `${idPrefix}-weapon`
+        `${idPrefix}-weapon`,
+        selectedDraft.mode
       )}
       {requiresActionDistanceInput(selectedDraft.mode) ? (
         <>

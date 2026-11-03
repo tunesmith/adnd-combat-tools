@@ -40,6 +40,12 @@ describe('intention weapon selection', () => {
     fireEvent.click(
       dialog.getByRole('button', { name: getWeaponInfo(18)?.name })
     );
+    fireEvent.change(dialog.getByLabelText('Action'), {
+      target: { value: 'open-melee' },
+    });
+    expect(dialog.getByRole('status')).toHaveTextContent(
+      'Weapon/action mismatch'
+    );
     fireEvent.click(dialog.getByRole('button', { name: 'Save intention' }));
 
     fireEvent.click(screen.getByRole('button', { name: /^Backstab/ }));
@@ -47,6 +53,16 @@ describe('intention weapon selection', () => {
     expect(
       dialog.getByRole('button', { name: getWeaponInfo(18)?.name })
     ).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.change(dialog.getByLabelText('Action'), {
+      target: { value: 'missile' },
+    });
+    expect(dialog.getByRole('status')).toBeEmptyDOMElement();
+    fireEvent.click(
+      dialog.getByRole('button', { name: getWeaponInfo(17)?.name })
+    );
+    expect(dialog.getByRole('status')).toHaveTextContent(
+      'not a missile weapon'
+    );
   });
 
   test('offers a labeled weapon shortlist while registering intentions', () => {
@@ -65,5 +81,15 @@ describe('intention weapon selection', () => {
     expect(
       weapons.getByRole('button', { name: getWeaponInfo(1)?.name })
     ).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(
+      dialog.getByRole('radio', { name: 'Missile', exact: true })
+    );
+    expect(dialog.getByRole('status')).toHaveTextContent(
+      'not a missile weapon'
+    );
+    fireEvent.click(
+      dialog.getByRole('radio', { name: 'Open melee', exact: true })
+    );
+    expect(dialog.getByRole('status')).toBeEmptyDOMElement();
   });
 });

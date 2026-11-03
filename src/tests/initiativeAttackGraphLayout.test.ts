@@ -1229,3 +1229,94 @@ describe('initiative attack graph layout', () => {
     );
   });
 });
+
+describe('cross-band charge prerequisites', () => {
+  test.each([57, 11])(
+    'keeps a missile prerequisite left of a charge with Azalia weapon %i',
+    (weaponId) => {
+      const scenario = buildInitiativeScenario({
+        label: 'Minotaur round 2',
+        partyInitiative: 4,
+        enemyInitiative: 5,
+        party: [
+          {
+            combatantKey: 1,
+            name: 'Lodi',
+            weaponId: 57,
+            declaredAction: 'open-melee',
+            initiativeTiming: 'wins-initiative',
+            targetCombatantKeys: [27],
+          },
+          {
+            combatantKey: 2,
+            name: 'Azalia',
+            weaponId,
+            declaredAction: 'missile',
+            missileInitiativeAdjustment: 3,
+            movementRate: 12,
+            targetCombatantKeys: [27],
+          },
+          {
+            combatantKey: 10,
+            name: 'Bemis',
+            weaponId: 56,
+            declaredAction: 'charge',
+            movementRate: 12,
+            targetDeclarations: [{ targetCombatantKey: 27, distanceInches: 4 }],
+          },
+          {
+            combatantKey: 9,
+            name: 'Astrid',
+            weaponId: 39,
+            declaredAction: 'close',
+            movementRate: 12,
+            targetDeclarations: [{ targetCombatantKey: 27, distanceInches: 4 }],
+          },
+          {
+            combatantKey: 12,
+            name: 'Sot',
+            weaponId: 17,
+            declaredAction: 'spell-casting',
+            castingSegments: 1,
+            targetCombatantKeys: [27],
+          },
+        ],
+        enemies: [
+          {
+            combatantKey: 27,
+            name: 'Minotaur',
+            weaponId: 15,
+            declaredAction: 'missile',
+            targetCombatantKeys: [10],
+          },
+        ],
+      });
+      const graph = buildInitiativeAttackGraph(
+        scenario,
+        resolveInitiativeRound(scenario)
+      );
+      const original = JSON.stringify(graph);
+      const layout = buildInitiativeAttackGraphLayout(graph);
+      const charge = layout.nodes.find((n) => n.nodeId === 'attack:party-10:1');
+      const shot = layout.nodes.find((n) => n.nodeId === 'attack:enemy-27:1');
+      const lane = layout.segmentColumns.find((c) => c.segment === 2);
+      expect(charge).toBeDefined();
+      expect(shot).toBeDefined();
+      expect(charge?.x).toBeGreaterThan((shot?.x || 0) + (shot?.width || 0));
+      expect(charge?.x).toBeGreaterThanOrEqual(lane?.startX || 0);
+      expect((charge?.x || 0) + (charge?.width || 0)).toBeLessThanOrEqual(
+        lane?.endX || 0
+      );
+      const edge = layout.edges.find(
+        (e) => e.fromNodeId === shot?.nodeId && e.toNodeId === charge?.nodeId
+      );
+      expect(edge?.path).toContain(' C ');
+      for (const edge of layout.edges) {
+        const from = layout.nodes.find((n) => n.nodeId === edge.fromNodeId);
+        const to = layout.nodes.find((n) => n.nodeId === edge.toNodeId);
+        expect(to?.x).toBeGreaterThan((from?.x || 0) + (from?.width || 0));
+      }
+      expect(JSON.stringify(graph)).toBe(original);
+    }
+  );
+});
