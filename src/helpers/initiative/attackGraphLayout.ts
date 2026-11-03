@@ -61,7 +61,7 @@ interface InitiativeAttackGraphLayoutSegmentLane {
   endX: number;
   centerX: number;
   nodeColumnXs: number[];
-  spellColumnCount: number;
+  columnIndexByNodeId: Map<string, number>;
 }
 
 const HORIZONTAL_PADDING = 32;
@@ -194,7 +194,6 @@ const getEdgePath = (
 
 const buildSegmentLanes = (
   graph: InitiativeAttackGraph,
-  graphNodeById: Map<string, typeof graph.nodes[number]>,
   layerIndexByNodeId: Map<string, number>
 ): InitiativeAttackGraphLayoutSegmentLane[] => {
   const nodesBySegment = new Map<number, string[]>();
@@ -214,152 +213,51 @@ const buildSegmentLanes = (
   return Array.from({ length: SEGMENT_COUNT }, (_, index) => {
     const segment = index + 1;
     const nodeIds = nodesBySegment.get(segment) || [];
-    const spellNodeIds = nodeIds.filter((nodeId) => {
-      const node = graphNodeById.get(nodeId);
-      return node?.kind === 'spell-start' || node?.kind === 'spell-completion';
-    });
-    const nonSpellNodeIds = nodeIds.filter((nodeId) => {
-      const node = graphNodeById.get(nodeId);
-      return node?.kind !== 'spell-start' && node?.kind !== 'spell-completion';
-    });
-    const sameSegmentEdges = graph.edges.filter((edge) => {
-      const fromNode = graphNodeById.get(edge.fromNodeId);
-      const toNode = graphNodeById.get(edge.toNodeId);
-
-      return fromNode?.segment === segment && toNode?.segment === segment;
-    });
-
-    const adjacency = new Map<string, string[]>();
-    nonSpellNodeIds.forEach((nodeId) => adjacency.set(nodeId, []));
-    sameSegmentEdges.forEach((edge) => {
-      if (!adjacency.has(edge.fromNodeId) || !adjacency.has(edge.toNodeId)) {
-        return;
-      }
-
-      adjacency.get(edge.fromNodeId)?.push(edge.toNodeId);
-      adjacency.get(edge.toNodeId)?.push(edge.fromNodeId);
-    });
-
-    const orderedNodeIds = [...nonSpellNodeIds].sort(
-      (leftNodeId, rightNodeId) => {
-        const leftLayer =
-          layerIndexByNodeId.get(leftNodeId) ?? Number.MAX_SAFE_INTEGER;
-        const rightLayer =
-          layerIndexByNodeId.get(rightNodeId) ?? Number.MAX_SAFE_INTEGER;
-
-        if (leftLayer !== rightLayer) {
-          return leftLayer - rightLayer;
-        }
-
-        return leftNodeId.localeCompare(rightNodeId);
-      }
+    // Only actual same-segment dependencies create horizontal subcolumns.
+    // Independent spell and non-spell nodes share the first column.
+    const columnIndexByNodeId = new Map<string, number>();
+    const nodeSet = new Set(nodeIds);
+    const orderedNodeIds = [...nodeIds].sort(
+      (left, right) =>
+        (layerIndexByNodeId.get(left) ?? 0) -
+        (layerIndexByNodeId.get(right) ?? 0)
     );
-
-    const visited = new Set<string>();
-    const spellColumnCount =
-      segment === 1 &&
-      spellNodeIds.some((nodeId) => {
-        const node = graphNodeById.get(nodeId);
-        return node?.kind === 'spell-completion';
-      })
-        ? 2
-        : spellNodeIds.length > 0
-        ? 1
-        : 0;
-    const components: string[][] = Array.from(
-      { length: spellColumnCount },
-      () => []
-    );
-    const componentIndexByNodeId = new Map<string, number>();
-
-    spellNodeIds.forEach((nodeId) => {
-      const node = graphNodeById.get(nodeId);
-      const spellColumnIndex =
-        spellColumnCount > 1 && node?.kind === 'spell-completion' ? 1 : 0;
-
-      componentIndexByNodeId.set(nodeId, spellColumnIndex);
-      components[spellColumnIndex]?.push(nodeId);
-    });
-
-    const nonSpellComponents: string[][] = [];
-
     orderedNodeIds.forEach((nodeId) => {
-      if (visited.has(nodeId)) {
-        return;
-      }
-
-      const stack = [nodeId];
-      const component: string[] = [];
-      visited.add(nodeId);
-
-      while (stack.length > 0) {
-        const currentNodeId = stack.pop();
-
-        if (!currentNodeId) {
-          continue;
-        }
-
-        component.push(currentNodeId);
-        (adjacency.get(currentNodeId) || []).forEach((neighborNodeId) => {
-          if (visited.has(neighborNodeId)) {
-            return;
-          }
-
-          visited.add(neighborNodeId);
-          stack.push(neighborNodeId);
-        });
-      }
-
-      nonSpellComponents.push(component);
-    });
-
-    const isolatedComponents = nonSpellComponents.filter(
-      (component) =>
-        component.length === 1 &&
-        (adjacency.get(component[0] || '') || []).length === 0
-    );
-    const connectedComponents = nonSpellComponents.filter(
-      (component) =>
-        !(
-          component.length === 1 &&
-          (adjacency.get(component[0] || '') || []).length === 0
+      const predecessors = graph.edges.filter(
+        (edge) => edge.toNodeId === nodeId && nodeSet.has(edge.fromNodeId)
+      );
+      columnIndexByNodeId.set(
+        nodeId,
+        predecessors.reduce(
+          (column, edge) =>
+            Math.max(
+              column,
+              (columnIndexByNodeId.get(edge.fromNodeId) ?? 0) + 1
+            ),
+          0
         )
-    );
-
-    if (isolatedComponents.length > 0) {
-      components.push(isolatedComponents.flat());
-      const isolatedComponentIndex = components.length - 1;
-      isolatedComponents.forEach((component) => {
-        const nodeId = component[0];
-        if (nodeId) {
-          componentIndexByNodeId.set(nodeId, isolatedComponentIndex);
-        }
-      });
-    }
-
-    connectedComponents.forEach((component) => {
-      components.push(component);
-      const componentIndex = components.length - 1;
-      component.forEach((componentNodeId) => {
-        componentIndexByNodeId.set(componentNodeId, componentIndex);
-      });
+      );
     });
+    const columnCount = nodeIds.length
+      ? Math.max(...Array.from(columnIndexByNodeId.values())) + 1
+      : 0;
 
     const contentWidth =
-      components.length > 0
-        ? components.length * NODE_COLUMN_WIDTH +
-          (components.length - 1) * SEGMENT_SUBCOLUMN_GAP
+      columnCount > 0
+        ? columnCount * NODE_COLUMN_WIDTH +
+          (columnCount - 1) * SEGMENT_SUBCOLUMN_GAP
         : 0;
     const width = Math.max(
       SEGMENT_EMPTY_LANE_WIDTH,
-      components.length > 0
+      columnCount > 0
         ? contentWidth + SEGMENT_LANE_PADDING * 2
         : SEGMENT_EMPTY_LANE_WIDTH
     );
     const contentStartX =
       cursorX + Math.max((width - contentWidth) / 2, SEGMENT_LANE_PADDING);
-    const nodeColumnXs = components.map(
-      (_component, componentIndex) =>
+    const nodeColumnXs = Array.from(
+      { length: columnCount },
+      (_, componentIndex) =>
         contentStartX +
         componentIndex * (NODE_COLUMN_WIDTH + SEGMENT_SUBCOLUMN_GAP)
     );
@@ -370,7 +268,7 @@ const buildSegmentLanes = (
       endX: cursorX + width,
       centerX: cursorX + width / 2,
       nodeColumnXs,
-      spellColumnCount,
+      columnIndexByNodeId,
     };
 
     cursorX = lane.endX;
@@ -456,11 +354,7 @@ export const buildInitiativeAttackGraphLayout = (
       }
     });
 
-  const segmentLanes = buildSegmentLanes(
-    graph,
-    graphNodeById,
-    layerIndexByNodeId
-  );
+  const segmentLanes = buildSegmentLanes(graph, layerIndexByNodeId);
   const segmentedNodesBySegment = new Map<number, string[]>();
 
   graph.nodes.forEach((node) => {
@@ -497,36 +391,14 @@ export const buildInitiativeAttackGraphLayout = (
       }
     });
 
-    const sameSegmentEdges = graph.edges.filter((edge) => {
-      const fromNode = graphNodeById.get(edge.fromNodeId);
-      const toNode = graphNodeById.get(edge.toNodeId);
-
-      return fromNode?.segment === segment && toNode?.segment === segment;
-    });
-    const adjacency = new Map<string, string[]>();
-    nodeIds
+    const nonSpellRowKeys = nodeIds
       .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
-      .forEach((nodeId) => adjacency.set(nodeId, []));
-    sameSegmentEdges.forEach((edge) => {
-      if (!adjacency.has(edge.fromNodeId) || !adjacency.has(edge.toNodeId)) {
-        return;
-      }
-
-      adjacency.get(edge.fromNodeId)?.push(edge.toNodeId);
-      adjacency.get(edge.toNodeId)?.push(edge.fromNodeId);
-    });
-
-    const nonSpellRowKeys = Array.from(
-      new Set(
-        nodeIds
-          .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
-          .map((nodeId) =>
-            (adjacency.get(nodeId) || []).length === 0
-              ? `${segment}:isolated:${nodeId}`
-              : `${segment}:layer:${layerIndexByNodeId.get(nodeId) ?? 0}`
-          )
+      .sort(
+        (left, right) =>
+          (layerIndexByNodeId.get(left) ?? 0) -
+            (layerIndexByNodeId.get(right) ?? 0) || left.localeCompare(right)
       )
-    ).sort();
+      .map((nodeId) => `${segment}:node:${nodeId}`);
 
     nonSpellRowKeys.forEach((rowKey) => {
       const rowIndex = getSmallestAvailableRow(usedRows);
@@ -538,11 +410,7 @@ export const buildInitiativeAttackGraphLayout = (
       .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
       .forEach((nodeId) => {
         const rowIndex =
-          segmentRowIndexByKey.get(
-            (adjacency.get(nodeId) || []).length === 0
-              ? `${segment}:isolated:${nodeId}`
-              : `${segment}:layer:${layerIndexByNodeId.get(nodeId) ?? 0}`
-          ) ?? 0;
+          segmentRowIndexByKey.get(`${segment}:node:${nodeId}`) ?? 0;
 
         setMaxRowHeight(
           segmentRowHeightByIndex,
@@ -610,177 +478,17 @@ export const buildInitiativeAttackGraphLayout = (
 
   segmentLanes.forEach((segmentLane) => {
     const nodeIds = segmentedNodesBySegment.get(segmentLane.segment) || [];
-    const spellNodeIds = nodeIds.filter((nodeId) => {
-      const node = graphNodeById.get(nodeId);
-      return node?.kind === 'spell-start' || node?.kind === 'spell-completion';
-    });
-    const nonSpellNodeIds = nodeIds.filter((nodeId) => {
-      const node = graphNodeById.get(nodeId);
-      return node?.kind !== 'spell-start' && node?.kind !== 'spell-completion';
-    });
-    const usedRows = new Set<number>(
-      spellChainRowsBySegment.get(segmentLane.segment) || []
-    );
-    nodeIds.forEach((nodeId) => {
-      const spellChainRowIndex = spellChainRowIndexByNodeId.get(nodeId);
-      if (spellChainRowIndex !== undefined) {
-        segmentRowIndexByKey.set(nodeId, spellChainRowIndex);
-        usedRows.add(spellChainRowIndex);
-      }
-    });
-
-    const sameSegmentEdges = graph.edges.filter((edge) => {
-      const fromNode = graphNodeById.get(edge.fromNodeId);
-      const toNode = graphNodeById.get(edge.toNodeId);
-
-      return (
-        fromNode?.segment === segmentLane.segment &&
-        toNode?.segment === segmentLane.segment
-      );
-    });
-    const adjacency = new Map<string, string[]>();
-    nonSpellNodeIds.forEach((nodeId) => adjacency.set(nodeId, []));
-    sameSegmentEdges.forEach((edge) => {
-      if (!adjacency.has(edge.fromNodeId) || !adjacency.has(edge.toNodeId)) {
-        return;
-      }
-
-      adjacency.get(edge.fromNodeId)?.push(edge.toNodeId);
-      adjacency.get(edge.toNodeId)?.push(edge.fromNodeId);
-    });
-
-    const nonSpellRowKeys = Array.from(
-      new Set(
-        nodeIds
-          .filter((nodeId) => !spellChainRowIndexByNodeId.has(nodeId))
-          .map((nodeId) =>
-            (adjacency.get(nodeId) || []).length === 0
-              ? `${segmentLane.segment}:isolated:${nodeId}`
-              : `${segmentLane.segment}:layer:${
-                  layerIndexByNodeId.get(nodeId) ?? 0
-                }`
-          )
-      )
-    ).sort();
-
-    nonSpellRowKeys.forEach((rowKey) => {
-      const existingRowIndex = segmentRowIndexByKey.get(rowKey);
-      if (existingRowIndex !== undefined) {
-        usedRows.add(existingRowIndex);
-        return;
-      }
-
-      const rowIndex = getSmallestAvailableRow(usedRows);
-      usedRows.add(rowIndex);
-      segmentRowIndexByKey.set(rowKey, rowIndex);
-    });
-
-    const orderedNodeIds = [...nonSpellNodeIds].sort(
-      (leftNodeId, rightNodeId) => {
-        const leftLayer =
-          layerIndexByNodeId.get(leftNodeId) ?? Number.MAX_SAFE_INTEGER;
-        const rightLayer =
-          layerIndexByNodeId.get(rightNodeId) ?? Number.MAX_SAFE_INTEGER;
-
-        if (leftLayer !== rightLayer) {
-          return leftLayer - rightLayer;
-        }
-
-        return leftNodeId.localeCompare(rightNodeId);
-      }
-    );
-    const visited = new Set<string>();
-    const componentIndexByNodeId = new Map<string, number>();
-    if (spellNodeIds.length > 0) {
-      spellNodeIds.forEach((nodeId) => {
-        const node = graphNodeById.get(nodeId);
-        const spellColumnIndex =
-          segmentLane.spellColumnCount > 1 && node?.kind === 'spell-completion'
-            ? 1
-            : 0;
-
-        componentIndexByNodeId.set(nodeId, spellColumnIndex);
-      });
-    }
-    const nonSpellComponents: string[][] = [];
-
-    orderedNodeIds.forEach((nodeId) => {
-      if (visited.has(nodeId)) {
-        return;
-      }
-
-      const stack = [nodeId];
-      const componentNodeIds: string[] = [];
-      visited.add(nodeId);
-
-      while (stack.length > 0) {
-        const currentNodeId = stack.pop();
-
-        if (!currentNodeId) {
-          continue;
-        }
-
-        componentNodeIds.push(currentNodeId);
-        (adjacency.get(currentNodeId) || []).forEach((neighborNodeId) => {
-          if (visited.has(neighborNodeId)) {
-            return;
-          }
-
-          visited.add(neighborNodeId);
-          stack.push(neighborNodeId);
-        });
-      }
-
-      nonSpellComponents.push(componentNodeIds);
-    });
-
-    const isolatedComponents = nonSpellComponents.filter(
-      (componentNodeIds) =>
-        componentNodeIds.length === 1 &&
-        (adjacency.get(componentNodeIds[0] || '') || []).length === 0
-    );
-    const connectedComponents = nonSpellComponents.filter(
-      (componentNodeIds) =>
-        !(
-          componentNodeIds.length === 1 &&
-          (adjacency.get(componentNodeIds[0] || '') || []).length === 0
-        )
-    );
-    let componentIndex = segmentLane.spellColumnCount;
-
-    if (isolatedComponents.length > 0) {
-      isolatedComponents.forEach((componentNodeIds) => {
-        const nodeId = componentNodeIds[0];
-        if (nodeId) {
-          componentIndexByNodeId.set(nodeId, componentIndex);
-        }
-      });
-      componentIndex += 1;
-    }
-
-    connectedComponents.forEach((componentNodeIds) => {
-      componentNodeIds.forEach((nodeId) => {
-        componentIndexByNodeId.set(nodeId, componentIndex);
-      });
-      componentIndex += 1;
-    });
-
     nodeIds.forEach((nodeId) => {
       const node = graphNodeById.get(nodeId);
       if (!node) {
         return;
       }
 
-      const layerIndex = layerIndexByNodeId.get(nodeId) ?? 0;
       const rowIndex =
-        segmentRowIndexByKey.get(nodeId) ??
-        segmentRowIndexByKey.get(
-          (adjacency.get(nodeId) || []).length === 0
-            ? `${segmentLane.segment}:isolated:${nodeId}`
-            : `${segmentLane.segment}:layer:${layerIndex}`
-        ) ??
+        spellChainRowIndexByNodeId.get(nodeId) ??
+        segmentRowIndexByKey.get(`${segmentLane.segment}:node:${nodeId}`) ??
         0;
-      const localColumnIndex = componentIndexByNodeId.get(nodeId) ?? 0;
+      const localColumnIndex = segmentLane.columnIndexByNodeId.get(nodeId) ?? 0;
       const nodeSize = nodeSizeById?.[nodeId];
       const width = nodeSize?.width ?? NODE_COLUMN_WIDTH;
       const height = nodeSize?.height ?? NODE_HEIGHT;

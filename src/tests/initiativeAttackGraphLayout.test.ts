@@ -171,7 +171,7 @@ describe('initiative attack graph layout', () => {
     expect(attackerNode?.x).toBeLessThan(
       (segmentTwoColumn?.endX || 0) - (attackerNode?.width || 0)
     );
-    expect(defenderNode?.x).toBe(attackerNode?.x);
+    expect(defenderNode?.x).toBeGreaterThan(attackerNode?.x || 0);
     expect(attackerNode?.y).toBeLessThan(defenderNode?.y || 0);
 
     expect(layout.edges).toEqual(
@@ -244,7 +244,7 @@ describe('initiative attack graph layout', () => {
     ).toBeGreaterThanOrEqual((enemyNode?.x || 0) + (enemyNode?.width || 0));
   });
 
-  test('splits independent same-segment chains into local subcolumns', () => {
+  test('aligns independent same-segment chains and offsets only their dependent attacks', () => {
     const scenario = buildInitiativeScenario({
       label: 'Segment Two Split',
       partyInitiative: 4,
@@ -322,11 +322,12 @@ describe('initiative attack graph layout', () => {
     );
 
     expect(segmentTwoColumn).toBeDefined();
-    expect(hobgoblinNode?.x).not.toBe(doranNode?.x);
-    expect(hobgoblinNode?.y).toBe(doranNode?.y);
-    expect(garranNode?.x).toBe(hobgoblinNode?.x);
-    expect(raiderNode?.x).toBe(doranNode?.x);
-    expect(garranNode?.y).toBe(raiderNode?.y);
+    expect(hobgoblinNode?.x).toBe(doranNode?.x);
+    expect(hobgoblinNode?.y).not.toBe(doranNode?.y);
+    expect(garranNode?.x).toBeGreaterThan(hobgoblinNode?.x || 0);
+    expect(raiderNode?.x).toBeGreaterThan(doranNode?.x || 0);
+    expect(garranNode?.x).toBe(raiderNode?.x);
+    expect(garranNode?.y).not.toBe(raiderNode?.y);
     expect(
       (segmentTwoColumn?.endX || 0) - (segmentTwoColumn?.startX || 0)
     ).toBeGreaterThan(300);
@@ -534,15 +535,15 @@ describe('initiative attack graph layout', () => {
       .sort((left, right) => left - right);
 
     expect(xPositions).toHaveLength(2);
-    expect(attackNodes[0]?.x).toBe(attackNodes[1]?.x);
-    expect(attackNodes[2]?.x).toBe(attackNodes[3]?.x);
-    expect(attackNodes[0]?.x || 0).toBeLessThan(attackNodes[2]?.x || 0);
+    expect(attackNodes[0]?.x).toBe(attackNodes[2]?.x);
+    expect(attackNodes[1]?.x).toBe(attackNodes[3]?.x);
+    expect(attackNodes[0]?.x || 0).toBeLessThan(attackNodes[1]?.x || 0);
     expect(attackNodes[0]?.y || 0).toBeLessThan(attackNodes[1]?.y || 0);
     expect(attackNodes[2]?.y || 0).toBeLessThan(attackNodes[3]?.y || 0);
     expect(yPositions).toEqual(
       [...yPositions].sort((left, right) => left - right)
     );
-    expect(new Set(yPositions).size).toBe(2);
+    expect(new Set(yPositions).size).toBe(4);
   });
 
   test('keeps segment guides in the upper band and pushes dependency-only nodes below it', () => {
@@ -689,6 +690,57 @@ describe('initiative attack graph layout', () => {
     expect(lodiStart?.y).toBe(lodiCompletion?.y);
     expect(merethStart?.y).toBeLessThan(lodiStart?.y || 0);
     expect(merethCompletion?.y).toBeLessThan(lodiCompletion?.y || 0);
+  });
+
+  test('aligns an independent charge with a spell start in segment one', () => {
+    const scenario = buildInitiativeScenario({
+      label: 'Shep and Bemis',
+      partyInitiative: 6,
+      enemyInitiative: 1,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Shep',
+          weaponId: 47,
+          declaredAction: 'spell-casting',
+          castingSegments: 3,
+          targetCombatantKeys: [3],
+        },
+        {
+          combatantKey: 2,
+          name: 'Bemis',
+          weaponId: 56,
+          declaredAction: 'charge',
+          movementRate: 12,
+          targetDeclarations: [{ targetCombatantKey: 3, distanceInches: 1.5 }],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Hound',
+          weaponId: 1,
+          targetCombatantKeys: [],
+        },
+      ],
+    });
+    const graph = buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+    const before = JSON.stringify(graph);
+    const layout = buildInitiativeAttackGraphLayout(graph);
+    const start = layout.nodes.find(
+      (node) => node.nodeId === 'spell-start:party-1'
+    );
+    const charge = layout.nodes.find(
+      (node) => node.nodeId === 'attack:party-2:1'
+    );
+    expect(start).toBeDefined();
+    expect(charge).toBeDefined();
+    expect(charge?.x).toBe(start?.x);
+    expect(charge?.y).toBeGreaterThan((start?.y || 0) + (start?.height || 0));
+    expect(JSON.stringify(graph)).toBe(before);
   });
 
   test('gives one-segment spells visible start-to-completion span inside segment 1', () => {
