@@ -4612,7 +4612,7 @@ const CombatTracker = ({
                 data-testid={'tracker-register-intentions-button'}
                 onClick={openIntentionsWizard}
               >
-                Register Intentions
+                Declare Intentions
               </button>
               <button
                 type={'button'}
@@ -5852,7 +5852,7 @@ const CombatTracker = ({
               id={'intentions-wizard-title'}
               className={styles['modalTitle']}
             >
-              Register Intentions
+              Declare Intentions
             </div>
             <div
               className={
@@ -5872,7 +5872,7 @@ const CombatTracker = ({
                 </span>
                 {intentionResolvedOnEntry ? (
                   <span className={styles['intentionsWizardResolvedBadge']}>
-                    Resolved
+                    Declared
                   </span>
                 ) : null}
                 <div className={styles['intentionsWizardNav']}>

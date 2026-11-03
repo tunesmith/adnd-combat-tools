@@ -56,9 +56,7 @@ describe('intention weapon selection', () => {
         loadedFromEncodedState
       />
     );
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Register Intentions' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Declare Intentions' }));
     const dialog = within(screen.getByRole('dialog'));
     const weapons = within(
       dialog.getByRole('group', { name: 'Weapon for this round' })
