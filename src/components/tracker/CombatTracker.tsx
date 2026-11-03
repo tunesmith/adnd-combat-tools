@@ -3320,6 +3320,7 @@ const CombatTracker = ({
     modeControl = 'select',
     combatant,
     updateDraft,
+    onWeaponChange,
     error,
   }: {
     idPrefix: string;
@@ -3330,6 +3331,7 @@ const CombatTracker = ({
     updateDraft: (
       updater: (draft: TrackerActionEditorDraft) => TrackerActionEditorDraft
     ) => void;
+    onWeaponChange: (weapon: number) => void;
     error: string | undefined;
   }) => (
     <>
@@ -3401,6 +3403,11 @@ const CombatTracker = ({
             ))}
           </select>
         </>
+      )}
+      {renderIntentionWeaponPicker(
+        combatant,
+        onWeaponChange,
+        `${idPrefix}-weapon`
       )}
       {requiresActionDistanceInput(selectedDraft.mode) ? (
         <>
@@ -5714,16 +5721,6 @@ const CombatTracker = ({
                   ? getPartyDisplayName(actionEditorTarget.index)
                   : getEnemyDisplayName(actionEditorTarget.index)}
               </div>
-              {renderIntentionWeaponPicker(
-                selectedActionEditorCombatant,
-                (weapon) => {
-                  setActionEditorWeapon(weapon);
-                  setActionEditorDrafts((drafts) =>
-                    getActionDraftsForWeaponChange(weapon, drafts)
-                  );
-                },
-                'edit-intention-weapon'
-              )}
               <div className={styles['actionIntentActionList']}>
                 {actionEditorDrafts.map((draft, actionIndex) => (
                   <button
@@ -5799,6 +5796,12 @@ const CombatTracker = ({
                 modeOptions: selectedActionEditorModeOptions,
                 combatant: selectedActionEditorCombatant,
                 updateDraft: updateSelectedActionEditorDraft,
+                onWeaponChange: (weapon) => {
+                  setActionEditorWeapon(weapon);
+                  setActionEditorDrafts((drafts) =>
+                    getActionDraftsForWeaponChange(weapon, drafts)
+                  );
+                },
                 error: actionEditorError,
               })}
             </div>
@@ -5900,11 +5903,6 @@ const CombatTracker = ({
               <div className={styles['intentionsWizardName']}>
                 {currentIntentionWizardEntry.combatantName}
               </div>
-              {renderIntentionWeaponPicker(
-                currentIntentionWizardCombatant,
-                updateIntentionWizardWeapon,
-                'wizard-intention-weapon'
-              )}
               {selectedIntentionWizardActionDraft ? (
                 <div className={styles['intentionsWizardActionPanel']}>
                   <div className={styles['actionIntentActionList']}>
@@ -5951,6 +5949,7 @@ const CombatTracker = ({
                     modeControl: 'pills',
                     combatant: currentIntentionWizardCombatant,
                     updateDraft: updateSelectedIntentionWizardActionDraft,
+                    onWeaponChange: updateIntentionWizardWeapon,
                     error: intentionWizardActionError,
                   })}
                   {intentionWizardActionDrafts.length > 1 &&
