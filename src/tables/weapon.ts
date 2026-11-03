@@ -155,7 +155,7 @@ const bardWeapons = [
 //   "Sword, short",
 // ];
 
-const offHandWeaponIds = new Set<number>([17, 32]);
+const offHandWeaponIds = new Set<number>([3, 17]);
 
 interface GeneralWeaponInfo {
   name: string;
@@ -1089,7 +1089,7 @@ export const getOffHandWeaponOptions = (
   const classWeapons = weaponClasses.get(attackerClass);
   const weaponOptions = classWeapons || weapons;
 
-  return constructOptions(filterWeaponClasses(weaponOptions, [17, 32])).filter(
-    (option) => offHandWeaponIds.has(option.value)
-  );
+  return constructOptions(
+    filterWeaponClasses(weaponOptions, Array.from(offHandWeaponIds))
+  ).filter((option) => offHandWeaponIds.has(option.value));
 };

@@ -3,7 +3,7 @@ import {
   getTrackerWeaponAdjustmentSummary,
   shouldShowTrackerEffectiveArmorClass,
 } from '../helpers/trackerAttackDetail';
-import { FIGHTER } from '../tables/attackerClass';
+import { CLERIC, FIGHTER, THIEF } from '../tables/attackerClass';
 import { getOffHandWeaponOptions } from '../tables/weapon';
 import type { TrackerCombatant } from '../types/tracker';
 
@@ -157,10 +157,14 @@ describe('tracker attack detail', () => {
     });
   });
 
-  test('limits off-hand weapon options to dagger and hammer choices allowed by class', () => {
+  test('limits off-hand weapon options to dagger and hand axe choices allowed by class', () => {
     expect(getOffHandWeaponOptions(FIGHTER)).toEqual([
+      { value: 3, label: 'Axe, Hand (Held)' },
       { value: 17, label: 'Dagger (Held)' },
-      { value: 32, label: 'Hammer (Held)' },
     ]);
+    expect(getOffHandWeaponOptions(THIEF)).toEqual([
+      { value: 17, label: 'Dagger (Held)' },
+    ]);
+    expect(getOffHandWeaponOptions(CLERIC)).toEqual([]);
   });
 });
