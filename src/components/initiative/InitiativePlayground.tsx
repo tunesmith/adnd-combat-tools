@@ -3136,17 +3136,29 @@ const InitiativePlayground = ({
                         ) : null}
 
                         {graphLayout.simultaneousGroups.map((group) => (
-                          <rect
+                          <g
                             key={`simultaneous-group-${group.nodeIds.join(
                               '-'
                             )}`}
-                            x={group.x}
-                            y={group.y}
-                            width={group.width}
-                            height={group.height}
-                            rx={18}
-                            className={styles['graphSimultaneousGroup']}
-                          />
+                            role={'group'}
+                            aria-label={'Simultaneous actions'}
+                          >
+                            <rect
+                              x={group.x}
+                              y={group.y}
+                              width={group.width}
+                              height={group.height}
+                              rx={18}
+                              className={styles['graphSimultaneousGroup']}
+                            />
+                            <text
+                              x={group.x + 12}
+                              y={group.y + 16}
+                              className={styles['graphSimultaneousLabel']}
+                            >
+                              Simultaneous
+                            </text>
+                          </g>
                         ))}
 
                         {graphEdgesInRenderOrder.map((edge) => {

@@ -1,0 +1,9 @@
+argument combat-tracker-book-grounded-ordering-review "Combat tracker: book-grounded ordering review"
+meta profile="cludia", cludia-next-ids="v1;P=65;L=28;C=15;CP=4;J=42"
+
+premise[fact] P63:gettohit-selects-attack-progression-attacker-combat-class-level ::T "getToHit selects the attack progression from the attacker combat class and level or monster attack-table category. [src/helpers/getToHit.ts; src/tables/combatLevel.ts.]"
+
+premise[fact] P64:gettohit-looks-up-required-attack-score-using-entered ::T "getToHit looks up the required attack score using the entered target AC adjusted for the selected weapon versus target armor type, when applicable. [src/helpers/getToHit.ts.]"
+
+conclusion[fact] C14:displayed-hit-number-base-attack-table-score-required "The displayed to-hit number is the base attack-table score required against the entered target defense, including the applicable weapon-versus-armor adjustment."
+  <- AND#J41(P63, P64)

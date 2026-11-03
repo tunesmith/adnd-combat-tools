@@ -3189,3 +3189,76 @@ describe('initiative attack graph', () => {
     );
   });
 });
+
+describe('ordinary tied-action simultaneous groups', () => {
+  const makeGraph = (enemyInitiative: number) => {
+    const scenario = buildInitiativeScenario({
+      label: 'Round 2 ties',
+      partyInitiative: 6,
+      enemyInitiative,
+      party: [
+        {
+          combatantKey: 1,
+          name: 'Astrid',
+          weaponId: 39,
+          declaredAction: 'open-melee',
+          targetCombatantKeys: [3],
+        },
+        {
+          combatantKey: 2,
+          name: 'Bemis',
+          weaponId: 56,
+          declaredAction: 'open-melee',
+          targetCombatantKeys: [4],
+        },
+        {
+          combatantKey: 5,
+          name: 'Shep',
+          weaponId: 47,
+          declaredAction: 'none',
+          actionLabel: 'Talk',
+        },
+        {
+          combatantKey: 6,
+          name: 'Lodi',
+          weaponId: 57,
+          declaredAction: 'charge',
+          targetDeclarations: [{ targetCombatantKey: 4, distanceInches: 1.5 }],
+        },
+      ],
+      enemies: [
+        {
+          combatantKey: 3,
+          name: 'Hound 1',
+          weaponId: 1,
+          declaredAction: 'open-melee',
+          targetCombatantKeys: [1],
+        },
+        {
+          combatantKey: 4,
+          name: 'Hound 2',
+          weaponId: 1,
+          declaredAction: 'magical-device',
+          targetCombatantKeys: [1],
+        },
+      ],
+    });
+    return buildInitiativeAttackGraph(
+      scenario,
+      resolveInitiativeRound(scenario)
+    );
+  };
+  test('merges a melee tie with other tied attacks without grouping movement or conversation', () => {
+    const graph = makeGraph(6);
+    expect(graph.simultaneousGroups).toHaveLength(1);
+    expect(graph.simultaneousGroups[0]?.slice().sort()).toEqual([
+      'attack:enemy-3:1',
+      'attack:enemy-4:1',
+      'attack:party-1:1',
+      'attack:party-2:1',
+    ]);
+  });
+  test('does not group independent actions just because they are ready on the winning side', () => {
+    expect(makeGraph(1).simultaneousGroups).toEqual([]);
+  });
+});

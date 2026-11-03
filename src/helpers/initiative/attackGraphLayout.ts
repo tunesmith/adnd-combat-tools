@@ -84,6 +84,7 @@ const SPELL_ARROWHEAD_EXTENSION = 10;
 const SEGMENT_TO_DEPENDENCY_FORWARD_GAP = NODE_COLUMN_WIDTH;
 const SIMULTANEOUS_GROUP_PADDING_X = 14;
 const SIMULTANEOUS_GROUP_PADDING_Y = 10;
+const SIMULTANEOUS_GROUP_LABEL_HEIGHT = 24;
 
 const getContentHeight = (rowHeights: number[]): number =>
   rowHeights.length > 0
@@ -440,7 +441,30 @@ export const buildInitiativeAttackGraphLayout = (
     ? segmentTopY + segmentContentHeight + SEGMENT_BAND_BOTTOM_PADDING
     : segmentBandTopY;
 
-  graph.layers.forEach((layer, layerIndex) => {
+  const groupStartIds = new Set<string>();
+  const groupEndIds = new Set<string>();
+  const orderedLayers = graph.layers.map((layer) => {
+    const pending = new Set(layer);
+    const ordered: string[] = [];
+    layer.forEach((id) => {
+      if (!pending.has(id)) return;
+      const group = graph.simultaneousGroups.find((ids) => ids.includes(id));
+      const members = group
+        ? layer.filter((member) => group.includes(member))
+        : [id];
+      const first = members[0];
+      const last = members[members.length - 1];
+      if (group && members.length > 1 && first && last) {
+        groupStartIds.add(first);
+        groupEndIds.add(last);
+      }
+      members.forEach((member) => {
+        if (pending.delete(member)) ordered.push(member);
+      });
+    });
+    return ordered;
+  });
+  orderedLayers.forEach((layer, layerIndex) => {
     layer.forEach((nodeId) => {
       const node = graphNodeById.get(nodeId);
 
@@ -464,7 +488,9 @@ export const buildInitiativeAttackGraphLayout = (
     setMaxRowHeight(
       dependencyRowHeightByIndex,
       stackIndex,
-      getNodeHeight(nodeId)
+      getNodeHeight(nodeId) +
+        (groupStartIds.has(nodeId) ? SIMULTANEOUS_GROUP_LABEL_HEIGHT : 0) +
+        (groupEndIds.has(nodeId) ? SIMULTANEOUS_GROUP_PADDING_Y : 0)
     );
   });
   const dependencyRowHeights = getOrderedRowHeights(dependencyRowHeightByIndex);
@@ -515,7 +541,11 @@ export const buildInitiativeAttackGraphLayout = (
       nodeId: positionedNode.nodeId,
       x: positionedNode.x + (NODE_COLUMN_WIDTH - width) / 2,
       y:
-        dependencyTopY + (dependencyRowOffsets[positionedNode.stackIndex] ?? 0),
+        dependencyTopY +
+        (dependencyRowOffsets[positionedNode.stackIndex] ?? 0) +
+        (groupStartIds.has(positionedNode.nodeId)
+          ? SIMULTANEOUS_GROUP_LABEL_HEIGHT
+          : 0),
       width,
       height,
     });
@@ -692,9 +722,13 @@ export const buildInitiativeAttackGraphLayout = (
       {
         nodeIds,
         x: minX - SIMULTANEOUS_GROUP_PADDING_X,
-        y: minY - SIMULTANEOUS_GROUP_PADDING_Y,
+        y: minY - SIMULTANEOUS_GROUP_LABEL_HEIGHT,
         width: maxX - minX + SIMULTANEOUS_GROUP_PADDING_X * 2,
-        height: maxY - minY + SIMULTANEOUS_GROUP_PADDING_Y * 2,
+        height:
+          maxY -
+          minY +
+          SIMULTANEOUS_GROUP_PADDING_Y +
+          SIMULTANEOUS_GROUP_LABEL_HEIGHT,
       },
     ];
   });

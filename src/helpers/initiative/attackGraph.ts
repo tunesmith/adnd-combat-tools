@@ -1633,6 +1633,59 @@ export const buildInitiativeAttackGraph = (
     directMeleeOpponentByCombatantId
   );
 
+  // Extend explicit melee ties to other ordinary, untimed attacks on the
+  // same initiative and routine phase. Readiness alone is not simultaneity.
+  const tiedMeleeIds = new Set(
+    resolution.directMeleeEngagements
+      .filter((engagement) => engagement.resolution.reason === 'simultaneous')
+      .flatMap((engagement) => [
+        engagement.partyCombatantId,
+        engagement.enemyCombatantId,
+      ])
+  );
+  const layers = getLayers(nodes, Array.from(edgesByKey.values()));
+  layers.forEach((layer) => {
+    const groups: InitiativeAttackNode[][] = [];
+    layer.forEach((id) => {
+      const node = nodesById.get(id);
+      const combatant = node && combatantById.get(node.combatantId);
+      if (
+        !node ||
+        !combatant ||
+        node.segment !== undefined ||
+        node.kind !== 'attack' ||
+        combatant.declaredAction === 'none' ||
+        (directMeleeCombatantIdSet.has(combatant.id) &&
+          !tiedMeleeIds.has(combatant.id))
+      )
+        return;
+      const group = groups.find((members) => {
+        const first = members[0];
+        const other = first && combatantById.get(first.combatantId);
+        return (
+          first &&
+          other &&
+          compareCombatantInitiative(combatant, other) === 0 &&
+          getSimpleInitiativePhase(combatant, node) ===
+            getSimpleInitiativePhase(other, first)
+        );
+      });
+      if (group) group.push(node);
+      else groups.push([node]);
+    });
+    groups
+      .filter((group) => new Set(group.map((node) => node.side)).size > 1)
+      .forEach((group) => {
+        const ids = group.map((node) => node.id);
+        // One shared timing group replaces contained pair outlines.
+        simultaneousGroupsByKey.forEach((existing, key) => {
+          if (existing.every((id) => ids.includes(id)))
+            simultaneousGroupsByKey.delete(key);
+        });
+        simultaneousGroupsByKey.set([...ids].sort().join('|'), ids);
+      });
+  });
+
   const edges = reduceTransitiveSimpleInitiativeEdges(
     Array.from(edgesByKey.values())
   );
