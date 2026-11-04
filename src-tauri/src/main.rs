@@ -25,6 +25,8 @@ struct View {
     recent_path: Option<PathBuf>,
     dirty: bool,
     busy: bool,
+    activity: Option<String>,
+    save_count: u64,
     status: String,
     token: u64,
     epoch: u64,
@@ -58,6 +60,8 @@ impl Session {
                 recent_path: recent,
                 dirty: false,
                 busy: false,
+                activity: None,
+                save_count: 0,
                 status: "Create or open a campaign.".into(),
                 token: 0,
                 epoch: 0,
@@ -178,6 +182,8 @@ impl Session {
             }
         }
         let path = path.unwrap();
+        self.view.activity = Some("save".into());
+        self.publish(app);
         match save(&path, &doc, revision.as_deref()) {
             Ok(rev) => {
                 self.revision = Some(rev);
@@ -185,6 +191,7 @@ impl Session {
                 self.view.path = Some(path.clone());
                 self.view.dirty = false;
                 self.view.status = "Saved successfully".into();
+                self.view.save_count += 1;
                 self.view.error = None;
                 self.remember(app, &path);
                 Ok(true)
@@ -290,6 +297,7 @@ fn run(app: tauri::AppHandle, command: String, opened: Option<PathBuf>) {
         let state = app.state::<State>();
         let mut session = state.session.lock().unwrap();
         session.view.busy = true;
+        session.view.activity = Some(command.clone());
         session.publish(&app);
         let quit = match session.command(&app, &command, opened) {
             Ok(q) => q,
@@ -300,6 +308,7 @@ fn run(app: tauri::AppHandle, command: String, opened: Option<PathBuf>) {
             }
         };
         session.view.busy = false;
+        session.view.activity = None;
         session.publish(&app);
         if quit {
             state.exiting.store(true, Ordering::SeqCst);

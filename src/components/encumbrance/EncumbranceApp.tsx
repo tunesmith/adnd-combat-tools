@@ -3017,15 +3017,13 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       )}
       <div className={styles['contentContainer']}>
         <div className={styles['toolbar']}>
-          <div className={styles['toolbarGroup']}>
-            <span className={styles['modeBadge']}>
-              {campaign
-                ? 'Working inventory · saved by Campaign Save (⌘S)'
-                : mode === 'dm'
-                ? 'Dungeon Master View'
-                : 'Player View'}
-            </span>
-          </div>
+          {!campaign && (
+            <div className={styles['toolbarGroup']}>
+              <span className={styles['modeBadge']}>
+                {mode === 'dm' ? 'Dungeon Master View' : 'Player View'}
+              </span>
+            </div>
+          )}
           <div className={styles['toolbarGroup']}>
             {campaign ? (
               <button

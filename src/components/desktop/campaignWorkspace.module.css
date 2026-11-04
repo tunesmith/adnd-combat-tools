@@ -71,11 +71,6 @@
   flex-wrap: wrap;
   background: #ede6d9;
 }
-.navigation small {
-  margin-left: auto;
-  color: #72634d;
-  font-size: 11px;
-}
 .main {
   padding: 20px 24px;
 }
@@ -100,17 +95,12 @@
   gap: 20px;
   margin-bottom: 14px;
 }
-.working,
 .historical {
   display: inline-block;
   padding: 3px 8px;
   font-size: 11px;
   font-weight: 600;
   border-radius: 12px;
-}
-.working {
-  background: #dfebd5;
-  color: #345126;
 }
 .historical {
   background: #e9e1d5;
@@ -221,7 +211,11 @@
     align-items: flex-start;
     flex-direction: column;
   }
-  .navigation small {
-    display: none;
-  }
+}
+.notice {
+  margin: 0;
+  padding: 8px 24px;
+  color: #65533b;
+  background: #eee5d3;
+  font-size: 12px;
 }

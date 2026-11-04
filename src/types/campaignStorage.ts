@@ -14,6 +14,8 @@ export interface DocumentState {
   recentPath: string | null;
   dirty: boolean;
   busy: boolean;
+  activity?: string | null;
+  saveCount?: number;
   token: number;
   epoch: number;
   status: string;

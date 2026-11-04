@@ -72,6 +72,10 @@ Required checks passed: TypeScript, Prettier, ESLint, 110 Jest suites / 747 test
 
 The temporary example is `/private/tmp/adnd-working-fixtures/Working retained.adnd`. It contains the edited session, an independent empty second-session inventory, and historical evidence/checkpoint data. Use Save As elsewhere if you want to keep it; macOS may remove temporary files.
 
+## Routine feedback
+
+The normal editing view omits the Working badge, shortcut hint, and repeated save explanation. Navigation shortcuts still work and respect text-entry focus. Historical views retain their read-only label. The heading is quiet when clean, shows Edited for pending changes, and briefly confirms a completed save with Saved. Saving/Opening feedback is transient; errors and actionable migration notices remain visible. The native save-success counter prevents cancelled or failed dialogs from generating a success confirmation.
+
 ## Remaining limits
 
 - Combat editing and the complete two-session carry-forward/unfinished-encounter workflow are not implemented or claimed complete. There is no XP settlement.

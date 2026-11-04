@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import CampaignSnapshots from './CampaignSnapshots';
 import CampaignHistory from './CampaignHistory';
+import CampaignSaveStatus from './CampaignSaveStatus';
 import EncumbranceApp from '../encumbrance/EncumbranceApp';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
@@ -205,15 +206,25 @@ export default function DesktopWorkspace({
           <small>AD&amp;D TOOLS · CAMPAIGN WORKSPACE</small>
           <h1>{document?.title || 'Open a campaign'}</h1>
         </div>
-        <div className={styles['status']} role="status">
-          {state?.busy
-            ? 'Working…'
-            : pending.current
-            ? 'Applying edits…'
-            : state?.status || 'Opening workspace…'}
-          {state?.dirty ? ' •' : ''}
+        <div className={styles['status']}>
+          <CampaignSaveStatus
+            state={state}
+            pending={pending.current > 0}
+            hasError={Boolean(error)}
+          />
         </div>
       </header>
+      {state?.status.startsWith('Opened older campaign') && (
+        <p className={styles['notice']} role="status">
+          Save upgrades this campaign to the current format and keeps the
+          previous file in its backup.
+        </p>
+      )}
+      {state?.status.includes('Could not remember path') && (
+        <p className={styles['notice']} role="alert">
+          Couldn’t remember this file. Use Open next time.
+        </p>
+      )}
       {(error || state?.error) && (
         <div role="alert" className={styles['error']}>
           {error || state?.error}
@@ -329,7 +340,6 @@ export default function DesktopWorkspace({
                 {label}
               </button>
             ))}
-            <small>⌘⌥1–4 · shortcuts pause while typing</small>
           </nav>
           <main className={styles['main']}>
             <section
@@ -339,12 +349,7 @@ export default function DesktopWorkspace({
             >
               <div className={styles['viewHeading']}>
                 <div>
-                  <span className={styles['working']}>Working</span>
                   <h2>Possessions</h2>
-                  <p>
-                    Edits here belong to this session and are saved by Campaign
-                    Save. Historical sources stay unchanged.
-                  </p>
                 </div>
                 {working && (
                   <details>
