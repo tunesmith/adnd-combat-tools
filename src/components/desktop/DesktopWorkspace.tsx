@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { serializeCampaign } from '../../helpers/campaignDocument';
+import CampaignSnapshots from './CampaignSnapshots';
 import type {
   DocumentCommand,
   DocumentState,
@@ -18,7 +18,7 @@ export default function DesktopWorkspace() {
       if (disposed) return;
       if (!next.dirty)
         savedSignature.current = next.document
-          ? serializeCampaign(next.document)
+          ? JSON.stringify(next.document)
           : null;
       setState(next);
     };
@@ -45,15 +45,20 @@ export default function DesktopWorkspace() {
       <p role="alert">Unable to open campaign workspace: {connectionError}</p>
     ) : null;
   const command = (action: DocumentCommand) => {
-    void window.campaignStorage?.command(action);
+    void window.campaignStorage
+      ?.command(action)
+      .catch((error: unknown) =>
+        setState((current) => current && { ...current, error: String(error) })
+      );
   };
   const edit = (title: string, notes: string) => {
     if (!state.document) return;
     const document = { ...state.document, title, notes };
-    const dirty = serializeCampaign(document) !== savedSignature.current;
+    const dirty = JSON.stringify(document) !== savedSignature.current;
     setState({
       ...state,
       document,
+      token: state.token + 1,
       dirty,
       status: dirty ? 'Unsaved changes' : 'No unsaved changes',
       error: null,
@@ -141,6 +146,12 @@ export default function DesktopWorkspace() {
               }
             />
           </label>
+          <CampaignSnapshots
+            key={state.document.id}
+            document={state.document}
+            token={state.token}
+            busy={state.busy}
+          />
           <small>{state.path || 'Choose a location with Save As.'}</small>
         </details>
       ) : (

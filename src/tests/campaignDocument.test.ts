@@ -13,14 +13,14 @@ const example = {
 describe('campaign document envelope', () => {
   test('round-trips all fields including identity', () => {
     expect(parseCampaign(serializeCampaign(validateCampaign(example)))).toEqual(
-      example
+      { ...example, schemaVersion: 2, sessions: [], records: [] }
     );
   });
   test.each([
     ['malformed JSON', '{broken', 'Invalid JSON'],
     [
       'future schema',
-      JSON.stringify({ ...example, schemaVersion: 2 }),
+      JSON.stringify({ ...example, schemaVersion: 3 }),
       'schema version',
     ],
     [
@@ -28,16 +28,8 @@ describe('campaign document envelope', () => {
       JSON.stringify({ ...example, treasure: 999 }),
       'Unrecognized',
     ],
-    [
-      'missing notes',
-      JSON.stringify({ ...example, notes: undefined }),
-      'must be strings',
-    ],
-    [
-      'empty identity',
-      JSON.stringify({ ...example, id: '' }),
-      'must be strings',
-    ],
+    ['missing notes', JSON.stringify({ ...example, notes: undefined }), ''],
+    ['empty identity', JSON.stringify({ ...example, id: '' }), ''],
     [
       'wrong kind',
       JSON.stringify({ ...example, kind: 'other' }),

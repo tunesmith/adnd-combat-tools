@@ -503,7 +503,7 @@ const compactRound = (round: TrackerRound): TrackerRoundV8 => {
   };
 };
 
-const compactTrackerState = (state: TrackerState): TrackerStateV8 => ({
+export const compactTrackerState = (state: TrackerState): TrackerStateV8 => ({
   version: 8,
   ...(state.title !== undefined ? { title: state.title } : {}),
   rounds: state.rounds.map((round) => compactRound(round)),

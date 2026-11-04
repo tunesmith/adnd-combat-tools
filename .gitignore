@@ -58,3 +58,5 @@ desktop-build/
 .cargo-local/
 src-tauri/target/
 src-tauri/gen/
+
+src-tauri/snapshot-validator.js

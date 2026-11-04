@@ -10,37 +10,47 @@ pub struct Document {
     pub id: String,
     pub title: String,
     pub notes: String,
+    #[serde(default)]
+    pub sessions: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub records: Vec<serde_json::Value>,
 }
 impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 1,
+            schema_version: 2,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
+            sessions: Vec::new(),
+            records: Vec::new(),
         }
     }
     pub fn validate(&self) -> Result<(), String> {
-        if self.kind != "adnd-campaign" {
-            return Err("Not an AD&D campaign document.".into());
+        let text = serde_json::to_string_pretty(self).map_err(|e| e.to_string())?;
+        if text.len() > 8_000_000 {
+            return Err("Campaign exceeds 8 MB".into());
         }
-        if self.schema_version != 1 {
-            return Err("Unsupported campaign schema version. This app supports version 1.".into());
-        }
-        if self.id.trim().is_empty()
-            || self.title.encode_utf16().count() > 1000
-            || self.notes.encode_utf16().count() > 1_000_000
-        {
-            return Err("Invalid campaign ID or title/notes size.".into());
-        }
+        crate::boundary::validate(&text)?;
         Ok(())
     }
 }
 pub fn parse(bytes: &[u8]) -> Result<Document, String> {
-    let d: Document =
-        serde_json::from_slice(bytes).map_err(|e| format!("Invalid campaign JSON: {e}"))?;
-    d.validate()?;
+    if bytes.len() > 8_000_000 {
+        return Err("Campaign exceeds 8 MB".into());
+    }
+    let text = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
+    let validated = crate::boundary::validate(text)?;
+    let d: Document = serde_json::from_str(&validated).map_err(|e| e.to_string())?;
+    if serde_json::to_vec_pretty(&d)
+        .map_err(|e| e.to_string())?
+        .len()
+        + 1
+        > 8_000_000
+    {
+        return Err("Campaign exceeds 8 MB when saved".into());
+    }
     Ok(d)
 }
 pub fn hash(bytes: &[u8]) -> String {
@@ -69,6 +79,9 @@ fn save_with_hook(
 ) -> Result<String, String> {
     doc.validate()?;
     let bytes = (serde_json::to_string_pretty(doc).map_err(|e| e.to_string())? + "\n").into_bytes();
+    if bytes.len() > 8_000_000 {
+        return Err("Campaign exceeds 8 MB".into());
+    }
     let old = read(path)?;
     if old.as_ref().map(|b| hash(b)).as_deref() != expected {
         return Err(CONFLICT.into());
@@ -154,11 +167,11 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 2.into();
+        v["schemaVersion"] = 3.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
-        v["schemaVersion"] = 1.into();
+        v["schemaVersion"] = 2.into();
         v["unknown"] = true.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap()).is_err());
     }
@@ -178,5 +191,75 @@ mod legacy_tests {
         save(&native, &doc, None).unwrap();
         assert_eq!(parse(&read(&native).unwrap().unwrap()).unwrap(), doc);
         assert_eq!(fs::read(&legacy).unwrap(), bytes);
+    }
+}
+
+pub fn validate_replacement(old: &Document, new: &Document) -> Result<(), String> {
+    for session in &old.sessions {
+        if !new.sessions.iter().any(|s| s["id"] == session["id"]) {
+            return Err("Sessions cannot be removed in B1".into());
+        }
+    }
+    for record in &old.records {
+        let next = new
+            .records
+            .iter()
+            .find(|r| r["id"] == record["id"])
+            .ok_or("Records cannot be removed in B1")?;
+        if next["type"] != record["type"] {
+            return Err("Record type is immutable".into());
+        }
+        for revision in record["revisions"].as_array().ok_or("Invalid revisions")? {
+            if !next["revisions"]
+                .as_array()
+                .ok_or("Invalid revisions")?
+                .iter()
+                .any(|r| r == revision)
+            {
+                return Err("Stored revisions are immutable; add a revision instead".into());
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod b1_tests {
+    use super::*;
+    #[test]
+    fn embedded_sources_survive_metadata_edits_save_and_reopen() {
+        let bytes = include_bytes!("../../src/tests/fixtures/campaignB1V2.json");
+        let mut doc = parse(bytes).unwrap();
+        let records = doc.records.clone();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("capture.adnd");
+        let revision = save(&path, &doc, None).unwrap();
+        doc.title = "Renamed synthetic campaign".into();
+        doc.notes = "New metadata".into();
+        save(&path, &doc, Some(&revision)).unwrap();
+        let reopened = parse(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(reopened.records, records);
+        assert_eq!(reopened.title, doc.title);
+        doc.records[0]["revisions"][0]["sourceText"] = "{}".into();
+        assert!(doc.validate().is_err());
+    }
+    #[test]
+    fn migration_preserves_original_bytes_until_save_then_backs_up_v1() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("old.adnd");
+        let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
+        fs::write(&path, bytes).unwrap();
+        let doc = parse(bytes).unwrap();
+        assert_eq!(doc.schema_version, 2);
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        save(&path, &doc, Some(&hash(bytes))).unwrap();
+        assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
+    }
+    #[test]
+    fn immutable_revision_cannot_be_replaced_by_metadata_update() {
+        let doc = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let mut next = doc.clone();
+        next.records[0]["revisions"][0]["sourceName"] = "Changed".into();
+        assert!(validate_replacement(&doc, &next).is_err());
     }
 }

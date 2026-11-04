@@ -1,0 +1,562 @@
+{
+  "kind": "adnd-campaign",
+  "id": "synthetic-b1-native",
+  "title": "Synthetic B1 campaign",
+  "notes": "Invented campaign for snapshot persistence checks.",
+  "schemaVersion": 2,
+  "sessions": [
+    {
+      "id": "session-1",
+      "label": "Lantern Gate"
+    }
+  ],
+  "records": [
+    {
+      "id": "combat-1",
+      "type": "combat",
+      "title": "Gate combat",
+      "sessionId": "session-1",
+      "currentRevisionId": "combat-r1",
+      "revisions": [
+        {
+          "id": "combat-r1",
+          "importedAt": "2026-11-04T00:00:00.000Z",
+          "sourceKind": "tracker-url",
+          "sourceText": "  https://example.invalid/tracker#s=eJztWdFu2jAUfc9XXPkZTQu0m8RbNU3rpFWrgO1l2oMbboWHYyP7Jh0g%2Fn2yIRA3IVW1dkWreUDE1745Psd2LifrBICVaKzQig3hfc9dG12oqWVD%2BJEAAKz9NwCT%2FAYlGwK7MEaUXLJeFVlwQ8v9gPogH56jC6a9epviObpcV8JwFkQyya27%2B1nQKrH0Nw%2BzcJNrM1kuXKp%2BM%2FJhlyp9G8TukC%2F8fPstzeOZNiSFpWA%2B7tOvXf0MRub89%2BXCzSacSa5LzFHRiJMDmIa3y4W1QuJnJUhwEiVeTH8VltwANoQQMSfi2dxeoxnpgoTy6fYdNr0u3vutvE9q%2BkXan4H2QSvtXw2qyPtf8p7cA8VQYS7QPnQCnbVK8lFhvoS0XZW0VZXBUVVa9KpUOW8XJX2UKOnJitK5Gc47mO9H5p%2BR%2BXcdzA8i8098EPlC6JA5gOZPqaNBW%2BQ5N0tfXikQqkRFOAVUmS4UoQFO8IW7Xwo%2BccI3h6EZShmefXX%2B1gGXWxATfb2r2ELmqhlMtF8gbfH6%2BO%2FCihvpJnLLpcWOTPd61jpuehHrs2Dd%2F65tmbguIta4LiLW7nXR%2FlQbE6euEnvW8iDG21vMqNnOM9oaDvfaDdpCtvRXentrxh6sel4pjIZmfn1EzU4ZRqVZUgPVNNuutFZGWIxuWzXypav%2Bzv9b0W17Edqj2xbdttfkPHRuhui2RbftP2S%2BcRA9ids2meHBbrOYaTUF%2FwY0OmwRa3RSItZHY43rImL99w7beKlohiQymPLVSmLY7%2BBXjLiwCHL7KumYeeHeMIGQssiF4oTTI2bGNzVX%2Bk7B5XUPlCZYodGn57OcCIyG6NGiO3kYlWZJdeXV86lLHLkqsaqvGQny2762EXebDOxcmFzYGUs2yR9ahwjB  ",
+          "sourceName": "  https://example.invalid/tracker#s=eJztWdFu2jAUfc9XXPkZTQu0m8RbNU3rpFWrgO1l2oMbboWHYyP7Jh0g%2Fn2yIRA3IVW1dkWreUDE1745Psd2LifrBICVaKzQig3hfc9dG12oqWVD%2BJEAAKz9NwCT%2FAYlGwK7MEaUXLJeFVlwQ8v9gPogH56jC6a9epviObpcV8JwFkQyya27%2B1nQKrH0Nw%2BzcJNrM1kuXKp%2BM%2FJhlyp9G8TukC%2F8fPstzeOZNiSFpWA%2B7tOvXf0MRub89%2BXCzSacSa5LzFHRiJMDmIa3y4W1QuJnJUhwEiVeTH8VltwANoQQMSfi2dxeoxnpgoTy6fYdNr0u3vutvE9q%2BkXan4H2QSvtXw2qyPtf8p7cA8VQYS7QPnQCnbVK8lFhvoS0XZW0VZXBUVVa9KpUOW8XJX2UKOnJitK5Gc47mO9H5p%2BR%2BXcdzA8i8098EPlC6JA5gOZPqaNBW%2BQ5N0tfXikQqkRFOAVUmS4UoQFO8IW7Xwo%2BccI3h6EZShmefXX%2B1gGXWxATfb2r2ELmqhlMtF8gbfH6%2BO%2FCihvpJnLLpcWOTPd61jpuehHrs2Dd%2F65tmbguIta4LiLW7nXR%2FlQbE6euEnvW8iDG21vMqNnOM9oaDvfaDdpCtvRXentrxh6sel4pjIZmfn1EzU4ZRqVZUgPVNNuutFZGWIxuWzXypav%2Bzv9b0W17Edqj2xbdttfkPHRuhui2RbftP2S%2BcRA9ids2meHBbrOYaTUF%2FwY0OmwRa3RSItZHY43rImL99w7beKlohiQymPLVSmLY7%2BBXjLiwCHL7KumYeeHeMIGQssiF4oTTI2bGNzVX%2Bk7B5XUPlCZYodGn57OcCIyG6NGiO3kYlWZJdeXV86lLHLkqsaqvGQny2762EXebDOxcmFzYGUs2yR9ahwjB  ",
+          "sourceHash": "8a68378111b8a3428222418bba89126eea16fab2cb8b446b162d21b4ed839cfe",
+          "contentHash": "8d00cea1584a680d5135869e1f14cee49b50e4e0a13890c6a453d2347b345ccd",
+          "sourceVersion": 7,
+          "normalizerVersion": 1,
+          "payload": {
+            "version": 7,
+            "title": "Synthetic lantern skirmish",
+            "activeRound": 1,
+            "rounds": [
+              {
+                "party": [
+                  {
+                    "key": 1,
+                    "name": "Mira",
+                    "class": 4,
+                    "level": 1,
+                    "armorType": 2,
+                    "armorClass": 10,
+                    "weapon": 2,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [2],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  },
+                  {
+                    "key": 2,
+                    "name": "Tal",
+                    "class": 4,
+                    "level": 1,
+                    "armorType": 2,
+                    "armorClass": 10,
+                    "weapon": 2,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [2],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  },
+                  {
+                    "key": 3,
+                    "name": "Oren",
+                    "class": 4,
+                    "level": 1,
+                    "armorType": 2,
+                    "armorClass": 10,
+                    "weapon": 2,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [2],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  }
+                ],
+                "enemies": [
+                  {
+                    "key": 4,
+                    "name": "Enemy 1",
+                    "class": 1,
+                    "level": 3,
+                    "armorType": 1,
+                    "armorClass": 5,
+                    "weapon": 1,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [1],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  },
+                  {
+                    "key": 5,
+                    "name": "Enemy 2",
+                    "class": 1,
+                    "level": 3,
+                    "armorType": 1,
+                    "armorClass": 5,
+                    "weapon": 1,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [1],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  },
+                  {
+                    "key": 6,
+                    "name": "Enemy 3",
+                    "class": 1,
+                    "level": 3,
+                    "armorType": 1,
+                    "armorClass": 5,
+                    "weapon": 1,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [1],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  }
+                ],
+                "partyInitiative": "",
+                "enemyInitiative": "",
+                "summary": "An invented encounter at Lantern Gate.",
+                "label": "Arrival",
+                "partyStates": [
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  },
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  },
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  }
+                ],
+                "enemyStates": [
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  },
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  },
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  }
+                ],
+                "cells": [
+                  [
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    }
+                  ],
+                  [
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    }
+                  ],
+                  [
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    }
+                  ]
+                ]
+              },
+              {
+                "party": [
+                  {
+                    "key": 1,
+                    "name": "Mira",
+                    "class": 4,
+                    "level": 1,
+                    "armorType": 2,
+                    "armorClass": 10,
+                    "weapon": 2,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [2],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  },
+                  {
+                    "key": 2,
+                    "name": "Tal",
+                    "class": 4,
+                    "level": 1,
+                    "armorType": 2,
+                    "armorClass": 10,
+                    "weapon": 2,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [2],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  },
+                  {
+                    "key": 3,
+                    "name": "Oren",
+                    "class": 4,
+                    "level": 1,
+                    "armorType": 2,
+                    "armorClass": 10,
+                    "weapon": 2,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [2],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  }
+                ],
+                "enemies": [
+                  {
+                    "key": 4,
+                    "name": "Enemy 1",
+                    "class": 1,
+                    "level": 3,
+                    "armorType": 1,
+                    "armorClass": 5,
+                    "weapon": 1,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [1],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  },
+                  {
+                    "key": 5,
+                    "name": "Enemy 2",
+                    "class": 1,
+                    "level": 3,
+                    "armorType": 1,
+                    "armorClass": 5,
+                    "weapon": 1,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [1],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  },
+                  {
+                    "key": 6,
+                    "name": "Enemy 3",
+                    "class": 1,
+                    "level": 3,
+                    "armorType": 1,
+                    "armorClass": 5,
+                    "weapon": 1,
+                    "maxHp": "",
+                    "movementRate": 12,
+                    "weaponShortlist": [1],
+                    "missileInitiativeAdjustment": 0,
+                    "attacksPerRoutine": 1
+                  }
+                ],
+                "partyInitiative": "",
+                "enemyInitiative": "",
+                "summary": "The invented second round.",
+                "label": "Moonrise",
+                "partyStates": [
+                  {
+                    "hp": "",
+                    "effect": "Synthetic dazzle",
+                    "action": "Raise lantern",
+                    "result": "Gate illuminated",
+                    "notes": "Unknown HP, not zero"
+                  },
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  },
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  }
+                ],
+                "enemyStates": [
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  },
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  },
+                  {
+                    "hp": "",
+                    "effect": "",
+                    "action": "",
+                    "result": "",
+                    "notes": ""
+                  }
+                ],
+                "cells": [
+                  [
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    }
+                  ],
+                  [
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    }
+                  ],
+                  [
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    },
+                    {
+                      "enemyToParty": "",
+                      "partyToEnemy": "",
+                      "enemyToPartyVisible": false,
+                      "partyToEnemyVisible": false
+                    }
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "inventory-1",
+      "type": "inventory",
+      "title": "Party inventory",
+      "sessionId": "session-1",
+      "currentRevisionId": "inventory-r1",
+      "revisions": [
+        {
+          "id": "inventory-r1",
+          "importedAt": "2026-11-04T00:00:00.000Z",
+          "sourceKind": "inventory-json",
+          "sourceText": "{\n  \"kind\": \"adnd-encumbrance-dm\",\n  \"version\": 9,\n  \"activeCharacterId\": \"synthetic-mira\",\n  \"characters\": [\n    {\n      \"id\": \"synthetic-mira\",\n      \"name\": \"Mira\",\n      \"strength\": {\n        \"score\": 8,\n        \"exceptional\": \"none\"\n      },\n      \"inventory\": [\n        {\n          \"day\": 1,\n          \"playerNotes\": \"Synthetic item\",\n          \"playerMagicKnowledge\": \"known-magical\",\n          \"playerKnowsValue\": true,\n          \"dmNotes\": \"DM-only synthetic note\",\n          \"isMagical\": true,\n          \"fullyIdentified\": true,\n          \"id\": \"pack\",\n          \"catalogId\": \"synthetic-pack\",\n          \"name\": \"Lantern pack\",\n          \"quantity\": 1,\n          \"containerId\": null,\n          \"customItem\": {\n            \"id\": \"synthetic-pack\",\n            \"name\": \"Lantern pack\",\n            \"category\": \"containers\",\n            \"encumbranceGp\": 10,\n            \"valueGp\": 2,\n            \"isContainer\": true,\n            \"capacityGp\": 500\n          }\n        },\n        {\n          \"day\": 1,\n          \"playerNotes\": \"Synthetic item\",\n          \"playerMagicKnowledge\": \"known-magical\",\n          \"playerKnowsValue\": true,\n          \"dmNotes\": \"DM-only synthetic note\",\n          \"isMagical\": true,\n          \"fullyIdentified\": true,\n          \"id\": \"case\",\n          \"catalogId\": \"synthetic-case\",\n          \"name\": \"Inner case\",\n          \"quantity\": 1,\n          \"containerId\": \"pack\",\n          \"customItem\": {\n            \"id\": \"synthetic-case\",\n            \"name\": \"Inner case\",\n            \"category\": \"containers\",\n            \"encumbranceGp\": 5,\n            \"valueGp\": 3,\n            \"isContainer\": true,\n            \"capacityGp\": 100\n          }\n        },\n        {\n          \"day\": 1,\n          \"playerNotes\": \"Synthetic item\",\n          \"playerMagicKnowledge\": \"known-magical\",\n          \"playerKnowsValue\": true,\n          \"dmNotes\": \"DM-only synthetic note\",\n          \"isMagical\": true,\n          \"fullyIdentified\": true,\n          \"id\": \"gem\",\n          \"catalogId\": \"synthetic-gem\",\n          \"name\": \"Blue lantern stones\",\n          \"quantity\": 2,\n          \"containerId\": \"case\",\n          \"valueGpOverride\": 17,\n          \"customItem\": {\n            \"id\": \"synthetic-gem\",\n            \"name\": \"Blue stone\",\n            \"category\": \"treasure\",\n            \"encumbranceGp\": 1,\n            \"valueGp\": 12\n          }\n        }\n      ],\n      \"dmNotes\": \"Invented test party only.\"\n    },\n    {\n      \"id\": \"synthetic-tal\",\n      \"name\": \"Tal\",\n      \"strength\": {\n        \"score\": 8,\n        \"exceptional\": \"none\"\n      },\n      \"inventory\": [],\n      \"dmNotes\": \"Another invented character\"\n    }\n  ]\n}\n",
+          "sourceName": "inventory-dm.json",
+          "sourceHash": "2a1c1d005efbd081f1d9ed5e3ccac77211e3a4783f243f3973e223222ec7527c",
+          "contentHash": "101e5a033d8d3ccaaa1e30ef47bf86ea4c2460424fc47236c5a214ed75a9cfd9",
+          "sourceVersion": 9,
+          "normalizerVersion": 1,
+          "payload": {
+            "kind": "adnd-encumbrance-dm",
+            "version": 9,
+            "activeCharacterId": "synthetic-mira",
+            "characters": [
+              {
+                "id": "synthetic-mira",
+                "name": "Mira",
+                "strength": {
+                  "score": 8,
+                  "exceptional": "none"
+                },
+                "inventory": [
+                  {
+                    "id": "pack",
+                    "catalogId": "synthetic-pack",
+                    "quantity": 1,
+                    "containerId": null,
+                    "day": 1,
+                    "playerNotes": "Synthetic item",
+                    "playerMagicKnowledge": "known-magical",
+                    "playerKnowsValue": true,
+                    "name": "Lantern pack",
+                    "dmNotes": "DM-only synthetic note",
+                    "isMagical": true,
+                    "fullyIdentified": true,
+                    "customItem": {
+                      "id": "synthetic-pack",
+                      "name": "Lantern pack",
+                      "category": "containers",
+                      "encumbranceGp": 10,
+                      "valueGp": 2,
+                      "isContainer": true,
+                      "capacityGp": 500
+                    }
+                  },
+                  {
+                    "id": "case",
+                    "catalogId": "synthetic-case",
+                    "quantity": 1,
+                    "containerId": "pack",
+                    "day": 1,
+                    "playerNotes": "Synthetic item",
+                    "playerMagicKnowledge": "known-magical",
+                    "playerKnowsValue": true,
+                    "name": "Inner case",
+                    "dmNotes": "DM-only synthetic note",
+                    "isMagical": true,
+                    "fullyIdentified": true,
+                    "customItem": {
+                      "id": "synthetic-case",
+                      "name": "Inner case",
+                      "category": "containers",
+                      "encumbranceGp": 5,
+                      "valueGp": 3,
+                      "isContainer": true,
+                      "capacityGp": 100
+                    }
+                  },
+                  {
+                    "id": "gem",
+                    "catalogId": "synthetic-gem",
+                    "quantity": 2,
+                    "containerId": "case",
+                    "day": 1,
+                    "playerNotes": "Synthetic item",
+                    "playerMagicKnowledge": "known-magical",
+                    "playerKnowsValue": true,
+                    "name": "Blue lantern stones",
+                    "valueGpOverride": 17,
+                    "dmNotes": "DM-only synthetic note",
+                    "isMagical": true,
+                    "fullyIdentified": true,
+                    "customItem": {
+                      "id": "synthetic-gem",
+                      "name": "Blue stone",
+                      "category": "treasure",
+                      "encumbranceGp": 1,
+                      "valueGp": 12
+                    }
+                  }
+                ],
+                "dmNotes": "Invented test party only."
+              },
+              {
+                "id": "synthetic-tal",
+                "name": "Tal",
+                "strength": {
+                  "score": 8,
+                  "exceptional": "none"
+                },
+                "inventory": [],
+                "dmNotes": "Another invented character"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

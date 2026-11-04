@@ -682,7 +682,8 @@ const isDmCharacter = (value: unknown): value is EncumbranceDmCharacter => {
 };
 
 const sanitizeDocument = (
-  candidate: AnyEncumbranceDocument
+  candidate: AnyEncumbranceDocument,
+  legacyCharacterId?: string
 ): EncumbranceDocument => {
   const legacyCustomItems = sanitizeCustomItems(candidate);
 
@@ -736,7 +737,7 @@ const sanitizeDocument = (
     );
   }
 
-  const migratedCharacterId = createCharacterId();
+  const migratedCharacterId = legacyCharacterId || createCharacterId();
   const migratedInventory = sanitizeInventoryCollection(
     candidate.inventory,
     candidate.version,
@@ -1846,7 +1847,11 @@ export const stringifyEncumbranceDocument = (
   document: EncumbranceDocument
 ): string => JSON.stringify(sanitizeDocument(document), null, 2);
 
-export const parseEncumbranceDocument = (text: string): EncumbranceDocument => {
+// Snapshot capture supplies a deterministic source-local ID for old single-character files.
+export const parseEncumbranceDocument = (
+  text: string,
+  legacyCharacterId?: string
+): EncumbranceDocument => {
   const rawValue = JSON.parse(text) as Partial<AnyEncumbranceDocument>;
   const rawCustomItems = (rawValue as { customItems?: unknown }).customItems;
 
@@ -1972,6 +1977,7 @@ export const parseEncumbranceDocument = (text: string): EncumbranceDocument => {
       | EncumbranceDocumentV3
       | EncumbranceDocumentV4
       | EncumbranceDocumentV5
-      | EncumbranceDocumentV6
+      | EncumbranceDocumentV6,
+    legacyCharacterId
   );
 };

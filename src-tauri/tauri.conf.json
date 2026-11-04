@@ -4,7 +4,7 @@
   "version": "0.2.2",
   "identifier": "local.adnd.tools",
   "build": {
-    "beforeBuildCommand": "npm run desktop:assets",
+    "beforeBuildCommand": "npm run desktop:boundary && npm run desktop:assets",
     "frontendDist": "../out-desktop"
   },
   "app": {

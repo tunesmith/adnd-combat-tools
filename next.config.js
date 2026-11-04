@@ -5,6 +5,7 @@ const nextConfig = {
   assetPrefix: !debug && !desktop ? '/adnd-combat-tools/' : '',
   basePath: !debug && !desktop ? '/adnd-combat-tools' : '',
   distDir: desktop ? '.next-desktop' : '.next',
+  env: { NEXT_PUBLIC_DESKTOP: desktop ? '1' : '0' },
   publicRuntimeConfig: {
     NODE_ENV: process.env.NODE_ENV,
   },

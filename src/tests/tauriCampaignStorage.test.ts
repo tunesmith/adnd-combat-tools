@@ -48,3 +48,42 @@ test.each(['save', 'openPending'])(
     expect(calls).toEqual(['campaign_edit', 'campaign_command']);
   }
 );
+
+test('Save waits for attachment validation and application', async () => {
+  let finish: () => void = () => undefined;
+  const mutation = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  const calls: string[] = [];
+  window.__TAURI__ = {
+    core: {
+      invoke: <T>(name: string): Promise<T> => {
+        calls.push(name);
+        return (name === 'campaign_replace'
+          ? mutation
+          : Promise.resolve()) as unknown as Promise<T>;
+      },
+    },
+    event: { listen: async () => () => undefined },
+  };
+  const storage = await createTauriStorage();
+  const replacement = storage?.replace(
+    {
+      kind: 'adnd-campaign',
+      schemaVersion: 2,
+      id: 'synthetic',
+      title: '',
+      notes: '',
+      sessions: [],
+      records: [],
+    },
+    0
+  );
+  await Promise.resolve();
+  const save = storage?.command('save');
+  expect(calls).toEqual(['campaign_replace']);
+  finish();
+  await replacement;
+  await save;
+  expect(calls).toEqual(['campaign_replace', 'campaign_command']);
+});

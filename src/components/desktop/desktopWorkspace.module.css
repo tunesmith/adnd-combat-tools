@@ -76,3 +76,52 @@
   font-size: 14px;
   margin-bottom: 0;
 }
+.snapshots {
+  margin-top: 20px;
+  border-top: 1px solid #c9bda6;
+  padding-top: 16px;
+}
+.snapshots fieldset,
+.snapshots article {
+  padding: 12px;
+  margin: 12px 0;
+}
+.snapshots button,
+.snapshots select {
+  margin: 6px;
+  padding: 6px 10px;
+}
+.snapshots ul {
+  padding-left: 22px;
+}
+.snapshots h4,
+.snapshots h5 {
+  margin: 12px 0 6px;
+}
+.snapshots dd {
+  margin-left: 20px;
+}
+.source {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 300px;
+  overflow: auto;
+}
+.snapshots > fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.snapshots > fieldset input {
+  width: 280px;
+}
+.snapshots button[aria-pressed='true'] {
+  background: #57272d;
+  color: #fff8e9;
+}
+.snapshots input[type='checkbox'] {
+  display: inline-block;
+  width: auto;
+  margin-right: 8px;
+}

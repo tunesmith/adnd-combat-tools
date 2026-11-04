@@ -10,9 +10,11 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
   const { invoke } = native.core;
   const { listen } = native.event;
   let pending: Promise<void> = Promise.resolve();
+  let editError: unknown = null;
   const listeners = new Set<(state: DocumentState) => void>();
   const command = async (action: DocumentCommand | 'openPending') => {
     await pending;
+    if (editError) throw editError;
     await invoke('campaign_command', { command: action });
   };
   await listen<DocumentState>('campaign-state', ({ payload }) => {
@@ -21,16 +23,41 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
   await listen<DocumentCommand | 'openPending'>(
     'campaign-action',
     ({ payload }) => {
-      void command(payload);
+      void command(payload).catch(() => undefined);
     }
   );
   return {
+    replace: (document, token) => {
+      const replacement = pending.then(() => {
+        if (editError) throw editError;
+        return invoke<DocumentState>('campaign_replace', {
+          id: document.id,
+          token,
+          text: JSON.stringify(document),
+        });
+      });
+      pending = replacement.then(
+        () => undefined,
+        () => undefined
+      );
+      return replacement;
+    },
+    pickSource: () => invoke('campaign_pick_source'),
+    exportSource: (id, recordId, revisionId) =>
+      invoke('campaign_export', { id, recordId, revisionId }),
     getState: () => invoke<DocumentState>('campaign_state'),
     edit(title, notes) {
       const edit = pending.then(() =>
         invoke<void>('campaign_edit', { title, notes })
       );
-      pending = edit.catch(() => undefined);
+      pending = edit.then(
+        () => {
+          editError = null;
+        },
+        (error) => {
+          editError = error;
+        }
+      );
       return edit;
     },
     command,

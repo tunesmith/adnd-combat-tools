@@ -21,7 +21,9 @@
     "desktop-stage/**",
     "desktop-build/**",
     "src-tauri/**",
-    ".cargo-local/**"
+    ".cargo-local/**",
+    "scripts/boundaryZlibStub.js",
+    "scripts/buildCampaignBoundary.cjs"
   ],
   "settings": {
     "import/resolver": {

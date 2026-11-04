@@ -1,3 +1,4 @@
+mod boundary;
 mod document;
 mod macos;
 use document::{hash, parse, read, save, Document, CONFLICT};
@@ -25,6 +26,7 @@ struct View {
     dirty: bool,
     busy: bool,
     status: String,
+    token: u64,
     error: Option<String>,
 }
 struct Session {
@@ -39,6 +41,14 @@ struct State {
     exiting: AtomicBool,
 }
 impl Session {
+    fn check_target(&self, id: &str, token: u64) -> Result<(), String> {
+        if self.view.token != token
+            || self.view.document.as_ref().map(|d| d.id.as_str()) != Some(id)
+        {
+            return Err("Campaign changed while importing. Preview and apply again.".into());
+        }
+        Ok(())
+    }
     fn new(recent: Option<PathBuf>) -> Self {
         Self {
             view: View {
@@ -48,6 +58,7 @@ impl Session {
                 dirty: false,
                 busy: false,
                 status: "Create or open a campaign.".into(),
+                token: 0,
                 error: None,
             },
             revision: None,
@@ -86,10 +97,20 @@ impl Session {
         let doc = parse(&bytes)?;
         self.saved = Some(doc.clone());
         self.view.document = Some(doc);
+        self.view.token += 1;
         self.revision = Some(hash(&bytes));
         self.view.path = Some(path.clone());
         self.view.dirty = false;
-        self.view.status = "Opened successfully".into();
+        self.view.status = if serde_json::from_slice::<serde_json::Value>(&bytes)
+            .ok()
+            .and_then(|v| v.get("schemaVersion").and_then(|v| v.as_u64()))
+            == Some(1)
+        {
+            "Opened V1 — Save upgrades to V2 and keeps the original in .bak"
+        } else {
+            "Opened successfully"
+        }
+        .into();
         self.remember(app, &path);
         Ok(())
     }
@@ -237,6 +258,7 @@ impl Session {
                 }
             }
             "new" | "close" => {
+                self.view.token += 1;
                 self.view.document = if command == "new" {
                     Some(Document::new())
                 } else {
@@ -304,9 +326,22 @@ async fn campaign_edit(app: tauri::AppHandle, title: String, notes: String) -> R
         if let Some(mut doc) = s.view.document.clone() {
             doc.title = title;
             doc.notes = notes;
-            doc.validate()?;
+            if doc.title.encode_utf16().count() > 1000
+                || doc.notes.encode_utf16().count() > 1_000_000
+            {
+                return Err("Title or notes is too large".into());
+            }
+            if serde_json::to_vec_pretty(&doc)
+                .map_err(|e| e.to_string())?
+                .len()
+                + 1
+                > 8_000_000
+            {
+                return Err("Campaign exceeds 8 MB".into());
+            }
             s.view.dirty = s.saved.as_ref() != Some(&doc);
             s.view.document = Some(doc);
+            s.view.token += 1;
             s.view.status = if s.view.dirty {
                 "Unsaved changes"
             } else {
@@ -352,7 +387,10 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             campaign_state,
             campaign_edit,
-            campaign_command
+            campaign_command,
+            campaign_replace,
+            campaign_pick_source,
+            campaign_export
         ])
         .setup(|app| {
             let recent = app
@@ -454,4 +492,153 @@ fn main() {
             }
             _ => (),
         });
+}
+
+#[tauri::command]
+async fn campaign_replace(
+    app: tauri::AppHandle,
+    id: String,
+    token: u64,
+    text: String,
+) -> Result<View, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let document = document::parse(text.as_bytes())?;
+        let state = app.state::<State>();
+        let mut s = state.session.lock().unwrap();
+        s.check_target(&id, token)?;
+        if document.id != id {
+            return Err("Campaign identity cannot be replaced".into());
+        }
+        document::validate_replacement(s.view.document.as_ref().unwrap(), &document)?;
+        s.view.document = Some(document);
+        s.view.token += 1;
+        s.view.dirty = s.view.document != s.saved;
+        s.view.status = if s.view.dirty {
+            "Unsaved campaign changes"
+        } else {
+            "No unsaved changes"
+        }
+        .into();
+        s.view.error = None;
+        s.publish(&app);
+        Ok(s.view.clone())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SourceInput {
+    name: String,
+    text: String,
+}
+#[tauri::command]
+async fn campaign_pick_source(app: tauri::AppHandle) -> Result<Option<SourceInput>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(file) = app
+            .dialog()
+            .file()
+            .add_filter("Tool JSON", &["json"])
+            .blocking_pick_file()
+        else {
+            return Ok(None);
+        };
+        let path = file.into_path().map_err(|e| e.to_string())?;
+        let bytes = document::read(&path)?.ok_or("Source file is missing")?;
+        if bytes.len() > 1_000_000 {
+            return Err("Source exceeds 1 MB".into());
+        }
+        Ok(Some(SourceInput {
+            name: path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string(),
+            text: String::from_utf8(bytes).map_err(|e| e.to_string())?,
+        }))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+async fn campaign_export(
+    app: tauri::AppHandle,
+    id: String,
+    record_id: String,
+    revision_id: String,
+) -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let (text, kind, original_path) = {
+            let state = app.state::<State>();
+            let s = state.session.lock().unwrap();
+            let doc = s.view.document.as_ref().ok_or("No campaign open")?;
+            if doc.id != id {
+                return Err("Campaign changed".into());
+            }
+            let rev = doc
+                .records
+                .iter()
+                .find(|r| r["id"] == record_id)
+                .and_then(|r| r["revisions"].as_array())
+                .and_then(|rs| rs.iter().find(|r| r["id"] == revision_id))
+                .ok_or("Revision not found")?;
+            (
+                rev["sourceText"]
+                    .as_str()
+                    .ok_or("Invalid source")?
+                    .to_owned(),
+                rev["sourceKind"].as_str().unwrap_or("").to_owned(),
+                s.view.path.clone(),
+            )
+        };
+        let name = if kind == "tracker-url" {
+            "combat-source-url.txt"
+        } else if kind == "inventory-json" {
+            "DM-inventory-source.json"
+        } else {
+            "combat-source.json"
+        };
+        let Some(file) = app.dialog().file().set_file_name(name).blocking_save_file() else {
+            return Ok(false);
+        };
+        let path = file.into_path().map_err(|e| e.to_string())?;
+        let current_path=app.state::<State>().session.lock().unwrap().view.path.clone();
+        for protected in [original_path,current_path].into_iter().flatten() {
+            for protected in [protected.clone(),PathBuf::from(format!("{}.bak",protected.display()))] {
+                let normalize=|p:&std::path::Path| p.canonicalize().ok().or_else(|| Some(p.parent()?.canonicalize().ok()?.join(p.file_name()?)));
+                if path==protected || matches!((normalize(&path),normalize(&protected)),(Some(a),Some(b)) if a==b) { return Err("Export to a different file; campaign files and their backups are protected.".into()); }
+            }
+        }
+        // Explicitly chosen destination, write through a same-directory temporary file.
+        use std::io::Write;
+        let mut temp = tempfile::NamedTempFile::new_in(path.parent().ok_or("No folder")?)
+            .map_err(|e| e.to_string())?;
+        temp.write_all(text.as_bytes())
+            .and_then(|_| temp.as_file().sync_all())
+            .map_err(|e| e.to_string())?;
+        temp.persist(path).map_err(|e| e.to_string())?;
+        Ok(true)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[cfg(test)]
+mod capture_target_tests {
+    use super::*;
+    #[test]
+    fn stale_import_cannot_attach_to_replaced_or_edited_campaign() {
+        let mut session = Session::new(None);
+        let original = Document::new();
+        let id = original.id.clone();
+        session.view.document = Some(original);
+        session.view.token = 12;
+        assert!(session.check_target(&id, 12).is_ok());
+        session.view.token += 1;
+        assert!(session.check_target(&id, 12).is_err());
+        session.view.document = Some(Document::new());
+        assert!(session.check_target(&id, 13).is_err());
+        session.view.document = None;
+        assert!(session.check_target(&id, 13).is_err());
+    }
 }
