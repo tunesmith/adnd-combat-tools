@@ -1,3 +1,13 @@
+import {
+  workingInventorySchema,
+  inventoryCheckpointSchema,
+  workspaceSchema,
+} from './campaignWorkingInventory';
+import type {
+  WorkingInventory,
+  InventoryCheckpoint,
+  WorkspaceView,
+} from './campaignWorkingInventory';
 import { z } from 'zod';
 import { strToU8 } from 'fflate';
 import {
@@ -11,7 +21,10 @@ import {
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
-  schemaVersion: 2;
+  schemaVersion: 3;
+  workingInventories: WorkingInventory[];
+  inventoryCheckpoints: InventoryCheckpoint[];
+  workspace: { sessionId: string | null; view: WorkspaceView };
   id: string;
   title: string;
   notes: string;
@@ -39,24 +52,53 @@ const v2 = z
     records: z.array(recordSchema).max(500),
   })
   .strict();
+const v3 = v2
+  .extend({
+    schemaVersion: z.literal(3),
+    workingInventories: z.array(workingInventorySchema).max(500),
+    inventoryCheckpoints: z.array(inventoryCheckpointSchema).max(1000),
+    workspace: workspaceSchema,
+  })
+  .strict();
 export function validateCampaign(value: unknown): CampaignDocument {
   if (!value || typeof value !== 'object')
     throw new Error('Expected a campaign object.');
   const header = value as Record<string, unknown>;
   if (header['kind'] !== 'adnd-campaign')
     throw new Error('Not an AD&D campaign document.');
-  if (header['schemaVersion'] !== 1 && header['schemaVersion'] !== 2)
+  if (
+    header['schemaVersion'] !== 1 &&
+    header['schemaVersion'] !== 2 &&
+    header['schemaVersion'] !== 3
+  )
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1 and 2.'
+      'Unsupported campaign schema version. This app supports versions 1, 2 and 3.'
     );
   if (
     value &&
     typeof value === 'object' &&
     (value as Record<string, unknown>)['schemaVersion'] === 1
   ) {
-    return { ...v1.parse(value), schemaVersion: 2, sessions: [], records: [] };
+    return {
+      ...v1.parse(value),
+      schemaVersion: 3,
+      sessions: [],
+      records: [],
+      workingInventories: [],
+      inventoryCheckpoints: [],
+      workspace: { sessionId: null, view: 'possessions' },
+    };
   }
-  const parsed = v2.parse(value);
+  const parsed =
+    header['schemaVersion'] === 2
+      ? {
+          ...v2.parse(value),
+          schemaVersion: 3 as const,
+          workingInventories: [],
+          inventoryCheckpoints: [],
+          workspace: { sessionId: null, view: 'possessions' as const },
+        }
+      : v3.parse(value);
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');
@@ -96,6 +138,42 @@ export function validateCampaign(value: unknown): CampaignDocument {
       if (hashes.has(identity)) throw new Error('Duplicate revision content.');
       hashes.add(identity);
     }
+  }
+  if (
+    parsed.workspace.sessionId !== null &&
+    !parsed.sessions.some((s) => s.id === parsed.workspace.sessionId)
+  )
+    throw new Error('Invalid selected session.');
+  const workingSessions = new Set<string>();
+  for (const w of parsed.workingInventories) {
+    unique(w.id);
+    if (
+      !parsed.sessions.some((s) => s.id === w.sessionId) ||
+      workingSessions.has(w.sessionId)
+    )
+      throw new Error('Each session may have one working inventory.');
+    workingSessions.add(w.sessionId);
+    const origin = w.origin;
+    if (
+      origin.kind === 'import' &&
+      !parsed.records.some(
+        (r) =>
+          r.id === origin.recordId &&
+          r.type === 'inventory' &&
+          r.revisions.some((v) => v.id === origin.revisionId)
+      )
+    )
+      throw new Error('Invalid working inventory origin.');
+    if (
+      origin.kind === 'checkpoint' &&
+      !parsed.inventoryCheckpoints.some((c) => c.id === origin.checkpointId)
+    )
+      throw new Error('Invalid checkpoint origin.');
+  }
+  for (const c of parsed.inventoryCheckpoints) {
+    unique(c.id);
+    if (!parsed.sessions.some((s) => s.id === c.sessionId))
+      throw new Error('Invalid checkpoint session.');
   }
   return parsed as CampaignDocument;
 }

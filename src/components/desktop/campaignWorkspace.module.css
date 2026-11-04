@@ -1,0 +1,227 @@
+.shell {
+  min-height: 100vh;
+  background: #f6f3ed;
+  color: #29261f;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 24px;
+  background: #57272d;
+  color: #fff8e9;
+}
+.header h1 {
+  font-size: 22px;
+  margin: 3px 0 0;
+}
+.header small {
+  color: #e9c77f;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+.status {
+  font-size: 12px;
+  max-width: 45%;
+  text-align: right;
+}
+.error {
+  background: #ffe8df;
+  padding: 12px 24px;
+  color: #852c20;
+}
+.sessionStrip {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 24px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #d8ccbc;
+}
+:is(.sessionStrip, .navigation, .viewHeading, .historyGrid, .secondary, .welcome, .error)
+  button,
+.start > button {
+  cursor: pointer;
+  padding: 7px 12px;
+  border: 1px solid #b8a98e;
+  border-radius: 5px;
+  background: #fffdf8;
+  color: #443b2c;
+  font: inherit;
+}
+:is(.sessionStrip, .navigation, .viewHeading, .historyGrid, .secondary, .welcome, .error)
+  button:disabled,
+.start > button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+:is(.sessionStrip, .navigation, .viewHeading, .historyGrid, .secondary, .welcome, .error)
+  button[aria-pressed='true'] {
+  background: #57272d;
+  color: #fff8e9;
+}
+.navigation {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 24px;
+  flex-wrap: wrap;
+  background: #ede6d9;
+}
+.navigation small {
+  margin-left: auto;
+  color: #72634d;
+  font-size: 11px;
+}
+.main {
+  padding: 20px 24px;
+}
+.view[hidden] {
+  display: none;
+}
+.view > h2,
+.viewHeading h2,
+.historyDetail h2 {
+  font-size: 23px;
+  margin: 4px 0 8px;
+}
+.view > p,
+:is(.viewHeading, .historyGrid, .welcome) p {
+  line-height: 1.5;
+  margin: 8px 0;
+}
+.viewHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+.working,
+.historical {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+}
+.working {
+  background: #dfebd5;
+  color: #345126;
+}
+.historical {
+  background: #e9e1d5;
+  color: #65533b;
+}
+:is(.sessionStrip, .viewHeading, .secondary, .historyDetail, .welcome)
+  details
+  > summary,
+.secondary > summary {
+  cursor: pointer;
+  padding: 7px 0;
+}
+.secondary {
+  margin-top: 24px;
+  padding: 12px 16px;
+  border: 1px solid #d8ccbc;
+  background: #fffdf8;
+}
+.view > label,
+.sessionStrip label,
+.viewHeading label {
+  display: block;
+  margin: 12px 0;
+}
+.view > label input,
+.view > label textarea {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  padding: 9px;
+  margin-top: 6px;
+  font: inherit;
+  border: 1px solid #b8a98e;
+  border-radius: 4px;
+}
+.sessionStrip input,
+.viewHeading input {
+  margin: 0 8px;
+  padding: 7px;
+  font: inherit;
+}
+.historyGrid {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+  gap: 24px;
+  margin: 18px 0;
+}
+.historyCard {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 8px 0;
+}
+.historyCard span,
+.historyCard small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+}
+.historyDetail {
+  background: #fffdf8;
+  border: 1px solid #d8ccbc;
+  border-radius: 8px;
+  padding: 18px;
+}
+.historyDetail ul {
+  padding-left: 22px;
+}
+.historyDetail dd {
+  margin-left: 20px;
+}
+.historyDetail h4,
+.historyDetail h5 {
+  margin: 12px 0;
+}
+.source {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+  font-size: 12px;
+}
+.welcome {
+  max-width: 760px;
+  margin: 60px auto;
+  padding: 20px;
+}
+.welcome p {
+  margin: 16px 0;
+  line-height: 1.6;
+}
+.welcome button {
+  margin: 8px 8px 8px 0;
+}
+.start {
+  padding: 16px;
+  border: 1px dashed #b8a98e;
+  border-radius: 8px;
+}
+.sessionStrip details {
+  margin-left: auto;
+}
+@media (max-width: 850px) {
+  .historyGrid {
+    grid-template-columns: 1fr;
+  }
+  .viewHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .navigation small {
+    display: none;
+  }
+}

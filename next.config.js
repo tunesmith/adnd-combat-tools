@@ -6,6 +6,16 @@ const nextConfig = {
   basePath: !debug && !desktop ? '/adnd-combat-tools' : '',
   distDir: desktop ? '.next-desktop' : '.next',
   env: { NEXT_PUBLIC_DESKTOP: desktop ? '1' : '0' },
+  webpack(config, { webpack }) {
+    if (desktop)
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /webFonts\.css$/,
+          require('path').resolve(__dirname, 'src/styles/desktopFonts.css')
+        )
+      );
+    return config;
+  },
   publicRuntimeConfig: {
     NODE_ENV: process.env.NODE_ENV,
   },

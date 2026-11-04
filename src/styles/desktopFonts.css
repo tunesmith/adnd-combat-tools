@@ -1,0 +1,4 @@
+/* Desktop assets use installed sans-serif/serif fallbacks; no remote font imports. */
+:root {
+  font-synthesis: none;
+}

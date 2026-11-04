@@ -1,5 +1,7 @@
 # Personal Mac desktop — checkpoint A (Tauri)
 
+The current desktop includes [the V3 working-inventory workspace](desktop-working-inventory.md). This file records the earlier foundation.
+
 B1 now extends this foundation with embedded snapshots. See [the B1 instructions and verification](desktop-b1.md) for current V2 document behavior. The checkpoint A report below records the original foundation.
 
 The optional desktop edition now uses Tauri 2 with bundled Next 12 assets and a small Rust native layer. The React frontend and existing domain code remain shared with the GitHub Pages edition. There is no XP, campaign inventory integration, or checkpoint B implementation.

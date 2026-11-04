@@ -70,7 +70,10 @@ test('Save waits for attachment validation and application', async () => {
   const replacement = storage?.replace(
     {
       kind: 'adnd-campaign',
-      schemaVersion: 2,
+      schemaVersion: 3,
+      workingInventories: [],
+      inventoryCheckpoints: [],
+      workspace: { sessionId: null, view: 'possessions' },
       id: 'synthetic',
       title: '',
       notes: '',
@@ -86,4 +89,91 @@ test('Save waits for attachment validation and application', async () => {
   await replacement;
   await save;
   expect(calls).toEqual(['campaign_replace', 'campaign_command']);
+});
+
+test('queued campaign mutations rebase on accepted state and stale epochs are cancelled', async () => {
+  const doc = {
+    kind: 'adnd-campaign' as const,
+    schemaVersion: 3 as const,
+    id: 'campaign',
+    title: '',
+    notes: '',
+    sessions: [],
+    records: [],
+    workingInventories: [],
+    inventoryCheckpoints: [],
+    workspace: { sessionId: null, view: 'possessions' as const },
+  };
+  let native = {
+    document: doc,
+    path: null,
+    recentPath: null,
+    dirty: false,
+    busy: false,
+    token: 0,
+    epoch: 5,
+    status: '',
+    error: null,
+  };
+  let writes = 0;
+  window.__TAURI__ = {
+    core: {
+      invoke: async <T>(
+        command: string,
+        args?: Record<string, unknown>
+      ): Promise<T> => {
+        if (command === 'campaign_state') return native as unknown as T;
+        if (command === 'campaign_replace') {
+          expect(args?.['token']).toBe(native.token);
+          writes++;
+          native = {
+            ...native,
+            token: native.token + 1,
+            document: JSON.parse(String(args?.['text'])),
+          };
+          return native as unknown as T;
+        }
+        return undefined as unknown as T;
+      },
+    },
+    event: { listen: async () => () => undefined },
+  };
+  const storage = await createTauriStorage();
+  await Promise.all([
+    storage?.mutate('campaign', 5, (d) => ({ ...d, notes: 'first' })),
+    storage?.mutate('campaign', 5, (d) => ({
+      ...d,
+      title: d.notes + ' second',
+    })),
+  ]);
+  expect(native.document.title).toBe('first second');
+  expect(writes).toBe(2);
+  native = { ...native, epoch: 6 };
+  expect(
+    await storage?.mutate('campaign', 5, (d) => ({ ...d, notes: 'late' }))
+  ).toBeNull();
+  expect(writes).toBe(2);
+});
+
+test('rejected edits block Save until the accepted draft is restored', async () => {
+  const calls: string[] = [];
+  window.__TAURI__ = {
+    core: {
+      invoke: async <T>(name: string): Promise<T> => {
+        calls.push(name);
+        if (name === 'campaign_state')
+          return { epoch: 1, document: { id: 'c' } } as unknown as T;
+        if (name === 'campaign_replace') throw new Error('Too large');
+        return undefined as unknown as T;
+      },
+    },
+    event: { listen: async () => () => undefined },
+  };
+  const storage = await createTauriStorage();
+  await expect(storage?.mutate('c', 1, (d) => d)).rejects.toThrow('Too large');
+  await expect(storage?.command('save')).rejects.toThrow('Too large');
+  expect(calls).not.toContain('campaign_command');
+  await storage?.discardRejectedEdits();
+  await storage?.command('save');
+  expect(calls).toContain('campaign_command');
 });

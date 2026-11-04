@@ -57,6 +57,11 @@ import {
 
 interface EncumbranceAppProps {
   mode: EncumbranceMode;
+  campaign?: {
+    document: EncumbranceDocument;
+    onDocumentChange: (document: EncumbranceDocument) => boolean | void;
+    onExport: () => void;
+  };
 }
 
 type EncumbranceSelectGroup = GroupBase<EncumbranceSelectOption>;
@@ -696,10 +701,27 @@ const resizeTextarea = (textarea: HTMLTextAreaElement | null) => {
   )}px`;
 };
 
-const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
-  const [document, setDocument] = useState<EncumbranceDocument>(
-    createEmptyEncumbranceDocument(getDocumentKindForMode(mode))
-  );
+const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
+  const [standaloneDocument, setStandaloneDocument] =
+    useState<EncumbranceDocument>(
+      createEmptyEncumbranceDocument(getDocumentKindForMode(mode))
+    );
+  const document = campaign?.document || standaloneDocument;
+  const currentDocumentRef = useRef(document);
+  currentDocumentRef.current = document;
+  const setDocument = (action: React.SetStateAction<EncumbranceDocument>) => {
+    if (!campaign) {
+      setStandaloneDocument(action);
+      return true;
+    }
+    const next =
+      typeof action === 'function'
+        ? action(currentDocumentRef.current)
+        : action;
+    if (campaign.onDocumentChange(next) === false) return false;
+    currentDocumentRef.current = next;
+    return true;
+  };
   const [addMode, setAddMode] = useState<AddMode>('catalog');
   const [selectedCatalogId, setSelectedCatalogId] = useState<string>(
     encumbranceCatalog[0]?.id || ''
@@ -727,6 +749,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     useState<BrowserFileHandle | null>(null);
   const [playerFileHandlesByCharacterId, setPlayerFileHandlesByCharacterId] =
     useState<Record<string, BrowserFileHandle>>({});
+  const characterDraftRef = useRef(characterEditDraft);
+  characterDraftRef.current = characterEditDraft;
+  const itemDraftRef = useRef(editingItemDraft);
+  itemDraftRef.current = editingItemDraft;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mergeFileInputRef = useRef<HTMLInputElement | null>(null);
   const fileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -1185,7 +1211,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   };
 
   const applyCharacterDraft = (nextDraft: CharacterEditDraft) => {
-    setDocument((currentDocument) => {
+    return setDocument((currentDocument) => {
       if (currentDocument.kind === 'adnd-encumbrance-dm') {
         return {
           ...currentDocument,
@@ -1226,15 +1252,12 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const updateCharacterEditDraft = (
     updater: (draft: CharacterEditDraft) => CharacterEditDraft
   ) => {
-    setCharacterEditDraft((currentDraft) => {
-      if (!currentDraft) {
-        return currentDraft;
-      }
-
-      const nextDraft = updater(currentDraft);
-      applyCharacterDraft(nextDraft);
-      return nextDraft;
-    });
+    const currentDraft = characterDraftRef.current;
+    if (!currentDraft) return;
+    const nextDraft = updater(currentDraft);
+    if (applyCharacterDraft(nextDraft) === false) return;
+    characterDraftRef.current = nextDraft;
+    setCharacterEditDraft(nextDraft);
   };
 
   const updateInventoryItem = (
@@ -1242,7 +1265,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     itemId: string,
     updater: (item: EncumbranceInventoryItem) => EncumbranceInventoryItem
   ) => {
-    setDocument((currentDocument) => {
+    return setDocument((currentDocument) => {
       if (currentDocument.kind === 'adnd-encumbrance-dm') {
         return {
           ...currentDocument,
@@ -1567,7 +1590,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     const normalizedDay = Math.max(0, Math.floor(Number(draft.day) || 0));
     const normalizedName = draft.name.trim();
 
-    updateInventoryItem(characterId, itemId, (currentItem) => ({
+    return updateInventoryItem(characterId, itemId, (currentItem) => ({
       ...currentItem,
       quantity: itemInfo.isContainer
         ? 1
@@ -1607,24 +1630,21 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
   const updateEditingItemDraft = (
     updater: (draft: InventoryEditDraft) => InventoryEditDraft
   ) => {
-    setEditingItemDraft((currentDraft) => {
-      if (!currentDraft) {
-        return currentDraft;
-      }
-
-      const nextDraft = updater(currentDraft);
-
-      if (editingItemInfo) {
-        applyEditingItemDraft(
-          nextDraft.characterId,
-          nextDraft.itemId,
-          editingItemInfo,
-          nextDraft
-        );
-      }
-
-      return nextDraft;
-    });
+    const currentDraft = itemDraftRef.current;
+    if (!currentDraft) return;
+    const nextDraft = updater(currentDraft);
+    if (
+      editingItemInfo &&
+      applyEditingItemDraft(
+        nextDraft.characterId,
+        nextDraft.itemId,
+        editingItemInfo,
+        nextDraft
+      ) === false
+    )
+      return;
+    itemDraftRef.current = nextDraft;
+    setEditingItemDraft(nextDraft);
   };
 
   const transferEditingItem = (nextCharacterId: string) => {
@@ -1636,11 +1656,14 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       return;
     }
 
-    transferInventoryItem(
-      editingItemDraft.itemId,
-      editingItemDraft.characterId,
-      nextCharacterId
-    );
+    if (
+      !transferInventoryItem(
+        editingItemDraft.itemId,
+        editingItemDraft.characterId,
+        nextCharacterId
+      )
+    )
+      return;
     setEditingItemDraft((currentDraft) =>
       currentDraft
         ? {
@@ -1701,10 +1724,10 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
     targetCharacterId: string
   ) => {
     if (sourceCharacterId === targetCharacterId) {
-      return;
+      return true;
     }
 
-    setDocument((currentDocument) => {
+    return setDocument((currentDocument) => {
       if (currentDocument.kind !== 'adnd-encumbrance-dm') {
         return currentDocument;
       }
@@ -1837,15 +1860,18 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
       `Character ${document.characters.length + 1}`
     );
 
-    setDocument((currentDocument) =>
-      currentDocument.kind === 'adnd-encumbrance-dm'
-        ? {
-            ...currentDocument,
-            activeCharacterId: nextCharacter.id,
-            characters: [...currentDocument.characters, nextCharacter],
-          }
-        : currentDocument
-    );
+    if (
+      !setDocument((currentDocument) =>
+        currentDocument.kind === 'adnd-encumbrance-dm'
+          ? {
+              ...currentDocument,
+              activeCharacterId: nextCharacter.id,
+              characters: [...currentDocument.characters, nextCharacter],
+            }
+          : currentDocument
+      )
+    )
+      return;
     setShowAllCharacters(false);
     setSelectedContainerId('');
     setShowAddModal(false);
@@ -1976,13 +2002,16 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         return;
       }
 
-      setDocument((currentDocument) =>
-        addInventoryEntry(
-          currentDocument,
-          selectedCatalogItem,
-          normalizedQuantity
+      if (
+        !setDocument((currentDocument) =>
+          addInventoryEntry(
+            currentDocument,
+            selectedCatalogItem,
+            normalizedQuantity
+          )
         )
-      );
+      )
+        return;
       setSelectedContainerId('');
       setSelectedQuantity(1);
       setAddItemDetailsDraft(defaultAddItemDetailsDraft());
@@ -2013,14 +2042,17 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
         : {}),
     };
 
-    setDocument((currentDocument) =>
-      addInventoryEntry(
-        currentDocument,
-        customItem,
-        normalizedQuantity,
-        customItem
+    if (
+      !setDocument((currentDocument) =>
+        addInventoryEntry(
+          currentDocument,
+          customItem,
+          normalizedQuantity,
+          customItem
+        )
       )
-    );
+    )
+      return;
     setSelectedContainerId('');
     setSelectedQuantity(1);
     setCustomItemDraft(defaultCustomItemDraft());
@@ -2980,149 +3012,168 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           : styles['outerContainerPlayer']
       }`}
     >
-      <div className={styles['title']}>AD&amp;D Encumbrance &amp; Gear</div>
+      {!campaign && (
+        <div className={styles['title']}>AD&amp;D Encumbrance &amp; Gear</div>
+      )}
       <div className={styles['contentContainer']}>
         <div className={styles['toolbar']}>
           <div className={styles['toolbarGroup']}>
             <span className={styles['modeBadge']}>
-              {mode === 'dm' ? 'Dungeon Master View' : 'Player View'}
+              {campaign
+                ? 'Working inventory · saved by Campaign Save (⌘S)'
+                : mode === 'dm'
+                ? 'Dungeon Master View'
+                : 'Player View'}
             </span>
           </div>
           <div className={styles['toolbarGroup']}>
-            <div className={styles['menuContainer']} ref={fileMenuRef}>
+            {campaign ? (
               <button
                 type="button"
-                className={`${styles['button']} ${styles['buttonCompact']}`}
-                aria-haspopup="menu"
-                aria-expanded={showFileMenu}
-                aria-controls="encumbrance-file-menu"
-                onClick={() => setShowFileMenu((currentValue) => !currentValue)}
+                className={styles['button']}
+                onClick={campaign.onExport}
               >
-                File
+                Export standalone DM JSON…
               </button>
-              {showFileMenu && (
-                <div
-                  id="encumbrance-file-menu"
-                  role="menu"
-                  aria-label="File"
-                  className={styles['menuPanel']}
+            ) : (
+              <div className={styles['menuContainer']} ref={fileMenuRef}>
+                <button
+                  type="button"
+                  className={`${styles['button']} ${styles['buttonCompact']}`}
+                  aria-haspopup="menu"
+                  aria-expanded={showFileMenu}
+                  aria-controls="encumbrance-file-menu"
+                  onClick={() =>
+                    setShowFileMenu((currentValue) => !currentValue)
+                  }
                 >
-                  {mode === 'dm' && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles['menuItem']}
-                      onClick={createFileMenuAction(resetDocument)}
-                    >
-                      New File
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className={styles['menuItem']}
-                    onClick={createFileMenuAction(triggerImport)}
-                  >
-                    Load File
-                  </button>
-                  {supportsNativeFileHandles && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles['menuItem']}
-                      onClick={createFileMenuAction(saveCurrentDocument)}
-                    >
-                      Save
-                    </button>
-                  )}
-                  {supportsNativeFileHandles && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles['menuItem']}
-                      onClick={createFileMenuAction(saveCurrentDocumentAs)}
-                    >
-                      Save As...
-                    </button>
-                  )}
+                  File
+                </button>
+                {showFileMenu && (
                   <div
-                    role="separator"
-                    aria-hidden="true"
-                    className={styles['menuDivider']}
-                  />
-                  {mode === 'dm' && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles['menuItem']}
-                      onClick={createFileMenuAction(triggerMergeImport)}
-                    >
-                      Import Player
-                    </button>
-                  )}
-                  {mode === 'dm' && supportsNativeFileHandles && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles['menuItem']}
-                      onClick={createFileMenuAction(savePlayerDocument)}
-                      disabled={isAllCharactersView}
-                      title={
-                        isAllCharactersView
-                          ? 'Select a character to save a player file.'
-                          : undefined
-                      }
-                    >
-                      Save Player
-                    </button>
-                  )}
-                  {mode === 'dm' && supportsNativeFileHandles && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles['menuItem']}
-                      onClick={createFileMenuAction(savePlayerDocumentAs)}
-                      disabled={isAllCharactersView}
-                      title={
-                        isAllCharactersView
-                          ? 'Select a character to save a player file.'
-                          : undefined
-                      }
-                    >
-                      Save Player As...
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className={styles['menuItem']}
-                    onClick={createFileMenuAction(exportCurrentDocument)}
+                    id="encumbrance-file-menu"
+                    role="menu"
+                    aria-label="File"
+                    className={styles['menuPanel']}
                   >
-                    {mode === 'dm' ? 'Export DM File' : 'Export File'}
-                  </button>
-                  {mode === 'dm' && (
+                    {mode === 'dm' && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles['menuItem']}
+                        onClick={createFileMenuAction(resetDocument)}
+                      >
+                        New File
+                      </button>
+                    )}
                     <button
                       type="button"
                       role="menuitem"
                       className={styles['menuItem']}
-                      onClick={createFileMenuAction(exportPlayerCopy)}
-                      disabled={isAllCharactersView}
-                      title={
-                        isAllCharactersView
-                          ? 'Select a character to export a player file.'
-                          : undefined
-                      }
+                      onClick={createFileMenuAction(triggerImport)}
                     >
-                      Export Player
+                      Load File
                     </button>
-                  )}
-                </div>
-              )}
-            </div>
+                    {supportsNativeFileHandles && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles['menuItem']}
+                        onClick={createFileMenuAction(saveCurrentDocument)}
+                      >
+                        Save
+                      </button>
+                    )}
+                    {supportsNativeFileHandles && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles['menuItem']}
+                        onClick={createFileMenuAction(saveCurrentDocumentAs)}
+                      >
+                        Save As...
+                      </button>
+                    )}
+                    <div
+                      role="separator"
+                      aria-hidden="true"
+                      className={styles['menuDivider']}
+                    />
+                    {mode === 'dm' && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles['menuItem']}
+                        onClick={createFileMenuAction(triggerMergeImport)}
+                      >
+                        Import Player
+                      </button>
+                    )}
+                    {mode === 'dm' && supportsNativeFileHandles && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles['menuItem']}
+                        onClick={createFileMenuAction(savePlayerDocument)}
+                        disabled={isAllCharactersView}
+                        title={
+                          isAllCharactersView
+                            ? 'Select a character to save a player file.'
+                            : undefined
+                        }
+                      >
+                        Save Player
+                      </button>
+                    )}
+                    {mode === 'dm' && supportsNativeFileHandles && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles['menuItem']}
+                        onClick={createFileMenuAction(savePlayerDocumentAs)}
+                        disabled={isAllCharactersView}
+                        title={
+                          isAllCharactersView
+                            ? 'Select a character to save a player file.'
+                            : undefined
+                        }
+                      >
+                        Save Player As...
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles['menuItem']}
+                      onClick={createFileMenuAction(exportCurrentDocument)}
+                    >
+                      {mode === 'dm' ? 'Export DM File' : 'Export File'}
+                    </button>
+                    {mode === 'dm' && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles['menuItem']}
+                        onClick={createFileMenuAction(exportPlayerCopy)}
+                        disabled={isAllCharactersView}
+                        title={
+                          isAllCharactersView
+                            ? 'Select a character to export a player file.'
+                            : undefined
+                        }
+                      >
+                        Export Player
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         <input
+          disabled={Boolean(campaign)}
           ref={fileInputRef}
           type="file"
           aria-label="Load File"
@@ -3131,6 +3182,7 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
           style={{ display: 'none' }}
         />
         <input
+          disabled={Boolean(campaign)}
           ref={mergeFileInputRef}
           type="file"
           aria-label="Import Player File"
@@ -3266,7 +3318,9 @@ const EncumbranceApp = ({ mode }: EncumbranceAppProps) => {
                       <span
                         className={`${styles['characterSummaryText']} ${styles['characterSummaryTextCompact']}`}
                       >
-                        Private notes saved
+                        {campaign
+                          ? 'Private notes present'
+                          : 'Private notes saved'}
                       </span>
                     )}
                   </div>

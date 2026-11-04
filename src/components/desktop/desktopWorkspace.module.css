@@ -125,3 +125,20 @@
   width: auto;
   margin-right: 8px;
 }
+.snapshots label {
+  display: block;
+  margin: 10px 0;
+}
+.snapshots input:not([type='checkbox']),
+.snapshots textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 5px;
+  padding: 8px;
+  font: inherit;
+  background: white;
+  color: #29261f;
+  border: 1px solid #a99a81;
+  border-radius: 4px;
+}

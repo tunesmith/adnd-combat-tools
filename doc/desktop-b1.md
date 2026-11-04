@@ -1,5 +1,7 @@
 # B1 — campaign snapshot capture
 
+The next slice adds [campaign-controlled working inventory and a focused workspace](desktop-working-inventory.md). Its V3 format preserves this B1 evidence.
+
 B1 extends the committed Tauri foundation. It does not change shell selection, add XP settlement, embed full tool editors, or synchronize separate tools with the campaign. All verification data is invented. Private design material was read in place; no private campaign evidence was copied into source or assets.
 
 ## Build, launch, and use

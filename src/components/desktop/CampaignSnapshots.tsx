@@ -53,7 +53,7 @@ function Detail({ value }: { value: Json }) {
     </dl>
   );
 }
-function Inspection({
+export function Inspection({
   payload,
   type,
 }: {
@@ -173,12 +173,15 @@ export default function CampaignSnapshots({
   document,
   token,
   busy,
+  activeSessionId,
 }: {
   document: CampaignDocument;
   token: number;
   busy: boolean;
+  activeSessionId?: string;
 }) {
-  const [sessionId, setSession] = useState(document.sessions[0]?.id || '');
+  const [localSessionId, setSession] = useState(document.sessions[0]?.id || '');
+  const sessionId = activeSessionId ?? localSessionId;
   const [label, setLabel] = useState('');
   const [message, setMessage] = useState('');
   const [sourceKind, setKind] = useState<SourceKind>('tracker-url');
@@ -288,57 +291,59 @@ export default function CampaignSnapshots({
         separate Tracker and Encumbrance tools are not saved into these
         snapshots by Campaign Save.
       </p>
-      <fieldset disabled={busy}>
-        <legend>Session</legend>
-        <select
-          aria-label="Selected session"
-          value={sessionId}
-          onChange={(e) => setSession(e.target.value)}
-        >
-          <option value="">Select a session</option>
-          {document.sessions.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        <input
-          aria-label="Session label"
-          placeholder="Session label"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-        />
-        <button
-          onClick={async () => {
-            if (!label.trim()) return;
-            const id = uid();
-            if (
-              await apply({
+      {activeSessionId === undefined && (
+        <fieldset disabled={busy}>
+          <legend>Session</legend>
+          <select
+            aria-label="Selected session"
+            value={sessionId}
+            onChange={(e) => setSession(e.target.value)}
+          >
+            <option value="">Select a session</option>
+            {document.sessions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <input
+            aria-label="Session label"
+            placeholder="Session label"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+          />
+          <button
+            onClick={async () => {
+              if (!label.trim()) return;
+              const id = uid();
+              if (
+                await apply({
+                  ...document,
+                  sessions: [...document.sessions, { id, label: label.trim() }],
+                })
+              ) {
+                setSession(id);
+                setLabel('');
+              }
+            }}
+          >
+            Add session
+          </button>
+          <button
+            disabled={!sessionId || !label.trim()}
+            onClick={() =>
+              void apply({
                 ...document,
-                sessions: [...document.sessions, { id, label: label.trim() }],
+                sessions: document.sessions.map((s) =>
+                  s.id === sessionId ? { ...s, label: label.trim() } : s
+                ),
               })
-            ) {
-              setSession(id);
-              setLabel('');
             }
-          }}
-        >
-          Add session
-        </button>
-        <button
-          disabled={!sessionId || !label.trim()}
-          onClick={() =>
-            void apply({
-              ...document,
-              sessions: document.sessions.map((s) =>
-                s.id === sessionId ? { ...s, label: label.trim() } : s
-              ),
-            })
-          }
-        >
-          Rename selected session
-        </button>
-      </fieldset>
+          >
+            Rename selected session
+          </button>
+        </fieldset>
+      )}
       <details>
         <summary>Import combat or inventory</summary>
         <fieldset disabled={busy}>
@@ -479,7 +484,9 @@ export default function CampaignSnapshots({
                   <button onClick={() => setSelected(r.id)}>{r.title}</button> —{' '}
                   {document.sessions.find((s) => s.id === r.sessionId)?.label};{' '}
                   {r.revisions.length} revisions; imported{' '}
-                  {r.revisions[r.revisions.length - 1]?.importedAt}
+                  {new Date(
+                    r.revisions[r.revisions.length - 1]?.importedAt || 0
+                  ).toLocaleString()}
                 </li>
               ))}
           </ul>
@@ -541,7 +548,8 @@ export default function CampaignSnapshots({
             >
               {record.revisions.map((r, i) => (
                 <option key={r.id} value={r.id}>
-                  Revision {i + 1} — imported {r.importedAt}
+                  Revision {i + 1} — imported{' '}
+                  {new Date(r.importedAt).toLocaleString()}
                 </option>
               ))}
             </select>

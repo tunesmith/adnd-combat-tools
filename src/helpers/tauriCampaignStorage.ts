@@ -27,6 +27,32 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
     }
   );
   return {
+    mutate: (id, epoch, change) => {
+      const operation = pending.then(async () => {
+        const current = await invoke<DocumentState>('campaign_state');
+        if (current.epoch !== epoch || current.document?.id !== id) return null;
+        const document = change(current.document);
+        return invoke<DocumentState>('campaign_replace', {
+          id,
+          token: current.token,
+          text: JSON.stringify(document),
+        });
+      });
+      pending = operation.then(
+        () => {
+          editError = null;
+        },
+        (error) => {
+          editError = error;
+        }
+      );
+      return operation;
+    },
+    exportWorking: async (id, epoch, workingId) => {
+      await pending;
+      if (editError) throw editError;
+      return invoke('campaign_export_working', { id, epoch, workingId });
+    },
     replace: (document, token) => {
       const replacement = pending.then(() => {
         if (editError) throw editError;
@@ -46,6 +72,11 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
     exportSource: (id, recordId, revisionId) =>
       invoke('campaign_export', { id, recordId, revisionId }),
     getState: () => invoke<DocumentState>('campaign_state'),
+    discardRejectedEdits: async () => {
+      await pending;
+      editError = null;
+      return invoke<DocumentState>('campaign_state');
+    },
     edit(title, notes) {
       const edit = pending.then(() =>
         invoke<void>('campaign_edit', { title, notes })

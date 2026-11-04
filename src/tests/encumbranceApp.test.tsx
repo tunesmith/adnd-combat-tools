@@ -497,7 +497,7 @@ describe('encumbrance app regressions', () => {
 
     expectBefore(
       screen.getByRole('button', {
-        name: 'Edit Boots, high, soft for Character 2',
+        name: 'Edit Boots, high, soft for Azalia Larkspur',
       }),
       screen.getByRole('button', {
         name: 'Edit Diamond for Unnamed adventurer',
@@ -510,7 +510,7 @@ describe('encumbrance app regressions', () => {
 
     expectBefore(
       screen.getByRole('button', {
-        name: 'Edit Boots, high, soft for Character 2',
+        name: 'Edit Boots, high, soft for Azalia Larkspur',
       }),
       screen.getByRole('button', {
         name: 'Edit Diamond for Unnamed adventurer',
@@ -521,7 +521,7 @@ describe('encumbrance app regressions', () => {
         name: 'Edit Diamond for Unnamed adventurer',
       }),
       screen.getByRole('button', {
-        name: 'Edit Diamond for Character 2',
+        name: 'Edit Diamond for Azalia Larkspur',
       })
     );
   });
@@ -1071,10 +1071,10 @@ describe('encumbrance app regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit Backpack' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Backpack' });
-    chooseSelectOption(within(dialog), 'Held by', 'Character 2');
+    chooseSelectOption(within(dialog), 'Held by', 'Azalia Larkspur');
     closeTopModal();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Character 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Azalia Larkspur' }));
 
     expect(
       screen.getByRole('button', { name: 'Edit Backpack' })
@@ -1113,12 +1113,12 @@ describe('encumbrance app regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit Diamond' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Diamond' });
-    chooseSelectOption(within(dialog), 'Held by', 'Character 2');
+    chooseSelectOption(within(dialog), 'Held by', 'Azalia Larkspur');
 
     expectSelectDisplayValue(within(dialog), 'Stored in', 'On person');
 
     closeTopModal();
-    fireEvent.click(screen.getByRole('button', { name: 'Character 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Azalia Larkspur' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit Diamond' }));
 
     const transferredDialog = screen.getByRole('dialog', { name: 'Diamond' });

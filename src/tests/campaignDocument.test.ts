@@ -13,14 +13,22 @@ const example = {
 describe('campaign document envelope', () => {
   test('round-trips all fields including identity', () => {
     expect(parseCampaign(serializeCampaign(validateCampaign(example)))).toEqual(
-      { ...example, schemaVersion: 2, sessions: [], records: [] }
+      {
+        ...example,
+        schemaVersion: 3,
+        workingInventories: [],
+        inventoryCheckpoints: [],
+        workspace: { sessionId: null, view: 'possessions' },
+        sessions: [],
+        records: [],
+      }
     );
   });
   test.each([
     ['malformed JSON', '{broken', 'Invalid JSON'],
     [
       'future schema',
-      JSON.stringify({ ...example, schemaVersion: 3 }),
+      JSON.stringify({ ...example, schemaVersion: 4 }),
       'schema version',
     ],
     [

@@ -27,6 +27,7 @@ struct View {
     busy: bool,
     status: String,
     token: u64,
+    epoch: u64,
     error: Option<String>,
 }
 struct Session {
@@ -59,6 +60,7 @@ impl Session {
                 busy: false,
                 status: "Create or open a campaign.".into(),
                 token: 0,
+                epoch: 0,
                 error: None,
             },
             revision: None,
@@ -98,15 +100,17 @@ impl Session {
         self.saved = Some(doc.clone());
         self.view.document = Some(doc);
         self.view.token += 1;
+        self.view.epoch += 1;
         self.revision = Some(hash(&bytes));
         self.view.path = Some(path.clone());
         self.view.dirty = false;
         self.view.status = if serde_json::from_slice::<serde_json::Value>(&bytes)
             .ok()
             .and_then(|v| v.get("schemaVersion").and_then(|v| v.as_u64()))
-            == Some(1)
+            .map(|v| v < 3)
+            .unwrap_or(false)
         {
-            "Opened V1 — Save upgrades to V2 and keeps the original in .bak"
+            "Opened older campaign — Save upgrades to V3 and keeps the original in .bak"
         } else {
             "Opened successfully"
         }
@@ -259,6 +263,7 @@ impl Session {
             }
             "new" | "close" => {
                 self.view.token += 1;
+                self.view.epoch += 1;
                 self.view.document = if command == "new" {
                     Some(Document::new())
                 } else {
@@ -390,7 +395,8 @@ fn main() {
             campaign_command,
             campaign_replace,
             campaign_pick_source,
-            campaign_export
+            campaign_export,
+            campaign_export_working
         ])
         .setup(|app| {
             let recent = app
@@ -641,4 +647,25 @@ mod capture_target_tests {
         session.view.document = None;
         assert!(session.check_target(&id, 13).is_err());
     }
+}
+
+#[tauri::command]
+async fn campaign_export_working(
+    app: tauri::AppHandle,
+    id: String,
+    epoch: u64,
+    working_id: String,
+) -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(move||{
+        let (text,protected)={let state=app.state::<State>();let s=state.session.lock().unwrap();
+            if s.view.epoch!=epoch||s.view.document.as_ref().map(|d|d.id.as_str())!=Some(id.as_str()){return Err("Campaign changed; export cancelled.".into());}
+            let working=s.view.document.as_ref().unwrap().working_inventories.iter().find(|w|w["id"]==working_id).ok_or("Working inventory changed")?;
+            (serde_json::to_string_pretty(&working["document"]).map_err(|e|e.to_string())?+"\n",s.view.path.clone())};
+        let Some(file)=app.dialog().file().set_file_name("working-DM-inventory.json").blocking_save_file() else{return Ok(false)};
+        let path=file.into_path().map_err(|e|e.to_string())?;
+        let current=app.state::<State>().session.lock().unwrap().view.path.clone();
+        for p in [protected,current].into_iter().flatten(){for p in [p.clone(),PathBuf::from(format!("{}.bak",p.display()))]{if path==p||matches!((path.canonicalize().ok(),p.canonicalize().ok()),(Some(a),Some(b)) if a==b){return Err("Export to a different file; campaign and backup are protected.".into());}}}
+        use std::io::Write;
+        let mut temp=tempfile::NamedTempFile::new_in(path.parent().ok_or("No folder")?).map_err(|e|e.to_string())?;temp.write_all(text.as_bytes()).and_then(|_|temp.as_file().sync_all()).map_err(|e|e.to_string())?;temp.persist(path).map_err(|e|e.to_string())?;Ok(true)
+    }).await.map_err(|e|e.to_string())?
 }

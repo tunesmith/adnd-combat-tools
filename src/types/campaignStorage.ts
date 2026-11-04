@@ -15,12 +15,20 @@ export interface DocumentState {
   dirty: boolean;
   busy: boolean;
   token: number;
+  epoch: number;
   status: string;
   error: string | null;
 }
 /** No paths or filesystem primitives are accepted from the renderer. */
 export interface CampaignStorage {
   getState(): Promise<DocumentState>;
+  discardRejectedEdits(): Promise<DocumentState>;
+  mutate(
+    id: string,
+    epoch: number,
+    change: (document: CampaignDocument) => CampaignDocument
+  ): Promise<DocumentState | null>;
+  exportWorking(id: string, epoch: number, workingId: string): Promise<boolean>;
   replace(document: CampaignDocument, token: number): Promise<DocumentState>;
   pickSource(): Promise<{ name: string; text: string } | null>;
   exportSource(

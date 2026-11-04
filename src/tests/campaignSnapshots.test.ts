@@ -20,7 +20,10 @@ function campaign(): CampaignDocument {
   const snapshot = interpretSource('tracker-json', text);
   return {
     kind: 'adnd-campaign',
-    schemaVersion: 2,
+    schemaVersion: 3,
+    workingInventories: [],
+    inventoryCheckpoints: [],
+    workspace: { sessionId: null, view: 'possessions' },
     id: 'campaign',
     title: 'Synthetic',
     notes: '',
