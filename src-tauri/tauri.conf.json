@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AD&D Tools",
+  "version": "0.2.2",
+  "identifier": "local.adnd.tools",
+  "build": {
+    "beforeBuildCommand": "npm run desktop:assets",
+    "frontendDist": "../out-desktop"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "AD&D Tools",
+        "width": 1180,
+        "height": 850,
+        "minWidth": 760,
+        "minHeight": 600,
+        "create": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost; object-src 'none'; frame-src 'none'"
+    },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "category": "Game",
+    "fileAssociations": [
+      {
+        "ext": ["adnd"],
+        "name": "AD&D Campaign",
+        "description": "AD&D campaign document",
+        "role": "Editor",
+        "mimeType": "application/x-adnd-campaign"
+      }
+    ],
+    "icon": ["icons/app.icns", "icons/app.png"],
+    "resources": {
+      "icons/campaign.icns": "campaign.icns"
+    },
+    "macOS": {
+      "infoPlist": "Info.plist"
+    }
+  }
+}

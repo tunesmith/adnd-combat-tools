@@ -32,5 +32,18 @@
     "jsx": "preserve"
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", ".next", "out", "dist", "build"]
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist",
+    "build",
+    ".next-desktop",
+    "out-desktop",
+    "desktop-dist",
+    "desktop-stage",
+    "desktop-build",
+    "src-tauri/target",
+    ".cargo-local"
+  ]
 }

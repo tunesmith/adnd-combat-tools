@@ -47,3 +47,14 @@ output/playwright/
 # local reference PDFs / symlinks
 /Dungeon Masters Guide (Orange Spine).pdf
 /Player's Handbook (Orange Spine).pdf
+
+# Local desktop build outputs
+.next-desktop/
+out-desktop/
+desktop-dist/
+desktop-stage/
+desktop-build/
+
+.cargo-local/
+src-tauri/target/
+src-tauri/gen/

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>adnd</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>campaign.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>AD&amp;D Campaign</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>local.adnd.campaign</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>AD&amp;D Campaign</string>
+			<key>UTTypeIconFile</key>
+			<string>campaign.icns</string>
+			<key>UTTypeIdentifier</key>
+			<string>local.adnd.campaign</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>adnd</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/x-adnd-campaign</string>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>

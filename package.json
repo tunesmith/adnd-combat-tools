@@ -4,7 +4,7 @@
   "version": "0.2.2",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": "20.x || 22.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -20,7 +20,11 @@
     "tsc:watch": "tsc -w",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "desktop:assets": "DESKTOP_BUILD=1 NEXT_PUBLIC_DESKTOP=1 next build && DESKTOP_BUILD=1 NEXT_PUBLIC_DESKTOP=1 next export -o out-desktop",
+    "desktop:build": "tauri build --bundles app",
+    "desktop:run": "open \"src-tauri/target/release/bundle/macos/AD&D Tools.app\"",
+    "desktop:test": "cargo test --manifest-path src-tauri/Cargo.toml"
   },
   "dependencies": {
     "next": "^12.1.1",
@@ -30,6 +34,7 @@
     "react-table": "^7.7.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^12.1.5",
     "@types/jest": "^27.4.1",

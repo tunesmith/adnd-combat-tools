@@ -1,8 +1,10 @@
 const debug = process.env.NODE_ENV !== 'production';
+const desktop = process.env.DESKTOP_BUILD === '1';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  assetPrefix: !debug ? '/adnd-combat-tools/' : '',
-  basePath: !debug ? '/adnd-combat-tools' : '',
+  assetPrefix: !debug && !desktop ? '/adnd-combat-tools/' : '',
+  basePath: !debug && !desktop ? '/adnd-combat-tools' : '',
+  distDir: desktop ? '.next-desktop' : '.next',
   publicRuntimeConfig: {
     NODE_ENV: process.env.NODE_ENV,
   },

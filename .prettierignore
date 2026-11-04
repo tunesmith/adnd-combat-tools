@@ -3,3 +3,15 @@ node_modules/
 .next/
 out/
 data/party-encumbrance-dm.json
+
+# Local desktop build outputs
+.next-desktop/
+out-desktop/
+desktop-dist/
+desktop-stage/
+desktop-build/
+output/
+
+.cargo-local/
+src-tauri/target/
+src-tauri/gen/

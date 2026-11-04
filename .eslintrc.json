@@ -10,7 +10,19 @@
   "parserOptions": {
     "project": ["./tsconfig.json"]
   },
-  "ignorePatterns": ["out/**", ".next/**", "next.config.js", "jest.config.js"],
+  "ignorePatterns": [
+    "out/**",
+    ".next/**",
+    "next.config.js",
+    "jest.config.js",
+    ".next-desktop/**",
+    "out-desktop/**",
+    "desktop-dist/**",
+    "desktop-stage/**",
+    "desktop-build/**",
+    "src-tauri/**",
+    ".cargo-local/**"
+  ],
   "settings": {
     "import/resolver": {
       "typescript": {}
@@ -23,18 +35,30 @@
     "@typescript-eslint/no-unnecessary-type-assertion": "warn",
     "@typescript-eslint/consistent-type-imports": [
       "warn",
-      { "fixStyle": "separate-type-imports" }
+      {
+        "fixStyle": "separate-type-imports"
+      }
     ],
     "unused-imports/no-unused-imports": "warn",
     "import/no-extraneous-dependencies": [
       "error",
-      { "devDependencies": ["**/src/tests/**", "**/*.test.*", "**/*.spec.*"] }
+      {
+        "devDependencies": ["**/src/tests/**", "**/*.test.*", "**/*.spec.*"]
+      }
     ],
     "import/no-unused-modules": [
       "warn",
-      { "unusedExports": true, "missingExports": false }
+      {
+        "unusedExports": true,
+        "missingExports": false
+      }
     ],
-    "import/no-useless-path-segments": ["warn", { "noUselessIndex": true }],
+    "import/no-useless-path-segments": [
+      "warn",
+      {
+        "noUselessIndex": true
+      }
+    ],
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off"
   },

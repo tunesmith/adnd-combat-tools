@@ -1,5 +1,9 @@
 module.exports = {
   preset: 'ts-jest',
+  modulePathIgnorePatterns: [
+    '<rootDir>/.cargo-local/',
+    '<rootDir>/src-tauri/target/',
+  ],
   testEnvironment: 'node',
   testMatch: ['<rootDir>/src/tests/**/*.(test|spec).[tj]s?(x)'],
   moduleNameMapper: {
