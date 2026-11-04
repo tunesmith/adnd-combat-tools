@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import CampaignSnapshots from './CampaignSnapshots';
-import CampaignHistory from './CampaignHistory';
+import VersionToolbar from './VersionToolbar';
+import HistoricalInventory from './HistoricalInventory';
+import CampaignCombats from './CampaignCombats';
+import { changeWorkingCombat } from '../../helpers/campaignWorkingCombat';
 import CampaignSaveStatus from './CampaignSaveStatus';
 import EncumbranceApp from '../encumbrance/EncumbranceApp';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
@@ -40,7 +43,7 @@ export default function DesktopWorkspace({
   }, []);
   const [error, setError] = useState<string | null>(null);
   const [sessionLabel, setSessionLabel] = useState('');
-  const [checkpointLabel, setCheckpointLabel] = useState('');
+  const [inventoryVersion, setInventoryVersion] = useState('');
   const receive = useCallback(
     (next: DocumentState) => {
       if (current.current?.epoch !== next.epoch) {
@@ -154,7 +157,7 @@ export default function DesktopWorkspace({
       const views: Record<string, WorkspaceView> = {
         '1': 'possessions',
         '2': 'combats',
-        '3': 'history',
+        '3': 'details',
         '4': 'details',
       };
       const view = views[event.code.replace('Digit', '')];
@@ -174,9 +177,37 @@ export default function DesktopWorkspace({
   const document = state?.document;
   const sessionId =
     document?.workspace.sessionId || document?.sessions[0]?.id || '';
-  const view = document?.workspace.view || 'possessions';
+  const view =
+    document?.workspace.view === 'history'
+      ? 'details'
+      : document?.workspace.view || 'possessions';
   const working = document?.workingInventories.find(
     (w) => w.sessionId === sessionId
+  );
+  const inventoryVersions = [
+    ...(document?.records || [])
+      .filter((r) => r.type === 'inventory' && r.sessionId === sessionId)
+      .flatMap((r) =>
+        r.revisions.map((v, i) => ({
+          id: v.id,
+          title: `${r.title} · imported ${i + 1}`,
+          time: v.importedAt,
+          document: v.payload as unknown as EncumbranceDmDocumentV9,
+          origin: { kind: 'import' as const, recordId: r.id, revisionId: v.id },
+        }))
+      ),
+    ...(document?.inventoryCheckpoints || [])
+      .filter((c) => c.sessionId === sessionId)
+      .map((c) => ({
+        id: c.id,
+        title: c.label,
+        time: c.capturedAt,
+        document: c.document,
+        origin: { kind: 'checkpoint' as const, checkpointId: c.id },
+      })),
+  ];
+  const historicalInventory = inventoryVersions.find(
+    (v) => v.id === inventoryVersion
   );
   function start(
     inventory: EncumbranceDmDocumentV9,
@@ -195,7 +226,7 @@ export default function DesktopWorkspace({
         checkpointId,
         at
       ),
-      workspace: { sessionId, view: 'possessions' },
+      workspace: { ...d.workspace, sessionId, view: 'possessions' },
     }));
   }
   const scope = state;
@@ -249,8 +280,8 @@ export default function DesktopWorkspace({
         <main className={styles['welcome']}>
           <h2>Your campaign, ready for play</h2>
           <p>
-            Keep working possessions, captured combats, and historical
-            checkpoints together in one local file.
+            Keep working possessions, combats, and historical checkpoints
+            together in one local file.
           </p>
           <button onClick={() => command('new')}>New campaign</button>
           <button onClick={() => command('open')}>Open campaign…</button>
@@ -327,7 +358,6 @@ export default function DesktopWorkspace({
               [
                 ['possessions', 'Possessions'],
                 ['combats', 'Combats'],
-                ['history', 'History & imports'],
                 ['details', 'Campaign Details'],
                 ['tools', 'Standalone tools'],
               ] as const
@@ -351,40 +381,13 @@ export default function DesktopWorkspace({
                 <div>
                   <h2>Possessions</h2>
                 </div>
-                {working && (
-                  <details>
-                    <summary>Capture checkpoint…</summary>
-                    <label>
-                      Checkpoint name
-                      <input
-                        maxLength={1000}
-                        value={checkpointLabel}
-                        onChange={(e) => setCheckpointLabel(e.target.value)}
-                      />
-                    </label>
-                    <button
-                      disabled={!checkpointLabel.trim()}
-                      onClick={() => {
-                        const id = uid(),
-                          at = new Date().toISOString();
-                        mutate((d) =>
-                          captureInventoryCheckpoint(
-                            d,
-                            working.id,
-                            checkpointLabel,
-                            id,
-                            at
-                          )
-                        );
-                        setCheckpointLabel('');
-                      }}
-                    >
-                      Capture checkpoint
-                    </button>
-                  </details>
-                )}
               </div>
-              {!sessionId ? (
+              {historicalInventory ? (
+                <HistoricalInventory
+                  key={historicalInventory.id}
+                  document={historicalInventory.document}
+                />
+              ) : !sessionId ? (
                 <p>Add or select a session to start.</p>
               ) : !working ? (
                 <div className={styles['start']}>
@@ -400,13 +403,6 @@ export default function DesktopWorkspace({
                   >
                     Create empty working inventory
                   </button>
-                  <CampaignHistory
-                    key={sessionId}
-                    document={document}
-                    sessionId={sessionId}
-                    type="inventory"
-                    onStart={start}
-                  />
                 </div>
               ) : (
                 <EncumbranceApp
@@ -442,46 +438,86 @@ export default function DesktopWorkspace({
                   }}
                 />
               )}
+              <VersionToolbar
+                key={`${state.epoch}:${sessionId}:${working?.id}`}
+                versions={inventoryVersions}
+                value={historicalInventory?.id || ''}
+                onSelect={setInventoryVersion}
+                onCapture={
+                  working
+                    ? (label) => {
+                        const id = uid(),
+                          at = new Date().toISOString();
+                        mutate((d) =>
+                          captureInventoryCheckpoint(
+                            d,
+                            working.id,
+                            label,
+                            id,
+                            at
+                          )
+                        );
+                      }
+                    : undefined
+                }
+                onRestore={
+                  historicalInventory
+                    ? () => {
+                        start(
+                          historicalInventory.document,
+                          historicalInventory.origin
+                        );
+                        setInventoryVersion('');
+                      }
+                    : undefined
+                }
+              />
             </section>
             <section
               className={styles['view']}
               style={{ display: view === 'combats' ? undefined : 'none' }}
               aria-label="Combats"
             >
-              <div className={styles['viewHeading']}>
-                <div>
-                  <span className={styles['historical']}>
-                    Historical · read only
-                  </span>
-                  <h2>Combats</h2>
-                  <p>
-                    Browse captured encounters for this session. Combat editing
-                    is the next integration slice.
-                  </p>
-                </div>
-              </div>
-              <CampaignHistory
-                key={sessionId}
+              <CampaignCombats
+                active={view === 'combats'}
+                key={`${state.epoch}`}
                 document={document}
                 sessionId={sessionId}
-                type="combat"
+                editorVersion={editorVersion}
+                onChange={(change) => mutate(change, scope)}
+                onEdit={(id, ownedSession, generation, next) => {
+                  if (
+                    editorVersion !== editorVersionRef.current ||
+                    !current.current?.document?.workingCombats.some(
+                      (c) =>
+                        c.id === id &&
+                        c.sessionId === ownedSession &&
+                        c.generation === generation
+                    )
+                  )
+                    return false;
+                  return mutate(
+                    (d) =>
+                      changeWorkingCombat(
+                        d,
+                        id,
+                        ownedSession,
+                        generation,
+                        next
+                      ),
+                    scope
+                  );
+                }}
               />
             </section>
             <section
               className={styles['view']}
-              style={{ display: view === 'history' ? undefined : 'none' }}
-              aria-label="History and imports"
+              style={{ display: view === 'details' ? undefined : 'none' }}
+              aria-label="Campaign Details"
             >
-              <h2>Historical inventories &amp; checkpoints</h2>
-              <CampaignHistory
-                key={sessionId}
-                document={document}
-                sessionId={sessionId}
-                type="inventory"
-                onStart={sessionId ? start : undefined}
-              />
+              <h2>Campaign Details</h2>
               <details className={styles['secondary']}>
-                <summary>Import, provenance &amp; revision management</summary>
+                <summary>Import…</summary>
                 <CampaignSnapshots
                   key={`${state.epoch}:${sessionId}`}
                   document={document}
@@ -490,13 +526,7 @@ export default function DesktopWorkspace({
                   activeSessionId={sessionId}
                 />
               </details>
-            </section>
-            <section
-              className={styles['view']}
-              style={{ display: view === 'details' ? undefined : 'none' }}
-              aria-label="Campaign Details"
-            >
-              <h2>Campaign Details</h2>
+
               <label>
                 Campaign title
                 <input

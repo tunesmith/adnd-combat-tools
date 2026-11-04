@@ -15,10 +15,16 @@ describe('campaign document envelope', () => {
     expect(parseCampaign(serializeCampaign(validateCampaign(example)))).toEqual(
       {
         ...example,
-        schemaVersion: 3,
+        schemaVersion: 4,
+        workingCombats: [],
+        combatCheckpoints: [],
         workingInventories: [],
         inventoryCheckpoints: [],
-        workspace: { sessionId: null, view: 'possessions' },
+        workspace: {
+          sessionId: null,
+          view: 'possessions',
+          combatSelections: {},
+        },
         sessions: [],
         records: [],
       }
@@ -28,7 +34,7 @@ describe('campaign document envelope', () => {
     ['malformed JSON', '{broken', 'Invalid JSON'],
     [
       'future schema',
-      JSON.stringify({ ...example, schemaVersion: 4 }),
+      JSON.stringify({ ...example, schemaVersion: 5 }),
       'schema version',
     ],
     [

@@ -59,6 +59,7 @@ interface EncumbranceAppProps {
   mode: EncumbranceMode;
   campaign?: {
     document: EncumbranceDocument;
+    readOnly?: boolean;
     onDocumentChange: (document: EncumbranceDocument) => boolean | void;
     onExport: () => void;
   };
@@ -706,10 +707,22 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     useState<EncumbranceDocument>(
       createEmptyEncumbranceDocument(getDocumentKindForMode(mode))
     );
-  const document = campaign?.document || standaloneDocument;
+  const readOnly = Boolean(campaign?.readOnly);
+  const [previewCharacterId, setPreviewCharacterId] = useState<string | null>(
+    null
+  );
+  const sourceDocument = campaign?.document || standaloneDocument;
+  const document = useMemo(
+    () =>
+      readOnly && previewCharacterId && isDmDocument(sourceDocument)
+        ? { ...sourceDocument, activeCharacterId: previewCharacterId }
+        : sourceDocument,
+    [readOnly, previewCharacterId, sourceDocument]
+  );
   const currentDocumentRef = useRef(document);
   currentDocumentRef.current = document;
   const setDocument = (action: React.SetStateAction<EncumbranceDocument>) => {
+    if (readOnly) return false;
     if (!campaign) {
       setStandaloneDocument(action);
       return true;
@@ -1197,6 +1210,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     : 0;
 
   const openCharacterModal = () => {
+    if (readOnly) return;
     setCharacterEditDraft({
       characterId: activeCharacter.id,
       name: activeCharacter.name,
@@ -1295,6 +1309,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   };
 
   const openEditItem = (itemId: string, characterId = activeCharacter.id) => {
+    if (readOnly) return;
     const ownerCharacter =
       mode === 'dm'
         ? dmCharacters.find((character) => character.id === characterId)
@@ -1337,6 +1352,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   };
 
   const openAddModal = () => {
+    if (readOnly) return;
     setAddMode('catalog');
     setAddItemDetailsDraft(defaultAddItemDetailsDraft('catalog'));
     setShowAddModal(true);
@@ -1809,6 +1825,11 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   };
 
   const selectActiveCharacter = (characterId: string) => {
+    if (readOnly) {
+      setPreviewCharacterId(characterId);
+      setShowAllCharacters(false);
+      return;
+    }
     if (!isDmDocument(document) || characterId === document.activeCharacterId) {
       setShowAllCharacters(false);
       return;
@@ -2500,6 +2521,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
           ? styles['inventoryRowWarning']
           : ''
       }`}
+      disabled={readOnly}
       onClick={() => openEditItem(rowRecord.item.id, rowRecord.character.id)}
       aria-label={`Edit ${rowRecord.displayName}${
         isAllCharactersView
@@ -3029,6 +3051,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
               <button
                 type="button"
                 className={styles['button']}
+                style={{ display: readOnly ? 'none' : undefined }}
                 onClick={campaign.onExport}
               >
                 Export standalone DM JSON…
@@ -3206,6 +3229,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                   <button
                     type="button"
                     className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
+                    style={{ display: readOnly ? 'none' : undefined }}
                     onClick={addCharacter}
                   >
                     Add Character
@@ -3274,7 +3298,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                       mode === 'dm' ? styles['characterSummaryTextCompact'] : ''
                     }`}
                   >
-                    Select a tab to edit a character.
+                    {readOnly
+                      ? 'Select a character tab to view their possessions.'
+                      : 'Select a tab to edit a character.'}
                   </span>
                 </div>
               </div>
@@ -3282,6 +3308,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
               <button
                 type="button"
                 className={styles['characterSummaryButton']}
+                disabled={readOnly}
                 onClick={openCharacterModal}
                 aria-label={`Edit ${characterSummaryName}`}
                 aria-haspopup="dialog"
@@ -3526,6 +3553,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
               <button
                 type="button"
                 className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
+                style={{ display: readOnly ? 'none' : undefined }}
                 onClick={openAddModal}
                 disabled={isAllCharactersView}
                 title={
@@ -3611,6 +3639,8 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
               <div className={styles['placeholder']}>
                 {isAllCharactersView
                   ? 'Select a character to add items, or switch back to a single character view.'
+                  : readOnly
+                  ? 'No items in this version.'
                   : 'Use Add Item to start building the loadout.'}
               </div>
             )}

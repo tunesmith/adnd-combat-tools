@@ -17,12 +17,14 @@ pub struct Document {
     pub working_inventories: Vec<serde_json::Value>,
     pub inventory_checkpoints: Vec<serde_json::Value>,
     pub workspace: serde_json::Value,
+    pub working_combats: Vec<serde_json::Value>,
+    pub combat_checkpoints: Vec<serde_json::Value>,
 }
 impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 3,
+            schema_version: 4,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -30,7 +32,9 @@ impl Document {
             records: Vec::new(),
             working_inventories: Vec::new(),
             inventory_checkpoints: Vec::new(),
-            workspace: serde_json::json!({"sessionId":null,"view":"possessions"}),
+            working_combats: Vec::new(),
+            combat_checkpoints: Vec::new(),
+            workspace: serde_json::json!({"sessionId":null,"view":"possessions","combatSelections":{}}),
         }
     }
     pub fn validate(&self) -> Result<(), String> {
@@ -173,11 +177,11 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 4.into();
+        v["schemaVersion"] = 5.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
-        v["schemaVersion"] = 3.into();
+        v["schemaVersion"] = 4.into();
         v["unknown"] = true.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap()).is_err());
     }
@@ -201,6 +205,35 @@ mod legacy_tests {
 }
 
 pub fn validate_replacement(old: &Document, new: &Document) -> Result<(), String> {
+    for checkpoint in &old.combat_checkpoints {
+        if !new.combat_checkpoints.contains(checkpoint) {
+            return Err("Combat checkpoints are immutable.".into());
+        }
+    }
+    for combat in &old.working_combats {
+        let next = new
+            .working_combats
+            .iter()
+            .find(|c| c["id"] == combat["id"])
+            .ok_or("Encounters cannot be removed in this slice")?;
+        if next["sessionId"] != combat["sessionId"] {
+            return Err("Encounter carry-forward is not implemented.".into());
+        }
+        if next["generation"] != combat["generation"] {
+            if next["generation"].as_u64()
+                != combat["generation"].as_u64().and_then(|g| g.checked_add(1))
+            {
+                return Err("Invalid encounter generation.".into());
+            }
+            if !new.combat_checkpoints.iter().any(|c| {
+                c["combatId"] == combat["id"]
+                    && c["sessionId"] == combat["sessionId"]
+                    && c["state"] == combat["state"]
+            }) {
+                return Err("Checkpoint the encounter before restoring history.".into());
+            }
+        }
+    }
     for checkpoint in &old.inventory_checkpoints {
         if !new.inventory_checkpoints.contains(checkpoint) {
             return Err("Historical inventory checkpoints are immutable.".into());
@@ -275,7 +308,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 3);
+        assert_eq!(doc.schema_version, 4);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -337,7 +370,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 3);
+        assert_eq!(doc.schema_version, 4);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -350,5 +383,62 @@ mod v2_migration_tests {
             serde_json::to_value(restored.sessions).unwrap(),
             original["sessions"]
         );
+    }
+}
+
+#[cfg(test)]
+mod combat_tests {
+    use super::*;
+    #[test]
+    fn v3_migration_combat_inventory_history_backup_conflict_and_failure() {
+        let mut doc = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let inventory = doc.records[1]["revisions"][0]["payload"].clone();
+        doc.working_inventories.push(serde_json::json!({"id":"inventory","sessionId":"session-1","title":"Possessions","document":inventory,"origin":{"kind":"empty"}}));
+        let mut old = serde_json::to_value(&doc).unwrap();
+        old["schemaVersion"] = 3.into();
+        old.as_object_mut().unwrap().remove("workingCombats");
+        old.as_object_mut().unwrap().remove("combatCheckpoints");
+        old["workspace"]
+            .as_object_mut()
+            .unwrap()
+            .remove("combatSelections");
+        let old_bytes = serde_json::to_vec_pretty(&old).unwrap();
+        doc = parse(&old_bytes).unwrap();
+        assert_eq!(doc.working_inventories[0]["document"], inventory);
+        let state = doc.records[0]["revisions"][0]["payload"].clone();
+        for id in ["gate", "bridge"] {
+            doc.working_combats.push(serde_json::json!({"id":id,"sessionId":"session-1","title":id,"generation":0,"state":state,"origin":{"kind":"empty"}}));
+        }
+        doc.combat_checkpoints.push(serde_json::json!({"id":"gate-history","combatId":"gate","sessionId":"session-1","label":"At gate","capturedAt":"2026-11-04T12:00:00.000Z","state":state}));
+        doc.working_combats[0]["state"]["rounds"][1]["partyStates"][0]["hp"] = "7".into();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("combat.adnd");
+        fs::write(&path, &old_bytes).unwrap();
+        let revision = save(&path, &doc, Some(&hash(&old_bytes))).unwrap();
+        assert_eq!(
+            fs::read(format!("{}.bak", path.display())).unwrap(),
+            old_bytes
+        );
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), doc);
+        let mut next = doc.clone();
+        next.working_combats[0]["generation"] = 1.into();
+        assert!(validate_replacement(&doc, &next).is_err());
+        let mut preserved = doc.combat_checkpoints[0].clone();
+        preserved["id"] = "before-restore".into();
+        preserved["state"] = doc.working_combats[0]["state"].clone();
+        next.combat_checkpoints.push(preserved);
+        next.working_combats[0]["state"] = state;
+        assert!(validate_replacement(&doc, &next).is_ok());
+        let before = fs::read(&path).unwrap();
+        assert!(save_with_hook(&path, &next, Some(&revision), || Err(
+            "synthetic failure".into()
+        ))
+        .is_err());
+        assert_eq!(fs::read(&path).unwrap(), before);
+        fs::write(&path, "external").unwrap();
+        assert_eq!(save(&path, &next, Some(&revision)).unwrap_err(), CONFLICT);
+        assert_eq!(fs::read_to_string(&path).unwrap(), "external");
+        next.combat_checkpoints[0]["label"] = "tampered".into();
+        assert!(validate_replacement(&doc, &next).is_err());
     }
 }

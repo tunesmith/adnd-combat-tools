@@ -7,7 +7,7 @@ afterEach(() => {
 test('ordinary browser has no native storage', async () => {
   expect(await createTauriStorage()).toBeNull();
 });
-test.each(['save', 'openPending'])(
+test.each(['save', 'quit', 'openPending'])(
   '%s waits for in-flight edits',
   async (action) => {
     let finishEdit: () => void = () => undefined;
@@ -70,7 +70,9 @@ test('Save waits for attachment validation and application', async () => {
   const replacement = storage?.replace(
     {
       kind: 'adnd-campaign',
-      schemaVersion: 3,
+      schemaVersion: 4,
+      workingCombats: [],
+      combatCheckpoints: [],
       workingInventories: [],
       inventoryCheckpoints: [],
       workspace: { sessionId: null, view: 'possessions' },
@@ -94,7 +96,9 @@ test('Save waits for attachment validation and application', async () => {
 test('queued campaign mutations rebase on accepted state and stale epochs are cancelled', async () => {
   const doc = {
     kind: 'adnd-campaign' as const,
-    schemaVersion: 3 as const,
+    schemaVersion: 4 as const,
+    workingCombats: [],
+    combatCheckpoints: [],
     id: 'campaign',
     title: '',
     notes: '',
@@ -171,9 +175,99 @@ test('rejected edits block Save until the accepted draft is restored', async () 
   };
   const storage = await createTauriStorage();
   await expect(storage?.mutate('c', 1, (d) => d)).rejects.toThrow('Too large');
+  await expect(
+    storage?.mutate('c', 1, (d) => ({ ...d, notes: 'later queued edit' }))
+  ).rejects.toThrow('Too large');
   await expect(storage?.command('save')).rejects.toThrow('Too large');
   expect(calls).not.toContain('campaign_command');
   await storage?.discardRejectedEdits();
   await storage?.command('save');
   expect(calls).toContain('campaign_command');
 });
+
+test.each(['save', 'quit', 'openPending'])(
+  '%s waits for a queued combat edit and retains inventory',
+  async (action) => {
+    const { parseCampaign } = await import('../helpers/campaignDocument');
+    const { createWorkingCombat, changeWorkingCombat } = await import(
+      '../helpers/campaignWorkingCombat'
+    );
+    const { syntheticCombat, syntheticInventory } = await import(
+      './fixtures/campaignB1'
+    );
+    const { startWorkingInventory } = await import(
+      '../helpers/campaignWorkingInventory'
+    );
+    const baseline = (await import('./fixtures/campaignB1V2.json')).default;
+    let doc = createWorkingCombat(
+      startWorkingInventory(
+        parseCampaign(JSON.stringify(baseline)),
+        'session-1',
+        syntheticInventory(),
+        { kind: 'empty' },
+        'inventory',
+        'unused',
+        '2026-11-04T12:00:00.000Z'
+      ),
+      'session-1',
+      'Gate',
+      syntheticCombat(),
+      { kind: 'empty' },
+      'encounter'
+    );
+    let finish: () => void = () => undefined;
+    const blocked = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    let onAction: ((event: { payload: unknown }) => void) | undefined;
+    const commands: string[] = [];
+    window.__TAURI__ = {
+      core: {
+        invoke: async <T>(
+          name: string,
+          args?: Record<string, unknown>
+        ): Promise<T> => {
+          if (name === 'campaign_state')
+            return { document: doc, epoch: 1, token: 1 } as unknown as T;
+          if (name === 'campaign_replace') {
+            await blocked;
+            doc = parseCampaign(String(args?.['text']));
+            return { document: doc, epoch: 1, token: 2 } as unknown as T;
+          }
+          commands.push(String(args?.['command']));
+          return undefined as unknown as T;
+        },
+      },
+      event: {
+        listen: async <T>(
+          name: string,
+          handler: (event: { payload: T }) => void
+        ) => {
+          if (name === 'campaign-action')
+            onAction = handler as (event: { payload: unknown }) => void;
+          return () => undefined;
+        },
+      },
+    };
+    const storage = await createTauriStorage();
+    const state = syntheticCombat();
+    const round = state.rounds[1];
+    if (!round) throw Error('fixture');
+    round.summary = 'Last keystroke before native command';
+    const edit = storage?.mutate(doc.id, 1, (d) =>
+      changeWorkingCombat(d, 'encounter', 'session-1', 0, state)
+    );
+    onAction?.({ payload: action });
+    await Promise.resolve();
+    expect(commands).toEqual([]);
+    finish();
+    await edit;
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(commands).toEqual([action]);
+    expect(doc.workingCombats[0]?.state.rounds[1]?.summary).toBe(
+      'Last keystroke before native command'
+    );
+    expect(doc.workingInventories[0]?.document.characters).toHaveLength(2);
+  }
+);

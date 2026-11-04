@@ -11,13 +11,15 @@ import DesktopWorkspace from '../components/desktop/DesktopWorkspace';
 import { parseCampaign } from '../helpers/campaignDocument';
 import { startWorkingInventory } from '../helpers/campaignWorkingInventory';
 import baseline from './fixtures/campaignB1V2.json';
-import { syntheticInventory } from './fixtures/campaignB1';
+import { createWorkingCombat } from '../helpers/campaignWorkingCombat';
+import { syntheticCombat, syntheticInventory } from './fixtures/campaignB1';
 import type { DocumentState, CampaignStorage } from '../types/campaignStorage';
 afterEach(() => {
   delete window.campaignStorage;
+  jest.restoreAllMocks();
 });
 test('campaign-controlled edits survive navigation, and shortcuts do not steal text input', async () => {
-  const doc = startWorkingInventory(
+  let doc = startWorkingInventory(
     parseCampaign(JSON.stringify(baseline)),
     'session-1',
     syntheticInventory(),
@@ -26,6 +28,24 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
     'unused',
     '2026-11-04T12:00:00.000Z'
   );
+  doc = createWorkingCombat(
+    doc,
+    'session-1',
+    'Gate',
+    syntheticCombat(),
+    { kind: 'empty' },
+    'gate'
+  );
+  doc = createWorkingCombat(
+    doc,
+    'session-1',
+    'Bridge',
+    syntheticCombat(),
+    { kind: 'empty' },
+    'bridge'
+  );
+  doc.workspace.view = 'possessions';
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   let native: DocumentState = {
     document: doc,
     path: 'synthetic.adnd',
@@ -111,6 +131,41 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
     native.document?.workingInventories[0]?.document.characters[0]?.inventory.find(
       (i) => i.id === 'gem'
     )?.quantity
+  ).toBe(6);
+  fireEvent.keyDown(window, { key: 'Escape' });
+  fireEvent.click(screen.getByRole('button', { name: 'Combats', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'Gate', exact: true }));
+  fireEvent.change(
+    screen.getByPlaceholderText(
+      'Anything you want to remember when you revisit this round later.'
+    ),
+    { target: { value: 'Gate edit retained' } }
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Bridge', exact: true }));
+  fireEvent.change(
+    screen.getByPlaceholderText(
+      'Anything you want to remember when you revisit this round later.'
+    ),
+    { target: { value: 'Bridge edit retained' } }
+  );
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Possessions', exact: true })
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Combats', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'Gate', exact: true }));
+  expect(
+    screen.getByPlaceholderText(
+      'Anything you want to remember when you revisit this round later.'
+    )
+  ).toHaveValue('Gate edit retained');
+  await waitFor(() =>
+    expect(native.document?.workingCombats[1]?.state.rounds[1]?.summary).toBe(
+      'Bridge edit retained'
+    )
+  );
+  expect(
+    native.document?.workingInventories[0]?.document.characters[0]?.inventory[2]
+      ?.quantity
   ).toBe(6);
   expect(native.document?.records).toEqual(baseline.records);
 });

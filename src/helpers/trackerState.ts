@@ -398,44 +398,89 @@ export const removeCombatant = (
     return state;
   }
 
-  if (side === 'party') {
-    return {
-      ...state,
-      rounds: state.rounds.map((round, roundIndex) =>
-        roundIndex === state.activeRound
-          ? {
-              ...round,
-              party: round.party.filter(
-                (_, partyIndex) => partyIndex !== index
-              ),
-              cells: round.cells.map((row) =>
-                row.filter((_, partyIndex) => partyIndex !== index)
-              ),
-              partyStates: round.partyStates.filter(
-                (_, partyIndex) => partyIndex !== index
-              ),
-            }
-          : round
-      ),
-    };
-  }
-
+  // Removing a roster entry also removes its declarations and reindexes surviving
+  // targets. Earlier rounds remain historical; only this round is edited.
   return {
     ...state,
-    rounds: state.rounds.map((round, roundIndex) =>
-      roundIndex === state.activeRound
-        ? {
-            ...round,
-            enemies: round.enemies.filter(
-              (_, enemyIndex) => enemyIndex !== index
-            ),
-            cells: round.cells.filter((_, enemyIndex) => enemyIndex !== index),
-            enemyStates: round.enemyStates.filter(
-              (_, enemyIndex) => enemyIndex !== index
-            ),
-          }
-        : round
-    ),
+    rounds: state.rounds.map((round, roundIndex) => {
+      if (roundIndex !== state.activeRound) return round;
+      const party = round.party.filter(
+        (_, i) => side !== 'party' || i !== index
+      );
+      const enemies = round.enemies.filter(
+        (_, i) => side !== 'enemy' || i !== index
+      );
+      const actions = round.actions?.flatMap((action) => {
+        const actors = action.side === 'party' ? party : enemies;
+        const targets = action.side === 'party' ? enemies : party;
+        const combatantIndex = actors.findIndex(
+          (c) => c.key === action.combatantKey
+        );
+        if (combatantIndex < 0) return [];
+        return [
+          {
+            ...action,
+            combatantIndex,
+            targetDeclarations: action.targetDeclarations.flatMap((target) => {
+              const targetCombatantIndex = targets.findIndex(
+                (c) => c.key === target.targetCombatantKey
+              );
+              if (targetCombatantIndex < 0) return [];
+              return [
+                {
+                  ...target,
+                  targetCombatantIndex,
+                  cellRowIndex:
+                    action.side === 'party'
+                      ? targetCombatantIndex
+                      : combatantIndex,
+                  cellColumnIndex:
+                    action.side === 'party'
+                      ? combatantIndex
+                      : targetCombatantIndex,
+                },
+              ];
+            }),
+          },
+        ];
+      });
+      const actionIds = new Set(actions?.map((action) => action.id));
+      return {
+        ...round,
+        party,
+        enemies,
+        ...(actions ? { actions } : {}),
+        partyStates: round.partyStates.filter(
+          (_, i) => side !== 'party' || i !== index
+        ),
+        enemyStates: round.enemyStates.filter(
+          (_, i) => side !== 'enemy' || i !== index
+        ),
+        cells: round.cells
+          .filter((_, i) => side !== 'enemy' || i !== index)
+          .map((row) =>
+            row
+              .filter((_, i) => side !== 'party' || i !== index)
+              .map((cell) => ({
+                ...cell,
+                ...(cell.partyToEnemyActionIds
+                  ? {
+                      partyToEnemyActionIds: cell.partyToEnemyActionIds.filter(
+                        (id) => actionIds.has(id)
+                      ),
+                    }
+                  : {}),
+                ...(cell.enemyToPartyActionIds
+                  ? {
+                      enemyToPartyActionIds: cell.enemyToPartyActionIds.filter(
+                        (id) => actionIds.has(id)
+                      ),
+                    }
+                  : {}),
+              }))
+          ),
+      };
+    }),
   };
 };
 

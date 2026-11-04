@@ -110,6 +110,8 @@ interface TrackerCombatantInputProps {
   canRemove: boolean;
   onRemove: () => void;
   onUpdate: (combatant: TrackerCombatant) => void;
+  liveUpdates?: boolean;
+  modalRootId?: string;
 }
 
 const getDerivedArmorClass = (armorTypeId: number): number =>
@@ -137,6 +139,8 @@ const TrackerCombatantInput = ({
   canRemove,
   onRemove,
   onUpdate,
+  liveUpdates = false,
+  modalRootId = 'app-modal',
 }: TrackerCombatantInputProps) => {
   const [open, setOpen] = useState<boolean>(false);
   const [isEditingWeaponShortlist, setIsEditingWeaponShortlist] =
@@ -230,6 +234,10 @@ const TrackerCombatantInput = ({
   };
 
   const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (liveUpdates) {
+      commit({ ...draft, name: event.target.value || undefined });
+      return;
+    }
     setDraft((previous) => ({
       ...previous,
       name: event.target.value || undefined,
@@ -244,6 +252,10 @@ const TrackerCombatantInput = ({
   };
 
   const handleMaxHpChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (liveUpdates) {
+      commit({ ...draft, maxHp: event.target.value });
+      return;
+    }
     setDraft((previous) => ({
       ...previous,
       maxHp: event.target.value,
@@ -445,10 +457,13 @@ const TrackerCombatantInput = ({
 
   const modalRoot =
     typeof document !== 'undefined'
-      ? document.getElementById('app-modal')
+      ? document.getElementById(modalRootId)
       : null;
-  const selectMenuPortalTarget =
-    typeof document !== 'undefined' ? document.body : null;
+  const selectMenuPortalTarget = liveUpdates
+    ? modalRoot
+    : typeof document !== 'undefined'
+    ? document.body
+    : null;
   const movementRateForDisplay =
     parseMovementRate(movementRateInput) ??
     draft.movementRate ??
@@ -518,7 +533,11 @@ const TrackerCombatantInput = ({
         createPortal(
           <>
             <div className={styles['modalShadow']} onClick={closeModal} />
-            <div className={styles['modal']}>
+            <div
+              className={styles['modal']}
+              role="dialog"
+              aria-label={side === 'party' ? 'Edit Party Member' : 'Edit Enemy'}
+            >
               <div className={styles['modalTitle']}>
                 {side === 'party' ? 'Edit Party Member' : 'Edit Enemy'}
               </div>

@@ -1,4 +1,9 @@
 import {
+  workingCombatSchema,
+  combatCheckpointSchema,
+} from './campaignWorkingCombat';
+import type { WorkingCombat, CombatCheckpoint } from './campaignWorkingCombat';
+import {
   workingInventorySchema,
   inventoryCheckpointSchema,
   workspaceSchema,
@@ -21,10 +26,16 @@ import {
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
-  schemaVersion: 3;
+  schemaVersion: 4;
+  workingCombats: WorkingCombat[];
+  combatCheckpoints: CombatCheckpoint[];
   workingInventories: WorkingInventory[];
   inventoryCheckpoints: InventoryCheckpoint[];
-  workspace: { sessionId: string | null; view: WorkspaceView };
+  workspace: {
+    sessionId: string | null;
+    view: WorkspaceView;
+    combatSelections?: Record<string, string>;
+  };
   id: string;
   title: string;
   notes: string;
@@ -60,6 +71,16 @@ const v3 = v2
     workspace: workspaceSchema,
   })
   .strict();
+const v4 = v3
+  .extend({
+    schemaVersion: z.literal(4),
+    workingCombats: z.array(workingCombatSchema).max(500),
+    combatCheckpoints: z.array(combatCheckpointSchema).max(1000),
+    workspace: workspaceSchema
+      .extend({ combatSelections: z.record(z.string()).default({}) })
+      .strict(),
+  })
+  .strict();
 export function validateCampaign(value: unknown): CampaignDocument {
   if (!value || typeof value !== 'object')
     throw new Error('Expected a campaign object.');
@@ -69,10 +90,11 @@ export function validateCampaign(value: unknown): CampaignDocument {
   if (
     header['schemaVersion'] !== 1 &&
     header['schemaVersion'] !== 2 &&
-    header['schemaVersion'] !== 3
+    header['schemaVersion'] !== 3 &&
+    header['schemaVersion'] !== 4
   )
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1, 2 and 3.'
+      'Unsupported campaign schema version. This app supports versions 1 through 4.'
     );
   if (
     value &&
@@ -81,15 +103,17 @@ export function validateCampaign(value: unknown): CampaignDocument {
   ) {
     return {
       ...v1.parse(value),
-      schemaVersion: 3,
+      schemaVersion: 4,
+      workingCombats: [],
+      combatCheckpoints: [],
       sessions: [],
       records: [],
       workingInventories: [],
       inventoryCheckpoints: [],
-      workspace: { sessionId: null, view: 'possessions' },
+      workspace: { sessionId: null, view: 'possessions', combatSelections: {} },
     };
   }
-  const parsed =
+  const legacy =
     header['schemaVersion'] === 2
       ? {
           ...v2.parse(value),
@@ -98,7 +122,19 @@ export function validateCampaign(value: unknown): CampaignDocument {
           inventoryCheckpoints: [],
           workspace: { sessionId: null, view: 'possessions' as const },
         }
-      : v3.parse(value);
+      : header['schemaVersion'] === 3
+      ? v3.parse(value)
+      : v4.parse(value);
+  const parsed =
+    legacy.schemaVersion === 3
+      ? {
+          ...legacy,
+          schemaVersion: 4 as const,
+          workingCombats: [],
+          combatCheckpoints: [],
+          workspace: { ...legacy.workspace, combatSelections: {} },
+        }
+      : legacy;
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');
@@ -174,6 +210,46 @@ export function validateCampaign(value: unknown): CampaignDocument {
     unique(c.id);
     if (!parsed.sessions.some((s) => s.id === c.sessionId))
       throw new Error('Invalid checkpoint session.');
+  }
+  for (const c of parsed.workingCombats) {
+    unique(c.id);
+    if (!parsed.sessions.some((s) => s.id === c.sessionId))
+      throw new Error('Invalid combat session.');
+    const origin = c.origin;
+    if (
+      origin.kind === 'import' &&
+      !parsed.records.some(
+        (r) =>
+          r.id === origin.recordId &&
+          r.type === 'combat' &&
+          r.revisions.some((v) => v.id === origin.revisionId)
+      )
+    )
+      throw new Error('Invalid combat origin.');
+    if (
+      origin.kind === 'checkpoint' &&
+      !parsed.combatCheckpoints.some((p) => p.id === origin.checkpointId)
+    )
+      throw new Error('Invalid combat checkpoint origin.');
+  }
+  for (const p of parsed.combatCheckpoints) {
+    unique(p.id);
+    if (
+      !parsed.workingCombats.some(
+        (c) => c.id === p.combatId && c.sessionId === p.sessionId
+      )
+    )
+      throw new Error('Invalid checkpoint encounter.');
+  }
+  for (const [sessionId, combatId] of Object.entries(
+    parsed.workspace.combatSelections || {}
+  )) {
+    if (
+      !parsed.workingCombats.some(
+        (c) => c.id === combatId && c.sessionId === sessionId
+      )
+    )
+      throw new Error('Invalid selected encounter.');
   }
   return parsed as CampaignDocument;
 }

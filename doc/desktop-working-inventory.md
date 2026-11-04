@@ -1,5 +1,7 @@
 # Campaign workspace and working possessions
 
+For the subsequent editable-combat slice and V4 migration, see [Editable campaign encounters](desktop-working-combat.md). The implementation and verification below describe the completed V3 inventory slice.
+
 This delivers the workspace/inventory slice of integrated session play. Possessions are edited directly in the campaign using the existing encumbrance editor. Combats remain read-only captured records. Combat editing, explicit session carry-forward, multi-session continuity validation, and XP settlement are future slices.
 
 ## Build and launch

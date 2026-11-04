@@ -219,3 +219,145 @@
   background: #eee5d3;
   font-size: 12px;
 }
+.encounterStrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #d8ccbc;
+  margin-bottom: 12px;
+}
+.encounterStrip button {
+  padding: 7px 12px;
+  border: 1px solid #b8a98e;
+  border-radius: 5px;
+  background: #fffdf8;
+  color: #443b2c;
+  cursor: pointer;
+}
+.encounterStrip button[aria-pressed='true'] {
+  background: #57272d;
+  color: #fff8e9;
+}
+.encounterStrip details {
+  margin-left: auto;
+}
+.encounterStrip input {
+  padding: 7px;
+  margin: 0 8px;
+}
+.versionToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.versionToolbar select {
+  max-width: min(520px, 50vw);
+}
+.versionMenu {
+  position: relative;
+}
+.versionMenu > summary {
+  cursor: pointer;
+  padding: 4px 12px;
+}
+.versionMenu > div {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  background: #fffdf8;
+  border: 1px solid #b8a98e;
+  padding: 8px;
+  min-width: 210px;
+}
+.versionMenu button {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+}
+.dialogShade {
+  position: fixed;
+  inset: 0;
+  background: #0008;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+}
+.versionDialog {
+  background: #fffdf8;
+  color: #29261f;
+  padding: 24px;
+  border-radius: 8px;
+  max-width: 420px;
+}
+.versionDialog input {
+  display: block;
+  margin: 12px 0;
+  width: 100%;
+}
+.versionDialog button {
+  margin-right: 8px;
+}
+.historyEditor {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.combatControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.combatControls .encounterStrip {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.combatControls .encounterStrip {
+  width: 100%;
+}
+.newEncounter {
+  margin-left: auto;
+  position: relative;
+}
+.newEncounter[open] {
+  padding: 8px;
+  border: 1px solid #b8a98e;
+  background: #fffdf8;
+}
+.versionToolbar {
+  padding-top: 12px;
+  border-top: 1px solid #d8ccbc;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.versionMenu > div {
+  bottom: 100%;
+}
+.newEncounter[open] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.newEncounterForm {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 20;
+  width: 280px;
+  padding: 16px;
+  background: #fffdf8;
+  border: 1px solid #b8a98e;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px #0002;
+}
+.newEncounterForm input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 8px 0;
+}

@@ -2576,3 +2576,28 @@
 .intentionWeaponWarningBadge:focus .intentionWeaponWarningTooltip {
   display: block;
 }
+
+.campaignPage {
+  min-height: 0;
+  background: var(--caput-martuum);
+  border-radius: 6px;
+}
+
+.trackerRoot {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.readOnly .toolbar,
+.readOnly .roundTabs {
+  display: none;
+}
+.readOnly :disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.readOnly .removeCombatant {
+  display: none;
+}

@@ -104,6 +104,12 @@ import {
 } from '../../tables/weapon';
 
 interface CombatTrackerProps {
+  campaign?: {
+    active: boolean;
+    readOnly?: boolean;
+    state: TrackerState;
+    onStateChange: (state: TrackerState) => boolean | void;
+  };
   rememberedState?: TrackerState;
   loadedFromEncodedState?: boolean;
 }
@@ -1418,11 +1424,14 @@ const trackerReducer = (
 
 const CombatTracker = ({
   rememberedState,
+  campaign,
   loadedFromEncodedState = false,
 }: CombatTrackerProps) => {
+  const readOnly = Boolean(campaign?.readOnly);
+  const isActive = !readOnly && campaign?.active !== false;
   const initialState = useMemo<TrackerState>(
-    () => rememberedState || createInitialTrackerState(),
-    [rememberedState]
+    () => campaign?.state || rememberedState || createInitialTrackerState(),
+    [campaign?.state, rememberedState]
   );
   const initialStateRef = useRef<TrackerState>(initialState);
   const [encodedTrackerState, setEncodedTrackerState] = useState<
@@ -1544,7 +1553,23 @@ const CombatTracker = ({
     setCombatFlowGraphInspectorPosition,
   ] = useState<CSSProperties | undefined>(undefined);
 
-  const [state, dispatch] = useReducer(trackerReducer, initialState);
+  const [standaloneState, standaloneDispatch] = useReducer(
+    trackerReducer,
+    initialState
+  );
+  const state = campaign?.state || standaloneState;
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const dispatch = (action: TrackerAction) => {
+    if (readOnly) return;
+    if (!campaign) {
+      standaloneDispatch(action);
+      return;
+    }
+    if (action.type === 'replace-state') return;
+    const next = trackerReducer(stateRef.current, action);
+    if (campaign.onStateChange(next) !== false) stateRef.current = next;
+  };
   const currentRound = state.rounds[state.activeRound];
   const currentRoundLabel = currentRound?.label || '';
   const currentRoundDisplayLabel =
@@ -1747,7 +1772,7 @@ const CombatTracker = ({
     ]
   );
   useLayoutEffect(() => {
-    if (!combatFlowGraphInspectorNodeId) {
+    if (!isActive || !combatFlowGraphInspectorNodeId) {
       setCombatFlowGraphInspectorHeight(GRAPH_POPOVER_FALLBACK_HEIGHT);
       return;
     }
@@ -1774,9 +1799,9 @@ const CombatTracker = ({
     const resizeObserver = new ResizeObserver(updateHeight);
     resizeObserver.observe(inspectorElement);
     return () => resizeObserver.disconnect();
-  }, [combatFlowGraphInspectorNodeId, combatFlowGraphInspectorModel]);
+  }, [combatFlowGraphInspectorNodeId, combatFlowGraphInspectorModel, isActive]);
   useLayoutEffect(() => {
-    if (!combatFlowGraphInspectorNodeId) {
+    if (!isActive || !combatFlowGraphInspectorNodeId) {
       setCombatFlowGraphInspectorPosition(undefined);
       return;
     }
@@ -1863,9 +1888,17 @@ const CombatTracker = ({
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [combatFlowGraphInspectorHeight, combatFlowGraphInspectorNodeId]);
+  }, [
+    combatFlowGraphInspectorHeight,
+    combatFlowGraphInspectorNodeId,
+    isActive,
+  ]);
   useEffect(() => {
-    if (!combatFlowGraphInspectorNodeId || typeof window === 'undefined') {
+    if (
+      !isActive ||
+      !combatFlowGraphInspectorNodeId ||
+      typeof window === 'undefined'
+    ) {
       return;
     }
 
@@ -1898,7 +1931,7 @@ const CombatTracker = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('click', handleDocumentClick);
     };
-  }, [combatFlowGraphInspectorNodeId]);
+  }, [combatFlowGraphInspectorNodeId, isActive]);
   const currentCombatWizardEntry = combatWizardEntries[combatWizardIndex];
   const currentCombatWizardEntryKey = currentCombatWizardEntry?.combatantKey;
   const currentCombatWizardActions = useMemo<TrackerActionDeclaration[]>(
@@ -1999,6 +2032,7 @@ const CombatTracker = ({
   }, [state.rounds]);
 
   useEffect(() => {
+    if (campaign) return;
     if (typeof window === 'undefined') {
       return;
     }
@@ -2026,9 +2060,10 @@ const CombatTracker = ({
     } catch (error) {
       console.error('Unable to initialize tracker drafts:', error);
     }
-  }, [loadedFromEncodedState]);
+  }, [loadedFromEncodedState, campaign]);
 
   useEffect(() => {
+    if (campaign) return;
     let active = true;
 
     encodeTrackerState(state)
@@ -2047,9 +2082,10 @@ const CombatTracker = ({
     return () => {
       active = false;
     };
-  }, [state]);
+  }, [state, campaign]);
 
   useEffect(() => {
+    if (campaign) return;
     if (!encodedTrackerState) {
       return;
     }
@@ -2082,9 +2118,10 @@ const CombatTracker = ({
 
     setAddressBarUrlTruncated(false);
     urlWarningShown.current = false;
-  }, [encodedTrackerState]);
+  }, [encodedTrackerState, campaign]);
 
   useEffect(() => {
+    if (campaign) return;
     if (
       typeof window === 'undefined' ||
       !draftId ||
@@ -2125,9 +2162,17 @@ const CombatTracker = ({
     }, LOCAL_DRAFT_AUTOSAVE_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [autosavePaused, draftId, encodedTrackerState, hasTrackerChanged, state]);
+  }, [
+    autosavePaused,
+    draftId,
+    encodedTrackerState,
+    hasTrackerChanged,
+    state,
+    campaign,
+  ]);
 
   useEffect(() => {
+    if (campaign) return;
     if (typeof window === 'undefined' || !draftId || !hasTrackerChanged) {
       return;
     }
@@ -2158,9 +2203,10 @@ const CombatTracker = ({
       window.removeEventListener('pagehide', saveDraftNow);
       window.removeEventListener('beforeunload', saveDraftNow);
     };
-  }, [autosavePaused, draftId, hasTrackerChanged, state]);
+  }, [autosavePaused, draftId, hasTrackerChanged, state, campaign]);
 
   useEffect(() => {
+    if (!isActive) return;
     if (
       !showUrlWarning &&
       !showRecoverModal &&
@@ -2220,10 +2266,11 @@ const CombatTracker = ({
     showShareModal,
     showStartNewCombatModal,
     showUrlWarning,
+    isActive,
   ]);
 
   useEffect(() => {
-    if (!showMoreActions) {
+    if (!isActive || !showMoreActions) {
       return;
     }
 
@@ -2236,7 +2283,7 @@ const CombatTracker = ({
     window.addEventListener('mousedown', handlePointerDown);
 
     return () => window.removeEventListener('mousedown', handlePointerDown);
-  }, [showMoreActions]);
+  }, [showMoreActions, isActive]);
 
   useEffect(() => {
     setShowIntentionsWizard(false);
@@ -2402,7 +2449,11 @@ const CombatTracker = ({
   }, [showImportModal]);
 
   useEffect(() => {
-    if (!showCombatWizard || currentCombatWizardEntryKey === undefined) {
+    if (
+      !isActive ||
+      !showCombatWizard ||
+      currentCombatWizardEntryKey === undefined
+    ) {
       return;
     }
 
@@ -2419,7 +2470,12 @@ const CombatTracker = ({
     });
 
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [combatWizardIndex, currentCombatWizardEntryKey, showCombatWizard]);
+  }, [
+    combatWizardIndex,
+    currentCombatWizardEntryKey,
+    showCombatWizard,
+    isActive,
+  ]);
 
   useEffect(() => {
     if (!isEditingTitle) {
@@ -2774,6 +2830,7 @@ const CombatTracker = ({
   };
 
   const handleImportShareUrl = async () => {
+    if (campaign) return;
     const encodedState = getTrackerEncodedStateFromUrlText(importUrlValue);
 
     if (!encodedState) {
@@ -3727,6 +3784,7 @@ const CombatTracker = ({
   };
 
   const confirmStartNewCombat = () => {
+    if (campaign) return;
     const nextState = startNewCombatFromActiveRound(state, newCombatHpMode);
     if (nextState === state) {
       closeStartNewCombatModal();
@@ -3917,7 +3975,7 @@ const CombatTracker = ({
         partyToEnemyVisible={cellState.partyToEnemyVisible}
         enemyToPartyActionAssignmentLabel={enemyAssignmentLabel}
         partyToEnemyActionAssignmentLabel={partyAssignmentLabel}
-        allowVisibilityToggle={allowVisibilityToggle}
+        allowVisibilityToggle={!readOnly && allowVisibilityToggle}
         displayMode={displayMode}
         onEnemyToPartyActionAssignmentOpen={
           enemyAssignmentLabel
@@ -4015,6 +4073,7 @@ const CombatTracker = ({
     const actions = getStructuredActionsForCombatant(currentRound, side, index);
     const summaryLines = getActionListSummaryLines(actions, fallbackIntention);
     const isEmpty = summaryLines.length === 0;
+    if (readOnly && isEmpty) return <span>—</span>;
 
     return (
       <button
@@ -4618,8 +4677,20 @@ const CombatTracker = ({
   };
 
   return (
-    <div id={'app-modal'}>
-      <div className={styles['page']}>
+    <fieldset
+      disabled={readOnly}
+      className={`${styles['trackerRoot']} ${
+        readOnly ? styles['readOnly'] : ''
+      }`}
+      id={
+        readOnly ? undefined : campaign ? 'campaign-combat-modal' : 'app-modal'
+      }
+    >
+      <div
+        className={`${styles['page']} ${
+          campaign ? styles['campaignPage'] : ''
+        }`}
+      >
         <div className={styles['toolbar']}>
           <div className={styles['pageHeader']}>
             <div className={styles['pageTitle']}>AD&amp;D Combat Tracker</div>
@@ -4652,95 +4723,114 @@ const CombatTracker = ({
               >
                 Advance Round
               </button>
-              <span className={styles['shareButtonWrap']}>
+              {campaign && (
                 <button
-                  type={'button'}
+                  type="button"
                   className={styles['toolbarButton']}
-                  disabled={!encodedTrackerState}
-                  title={showLongUrlNotice ? longUrlNoticeTitle : undefined}
-                  aria-label={
-                    showLongUrlNotice
-                      ? `Copy Share URL. ${longUrlNoticeTitle}`
-                      : undefined
-                  }
-                  onClick={() => void handleCopyShareUrl()}
+                  disabled={state.rounds.length <= 1}
+                  onClick={() => setShowDeleteRoundModal(true)}
                 >
-                  {shareCopied ? 'Share URL Copied' : 'Copy Share URL'}
+                  Delete Round…
                 </button>
-                {showLongUrlNotice ? (
-                  <span
-                    className={styles['shareUrlBadge']}
-                    aria-hidden={'true'}
-                  >
-                    Long URL
+              )}
+              {!campaign && (
+                <>
+                  <span className={styles['shareButtonWrap']}>
+                    <button
+                      type={'button'}
+                      className={styles['toolbarButton']}
+                      disabled={!encodedTrackerState}
+                      title={showLongUrlNotice ? longUrlNoticeTitle : undefined}
+                      aria-label={
+                        showLongUrlNotice
+                          ? `Copy Share URL. ${longUrlNoticeTitle}`
+                          : undefined
+                      }
+                      onClick={() => void handleCopyShareUrl()}
+                    >
+                      {shareCopied ? 'Share URL Copied' : 'Copy Share URL'}
+                    </button>
+                    {showLongUrlNotice ? (
+                      <span
+                        className={styles['shareUrlBadge']}
+                        aria-hidden={'true'}
+                      >
+                        Long URL
+                      </span>
+                    ) : null}
                   </span>
-                ) : null}
-              </span>
-              <div className={styles['toolbarMenuWrap']} ref={moreActionsRef}>
-                <button
-                  type={'button'}
-                  className={styles['toolbarButton']}
-                  aria-haspopup={'menu'}
-                  aria-expanded={showMoreActions}
-                  onClick={() => setShowMoreActions((previous) => !previous)}
-                >
-                  More
-                </button>
-                {showMoreActions ? (
-                  <div className={styles['toolbarMenu']} role={'menu'}>
+                  <div
+                    className={styles['toolbarMenuWrap']}
+                    ref={moreActionsRef}
+                  >
                     <button
                       type={'button'}
-                      className={styles['toolbarMenuItem']}
-                      onClick={openImportModal}
+                      className={styles['toolbarButton']}
+                      aria-haspopup={'menu'}
+                      aria-expanded={showMoreActions}
+                      onClick={() =>
+                        setShowMoreActions((previous) => !previous)
+                      }
                     >
-                      Import Share URL
+                      More
                     </button>
-                    <button
-                      type={'button'}
-                      className={styles['toolbarMenuItem']}
-                      disabled={savedDrafts.length === 0}
-                      onClick={() => {
-                        setRecoverError(undefined);
-                        setShowRecoverModal(true);
-                        setShowMoreActions(false);
-                      }}
-                    >
-                      Recover Local Draft
-                    </button>
-                    <button
-                      type={'button'}
-                      className={styles['toolbarMenuItem']}
-                      disabled={!hasLocalDraft}
-                      onClick={() => {
-                        handleClearCurrentDraft();
-                        setShowMoreActions(false);
-                      }}
-                    >
-                      Clear Local Draft
-                    </button>
-                    <div className={styles['toolbarMenuDivider']} />
-                    <button
-                      type={'button'}
-                      className={styles['toolbarMenuItem']}
-                      onClick={openStartNewCombatModal}
-                    >
-                      Start New Combat From This Round
-                    </button>
-                    <div className={styles['toolbarMenuDivider']} />
-                    <button
-                      type={'button'}
-                      className={`${styles['toolbarMenuItem']} ${styles['toolbarMenuItemDanger']}`}
-                      disabled={state.rounds.length <= 1}
-                      onClick={() => {
-                        setShowDeleteRoundModal(true);
-                        setShowMoreActions(false);
-                      }}
-                    >
-                      Delete Round
-                    </button>
+                    {showMoreActions ? (
+                      <div className={styles['toolbarMenu']} role={'menu'}>
+                        <button
+                          type={'button'}
+                          className={styles['toolbarMenuItem']}
+                          onClick={openImportModal}
+                        >
+                          Import Share URL
+                        </button>
+                        <button
+                          type={'button'}
+                          className={styles['toolbarMenuItem']}
+                          disabled={savedDrafts.length === 0}
+                          onClick={() => {
+                            setRecoverError(undefined);
+                            setShowRecoverModal(true);
+                            setShowMoreActions(false);
+                          }}
+                        >
+                          Recover Local Draft
+                        </button>
+                        <button
+                          type={'button'}
+                          className={styles['toolbarMenuItem']}
+                          disabled={!hasLocalDraft}
+                          onClick={() => {
+                            handleClearCurrentDraft();
+                            setShowMoreActions(false);
+                          }}
+                        >
+                          Clear Local Draft
+                        </button>
+                        <div className={styles['toolbarMenuDivider']} />
+                        <button
+                          type={'button'}
+                          className={styles['toolbarMenuItem']}
+                          onClick={openStartNewCombatModal}
+                        >
+                          Start New Combat From This Round
+                        </button>
+                        <div className={styles['toolbarMenuDivider']} />
+                        <button
+                          type={'button'}
+                          className={`${styles['toolbarMenuItem']} ${styles['toolbarMenuItemDanger']}`}
+                          disabled={state.rounds.length <= 1}
+                          onClick={() => {
+                            setShowDeleteRoundModal(true);
+                            setShowMoreActions(false);
+                          }}
+                        >
+                          Delete Round
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
+                </>
+              )}
             </div>
             <div className={styles['toolbarSubrow']}>
               <div className={styles['toolbarSubgroup']}>
@@ -4771,7 +4861,11 @@ const CombatTracker = ({
                   Add Enemy
                 </button>
               </div>
-              <div className={styles['toolbarStatus']}>{localDraftStatus}</div>
+              {!campaign && (
+                <div className={styles['toolbarStatus']}>
+                  {localDraftStatus}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -4801,7 +4895,11 @@ const CombatTracker = ({
                 type={'text'}
                 className={styles['roundHeadingTitleInput']}
                 value={titleDraft}
-                onChange={(event) => setTitleDraft(event.target.value)}
+                onChange={(event) => {
+                  setTitleDraft(event.target.value);
+                  if (campaign)
+                    dispatch({ type: 'set-title', value: event.target.value });
+                }}
                 onBlur={commitTitleEdit}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
@@ -4843,7 +4941,14 @@ const CombatTracker = ({
                 type={'text'}
                 className={styles['roundHeadingLabelInput']}
                 value={roundLabelDraft}
-                onChange={(event) => setRoundLabelDraft(event.target.value)}
+                onChange={(event) => {
+                  setRoundLabelDraft(event.target.value);
+                  if (campaign)
+                    dispatch({
+                      type: 'set-round-label',
+                      value: event.target.value,
+                    });
+                }}
                 onBlur={commitRoundLabelEdit}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
@@ -4920,6 +5025,10 @@ const CombatTracker = ({
                     style={partyColumnStyles[partyIndex]}
                   >
                     <TrackerCombatantInput
+                      liveUpdates={Boolean(campaign)}
+                      modalRootId={
+                        campaign ? 'campaign-combat-modal' : 'app-modal'
+                      }
                       combatant={combatant}
                       side={'party'}
                       canRemove={currentRound.party.length > 1}
@@ -4962,6 +5071,10 @@ const CombatTracker = ({
                 <tr key={`enemy-row-${combatant.key}`}>
                   <th className={styles['enemyHeader']}>
                     <TrackerCombatantInput
+                      liveUpdates={Boolean(campaign)}
+                      modalRootId={
+                        campaign ? 'campaign-combat-modal' : 'app-modal'
+                      }
                       combatant={combatant}
                       side={'enemy'}
                       canRemove={currentRound.enemies.length > 1}
@@ -5128,50 +5241,53 @@ const CombatTracker = ({
           </table>
         </div>
         {renderCombatFlowPanel()}
-        <section
-          ref={combatFlowGraphContainerRef}
-          className={styles['initiativeDagPanel']}
-          aria-labelledby={'tracker-initiative-dag-title'}
-        >
-          <h2
-            id={'tracker-initiative-dag-title'}
-            className={styles['initiativeDagTitle']}
+        {(!readOnly || resolvedInitiativeRound) && (
+          <section
+            ref={combatFlowGraphContainerRef}
+            className={styles['initiativeDagPanel']}
+            aria-labelledby={'tracker-initiative-dag-title'}
           >
-            Precedence DAG
-          </h2>
-          {resolvedInitiativeRound ? (
-            <InitiativeAttackGraphView
-              completedNodeIds={combatFlowCompletedNodeIds}
-              onNodeSelect={openCombatFlowGraphNode}
-              readyNodeIds={combatFlowReadyNodeIds}
-              resolvedRound={resolvedInitiativeRound}
-              markerIdPrefix={'tracker-initiative-dag'}
-              minHeightRem={22}
-              readableText={true}
-              selectedNodeId={
-                combatFlowGraphInspectorNodeId || selectedCombatFlowNode?.id
-              }
-              showEmptySegmentLanes={true}
-              targetPrefix={'→'}
-            />
-          ) : (
-            <div className={styles['initiativeDagEmpty']}>
-              Enter party and enemy initiative to draw the current round DAG.
-            </div>
-          )}
-          {combatFlowGraphInspectorModel && combatFlowGraphInspectorPosition ? (
-            <InitiativeGraphInspectorPanel
-              ref={combatFlowGraphInspectorRef}
-              className={styles['graphInspectorPopover']}
-              model={combatFlowGraphInspectorModel}
-              style={combatFlowGraphInspectorPosition}
-              onClick={(event) => event.stopPropagation()}
-              onOpenNode={openCombatFlowGraphNode}
-              onResolve={markCombatFlowNodeResolved}
-              onClearStatus={clearCombatFlowNodeResolved}
-            />
-          ) : null}
-        </section>
+            <h2
+              id={'tracker-initiative-dag-title'}
+              className={styles['initiativeDagTitle']}
+            >
+              Precedence DAG
+            </h2>
+            {resolvedInitiativeRound ? (
+              <InitiativeAttackGraphView
+                completedNodeIds={combatFlowCompletedNodeIds}
+                onNodeSelect={openCombatFlowGraphNode}
+                readyNodeIds={combatFlowReadyNodeIds}
+                resolvedRound={resolvedInitiativeRound}
+                markerIdPrefix={'tracker-initiative-dag'}
+                minHeightRem={22}
+                readableText={true}
+                selectedNodeId={
+                  combatFlowGraphInspectorNodeId || selectedCombatFlowNode?.id
+                }
+                showEmptySegmentLanes={true}
+                targetPrefix={'→'}
+              />
+            ) : (
+              <div className={styles['initiativeDagEmpty']}>
+                Enter party and enemy initiative to draw the current round DAG.
+              </div>
+            )}
+            {combatFlowGraphInspectorModel &&
+            combatFlowGraphInspectorPosition ? (
+              <InitiativeGraphInspectorPanel
+                ref={combatFlowGraphInspectorRef}
+                className={styles['graphInspectorPopover']}
+                model={combatFlowGraphInspectorModel}
+                style={combatFlowGraphInspectorPosition}
+                onClick={(event) => event.stopPropagation()}
+                onOpenNode={openCombatFlowGraphNode}
+                onResolve={markCombatFlowNodeResolved}
+                onClearStatus={clearCombatFlowNodeResolved}
+              />
+            ) : null}
+          </section>
+        )}
       </div>
       {showRecoverModal && (
         <>
@@ -6328,7 +6444,7 @@ const CombatTracker = ({
           </div>
         </>
       )}
-    </div>
+    </fieldset>
   );
 };
 

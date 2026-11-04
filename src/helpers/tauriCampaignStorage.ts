@@ -29,6 +29,7 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
   return {
     mutate: (id, epoch, change) => {
       const operation = pending.then(async () => {
+        if (editError) throw editError;
         const current = await invoke<DocumentState>('campaign_state');
         if (current.epoch !== epoch || current.document?.id !== id) return null;
         const document = change(current.document);

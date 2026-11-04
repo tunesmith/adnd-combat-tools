@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import HistoricalCombat from './HistoricalCombat';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import { captureSnapshot } from '../../helpers/campaignCapture';
 import {
@@ -25,34 +26,6 @@ const uid = () =>
     : `capture-${Date.now()}-${Math.random()
         .toString(36)
         .slice(2)}-${Math.random().toString(36).slice(2)}`;
-function Detail({ value }: { value: Json }) {
-  if (value === null) return <span>None</span>;
-  if (typeof value !== 'object')
-    return <span>{String(value) || 'Unknown / blank'}</span>;
-  return (
-    <dl>
-      {Object.entries(value).map(([key, v]) => (
-        <div key={key}>
-          <dt>
-            <strong>{key}</strong>
-          </dt>
-          <dd>
-            {typeof v === 'object' && v !== null ? (
-              <details>
-                <summary>
-                  {Array.isArray(v) ? `${v.length} entries` : 'Details'}
-                </summary>
-                <Detail value={v} />
-              </details>
-            ) : (
-              <Detail value={v} />
-            )}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
 export function Inspection({
   payload,
   type,
@@ -60,65 +33,8 @@ export function Inspection({
   payload: Json;
   type: 'combat' | 'inventory';
 }) {
-  const [roundIndex, setRound] = useState(() =>
-    type === 'combat' ? (payload as unknown as TrackerState).activeRound : 0
-  );
-  if (type === 'combat') {
-    const data = payload as unknown as TrackerState;
-    const round = data.rounds[roundIndex] || data.rounds[0];
-    return (
-      <section>
-        <h4>{data.title || 'Combat snapshot'}</h4>
-        <label>
-          Inspect round
-          <select
-            value={roundIndex}
-            onChange={(e) => setRound(Number(e.target.value))}
-          >
-            {data.rounds.map((r, i) => (
-              <option key={i} value={i}>
-                {r.label}
-                {i === data.activeRound ? ' (source current round)' : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-        {round && (
-          <>
-            <p>{round.summary || 'No round summary'}</p>
-            {(['party', 'enemies'] as const).map((side) => (
-              <div key={side}>
-                <h5>{side === 'party' ? 'Party' : 'Enemies'}</h5>
-                <ul>
-                  {round[side].map((c, i) => {
-                    const s = (
-                      side === 'party' ? round.partyStates : round.enemyStates
-                    )[i];
-                    return (
-                      <li key={c.key}>
-                        <strong>{c.name || `Combatant ${c.key}`}</strong> — HP:{' '}
-                        {s?.hp || 'Unknown'}; effect: {s?.effect || 'None'}
-                        <p>
-                          Action: {s?.action || '—'} · Result:{' '}
-                          {s?.result || '—'} · Notes: {s?.notes || '—'}
-                        </p>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </>
-        )}
-        <details>
-          <summary>
-            All rounds, cells, declarations, and source-scoped identities
-          </summary>
-          <Detail value={payload} />
-        </details>
-      </section>
-    );
-  }
+  if (type === 'combat')
+    return <HistoricalCombat state={payload as unknown as TrackerState} />;
   const data = payload as unknown as EncumbranceDmDocumentV9;
   return (
     <section>
@@ -153,19 +69,11 @@ export function Inspection({
                   {String(item.fullyIdentified ?? false)} · Value override:{' '}
                   {item.valueGpOverride ?? 'None'}
                 </p>
-                <details>
-                  <summary>All item fields</summary>
-                  <Detail value={JSON.parse(JSON.stringify(item))} />
-                </details>
               </li>
             ))}
           </ul>
         </article>
       ))}
-      <details>
-        <summary>Full DM payload</summary>
-        <Detail value={payload} />
-      </details>
     </section>
   );
 }
@@ -607,10 +515,6 @@ export default function CampaignSnapshots({
             Export original{' '}
             {record.type === 'inventory' ? 'DM inventory' : 'combat'} source…
           </button>
-          <details>
-            <summary>Original source text</summary>
-            <pre className={styles['source']}>{revision.sourceText}</pre>
-          </details>
         </article>
       )}
     </section>
