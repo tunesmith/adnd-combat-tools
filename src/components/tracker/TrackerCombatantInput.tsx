@@ -111,6 +111,7 @@ interface TrackerCombatantInputProps {
   onRemove: () => void;
   onUpdate: (combatant: TrackerCombatant) => void;
   liveUpdates?: boolean;
+  levelManaged?: boolean;
   modalRootId?: string;
 }
 
@@ -140,6 +141,7 @@ const TrackerCombatantInput = ({
   onRemove,
   onUpdate,
   liveUpdates = false,
+  levelManaged = false,
   modalRootId = 'app-modal',
 }: TrackerCombatantInputProps) => {
   const [open, setOpen] = useState<boolean>(false);
@@ -599,6 +601,7 @@ const TrackerCombatantInput = ({
                   <Select
                     isSearchable={false}
                     instanceId={`creatureClass-${draft.key}`}
+                    isDisabled={levelManaged}
                     styles={combatantSelectStyles}
                     menuPortalTarget={selectMenuPortalTarget}
                     menuPosition={'fixed'}
@@ -614,6 +617,7 @@ const TrackerCombatantInput = ({
                   <Select
                     isSearchable={false}
                     instanceId={`level-${draft.key}`}
+                    isDisabled={levelManaged}
                     styles={combatantSelectStyles}
                     menuPortalTarget={selectMenuPortalTarget}
                     menuPosition={'fixed'}
@@ -623,6 +627,9 @@ const TrackerCombatantInput = ({
                     options={levelOptions}
                     onChange={handleLevel}
                   />
+                  {levelManaged && (
+                    <small>Captured level from Party Reference</small>
+                  )}
                 </div>
                 <div className={styles['combatantField']}>
                   <span className={styles['combatantFieldLabel']}>

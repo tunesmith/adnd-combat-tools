@@ -1,3 +1,6 @@
+import { campaignPartySchema } from './campaignPartyModel';
+import type { CampaignParty } from './campaignPartyModel';
+import { validatePartyReferences } from './campaignParty';
 import { validateContinuationReferences } from './campaignContinuity';
 import { sessionContinuationSchema } from './campaignContinuityModel';
 import type { SessionContinuation } from './campaignContinuityModel';
@@ -30,7 +33,8 @@ import {
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
-  schemaVersion: 5;
+  schemaVersion: 6;
+  party?: CampaignParty;
   workingCombats: WorkingCombat[];
   combatCheckpoints: CombatCheckpoint[];
   workingInventories: WorkingInventory[];
@@ -116,6 +120,33 @@ const v5 = v4
     workingCombats: z.array(workingCombatSchema).max(500),
   })
   .strict();
+const v6 = v5
+  .extend({
+    schemaVersion: z.literal(6),
+    party: campaignPartySchema.optional(),
+    workingCombats: z
+      .array(
+        workingCombatSchema
+          .extend({ removedAt: z.string().datetime().optional() })
+          .strict()
+      )
+      .max(500),
+    workspace: v5.shape.workspace
+      .extend({
+        view: z.enum([
+          'possessions',
+          'combats',
+          'history',
+          'details',
+          'tools',
+          'session',
+          'party',
+        ]),
+      })
+      .strict(),
+  })
+  .strict();
+
 export function validateCampaign(value: unknown): CampaignDocument {
   if (!value || typeof value !== 'object')
     throw new Error('Expected a campaign object.');
@@ -127,10 +158,11 @@ export function validateCampaign(value: unknown): CampaignDocument {
     header['schemaVersion'] !== 2 &&
     header['schemaVersion'] !== 3 &&
     header['schemaVersion'] !== 4 &&
-    header['schemaVersion'] !== 5
+    header['schemaVersion'] !== 5 &&
+    header['schemaVersion'] !== 6
   )
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1 through 5.'
+      'Unsupported campaign schema version. This app supports versions 1 through 6.'
     );
   if (
     value &&
@@ -139,7 +171,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   ) {
     return {
       ...v1.parse(value),
-      schemaVersion: 5,
+      schemaVersion: 6,
       workingCombats: [],
       combatCheckpoints: [],
       sessions: [],
@@ -162,7 +194,9 @@ export function validateCampaign(value: unknown): CampaignDocument {
       ? v3.parse(value)
       : header['schemaVersion'] === 4
       ? v4.parse(value)
-      : v5.parse(value);
+      : header['schemaVersion'] === 5
+      ? v5.parse(value)
+      : v6.parse(value);
   const migrated =
     legacy.schemaVersion === 3
       ? {
@@ -176,7 +210,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   const parsed = (migrated.schemaVersion === 4
     ? {
         ...migrated,
-        schemaVersion: 5 as const,
+        schemaVersion: 6 as const,
         sessions: migrated.sessions.map((s) => ({ ...s, notes: '' })),
         workingCombats: migrated.workingCombats.map((c) => ({
           ...c,
@@ -184,7 +218,10 @@ export function validateCampaign(value: unknown): CampaignDocument {
           status: 'unspecified' as const,
         })),
       }
-    : migrated) as unknown as CampaignDocument;
+    : {
+        ...migrated,
+        schemaVersion: 6 as const,
+      }) as unknown as CampaignDocument;
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');
@@ -296,11 +333,12 @@ export function validateCampaign(value: unknown): CampaignDocument {
   )) {
     if (
       !parsed.workingCombats.some(
-        (c) => c.id === combatId && c.sessionId === sessionId
+        (c) => c.id === combatId && c.sessionId === sessionId && !c.removedAt
       )
     )
       throw new Error('Invalid selected encounter.');
   }
+  validatePartyReferences(parsed, unique);
   validateContinuationReferences(parsed);
   return parsed;
 }

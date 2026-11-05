@@ -1,6 +1,6 @@
 # C1: Start next session and session notes
 
-C1 adds explicit session continuation to the existing Tauri workspace. It stops before Party Reference, saving throws, effective levels, XP, or any private historical-session import. The public tracker and encumbrance tools retain their standalone behavior.
+C1 adds explicit session continuation to the existing Tauri workspace. This page describes that milestone. See [C2 Party Reference](desktop-party-reference.md) for roster profiles, saving throws, effective levels, and encounter recovery. The public tracker and encumbrance tools retain their standalone behavior.
 
 ## Hands-on workflow
 

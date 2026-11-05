@@ -22,6 +22,7 @@ export const sessionContinuationSchema = z
     combatInstanceIds: z.array(z.string().min(1)),
     inventoryId: z.string().min(1).nullable(),
     copyNotes: z.boolean(),
+    partyCharacterIds: z.array(z.string().min(1)).optional(),
   })
   .strict();
 export type SessionContinuation = z.infer<typeof sessionContinuationSchema>;

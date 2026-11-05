@@ -253,7 +253,7 @@
 }
 .versionMenu > div {
   position: absolute;
-  right: 0;
+  left: 0;
   z-index: 10;
   background: #fffdf8;
   border: 1px solid #b8a98e;
@@ -428,4 +428,144 @@
 }
 .sessionError {
   color: #852c20;
+}
+.partyTableWrap {
+  overflow-x: auto;
+}
+.partyTable {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 880px;
+  border: 1px solid #d8ccbc;
+}
+.partyTable th,
+.partyTable td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #d8ccbc;
+  vertical-align: top;
+  text-align: left;
+}
+.partyTable thead th {
+  background: #ede6d9;
+}
+.partyTable tbody th {
+  font-weight: normal;
+  min-width: 160px;
+  background: #f0ebdf;
+}
+.partyTable tbody td {
+  background: #fffdf8;
+}
+.partyTable .saveTarget {
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.partyTable td.saveTarget {
+  font-weight: 600;
+}
+.partyTable .saveTarget:nth-child(2),
+.partyTable .saveNote:nth-child(7) {
+  border-left: 1px solid #d8ccbc;
+}
+.partyTable .saveNote {
+  width: 13%;
+}
+.partyTable .saveNote:last-child {
+  width: 26%;
+}
+.partyTable small {
+  display: block;
+  color: #6d6151;
+  margin: 3px 0;
+}
+.saveNoteEditor {
+  display: block;
+  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 3px 5px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font: inherit;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: inherit;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+}
+.saveNoteEditor:hover,
+.saveNoteEditor:focus {
+  background: #fff;
+  border-color: #b8a98e;
+}
+.partyTable button,
+.linkedLevelNotice button {
+  font: inherit;
+  padding: 5px 9px;
+  border: 1px solid #b8a98e;
+  border-radius: 5px;
+  background: #fffdf8;
+  color: #443b2c;
+  cursor: pointer;
+}
+.partyTable .effectToggle {
+  margin-top: 4px;
+  border-color: #57272d;
+  color: #57272d;
+  font-weight: 600;
+}
+.partyTable .partyName {
+  display: block;
+  padding: 0;
+  border-color: transparent;
+  text-align: left;
+  overflow-wrap: anywhere;
+  background: transparent;
+  color: #57272d;
+  font-weight: 700;
+}
+.partyTable .partyName:hover {
+  text-decoration: underline;
+}
+.partyTable .effectToggle[aria-pressed='true'] {
+  background: #57272d;
+  color: #fff8e9;
+}
+.profileFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+.profileFields input,
+.profileFields select {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+}
+.manualTargets {
+  min-width: 0;
+  margin: 12px 0;
+  border: 1px solid #d8ccbc;
+  border-radius: 5px;
+}
+.manualTargets legend {
+  font-weight: 600;
+}
+.continuationDialog details label {
+  display: block;
+  margin: 8px 0;
+}
+.continuationDialog details select {
+  max-width: 100%;
+}
+.linkedLevelNotice {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
 }

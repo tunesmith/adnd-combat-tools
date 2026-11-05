@@ -19,12 +19,14 @@ pub struct Document {
     pub workspace: serde_json::Value,
     pub working_combats: Vec<serde_json::Value>,
     pub combat_checkpoints: Vec<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub party: Option<serde_json::Value>,
 }
 impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 5,
+            schema_version: 6,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -34,6 +36,7 @@ impl Document {
             inventory_checkpoints: Vec::new(),
             working_combats: Vec::new(),
             combat_checkpoints: Vec::new(),
+            party: None,
             workspace: serde_json::json!({"sessionId":null,"view":"possessions","combatSelections":{}}),
         }
     }
@@ -177,11 +180,11 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 6.into();
+        v["schemaVersion"] = 7.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
-        v["schemaVersion"] = 5.into();
+        v["schemaVersion"] = 6.into();
         v["unknown"] = true.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap()).is_err());
     }
@@ -243,11 +246,13 @@ pub fn validate_replacement_with_purpose(
             {
                 return Err("Invalid encounter generation.".into());
             }
-            if !new.combat_checkpoints.iter().any(|c| {
-                c["combatId"] == combat["id"]
-                    && c["sessionId"] == combat["sessionId"]
-                    && c["state"] == combat["state"]
-            }) {
+            if next["removedAt"] == combat["removedAt"]
+                && !new.combat_checkpoints.iter().any(|c| {
+                    c["combatId"] == combat["id"]
+                        && c["sessionId"] == combat["sessionId"]
+                        && c["state"] == combat["state"]
+                })
+            {
                 return Err("Checkpoint the encounter before restoring history.".into());
             }
         }
@@ -326,7 +331,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 5);
+        assert_eq!(doc.schema_version, 6);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -388,7 +393,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 5);
+        assert_eq!(doc.schema_version, 6);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);

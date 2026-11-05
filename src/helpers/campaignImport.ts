@@ -23,6 +23,7 @@ export function activateSource(
       doc.workingCombats.find(
         (c) =>
           c.sessionId === sessionId &&
+          !c.removedAt &&
           ownedHistory(doc, 'combat', c).records.has(recordId)
       );
     if (existing)

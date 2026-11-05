@@ -1,3 +1,4 @@
+import { profilesInSession } from '../../helpers/campaignParty';
 import { useEffect, useRef, useState } from 'react';
 import {
   sessionFingerprint,
@@ -26,7 +27,9 @@ export default function CreateSessionDialog({
     source ? sessionFingerprint(document, sessionId) : ''
   );
   const [combats] = useState(() =>
-    document.workingCombats.filter((c) => c.sessionId === sessionId)
+    document.workingCombats.filter(
+      (c) => c.sessionId === sessionId && !c.removedAt
+    )
   );
   const [inventory] = useState(() =>
     document.workingInventories.find((w) => w.sessionId === sessionId)
@@ -35,6 +38,8 @@ export default function CreateSessionDialog({
   const [selected, setSelected] = useState<string[]>([]);
   const [carryInventory, setCarryInventory] = useState(false);
   const [copyNotes, setCopyNotes] = useState(false);
+  const [profiles] = useState(() => profilesInSession(document, sessionId));
+  const [partyIds, setPartyIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const destinationId = useRef<string>();
@@ -53,6 +58,9 @@ export default function CreateSessionDialog({
       ? [`${selected.length} encounter${selected.length === 1 ? '' : 's'}`]
       : []),
     ...(copyNotes ? ['session notes'] : []),
+    ...(partyIds.length
+      ? [`${partyIds.length} party profile${partyIds.length === 1 ? '' : 's'}`]
+      : []),
   ];
 
   async function create() {
@@ -85,6 +93,7 @@ export default function CreateSessionDialog({
                 }
               : null,
           copyNotes,
+          partyCharacterIds: partyIds,
           capturedAt: new Date().toISOString(),
         };
         await onCreate((doc) => startNextSession(doc, request));
@@ -143,48 +152,85 @@ export default function CreateSessionDialog({
               onChange={(e) => setLabel(e.target.value)}
             />
           </label>
-          {source && (inventory || combats.length > 0 || source.notes) && (
-            <fieldset className={styles['sessionTransfer']}>
-              <legend>Carry from {source.label}</legend>
-              {inventory && (
-                <label className={styles['continuationChoice']}>
-                  <input
-                    type="checkbox"
-                    checked={carryInventory}
-                    onChange={(e) => setCarryInventory(e.target.checked)}
-                  />
-                  Current inventory
-                </label>
-              )}
-              {combats.map((c) => (
-                <label className={styles['continuationChoice']} key={c.id}>
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(c.id)}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setSelected((ids) =>
-                        checked
-                          ? [...ids, c.id]
-                          : ids.filter((id) => id !== c.id)
-                      );
-                    }}
-                  />
-                  {c.title}
-                </label>
-              ))}
-              {source.notes && (
-                <label className={styles['continuationChoice']}>
-                  <input
-                    type="checkbox"
-                    checked={copyNotes}
-                    onChange={(e) => setCopyNotes(e.target.checked)}
-                  />
-                  Copy session notes
-                </label>
-              )}
-            </fieldset>
-          )}
+          {source &&
+            (inventory ||
+              combats.length > 0 ||
+              source.notes ||
+              profiles.length > 0) && (
+              <fieldset className={styles['sessionTransfer']}>
+                <legend>Carry from {source.label}</legend>
+                {inventory && (
+                  <label className={styles['continuationChoice']}>
+                    <input
+                      type="checkbox"
+                      checked={carryInventory}
+                      onChange={(e) => setCarryInventory(e.target.checked)}
+                    />
+                    Current inventory
+                  </label>
+                )}
+                {combats.map((c) => (
+                  <label className={styles['continuationChoice']} key={c.id}>
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(c.id)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSelected((ids) =>
+                          checked
+                            ? [...ids, c.id]
+                            : ids.filter((id) => id !== c.id)
+                        );
+                      }}
+                    />
+                    {c.title}
+                  </label>
+                ))}
+                {profiles.length > 0 && (
+                  <details>
+                    <summary>
+                      Party profiles
+                      {partyIds.length ? ` (${partyIds.length} selected)` : ''}
+                    </summary>
+                    {profiles.map((profile, index) => (
+                      <label
+                        key={profile.characterId}
+                        className={styles['continuationChoice']}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={partyIds.includes(profile.characterId)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setPartyIds((ids) =>
+                              checked
+                                ? [...ids, profile.characterId]
+                                : ids.filter((id) => id !== profile.characterId)
+                            );
+                          }}
+                        />
+                        {index + 1}.{' '}
+                        {
+                          document.party?.roster.find(
+                            (c) => c.id === profile.characterId
+                          )?.name
+                        }
+                      </label>
+                    ))}
+                  </details>
+                )}
+                {source.notes && (
+                  <label className={styles['continuationChoice']}>
+                    <input
+                      type="checkbox"
+                      checked={copyNotes}
+                      onChange={(e) => setCopyNotes(e.target.checked)}
+                    />
+                    Copy session notes
+                  </label>
+                )}
+              </fieldset>
+            )}
         </fieldset>
         {error && (
           <p role="alert" className={styles['sessionError']}>

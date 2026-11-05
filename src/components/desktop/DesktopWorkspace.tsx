@@ -1,3 +1,4 @@
+import PartyReference from './PartyReference';
 import CreateSessionDialog from './CreateSessionDialog';
 import RenamableTab from './RenamableTab';
 import { ownedHistory, ownsVersion } from '../../helpers/campaignHistory';
@@ -430,6 +431,7 @@ export default function DesktopWorkspace({
                 ['possessions', 'Possessions'],
                 ['combats', 'Combats'],
                 ['session', 'Session notes'],
+                ['party', 'Party Reference'],
                 ['details', 'Campaign Details'],
                 ['tools', 'Standalone tools'],
               ] as const
@@ -457,7 +459,7 @@ export default function DesktopWorkspace({
                 Encounters:{' '}
                 {
                   document.workingCombats.filter(
-                    (c) => c.sessionId === sessionId
+                    (c) => c.sessionId === sessionId && !c.removedAt
                   ).length
                 }{' '}
                 ·{' '}
@@ -614,7 +616,8 @@ export default function DesktopWorkspace({
                       (c) =>
                         c.id === id &&
                         c.sessionId === ownedSession &&
-                        c.generation === generation
+                        c.generation === generation &&
+                        !c.removedAt
                     )
                   )
                     return false;
@@ -632,6 +635,16 @@ export default function DesktopWorkspace({
                 }}
               />
             </section>
+            {view === 'party' && (
+              <section className={styles['view']} aria-label="Party Reference">
+                <PartyReference
+                  key={`${state.epoch}:${sessionId}`}
+                  document={document}
+                  sessionId={sessionId}
+                  onChange={(change) => mutate(change, scope)}
+                />
+              </section>
+            )}
             <section
               className={styles['view']}
               style={{ display: view === 'details' ? undefined : 'none' }}

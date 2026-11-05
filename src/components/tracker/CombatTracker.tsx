@@ -109,6 +109,9 @@ interface CombatTrackerProps {
     readOnly?: boolean;
     state: TrackerState;
     onStateChange: (state: TrackerState) => boolean | void;
+    projectNewRound?: (state: TrackerState) => TrackerState;
+    reservedKey?: number;
+    levelManaged?: (side: 'party' | 'enemy', key: number) => boolean;
   };
   rememberedState?: TrackerState;
   loadedFromEncodedState?: boolean;
@@ -1567,7 +1570,12 @@ const CombatTracker = ({
       return;
     }
     if (action.type === 'replace-state') return;
-    const next = trackerReducer(stateRef.current, action);
+    const reduced = trackerReducer(stateRef.current, action);
+    const next =
+      action.type === 'advance-round' &&
+      reduced.rounds.length > stateRef.current.rounds.length
+        ? campaign.projectNewRound?.(reduced) || reduced
+        : reduced;
     if (campaign.onStateChange(next) !== false) stateRef.current = next;
   };
   const currentRound = state.rounds[state.activeRound];
@@ -2576,8 +2584,11 @@ const CombatTracker = ({
   };
 
   const nextKey = () => {
-    const current = idCounter.current;
-    idCounter.current += 1;
+    const current = Math.max(
+      idCounter.current,
+      (campaign?.reservedKey ?? -1) + 1
+    );
+    idCounter.current = current + 1;
     return current;
   };
 
@@ -5031,6 +5042,10 @@ const CombatTracker = ({
                       }
                       combatant={combatant}
                       side={'party'}
+                      levelManaged={campaign?.levelManaged?.(
+                        'party',
+                        combatant.key
+                      )}
                       canRemove={currentRound.party.length > 1}
                       onRemove={() =>
                         dispatch({
@@ -5077,6 +5092,10 @@ const CombatTracker = ({
                       }
                       combatant={combatant}
                       side={'enemy'}
+                      levelManaged={campaign?.levelManaged?.(
+                        'enemy',
+                        combatant.key
+                      )}
                       canRemove={currentRound.enemies.length > 1}
                       onRemove={() =>
                         dispatch({

@@ -1,3 +1,4 @@
+import { validateEncounterRemoval } from './campaignEncounterRemoval';
 import { validateContinuityTransition } from './campaignContinuity';
 import { canonical } from './campaignSnapshots';
 import type { CampaignDocument } from './campaignDocument';
@@ -72,10 +73,33 @@ export function validateHistoryTransition(
   purpose: string
 ) {
   validateContinuityTransition(old, next);
+  if (
+    old.party?.roster.some(
+      (c) => !next.party?.roster.some((n) => n.id === c.id)
+    )
+  )
+    throw new Error('Campaign character identities cannot be deleted.');
+  if (
+    old.party?.profiles.some(
+      (p) =>
+        !next.party?.profiles.some(
+          (n) => n.characterId === p.characterId && n.sessionId === p.sessionId
+        )
+    )
+  )
+    throw new Error('Historical party profiles cannot be deleted.');
+  if (
+    next.workingCombats.some(
+      (c) => c.removedAt && !old.workingCombats.some((p) => p.id === c.id)
+    )
+  )
+    throw new Error('Only existing encounters can be removed.');
   for (const p of next.combatCheckpoints.filter(
     (p) => !old.combatCheckpoints.some((c) => c.id === p.id)
   )) {
     const owner = old.workingCombats.find((w) => w.id === p.combatId);
+    if (owner?.removedAt)
+      throw new Error('Recover the encounter before checkpointing it.');
     if (p.origin && owner && canonical(p.origin) !== canonical(owner.origin))
       throw new Error('Checkpoint provenance must match its encounter.');
   }
@@ -89,6 +113,7 @@ export function validateHistoryTransition(
   for (const combat of old.workingCombats) {
     const changed = next.workingCombats.find((c) => c.id === combat.id);
     if (!changed) continue;
+    if (validateEncounterRemoval(old, next, combat, changed)) continue;
     if (
       changed.generation !== combat.generation ||
       JSON.stringify(changed.origin) !== JSON.stringify(combat.origin)

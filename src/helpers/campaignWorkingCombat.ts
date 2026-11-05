@@ -17,6 +17,7 @@ export interface WorkingCombat {
   encounterId: string;
   status: EncounterStatus;
   continuedFrom?: ContinuedFrom;
+  removedAt?: string;
   state: TrackerState;
   origin:
     | { kind: 'empty' }
@@ -137,7 +138,10 @@ export function changeWorkingCombat(
   if (
     !doc.workingCombats.some(
       (c) =>
-        c.id === id && c.sessionId === sessionId && c.generation === generation
+        c.id === id &&
+        c.sessionId === sessionId &&
+        c.generation === generation &&
+        !c.removedAt
     )
   )
     throw new Error('Encounter changed; delayed edit cancelled.');
@@ -158,7 +162,7 @@ export function captureCombatCheckpoint(
   at: string
 ): CampaignDocument {
   const combat = doc.workingCombats.find((c) => c.id === id);
-  if (!combat) throw new Error('Encounter not found.');
+  if (!combat || combat.removedAt) throw new Error('Encounter is unavailable.');
   if (!label.trim()) throw new Error('Name the checkpoint.');
   return {
     ...doc,
@@ -186,7 +190,7 @@ export function restoreWorkingCombat(
   at: string
 ): CampaignDocument {
   const combat = doc.workingCombats.find((c) => c.id === id);
-  if (!combat) throw new Error('Encounter not found.');
+  if (!combat || combat.removedAt) throw new Error('Encounter is unavailable.');
   if (!ownsVersion(doc, 'combat', combat, origin))
     throw new Error('Version does not belong to this encounter.');
   const preserved = captureCombatCheckpoint(

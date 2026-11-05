@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import styles from './campaignWorkspace.module.css';
 export default function VersionToolbar({
@@ -9,6 +10,7 @@ export default function VersionToolbar({
   onCreate,
   replacementName,
   firstActivation,
+  secondaryActions,
 }: {
   versions: { id: string; title: string; time: string }[];
   value: string;
@@ -18,6 +20,7 @@ export default function VersionToolbar({
   onCreate?: () => void;
   replacementName?: string;
   firstActivation?: boolean;
+  secondaryActions?: ReactNode;
 }) {
   const menu = useRef<HTMLDetailsElement>(null);
   const openAction = (next: 'capture' | 'restore') => {
@@ -74,6 +77,7 @@ export default function VersionToolbar({
               Create new encounter from this version…
             </button>
           )}
+          {secondaryActions}
         </div>
       </details>
       {action && (

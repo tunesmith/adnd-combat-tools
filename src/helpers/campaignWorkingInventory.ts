@@ -11,7 +11,8 @@ export type WorkspaceView =
   | 'history'
   | 'details'
   | 'tools'
-  | 'session';
+  | 'session'
+  | 'party';
 export interface WorkingInventory {
   continuedFrom?: ContinuedFrom;
   id: string;

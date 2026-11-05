@@ -1,3 +1,4 @@
+import { carriedParty, partyInSession } from './campaignParty';
 import { sha256 } from 'js-sha256';
 import { canonical } from './campaignSnapshots';
 import { captureCombatCheckpoint } from './campaignWorkingCombat';
@@ -18,6 +19,7 @@ export interface NextSessionRequest {
     checkpointId: string;
   } | null;
   copyNotes: boolean;
+  partyCharacterIds?: string[];
   capturedAt: string;
 }
 function sourceContext(doc: CampaignDocument, id: string) {
@@ -29,6 +31,9 @@ function sourceContext(doc: CampaignDocument, id: string) {
     combats: doc.workingCombats.filter((c) => c.sessionId === id),
     inventory: doc.workingInventories.filter((w) => w.sessionId === id),
     selected: doc.workspace.combatSelections?.[id] || null,
+    ...(doc.party
+      ? { party: partyInSession(doc, id), roster: doc.party.roster }
+      : {}),
   };
 }
 export function sessionFingerprint(doc: CampaignDocument, id: string) {
@@ -56,6 +61,9 @@ export function startNextSession(
     combatInstanceIds: request.combats.map((c) => c.sourceId),
     inventoryId: request.inventory?.sourceId || null,
     copyNotes: request.copyNotes,
+    ...(request.partyCharacterIds?.length
+      ? { partyCharacterIds: request.partyCharacterIds }
+      : {}),
   };
   const fingerprint = requestFingerprint(request.destinationId, label, origin);
   const existing = doc.sessions.find((s) => s.id === request.destinationId);
@@ -90,7 +98,8 @@ export function startNextSession(
   };
   for (const choice of request.combats) {
     const combat = doc.workingCombats.find(
-      (c) => c.id === choice.sourceId && c.sessionId === source.id
+      (c) =>
+        c.id === choice.sourceId && c.sessionId === source.id && !c.removedAt
     );
     if (!combat) throw new Error('Selected source encounter is missing.');
     next = captureCombatCheckpoint(
@@ -149,6 +158,27 @@ export function startNextSession(
           },
         },
       ],
+    };
+  }
+  if (request.partyCharacterIds?.length && doc.party) {
+    const carried = carriedParty(
+      doc,
+      next,
+      source.id,
+      request.destinationId,
+      request.partyCharacterIds
+    );
+    next = {
+      ...next,
+      party: {
+        ...doc.party,
+        profiles: [...doc.party.profiles, ...carried.profiles],
+        inventoryLinks: [
+          ...doc.party.inventoryLinks,
+          ...carried.inventoryLinks,
+        ],
+        combatLinks: [...doc.party.combatLinks, ...carried.combatLinks],
+      },
     };
   }
   const selected =
@@ -311,6 +341,15 @@ export function validateContinuityTransition(
     const source = old.sessions.find((p) => p.id === origin.sourceSessionId);
     if ((s.notes || '') !== (origin.copyNotes ? source?.notes || '' : ''))
       throw new Error('Session notes were not copied as requested.');
+    const party = carriedParty(
+      old,
+      next,
+      origin.sourceSessionId,
+      s.id,
+      origin.partyCharacterIds || []
+    );
+    if (canonical(party) !== canonical(partyInSession(next, s.id)))
+      throw new Error('Party profile copies do not match choices.');
     const combats = next.workingCombats.filter((c) => c.sessionId === s.id),
       inventories = next.workingInventories.filter((w) => w.sessionId === s.id);
     if (
@@ -320,7 +359,10 @@ export function validateContinuityTransition(
       throw new Error('Continuation copies do not match choices.');
     for (const id of origin.combatInstanceIds) {
       const source = old.workingCombats.find(
-          (c) => c.id === id && c.sessionId === origin.sourceSessionId
+          (c) =>
+            c.id === id &&
+            c.sessionId === origin.sourceSessionId &&
+            !c.removedAt
         ),
         copy = combats.find((c) => c.continuedFrom?.instanceId === id);
       if (
