@@ -1,3 +1,8 @@
+import {
+  encounterStatusSchema,
+  continuedFromSchema,
+} from './campaignContinuityModel';
+import type { EncounterStatus, ContinuedFrom } from './campaignContinuityModel';
 import { ownsVersion } from './campaignHistory';
 import { z } from 'zod';
 import { canonical, interpretSource } from './campaignSnapshots';
@@ -9,6 +14,9 @@ export interface WorkingCombat {
   sessionId: string;
   title: string;
   generation: number;
+  encounterId: string;
+  status: EncounterStatus;
+  continuedFrom?: ContinuedFrom;
   state: TrackerState;
   origin:
     | { kind: 'empty' }
@@ -22,6 +30,7 @@ export interface CombatCheckpoint {
   label: string;
   capturedAt: string;
   origin?: WorkingCombat['origin'];
+  status?: EncounterStatus;
   state: TrackerState;
 }
 const id = z.string().min(1);
@@ -36,7 +45,7 @@ const tracker = z.unknown().superRefine((value, ctx) => {
     ctx.addIssue({ code: 'custom', message: String(error) });
   }
 });
-export const workingCombatSchema = z
+export const legacyWorkingCombatSchema = z
   .object({
     id,
     sessionId: id,
@@ -52,6 +61,13 @@ export const workingCombatSchema = z
     ]),
   })
   .strict();
+export const workingCombatSchema = legacyWorkingCombatSchema
+  .extend({
+    encounterId: id,
+    status: encounterStatusSchema,
+    continuedFrom: continuedFromSchema.optional(),
+  })
+  .strict();
 export const combatCheckpointSchema = z
   .object({
     id,
@@ -59,7 +75,8 @@ export const combatCheckpointSchema = z
     sessionId: id,
     label: z.string().min(1).max(1000),
     capturedAt: z.string().datetime(),
-    origin: workingCombatSchema.shape.origin.optional(),
+    origin: legacyWorkingCombatSchema.shape.origin.optional(),
+    status: encounterStatusSchema.optional(),
     state: tracker,
   })
   .strict();
@@ -94,6 +111,8 @@ export function createWorkingCombat(
     sessionId,
     title: name,
     generation: 0,
+    encounterId: id,
+    status: 'unspecified',
     state: normalizeWorkingCombat({ ...state, title: name }),
     origin,
   };
@@ -151,6 +170,7 @@ export function captureCombatCheckpoint(
         sessionId: combat.sessionId,
         label: label.trim(),
         capturedAt: at,
+        status: combat.status,
         origin: combat.origin,
         state: JSON.parse(JSON.stringify(combat.state)),
       },

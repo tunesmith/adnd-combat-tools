@@ -1,5 +1,9 @@
+import { validateContinuationReferences } from './campaignContinuity';
+import { sessionContinuationSchema } from './campaignContinuityModel';
+import type { SessionContinuation } from './campaignContinuityModel';
 import {
   workingCombatSchema,
+  legacyWorkingCombatSchema,
   combatCheckpointSchema,
 } from './campaignWorkingCombat';
 import type { WorkingCombat, CombatCheckpoint } from './campaignWorkingCombat';
@@ -26,7 +30,7 @@ import {
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
-  schemaVersion: 4;
+  schemaVersion: 5;
   workingCombats: WorkingCombat[];
   combatCheckpoints: CombatCheckpoint[];
   workingInventories: WorkingInventory[];
@@ -39,7 +43,10 @@ export interface CampaignDocument {
   id: string;
   title: string;
   notes: string;
-  sessions: CampaignSession[];
+  sessions: (CampaignSession & {
+    notes?: string;
+    continuation?: SessionContinuation;
+  })[];
   records: CampaignRecord[];
 }
 const common = {
@@ -74,11 +81,39 @@ const v3 = v2
 const v4 = v3
   .extend({
     schemaVersion: z.literal(4),
-    workingCombats: z.array(workingCombatSchema).max(500),
+    workingCombats: z.array(legacyWorkingCombatSchema).max(500),
     combatCheckpoints: z.array(combatCheckpointSchema).max(1000),
     workspace: workspaceSchema
       .extend({ combatSelections: z.record(z.string()).default({}) })
       .strict(),
+  })
+  .strict();
+const v5 = v4
+  .extend({
+    schemaVersion: z.literal(5),
+    workspace: v4.shape.workspace
+      .extend({
+        view: z.enum([
+          'possessions',
+          'combats',
+          'history',
+          'details',
+          'tools',
+          'session',
+        ]),
+      })
+      .strict(),
+    sessions: z
+      .array(
+        sessionSchema
+          .extend({
+            notes: z.string().max(1_000_000).optional(),
+            continuation: sessionContinuationSchema.optional(),
+          })
+          .strict()
+      )
+      .max(500),
+    workingCombats: z.array(workingCombatSchema).max(500),
   })
   .strict();
 export function validateCampaign(value: unknown): CampaignDocument {
@@ -91,10 +126,11 @@ export function validateCampaign(value: unknown): CampaignDocument {
     header['schemaVersion'] !== 1 &&
     header['schemaVersion'] !== 2 &&
     header['schemaVersion'] !== 3 &&
-    header['schemaVersion'] !== 4
+    header['schemaVersion'] !== 4 &&
+    header['schemaVersion'] !== 5
   )
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1 through 4.'
+      'Unsupported campaign schema version. This app supports versions 1 through 5.'
     );
   if (
     value &&
@@ -103,7 +139,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   ) {
     return {
       ...v1.parse(value),
-      schemaVersion: 4,
+      schemaVersion: 5,
       workingCombats: [],
       combatCheckpoints: [],
       sessions: [],
@@ -124,8 +160,10 @@ export function validateCampaign(value: unknown): CampaignDocument {
         }
       : header['schemaVersion'] === 3
       ? v3.parse(value)
-      : v4.parse(value);
-  const parsed =
+      : header['schemaVersion'] === 4
+      ? v4.parse(value)
+      : v5.parse(value);
+  const migrated =
     legacy.schemaVersion === 3
       ? {
           ...legacy,
@@ -135,6 +173,18 @@ export function validateCampaign(value: unknown): CampaignDocument {
           workspace: { ...legacy.workspace, combatSelections: {} },
         }
       : legacy;
+  const parsed = (migrated.schemaVersion === 4
+    ? {
+        ...migrated,
+        schemaVersion: 5 as const,
+        sessions: migrated.sessions.map((s) => ({ ...s, notes: '' })),
+        workingCombats: migrated.workingCombats.map((c) => ({
+          ...c,
+          encounterId: c.id,
+          status: 'unspecified' as const,
+        })),
+      }
+    : migrated) as unknown as CampaignDocument;
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');
@@ -251,7 +301,8 @@ export function validateCampaign(value: unknown): CampaignDocument {
     )
       throw new Error('Invalid selected encounter.');
   }
-  return parsed as CampaignDocument;
+  validateContinuationReferences(parsed);
+  return parsed;
 }
 export function parseCampaign(text: string): CampaignDocument {
   if (strToU8(text).length > MAX_CAMPAIGN_BYTES)

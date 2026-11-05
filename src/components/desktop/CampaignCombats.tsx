@@ -1,11 +1,13 @@
 import { ownedHistory } from '../../helpers/campaignHistory';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+import RenamableTab from './RenamableTab';
 import CombatTracker from '../tracker/CombatTracker';
 import VersionToolbar from './VersionToolbar';
 import HistoricalCombat from './HistoricalCombat';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
   createWorkingCombat,
+  changeWorkingCombat,
   emptyWorkingCombat,
   captureCombatCheckpoint,
   restoreWorkingCombat,
@@ -34,9 +36,10 @@ export default function CampaignCombats({
   editorVersion: number;
   active: boolean;
 }) {
-  const newEncounterRef = useRef<HTMLDetailsElement>(null);
-  const [name, setName] = useState('');
-  const [historyId, setHistoryId] = useState('');
+  const [newEncounterId, setNewEncounterId] = useState<string>();
+  const [historySelections, setHistorySelections] = useState<
+    Record<string, string>
+  >({});
   const combats = document.workingCombats.filter(
     (c) => c.sessionId === sessionId
   );
@@ -44,6 +47,11 @@ export default function CampaignCombats({
     combats.find(
       (c) => c.id === document.workspace.combatSelections?.[sessionId]
     ) || combats[0];
+  const historyId = historySelections[selected?.id || ''] || '';
+  function setHistoryId(id: string) {
+    if (selected)
+      setHistorySelections((old) => ({ ...old, [selected.id]: id }));
+  }
   const owned = selected
     ? ownedHistory(document, 'combat', selected)
     : { records: new Set<string>(), checkpoints: new Set<string>() };
@@ -53,7 +61,12 @@ export default function CampaignCombats({
       .flatMap((r) =>
         r.revisions.map((v, i) => ({
           id: v.id,
-          title: `${r.title} · imported revision ${i + 1}`,
+          title: `${r.title} · imported revision ${i + 1}${
+            r.sessionId !== sessionId
+              ? ' · from ' +
+                document.sessions.find((s) => s.id === r.sessionId)?.label
+              : ''
+          }`,
           time: v.importedAt,
           state: v.payload as unknown as TrackerState,
           origin: { kind: 'import' as const, recordId: r.id, revisionId: v.id },
@@ -63,7 +76,12 @@ export default function CampaignCombats({
       .filter((c) => owned.checkpoints.has(c.id))
       .map((c) => ({
         id: c.id,
-        title: `${c.state.title || 'Untitled encounter'} · ${c.label}`,
+        title: `${c.state.title || 'Untitled encounter'} · ${c.label}${
+          c.sessionId !== sessionId
+            ? ' · from ' +
+              document.sessions.find((s) => s.id === c.sessionId)?.label
+            : ''
+        }`,
         time: c.capturedAt,
         state: c.state,
         origin: { kind: 'checkpoint' as const, checkpointId: c.id },
@@ -72,22 +90,17 @@ export default function CampaignCombats({
   const historical = history.find((h) => h.id === historyId);
   const create = (state: TrackerState, origin: WorkingCombat['origin']) => {
     const id = uid();
-    if (
-      onChange((d) =>
-        createWorkingCombat(
-          d,
-          sessionId,
-          name || state.title || 'Untitled encounter',
-          state,
-          origin,
-          id
-        )
+    const created = onChange((d) =>
+      createWorkingCombat(
+        d,
+        sessionId,
+        state.title || 'Untitled encounter',
+        state,
+        origin,
+        id
       )
-    ) {
-      if (newEncounterRef.current) newEncounterRef.current.open = false;
-      setName('');
-      setHistoryId('');
-    }
+    );
+    if (created && origin.kind === 'empty') setNewEncounterId(id);
   };
   return (
     <>
@@ -106,11 +119,18 @@ export default function CampaignCombats({
               aria-label="Working encounters"
             >
               {combats.map((c) => (
-                <button
+                <RenamableTab
                   key={c.id}
-                  aria-pressed={selected?.id === c.id && !historical}
-                  onClick={() => {
-                    setHistoryId('');
+                  kind="encounter"
+                  label={c.title}
+                  selected={selected?.id === c.id && !historical}
+                  renameOnMount={c.id === newEncounterId}
+                  onRenameEnd={() => setNewEncounterId(undefined)}
+                  onSelect={() => {
+                    if (selected?.id === c.id) {
+                      setHistoryId('');
+                      return;
+                    }
                     onChange((d) => ({
                       ...d,
                       workspace: {
@@ -122,30 +142,35 @@ export default function CampaignCombats({
                       },
                     }));
                   }}
-                >
-                  {c.title}
-                </button>
+                  onRename={(title) =>
+                    onChange((d) => {
+                      const current = d.workingCombats.find(
+                        (item) => item.id === c.id
+                      );
+                      if (!current)
+                        throw new Error('Encounter is unavailable.');
+                      return changeWorkingCombat(
+                        d,
+                        c.id,
+                        sessionId,
+                        c.generation,
+                        { ...current.state, title }
+                      );
+                    })
+                  }
+                />
               ))}
-              <details ref={newEncounterRef} className={styles['newEncounter']}>
-                <summary>New encounter…</summary>
-                <div className={styles['newEncounterForm']}>
-                  <label>
-                    New encounter name
-                    <input
-                      maxLength={1000}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </label>
-                  <button
-                    onClick={() =>
-                      create(emptyWorkingCombat(), { kind: 'empty' })
-                    }
-                  >
-                    Create empty encounter
-                  </button>
-                </div>
-              </details>
+              <button
+                className={styles['addTab']}
+                onClick={() =>
+                  create(
+                    { ...emptyWorkingCombat(), title: 'Untitled encounter' },
+                    { kind: 'empty' }
+                  )
+                }
+              >
+                + Encounter
+              </button>
             </div>
           </div>
           {!selected && (
@@ -154,7 +179,6 @@ export default function CampaignCombats({
               Details → Import.
             </p>
           )}
-          {selected && !historical && <p>Current · editable</p>}
           {selected && !historical && (
             <CombatTracker
               key={`${selected.id}:${selected.generation}:${editorVersion}`}

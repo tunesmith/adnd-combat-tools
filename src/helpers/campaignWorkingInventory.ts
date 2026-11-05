@@ -1,3 +1,5 @@
+import { continuedFromSchema } from './campaignContinuityModel';
+import type { ContinuedFrom } from './campaignContinuityModel';
 import { z } from 'zod';
 import { canonical, interpretSource } from './campaignSnapshots';
 import { createEmptyEncumbranceDocument } from './encumbranceDocument';
@@ -8,8 +10,10 @@ export type WorkspaceView =
   | 'combats'
   | 'history'
   | 'details'
-  | 'tools';
+  | 'tools'
+  | 'session';
 export interface WorkingInventory {
+  continuedFrom?: ContinuedFrom;
   id: string;
   sessionId: string;
   title: string;
@@ -47,6 +51,7 @@ export const workingInventorySchema = z
     sessionId: id,
     title: z.string().min(1).max(1000),
     document: inventory,
+    continuedFrom: continuedFromSchema.optional(),
     origin: z.discriminatedUnion('kind', [
       z.object({ kind: z.literal('empty') }).strict(),
       z

@@ -1,5 +1,7 @@
 # Import and history usability
 
+For C1 session continuation, notes, V5 migration and verification, see [Session continuity](desktop-session-continuity.md).
+
 This pass implements the five Session 93 play-test usability fixes. It includes the mixed-record duplicate-scan fix and its synthetic regressions. Session dates remain deferred; session labels continue to work as before.
 
 ## Import workflow

@@ -1,3 +1,4 @@
+import { validateContinuityTransition } from './campaignContinuity';
 import { canonical } from './campaignSnapshots';
 import type { CampaignDocument } from './campaignDocument';
 import type { WorkingCombat } from './campaignWorkingCombat';
@@ -70,6 +71,7 @@ export function validateHistoryTransition(
   next: CampaignDocument,
   purpose: string
 ) {
+  validateContinuityTransition(old, next);
   for (const p of next.combatCheckpoints.filter(
     (p) => !old.combatCheckpoints.some((c) => c.id === p.id)
   )) {

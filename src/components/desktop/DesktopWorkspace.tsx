@@ -1,3 +1,5 @@
+import CreateSessionDialog from './CreateSessionDialog';
+import RenamableTab from './RenamableTab';
 import { ownedHistory, ownsVersion } from '../../helpers/campaignHistory';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -32,6 +34,10 @@ export default function DesktopWorkspace({
 }: {
   children?: ReactNode;
 }) {
+  const [continuing, setContinuing] = useState<{
+    sessionId: string;
+    owner: DocumentState;
+  } | null>(null);
   const [state, setState] = useState<DocumentState | null>(null);
   const current = useRef<DocumentState | null>(null);
   const pending = useRef(0);
@@ -43,8 +49,9 @@ export default function DesktopWorkspace({
     setEditorVersion(editorVersionRef.current);
   }, []);
   const [error, setError] = useState<string | null>(null);
-  const [sessionLabel, setSessionLabel] = useState('');
-  const [inventoryVersion, setInventoryVersion] = useState('');
+  const [inventoryHistorySelections, setInventoryHistorySelections] = useState<
+    Record<string, string>
+  >({});
   const receive = useCallback(
     (next: DocumentState) => {
       if (current.current?.epoch !== next.epoch) {
@@ -135,6 +142,43 @@ export default function DesktopWorkspace({
       return false;
     }
   }
+  async function createSession(
+    change: (doc: CampaignDocument) => CampaignDocument,
+    owner: DocumentState
+  ) {
+    const storage = window.campaignStorage;
+    if (!storage || !owner.document) throw new Error('Campaign unavailable.');
+    if (
+      current.current?.epoch !== owner.epoch ||
+      current.current.document?.id !== owner.document.id
+    )
+      throw new Error('Campaign changed. Reopen New session.');
+    change(current.current.document);
+    pending.current += 1;
+    setError(null);
+    try {
+      const accepted = await storage.mutate(
+        owner.document.id,
+        owner.epoch,
+        change
+      );
+      if (
+        !accepted ||
+        current.current?.epoch !== owner.epoch ||
+        current.current.document?.id !== owner.document.id
+      )
+        throw new Error('Campaign changed while creating the session.');
+      pending.current = Math.max(0, pending.current - 1);
+      receive(accepted);
+    } catch (e) {
+      if (current.current?.epoch === owner.epoch) {
+        pending.current = Math.max(0, pending.current - 1);
+        needsEditorReset.current = true;
+        setError(String(e));
+      }
+      throw e;
+    }
+  }
   function navigate(view: WorkspaceView) {
     mutate((d) => ({ ...d, workspace: { ...d.workspace, view } }));
   }
@@ -151,7 +195,7 @@ export default function DesktopWorkspace({
       if (
         target instanceof HTMLElement &&
         target.closest(
-          'input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"]'
+          'input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="dialog"]'
         )
       )
         return;
@@ -160,6 +204,7 @@ export default function DesktopWorkspace({
         '2': 'combats',
         '3': 'details',
         '4': 'details',
+        '5': 'session',
       };
       const view = views[event.code.replace('Digit', '')];
       if (view && current.current?.document) {
@@ -185,6 +230,15 @@ export default function DesktopWorkspace({
   const working = document?.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
+  const inventoryVersionKey = `${state?.epoch}:${working?.id || sessionId}`;
+  const inventoryVersion =
+    inventoryHistorySelections[inventoryVersionKey] || '';
+  function setInventoryVersion(id: string) {
+    setInventoryHistorySelections((old) => ({
+      ...old,
+      [inventoryVersionKey]: id,
+    }));
+  }
   const inventoryHistory =
     document && working
       ? ownedHistory(document, 'inventory', working)
@@ -197,7 +251,12 @@ export default function DesktopWorkspace({
       .flatMap((r) =>
         r.revisions.map((v, i) => ({
           id: v.id,
-          title: `${r.title} · imported ${i + 1}`,
+          title: `${r.title} · imported ${i + 1}${
+            r.sessionId !== sessionId
+              ? ' · from ' +
+                document?.sessions.find((s) => s.id === r.sessionId)?.label
+              : ''
+          }`,
           time: v.importedAt,
           document: v.payload as unknown as EncumbranceDmDocumentV9,
           origin: { kind: 'import' as const, recordId: r.id, revisionId: v.id },
@@ -207,7 +266,12 @@ export default function DesktopWorkspace({
       .filter((c) => inventoryHistory.checkpoints.has(c.id))
       .map((c) => ({
         id: c.id,
-        title: c.label,
+        title: `${c.label}${
+          c.sessionId !== sessionId
+            ? ' · from ' +
+              document?.sessions.find((s) => s.id === c.sessionId)?.label
+            : ''
+        }`,
         time: c.capturedAt,
         document: c.document,
         origin: { kind: 'checkpoint' as const, checkpointId: c.id },
@@ -294,6 +358,18 @@ export default function DesktopWorkspace({
           )}
         </div>
       )}
+      {continuing &&
+        document &&
+        continuing.owner.epoch === state?.epoch &&
+        continuing.owner.document?.id === document.id && (
+          <CreateSessionDialog
+            key={`${state.epoch}:${continuing.sessionId}`}
+            document={document}
+            sessionId={continuing.sessionId}
+            onCreate={(change) => createSession(change, continuing.owner)}
+            onClose={() => setContinuing(null)}
+          />
+        )}
       {!document ? (
         <main className={styles['welcome']}>
           <h2>Your campaign, ready for play</h2>
@@ -313,69 +389,47 @@ export default function DesktopWorkspace({
         </main>
       ) : (
         <>
-          <div className={styles['sessionStrip']}>
-            <strong>Session</strong>
+          <div className={styles['sessionStrip']} aria-label="Sessions">
             {document.sessions.map((s) => (
-              <button
+              <RenamableTab
                 key={s.id}
-                aria-pressed={s.id === sessionId}
-                onClick={() =>
-                  mutate((d) => ({
-                    ...d,
-                    workspace: { ...d.workspace, sessionId: s.id },
-                  }))
-                }
-              >
-                {s.label}
-              </button>
-            ))}
-            <details>
-              <summary>Sessions…</summary>
-              <label>
-                Session label
-                <input
-                  maxLength={1000}
-                  value={sessionLabel}
-                  onChange={(e) => setSessionLabel(e.target.value)}
-                />
-              </label>
-              <button
-                disabled={!sessionLabel.trim()}
-                onClick={() => {
-                  const id = uid(),
-                    label = sessionLabel.trim();
-                  mutate((d) => ({
-                    ...d,
-                    sessions: [...d.sessions, { id, label }],
-                    workspace: { ...d.workspace, sessionId: id },
-                  }));
-                  setSessionLabel('');
+                kind="session"
+                label={s.label}
+                selected={s.id === sessionId}
+                onSelect={() => {
+                  if (s.id !== sessionId)
+                    mutate((d) => ({
+                      ...d,
+                      workspace: { ...d.workspace, sessionId: s.id },
+                    }));
                 }}
-              >
-                Add session
-              </button>
-              <button
-                disabled={!sessionId || !sessionLabel.trim()}
-                onClick={() =>
-                  mutate((d) => ({
-                    ...d,
-                    sessions: d.sessions.map((s) =>
-                      s.id === sessionId
-                        ? { ...s, label: sessionLabel.trim() }
-                        : s
-                    ),
-                  }))
+                onRename={(label) =>
+                  mutate(
+                    (d) => ({
+                      ...d,
+                      sessions: d.sessions.map((item) =>
+                        item.id === s.id ? { ...item, label } : item
+                      ),
+                    }),
+                    state
+                  )
                 }
-              >
-                Rename selected session
-              </button>
-            </details>
+              />
+            ))}
+            <button
+              className={styles['addTab']}
+              disabled={state.busy || pending.current > 0}
+              onClick={() => setContinuing({ sessionId, owner: state })}
+            >
+              + Session
+            </button>
           </div>
           <nav className={styles['navigation']} aria-label="Campaign views">
             {(
               [
                 ['possessions', 'Possessions'],
                 ['combats', 'Combats'],
+                ['session', 'Session notes'],
                 ['details', 'Campaign Details'],
                 ['tools', 'Standalone tools'],
               ] as const
@@ -392,6 +446,53 @@ export default function DesktopWorkspace({
           <main className={styles['main']}>
             <section
               className={styles['view']}
+              style={{ display: view === 'session' ? undefined : 'none' }}
+              aria-label="Session overview"
+            >
+              <h2>
+                {document.sessions.find((s) => s.id === sessionId)?.label ||
+                  'Select a session'}
+              </h2>
+              <p>
+                Encounters:{' '}
+                {
+                  document.workingCombats.filter(
+                    (c) => c.sessionId === sessionId
+                  ).length
+                }{' '}
+                ·{' '}
+                {working
+                  ? 'Current inventory available'
+                  : 'No current inventory'}
+              </p>
+              <label>
+                Session notes
+                <textarea
+                  rows={10}
+                  maxLength={1_000_000}
+                  disabled={!sessionId}
+                  value={
+                    document.sessions.find((s) => s.id === sessionId)?.notes ||
+                    ''
+                  }
+                  onChange={(e) => {
+                    const notes = e.target.value,
+                      ownerId = sessionId;
+                    mutate(
+                      (d) => ({
+                        ...d,
+                        sessions: d.sessions.map((s) =>
+                          s.id === ownerId ? { ...s, notes } : s
+                        ),
+                      }),
+                      scope
+                    );
+                  }}
+                />
+              </label>
+            </section>
+            <section
+              className={styles['view']}
               style={{ display: view === 'possessions' ? undefined : 'none' }}
               aria-label="Possessions"
             >
@@ -400,7 +501,6 @@ export default function DesktopWorkspace({
                   <h2>Possessions</h2>
                 </div>
               </div>
-              {working && !historicalInventory && <p>Current · editable</p>}
               {historicalInventory ? (
                 <HistoricalInventory
                   key={historicalInventory.id}

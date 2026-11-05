@@ -24,7 +24,7 @@ impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 4,
+            schema_version: 5,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -177,11 +177,11 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 5.into();
+        v["schemaVersion"] = 6.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
-        v["schemaVersion"] = 4.into();
+        v["schemaVersion"] = 5.into();
         v["unknown"] = true.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap()).is_err());
     }
@@ -229,8 +229,13 @@ pub fn validate_replacement_with_purpose(
             .iter()
             .find(|c| c["id"] == combat["id"])
             .ok_or("Encounters cannot be removed in this slice")?;
-        if next["sessionId"] != combat["sessionId"] {
-            return Err("Encounter carry-forward is not implemented.".into());
+        if next["sessionId"] != combat["sessionId"]
+            || next["encounterId"] != combat["encounterId"]
+            || next["continuedFrom"] != combat["continuedFrom"]
+        {
+            return Err(
+                "Existing encounter instance identity and lineage cannot be reassigned.".into(),
+            );
         }
         if next["generation"] != combat["generation"] {
             if next["generation"].as_u64()
@@ -321,7 +326,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 4);
+        assert_eq!(doc.schema_version, 5);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -383,7 +388,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 4);
+        assert_eq!(doc.schema_version, 5);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -394,7 +399,18 @@ mod v2_migration_tests {
         );
         assert_eq!(
             serde_json::to_value(restored.sessions).unwrap(),
-            original["sessions"]
+            serde_json::Value::Array(
+                original["sessions"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|s| {
+                        let mut s = s.clone();
+                        s["notes"] = "".into();
+                        s
+                    })
+                    .collect()
+            )
         );
     }
 }
@@ -409,6 +425,9 @@ mod combat_tests {
         doc.working_inventories.push(serde_json::json!({"id":"inventory","sessionId":"session-1","title":"Possessions","document":inventory,"origin":{"kind":"empty"}}));
         let mut old = serde_json::to_value(&doc).unwrap();
         old["schemaVersion"] = 3.into();
+        for session in old["sessions"].as_array_mut().unwrap() {
+            session.as_object_mut().unwrap().remove("notes");
+        }
         old.as_object_mut().unwrap().remove("workingCombats");
         old.as_object_mut().unwrap().remove("combatCheckpoints");
         old["workspace"]
@@ -420,7 +439,7 @@ mod combat_tests {
         assert_eq!(doc.working_inventories[0]["document"], inventory);
         let state = doc.records[0]["revisions"][0]["payload"].clone();
         for id in ["gate", "bridge"] {
-            doc.working_combats.push(serde_json::json!({"id":id,"sessionId":"session-1","title":id,"generation":0,"state":state,"origin":{"kind":"empty"}}));
+            doc.working_combats.push(serde_json::json!({"id":id,"sessionId":"session-1","title":id,"generation":0,"encounterId":id,"status":"unspecified","state":state,"origin":{"kind":"empty"}}));
         }
         doc.combat_checkpoints.push(serde_json::json!({"id":"gate-history","combatId":"gate","sessionId":"session-1","label":"At gate","capturedAt":"2026-11-04T12:00:00.000Z","state":state}));
         doc.working_combats[0]["state"]["rounds"][1]["partyStates"][0]["hp"] = "7".into();
@@ -468,7 +487,7 @@ mod history_ownership_tests {
         other["currentRevisionId"] = "other-revision".into();
         doc.records.push(other);
         let state = doc.records[0]["revisions"][0]["payload"].clone();
-        doc.working_combats.push(serde_json::json!({"id":"A","sessionId":"session-1","title":"Renamable","generation":0,"state":state,"origin":{"kind":"import","recordId":"combat-1","revisionId":"combat-r1"}}));
+        doc.working_combats.push(serde_json::json!({"id":"A","sessionId":"session-1","title":"Renamable","generation":0,"encounterId":"A","status":"unspecified","state":state,"origin":{"kind":"import","recordId":"combat-1","revisionId":"combat-r1"}}));
         let mut next = doc.clone();
         next.combat_checkpoints.push(serde_json::json!({"id":"preserved","combatId":"A","sessionId":"session-1","label":"Before","capturedAt":"2026-11-04T12:00:00.000Z","state":state}));
         next.working_combats[0]["generation"] = 1.into();
@@ -478,5 +497,101 @@ mod history_ownership_tests {
             .contains("belong"));
         next.working_combats[0]["origin"] = doc.working_combats[0]["origin"].clone();
         assert!(validate_replacement(&doc, &next).is_ok());
+    }
+}
+
+#[cfg(test)]
+mod continuity_tests {
+    use super::*;
+    #[test]
+    fn v4_upgrade_native_continuation_exact_state_backup_failure_and_reopen() {
+        let mut source =
+            parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let state = source.records[0]["revisions"][0]["payload"].clone();
+        let inventory = source.records[1]["revisions"][0]["payload"].clone();
+        source.working_combats.push(serde_json::json!({"id":"ongoing","encounterId":"ongoing","status":"unspecified","sessionId":"session-1","title":"Invented fight","generation":0,"state":state,"origin":{"kind":"import","recordId":"combat-1","revisionId":"combat-r1"}}));
+        source.working_inventories.push(serde_json::json!({"id":"inventory","sessionId":"session-1","title":"Invented possessions","document":inventory,"origin":{"kind":"import","recordId":"inventory-1","revisionId":"inventory-r1"}}));
+        source.workspace = serde_json::json!({"sessionId":"session-1","view":"combats","combatSelections":{"session-1":"ongoing"}});
+        let mut legacy = serde_json::to_value(&source).unwrap();
+        legacy["schemaVersion"] = 4.into();
+        for session in legacy["sessions"].as_array_mut().unwrap() {
+            session.as_object_mut().unwrap().remove("notes");
+        }
+        for combat in legacy["workingCombats"].as_array_mut().unwrap() {
+            combat.as_object_mut().unwrap().remove("encounterId");
+            combat.as_object_mut().unwrap().remove("status");
+        }
+        let legacy_bytes = serde_json::to_vec_pretty(&legacy).unwrap();
+        let mut source = parse(&legacy_bytes).unwrap();
+        assert_eq!(source.working_combats[0]["status"], "unspecified");
+        assert_eq!(source.sessions[0]["notes"], "");
+        source.working_combats[0]["status"] = "in-progress".into();
+        source.sessions[0]["notes"] = "Stopping point\nRemember lantern".into();
+        let context = serde_json::json!({"session":source.sessions[0],"records":source.records,"combats":source.working_combats,"inventory":source.working_inventories,"selected":"ongoing"});
+        let fingerprint = hash(&serde_json::to_vec(&context).unwrap());
+        let choices = serde_json::json!({"sourceSessionId":"session-1","sourceFingerprint":fingerprint,"combatInstanceIds":["ongoing"],"inventoryId":"inventory","copyNotes":true});
+        let mut request = choices.clone();
+        request["destinationId"] = "next".into();
+        request["label"] = "After the gate".into();
+        let request_fingerprint = hash(&serde_json::to_vec(&request).unwrap());
+        let mut lineage = choices;
+        lineage["requestFingerprint"] = request_fingerprint.into();
+        let mut next = source.clone();
+        next.sessions.push(serde_json::json!({"id":"next","label":"After the gate","notes":source.sessions[0]["notes"],"continuation":lineage}));
+        let at = "2026-11-04T12:00:00.000Z";
+        next.combat_checkpoints.push(serde_json::json!({"id":"combat-before-next","combatId":"ongoing","sessionId":"session-1","label":"Before next","capturedAt":at,"state":state,"origin":source.working_combats[0]["origin"],"status":"in-progress"}));
+        next.inventory_checkpoints.push(serde_json::json!({"id":"inventory-before-next","workingId":"inventory","sessionId":"session-1","label":"Before next","capturedAt":at,"document":inventory,"origin":source.working_inventories[0]["origin"]}));
+        let mut combat = source.working_combats[0].clone();
+        combat["id"] = "ongoing-next".into();
+        combat["sessionId"] = "next".into();
+        combat["origin"] =
+            serde_json::json!({"kind":"checkpoint","checkpointId":"combat-before-next"});
+        combat["continuedFrom"] = serde_json::json!({"sessionId":"session-1","instanceId":"ongoing","checkpointId":"combat-before-next"});
+        next.working_combats.push(combat);
+        let mut possessions = source.working_inventories[0].clone();
+        possessions["id"] = "inventory-next".into();
+        possessions["sessionId"] = "next".into();
+        possessions["origin"] =
+            serde_json::json!({"kind":"checkpoint","checkpointId":"inventory-before-next"});
+        possessions["continuedFrom"] = serde_json::json!({"sessionId":"session-1","instanceId":"inventory","checkpointId":"inventory-before-next"});
+        next.working_inventories.push(possessions);
+        next.workspace["sessionId"] = "next".into();
+        next.workspace["view"] = "session".into();
+        next.workspace["combatSelections"]["next"] = "ongoing-next".into();
+        validate_replacement(&source, &next).unwrap();
+        let mut invalid = next.clone();
+        invalid.working_combats[1]["state"]["activeRound"] = 0.into();
+        assert!(validate_replacement(&source, &invalid).is_err());
+        invalid = next.clone();
+        invalid.combat_checkpoints.clear();
+        assert!(validate_replacement(&source, &invalid).is_err());
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("continuation.adnd");
+        fs::write(&path, &legacy_bytes).unwrap();
+        let revision = save(&path, &next, Some(&hash(&legacy_bytes))).unwrap();
+        assert_eq!(
+            fs::read(format!("{}.bak", path.display())).unwrap(),
+            legacy_bytes
+        );
+        let reopened = parse(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(reopened, next);
+        let mut later = reopened.clone();
+        later.working_combats[1]["state"]["rounds"][1]["partyStates"][0]["hp"] = "3".into();
+        later.working_inventories[1]["document"]["characters"][0]["inventory"][2]["quantity"] =
+            9.into();
+        later.sessions[1]["notes"] = "New-session notes".into();
+        validate_replacement(&reopened, &later).unwrap();
+        assert_eq!(later.working_combats[0], source.working_combats[0]);
+        assert_eq!(later.sessions[0], source.sessions[0]);
+        assert_eq!(later.combat_checkpoints, reopened.combat_checkpoints);
+        assert_eq!(later.inventory_checkpoints, reopened.inventory_checkpoints);
+        let bytes = fs::read(&path).unwrap();
+        assert!(save_with_hook(&path, &later, Some(&revision), || Err(
+            "Injected failure".into()
+        ))
+        .is_err());
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        save(&path, &later, Some(&revision)).unwrap();
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), later);
     }
 }
