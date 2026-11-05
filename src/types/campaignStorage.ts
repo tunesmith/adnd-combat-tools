@@ -31,7 +31,11 @@ export interface CampaignStorage {
     change: (document: CampaignDocument) => CampaignDocument
   ): Promise<DocumentState | null>;
   exportWorking(id: string, epoch: number, workingId: string): Promise<boolean>;
-  replace(document: CampaignDocument, token: number): Promise<DocumentState>;
+  replace(
+    document: CampaignDocument,
+    token: number,
+    purpose?: 'import' | 'activate-source'
+  ): Promise<DocumentState>;
   pickSource(): Promise<{ name: string; text: string } | null>;
   exportSource(
     id: string,

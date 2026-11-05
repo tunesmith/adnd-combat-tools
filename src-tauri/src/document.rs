@@ -204,7 +204,20 @@ mod legacy_tests {
     }
 }
 
+#[cfg(test)]
 pub fn validate_replacement(old: &Document, new: &Document) -> Result<(), String> {
+    validate_replacement_with_purpose(old, new, "")
+}
+pub fn validate_replacement_with_purpose(
+    old: &Document,
+    new: &Document,
+    purpose: &str,
+) -> Result<(), String> {
+    crate::boundary::validate_transition(
+        &serde_json::to_string(new).map_err(|e| e.to_string())?,
+        Some(&serde_json::to_string(old).map_err(|e| e.to_string())?),
+        purpose,
+    )?;
     for checkpoint in &old.combat_checkpoints {
         if !new.combat_checkpoints.contains(checkpoint) {
             return Err("Combat checkpoints are immutable.".into());
@@ -440,5 +453,30 @@ mod combat_tests {
         assert_eq!(fs::read_to_string(&path).unwrap(), "external");
         next.combat_checkpoints[0]["label"] = "tampered".into();
         assert!(validate_replacement(&doc, &next).is_err());
+    }
+}
+
+#[cfg(test)]
+mod history_ownership_tests {
+    use super::*;
+    #[test]
+    fn native_boundary_rejects_unrelated_restore_even_with_a_preserved_current_checkpoint() {
+        let mut doc = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let mut other = doc.records[0].clone();
+        other["id"] = "other-source".into();
+        other["revisions"][0]["id"] = "other-revision".into();
+        other["currentRevisionId"] = "other-revision".into();
+        doc.records.push(other);
+        let state = doc.records[0]["revisions"][0]["payload"].clone();
+        doc.working_combats.push(serde_json::json!({"id":"A","sessionId":"session-1","title":"Renamable","generation":0,"state":state,"origin":{"kind":"import","recordId":"combat-1","revisionId":"combat-r1"}}));
+        let mut next = doc.clone();
+        next.combat_checkpoints.push(serde_json::json!({"id":"preserved","combatId":"A","sessionId":"session-1","label":"Before","capturedAt":"2026-11-04T12:00:00.000Z","state":state}));
+        next.working_combats[0]["generation"] = 1.into();
+        next.working_combats[0]["origin"] = serde_json::json!({"kind":"import","recordId":"other-source","revisionId":"other-revision"});
+        assert!(validate_replacement(&doc, &next)
+            .unwrap_err()
+            .contains("belong"));
+        next.working_combats[0]["origin"] = doc.working_combats[0]["origin"].clone();
+        assert!(validate_replacement(&doc, &next).is_ok());
     }
 }

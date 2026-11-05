@@ -25,6 +25,7 @@ export interface InventoryCheckpoint {
   sessionId: string;
   label: string;
   capturedAt: string;
+  origin?: WorkingInventory['origin'];
   document: EncumbranceDmDocumentV9;
 }
 const id = z.string().min(1);
@@ -62,6 +63,7 @@ export const inventoryCheckpointSchema = z
     sessionId: id,
     label: z.string().min(1).max(1000),
     capturedAt: z.string().datetime(),
+    origin: workingInventorySchema.shape.origin.optional(),
     document: inventory,
   })
   .strict();
@@ -104,6 +106,7 @@ export function captureInventoryCheckpoint(
         sessionId: working.sessionId,
         label: label.trim(),
         capturedAt: at,
+        origin: working.origin,
         document: JSON.parse(JSON.stringify(working.document)),
       },
     ],

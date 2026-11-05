@@ -361,3 +361,7 @@
   box-sizing: border-box;
   margin: 8px 0;
 }
+.versionDialog button {
+  padding: 8px 14px;
+  margin-top: 12px;
+}

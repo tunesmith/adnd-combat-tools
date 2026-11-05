@@ -50,7 +50,7 @@ test('campaign history replaces the editor for inspection and returns without a 
     'session-1',
     'Current encounter',
     syntheticCombat(),
-    { kind: 'empty' },
+    { kind: 'import', recordId: 'combat-1', revisionId: 'combat-r1' },
     'current'
   );
   const onChange = jest.fn(() => true),

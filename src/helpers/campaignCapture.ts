@@ -28,10 +28,9 @@ export function captureSnapshot(
   if (input.targetId && !existing) throw new Error('Target record is missing.');
   if (existing && existing.type !== type)
     throw new Error('Snapshot type does not match the target record.');
+  const identity = contentIdentity(type, interpretation.payload);
   const duplicate = existing?.revisions.find(
-    (r) =>
-      contentIdentity(type, r.payload) ===
-      contentIdentity(type, interpretation.payload)
+    (r) => contentIdentity(existing.type, r.payload) === identity
   );
   if (existing && duplicate)
     return {
@@ -47,12 +46,10 @@ export function captureSnapshot(
   if (
     !existing &&
     !input.allowDistinct &&
-    document.records.some((r) =>
-      r.revisions.some(
-        (v) =>
-          contentIdentity(type, v.payload) ===
-          contentIdentity(type, interpretation.payload)
-      )
+    document.records.some(
+      (r) =>
+        r.type === type &&
+        r.revisions.some((v) => contentIdentity(r.type, v.payload) === identity)
     )
   )
     throw new Error(

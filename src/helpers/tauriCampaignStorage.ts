@@ -54,12 +54,13 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       if (editError) throw editError;
       return invoke('campaign_export_working', { id, epoch, workingId });
     },
-    replace: (document, token) => {
+    replace: (document, token, purpose) => {
       const replacement = pending.then(() => {
         if (editError) throw editError;
         return invoke<DocumentState>('campaign_replace', {
           id: document.id,
           token,
+          purpose,
           text: JSON.stringify(document),
         });
       });

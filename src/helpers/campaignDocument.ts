@@ -270,3 +270,5 @@ export function serializeCampaign(document: CampaignDocument): string {
     throw new Error('Campaign exceeds 8 MB.');
   return text;
 }
+
+export { validateHistoryTransition } from './campaignHistory';

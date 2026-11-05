@@ -9,6 +9,6 @@ esbuild.buildSync({
   outfile: process.argv[2] || 'src-tauri/snapshot-validator.js',
   alias: { zlib: require('path').resolve('scripts/boundaryZlibStub.js') },
   footer: {
-    js: 'globalThis.validateCampaignJson = text => { try { return JSON.stringify({document: CampaignBoundary.parseCampaign(text)}); } catch (error) { return JSON.stringify({error: String(error)}); } };',
+    js: 'globalThis.validateCampaignJson = (text,previous,purpose) => { try { return JSON.stringify({document: (()=>{const doc=CampaignBoundary.parseCampaign(text);if(previous)CampaignBoundary.validateHistoryTransition(CampaignBoundary.parseCampaign(previous),doc,purpose);return doc;})()}); } catch (error) { return JSON.stringify({error: String(error)}); } };',
   },
 });

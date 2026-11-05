@@ -81,21 +81,23 @@
   border-top: 1px solid #c9bda6;
   padding-top: 16px;
 }
-.snapshots fieldset,
-.snapshots article {
+.snapshots > div > fieldset,
+.snapshots > article {
   padding: 12px;
   margin: 12px 0;
 }
-.snapshots button,
-.snapshots select {
+.snapshots > div > fieldset button,
+.snapshots > div > fieldset select,
+.snapshots > article > button,
+.snapshots > article > label > select {
   margin: 6px;
   padding: 6px 10px;
 }
 .snapshots ul {
   padding-left: 22px;
 }
-.snapshots h4,
-.snapshots h5 {
+.snapshots > section h4,
+.snapshots > article > h4 {
   margin: 12px 0 6px;
 }
 .snapshots dd {
@@ -141,4 +143,40 @@
   color: #29261f;
   border: 1px solid #a99a81;
   border-radius: 4px;
+}
+
+.readablePreview {
+  margin: 12px 0;
+}
+.readablePreview > summary {
+  cursor: pointer;
+  padding: 8px;
+}
+.snapshots > div > fieldset > label {
+  display: block;
+  margin: 8px 0;
+}
+.snapshots > div > fieldset > label > input,
+.snapshots textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 680px;
+  padding: 8px;
+}
+.snapshots > [role='dialog'],
+.snapshots > article > [role='dialog'] {
+  position: fixed;
+  z-index: 1000;
+  top: 25%;
+  left: 25%;
+  width: 50%;
+  max-width: 600px;
+  padding: 24px;
+  border: 2px solid #b8a98e;
+  background: #fffdf8;
+  box-shadow: 0 0 0 100vmax #0007;
+}
+.snapshots [role='dialog'] button {
+  padding: 8px 16px;
+  margin: 8px;
 }

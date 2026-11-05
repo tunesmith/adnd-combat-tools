@@ -1,3 +1,4 @@
+import { ownedHistory } from '../../helpers/campaignHistory';
 import { useRef, useState } from 'react';
 import CombatTracker from '../tracker/CombatTracker';
 import VersionToolbar from './VersionToolbar';
@@ -43,9 +44,12 @@ export default function CampaignCombats({
     combats.find(
       (c) => c.id === document.workspace.combatSelections?.[sessionId]
     ) || combats[0];
+  const owned = selected
+    ? ownedHistory(document, 'combat', selected)
+    : { records: new Set<string>(), checkpoints: new Set<string>() };
   const history = [
     ...document.records
-      .filter((r) => r.type === 'combat' && r.sessionId === sessionId)
+      .filter((r) => r.type === 'combat' && owned.records.has(r.id))
       .flatMap((r) =>
         r.revisions.map((v, i) => ({
           id: v.id,
@@ -56,7 +60,7 @@ export default function CampaignCombats({
         }))
       ),
     ...document.combatCheckpoints
-      .filter((c) => c.sessionId === sessionId)
+      .filter((c) => owned.checkpoints.has(c.id))
       .map((c) => ({
         id: c.id,
         title: `${c.state.title || 'Untitled encounter'} · ${c.label}`,
@@ -146,10 +150,11 @@ export default function CampaignCombats({
           </div>
           {!selected && (
             <p>
-              Create an encounter above or start from a historical snapshot
-              below.
+              Create an encounter above, or choose a stored source in Campaign
+              Details → Import.
             </p>
           )}
+          {selected && !historical && <p>Current · editable</p>}
           {selected && !historical && (
             <CombatTracker
               key={`${selected.id}:${selected.generation}:${editorVersion}`}

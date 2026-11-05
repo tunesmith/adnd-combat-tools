@@ -1,5 +1,7 @@
 # Editable campaign encounters
 
+For the current import/use, scoped history, and preview workflow, see [Import and history usability](desktop-playtest-usability.md). The verification below records the preceding combat integration slice.
+
 This slice adds working combats to the existing Tauri campaign workspace. It reuses the combat tracker alongside the completed Possessions editor. Explicit cross-session carry-forward, multi-session continuity validation, and XP remain future work.
 
 ## Build and launch

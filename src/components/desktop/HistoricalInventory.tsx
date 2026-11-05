@@ -7,6 +7,7 @@ export default function HistoricalInventory({
 }) {
   return (
     <section aria-label="Historical inventory">
+      <p>Historical · read only</p>
       <EncumbranceApp
         mode="dm"
         campaign={{

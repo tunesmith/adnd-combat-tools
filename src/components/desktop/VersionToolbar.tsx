@@ -7,6 +7,8 @@ export default function VersionToolbar({
   onCapture,
   onRestore,
   onCreate,
+  replacementName,
+  firstActivation,
 }: {
   versions: { id: string; title: string; time: string }[];
   value: string;
@@ -14,6 +16,8 @@ export default function VersionToolbar({
   onCapture?: (name: string) => void;
   onRestore?: () => void;
   onCreate?: () => void;
+  replacementName?: string;
+  firstActivation?: boolean;
 }) {
   const menu = useRef<HTMLDetailsElement>(null);
   const openAction = (next: 'capture' | 'restore') => {
@@ -50,8 +54,14 @@ export default function VersionToolbar({
             </button>
           )}
           {value && onRestore && (
-            <button onClick={() => openAction('restore')}>
-              Restore this version…
+            <button
+              onClick={() =>
+                firstActivation ? onRestore?.() : openAction('restore')
+              }
+            >
+              {firstActivation
+                ? 'Use as current inventory'
+                : 'Restore this version…'}
             </button>
           )}
           {value && onCreate && (
@@ -75,6 +85,12 @@ export default function VersionToolbar({
               action === 'capture' ? 'Capture checkpoint' : 'Restore version'
             }
             className={styles['versionDialog']}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.stopPropagation();
+                setAction(null);
+              }
+            }}
           >
             {action === 'capture' ? (
               <label>
@@ -88,11 +104,16 @@ export default function VersionToolbar({
               </label>
             ) : (
               <p>
-                Restore this version? Current work will be preserved in a
-                checkpoint first.
+                Replace {replacementName || 'the current encounter'} with this
+                version? Current work will be preserved in a checkpoint.
               </p>
             )}
-            <button onClick={() => setAction(null)}>Cancel</button>
+            <button
+              autoFocus={action === 'restore'}
+              onClick={() => setAction(null)}
+            >
+              Cancel
+            </button>
             <button
               disabled={action === 'capture' && !name.trim()}
               onClick={() => {
@@ -102,9 +123,7 @@ export default function VersionToolbar({
                 setName('');
               }}
             >
-              {action === 'capture'
-                ? 'Capture checkpoint'
-                : 'Preserve current and restore'}
+              {action === 'capture' ? 'Capture checkpoint' : 'Restore version'}
             </button>
           </section>
         </div>

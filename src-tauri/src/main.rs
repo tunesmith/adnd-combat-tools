@@ -511,6 +511,7 @@ fn main() {
 
 #[tauri::command]
 async fn campaign_replace(
+    purpose: Option<String>,
     app: tauri::AppHandle,
     id: String,
     token: u64,
@@ -524,7 +525,11 @@ async fn campaign_replace(
         if document.id != id {
             return Err("Campaign identity cannot be replaced".into());
         }
-        document::validate_replacement(s.view.document.as_ref().unwrap(), &document)?;
+        document::validate_replacement_with_purpose(
+            s.view.document.as_ref().unwrap(),
+            &document,
+            purpose.as_deref().unwrap_or(""),
+        )?;
         s.view.document = Some(document);
         s.view.token += 1;
         s.view.dirty = s.view.document != s.saved;

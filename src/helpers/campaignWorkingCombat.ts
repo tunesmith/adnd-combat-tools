@@ -1,3 +1,4 @@
+import { ownsVersion } from './campaignHistory';
 import { z } from 'zod';
 import { canonical, interpretSource } from './campaignSnapshots';
 import { createInitialTrackerState } from './trackerState';
@@ -20,6 +21,7 @@ export interface CombatCheckpoint {
   sessionId: string;
   label: string;
   capturedAt: string;
+  origin?: WorkingCombat['origin'];
   state: TrackerState;
 }
 const id = z.string().min(1);
@@ -57,6 +59,7 @@ export const combatCheckpointSchema = z
     sessionId: id,
     label: z.string().min(1).max(1000),
     capturedAt: z.string().datetime(),
+    origin: workingCombatSchema.shape.origin.optional(),
     state: tracker,
   })
   .strict();
@@ -148,6 +151,7 @@ export function captureCombatCheckpoint(
         sessionId: combat.sessionId,
         label: label.trim(),
         capturedAt: at,
+        origin: combat.origin,
         state: JSON.parse(JSON.stringify(combat.state)),
       },
     ],
@@ -163,6 +167,8 @@ export function restoreWorkingCombat(
 ): CampaignDocument {
   const combat = doc.workingCombats.find((c) => c.id === id);
   if (!combat) throw new Error('Encounter not found.');
+  if (!ownsVersion(doc, 'combat', combat, origin))
+    throw new Error('Version does not belong to this encounter.');
   const preserved = captureCombatCheckpoint(
     doc,
     id,

@@ -1,3 +1,4 @@
+import { ownedHistory, ownsVersion } from '../../helpers/campaignHistory';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -184,9 +185,15 @@ export default function DesktopWorkspace({
   const working = document?.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
+  const inventoryHistory =
+    document && working
+      ? ownedHistory(document, 'inventory', working)
+      : { records: new Set<string>(), checkpoints: new Set<string>() };
   const inventoryVersions = [
     ...(document?.records || [])
-      .filter((r) => r.type === 'inventory' && r.sessionId === sessionId)
+      .filter(
+        (r) => r.type === 'inventory' && inventoryHistory.records.has(r.id)
+      )
       .flatMap((r) =>
         r.revisions.map((v, i) => ({
           id: v.id,
@@ -197,7 +204,7 @@ export default function DesktopWorkspace({
         }))
       ),
     ...(document?.inventoryCheckpoints || [])
-      .filter((c) => c.sessionId === sessionId)
+      .filter((c) => inventoryHistory.checkpoints.has(c.id))
       .map((c) => ({
         id: c.id,
         title: c.label,
@@ -218,7 +225,18 @@ export default function DesktopWorkspace({
       at = new Date().toISOString();
     mutate((d) => ({
       ...startWorkingInventory(
-        d,
+        (() => {
+          const current = d.workingInventories.find(
+            (w) => w.sessionId === sessionId
+          );
+          if (
+            current &&
+            origin.kind !== 'empty' &&
+            !ownsVersion(d, 'inventory', current, origin)
+          )
+            throw new Error('Choose unrelated sources through Imports.');
+          return d;
+        })(),
         sessionId,
         inventory,
         origin,
@@ -382,6 +400,7 @@ export default function DesktopWorkspace({
                   <h2>Possessions</h2>
                 </div>
               </div>
+              {working && !historicalInventory && <p>Current · editable</p>}
               {historicalInventory ? (
                 <HistoricalInventory
                   key={historicalInventory.id}
@@ -393,8 +412,7 @@ export default function DesktopWorkspace({
                 <div className={styles['start']}>
                   <h3>Start this session’s working inventory</h3>
                   <p>
-                    Choose a historical inventory below, or start empty. Nothing
-                    is carried between sessions automatically.
+                    Import an inventory in Campaign Details, or start empty.
                   </p>
                   <button
                     onClick={() =>
@@ -440,6 +458,10 @@ export default function DesktopWorkspace({
               )}
               <VersionToolbar
                 key={`${state.epoch}:${sessionId}:${working?.id}`}
+                replacementName={`${working?.title || 'inventory'} in ${
+                  document.sessions.find((s) => s.id === sessionId)?.label
+                }`}
+                firstActivation={!working}
                 versions={inventoryVersions}
                 value={historicalInventory?.id || ''}
                 onSelect={setInventoryVersion}

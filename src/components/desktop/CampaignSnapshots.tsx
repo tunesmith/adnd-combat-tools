@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import HistoricalCombat from './HistoricalCombat';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
-import { captureSnapshot } from '../../helpers/campaignCapture';
+import { ownedHistory } from '../../helpers/campaignHistory';
+import {
+  importCampaignSource,
+  activateSource,
+} from '../../helpers/campaignImport';
+import StoredCheckpoints from './StoredCheckpoints';
+import HistoricalInventory from './HistoricalInventory';
 import {
   interpretSource,
   contentIdentity,
@@ -13,68 +19,26 @@ import type {
 } from '../../helpers/campaignSnapshots';
 import type { TrackerState } from '../../types/tracker';
 import type { EncumbranceDmDocumentV9 } from '../../types/encumbrance';
-import { encumbranceCatalogById } from '../../tables/encumbranceCatalog';
-import {
-  getInventoryItemInfo,
-  getTotalEncumbranceGp,
-  getTotalValueGp,
-} from '../../helpers/encumbranceRules';
 import styles from './desktopWorkspace.module.css';
 const uid = () =>
-  typeof crypto.randomUUID === 'function'
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
     : `capture-${Date.now()}-${Math.random()
         .toString(36)
         .slice(2)}-${Math.random().toString(36).slice(2)}`;
-export function Inspection({
+function Inspection({
   payload,
   type,
 }: {
   payload: Json;
   type: 'combat' | 'inventory';
 }) {
-  if (type === 'combat')
-    return <HistoricalCombat state={payload as unknown as TrackerState} />;
-  const data = payload as unknown as EncumbranceDmDocumentV9;
-  return (
-    <section>
-      <h4>DM inventory — {data.characters.length} characters</h4>
-      {data.characters.map((c) => (
-        <article key={c.id}>
-          <h5>
-            {c.name || 'Unnamed character'} — {c.inventory.length} inventory
-            entries
-          </h5>
-          <p>
-            DM notes: {c.dmNotes || '—'} · Load:{' '}
-            {getTotalEncumbranceGp(c, encumbranceCatalogById)} gp · Value:{' '}
-            {getTotalValueGp(c, encumbranceCatalogById)} gp
-          </p>
-          <ul>
-            {c.inventory.map((item) => (
-              <li key={item.id}>
-                <strong>
-                  {item.name ||
-                    getInventoryItemInfo(item, encumbranceCatalogById)?.name ||
-                    item.catalogId}
-                </strong>{' '}
-                × {item.quantity} · Container:{' '}
-                {item.containerId
-                  ? c.inventory.find((parent) => parent.id === item.containerId)
-                      ?.name || item.containerId
-                  : 'None'}
-                <p>
-                  Player notes: {item.playerNotes || '—'} · DM notes:{' '}
-                  {item.dmNotes || '—'} · Identified:{' '}
-                  {String(item.fullyIdentified ?? false)} · Value override:{' '}
-                  {item.valueGpOverride ?? 'None'}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </article>
-      ))}
-    </section>
+  return type === 'combat' ? (
+    <HistoricalCombat state={payload as unknown as TrackerState} />
+  ) : (
+    <HistoricalInventory
+      document={payload as unknown as EncumbranceDmDocumentV9}
+    />
   );
 }
 export default function CampaignSnapshots({
@@ -90,6 +54,12 @@ export default function CampaignSnapshots({
 }) {
   const [localSessionId, setSession] = useState(document.sessions[0]?.id || '');
   const sessionId = activeSessionId ?? localSessionId;
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [useImport, setUseImport] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const inFlight = useRef(false);
+  const [confirmInventory, setConfirmInventory] = useState(false);
+  const [activation, setActivation] = useState(false);
   const [label, setLabel] = useState('');
   const [message, setMessage] = useState('');
   const [sourceKind, setKind] = useState<SourceKind>('tracker-url');
@@ -111,17 +81,25 @@ export default function CampaignSnapshots({
   }, [record?.id, record?.title]);
   const type = sourceKind === 'inventory-json' ? 'inventory' : 'combat';
   const matches = preview
-    ? document.records.filter((r) =>
-        r.revisions.some(
-          (v) =>
-            contentIdentity(r.type, v.payload) ===
-            contentIdentity(type, preview.payload)
-        )
+    ? document.records.filter(
+        (r) =>
+          r.type === type &&
+          r.revisions.some(
+            (v) =>
+              contentIdentity(r.type, v.payload) ===
+              contentIdentity(type, preview.payload)
+          )
       )
     : [];
-  async function apply(next: CampaignDocument, expected = token) {
+  async function apply(
+    next: CampaignDocument,
+    expected = token,
+    purpose?: 'import' | 'activate-source'
+  ) {
     try {
-      await window.campaignStorage?.replace(next, expected);
+      if (!window.campaignStorage)
+        throw new Error('Campaign storage is unavailable.');
+      await window.campaignStorage.replace(next, expected, purpose);
       setMessage('Campaign updated.');
       return true;
     } catch (error) {
@@ -143,21 +121,64 @@ export default function CampaignSnapshots({
   }
   function prepare() {
     try {
-      setPreview(interpretSource(sourceKind, sourceText));
+      const interpreted = interpretSource(sourceKind, sourceText);
+      setPreview(interpreted);
+      if (!recordTitle.trim())
+        setTitle(
+          typeof interpreted.payload === 'object' &&
+            interpreted.payload &&
+            !Array.isArray(interpreted.payload) &&
+            typeof interpreted.payload['title'] === 'string'
+            ? interpreted.payload['title']
+            : sourceName.replace(/\.json$/i, '') ||
+                (sourceKind === 'inventory-json'
+                  ? 'Party inventory'
+                  : 'Imported combat')
+        );
       setPreviewToken(token);
       setDistinct(false);
-      setMessage(
-        'Preview ready. Import time records capture time, not play time.'
-      );
+      setMessage('Preview ready.');
     } catch (error) {
       setPreview(null);
       setMessage(String(error));
     }
   }
-  async function attach() {
-    if (!preview || !sessionId) return;
+  function clearDraft() {
+    setText('');
+    setName('');
+    setPreview(null);
+    setTitle('');
+    setTarget('new');
+    setDistinct(false);
+    setUseImport(true);
+    setConfirmInventory(false);
+    setPreviewOpen(false);
+  }
+  const currentInventory = document.workingInventories.find(
+    (w) => w.sessionId === sessionId
+  );
+  async function attach(confirmed = false) {
+    if (!preview || !sessionId || inFlight.current) return;
+    if (
+      useImport &&
+      type === 'inventory' &&
+      currentInventory &&
+      !confirmed &&
+      !(
+        target !== 'new' &&
+        matches.some((r) => r.id === target) &&
+        ownedHistory(document, 'inventory', currentInventory).records.has(
+          target
+        )
+      )
+    ) {
+      setConfirmInventory(true);
+      return;
+    }
+    inFlight.current = true;
+    setSubmitting(true);
     try {
-      const result = captureSnapshot(
+      const result = importCampaignSource(
         document,
         {
           sourceKind,
@@ -175,32 +196,59 @@ export default function CampaignSnapshots({
           recordId: uid(),
           revisionId: uid(),
           importedAt: new Date().toISOString(),
-        }
+          workingId: uid(),
+          checkpointId: uid(),
+        },
+        useImport
       );
-      if (await apply(result.document, previewToken)) {
+      if (await apply(result.document, previewToken, 'import')) {
         setSelected(result.recordId);
         setMessage(
-          result.duplicate
-            ? 'Already imported — selected the existing revision.'
-            : 'Snapshot captured.'
+          !useImport
+            ? result.duplicate
+              ? 'Already stored — existing source selected.'
+              : 'Snapshot stored.'
+            : result.keptWorking
+            ? 'Source stored. Existing working edits retained.'
+            : 'Imported and ready to edit.'
         );
-        setPreview(null);
+        clearDraft();
       }
     } catch (error) {
       setMessage(String(error));
+    } finally {
+      inFlight.current = false;
+      setSubmitting(false);
+    }
+  }
+
+  async function openStored(reuse = true) {
+    if (!record || !revision || inFlight.current) return;
+    inFlight.current = true;
+    setSubmitting(true);
+    try {
+      const next = activateSource(
+        document,
+        record.id,
+        revision.id,
+        sessionId,
+        { workingId: uid(), checkpointId: uid(), at: new Date().toISOString() },
+        reuse
+      );
+      if (await apply(next, token, 'activate-source')) setActivation(false);
+    } catch (error) {
+      setMessage(String(error));
+    } finally {
+      inFlight.current = false;
+      setSubmitting(false);
     }
   }
 
   return (
     <section className={styles['snapshots']} aria-label="Campaign snapshots">
-      <h3>Sessions and captured snapshots</h3>
-      <p>
-        Imported snapshot—import again to capture later changes. Edits in the
-        separate Tracker and Encumbrance tools are not saved into these
-        snapshots by Campaign Save.
-      </p>
+      <h3>Session imports</h3>
       {activeSessionId === undefined && (
-        <fieldset disabled={busy}>
+        <fieldset disabled={busy || submitting}>
           <legend>Session</legend>
           <select
             aria-label="Selected session"
@@ -252,9 +300,8 @@ export default function CampaignSnapshots({
           </button>
         </fieldset>
       )}
-      <details>
-        <summary>Import combat or inventory</summary>
-        <fieldset disabled={busy}>
+      <div>
+        <fieldset disabled={busy || submitting}>
           <div role="group" aria-label="Snapshot source">
             {(
               [
@@ -268,10 +315,8 @@ export default function CampaignSnapshots({
                 aria-pressed={sourceKind === kind}
                 onClick={() => {
                   setKind(kind);
-                  setPreview(null);
-                  setTarget('new');
-                  setName('');
-                  setText('');
+                  clearDraft();
+                  setMessage('');
                 }}
               >
                 {label}
@@ -298,17 +343,33 @@ export default function CampaignSnapshots({
           </button>
           {preview && (
             <>
-              <Inspection
-                key={preview.contentHash}
-                payload={preview.payload}
-                type={type}
-              />
+              <p>
+                {type === 'combat'
+                  ? `${
+                      (preview.payload as unknown as TrackerState).rounds.length
+                    } rounds`
+                  : `${
+                      (preview.payload as unknown as EncumbranceDmDocumentV9)
+                        .characters.length
+                    } characters`}{' '}
+                · Original source retained
+              </p>
               <label>
                 Record title
                 <input
                   value={recordTitle}
                   onChange={(e) => setTitle(e.target.value)}
                 />
+              </label>
+              <label>
+                Import outcome
+                <select
+                  value={useImport ? 'use' : 'store'}
+                  onChange={(e) => setUseImport(e.target.value === 'use')}
+                >
+                  <option value="use">Import and use</option>
+                  <option value="store">Store snapshot only</option>
+                </select>
               </label>
               <label>
                 Import destination
@@ -368,16 +429,69 @@ export default function CampaignSnapshots({
                   !sessionId ||
                   (target === 'new' && matches.length > 0 && !distinct)
                 }
-                onClick={() => void attach()}
+                onClick={() => void attach(false)}
               >
-                Attach snapshot
+                {useImport ? 'Import and use' : 'Store snapshot only'}
               </button>
-              <button onClick={() => setPreview(null)}>Cancel import</button>
+              <button
+                onClick={() => {
+                  clearDraft();
+                  setMessage('Import cancelled.');
+                }}
+              >
+                Cancel import
+              </button>
             </>
           )}
         </fieldset>
-      </details>
+      </div>
+      {preview && (
+        <details
+          className={styles['readablePreview']}
+          onToggle={(e) => setPreviewOpen(e.currentTarget.open)}
+        >
+          <summary>Readable preview</summary>
+          {previewOpen && (
+            <Inspection
+              key={preview.contentHash}
+              payload={preview.payload}
+              type={type}
+            />
+          )}
+        </details>
+      )}
+      {confirmInventory && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Replace inventory"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setConfirmInventory(false);
+          }}
+        >
+          <p>
+            Replace “{currentInventory?.title}” in{' '}
+            {document.sessions.find((s) => s.id === sessionId)?.label}? Current
+            possessions will be preserved in a checkpoint.
+          </p>
+          <button autoFocus onClick={() => setConfirmInventory(false)}>
+            Cancel
+          </button>
+          <button disabled={submitting} onClick={() => void attach(true)}>
+            Replace inventory
+          </button>
+        </div>
+      )}
       <p role="status">{message}</p>
+      <button
+        onClick={() => {
+          clearDraft();
+          setSelected('');
+          setMessage('');
+        }}
+      >
+        Import another source
+      </button>
       {(['combat', 'inventory'] as const).map((kind) => (
         <section key={kind}>
           <h4>{kind === 'combat' ? 'Combats' : 'Inventories'}</h4>
@@ -400,6 +514,12 @@ export default function CampaignSnapshots({
           </ul>
         </section>
       ))}
+      <StoredCheckpoints
+        document={document}
+        sessionId={sessionId}
+        busy={busy || submitting}
+        apply={apply}
+      />
       {record && revision && (
         <article>
           <h4>{record.title}</h4>
@@ -493,11 +613,57 @@ export default function CampaignSnapshots({
             Source format {revision.sourceVersion}; interpretation version{' '}
             {revision.normalizerVersion}. Original source is immutable evidence.
           </p>
-          <Inspection
-            key={revision.id}
-            payload={revision.payload}
-            type={record.type}
-          />
+          <button
+            disabled={busy || submitting}
+            onClick={() => {
+              if (record.type === 'inventory' && currentInventory)
+                setActivation(true);
+              else void openStored();
+            }}
+          >
+            {record.type === 'combat'
+              ? 'Open or create encounter'
+              : currentInventory
+              ? 'Replace current inventory…'
+              : 'Use as current inventory'}
+          </button>
+          {activation && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Replace inventory"
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setActivation(false);
+              }}
+            >
+              <p>
+                Replace {currentInventory?.title} in{' '}
+                {document.sessions.find((s) => s.id === sessionId)?.label}?
+                Current possessions will be checkpointed.
+              </p>
+              <button autoFocus onClick={() => setActivation(false)}>
+                Cancel
+              </button>
+              <button
+                disabled={submitting}
+                onClick={() => void openStored(false)}
+              >
+                Replace inventory
+              </button>
+            </div>
+          )}
+          <details className={styles['readablePreview']}>
+            <summary>Readable preview</summary>
+            <Inspection
+              key={revision.id}
+              payload={revision.payload}
+              type={record.type}
+            />
+          </details>
+          <details>
+            <summary>Source &amp; provenance</summary>
+            <pre className={styles['source']}>{revision.sourceText}</pre>
+          </details>
           <button
             onClick={() =>
               void window.campaignStorage
