@@ -432,15 +432,6 @@ fn main() {
             if let Some(item) = menu.items()?.get(1) {
                 menu.remove(item)?;
             }
-            for item in menu.items()? {
-                if let tauri::menu::MenuItemKind::Submenu(sub) = item {
-                    if sub.text()? == "Window" {
-                        if let Some(last) = sub.items()?.last() {
-                            sub.remove(last)?;
-                        }
-                    }
-                }
-            }
             let file = Submenu::new(app.handle(), "File", true)?;
             for (id, label, key) in [
                 ("new", "New Campaign", "CmdOrCtrl+N"),
@@ -466,12 +457,36 @@ fn main() {
                 None::<&str>,
             )?)?;
             menu.insert(&file, 1)?;
+            let tools = Submenu::new(app.handle(), "Tools", true)?;
+            tools.append(&MenuItem::with_id(
+                app.handle(),
+                "standaloneTools",
+                "Standalone Tools",
+                true,
+                None::<&str>,
+            )?)?;
+            let items = menu.items()?;
+            let mut tools_index = items.len();
+            for (index, item) in items.into_iter().enumerate() {
+                if let tauri::menu::MenuItemKind::Submenu(sub) = item {
+                    if sub.text()? == "Window" {
+                        if let Some(last) = sub.items()?.last() {
+                            sub.remove(last)?;
+                        }
+                        tools_index = index;
+                        break;
+                    }
+                }
+            }
+            menu.insert(&tools, tools_index)?;
             app.set_menu(menu)?;
             Ok(())
         })
         .on_menu_event(|app, event| {
             let id = event.id().as_ref();
-            if ["new", "open", "save", "saveAs", "close", "reopen"].contains(&id) {
+            if id == "standaloneTools" {
+                let _ = app.emit("show-standalone-tools", ());
+            } else if ["new", "open", "save", "saveAs", "close", "reopen"].contains(&id) {
                 let _ = app.emit("campaign-action", id);
             }
         })

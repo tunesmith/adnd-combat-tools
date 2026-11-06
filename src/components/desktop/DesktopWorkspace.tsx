@@ -41,6 +41,7 @@ export default function DesktopWorkspace({
   } | null>(null);
   const [state, setState] = useState<DocumentState | null>(null);
   const current = useRef<DocumentState | null>(null);
+  const welcomeTools = useRef<HTMLDetailsElement>(null);
   const pending = useRef(0);
   const needsEditorReset = useRef(false);
   const editorVersionRef = useRef(0);
@@ -94,55 +95,58 @@ export default function DesktopWorkspace({
       unsubscribe?.();
     };
   }, [receive]);
-  function mutate(
-    change: (document: CampaignDocument) => CampaignDocument,
-    owner = current.current
-  ) {
-    if (!owner?.document || !window.campaignStorage) return false;
-    const id = owner.document.id,
-      epoch = owner.epoch;
-    if (current.current?.epoch !== epoch || current.current.document?.id !== id)
-      return false;
-    try {
-      const next = change(current.current.document);
-      pending.current += 1;
-      setError(null);
-      const optimistic = {
-        ...current.current,
-        document: next,
-        dirty: true,
-        status: 'Unsaved campaign changes',
-      };
-      current.current = optimistic;
-      setState(optimistic);
-      void window.campaignStorage
-        .mutate(id, epoch, change)
-        .then((accepted) => {
-          if (
-            current.current?.epoch !== epoch ||
-            current.current.document?.id !== id
-          )
-            return;
-          pending.current = Math.max(0, pending.current - 1);
-          if (accepted && pending.current === 0) {
-            setError(null);
-            receive(accepted);
-          }
-        })
-        .catch((e) => {
-          if (current.current?.epoch === epoch) {
+  const mutate = useCallback(
+    function mutate(
+      change: (document: CampaignDocument) => CampaignDocument,
+      owner: DocumentState | null = current.current
+    ) {
+      if (!owner?.document || !window.campaignStorage) return false;
+      const id = owner.document.id,
+        epoch = owner.epoch;
+      const active = current.current;
+      if (active?.epoch !== epoch || active.document?.id !== id) return false;
+      try {
+        const next = change(active.document);
+        pending.current += 1;
+        setError(null);
+        const optimistic = {
+          ...active,
+          document: next,
+          dirty: true,
+          status: 'Unsaved campaign changes',
+        };
+        current.current = optimistic;
+        setState(optimistic);
+        void window.campaignStorage
+          .mutate(id, epoch, change)
+          .then((accepted) => {
+            if (
+              current.current?.epoch !== epoch ||
+              current.current?.document?.id !== id
+            )
+              return;
             pending.current = Math.max(0, pending.current - 1);
-            needsEditorReset.current = true;
-            setError(String(e));
-          }
-        });
-      return true;
-    } catch (e) {
-      needsEditorReset.current = true;
-      setError(String(e));
-      return false;
-    }
-  }
+            if (accepted && pending.current === 0) {
+              setError(null);
+              receive(accepted);
+            }
+          })
+          .catch((e) => {
+            if (current.current?.epoch === epoch) {
+              pending.current = Math.max(0, pending.current - 1);
+              needsEditorReset.current = true;
+              setError(String(e));
+            }
+          });
+        return true;
+      } catch (e) {
+        needsEditorReset.current = true;
+        setError(String(e));
+        return false;
+      }
+    },
+    [receive]
+  );
   async function createSession(
     change: (doc: CampaignDocument) => CampaignDocument,
     owner: DocumentState
@@ -180,9 +184,34 @@ export default function DesktopWorkspace({
       throw e;
     }
   }
-  function navigate(view: WorkspaceView) {
-    mutate((d) => ({ ...d, workspace: { ...d.workspace, view } }));
-  }
+  const navigate = useCallback(
+    (view: WorkspaceView) => {
+      if (current.current?.document?.workspace.view !== view)
+        mutate((d) => ({ ...d, workspace: { ...d.workspace, view } }));
+    },
+    [mutate]
+  );
+  useEffect(() => {
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    void window.__TAURI__?.event
+      .listen('show-standalone-tools', () => {
+        if (disposed) return;
+        if (current.current?.document) navigate('tools');
+        else if (welcomeTools.current) welcomeTools.current.open = true;
+      })
+      .then((cleanup) => {
+        if (disposed) cleanup();
+        else unlisten = cleanup;
+      })
+      .catch((e) => {
+        if (!disposed) setError(String(e));
+      });
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, [navigate]);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if (
@@ -215,7 +244,7 @@ export default function DesktopWorkspace({
     };
     window.addEventListener('keydown', keydown);
     return () => window.removeEventListener('keydown', keydown);
-  });
+  }, [navigate]);
   const command = (action: DocumentCommand) => {
     void window.campaignStorage
       ?.command(action)
@@ -318,7 +347,18 @@ export default function DesktopWorkspace({
       <header className={styles['header']}>
         <div>
           <small>AD&amp;D TOOLS · CAMPAIGN WORKSPACE</small>
-          <h1>{document?.title || 'Open a campaign'}</h1>
+          <div className={styles['campaignHeading']}>
+            <h1>{document?.title || 'Open a campaign'}</h1>
+            {document && (
+              <button
+                type="button"
+                aria-pressed={view === 'details'}
+                onClick={() => navigate('details')}
+              >
+                Campaign Details
+              </button>
+            )}
+          </div>
         </div>
         <div className={styles['status']}>
           <CampaignSaveStatus
@@ -383,7 +423,7 @@ export default function DesktopWorkspace({
           {state?.recentPath && (
             <button onClick={() => command('reopen')}>Reopen last</button>
           )}
-          <details>
+          <details ref={welcomeTools}>
             <summary>Standalone tools</summary>
             {children}
           </details>
@@ -425,15 +465,13 @@ export default function DesktopWorkspace({
               + Session
             </button>
           </div>
-          <nav className={styles['navigation']} aria-label="Campaign views">
+          <nav className={styles['navigation']} aria-label="Session views">
             {(
               [
-                ['possessions', 'Possessions'],
-                ['combats', 'Combats'],
                 ['session', 'Session notes'],
                 ['party', 'Party Reference'],
-                ['details', 'Campaign Details'],
-                ['tools', 'Standalone tools'],
+                ['possessions', 'Possessions'],
+                ['combats', 'Combats'],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -455,18 +493,6 @@ export default function DesktopWorkspace({
                 {document.sessions.find((s) => s.id === sessionId)?.label ||
                   'Select a session'}
               </h2>
-              <p>
-                Encounters:{' '}
-                {
-                  document.workingCombats.filter(
-                    (c) => c.sessionId === sessionId && !c.removedAt
-                  ).length
-                }{' '}
-                ·{' '}
-                {working
-                  ? 'Current inventory available'
-                  : 'No current inventory'}
-              </p>
               <label>
                 Session notes
                 <textarea
