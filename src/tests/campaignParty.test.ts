@@ -16,19 +16,15 @@ import {
 } from '../helpers/campaignContinuity';
 import { validateHistoryTransition } from '../helpers/campaignHistory';
 import { setEncounterRemoval } from '../helpers/campaignEncounterRemoval';
-import { applyPartyLevelsToLatestRound } from '../helpers/applyPartyLevels';
 import {
   calculatedSaves,
   effectiveLevel,
   emptyProfile,
-  projectCombatRound,
-  projectedTrackerLevel,
-  setCombatCharacterLink,
-  setInventoryCharacterLink,
+  combatValuesForProfile,
   updatePartyProfile,
 } from '../helpers/campaignParty';
 import { insertRoundAfterActive } from '../helpers/trackerState';
-import { BARD, CLERIC, FIGHTER, MONK, MONSTER } from '../tables/attackerClass';
+import { BARD, CLERIC, FIGHTER } from '../tables/attackerClass';
 
 const at = '2026-11-04T12:00:00.000Z';
 function required<T>(value: T | undefined): T {
@@ -87,34 +83,10 @@ function fixture() {
     player: 'Another player',
     notes: '',
   });
-  const combat = required(doc.workingCombats[0]);
-  const key = required(required(combat.state.rounds[1]).party[0]).key;
-  doc = setCombatCharacterLink(
-    doc,
-    {
-      sessionId: 'session-1',
-      combatId: 'fight',
-      generation: 0,
-      side: 'party',
-      key,
-      characterId: 'pc-a',
-    },
-    true
-  );
-  doc = setInventoryCharacterLink(
-    doc,
-    {
-      sessionId: 'session-1',
-      inventoryId: 'inventory',
-      inventoryCharacterId: 'synthetic-mira',
-      characterId: 'pc-b',
-    },
-    true
-  );
   return doc;
 }
 
-test('a named +1 crosses the cleric band, preserves overrides, and only changes new or explicitly updated latest rounds', () => {
+test('a named +1 crosses the cleric band, preserves overrides, and leaves combat rounds independent', () => {
   const doc = fixture(),
     profile = required(doc.party?.profiles[0]),
     combat = required(doc.workingCombats[0]);
@@ -133,51 +105,19 @@ test('a named +1 crosses the cleric band, preserves overrides, and only changes 
   expect(current.saveNotes[0]).toBe('Free text');
   expect(enabled.workingCombats).toEqual(doc.workingCombats);
   const newRound = insertRoundAfterActive(combat.state);
-  const projected = projectCombatRound(
-    enabled,
-    combat,
-    newRound,
-    newRound.activeRound
-  );
-  expect(projected.rounds.slice(0, 2)).toEqual(combat.state.rounds);
-  expect(projected.rounds[2]?.party[0]?.level).toBe(7);
-  expect(projected.rounds[2]?.partyStates[0]?.hp).toBe('14');
-  const other = required(enabled.workingCombats[1]);
-  expect(
-    projectCombatRound(enabled, other, newRound, newRound.activeRound)
-  ).toBe(newRound);
-  const older = changeWorkingCombat(
+  expect(newRound.rounds.slice(0, 2)).toEqual(combat.state.rounds);
+  expect(newRound.rounds[2]?.party[0]?.level).toBe(6);
+  expect(newRound.rounds[2]?.partyStates[0]?.hp).toBe('14');
+  const edited = changeWorkingCombat(
     enabled,
     combat.id,
     combat.sessionId,
     combat.generation,
-    { ...combat.state, activeRound: 0 }
+    newRound
   );
-  expect(() =>
-    applyPartyLevelsToLatestRound(
-      older,
-      combat.id,
-      combat.generation,
-      'before',
-      at
-    )
-  ).toThrow('latest');
-  const applied = applyPartyLevelsToLatestRound(
-    enabled,
-    combat.id,
-    combat.generation,
-    'before',
-    at
-  );
-  expect(applied.combatCheckpoints[0]?.state).toEqual(combat.state);
-  expect(applied.workingCombats[0]?.state.rounds[0]).toEqual(
-    combat.state.rounds[0]
-  );
-  expect(applied.workingCombats[0]?.state.rounds[1]?.party[0]?.level).toBe(7);
-  expect(applied.workingCombats[0]?.state.rounds[1]?.partyStates).toEqual(
-    combat.state.rounds[1]?.partyStates
-  );
-  expect(parseCampaign(serializeCampaign(applied))).toEqual(applied);
+  expect(edited.party).toEqual(enabled.party);
+  expect(edited.workingInventories).toEqual(doc.workingInventories);
+  expect(parseCampaign(serializeCampaign(edited))).toEqual(edited);
 });
 
 test('reviewed bard history separates saves from fighter attack levels, and unsupported cases stay manual', () => {
@@ -189,32 +129,29 @@ test('reviewed bard history separates saves from fighter attack levels, and unsu
     retainedThief: 6,
     adjustment: { name: 'Blessing', enabled: true },
   };
-  const actor = required(required(syntheticCombat().rounds[0]).party[0]);
   expect(calculatedSaves(profile)).toEqual([7, 10, 11, 13, 12]);
-  expect(projectedTrackerLevel(profile, { ...actor, class: BARD })).toBe(5);
+  expect(combatValuesForProfile(profile)).toEqual({ class: BARD, level: 5 });
   expect(calculatedSaves({ ...profile, retainedThief: null })).toBeNull();
   expect(calculatedSaves({ ...profile, saveBasis: 'manual' })).toBeNull();
   expect(
-    projectedTrackerLevel(profile, { ...actor, class: MONSTER })
-  ).toBeNull();
+    combatValuesForProfile({ ...profile, combatBasis: 'manual' })
+  ).toBeUndefined();
   expect(calculatedSaves({ ...profile, characterClass: 'monk' })).toEqual([
     12, 11, 12, 15, 13,
   ]);
   expect(
-    projectedTrackerLevel(
-      { ...profile, characterClass: 'monk' },
-      { ...actor, class: MONK }
-    )
-  ).toBeNull();
+    combatValuesForProfile({ ...profile, characterClass: 'monk' })
+  ).toBeUndefined();
   expect(
-    projectedTrackerLevel(
-      { ...profile, characterClass: 'fighter', baseLevel: 22 },
-      { ...actor, class: FIGHTER }
-    )
-  ).toBe(17);
+    combatValuesForProfile({
+      ...profile,
+      characterClass: 'fighter',
+      baseLevel: 22,
+    })
+  ).toEqual({ class: FIGHTER, level: 17 });
 });
 
-test('selective profile continuation remaps explicit links without merging same names or editing the source session', () => {
+test('selective continuation copies profiles and working data independently, even with duplicate names', () => {
   const doc = fixture();
   const next = startNextSession(doc, {
     campaignId: doc.id,
@@ -246,11 +183,8 @@ test('selective profile continuation remaps explicit links without merging same 
       .map((p) => p.characterId)
   ).toEqual(['pc-a']);
   expect(
-    next.party?.combatLinks.find((l) => l.combatId === 'continued')?.characterId
-  ).toBe('pc-a');
-  expect(
-    next.party?.inventoryLinks.find((l) => l.inventoryId === 'carried')
-  ).toBeUndefined();
+    next.workingInventories.find((w) => w.id === 'carried')?.document
+  ).toEqual(doc.workingInventories[0]?.document);
   const copy = required(
     next.party?.profiles.find((p) => p.sessionId === 'session-2')
   );
@@ -266,7 +200,7 @@ test('selective profile continuation remaps explicit links without merging same 
   expect(parseCampaign(serializeCampaign(edited))).toEqual(edited);
 });
 
-test('a continued encounter can be removed, saved and recovered with frozen state, links and logical identity', () => {
+test('a continued encounter can be removed, saved and recovered with frozen state and logical identity', () => {
   const source = fixture(),
     next = startNextSession(source, {
       campaignId: source.id,
@@ -309,7 +243,24 @@ test('a continued encounter can be removed, saved and recovered with frozen stat
   expect(() => validateHistoryTransition(removed, forged, '')).toThrow(
     'retain'
   );
-  const reopened = parseCampaign(serializeCampaign(removed));
+  const legacy = {
+    ...removed,
+    schemaVersion: 6,
+    party: {
+      ...required(removed.party),
+      combatLinks: [],
+      inventoryLinks: [],
+    },
+  };
+  const migrated = parseCampaign(JSON.stringify(legacy));
+  expect(migrated).toEqual(removed);
+  for (const key of ['combatLinks', 'inventoryLinks'] as const) {
+    expect(() =>
+      validateCampaign({ ...legacy, party: { ...legacy.party, [key]: [{}] } })
+    ).toThrow();
+  }
+  expect(() => validateCampaign({ ...legacy, schemaVersion: 7 })).toThrow();
+  const reopened = parseCampaign(serializeCampaign(migrated));
   const recovered = setEncounterRemoval(reopened, 'continued', 'session-2', 1);
   expect(() =>
     validateHistoryTransition(reopened, recovered, '')
@@ -320,10 +271,8 @@ test('a continued encounter can be removed, saved and recovered with frozen stat
   expect(restored.removedAt).toBeUndefined();
   expect(restored.encounterId).toBe('fight');
   expect(restored.state).toEqual(archived.state);
-  expect(
-    recovered.party?.combatLinks.find((l) => l.combatId === 'continued')
-      ?.generation
-  ).toBe(2);
+  expect(restored.generation).toBe(2);
+  expect(recovered.party).toEqual(next.party);
   expect(recovered.workingCombats).toHaveLength(next.workingCombats.length);
   expect(() =>
     validateCampaign({

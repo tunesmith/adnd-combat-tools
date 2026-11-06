@@ -113,7 +113,7 @@ export function validateHistoryTransition(
   for (const combat of old.workingCombats) {
     const changed = next.workingCombats.find((c) => c.id === combat.id);
     if (!changed) continue;
-    if (validateEncounterRemoval(old, next, combat, changed)) continue;
+    if (validateEncounterRemoval(combat, changed)) continue;
     if (
       changed.generation !== combat.generation ||
       JSON.stringify(changed.origin) !== JSON.stringify(combat.origin)

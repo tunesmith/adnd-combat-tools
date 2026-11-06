@@ -11,6 +11,7 @@ import {
 import type { CSSProperties } from 'react';
 import {
   addCombatant,
+  createBaseCombatant,
   createInitialTrackerState,
   insertRoundAfterActive,
   removeActiveRound,
@@ -109,9 +110,12 @@ interface CombatTrackerProps {
     readOnly?: boolean;
     state: TrackerState;
     onStateChange: (state: TrackerState) => boolean | void;
-    projectNewRound?: (state: TrackerState) => TrackerState;
-    reservedKey?: number;
-    levelManaged?: (side: 'party' | 'enemy', key: number) => boolean;
+    partyProfiles?: {
+      id: string;
+      name: string;
+      player: string;
+      combatValues?: Pick<TrackerCombatant, 'class' | 'level'>;
+    }[];
   };
   rememberedState?: TrackerState;
   loadedFromEncodedState?: boolean;
@@ -277,7 +281,12 @@ type TrackerAction =
       index: number;
       combatant: TrackerCombatant;
     }
-  | { type: 'add-combatant'; side: TrackerSide; key: number }
+  | {
+      type: 'add-combatant';
+      side: TrackerSide;
+      key: number;
+      partyDraft?: TrackerCombatant;
+    }
   | { type: 'remove-combatant'; side: TrackerSide; index: number }
   | { type: 'advance-round' }
   | { type: 'remove-round' };
@@ -1405,7 +1414,7 @@ const trackerReducer = (
         action.combatant
       );
     case 'add-combatant':
-      return addCombatant(state, action.side, action.key);
+      return addCombatant(state, action.side, action.key, action.partyDraft);
     case 'remove-combatant': {
       const activeRound = state.rounds[state.activeRound];
       if (
@@ -1538,6 +1547,11 @@ const CombatTracker = ({
     useState<boolean>(false);
   const [roundLabelDraft, setRoundLabelDraft] = useState<string>('');
   const idCounter = useRef<number>(getNextCombatantKey(initialState));
+  const [partyDraft, setPartyDraft] = useState<{
+    combatant: TrackerCombatant;
+    roundIndex: number;
+    copiedClassAndLevel: boolean;
+  }>();
   const pausedEncodedState = useRef<string | undefined>(undefined);
   const urlWarningShown = useRef<boolean>(false);
   const recoverPromptHandled = useRef<boolean>(false);
@@ -1564,21 +1578,22 @@ const CombatTracker = ({
   const stateRef = useRef(state);
   stateRef.current = state;
   const dispatch = (action: TrackerAction) => {
-    if (readOnly) return;
+    if (readOnly) return false;
     if (!campaign) {
       standaloneDispatch(action);
-      return;
+      return true;
     }
-    if (action.type === 'replace-state') return;
-    const reduced = trackerReducer(stateRef.current, action);
-    const next =
-      action.type === 'advance-round' &&
-      reduced.rounds.length > stateRef.current.rounds.length
-        ? campaign.projectNewRound?.(reduced) || reduced
-        : reduced;
-    if (campaign.onStateChange(next) !== false) stateRef.current = next;
+    if (action.type === 'replace-state') return false;
+    const next = trackerReducer(stateRef.current, action);
+    if (campaign.onStateChange(next) === false) return false;
+    stateRef.current = next;
+    return true;
   };
   const currentRound = state.rounds[state.activeRound];
+  const campaignActive = campaign?.active;
+  useEffect(() => {
+    setPartyDraft(undefined);
+  }, [campaignActive, state.activeRound]);
   const currentRoundLabel = currentRound?.label || '';
   const currentRoundDisplayLabel =
     currentRoundLabel || `Round ${state.activeRound + 1}`;
@@ -2586,7 +2601,7 @@ const CombatTracker = ({
   const nextKey = () => {
     const current = Math.max(
       idCounter.current,
-      (campaign?.reservedKey ?? -1) + 1
+      campaign ? getNextCombatantKey(stateRef.current) : 0
     );
     idCounter.current = current + 1;
     return current;
@@ -4697,6 +4712,38 @@ const CombatTracker = ({
         readOnly ? undefined : campaign ? 'campaign-combat-modal' : 'app-modal'
       }
     >
+      {!readOnly &&
+        campaignActive &&
+        partyDraft &&
+        partyDraft.roundIndex === state.activeRound && (
+          <TrackerCombatantInput
+            combatant={partyDraft.combatant}
+            side="party"
+            modalRootId="campaign-combat-modal"
+            newMember={{
+              copiedClassAndLevel: partyDraft.copiedClassAndLevel,
+              duplicateName: currentRound.party.some(
+                (actor) =>
+                  actor.name?.trim().toLowerCase() ===
+                  partyDraft.combatant.name?.trim().toLowerCase()
+              ),
+              onCancel: () => setPartyDraft(undefined),
+              onAdd: (combatant) => {
+                if (stateRef.current.activeRound !== partyDraft.roundIndex)
+                  return;
+                if (
+                  dispatch({
+                    type: 'add-combatant',
+                    side: 'party',
+                    key: nextKey(),
+                    partyDraft: combatant,
+                  })
+                )
+                  setPartyDraft(undefined);
+              },
+            }}
+          />
+        )}
       <div
         className={`${styles['page']} ${
           campaign ? styles['campaignPage'] : ''
@@ -4858,6 +4905,37 @@ const CombatTracker = ({
                 >
                   Add Party Member
                 </button>
+                {!!campaign?.partyProfiles?.length && (
+                  <select
+                    aria-label="Add from party/profile"
+                    className={styles['toolbarButton']}
+                    value=""
+                    onChange={(event) => {
+                      const profile = campaign.partyProfiles?.find(
+                        (p) => p.id === event.target.value
+                      );
+                      if (!profile) return;
+                      setPartyDraft({
+                        combatant: createBaseCombatant(
+                          nextKey(),
+                          'party',
+                          profile.name,
+                          profile.combatValues
+                        ),
+                        roundIndex: state.activeRound,
+                        copiedClassAndLevel: Boolean(profile.combatValues),
+                      });
+                    }}
+                  >
+                    <option value="">Add from party/profile…</option>
+                    {campaign.partyProfiles.map((profile, index) => (
+                      <option key={profile.id} value={profile.id}>
+                        {index + 1}. {profile.name}
+                        {profile.player ? ` · ${profile.player}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button
                   type={'button'}
                   className={styles['toolbarButton']}
@@ -5042,10 +5120,6 @@ const CombatTracker = ({
                       }
                       combatant={combatant}
                       side={'party'}
-                      levelManaged={campaign?.levelManaged?.(
-                        'party',
-                        combatant.key
-                      )}
                       canRemove={currentRound.party.length > 1}
                       onRemove={() =>
                         dispatch({
@@ -5092,10 +5166,6 @@ const CombatTracker = ({
                       }
                       combatant={combatant}
                       side={'enemy'}
-                      levelManaged={campaign?.levelManaged?.(
-                        'enemy',
-                        combatant.key
-                      )}
                       canRemove={currentRound.enemies.length > 1}
                       onRemove={() =>
                         dispatch({

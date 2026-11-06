@@ -1,4 +1,4 @@
-import { carriedParty, partyInSession } from './campaignParty';
+import { carriedPartyProfiles, profilesInSession } from './campaignParty';
 import { sha256 } from 'js-sha256';
 import { canonical } from './campaignSnapshots';
 import { captureCombatCheckpoint } from './campaignWorkingCombat';
@@ -32,7 +32,7 @@ function sourceContext(doc: CampaignDocument, id: string) {
     inventory: doc.workingInventories.filter((w) => w.sessionId === id),
     selected: doc.workspace.combatSelections?.[id] || null,
     ...(doc.party
-      ? { party: partyInSession(doc, id), roster: doc.party.roster }
+      ? { party: profilesInSession(doc, id), roster: doc.party.roster }
       : {}),
   };
 }
@@ -161,9 +161,8 @@ export function startNextSession(
     };
   }
   if (request.partyCharacterIds?.length && doc.party) {
-    const carried = carriedParty(
+    const carried = carriedPartyProfiles(
       doc,
-      next,
       source.id,
       request.destinationId,
       request.partyCharacterIds
@@ -172,12 +171,7 @@ export function startNextSession(
       ...next,
       party: {
         ...doc.party,
-        profiles: [...doc.party.profiles, ...carried.profiles],
-        inventoryLinks: [
-          ...doc.party.inventoryLinks,
-          ...carried.inventoryLinks,
-        ],
-        combatLinks: [...doc.party.combatLinks, ...carried.combatLinks],
+        profiles: [...doc.party.profiles, ...carried],
       },
     };
   }
@@ -341,14 +335,13 @@ export function validateContinuityTransition(
     const source = old.sessions.find((p) => p.id === origin.sourceSessionId);
     if ((s.notes || '') !== (origin.copyNotes ? source?.notes || '' : ''))
       throw new Error('Session notes were not copied as requested.');
-    const party = carriedParty(
+    const party = carriedPartyProfiles(
       old,
-      next,
       origin.sourceSessionId,
       s.id,
       origin.partyCharacterIds || []
     );
-    if (canonical(party) !== canonical(partyInSession(next, s.id)))
+    if (canonical(party) !== canonical(profilesInSession(next, s.id)))
       throw new Error('Party profile copies do not match choices.');
     const combats = next.workingCombats.filter((c) => c.sessionId === s.id),
       inventories = next.workingInventories.filter((w) => w.sessionId === s.id);

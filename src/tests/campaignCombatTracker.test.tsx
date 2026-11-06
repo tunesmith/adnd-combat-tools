@@ -11,6 +11,8 @@ import {
 } from '../helpers/campaignWorkingCombat';
 import baseline from './fixtures/campaignB1V2.json';
 import type { CampaignDocument } from '../helpers/campaignDocument';
+import type { TrackerState } from '../types/tracker';
+import { CLERIC, FIGHTER } from '../tables/attackerClass';
 
 afterEach(() => jest.restoreAllMocks());
 test('controlled tracker sends complete live edits through campaign validation and never writes browser drafts or URL', () => {
@@ -102,4 +104,96 @@ test('controlled tracker sends complete live edits through campaign validation a
   expect(url).not.toHaveBeenCalled();
   fireEvent(window, new Event('pagehide'));
   expect(local).not.toHaveBeenCalled();
+});
+
+test('copying a profile opens a local draft and later rounds inherit the reviewed combat values', () => {
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  const initial = createRegisterIntentionsFixtureState();
+  let combat = initial;
+  function Harness({ level }: { level: number }) {
+    const [state, setState] = useState<TrackerState>(initial);
+    return (
+      <CombatTracker
+        campaign={{
+          active: true,
+          state,
+          partyProfiles: [
+            {
+              id: 'scout',
+              name: 'Scout',
+              player: '',
+              combatValues: { class: CLERIC, level },
+            },
+          ],
+          onStateChange: (next) => {
+            combat = next;
+            setState(next);
+          },
+        }}
+      />
+    );
+  }
+  const { rerender } = render(<Harness level={7} />);
+  const select = screen.getByRole('combobox', {
+    name: 'Add from party/profile',
+  });
+  fireEvent.change(select, { target: { value: 'scout' } });
+  let dialog = within(
+    screen.getByRole('dialog', { name: 'Add Party Member from Profile' })
+  );
+  expect(dialog.getByText('Cleric')).toBeInTheDocument();
+  expect(combat).toBe(initial);
+  fireEvent.click(dialog.getByRole('button', { name: 'Cancel' }));
+  expect(combat).toBe(initial);
+  fireEvent.change(select, { target: { value: 'scout' } });
+  dialog = within(
+    screen.getByRole('dialog', { name: 'Add Party Member from Profile' })
+  );
+  expect(dialog.getByLabelText('Max HP')).toHaveValue('');
+  fireEvent.change(dialog.getByLabelText('Max HP'), {
+    target: { value: '11' },
+  });
+  fireEvent.click(dialog.getByRole('button', { name: 'Add party member' }));
+  const copied = combat.rounds[0]?.party.at(-1);
+  expect(copied).toMatchObject({
+    name: 'Scout',
+    class: CLERIC,
+    level: 7,
+    maxHp: '11',
+  });
+  expect(
+    initial.rounds[0]?.party.some((actor) => actor.key === copied?.key)
+  ).toBe(false);
+
+  fireEvent.change(select, { target: { value: 'scout' } });
+  dialog = within(
+    screen.getByRole('dialog', { name: 'Add Party Member from Profile' })
+  );
+  for (const [label, option] of [
+    ['Class', 'Fighter'],
+    ['Level', 'Level 4'],
+  ] as const) {
+    const control = dialog
+      .getByRole('combobox', { name: label })
+      .closest('[class*="-control"]');
+    if (!control) throw new Error(`Missing ${label} control`);
+    fireEvent.mouseDown(control);
+    fireEvent.click(screen.getByText(option, { exact: true }));
+  }
+  fireEvent.click(
+    dialog.getByRole('button', { name: 'Add separate combatant' })
+  );
+  expect(combat.rounds[0]?.party.at(-1)?.key).not.toBe(copied?.key);
+  expect(combat.rounds[0]?.party.at(-1)).toMatchObject({
+    class: FIGHTER,
+    level: 4,
+  });
+
+  const captured = combat;
+  rerender(<Harness level={9} />);
+  expect(combat).toBe(captured);
+  fireEvent.click(screen.getByRole('button', { name: 'Advance Round' }));
+  expect(combat.rounds[0]).toEqual(captured.rounds[0]);
+  expect(combat.rounds[1]?.party.at(-2)?.level).toBe(7);
+  expect(combat.rounds[1]?.party.at(-1)?.level).toBe(4);
 });

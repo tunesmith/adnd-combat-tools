@@ -18,7 +18,6 @@ import {
 } from '../../helpers/campaignParty';
 import { saveCategories } from '../../tables/savingThrows';
 import AutoHeightTextarea from '../tracker/AutoHeightTextarea';
-import PartyLinks from './PartyLinks';
 import styles from './campaignWorkspace.module.css';
 
 const notes = ['Dodging notes', 'Fire/lightning notes', 'Other notes'] as const;
@@ -268,7 +267,7 @@ function ProfileDialog({
               </select>
             </label>
             <label>
-              Combat level{' '}
+              When copying to combat{' '}
               <select
                 value={draft.combatBasis}
                 onChange={(e) =>
@@ -278,8 +277,8 @@ function ProfileDialog({
                   })
                 }
               >
-                <option value="class">Use reviewed class profile</option>
-                <option value="manual">Manual tracker level</option>
+                <option value="class">Copy supported class and level</option>
+                <option value="manual">Copy name only</option>
               </select>
             </label>
           </details>
@@ -334,13 +333,6 @@ function ProfileDialog({
             <button type="submit">Save profile</button>
           </footer>
         </form>
-        {saved && (
-          <PartyLinks
-            document={document}
-            profile={profile}
-            onChange={onChange}
-          />
-        )}
       </section>
     </div>
   );

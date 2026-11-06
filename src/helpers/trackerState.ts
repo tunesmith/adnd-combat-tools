@@ -37,19 +37,20 @@ export const ensureWeaponShortlist = (
         weaponShortlist: [combatant.weapon],
       };
 
-const createBaseCombatant = (
+export const createBaseCombatant = (
   key: number,
   side: TrackerSide,
-  name: string
+  name: string,
+  values?: Pick<TrackerCombatant, 'class' | 'level'>
 ): TrackerCombatant => {
-  const attackerClass = getDefaultClass(side);
+  const attackerClass = values?.class ?? getDefaultClass(side);
   const defaultWeapon = getDefaultWeapon(attackerClass);
 
   return {
     key,
     name,
     class: attackerClass,
-    level: side === 'party' ? 1 : 3,
+    level: values?.level ?? (side === 'party' ? 1 : 3),
     armorType: side === 'party' ? 2 : 1,
     armorClass: side === 'party' ? 10 : 5,
     weapon: defaultWeapon,
@@ -317,7 +318,8 @@ export const removeActiveRound = (state: TrackerState): TrackerState => {
 export const addCombatant = (
   state: TrackerState,
   side: TrackerSide,
-  nextKey: number
+  nextKey: number,
+  partyDraft?: TrackerCombatant
 ): TrackerState => {
   const currentRound = state.rounds[state.activeRound];
   if (!currentRound) {
@@ -326,7 +328,9 @@ export const addCombatant = (
 
   const combatant =
     side === 'party'
-      ? createTrackerCombatant(nextKey, side, currentRound.party.length)
+      ? partyDraft
+        ? { ...partyDraft, key: nextKey }
+        : createTrackerCombatant(nextKey, side, currentRound.party.length)
       : (() => {
           const previousEnemy =
             currentRound.enemies[currentRound.enemies.length - 1];

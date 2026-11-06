@@ -526,8 +526,7 @@
   background: #fff;
   border-color: #b8a98e;
 }
-.partyTable button,
-.linkedLevelNotice button {
+.partyTable button {
   font: inherit;
   padding: 5px 9px;
   border: 1px solid #b8a98e;
@@ -585,11 +584,4 @@
 }
 .continuationDialog details select {
   max-width: 100%;
-}
-.linkedLevelNotice {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
 }

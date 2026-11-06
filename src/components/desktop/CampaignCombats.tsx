@@ -1,9 +1,8 @@
 import { setEncounterRemoval } from '../../helpers/campaignEncounterRemoval';
 import {
-  linkedCombatValues,
-  projectCombatRound,
+  combatValuesForProfile,
+  profilesInSession,
 } from '../../helpers/campaignParty';
-import { applyPartyLevelsToLatestRound } from '../../helpers/applyPartyLevels';
 import { ownedHistory } from '../../helpers/campaignHistory';
 import { useState } from 'react';
 import RenamableTab from './RenamableTab';
@@ -42,10 +41,7 @@ export default function CampaignCombats({
   editorVersion: number;
   active: boolean;
 }) {
-  const [confirm, setConfirm] = useState<{
-    id: string;
-    action: 'remove' | 'levels';
-  }>();
+  const [confirmRemovalId, setConfirmRemovalId] = useState<string>();
   const [undo, setUndo] = useState<string>();
   const [newEncounterId, setNewEncounterId] = useState<string>();
   const [historySelections, setHistorySelections] = useState<
@@ -103,27 +99,23 @@ export default function CampaignCombats({
     (c) => c.sessionId === sessionId && c.removedAt
   );
   const undoEncounter = removed.find((c) => c.id === undo);
-  const latest = selected ? selected.state.rounds.length - 1 : -1;
-  const linked = selected
-    ? linkedCombatValues(document, selected, selected.state.rounds[latest])
-    : [];
-  const pending = linked.filter(
-    (l) => l.level !== null && l.level !== l.actor.level
+  const partyProfiles = profilesInSession(document, sessionId).flatMap(
+    (profile) => {
+      const character = document.party?.roster.find(
+        (c) => c.id === profile.characterId
+      );
+      return character
+        ? [
+            {
+              id: character.id,
+              name: character.name,
+              player: character.player,
+              combatValues: combatValuesForProfile(profile),
+            },
+          ]
+        : [];
+    }
   );
-  const manual = linked.filter((l) => l.level === null);
-  const currentLinks = selected
-    ? linkedCombatValues(
-        document,
-        selected,
-        selected.state.rounds[selected.state.activeRound]
-      )
-    : [];
-  const reservedKey = selected
-    ? (document.party?.combatLinks || []).reduce(
-        (max, l) => (l.combatId === selected.id ? Math.max(max, l.key) : max),
-        -1
-      )
-    : -1;
   const sessionLabel =
     document.sessions.find((s) => s.id === sessionId)?.label || 'this session';
 
@@ -141,7 +133,7 @@ export default function CampaignCombats({
       )
     ) {
       setUndo(combat.id);
-      setConfirm(undefined);
+      setConfirmRemovalId(undefined);
     }
   }
   function requestRemoval(combat: WorkingCombat) {
@@ -158,7 +150,7 @@ export default function CampaignCombats({
           r.enemyInitiative
       ) ||
       document.combatCheckpoints.some((c) => c.combatId === combat.id);
-    if (meaningful) setConfirm({ id: combat.id, action: 'remove' });
+    if (meaningful) setConfirmRemovalId(combat.id);
     else remove(combat);
   }
   function recover(combat: WorkingCombat) {
@@ -261,50 +253,13 @@ export default function CampaignCombats({
               Details → Import.
             </p>
           )}
-          {selected && !historical && pending.length > 0 && (
-            <div className={styles['linkedLevelNotice']}>
-              <span>
-                Latest round has pending levels for{' '}
-                {pending.map((l) => l.name).join(', ')}. New rounds use Party
-                Reference.
-              </span>
-              {selected.state.activeRound === latest ? (
-                <button
-                  onClick={() =>
-                    setConfirm({ id: selected.id, action: 'levels' })
-                  }
-                >
-                  Apply levels…
-                </button>
-              ) : (
-                <span>Select the latest round to apply now.</span>
-              )}
-            </div>
-          )}
-          {selected && !historical && manual.length > 0 && (
-            <p>
-              Manual combat level for {manual.map((l) => l.name).join(', ')}.
-              Review class and combat basis in Party Reference.
-            </p>
-          )}
           {selected && !historical && (
             <CombatTracker
               key={`${selected.id}:${selected.generation}:${editorVersion}`}
               campaign={{
                 active,
                 state: selected.state,
-                reservedKey,
-                levelManaged: (side, key) =>
-                  currentLinks.some(
-                    (l) => l.side === side && l.key === key && l.level !== null
-                  ),
-                projectNewRound: (next) =>
-                  projectCombatRound(
-                    document,
-                    selected,
-                    next,
-                    next.activeRound
-                  ),
+                partyProfiles,
                 onStateChange: (next) =>
                   onEdit(
                     selected.id,
@@ -385,79 +340,35 @@ export default function CampaignCombats({
               ))}
             </details>
           )}
-          {confirm && selected?.id === confirm.id && (
+          {confirmRemovalId && selected?.id === confirmRemovalId && (
             <div className={styles['dialogShade']}>
               <section
                 role="dialog"
                 aria-modal="true"
-                aria-label={
-                  confirm.action === 'remove'
-                    ? 'Remove encounter'
-                    : 'Apply linked levels'
-                }
+                aria-label="Remove encounter"
                 className={styles['continuationDialog']}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') {
                     e.stopPropagation();
-                    setConfirm(undefined);
+                    setConfirmRemovalId(undefined);
                   }
                 }}
               >
-                {confirm.action === 'remove' ? (
-                  <p>
-                    Remove <strong>{selected.title}</strong> from{' '}
-                    <strong>{sessionLabel}</strong>? Recover it from Removed
-                    encounters.
-                  </p>
-                ) : (
-                  <>
-                    <p>
-                      Apply these levels to the latest round of{' '}
-                      <strong>{selected.title}</strong>? A checkpoint will
-                      preserve the current values.
-                    </p>
-                    <ul>
-                      {pending.map((l) => (
-                        <li key={`${l.side}:${l.key}`}>
-                          {l.actor.name || l.name} · {l.actor.level} → {l.level}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
+                <p>
+                  Remove <strong>{selected.title}</strong> from{' '}
+                  <strong>{sessionLabel}</strong>? Recover it from Removed
+                  encounters.
+                </p>
                 <footer className={styles['sessionDialogFooter']}>
-                  <button autoFocus onClick={() => setConfirm(undefined)}>
+                  <button
+                    autoFocus
+                    onClick={() => setConfirmRemovalId(undefined)}
+                  >
                     Cancel
                   </button>
-                  {confirm.action === 'remove' ? (
-                    <button onClick={() => remove(selected)}>
-                      Remove from session
-                    </button>
-                  ) : (
-                    <button
-                      disabled={
-                        !pending.length || selected.state.activeRound !== latest
-                      }
-                      onClick={() => {
-                        const id = uid(),
-                          at = new Date().toISOString();
-                        if (
-                          onChange((d) =>
-                            applyPartyLevelsToLatestRound(
-                              d,
-                              selected.id,
-                              selected.generation,
-                              id,
-                              at
-                            )
-                          )
-                        )
-                          setConfirm(undefined);
-                      }}
-                    >
-                      Apply to latest round
-                    </button>
-                  )}
+                  <button onClick={() => remove(selected)}>
+                    Remove from session
+                  </button>
                 </footer>
               </section>
             </div>

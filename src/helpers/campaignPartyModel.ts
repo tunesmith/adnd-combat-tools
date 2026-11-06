@@ -57,34 +57,12 @@ export const partyProfileSchema = z
     saveNotes: z.tuple([note, note, note]),
   })
   .strict();
-const inventoryLinkSchema = z
-  .object({
-    sessionId: id,
-    inventoryId: id,
-    inventoryCharacterId: id,
-    characterId: id,
-  })
-  .strict();
-const combatLinkSchema = z
-  .object({
-    sessionId: id,
-    combatId: id,
-    generation: z.number().int().nonnegative(),
-    side: z.enum(['party', 'enemy']),
-    key: z.number().int().safe(),
-    characterId: id,
-  })
-  .strict();
 export const campaignPartySchema = z
   .object({
     roster: z.array(rosterCharacterSchema).max(500),
     profiles: z.array(partyProfileSchema),
-    inventoryLinks: z.array(inventoryLinkSchema),
-    combatLinks: z.array(combatLinkSchema),
   })
   .strict();
 export type CampaignParty = z.infer<typeof campaignPartySchema>;
 export type RosterCharacter = z.infer<typeof rosterCharacterSchema>;
 export type PartyProfile = z.infer<typeof partyProfileSchema>;
-export type InventoryLink = z.infer<typeof inventoryLinkSchema>;
-export type CombatLink = z.infer<typeof combatLinkSchema>;

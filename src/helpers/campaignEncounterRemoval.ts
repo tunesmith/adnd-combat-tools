@@ -1,19 +1,6 @@
 import type { CampaignDocument } from './campaignDocument';
 import type { WorkingCombat } from './campaignWorkingCombat';
 import { canonical } from './campaignSnapshots';
-import { sameCombatSlot } from './campaignParty';
-
-function retainLinkGenerations(doc: CampaignDocument, combat: WorkingCombat) {
-  return (
-    doc.party?.combatLinks
-      .filter((l) => l.combatId === combat.id)
-      .map((l) =>
-        l.generation === combat.generation
-          ? { ...l, generation: l.generation + 1 }
-          : l
-      ) || []
-  );
-}
 
 function removalState(
   combat: WorkingCombat,
@@ -53,23 +40,10 @@ export function setEncounterRemoval(
     ...doc,
     workingCombats,
     workspace: { ...doc.workspace, combatSelections },
-    ...(doc.party
-      ? {
-          party: {
-            ...doc.party,
-            combatLinks: [
-              ...doc.party.combatLinks.filter((l) => l.combatId !== id),
-              ...retainLinkGenerations(doc, combat),
-            ],
-          },
-        }
-      : {}),
   };
 }
 
 export function validateEncounterRemoval(
-  old: CampaignDocument,
-  next: CampaignDocument,
   combat: WorkingCombat,
   changed: WorkingCombat
 ): boolean {
@@ -80,20 +54,5 @@ export function validateEncounterRemoval(
     : combat;
   if (canonical(expected) !== canonical(changed))
     throw new Error('A removed encounter must retain its captured state.');
-  const links = transitioned
-    ? retainLinkGenerations(old, combat)
-    : old.party?.combatLinks.filter((l) => l.combatId === combat.id) || [];
-  const nextLinks =
-    next.party?.combatLinks.filter((l) => l.combatId === combat.id) || [];
-  if (
-    links.length !== nextLinks.length ||
-    links.some(
-      (l) =>
-        !nextLinks.some(
-          (n) => sameCombatSlot(l, n) && canonical(l) === canonical(n)
-        )
-    )
-  )
-    throw new Error('A removed encounter must retain its character links.');
   return true;
 }

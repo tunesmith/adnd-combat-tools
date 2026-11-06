@@ -107,11 +107,16 @@ const combatantSelectStyles = {
 interface TrackerCombatantInputProps {
   combatant: TrackerCombatant;
   side: 'party' | 'enemy';
-  canRemove: boolean;
-  onRemove: () => void;
-  onUpdate: (combatant: TrackerCombatant) => void;
+  canRemove?: boolean;
+  onRemove?: () => void;
+  onUpdate?: (combatant: TrackerCombatant) => void;
   liveUpdates?: boolean;
-  levelManaged?: boolean;
+  newMember?: {
+    copiedClassAndLevel: boolean;
+    duplicateName: boolean;
+    onAdd: (combatant: TrackerCombatant) => void;
+    onCancel: () => void;
+  };
   modalRootId?: string;
 }
 
@@ -141,10 +146,10 @@ const TrackerCombatantInput = ({
   onRemove,
   onUpdate,
   liveUpdates = false,
-  levelManaged = false,
+  newMember,
   modalRootId = 'app-modal',
 }: TrackerCombatantInputProps) => {
-  const [open, setOpen] = useState<boolean>(false);
+  const [open, setOpen] = useState(Boolean(newMember));
   const [isEditingWeaponShortlist, setIsEditingWeaponShortlist] =
     useState<boolean>(false);
   const [draft, setDraft] = useState<TrackerCombatant>(combatant);
@@ -222,7 +227,7 @@ const TrackerCombatantInput = ({
 
   const commit = (nextCombatant: TrackerCombatant) => {
     setDraft(nextCombatant);
-    onUpdate(nextCombatant);
+    onUpdate?.(nextCombatant);
   };
 
   const openModal = () => {
@@ -231,6 +236,7 @@ const TrackerCombatantInput = ({
   };
 
   const closeModal = () => {
+    newMember?.onCancel();
     setIsEditingWeaponShortlist(false);
     setOpen(false);
   };
@@ -461,11 +467,12 @@ const TrackerCombatantInput = ({
     typeof document !== 'undefined'
       ? document.getElementById(modalRootId)
       : null;
-  const selectMenuPortalTarget = liveUpdates
-    ? modalRoot
-    : typeof document !== 'undefined'
-    ? document.body
-    : null;
+  const selectMenuPortalTarget =
+    liveUpdates || newMember
+      ? modalRoot
+      : typeof document !== 'undefined'
+      ? document.body
+      : null;
   const movementRateForDisplay =
     parseMovementRate(movementRateInput) ??
     draft.movementRate ??
@@ -499,37 +506,41 @@ const TrackerCombatantInput = ({
 
   return (
     <div className={styles['combatantShell']}>
-      <div className={sizerClassName} aria-hidden={'true'}>
-        {renderHeaderContent(true)}
-      </div>
-      <button
-        type={'button'}
-        className={
-          side === 'party'
-            ? styles['combatantButtonParty']
-            : styles['combatantButtonEnemy']
-        }
-        aria-label={`Edit ${
-          draft.name || (side === 'party' ? 'party member' : 'enemy')
-        }`}
-        onClick={openModal}
-      >
-        {renderHeaderContent()}
-      </button>
-      <button
-        type={'button'}
-        className={styles['removeCombatant']}
-        disabled={!canRemove}
-        aria-label={`Remove ${
-          draft.name || (side === 'party' ? 'party member' : 'enemy')
-        }`}
-        onClick={(event) => {
-          event.stopPropagation();
-          onRemove();
-        }}
-      >
-        x
-      </button>
+      {!newMember && (
+        <>
+          <div className={sizerClassName} aria-hidden={'true'}>
+            {renderHeaderContent(true)}
+          </div>
+          <button
+            type={'button'}
+            className={
+              side === 'party'
+                ? styles['combatantButtonParty']
+                : styles['combatantButtonEnemy']
+            }
+            aria-label={`Edit ${
+              draft.name || (side === 'party' ? 'party member' : 'enemy')
+            }`}
+            onClick={openModal}
+          >
+            {renderHeaderContent()}
+          </button>
+          <button
+            type={'button'}
+            className={styles['removeCombatant']}
+            disabled={!canRemove}
+            aria-label={`Remove ${
+              draft.name || (side === 'party' ? 'party member' : 'enemy')
+            }`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove?.();
+            }}
+          >
+            x
+          </button>
+        </>
+      )}
       {open &&
         modalRoot &&
         createPortal(
@@ -538,11 +549,39 @@ const TrackerCombatantInput = ({
             <div
               className={styles['modal']}
               role="dialog"
-              aria-label={side === 'party' ? 'Edit Party Member' : 'Edit Enemy'}
+              aria-label={
+                newMember
+                  ? 'Add Party Member from Profile'
+                  : side === 'party'
+                  ? 'Edit Party Member'
+                  : 'Edit Enemy'
+              }
+              onKeyDown={(event) => {
+                if (
+                  newMember &&
+                  event.key === 'Escape' &&
+                  !event.defaultPrevented
+                ) {
+                  event.stopPropagation();
+                  closeModal();
+                }
+              }}
             >
               <div className={styles['modalTitle']}>
-                {side === 'party' ? 'Edit Party Member' : 'Edit Enemy'}
+                {newMember
+                  ? 'Add Party Member from Profile'
+                  : side === 'party'
+                  ? 'Edit Party Member'
+                  : 'Edit Enemy'}
               </div>
+              {newMember && (
+                <p className={styles['modalHint']}>
+                  {newMember.copiedClassAndLevel
+                    ? 'Copied name, class, and level.'
+                    : 'Copied name. Choose the combat class and level.'}{' '}
+                  Review armor, weapon, movement, and hit points before adding.
+                </p>
+              )}
               <div className={styles['combatantModalForm']}>
                 <div className={styles['combatantFieldWide']}>
                   <label
@@ -556,6 +595,7 @@ const TrackerCombatantInput = ({
                     className={styles['combatantTextInput']}
                     type={'text'}
                     value={draft.name || ''}
+                    autoFocus={Boolean(newMember)}
                     onChange={handleNameChange}
                     onBlur={handleNameBlur}
                     placeholder={'Name or label'}
@@ -599,9 +639,9 @@ const TrackerCombatantInput = ({
                 <div className={styles['combatantField']}>
                   <span className={styles['combatantFieldLabel']}>Class</span>
                   <Select
+                    aria-label="Class"
                     isSearchable={false}
                     instanceId={`creatureClass-${draft.key}`}
-                    isDisabled={levelManaged}
                     styles={combatantSelectStyles}
                     menuPortalTarget={selectMenuPortalTarget}
                     menuPosition={'fixed'}
@@ -615,9 +655,9 @@ const TrackerCombatantInput = ({
                 <div className={styles['combatantField']}>
                   <span className={styles['combatantFieldLabel']}>Level</span>
                   <Select
+                    aria-label="Level"
                     isSearchable={false}
                     instanceId={`level-${draft.key}`}
-                    isDisabled={levelManaged}
                     styles={combatantSelectStyles}
                     menuPortalTarget={selectMenuPortalTarget}
                     menuPosition={'fixed'}
@@ -627,9 +667,6 @@ const TrackerCombatantInput = ({
                     options={levelOptions}
                     onChange={handleLevel}
                   />
-                  {levelManaged && (
-                    <small>Captured level from Party Reference</small>
-                  )}
                 </div>
                 <div className={styles['combatantField']}>
                   <span className={styles['combatantFieldLabel']}>
@@ -818,6 +855,33 @@ const TrackerCombatantInput = ({
                   </p>
                 ) : null}
               </div>
+              {newMember && (
+                <>
+                  {newMember.duplicateName && (
+                    <p className={styles['modalHint']}>
+                      This round already has a party member with this name.
+                    </p>
+                  )}
+                  <div className={styles['modalActions']}>
+                    <button
+                      type="button"
+                      className={styles['toolbarButton']}
+                      onClick={closeModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className={styles['toolbarButtonPrimary']}
+                      onClick={() => newMember.onAdd(draft)}
+                    >
+                      {newMember.duplicateName
+                        ? 'Add separate combatant'
+                        : 'Add party member'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </>,
           modalRoot

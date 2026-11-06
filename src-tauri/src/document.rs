@@ -26,7 +26,7 @@ impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 6,
+            schema_version: 7,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -180,11 +180,11 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 7.into();
+        v["schemaVersion"] = 8.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
-        v["schemaVersion"] = 6.into();
+        v["schemaVersion"] = 7.into();
         v["unknown"] = true.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap()).is_err());
     }
@@ -331,7 +331,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 6);
+        assert_eq!(doc.schema_version, 7);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -393,7 +393,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 6);
+        assert_eq!(doc.schema_version, 7);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -508,6 +508,44 @@ mod history_ownership_tests {
 #[cfg(test)]
 mod continuity_tests {
     use super::*;
+    #[test]
+    fn v6_campaign_upgrades_without_changing_evidence_or_backup_bytes() {
+        let mut source =
+            parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let state = source.records[0]["revisions"][0]["payload"].clone();
+        let inventory = source.records[1]["revisions"][0]["payload"].clone();
+        source.working_combats.push(serde_json::json!({"id":"fight","encounterId":"fight","status":"unspecified","sessionId":"session-1","title":"Invented fight","generation":1,"removedAt":"2026-11-04T12:00:00.000Z","state":state,"origin":{"kind":"import","recordId":"combat-1","revisionId":"combat-r1"}}));
+        source.working_inventories.push(serde_json::json!({"id":"inventory","sessionId":"session-1","title":"Invented possessions","document":inventory,"origin":{"kind":"import","recordId":"inventory-1","revisionId":"inventory-r1"}}));
+        source.combat_checkpoints.push(serde_json::json!({"id":"earlier","combatId":"fight","sessionId":"session-1","label":"Before","capturedAt":"2026-11-04T12:00:00.000Z","state":state}));
+        source.party = Some(serde_json::json!({
+            "roster":[{"id":"pc","name":"Synthetic scout","player":"","notes":"Character notes"}],
+            "profiles":[{"characterId":"pc","sessionId":"session-1","characterClass":"cleric","baseLevel":6,"saveBasis":"printed","combatBasis":"class","retainedFighter":null,"retainedThief":null,"adjustment":{"name":"Lantern","enabled":true},"participating":true,"overrides":[null,null,null,null,null],"saveNotes":["","Save note",""]}]
+        }));
+        let mut legacy = serde_json::to_value(&source).unwrap();
+        legacy["schemaVersion"] = 6.into();
+        legacy["party"]["inventoryLinks"] = serde_json::json!([]);
+        legacy["party"]["combatLinks"] = serde_json::json!([]);
+        let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("legacy-v6.adnd");
+        fs::write(&path, &bytes).unwrap();
+        let migrated = parse(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(migrated, source);
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        save(&path, &migrated, Some(&hash(&bytes))).unwrap();
+        assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), migrated);
+        let mut recovered = migrated.clone();
+        recovered.working_combats[0]["generation"] = 2.into();
+        recovered.working_combats[0]
+            .as_object_mut()
+            .unwrap()
+            .remove("removedAt");
+        assert!(validate_replacement(&migrated, &recovered).is_ok());
+        recovered.working_combats[0]["state"]["rounds"][0]["party"][0]["level"] = 17.into();
+        assert!(validate_replacement(&migrated, &recovered).is_err());
+    }
+
     #[test]
     fn v4_upgrade_native_continuation_exact_state_backup_failure_and_reopen() {
         let mut source =

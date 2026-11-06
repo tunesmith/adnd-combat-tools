@@ -61,7 +61,7 @@ test('V3 migration preserves inventory/checkpoint data and every B1 field', () =
   expect(migrated).toEqual({
     ...old,
     sessions: old.sessions.map((s) => ({ ...s, notes: '' })),
-    schemaVersion: 6,
+    schemaVersion: 7,
     workingCombats: [],
     combatCheckpoints: [],
     workspace: { ...old.workspace, combatSelections: {} },
@@ -196,7 +196,7 @@ test('removing a combatant reindexes surviving declared actions without changing
 test('invalid identities, associations and future versions are rejected', () => {
   const doc = setup();
   expect(() =>
-    parseCampaign(JSON.stringify({ ...doc, schemaVersion: 7 }))
+    parseCampaign(JSON.stringify({ ...doc, schemaVersion: 8 }))
   ).toThrow();
   required(doc.workingCombats[0]).sessionId = 'missing';
   expect(() => parseCampaign(JSON.stringify(doc))).toThrow();
