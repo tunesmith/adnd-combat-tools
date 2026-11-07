@@ -1,5 +1,11 @@
 /** @jest-environment jsdom */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import DesktopWorkspace from '../components/desktop/DesktopWorkspace';
 import { parseCampaign } from '../helpers/campaignDocument';
@@ -111,6 +117,11 @@ test('workspace starts the selected continuation atomically, edits notes indepen
   window.campaignStorage = storage;
   render(<DesktopWorkspace />);
   await screen.findByRole('button', { name: '+ Session' });
+  expect(
+    within(screen.getByRole('navigation', { name: 'Session views' }))
+      .getAllByRole('button')
+      .map((button) => button.textContent)
+  ).toEqual(['Session', 'References', 'Possessions', 'Combats']);
   fireEvent.change(screen.getByRole('combobox', { name: 'Version' }), {
     target: { value: 'source-history' },
   });
@@ -127,6 +138,12 @@ test('workspace starts the selected continuation atomically, edits notes indepen
     ).not.toBeInTheDocument()
   );
   expect(screen.getByLabelText('Session notes')).toHaveValue('');
+  expect(
+    screen.getByRole('table', { name: 'Session characters' })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: '+ Character' })
+  ).toBeInTheDocument();
   const copied = native.document?.workingCombats.find(
     (c) => c.sessionId !== 'one'
   );

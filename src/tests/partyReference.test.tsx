@@ -40,6 +40,9 @@ test('calculated rows use the rules table and only manual rows accept numeric ta
     );
   }
   render(<Workspace />);
+  expect(
+    screen.queryByRole('button', { name: '+ Character' })
+  ).not.toBeInTheDocument();
   expect(screen.getByRole('cell', { name: '9' })).toBeInTheDocument();
   expect(screen.queryByRole('cell', { name: '5' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Cleric' }));

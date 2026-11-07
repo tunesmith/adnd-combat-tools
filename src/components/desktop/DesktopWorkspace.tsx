@@ -1,4 +1,5 @@
 import PartyReference from './PartyReference';
+import AutoHeightTextarea from '../tracker/AutoHeightTextarea';
 import CreateSessionDialog from './CreateSessionDialog';
 import RenamableTab from './RenamableTab';
 import { ownedHistory, ownsVersion } from '../../helpers/campaignHistory';
@@ -468,8 +469,8 @@ export default function DesktopWorkspace({
           <nav className={styles['navigation']} aria-label="Session views">
             {(
               [
-                ['session', 'Session notes'],
-                ['party', 'Party Reference'],
+                ['session', 'Session'],
+                ['party', 'References'],
                 ['possessions', 'Possessions'],
                 ['combats', 'Combats'],
               ] as const
@@ -489,35 +490,43 @@ export default function DesktopWorkspace({
               style={{ display: view === 'session' ? undefined : 'none' }}
               aria-label="Session overview"
             >
-              <h2>
-                {document.sessions.find((s) => s.id === sessionId)?.label ||
-                  'Select a session'}
-              </h2>
-              <label>
-                Session notes
-                <textarea
-                  rows={10}
-                  maxLength={1_000_000}
-                  disabled={!sessionId}
-                  value={
-                    document.sessions.find((s) => s.id === sessionId)?.notes ||
-                    ''
-                  }
-                  onChange={(e) => {
-                    const notes = e.target.value,
-                      ownerId = sessionId;
-                    mutate(
-                      (d) => ({
-                        ...d,
-                        sessions: d.sessions.map((s) =>
-                          s.id === ownerId ? { ...s, notes } : s
-                        ),
-                      }),
-                      scope
-                    );
-                  }}
-                />
-              </label>
+              <div className={styles['sessionLayout']}>
+                <div className={styles['sessionRoster']}>
+                  {view === 'session' && (
+                    <PartyReference
+                      key={`${state.epoch}:${sessionId}`}
+                      view="session"
+                      document={document}
+                      sessionId={sessionId}
+                      onChange={(change) => mutate(change, scope)}
+                    />
+                  )}
+                </div>
+                <label className={styles['sessionNotes']}>
+                  Session notes
+                  <AutoHeightTextarea
+                    rows={5}
+                    maxLength={1_000_000}
+                    disabled={!sessionId}
+                    value={
+                      document.sessions.find((s) => s.id === sessionId)
+                        ?.notes || ''
+                    }
+                    onChange={(notes) => {
+                      const ownerId = sessionId;
+                      mutate(
+                        (d) => ({
+                          ...d,
+                          sessions: d.sessions.map((s) =>
+                            s.id === ownerId ? { ...s, notes } : s
+                          ),
+                        }),
+                        scope
+                      );
+                    }}
+                  />
+                </label>
+              </div>
             </section>
             <section
               className={styles['view']}
@@ -662,7 +671,7 @@ export default function DesktopWorkspace({
               />
             </section>
             {view === 'party' && (
-              <section className={styles['view']} aria-label="Party Reference">
+              <section className={styles['view']} aria-label="References">
                 <PartyReference
                   key={`${state.epoch}:${sessionId}`}
                   document={document}

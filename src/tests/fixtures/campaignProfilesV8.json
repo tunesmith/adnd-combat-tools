@@ -1,0 +1,263 @@
+{
+  "kind": "adnd-campaign",
+  "schemaVersion": 8,
+  "id": "synthetic-dense-session",
+  "title": "Lantern Company",
+  "notes": "Synthetic campaign notes",
+  "sessions": [
+    {
+      "id": "one",
+      "label": "Session One",
+      "notes": "Synthetic stopping point.\nCheck the lantern and return to the bridge."
+    },
+    {
+      "id": "two",
+      "label": "Session Two",
+      "notes": ""
+    }
+  ],
+  "records": [],
+  "workingInventories": [],
+  "inventoryCheckpoints": [],
+  "workingCombats": [],
+  "combatCheckpoints": [],
+  "workspace": {
+    "sessionId": "one",
+    "view": "session",
+    "combatSelections": {}
+  },
+  "party": {
+    "roster": [
+      {
+        "id": "synthetic-profile-0",
+        "name": "Nera Elm",
+        "player": "Player 1",
+        "notes": "Invented character notes."
+      },
+      {
+        "id": "synthetic-profile-1",
+        "name": "Talin Brook",
+        "player": "Player 2",
+        "notes": "Invented character notes."
+      },
+      {
+        "id": "synthetic-profile-2",
+        "name": "Voss Reed",
+        "player": "Player 3",
+        "notes": "Invented character notes."
+      },
+      {
+        "id": "synthetic-profile-3",
+        "name": "Mira Vale",
+        "player": "Player 4",
+        "notes": "Invented character notes."
+      },
+      {
+        "id": "synthetic-profile-4",
+        "name": "Oren West",
+        "player": "Player 5",
+        "notes": "Invented character notes."
+      }
+    ],
+    "profiles": [
+      {
+        "characterId": "synthetic-profile-0",
+        "sessionId": "one",
+        "characterClass": "fighter",
+        "baseLevel": 6,
+        "saveBasis": "printed",
+        "combatBasis": "class",
+        "retainedFighter": null,
+        "retainedThief": null,
+        "adjustment": {
+          "name": "Lantern blessing",
+          "enabled": true
+        },
+        "participating": true,
+        "overrides": [null, null, null, null, null],
+        "saveNotes": ["Free note", "", ""],
+        "reference": {
+          "race": "Human",
+          "gender": "Female",
+          "age": 27,
+          "alignment": "Neutral Good",
+          "maxHp": 24,
+          "attributes": {
+            "strength": {
+              "score": 18,
+              "exceptional": 64
+            },
+            "intelligence": 13,
+            "wisdom": 12,
+            "dexterity": 15,
+            "constitution": 16,
+            "charisma": 11
+          },
+          "bonuses": {
+            "meleeHit": 2,
+            "meleeDamage": 3,
+            "missileHit": 0,
+            "reactionPercent": -5,
+            "xpPercent": 10
+          }
+        }
+      },
+      {
+        "characterId": "synthetic-profile-1",
+        "sessionId": "one",
+        "characterClass": "cleric",
+        "baseLevel": 1,
+        "saveBasis": "printed",
+        "combatBasis": "class",
+        "retainedFighter": null,
+        "retainedThief": null,
+        "adjustment": null,
+        "participating": true,
+        "overrides": [null, null, null, null, null],
+        "saveNotes": ["Free note", "", ""],
+        "reference": {
+          "race": "Dwarf",
+          "gender": "Male",
+          "age": null,
+          "alignment": "Lawful Neutral",
+          "maxHp": 18,
+          "attributes": {
+            "strength": {
+              "score": 18,
+              "exceptional": 100
+            },
+            "intelligence": 11,
+            "wisdom": 17,
+            "dexterity": 10,
+            "constitution": 15,
+            "charisma": 13
+          },
+          "bonuses": {
+            "meleeHit": 1,
+            "meleeDamage": 2,
+            "missileHit": 0,
+            "reactionPercent": 0,
+            "xpPercent": 10
+          }
+        }
+      },
+      {
+        "characterId": "synthetic-profile-2",
+        "sessionId": "one",
+        "characterClass": "thief",
+        "baseLevel": 1,
+        "saveBasis": "printed",
+        "combatBasis": "class",
+        "retainedFighter": null,
+        "retainedThief": null,
+        "adjustment": null,
+        "participating": true,
+        "overrides": [null, null, null, null, null],
+        "saveNotes": ["Free note", "", ""],
+        "reference": {
+          "race": "Elf",
+          "gender": "Nonbinary",
+          "age": 0,
+          "alignment": "Chaotic Good",
+          "maxHp": 0,
+          "attributes": {
+            "strength": {
+              "score": 0,
+              "exceptional": null
+            },
+            "intelligence": 15,
+            "wisdom": 11,
+            "dexterity": 18,
+            "constitution": 12,
+            "charisma": 9
+          },
+          "bonuses": {
+            "meleeHit": 0,
+            "meleeDamage": 0,
+            "missileHit": 2,
+            "reactionPercent": 25,
+            "xpPercent": 0
+          }
+        }
+      },
+      {
+        "characterId": "synthetic-profile-3",
+        "sessionId": "one",
+        "characterClass": "manual",
+        "baseLevel": 1,
+        "saveBasis": "printed",
+        "combatBasis": "class",
+        "retainedFighter": null,
+        "retainedThief": null,
+        "adjustment": null,
+        "participating": true,
+        "overrides": [null, null, null, null, 16],
+        "saveNotes": ["Free note", "", ""],
+        "reference": {
+          "race": "",
+          "gender": "",
+          "age": null,
+          "alignment": "",
+          "maxHp": null,
+          "attributes": {
+            "strength": {
+              "score": null,
+              "exceptional": null
+            },
+            "intelligence": null,
+            "wisdom": null,
+            "dexterity": null,
+            "constitution": null,
+            "charisma": null
+          },
+          "bonuses": {
+            "meleeHit": null,
+            "meleeDamage": null,
+            "missileHit": null,
+            "reactionPercent": null,
+            "xpPercent": null
+          }
+        }
+      },
+      {
+        "characterId": "synthetic-profile-4",
+        "sessionId": "one",
+        "characterClass": "magic-user",
+        "baseLevel": 1,
+        "saveBasis": "printed",
+        "combatBasis": "class",
+        "retainedFighter": null,
+        "retainedThief": null,
+        "adjustment": null,
+        "participating": true,
+        "overrides": [null, null, null, null, null],
+        "saveNotes": ["Free note", "", ""],
+        "reference": {
+          "race": "Gnome",
+          "gender": "Male",
+          "age": 82,
+          "alignment": "True Neutral",
+          "maxHp": 12,
+          "attributes": {
+            "strength": {
+              "score": 8,
+              "exceptional": null
+            },
+            "intelligence": 17,
+            "wisdom": 12,
+            "dexterity": 14,
+            "constitution": 10,
+            "charisma": 15
+          },
+          "bonuses": {
+            "meleeHit": -1,
+            "meleeDamage": -1,
+            "missileHit": 0,
+            "reactionPercent": 5,
+            "xpPercent": 10
+          }
+        }
+      }
+    ]
+  }
+}

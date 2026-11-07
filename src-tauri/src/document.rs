@@ -26,7 +26,7 @@ impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 7,
+            schema_version: 8,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -180,11 +180,11 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 8.into();
+        v["schemaVersion"] = 9.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
-        v["schemaVersion"] = 7.into();
+        v["schemaVersion"] = 8.into();
         v["unknown"] = true.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap()).is_err());
     }
@@ -331,7 +331,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 7);
+        assert_eq!(doc.schema_version, 8);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -393,7 +393,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 7);
+        assert_eq!(doc.schema_version, 8);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -508,6 +508,42 @@ mod history_ownership_tests {
 #[cfg(test)]
 mod continuity_tests {
     use super::*;
+    #[test]
+    fn dense_profiles_upgrade_and_survive_save_failure_conflict_and_reopen() {
+        let expanded = parse(include_bytes!(
+            "../../src/tests/fixtures/campaignProfilesV8.json"
+        ))
+        .unwrap();
+        let mut legacy = serde_json::to_value(&expanded).unwrap();
+        legacy["schemaVersion"] = 7.into();
+        for profile in legacy["party"]["profiles"].as_array_mut().unwrap() {
+            profile.as_object_mut().unwrap().remove("reference");
+        }
+        let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
+        let migrated = parse(&bytes).unwrap();
+        assert_eq!(migrated.schema_version, 8);
+        assert!(migrated.party.as_ref().unwrap()["profiles"][0]["reference"].is_null());
+        validate_replacement(&migrated, &expanded).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("dense.adnd");
+        fs::write(&path, &bytes).unwrap();
+        let revision = save(&path, &expanded, Some(&hash(&bytes))).unwrap();
+        assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), expanded);
+        let saved = fs::read(&path).unwrap();
+        assert!(save_with_hook(&path, &expanded, Some(&revision), || Err(
+            "Injected write failure".into()
+        ))
+        .is_err());
+        assert_eq!(fs::read(&path).unwrap(), saved);
+        fs::write(&path, b"External change").unwrap();
+        assert_eq!(
+            save(&path, &expanded, Some(&revision)).unwrap_err(),
+            CONFLICT
+        );
+        assert_eq!(fs::read(&path).unwrap(), b"External change");
+    }
+
     #[test]
     fn v6_campaign_upgrades_without_changing_evidence_or_backup_bytes() {
         let mut source =

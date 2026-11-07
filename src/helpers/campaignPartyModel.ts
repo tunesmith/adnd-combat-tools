@@ -18,6 +18,69 @@ const id = z.string().min(1);
 const note = z.string().max(100_000);
 const level = z.number().int().min(0).max(99);
 const override = z.number().int().min(0).max(99).nullable();
+const attribute = z.number().int().min(0).max(25).nullable();
+const bonus = z.number().int().min(-1000).max(1000).nullable();
+export const profileReferenceSchema = z
+  .object({
+    race: z.string().max(200),
+    gender: z.string().max(200),
+    age: z.number().int().min(0).max(1_000_000).nullable(),
+    alignment: z.string().max(200),
+    maxHp: z.number().int().min(0).max(1_000_000).nullable(),
+    attributes: z
+      .object({
+        strength: z
+          .object({
+            score: attribute,
+            exceptional: z.number().int().min(1).max(100).nullable(),
+          })
+          .strict()
+          .refine(
+            (strength) =>
+              strength.exceptional === null || strength.score === 18,
+            'Exceptional strength requires STR 18.'
+          ),
+        intelligence: attribute,
+        wisdom: attribute,
+        dexterity: attribute,
+        constitution: attribute,
+        charisma: attribute,
+      })
+      .strict(),
+    bonuses: z
+      .object({
+        meleeHit: bonus,
+        meleeDamage: bonus,
+        missileHit: bonus,
+        reactionPercent: bonus,
+        xpPercent: bonus,
+      })
+      .strict(),
+  })
+  .strict();
+export type ProfileReference = z.infer<typeof profileReferenceSchema>;
+export const emptyProfileReference = (): ProfileReference => ({
+  race: '',
+  gender: '',
+  age: null,
+  alignment: '',
+  maxHp: null,
+  attributes: {
+    strength: { score: null, exceptional: null },
+    intelligence: null,
+    wisdom: null,
+    dexterity: null,
+    constitution: null,
+    charisma: null,
+  },
+  bonuses: {
+    meleeHit: null,
+    meleeDamage: null,
+    missileHit: null,
+    reactionPercent: null,
+    xpPercent: null,
+  },
+});
 
 export const rosterCharacterSchema = z
   .object({
@@ -55,6 +118,7 @@ export const partyProfileSchema = z
     // Keep the V6 file key. These targets only apply when no save is calculated.
     overrides: z.tuple([override, override, override, override, override]),
     saveNotes: z.tuple([note, note, note]),
+    reference: profileReferenceSchema.optional(),
   })
   .strict();
 export const campaignPartySchema = z

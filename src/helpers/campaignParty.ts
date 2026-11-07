@@ -48,6 +48,10 @@ const combatClasses: Partial<Record<PartyProfile['characterClass'], number>> = {
   assassin: ASSASSIN,
   bard: BARD,
 };
+export const profileClassLabel = (value: string) =>
+  value === 'manual'
+    ? 'Manual / creature'
+    : value.charAt(0).toUpperCase() + value.slice(1).replace('-', ' ');
 export const effectiveLevel = (profile: PartyProfile) =>
   profile.baseLevel + (profile.adjustment?.enabled ? 1 : 0);
 export function calculatedSaves(profile: PartyProfile): SaveTargets | null {
@@ -148,6 +152,18 @@ export function carriedPartyProfiles(
       adjustment: p.adjustment ? { ...p.adjustment } : null,
       overrides: [...p.overrides],
       saveNotes: [...p.saveNotes],
+      ...(p.reference
+        ? {
+            reference: {
+              ...p.reference,
+              attributes: {
+                ...p.reference.attributes,
+                strength: { ...p.reference.attributes.strength },
+              },
+              bonuses: { ...p.reference.bonuses },
+            },
+          }
+        : {}),
     }));
 }
 export function validatePartyReferences(
