@@ -178,11 +178,6 @@ export default function CampaignCombats({
   };
   return (
     <>
-      <div className={styles['viewHeading']}>
-        <div>
-          <h2>Combats</h2>
-        </div>
-      </div>
       {!sessionId ? (
         <p>Select a session first.</p>
       ) : (

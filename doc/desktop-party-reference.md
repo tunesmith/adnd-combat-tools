@@ -51,6 +51,13 @@ current session. The editor copies its name and, where supported, its class and
 effective level. Review armor, weapon, movement, and HP in the draft and choose
 **Add party member**. Each copy becomes a separate combatant, even when names
 match. Later combat edits and profile edits are independent.
+The picker omits names present in the selected round's party, ignoring
+leading/trailing whitespace and letter case. It hides when no choices remain
+and updates when rounds or participants change. This is an availability
+heuristic for imported rosters. It does not merge identities. Use manual
+**Add Party Member** for distinct same-name characters. Renaming a copied
+combatant can make the profile available again because copies have no identity
+link. Drafts still require explicit confirmation when a matching name appears.
 
 **+ Session** can carry selected party profiles separately from inventory,
 encounters, and notes. All transfer boxes start unchecked. **+ Encounter**

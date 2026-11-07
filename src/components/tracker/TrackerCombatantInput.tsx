@@ -113,8 +113,11 @@ interface TrackerCombatantInputProps {
   liveUpdates?: boolean;
   newMember?: {
     copiedClassAndLevel: boolean;
-    duplicateName: boolean;
-    onAdd: (combatant: TrackerCombatant) => void;
+    isDuplicateName: (name: string | undefined) => boolean;
+    onAdd: (
+      combatant: TrackerCombatant,
+      confirmedDuplicate: boolean
+    ) => boolean | void;
     onCancel: () => void;
   };
   modalRootId?: string;
@@ -153,6 +156,8 @@ const TrackerCombatantInput = ({
   const [isEditingWeaponShortlist, setIsEditingWeaponShortlist] =
     useState<boolean>(false);
   const [draft, setDraft] = useState<TrackerCombatant>(combatant);
+  const [addError, setAddError] = useState('');
+  const duplicateName = Boolean(newMember?.isDuplicateName(draft.name));
   const [movementRateInput, setMovementRateInput] = useState<string>(
     formatMovementRateInput(combatant.movementRate)
   );
@@ -242,13 +247,14 @@ const TrackerCombatantInput = ({
   };
 
   const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const name = event.target.value || undefined;
     if (liveUpdates) {
-      commit({ ...draft, name: event.target.value || undefined });
+      commit({ ...draft, name });
       return;
     }
     setDraft((previous) => ({
       ...previous,
-      name: event.target.value || undefined,
+      name,
     }));
   };
 
@@ -857,9 +863,14 @@ const TrackerCombatantInput = ({
               </div>
               {newMember && (
                 <>
-                  {newMember.duplicateName && (
+                  {duplicateName && (
                     <p className={styles['modalHint']}>
                       This round already has a party member with this name.
+                    </p>
+                  )}
+                  {addError && (
+                    <p role="alert" className={styles['modalHint']}>
+                      {addError}
                     </p>
                   )}
                   <div className={styles['modalActions']}>
@@ -873,9 +884,14 @@ const TrackerCombatantInput = ({
                     <button
                       type="button"
                       className={styles['toolbarButtonPrimary']}
-                      onClick={() => newMember.onAdd(draft)}
+                      onClick={() => {
+                        if (newMember.onAdd(draft, duplicateName) === false)
+                          setAddError(
+                            'The round changed. Review this draft before adding.'
+                          );
+                      }}
                     >
-                      {newMember.duplicateName
+                      {duplicateName
                         ? 'Add separate combatant'
                         : 'Add party member'}
                     </button>

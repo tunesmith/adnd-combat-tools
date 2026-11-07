@@ -13,6 +13,12 @@ import baseline from './fixtures/campaignB1V2.json';
 import type { CampaignDocument } from '../helpers/campaignDocument';
 import type { TrackerState } from '../types/tracker';
 import { CLERIC, FIGHTER } from '../tables/attackerClass';
+import {
+  addCombatant,
+  createInitialTrackerState,
+  insertRoundAfterActive,
+  removeCombatant,
+} from '../helpers/trackerState';
 
 afterEach(() => jest.restoreAllMocks());
 test('controlled tracker sends complete live edits through campaign validation and never writes browser drafts or URL', () => {
@@ -124,6 +130,12 @@ test('copying a profile opens a local draft and later rounds inherit the reviewe
               player: '',
               combatValues: { class: CLERIC, level },
             },
+            {
+              id: 'veteran',
+              name: 'Veteran',
+              player: '',
+              combatValues: { class: CLERIC, level },
+            },
           ],
           onStateChange: (next) => {
             combat = next;
@@ -165,7 +177,10 @@ test('copying a profile opens a local draft and later rounds inherit the reviewe
     initial.rounds[0]?.party.some((actor) => actor.key === copied?.key)
   ).toBe(false);
 
-  fireEvent.change(select, { target: { value: 'scout' } });
+  expect(
+    screen.queryByRole('option', { name: /Scout/ })
+  ).not.toBeInTheDocument();
+  fireEvent.change(select, { target: { value: 'veteran' } });
   dialog = within(
     screen.getByRole('dialog', { name: 'Add Party Member from Profile' })
   );
@@ -180,6 +195,9 @@ test('copying a profile opens a local draft and later rounds inherit the reviewe
     fireEvent.mouseDown(control);
     fireEvent.click(screen.getByText(option, { exact: true }));
   }
+  fireEvent.change(dialog.getByLabelText('Name'), {
+    target: { value: 'Scout' },
+  });
   fireEvent.click(
     dialog.getByRole('button', { name: 'Add separate combatant' })
   );
@@ -196,4 +214,130 @@ test('copying a profile opens a local draft and later rounds inherit the reviewe
   expect(combat.rounds[0]).toEqual(captured.rounds[0]);
   expect(combat.rounds[1]?.party.at(-2)?.level).toBe(7);
   expect(combat.rounds[1]?.party.at(-1)?.level).toBe(4);
+});
+
+test('imported names filter profile choices by selected round, and missing participants return after removal', () => {
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  const full = addCombatant(
+    addCombatant(createInitialTrackerState(), 'party', 7),
+    'party',
+    8
+  );
+  const names = [' Mira ', 'TAL', 'Oren', 'Nella', 'Voss'];
+  const round = full.rounds[0];
+  if (!round) throw new Error('Missing round');
+  round.party = round.party.map((actor, index) => ({
+    ...actor,
+    name: names[index],
+  }));
+  const original = JSON.stringify(full);
+  const profiles = ['mira', 'Tal', ' OREN ', 'Nella', 'Voss'].map(
+    (name, index) => ({
+      id: String(index),
+      name,
+      player: '',
+    })
+  );
+  let accepted = full;
+  const renderTracker = (state: TrackerState, choices = profiles) => (
+    <CombatTracker
+      campaign={{
+        active: true,
+        state,
+        partyProfiles: choices,
+        onStateChange: (next) => {
+          accepted = next;
+        },
+      }}
+    />
+  );
+  const { rerender } = render(renderTracker(full));
+  expect(
+    screen.queryByRole('combobox', { name: 'Add from party/profile' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Add Party Member', exact: true })
+  ).toBeEnabled();
+
+  const partial = removeCombatant(full, 'party', 4);
+  rerender(renderTracker(partial));
+  const picker = screen.getByRole('combobox', {
+    name: 'Add from party/profile',
+  });
+  expect(
+    within(picker)
+      .getAllByRole('option')
+      .map((option) => option.textContent)
+  ).toEqual(['Add from party/profile…', '1. Voss']);
+  fireEvent.change(picker, { target: { value: '4' } });
+  fireEvent.click(
+    within(
+      screen.getByRole('dialog', { name: 'Add Party Member from Profile' })
+    ).getByRole('button', { name: 'Add party member' })
+  );
+  rerender(renderTracker(accepted));
+  expect(
+    screen.queryByRole('combobox', { name: 'Add from party/profile' })
+  ).not.toBeInTheDocument();
+
+  const later = removeCombatant(insertRoundAfterActive(accepted), 'party', 4);
+  rerender(renderTracker(later));
+  expect(screen.getByRole('option', { name: '1. Voss' })).toBeInTheDocument();
+  rerender(renderTracker({ ...later, activeRound: 0 }));
+  expect(
+    screen.queryByRole('combobox', { name: 'Add from party/profile' })
+  ).not.toBeInTheDocument();
+  rerender(
+    renderTracker(full, [
+      ...profiles,
+      { id: 'distinct', name: 'Mira Vale', player: '' },
+    ])
+  );
+  expect(
+    screen.getByRole('option', { name: '1. Mira Vale' })
+  ).toBeInTheDocument();
+  expect(JSON.stringify(full)).toBe(original);
+});
+
+test('a participant added while a profile draft is open requires deliberate duplicate confirmation', () => {
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  const state = createInitialTrackerState();
+  const onChange = jest.fn<void, [TrackerState]>();
+  const renderTracker = (current: TrackerState) => (
+    <CombatTracker
+      campaign={{
+        active: true,
+        state: current,
+        partyProfiles: [{ id: 'scout', name: 'Scout', player: '' }],
+        onStateChange: onChange,
+      }}
+    />
+  );
+  const { rerender } = render(renderTracker(state));
+  fireEvent.change(
+    screen.getByRole('combobox', { name: 'Add from party/profile' }),
+    { target: { value: 'scout' } }
+  );
+  const changed = addCombatant(state, 'party', 7);
+  const actor = changed.rounds[0]?.party.at(-1);
+  if (!actor) throw new Error('Missing actor');
+  actor.name = ' SCOUT ';
+  rerender(renderTracker(changed));
+  const dialog = within(
+    screen.getByRole('dialog', { name: 'Add Party Member from Profile' })
+  );
+  expect(
+    dialog.queryByRole('button', { name: 'Add party member', exact: true })
+  ).not.toBeInTheDocument();
+  expect(
+    dialog.getByText('This round already has a party member with this name.')
+  ).toBeInTheDocument();
+  expect(onChange).not.toHaveBeenCalled();
+  fireEvent.click(
+    dialog.getByRole('button', { name: 'Add separate combatant' })
+  );
+  expect(onChange).toHaveBeenCalledTimes(1);
+  const accepted = onChange.mock.calls[0]?.[0];
+  expect(accepted?.rounds[0]?.party).toHaveLength(5);
+  expect(accepted?.rounds[0]?.party.at(-1)?.key).not.toBe(7);
 });

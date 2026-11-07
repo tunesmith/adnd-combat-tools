@@ -1,5 +1,6 @@
 import { getTrackerWeaponWarning } from '../../helpers/trackerWeaponWarning';
 import AutoHeightTextarea from './AutoHeightTextarea';
+import { partyHasName } from '../../helpers/trackerPartyNames';
 import {
   useEffect,
   useLayoutEffect,
@@ -1590,6 +1591,9 @@ const CombatTracker = ({
     return true;
   };
   const currentRound = state.rounds[state.activeRound];
+  const availablePartyProfiles = (campaign?.partyProfiles || []).filter(
+    (profile) => !partyHasName(currentRound?.party || [], profile.name)
+  );
   const campaignActive = campaign?.active;
   useEffect(() => {
     setPartyDraft(undefined);
@@ -4722,15 +4726,23 @@ const CombatTracker = ({
             modalRootId="campaign-combat-modal"
             newMember={{
               copiedClassAndLevel: partyDraft.copiedClassAndLevel,
-              duplicateName: currentRound.party.some(
-                (actor) =>
-                  actor.name?.trim().toLowerCase() ===
-                  partyDraft.combatant.name?.trim().toLowerCase()
-              ),
+              isDuplicateName: (name) =>
+                partyHasName(
+                  stateRef.current.rounds[partyDraft.roundIndex]?.party || [],
+                  name
+                ),
               onCancel: () => setPartyDraft(undefined),
-              onAdd: (combatant) => {
+              onAdd: (combatant, confirmedDuplicate) => {
                 if (stateRef.current.activeRound !== partyDraft.roundIndex)
-                  return;
+                  return false;
+                if (
+                  partyHasName(
+                    stateRef.current.rounds[partyDraft.roundIndex]?.party || [],
+                    combatant.name
+                  ) &&
+                  !confirmedDuplicate
+                )
+                  return false;
                 if (
                   dispatch({
                     type: 'add-combatant',
@@ -4738,8 +4750,11 @@ const CombatTracker = ({
                     key: nextKey(),
                     partyDraft: combatant,
                   })
-                )
+                ) {
                   setPartyDraft(undefined);
+                  return true;
+                }
+                return false;
               },
             }}
           />
@@ -4905,16 +4920,24 @@ const CombatTracker = ({
                 >
                   Add Party Member
                 </button>
-                {!!campaign?.partyProfiles?.length && (
+                {availablePartyProfiles.length > 0 && (
                   <select
                     aria-label="Add from party/profile"
                     className={styles['toolbarButton']}
                     value=""
                     onChange={(event) => {
-                      const profile = campaign.partyProfiles?.find(
+                      const profile = availablePartyProfiles.find(
                         (p) => p.id === event.target.value
                       );
-                      if (!profile) return;
+                      if (
+                        !profile ||
+                        partyHasName(
+                          stateRef.current.rounds[stateRef.current.activeRound]
+                            ?.party || [],
+                          profile.name
+                        )
+                      )
+                        return;
                       setPartyDraft({
                         combatant: createBaseCombatant(
                           nextKey(),
@@ -4928,7 +4951,7 @@ const CombatTracker = ({
                     }}
                   >
                     <option value="">Add from party/profile…</option>
-                    {campaign.partyProfiles.map((profile, index) => (
+                    {availablePartyProfiles.map((profile, index) => (
                       <option key={profile.id} value={profile.id}>
                         {index + 1}. {profile.name}
                         {profile.player ? ` · ${profile.player}` : ''}

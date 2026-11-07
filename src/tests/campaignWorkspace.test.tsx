@@ -168,4 +168,30 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
       ?.quantity
   ).toBe(6);
   expect(native.document?.records).toEqual(baseline.records);
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Campaign Details', exact: true })
+  );
+  const details = within(
+    screen.getByRole('region', { name: 'Campaign Details' })
+  );
+  const title = details.getByLabelText('Campaign title');
+  const notes = details.getByLabelText('Campaign notes');
+  const imports = details.getByText('Import…', { selector: 'summary' });
+  expect(
+    title.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  expect(
+    notes.compareDocumentPosition(imports) & Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  expect(details.queryByText('synthetic.adnd')).not.toBeInTheDocument();
+  expect(
+    details.queryByText(/Choose a location with File/)
+  ).not.toBeInTheDocument();
+  expect(details.queryByText(/Campaign Save includes/)).not.toBeInTheDocument();
+  fireEvent.change(title, { target: { value: 'Edited synthetic title' } });
+  fireEvent.change(notes, { target: { value: 'Campaign-wide note' } });
+  await waitFor(() =>
+    expect(native.document?.title).toBe('Edited synthetic title')
+  );
+  expect(native.document?.notes).toBe('Campaign-wide note');
 });

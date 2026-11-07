@@ -533,11 +533,6 @@ export default function DesktopWorkspace({
               style={{ display: view === 'possessions' ? undefined : 'none' }}
               aria-label="Possessions"
             >
-              <div className={styles['viewHeading']}>
-                <div>
-                  <h2>Possessions</h2>
-                </div>
-              </div>
               {historicalInventory ? (
                 <HistoricalInventory
                   key={historicalInventory.id}
@@ -686,17 +681,6 @@ export default function DesktopWorkspace({
               aria-label="Campaign Details"
             >
               <h2>Campaign Details</h2>
-              <details className={styles['secondary']}>
-                <summary>Import…</summary>
-                <CampaignSnapshots
-                  key={`${state.epoch}:${sessionId}`}
-                  document={document}
-                  token={state.token}
-                  busy={state.busy || pending.current > 0}
-                  activeSessionId={sessionId}
-                />
-              </details>
-
               <label>
                 Campaign title
                 <input
@@ -720,11 +704,16 @@ export default function DesktopWorkspace({
                   }}
                 />
               </label>
-              <p>{state.path || 'Choose a location with File → Save As.'}</p>
-              <p>
-                Campaign Save includes all working inventories, checkpoints, and
-                imported evidence.
-              </p>
+              <details className={styles['secondary']}>
+                <summary>Import…</summary>
+                <CampaignSnapshots
+                  key={`${state.epoch}:${sessionId}`}
+                  document={document}
+                  token={state.token}
+                  busy={state.busy || pending.current > 0}
+                  activeSessionId={sessionId}
+                />
+              </details>
             </section>
             <section
               className={styles['view']}
