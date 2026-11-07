@@ -571,7 +571,7 @@ const getMovementEdgeExplanation = ({
   }
 
   if (fromNode?.kind === 'contact' && fromNode.segment !== undefined) {
-    return `Contact is established on segment ${fromNode.segment}, and that has to happen before the later result shown here.`;
+    return `Contact is established on segment ${fromNode.segment}, and that has to happen before the later outcome shown here.`;
   }
 
   if (fromNode?.segment !== undefined) {

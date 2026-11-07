@@ -77,6 +77,30 @@ test('controlled tracker sends complete live edits through campaign validation a
   expect(accepted.workingCombats[0]?.state.rounds[0]?.summary).toBe(
     'Saved immediately without blur'
   );
+  expect(screen.getAllByRole('columnheader', { name: 'Outcome' })).toHaveLength(
+    2
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Combat', exact: true }));
+  const combatDialog = within(screen.getByRole('dialog', { name: 'Combat' }));
+  fireEvent.change(combatDialog.getByLabelText('Outcome'), {
+    target: { value: 'Takes 3 damage before acting' },
+  });
+  expect(
+    accepted.workingCombats[0]?.state.rounds[0]?.partyStates[0]?.result
+  ).toBe('Takes 3 damage before acting');
+  fireEvent.click(
+    combatDialog.getByRole('button', { name: 'Close', exact: true })
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Combat', exact: true }));
+  expect(
+    within(screen.getByRole('dialog', { name: 'Combat' })).getByText('Resolved')
+  ).toBeInTheDocument();
+  fireEvent.click(
+    within(screen.getByRole('dialog', { name: 'Combat' })).getByRole('button', {
+      name: 'Close',
+      exact: true,
+    })
+  );
   fireEvent.click(screen.getByRole('button', { name: /^Backstab/ }));
   const dialog = within(screen.getByRole('dialog', { name: 'Edit Intention' }));
   fireEvent.change(dialog.getByLabelText('Action'), {

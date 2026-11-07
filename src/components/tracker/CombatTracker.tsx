@@ -295,7 +295,7 @@ type TrackerAction =
 const partyFieldDefinitions: { key: RoundCombatantField; label: string }[] = [
   { key: 'hp', label: 'HP' },
   { key: 'action', label: 'Intention' },
-  { key: 'result', label: 'Result' },
+  { key: 'result', label: 'Outcome' },
   { key: 'effect', label: 'Current Effect' },
   { key: 'notes', label: 'Notes' },
 ];
@@ -4202,10 +4202,10 @@ const CombatTracker = ({
     if (targetIndices.length === 0) {
       const message =
         selectedAction?.usesGridTargets === false
-          ? 'This action does not use the target grid. You can still fill out the action result, or adjust the intention.'
+          ? 'This action does not use the target grid. You can still record the outcome for this combatant, or adjust the intention.'
           : selectedAction && scope.targetIndices.length > 0
           ? 'No active target cells are assigned to this action. Choose another action, or adjust target assignments in the tracker.'
-          : 'No targets are active in the grid for this combatant. You can still fill out the action result, or adjust targets in the tracker.';
+          : 'No targets are active in the grid for this combatant. You can still record the outcome for this combatant, or adjust targets in the tracker.';
 
       return (
         <div className={styles['combatWizardEmptyTargets']}>{message}</div>
@@ -4600,7 +4600,7 @@ const CombatTracker = ({
                       <>
                         <label className={styles['combatFlowField']}>
                           <span className={styles['combatFlowFieldLabel']}>
-                            Result
+                            Outcome
                           </span>
                           <AutoHeightTextarea
                             className={styles['combatFlowTextarea']}
@@ -4617,7 +4617,7 @@ const CombatTracker = ({
                               })
                             }
                             placeholder={
-                              'misses, hits for 6, sleep: one saves, two asleep...'
+                              'hits for 6; takes 3 damage; fails a save...'
                             }
                           />
                         </label>
@@ -5739,8 +5739,8 @@ const CombatTracker = ({
                   </span>
                   <span className={styles['newCombatChoiceDescription']}>
                     Keep each combatant&apos;s HP from{' '}
-                    {currentRoundDisplayLabel}. Clear effects, actions, results,
-                    and notes.
+                    {currentRoundDisplayLabel}. Clear effects, actions,
+                    outcomes, and notes.
                   </span>
                 </button>
                 <button
@@ -6495,21 +6495,19 @@ const CombatTracker = ({
               )}
               <label
                 className={styles['modalLabel']}
-                htmlFor={'combat-wizard-result'}
+                htmlFor={'combat-wizard-outcome'}
               >
-                Result
+                Outcome
               </label>
               <AutoHeightTextarea
                 ref={combatResultTextareaRef}
-                id={'combat-wizard-result'}
+                id={'combat-wizard-outcome'}
                 className={styles['combatWizardTextarea']}
                 value={currentCombatWizardEntry.result}
                 onChange={(value) =>
                   updateCombatWizardResult(currentCombatWizardEntry, value)
                 }
-                placeholder={
-                  'misses, hits for 6, sleep: one saves, two asleep...'
-                }
+                placeholder={'hits for 6; takes 3 damage; fails a save...'}
               />
               <label
                 className={styles['modalLabel']}
